@@ -62,7 +62,7 @@ bool HistoryCollectionBase::execute( real64 const time_n,
     // std::function defines the == and =! comparable against nullptr_t to check the
     // function pointer is actually assigned (an error would be thrown on the call attempt even so)
     GEOS_ERROR_IF( m_bufferProviders[collectionIdx] == nullptr,
-                    "History collection buffer retrieval function is unassigned, did you declare a related TimeHistoryOutput event?" );
+                   "History collection buffer retrieval function is unassigned, did you declare a related TimeHistoryOutput event?" );
     // using GEOS_ERROR_IF_EQ caused type issues since the values are used in streams
     this->updateSetsIndices( domain );
     HistoryMetadata hmd = this->getMetaData( domain, collectionIdx );
@@ -119,8 +119,8 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
       } );
 
       GEOS_ERROR_IF( !bodyFound,
-                      GEOS_FMT( "MeshBody ({}) is specified, but not found.",
-                                 targetTokens[0] ) );
+                     GEOS_FMT( "MeshBody ({}) is specified, but not found.",
+                               targetTokens[0] ) );
     }
 
 
@@ -150,8 +150,8 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
         } );
 
         GEOS_ERROR_IF( !levelFound,
-                        GEOS_FMT( "MeshLevel ({}) is specified, but not found.",
-                                   targetTokens[1] ) );
+                       GEOS_FMT( "MeshLevel ({}) is specified, but not found.",
+                                 targetTokens[1] ) );
       }
     }
     else if( !meshBody.getMeshLevels().hasGroup< MeshLevel >( targetTokens[1] ) )

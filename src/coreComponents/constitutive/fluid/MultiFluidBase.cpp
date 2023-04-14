@@ -157,20 +157,20 @@ void MultiFluidBase::postProcessInput()
   integer const numPhase = numFluidPhases();
 
   GEOS_THROW_IF_LT_MSG( numComp, 1,
-                         GEOS_FMT( "{}: invalid number of components", getFullName() ),
-                         InputError );
+                        GEOS_FMT( "{}: invalid number of components", getFullName() ),
+                        InputError );
   GEOS_THROW_IF_GT_MSG( numComp, MAX_NUM_COMPONENTS,
-                         GEOS_FMT( "{}: invalid number of components", getFullName() ),
-                         InputError );
+                        GEOS_FMT( "{}: invalid number of components", getFullName() ),
+                        InputError );
   GEOS_THROW_IF_LT_MSG( numPhase, 1,
-                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
-                         InputError );
+                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
+                        InputError );
   GEOS_THROW_IF_GT_MSG( numPhase, MAX_NUM_PHASES,
-                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
-                         InputError );
+                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
+                        InputError );
   GEOS_THROW_IF_NE_MSG( m_componentMolarWeight.size(), numComp,
-                         GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), viewKeyStruct::componentMolarWeightString() ),
-                         InputError );
+                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), viewKeyStruct::componentMolarWeightString() ),
+                        InputError );
 
   // call to correctly set member array tertiary sizes on the 'main' material object
   resizeFields( 0, 0 );

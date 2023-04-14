@@ -164,11 +164,11 @@ findName( InputRange const & input,
   using std::end;
   auto const it = std::find_first_of( begin( input ), end( input ), begin( expected ), end( expected ) );
   GEOS_THROW_IF( it == end( input ),
-                  GEOS_FMT( "Name '{}' not found in `{}`.\nExpected one of: {}.\nInput provided: {}.",
-                             *begin( expected ), attribute,
-                             stringutilities::join( begin( expected ), end( expected ), ", " ),
-                             stringutilities::join( begin( input ), end( input ) ) ),
-                  InputError );
+                 GEOS_FMT( "Name '{}' not found in `{}`.\nExpected one of: {}.\nInput provided: {}.",
+                           *begin( expected ), attribute,
+                           stringutilities::join( begin( expected ), end( expected ), ", " ),
+                           stringutilities::join( begin( input ), end( input ) ) ),
+                 InputError );
   return static_cast< integer >( std::distance( begin( input ), it ) );
 }
 
@@ -183,8 +183,8 @@ initializePropertyTable( string_array const & inputParameters,
 
 {
   GEOS_THROW_IF( inputParameters.size() < 8,
-                  "Invalid property input!",
-                  InputError );
+                 "Invalid property input!",
+                 InputError );
 
   try
   {
@@ -193,7 +193,7 @@ initializePropertyTable( string_array const & inputParameters,
     real64 const dP = stod( inputParameters[4] );
 
     GEOS_THROW_IF( PStart >= PEnd, "PStart must be strictly smaller than PEnd",
-                    InputError );
+                   InputError );
 
     constexpr real64 T_K = 273.15;
 
@@ -202,11 +202,11 @@ initializePropertyTable( string_array const & inputParameters,
     real64 const dT = stod( inputParameters[7] );
 
     GEOS_THROW_IF( TStart < 10, "Temperature must be in Kelvin and must be larger than 283.15 K",
-                    InputError );
+                   InputError );
     GEOS_THROW_IF( TEnd > 350, "Temperature must be in Kelvin and must be smaller than 623.15 K",
-                    InputError );
+                   InputError );
     GEOS_THROW_IF( TStart >= TEnd, "TStart must be strictly smaller than TEnd",
-                    InputError );
+                   InputError );
 
     for( real64 P = PStart; P <= PEnd; P += dP )
     {

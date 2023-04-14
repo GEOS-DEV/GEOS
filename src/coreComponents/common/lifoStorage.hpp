@@ -412,7 +412,7 @@ public:
     pushWait();
     int id = m_bufferCount++;
     GEOS_ERROR_IF( m_hostDeque.capacity() == 0,
-                    "Cannot save on a Lifo without host storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
+                   "Cannot save on a Lifo without host storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
 
 #ifdef GEOSX_USE_CUDA
     if( m_deviceDeque.capacity() > 0 )
@@ -701,10 +701,10 @@ private:
 
     std::ofstream wf( fileName, std::ios::out | std::ios::binary );
     GEOS_ERROR_IF( !wf || wf.fail() || !wf.is_open(),
-                    "Could not open file "<< fileName << " for writting" );
+                   "Could not open file "<< fileName << " for writting" );
     wf.write( (const char *)d, m_bufferSize );
     GEOS_ERROR_IF( wf.bad() || wf.fail(),
-                    "An error occured while writting "<< fileName );
+                   "An error occured while writting "<< fileName );
     wf.close();
   }
 
@@ -720,7 +720,7 @@ private:
     std::string fileName = GEOS_FMT( "{}_{:08}.dat", m_name, id );
     std::ifstream wf( fileName, std::ios::in | std::ios::binary );
     GEOS_ERROR_IF( !wf,
-                    "Could not open file "<< fileName << " for reading" );
+                   "Could not open file "<< fileName << " for reading" );
     wf.read( (char *)d, m_bufferSize );
     wf.close();
     remove( fileName.c_str() );

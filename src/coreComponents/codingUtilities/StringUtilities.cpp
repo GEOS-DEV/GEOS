@@ -90,7 +90,7 @@ string toMetricPrefixString( T const & value )
   rval = temp;
 
   GEOS_ERROR_IF( rval.empty(),
-                  GEOS_FMT( "The value of {} was not able to be converted with a metric prefix", value ) );
+                 GEOS_FMT( "The value of {} was not able to be converted with a metric prefix", value ) );
 
 
   return rval;

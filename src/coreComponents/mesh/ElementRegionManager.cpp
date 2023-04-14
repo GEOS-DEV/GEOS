@@ -68,7 +68,7 @@ void ElementRegionManager::setMaxGlobalIndex()
 Group * ElementRegionManager::createChild( string const & childKey, string const & childName )
 {
   GEOS_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
-                  "KeyName ("<<childKey<<") not found in ObjectManager::Catalog" );
+                 "KeyName ("<<childKey<<") not found in ObjectManager::Catalog" );
   GEOS_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog." );
 
   Group & elementRegions = this->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
@@ -191,7 +191,7 @@ void ElementRegionManager::generateWells( MeshManager & meshManager,
     globalIndex const numWellElemsGlobal = MpiWrapper::sum( subRegion.size() );
 
     GEOS_ERROR_IF( numWellElemsGlobal != wellGeometry.getNumElements(),
-                    "Invalid partitioning in well " << subRegionName );
+                   "Invalid partitioning in well " << subRegionName );
 
   } );
 
@@ -666,9 +666,9 @@ ElementRegionManager::getCellBlockToSubRegionMap( CellBlockManagerABC const & ce
   {
     localIndex const blockIndex = cellBlocks.getIndex( subRegion.getName() );
     GEOS_ERROR_IF( blockIndex == Group::subGroupMap::KeyIndex::invalid_index,
-                    GEOS_FMT( "Cell block not found for subregion {}/{}", region.getName(), subRegion.getName() ) );
+                   GEOS_FMT( "Cell block not found for subregion {}/{}", region.getName(), subRegion.getName() ) );
     GEOS_ERROR_IF( blockMap( blockIndex, 1 ) != -1,
-                    GEOS_FMT( "Cell block {} mapped to more than one subregion", subRegion.getName() ) );
+                   GEOS_FMT( "Cell block {} mapped to more than one subregion", subRegion.getName() ) );
 
     blockMap( blockIndex, 0 ) = er;
     blockMap( blockIndex, 1 ) = esr;

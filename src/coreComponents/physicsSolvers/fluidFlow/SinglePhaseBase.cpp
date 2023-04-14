@@ -139,8 +139,8 @@ void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) c
 
     thermalConductivityName = getConstitutiveName< SinglePhaseThermalConductivityBase >( subRegion );
     GEOS_THROW_IF( thermalConductivityName.empty(),
-                    GEOS_FMT( "Thermal conductivity model not found on subregion {}", subRegion.getName() ),
-                    InputError );
+                   GEOS_FMT( "Thermal conductivity model not found on subregion {}", subRegion.getName() ),
+                   InputError );
   }
 }
 
@@ -170,8 +170,8 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
       string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       fluidName = getConstitutiveName< SingleFluidBase >( subRegion );
       GEOS_THROW_IF( fluidName.empty(),
-                      GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
-                      InputError );
+                     GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                     InputError );
 
       SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
 
@@ -179,13 +179,13 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
       {
         string const fluidModelName = castedFluid.catalogName();
         GEOS_THROW_IF( m_isThermal && (fluidModelName != "ThermalCompressibleSinglePhaseFluid"),
-                        GEOS_FMT( "SingleFluidBase {}: the thermal option is enabled in the solver, but the fluid model `{}` is not for thermal fluid",
-                                   getName(), fluid.getName() ),
-                        InputError );
+                       GEOS_FMT( "SingleFluidBase {}: the thermal option is enabled in the solver, but the fluid model `{}` is not for thermal fluid",
+                                 getName(), fluid.getName() ),
+                       InputError );
         GEOS_THROW_IF( !m_isThermal && (fluidModelName == "ThermalCompressibleSinglePhaseFluid"),
-                        GEOS_FMT( "SingleFluidBase {}: the fluid model is for thermal fluid `{}`, but the solver option is incompatible with the fluid model",
-                                   getName(), fluid.getName() ),
-                        InputError );
+                       GEOS_FMT( "SingleFluidBase {}: the fluid model is for thermal fluid `{}`, but the solver option is incompatible with the fluid model",
+                                 getName(), fluid.getName() ),
+                       InputError );
       } );
     } );
   } );
@@ -438,14 +438,14 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
 
     // check that the gravity vector is aligned with the z-axis
     GEOS_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
-                    catalogName() << " " << getName() <<
-                    ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
-                    ") is not aligned with the z-axis. \n"
-                    "This is incompatible with the " << EquilibriumInitialCondition::catalogName() << " called " << bc.getName() <<
-                    "used in this simulation. To proceed, you can either: \n" <<
-                    "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n" <<
-                    "   - Remove the hydrostatic equilibrium initial condition from the XML file",
-                    InputError );
+                   catalogName() << " " << getName() <<
+                   ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
+                   ") is not aligned with the z-axis. \n"
+                   "This is incompatible with the " << EquilibriumInitialCondition::catalogName() << " called " << bc.getName() <<
+                   "used in this simulation. To proceed, you can either: \n" <<
+                   "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n" <<
+                   "   - Remove the hydrostatic equilibrium initial condition from the XML file",
+                   InputError );
   } );
 
   if( equilCounter == 0 )
@@ -500,11 +500,11 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
 
     real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
     GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
-                         SinglePhaseBase::catalogName() << " " << getName()
-                                                        << ": By looking at the elevation of the cell centers in this model, GEOSX found that "
-                                                        << "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " << globalMaxElevation[equilIndex] << "\n"
-                                                        << "But, a datum elevation of " << datumElevation << " was specified in the input file to equilibrate the model.\n "
-                                                        << "The simulation is going to proceed with this out-of-bound datum elevation, but the initial condition may be inaccurate." );
+                        SinglePhaseBase::catalogName() << " " << getName()
+                                                       << ": By looking at the elevation of the cell centers in this model, GEOSX found that "
+                                                       << "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " << globalMaxElevation[equilIndex] << "\n"
+                                                       << "But, a datum elevation of " << datumElevation << " was specified in the input file to equilibrate the model.\n "
+                                                       << "The simulation is going to proceed with this out-of-bound datum elevation, but the initial condition may be inaccurate." );
 
     array1d< array1d< real64 > > elevationValues;
     array1d< real64 > pressureValues;
@@ -555,9 +555,9 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
                                            pressureValues.toView() );
 
       GEOS_THROW_IF( !equilHasConverged,
-                      SinglePhaseBase::catalogName() << " " << getName()
-                                                     << ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "!",
-                      std::runtime_error );
+                     SinglePhaseBase::catalogName() << " " << getName()
+                                                    << ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "!",
+                     std::runtime_error );
     } );
 
     // Step 3.4: create hydrostatic pressure table
@@ -588,8 +588,8 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
 
     // For single phase flow, just issue a warning, because the simulation can proceed with a negative pressure
     GEOS_WARNING_IF( minPressure.get() <= 0.0,
-                      GEOS_FMT( "A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
-                                 minPressure.get(), region.getName(), subRegion.getName() ) );
+                     GEOS_FMT( "A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
+                               minPressure.get(), region.getName(), subRegion.getName() ) );
   } );
 }
 
@@ -867,8 +867,8 @@ void applyAndSpecifyFieldValue( real64 const & time_n,
     {
       globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
       GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-                                   solverName, time_n+dt, FieldSpecificationBase::catalogName(),
-                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+                                 solverName, time_n+dt, FieldSpecificationBase::catalogName(),
+                                 fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
     }
 
     // Specify the bc value of the field
@@ -1001,8 +1001,8 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-                                     getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(),
-                                     fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+                                   getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(),
+                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
 
       if( targetSet.size() == 0 )

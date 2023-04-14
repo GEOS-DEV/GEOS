@@ -53,9 +53,9 @@ meshToDual( ArrayOfArraysView< int64_t const, int64_t > const & elemToNodes,
 
   // Technical UB if ParMETIS writes into these arrays; in practice we discard them right after
   GEOS_PARMETIS_CHECK( ParMETIS_V3_Mesh2Dual( const_cast< idx_t * >( elemDist.data() ),
-                                               const_cast< idx_t * >( elemToNodes.getOffsets() ),
-                                               const_cast< idx_t * >( elemToNodes.getValues() ),
-                                               &numflag, &ncommonnodes, &xadj, &adjncy, &comm ) );
+                                              const_cast< idx_t * >( elemToNodes.getOffsets() ),
+                                              const_cast< idx_t * >( elemToNodes.getValues() ),
+                                              &numflag, &ncommonnodes, &xadj, &adjncy, &comm ) );
 
   ArrayOfArrays< int64_t, int64_t > graph;
   graph.resizeFromOffsets( numElems, xadj );
@@ -100,20 +100,20 @@ partition( ArrayOfArraysView< int64_t const, int64_t > const & graph,
 
   // Technical UB if ParMETIS writes into these arrays; in practice we discard them right after
   GEOS_PARMETIS_CHECK( ParMETIS_V3_PartKway( const_cast< idx_t * >( vertDist.data() ),
-                                              const_cast< idx_t * >( graph.getOffsets() ),
-                                              const_cast< idx_t * >( graph.getValues() ),
-                                              nullptr, nullptr, &wgtflag,
-                                              &numflag, &ncon, &npart, tpwgts.data(),
-                                              &ubvec, options, &edgecut, part.data(), &comm ) );
+                                             const_cast< idx_t * >( graph.getOffsets() ),
+                                             const_cast< idx_t * >( graph.getValues() ),
+                                             nullptr, nullptr, &wgtflag,
+                                             &numflag, &ncon, &npart, tpwgts.data(),
+                                             &ubvec, options, &edgecut, part.data(), &comm ) );
 
   for( int iter = 0; iter < numRefinements; ++iter )
   {
     GEOS_PARMETIS_CHECK( ParMETIS_V3_RefineKway( const_cast< idx_t * >( vertDist.data() ),
-                                                  const_cast< idx_t * >( graph.getOffsets() ),
-                                                  const_cast< idx_t * >( graph.getValues() ),
-                                                  nullptr, nullptr, &wgtflag,
-                                                  &numflag, &ncon, &npart, tpwgts.data(),
-                                                  &ubvec, options, &edgecut, part.data(), &comm ) );
+                                                 const_cast< idx_t * >( graph.getOffsets() ),
+                                                 const_cast< idx_t * >( graph.getValues() ),
+                                                 nullptr, nullptr, &wgtflag,
+                                                 &numflag, &ncon, &npart, tpwgts.data(),
+                                                 &ubvec, options, &edgecut, part.data(), &comm ) );
   }
 
   return part;

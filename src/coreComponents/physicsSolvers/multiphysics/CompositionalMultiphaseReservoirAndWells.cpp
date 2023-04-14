@@ -141,10 +141,10 @@ initializePreSubGroups()
   bool const useMassFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );;
   bool const useMassWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
   GEOS_THROW_IF( useMassFlow != useMassWell,
-                  GEOS_FMT( "CompositionalMultiphaseReservoir '{}': the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
-                             this->getName(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
-                             Base::reservoirSolver()->getName(), Base::wellSolver()->getName() ),
-                  InputError );
+                 GEOS_FMT( "CompositionalMultiphaseReservoir '{}': the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
+                           this->getName(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
+                           Base::reservoirSolver()->getName(), Base::wellSolver()->getName() ),
+                 InputError );
 }
 
 template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
@@ -431,9 +431,9 @@ assembleCouplingTerms( real64 const time_n,
         if( totalNumCrossflowPerforations > 0 )
         {
           GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "CompositionalMultiphaseReservoir '{}': Warning! Crossflow detected at {} perforations in well {}"
-                                                "To disable crossflow for injectors, you can use the field '{}' in the WellControls '{}' section",
-                                                this->getName(), totalNumCrossflowPerforations, subRegion.getName(),
-                                                WellControls::viewKeyStruct::enableCrossflowString(), wellControls.getName() ) );
+                                              "To disable crossflow for injectors, you can use the field '{}' in the WellControls '{}' section",
+                                              this->getName(), totalNumCrossflowPerforations, subRegion.getName(),
+                                              WellControls::viewKeyStruct::enableCrossflowString(), wellControls.getName() ) );
         }
       }
     } );

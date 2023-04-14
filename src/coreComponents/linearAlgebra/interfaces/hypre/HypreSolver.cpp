@@ -203,17 +203,17 @@ void HypreSolver::setup( HypreMatrix const & mat )
 
   // Set the preconditioner
   GEOS_LAI_CHECK_ERROR( m_solver->setPrecond( m_solver->ptr,
-                                               m_precond.unwrapped().solve,
-                                               hypre::dummySetup,
-                                               m_precond.unwrapped().ptr ) );
+                                              m_precond.unwrapped().solve,
+                                              hypre::dummySetup,
+                                              m_precond.unwrapped().ptr ) );
 
   // Setup the solver (need a dummy vector for rhs/sol to avoid hypre segfaulting in setup)
   HypreVector dummy;
   dummy.create( mat.numLocalRows(), mat.comm() );
   GEOS_LAI_CHECK_ERROR( m_solver->setup( m_solver->ptr,
-                                          mat.unwrapped(),
-                                          dummy.unwrapped(),
-                                          dummy.unwrapped() ) );
+                                         mat.unwrapped(),
+                                         dummy.unwrapped(),
+                                         dummy.unwrapped() ) );
 }
 
 int HypreSolver::doSolve( HypreVector const & rhs,
@@ -266,13 +266,13 @@ void HypreSolver::solve( HypreVector const & rhs,
   if( m_params.logLevel >= 1 )
   {
     GEOS_LOG_RANK_0( "\t\tLinear Solver | " << m_result.status <<
-                      " | Iterations: " << m_result.numIterations <<
-                      " | Final Rel Res: " << m_result.residualReduction <<
-                      " | Make Restrictor Time: " << m_makeRestrictorTime <<
-                      " | Compute Auu Time: " << m_computeAuuTime <<
-                      " | SC Filter Time: " << m_componentFilterTime <<
-                      " | Setup Time: " << m_result.setupTime << " s" <<
-                      " | Solve Time: " << m_result.solveTime << " s" );
+                     " | Iterations: " << m_result.numIterations <<
+                     " | Final Rel Res: " << m_result.residualReduction <<
+                     " | Make Restrictor Time: " << m_makeRestrictorTime <<
+                     " | Compute Auu Time: " << m_computeAuuTime <<
+                     " | SC Filter Time: " << m_componentFilterTime <<
+                     " | Setup Time: " << m_result.setupTime << " s" <<
+                     " | Solve Time: " << m_result.solveTime << " s" );
   }
 }
 

@@ -234,8 +234,8 @@ bool EventBase::execute( real64 const time_n,
 
     // Print debug information for logLevel >= 1
     GEOS_LOG_LEVEL_RANK_0( 1,
-                            "          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->getCurrentEventDtRequest() << ", forecast=" <<
-                            subEvent->getForecast() );
+                           "          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->getCurrentEventDtRequest() << ", forecast=" <<
+                           subEvent->getForecast() );
 
     if( subEvent->isReadyForExec() )
     {

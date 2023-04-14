@@ -174,9 +174,9 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   }
 
   GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseSolver( precond.ptr,
-                                                   mgrData.coarseSolver.solve,
-                                                   mgrData.coarseSolver.setup,
-                                                   mgrData.coarseSolver.ptr ) );
+                                                  mgrData.coarseSolver.solve,
+                                                  mgrData.coarseSolver.setup,
+                                                  mgrData.coarseSolver.ptr ) );
   precond.setup = HYPRE_MGRSetup;
   precond.solve = HYPRE_MGRSolve;
   precond.destroy = HYPRE_MGRDestroy;

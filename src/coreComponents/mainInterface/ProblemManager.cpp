@@ -225,8 +225,8 @@ bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions 
     std::vector< string > dir_contents = readDirectory( dirname );
 
     GEOS_THROW_IF( dir_contents.empty(),
-                    "Directory gotten from " << restartFileName << " " << dirname << " is empty.",
-                    InputError );
+                   "Directory gotten from " << restartFileName << " " << dirname << " is empty.",
+                   InputError );
 
     std::regex basename_regex( basename );
 
@@ -243,8 +243,8 @@ bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions 
     }
 
     GEOS_THROW_IF( !match_found,
-                    "No matches found for pattern " << basename << " in directory " << dirname << ".",
-                    InputError );
+                   "No matches found for pattern " << basename << " in directory " << dirname << ".",
+                   InputError );
 
     restartFileName = getAbsolutePath( dirname + "/" + max_match );
   }
@@ -381,7 +381,7 @@ void ProblemManager::parseInputFile()
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult const xmlResult = xmlDocument.load_file( inputFileName.c_str() );
   GEOS_THROW_IF( !xmlResult, GEOS_FMT( "Errors found while parsing XML file {}\nDescription: {}\nOffset: {}",
-                                         inputFileName, xmlResult.description(), xmlResult.offset ), InputError );
+                                       inputFileName, xmlResult.description(), xmlResult.offset ), InputError );
 
   // Add path information to the file
   xmlDocument.append_child( xmlWrapper::filePathString ).append_attribute( xmlWrapper::filePathString ).set_value( inputFileName.c_str() );
@@ -397,7 +397,7 @@ void ProblemManager::parseInputString( string const & xmlString )
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( xmlString.c_str(), xmlString.length() );
   GEOS_THROW_IF( !xmlResult, GEOS_FMT( "Errors found while parsing XML string\nDescription: {}\nOffset: {}",
-                                         xmlResult.description(), xmlResult.offset ), InputError );
+                                       xmlResult.description(), xmlResult.offset ), InputError );
 
   // Parse the results
   parseXMLDocument( xmlDocument );
@@ -890,7 +890,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
     string const subRegionName = std::get< 3 >( key );
 
     GEOS_LOG_RANK_0( "regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = "<<
-                      meshBodyName<<", "<<meshLevelName<<", "<<regionName<<", "<<subRegionName );
+                     meshBodyName<<", "<<meshLevelName<<", "<<regionName<<", "<<subRegionName );
 
 
 
@@ -908,12 +908,12 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
       {
         constitutiveManager.hangConstitutiveRelation( materialName, &elemSubRegion, numQuadraturePoints );
         GEOS_LOG_RANK_0( GEOS_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
-                                     meshBodyName,
-                                     meshLevelName,
-                                     regionName,
-                                     subRegionName,
-                                     materialName,
-                                     numQuadraturePoints ) );
+                                   meshBodyName,
+                                   meshLevelName,
+                                   regionName,
+                                   subRegionName,
+                                   materialName,
+                                   numQuadraturePoints ) );
       }
     }
   }

@@ -65,7 +65,7 @@ void computeVolumeAndCenter( array2d< real64, nodes::REFERENCE_POSITION_PERM > c
   localIndex const numNodes = toNodes.size();
 
   GEOS_ERROR_IF( numNodes != 8 && numNodes != 4,
-                  "This number of nodes is not supported in the test yet" );
+                 "This number of nodes is not supported in the test yet" );
 
   LvArray::tensorOps::fill< 3 >( elemCenter, 0.0 );
 

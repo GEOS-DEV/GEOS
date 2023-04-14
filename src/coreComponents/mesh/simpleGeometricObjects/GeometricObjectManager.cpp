@@ -46,7 +46,7 @@ GeometricObjectManager::~GeometricObjectManager()
 GeometricObjectManager & GeometricObjectManager::getInstance()
 {
   GEOS_ERROR_IF( m_instance == nullptr,
-                  "GeometricObjectManager has not been constructed, or is already been destructed." );
+                 "GeometricObjectManager has not been constructed, or is already been destructed." );
   return *m_instance;
 }
 

@@ -36,13 +36,13 @@ MPI_iCommData::~MPI_iCommData()
   for( int neighbor=0; neighbor<m_size; ++neighbor )
   {
     GEOS_ERROR_IF( m_mpiSendBufferRequest[neighbor] != MPI_REQUEST_NULL,
-                    "Destroying MPI_iCommData with uncompleted m_mpiSendBufferRequest for neighbor "<<neighbor );
+                   "Destroying MPI_iCommData with uncompleted m_mpiSendBufferRequest for neighbor "<<neighbor );
     GEOS_ERROR_IF( m_mpiRecvBufferRequest[neighbor] != MPI_REQUEST_NULL,
-                    "Destroying MPI_iCommData with uncompleted m_mpiRecvBufferRequest for neighbor "<<neighbor );
+                   "Destroying MPI_iCommData with uncompleted m_mpiRecvBufferRequest for neighbor "<<neighbor );
     GEOS_ERROR_IF( m_mpiSendBufferSizeRequest[neighbor] != MPI_REQUEST_NULL,
-                    "Destroying MPI_iCommData with uncompleted m_mpiSendBufferSizeRequest for neighbor "<<neighbor );
+                   "Destroying MPI_iCommData with uncompleted m_mpiSendBufferSizeRequest for neighbor "<<neighbor );
     GEOS_ERROR_IF( m_mpiRecvBufferSizeRequest[neighbor] != MPI_REQUEST_NULL,
-                    "Destroying MPI_iCommData with uncompleted m_mpiRecvBufferSizeRequest for neighbor "<<neighbor );
+                   "Destroying MPI_iCommData with uncompleted m_mpiRecvBufferSizeRequest for neighbor "<<neighbor );
   }
 }
 
@@ -52,13 +52,13 @@ void MPI_iCommData::resize( localIndex numMessages )
   for( int neighbor=0; neighbor<m_size; ++neighbor )
   {
     GEOS_ERROR_IF( m_mpiSendBufferRequest[neighbor] != MPI_REQUEST_NULL,
-                    "resize(localIndex) called on MPI_iCommData with uncompleted m_mpiSendBufferRequest for neighbor "<<neighbor );
+                   "resize(localIndex) called on MPI_iCommData with uncompleted m_mpiSendBufferRequest for neighbor "<<neighbor );
     GEOS_ERROR_IF( m_mpiRecvBufferRequest[neighbor] != MPI_REQUEST_NULL,
-                    "resize(localIndex) called on MPI_iCommData with uncompleted m_mpiRecvBufferRequest for neighbor "<<neighbor );
+                   "resize(localIndex) called on MPI_iCommData with uncompleted m_mpiRecvBufferRequest for neighbor "<<neighbor );
     GEOS_ERROR_IF( m_mpiSendBufferSizeRequest[neighbor] != MPI_REQUEST_NULL,
-                    "resize(localIndex) called on MPI_iCommData with uncompleted m_mpiSendBufferSizeRequest for neighbor "<<neighbor );
+                   "resize(localIndex) called on MPI_iCommData with uncompleted m_mpiSendBufferSizeRequest for neighbor "<<neighbor );
     GEOS_ERROR_IF( m_mpiRecvBufferSizeRequest[neighbor] != MPI_REQUEST_NULL,
-                    "resize(localIndex) called on MPI_iCommData with uncompleted m_mpiRecvBufferSizeRequest for neighbor "<<neighbor );
+                   "resize(localIndex) called on MPI_iCommData with uncompleted m_mpiRecvBufferSizeRequest for neighbor "<<neighbor );
   }
 
   m_mpiSendBufferRequest.resize( numMessages );

@@ -517,8 +517,8 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
       else if( typeid( source ) != typeid( m_values[index].second ) )
       {
         GEOS_ERROR( "MappedVector::insert(): Tried to insert existing key (" << keyName <<
-                     ") with a different type without overwrite flag\n " << " " << LvArray::system::demangleType( source ) <<
-                     " != " << LvArray::system::demangleType( m_values[ index ].second ) );
+                    ") with a different type without overwrite flag\n " << " " << LvArray::system::demangleType( source ) <<
+                    " != " << LvArray::system::demangleType( m_values[ index ].second ) );
       }
       else
       {

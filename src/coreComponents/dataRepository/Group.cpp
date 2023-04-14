@@ -159,8 +159,8 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
     {
       // Make sure child names are not duplicated
       GEOS_ERROR_IF( std::find( childNames.begin(), childNames.end(), childName ) != childNames.end(),
-                      GEOS_FMT( "Error: An XML block cannot contain children with duplicated names ({}/{}). ",
-                                 getPath(), childName ) );
+                     GEOS_FMT( "Error: An XML block cannot contain children with duplicated names ({}/{}). ",
+                               getPath(), childName ) );
       childNames.emplace_back( childName );
     }
 
@@ -199,11 +199,11 @@ void Group::processInputFile( xmlWrapper::xmlNode const & targetNode )
     if( attributeName != "name" && attributeName != "xmlns:xsi" && attributeName != "xsi:noNamespaceSchemaLocation" )
     {
       GEOS_THROW_IF( processedAttributes.count( attributeName ) == 0,
-                      GEOS_FMT( "XML Node '{}' with name='{}' contains unused attribute '{}'.\n"
-                                 "Valid attributes are:\n{}\nFor more details, please refer to documentation at:\n"
-                                 "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
-                                 targetNode.path(), targetNode.attribute( "name" ).value(), attributeName, dumpInputOptions() ),
-                      InputError );
+                     GEOS_FMT( "XML Node '{}' with name='{}' contains unused attribute '{}'.\n"
+                               "Valid attributes are:\n{}\nFor more details, please refer to documentation at:\n"
+                               "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
+                               targetNode.path(), targetNode.attribute( "name" ).value(), attributeName, dumpInputOptions() ),
+                     InputError );
     }
   }
 }
@@ -232,7 +232,7 @@ void Group::registerDataOnMeshRecursive( Group & meshBodies )
 Group * Group::createChild( string const & childKey, string const & childName )
 {
   GEOS_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
-                  "KeyName ("<<childKey<<") not found in Group::Catalog" );
+                 "KeyName ("<<childKey<<") not found in Group::Catalog" );
   GEOS_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from Group::Catalog." );
   return &registerGroup( childName,
                          CatalogInterface::factory( childKey, childName, this ) );
@@ -611,7 +611,7 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
       }
     }
     GEOS_ERROR_IF( !foundTarget,
-                    "Could not find the specified path from the starting group." );
+                   "Could not find the specified path from the starting group." );
   }
 
   string::size_type currentPosition;

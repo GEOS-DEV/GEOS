@@ -92,9 +92,9 @@ public:
               HypreMGRData & mgrData )
   {
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCpointsByPointMarkerArray( precond.ptr,
-                                                                  m_numBlocks, numLevels,
-                                                                  m_numLabels, m_ptrLabels,
-                                                                  mgrData.pointMarkers.data() ) );
+                                                                 m_numBlocks, numLevels,
+                                                                 m_numLabels, m_ptrLabels,
+                                                                 mgrData.pointMarkers.data() ) );
 
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, toUnderlyingPtr( m_levelFRelaxMethod ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( precond.ptr, toUnderlyingPtr( m_levelInterpType ) ) );

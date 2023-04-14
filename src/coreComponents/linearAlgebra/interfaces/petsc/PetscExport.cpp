@@ -78,7 +78,7 @@ void PetscExport::exportCRS( PetscMatrix const & mat,
   else
   {
     GEOS_LAI_CHECK_ERROR( MatCreateSubMatrices( mat.unwrapped(), rank == m_targetRank ? 1 : 0,
-                                                 &m_indexSet, &m_indexSet, MAT_INITIAL_MATRIX, &submat ) );
+                                                &m_indexSet, &m_indexSet, MAT_INITIAL_MATRIX, &submat ) );
     localMatrix = rank == m_targetRank ? submat[0] : nullptr;
   }
 

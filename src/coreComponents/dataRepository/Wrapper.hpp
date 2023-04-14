@@ -220,7 +220,7 @@ public:
   static Wrapper & cast( WrapperBase & wrapper )
   {
     GEOS_ERROR_IF( wrapper.getTypeId() != typeid( T ),
-                    "Invalid downcast to Wrapper< " << LvArray::system::demangleType< T >() << " >" );
+                   "Invalid downcast to Wrapper< " << LvArray::system::demangleType< T >() << " >" );
     return static_cast< Wrapper< T > & >( wrapper );
   }
 
@@ -233,7 +233,7 @@ public:
   static Wrapper< T > const & cast( WrapperBase const & wrapper )
   {
     GEOS_ERROR_IF( wrapper.getTypeId() != typeid( T ),
-                    "Invalid downcast to Wrapper< " << LvArray::system::demangleType< T >() << " >" );
+                   "Invalid downcast to Wrapper< " << LvArray::system::demangleType< T >() << " >" );
     return static_cast< Wrapper< T > const & >( wrapper );
   }
 
@@ -618,11 +618,11 @@ public:
                                                                      targetNode,
                                                                      inputFlag == InputFlags::REQUIRED );
         GEOS_THROW_IF( !m_successfulReadFromInput,
-                        GEOS_FMT( "XML Node '{}' with name='{}' is missing required attribute '{}'."
-                                   "Available options are:\n{}\nFor more details, please refer to documentation at:\n"
-                                   "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
-                                   targetNode.path(), targetNode.attribute( "name" ).value(), getName(), dumpInputOptions( true ) ),
-                        InputError );
+                       GEOS_FMT( "XML Node '{}' with name='{}' is missing required attribute '{}'."
+                                 "Available options are:\n{}\nFor more details, please refer to documentation at:\n"
+                                 "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
+                                 targetNode.path(), targetNode.attribute( "name" ).value(), getName(), dumpInputOptions( true ) ),
+                       InputError );
       }
       else
       {

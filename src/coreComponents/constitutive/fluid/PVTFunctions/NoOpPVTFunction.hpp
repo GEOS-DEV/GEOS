@@ -60,9 +60,9 @@ public:
                 bool useMass ) const
   {
     GEOS_UNUSED_VAR( pressure, temperature,
-                      phaseComposition, dPhaseComposition,
-                      value, dValue,
-                      useMass );
+                     phaseComposition, dPhaseComposition,
+                     value, dValue,
+                     useMass );
   }
 
   virtual void move( LvArray::MemorySpace const space, bool const touch ) override

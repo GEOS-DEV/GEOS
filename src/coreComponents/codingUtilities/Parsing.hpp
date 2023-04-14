@@ -130,15 +130,15 @@ void parseFile( string const & filename,
     {
       std::ptrdiff_t const left = std::distance( ptr, end );
       GEOS_THROW( GEOS_FMT( "Unable to parse value in file {} at position {}: {}...",
-                              filename, static_cast< std::streamoff >( inputStream.tellg() ) - left,
-                              string( ptr, std::min( left, std::ptrdiff_t{32} ) ) ),
-                   std::runtime_error );
+                            filename, static_cast< std::streamoff >( inputStream.tellg() ) - left,
+                            string( ptr, std::min( left, std::ptrdiff_t{32} ) ) ),
+                  std::runtime_error );
     }
   }
 
   GEOS_THROW_IF( inputStream.fail() && !inputStream.eof(),
-                  GEOS_FMT( "Error while reading file {}: {}", filename, std::strerror( errno ) ),
-                  std::runtime_error );
+                 GEOS_FMT( "Error while reading file {}: {}", filename, std::strerror( errno ) ),
+                 std::runtime_error );
 }
 
 } // namespace geos

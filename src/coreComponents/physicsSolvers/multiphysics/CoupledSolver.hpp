@@ -80,9 +80,9 @@ public:
       using SolverType = TYPEOFPTR( SolverPtr {} );
       solver = this->getParent().template getGroupPointer< SolverType >( m_names[idx()] );
       GEOS_THROW_IF( solver == nullptr,
-                      GEOS_FMT( "Could not find solver '{}' of type {}",
-                                 m_names[idx()], LvArray::system::demangleType< SolverType >() ),
-                      InputError );
+                     GEOS_FMT( "Could not find solver '{}' of type {}",
+                               m_names[idx()], LvArray::system::demangleType< SolverType >() ),
+                     InputError );
     } );
   }
 
@@ -536,13 +536,13 @@ protected:
     bool const isSequential = getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
     bool const usesLineSearch = getNonlinearSolverParameters().m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None;
     GEOS_THROW_IF( isSequential && usesLineSearch,
-                    GEOS_FMT( "`{}`: line search is not supported by the coupled solver when {} is set to `{}`. Please set {} to `{}` to remove this error",
-                               getName(),
-                               NonlinearSolverParameters::viewKeysStruct::couplingTypeString(),
-                               EnumStrings< NonlinearSolverParameters::CouplingType >::toString( NonlinearSolverParameters::CouplingType::Sequential ),
-                               NonlinearSolverParameters::viewKeysStruct::lineSearchActionString(),
-                               EnumStrings< NonlinearSolverParameters::LineSearchAction >::toString( NonlinearSolverParameters::LineSearchAction::None ) ),
-                    InputError );
+                   GEOS_FMT( "`{}`: line search is not supported by the coupled solver when {} is set to `{}`. Please set {} to `{}` to remove this error",
+                             getName(),
+                             NonlinearSolverParameters::viewKeysStruct::couplingTypeString(),
+                             EnumStrings< NonlinearSolverParameters::CouplingType >::toString( NonlinearSolverParameters::CouplingType::Sequential ),
+                             NonlinearSolverParameters::viewKeysStruct::lineSearchActionString(),
+                             EnumStrings< NonlinearSolverParameters::LineSearchAction >::toString( NonlinearSolverParameters::LineSearchAction::None ) ),
+                   InputError );
   }
 
   void

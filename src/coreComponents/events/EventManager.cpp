@@ -175,8 +175,8 @@ bool EventManager::run( DomainPartition & domain )
 
       // Print debug information for logLevel >= 1
       GEOS_LOG_LEVEL_RANK_0( 1,
-                              "     Event: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->getCurrentEventDtRequest() << ", forecast=" <<
-                              subEvent->getForecast() );
+                             "     Event: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->getCurrentEventDtRequest() << ", forecast=" <<
+                             subEvent->getForecast() );
 
       // Execute, signal events
       bool earlyReturn = false;

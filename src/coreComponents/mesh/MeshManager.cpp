@@ -129,7 +129,7 @@ void MeshManager::importFields( DomainPartition & domain )
           if( generator.getLogLevel() >= 1 )
           {
             GEOS_LOG_RANK_0( "Skipping import of " << meshFieldName << " -> " << geosxFieldName <<
-                              " on " << region.getName() << "/" << subRegion.getName() << " (field not found)" );
+                             " on " << region.getName() << "/" << subRegion.getName() << " (field not found)" );
           }
 
           continue;
@@ -142,7 +142,7 @@ void MeshManager::importFields( DomainPartition & domain )
         if( generator.getLogLevel() >= 1 )
         {
           GEOS_LOG_RANK_0( "Importing field " << meshFieldName << " -> " << geosxFieldName <<
-                            " on " << region.getName() << "/" << subRegion.getName() );
+                           " on " << region.getName() << "/" << subRegion.getName() );
         }
 
         bool const isMaterialField = materialWrapperNames.count( geosxFieldName ) > 0 && wrapper.numArrayDims() > 1;

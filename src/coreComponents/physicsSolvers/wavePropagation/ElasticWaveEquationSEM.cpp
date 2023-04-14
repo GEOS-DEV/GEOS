@@ -126,8 +126,8 @@ localIndex ElasticWaveEquationSEM::getNumNodesPerElem()
   FiniteElementDiscretization const * const
   feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
   GEOS_THROW_IF( feDiscretization == nullptr,
-                  getName() << ": FE discretization not found: " << m_discretizationName,
-                  InputError );
+                 getName() << ": FE discretization not found: " << m_discretizationName,
+                 InputError );
 
   localIndex numNodesPerElem = 0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
@@ -230,10 +230,10 @@ void ElasticWaveEquationSEM::postProcessInput()
   WaveSolverBase::postProcessInput();
 
   GEOS_ERROR_IF( m_sourceCoordinates.size( 1 ) != 3,
-                  "Invalid number of physical coordinates for the sources" );
+                 "Invalid number of physical coordinates for the sources" );
 
   GEOS_ERROR_IF( m_receiverCoordinates.size( 1 ) != 3,
-                  "Invalid number of physical coordinates for the receivers" );
+                 "Invalid number of physical coordinates for the receivers" );
 
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
@@ -329,8 +329,8 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
   {
 
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
-                    "Invalid type of element, the elastic solver is designed for hexahedral meshes only (C3D8) ",
-                    InputError );
+                   "Invalid type of element, the elastic solver is designed for hexahedral meshes only (C3D8) ",
+                   InputError );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();

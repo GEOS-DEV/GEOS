@@ -203,9 +203,9 @@ void EpetraMatrix::add( globalIndex const rowIndex,
 {
   GEOS_LAI_ASSERT( modifiable() );
   GEOS_LAI_CHECK_ERROR( m_matrix->SumIntoGlobalValues( rowIndex,
-                                                        LvArray::integerConversion< int >( size ),
-                                                        values,
-                                                        trilinos::toEpetraLongLong( colIndices ) ) );
+                                                       LvArray::integerConversion< int >( size ),
+                                                       values,
+                                                       trilinos::toEpetraLongLong( colIndices ) ) );
 }
 
 void EpetraMatrix::set( globalIndex const rowIndex,
@@ -215,9 +215,9 @@ void EpetraMatrix::set( globalIndex const rowIndex,
 {
   GEOS_LAI_ASSERT( modifiable() );
   GEOS_LAI_CHECK_ERROR( m_matrix->ReplaceGlobalValues( rowIndex,
-                                                        LvArray::integerConversion< int >( size ),
-                                                        values,
-                                                        trilinos::toEpetraLongLong( colIndices ) ) );
+                                                       LvArray::integerConversion< int >( size ),
+                                                       values,
+                                                       trilinos::toEpetraLongLong( colIndices ) ) );
 }
 
 void EpetraMatrix::insert( globalIndex const rowIndex,
@@ -227,9 +227,9 @@ void EpetraMatrix::insert( globalIndex const rowIndex,
 {
   GEOS_LAI_ASSERT( insertable() );
   GEOS_LAI_CHECK_ERROR_NNEG( m_matrix->InsertGlobalValues( rowIndex,
-                                                            LvArray::integerConversion< int >( size ),
-                                                            values,
-                                                            trilinos::toEpetraLongLong( colIndices ) ) );
+                                                           LvArray::integerConversion< int >( size ),
+                                                           values,
+                                                           trilinos::toEpetraLongLong( colIndices ) ) );
 }
 
 void EpetraMatrix::add( globalIndex const rowIndex,
@@ -238,9 +238,9 @@ void EpetraMatrix::add( globalIndex const rowIndex,
 {
   GEOS_LAI_ASSERT( modifiable() );
   GEOS_LAI_CHECK_ERROR( m_matrix->SumIntoGlobalValues( rowIndex,
-                                                        LvArray::integerConversion< int >( colIndices.size() ),
-                                                        values,
-                                                        trilinos::toEpetraLongLong( colIndices ) ) );
+                                                       LvArray::integerConversion< int >( colIndices.size() ),
+                                                       values,
+                                                       trilinos::toEpetraLongLong( colIndices ) ) );
 }
 
 void EpetraMatrix::set( globalIndex const rowIndex,
@@ -249,9 +249,9 @@ void EpetraMatrix::set( globalIndex const rowIndex,
 {
   GEOS_LAI_ASSERT( modifiable() );
   GEOS_LAI_CHECK_ERROR( m_matrix->ReplaceGlobalValues( rowIndex,
-                                                        LvArray::integerConversion< int >( colIndices.size() ),
-                                                        values,
-                                                        trilinos::toEpetraLongLong( colIndices ) ) );
+                                                       LvArray::integerConversion< int >( colIndices.size() ),
+                                                       values,
+                                                       trilinos::toEpetraLongLong( colIndices ) ) );
 }
 
 void EpetraMatrix::insert( globalIndex const rowIndex,
@@ -260,9 +260,9 @@ void EpetraMatrix::insert( globalIndex const rowIndex,
 {
   GEOS_LAI_ASSERT( insertable() );
   GEOS_LAI_CHECK_ERROR_NNEG( m_matrix->InsertGlobalValues( rowIndex,
-                                                            LvArray::integerConversion< int >( colIndices.size() ),
-                                                            values,
-                                                            trilinos::toEpetraLongLong( colIndices ) ) );
+                                                           LvArray::integerConversion< int >( colIndices.size() ),
+                                                           values,
+                                                           trilinos::toEpetraLongLong( colIndices ) ) );
 }
 
 void EpetraMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
@@ -271,11 +271,11 @@ void EpetraMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
 {
   GEOS_LAI_ASSERT( modifiable() );
   GEOS_LAI_CHECK_ERROR( m_matrix->SumIntoGlobalValues( LvArray::integerConversion< int >( rowIndices.size() ),
-                                                        trilinos::toEpetraLongLong( rowIndices ),
-                                                        LvArray::integerConversion< int >( colIndices.size() ),
-                                                        trilinos::toEpetraLongLong( colIndices ),
-                                                        values.dataIfContiguous(),
-                                                        Epetra_FECrsMatrix::ROW_MAJOR ) );
+                                                       trilinos::toEpetraLongLong( rowIndices ),
+                                                       LvArray::integerConversion< int >( colIndices.size() ),
+                                                       trilinos::toEpetraLongLong( colIndices ),
+                                                       values.dataIfContiguous(),
+                                                       Epetra_FECrsMatrix::ROW_MAJOR ) );
 }
 
 void EpetraMatrix::set( arraySlice1d< globalIndex const > const & rowIndices,
@@ -284,11 +284,11 @@ void EpetraMatrix::set( arraySlice1d< globalIndex const > const & rowIndices,
 {
   GEOS_LAI_ASSERT( modifiable() );
   GEOS_LAI_CHECK_ERROR( m_matrix->ReplaceGlobalValues( LvArray::integerConversion< int >( rowIndices.size() ),
-                                                        trilinos::toEpetraLongLong( rowIndices ),
-                                                        LvArray::integerConversion< int >( colIndices.size() ),
-                                                        trilinos::toEpetraLongLong( colIndices ),
-                                                        values.dataIfContiguous(),
-                                                        Epetra_FECrsMatrix::ROW_MAJOR ) );
+                                                       trilinos::toEpetraLongLong( rowIndices ),
+                                                       LvArray::integerConversion< int >( colIndices.size() ),
+                                                       trilinos::toEpetraLongLong( colIndices ),
+                                                       values.dataIfContiguous(),
+                                                       Epetra_FECrsMatrix::ROW_MAJOR ) );
 }
 
 void EpetraMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
@@ -297,11 +297,11 @@ void EpetraMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
 {
   GEOS_LAI_ASSERT( insertable() );
   GEOS_LAI_CHECK_ERROR_NNEG( m_matrix->InsertGlobalValues( LvArray::integerConversion< int >( rowIndices.size() ),
-                                                            trilinos::toEpetraLongLong( rowIndices ),
-                                                            LvArray::integerConversion< int >( colIndices.size() ),
-                                                            trilinos::toEpetraLongLong( colIndices ),
-                                                            values.dataIfContiguous(),
-                                                            Epetra_FECrsMatrix::ROW_MAJOR ) );
+                                                           trilinos::toEpetraLongLong( rowIndices ),
+                                                           LvArray::integerConversion< int >( colIndices.size() ),
+                                                           trilinos::toEpetraLongLong( colIndices ),
+                                                           values.dataIfContiguous(),
+                                                           Epetra_FECrsMatrix::ROW_MAJOR ) );
 }
 
 void EpetraMatrix::add( globalIndex const * rowIndices,
@@ -312,11 +312,11 @@ void EpetraMatrix::add( globalIndex const * rowIndices,
 {
   GEOS_LAI_ASSERT( modifiable() );
   GEOS_LAI_CHECK_ERROR( m_matrix->SumIntoGlobalValues( LvArray::integerConversion< int >( numRows ),
-                                                        trilinos::toEpetraLongLong( rowIndices ),
-                                                        LvArray::integerConversion< int >( numCols ),
-                                                        trilinos::toEpetraLongLong( colIndices ),
-                                                        values,
-                                                        Epetra_FECrsMatrix::ROW_MAJOR ) );
+                                                       trilinos::toEpetraLongLong( rowIndices ),
+                                                       LvArray::integerConversion< int >( numCols ),
+                                                       trilinos::toEpetraLongLong( colIndices ),
+                                                       values,
+                                                       Epetra_FECrsMatrix::ROW_MAJOR ) );
 }
 
 void EpetraMatrix::set( globalIndex const * rowIndices,
@@ -327,11 +327,11 @@ void EpetraMatrix::set( globalIndex const * rowIndices,
 {
   GEOS_LAI_ASSERT( modifiable() );
   GEOS_LAI_CHECK_ERROR( m_matrix->ReplaceGlobalValues( LvArray::integerConversion< int >( numRows ),
-                                                        trilinos::toEpetraLongLong( rowIndices ),
-                                                        LvArray::integerConversion< int >( numCols ),
-                                                        trilinos::toEpetraLongLong( colIndices ),
-                                                        values,
-                                                        Epetra_FECrsMatrix::ROW_MAJOR ) );
+                                                       trilinos::toEpetraLongLong( rowIndices ),
+                                                       LvArray::integerConversion< int >( numCols ),
+                                                       trilinos::toEpetraLongLong( colIndices ),
+                                                       values,
+                                                       Epetra_FECrsMatrix::ROW_MAJOR ) );
 }
 
 void EpetraMatrix::insert( globalIndex const * rowIndices,
@@ -342,11 +342,11 @@ void EpetraMatrix::insert( globalIndex const * rowIndices,
 {
   GEOS_LAI_ASSERT( insertable() );
   GEOS_LAI_CHECK_ERROR_NNEG( m_matrix->InsertGlobalValues( LvArray::integerConversion< int >( numRows ),
-                                                            trilinos::toEpetraLongLong( rowIndices ),
-                                                            LvArray::integerConversion< int >( numCols ),
-                                                            trilinos::toEpetraLongLong( colIndices ),
-                                                            values,
-                                                            Epetra_FECrsMatrix::ROW_MAJOR ) );
+                                                           trilinos::toEpetraLongLong( rowIndices ),
+                                                           LvArray::integerConversion< int >( numCols ),
+                                                           trilinos::toEpetraLongLong( colIndices ),
+                                                           values,
+                                                           Epetra_FECrsMatrix::ROW_MAJOR ) );
 }
 
 
@@ -359,9 +359,9 @@ void EpetraMatrix::insert( arrayView1d< globalIndex const > const & rowIndices,
   for( localIndex a=0; a<n; ++a )
   {
     GEOS_LAI_CHECK_ERROR_NNEG( m_matrix->InsertGlobalValues( rowIndices[a],
-                                                              1,
-                                                              &(values[a]),
-                                                              &(colIndices[a]) ) );
+                                                             1,
+                                                             &(values[a]),
+                                                             &(colIndices[a]) ) );
   }
 }
 
@@ -1092,11 +1092,11 @@ void EpetraMatrix::multiply( bool const transA,
                          comm() );
 
   GEOS_LAI_CHECK_ERROR( EpetraExt::MatrixMatrix::Multiply( unwrapped(),
-                                                            transA,
-                                                            B.unwrapped(),
-                                                            transB,
-                                                            C.unwrapped(),
-                                                            true ) );
+                                                           transA,
+                                                           B.unwrapped(),
+                                                           transB,
+                                                           C.unwrapped(),
+                                                           true ) );
   C.m_assembled = true;
 }
 

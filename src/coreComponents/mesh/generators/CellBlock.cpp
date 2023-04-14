@@ -148,10 +148,10 @@ localIndex CellBlock::getFaceNodes( localIndex const cellIndex,
                                     Span< localIndex > const nodesInFaces ) const
 {
   return geos::getFaceNodes( m_elementType,
-                              cellIndex,
-                              faceNum,
-                              m_elementsToNodes,
-                              nodesInFaces );
+                             cellIndex,
+                             faceNum,
+                             m_elementsToNodes,
+                             nodesInFaces );
 }
 
 }

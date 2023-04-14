@@ -53,7 +53,7 @@ void ThickPlane::postProcessInput()
 
   LvArray::tensorOps::normalize< 3 >( m_normal );
   GEOS_ERROR_IF( std::fabs( LvArray::tensorOps::l2Norm< 3 >( m_normal ) - 1.0 ) > 1e-15,
-                  "Error: could not properly normalize input normal." );
+                 "Error: could not properly normalize input normal." );
 }
 
 

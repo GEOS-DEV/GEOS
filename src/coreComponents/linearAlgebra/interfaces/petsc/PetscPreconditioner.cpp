@@ -175,15 +175,15 @@ void createPetscAMG( LinearSolverParameters const & params,
   if( params.amg.maxLevels > 0 )
   {
     GEOS_LAI_CHECK_ERROR( PCMGSetLevels( precond,
-                                          LvArray::integerConversion< PetscInt >( params.amg.maxLevels ),
-                                          nullptr ) );
+                                         LvArray::integerConversion< PetscInt >( params.amg.maxLevels ),
+                                         nullptr ) );
   }
 
   // Set the number of sweeps
   if( params.amg.numSweeps > 1 )
   {
     GEOS_LAI_CHECK_ERROR( PCMGSetNumberSmooth( precond,
-                                                LvArray::integerConversion< PetscInt >( params.amg.numSweeps ) ) );
+                                               LvArray::integerConversion< PetscInt >( params.amg.numSweeps ) ) );
   }
 
   // Set smoother to be used (for all levels)

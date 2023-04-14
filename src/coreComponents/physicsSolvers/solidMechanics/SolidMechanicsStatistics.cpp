@@ -139,13 +139,13 @@ void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh ) const
                          MPI_COMM_GEOSX );
 
   GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Min displacement (X, Y, Z): "
-                                       << nodeStatistics.minDisplacement[0] << ", "
-                                       << nodeStatistics.minDisplacement[1] << ", "
-                                       << nodeStatistics.minDisplacement[2] << " m" );
+                                      << nodeStatistics.minDisplacement[0] << ", "
+                                      << nodeStatistics.minDisplacement[1] << ", "
+                                      << nodeStatistics.minDisplacement[2] << " m" );
   GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max displacement (X, Y, Z): "
-                                       << nodeStatistics.maxDisplacement[0] << ", "
-                                       << nodeStatistics.maxDisplacement[1] << ", "
-                                       << nodeStatistics.maxDisplacement[2] << " m" );
+                                      << nodeStatistics.maxDisplacement[0] << ", "
+                                      << nodeStatistics.maxDisplacement[1] << ", "
+                                      << nodeStatistics.maxDisplacement[2] << " m" );
 }
 
 REGISTER_CATALOG_ENTRY( TaskBase,

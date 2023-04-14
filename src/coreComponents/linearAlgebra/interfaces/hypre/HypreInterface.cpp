@@ -47,7 +47,7 @@ void HypreInterface::initialize()
 #if defined(HYPRE_DEVELOP_STRING)
 #if defined(HYPRE_BRANCH_NAME)
   GEOS_LOG_RANK_0( "  - hypre development version: " << HYPRE_DEVELOP_STRING <<
-                    " (" << HYPRE_BRANCH_NAME << ")" );
+                   " (" << HYPRE_BRANCH_NAME << ")" );
 #else
   GEOS_LOG_RANK_0( "  - hypre development version: " << HYPRE_DEVELOP_STRING );
 #endif
@@ -89,7 +89,7 @@ geos::HypreInterface::createPreconditioner( LinearSolverParameters params )
 
 std::unique_ptr< PreconditionerBase< HypreInterface > >
 geos::HypreInterface::createPreconditioner( LinearSolverParameters params,
-                                             array1d< HypreVector > const & nearNullKernel )
+                                            array1d< HypreVector > const & nearNullKernel )
 {
   return std::make_unique< HyprePreconditioner >( std::move( params ), nearNullKernel );
 }

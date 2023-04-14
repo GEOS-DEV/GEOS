@@ -136,8 +136,8 @@ void FenghourCO2ViscosityUpdate::compute( real64 const & pressure,
                                           bool useMass ) const
 {
   GEOS_UNUSED_VAR( phaseComposition,
-                    dPhaseComposition,
-                    useMass );
+                   dPhaseComposition,
+                   useMass );
 
   using Deriv = multifluid::DerivativeOffset;
 

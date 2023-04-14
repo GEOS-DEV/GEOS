@@ -38,7 +38,7 @@ GeosxState * currentGlobalState = nullptr;
 GeosxState & getGlobalState()
 {
   GEOS_ERROR_IF( currentGlobalState == nullptr,
-                  "The state has not been created." );
+                 "The state has not been created." );
 
   return *currentGlobalState;
 }

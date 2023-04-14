@@ -56,7 +56,7 @@ CommunicationTools::~CommunicationTools()
 CommunicationTools & CommunicationTools::getInstance()
 {
   GEOS_ERROR_IF( m_instance == nullptr,
-                  "CommunicationTools has not been constructed, or is already been destructed." );
+                 "CommunicationTools has not been constructed, or is already been destructed." );
   return *m_instance;
 }
 
@@ -286,8 +286,8 @@ void CommunicationTools::assignNewGlobalIndices( ObjectManagerBase & object,
   for( localIndex const newLocalIndex : indexList )
   {
     GEOS_ERROR_IF( localToGlobal[newLocalIndex] != -1,
-                    "Local object " << newLocalIndex << " should be new but already has a global index "
-                                    << localToGlobal[newLocalIndex] );
+                   "Local object " << newLocalIndex << " should be new but already has a global index "
+                                   << localToGlobal[newLocalIndex] );
 
     localToGlobal[newLocalIndex] = object.maxGlobalIndex() + glocalIndexOffset + nIndicesAssigned + 1;
     object.updateGlobalToLocalMap( newLocalIndex );
@@ -323,8 +323,8 @@ CommunicationTools::assignNewGlobalIndices( ElementRegionManager & elementManage
     for( localIndex const newLocalIndex : indexList )
     {
       GEOS_ERROR_IF( localToGlobal[newLocalIndex] != -1,
-                      "Local object " << newLocalIndex << " should be new but already has a global index "
-                                      << localToGlobal[newLocalIndex] );
+                     "Local object " << newLocalIndex << " should be new but already has a global index "
+                                     << localToGlobal[newLocalIndex] );
 
       localToGlobal[newLocalIndex] = elementManager.maxGlobalIndex() + glocalIndexOffset + nIndicesAssigned + 1;
       subRegion.updateGlobalToLocalMap( newLocalIndex );
@@ -436,7 +436,7 @@ void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
       {
         error = true;
         GEOS_LOG_RANK( "Receiving " << recvIdx << " from " << neighborRank <<
-                        " but ghostRank[ " << recvIdx << " ] is " << ghostRank[ recvIdx ] );
+                       " but ghostRank[ " << recvIdx << " ] is " << ghostRank[ recvIdx ] );
       }
     }
 
@@ -447,7 +447,7 @@ void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
       {
         error = true;
         GEOS_LOG_RANK( "Sending " << sendIdx << " to " << neighborRank <<
-                        " but ghostRank[ " << sendIdx << " ] is " << ghostRank[ sendIdx ] );
+                       " but ghostRank[ " << sendIdx << " ] is " << ghostRank[ sendIdx ] );
       }
     }
 
@@ -456,7 +456,7 @@ void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
     {
       error = true;
       GEOS_LOG_RANK( "Expected to send 0 non local ghosts to rank " << neighborRank <<
-                      " but sending " << nonLocalGhosts.size() );
+                     " but sending " << nonLocalGhosts.size() );
     }
   }
 

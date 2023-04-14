@@ -209,8 +209,8 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
 
     solidInternalEnergyName = getConstitutiveName< SolidInternalEnergy >( subRegion );
     GEOS_THROW_IF( solidInternalEnergyName.empty(),
-                    GEOS_FMT( "Solid internal energy model not found on subregion {}", subRegion.getName() ),
-                    InputError );
+                   GEOS_FMT( "Solid internal energy model not found on subregion {}", subRegion.getName() ),
+                   InputError );
   }
 }
 
@@ -533,8 +533,8 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
     if( bc.getLogLevel() >= 1 )
     {
       GEOS_LOG_RANK_0( GEOS_FMT( string( "FlowSolverBase {}: at time {}s, " )
-                                   + string( "the <{}> boundary condition '{}' produces a flux of {} kg (or moles if useMass=0). " ),
-                                   getName(), time+dt, AquiferBoundaryCondition::catalogName(), bc.getName(), dt * globalSumFluxes[aquiferIndex] ) );
+                                 + string( "the <{}> boundary condition '{}' produces a flux of {} kg (or moles if useMass=0). " ),
+                                 getName(), time+dt, AquiferBoundaryCondition::catalogName(), bc.getName(), dt * globalSumFluxes[aquiferIndex] ) );
     }
     bc.saveConvergedState( dt * globalSumFluxes[aquiferIndex] );
   } );

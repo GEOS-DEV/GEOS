@@ -87,20 +87,20 @@ void addIncludedXML( xmlNode & targetNode, int const level )
       string const includedFilePath = [&]()
       {
         GEOS_THROW_IF_NE_MSG( string( fileNode.name() ), includedFileTag,
-                               GEOS_FMT( "<{}> must only contain <{}> tags", includedListTag, includedFileTag ),
-                               InputError );
+                              GEOS_FMT( "<{}> must only contain <{}> tags", includedListTag, includedFileTag ),
+                              InputError );
         xmlAttribute const nameAttr = fileNode.attribute( "name" );
         string const fileName = nameAttr.value();
         GEOS_THROW_IF( !nameAttr || fileName.empty(),
-                        GEOS_FMT( "<{}> tag must have a non-empty 'name' attribute", includedFileTag ),
-                        InputError );
+                       GEOS_FMT( "<{}> tag must have a non-empty 'name' attribute", includedFileTag ),
+                       InputError );
         return isAbsolutePath( fileName ) ? fileName : joinPath( splitPath( currentFilePath ).first, fileName );
       }();
 
       xmlDocument includedXmlDocument;
       xmlResult const result = includedXmlDocument.load_file( includedFilePath.c_str() );
       GEOS_THROW_IF( !result, GEOS_FMT( "Errors found while parsing included XML file {}\nDescription: {}\nOffset: {}",
-                                          includedFilePath, result.description(), result.offset ), InputError );
+                                        includedFilePath, result.description(), result.offset ), InputError );
 
       // All included files must contain a root node that must match the target node.
       // Currently, schema only allows <Included> tags at the top level (inside <Problem>).
@@ -108,7 +108,7 @@ void addIncludedXML( xmlNode & targetNode, int const level )
 
       xmlNode includedRootNode = includedXmlDocument.first_child();
       GEOS_THROW_IF_NE_MSG( string( includedRootNode.name() ), string( targetNode.name() ),
-                             "Included document root does not match the including XML node", InputError );
+                            "Included document root does not match the including XML node", InputError );
 
       // Process potential includes in the included file to allow nesting
       includedXmlDocument.append_child( filePathString ).append_attribute( filePathString ).set_value( includedFilePath.c_str() );

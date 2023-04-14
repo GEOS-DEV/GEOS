@@ -116,18 +116,18 @@ void InternalWellboreGenerator::postProcessInput()
 {
 
   GEOS_ERROR_IF( m_nElems[1].size() > 1,
-                  "Only one block in the theta direction is currently supported. "
-                  "This is specified by the nt keyword in InternalWellbore" );
+                 "Only one block in the theta direction is currently supported. "
+                 "This is specified by the nt keyword in InternalWellbore" );
 
   GEOS_ERROR_IF( m_nElems[2].size() > 1,
-                  "Only one block in the z direction is currently supported. "
-                  "This is specified by the nz keyword in InternalWellbore" );
+                 "Only one block in the z direction is currently supported. "
+                 "This is specified by the nz keyword in InternalWellbore" );
 
 
 
   GEOS_ERROR_IF( m_trajectory.size( 0 ) != 2 || m_trajectory.size( 1 ) != 3,
-                  "Input for trajectory should be specified in the form of "
-                  "{ { xbottom, ybottom, zbottom }, { xtop, ytop, ztop } }." );
+                 "Input for trajectory should be specified in the form of "
+                 "{ { xbottom, ybottom, zbottom }, { xtop, ytop, ztop } }." );
 
   // Project trajectory to bottom and top of the wellbore
   real64 trajectoryVector[3] = {0};
@@ -268,12 +268,12 @@ void InternalWellboreGenerator::postProcessInput()
     real64 const innerLimit = m_vertices[0][m_cartesianOuterBoundary];
     real64 const outerLimit = m_vertices[0].size();
     GEOS_ERROR_IF( m_cartesianMappingInnerRadius< 1e98 &&
-                                                   m_cartesianMappingInnerRadius > outerLimit,
-                    "cartesianMappingInnerRadius must be inside the outer radius of the mesh" );
+                                                  m_cartesianMappingInnerRadius > outerLimit,
+                   "cartesianMappingInnerRadius must be inside the outer radius of the mesh" );
 
     GEOS_ERROR_IF( m_cartesianMappingInnerRadius < innerLimit,
-                    "cartesianMappingInnerRadius must be outside the radius "
-                    "of the inner boundary of the region specified by useCartesianOuterBoundary" );
+                   "cartesianMappingInnerRadius must be outside the radius "
+                   "of the inner boundary of the region specified by useCartesianOuterBoundary" );
 
     if( m_cartesianMappingInnerRadius > 1e98 )
     {

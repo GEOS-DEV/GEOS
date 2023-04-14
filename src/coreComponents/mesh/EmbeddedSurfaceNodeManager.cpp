@@ -338,8 +338,8 @@ localIndex EmbeddedSurfaceNodeManager::unpackNewNodesGlobalMaps( buffer_unit_typ
         ++numNewIndices;
 
         GEOS_ERROR_IF( packList.size() != 0,
-                        "EmbeddedSurfaceNodeManager::unpackGlobalMaps(): packList specified, "
-                        "but a new globalIndex is unpacked" );
+                       "EmbeddedSurfaceNodeManager::unpackGlobalMaps(): packList specified, "
+                       "but a new globalIndex is unpacked" );
       }
     }
 

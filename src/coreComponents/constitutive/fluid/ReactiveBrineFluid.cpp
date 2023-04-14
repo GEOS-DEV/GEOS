@@ -115,11 +115,11 @@ void ReactiveBrineFluid< PHASE > ::postProcessInput()
   ReactiveMultiFluid::postProcessInput();
 
   GEOS_THROW_IF_NE_MSG( numFluidPhases(), 1,
-                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
-                         InputError );
+                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
+                        InputError );
   GEOS_THROW_IF_NE_MSG( m_phasePVTParaFiles.size(), 1,
-                         GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName() ),
-                         InputError );
+                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName() ),
+                        InputError );
 
   createPVTModels();
 }
@@ -145,8 +145,8 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
       if( !strs.empty() )
       {
         GEOS_THROW_IF( strs.size() < 2,
-                        GEOS_FMT( "{}: missing PVT model in line '{}'", getFullName(), str ),
-                        InputError );
+                       GEOS_FMT( "{}: missing PVT model in line '{}'", getFullName(), str ),
+                       InputError );
 
         if( strs[0] == "DensityFun" )
         {
@@ -180,16 +180,16 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
 
   // at this point, we have read the file and we check the consistency of non-thermal models
   GEOS_THROW_IF( phase1InputParams[PHASE::InputParamOrder::DENSITY].empty(),
-                  GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Density::catalogName() ),
-                  InputError );
+                 GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Density::catalogName() ),
+                 InputError );
   GEOS_THROW_IF( phase1InputParams[PHASE::InputParamOrder::VISCOSITY].empty(),
-                  GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Viscosity::catalogName() ),
-                  InputError );
+                 GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Viscosity::catalogName() ),
+                 InputError );
   // we also detect any inconsistency arising in the enthalpy models
   GEOS_THROW_IF( phase1InputParams[PHASE::InputParamOrder::ENTHALPY].empty() &&
-                  ( PHASE::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() ),
-                  GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Enthalpy::catalogName() ),
-                  InputError );
+                 ( PHASE::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() ),
+                 GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Enthalpy::catalogName() ),
+                 InputError );
 
   // then, we are ready to instantiate the phase models
   m_phase = std::make_unique< PHASE >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight );

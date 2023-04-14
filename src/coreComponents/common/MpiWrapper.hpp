@@ -855,7 +855,7 @@ int MpiWrapper::iRecv( T * const buf,
 {
 #ifdef GEOSX_USE_MPI
   GEOS_ERROR_IF( (*request)!=MPI_REQUEST_NULL,
-                  "Attempting to use an MPI_Request that is still in use." );
+                 "Attempting to use an MPI_Request that is still in use." );
   return MPI_Irecv( buf, count, internal::getMpiType< T >(), source, tag, comm, request );
 #else
   std::map< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
@@ -868,7 +868,7 @@ int MpiWrapper::iRecv( T * const buf,
   else
   {
     GEOS_ERROR_IF( iPointer->second.first != 0,
-                    "Tag does is assigned, but pointer was not set by iSend." );
+                   "Tag does is assigned, but pointer was not set by iSend." );
     memcpy( buf, iPointer->second.second, count*sizeof(T) );
     pointerMap.erase( iPointer );
   }
@@ -914,7 +914,7 @@ int MpiWrapper::iSend( arrayView1d< T const > const & buf,
 {
 #ifdef GEOSX_USE_MPI
   GEOS_ERROR_IF( (*request)!=MPI_REQUEST_NULL,
-                  "Attempting to use an MPI_Request that is still in use." );
+                 "Attempting to use an MPI_Request that is still in use." );
   return MPI_Isend( reinterpret_cast< char const * >( buf.data() ),
                     buf.size() * sizeof( T ),
                     MPI_CHAR,
@@ -938,7 +938,7 @@ int MpiWrapper::iSend( T const * const buf,
 {
 #ifdef GEOSX_USE_MPI
   GEOS_ERROR_IF( (*request)!=MPI_REQUEST_NULL,
-                  "Attempting to use an MPI_Request that is still in use." );
+                 "Attempting to use an MPI_Request that is still in use." );
   return MPI_Isend( buf, count, internal::getMpiType< T >(), dest, tag, comm, request );
 #else
   std::map< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
@@ -952,7 +952,7 @@ int MpiWrapper::iSend( T const * const buf,
   else
   {
     GEOS_ERROR_IF( iPointer->second.first != 1,
-                    "Tag does is assigned, but pointer was not set by iRecv." );
+                   "Tag does is assigned, but pointer was not set by iRecv." );
     memcpy( iPointer->second.second, buf, count*sizeof(T) );
     pointerMap.erase( iPointer );
   }

@@ -63,8 +63,8 @@ void BrooksCoreyCapillaryPressure::postProcessInput()
   auto const checkInputSize = [&]( auto const & array, auto const & attribute )
   {
     GEOS_THROW_IF_NE_MSG( array.size(), m_phaseNames.size(),
-                           GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
-                           InputError );
+                          GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
+                          InputError );
   };
   checkInputSize( m_phaseMinVolumeFraction, viewKeyStruct::phaseMinVolumeFractionString() );
   checkInputSize( m_phaseCapPressureExponentInv, viewKeyStruct::phaseCapPressureExponentInvString() );
@@ -79,33 +79,33 @@ void BrooksCoreyCapillaryPressure::postProcessInput()
     };
 
     GEOS_THROW_IF_LT_MSG( m_phaseMinVolumeFraction[ip], 0.0,
-                           errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
-                           InputError );
+                          errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
+                          InputError );
     GEOS_THROW_IF_GT_MSG( m_phaseMinVolumeFraction[ip], 1.0,
-                           errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
-                           InputError );
+                          errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
+                          InputError );
     m_volFracScale -= m_phaseMinVolumeFraction[ip];
 
     if( m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE )
     {
       GEOS_THROW_IF_LT_MSG( m_phaseCapPressureExponentInv[ip], 1.0,
-                             errorMsg( viewKeyStruct::phaseCapPressureExponentInvString() ),
-                             InputError );
+                            errorMsg( viewKeyStruct::phaseCapPressureExponentInvString() ),
+                            InputError );
       GEOS_THROW_IF_LT_MSG( m_phaseEntryPressure[ip], 0.0,
-                             errorMsg( viewKeyStruct::phaseEntryPressureString() ),
-                             InputError );
+                            errorMsg( viewKeyStruct::phaseEntryPressureString() ),
+                            InputError );
       GEOS_THROW_IF_LT_MSG( m_capPressureEpsilon, 0.0,
-                             errorMsg( viewKeyStruct::capPressureEpsilonString() ),
-                             InputError );
+                            errorMsg( viewKeyStruct::capPressureEpsilonString() ),
+                            InputError );
       GEOS_THROW_IF_GT_MSG( m_capPressureEpsilon, 0.2,
-                             errorMsg( viewKeyStruct::capPressureEpsilonString() ),
-                             InputError );
+                            errorMsg( viewKeyStruct::capPressureEpsilonString() ),
+                            InputError );
     }
   }
 
   GEOS_THROW_IF_LT_MSG( m_volFracScale, 0.0,
-                         GEOS_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName() ),
-                         InputError );
+                        GEOS_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName() ),
+                        InputError );
 }
 
 BrooksCoreyCapillaryPressure::KernelWrapper

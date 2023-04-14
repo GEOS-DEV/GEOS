@@ -72,10 +72,10 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
   // 1. Allocate constitutive relation
   // we only register the constitutive relation if it has not been registered yet.
   GEOS_ERROR_IF( constitutiveGroup->hasGroup( constitutiveRelationInstanceName ),
-                  GEOS_FMT( "Error! The constitutive relation {} has already been registered on the subRegion {}. "
-                             "Make sure that the same constitutive model is not listed as a material on a"
-                             " region both as a stand-alone one and as part of a compound constitutive model.",
-                             constitutiveRelationInstanceName, parent->getName() ) );
+                 GEOS_FMT( "Error! The constitutive relation {} has already been registered on the subRegion {}. "
+                           "Make sure that the same constitutive model is not listed as a material on a"
+                           " region both as a stand-alone one and as part of a compound constitutive model.",
+                           constitutiveRelationInstanceName, parent->getName() ) );
 
   ConstitutiveBase const & constitutiveRelation = getConstitutiveRelation( constitutiveRelationInstanceName );
 
@@ -95,10 +95,10 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
   {
     // we only want to register the subRelation if it has not been registered yet.
     GEOS_ERROR_IF( constitutiveGroup->hasGroup( subRelationName ),
-                    GEOS_FMT( "Error! The constitutive relation {} has already been registered on the subRegion {}. "
-                               "Make sure that the same constitutive model is not listed as a material on a"
-                               " region both as a stand-alone one and as part of a compound constitutive model.",
-                               subRelationName, parent->getName() ) );
+                   GEOS_FMT( "Error! The constitutive relation {} has already been registered on the subRegion {}. "
+                             "Make sure that the same constitutive model is not listed as a material on a"
+                             " region both as a stand-alone one and as part of a compound constitutive model.",
+                             subRelationName, parent->getName() ) );
 
     ConstitutiveBase const & subRelation = getConstitutiveRelation( subRelationName );
 

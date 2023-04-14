@@ -199,9 +199,9 @@ VAL findOption( mapBase< KEY, VAL, SORTED > const & map,
 {
   auto const iter = map.find( option );
   GEOS_THROW_IF( iter == map.end(),
-                  GEOS_FMT( "{}: unsupported option '{}' for {}.\nSupported options are: {}",
-                             contextName, option, optionName, stringutilities::join( mapKeys( map ), ", " ) ),
-                  InputError );
+                 GEOS_FMT( "{}: unsupported option '{}' for {}.\nSupported options are: {}",
+                           contextName, option, optionName, stringutilities::join( mapKeys( map ), ", " ) ),
+                 InputError );
   return iter->second;
 }
 

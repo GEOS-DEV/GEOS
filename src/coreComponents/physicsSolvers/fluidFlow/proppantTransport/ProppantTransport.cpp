@@ -142,15 +142,15 @@ void ProppantTransport::setConstitutiveNames( ElementSubRegionBase & subRegion )
   string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   fluidName = getConstitutiveName< SlurryFluidBase >( subRegion );
   GEOS_THROW_IF( fluidName.empty(),
-                  GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
-                  InputError );
+                 GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                 InputError );
 
   subRegion.registerWrapper< string >( viewKeyStruct::proppantNamesString() );
   string & proppantName = subRegion.getReference< string >( viewKeyStruct::proppantNamesString() );
   proppantName = getConstitutiveName< ParticleFluidBase >( subRegion );
   GEOS_THROW_IF( proppantName.empty(),
-                  GEOS_FMT( "Proppant model not found on subregion {}", subRegion.getName() ),
-                  InputError );
+                 GEOS_FMT( "Proppant model not found on subregion {}", subRegion.getName() ),
+                 InputError );
 
 }
 
@@ -765,8 +765,8 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
           {
             bcConsistent &= bcStatusEntryInner.second[ic];
             GEOS_WARNING_IF( !bcConsistent, "Composition boundary condition not applied to component " << ic
-                                                                                                        << " on region '" << bcStatusEntryOuter.first << "',"
-                                                                                                        << " set '" << bcStatusEntryInner.first << "'" );
+                                                                                                       << " on region '" << bcStatusEntryOuter.first << "',"
+                                                                                                       << " set '" << bcStatusEntryInner.first << "'" );
           }
         }
       }

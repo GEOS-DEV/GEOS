@@ -59,19 +59,19 @@ partition( ArrayOfArraysView< int64_t const, int64_t > const & graph,
   SCOTCH_Num * const edges = const_cast< SCOTCH_Num * >( graph.getValues() );
 
   GEOS_SCOTCH_CHECK( SCOTCH_dgraphBuild( gr,          // graphptr
-                                          0,           // baseval
-                                          numVerts,    // vertlocnbr
-                                          numVerts,    // vertlocmax
-                                          offsets,     // vertloctab
-                                          offsets + 1, // vendloctab
-                                          nullptr,     // veloloctab
-                                          nullptr,     // vlblloctab
-                                          numEdges,    // edgelocnbr
-                                          numEdges,    // edgelocsiz
-                                          edges,       // edgeloctab
-                                          nullptr,     // edgegsttab
-                                          nullptr      // edloloctab,
-                                          ) );
+                                         0,            // baseval
+                                         numVerts,     // vertlocnbr
+                                         numVerts,     // vertlocmax
+                                         offsets,      // vertloctab
+                                         offsets + 1,  // vendloctab
+                                         nullptr,      // veloloctab
+                                         nullptr,      // vlblloctab
+                                         numEdges,     // edgelocnbr
+                                         numEdges,     // edgelocsiz
+                                         edges,        // edgeloctab
+                                         nullptr,      // edgegsttab
+                                         nullptr       // edloloctab,
+                                         ) );
 
   // TODO: maybe remove?
   GEOS_SCOTCH_CHECK( SCOTCH_dgraphCheck( gr ) );

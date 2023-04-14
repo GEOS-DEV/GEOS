@@ -85,14 +85,14 @@ void CompositionalMultiphaseHybridFVM::initializePreSubGroups()
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
   GEOS_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
-                  catalogName() << " " << getName() <<
-                  ": the HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM",
-                  InputError );
+                 catalogName() << " " << getName() <<
+                 ": the HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM",
+                 InputError );
 
   GEOS_THROW_IF( m_hasCapPressure,
-                  catalogName() << " " << getName() <<
-                  ": capillary pressure is not yet supported by CompositionalMultiphaseHybridFVM",
-                  InputError );
+                 catalogName() << " " << getName() <<
+                 ": capillary pressure is not yet supported by CompositionalMultiphaseHybridFVM",
+                 InputError );
 }
 
 void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGroups()
@@ -142,16 +142,16 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
     } );
 
     GEOS_THROW_IF( minVal.get() <= 0.0,
-                    catalogName() << " " << getName()
-                                  << ": the transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
-                    std::runtime_error );
+                   catalogName() << " " << getName()
+                                 << ": the transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
+                   std::runtime_error );
 
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
       GEOS_LOG_RANK_0( catalogName() << " " << getName() <<
-                        "An aquifer boundary condition named " << bc.getName() << " was requested in the XML file. \n"
-                                                                                  "This type of boundary condition is not yet supported by CompositionalMultiphaseHybridFVM and will be ignored" );
+                       "An aquifer boundary condition named " << bc.getName() << " was requested in the XML file. \n"
+                                                                                 "This type of boundary condition is not yet supported by CompositionalMultiphaseHybridFVM and will be ignored" );
     } );
   } );
 

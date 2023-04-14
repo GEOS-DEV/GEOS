@@ -134,10 +134,10 @@ public:
                             MeshData< SUBREGION_TYPE > & meshData )
   {
     GEOS_UNUSED_VAR( nodeManager,
-                      edgeManager,
-                      faceManager,
-                      cellSubRegion,
-                      meshData );
+                     edgeManager,
+                     faceManager,
+                     cellSubRegion,
+                     meshData );
   }
 
   /**
@@ -180,8 +180,8 @@ public:
                           StackVariables & stack )
   {
     GEOS_UNUSED_VAR( cellIndex,
-                      meshData,
-                      stack );
+                     meshData,
+                     stack );
 
   }
 
@@ -353,8 +353,8 @@ public:
                                         real64 const & scaleFactor )
   {
     GEOS_UNUSED_VAR( stack,
-                      matrix,
-                      scaleFactor );
+                     matrix,
+                     scaleFactor );
   }
 
 
@@ -713,14 +713,14 @@ public:
   void setGradNView( arrayView4d< real64 const > const & source )
   {
     GEOS_ERROR_IF_NE_MSG( source.size( 1 ),
-                           getNumQuadraturePoints(),
-                           "2nd-dimension of gradN array does not match number of quadrature points" );
+                          getNumQuadraturePoints(),
+                          "2nd-dimension of gradN array does not match number of quadrature points" );
     GEOS_ERROR_IF_NE_MSG( source.size( 2 ),
-                           getMaxSupportPoints(),
-                           "3rd-dimension of gradN array does not match number of support points" );
+                          getMaxSupportPoints(),
+                          "3rd-dimension of gradN array does not match number of support points" );
     GEOS_ERROR_IF_NE_MSG( source.size( 3 ),
-                           3,
-                           "4th-dimension of gradN array does not match 3" );
+                          3,
+                          "4th-dimension of gradN array does not match 3" );
 
     m_viewGradN = source;
   }
@@ -732,8 +732,8 @@ public:
   void setDetJView( arrayView2d< real64 const > const & source )
   {
     GEOS_ERROR_IF_NE_MSG( source.size( 1 ),
-                           getNumQuadraturePoints(),
-                           "2nd-dimension of gradN array does not match number of quadrature points" );
+                          getNumQuadraturePoints(),
+                          "2nd-dimension of gradN array does not match number of quadrature points" );
     m_viewDetJ = source;
   }
 

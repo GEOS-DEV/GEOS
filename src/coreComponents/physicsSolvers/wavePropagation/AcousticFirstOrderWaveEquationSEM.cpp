@@ -197,8 +197,8 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
                                                                                         CellElementSubRegion & elementSubRegion )
   {
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
-                    "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
-                    InputError );
+                   "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
+                   InputError );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();

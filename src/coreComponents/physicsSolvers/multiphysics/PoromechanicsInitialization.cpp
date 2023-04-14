@@ -90,9 +90,9 @@ postProcessInput()
   PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
 
   GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_poromechanicsSolverName ),
-                  GEOS_FMT( "Task {}: physics solver named {} not found",
-                             getName(), m_poromechanicsSolverName ),
-                  InputError );
+                 GEOS_FMT( "Task {}: physics solver named {} not found",
+                           getName(), m_poromechanicsSolverName ),
+                 InputError );
 
   m_poromechanicsSolver = &physicsSolverManager.getGroup< POROMECHANICS_SOLVER >( m_poromechanicsSolverName );
 }
@@ -110,13 +110,13 @@ execute( real64 const time_n,
   if( m_performStressInitialization )
   {
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Task `{}`: at time {}s, physics solver `{}` is set to perform stress initialization during the next time step(s)",
-                                          getName(), time_n, m_poromechanicsSolverName ) );
+                                        getName(), time_n, m_poromechanicsSolverName ) );
     m_poromechanicsSolver->setStressInitialization( true );
   }
   else
   {
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Task `{}`: at time {}s, physics solver `{}` has completed stress initialization",
-                                          getName(), time_n, m_poromechanicsSolverName ) );
+                                        getName(), time_n, m_poromechanicsSolverName ) );
     m_poromechanicsSolver->setStressInitialization( false );
   }
 

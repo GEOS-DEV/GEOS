@@ -153,9 +153,9 @@ void PhillipsBrineViscosityUpdate::compute( real64 const & pressure,
                                             bool useMass ) const
 {
   GEOS_UNUSED_VAR( pressure,
-                    phaseComposition,
-                    dPhaseComposition,
-                    useMass );
+                   phaseComposition,
+                   dPhaseComposition,
+                   useMass );
 
   using Deriv = multifluid::DerivativeOffset;
 

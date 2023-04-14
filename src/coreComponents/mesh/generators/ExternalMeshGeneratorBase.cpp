@@ -65,8 +65,8 @@ void ExternalMeshGeneratorBase::postProcessInput()
                                                   string const & toKey )
   {
     GEOS_THROW_IF_NE_MSG( from.size(), to.size(),
-                           "Mesh '" << meshName << "': attributes '" << fromKey << "' and '" << toKey << "' must contain the same number of values.",
-                           InputError );
+                          "Mesh '" << meshName << "': attributes '" << fromKey << "' and '" << toKey << "' must contain the same number of values.",
+                          InputError );
   };
   checkSizes( m_volumicFieldsToImport, m_volumicFieldsInGEOSX, viewKeyStruct::volumicFieldsToImportString(), viewKeyStruct::volumicFieldsInGEOSXString() );
   checkSizes( m_surfacicFieldsToImport, m_surfacicFieldsInGEOSX, viewKeyStruct::surfacicFieldsToImportString(), viewKeyStruct::surfacicFieldsInGEOSXString() );
@@ -77,8 +77,8 @@ void ExternalMeshGeneratorBase::postProcessInput()
     bool const hasDuplicates = tmp.size() != LvArray::integerConversion< std::size_t >( v.size() );
 
     GEOS_THROW_IF( hasDuplicates,
-                    "Mesh '" << meshName << "': '" << stringutilities::join( v, ", " ) << "' already present in list of fields to import.",
-                    InputError );
+                   "Mesh '" << meshName << "': '" << stringutilities::join( v, ", " ) << "' already present in list of fields to import.",
+                   InputError );
   };
   checkDuplicates( m_volumicFieldsInGEOSX );
   checkDuplicates( m_surfacicFieldsInGEOSX );

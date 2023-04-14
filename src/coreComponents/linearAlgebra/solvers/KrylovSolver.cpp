@@ -92,8 +92,8 @@ void KrylovSolver< VECTOR >::logResult() const
   if( m_params.logLevel >= 1 )
   {
     GEOS_LOG_RANK_0( GEOS_FMT( "[{}] {} in {} iterations ({:.3f} s)", methodName(),
-                                 m_result.success() ? "converged" : "failed to converge",
-                                 m_result.numIterations, m_result.solveTime ) );
+                               m_result.success() ? "converged" : "failed to converge",
+                               m_result.numIterations, m_result.solveTime ) );
   }
 }
 

@@ -59,8 +59,8 @@ void EzrokhiBrineDensity::makeCoefficients( string_array const & inputPara )
 
   m_waterCompressibility = 4.5e-10; // Pa-1
   GEOS_THROW_IF_LT_MSG( inputPara.size(), 5,
-                         GEOS_FMT( "{}: insufficient number of model parameters", m_functionName ),
-                         InputError );
+                        GEOS_FMT( "{}: insufficient number of model parameters", m_functionName ),
+                        InputError );
 
   try
   {

@@ -74,7 +74,7 @@ MultiphasePoromechanics( NodeManager const & nodeManager,
   m_numPhases( numPhases )
 {
   GEOS_ERROR_IF_GT_MSG( m_numComponents, maxNumComponents,
-                         "MultiphasePoromechanics solver allows at most " << maxNumComponents << " components at the moment" );
+                        "MultiphasePoromechanics solver allows at most " << maxNumComponents << " components at the moment" );
 
   // extract fluid constitutive data views
   {

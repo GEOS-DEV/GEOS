@@ -47,8 +47,8 @@ PhillipsBrineViscosity::PhillipsBrineViscosity( string const & name,
 void PhillipsBrineViscosity::makeCoefficients( string_array const & inputPara )
 {
   GEOS_THROW_IF_LT_MSG( inputPara.size(), 3,
-                         GEOS_FMT( "{}: insufficient number of model parameters", m_functionName ),
-                         InputError );
+                        GEOS_FMT( "{}: insufficient number of model parameters", m_functionName ),
+                        InputError );
 
   real64 m;
   try

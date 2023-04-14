@@ -276,8 +276,8 @@ bool dispatch( TypeList< Ts... > const types,
   if( !success && errorIfTypeNotFound )
   {
     GEOS_ERROR( "Type " << LvArray::system::demangle( type.name() ) << " was not dispatched.\n" <<
-                 "Check the stack trace below and revise the type list passed to dispatch().\n" <<
-                 "If you are unsure about this error, please report it to GEOSX issue tracker." );
+                "Check the stack trace below and revise the type list passed to dispatch().\n" <<
+                "If you are unsure about this error, please report it to GEOSX issue tracker." );
   }
   return success;
 }

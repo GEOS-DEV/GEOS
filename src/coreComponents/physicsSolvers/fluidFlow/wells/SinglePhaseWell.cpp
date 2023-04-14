@@ -130,19 +130,19 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
   real64 const targetTotalRate = wellControls.getTargetTotalRate( time_n + dt );
   real64 const targetPhaseRate = wellControls.getTargetPhaseRate( time_n + dt );
   GEOS_THROW_IF( currentControl == WellControls::Control::PHASEVOLRATE,
-                  "WellControls named " << wellControls.getName() <<
-                  ": Phase rate control is not available for SinglePhaseWell",
-                  InputError );
+                 "WellControls named " << wellControls.getName() <<
+                 ": Phase rate control is not available for SinglePhaseWell",
+                 InputError );
   // The user always provides positive rates, but these rates are later multiplied by -1 internally for producers
   GEOS_THROW_IF( ( ( wellControls.isInjector() && targetTotalRate < 0.0 ) ||
-                    ( wellControls.isProducer() && targetTotalRate > 0.0) ),
-                  "WellControls named " << wellControls.getName() <<
-                  ": Target total rate cannot be negative",
-                  InputError );
+                   ( wellControls.isProducer() && targetTotalRate > 0.0) ),
+                 "WellControls named " << wellControls.getName() <<
+                 ": Target total rate cannot be negative",
+                 InputError );
   GEOS_THROW_IF( !isZero( targetPhaseRate ),
-                  "WellControls named " << wellControls.getName() <<
-                  ": Target phase rate cannot be used for SinglePhaseWell",
-                  InputError );
+                 "WellControls named " << wellControls.getName() <<
+                 ": Target phase rate cannot be used for SinglePhaseWell",
+                 InputError );
 }
 
 void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
@@ -200,7 +200,7 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
   if( logLevel >= 2 )
   {
     GEOS_LOG_RANK( GEOS_FMT( "{}: The BHP (at the specified reference elevation) is {} Pa",
-                               wellControlsName, currentBHP ) );
+                             wellControlsName, currentBHP ) );
   }
 
 }
@@ -276,7 +276,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
         if( logLevel >= 2 )
         {
           GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa",
-                                     wellControlsName, surfacePres ) );
+                                   wellControlsName, surfacePres ) );
         }
       }
       else
@@ -293,9 +293,9 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
       if( logLevel >= 2 && useSurfaceConditions )
       {
         GEOS_LOG_RANK( GEOS_FMT( "{}: The total fluid density at surface conditions is {} kg/sm3. \n"
-                                   "The total rate is {} kg/s, which corresponds to a total surface volumetric rate of {} sm3/s",
-                                   wellControlsName, dens[iwelemRef][0],
-                                   currentVolRate, currentVolRate ) );
+                                 "The total rate is {} kg/s, which corresponds to a total surface volumetric rate of {} sm3/s",
+                                 wellControlsName, dens[iwelemRef][0],
+                                 currentVolRate, currentVolRate ) );
       }
     } );
   } );
@@ -532,13 +532,13 @@ void SinglePhaseWell::assemblePressureRelations( real64 const & time_n,
         {
           wellControls.switchToTotalRateControl( wellControls.getTargetTotalRate( timeAtEndOfStep ) );
           GEOS_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
-                                                         << " from BHP constraint to rate constraint" );
+                                                        << " from BHP constraint to rate constraint" );
         }
         else
         {
           wellControls.switchToBHPControl( wellControls.getTargetBHP( timeAtEndOfStep ) );
           GEOS_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
-                                                         << " from rate constraint to BHP constraint" );
+                                                        << " from rate constraint to BHP constraint" );
         }
       }
 
@@ -1049,9 +1049,9 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
 
         real64 const currentTotalRate = connRate[iwelemRef];
         GEOS_LOG( GEOS_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
-                              wellControlsName, currentBHP ) );
+                            wellControlsName, currentBHP ) );
         GEOS_LOG( GEOS_FMT( "{}: Total rate: {} kg/s; total {} volumetric rate: {} {}m3/s",
-                              wellControlsName, currentTotalRate, conditionKey, currentTotalVolRate, unitKey ) );
+                            wellControlsName, currentTotalRate, conditionKey, currentTotalVolRate, unitKey ) );
       } );
     } );
   } );

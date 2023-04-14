@@ -156,7 +156,7 @@ public:
   virtual Matrix const & preconditionerMatrix() const
   {
     GEOS_ERROR( "PreconditionerBase::preconditionerMatrix called. This is not supposed to happen."
-                 "Check the value of hasPreconditionerMatrix() before accessing this function." );
+                "Check the value of hasPreconditionerMatrix() before accessing this function." );
     // This is here just to be able to compile ...
     return *m_mat;
   }

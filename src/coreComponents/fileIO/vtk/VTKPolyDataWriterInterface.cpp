@@ -315,7 +315,7 @@ getSurface( FaceElementSubRegion const & subRegion,
       default:
       {
         GEOS_ERROR( GEOS_FMT( "Elements with {} nodes can't be output in the subregion {}",
-                                subRegion.numNodesPerElement(), subRegion.getName() ) );
+                              subRegion.numNodesPerElement(), subRegion.getName() ) );
         return VTK_POLYGON;
       }
     }
@@ -583,9 +583,9 @@ template< typename T, int NDIM, typename PERM >
 void checkLabels( Wrapper< Array< T, NDIM, PERM > > const & wrapper, int const dim )
 {
   GEOS_ERROR_IF_NE_MSG( LvArray::integerConversion< localIndex >( wrapper.getDimLabels( dim ).size() ),
-                         wrapper.reference().size( dim ),
-                         "VTK writer: component names are set, but don't match the array size.\n"
-                         "This is likely a bug in physics module (solver or constitutive model)." );
+                        wrapper.reference().size( dim ),
+                        "VTK writer: component names are set, but don't match the array size.\n"
+                        "This is likely a bug in physics module (solver or constitutive model)." );
 }
 
 /**
@@ -746,9 +746,9 @@ writeElementField( Group const & subRegions,
     {
       // Sanity check
       GEOS_ERROR_IF_NE_MSG( wrapper.numArrayDims(), numDims,
-                             "VTK writer: sanity check failed for " << field << " (inconsistent array dimensions)" );
+                            "VTK writer: sanity check failed for " << field << " (inconsistent array dimensions)" );
       GEOS_ERROR_IF_NE_MSG( wrapper.numArrayComp(), data->GetNumberOfComponents(),
-                             "VTK writer: sanity check failed for " << field << " (inconsistent array sizes)" );
+                            "VTK writer: sanity check failed for " << field << " (inconsistent array sizes)" );
     }
   } );
 

@@ -64,8 +64,8 @@ void ReactiveMultiFluid::postProcessInput()
   MultiFluidBase::postProcessInput();
 
   GEOS_THROW_IF_NE_MSG( numFluidPhases(), 1,
-                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
-                         InputError );
+                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
+                        InputError );
 
   createChemicalReactions();
 }

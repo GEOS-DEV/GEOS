@@ -68,7 +68,7 @@ public:
     if( !s.empty() )
     {
       GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': JIT compiler produced the following output:\n{}",
-                                   SymbolicFunction::catalogName(), m_name, s ) );
+                                 SymbolicFunction::catalogName(), m_name, s ) );
     }
   }
 

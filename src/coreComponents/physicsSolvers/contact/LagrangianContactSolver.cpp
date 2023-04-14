@@ -704,9 +704,9 @@ real64 LagrangianContactSolver::calculateResidualNorm( real64 const & GEOS_UNUSE
     globalResidualNorm[2] /= (m_initialResidual[2]+1.0);
   }
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( Rdisplacement, Rtraction, Rtotal ) = ( {:15.6e}, {:15.6e}, {:15.6e} );",
-                                        globalResidualNorm[0],
-                                        globalResidualNorm[1],
-                                        globalResidualNorm[2] ) );
+                                      globalResidualNorm[0],
+                                      globalResidualNorm[1],
+                                      globalResidualNorm[2] ) );
   return globalResidualNorm[2];
 }
 

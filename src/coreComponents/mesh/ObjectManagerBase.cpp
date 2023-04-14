@@ -417,7 +417,7 @@ localIndex ObjectManagerBase::unpackParentChildMaps( buffer_unit_type const * & 
     string shouldBeParentIndexString;
     unpackedSize += bufferOps::Unpack( buffer, shouldBeParentIndexString );
     GEOS_ERROR_IF( shouldBeParentIndexString != fields::parentIndex::key(),
-                    "value read from buffer is:" << shouldBeParentIndexString << ". It should be " << fields::parentIndex::key() );
+                   "value read from buffer is:" << shouldBeParentIndexString << ". It should be " << fields::parentIndex::key() );
     unpackedSize += bufferOps::Unpack( buffer,
                                        parentIndex,
                                        packList,
@@ -431,7 +431,7 @@ localIndex ObjectManagerBase::unpackParentChildMaps( buffer_unit_type const * & 
     string shouldBeChildIndexString;
     unpackedSize += bufferOps::Unpack( buffer, shouldBeChildIndexString );
     GEOS_ERROR_IF( shouldBeChildIndexString != fields::childIndex::key(),
-                    "value read from buffer is:" << shouldBeChildIndexString << ". It should be " << fields::childIndex::key() );
+                   "value read from buffer is:" << shouldBeChildIndexString << ". It should be " << fields::childIndex::key() );
     unpackedSize += bufferOps::Unpack( buffer,
                                        childIndex,
                                        packList,
@@ -633,8 +633,8 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
         ++numNewIndices;
 
         GEOS_ERROR_IF( packList.size() != 0,
-                        "ObjectManagerBase::unpack(): packList specified, "
-                        "but a new globalIndex is unpacked" );
+                       "ObjectManagerBase::unpack(): packList specified, "
+                       "but a new globalIndex is unpacked" );
       }
       else
       {

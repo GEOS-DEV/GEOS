@@ -45,7 +45,7 @@ FunctionManager::~FunctionManager()
 FunctionManager & FunctionManager::getInstance()
 {
   GEOS_ERROR_IF( m_instance == nullptr,
-                  "FunctionManager has not been constructed, or is already been destructed." );
+                 "FunctionManager has not been constructed, or is already been destructed." );
   return *m_instance;
 }
 

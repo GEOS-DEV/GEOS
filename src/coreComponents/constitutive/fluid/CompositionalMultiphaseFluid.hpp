@@ -200,7 +200,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
   m_fluid.Update( pressure, temperature, compMoleFrac );
 
   GEOS_WARNING_IF( !m_fluid.hasSucceeded(),
-                    "Phase equilibrium calculations not converged" );
+                   "Phase equilibrium calculations not converged" );
 
   pvt::MultiphaseSystemProperties const & props = m_fluid.getMultiphaseSystemProperties();
 
@@ -305,7 +305,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
   m_fluid.Update( pressure, temperature, compMoleFrac );
 
   GEOS_WARNING_IF( !m_fluid.hasSucceeded(),
-                    "Phase equilibrium calculations not converged" );
+                   "Phase equilibrium calculations not converged" );
 
   pvt::MultiphaseSystemProperties const & props = m_fluid.getMultiphaseSystemProperties();
 

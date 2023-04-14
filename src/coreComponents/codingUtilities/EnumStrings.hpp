@@ -136,8 +136,8 @@ struct EnumStrings
     std::size_t size = std::distance( std::begin( strings ), std::end( strings ) );
     base_type const index = static_cast< base_type >( e );
     GEOS_THROW_IF( index >= LvArray::integerConversion< base_type >( size ),
-                    "Invalid value " << index << " of type " << TypeName< ENUM >::brief() << ". Valid range is 0.." << size - 1,
-                    InputError );
+                   "Invalid value " << index << " of type " << TypeName< ENUM >::brief() << ". Valid range is 0.." << size - 1,
+                   InputError );
     return strings[ index ];
   }
 
@@ -151,8 +151,8 @@ struct EnumStrings
     auto const & strings = get();
     auto const it = std::find( std::begin( strings ), std::end( strings ), s );
     GEOS_THROW_IF( it == std::end( strings ),
-                    "Invalid value '" << s << "' of type " << TypeName< enum_type >::brief() << ". Valid options are: " << concat( ", " ),
-                    InputError );
+                   "Invalid value '" << s << "' of type " << TypeName< enum_type >::brief() << ". Valid options are: " << concat( ", " ),
+                   InputError );
     enum_type const e = static_cast< enum_type >( LvArray::integerConversion< base_type >( std::distance( std::begin( strings ), it ) ) );
     return e;
   }

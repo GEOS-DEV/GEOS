@@ -616,9 +616,9 @@ redistributeMesh( vtkDataSet & loadedMesh,
     vtkIdTypeArray const * const globalCellId = vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() );
     vtkIdTypeArray const * const globalPointId = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
     GEOS_ERROR_IF( globalCellId->GetNumberOfComponents() != 1 && globalCellId->GetNumberOfTuples() != mesh->GetNumberOfCells(),
-                    "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
+                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
     GEOS_ERROR_IF( globalPointId->GetNumberOfComponents() != 1 && globalPointId->GetNumberOfTuples() != mesh->GetNumberOfPoints(),
-                    "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
+                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
 
     GEOS_LOG_RANK_0( "Using global Ids defined in VTK mesh" );
   }
@@ -879,7 +879,7 @@ splitCellsByTypeAndAttribute( std::map< ElementType, std::vector< vtkIdType > > 
     else
     {
       GEOS_ERROR_IF_NE_MSG( attributeDataArray->GetNumberOfComponents(), 1,
-                             "Invalid number of components in attribute array" );
+                            "Invalid number of components in attribute array" );
       vtkArrayDispatch::Dispatch::Execute( attributeDataArray, [&]( auto const * attributeArray )
       {
         using ArrayType = TYPEOFPTR( attributeArray );
@@ -1561,7 +1561,7 @@ void importMaterialField( std::vector< vtkIdType > const & cellIds,
     localIndex const numComponentsSrc = LvArray::integerConversion< localIndex >( vtkArray->GetNumberOfComponents() );
     localIndex const numComponentsDst = wrapperT.numArrayComp() / view.size( 1 );
     GEOS_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
-                           "Mismatch in number of components for field " << vtkArray->GetName() );
+                          "Mismatch in number of components for field " << vtkArray->GetName() );
 
     vtkArrayDispatch::DispatchByValueType< vtkArrayDispatch::Reals >::Execute( vtkArray, [&]( auto const * srcArray )
     {
@@ -1597,7 +1597,7 @@ void importRegularField( std::vector< vtkIdType > const & cellIds,
     localIndex const numComponentsSrc = LvArray::integerConversion< localIndex >( vtkArray->GetNumberOfComponents() );
     localIndex const numComponentsDst = wrapperT.numArrayComp();
     GEOS_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
-                           "Mismatch in number of components for field " << vtkArray->GetName() );
+                          "Mismatch in number of components for field " << vtkArray->GetName() );
 
     vtkArrayDispatch::DispatchByValueType< vtkArrayDispatch::Reals >::Execute( vtkArray, [&]( auto const * srcArray )
     {
@@ -1672,9 +1672,9 @@ void printMeshStatistics( vtkDataSet & mesh,
 
     int const widthLocal = static_cast< int >( std::log10( maxLocalElems ) + 1 );
     GEOS_LOG( GEOS_FMT( "Load balancing: {1:>{0}} {2:>{0}} {3:>{0}}\n"
-                          "(element/rank): {4:>{0}} {5:>{0}} {6:>{0}}",
-                          widthLocal, "min", "avg", "max",
-                          minLocalElems, avgLocalElems, maxLocalElems ) );
+                        "(element/rank): {4:>{0}} {5:>{0}} {6:>{0}}",
+                        widthLocal, "min", "avg", "max",
+                        minLocalElems, avgLocalElems, maxLocalElems ) );
   }
 }
 
@@ -1689,13 +1689,13 @@ findArraysForImport( vtkDataSet & mesh,
   {
     vtkAbstractArray * const curArray = cellData.GetAbstractArray( sourceName.c_str() );
     GEOS_THROW_IF( curArray == nullptr,
-                    GEOS_FMT( "Source field '{}' not found in dataset", sourceName ),
-                    InputError );
+                   GEOS_FMT( "Source field '{}' not found in dataset", sourceName ),
+                   InputError );
 
     int const dataType = curArray->GetDataType();
     GEOS_ERROR_IF( dataType != VTK_FLOAT && dataType != VTK_DOUBLE,
-                    GEOS_FMT( "Source field '{}' has unsupported type: {} (expected floating point type)",
-                               sourceName, curArray->GetDataTypeAsString() ) );
+                   GEOS_FMT( "Source field '{}' has unsupported type: {} (expected floating point type)",
+                             sourceName, curArray->GetDataTypeAsString() ) );
     arrays.push_back( vtkDataArray::SafeDownCast( curArray ) );
   }
 
@@ -1710,13 +1710,13 @@ findArrayForImport( vtkDataSet & mesh,
 
   vtkAbstractArray * const curArray = cellData.GetAbstractArray( sourceName.c_str() );
   GEOS_THROW_IF( curArray == nullptr,
-                  GEOS_FMT( "Source field '{}' not found in dataset", sourceName ),
-                  InputError );
+                 GEOS_FMT( "Source field '{}' not found in dataset", sourceName ),
+                 InputError );
 
   int const dataType = curArray->GetDataType();
   GEOS_ERROR_IF( dataType != VTK_FLOAT && dataType != VTK_DOUBLE,
-                  GEOS_FMT( "Source field '{}' has unsupported type: {} (expected floating point type)",
-                             sourceName, curArray->GetDataTypeAsString() ) );
+                 GEOS_FMT( "Source field '{}' has unsupported type: {} (expected floating point type)",
+                           sourceName, curArray->GetDataTypeAsString() ) );
   return vtkDataArray::SafeDownCast( curArray );
 }
 
@@ -1764,8 +1764,8 @@ void importNodesets( integer const logLevel,
 
     vtkAbstractArray * const curArray = mesh.GetPointData()->GetAbstractArray( nodesetNames[i].c_str() );
     GEOS_THROW_IF( curArray == nullptr,
-                    GEOS_FMT( "Target nodeset '{}' not found in mesh", nodesetNames[i] ),
-                    InputError );
+                   GEOS_FMT( "Target nodeset '{}' not found in mesh", nodesetNames[i] ),
+                   InputError );
     vtkTypeInt64Array const & nodesetMask = *vtkTypeInt64Array::FastDownCast( curArray );
 
     SortedArray< localIndex > & targetNodeset = nodeSets[ nodesetNames[i] ];
@@ -1809,10 +1809,10 @@ real64 writeNodes( integer const logLevel,
     // TODO: remove this check once the input mesh is cleaned of duplicate points via a filter
     //       and make launch policy parallel again
     GEOS_ERROR_IF( nodeGlobalIds.count( pointGlobalID ) > 0,
-                    GEOS_FMT( "Duplicate point detected: globalID = {}\n"
-                               "Consider cleaning the dataset in Paraview using 'Clean to grid' filter.\n"
-                               "Make sure partitionRefinement is set to 1 or higher (this may help).",
-                               pointGlobalID ) );
+                   GEOS_FMT( "Duplicate point detected: globalID = {}\n"
+                             "Consider cleaning the dataset in Paraview using 'Clean to grid' filter.\n"
+                             "Make sure partitionRefinement is set to 1 or higher (this may help).",
+                             pointGlobalID ) );
     nodeGlobalIds.insert( pointGlobalID );
   } );
 

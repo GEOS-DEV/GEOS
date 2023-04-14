@@ -93,8 +93,8 @@ localIndex AcousticWaveEquationSEM::getNumNodesPerElem()
   FiniteElementDiscretization const * const
   feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
   GEOS_THROW_IF( feDiscretization == nullptr,
-                  getName() << ": FE discretization not found: " << m_discretizationName,
-                  InputError );
+                 getName() << ": FE discretization not found: " << m_discretizationName,
+                 InputError );
 
   localIndex numNodesPerElem = 0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
@@ -197,12 +197,12 @@ void AcousticWaveEquationSEM::postProcessInput()
 
   WaveSolverBase::postProcessInput();
   GEOS_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
-                  "Invalid number of physical coordinates for the sources",
-                  InputError );
+                 "Invalid number of physical coordinates for the sources",
+                 InputError );
 
   GEOS_THROW_IF( m_receiverCoordinates.size( 1 ) != 3,
-                  "Invalid number of physical coordinates for the receivers",
-                  InputError );
+                 "Invalid number of physical coordinates for the receivers",
+                 InputError );
 
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
@@ -286,8 +286,8 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
                                                                                         CellElementSubRegion & elementSubRegion )
   {
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
-                    "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
-                    InputError );
+                   "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
+                   InputError );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
@@ -738,14 +738,14 @@ void AcousticWaveEquationSEM::initializePML()
     indicatorPML.zero();
 
     GEOS_LOG_LEVEL_RANK_0( 1,
-                            "PML parameters are: \n"
-                            << "\t inner boundaries xMin = "<<param.xMinPML<<"\n"
-                            << "\t inner boundaries xMax = "<<param.xMaxPML<<"\n"
-                            << "\t left, front, top max PML thicknesses  = "<<param.thicknessMinXYZPML<<"\n"
-                            << "\t right, back, bottom max PML thicknesses  = "<<param.thicknessMaxXYZPML<<"\n"
-                            << "\t left, front, top average wave speed  = "<<param.waveSpeedMinXYZPML<<"\n"
-                            << "\t right, back, bottom average wave speed  = "<<param.waveSpeedMaxXYZPML<<"\n"
-                            << "\t theoretical reflectivity = "<< param.reflectivityPML );
+                           "PML parameters are: \n"
+                           << "\t inner boundaries xMin = "<<param.xMinPML<<"\n"
+                           << "\t inner boundaries xMax = "<<param.xMaxPML<<"\n"
+                           << "\t left, front, top max PML thicknesses  = "<<param.thicknessMinXYZPML<<"\n"
+                           << "\t right, back, bottom max PML thicknesses  = "<<param.thicknessMaxXYZPML<<"\n"
+                           << "\t left, front, top average wave speed  = "<<param.waveSpeedMinXYZPML<<"\n"
+                           << "\t right, back, bottom average wave speed  = "<<param.waveSpeedMaxXYZPML<<"\n"
+                           << "\t theoretical reflectivity = "<< param.reflectivityPML );
 
   } );
 }
@@ -919,13 +919,13 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
         std::ofstream wf( fileName, std::ios::out | std::ios::binary );
         GEOS_THROW_IF( !wf,
-                        "Could not open file "<< fileName << " for writting",
-                        InputError );
+                       "Could not open file "<< fileName << " for writting",
+                       InputError );
         wf.write( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
         wf.close( );
         GEOS_THROW_IF( !wf.good(),
-                        "An error occured while writting "<< fileName,
-                        InputError );
+                       "An error occured while writting "<< fileName,
+                       InputError );
       }
 
     }
@@ -979,8 +979,8 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         std::string fileName = GEOS_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
         std::ifstream wf( fileName, std::ios::in | std::ios::binary );
         GEOS_THROW_IF( !wf,
-                        "Could not open file "<< fileName << " for reading",
-                        InputError );
+                       "Could not open file "<< fileName << " for reading",
+                       InputError );
         //std::string fileName = GEOS_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
         //const int fileDesc = open( fileName.c_str(), O_RDONLY | O_DIRECT );
         //GEOS_ERROR_IF( fileDesc == -1,

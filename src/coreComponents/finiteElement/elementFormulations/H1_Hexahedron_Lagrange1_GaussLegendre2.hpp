@@ -575,9 +575,9 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
                           real64 ( & J )[3][3] )
 {
   supportLoop( qa, qb, qc, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                                  int const nodeIndex,
-                                                  real64 const (&X)[numNodes][3],
-                                                  real64 (& J)[3][3] )
+                                                 int const nodeIndex,
+                                                 real64 const (&X)[numNodes][3],
+                                                 real64 (& J)[3][3] )
   {
     real64 const * const GEOS_RESTRICT Xnode = X[nodeIndex];
     for( int i = 0; i < 3; ++i )
@@ -614,9 +614,9 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
                                         real64 (& gradN)[numNodes][3] )
 {
   supportLoop( qa, qb, qc, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                                  int const nodeIndex,
-                                                  real64 const (&invJ)[3][3],
-                                                  real64 (& gradN)[numNodes][3] )
+                                                 int const nodeIndex,
+                                                 real64 const (&invJ)[3][3],
+                                                 real64 (& gradN)[numNodes][3] )
   {
 //    for( int i = 0; i < 3; ++i )
 //    {
@@ -666,10 +666,10 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::symmetricGradient( int const q,
   LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
 
   supportLoop( qa, qb, qc, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                                  int const nodeIndex,
-                                                  real64 const (&invJ)[3][3],
-                                                  real64 const (&var)[numNodes][3],
-                                                  real64 (& grad)[6] )
+                                                 int const nodeIndex,
+                                                 real64 const (&invJ)[3][3],
+                                                 real64 const (&var)[numNodes][3],
+                                                 real64 (& grad)[6] )
   {
 
     real64 gradN[3] = {0, 0, 0};
@@ -736,10 +736,10 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const q,
   LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
 
   supportLoop( qa, qb, qc, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                                  int const nodeIndex,
-                                                  real64 const (&invJ)[3][3],
-                                                  real64 const (&var)[numNodes][3],
-                                                  real64 (& grad)[3][3] )
+                                                 int const nodeIndex,
+                                                 real64 const (&invJ)[3][3],
+                                                 real64 const (&var)[numNodes][3],
+                                                 real64 (& grad)[3][3] )
   {
     for( int i = 0; i < 3; ++i )
     {

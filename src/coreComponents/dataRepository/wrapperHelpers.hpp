@@ -461,13 +461,13 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
   for( int i = 0; i < NDIM; ++i )
   {
     GEOS_ERROR_IF_NE_MSG( permFromConduit[ i ], perm[ i ],
-                           "The permutation of the data in conduit and the provided Array don't match." );
+                          "The permutation of the data in conduit and the provided Array don't match." );
   }
 
   if( hasImplicitDimension )
   {
     GEOS_ERROR_IF_NE_MSG( permFromConduit[ NDIM ], NDIM,
-                           "The permutation of the data in conduit and the provided Array don't match." );
+                          "The permutation of the data in conduit and the provided Array don't match." );
   }
 
   // Now pull out the dimensions and resize the array.
@@ -569,7 +569,7 @@ void addBlueprintField( T const &,
                         std::vector< string > const & )
 {
   GEOS_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
-               "\nWas trying to write it to " << fields.path() );
+              "\nWas trying to write it to " << fields.path() );
 }
 
 template< typename T, int NDIM, int USD >
@@ -615,7 +615,7 @@ void populateMCArray( T const &,
                       std::vector< string > const & )
 {
   GEOS_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
-               "\nWas trying to write it to " << node.path() );
+              "\nWas trying to write it to " << node.path() );
 }
 
 template< typename T >

@@ -971,9 +971,9 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   cellBlockManager.buildMaps();
 
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: total number of nodes = {}", getName(),
-                               ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) ) );
+                             ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) ) );
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: total number of elems = {}", getName(),
-                               m_numElemsTotal[0] * m_numElemsTotal[1] * m_numElemsTotal[2] ) );
+                             m_numElemsTotal[0] * m_numElemsTotal[1] * m_numElemsTotal[2] ) );
 }
 
 void

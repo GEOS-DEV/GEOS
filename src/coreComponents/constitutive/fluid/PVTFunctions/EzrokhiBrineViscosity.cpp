@@ -56,8 +56,8 @@ void EzrokhiBrineViscosity::makeCoefficients( string_array const & inputPara )
   // compute brine viscosity following Ezrokhi`s method (referenced in Eclipse TD, Aqueous phase properties)
   // Reference : Zaytsev, I.D. and Aseyev, G.G. Properties of Aqueous Solutions of Electrolytes, Boca Raton, Florida, USA CRC Press (1993).
   GEOS_THROW_IF_LT_MSG( inputPara.size(), 5,
-                         GEOS_FMT( "{}: insufficient number of model parameters", m_functionName ),
-                         InputError );
+                        GEOS_FMT( "{}: insufficient number of model parameters", m_functionName ),
+                        InputError );
 
   try
   {

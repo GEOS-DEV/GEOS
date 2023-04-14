@@ -268,9 +268,9 @@ static void addUmpireHighWaterMarks()
     std::size_t const totalMark = MpiWrapper::sum( mark );
     std::size_t const maxMark = MpiWrapper::max( mark );
     GEOS_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " sum across ranks: " <<
-                      std::setw( 9 ) << LvArray::system::calculateSize( totalMark ) );
+                     std::setw( 9 ) << LvArray::system::calculateSize( totalMark ) );
     GEOS_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << "         rank max: " <<
-                      std::setw( 9 ) << LvArray::system::calculateSize( maxMark ) );
+                     std::setw( 9 ) << LvArray::system::calculateSize( maxMark ) );
 
     pushStatsIntoAdiak( allocatorName + " sum across ranks", mark );
     pushStatsIntoAdiak( allocatorName + " rank max", mark );

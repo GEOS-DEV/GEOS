@@ -122,7 +122,7 @@ void SolverStatistics::outputStatistics() const
   auto const logStat = [&]( auto const name, auto const value )
   {
     GEOS_LOG_RANK_0( GEOS_FMT( "{}, number of {}: {}",
-                                 getParent().getName(), name, value ) );
+                               getParent().getName(), name, value ) );
   };
 
   // TODO: the print logic is really convoluted to accomodate the needs of the different solvers, needs simplification

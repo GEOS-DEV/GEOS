@@ -62,11 +62,11 @@ void MultiPhaseConstantThermalConductivity::allocateConstitutiveData( dataReposi
 void MultiPhaseConstantThermalConductivity::postProcessInput()
 {
   GEOS_THROW_IF( m_thermalConductivityComponents[0] <= 0 ||
-                  m_thermalConductivityComponents[1] <= 0 ||
-                  m_thermalConductivityComponents[2] <= 0,
-                  GEOS_FMT( "{}: the components of the thermal conductivity tensor must be strictly positive",
-                             getFullName() ),
-                  InputError );
+                 m_thermalConductivityComponents[1] <= 0 ||
+                 m_thermalConductivityComponents[2] <= 0,
+                 GEOS_FMT( "{}: the components of the thermal conductivity tensor must be strictly positive",
+                           getFullName() ),
+                 InputError );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, MultiPhaseConstantThermalConductivity, string const &, Group * const )

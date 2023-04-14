@@ -307,7 +307,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
       std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ",
-                              coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] );
+                             coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] );
     }
   }
   else
@@ -623,7 +623,7 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
       {
         bcConsistent = false;
         GEOS_WARNING( GEOS_FMT( "Temperature boundary condition not prescribed on set {}. \n"
-                                  "Note that for face boundary conditions, you must provide a temperature", setName ) );
+                                "Note that for face boundary conditions, you must provide a temperature", setName ) );
       }
       if( comp < 0 || comp >= m_numComponents )
       {
@@ -822,8 +822,8 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
         GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
-                                     getName(), time+dt, AquiferBoundaryCondition::catalogName(),
-                                     bc.getName(), setName, faceManager.getName(), bc.getScale(), numTargetFaces ) );
+                                   getName(), time+dt, AquiferBoundaryCondition::catalogName(),
+                                   bc.getName(), setName, faceManager.getName(), bc.getScale(), numTargetFaces ) );
       }
 
       if( stencil.size() == 0 )

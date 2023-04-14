@@ -391,12 +391,12 @@ void PetscMatrix::add( globalIndex const rowIndex,
   GEOS_LAI_ASSERT( modifiable() );
   PetscInt rows[1] = {rowIndex};
   GEOS_LAI_CHECK_ERROR( MatSetValues( m_mat,
-                                       1,
-                                       rows,
-                                       colIndices.size(),
-                                       petsc::toPetscInt( colIndices ),
-                                       values,
-                                       ADD_VALUES ) );
+                                      1,
+                                      rows,
+                                      colIndices.size(),
+                                      petsc::toPetscInt( colIndices ),
+                                      values,
+                                      ADD_VALUES ) );
 }
 
 void PetscMatrix::set( globalIndex const rowIndex,
@@ -406,12 +406,12 @@ void PetscMatrix::set( globalIndex const rowIndex,
   GEOS_LAI_ASSERT( modifiable() );
   PetscInt rows[1] = {rowIndex};
   GEOS_LAI_CHECK_ERROR( MatSetValues( m_mat,
-                                       1,
-                                       rows,
-                                       colIndices.size(),
-                                       petsc::toPetscInt( colIndices ),
-                                       values,
-                                       INSERT_VALUES ) );
+                                      1,
+                                      rows,
+                                      colIndices.size(),
+                                      petsc::toPetscInt( colIndices ),
+                                      values,
+                                      INSERT_VALUES ) );
 }
 
 void PetscMatrix::insert( globalIndex const rowIndex,
@@ -421,12 +421,12 @@ void PetscMatrix::insert( globalIndex const rowIndex,
   GEOS_LAI_ASSERT( insertable() );
   PetscInt rows[1] = {rowIndex};
   GEOS_LAI_CHECK_ERROR( MatSetValues( m_mat,
-                                       1,
-                                       rows,
-                                       colIndices.size(),
-                                       petsc::toPetscInt( colIndices ),
-                                       values,
-                                       ADD_VALUES ) );
+                                      1,
+                                      rows,
+                                      colIndices.size(),
+                                      petsc::toPetscInt( colIndices ),
+                                      values,
+                                      ADD_VALUES ) );
 }
 
 void PetscMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
@@ -435,12 +435,12 @@ void PetscMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
 {
   GEOS_LAI_ASSERT( modifiable() );
   GEOS_LAI_CHECK_ERROR( MatSetValues( m_mat,
-                                       rowIndices.size(),
-                                       petsc::toPetscInt( rowIndices ),
-                                       colIndices.size(),
-                                       petsc::toPetscInt( colIndices ),
-                                       values.dataIfContiguous(),
-                                       ADD_VALUES ) );
+                                      rowIndices.size(),
+                                      petsc::toPetscInt( rowIndices ),
+                                      colIndices.size(),
+                                      petsc::toPetscInt( colIndices ),
+                                      values.dataIfContiguous(),
+                                      ADD_VALUES ) );
 }
 
 void PetscMatrix::set( arraySlice1d< globalIndex const > const & rowIndices,
@@ -449,12 +449,12 @@ void PetscMatrix::set( arraySlice1d< globalIndex const > const & rowIndices,
 {
   GEOS_LAI_ASSERT( modifiable() );
   GEOS_LAI_CHECK_ERROR( MatSetValues( m_mat,
-                                       rowIndices.size(),
-                                       petsc::toPetscInt( rowIndices ),
-                                       colIndices.size(),
-                                       petsc::toPetscInt( colIndices ),
-                                       values.dataIfContiguous(),
-                                       INSERT_VALUES ) );
+                                      rowIndices.size(),
+                                      petsc::toPetscInt( rowIndices ),
+                                      colIndices.size(),
+                                      petsc::toPetscInt( colIndices ),
+                                      values.dataIfContiguous(),
+                                      INSERT_VALUES ) );
 }
 
 void PetscMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
@@ -463,12 +463,12 @@ void PetscMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
 {
   GEOS_LAI_ASSERT( insertable() );
   GEOS_LAI_CHECK_ERROR( MatSetValues( m_mat,
-                                       rowIndices.size(),
-                                       petsc::toPetscInt( rowIndices ),
-                                       colIndices.size(),
-                                       petsc::toPetscInt( colIndices ),
-                                       values.dataIfContiguous(),
-                                       ADD_VALUES ) );
+                                      rowIndices.size(),
+                                      petsc::toPetscInt( rowIndices ),
+                                      colIndices.size(),
+                                      petsc::toPetscInt( colIndices ),
+                                      values.dataIfContiguous(),
+                                      ADD_VALUES ) );
 }
 
 void PetscMatrix::add( globalIndex const * rowIndices,
@@ -479,12 +479,12 @@ void PetscMatrix::add( globalIndex const * rowIndices,
 {
   GEOS_LAI_ASSERT( modifiable() );
   GEOS_LAI_CHECK_ERROR( MatSetValues( m_mat,
-                                       numRows,
-                                       petsc::toPetscInt( rowIndices ),
-                                       numCols,
-                                       petsc::toPetscInt( colIndices ),
-                                       values,
-                                       ADD_VALUES ) );
+                                      numRows,
+                                      petsc::toPetscInt( rowIndices ),
+                                      numCols,
+                                      petsc::toPetscInt( colIndices ),
+                                      values,
+                                      ADD_VALUES ) );
 }
 
 void PetscMatrix::set( globalIndex const * rowIndices,
@@ -495,12 +495,12 @@ void PetscMatrix::set( globalIndex const * rowIndices,
 {
   GEOS_LAI_ASSERT( modifiable() );
   GEOS_LAI_CHECK_ERROR( MatSetValues( m_mat,
-                                       numRows,
-                                       petsc::toPetscInt( rowIndices ),
-                                       numCols,
-                                       petsc::toPetscInt( colIndices ),
-                                       values,
-                                       INSERT_VALUES ) );
+                                      numRows,
+                                      petsc::toPetscInt( rowIndices ),
+                                      numCols,
+                                      petsc::toPetscInt( colIndices ),
+                                      values,
+                                      INSERT_VALUES ) );
 }
 
 void PetscMatrix::insert( globalIndex const * rowIndices,
@@ -511,12 +511,12 @@ void PetscMatrix::insert( globalIndex const * rowIndices,
 {
   GEOS_LAI_ASSERT( insertable() );
   GEOS_LAI_CHECK_ERROR( MatSetValues( m_mat,
-                                       numRows,
-                                       petsc::toPetscInt( rowIndices ),
-                                       numCols,
-                                       petsc::toPetscInt( colIndices ),
-                                       values,
-                                       ADD_VALUES ) );
+                                      numRows,
+                                      petsc::toPetscInt( rowIndices ),
+                                      numCols,
+                                      petsc::toPetscInt( colIndices ),
+                                      values,
+                                      ADD_VALUES ) );
 }
 
 void PetscMatrix::insert( arrayView1d< globalIndex const > const & rowIndices,

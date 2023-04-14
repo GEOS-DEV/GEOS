@@ -704,9 +704,9 @@ jacobianTransformation( int const qa,
                         real64 ( & J )[3][3] )
 {
   supportLoop( qa, qb, qc, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                                  int const nodeIndex,
-                                                  real64 const (&X)[numNodes][3],
-                                                  real64 (& J)[3][3] )
+                                                 int const nodeIndex,
+                                                 real64 const (&X)[numNodes][3],
+                                                 real64 (& J)[3][3] )
   {
     real64 const * const GEOS_RESTRICT Xnode = X[nodeIndex];
     for( int i = 0; i < 3; ++i )
@@ -739,9 +739,9 @@ jacobianTransformation( real64 const (&coords)[3],
                         real64 ( & J )[3][3] )
 {
   supportLoop( coords, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                              int const nodeIndex,
-                                              real64 const (&X)[numNodes][3],
-                                              real64 (& J)[3][3] )
+                                             int const nodeIndex,
+                                             real64 const (&X)[numNodes][3],
+                                             real64 (& J)[3][3] )
   {
     real64 const * const GEOS_RESTRICT Xnode = X[nodeIndex];
     for( int i = 0; i < 3; ++i )
@@ -765,9 +765,9 @@ jacobianTransformation2d( int const qa,
                           real64 ( & J )[3][2] )
 {
   supportLoop2d( qa, qb, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[2],
-                                                int const nodeIndex,
-                                                real64 const (&X)[numNodesPerFace][3],
-                                                real64 ( & J)[3][2] )
+                                               int const nodeIndex,
+                                               real64 const (&X)[numNodesPerFace][3],
+                                               real64 ( & J)[3][2] )
   {
     real64 const * const GEOS_RESTRICT Xnode = X[nodeIndex];
     for( int i = 0; i < 3; ++i )
@@ -1194,9 +1194,9 @@ applyTransformationToParentGradients( int const qa,
                                       real64 (& gradN)[numNodes][3] )
 {
   supportLoop( qa, qb, qc, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                                  int const nodeIndex,
-                                                  real64 const (&invJ)[3][3],
-                                                  real64 (& gradN)[numNodes][3] )
+                                                 int const nodeIndex,
+                                                 real64 const (&invJ)[3][3],
+                                                 real64 (& gradN)[numNodes][3] )
   {
 //    for( int i = 0; i < 3; ++i )
 //    {
@@ -1226,9 +1226,9 @@ applyTransformationToParentGradients( real64 const (&coords)[3],
                                       real64 (& gradN)[numNodes][3] )
 {
   supportLoop( coords, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                              int const nodeIndex,
-                                              real64 const (&invJ)[3][3],
-                                              real64 (& gradN)[numNodes][3] )
+                                             int const nodeIndex,
+                                             real64 const (&invJ)[3][3],
+                                             real64 (& gradN)[numNodes][3] )
   {
     gradN[nodeIndex][0] = dNdXi[0] * invJ[0][0] + dNdXi[1] * invJ[1][0] + dNdXi[2] * invJ[2][0];
     gradN[nodeIndex][1] = dNdXi[0] * invJ[0][1] + dNdXi[1] * invJ[1][1] + dNdXi[2] * invJ[2][1];
@@ -1269,10 +1269,10 @@ symmetricGradient( int const q,
   GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
 
   supportLoop( qa, qb, qc, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                                  int const nodeIndex,
-                                                  real64 const (&invJ)[3][3],
-                                                  real64 const (&var)[numNodes][3],
-                                                  real64 (& grad)[6] )
+                                                 int const nodeIndex,
+                                                 real64 const (&invJ)[3][3],
+                                                 real64 const (&var)[numNodes][3],
+                                                 real64 (& grad)[6] )
   {
 
     real64 gradN[3] = {0, 0, 0};
@@ -1343,10 +1343,10 @@ gradient( int const q,
   GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
 
   supportLoop( qa, qb, qc, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                                  int const nodeIndex,
-                                                  real64 const (&invJ)[3][3],
-                                                  real64 const (&var)[numNodes][3],
-                                                  real64 (& grad)[3][3] )
+                                                 int const nodeIndex,
+                                                 real64 const (&invJ)[3][3],
+                                                 real64 const (&var)[numNodes][3],
+                                                 real64 (& grad)[3][3] )
   {
     for( int i = 0; i < 3; ++i )
     {

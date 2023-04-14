@@ -157,10 +157,10 @@ void TrilinosSolver::solve( EpetraVector const & rhs,
   if( m_params.logLevel >= 1 )
   {
     GEOS_LOG_RANK_0( "\t\tLinear Solver | " << m_result.status <<
-                      " | Iterations: " << m_result.numIterations <<
-                      " | Final Rel Res: " << m_result.residualReduction <<
-                      " | Setup Time: " << m_result.setupTime << " s" <<
-                      " | Solve Time: " << m_result.solveTime << " s" );
+                     " | Iterations: " << m_result.numIterations <<
+                     " | Final Rel Res: " << m_result.residualReduction <<
+                     " | Setup Time: " << m_result.setupTime << " s" <<
+                     " | Solve Time: " << m_result.solveTime << " s" );
   }
 }
 

@@ -329,7 +329,7 @@ void RotationMatrix_3D( NORMAL_TYPE const & normal,
   rotationMatrix[ 2 ][ 2 ] = m2[ 2 ];
 
   GEOS_ERROR_IF( fabs( LvArray::tensorOps::determinant< 3 >( rotationMatrix ) - 1.0 ) > 1.e+1 * machinePrecision,
-                  "Rotation matrix with determinant different from +1.0" );
+                 "Rotation matrix with determinant different from +1.0" );
 }
 
 /**

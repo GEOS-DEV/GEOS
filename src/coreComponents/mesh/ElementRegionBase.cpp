@@ -65,8 +65,8 @@ string ElementRegionBase::verifyMeshBodyName( Group const & meshBodies,
       meshBodyName = onlyMeshBodyName;
     }
     GEOS_ERROR_IF_NE_MSG( onlyMeshBodyName,
-                           meshBodyName,
-                           "MeshBody specified does not match MeshBody in hierarchy." );
+                          meshBodyName,
+                          "MeshBody specified does not match MeshBody in hierarchy." );
   }
   else
   {
@@ -79,8 +79,8 @@ string ElementRegionBase::verifyMeshBodyName( Group const & meshBodies,
       }
     } );
     GEOS_ERROR_IF( !meshBodyFound,
-                    "There are multiple MeshBodies in this problem, but the "
-                    "specified MeshBody name "<<meshBodyName<<" was not found" );
+                   "There are multiple MeshBodies in this problem, but the "
+                   "specified MeshBody name "<<meshBodyName<<" was not found" );
   }
 
   return meshBodyName;

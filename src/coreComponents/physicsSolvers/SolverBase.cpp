@@ -115,7 +115,7 @@ void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies 
     if( targetTokens.size()==1 ) // no MeshBody or MeshLevel specified
     {
       GEOS_ERROR_IF( meshBodies.numSubGroups() != 1,
-                      "No MeshBody information is specified in SolverBase::meshTargets, but there are multiple MeshBody objects" );
+                     "No MeshBody information is specified in SolverBase::meshTargets, but there are multiple MeshBody objects" );
       MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( 0 );
       string const meshBodyName = meshBody.getName();
 
@@ -129,7 +129,7 @@ void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies 
     {
       string const meshBodyName = targetTokens[0];
       GEOS_ERROR_IF( !meshBodies.hasGroup( meshBodyName ),
-                      "MeshBody ("<<meshBodyName<<") is specified in targetRegions, but does not exist." );
+                     "MeshBody ("<<meshBodyName<<") is specified in targetRegions, but does not exist." );
 
       string const meshLevelName = m_discretizationName;
 
@@ -292,12 +292,12 @@ real64 SolverBase::setNextDt( real64 const & currentDt,
     if( nextDtNewton > currentDt )
     {
       GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Newton solver converged in less than {} iterations, time-step required will be increased.",
-                                            getName(), iterIncreaseLimit ) );
+                                          getName(), iterIncreaseLimit ) );
     }
     else if( nextDtNewton < currentDt )
     {
       GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Newton solver converged in more than {} iterations, time-step required will be decreased.",
-                                            getName(), iterDecreaseLimit ) );
+                                          getName(), iterDecreaseLimit ) );
     }
   }
   else // time step size decided based on state change
@@ -305,12 +305,12 @@ real64 SolverBase::setNextDt( real64 const & currentDt,
     if( nextDtStateChange > currentDt )
     {
       GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Time-step required will be increased based on state change.",
-                                            getName() ) );
+                                          getName() ) );
     }
     else if( nextDtStateChange < currentDt )
     {
       GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Time-step required will be decreased based on state change.",
-                                            getName() ) );
+                                          getName() ) );
     }
   }
 
@@ -832,8 +832,8 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     if( newtonIter > 0 )
     {
       GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    Last LinSolve(iter,res) = ( {:3}, {:4.2e} ) ; ",
-                                            m_linearSolverResult.numIterations,
-                                            m_linearSolverResult.residualReduction ) );
+                                          m_linearSolverResult.numIterations,
+                                          m_linearSolverResult.residualReduction ) );
     }
 
     // if the residual norm is less than the Newton tolerance we denote that we have
@@ -850,8 +850,8 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     {
       string const maxAllowedResidualNormString = NonlinearSolverParameters::viewKeysStruct::maxAllowedResidualNormString();
       GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    The residual norm is above the {} of {}. Newton loop terminated.",
-                                            maxAllowedResidualNormString,
-                                            m_nonlinearSolverParameters.m_maxAllowedResidualNorm ) );
+                                          maxAllowedResidualNormString,
+                                          m_nonlinearSolverParameters.m_maxAllowedResidualNorm ) );
       isNewtonConverged = false;
       break;
     }

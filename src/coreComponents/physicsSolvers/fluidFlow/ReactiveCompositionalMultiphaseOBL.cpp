@@ -189,11 +189,11 @@ void ReactiveCompositionalMultiphaseOBL::postProcessInput()
   SolverBase::postProcessInput();
 
   GEOS_THROW_IF_GT_MSG( m_maxCompFracChange, 1.0,
-                         GEOS_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be greater than 1.0", m_maxCompFracChange ),
-                         InputError );
+                        GEOS_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be greater than 1.0", m_maxCompFracChange ),
+                        InputError );
   GEOS_THROW_IF_LT_MSG( m_maxCompFracChange, 0.0,
-                         GEOS_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be lesser than 0.0", m_maxCompFracChange ),
-                         InputError );
+                        GEOS_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be lesser than 0.0", m_maxCompFracChange ),
+                        InputError );
 
   m_OBLOperatorsTable = makeOBLOperatorsTable( m_OBLOperatorsTableFile, FunctionManager::getInstance());
 
@@ -204,12 +204,12 @@ void ReactiveCompositionalMultiphaseOBL::postProcessInput()
   m_numOBLOperators = COMPUTE_NUM_OPS( m_numPhases, m_numComponents, m_enableEnergyBalance );
 
   GEOS_THROW_IF_NE_MSG( m_numDofPerCell, m_OBLOperatorsTable->numDims(),
-                         GEOS_FMT( "The number of degrees of freedom per element used in solver - {} - and in operator table - {} - should match", m_numDofPerCell, m_OBLOperatorsTable->numDims()),
-                         InputError );
+                        GEOS_FMT( "The number of degrees of freedom per element used in solver - {} - and in operator table - {} - should match", m_numDofPerCell, m_OBLOperatorsTable->numDims()),
+                        InputError );
 
   GEOS_THROW_IF_NE_MSG( m_numOBLOperators, m_OBLOperatorsTable->numOps(),
-                         GEOS_FMT( "The number of operators per element used in solver - {} - and in operator table - {} - should match", m_numOBLOperators, m_OBLOperatorsTable->numOps()),
-                         InputError );
+                        GEOS_FMT( "The number of operators per element used in solver - {} - and in operator table - {} - should match", m_numOBLOperators, m_OBLOperatorsTable->numOps()),
+                        InputError );
 
 }
 
@@ -827,8 +827,8 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-                                     getName(), time+dt, SourceFluxBoundaryCondition::catalogName(),
-                                     fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+                                   getName(), time+dt, SourceFluxBoundaryCondition::catalogName(),
+                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
 
       if( targetSet.size() == 0 )
@@ -1019,7 +1019,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
             {
               bcConsistent = false;
               GEOS_WARNING( GEOS_FMT( "Boundary condition not applied to composition[{}] on set {}/{}/{}",
-                                        ic, regionEntry.first, subRegionEntry.first, setEntry.first ) );
+                                      ic, regionEntry.first, subRegionEntry.first, setEntry.first ) );
             }
           }
         }
@@ -1066,8 +1066,8 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-                                     getName(), time+dt, FieldSpecificationBase::catalogName(),
-                                     fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+                                   getName(), time+dt, FieldSpecificationBase::catalogName(),
+                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
 
       fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
@@ -1106,8 +1106,8 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-                                     getName(), time+dt, FieldSpecificationBase::catalogName(),
-                                     fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+                                   getName(), time+dt, FieldSpecificationBase::catalogName(),
+                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
 
       fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,

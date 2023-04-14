@@ -325,9 +325,9 @@ void HypreVector::print( std::ostream & os ) const
       forAll< serialPolicy >( localSize(), [&, data]( localIndex const i )
       {
         GEOS_FMT_TO( str, sizeof( str ), lineFormat,
-                      rank,
-                      firstRowID + i,
-                      data[i] );
+                     rank,
+                     firstRowID + i,
+                     data[i] );
         os << str;
       } );
     }

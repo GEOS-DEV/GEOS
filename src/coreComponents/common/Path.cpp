@@ -48,10 +48,10 @@ std::string getAbsolutePath( std::string const & path )
 
   char const * const cwd = getcwd( buf, PATH_MAX ) ? buf : "";
   GEOS_THROW( GEOS_FMT( "Could not resolve absolute path for: {}.\n"
-                          "The following error occurred: {}.\n"
-                          "Current working directory is: {}.\n",
-                          path, reason, cwd ),
-               InputError );
+                        "The following error occurred: {}.\n"
+                        "Current working directory is: {}.\n",
+                        path, reason, cwd ),
+              InputError );
 }
 
 std::istream & operator>>( std::istream & is, Path & p )

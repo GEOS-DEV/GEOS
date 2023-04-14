@@ -1686,14 +1686,14 @@ PresTempCompFracInitializationKernel::
 
 
   GEOS_THROW_IF( foundNegativePres.get() == 1,
-                  "Invalid well initialization: negative pressure was found, please check " << wellControls.getName(),
-                  InputError );
+                 "Invalid well initialization: negative pressure was found, please check " << wellControls.getName(),
+                 InputError );
   GEOS_THROW_IF( foundNegativeTemp.get() == 1,
-                  "Invalid well initialization: negative temperature was found, please check " << wellControls.getName(),
-                  InputError );
+                 "Invalid well initialization: negative temperature was found, please check " << wellControls.getName(),
+                 InputError );
   GEOS_THROW_IF( foundInconsistentCompFrac.get() == 1,
-                  "Invalid well initialization: inconsistent component fractions were found, please check " << wellControls.getName(),
-                  InputError );
+                 "Invalid well initialization: inconsistent component fractions were found, please check " << wellControls.getName(),
+                 InputError );
 
 
 }

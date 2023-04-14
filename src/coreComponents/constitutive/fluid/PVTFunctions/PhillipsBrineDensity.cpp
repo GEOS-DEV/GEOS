@@ -80,8 +80,8 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
 
   // initialize salinity
   GEOS_THROW_IF_LT_MSG( inputParams.size(), 9,
-                         GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
-                         InputError );
+                        GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
+                        InputError );
   real64 salinity;
   try
   {

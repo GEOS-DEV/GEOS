@@ -36,7 +36,7 @@ BlackOilTables::readTable( string const & fileName,
 {
   std::ifstream is( fileName );
   GEOS_ERROR_IF( !is.is_open(),
-                  "BlackOilTables: could not open file: " << fileName );
+                 "BlackOilTables: could not open file: " << fileName );
 
   // Read line-by-line until eof
   string str;
@@ -68,8 +68,8 @@ BlackOilTables::readTable( string const & fileName,
   for( localIndex i = 0; i < data.size(); ++i )
   {
     GEOS_ERROR_IF( data[i].size() < minRowLength,
-                    "BlackOilTables: too few entries in row " << i << " of table " << fileName
-                                                              << ", minimum " << std::to_string( minRowLength ) << " required" );
+                   "BlackOilTables: too few entries in row " << i << " of table " << fileName
+                                                             << ", minimum " << std::to_string( minRowLength ) << " required" );
   }
 }
 

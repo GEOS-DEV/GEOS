@@ -210,8 +210,8 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
 
   // initialize salinity and tolerance
   GEOS_THROW_IF_LT_MSG( inputParams.size(), 9,
-                         GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
-                         InputError );
+                        GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
+                        InputError );
 
   real64 tolerance = 1e-9;
   real64 salinity = 0.0;
@@ -258,11 +258,11 @@ CO2Solubility::CO2Solubility( string const & name,
                   componentMolarWeight )
 {
   GEOS_THROW_IF_NE_MSG( phaseNames.size(), 2,
-                         "The CO2Solubility model is a two-phase model",
-                         InputError );
+                        "The CO2Solubility model is a two-phase model",
+                        InputError );
   GEOS_THROW_IF_NE_MSG( componentNames.size(), 2,
-                         "The CO2Solubility model is a two-component model",
-                         InputError );
+                        "The CO2Solubility model is a two-component model",
+                        InputError );
 
   string const expectedCO2ComponentNames[] = { "CO2", "co2" };
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, "componentNames" );
