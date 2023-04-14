@@ -1067,6 +1067,7 @@
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="CompressibleSolidCarmanKozenyPermeability" type="CompressibleSolidCarmanKozenyPermeabilityType" />
 			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
+			<xsd:element name="CompressibleSolidExponentialDecayPermeability" type="CompressibleSolidExponentialDecayPermeabilityType" />
 			<xsd:element name="CompressibleSolidParallelPlatesPermeability" type="CompressibleSolidParallelPlatesPermeabilityType" />
 			<xsd:element name="CompressibleSolidSlipDependentPermeability" type="CompressibleSolidSlipDependentPermeabilityType" />
 			<xsd:element name="CompressibleSolidWillisRichardsPermeability" type="CompressibleSolidWillisRichardsPermeabilityType" />
@@ -1082,6 +1083,7 @@
 			<xsd:element name="ElasticIsotropicPressureDependent" type="ElasticIsotropicPressureDependentType" />
 			<xsd:element name="ElasticOrthotropic" type="ElasticOrthotropicType" />
 			<xsd:element name="ElasticTransverseIsotropic" type="ElasticTransverseIsotropicType" />
+			<xsd:element name="ExponentialDecayPermeability" type="ExponentialDecayPermeabilityType" />
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
 			<xsd:element name="FrictionlessContact" type="FrictionlessContactType" />
 			<xsd:element name="JFunctionCapillaryPressure" type="JFunctionCapillaryPressureType" />
@@ -1512,6 +1514,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="CompressibleSolidCarmanKozenyPermeabilityType" />
 	<xsd:complexType name="CompressibleSolidConstantPermeabilityType" />
+	<xsd:complexType name="CompressibleSolidExponentialDecayPermeabilityType" />
 	<xsd:complexType name="CompressibleSolidParallelPlatesPermeabilityType" />
 	<xsd:complexType name="CompressibleSolidSlipDependentPermeabilityType" />
 	<xsd:complexType name="CompressibleSolidWillisRichardsPermeabilityType" />
@@ -1770,6 +1773,16 @@
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+	</xsd:complexType>
+	<xsd:complexType name="ExponentialDecayPermeabilityType">
+		<!--dPerm_dDispJump => Derivative of rock permeability with respect to displacement jump-->
+		<xsd:attribute name="dPerm_dDispJump" type="real64_array4d" />
+		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
+		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
+		<!--dPerm_dTraction => Derivative of rock permeability with respect to the traction vector-->
+		<xsd:attribute name="dPerm_dTraction" type="real64_array4d" />
+		<!--permeability => Rock permeability-->
+		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="ExtendedDruckerPragerType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->

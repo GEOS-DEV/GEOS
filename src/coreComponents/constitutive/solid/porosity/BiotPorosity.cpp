@@ -35,11 +35,14 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Grain bulk modulus" );
 
+  registerWrapper( viewKeyStruct::defaultThermalExpansionCoefficientString(), &m_defaultThermalExpansionCoefficient ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default thermal expansion coefficient" );
+
   registerField( fields::porosity::biotCoefficient{}, &m_biotCoefficient );
 
-  registerWrapper( viewKeyStruct::thermalExpansionCoefficientString(), &m_thermalExpansionCoefficient ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "Thermal expansion coefficient" );
+  registerField( fields::porosity::thermalExpansionCoefficient{}, &m_thermalExpansionCoefficient );
 
   registerWrapper( viewKeyStruct::meanStressIncrementString(), &m_meanStressIncrement ).
     setApplyDefaultValue( 0.0 ).
@@ -61,7 +64,9 @@ void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
 void BiotPorosity::postProcessInput()
 {
   PorosityBase::postProcessInput();
-  // TODO valdate input
+
+  getWrapper< array1d< real64 > >( fields::porosity::thermalExpansionCoefficient::key() ).
+    setApplyDefaultValue( m_defaultThermalExpansionCoefficient );
 }
 
 void BiotPorosity::initializeState() const

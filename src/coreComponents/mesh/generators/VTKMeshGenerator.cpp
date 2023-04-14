@@ -25,7 +25,6 @@
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
 #include "common/MpiWrapper.hpp"
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 namespace geosx
 {
@@ -45,9 +44,14 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Names of the VTK nodesets to import" );
 
+  registerWrapper( viewKeyStruct::mainBlockNameString(), &m_mainBlockName ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( "main" ).
+    setDescription( "For multi-block files, name of the 3d mesh block." );
+
   registerWrapper( viewKeyStruct::faceBlockNamesString(), &m_faceBlockNames ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Names of the VTK faces to import" );
+    setDescription( "For multi-block files, names of the face mesh block." );
 
   registerWrapper( viewKeyStruct::partitionRefinementString(), &m_partitionRefinement ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -81,7 +85,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': reading mesh from {}", catalogName(), getName(), m_filePath ) );
   {
     GEOSX_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
-    vtkSmartPointer< vtkDataSet > loadedMesh = vtk::loadMesh( m_filePath );
+    vtkSmartPointer< vtkDataSet > loadedMesh = vtk::loadMesh( m_filePath, m_mainBlockName );
     GEOSX_LOG_LEVEL_RANK_0( 2, "  redistributing mesh..." );
     m_vtkMesh = vtk::redistributeMesh( *loadedMesh, comm, m_partitionMethod, m_partitionRefinement, m_useGlobalIds );
     GEOSX_LOG_LEVEL_RANK_0( 2, "  finding neighbor ranks..." );
@@ -116,17 +120,18 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   for( string const & faceBlockName: m_faceBlockNames )
   {
-    importFractureNetwork( faceBlockName, m_vtkMesh, cellBlockManager );
+    m_faceBlockMeshes[faceBlockName] = importFractureNetwork( m_filePath, faceBlockName, m_vtkMesh, cellBlockManager );
   }
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  done!" );
   vtk::printMeshStatistics( *m_vtkMesh, m_cellMap, comm );
 }
 
-void VTKMeshGenerator::importFieldsOnArray( string const & cellBlockName, string const & meshFieldName, bool isMaterialField, WrapperBase & wrapper ) const
+void VTKMeshGenerator::importVolumicFieldOnArray( string const & cellBlockName,
+                                                  string const & meshFieldName,
+                                                  bool isMaterialField,
+                                                  dataRepository::WrapperBase & wrapper ) const
 {
-  GEOSX_ASSERT_MSG( m_vtkMesh, "Must call generateMesh() before importFields()" );
-
   for( auto const & typeRegions : m_cellMap )
   {
     // Restrict data import to 3D cells
@@ -155,10 +160,53 @@ void VTKMeshGenerator::importFieldsOnArray( string const & cellBlockName, string
   GEOSX_ERROR( "Could not import field \"" << meshFieldName << "\" from cell block \"" << cellBlockName << "\"." );
 }
 
+
+void VTKMeshGenerator::importSurfacicFieldOnArray( string const & faceBlockName,
+                                                   string const & meshFieldName,
+                                                   dataRepository::WrapperBase & wrapper ) const
+{
+  // If the field was not imported from cell blocks, we now look for it in the face blocks.
+  // This surely can be improved by clearly stating which field should be on which block.
+  // Note that there is no additional work w.r.t. the cells on which we want to import the fields,
+  // because the face blocks are heterogeneous.
+  // We always take the whole data, we do not select cell type by cell type.
+  for( auto const & p: m_faceBlockMeshes )
+  {
+    vtkSmartPointer< vtkDataSet > faceMesh = p.second;
+    if( vtk::hasArray( *faceMesh, meshFieldName ) )
+    {
+      vtkDataArray * vtkArray = vtk::findArrayForImport( *faceMesh, meshFieldName );
+      return vtk::importRegularField( vtkArray, wrapper );
+    }
+  }
+
+  GEOSX_ERROR( "Could not import field \"" << meshFieldName << "\" from face block \"" << faceBlockName << "\"." );
+}
+
+
+void VTKMeshGenerator::importFieldOnArray( Block block,
+                                           string const & blockName,
+                                           string const & meshFieldName,
+                                           bool isMaterialField,
+                                           dataRepository::WrapperBase & wrapper ) const
+{
+  GEOSX_ASSERT_MSG( m_vtkMesh, "Must call generateMesh() before importFields()" );
+
+  switch( block )
+  {
+    case MeshGeneratorBase::Block::VOLUMIC:
+      return importVolumicFieldOnArray( blockName, meshFieldName, isMaterialField, wrapper );
+    case MeshGeneratorBase::Block::SURFACIC:
+    case MeshGeneratorBase::Block::LINEIC:
+      return importSurfacicFieldOnArray( blockName, meshFieldName, wrapper );
+  }
+}
+
 void VTKMeshGenerator::freeResources()
 {
   m_vtkMesh = nullptr;
   m_cellMap.clear();
+  m_faceBlockMeshes.clear();
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, VTKMeshGenerator, string const &, Group * const )

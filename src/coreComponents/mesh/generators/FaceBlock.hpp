@@ -71,37 +71,37 @@ public:
    * @brief Defines the 2d elements to nodes mapping.
    * @param _2dElemToNodes The input mapping.
    */
-  void set2dElemToNodes( ArrayOfArrays< localIndex > _2dElemToNodes );
+  void set2dElemToNodes( ArrayOfArrays< localIndex > && _2dElemToNodes );
 
   /**
    * @brief Defines the 2d elements to edges mapping.
    * @param _2dElemToEdges The input mapping.
    */
-  void set2dElemToEdges( ArrayOfArrays< localIndex > _2dElemToEdges );
+  void set2dElemToEdges( ArrayOfArrays< localIndex > && _2dElemToEdges );
 
   /**
    * @brief Defines the 2d elements to faces mapping.
    * @param _2dElemToFaces The input mapping.
    */
-  void set2dElemToFaces( array2d< localIndex > _2dElemToFaces );
+  void set2dElemToFaces( array2d< localIndex > && _2dElemToFaces );
 
   /**
    * @brief Defines the 2d faces to elements mapping.
    * @param _2dFaceTo2dElems The input mapping.
    */
-  void set2dFaceTo2dElems( ArrayOfArrays< localIndex > _2dFaceTo2dElems );
+  void set2dFaceTo2dElems( ArrayOfArrays< localIndex > && _2dFaceTo2dElems );
 
   /**
    * @brief Defines the 2d faces to edges mapping.
    * @param _2dFaceToEdge The input mapping.
    */
-  void set2dFaceToEdge( array1d< localIndex > _2dFaceToEdge );
+  void set2dFaceToEdge( array1d< localIndex > && _2dFaceToEdge );
 
   /**
    * @brief Defines the 2d elements to 3d elements mapping.
    * @param _2dElemToElems The input mapping.
    */
-  void set2dElemToElems( ToCellRelation< array2d< localIndex > > _2dElemToElems );
+  void set2dElemToElems( ToCellRelation< array2d< localIndex > > && _2dElemToElems );
 
 private:
 

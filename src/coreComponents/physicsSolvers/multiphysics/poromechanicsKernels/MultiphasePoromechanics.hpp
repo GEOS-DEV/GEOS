@@ -20,6 +20,8 @@
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_MULTIPHASEPOROMECHANICS_HPP_
 
 #include "codingUtilities/Utilities.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
+#include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsBase.hpp"
 
 namespace geosx
@@ -241,18 +243,12 @@ public:
   /**
    * @brief Helper function to compute the pore-volume constraint and its derivatives wrt primary variables
    * @param[in] k the element index
-   * @param[in] porosity the element porosity
-   * @param[in] dPorosity_dVolStrain the derivative of porosity wrt volumetric strain increment
-   * @param[in] dPorosity_dPressure the derivative of porosity wrt pressure
-   * @param[in] dPorosity_dTemperature the derivative of porosity wrt temperature
+   * @param[in] porosity_n the element porosity at the previous converged time step
    * @param[inout] stack the stack variables
    */
   GEOSX_HOST_DEVICE
   void computePoreVolumeConstraint( localIndex const k,
-                                    real64 const & porosity,
-                                    real64 const & dPorosity_dVolStrain,
-                                    real64 const & dPorosity_dPressure,
-                                    real64 const & dPorosity_dTemperature,
+                                    real64 const & porosity_n,
                                     StackVariables & stack ) const;
 
   /**
@@ -358,6 +354,126 @@ using MultiphasePoromechanicsKernelFactory =
                                 localIndex const,
                                 localIndex const,
                                 string const >;
+
+/**
+ * @class MultiphaseBulkDensityKernel
+ * @brief Kernel to update the bulk density before a mechanics solve in sequential schemes
+ */
+class MultiphaseBulkDensityKernel
+{
+public:
+
+  /**
+   * @brief Constructor
+   * @param[in] numPhases the number of fluid phases
+   * @param[in] fluid the fluid model
+   * @param[in] solid the porous solid model
+   * @param[in] subRegion the element subregion
+   */
+  MultiphaseBulkDensityKernel( integer const numPhases,
+                               constitutive::MultiFluidBase const & fluid,
+                               constitutive::CoupledSolidBase const & solid,
+                               ElementSubRegionBase & subRegion )
+    : m_numPhases( numPhases ),
+    m_bulkDensity( subRegion.getField< fields::poromechanics::bulkDensity >() ),
+    m_fluidPhaseVolFrac( subRegion.getField< fields::flow::phaseVolumeFraction >() ),
+    m_rockDensity( solid.getDensity() ),
+    m_fluidPhaseDensity( fluid.phaseMassDensity() ),
+    m_porosity( solid.getPorosity() )
+  {}
+
+  /**
+   * @brief Compute the bulk density in an element
+   * @param[in] ei the element index
+   * @param[in] q the quadrature point index
+   */
+  GEOSX_HOST_DEVICE
+  void compute( localIndex const ei,
+                localIndex const q ) const
+  {
+    m_bulkDensity[ei][q] = 0.0;
+    for( integer ip = 0; ip < m_numPhases; ++ip )
+    {
+      m_bulkDensity[ei][q] += m_fluidPhaseVolFrac[ei][ip] * m_fluidPhaseDensity[ei][q][ip];
+    }
+    m_bulkDensity[ei][q] *= m_porosity[ei][q];
+    m_bulkDensity[ei][q] += ( 1 - m_porosity[ei][q] ) * m_rockDensity[ei][q];
+  }
+
+  /**
+   * @brief Performs the kernel launch
+   * @tparam POLICY the policy used in the RAJA kernels
+   * @tparam KERNEL_TYPE the kernel type
+   * @param[in] numElems the number of elements
+   * @param[in] numQuad the number of quadrature points
+   * @param[inout] kernelComponent the kernel component providing access to the compute function
+   */
+  template< typename POLICY, typename KERNEL_TYPE >
+  static void
+  launch( localIndex const numElems,
+          localIndex const numQuad,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      for( localIndex q = 0; q < numQuad; ++q )
+      {
+        kernelComponent.compute( ei, q );
+      }
+    } );
+  }
+
+protected:
+
+  // number of fluid phases
+  integer const m_numPhases;
+
+  // the bulk density
+  arrayView2d< real64 > const m_bulkDensity;
+
+  // the fluid phase saturation
+  arrayView2d< real64 const, compflow::USD_PHASE > const m_fluidPhaseVolFrac;
+
+  // the rock density
+  arrayView2d< real64 const > const m_rockDensity;
+
+  // the fluid density
+  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const m_fluidPhaseDensity;
+
+  // the porosity
+  arrayView2d< real64 const > const m_porosity;
+
+};
+
+/**
+ * @class MultiphaseBulkDensityKernelFactory
+ */
+class MultiphaseBulkDensityKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] numPhases number of phases
+   * @param[in] fluid the fluid model
+   * @param[in] solid the porous solid model
+   * @param[in] subRegion the element subregion
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch( integer const numPhases,
+                   constitutive::MultiFluidBase const & fluid,
+                   constitutive::CoupledSolidBase const & solid,
+                   ElementSubRegionBase & subRegion )
+  {
+    MultiphaseBulkDensityKernel kernel( numPhases, fluid, solid, subRegion );
+    MultiphaseBulkDensityKernel::launch< POLICY >( subRegion.size(),
+                                                   subRegion.getField< fields::poromechanics::bulkDensity >().size( 1 ),
+                                                   kernel );
+  }
+};
+
 
 } // namespace poromechanicsKernels
 

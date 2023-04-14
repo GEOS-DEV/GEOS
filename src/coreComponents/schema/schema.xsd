@@ -514,6 +514,10 @@
 					<xsd:selector xpath="CompressibleSolidConstantPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="ConstitutiveCompressibleSolidExponentialDecayPermeabilityUniqueName">
+					<xsd:selector xpath="CompressibleSolidExponentialDecayPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="ConstitutiveCompressibleSolidParallelPlatesPermeabilityUniqueName">
 					<xsd:selector xpath="CompressibleSolidParallelPlatesPermeability" />
 					<xsd:field xpath="@name" />
@@ -572,6 +576,10 @@
 				</xsd:unique>
 				<xsd:unique name="ConstitutiveElasticTransverseIsotropicUniqueName">
 					<xsd:selector xpath="ElasticTransverseIsotropic" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="ConstitutiveExponentialDecayPermeabilityUniqueName">
+					<xsd:selector xpath="ExponentialDecayPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="ConstitutiveExtendedDruckerPragerUniqueName">
@@ -1237,14 +1245,14 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CylinderType">
-		<!--innerRadius => Inner radius of the annulus-->
+		<!--firstFaceCenter => Center point of the first face of the cylinder-->
+		<xsd:attribute name="firstFaceCenter" type="R1Tensor" use="required" />
+        <!--secondFaceCenter => Center point of the second face of the cylinder-->
+		<xsd:attribute name="secondFaceCenter" type="R1Tensor" use="required" />
+		<!--outerRadius => Outer radius of the cylinder-->
+		<xsd:attribute name="outerRadius" type="real64" use="required" />
+        <!--innerRadius => Inner radius of the annulus-->
 		<xsd:attribute name="innerRadius" type="real64" default="-1" />
-		<!--point1 => Center point of one (upper or lower) face of the cylinder-->
-		<xsd:attribute name="point1" type="R1Tensor" use="required" />
-		<!--point2 => Center point of the other face of the cylinder-->
-		<xsd:attribute name="point2" type="R1Tensor" use="required" />
-		<!--radius => Radius of the cylinder-->
-		<xsd:attribute name="radius" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1549,7 +1557,9 @@ the relative residual norm satisfies:
 	<xsd:complexType name="NonlinearSolverParametersType">
 		<!--allowNonConverged => Allow non-converged solution to be accepted. (i.e. exit from the Newton loop without achieving the desired tolerance)-->
 		<xsd:attribute name="allowNonConverged" type="integer" default="0" />
-		<!--couplingType => Type of coupling. Options are: Sequential and FullyImplicit-->
+		<!--couplingType => Type of coupling. Valid options:
+* FullyImplicit
+* Sequential-->
 		<xsd:attribute name="couplingType" type="geosx_NonlinearSolverParameters_CouplingType" default="FullyImplicit" />
 		<!--lineSearchAction => How the line search is to be used. Options are: 
  * None    - Do not use line search.
@@ -1580,6 +1590,10 @@ the relative residual norm satisfies:
 		<xsd:attribute name="newtonMinIter" type="integer" default="1" />
 		<!--newtonTol => The required tolerance in order to exit the Newton iteration loop.-->
 		<xsd:attribute name="newtonTol" type="real64" default="1e-06" />
+		<!--sequentialConvergenceCriterion => Criterion used to check outer-loop convergence in sequential schemes. Valid options:
+* ResidualNorm
+* NumberOfNonlinearIterations-->
+		<xsd:attribute name="sequentialConvergenceCriterion" type="geosx_NonlinearSolverParameters_SequentialConvergenceCriterion" default="ResidualNorm" />
 		<!--subcycling => Flag to decide whether to iterate between sequentially coupled solvers or not.-->
 		<xsd:attribute name="subcycling" type="integer" default="0" />
 		<!--timeStepCutFactor => Factor by which the time step will be cut if a timestep cut is required.-->
@@ -1610,6 +1624,11 @@ the relative residual norm satisfies:
 	<xsd:simpleType name="geosx_NonlinearSolverParameters_LineSearchInterpolationType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|Linear|Parabolic" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geosx_NonlinearSolverParameters_SequentialConvergenceCriterion">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|ResidualNorm|NumberOfNonlinearIterations" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="FiniteVolumeType">
@@ -2288,13 +2307,13 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 None - Add no stabilization to mass equation,
 Global - Add stabilization to all faces,
 Local - Add stabilization only to interiors of macro elements.-->
-		<xsd:attribute name="stabilizationType" type="geosx_MultiphasePoromechanicsSolver_StabilizationType" default="None" />
+		<xsd:attribute name="stabilizationType" type="geosx_MultiphasePoromechanics_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_MultiphasePoromechanicsSolver_StabilizationType">
+	<xsd:simpleType name="geosx_MultiphasePoromechanics_StabilizationType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|None|Global|Local" />
 		</xsd:restriction>
@@ -2942,6 +2961,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="CompressibleSolidCarmanKozenyPermeability" type="CompressibleSolidCarmanKozenyPermeabilityType" />
 			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
+			<xsd:element name="CompressibleSolidExponentialDecayPermeability" type="CompressibleSolidExponentialDecayPermeabilityType" />
 			<xsd:element name="CompressibleSolidParallelPlatesPermeability" type="CompressibleSolidParallelPlatesPermeabilityType" />
 			<xsd:element name="CompressibleSolidSlipDependentPermeability" type="CompressibleSolidSlipDependentPermeabilityType" />
 			<xsd:element name="CompressibleSolidWillisRichardsPermeability" type="CompressibleSolidWillisRichardsPermeabilityType" />
@@ -2957,6 +2977,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="ElasticIsotropicPressureDependent" type="ElasticIsotropicPressureDependentType" />
 			<xsd:element name="ElasticOrthotropic" type="ElasticOrthotropicType" />
 			<xsd:element name="ElasticTransverseIsotropic" type="ElasticTransverseIsotropicType" />
+			<xsd:element name="ExponentialDecayPermeability" type="ExponentialDecayPermeabilityType" />
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
 			<xsd:element name="FrictionlessContact" type="FrictionlessContactType" />
 			<xsd:element name="JFunctionCapillaryPressure" type="JFunctionCapillaryPressureType" />
@@ -2996,6 +3017,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 	<xsd:complexType name="BiotPorosityType">
 		<!--defaultReferencePorosity => Default value of the reference porosity-->
 		<xsd:attribute name="defaultReferencePorosity" type="real64" use="required" />
+		<!--defaultThermalExpansionCoefficient => Default thermal expansion coefficient-->
+		<xsd:attribute name="defaultThermalExpansionCoefficient" type="real64" default="0" />
 		<!--grainBulkModulus => Grain bulk modulus-->
 		<xsd:attribute name="grainBulkModulus" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -3209,6 +3232,18 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompressibleSolidConstantPermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CompressibleSolidExponentialDecayPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
@@ -3557,6 +3592,14 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<xsd:attribute name="defaultYoungModulusAxial" type="real64" default="-1" />
 		<!--defaultYoungModulusTransverse => Default Transverse Young's Modulus-->
 		<xsd:attribute name="defaultYoungModulusTransverse" type="real64" default="-1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ExponentialDecayPermeabilityType">
+		<!--empiricalConstant => an empirical constant.-->
+		<xsd:attribute name="empiricalConstant" type="real64" use="required" />
+		<!--initialPermeability =>  initial permeability of the fracture.-->
+		<xsd:attribute name="initialPermeability" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
