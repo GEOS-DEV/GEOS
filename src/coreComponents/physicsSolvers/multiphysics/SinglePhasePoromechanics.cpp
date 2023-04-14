@@ -275,11 +275,11 @@ void SinglePhasePoromechanics::assembleSystem( real64 const time_n,
 
   // step 3: compute the fluxes (face-based contributions)
 
-    flowSolver()->assembleFluxTerms( time_n, dt,
-                                     domain,
-                                     dofManager,
-                                     localMatrix,
-                                     localRhs );
+  flowSolver()->assembleFluxTerms( time_n, dt,
+                                   domain,
+                                   dofManager,
+                                   localMatrix,
+                                   localRhs );
 }
 
 void SinglePhasePoromechanics::createPreconditioner()

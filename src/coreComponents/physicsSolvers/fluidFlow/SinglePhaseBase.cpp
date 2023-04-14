@@ -269,13 +269,13 @@ void SinglePhaseBase::updateSolidInternalEnergyModel( ObjectManagerBase & dataGr
 void SinglePhaseBase::updateThermalConductivity( ElementSubRegionBase & subRegion ) const
 {
   CoupledSolidBase const & porousSolid =
-        getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
-  
+    getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+
   arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
 
   string const & thermalConductivityName = subRegion.template getReference< string >( viewKeyStruct::thermalConductivityNamesString() );
-  SinglePhaseThermalConductivityBase const & conductivityMaterial = 
-  getConstitutiveModel< SinglePhaseThermalConductivityBase >( subRegion, thermalConductivityName );
+  SinglePhaseThermalConductivityBase const & conductivityMaterial =
+    getConstitutiveModel< SinglePhaseThermalConductivityBase >( subRegion, thermalConductivityName );
   conductivityMaterial.update( porosity );
 }
 
@@ -633,7 +633,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
       updateFluidState( subRegion );
       // for thermal simulations, update solid internal energy
       if( m_isThermal )
-      {        
+      {
         updateSolidInternalEnergyModel( subRegion );
         updateThermalConductivity( subRegion );
 

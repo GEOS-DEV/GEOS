@@ -114,9 +114,9 @@ public:
    */
   virtual void saveConvergedRockFluidState( arrayView2d< real64 const > const & convergedPorosity ) const
   { GEOSX_UNUSED_VAR( convergedPorosity ); }
-  
+
   /**
-   * @brief Update the thermal conductivity state 
+   * @brief Update the thermal conductivity state
    * @param[in] porosity the  porosity field after reservoir initialization
    *
    * Note: this is needed because of the fracture subregions which do not exist at initialization

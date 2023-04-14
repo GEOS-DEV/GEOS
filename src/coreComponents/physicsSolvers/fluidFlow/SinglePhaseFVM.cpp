@@ -460,24 +460,25 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
                                                                                      localRhs.toView() );
       }
     } );
-    
-    // Eventually, EmbeddedSurfaceToCellStencil should be moved here to account for the permeability of the fracture in the matrix-frac connection
+
+    // Eventually, EmbeddedSurfaceToCellStencil should be moved here to account for the permeability of the fracture in the matrix-frac
+    // connection
     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto & stencil )
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       if( m_isThermal )
       {
-      //   thermalSinglePhasePoromechanicsEmbeddedFractureKernels::
-      //     ConnectorBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-      //                                                                                     dofKey,
-      //                                                                                     jumpDofKey,
-      //                                                                                     getName(),
-      //                                                                                     mesh.getElemManager(),
-      //                                                                                     stencilWrapper,
-      //                                                                                     dt,
-      //                                                                                     localMatrix.toViewConstSizes(),
-      //                                                                                     localRhs.toView() );
+        //   thermalSinglePhasePoromechanicsEmbeddedFractureKernels::
+        //     ConnectorBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+        //                                                                                     dofKey,
+        //                                                                                     jumpDofKey,
+        //                                                                                     getName(),
+        //                                                                                     mesh.getElemManager(),
+        //                                                                                     stencilWrapper,
+        //                                                                                     dt,
+        //                                                                                     localMatrix.toViewConstSizes(),
+        //                                                                                     localRhs.toView() );
       }
       else
       {
@@ -555,16 +556,16 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
 
       if( m_isThermal )
       {
-      //   thermalSinglePhasePoromechanicsConformingFracturesKernels::
-      //     ConnectorBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-      //                                                                                     dofKey,
-      //                                                                                     jumpDofKey,
-      //                                                                                     getName(),
-      //                                                                                     mesh.getElemManager(),
-      //                                                                                     stencilWrapper,
-      //                                                                                     dt,
-      //                                                                                     localMatrix.toViewConstSizes(),
-      //                                                                                     localRhs.toView() );
+        //   thermalSinglePhasePoromechanicsConformingFracturesKernels::
+        //     ConnectorBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+        //                                                                                     dofKey,
+        //                                                                                     jumpDofKey,
+        //                                                                                     getName(),
+        //                                                                                     mesh.getElemManager(),
+        //                                                                                     stencilWrapper,
+        //                                                                                     dt,
+        //                                                                                     localMatrix.toViewConstSizes(),
+        //                                                                                     localRhs.toView() );
       }
       else
       {

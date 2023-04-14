@@ -49,9 +49,9 @@ public:
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
-  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors; 
+  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
   using FracturePermeabilityAccessors = StencilMaterialAccessors< PermeabilityBase,
-                                                              fields::permeability::dPerm_dDispJump >;
+                                                                  fields::permeability::dPerm_dDispJump >;
   using AbstractBase::m_dt;
   using AbstractBase::m_rankOffset;
   using AbstractBase::m_dofNumber;
@@ -161,12 +161,12 @@ public:
   {
 
     m_stencilWrapper.computeWeights( iconn,
-                                   m_permeability,
-                                   m_dPerm_dPres,
-                                   m_dPerm_dDispJump,
-                                   stack.transmissibility,
-                                   stack.dTrans_dPres,
-                                   stack.dTrans_dDispJump );
+                                     m_permeability,
+                                     m_dPerm_dPres,
+                                     m_dPerm_dDispJump,
+                                     stack.transmissibility,
+                                     stack.dTrans_dPres,
+                                     stack.dTrans_dDispJump );
 
 
     real64 fluxVal = 0.0;
@@ -284,7 +284,7 @@ public:
     typename kernelType::FracturePermeabilityAccessors edfmPermAccessors( elemManager, solverName );
 
 
-    kernelType kernel( rankOffset, stencilWrapper, 
+    kernelType kernel( rankOffset, stencilWrapper,
                        pressureDofNumberAccessor, dispJumpDofNumberAccessor,
                        flowAccessors, fluidAccessors, permAccessors, edfmPermAccessors,
                        dt, localMatrix, localRhs );

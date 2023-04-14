@@ -708,7 +708,8 @@ public:
 //     forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [stencilWrapper, dt, rankOffset, dofNumber, ghostRank,
 //                                                               pres, gravCoef, dens, dDens_dPres, mob,
 //                                                               dMob_dPres, permeability, dPerm_dPres,
-//                                                               seri, sesri, sei, localMatrix, localRhs] GEOSX_HOST_DEVICE ( localIndex const iconn )
+//                                                               seri, sesri, sei, localMatrix, localRhs] GEOSX_HOST_DEVICE ( localIndex
+// const iconn )
 //     {
 //       localIndex const stencilSize = stencilWrapper.stencilSize( iconn );
 //       localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );

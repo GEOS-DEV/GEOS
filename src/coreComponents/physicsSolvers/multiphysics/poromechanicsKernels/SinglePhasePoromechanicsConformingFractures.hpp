@@ -117,8 +117,8 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
       : Base::StackVariables( size, numElems ),
-    localColIndices( numElems ),
-    dFlux_dAperture( numElems, size )
+      localColIndices( numElems ),
+      dFlux_dAperture( numElems, size )
     {}
 
     stackArray1d< localIndex, maxNumElems > localColIndices;
@@ -165,13 +165,13 @@ public:
 
   {
 
-    m_stencilWrapper.computeWeights( iconn, 
-                                   m_permeability,
-                                   m_dPerm_dPres,
-                                   m_dPerm_dDispJump,
-                                   stack.transmissibility,
-                                   stack.dTrans_dPres,
-                                   stack.dTrans_dDispJump );
+    m_stencilWrapper.computeWeights( iconn,
+                                     m_permeability,
+                                     m_dPerm_dPres,
+                                     m_dPerm_dDispJump,
+                                     stack.transmissibility,
+                                     stack.dTrans_dPres,
+                                     stack.dTrans_dDispJump );
 
 
     localIndex k[2];
