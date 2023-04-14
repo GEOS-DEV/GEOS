@@ -22,6 +22,7 @@
 #include "codingUtilities/traits.hpp"
 #include "dataRepository/RestartFlags.hpp"
 #include "common/DataTypes.hpp"
+#include "dataRepository/DefaultValue.hpp"
 
 /**
  * @brief Generates a traits struct.
@@ -52,7 +53,7 @@
     /** The actual type to be registered. */ \
     using type = TYPE; \
     /** The template type T for registration of a container<T>. */ \
-    using dataType = internal::typeHelper_t< TYPE >; \
+    using dataType = dataRepository::internal::Helper< TYPE >::value_type; \
     /** @brief @return The default data value for NAME. */ \
     static constexpr dataType defaultValue() \
     { return DEFAULT; } \
@@ -71,24 +72,6 @@ namespace geos
  */
 namespace fields
 {
-
-namespace internal
-{
-template< typename TYPE, bool HAS_TYPE = std::enable_if_t< traits::HasAlias_value_type< TYPE >, std::true_type >::value >
-struct typeHelper
-{
-  using type = typename TYPE::value_type;
-};
-
-template< typename TYPE >
-struct typeHelper< TYPE, false >
-{
-  using type = TYPE;  //typename std::enable_if< std::is_fundamental<TYPE>::value, TYPE>::type;
-};
-
-template< typename T >
-using typeHelper_t = typename typeHelper< T >::type;
-}
 
 DECLARE_FIELD( ghostRank,
                "ghostRank",
