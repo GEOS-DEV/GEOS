@@ -684,7 +684,7 @@ private:
       {"string_array", constructArrayRegex( rs, 1 )},
       {"path_array", constructArrayRegex( rs, 1 )},
       {"mapPair", rs},
-      {"geosx_dataRepository_PlotLevel", ri}
+      {"geos_dataRepository_PlotLevel", ri}
     };
   };
 };
