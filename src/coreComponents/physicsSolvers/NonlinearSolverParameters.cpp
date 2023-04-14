@@ -135,7 +135,14 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
   registerWrapper( viewKeysStruct::couplingTypeString(), &m_couplingType ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( CouplingType::FullyImplicit ).
-    setDescription( "Type of coupling. Options are: Sequential and FullyImplicit" );
+    setDescription( "Type of coupling. "
+                    "Valid options:\n* " + EnumStrings< CouplingType >::concat( "\n* " ) );
+
+  registerWrapper( viewKeysStruct::sequentialConvergenceCriterionString(), &m_sequentialConvergenceCriterion ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setApplyDefaultValue( SequentialConvergenceCriterion::ResidualNorm ).
+    setDescription( "Criterion used to check outer-loop convergence in sequential schemes. "
+                    "Valid options:\n* " + EnumStrings< SequentialConvergenceCriterion >::concat( "\n* " ) );
 
   registerWrapper( viewKeysStruct::subcyclingOptionString(), &m_subcyclingOption ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).

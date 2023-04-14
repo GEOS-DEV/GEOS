@@ -1415,7 +1415,7 @@ Datastructure: CompressibleSolidConstantPermeability
 .. _DATASTRUCTURE_CompressibleSolidExponentialDecayPermeability:
 
 Datastructure: CompressibleSolidExponentialDecayPermeability
-====================================================
+============================================================
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidExponentialDecayPermeability_other.rst
 
 

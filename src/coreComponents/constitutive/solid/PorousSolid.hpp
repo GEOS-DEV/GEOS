@@ -214,15 +214,11 @@ private:
                         real64 & dPorosity_dPressure,
                         real64 & dPorosity_dTemperature ) const
   {
-    real64 const thermalExpansionCoefficient =
-      m_solidUpdate.getThermalExpansionCoefficient( k );
-
     m_porosityUpdate.updateFromPressureTemperatureAndStrain( k,
                                                              q,
                                                              deltaPressure,
                                                              deltaTemperature,
                                                              strainIncrement,
-                                                             thermalExpansionCoefficient,
                                                              dPorosity_dVolStrain,
                                                              dPorosity_dPressure,
                                                              dPorosity_dTemperature );
