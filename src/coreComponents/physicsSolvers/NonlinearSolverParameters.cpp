@@ -14,7 +14,7 @@
 
 #include "NonlinearSolverParameters.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -155,7 +155,7 @@ void NonlinearSolverParameters::postProcessInput()
 {
   if( m_timeStepDecreaseIterLimit <= m_timeStepIncreaseIterLimit )
   {
-    GEOSX_ERROR( " timeStepIncreaseIterLimit should be smaller than timeStepDecreaseIterLimit!!" );
+    GEOS_ERROR( " timeStepIncreaseIterLimit should be smaller than timeStepDecreaseIterLimit!!" );
   }
 }
 
@@ -163,4 +163,4 @@ void NonlinearSolverParameters::postProcessInput()
 
 REGISTER_CATALOG_ENTRY( Group, NonlinearSolverParameters, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

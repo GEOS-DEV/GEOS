@@ -5,10 +5,10 @@ Meshes
 ============
 
 The purpose of this document is to explain how users and developers interact with mesh data.
-This section describes how meshes are handled and stored in GEOSX.
+This section describes how meshes are handled and stored in GEOS.
 
 There are two possible methods for generating a mesh:
-either by using GEOSX's internal mesh generator (for Cartesian meshes only),
+either by using GEOS's internal mesh generator (for Cartesian meshes only),
 or by importing meshes from various common mesh file formats.
 This latter options allows one to work with more complex geometries,
 such as unstructured meshes comprised of a variety of element types (polyhedral elements).
@@ -106,7 +106,7 @@ The following is an example of a mesh block along each dimension, and an image s
 Advanced Cell Block Specification
 ==================================
 It's possible to generate more complex ``CellBlock`` using the ``InternalMeshGenerator``.
-For instance, the staircase example is a model which is often used in GEOSX as an integrated
+For instance, the staircase example is a model which is often used in GEOS as an integrated
 test. It defines ``CellBlocks`` in the three directions to generate a staircase-like model
 with the following code.
 
@@ -149,9 +149,9 @@ Using an External Mesh
 Supported Formats
 =================
 
-GEOSX provides features to run simulations on unstructured meshes.
+GEOS provides features to run simulations on unstructured meshes.
 It uses VTK_ to read the external meshes and its API to write
-it into the GEOSX mesh data structure.
+it into the GEOS mesh data structure.
 
 The supported mesh elements for volume elements consist of the following:
 
@@ -174,7 +174,7 @@ Importing the Mesh
 Importing regions
 *****************
 
-Several blocks are involved to import an external mesh into GEOSX, defined in the XML input file.
+Several blocks are involved to import an external mesh into GEOS, defined in the XML input file.
 These are the ``<Mesh>`` block and the ``<ElementRegions>`` block.
 
 The mesh block has the following syntax:
@@ -194,7 +194,7 @@ example the list of regions that are imported with their names, which is particu
 fill the ``cellBlocks`` field of the ``ElementRegions`` block (see below). Some information about the 
 imported surfaces is also provided.
 
-GEOSX uses ``ElementRegions`` to support different physics
+GEOS uses ``ElementRegions`` to support different physics
 or to define different constitutive properties.
 The ``ElementRegions`` block can contain several ``CellElementRegion`` blocks. A ``CellElementRegion`` is defined as a set of ``CellBlocks``.
 A ``CellBlock`` is an ensemble of elements with the same element geometry.
@@ -282,10 +282,10 @@ An example of a ``vtk`` file with all the physical regions defined is used in :r
 Importing surfaces
 ******************
 
-Surfaces are imported through point sets in GEOSX. This feature is supported using only the ``vtk`` file format.
+Surfaces are imported through point sets in GEOS. This feature is supported using only the ``vtk`` file format.
 In the same way than the regions, the surfaces of interests can be defined using the `physical entity names`_.
-The surfaces are automatically import in GEOSX if they exist in the ``vtk`` file.
-Within GEOSX, the point set will have the same name than the one given in the file. This name can be used
+The surfaces are automatically import in GEOS if they exist in the ``vtk`` file.
+Within GEOS, the point set will have the same name than the one given in the file. This name can be used
 again to impose boundary condition. For instance, if a surface is named "Bottom" and the user wants to
 impose a Dirichlet boundary condition of 0 on it, it can be easily done using this syntax.
 

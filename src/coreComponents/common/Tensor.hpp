@@ -12,12 +12,12 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_COMMON_TENSOR_HPP_
-#define GEOSX_COMMON_TENSOR_HPP_
+#ifndef GEOS_COMMON_TENSOR_HPP_
+#define GEOS_COMMON_TENSOR_HPP_
 
 #include "GeosxMacros.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -43,8 +43,8 @@ public:
    * @param i element index
    * @return const reference to the i-th element
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   T const & operator[]( std::ptrdiff_t const i ) const
   {
     return data[i];
@@ -55,8 +55,8 @@ public:
    * @param i element index
    * @return reference to the i-th element
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   T & operator[]( std::ptrdiff_t const i )
   {
     return data[i];
@@ -70,8 +70,8 @@ public:
    * @note Version for floating point types that avoids direct equality comparison.
    */
   template< typename U = T >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   std::enable_if_t< std::is_floating_point< U >::value, bool >
   operator==( Tensor< U, SIZE > const & rhs ) const
   {
@@ -93,8 +93,8 @@ public:
    * @note Version for all types except floating point.
    */
   template< typename U = T >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   std::enable_if_t< !std::is_floating_point< U >::value, bool >
   operator==( Tensor< U, SIZE > const & rhs ) const
   {
@@ -113,11 +113,11 @@ public:
    * @param junk Unused
    * @return The value of the template parameter SIZE.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   constexpr int size( int junk ) const
   {
-    GEOSX_UNUSED_VAR( junk );
+    GEOS_UNUSED_VAR( junk );
     return SIZE;
   }
 
@@ -146,4 +146,4 @@ private:
 
 }
 
-#endif //GEOSX_COMMON_TENSOR_HPP_
+#endif //GEOS_COMMON_TENSOR_HPP_

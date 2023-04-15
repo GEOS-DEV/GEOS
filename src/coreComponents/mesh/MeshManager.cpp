@@ -22,7 +22,7 @@
 
 #include <unordered_set>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -39,7 +39,7 @@ MeshManager::~MeshManager()
 
 Group * MeshManager::createChild( string const & childKey, string const & childName )
 {
-  GEOSX_LOG_RANK_0( "Adding Mesh: " << childKey << ", " << childName );
+  GEOS_LOG_RANK_0( "Adding Mesh: " << childKey << ", " << childName );
   std::unique_ptr< MeshGeneratorBase > solver = MeshGeneratorBase::CatalogInterface::factory( childKey, childName, this );
   return &this->registerGroup< MeshGeneratorBase >( childName, std::move( solver ) );
 }
@@ -102,13 +102,13 @@ std::unordered_set< string > getMaterialWrapperNames( ElementSubRegionBase const
 
 void MeshManager::importFields( DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   forSubGroups< MeshGeneratorBase >( [&domain]( MeshGeneratorBase const & generator )
   {
     if( !domain.hasMeshBody( generator.getName() ) )
       return;
 
-    GEOSX_LOG_RANK_0( GEOSX_FMT( "{}: importing field data from mesh dataset", generator.getName() ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}: importing field data from mesh dataset", generator.getName() ) );
 
     auto const importFields = [&generator]( ElementRegionBase const & region,
                                             ElementSubRegionBase & subRegion,
@@ -128,8 +128,8 @@ void MeshManager::importFields( DomainPartition & domain )
           // Skip - the user may have not enabled a particular physics model/solver on this destination region.
           if( generator.getLogLevel() >= 1 )
           {
-            GEOSX_LOG_RANK_0( "Skipping import of " << meshFieldName << " -> " << geosxFieldName <<
-                              " on " << region.getName() << "/" << subRegion.getName() << " (field not found)" );
+            GEOS_LOG_RANK_0( "Skipping import of " << meshFieldName << " -> " << geosxFieldName <<
+                             " on " << region.getName() << "/" << subRegion.getName() << " (field not found)" );
           }
 
           continue;
@@ -141,8 +141,8 @@ void MeshManager::importFields( DomainPartition & domain )
         WrapperBase & wrapper = subRegion.getWrapperBase( geosxFieldName );
         if( generator.getLogLevel() >= 1 )
         {
-          GEOSX_LOG_RANK_0( "Importing field " << meshFieldName << " -> " << geosxFieldName <<
-                            " on " << region.getName() << "/" << subRegion.getName() );
+          GEOS_LOG_RANK_0( "Importing field " << meshFieldName << " -> " << geosxFieldName <<
+                           " on " << region.getName() << "/" << subRegion.getName() );
         }
 
         bool const isMaterialField = materialWrapperNames.count( geosxFieldName ) > 0 && wrapper.numArrayDims() > 1;
@@ -180,4 +180,4 @@ void MeshManager::importFields( DomainPartition & domain )
   } );
 }
 
-} /* namespace geosx */
+} /* namespace geos */

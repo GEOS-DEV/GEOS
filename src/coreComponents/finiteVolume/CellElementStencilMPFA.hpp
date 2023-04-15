@@ -16,12 +16,12 @@
  * @file CellElementStencilMPFA.hpp
  */
 
-#ifndef GEOSX_FINITEVOLUME_CELLELEMENTSTENCILMPFA_HPP_
-#define GEOSX_FINITEVOLUME_CELLELEMENTSTENCILMPFA_HPP_
+#ifndef GEOS_FINITEVOLUME_CELLELEMENTSTENCILMPFA_HPP_
+#define GEOS_FINITEVOLUME_CELLELEMENTSTENCILMPFA_HPP_
 
 #include "StencilBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -70,12 +70,12 @@ public:
    */
   constexpr localIndex numPointsInFlux( localIndex index ) const
   {
-    GEOSX_UNUSED_VAR( index );
+    GEOS_UNUSED_VAR( index );
     return maxNumPointsInFlux;
   }
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FINITEVOLUME_CELLELEMENTSTENCILMPFA_HPP_ */
+#endif /* GEOS_FINITEVOLUME_CELLELEMENTSTENCILMPFA_HPP_ */

@@ -16,8 +16,8 @@
  * @file capillaryPressureSelector.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSURESELECTOR_HPP
-#define GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSURESELECTOR_HPP
+#ifndef GEOS_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSURESELECTOR_HPP
+#define GEOS_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSURESELECTOR_HPP
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/capillaryPressure/BrooksCoreyCapillaryPressure.hpp"
@@ -25,7 +25,7 @@
 #include "constitutive/capillaryPressure/TableCapillaryPressure.hpp"
 #include "constitutive/capillaryPressure/VanGenuchtenCapillaryPressure.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -53,6 +53,6 @@ void constitutiveUpdatePassThru( CapillaryPressureBase & capPres,
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSURESELECTOR_HPP
+#endif //GEOS_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSURESELECTOR_HPP
