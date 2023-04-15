@@ -50,7 +50,7 @@ namespace isothermalCompositionalMultiphaseFVMKernels
 {
 
 using namespace constitutive;
-
+using namespace CompositionalMultiphaseFVMUpwindUtilities;
 /******************************** PhaseMobilityKernel ********************************/
 
 /**
@@ -555,9 +555,11 @@ public:
 
   /// choosing upwinding scheme hard coded
   /// todo dispatch from input
-  template< CompositionalMultiphaseFVMUpwindUtilities::Term T >
+
+
+  template< CompositionalMultiphaseFVMUpwindUtilities::DrivingForces T >
   using UpwindSchemeType = CompositionalMultiphaseFVMUpwindUtilities::HybridUpwind< T >;
-  //using UpwindSchemeType = CompositionalMultiphaseFVMUpwindUtilities::PhasePotentialUpwind<T>;
+
 
   /**
    * @brief Compute the local flux contributions to the residual and Jacobian
@@ -579,6 +581,11 @@ public:
                                      m_dPerm_dPres,
                                      stack.transmissibility,
                                      stack.dTrans_dPres );
+
+
+
+
+
 
 
     localIndex k[numFluxSupportPoints];
@@ -638,25 +645,25 @@ public:
 
           //using helpers
           localIndex k_up = -1;
-          CompositionalMultiphaseFVMUpwindUtilities::UpwindHelpers::computePPUVelocity< numComp, numFluxSupportPoints >(
-            m_numPhases,
-            ip,
-            seri, sesri, sei,
-            trans,
-            dTrans_dPres,
-            m_pres,
-            m_gravCoef,
-            m_phaseMob, m_dPhaseMob,
-            m_dPhaseVolFrac,
-            m_dCompFrac_dCompDens,
-            m_phaseMassDens, m_dPhaseMassDens,
-            m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
-            m_hasCapPressure,
-            k_up,
-            potGrad,
-            phaseFlux,
-            dPhaseFlux_dP,
-            dPhaseFlux_dC
+            UpwindHelpers::computePPUPhaseFlux<numComp, numFluxSupportPoints>(
+                    m_numPhases,
+                    ip,
+                    seri, sesri, sei,
+                    trans,
+                    dTrans_dPres,
+                    m_pres,
+                    m_gravCoef,
+                    m_phaseMob, m_dPhaseMob,
+                    m_dPhaseVolFrac,
+                    m_dCompFrac_dCompDens,
+                    m_phaseMassDens, m_dPhaseMassDens,
+                    m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
+                    m_hasCapPressure,
+                    k_up,
+                    potGrad,
+                    phaseFlux,
+                    dPhaseFlux_dP,
+                    dPhaseFlux_dC
             );
 
           localIndex const er_up = seri[k_up];
@@ -680,169 +687,169 @@ public:
           // todo ? UpwindHelpers::mdensMultiply
 
           if( !IS_UT_FORM )
-            CompositionalMultiphaseFVMUpwindUtilities::UpwindHelpers::formPhaseComp< numComp, numFluxSupportPoints >(
-              ip,
-              k_up,
-              seri, sesri, sei,
-              m_phaseCompFrac, m_dPhaseCompFrac,
-              m_dCompFrac_dCompDens,
-              phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC,
-              compFlux, dCompFlux_dP, dCompFlux_dC
+              UpwindHelpers::computePhaseComponentFlux<numComp, numFluxSupportPoints>(
+                      ip,
+                      k_up,
+                      seri, sesri, sei,
+                      m_phaseCompFrac, m_dPhaseCompFrac,
+                      m_dCompFrac_dCompDens,
+                      phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC,
+                      compFlux, dCompFlux_dP, dCompFlux_dC
               );
           else
           {
 
             // choose upstream cell
             // create local work arrays
-            real64 phaseFluxV{};
-            real64 dPhaseFluxV_dP[numFluxSupportPoints]{};
-            real64 dPhaseFluxV_dC[numFluxSupportPoints][numComp]{};
+            real64 viscousPhaseFlux{};
+            real64 dViscousPhaseFlux_dP[numFluxSupportPoints]{};
+            real64 dViscousPhaseFlux_dC[numFluxSupportPoints][numComp]{};
 
-            real64 fflow{};
-            real64 dFflow_dP[numFluxSupportPoints]{};
-            real64 dFflow_dC[numFluxSupportPoints][numComp]{};
+            real64 fractionalFlow{};
+            real64 dFractionFlow_dP[numFluxSupportPoints]{};
+            real64 dFractionalFlow_dC[numFluxSupportPoints][numComp]{};
 
 
             // and the fractional flow for viscous part as \lambda_i^{up}/\sum_{NP}(\lambda_j^{up}) with up decided upon
             // the Upwind strategy
             k_up = -1;
-            CompositionalMultiphaseFVMUpwindUtilities::UpwindHelpers::formFracFlow< numComp, numFluxSupportPoints,
-                                                                                    CompositionalMultiphaseFVMUpwindUtilities::Term::Viscous,
-                                                                                    UpwindSchemeType >( m_numPhases,
-                                                                                                        ip,
-                                                                                                        seri,
-                                                                                                        sesri,
-                                                                                                        sei,
-                                                                                                        trans,
-                                                                                                        dTrans_dPres,
-                                                                                                        totFlux,
-                                                                                                        m_pres,
-                                                                                                        m_gravCoef,
-                                                                                                        m_dCompFrac_dCompDens,
-                                                                                                        m_phaseMassDens,
-                                                                                                        m_dPhaseMassDens,
-                                                                                                        m_phaseMob,
-                                                                                                        m_dPhaseMob,
-                                                                                                        m_dPhaseVolFrac,
-                                                                                                        m_phaseCapPressure,
-                                                                                                        m_dPhaseCapPressure_dPhaseVolFrac,
-                                                                                                        m_hasCapPressure,
-                                                                                                        k_up,
-                                                                                                        fflow,
-                                                                                                        dFflow_dP,
-                                                                                                        dFflow_dC );
+              UpwindHelpers::computeFractionalFlow<numComp, numFluxSupportPoints,
+                      DrivingForces::Viscous,
+                      UpwindSchemeType>(m_numPhases,
+                                        ip,
+                                        seri,
+                                        sesri,
+                                        sei,
+                                        trans,
+                                        dTrans_dPres,
+                                        totFlux,
+                                        m_pres,
+                                        m_gravCoef,
+                                        m_dCompFrac_dCompDens,
+                                        m_phaseMassDens,
+                                        m_dPhaseMassDens,
+                                        m_phaseMob,
+                                        m_dPhaseMob,
+                                        m_dPhaseVolFrac,
+                                        m_phaseCapPressure,
+                                        m_dPhaseCapPressure_dPhaseVolFrac,
+                                        m_hasCapPressure,
+                                        k_up,
+                                        fractionalFlow,
+                                        dFractionFlow_dP,
+                                        dFractionalFlow_dC);
 
             //todo ? mdensmultiply
 
 
             /// Assembling the viscous flux (and derivatives) from fractional flow and total velocity as \phi_{\mu} = f_i^{up,\mu} uT
-            phaseFluxV = fflow * totFlux;
+            viscousPhaseFlux = fractionalFlow * totFlux;
             for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
             {
-              dPhaseFluxV_dP[ke] += dFflow_dP[ke] * totFlux;
+                dViscousPhaseFlux_dP[ke] += dFractionFlow_dP[ke] * totFlux;
 
               for( localIndex jc = 0; jc < numComp; ++jc )
               {
-                dPhaseFluxV_dC[ke][jc] += dFflow_dC[ke][jc] * totFlux;
+                  dViscousPhaseFlux_dC[ke][jc] += dFractionalFlow_dC[ke][jc] * totFlux;
               }
             }
 
             //NON-FIXED UT -- to be canceled out if considered fixed
             for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
             {
-              dPhaseFluxV_dP[ke] += fflow * dTotFlux_dP[ke];
+                dViscousPhaseFlux_dP[ke] += fractionalFlow * dTotFlux_dP[ke];
 
               for( localIndex jc = 0; jc < numComp; ++jc )
               {
-                dPhaseFluxV_dC[ke][jc] += fflow * dTotFlux_dC[ke][jc];
+                  dViscousPhaseFlux_dC[ke][jc] += fractionalFlow * dTotFlux_dC[ke][jc];
               }
             }
 
             // accumulate in the flux and its derivatives
-            phaseFlux += phaseFluxV;
+            phaseFlux += viscousPhaseFlux;
             for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
             {
-              dPhaseFlux_dP[ke] += dPhaseFluxV_dP[ke];
+              dPhaseFlux_dP[ke] += dViscousPhaseFlux_dP[ke];
               for( localIndex ic = 0; ic < numComp; ++ic )
-                dPhaseFlux_dC[ke][ic] += dPhaseFluxV_dC[ke][ic];
+                dPhaseFlux_dC[ke][ic] += dViscousPhaseFlux_dC[ke][ic];
             }
 
             // Distributing the viscous flux of phase i onto component
-            CompositionalMultiphaseFVMUpwindUtilities::UpwindHelpers::formPhaseComp( ip,
-                                                                                     k_up,
-                                                                                     seri,
-                                                                                     sesri,
-                                                                                     sei,
-                                                                                     m_phaseCompFrac,
-                                                                                     m_dPhaseCompFrac,
-                                                                                     m_dCompFrac_dCompDens,
-                                                                                     phaseFluxV,
-                                                                                     dPhaseFluxV_dP,
-                                                                                     dPhaseFluxV_dC,
-                                                                                     compFlux,
-                                                                                     dCompFlux_dP,
-                                                                                     dCompFlux_dC );
+              UpwindHelpers::computePhaseComponentFlux(ip,
+                                                                                                  k_up,
+                                                                                                  seri,
+                                                                                                  sesri,
+                                                                                                  sei,
+                                                                                                  m_phaseCompFrac,
+                                                                                                  m_dPhaseCompFrac,
+                                                                                                  m_dCompFrac_dCompDens,
+                                                                                                  viscousPhaseFlux,
+                                                                                                  dViscousPhaseFlux_dP,
+                                                                                                  dViscousPhaseFlux_dC,
+                                                                                                  compFlux,
+                                                                                                  dCompFlux_dP,
+                                                                                                  dCompFlux_dC);
 
             /// Assembling the gravitational flux (and derivatives) from fractional flow and total velocity as \phi_{g} = f_i^{up,g} uT
             localIndex k_up_g = -1;
             localIndex k_up_og = -1;
 
-            real64 phaseFluxG{};
-            real64 dPhaseFluxG_dP[numFluxSupportPoints]{};
-            real64 dPhaseFluxG_dC[numFluxSupportPoints][numComp]{};
+            real64 gravitationalPhaseFlux{};
+            real64 gravitationalPhaseFlux_dP[numFluxSupportPoints]{};
+            real64 gravitationalPhaseFlux_dC[numFluxSupportPoints][numComp]{};
 
-            CompositionalMultiphaseFVMUpwindUtilities::UpwindHelpers::formPotFluxes< numComp,
-                                                                                     CompositionalMultiphaseFVMUpwindUtilities::Term::Gravity,
-                                                                                     numFluxSupportPoints, UpwindSchemeType >(
-              m_numPhases,
-              ip,
-              seri,
-              sesri,
-              sei,
-              trans,
-              dTrans_dPres,
-              totFlux,
-              m_pres,
-              m_gravCoef,
-              m_phaseMob,
-              m_dPhaseMob,
-              m_dPhaseVolFrac,
-              m_dCompFrac_dCompDens,
-              m_phaseMassDens,
-              m_dPhaseMassDens,
-              m_phaseCapPressure,
-              m_dPhaseCapPressure_dPhaseVolFrac,
-              m_hasCapPressure,
-              k_up_g,
-              k_up_og,
-              phaseFlux,
-              dPhaseFlux_dP,
-              dPhaseFlux_dC
+              UpwindHelpers::computePotentialFluxes<numComp,
+                      DrivingForces::Gravity,
+                      numFluxSupportPoints, UpwindSchemeType>(
+                      m_numPhases,
+                      ip,
+                      seri,
+                      sesri,
+                      sei,
+                      trans,
+                      dTrans_dPres,
+                      totFlux,
+                      m_pres,
+                      m_gravCoef,
+                      m_phaseMob,
+                      m_dPhaseMob,
+                      m_dPhaseVolFrac,
+                      m_dCompFrac_dCompDens,
+                      m_phaseMassDens,
+                      m_dPhaseMassDens,
+                      m_phaseCapPressure,
+                      m_dPhaseCapPressure_dPhaseVolFrac,
+                      m_hasCapPressure,
+                      k_up_g,
+                      k_up_og,
+                      phaseFlux,
+                      dPhaseFlux_dP,
+                      dPhaseFlux_dC
               );
 
             // Distributing the gravitational flux of phase i onto component
-            CompositionalMultiphaseFVMUpwindUtilities::UpwindHelpers::formPhaseComp( ip,
-                                                                                     k_up_g,
-                                                                                     seri,
-                                                                                     sesri,
-                                                                                     sei,
-                                                                                     m_phaseCompFrac,
-                                                                                     m_dPhaseCompFrac,
-                                                                                     m_dCompFrac_dCompDens,
-                                                                                     phaseFluxG,
-                                                                                     dPhaseFluxG_dP,
-                                                                                     dPhaseFluxG_dC,
-                                                                                     compFlux,
-                                                                                     dCompFlux_dP,
-                                                                                     dCompFlux_dC );
+              UpwindHelpers::computePhaseComponentFlux(ip,
+                                                       k_up_g,
+                                                       seri,
+                                                       sesri,
+                                                       sei,
+                                                       m_phaseCompFrac,
+                                                       m_dPhaseCompFrac,
+                                                       m_dCompFrac_dCompDens,
+                                                       gravitationalPhaseFlux,
+                                                       gravitationalPhaseFlux_dP,
+                                                       gravitationalPhaseFlux_dC,
+                                                       compFlux,
+                                                       dCompFlux_dP,
+                                                       dCompFlux_dC);
 
             //update phaseFlux from gravitational
-            phaseFlux += phaseFluxG;
+            phaseFlux += gravitationalPhaseFlux;
             for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
             {
-              dPhaseFlux_dP[ke] += dPhaseFluxG_dP[ke];
+              dPhaseFlux_dP[ke] += gravitationalPhaseFlux_dP[ke];
               for( localIndex ic = 0; ic < numComp; ++ic )
-                dPhaseFlux_dC[ke][ic] += dPhaseFluxG_dC[ke][ic];
+                dPhaseFlux_dC[ke][ic] += gravitationalPhaseFlux_dC[ke][ic];
             }
 
 
@@ -852,62 +859,62 @@ public:
               localIndex k_up_pc = -1;
               localIndex k_up_opc = -1;
 
-              real64 phaseFluxCap{};
-              real64 dPhaseFluxCap_dP[numFluxSupportPoints]{};
-              real64 dPhaseFluxCap_dC[numFluxSupportPoints][numComp]{};
+              real64 capillaryPhaseFlux{};
+              real64 dCapillaryPhaseFlux_dP[numFluxSupportPoints]{};
+              real64 dCapillaryPhaseFlux_dC[numFluxSupportPoints][numComp]{};
 
-              CompositionalMultiphaseFVMUpwindUtilities::UpwindHelpers::formPotFluxes< numComp,
-                                                                                       CompositionalMultiphaseFVMUpwindUtilities::Term::Capillary,
-                                                                                       numFluxSupportPoints, UpwindSchemeType >(
-                m_numPhases,
-                ip,
-                seri,
-                sesri,
-                sei,
-                trans,
-                dTrans_dPres,
-                totFlux,
-                m_pres,
-                m_gravCoef,
-                m_phaseMob,
-                m_dPhaseMob,
-                m_dPhaseVolFrac,
-                m_dCompFrac_dCompDens,
-                m_phaseMassDens,
-                m_dPhaseMassDens,
-                m_phaseCapPressure,
-                m_dPhaseCapPressure_dPhaseVolFrac,
-                m_hasCapPressure,
-                k_up_pc,
-                k_up_opc,
-                phaseFluxCap,
-                dPhaseFluxCap_dP,
-                dPhaseFluxCap_dC
+                UpwindHelpers::computePotentialFluxes<numComp,
+                        DrivingForces::Capillary,
+                        numFluxSupportPoints, UpwindSchemeType>(
+                        m_numPhases,
+                        ip,
+                        seri,
+                        sesri,
+                        sei,
+                        trans,
+                        dTrans_dPres,
+                        totFlux,
+                        m_pres,
+                        m_gravCoef,
+                        m_phaseMob,
+                        m_dPhaseMob,
+                        m_dPhaseVolFrac,
+                        m_dCompFrac_dCompDens,
+                        m_phaseMassDens,
+                        m_dPhaseMassDens,
+                        m_phaseCapPressure,
+                        m_dPhaseCapPressure_dPhaseVolFrac,
+                        m_hasCapPressure,
+                        k_up_pc,
+                        k_up_opc,
+                        capillaryPhaseFlux,
+                        dCapillaryPhaseFlux_dP,
+                        dCapillaryPhaseFlux_dC
                 );
 
               // Distributing the gravitational flux of phase i onto component
-              CompositionalMultiphaseFVMUpwindUtilities::UpwindHelpers::formPhaseComp( ip,
-                                                                                       k_up_pc,
-                                                                                       seri,
-                                                                                       sesri,
-                                                                                       sei,
-                                                                                       m_phaseCompFrac,
-                                                                                       m_dPhaseCompFrac,
-                                                                                       m_dCompFrac_dCompDens,
-                                                                                       phaseFluxCap,
-                                                                                       dPhaseFluxCap_dP,
-                                                                                       dPhaseFluxCap_dC,
-                                                                                       compFlux,
-                                                                                       dCompFlux_dP,
-                                                                                       dCompFlux_dC );
+                UpwindHelpers::computePhaseComponentFlux(ip,
+                                                         k_up_pc,
+                                                         seri,
+                                                         sesri,
+                                                         sei,
+                                                         m_phaseCompFrac,
+                                                         m_dPhaseCompFrac,
+                                                         m_dCompFrac_dCompDens,
+                                                         capillaryPhaseFlux,
+                                                         dCapillaryPhaseFlux_dP,
+                                                         dCapillaryPhaseFlux_dC,
+                                                         compFlux,
+                                                         dCompFlux_dP,
+                                                         dCompFlux_dC);
 
               //update phaseFlux from gravitational and capillary part
-              phaseFlux += phaseFluxCap;
+              phaseFlux += capillaryPhaseFlux;
               for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
               {
-                dPhaseFlux_dP[ke] += dPhaseFluxCap_dP[ke];
+                dPhaseFlux_dP[ke] += dCapillaryPhaseFlux_dP[ke];
                 for( localIndex ic = 0; ic < numComp; ++ic )
-                  dPhaseFlux_dC[ke][ic] += dPhaseFluxCap_dC[ke][ic];
+                  dPhaseFlux_dC[ke][ic] += dCapillaryPhaseFlux_dC[ke][ic];
               }
 
             }                    //end if capPressureFlag

@@ -381,34 +381,34 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
           for( localIndex ip = 0; ip < NP; ++ip )
           {
 
-            UHelpers::computePPUVelocity< NC, numFluxSupportPoints >(
-              NP,
-              ip,
-              {seri[iconn][0], seri[iconn][1]},
-              {sesri[iconn][0], sesri[iconn][1]},
-              {sei[iconn][0], sei[iconn][1]},
-              trans,
-              dTrans_dP,
-              presView.toNestedViewConst(),
-              gravCoefView.toNestedViewConst(),
-              phaseMobView.toNestedViewConst(),
-              dPhaseMobView.toNestedViewConst(),
-              dPhaseVolFracView.toNestedViewConst(),
-              dCompFrac_dCompDensView.toNestedViewConst(),
-              phaseMassDensView.toNestedViewConst(),
-              dPhaseMassDensView.toNestedViewConst(),
-              phaseCapPressureView.toNestedViewConst(),
-              dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
-              capPressureFlag,
-              k_up[ip],
-              potGrad,
-              phaseFlux[ip],
-              dPhaseFlux_dP[ip],
-              dPhaseFlux_dC[ip] );
+              UHelpers::computePPUPhaseFlux<NC, numFluxSupportPoints>(
+                      NP,
+                      ip,
+                      {seri[iconn][0], seri[iconn][1]},
+                      {sesri[iconn][0], sesri[iconn][1]},
+                      {sei[iconn][0], sei[iconn][1]},
+                      trans,
+                      dTrans_dP,
+                      presView.toNestedViewConst(),
+                      gravCoefView.toNestedViewConst(),
+                      phaseMobView.toNestedViewConst(),
+                      dPhaseMobView.toNestedViewConst(),
+                      dPhaseVolFracView.toNestedViewConst(),
+                      dCompFrac_dCompDensView.toNestedViewConst(),
+                      phaseMassDensView.toNestedViewConst(),
+                      dPhaseMassDensView.toNestedViewConst(),
+                      phaseCapPressureView.toNestedViewConst(),
+                      dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
+                      capPressureFlag,
+                      k_up[ip],
+                      potGrad,
+                      phaseFlux[ip],
+                      dPhaseFlux_dP[ip],
+                      dPhaseFlux_dC[ip]);
             // grabing total flux and other potential on the way as needed for fractional flow formulation
             totFlux += phaseFlux[ip];
 
-            UHelpers::formPotential< NC, CompositionalMultiphaseFVMUpwindUtilities::Term::Gravity, numFluxSupportPoints >::compute(
+            UHelpers::computePotential< NC, CompositionalMultiphaseFVMUpwindUtilities::DrivingForces::Gravity, numFluxSupportPoints >::compute(
               NP,
               ip,
               {seri[iconn][0], seri[iconn][1]},
@@ -430,7 +430,7 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
               dProp_dC[ip]
               );
 
-            UHelpers::formPotential< NC, CompositionalMultiphaseFVMUpwindUtilities::Term::Capillary, numFluxSupportPoints >::compute(
+            UHelpers::computePotential< NC, CompositionalMultiphaseFVMUpwindUtilities::DrivingForces::Capillary, numFluxSupportPoints >::compute(
               NP,
               ip,
               {seri[iconn][0], seri[iconn][1]},
@@ -460,32 +460,32 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
           for( localIndex ip = 0; ip < NP; ++ip )
           {
               //Forming same upwind scheme but with fractional flow formulation -- upwind direction should be the same
-            UHelpers::formFracFlow< NC, numFluxSupportPoints,
-                                    CompositionalMultiphaseFVMUpwindUtilities::Term::Viscous,
-                                    CompositionalMultiphaseFVMUpwindUtilities::PhasePotentialUpwind >(
-              NP,
-              ip,
-              {seri[iconn][0],seri[iconn][1]},
-              {sesri[iconn][0],sesri[iconn][1]},
-              {sei[iconn][0],sei[iconn][1]},
-              trans,
-              dTrans_dP,
-              totFlux,
-              presView.toNestedViewConst(),
-              gravCoefView.toNestedViewConst(),
-              dCompFrac_dCompDensView.toNestedViewConst(),
-              phaseMassDensView.toNestedViewConst(),
-              dPhaseMassDensView.toNestedViewConst(),
-              phaseMobView.toNestedViewConst(),
-              dPhaseMobView.toNestedViewConst(),
-              dPhaseVolFracView.toNestedViewConst(),
-              phaseCapPressureView.toNestedViewConst(),
-              dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
-              capPressureFlag,
-              k_up_scheme[ip],
-              fflow[ip],
-              dFflow_dP[ip],
-              dFflow_dC[ip] );
+              UHelpers::computeFractionalFlow<NC, numFluxSupportPoints,
+                      CompositionalMultiphaseFVMUpwindUtilities::DrivingForces::Viscous,
+                      CompositionalMultiphaseFVMUpwindUtilities::PhasePotentialUpwind>(
+                      NP,
+                      ip,
+                      {seri[iconn][0], seri[iconn][1]},
+                      {sesri[iconn][0], sesri[iconn][1]},
+                      {sei[iconn][0], sei[iconn][1]},
+                      trans,
+                      dTrans_dP,
+                      totFlux,
+                      presView.toNestedViewConst(),
+                      gravCoefView.toNestedViewConst(),
+                      dCompFrac_dCompDensView.toNestedViewConst(),
+                      phaseMassDensView.toNestedViewConst(),
+                      dPhaseMassDensView.toNestedViewConst(),
+                      phaseMobView.toNestedViewConst(),
+                      dPhaseMobView.toNestedViewConst(),
+                      dPhaseVolFracView.toNestedViewConst(),
+                      phaseCapPressureView.toNestedViewConst(),
+                      dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
+                      capPressureFlag,
+                      k_up_scheme[ip],
+                      fflow[ip],
+                      dFflow_dP[ip],
+                      dFflow_dC[ip]);
 
             EXPECT_EQ( k_up_scheme[ip], k_up[ip] );
 
@@ -520,9 +520,9 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
 
 }//EOfunc
 
-template< localIndex NC, localIndex NP, Term T, bool isViscous = (T == Term::Viscous), bool isGrav = (T ==
-                                                                                                      Term::Gravity), bool isCapillary = (
-            T == Term::Capillary) >
+template< localIndex NC, localIndex NP, DrivingForces T, bool isViscous = (T == DrivingForces::Viscous), bool isGrav = (T ==
+                                                                                                                        DrivingForces::Gravity), bool isCapillary = (
+        T == DrivingForces::Capillary) >
 void testCompositionalUpwindHUPU( CompositionalMultiphaseFVM & solver,
                                   DomainPartition & domain )
 {
@@ -588,30 +588,30 @@ void testCompositionalUpwindHUPU( CompositionalMultiphaseFVM & solver,
           real64 dPhaseFlux_dC[NP][numFluxSupportPoints][NC]{};
           for( localIndex ip = 0; ip < NP; ++ip )
           {
-            UHelpers::computePPUVelocity< NC, numFluxSupportPoints >(
-              NP,
-              ip,
-              {seri[iconn][0], seri[iconn][1]},
-              {sesri[iconn][0], sesri[iconn][1]},
-              {sei[iconn][0], sei[iconn][1]},
-              trans,
-              dTrans_dP,
-              presView.toNestedViewConst(),
-              gravCoefView.toNestedViewConst(),
-              phaseMobView.toNestedViewConst(),
-              dPhaseMobView.toNestedViewConst(),
-              dPhaseVolFracView.toNestedViewConst(),
-              dCompFrac_dCompDensView.toNestedViewConst(),
-              phaseMassDensView.toNestedViewConst(),
-              dPhaseMassDensView.toNestedViewConst(),
-              phaseCapPressureView.toNestedViewConst(),
-              dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
-              capPressureFlag,
-              k_up,
-              potGrad,
-              phaseFlux[ip],
-              dPhaseFlux_dP[ip],
-              dPhaseFlux_dC[ip] );
+              UHelpers::computePPUPhaseFlux<NC, numFluxSupportPoints>(
+                      NP,
+                      ip,
+                      {seri[iconn][0], seri[iconn][1]},
+                      {sesri[iconn][0], sesri[iconn][1]},
+                      {sei[iconn][0], sei[iconn][1]},
+                      trans,
+                      dTrans_dP,
+                      presView.toNestedViewConst(),
+                      gravCoefView.toNestedViewConst(),
+                      phaseMobView.toNestedViewConst(),
+                      dPhaseMobView.toNestedViewConst(),
+                      dPhaseVolFracView.toNestedViewConst(),
+                      dCompFrac_dCompDensView.toNestedViewConst(),
+                      phaseMassDensView.toNestedViewConst(),
+                      dPhaseMassDensView.toNestedViewConst(),
+                      phaseCapPressureView.toNestedViewConst(),
+                      dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
+                      capPressureFlag,
+                      k_up,
+                      potGrad,
+                      phaseFlux[ip],
+                      dPhaseFlux_dP[ip],
+                      dPhaseFlux_dC[ip]);
 
             totFlux += phaseFlux[ip];
 
@@ -620,59 +620,59 @@ void testCompositionalUpwindHUPU( CompositionalMultiphaseFVM & solver,
           //standard loop
           for( localIndex ip = 0; ip < NP; ++ip )
           {
-            UHelpers::formFracFlow< NC, numFluxSupportPoints,
-                                    T,
-                                    HybridUpwind >(
-              NP,
-              ip,
-              {seri[iconn][0], seri[iconn][1]},
-              {sesri[iconn][0], sesri[iconn][1]},
-              {sei[iconn][0], sei[iconn][1]},
-              trans,
-              dTrans_dP,
-              (isViscous) ? totFlux : 0.0,
-              presView.toNestedViewConst(),
-              gravCoefView.toNestedViewConst(),
-              dCompFrac_dCompDensView.toNestedViewConst(),
-              phaseMassDensView.toNestedViewConst(),
-              dPhaseMassDensView.toNestedViewConst(),
-              phaseMobView.toNestedViewConst(),
-              dPhaseMobView.toNestedViewConst(),
-              dPhaseVolFracView.toNestedViewConst(),
-              phaseCapPressureView.toNestedViewConst(),
-              dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
-              capPressureFlag,
-              k_up_hu,
-              fflow[0],
-              dFflow_dP[0],
-              dFflow_dC[0] );
+              UHelpers::computeFractionalFlow<NC, numFluxSupportPoints,
+                      T,
+                      HybridUpwind>(
+                      NP,
+                      ip,
+                      {seri[iconn][0], seri[iconn][1]},
+                      {sesri[iconn][0], sesri[iconn][1]},
+                      {sei[iconn][0], sei[iconn][1]},
+                      trans,
+                      dTrans_dP,
+                      (isViscous) ? totFlux : 0.0,
+                      presView.toNestedViewConst(),
+                      gravCoefView.toNestedViewConst(),
+                      dCompFrac_dCompDensView.toNestedViewConst(),
+                      phaseMassDensView.toNestedViewConst(),
+                      dPhaseMassDensView.toNestedViewConst(),
+                      phaseMobView.toNestedViewConst(),
+                      dPhaseMobView.toNestedViewConst(),
+                      dPhaseVolFracView.toNestedViewConst(),
+                      phaseCapPressureView.toNestedViewConst(),
+                      dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
+                      capPressureFlag,
+                      k_up_hu,
+                      fflow[0],
+                      dFflow_dP[0],
+                      dFflow_dC[0]);
 
-            UHelpers::formFracFlow< NC, numFluxSupportPoints,
-                                    T,
-                                    PhaseUpwind >(
-              NP,
-              ip,
-              {seri[iconn][0], seri[iconn][1]},
-              {sesri[iconn][0], sesri[iconn][1]},
-              {sei[iconn][0], sei[iconn][1]},
-              trans,
-              dTrans_dP,
-              (isViscous) ? totFlux : 0.0,
-              presView.toNestedViewConst(),
-              gravCoefView.toNestedViewConst(),
-              dCompFrac_dCompDensView.toNestedViewConst(),
-              phaseMassDensView.toNestedViewConst(),
-              dPhaseMassDensView.toNestedViewConst(),
-              phaseMobView.toNestedViewConst(),
-              dPhaseMobView.toNestedViewConst(),
-              dPhaseVolFracView.toNestedViewConst(),
-              phaseCapPressureView.toNestedViewConst(),
-              dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
-              capPressureFlag,
-              k_up_pu,
-              fflow[1],
-              dFflow_dP[1],
-              dFflow_dC[1] );
+              UHelpers::computeFractionalFlow<NC, numFluxSupportPoints,
+                      T,
+                      PhaseUpwind>(
+                      NP,
+                      ip,
+                      {seri[iconn][0], seri[iconn][1]},
+                      {sesri[iconn][0], sesri[iconn][1]},
+                      {sei[iconn][0], sei[iconn][1]},
+                      trans,
+                      dTrans_dP,
+                      (isViscous) ? totFlux : 0.0,
+                      presView.toNestedViewConst(),
+                      gravCoefView.toNestedViewConst(),
+                      dCompFrac_dCompDensView.toNestedViewConst(),
+                      phaseMassDensView.toNestedViewConst(),
+                      dPhaseMassDensView.toNestedViewConst(),
+                      phaseMobView.toNestedViewConst(),
+                      dPhaseMobView.toNestedViewConst(),
+                      dPhaseVolFracView.toNestedViewConst(),
+                      phaseCapPressureView.toNestedViewConst(),
+                      dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
+                      capPressureFlag,
+                      k_up_pu,
+                      fflow[1],
+                      dFflow_dP[1],
+                      dFflow_dC[1]);
 
             EXPECT_EQ( k_up_hu, k_up_pu );
             EXPECT_EQ(fflow[0], fflow[1] );
@@ -736,7 +736,7 @@ TEST_F( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_HUPUViscous )
   localIndex constexpr NP = 2;
   localIndex constexpr NC = 4;
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
-  testCompositionalUpwindHUPU< NC, NP, Term::Viscous >( *solver, domain );
+  testCompositionalUpwindHUPU< NC, NP, DrivingForces::Viscous >(*solver, domain );
 }
 
 TEST_F( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_HUPUGravity )
@@ -744,7 +744,7 @@ TEST_F( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_HUPUGravity )
   localIndex constexpr NP = 2;
   localIndex constexpr NC = 4;
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
-  testCompositionalUpwindHUPU< NC, NP, Term::Gravity >( *solver, domain );
+  testCompositionalUpwindHUPU< NC, NP, DrivingForces::Gravity >(*solver, domain );
 }
 
 TEST_F( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_HUPUCapillary )
@@ -752,7 +752,7 @@ TEST_F( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_HUPUCapillary )
   localIndex constexpr NP = 2;
   localIndex constexpr NC = 4;
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
-  testCompositionalUpwindHUPU< NC, NP, Term::Capillary >( *solver, domain );
+  testCompositionalUpwindHUPU< NC, NP, DrivingForces::Capillary >(*solver, domain );
 }
 
 int main( int argc,
