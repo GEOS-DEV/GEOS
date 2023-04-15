@@ -18,8 +18,8 @@
 // TPL includes
 #include <gtest/gtest.h>
 
-using namespace geosx;
-using namespace geosx::traits;
+using namespace geos;
+using namespace geos::traits;
 
 
 

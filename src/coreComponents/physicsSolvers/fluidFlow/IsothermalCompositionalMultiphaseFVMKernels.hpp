@@ -16,8 +16,8 @@
  * @file IsothermalCompositionalMultiphaseFVMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataLayouts.hpp"
@@ -41,7 +41,7 @@
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace isothermalCompositionalMultiphaseFVMKernels
@@ -98,7 +98,7 @@ public:
    * @param[in] phaseMobilityKernelOp the function used to customize the kernel
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( localIndex const ei,
                 FUNC && phaseMobilityKernelOp = NoOpFunc{} ) const
   {
@@ -475,7 +475,7 @@ public:
      * @param[in] size size of the stencil for this connection
      * @param[in] numElems number of elements for this connection
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
       : stencilSize( size ),
       numConnectedElems( numElems ),
@@ -515,7 +515,7 @@ public:
    * @param[in] iconn the connection index
    * @return the size of the stencil at this connection
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex stencilSize( localIndex const iconn ) const
   { return m_sei[iconn].size(); }
 
@@ -524,7 +524,7 @@ public:
    * @param[in] iconn the connection index
    * @return the number of elements at this connection
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex numPointsInFlux( localIndex const iconn ) const
   { return m_stencilWrapper.numPointsInFlux( iconn ); }
 
@@ -534,7 +534,7 @@ public:
    * @param[in] iconn the connection index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const iconn,
               StackVariables & stack ) const
   {
@@ -558,7 +558,7 @@ public:
    * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
                     FUNC && compFluxKernelOp = NoOpFunc{} ) const
@@ -830,7 +830,7 @@ public:
    * @param[inout] stack the stack variables
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack,
                  FUNC && assemblyKernelOp = NoOpFunc{} ) const
@@ -853,8 +853,8 @@ public:
       {
         globalIndex const globalRow = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
         localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
-        GEOSX_ASSERT_GE( localRow, 0 );
-        GEOSX_ASSERT_GT( m_localMatrix.numRows(), localRow + numComp );
+        GEOS_ASSERT_GE( localRow, 0 );
+        GEOS_ASSERT_GT( m_localMatrix.numRows(), localRow + numComp );
 
         for( integer ic = 0; ic < numComp; ++ic )
         {
@@ -884,9 +884,9 @@ public:
   launch( localIndex const numConnections,
           KERNEL_TYPE const & kernelComponent )
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
-    forAll< POLICY >( numConnections, [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+    forAll< POLICY >( numConnections, [=] GEOS_HOST_DEVICE ( localIndex const iconn )
     {
       typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
                                                   kernelComponent.numPointsInFlux( iconn ) );
@@ -1093,9 +1093,9 @@ public:
      * @param[in] size size of the stencil for this connection
      * @param[in] numElems number of elements for this connection
      */
-    GEOSX_HOST_DEVICE
-    StackVariables( localIndex const GEOSX_UNUSED_PARAM( size ),
-                    localIndex GEOSX_UNUSED_PARAM( numElems ) )
+    GEOS_HOST_DEVICE
+    StackVariables( localIndex const GEOS_UNUSED_PARAM( size ),
+                    localIndex GEOS_UNUSED_PARAM( numElems ) )
     {}
 
     // Transmissibility
@@ -1128,7 +1128,7 @@ public:
    * @param[in] iconn the connection index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const iconn,
               StackVariables & stack ) const
   {
@@ -1150,7 +1150,7 @@ public:
    * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
                     FUNC && compFluxKernelOp = NoOpFunc{} ) const
@@ -1352,7 +1352,7 @@ public:
    * @param[inout] stack the stack variables
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack,
                  FUNC && assemblyKernelOp = NoOpFunc{} ) const
@@ -1372,8 +1372,8 @@ public:
     {
       globalIndex const globalRow = m_dofNumber[m_seri( iconn, Order::ELEM )][m_sesri( iconn, Order::ELEM )][m_sei( iconn, Order::ELEM )];
       localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
-      GEOSX_ASSERT_GE( localRow, 0 );
-      GEOSX_ASSERT_GT( AbstractBase::m_localMatrix.numRows(), localRow + numComp );
+      GEOS_ASSERT_GE( localRow, 0 );
+      GEOS_ASSERT_GT( AbstractBase::m_localMatrix.numRows(), localRow + numComp );
 
       for( integer ic = 0; ic < numComp; ++ic )
       {
@@ -1521,7 +1521,7 @@ struct CFLFluxKernel
     StencilMaterialAccessors< RelativePermeabilityBase, fields::relperm::phaseRelPerm >;
 
   template< integer NC, localIndex NUM_ELEMS, localIndex maxStencilSize >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   compute( integer const numPhases,
            localIndex const stencilSize,
@@ -1572,7 +1572,7 @@ struct CFLKernel
   static constexpr real64 minComponentFraction = 1e-12;
 
   template< integer NP >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   computePhaseCFL( real64 const & poreVol,
                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac,
@@ -1583,7 +1583,7 @@ struct CFLKernel
                    real64 & phaseCFLNumber );
 
   template< integer NC >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   computeCompCFL( real64 const & poreVol,
                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > compDens,
@@ -1645,7 +1645,7 @@ struct AquiferBCKernel
                               fields::multifluid::dPhaseCompFraction >;
 
   template< integer NC >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
     compute( integer const numPhases,
              integer const ipWater,
@@ -1696,7 +1696,7 @@ struct AquiferBCKernel
 
 } // namespace isothermalCompositionalMultiphaseFVMKernels
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP

@@ -16,8 +16,8 @@
  * @file SuperLUDist.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_SUPERLU_DIST_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_SUPERLU_DIST_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_SUPERLU_DIST_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_SUPERLU_DIST_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/LinearSolverBase.hpp"
@@ -27,7 +27,7 @@
 
 #include <memory>
 
-namespace geosx
+namespace geos
 {
 
 /// Forward declaration for SuperLU_Dist data struct
@@ -128,4 +128,4 @@ private:
 
 }
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_SUPERLU_DIST_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_INTERFACES_SUPERLU_DIST_HPP_*/

@@ -3,7 +3,7 @@
 Adding a new Physics Solver
 ###########################
 
-In this tutorial, you will learn how to construct a new GEOSX Physics Solver class.
+In this tutorial, you will learn how to construct a new GEOS Physics Solver class.
 We will use *LaplaceFEM* solver, computing the solution of the Laplace problem in
 a specified material, as a starting point.
 
@@ -56,7 +56,7 @@ the transient state.
    :end-before: //END_SPHINX_INCLUDE_TIMEINTOPT
 
 In order to register an enumeration type with the Data Repository and have its value read from input,
-we must define stream insertion/extraction operators. This is a common task, so GEOSX provides
+we must define stream insertion/extraction operators. This is a common task, so GEOS provides
 a facility for automating it. Upon including ``common/EnumStrings.hpp``, we can call the following macro
 at the namespace scope (in this case, right after the ``LaplaceBaseH1`` class definition is complete):
 
@@ -74,7 +74,7 @@ Once explained the main variables and enum, let us start reading through the dif
 
 Start looking at the class *LaplaceFEM* constructor and destructor declarations
 shows the usual `string` ``name`` and `Group*` pointer to ``parent`` that are required
-to build the global file-system like structure of GEOSX (see :ref:`GroupPar` for details).
+to build the global file-system like structure of GEOS (see :ref:`GroupPar` for details).
 It can also be noted that the nullary constructor is deleted on purpose to avoid compiler
 automatic generation and user misuse.
 
@@ -218,7 +218,7 @@ commented afterwards.
 
   #include "physicsSolvers/simplePDE/LaplaceFEM.hpp"
 
-  namespace geosx
+  namespace geos
   {
 
   class LaplaceDiffFEM : public LaplaceFEM

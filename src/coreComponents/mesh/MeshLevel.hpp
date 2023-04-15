@@ -16,8 +16,8 @@
  * @file MeshLevel.hpp
  */
 
-#ifndef GEOSX_MESH_MESHLEVEL_HPP_
-#define GEOSX_MESH_MESHLEVEL_HPP_
+#ifndef GEOS_MESH_MESHLEVEL_HPP_
+#define GEOS_MESH_MESHLEVEL_HPP_
 
 #include "NodeManager.hpp"
 #include "EmbeddedSurfaceNodeManager.hpp"
@@ -25,7 +25,7 @@
 #include "ElementRegionManager.hpp"
 #include "FaceManager.hpp"
 
-namespace geosx
+namespace geos
 {
 class ElementRegionManager;
 
@@ -285,6 +285,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_MESHLEVEL_HPP_ */
+#endif /* GEOS_MESH_MESHLEVEL_HPP_ */

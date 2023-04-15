@@ -18,4 +18,4 @@
 
 #include <typeindex>
 
-using namespace geosx;
+using namespace geos;

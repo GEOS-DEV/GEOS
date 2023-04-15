@@ -3,7 +3,7 @@
 System prerequisites
 ====================
 
-To configure and build GEOSX you will need the following tools available on your system.
+To configure and build GEOS you will need the following tools available on your system.
 
 List of prerequisites
 ---------------------
@@ -25,7 +25,7 @@ If you plan on building bundled third-party library (TPLs) dependencies yourself
 
 - Compatible C and Fortran compilers
 
-If you will be checking out and running integrated tests (a submodule of GEOSX, currently not publicly available):
+If you will be checking out and running integrated tests (a submodule of GEOS, currently not publicly available):
 
 - `git-lfs <https://git-lfs.github.com/>`_ (Git Large File Storage extension)
 - `h5py <https://www.h5py.org/>`_ and `mpi4py <https://pypi.org/project/mpi4py/>`_ python modules

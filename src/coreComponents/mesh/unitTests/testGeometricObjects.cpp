@@ -20,7 +20,7 @@
 
 #include <gtest/gtest.h>
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -148,4 +148,4 @@ TEST( GeometricObjectTests, Cylinder )
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */

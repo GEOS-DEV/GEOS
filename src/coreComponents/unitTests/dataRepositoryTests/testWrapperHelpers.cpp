@@ -25,7 +25,7 @@
 #include <random>
 
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -229,17 +229,17 @@ TYPED_TEST( AverageOverSecondDim, test )
 
 } // namespace testing
 } // namespace dataRepository
-} // end namespace geosx
+} // end namespace geos
 
 int main( int argc, char * argv[] )
 {
   testing::InitGoogleTest( &argc, argv );
 
-  geosx::basicSetup( argc, argv );
+  geos::basicSetup( argc, argv );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::basicCleanup();
+  geos::basicCleanup();
 
   return result;
 }

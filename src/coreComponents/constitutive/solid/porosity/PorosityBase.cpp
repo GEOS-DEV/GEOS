@@ -19,7 +19,7 @@
 #include "constitutive/solid/porosity/PorosityBase.hpp"
 #include "constitutive/solid/porosity/PorosityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -79,7 +79,7 @@ void PorosityBase::scaleReferencePorosity( arrayView1d< real64 const > scalingFa
 
   arrayView1d< real64 > referencePorosity = m_referencePorosity;
 
-  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( numE, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     referencePorosity[k] *= scalingFactors[k];
   } );
@@ -97,4 +97,4 @@ void PorosityBase::initializeState() const
 }
 
 }
-} /* namespace geosx */
+} /* namespace geos */

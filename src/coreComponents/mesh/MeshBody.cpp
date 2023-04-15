@@ -19,7 +19,7 @@
 #include "MeshBody.hpp"
 #include "MeshLevel.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -75,8 +75,8 @@ void MeshBody::setGlobalLengthScale( real64 scale )
 
 string MeshBody::intToMeshLevelString( localIndex const meshLevel )
 {
-  return GEOSX_FMT( "Level{}", meshLevel );
+  return GEOS_FMT( "Level{}", meshLevel );
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */

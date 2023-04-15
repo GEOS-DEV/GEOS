@@ -17,8 +17,8 @@
  * @file ConstitutivePassThru.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
-#define GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
+#ifndef GEOS_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
+#define GEOS_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
 
 #include "ConstitutivePassThruHandler.hpp"
 #include "NullModel.hpp"
@@ -46,7 +46,7 @@
 #include "permeability/WillisRichardsPermeability.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -111,9 +111,9 @@ struct ConstitutivePassThru< NullModel >
     }
     else
     {
-      GEOSX_ERROR( "ConstitutivePassThru< NullModel >::execute failed. The constitutive relation is named "
-                   << constitutiveRelation.getName() << " with type "
-                   << LvArray::system::demangleType( constitutiveRelation ) );
+      GEOS_ERROR( "ConstitutivePassThru< NullModel >::execute failed. The constitutive relation is named "
+                  << constitutiveRelation.getName() << " with type "
+                  << LvArray::system::demangleType( constitutiveRelation ) );
     }
   }
 };
@@ -135,9 +135,9 @@ struct ConstitutivePassThru< PorousSolid< ElasticIsotropic > >
     }
     else
     {
-      GEOSX_ERROR( "ConstitutivePassThru< PorousSolid< ElasticIsotropic > >::execute failed. The constitutive relation is named "
-                   << constitutiveRelation.getName() << " with type "
-                   << LvArray::system::demangleType( constitutiveRelation ) );
+      GEOS_ERROR( "ConstitutivePassThru< PorousSolid< ElasticIsotropic > >::execute failed. The constitutive relation is named "
+                  << constitutiveRelation.getName() << " with type "
+                  << LvArray::system::demangleType( constitutiveRelation ) );
     }
   }
 };
@@ -233,9 +233,9 @@ struct ConstitutivePassThru< ProppantSolid< ProppantPorosity, ProppantPermeabili
     }
     else
     {
-      GEOSX_ERROR( "ConstitutivePassThru< ProppantSolid >::execute failed. The constitutive relation is named "
-                   << constitutiveRelation.getName() << " with type "
-                   << LvArray::system::demangleType( constitutiveRelation ) );
+      GEOS_ERROR( "ConstitutivePassThru< ProppantSolid >::execute failed. The constitutive relation is named "
+                  << constitutiveRelation.getName() << " with type "
+                  << LvArray::system::demangleType( constitutiveRelation ) );
     }
   }
 };
@@ -296,6 +296,6 @@ struct ConstitutivePassThru< CoupledSolidBase >
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_ */

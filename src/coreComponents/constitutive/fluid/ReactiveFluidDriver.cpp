@@ -22,7 +22,7 @@
 #include "functions/TableFunction.hpp"
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 using namespace constitutive;
@@ -114,16 +114,16 @@ void ReactiveFluidDriver::postProcessInput()
 }
 
 
-bool ReactiveFluidDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                                   real64 const GEOSX_UNUSED_PARAM( dt ),
-                                   integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                                   integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                                   real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                                   DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+bool ReactiveFluidDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
+                                   real64 const GEOS_UNUSED_PARAM( dt ),
+                                   integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                   integer const GEOS_UNUSED_PARAM( eventCounter ),
+                                   real64 const GEOS_UNUSED_PARAM( eventProgress ),
+                                   DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   // this code only makes sense in serial
 
-  GEOSX_THROW_IF( MpiWrapper::commRank() > 0, "ReactiveFluidDriver should only be run in serial", std::runtime_error );
+  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "ReactiveFluidDriver should only be run in serial", std::runtime_error );
 
   // get the fluid out of the constitutive manager.
   // for the moment it is of type MultiFluidBase.
@@ -135,18 +135,18 @@ bool ReactiveFluidDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
 
   if( getLogLevel() > 0 )
   {
-    GEOSX_LOG_RANK_0( "Launching ReactiveFluid Driver" );
-    GEOSX_LOG_RANK_0( "  Fluid .................. " << m_fluidName );
-    GEOSX_LOG_RANK_0( "  Type ................... " << baseFluid.getCatalogName() );
-    GEOSX_LOG_RANK_0( "  No. of Phases .......... " << m_numPhases );
-    GEOSX_LOG_RANK_0( "  No. of Primary Species ...... " << m_numPrimarySpecies );
-    GEOSX_LOG_RANK_0( "  No. of Secondary Species ...... " << m_numSecondarySpecies );
-    GEOSX_LOG_RANK_0( "  No. of Kinetic Reactions ...... " << m_numKineticReactions );
-    GEOSX_LOG_RANK_0( "  Pressure Control ....... " << m_pressureFunctionName );
-    GEOSX_LOG_RANK_0( "  Temperature Control .... " << m_temperatureFunctionName );
-    GEOSX_LOG_RANK_0( "  Steps .................. " << m_numSteps );
-    GEOSX_LOG_RANK_0( "  Output ................. " << m_outputFile );
-    GEOSX_LOG_RANK_0( "  Baseline ............... " << m_baselineFile );
+    GEOS_LOG_RANK_0( "Launching ReactiveFluid Driver" );
+    GEOS_LOG_RANK_0( "  Fluid .................. " << m_fluidName );
+    GEOS_LOG_RANK_0( "  Type ................... " << baseFluid.getCatalogName() );
+    GEOS_LOG_RANK_0( "  No. of Phases .......... " << m_numPhases );
+    GEOS_LOG_RANK_0( "  No. of Primary Species ...... " << m_numPrimarySpecies );
+    GEOS_LOG_RANK_0( "  No. of Secondary Species ...... " << m_numSecondarySpecies );
+    GEOS_LOG_RANK_0( "  No. of Kinetic Reactions ...... " << m_numKineticReactions );
+    GEOS_LOG_RANK_0( "  Pressure Control ....... " << m_pressureFunctionName );
+    GEOS_LOG_RANK_0( "  Temperature Control .... " << m_temperatureFunctionName );
+    GEOS_LOG_RANK_0( "  Steps .................. " << m_numSteps );
+    GEOS_LOG_RANK_0( "  Output ................. " << m_outputFile );
+    GEOS_LOG_RANK_0( "  Baseline ............... " << m_baselineFile );
   }
 
   // create a dummy discretization with one quadrature point for
@@ -202,7 +202,7 @@ void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > con
   // set composition to user specified feed
   // it is more convenient to provide input in molar, so perform molar to mass conversion here
 
-  GEOSX_ASSERT_EQ( numPrimarySpecies, m_feed.size() );
+  GEOS_ASSERT_EQ( numPrimarySpecies, m_feed.size() );
   array2d< real64, compflow::LAYOUT_COMP > primarySpeciesTotalConcentrationValues( 1, numPrimarySpecies );
   array2d< real64, compflow::LAYOUT_COMP > compositionValues( 1, numPrimarySpecies );
 
@@ -230,7 +230,7 @@ void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > con
   // note: column indexing should be kept consistent with output file header below.
   integer numSteps = m_numSteps;
   using ExecPolicy = typename ReactiveMultiFluid::exec_policy;
-  forAll< ExecPolicy >( 1, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+  forAll< ExecPolicy >( 1, [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
     for( integer n = 0; n <= numSteps; ++n )
     {
@@ -301,7 +301,7 @@ void ReactiveFluidDriver::compareWithBaseline()
   // open baseline file
 
   std::ifstream file( m_baselineFile.c_str() );
-  GEOSX_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
+  GEOS_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
 
   // discard file header
 
@@ -323,26 +323,26 @@ void ReactiveFluidDriver::compareWithBaseline()
   {
     for( integer col=0; col < m_table.size( 1 ); ++col )
     {
-      GEOSX_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
+      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
       file >> value;
 
       error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
-      GEOSX_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
-                                                                                          << " (row " << row+m_numColumns << " with header)"
-                                                                                          << " and column " << col+1, std::runtime_error );
+      GEOS_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
+                                                                                         << " (row " << row+m_numColumns << " with header)"
+                                                                                         << " and column " << col+1, std::runtime_error );
     }
   }
 
   // check we actually reached the end of the baseline file
 
   file >> value;
-  GEOSX_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
+  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
 
   // success
 
   if( getLogLevel() > 0 )
   {
-    GEOSX_LOG_RANK_0( "  Comparison ............. Internal results consistent with baseline." );
+    GEOS_LOG_RANK_0( "  Comparison ............. Internal results consistent with baseline." );
   }
 
   file.close();
@@ -353,4 +353,4 @@ REGISTER_CATALOG_ENTRY( TaskBase,
                         ReactiveFluidDriver,
                         string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

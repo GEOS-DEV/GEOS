@@ -16,8 +16,8 @@
  * @file DofManager.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_
-#define GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_
+#ifndef GEOS_LINEARALGEBRA_DOFMANAGER_HPP_
+#define GEOS_LINEARALGEBRA_DOFMANAGER_HPP_
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/utilities/ComponentMask.hpp"
@@ -25,7 +25,7 @@
 
 #include <numeric>
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;
@@ -591,6 +591,6 @@ private:
   bool m_reordered = false;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /*GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_DOFMANAGER_HPP_*/

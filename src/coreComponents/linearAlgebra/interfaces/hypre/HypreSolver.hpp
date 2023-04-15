@@ -16,14 +16,14 @@
  * @file HypreSolver.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPRESOLVER_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPRESOLVER_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_HYPRESOLVER_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_HYPRESOLVER_HPP_
 
 #include "linearAlgebra/interfaces/hypre/HypreInterface.hpp"
 #include "linearAlgebra/interfaces/hypre/HyprePreconditioner.hpp"
 #include "common/LinearSolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class DofManager;

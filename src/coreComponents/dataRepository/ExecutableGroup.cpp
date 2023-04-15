@@ -18,21 +18,21 @@
 
 #include "ExecutableGroup.hpp"
 
-namespace geosx
+namespace geos
 {
 
-void ExecutableGroup::signalToPrepareForExecution( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                                                   real64 const GEOSX_UNUSED_PARAM( dt ),
-                                                   integer const GEOSX_UNUSED_PARAM( cycle ),
+void ExecutableGroup::signalToPrepareForExecution( real64 const GEOS_UNUSED_PARAM( time_n ),
+                                                   real64 const GEOS_UNUSED_PARAM( dt ),
+                                                   integer const GEOS_UNUSED_PARAM( cycle ),
                                                    DomainPartition &
-                                                   GEOSX_UNUSED_PARAM( domain ) )
+                                                   GEOS_UNUSED_PARAM( domain ) )
 {}
 
-void ExecutableGroup::cleanup( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                               integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                               integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                               real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                               DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+void ExecutableGroup::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
+                               integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                               integer const GEOS_UNUSED_PARAM( eventCounter ),
+                               real64 const GEOS_UNUSED_PARAM( eventProgress ),
+                               DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {}
 
 }

@@ -18,7 +18,7 @@
 
 #include "FaceElementToCellStencil.hpp"
 
-namespace geosx
+namespace geos
 {
 
 FaceElementToCellStencil::FaceElementToCellStencil()
@@ -49,7 +49,7 @@ void FaceElementToCellStencil::add( localIndex const numPts,
                                     real64 const * const weights,
                                     localIndex const connectorIndex )
 {
-  GEOSX_ERROR_IF_NE_MSG( numPts, 2, "Number of cells in faceToCell stencil should be 2" );
+  GEOS_ERROR_IF_NE_MSG( numPts, 2, "Number of cells in faceToCell stencil should be 2" );
 
   localIndex const oldSize = m_elementRegionIndices.size( 0 );
   localIndex const newSize = oldSize + 1;
@@ -109,4 +109,4 @@ FaceElementToCellStencilWrapper::
   m_transMultiplier( transMultiplier )
 {}
 
-} /* namespace geosx */
+} /* namespace geos */

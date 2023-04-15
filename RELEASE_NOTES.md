@@ -9,12 +9,12 @@
 [comment]: # (All right reserved)
 [comment]: # 
 [comment]: # (For more details see:)
-[comment]: # (  https://github.com/GEOSX/GEOSX/LICENSE)
-[comment]: # (  https://github.com/GEOSX/GEOSX/COPYRIGHT)
-[comment]: # (  https://github.com/GEOSX/GEOSX/CONTRIBUTORS)
-[comment]: # (  https://github.com/GEOSX/GEOSX/NOTICE)
-[comment]: # (  https://github.com/GEOSX/GEOSX/ACKNOWLEDGEMENTS)
-[comment]: # (  https://github.com/GEOSX/GEOSX/RELEASE)
+[comment]: # (  https://github.com/GEOS-DEV/GEOS/LICENSE)
+[comment]: # (  https://github.com/GEOS-DEV/GEOS/COPYRIGHT)
+[comment]: # (  https://github.com/GEOS-DEV/GEOS/CONTRIBUTORS)
+[comment]: # (  https://github.com/GEOS-DEV/GEOS/NOTICE)
+[comment]: # (  https://github.com/GEOS-DEV/GEOS/ACKNOWLEDGEMENTS)
+[comment]: # (  https://github.com/GEOS-DEV/GEOS/RELEASE)
 
 
 Version v0.2.0 -- Release date 2020-06-20

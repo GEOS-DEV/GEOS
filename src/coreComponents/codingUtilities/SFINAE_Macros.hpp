@@ -16,8 +16,8 @@
  * @file SFINAE_Macros.hpp
  */
 
-#ifndef GEOSX_CODINGUTILITIES_SFINAE_MACROS_HPP_
-#define GEOSX_CODINGUTILITIES_SFINAE_MACROS_HPP_
+#ifndef GEOS_CODINGUTILITIES_SFINAE_MACROS_HPP_
+#define GEOS_CODINGUTILITIES_SFINAE_MACROS_HPP_
 
 #include "LvArray/src/Macros.hpp"
 #include "LvArray/src/typeManipulation.hpp"
@@ -59,4 +59,4 @@
   IS_VALID_EXPRESSION( HasAlias_ ## NAME, CLASS, !std::is_enum< typename CLASS::NAME >::value )
 
 
-#endif /* GEOSX_CODINGUTILITIES_SFINAE_MACROS_HPP_ */
+#endif /* GEOS_CODINGUTILITIES_SFINAE_MACROS_HPP_ */

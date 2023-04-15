@@ -16,8 +16,8 @@
  * @file KeyIndexT.hpp
  */
 
-#ifndef GEOSX_DATAREPOSITORY_KEYINDEXT_HPP_
-#define GEOSX_DATAREPOSITORY_KEYINDEXT_HPP_
+#ifndef GEOS_DATAREPOSITORY_KEYINDEXT_HPP_
+#define GEOS_DATAREPOSITORY_KEYINDEXT_HPP_
 
 
 #include <ostream>
@@ -154,4 +154,4 @@ std::ostream & operator<<( std::ostream & os, const KeyIndexT< KEY_TYPE, INDEX_T
   return os;
 }
 
-#endif /* GEOSX_DATAREPOSITORY_KEYINDEXT_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_KEYINDEXT_HPP_ */

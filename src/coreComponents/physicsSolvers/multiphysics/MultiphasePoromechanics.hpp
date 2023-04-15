@@ -16,8 +16,8 @@
  * @file MultiphasePoromechanics.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICS_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICS_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICS_HPP_
 
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
@@ -25,7 +25,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 // Note that in the current implementation, the order of the templates in CoupledSolver< ... > matters
@@ -211,7 +211,7 @@ real64 MultiphasePoromechanics::assemblyLaunch( MeshLevel & mesh,
                                                 arrayView1d< real64 > const & localRhs,
                                                 PARAMS && ... params )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NodeManager const & nodeManager = mesh.getNodeManager();
 
@@ -238,6 +238,6 @@ real64 MultiphasePoromechanics::assemblyLaunch( MeshLevel & mesh,
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICS_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICS_HPP_ */

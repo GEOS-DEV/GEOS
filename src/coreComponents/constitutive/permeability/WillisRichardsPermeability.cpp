@@ -20,7 +20,7 @@
 #include "LvArray/src/tensorOps.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -68,4 +68,4 @@ void WillisRichardsPermeability::allocateConstitutiveData( dataRepository::Group
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, WillisRichardsPermeability, string const &, Group * const )
 
 } /* namespace constitutive */
-} /* namespace geosx */
+} /* namespace geos */

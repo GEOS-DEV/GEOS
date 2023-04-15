@@ -20,7 +20,7 @@
 
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace stringutilities;
@@ -100,7 +100,7 @@ void ReactionsBase::KernelWrapper::computeLog10ActCoefBDotModel( real64 const te
   // localIndex const NBasis = m_numPrimarySpecies;
   // localIndex const NDependent = m_numSecondarySpecies;
 
-  GEOSX_UNUSED_VAR( temperature );
+  GEOS_UNUSED_VAR( temperature );
 
   for( localIndex i = 0; i < m_numPrimarySpecies; ++i )
   {
@@ -148,4 +148,4 @@ void ReactionsBase::KernelWrapper::computeIonicStrength( arraySlice1d< real64 co
 
 } // namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos

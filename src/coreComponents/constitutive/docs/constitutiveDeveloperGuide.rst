@@ -4,7 +4,7 @@
 Constitutive models
 ################################################################################
 
-In GEOSX, all constitutive models defining fluid and rock properties are implemented
+In GEOS, all constitutive models defining fluid and rock properties are implemented
 in the namespace ``constitutive`` and derived from a common base class,
 ``ConstitutiveBase``. All objects are owned and handled by the ``ConstitutiveManager``.
 

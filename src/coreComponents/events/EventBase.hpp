@@ -16,14 +16,14 @@
  * @file EventBase.hpp
  */
 
-#ifndef GEOSX_EVENTS_EVENTSBASE_HPP_
-#define GEOSX_EVENTS_EVENTSBASE_HPP_
+#ifndef GEOS_EVENTS_EVENTSBASE_HPP_
+#define GEOS_EVENTS_EVENTSBASE_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -156,7 +156,7 @@ public:
    */
   virtual real64 getEventTypeDtRequest( real64 const time )
   {
-    GEOSX_UNUSED_VAR( time );
+    GEOS_UNUSED_VAR( time );
     return std::numeric_limits< real64 >::max();
   }
 
@@ -348,6 +348,6 @@ private:
   ExecutableGroup * m_target;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_EVENTS_EVENTSBASE_HPP_ */
+#endif /* GEOS_EVENTS_EVENTSBASE_HPP_ */

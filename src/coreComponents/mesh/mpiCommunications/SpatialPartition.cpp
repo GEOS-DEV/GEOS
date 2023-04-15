@@ -18,7 +18,7 @@
 
 #include <cmath>
 
-namespace geosx
+namespace geos
 {
 
 namespace
@@ -170,7 +170,7 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
       {
         check *= this->m_Partitions( i );
       }
-      GEOSX_ERROR_IF_NE( check, m_size );
+      GEOS_ERROR_IF_NE( check, m_size );
     }
 
     //get communicator, rank, and coordinates
@@ -240,7 +240,7 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
     }
     else
     {
-      GEOSX_ERROR( "SpatialPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n" );
+      GEOS_ERROR( "SpatialPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n" );
     }
   }
 }

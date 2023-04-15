@@ -21,7 +21,7 @@
 
 #include "events/tasks/TaskBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class SolidMechanicsLagrangianFEM;
@@ -105,6 +105,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSTATERESET_HPP_ */

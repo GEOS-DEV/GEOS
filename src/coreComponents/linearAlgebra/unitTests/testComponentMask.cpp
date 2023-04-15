@@ -23,7 +23,7 @@
 #include <vector>
 #include <algorithm>
 
-using namespace geosx;
+using namespace geos;
 
 template< int N >
 void compare( ComponentMask< N > const & mask, std::vector< int > const & expected )

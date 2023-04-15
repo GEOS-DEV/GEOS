@@ -17,13 +17,13 @@
  */
 
 
-#ifndef GEOSX_FIELDSPECIFICATION_TRACTIONBOUNDARYCONDITION_HPP
-#define GEOSX_FIELDSPECIFICATION_TRACTIONBOUNDARYCONDITION_HPP
+#ifndef GEOS_FIELDSPECIFICATION_TRACTIONBOUNDARYCONDITION_HPP
+#define GEOS_FIELDSPECIFICATION_TRACTIONBOUNDARYCONDITION_HPP
 
 #include "FieldSpecificationBase.hpp"
 #include "mesh/FaceManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class TableFunction;
@@ -133,6 +133,6 @@ ENUM_STRINGS( TractionBoundaryCondition::TractionType,
               "normal",
               "stress" );
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FIELDSPECIFICATION_TRACTIONBOUNDARYCONDITION_HPP */
+#endif /* GEOS_FIELDSPECIFICATION_TRACTIONBOUNDARYCONDITION_HPP */

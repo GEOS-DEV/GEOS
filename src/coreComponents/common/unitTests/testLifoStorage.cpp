@@ -62,7 +62,7 @@ struct RAJAHelper< RAJA::cuda_exec< N > >
 
 #endif
 
-using namespace geosx;
+using namespace geos;
 
 
 template< typename POLICY >
@@ -77,7 +77,7 @@ void testLifoStorage( int elemCnt, int numberOfElementsOnDevice, int numberOfEle
   {
 
     float * dataPointer = array.data();
-    forAll< POLICY >( elemCnt, [dataPointer, j, elemCnt] GEOSX_HOST_DEVICE ( int i ) { dataPointer[ i ] = j*elemCnt+i; } );
+    forAll< POLICY >( elemCnt, [dataPointer, j, elemCnt] GEOS_HOST_DEVICE ( int i ) { dataPointer[ i ] = j*elemCnt+i; } );
     lifo.push( array );
   }
 
@@ -85,7 +85,7 @@ void testLifoStorage( int elemCnt, int numberOfElementsOnDevice, int numberOfEle
   {
     lifo.pop( array );
     float * dataPointer = array.data();
-    forAll< POLICY >( elemCnt, [dataPointer, totalNumberOfBuffers, j, elemCnt] GEOSX_HOST_DEVICE ( int i )
+    forAll< POLICY >( elemCnt, [dataPointer, totalNumberOfBuffers, j, elemCnt] GEOS_HOST_DEVICE ( int i )
     {
       PORTABLE_EXPECT_EQ( dataPointer[ i ], (float)(totalNumberOfBuffers-j-1)*elemCnt+i );
     } );
@@ -104,7 +104,7 @@ void testLifoStorageAsync( int elemCnt, int numberOfElementsOnDevice, int number
 
     float * dataPointer = array.data();
     lifo.pushWait( );
-    forAll< POLICY >( elemCnt, [dataPointer, j, elemCnt] GEOSX_HOST_DEVICE ( int i ) { dataPointer[ i ] = j*elemCnt+i; } );
+    forAll< POLICY >( elemCnt, [dataPointer, j, elemCnt] GEOS_HOST_DEVICE ( int i ) { dataPointer[ i ] = j*elemCnt+i; } );
     lifo.pushAsync( array );
   }
 
@@ -113,7 +113,7 @@ void testLifoStorageAsync( int elemCnt, int numberOfElementsOnDevice, int number
     lifo.popAsync( array );
     lifo.popWait( );
     float * dataPointer = array.data();
-    forAll< POLICY >( elemCnt, [dataPointer, totalNumberOfBuffers, j, elemCnt] GEOSX_HOST_DEVICE ( int i )
+    forAll< POLICY >( elemCnt, [dataPointer, totalNumberOfBuffers, j, elemCnt] GEOS_HOST_DEVICE ( int i )
     {
       PORTABLE_EXPECT_EQ( dataPointer[ i ], (float)(totalNumberOfBuffers-j-1)*elemCnt+i );
     } );

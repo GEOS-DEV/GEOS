@@ -19,7 +19,7 @@
 #include "CapillaryPressureBase.hpp"
 #include "CapillaryPressureFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -52,12 +52,12 @@ void CapillaryPressureBase::postProcessInput()
   ConstitutiveBase::postProcessInput();
 
   integer const numPhases = numFluidPhases();
-  GEOSX_THROW_IF_LT_MSG( numPhases, 2,
-                         GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
-                         InputError );
-  GEOSX_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
-                         GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
-                         InputError );
+  GEOS_THROW_IF_LT_MSG( numPhases, 2,
+                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
+                        InputError );
+  GEOS_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
+                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
+                        InputError );
 
   m_phaseTypes.resize( numPhases );
   m_phaseOrder.resizeDefault( MAX_NUM_PHASES, -1 );
@@ -110,4 +110,4 @@ void CapillaryPressureBase::allocateConstitutiveData( dataRepository::Group & pa
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

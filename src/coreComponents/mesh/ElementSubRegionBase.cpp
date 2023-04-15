@@ -18,7 +18,7 @@
 
 #include "ElementSubRegionBase.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -61,4 +61,4 @@ void ElementSubRegionBase::resizePerElementValues( localIndex const newNumNodesP
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */

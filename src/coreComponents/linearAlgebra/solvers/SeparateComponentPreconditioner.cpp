@@ -21,7 +21,7 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
-namespace geosx
+namespace geos
 {
 
 template< typename LAI >
@@ -32,8 +32,8 @@ SeparateComponentPreconditioner( localIndex const numComp,
   m_numComp( numComp ),
   m_precond( std::move( precond ) )
 {
-  GEOSX_LAI_ASSERT_GT( m_numComp, 0 );
-  GEOSX_LAI_ASSERT( m_precond );
+  GEOS_LAI_ASSERT_GT( m_numComp, 0 );
+  GEOS_LAI_ASSERT( m_precond );
 }
 
 template< typename LAI >

@@ -16,8 +16,8 @@
  * @file FiniteElementSpace.hpp
  */
 
-#ifndef GEOSX_FINITEELEMENT_FINITEELEMENTDISCRETIZATION_HPP_
-#define GEOSX_FINITEELEMENT_FINITEELEMENTDISCRETIZATION_HPP_
+#ifndef GEOS_FINITEELEMENT_FINITEELEMENTDISCRETIZATION_HPP_
+#define GEOS_FINITEELEMENT_FINITEELEMENTDISCRETIZATION_HPP_
 
 #include "common/TimingMacros.hpp"
 #include "dataRepository/Group.hpp"
@@ -27,7 +27,7 @@
 #include "FiniteElementDispatch.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 // TODO remove when these quantities are placed inside the FiniteElementBase
@@ -114,7 +114,7 @@ FiniteElementDiscretization::
                                    typename FE_TYPE::template MeshData< SUBREGION_TYPE > meshData,
                                    FE_TYPE & finiteElement ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // do not precompute shape functions in case of SEM formulation (not needed)
   if( m_formulation == "SEM" )
@@ -164,6 +164,6 @@ FiniteElementDiscretization::
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FINITEELEMENT_FINITEELEMENTDISCRETIZATION_HPP_ */
+#endif /* GEOS_FINITEELEMENT_FINITEELEMENTDISCRETIZATION_HPP_ */

@@ -17,12 +17,12 @@
  *
  */
 
-#ifndef GEOSX_FINITEVOLUME_FINITEVOLUMEMANAGER_HPP_
-#define GEOSX_FINITEVOLUME_FINITEVOLUMEMANAGER_HPP_
+#ifndef GEOS_FINITEVOLUME_FINITEVOLUMEMANAGER_HPP_
+#define GEOS_FINITEVOLUME_FINITEVOLUMEMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;
@@ -87,7 +87,7 @@ private:
 
 };
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif //GEOSX_FINITEVOLUME_FINITEVOLUMEMANAGER_HPP_
+#endif //GEOS_FINITEVOLUME_FINITEVOLUMEMANAGER_HPP_

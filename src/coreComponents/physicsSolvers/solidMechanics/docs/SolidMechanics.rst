@@ -185,7 +185,7 @@ Finally, the end-of-step velocities are calculated from the end of step accelera
 
 Note that the velocities may be stored at the midstep, resulting one less kinematic update.
 This approach is typically referred to as the "Leapfrog" method.
-However, in GEOSX we do not offer this option since it can cause some confusion that results from the
+However, in GEOS we do not offer this option since it can cause some confusion that results from the
 storage of state at different points in time.
 
 

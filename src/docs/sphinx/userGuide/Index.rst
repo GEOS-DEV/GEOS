@@ -2,7 +2,7 @@
 User Guide
 ###############################################################################
 
-Welcome to the GEOSX user guide.
+Welcome to the GEOS user guide.
 
 .. toctree::
    :maxdepth: 2

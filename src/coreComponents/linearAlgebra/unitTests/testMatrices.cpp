@@ -20,7 +20,7 @@
 
 #include <gtest/gtest.h>
 
-using namespace geosx;
+using namespace geos;
 
 template< typename LAI >
 class MatrixTest : public ::testing::Test
@@ -47,7 +47,7 @@ TYPED_TEST_P( MatrixTest, MatrixFunctions )
   {
     // Test matrix-matrix product: C = A*B
     Matrix A;
-    geosx::testing::compute2DLaplaceOperator( MPI_COMM_GEOSX, 2 * numranks, A );
+    geos::testing::compute2DLaplaceOperator( MPI_COMM_GEOSX, 2 * numranks, A );
     Matrix B( A );
 
     A.multiply( B, C );
@@ -229,7 +229,7 @@ TYPED_TEST_P( MatrixTest, MatrixMatrixOperations )
 
   globalIndex const n = 100;
   Matrix A;
-  geosx::testing::compute2DLaplaceOperator( MPI_COMM_GEOSX, n, A );
+  geos::testing::compute2DLaplaceOperator( MPI_COMM_GEOSX, n, A );
 
   Matrix A_squared;
   A.multiply( A, A_squared );
@@ -296,6 +296,6 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, MatrixTest, PetscInterface, );
 
 int main( int argc, char * * argv )
 {
-  geosx::testing::LinearAlgebraTestScope scope( argc, argv );
+  geos::testing::LinearAlgebraTestScope scope( argc, argv );
   return RUN_ALL_TESTS();
 }

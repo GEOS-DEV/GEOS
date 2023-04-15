@@ -16,12 +16,12 @@
  * @file LinearSolverParameters.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_UTILITIES_LINEARSOLVERPARAMETERS_HPP_
-#define GEOSX_LINEARALGEBRA_UTILITIES_LINEARSOLVERPARAMETERS_HPP_
+#ifndef GEOS_LINEARALGEBRA_UTILITIES_LINEARSOLVERPARAMETERS_HPP_
+#define GEOS_LINEARALGEBRA_UTILITIES_LINEARSOLVERPARAMETERS_HPP_
 
 #include "codingUtilities/EnumStrings.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -366,6 +366,6 @@ ENUM_STRINGS( LinearSolverParameters::AMG::NullSpaceType,
               "constantModes",
               "rigidBodyModes" );
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /*GEOSX_LINEARALGEBRA_UTILITIES_LINEARSOLVERPARAMETERS_HPP_ */
+#endif /*GEOS_LINEARALGEBRA_UTILITIES_LINEARSOLVERPARAMETERS_HPP_ */

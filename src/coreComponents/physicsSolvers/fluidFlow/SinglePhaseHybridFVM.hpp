@@ -16,13 +16,13 @@
  * @file SinglePhaseHybridFVM.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_
 
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 
@@ -193,6 +193,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_

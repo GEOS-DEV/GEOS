@@ -16,13 +16,13 @@
  * @file ProppantPermeability.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_PERMEABILITY_PROPPANTPERMEABILITY_HPP_
-#define GEOSX_CONSTITUTIVE_PERMEABILITY_PROPPANTPERMEABILITY_HPP_
+#ifndef GEOS_CONSTITUTIVE_PERMEABILITY_PROPPANTPERMEABILITY_HPP_
+#define GEOS_CONSTITUTIVE_PERMEABILITY_PROPPANTPERMEABILITY_HPP_
 
 #include "constitutive/permeability/PermeabilityBase.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -42,7 +42,7 @@ public:
     m_proppantPackPermeability( proppantPackPermeability )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & oldHydraulicAperture,
                 real64 const & newHydraulicAperture,
                 real64 const & proppantPackVolumeFraction,
@@ -79,14 +79,14 @@ public:
     }
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void updateFromApertureAndProppantVolumeFraction ( localIndex const k,
                                                              localIndex const q,
                                                              real64 const & oldHydraulicAperture,
                                                              real64 const & newHydraulicAperture,
                                                              real64 const & proppantPackVolumeFraction ) const override final
   {
-    GEOSX_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( q );
 
     compute( oldHydraulicAperture,
              newHydraulicAperture,
@@ -169,7 +169,7 @@ private:
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 
-#endif //GEOSX_CONSTITUTIVE_PERMEABILITY_PROPPANTPERMEABILITY_HPP_
+#endif //GEOS_CONSTITUTIVE_PERMEABILITY_PROPPANTPERMEABILITY_HPP_

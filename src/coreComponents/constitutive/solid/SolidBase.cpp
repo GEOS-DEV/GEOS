@@ -19,7 +19,7 @@
 
 #include "SolidBase.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -97,7 +97,7 @@ void SolidBase::saveConvergedState() const
   arrayView3d< real64 const, solid::STRESS_USD > newStress = m_newStress;
   arrayView3d< real64, solid::STRESS_USD > oldStress = m_oldStress;
 
-  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( numE, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < numQ; ++q )
     {
@@ -108,4 +108,4 @@ void SolidBase::saveConvergedState() const
 
 
 } /* namespace constitutive */
-} /* namespace geosx */
+} /* namespace geos */
