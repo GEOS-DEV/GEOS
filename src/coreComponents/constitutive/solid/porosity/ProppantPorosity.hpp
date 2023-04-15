@@ -16,12 +16,12 @@
  * @file PressurePorosity.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_POROSITY_PROPPANTPOROSITY_HPP_
-#define GEOSX_CONSTITUTIVE_POROSITY_PROPPANTPOROSITY_HPP_
+#ifndef GEOS_CONSTITUTIVE_POROSITY_PROPPANTPOROSITY_HPP_
+#define GEOS_CONSTITUTIVE_POROSITY_PROPPANTPOROSITY_HPP_
 
 #include "PorosityBase.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -46,14 +46,14 @@ public:
     m_maxProppantConcentration( maxProppantConcentration )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computePorosity( real64 const & proppantPackVolumeFraction,
                         real64 & porosity ) const
   {
     porosity = 1.0 - m_maxProppantConcentration * proppantPackVolumeFraction;
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void updateFromProppantVolumeFraction( localIndex const k,
                                          localIndex const q,
                                          real64 const & proppantPackVolumeFraction ) const
@@ -120,7 +120,7 @@ private:
 
 }/* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 
-#endif //GEOSX_CONSTITUTIVE_POROSITY_PROPPANTPOROSITY_HPP_
+#endif //GEOS_CONSTITUTIVE_POROSITY_PROPPANTPOROSITY_HPP_

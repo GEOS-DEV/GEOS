@@ -19,7 +19,7 @@
 #include <gtest/gtest.h>
 #include <numeric>
 
-namespace geosx
+namespace geos
 {
 
 TEST( testComputationalGeometry, checkCentroid3DPolygon )
@@ -69,4 +69,4 @@ TEST( testComputationalGeometry, checkCentroid3DPolygon )
   }
 }
 
-} /* namespace geosx */
+} /* namespace geos */

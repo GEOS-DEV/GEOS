@@ -12,7 +12,7 @@
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -270,8 +270,8 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
 
   // poll for pack completion here
   waitAllDeviceEvents( packEvents );
-  GEOSX_ERROR_IF( bufferSize != packedSize,
-                  "Allocated Buffer Size ("<<bufferSize<<") is not equal to packed buffer size("<<packedSize<<")" );
+  GEOS_ERROR_IF( bufferSize != packedSize,
+                 "Allocated Buffer Size ("<<bufferSize<<") is not equal to packed buffer size("<<packedSize<<")" );
 
 
 }
@@ -283,7 +283,7 @@ localIndex unpackNewAndModifiedObjectsOnOwningRanks( NeighborCommunicator * cons
 //                                          array1d<array1d< std::set<localIndex> > > & allModifiedElements,
                                                      ModifiedObjectLists & receivedObjects )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NodeManager & nodeManager = mesh->getNodeManager();
   EdgeManager & edgeManager = mesh->getEdgeManager();
@@ -589,7 +589,7 @@ void packNewModifiedObjectsToGhosts( NeighborCommunicator * const neighbor,
   packedSize += edgeManager.packParentChildMaps( sendBufferPtr, modEdgesToSend );
   packedSize += faceManager.packParentChildMaps( sendBufferPtr, modFacesToSend );
 
-  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 
   waitAllDeviceEvents( packEvents );
 }
@@ -1008,4 +1008,4 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
 
 
 
-} /* namespace geosx */
+} /* namespace geos */

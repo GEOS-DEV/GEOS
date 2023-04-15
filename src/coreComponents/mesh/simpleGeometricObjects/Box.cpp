@@ -23,7 +23,7 @@
 #include "Box.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -68,9 +68,9 @@ void Box::postProcessInput()
   m_strikeAngle += 90; // Counterclockwise from x-axis
   if( std::fabs( m_strikeAngle ) > 1e-20 )
   {
-    GEOSX_ERROR_IF( (m_max[0]-m_min[0]) < (m_max[1]-m_min[1]),
-                    "Error: When a strike angle is specified, the box is supposed to represent a plane normal to the "
-                    "y direction. This box seems to be too thick." );
+    GEOS_ERROR_IF( (m_max[0]-m_min[0]) < (m_max[1]-m_min[1]),
+                   "Error: When a strike angle is specified, the box is supposed to represent a plane normal to the "
+                   "y direction. This box seems to be too thick." );
 
     m_cosStrike = std::cos( m_strikeAngle / 180 *M_PI );
     m_sinStrike = std::sin( m_strikeAngle / 180 *M_PI );
@@ -102,4 +102,4 @@ bool Box::isCoordInObject( real64 const ( &coord ) [3] ) const
 
 REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Box, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

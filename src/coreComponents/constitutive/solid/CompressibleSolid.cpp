@@ -26,7 +26,7 @@
 #include "constitutive/permeability/SlipDependentPermeability.hpp"
 #include "constitutive/permeability/WillisRichardsPermeability.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -61,4 +61,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, FaultWR, string const &, Group * const
 
 
 }
-} /* namespace geosx */
+} /* namespace geos */

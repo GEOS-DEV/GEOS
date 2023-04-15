@@ -21,7 +21,7 @@
 #include "constitutive/fluid/PVTFunctions/PureWaterProperties.hpp"
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace stringutilities;
@@ -46,9 +46,9 @@ PhillipsBrineViscosity::PhillipsBrineViscosity( string const & name,
 
 void PhillipsBrineViscosity::makeCoefficients( string_array const & inputPara )
 {
-  GEOSX_THROW_IF_LT_MSG( inputPara.size(), 3,
-                         GEOSX_FMT( "{}: insufficient number of model parameters", m_functionName ),
-                         InputError );
+  GEOS_THROW_IF_LT_MSG( inputPara.size(), 3,
+                        GEOS_FMT( "{}: insufficient number of model parameters", m_functionName ),
+                        InputError );
 
   real64 m;
   try
@@ -57,7 +57,7 @@ void PhillipsBrineViscosity::makeCoefficients( string_array const & inputPara )
   }
   catch( std::invalid_argument const & e )
   {
-    GEOSX_THROW( GEOSX_FMT( "{}: invalid model parameter value '{}'", m_functionName, e.what() ), InputError );
+    GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value '{}'", m_functionName, e.what() ), InputError );
   }
 
   // these coefficients come from Phillips et al. (1981), equation (1), pages 5-6
@@ -88,4 +88,4 @@ REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineViscosity, string const &,
 
 } // namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos

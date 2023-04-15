@@ -14,7 +14,7 @@
 
 #include "NullModel.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -30,4 +30,4 @@ NullModel::~NullModel()
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, NullModel, string const &, dataRepository::Group * const )
 
 } // constitutive
-} /* namespace geosx */
+} /* namespace geos */

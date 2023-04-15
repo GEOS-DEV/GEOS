@@ -10,7 +10,7 @@ Triaxial Driver
 Introduction
 ------------
 
-When calibrating solid material parameters to experimental data, it can be a hassle to launch a full finite element simulation to mimic experimental loading conditions.  Instead, GEOSX provides a ``TriaxialDriver`` allowing the user to run loading tests on a single material point.  This makes it easy to understand the material response and fit it to lab data.  The driver itself is launched like any other GEOSX simulation, but with a particular XML structure:
+When calibrating solid material parameters to experimental data, it can be a hassle to launch a full finite element simulation to mimic experimental loading conditions.  Instead, GEOS provides a ``TriaxialDriver`` allowing the user to run loading tests on a single material point.  This makes it easy to understand the material response and fit it to lab data.  The driver itself is launched like any other GEOS simulation, but with a particular XML structure:
 
 .. code-block:: sh
 
@@ -24,7 +24,7 @@ A typical XML file to run the triaxial driver will have the following key elemen
 .. literalinclude:: ../../../unitTests/constitutiveTests/testTriaxial_druckerPragerExtended.xml
   :language: xml
 
-The first thing to note is that the XML structure is identical to a standard GEOSX input deck.  In fact, once the constitutive block is calibrated, one could start adding solver and discretization blocks to the same file to create a proper field simulation.  This makes it easy to go back and forth between calibration and simulation.
+The first thing to note is that the XML structure is identical to a standard GEOS input deck.  In fact, once the constitutive block is calibrated, one could start adding solver and discretization blocks to the same file to create a proper field simulation.  This makes it easy to go back and forth between calibration and simulation.
 
 The ``TriaxialDriver`` is added as a ``Task``, a particular type of executable event often used for simple actions.  It is added as a ``SoloEvent`` to the event queue.  This leads to a trivial event queue, since all we do is launch the driver and then quit.
 
@@ -36,7 +36,7 @@ The key parameters for the TriaxialDriver are:
 
 .. note::
 
-   GEOSX uses the *engineering* sign convention where compressive stresses and strains are *negative*.
+   GEOS uses the *engineering* sign convention where compressive stresses and strains are *negative*.
    This is one of the most frequent issues users make when calibrating material parameters, as
    stress- and strain-like quantities often need to be negative to make physical sense.  You may note in the
    XML above, for example, that ``stressFunction`` and ``strainFunction`` have negative values for
@@ -117,7 +117,7 @@ We generally spend a lot of time vetting the material model implementations (#4)
 Unit Testing
 ------------
 
-The development team also uses the Triaxial Driver to perform unit testing on the various material models within GEOSX.  The optional argument ``baseline`` can be used to point to a previous output file that has been validated  (e.g. against analytical or experimental benchmarks).  If such a file is specified, the driver will perform a loading run and then compare the new results against the baseline.  In this way, any regressions in the material models can be quickly identified.
+The development team also uses the Triaxial Driver to perform unit testing on the various material models within GEOS.  The optional argument ``baseline`` can be used to point to a previous output file that has been validated  (e.g. against analytical or experimental benchmarks).  If such a file is specified, the driver will perform a loading run and then compare the new results against the baseline.  In this way, any regressions in the material models can be quickly identified.
 
 Developers of new models are encouraged to add their own baselines to ``src/coreComponents/constitutive/unitTests``. Adding additional tests is straightforward:
 

@@ -16,8 +16,8 @@
  * @file PetscMatrix.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_PETSCSPARSEMATRIX_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_PETSCSPARSEMATRIX_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_PETSCSPARSEMATRIX_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_PETSCSPARSEMATRIX_HPP_
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/petsc/PetscVector.hpp"
@@ -38,7 +38,7 @@ extern "C" struct _p_Mat;
 
 ///@}
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -408,6 +408,6 @@ private:
 
 };
 
-} // namespace geosx
+} // namespace geos
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_PETSCSPARSEMATRIX_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_INTERFACES_PETSCSPARSEMATRIX_HPP_*/

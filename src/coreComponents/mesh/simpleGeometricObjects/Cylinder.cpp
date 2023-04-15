@@ -23,7 +23,7 @@
 #include "Cylinder.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -100,4 +100,4 @@ bool Cylinder::isCoordInObject( real64 const ( &targetPt ) [3] ) const
 
 REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Cylinder, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

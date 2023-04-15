@@ -20,7 +20,7 @@
 #include "LvArray/src/tensorOps.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -64,4 +64,4 @@ void ExponentialDecayPermeability::allocateConstitutiveData( dataRepository::Gro
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ExponentialDecayPermeability, string const &, Group * const )
 
 } /* namespace constitutive */
-} /* namespace geosx */
+} /* namespace geos */

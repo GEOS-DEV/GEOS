@@ -127,4 +127,4 @@ The type ``DefaultValue<T>`` is used to store the default value for the wrapper.
 API documentation
 -----------------
 
-`Wrapper <../../../doxygen_output/html/classgeosx_1_1data_repository_1_1_wrapper.html>`_
+`Wrapper <../../../doxygen_output/html/classgeos_1_1data_repository_1_1_wrapper.html>`_

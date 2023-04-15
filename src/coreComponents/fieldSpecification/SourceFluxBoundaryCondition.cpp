@@ -19,7 +19,7 @@
 
 #include "SourceFluxBoundaryCondition.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -33,4 +33,4 @@ SourceFluxBoundaryCondition::SourceFluxBoundaryCondition( string const & name, G
 
 REGISTER_CATALOG_ENTRY( FieldSpecificationBase, SourceFluxBoundaryCondition, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

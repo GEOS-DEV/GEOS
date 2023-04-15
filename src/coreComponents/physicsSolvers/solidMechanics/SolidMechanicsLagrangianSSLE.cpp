@@ -24,7 +24,7 @@
 
 
 
-namespace geosx
+namespace geos
 {
 
 using namespace constitutive;
@@ -41,4 +41,4 @@ SolidMechanicsLagrangianSSLE::~SolidMechanicsLagrangianSSLE()
 
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianSSLE, string const &, dataRepository::Group * const )
-} /* namespace geosx */
+} /* namespace geos */

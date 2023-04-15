@@ -26,7 +26,7 @@
 #include "BufferOps.hpp"
 #include "mesh/MeshFields.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -79,8 +79,8 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   m_surfaceElementsToCells.resize( 0, 1 );
 }
 
-void EmbeddedSurfaceSubRegion::calculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
-                                                                    FaceManager const & GEOSX_UNUSED_PARAM( facemanager ) )
+void EmbeddedSurfaceSubRegion::calculateElementGeometricQuantities( NodeManager const & GEOS_UNUSED_PARAM( nodeManager ),
+                                                                    FaceManager const & GEOS_UNUSED_PARAM( facemanager ) )
 {
   // loop over the elements
   forAll< parallelHostPolicy >( this->size(), [=] ( localIndex const k )
@@ -321,13 +321,13 @@ localIndex EmbeddedSurfaceSubRegion::packUpDownMapsImpl( buffer_unit_type * & bu
 localIndex EmbeddedSurfaceSubRegion::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                                        localIndex_array & packList,
                                                        bool const overwriteUpMaps,
-                                                       bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
+                                                       bool const GEOS_UNUSED_PARAM( overwriteDownMaps ) )
 {
   localIndex unPackedSize = 0;
 
   string nodeListString;
   unPackedSize += bufferOps::Unpack( buffer, nodeListString );
-  GEOSX_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString() );
+  GEOS_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString() );
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toNodesRelation,
                                      packList,
@@ -337,7 +337,7 @@ localIndex EmbeddedSurfaceSubRegion::unpackUpDownMaps( buffer_unit_type const * 
 
   string elementListString;
   unPackedSize += bufferOps::Unpack( buffer, elementListString );
-  GEOSX_ERROR_IF_NE( elementListString, viewKeyStruct::surfaceElementsToCellRegionsString() );
+  GEOS_ERROR_IF_NE( elementListString, viewKeyStruct::surfaceElementsToCellRegionsString() );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_surfaceElementsToCells,
@@ -348,4 +348,4 @@ localIndex EmbeddedSurfaceSubRegion::unpackUpDownMaps( buffer_unit_type const * 
   return unPackedSize;
 }
 
-} /* namespace geosx */
+} /* namespace geos */

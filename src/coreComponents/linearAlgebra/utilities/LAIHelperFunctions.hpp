@@ -16,8 +16,8 @@
  * @file LAIHelperFunctions.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_
-#define GEOSX_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_
+#ifndef GEOS_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_
+#define GEOS_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
@@ -26,7 +26,7 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace LAIHelperFunctions
 {
@@ -228,7 +228,7 @@ void computeRigidBodyModes( MeshLevel const & mesh,
       arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
       localIndex const numComponentsField = dofManager.numComponents( selection[k] );
       numComponents = numComponents > 0 ? numComponents : numComponentsField;
-      GEOSX_ERROR_IF( numComponents != numComponentsField, "Rigid body modes called with different number of components." );
+      GEOS_ERROR_IF( numComponents != numComponentsField, "Rigid body modes called with different number of components." );
       globalIndex const globalOffset = dofManager.globalOffset( selection[k] );
       globalIndex const numLocalDofs = LvArray::integerConversion< globalIndex >( dofManager.numLocalDofs( selection[k] ) );
       for( globalIndex i = 0; i < dofNumber.size(); ++i )
@@ -340,7 +340,7 @@ void computeRigidBodyModes( MeshLevel const & mesh,
     }
     default:
     {
-      GEOSX_ERROR( "Rigid body modes computation unsupported for " << numComponents << " components." );
+      GEOS_ERROR( "Rigid body modes computation unsupported for " << numComponents << " components." );
     }
   }
 }
@@ -349,4 +349,4 @@ void computeRigidBodyModes( MeshLevel const & mesh,
 
 } // geosx namespace
 
-#endif /*GEOSX_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_*/

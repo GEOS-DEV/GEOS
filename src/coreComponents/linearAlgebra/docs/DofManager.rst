@@ -2,7 +2,7 @@
 DoF Manager
 ###############################################################################
 
-This will contains a description of the DoF manager in GEOSX.
+This will contains a description of the DoF manager in GEOS.
 
 Brief description
 ========================

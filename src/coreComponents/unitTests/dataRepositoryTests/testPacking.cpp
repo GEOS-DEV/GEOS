@@ -25,7 +25,7 @@
 #include <ctime>
 #include <cstdlib>
 
-using namespace geosx;
+using namespace geos;
 
 real64 drand( real64 min = 0.0, real64 max = 1.0 )
 {
@@ -221,8 +221,8 @@ TEST( testPacking, testPackByIndexDevice )
 int main( int ac, char * av[] )
 {
   ::testing::InitGoogleTest( &ac, av );
-  geosx::basicSetup( ac, av );
+  geos::basicSetup( ac, av );
   int const result = RUN_ALL_TESTS();
-  geosx::basicCleanup();
+  geos::basicCleanup();
   return result;
 }

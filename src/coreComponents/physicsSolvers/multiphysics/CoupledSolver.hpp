@@ -17,14 +17,14 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDSOLVER_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDSOLVER_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDSOLVER_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
 
 #include <tuple>
 
-namespace geosx
+namespace geos
 {
 
 template< typename ... SOLVERS >
@@ -79,10 +79,10 @@ public:
       using SolverPtr = TYPEOFREF( solver );
       using SolverType = TYPEOFPTR( SolverPtr {} );
       solver = this->getParent().template getGroupPointer< SolverType >( m_names[idx()] );
-      GEOSX_THROW_IF( solver == nullptr,
-                      GEOSX_FMT( "Could not find solver '{}' of type {}",
-                                 m_names[idx()], LvArray::system::demangleType< SolverType >() ),
-                      InputError );
+      GEOS_THROW_IF( solver == nullptr,
+                     GEOS_FMT( "Could not find solver '{}' of type {}",
+                               m_names[idx()], LvArray::system::demangleType< SolverType >() ),
+                     InputError );
     } );
   }
 
@@ -95,7 +95,7 @@ public:
   virtual void
   setupCoupling( DomainPartition const & domain,
                  DofManager & dofManager ) const
-  { GEOSX_UNUSED_VAR( domain, dofManager ); }
+  { GEOS_UNUSED_VAR( domain, dofManager ); }
 
   /**
    * @brief Utility function to compute coupling terms
@@ -113,7 +113,7 @@ public:
                          DofManager const & dofManager,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs )
-  { GEOSX_UNUSED_VAR( time_n, dt, domain, dofManager, localMatrix, localRhs ); }
+  { GEOS_UNUSED_VAR( time_n, dt, domain, dofManager, localMatrix, localRhs ); }
 
   /**
    * @defgroup Solver Interface Functions
@@ -219,7 +219,7 @@ public:
               int const cycleNumber,
               DomainPartition & domain ) override final
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
     if( getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::FullyImplicit )
     {
@@ -231,7 +231,7 @@ public:
     }
     else
     {
-      GEOSX_ERROR( "Invalid coupling type option." );
+      GEOS_ERROR( "Invalid coupling type option." );
       return 0;
     }
 
@@ -349,7 +349,7 @@ protected:
                                                 int const cycleNumber,
                                                 DomainPartition & domain )
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
     real64 dtReturn = dt;
 
@@ -399,7 +399,7 @@ protected:
       // Solve the subproblems nonlinearly
       forEachArgInTuple( m_solvers, [&]( auto & solver, auto idx )
       {
-        GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "  Iteration {:2}: {}", iter+1, solver->getName() ) );
+        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "  Iteration {:2}: {}", iter+1, solver->getName() ) );
         dtReturnTemporary = solver->nonlinearImplicitStep( time_n,
                                                            dtReturn,
                                                            cycleNumber,
@@ -428,7 +428,7 @@ protected:
       ++iter;
     }
 
-    GEOSX_ERROR_IF( !isConverged, getName() << "::sequentiallyCoupledSolverStep did not converge!" );
+    GEOS_ERROR_IF( !isConverged, getName() << "::sequentiallyCoupledSolverStep did not converge!" );
 
     implicitStepComplete( time_n, dt, domain );
 
@@ -443,7 +443,7 @@ protected:
    */
   virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
   {
-    GEOSX_UNUSED_VAR( domain, solverType );
+    GEOS_UNUSED_VAR( domain, solverType );
   }
 
   bool checkSequentialConvergence( int const & iter,
@@ -456,13 +456,13 @@ protected:
 
     if( params.m_subcyclingOption == 0 )
     {
-      GEOSX_LOG_LEVEL_RANK_0( 1, "***** Single Pass solver, no subcycling *****\n" );
+      GEOS_LOG_LEVEL_RANK_0( 1, "***** Single Pass solver, no subcycling *****\n" );
     }
     else
     {
       if( params.sequentialConvergenceCriterion() == NonlinearSolverParameters::SequentialConvergenceCriterion::ResidualNorm )
       {
-        GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "  Iteration {:2}: outer-loop convergence check", iter+1 ) );
+        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "  Iteration {:2}: outer-loop convergence check", iter+1 ) );
         real64 residualNorm = 0;
 
         // loop over all the single-physics solvers
@@ -500,7 +500,7 @@ protected:
 
         // finally, we perform the convergence check on the multiphysics residual
         residualNorm = sqrt( residualNorm );
-        GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
+        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
         isConverged = ( residualNorm < params.m_newtonTol );
 
       }
@@ -517,12 +517,12 @@ protected:
       }
       else
       {
-        GEOSX_ERROR( "Invalid sequential convergence criterion." );
+        GEOS_ERROR( "Invalid sequential convergence criterion." );
       }
 
       if( isConverged )
       {
-        GEOSX_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter + 1 << " iteration(s)! *****\n" );
+        GEOS_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter + 1 << " iteration(s)! *****\n" );
       }
     }
     return isConverged;
@@ -535,14 +535,14 @@ protected:
 
     bool const isSequential = getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
     bool const usesLineSearch = getNonlinearSolverParameters().m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None;
-    GEOSX_THROW_IF( isSequential && usesLineSearch,
-                    GEOSX_FMT( "`{}`: line search is not supported by the coupled solver when {} is set to `{}`. Please set {} to `{}` to remove this error",
-                               getName(),
-                               NonlinearSolverParameters::viewKeysStruct::couplingTypeString(),
-                               EnumStrings< NonlinearSolverParameters::CouplingType >::toString( NonlinearSolverParameters::CouplingType::Sequential ),
-                               NonlinearSolverParameters::viewKeysStruct::lineSearchActionString(),
-                               EnumStrings< NonlinearSolverParameters::LineSearchAction >::toString( NonlinearSolverParameters::LineSearchAction::None ) ),
-                    InputError );
+    GEOS_THROW_IF( isSequential && usesLineSearch,
+                   GEOS_FMT( "`{}`: line search is not supported by the coupled solver when {} is set to `{}`. Please set {} to `{}` to remove this error",
+                             getName(),
+                             NonlinearSolverParameters::viewKeysStruct::couplingTypeString(),
+                             EnumStrings< NonlinearSolverParameters::CouplingType >::toString( NonlinearSolverParameters::CouplingType::Sequential ),
+                             NonlinearSolverParameters::viewKeysStruct::lineSearchActionString(),
+                             EnumStrings< NonlinearSolverParameters::LineSearchAction >::toString( NonlinearSolverParameters::LineSearchAction::None ) ),
+                   InputError );
   }
 
   void
@@ -564,6 +564,6 @@ protected:
   std::array< string, sizeof...( SOLVERS ) > m_names;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDSOLVER_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDSOLVER_HPP_ */

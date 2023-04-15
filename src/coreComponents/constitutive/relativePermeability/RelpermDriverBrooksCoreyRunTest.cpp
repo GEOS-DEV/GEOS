@@ -16,7 +16,7 @@
 #include "BrooksCoreyRelativePermeability.hpp"
 
 
-namespace geosx
+namespace geos
 {
-template void RelpermDriver::runTest< geosx::constitutive::BrooksCoreyRelativePermeability >( geosx::constitutive::BrooksCoreyRelativePermeability &, arrayView2d< real64 > const & );
+template void RelpermDriver::runTest< geos::constitutive::BrooksCoreyRelativePermeability >( geos::constitutive::BrooksCoreyRelativePermeability &, arrayView2d< real64 > const & );
 }

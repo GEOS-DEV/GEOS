@@ -16,8 +16,8 @@
  * @file HypreInterface.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREINTERFACE_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREINTERFACE_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_HYPREINTERFACE_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_HYPREINTERFACE_HPP_
 
 #include "linearAlgebra/interfaces/hypre/HypreMatrix.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreVector.hpp"
@@ -26,7 +26,7 @@
 
 #include <memory>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -79,6 +79,6 @@ struct HypreInterface
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREINTERFACE_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_INTERFACES_HYPREINTERFACE_HPP_*/

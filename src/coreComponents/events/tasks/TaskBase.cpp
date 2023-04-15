@@ -18,7 +18,7 @@
 
 #include "TaskBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;

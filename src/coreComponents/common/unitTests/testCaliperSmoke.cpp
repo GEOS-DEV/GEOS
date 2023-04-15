@@ -44,9 +44,9 @@ TEST( CaliperSmoke, SmokeTest )
     setenv( "CALI_CONFIG", "runtime-report", 0 );
   }
 
-  GEOSX_CALIPER_MARK_FUNCTION_BEGIN;
+  GEOS_CALIPER_MARK_FUNCTION_BEGIN;
   EXPECT_STRNE( cali_caliper_version(), NULL );
-  GEOSX_CALIPER_MARK_FUNCTION_END;
+  GEOS_CALIPER_MARK_FUNCTION_END;
 
   adiak::init( nullptr );
   adiak::fini();

@@ -16,15 +16,15 @@
  * @file MeshGeneratorBase.hpp
  */
 
-#ifndef GEOSX_MESH_GENERATORS_MESHGENERATORBASE_HPP
-#define GEOSX_MESH_GENERATORS_MESHGENERATORBASE_HPP
+#ifndef GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
+#define GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/WrapperBase.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace dataRepository
@@ -131,4 +131,4 @@ protected:
 };
 }
 
-#endif /* GEOSX_MESH_GENERATORS_MESHGENERATORBASE_HPP */
+#endif /* GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP */

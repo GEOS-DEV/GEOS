@@ -16,15 +16,15 @@
  * @file PureWaterProperties.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PUREWATERPROPERTIES_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PUREWATERPROPERTIES_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PUREWATERPROPERTIES_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PUREWATERPROPERTIES_HPP_
 
 #include "PVTFunctionBase.hpp"
 
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -74,6 +74,6 @@ struct PureWaterProperties
 
 } // end namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PUREWATERPROPERTIES_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PUREWATERPROPERTIES_HPP_

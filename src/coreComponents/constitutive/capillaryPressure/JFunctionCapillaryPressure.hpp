@@ -16,15 +16,15 @@
  * @file JFunctionCapillaryPressure.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_JFUNCTIONCAPILLARYPRESSURE_HPP
-#define GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_JFUNCTIONCAPILLARYPRESSURE_HPP
+#ifndef GEOS_CONSTITUTIVE_CAPILLARYPRESSURE_JFUNCTIONCAPILLARYPRESSURE_HPP
+#define GEOS_CONSTITUTIVE_CAPILLARYPRESSURE_JFUNCTIONCAPILLARYPRESSURE_HPP
 
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -70,13 +70,13 @@ public:
                    arrayView3d< real64, cappres::USD_CAPPRES > const & phaseCapPres,
                    arrayView4d< real64, cappres::USD_CAPPRES_DS > const & dPhaseCapPres_dPhaseVolFrac );
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                   arraySlice1d< real64 const > const & jFuncMultiplier,
                   arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
                   arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const;
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     virtual void update( localIndex const k,
                          localIndex const q,
                          arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override;
@@ -172,7 +172,7 @@ private:
 
 };
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 JFunctionCapillaryPressure::KernelWrapper::
   compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
@@ -243,12 +243,12 @@ JFunctionCapillaryPressure::KernelWrapper::
   }
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 JFunctionCapillaryPressure::KernelWrapper::
   update( localIndex const k,
           localIndex const q,
-          arraySlice1d< geosx::real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const
+          arraySlice1d< geos::real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const
 {
   compute( phaseVolFraction,
            m_jFuncMultiplier[k],
@@ -266,6 +266,6 @@ ENUM_STRINGS( JFunctionCapillaryPressure::PermeabilityDirection,
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
-#endif // GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_JFUNCTIONCAPILLARYPRESSURE_HPP
+#endif // GEOS_CONSTITUTIVE_CAPILLARYPRESSURE_JFUNCTIONCAPILLARYPRESSURE_HPP

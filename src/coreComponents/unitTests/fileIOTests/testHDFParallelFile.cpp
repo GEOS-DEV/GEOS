@@ -4,11 +4,11 @@
 
 #include <gtest/gtest.h>
 
-using namespace geosx;
+using namespace geos;
 
 TEST( testHDFIO_parallel, SingleValueHistory )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   string filename( "single_value_parallel" );
   HistoryMetadata spec( "Time History", 1, std::type_index( typeid(real64)));
 
@@ -31,7 +31,7 @@ TEST( testHDFIO_parallel, SingleValueHistory )
 
 TEST( testHDFIO_parallel, DynamicHistory )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   string filename( "dynamic_parallel" );
   HistoryMetadata singleItemSpec( "some_real", 1, std::type_index( typeid(real64)));
 
@@ -79,8 +79,8 @@ TEST( testHDFIO_parallel, DynamicHistory )
 int main( int ac, char * av[] )
 {
   ::testing::InitGoogleTest( &ac, av );
-  geosx::basicSetup( ac, av );
+  geos::basicSetup( ac, av );
   int const result = RUN_ALL_TESTS();
-  geosx::basicCleanup();
+  geos::basicCleanup();
   return result;
 }

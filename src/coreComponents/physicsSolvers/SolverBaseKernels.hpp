@@ -16,14 +16,14 @@
  * @file SolverBaseKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLVERBASEKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_SOLVERBASEKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_SOLVERBASEKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_SOLVERBASEKERNELS_HPP
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace solverBaseKernels
@@ -88,7 +88,7 @@ public:
    * @param[in] i the looping index of the element/node/face
    * @return the ghost rank of the element/node/face
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   integer ghostRank( localIndex const i ) const
   { return m_ghostRank( i ); }
 
@@ -97,7 +97,7 @@ public:
    * @param[in] i the element/node/face index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void setupLinf( localIndex const i,
                           LinfStackVariables & stack ) const
   {
@@ -109,7 +109,7 @@ public:
    * @param[in] i the element/node/face index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void setupL2( localIndex const i,
                         L2StackVariables & stack ) const
   {
@@ -122,7 +122,7 @@ public:
    * @param[in] i the element/node/face index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const i,
                             LinfStackVariables & stack ) const = 0;
 
@@ -131,7 +131,7 @@ public:
    * @param[in] i the element/node/face index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeL2( localIndex const i,
                           L2StackVariables & stack ) const = 0;
 
@@ -151,7 +151,7 @@ public:
   {
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > localResidualNorm[numNorm]{};
 
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       if( kernelComponent.ghostRank( i ) >= 0 )
       {
@@ -193,7 +193,7 @@ public:
     RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localResidualNorm[numNorm]{};
     RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localResidualNormalizer[numNorm]{};
 
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       if( kernelComponent.ghostRank( i ) >= 0 )
       {
@@ -342,6 +342,6 @@ ENUM_STRINGS( NormType,
 
 } // namespace solverBaseKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_SOLVERBASEKERNELS
+#endif //GEOS_PHYSICSSOLVERS_SOLVERBASEKERNELS_HPP

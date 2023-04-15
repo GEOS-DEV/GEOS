@@ -16,12 +16,12 @@
  * @file PVTDriverRunTest.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_PVTDRIVERRUNTEST_HPP_
-#define GEOSX_CONSTITUTIVE_PVTDRIVERRUNTEST_HPP_
+#ifndef GEOS_CONSTITUTIVE_PVTDRIVERRUNTEST_HPP_
+#define GEOS_CONSTITUTIVE_PVTDRIVERRUNTEST_HPP_
 
 #include "PVTDriver.hpp"
 
-namespace geosx
+namespace geos
 {
 
 template< typename FLUID_TYPE >
@@ -43,7 +43,7 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
   // set composition to user specified feed
   // it is more convenient to provide input in molar, so perform molar to mass conversion here
 
-  GEOSX_ASSERT_EQ( numComponents, m_feed.size() );
+  GEOS_ASSERT_EQ( numComponents, m_feed.size() );
   array2d< real64, compflow::LAYOUT_COMP > const compositionValues( 1, numComponents );
 
   real64 sum = 0.0;
@@ -65,7 +65,7 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
   integer const numSteps = m_numSteps;
   using ExecPolicy = typename FLUID_TYPE::exec_policy;
   forAll< ExecPolicy >( composition.size( 0 ),
-                        [numPhases, numSteps, kernelWrapper, table, composition] GEOSX_HOST_DEVICE ( localIndex const i )
+                        [numPhases, numSteps, kernelWrapper, table, composition] GEOS_HOST_DEVICE ( localIndex const i )
   {
     for( integer n = 0; n <= numSteps; ++n )
     {
@@ -86,4 +86,4 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
 }
 
 
-#endif /* GEOSX_CONSTITUTIVE_PVTDRIVERRUNTEST_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_PVTDRIVERRUNTEST_HPP_ */

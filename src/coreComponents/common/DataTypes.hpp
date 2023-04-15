@@ -19,8 +19,8 @@
  * use of the data types.
  */
 
-#ifndef GEOSX_COMMON_DATATYPES_HPP
-#define GEOSX_COMMON_DATATYPES_HPP
+#ifndef GEOS_COMMON_DATATYPES_HPP
+#define GEOS_COMMON_DATATYPES_HPP
 
 // Source includes
 #include "common/GeosxConfig.hpp"
@@ -65,7 +65,7 @@
 /**
  * top level geosx namespace contains all code that is specific to GEOSX
  */
-namespace geosx
+namespace geos
 {
 
 /**
@@ -96,8 +96,8 @@ NEW_TYPE dynamicCast( EXISTING_TYPE & val )
 
   using POINTER_TO_NEW_TYPE = std::remove_reference_t< NEW_TYPE > *;
   POINTER_TO_NEW_TYPE ptr = dynamicCast< POINTER_TO_NEW_TYPE >( &val );
-  GEOSX_ERROR_IF( ptr == nullptr, "Cast from " << LvArray::system::demangleType( val ) << " to " <<
-                  LvArray::system::demangleType< NEW_TYPE >() << " failed." );
+  GEOS_ERROR_IF( ptr == nullptr, "Cast from " << LvArray::system::demangleType( val ) << " to " <<
+                 LvArray::system::demangleType< NEW_TYPE >() << " failed." );
 
   return *ptr;
 }
@@ -415,84 +415,84 @@ using unordered_map = mapBase< TKEY, TVAL, std::integral_constant< bool, false >
  */
 ///@{
 
-/// A 1-dimensional array of geosx::integer types.
+/// A 1-dimensional array of geos::integer types.
 using integer_array = array1d< integer >;
 
-/// A 1-dimensional array of geosx::real32 types.
+/// A 1-dimensional array of geos::real32 types.
 using real32_array = array1d< real32 >;
 
-/// A 1-dimensional array of geosx::real64 types.
+/// A 1-dimensional array of geos::real64 types.
 using real64_array = array1d< real64 >;
 
-/// A 1-dimensional array of geosx::string types.
+/// A 1-dimensional array of geos::string types.
 using string_array = array1d< string >;
 
-/// A 1-dimensional array of geosx::Path types
+/// A 1-dimensional array of geos::Path types
 using path_array = array1d< Path >;
 
-/// A 1-dimensional array of geosx::localIndex types
+/// A 1-dimensional array of geos::localIndex types
 using localIndex_array = array1d< localIndex >;
 
-/// A 1-dimensional array of geosx::globalIndex types
+/// A 1-dimensional array of geos::globalIndex types
 using globalIndex_array = array1d< globalIndex >;
 
 
-/// A 2-dimensional array of geosx::integer types.
+/// A 2-dimensional array of geos::integer types.
 using integer_array2d = array2d< integer >;
 
-/// A 2-dimensional array of geosx::real32 types.
+/// A 2-dimensional array of geos::real32 types.
 using real32_array2d = array2d< real32 >;
 
-/// A 2-dimensional array of geosx::real64 types.
+/// A 2-dimensional array of geos::real64 types.
 using real64_array2d = array2d< real64 >;
 
-/// A 2-dimensional array of geosx::localIndex types
+/// A 2-dimensional array of geos::localIndex types
 using localIndex_array2d = array2d< localIndex >;
 
-/// A 2-dimensional array of geosx::globalIndex types
+/// A 2-dimensional array of geos::globalIndex types
 using globalIndex_array2d = array2d< globalIndex >;
 
 
-/// A 3-dimensional array of geosx::integer types.
+/// A 3-dimensional array of geos::integer types.
 using integer_array3d = array3d< integer >;
 
-/// A 3-dimensional array of geosx::real32 types.
+/// A 3-dimensional array of geos::real32 types.
 using real32_array3d = array3d< real32 >;
 
-/// A 3-dimensional array of geosx::real64 types.
+/// A 3-dimensional array of geos::real64 types.
 using real64_array3d = array3d< real64 >;
 
-/// A 3-dimensional array of geosx::localIndex types.
+/// A 3-dimensional array of geos::localIndex types.
 using localIndex_array3d = array3d< localIndex >;
 
-/// A 3-dimensional array of geosx::globalIndex types.
+/// A 3-dimensional array of geos::globalIndex types.
 using globalIndex_array3d = array3d< globalIndex >;
 
 
-/// A 4-dimensional array of geosx::integer types.
+/// A 4-dimensional array of geos::integer types.
 using integer_array4d = array4d< integer >;
 
-/// A 4-dimensional array of geosx::real32 types.
+/// A 4-dimensional array of geos::real32 types.
 using real32_array4d = array4d< real32 >;
 
-/// A 4-dimensional array of geosx::real64 types.
+/// A 4-dimensional array of geos::real64 types.
 using real64_array4d = array4d< real64 >;
 
-/// A 4-dimensional array of geosx::localIndex types.
+/// A 4-dimensional array of geos::localIndex types.
 using localIndex_array4d = array4d< localIndex >;
 
-/// A 4-dimensional array of geosx::globalIndex types.
+/// A 4-dimensional array of geos::globalIndex types.
 using globalIndex_array4d = array4d< globalIndex >;
 
 ///@}
 
-/// A variable for the maximum value of a geosx::globalIndex.
+/// A variable for the maximum value of a geos::globalIndex.
 constexpr static auto GLOBALINDEX_MAX = std::numeric_limits< globalIndex >::max();
 
-/// A variable for the maximum value of a geosx::localIndex.
+/// A variable for the maximum value of a geos::localIndex.
 constexpr static auto LOCALINDEX_MAX = std::numeric_limits< localIndex >::max();
 
-/// A global variable for the value of a object that has not been assigned a geosx::globalIndex.
+/// A global variable for the value of a object that has not been assigned a geos::globalIndex.
 constexpr static localIndex unmappedLocalIndexValue = -1;
 
 
@@ -684,7 +684,7 @@ private:
       {"string_array", constructArrayRegex( rs, 1 )},
       {"path_array", constructArrayRegex( rs, 1 )},
       {"mapPair", rs},
-      {"geosx_dataRepository_PlotLevel", ri}
+      {"geos_dataRepository_PlotLevel", ri}
     };
   };
 };
@@ -742,4 +742,4 @@ struct TypeName
 
 
 
-#endif /* GEOSX_COMMON_DATATYPES_HPP */
+#endif /* GEOS_COMMON_DATATYPES_HPP */

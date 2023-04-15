@@ -36,7 +36,7 @@
 // System includes
 #include <unordered_set>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -230,7 +230,7 @@ getWell( WellElementSubRegion const & subRegion,
   auto cellsArray = vtkSmartPointer< vtkCellArray >::New();
   cellsArray->SetNumberOfCells( subRegion.size() );
   localIndex const numberOfNodesPerElement = subRegion.numNodesPerElement();
-  GEOSX_ERROR_IF_NE( numberOfNodesPerElement, 2 );
+  GEOS_ERROR_IF_NE( numberOfNodesPerElement, 2 );
   std::vector< vtkIdType > connectivity( numberOfNodesPerElement );
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const referencePosition = nodeManager.referencePosition();
@@ -314,8 +314,8 @@ getSurface( FaceElementSubRegion const & subRegion,
       case 8: return VTK_HEXAHEDRON;
       default:
       {
-        GEOSX_ERROR( GEOSX_FMT( "Elements with {} nodes can't be output in the subregion {}",
-                                subRegion.numNodesPerElement(), subRegion.getName() ) );
+        GEOS_ERROR( GEOS_FMT( "Elements with {} nodes can't be output in the subregion {}",
+                              subRegion.numNodesPerElement(), subRegion.getName() ) );
         return VTK_POLYGON;
       }
     }
@@ -582,10 +582,10 @@ getDefaultLabels( localIndex const size )
 template< typename T, int NDIM, typename PERM >
 void checkLabels( Wrapper< Array< T, NDIM, PERM > > const & wrapper, int const dim )
 {
-  GEOSX_ERROR_IF_NE_MSG( LvArray::integerConversion< localIndex >( wrapper.getDimLabels( dim ).size() ),
-                         wrapper.reference().size( dim ),
-                         "VTK writer: component names are set, but don't match the array size.\n"
-                         "This is likely a bug in physics module (solver or constitutive model)." );
+  GEOS_ERROR_IF_NE_MSG( LvArray::integerConversion< localIndex >( wrapper.getDimLabels( dim ).size() ),
+                        wrapper.reference().size( dim ),
+                        "VTK writer: component names are set, but don't match the array size.\n"
+                        "This is likely a bug in physics module (solver or constitutive model)." );
 }
 
 /**
@@ -745,10 +745,10 @@ writeElementField( Group const & subRegions,
     else
     {
       // Sanity check
-      GEOSX_ERROR_IF_NE_MSG( wrapper.numArrayDims(), numDims,
-                             "VTK writer: sanity check failed for " << field << " (inconsistent array dimensions)" );
-      GEOSX_ERROR_IF_NE_MSG( wrapper.numArrayComp(), data->GetNumberOfComponents(),
-                             "VTK writer: sanity check failed for " << field << " (inconsistent array sizes)" );
+      GEOS_ERROR_IF_NE_MSG( wrapper.numArrayDims(), numDims,
+                            "VTK writer: sanity check failed for " << field << " (inconsistent array dimensions)" );
+      GEOS_ERROR_IF_NE_MSG( wrapper.numArrayComp(), data->GetNumberOfComponents(),
+                            "VTK writer: sanity check failed for " << field << " (inconsistent array sizes)" );
     }
   } );
 
@@ -936,20 +936,20 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
 
 static string getCycleSubFolder( integer const cycle )
 {
-  return GEOSX_FMT( "{:06d}", cycle );
+  return GEOS_FMT( "{:06d}", cycle );
 }
 
 static string getRankFileName( integer const rank )
 {
   int const width = static_cast< int >( std::log10( MpiWrapper::commSize() ) ) + 1;
-  return GEOSX_FMT( "rank_{:>0{}}", rank, width );
+  return GEOS_FMT( "rank_{:>0{}}", rank, width );
 }
 
 void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
                                                DomainPartition const & domain,
                                                VTKVTMWriter const & vtmWriter ) const
 {
-  GEOSX_ASSERT_EQ_MSG( MpiWrapper::commRank(), 0, "Must only be called on rank 0" );
+  GEOS_ASSERT_EQ_MSG( MpiWrapper::commRank(), 0, "Must only be called on rank 0" );
 
   // loop over mesh bodies - use domain to get element regions
   domain.forMeshBodies( [&]( MeshBody const & meshBody )
@@ -1007,7 +1007,7 @@ int toVtkOutputMode( VTKOutputMode const mode )
     case VTKOutputMode::BINARY: return vtkXMLWriterBase::Binary;
     default:
     {
-      GEOSX_ERROR( "Unsupported VTK output mode" );
+      GEOS_ERROR( "Unsupported VTK output mode" );
       return -1;
     }
   }
@@ -1143,4 +1143,4 @@ bool VTKPolyDataWriterInterface::isFieldPlotEnabled( dataRepository::WrapperBase
 }
 
 } // namespace vtk
-} // namespace geosx
+} // namespace geos

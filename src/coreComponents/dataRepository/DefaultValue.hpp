@@ -16,14 +16,14 @@
  * @file DefaultValue.hpp
  */
 
-#ifndef GEOSX_DATAREPOSITORY_DEFAULTVALUE_HPP_
-#define GEOSX_DATAREPOSITORY_DEFAULTVALUE_HPP_
+#ifndef GEOS_DATAREPOSITORY_DEFAULTVALUE_HPP_
+#define GEOS_DATAREPOSITORY_DEFAULTVALUE_HPP_
 
 // Source includes
 #include "common/DataTypes.hpp"
 #include "codingUtilities/traits.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -111,7 +111,7 @@ struct Helper< T, std::enable_if_t< traits::HasAlias_value_type< T > &&
 
 template< typename T >
 std::enable_if_t< !Helper< T >::has_default_value, std::ostream & >
-operator<<( std::ostream & stream, Helper< T > const & GEOSX_UNUSED_PARAM( value ) )
+operator<<( std::ostream & stream, Helper< T > const & GEOS_UNUSED_PARAM( value ) )
 {
   return stream;
 }
@@ -133,7 +133,7 @@ template< typename T >
 using DefaultValue = internal::Helper< T >;
 
 } // namespace dataRepository
-} // namespace geosx
+} // namespace geos
 
 
-#endif /* GEOSX_DATAREPOSITORY_DEFAULTVALUE_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_DEFAULTVALUE_HPP_ */

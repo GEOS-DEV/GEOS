@@ -16,7 +16,7 @@
 
 #include <gtest/gtest.h>
 
-using namespace geosx;
+using namespace geos;
 
 static_assert( std::is_same< types::DimsRange< 3, 5 >, camp::as_list< camp::idx_seq< 3, 4, 5 > > >::value, "DimsRange failed" );
 static_assert( std::is_same< types::DimsSingle< 4 >, camp::as_list< camp::idx_seq< 4 > > >::value, "DimsSingle failed" );

@@ -4,7 +4,7 @@
 Data Repository
 ###############
 
-The GEOSX "Data Repository" is intended to provide the building blocks for the code structure within GEOSX.
+The GEOS "Data Repository" is intended to provide the building blocks for the code structure within GEOS.
 The "Data Repository" provides a general capability to store arbitrary data and objects in a hierarchical
 structure, similar to a standard file system.
 

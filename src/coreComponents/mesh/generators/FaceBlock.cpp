@@ -14,7 +14,7 @@
 
 #include "FaceBlock.hpp"
 
-namespace geosx
+namespace geos
 {
 
 localIndex FaceBlock::num2dElements() const

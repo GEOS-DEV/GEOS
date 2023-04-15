@@ -19,7 +19,7 @@
 #include "ThickPlane.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -49,11 +49,11 @@ ThickPlane::~ThickPlane()
 void ThickPlane::postProcessInput()
 {
   m_thickness *= 0.5; // actually store the half-thickness
-  GEOSX_ERROR_IF( m_thickness <= 0, "Error: the plane appears to have zero or negative thickness" );
+  GEOS_ERROR_IF( m_thickness <= 0, "Error: the plane appears to have zero or negative thickness" );
 
   LvArray::tensorOps::normalize< 3 >( m_normal );
-  GEOSX_ERROR_IF( std::fabs( LvArray::tensorOps::l2Norm< 3 >( m_normal ) - 1.0 ) > 1e-15,
-                  "Error: could not properly normalize input normal." );
+  GEOS_ERROR_IF( std::fabs( LvArray::tensorOps::l2Norm< 3 >( m_normal ) - 1.0 ) > 1e-15,
+                 "Error: could not properly normalize input normal." );
 }
 
 
@@ -70,4 +70,4 @@ bool ThickPlane::isCoordInObject( real64 const ( &coord ) [3] ) const
 
 REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, ThickPlane, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

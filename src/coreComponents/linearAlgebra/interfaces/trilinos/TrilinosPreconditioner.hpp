@@ -16,8 +16,8 @@
  * @file TrilinosPreconditioner.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSPRECONDITIONER_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSPRECONDITIONER_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_TRILINOSPRECONDITIONER_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_TRILINOSPRECONDITIONER_HPP_
 
 #include "common/PreconditionerBase.hpp"
 #include "linearAlgebra/interfaces/trilinos/TrilinosInterface.hpp"
@@ -27,7 +27,7 @@
 
 class Epetra_Operator;
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -118,4 +118,4 @@ private:
 
 }
 
-#endif //GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSPRECONDITIONER_HPP_
+#endif //GEOS_LINEARALGEBRA_INTERFACES_TRILINOSPRECONDITIONER_HPP_

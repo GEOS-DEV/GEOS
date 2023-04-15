@@ -16,8 +16,8 @@
  * @file FieldSpecificationManager.hpp
  */
 
-#ifndef GEOSX_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_
-#define GEOSX_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_
+#ifndef GEOS_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_
+#define GEOS_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_
 
 #include "FieldSpecificationBase.hpp"
 
@@ -27,7 +27,7 @@
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/DomainPartition.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -99,7 +99,7 @@ public:
                         MeshLevel & mesh,
                         string const & fieldName ) const
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
     applyFieldValue< POLICY >( time, mesh, fieldName,
                                [&]( FieldSpecificationBase const &,
@@ -213,7 +213,7 @@ public:
               string const & fieldName,
               LAMBDA && lambda ) const
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
     string const meshBodyName = mesh.getParent().getParent().getName();
     string const meshLevelName = mesh.getName();
@@ -243,7 +243,7 @@ FieldSpecificationManager::
                    string const & fieldName,
                    LAMBDA && lambda ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   apply( time, mesh, fieldName,
          [&]( FieldSpecificationBase const & fs,
@@ -266,7 +266,7 @@ FieldSpecificationManager::
                    PRELAMBDA && preLambda,
                    POSTLAMBDA && postLambda ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   apply( time, mesh, fieldName,
          [&]( FieldSpecificationBase const & fs,
@@ -281,6 +281,6 @@ FieldSpecificationManager::
   } );
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_ */
+#endif /* GEOS_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_ */

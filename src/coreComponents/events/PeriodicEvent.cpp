@@ -21,7 +21,7 @@
 #include "common/Format.hpp"
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -119,9 +119,9 @@ void PeriodicEvent::estimateEventTiming( real64 const time,
 }
 
 void PeriodicEvent::checkOptionalFunctionThreshold( real64 const time,
-                                                    real64 const GEOSX_UNUSED_PARAM( dt ),
-                                                    integer const GEOSX_UNUSED_PARAM( cycle ),
-                                                    DomainPartition & GEOSX_UNUSED_PARAM( domain ))
+                                                    real64 const GEOS_UNUSED_PARAM( dt ),
+                                                    integer const GEOS_UNUSED_PARAM( cycle ),
+                                                    DomainPartition & GEOS_UNUSED_PARAM( domain ))
 {
   // Grab the function
   FunctionManager & functionManager = FunctionManager::getInstance();
@@ -213,8 +213,8 @@ real64 PeriodicEvent::getEventTypeDtRequest( real64 const time )
 
 void PeriodicEvent::cleanup( real64 const time_n,
                              integer const cycleNumber,
-                             integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                             real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+                             integer const GEOS_UNUSED_PARAM( eventCounter ),
+                             real64 const GEOS_UNUSED_PARAM( eventProgress ),
                              DomainPartition & domain )
 {
   // Only call the cleanup method of the target/children if it is within its application time
@@ -237,20 +237,20 @@ void PeriodicEvent::cleanup( real64 const time_n,
 
 void PeriodicEvent::validate() const
 {
-  GEOSX_THROW_IF( m_timeFrequency > 0 &&
-                  getEventTarget()->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize,
-                  GEOSX_FMT(
-                    "`{}`: This event targets an object that automatically selects the time step size. Therefore, `{}` cannot be used here. However, forcing a constant time step size can still be achived with `{}`.",
-                    getName(), viewKeyStruct::timeFrequencyString(), EventBase::viewKeyStruct::forceDtString() ),
-                  InputError );
-  GEOSX_THROW_IF( m_cycleFrequency != 1 &&
-                  getEventTarget()->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize,
-                  GEOSX_FMT(
-                    "`{}`: This event targets an object that automatically selects the time step size. Therefore, `{}` cannot be used here. However, forcing a constant time step size can still be achived with `{}`.",
-                    getName(), viewKeyStruct::cycleFrequencyString(), EventBase::viewKeyStruct::forceDtString() ),
-                  InputError );
+  GEOS_THROW_IF( m_timeFrequency > 0 &&
+                 getEventTarget()->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize,
+                 GEOS_FMT(
+                   "`{}`: This event targets an object that automatically selects the time step size. Therefore, `{}` cannot be used here. However, forcing a constant time step size can still be achived with `{}`.",
+                   getName(), viewKeyStruct::timeFrequencyString(), EventBase::viewKeyStruct::forceDtString() ),
+                 InputError );
+  GEOS_THROW_IF( m_cycleFrequency != 1 &&
+                 getEventTarget()->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize,
+                 GEOS_FMT(
+                   "`{}`: This event targets an object that automatically selects the time step size. Therefore, `{}` cannot be used here. However, forcing a constant time step size can still be achived with `{}`.",
+                   getName(), viewKeyStruct::cycleFrequencyString(), EventBase::viewKeyStruct::forceDtString() ),
+                 InputError );
 }
 
 REGISTER_CATALOG_ENTRY( EventBase, PeriodicEvent, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

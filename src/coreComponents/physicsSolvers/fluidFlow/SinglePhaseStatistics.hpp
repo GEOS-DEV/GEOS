@@ -21,7 +21,7 @@
 
 #include "physicsSolvers/FieldStatisticsBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class SinglePhaseBase;
@@ -109,6 +109,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASESTATISTICS_HPP_ */

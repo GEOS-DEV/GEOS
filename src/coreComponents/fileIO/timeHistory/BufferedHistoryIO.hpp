@@ -12,12 +12,12 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_FILEIO_TIMEHISTORY_BUFFEREDHISTORYIO_HPP_
-#define GEOSX_FILEIO_TIMEHISTORY_BUFFEREDHISTORYIO_HPP_
+#ifndef GEOS_FILEIO_TIMEHISTORY_BUFFEREDHISTORYIO_HPP_
+#define GEOS_FILEIO_TIMEHISTORY_BUFFEREDHISTORYIO_HPP_
 
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

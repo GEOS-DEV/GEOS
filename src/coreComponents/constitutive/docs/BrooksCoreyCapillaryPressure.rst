@@ -8,7 +8,7 @@ Brooks-Corey capillary pressure model
 Overview
 =====================
 
-In GEOSX, the oil-phase pressure is assumed to be the primary pressure.
+In GEOS, the oil-phase pressure is assumed to be the primary pressure.
 The following paragraphs explain how the Brooks-Corey capillary pressure
 model is used to compute the water-phase and gas-phase pressures as:
 

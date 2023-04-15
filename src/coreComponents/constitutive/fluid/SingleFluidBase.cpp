@@ -20,7 +20,7 @@
 
 #include "SingleFluidFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -101,4 +101,4 @@ void SingleFluidBase::allocateConstitutiveData( Group & parent,
 
 } //namespace constitutive
 
-} //namespace geosx
+} //namespace geos

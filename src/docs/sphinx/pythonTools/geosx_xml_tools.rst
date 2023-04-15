@@ -1,10 +1,10 @@
 
 .. _XMLToolsPackage:
 
-GEOSX XML Tools
+GEOS XML Tools
 --------------------------
 
-The `geosx_xml_tools` python package adds a set of advanced features to the GEOSX xml format: units, parameters, and symbolic expressions.
+The `geosx_xml_tools` python package adds a set of advanced features to the GEOS xml format: units, parameters, and symbolic expressions.
 See :ref:`PythonToolsSetup` for details on setup instructions, and :ref:`AdvancedXMLFeatures` for a detailed description of the input format.
 The available console scripts for this package and its API are described below.
 
@@ -34,7 +34,7 @@ Formats an xml file.
 check_xml_attribute_coverage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Checks xml attribute coverage for files in the GEOSX repository.
+Checks xml attribute coverage for files in the GEOS repository.
 
 .. argparse::
    :module: geosx_xml_tools.command_line_parsers
