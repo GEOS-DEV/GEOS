@@ -16,8 +16,8 @@
  *  @file ModifiedCamClay.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_MODIFIEDCAMCLAY_HPP
-#define GEOSX_CONSTITUTIVE_SOLID_MODIFIEDCAMCLAY_HPP
+#ifndef GEOS_CONSTITUTIVE_SOLID_MODIFIEDCAMCLAY_HPP
+#define GEOS_CONSTITUTIVE_SOLID_MODIFIEDCAMCLAY_HPP
 
 #include "ElasticIsotropicPressureDependent.hpp"
 #include "InvariantDecompositions.hpp"
@@ -25,7 +25,7 @@
 #include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -98,7 +98,7 @@ public:
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicPressureDependentUpdates::smallStrainUpdate;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void evaluateYield( real64 const p,
                       real64 const q,
                       real64 const pc,
@@ -116,33 +116,33 @@ public:
 
 
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   real64 ( &stiffness )[6][6] ) const override final;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const final;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual real64 getBulkModulus( localIndex const k ) const override final
   {
     return -m_refPressure/m_recompressionIndex[k]; // bulk modulus at cell index K
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual real64 getShearModulus( localIndex const k ) const override final
   {
     return m_shearModulus[k];
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const override final
@@ -168,7 +168,7 @@ private:
 };
 
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void ModifiedCamClayUpdates::evaluateYield( real64 const p,
                                             real64 const q,
@@ -198,7 +198,7 @@ void ModifiedCamClayUpdates::evaluateYield( real64 const p,
 }
 
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
                                                 localIndex const q,
@@ -422,7 +422,7 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
 }
 
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
                                                 localIndex const q,
@@ -580,6 +580,6 @@ protected:
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_MODIFIEDCAMCLAY_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_MODIFIEDCAMCLAY_HPP_ */

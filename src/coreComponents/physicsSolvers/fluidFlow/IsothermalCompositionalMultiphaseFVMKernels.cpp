@@ -25,7 +25,7 @@
 #include "finiteVolume/FaceElementToCellStencil.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace isothermalCompositionalMultiphaseFVMKernels
@@ -71,7 +71,7 @@ FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhase
 /******************************** CFLFluxKernel ********************************/
 
 template< integer NC, localIndex NUM_ELEMS, localIndex maxStencilSize >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void
 CFLFluxKernel::
@@ -190,7 +190,7 @@ CFLFluxKernel::
   localIndex constexpr numElems = STENCILWRAPPER_TYPE::maxNumPointsInFlux;
   localIndex constexpr maxStencilSize = STENCILWRAPPER_TYPE::maxStencilSize;
 
-  forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+  forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
   {
     // compute transmissibility
     real64 transmissibility[STENCILWRAPPER_TYPE::maxNumConnections][2];
@@ -270,7 +270,7 @@ INST_CFLFluxKernel( 5, FaceElementToCellStencilWrapper );
 /******************************** CFLKernel ********************************/
 
 template< integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 CFLKernel::
   computePhaseCFL( real64 const & poreVol,
@@ -354,7 +354,7 @@ CFLKernel::
 
 
 template< integer NC >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 CFLKernel::
   computeCompCFL( real64 const & poreVol,
@@ -402,7 +402,7 @@ CFLKernel::
   RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionPhaseCFLNumber( 0.0 );
   RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionCompCFLNumber( 0.0 );
 
-  forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
     real64 const poreVol = volume[ei] * porosity[ei][0];
 
@@ -468,7 +468,7 @@ INST_CFLKernel( 5, 3 );
 /******************************** AquiferBCKernel ********************************/
 
 template< integer NC >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 AquiferBCKernel::
   compute( integer const numPhases,
@@ -584,7 +584,7 @@ AquiferBCKernel::
   BoundaryStencil::IndexContainerViewConstType const & sefi = stencil.getElementIndices();
   BoundaryStencil::WeightContainerViewConstType const & weight = stencil.getWeights();
 
-  forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+  forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
   {
     constexpr integer NDOF = NC + 1;
 
@@ -645,8 +645,8 @@ AquiferBCKernel::
     {
       globalIndex const globalRow = dofNumber[er][esr][ei];
       localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
-      GEOSX_ASSERT_GE( localRow, 0 );
-      GEOSX_ASSERT_GT( localMatrix.numRows(), localRow + NC );
+      GEOS_ASSERT_GE( localRow, 0 );
+      GEOS_ASSERT_GT( localMatrix.numRows(), localRow + NC );
 
       for( integer ic = 0; ic < NC; ++ic )
       {
@@ -698,4 +698,4 @@ INST_AquiferBCKernel( 5 );
 
 } // namespace isothermalCompositionalMultiphaseFVMKernels
 
-} // namespace geosx
+} // namespace geos

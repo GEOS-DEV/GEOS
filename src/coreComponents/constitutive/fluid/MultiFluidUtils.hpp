@@ -15,12 +15,12 @@
 /**
  * @file MultiFluidUtils.hpp
  */
-#ifndef GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDUTILS_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDUTILS_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUIDUTILS_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUIDUTILS_HPP_
 
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -54,7 +54,7 @@ using ArraySliceOrRef = typename ArraySliceOrRefHelper< T, DIM, USD >::type;
 template< typename T, int DIM, int USD, int USD_DC >
 struct MultiFluidVarSlice
 {
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   MultiFluidVarSlice( internal::ArraySliceOrRef< T, DIM, USD > inputValue,
                       internal::ArraySliceOrRef< T, DIM+1, USD_DC > inputDerivs ):
     value( inputValue ),
@@ -81,7 +81,7 @@ struct MultiFluidVarView
 
   using SliceType = MultiFluidVarSlice< T, NDIM - 2, USD - 2, USD_DC - 2 >;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   SliceType operator()( localIndex const k, localIndex const q ) const
   {
     return { value[k][q], derivs[k][q] };
@@ -119,6 +119,6 @@ struct MultiFluidVar
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDUTILS_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUIDUTILS_HPP_

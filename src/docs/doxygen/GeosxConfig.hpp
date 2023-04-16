@@ -5,8 +5,8 @@
  * Contains a CMake-generated list of macros that define a particular build configuration.
  */
 
-#ifndef GEOSX_COMMON_CONFIG_HPP
-#define GEOSX_COMMON_CONFIG_HPP
+#ifndef GEOS_COMMON_CONFIG_HPP
+#define GEOS_COMMON_CONFIG_HPP
 
 /// Enables floating point exceptions
 #define GEOSX_USE_FPE
@@ -30,7 +30,7 @@
 #define GEOSX_USE_MPI
 
 /// Enables use of OpenMP (CMake option ENABLE_OPENMP)
-#define GEOSX_USE_OPENMP
+/* #undef GEOSX_USE_OPENMP */
 
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
 #define GEOSX_USE_CUDA
@@ -82,7 +82,7 @@
 /// Denotes HYPRE using HIP
 #define GEOSX_USE_HYPRE_HIP 2
 /// Macro determining what parellel interface hypre is using
-#define GEOSX_USE_HYPRE_DEVICE GEOSX_USE_HYPRE_CUDA
+#define GEOSX_USE_HYPRE_DEVICE GEOSX_USE_HYPRE_CPU
 
 /// Enables use of SuperLU_dist library through HYPRE (CMake option ENABLE_SUPERLU_DIST)
 #define GEOSX_USE_SUPERLU_DIST
@@ -142,10 +142,10 @@
 /* #undef chai_VERSION */
 
 /// Version information for adiak
-#define adiak_VERSION ..
+/* #undef adiak_VERSION */
 
 /// Version information for caliper
-#define caliper_VERSION 2.8.0
+/* #undef caliper_VERSION */
 
 /// Version information for Metis
 #define METIS_VERSION 5.1.0
@@ -182,5 +182,5 @@
 #define GEOSX_USE_DEVICE
 #endif
 
-#endif  /* GEOSX_CONFIG_HPP */
+#endif  /* GEOS_CONFIG_HPP */
 

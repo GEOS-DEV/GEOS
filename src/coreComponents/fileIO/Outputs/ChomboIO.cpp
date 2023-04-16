@@ -24,7 +24,7 @@
 #include <fstream>
 #include <chrono>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -68,24 +68,24 @@ ChomboIO::~ChomboIO()
   m_coupler = nullptr;
 }
 
-bool ChomboIO::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
+bool ChomboIO::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
                         real64 const dt,
                         integer const cycleNumber,
-                        integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                        real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+                        integer const GEOS_UNUSED_PARAM( eventCounter ),
+                        real64 const GEOS_UNUSED_PARAM( eventProgress ),
                         DomainPartition & domain )
 {
   if( cycleNumber < m_beginCycle )
   {
     return false;
   }
-  GEOSX_LOG_RANK_0( "Executing chombo coupling" );
+  GEOS_LOG_RANK_0( "Executing chombo coupling" );
 
   if( m_coupler == nullptr )
   {
-    GEOSX_ERROR_IF( m_waitForInput && m_inputPath == "/INVALID_INPUT_PATH", "Waiting for input but no input path was specified." );
+    GEOS_ERROR_IF( m_waitForInput && m_inputPath == "/INVALID_INPUT_PATH", "Waiting for input but no input path was specified." );
 
-    GEOSX_LOG_RANK_0( "Initializing chombo coupling" );
+    GEOS_LOG_RANK_0( "Initializing chombo coupling" );
 
     m_coupler = new ChomboCoupler( MPI_COMM_GEOSX, m_outputPath, m_inputPath, domain.getMeshBody( 0 ).getBaseDiscretization() );
   }
@@ -101,4 +101,4 @@ bool ChomboIO::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
 }
 
 REGISTER_CATALOG_ENTRY( OutputBase, ChomboIO, string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */

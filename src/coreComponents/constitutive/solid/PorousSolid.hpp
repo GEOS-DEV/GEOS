@@ -17,8 +17,8 @@
  * @file PorousSolid.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_POROUSSOLID_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_POROUSSOLID_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_POROUSSOLID_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_POROUSSOLID_HPP_
 
 #include "constitutive/fluid/layouts.hpp"
 #include "constitutive/solid/CoupledSolid.hpp"
@@ -26,7 +26,7 @@
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -53,7 +53,7 @@ public:
     CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >( solidModel, porosityModel, permModel )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void updateStateFromPressureAndTemperature( localIndex const k,
                                                       localIndex const q,
                                                       real64 const & pressure,
@@ -64,7 +64,7 @@ public:
     m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, pressure_n, temperature, temperature_n );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void smallStrainUpdatePoromechanics( localIndex const k,
                                        localIndex const q,
                                        real64 const & pressure_n,
@@ -114,7 +114,7 @@ public:
     dSolidDensity_dPressure = m_porosityUpdate.dGrainDensity_dPressure();
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void smallStrainUpdatePoromechanicsFixedStress( localIndex const k,
                                                   localIndex const q,
                                                   real64 const & pressure_n,
@@ -168,7 +168,7 @@ public:
    * @param k the element number
    * @param stiffness the stiffness array
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   void getElasticStiffness( localIndex const k, localIndex const q, real64 ( & stiffness )[6][6] ) const
   {
@@ -182,7 +182,7 @@ private:
   using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_permUpdate;
 
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   void updateBiotCoefficient( localIndex const k ) const
   {
@@ -192,7 +192,7 @@ private:
     m_porosityUpdate.updateBiotCoefficient( k, bulkModulus );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void updateThermalExpansionCoefficient( localIndex const k ) const
   {
     real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
@@ -200,7 +200,7 @@ private:
     m_porosityUpdate.updateThermalExpansionCoefficient( k, thermalExpansionCoefficient );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computePorosity( localIndex const k,
                         localIndex const q,
                         real64 const & deltaPressure,
@@ -213,15 +213,11 @@ private:
                         real64 & dPorosity_dPressure,
                         real64 & dPorosity_dTemperature ) const
   {
-    real64 const thermalExpansionCoefficient =
-      m_solidUpdate.getThermalExpansionCoefficient( k );
-
     m_porosityUpdate.updateFromPressureTemperatureAndStrain( k,
                                                              q,
                                                              deltaPressure,
                                                              deltaTemperature,
                                                              strainIncrement,
-                                                             thermalExpansionCoefficient,
                                                              dPorosity_dVolStrain,
                                                              dPorosity_dPressure,
                                                              dPorosity_dTemperature );
@@ -231,7 +227,7 @@ private:
     porosityInit = m_porosityUpdate.getInitialPorosity( k, q );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   void computeTotalStress( localIndex const k,
                            localIndex const q,
@@ -359,6 +355,6 @@ private:
 
 
 }
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_POROUSSOLID_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_POROUSSOLID_HPP_ */

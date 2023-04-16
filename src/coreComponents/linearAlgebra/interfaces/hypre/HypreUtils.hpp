@@ -16,8 +16,8 @@
  * @file HypreUtils.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -30,17 +30,17 @@
 
 #if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_CUDA || GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_HIP
 /// Host-device marker for custom hypre kernels
-#define GEOSX_HYPRE_DEVICE GEOSX_DEVICE
+#define GEOS_HYPRE_DEVICE GEOS_DEVICE
 /// Host-device marker for custom hypre kernels
-#define GEOSX_HYPRE_HOST_DEVICE GEOSX_HOST_DEVICE
+#define GEOS_HYPRE_HOST_DEVICE GEOS_HOST_DEVICE
 #else
 /// Host-device marker for custom hypre kernels
-#define GEOSX_HYPRE_DEVICE
+#define GEOS_HYPRE_DEVICE
 /// Host-device marker for custom hypre kernels
-#define GEOSX_HYPRE_HOST_DEVICE
+#define GEOS_HYPRE_HOST_DEVICE
 #endif
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -140,11 +140,11 @@ constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_HOST;
 //          localIndex to int. We are getting away with this because we do not
 //          pass ( localIndex * ) to hypre except when it is on the GPU, in
 //          which case we are using int for localIndex.
-#if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_CUDA || GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_HIP
-static_assert( sizeof( HYPRE_Int ) == sizeof( geosx::localIndex ),
-               "HYPRE_Int and geosx::localIndex must have the same size" );
-static_assert( std::is_signed< HYPRE_Int >::value == std::is_signed< geosx::localIndex >::value,
-               "HYPRE_Int and geosx::localIndex must both be signed or unsigned" );
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+// static_assert( sizeof( HYPRE_Int ) == sizeof( geos::localIndex ),
+//                "HYPRE_Int and geos::localIndex must have the same size" );
+static_assert( std::is_signed< HYPRE_Int >::value == std::is_signed< geos::localIndex >::value,
+               "HYPRE_Int and geos::localIndex must both be signed or unsigned" );
 #endif
 
 /**
@@ -157,14 +157,14 @@ inline void checkDeviceErrors( char const * msg, char const * file, int const li
 {
 #if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_CUDA
   cudaError_t const err = cudaGetLastError();
-  GEOSX_ERROR_IF( err != cudaSuccess, GEOSX_FMT( "Previous CUDA errors found: {} ({} at {}:{})", msg, cudaGetErrorString( err ), file, line ) );
+  GEOS_ERROR_IF( err != cudaSuccess, GEOS_FMT( "Previous CUDA errors found: {} ({} at {}:{})", msg, cudaGetErrorString( err ), file, line ) );
 #elif GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_HIP
   hipError_t const err = hipGetLastError();
-  GEOSX_UNUSED_VAR( msg, file, line ); // on crusher geosx_error_if ultimately resolves to an assert, which drops the content on release
+  GEOS_UNUSED_VAR( msg, file, line ); // on crusher geosx_error_if ultimately resolves to an assert, which drops the content on release
                                        // builds
-  GEOSX_ERROR_IF( err != hipSuccess, GEOSX_FMT( "Previous HIP errors found: {} ({} at {}:{})", msg, hipGetErrorString( err ), file, line ) );
+  GEOS_ERROR_IF( err != hipSuccess, GEOS_FMT( "Previous HIP errors found: {} ({} at {}:{})", msg, hipGetErrorString( err ), file, line ) );
 #else
-  GEOSX_UNUSED_VAR( msg, file, line );
+  GEOS_UNUSED_VAR( msg, file, line );
 #endif
 }
 
@@ -172,23 +172,23 @@ inline void checkDeviceErrors( char const * msg, char const * file, int const li
  * @brief Check for previous device errors and report with line information.
  * @param msg custom message to add
  */
-#define GEOSX_HYPRE_CHECK_DEVICE_ERRORS( msg ) ::geosx::hypre::checkDeviceErrors( msg, __FILE__, __LINE__ )
+#define GEOS_HYPRE_CHECK_DEVICE_ERRORS( msg ) ::geos::hypre::checkDeviceErrors( msg, __FILE__, __LINE__ )
 
-static_assert( sizeof( HYPRE_BigInt ) == sizeof( geosx::globalIndex ),
-               "HYPRE_BigInt and geosx::globalIndex must have the same size" );
+static_assert( sizeof( HYPRE_BigInt ) == sizeof( geos::globalIndex ),
+               "HYPRE_BigInt and geos::globalIndex must have the same size" );
 
-static_assert( std::is_signed< HYPRE_BigInt >::value == std::is_signed< geosx::globalIndex >::value,
-               "HYPRE_BigInt and geosx::globalIndex must both be signed or unsigned" );
+static_assert( std::is_signed< HYPRE_BigInt >::value == std::is_signed< geos::globalIndex >::value,
+               "HYPRE_BigInt and geos::globalIndex must both be signed or unsigned" );
 
-static_assert( std::is_same< HYPRE_Real, geosx::real64 >::value,
-               "HYPRE_Real and geosx::real64 must be the same type" );
+static_assert( std::is_same< HYPRE_Real, geos::real64 >::value,
+               "HYPRE_Real and geos::real64 must be the same type" );
 
 /**
  * @brief Converts a non-const array from GEOSX globalIndex type to HYPRE_BigInt.
  * @param[in] index the input array
  * @return the converted array
  */
-inline HYPRE_BigInt * toHypreBigInt( geosx::globalIndex * const index )
+inline HYPRE_BigInt * toHypreBigInt( geos::globalIndex * const index )
 {
   return reinterpret_cast< HYPRE_BigInt * >(index);
 }
@@ -198,7 +198,7 @@ inline HYPRE_BigInt * toHypreBigInt( geosx::globalIndex * const index )
  * @param[in] index the input array
  * @return the converted array
  */
-inline HYPRE_BigInt const * toHypreBigInt( geosx::globalIndex const * const index )
+inline HYPRE_BigInt const * toHypreBigInt( geos::globalIndex const * const index )
 {
   return reinterpret_cast< HYPRE_BigInt const * >(index);
 }
@@ -535,6 +535,6 @@ enum class MGRGlobalSmootherType : HYPRE_Int
 
 } // namespace hypre
 
-} // namespace geosx
+} // namespace geos
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_*/

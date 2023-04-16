@@ -16,14 +16,14 @@
  * @file H1_Tetrahedron_Lagrange1_Gauss1.hpp
  */
 
-#ifndef GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1TETRAHEDRONLAGRANGE1GAUSS1
-#define GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1TETRAHEDRONLAGRANGE1GAUSS1
+#ifndef GEOS_FINITEELEMENT_ELEMENTFORMULATIONS_H1TETRAHEDRONLAGRANGE1GAUSS1_HPP_
+#define GEOS_FINITEELEMENT_ELEMENTFORMULATIONS_H1TETRAHEDRONLAGRANGE1GAUSS1_HPP_
 
 #include "FiniteElementBase.hpp"
 #include "LagrangeBasis1.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace finiteElement
 {
@@ -66,7 +66,7 @@ public:
   virtual ~H1_Tetrahedron_Lagrange1_Gauss1() override
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual localIndex getNumQuadraturePoints() const override
   {
     return numQuadraturePoints;
@@ -77,21 +77,21 @@ public:
    * @param stack Stack variables as filled by @ref setupStack.
    * @return The number of quadrature points.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static localIndex
   getNumQuadraturePoints( StackVariables const & stack )
   {
-    GEOSX_UNUSED_VAR( stack );
+    GEOS_UNUSED_VAR( stack );
     return numQuadraturePoints;
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual localIndex getNumSupportPoints() const override
   {
     return numNodes;
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual localIndex getMaxSupportPoints() const override
   {
     return maxSupportPoints;
@@ -102,10 +102,10 @@ public:
    * @param stack Object that holds stack variables.
    * @return The number of support points.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static localIndex getNumSupportPoints( StackVariables const & stack )
   {
-    GEOSX_UNUSED_VAR( stack );
+    GEOS_UNUSED_VAR( stack );
     return numNodes;
   }
 
@@ -115,8 +115,8 @@ public:
    * @param linearIndex linear index of the sampling point
    * @param samplingPointCoord coordinates of the sampling point
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   static void getSamplingPointCoordInParentSpace( int const & linearIndex,
                                                   real64 (& samplingPointCoord)[3] )
   {
@@ -151,8 +151,8 @@ public:
    * @param N An array to pass back the shape function values for each support
    *   point.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   static void calcN( real64 const (&pointCoord)[3],
                      real64 ( &N )[numNodes] );
 
@@ -163,7 +163,7 @@ public:
    * @param N An array to pass back the shape function values for each support
    *   point.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void calcN( localIndex const q,
                      real64 ( &N )[numNodes] );
 
@@ -175,7 +175,7 @@ public:
    * @param N An array to pass back the shape function values for each support
    *   point.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   static void calcN( localIndex const q,
                      StackVariables const & stack,
@@ -190,7 +190,7 @@ public:
    *   support points at the coordinates of the quadrature point @p q.
    * @return The determinant of the parent/physical transformation matrix.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static real64 calcGradN( localIndex const q,
                            real64 const (&X)[numNodes][3],
                            real64 ( &gradN )[numNodes][3] );
@@ -205,7 +205,7 @@ public:
    *   support points at the coordinates of the quadrature point @p q.
    * @return The determinant of the parent/physical transformation matrix.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   static real64 calcGradN( localIndex const q,
                            real64 const (&X)[numNodes][3],
@@ -219,7 +219,7 @@ public:
    * @return The product of the quadrature rule weight and the determinate of
    *   the parent/physical transformation matrix.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static real64 transformedQuadratureWeight( localIndex const q,
                                              real64 const (&X)[numNodes][3] );
 
@@ -231,12 +231,12 @@ public:
    * @param J Array to store the Jacobian transformation.
    * @return The determinant of the Jacobian transformation matrix.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static real64 invJacobianTransformation( int const q,
                                            real64 const (&X)[numNodes][3],
                                            real64 ( & J )[3][3] )
   {
-    GEOSX_UNUSED_VAR( q, X );
+    GEOS_UNUSED_VAR( q, X );
 //    jacobianTransformation( q, X, J );
     return LvArray::tensorOps::invert< 3 >( J );
   }
@@ -253,14 +253,14 @@ private:
    * @param X Array containing the coordinates of the support points
    * @return determinant value
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static real64 determinantJacobianTransformation( real64 const (&X)[numNodes][3] );
 
 };
 
 /// @cond Doxygen_Suppress
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64
 H1_Tetrahedron_Lagrange1_Gauss1::
@@ -273,7 +273,7 @@ H1_Tetrahedron_Lagrange1_Gauss1::
 
 //*************************************************************************************************
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void
 H1_Tetrahedron_Lagrange1_Gauss1::
@@ -292,25 +292,25 @@ H1_Tetrahedron_Lagrange1_Gauss1::
 }
 
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void
 H1_Tetrahedron_Lagrange1_Gauss1::
   calcN( localIndex const q,
          real64 (& N)[numNodes] )
 {
-  GEOSX_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( q );
 
   // single quadrature point (centroid), i.e.  r = s = t = 1/4
   real64 const pointCoord[3] = {0.25, 0.25, 0.25};
   calcN( pointCoord, N );
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void H1_Tetrahedron_Lagrange1_Gauss1::
   calcN( localIndex const q,
-         StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+         StackVariables const & GEOS_UNUSED_PARAM( stack ),
          real64 ( & N )[numNodes] )
 {
   return calcN( q, N );
@@ -318,7 +318,7 @@ void H1_Tetrahedron_Lagrange1_Gauss1::
 
 //*************************************************************************************************
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64
 H1_Tetrahedron_Lagrange1_Gauss1::
@@ -326,7 +326,7 @@ H1_Tetrahedron_Lagrange1_Gauss1::
              real64 const (&X)[numNodes][3],
              real64 (& gradN)[numNodes][3] )
 {
-  GEOSX_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( q );
 
   gradN[0][0] =  X[1][1]*( X[3][2] - X[2][2] ) - X[2][1]*( X[3][2] - X[1][2] ) + X[3][1]*( X[2][2] - X[1][2] );
   gradN[0][1] = -X[1][0]*( X[3][2] - X[2][2] ) + X[2][0]*( X[3][2] - X[1][2] ) - X[3][0]*( X[2][2] - X[1][2] );
@@ -358,12 +358,12 @@ H1_Tetrahedron_Lagrange1_Gauss1::
   return detJ * weight;
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64 H1_Tetrahedron_Lagrange1_Gauss1::
   calcGradN( localIndex const q,
              real64 const (&X)[numNodes][3],
-             StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+             StackVariables const & GEOS_UNUSED_PARAM( stack ),
              real64 ( & gradN )[numNodes][3] )
 {
   return calcGradN( q, X, gradN );
@@ -371,14 +371,14 @@ real64 H1_Tetrahedron_Lagrange1_Gauss1::
 
 //*************************************************************************************************
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64
 H1_Tetrahedron_Lagrange1_Gauss1::
   transformedQuadratureWeight( localIndex const q,
                                real64 const (&X)[numNodes][3] )
 {
-  GEOSX_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( q );
 
   real64 detJ =  determinantJacobianTransformation( X );
 
@@ -390,4 +390,4 @@ H1_Tetrahedron_Lagrange1_Gauss1::
 }
 }
 
-#endif //GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1TETRAHEDRONLAGRANGE1GAUSS1
+#endif //GEOS_FINITEELEMENT_ELEMENTFORMULATIONS_H1TETRAHEDRONLAGRANGE1GAUSS1_HPP_

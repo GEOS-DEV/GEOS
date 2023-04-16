@@ -22,7 +22,7 @@
 
 #include <gtest/gtest.h>
 
-using namespace geosx;
+using namespace geos;
 
 /** ---------------------- Helpers ---------------------- **/
 
@@ -39,7 +39,7 @@ void createAndAssemble( localIndex const startSize, VEC & x )
 
   x.create( localSize, MPI_COMM_GEOSX );
   arrayView1d< real64 > const values = x.open();
-  forAll< POLICY >( localSize, [=] GEOSX_HOST_DEVICE ( localIndex const i )
+  forAll< POLICY >( localSize, [=] GEOS_HOST_DEVICE ( localIndex const i )
   {
     globalIndex const row = rankOffset + i;
     values[i] = std::pow( -1.0, row ) * ( 1.0 + row );
@@ -378,6 +378,6 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, VectorTest, PetscInterface, );
 
 int main( int argc, char * * argv )
 {
-  geosx::testing::LinearAlgebraTestScope scope( argc, argv );
+  geos::testing::LinearAlgebraTestScope scope( argc, argv );
   return RUN_ALL_TESTS();
 }

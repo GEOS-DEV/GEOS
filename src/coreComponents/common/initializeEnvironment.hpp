@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_COMMON_INITIALIZEENVIRONMENT_HPP_
-#define GEOSX_COMMON_INITIALIZEENVIRONMENT_HPP_
+#ifndef GEOS_COMMON_INITIALIZEENVIRONMENT_HPP_
+#define GEOS_COMMON_INITIALIZEENVIRONMENT_HPP_
 
 // Source includes
 #include "DataTypes.hpp"
@@ -33,7 +33,7 @@ class ConfigManager;
 }
 #endif
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -177,11 +177,11 @@ void pushStatsIntoAdiak( string const & name, T const value )
   adiak::value( name + " min", MpiWrapper::min( value ) );
   adiak::value( name + " max", MpiWrapper::max( value ) );
 #else
-  GEOSX_UNUSED_VAR( name );
-  GEOSX_UNUSED_VAR( value );
+  GEOS_UNUSED_VAR( name );
+  GEOS_UNUSED_VAR( value );
 #endif
 }
 
-} // namespace geosx
+} // namespace geos
 
-#endif // GEOSX_COMMON_INITIALIZEENVIRONMENT_HPP_
+#endif // GEOS_COMMON_INITIALIZEENVIRONMENT_HPP_

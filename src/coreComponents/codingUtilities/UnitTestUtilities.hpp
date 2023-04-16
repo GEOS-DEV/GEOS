@@ -16,8 +16,8 @@
  * @file UnitTestUtilities.hpp
  */
 
-#ifndef GEOSX_CODINGUTILITIES_UNITTESTUTILITIES_HPP_
-#define GEOSX_CODINGUTILITIES_UNITTESTUTILITIES_HPP_
+#ifndef GEOS_CODINGUTILITIES_UNITTESTUTILITIES_HPP_
+#define GEOS_CODINGUTILITIES_UNITTESTUTILITIES_HPP_
 
 #include "common/DataTypes.hpp"
 
@@ -35,12 +35,12 @@
   } while( false )
 
 #define SKIP_TEST_IN_SERIAL( REASON ) \
-  SKIP_TEST_IF( geosx::MpiWrapper::commSize() == 1, REASON )
+  SKIP_TEST_IF( geos::MpiWrapper::commSize() == 1, REASON )
 
 #define SKIP_TEST_IN_PARALLEL( REASON ) \
-  SKIP_TEST_IF( geosx::MpiWrapper::commSize() != 1, REASON )
+  SKIP_TEST_IF( geos::MpiWrapper::commSize() != 1, REASON )
 
-namespace geosx
+namespace geos
 {
 
 namespace testing
@@ -70,7 +70,7 @@ T expected( T expectedSerial,
   }
   else
   {
-    GEOSX_ASSERT( expectedParallel.size() == std::size_t( mpiSize ) );
+    GEOS_ASSERT( expectedParallel.size() == std::size_t( mpiSize ) );
     std::vector< T > tmp( expectedParallel );
     return tmp[MpiWrapper::commRank( comm )];
   }
@@ -218,6 +218,6 @@ void compareLocalMatrices( CRSMatrixView< T const, COL_INDEX const > const & mat
 
 } // namespace testing
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_CODINGUTILITIES_UNITTESTUTILITIES_HPP_
+#endif //GEOS_CODINGUTILITIES_UNITTESTUTILITIES_HPP_

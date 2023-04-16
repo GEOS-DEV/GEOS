@@ -16,8 +16,8 @@
  * @file HypreKernels.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREKERNELS_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREKERNELS_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_HYPREKERNELS_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_HYPREKERNELS_HPP_
 
 #include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/traits.hpp"
@@ -28,7 +28,7 @@
 
 #include <_hypre_parcsr_mv.h>
 
-namespace geosx
+namespace geos
 {
 namespace hypre
 {
@@ -39,14 +39,14 @@ namespace ops
 {
 
 template< typename T >
-GEOSX_HYPRE_HOST_DEVICE
+GEOS_HYPRE_HOST_DEVICE
 constexpr T identity( T const v )
 {
   return v;
 }
 
 template< typename T >
-GEOSX_HYPRE_HOST_DEVICE
+GEOS_HYPRE_HOST_DEVICE
 constexpr T plus( T const lhs, T const rhs )
 {
   return lhs + rhs;
@@ -103,7 +103,7 @@ struct RowReducer
   F transform;
   R reduce;
 
-  auto GEOSX_HYPRE_DEVICE
+  auto GEOS_HYPRE_DEVICE
   operator()( double acc, double v ) const
   {
     return reduce( acc, transform( v ) );
@@ -123,10 +123,10 @@ void rescaleMatrixRows( hypre_ParCSRMatrix * const mat,
   HYPRE_BigInt const firstLocalRow = hypre_ParCSRMatrixFirstRowIndex( mat );
   internal::RowReducer< F, R > reducer{ std::move( transform ), std::move( reduce ) };
 
-  forAll< execPolicy >( rowIndices.size(), [diag, offd, reducer, rowIndices, firstLocalRow] GEOSX_HYPRE_DEVICE ( localIndex const i )
+  forAll< execPolicy >( rowIndices.size(), [diag, offd, reducer, rowIndices, firstLocalRow] GEOS_HYPRE_DEVICE ( localIndex const i )
   {
     HYPRE_Int const localRow = LvArray::integerConversion< HYPRE_Int >( rowIndices[i] - firstLocalRow );
-    GEOSX_ASSERT( 0 <= localRow && localRow < diag.nrow );
+    GEOS_ASSERT( 0 <= localRow && localRow < diag.nrow );
 
     HYPRE_Real scale = 0.0;
     for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
@@ -141,7 +141,7 @@ void rescaleMatrixRows( hypre_ParCSRMatrix * const mat,
       }
     }
 
-    GEOSX_ASSERT_MSG( !isZero( scale ), "Zero row sum in row " << rowIndices[i] );
+    GEOS_ASSERT_MSG( !isZero( scale ), "Zero row sum in row " << rowIndices[i] );
     scale = 1.0 / scale;
     for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
     {
@@ -168,7 +168,7 @@ void computeRowsSums( hypre_ParCSRMatrix const * const mat,
   HYPRE_Real * const values = hypre_VectorData( hypre_ParVectorLocalVector( vec ) );
   internal::RowReducer< F, R > reducer{ std::move( transform ), std::move( reduce ) };
 
-  forAll< execPolicy >( diag.nrow, [diag, offd, reducer, values] GEOSX_HYPRE_DEVICE ( HYPRE_Int const localRow )
+  forAll< execPolicy >( diag.nrow, [diag, offd, reducer, values] GEOS_HYPRE_DEVICE ( HYPRE_Int const localRow )
   {
     HYPRE_Real sum = 0.0;
     for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
@@ -190,7 +190,7 @@ namespace internal
 {
 
 template< typename MAP >
-void GEOSX_HYPRE_DEVICE
+void GEOS_HYPRE_DEVICE
 makeSortedPermutation( HYPRE_Int const * const indices,
                        HYPRE_Int const size,
                        HYPRE_Int * const perm,
@@ -200,7 +200,7 @@ makeSortedPermutation( HYPRE_Int const * const indices,
   {
     perm[i] = i; // std::iota
   }
-  auto const comp = [indices, map] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int i, HYPRE_Int j )
+  auto const comp = [indices, map] GEOS_HYPRE_HOST_DEVICE ( HYPRE_Int i, HYPRE_Int j )
   {
     return map( indices[i] ) < map( indices[j] );
   };
@@ -216,12 +216,12 @@ void addEntriesRestricted( hypre_CSRMatrix const * const src_mat,
                            DST_COLMAP const dst_colmap,
                            real64 const scale )
 {
-  GEOSX_LAI_ASSERT( src_mat != nullptr );
-  GEOSX_LAI_ASSERT( dst_mat != nullptr );
+  GEOS_LAI_ASSERT( src_mat != nullptr );
+  GEOS_LAI_ASSERT( dst_mat != nullptr );
 
   CSRData< true > src{ src_mat };
   CSRData< false > dst{ dst_mat };
-  GEOSX_LAI_ASSERT_EQ( src.nrow, dst.nrow );
+  GEOS_LAI_ASSERT_EQ( src.nrow, dst.nrow );
 
   if( src.ncol == 0 || isZero( scale ) )
   {
@@ -236,7 +236,7 @@ void addEntriesRestricted( hypre_CSRMatrix const * const src_mat,
   forAll< hypre::execPolicy >( dst.nrow,
                                [src, src_colmap, dst, dst_colmap, scale,
                                 src_permutation = src_permutation.toView(),
-                                dst_permutation = dst_permutation.toView()] GEOSX_HYPRE_DEVICE ( HYPRE_Int const localRow )
+                                dst_permutation = dst_permutation.toView()] GEOS_HYPRE_DEVICE ( HYPRE_Int const localRow )
   {
     HYPRE_Int const src_offset = src.rowptr[localRow];
     HYPRE_Int const src_length = src.rowptr[localRow + 1] - src_offset;
@@ -273,6 +273,6 @@ void addEntriesRestricted( hypre_CSRMatrix const * const src_mat,
 /// @endcond
 
 } // namespace hypre
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_INTERFACES_HYPREKERNELS_HPP_
+#endif //GEOS_LINEARALGEBRA_INTERFACES_HYPREKERNELS_HPP_

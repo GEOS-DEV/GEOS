@@ -26,7 +26,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/HybridFVMHelperKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace compositionalMultiphaseHybridFVMKernels
@@ -35,7 +35,7 @@ namespace compositionalMultiphaseHybridFVMKernels
 /******************************** UpwindingHelper ********************************/
 
 template< integer NC, integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void
 UpwindingHelper::
@@ -133,7 +133,7 @@ UpwindingHelper::
 }
 
 template< integer NC, integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void
 UpwindingHelper::
@@ -271,7 +271,7 @@ UpwindingHelper::
 }
 
 template< integer NC, integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void
 UpwindingHelper::
@@ -358,7 +358,7 @@ UpwindingHelper::
 }
 
 template< integer NC, integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void
 UpwindingHelper::
@@ -399,7 +399,7 @@ UpwindingHelper::
   }
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void
 UpwindingHelper::
@@ -434,7 +434,7 @@ UpwindingHelper::
 }
 
 template< integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void
 UpwindingHelper::
@@ -498,7 +498,7 @@ UpwindingHelper::
 
 #define INST_UpwindingHelperNCNP( NC, NP ) \
   template \
-  GEOSX_HOST_DEVICE \
+  GEOS_HOST_DEVICE \
   void \
   UpwindingHelper:: \
     upwindViscousCoefficient< NC, NP >( localIndex const (&localIds)[ 3 ], \
@@ -517,7 +517,7 @@ UpwindingHelper::
                                         real64 ( &dUpwPhaseViscCoef_dCompDens )[ NP ][ NC ][ NC ], \
                                         globalIndex & upwViscDofNumber ); \
   template \
-  GEOSX_HOST_DEVICE \
+  GEOS_HOST_DEVICE \
   void \
   UpwindingHelper:: \
     upwindBuoyancyCoefficient< NC, NP >( localIndex const (&localIds)[ 3 ], \
@@ -539,7 +539,7 @@ UpwindingHelper::
                                          real64 ( &dUpwPhaseGravCoef_dPres )[ NP ][ NP-1 ][ NC ][ 2 ], \
                                          real64 ( &dUpwPhaseGravCoef_dCompDens )[ NP ][ NP-1 ][ NC ][ 2 ][ NC ] ); \
   template \
-  GEOSX_HOST_DEVICE \
+  GEOS_HOST_DEVICE \
   void \
   UpwindingHelper:: \
     computePhaseGravTerm< NC, NP >( localIndex const (&localIds)[ 3 ], \
@@ -552,7 +552,7 @@ UpwindingHelper::
                                     real64 ( &dPhaseGravTerm_dPres )[ NP ][ NP-1 ][ 2 ], \
                                     real64 ( &dPhaseGravTerm_dCompDens )[ NP ][ NP-1 ][ 2 ][ NC ] ); \
   template \
-  GEOSX_HOST_DEVICE \
+  GEOS_HOST_DEVICE \
   void \
   UpwindingHelper:: \
     computeUpwindedTotalMobility< NC, NP >( localIndex const (&localIds)[ 3 ], \
@@ -580,7 +580,7 @@ INST_UpwindingHelperNCNP( 5, 3 );
 
 #define INST_UpwindingHelperNP( NP ) \
   template \
-  GEOSX_HOST_DEVICE \
+  GEOS_HOST_DEVICE \
   void \
   UpwindingHelper:: \
     setIndicesForTotalMobilityUpwinding< NP >( localIndex const (&localIds)[ 3 ], \
@@ -597,7 +597,7 @@ INST_UpwindingHelperNP( 3 );
 /******************************** AssemblerKernelHelper ********************************/
 
 template< integer NF, integer NC, integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void
 AssemblerKernelHelper::
@@ -701,7 +701,7 @@ AssemblerKernelHelper::
 }
 
 template< integer NF, integer NC, integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void
 AssemblerKernelHelper::
@@ -878,8 +878,8 @@ AssemblerKernelHelper::
     localIndex const eqnRowLocalIndex =
       LvArray::integerConversion< localIndex >( elemDofNumber[localIds[0]][localIds[1]][localIds[2]] + ic - rankOffset );
 
-    GEOSX_ASSERT_GE( eqnRowLocalIndex, 0 );
-    GEOSX_ASSERT_GT( localMatrix.numRows(), eqnRowLocalIndex );
+    GEOS_ASSERT_GE( eqnRowLocalIndex, 0 );
+    GEOS_ASSERT_GT( localMatrix.numRows(), eqnRowLocalIndex );
 
     // residual
     localRhs[eqnRowLocalIndex] = localRhs[eqnRowLocalIndex] + divMassFluxes[ic];
@@ -899,7 +899,7 @@ AssemblerKernelHelper::
 }
 
 template< integer NF, integer NC, integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void
 AssemblerKernelHelper::
@@ -981,7 +981,7 @@ AssemblerKernelHelper::
 }
 
 template< integer NF, integer NC, integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void
 AssemblerKernelHelper::
@@ -1043,7 +1043,7 @@ AssemblerKernelHelper::
 }
 
 template< integer NF, integer NC, integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void
 AssemblerKernelHelper::
@@ -1098,8 +1098,8 @@ AssemblerKernelHelper::
     // dof number of this face constraint
     localIndex const eqnLocalRowIndex = LvArray::integerConversion< localIndex >( faceDofNumber[elemToFaces[ifaceLoc]] - rankOffset );
 
-    GEOSX_ASSERT_GE( eqnLocalRowIndex, 0 );
-    GEOSX_ASSERT_GT( localMatrix.numRows(), eqnLocalRowIndex );
+    GEOS_ASSERT_GE( eqnLocalRowIndex, 0 );
+    GEOS_ASSERT_GT( localMatrix.numRows(), eqnLocalRowIndex );
 
     // residual
     RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnLocalRowIndex], flux );
@@ -1121,7 +1121,7 @@ AssemblerKernelHelper::
 
 #define INST_AssemblerKernelHelper( NF, NC, NP ) \
   template \
-  GEOSX_HOST_DEVICE \
+  GEOS_HOST_DEVICE \
   void \
   AssemblerKernelHelper:: \
     applyGradient< NF, NC, NP >( arrayView1d< real64 const > const & facePres, \
@@ -1140,7 +1140,7 @@ AssemblerKernelHelper::
                                  real64 ( &dOneSidedVolFlux_dFacePres )[ NF ][ NF ], \
                                  real64 ( &dOneSidedVolFlux_dCompDens )[ NF ][ NC ] ); \
   template \
-  GEOSX_HOST_DEVICE \
+  GEOS_HOST_DEVICE \
   void \
   AssemblerKernelHelper:: \
     assembleFluxDivergence< NF, NC, NP >( localIndex const (&localIds)[ 3 ], \
@@ -1172,7 +1172,7 @@ AssemblerKernelHelper::
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix, \
                                           arrayView1d< real64 > const & localRhs ); \
   template \
-  GEOSX_HOST_DEVICE \
+  GEOS_HOST_DEVICE \
   void \
   AssemblerKernelHelper:: \
     assembleViscousFlux< NF, NC, NP >( localIndex const ifaceLoc, \
@@ -1194,7 +1194,7 @@ AssemblerKernelHelper::
                                        globalIndex ( &dofColIndicesElemVars )[ (NC+1)*(NF+1) ], \
                                        globalIndex ( &dofColIndicesFaceVars )[ NF ] ); \
   template \
-  GEOSX_HOST_DEVICE \
+  GEOS_HOST_DEVICE \
   void \
   AssemblerKernelHelper:: \
     assembleBuoyancyFlux< NF, NC, NP >( localIndex const ifaceLoc, \
@@ -1208,7 +1208,7 @@ AssemblerKernelHelper::
                                         real64 ( &divMassFluxes )[ NC ], \
                                         real64 ( &dDivMassFluxes_dElemVars )[ NC ][ (NC+1)*(NF+1) ] ); \
   template \
-  GEOSX_HOST_DEVICE \
+  GEOS_HOST_DEVICE \
   void \
   AssemblerKernelHelper:: \
     assembleFaceConstraints< NF, NC, NP >( arrayView1d< globalIndex const > const & faceDofNumber, \
@@ -1264,7 +1264,7 @@ INST_AssemblerKernelHelper( 6, 5, 3 );
 /******************************** AssemblerKernel ********************************/
 
 template< integer NF, integer NC, integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void
 AssemblerKernel::
@@ -1391,7 +1391,7 @@ AssemblerKernel::
 
 #define INST_AssemblerKernel( NF, NC, NP ) \
   template \
-  GEOSX_HOST_DEVICE \
+  GEOS_HOST_DEVICE \
   void \
   AssemblerKernel:: \
     compute< NF, NC, NP >( localIndex const er, localIndex const esr, localIndex const ei, \
@@ -1528,7 +1528,7 @@ FluxKernel::
 
   // assemble the residual and Jacobian element by element
   // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const ei )
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const ei )
   {
     // transmissibility matrix
     stackArray2d< real64, NF *NF > transMatrix( NF, NF );
@@ -1708,4 +1708,4 @@ INST_FluxKernel( 6, 5, 3, mimeticInnerProduct::BdVLMInnerProduct const );
 
 } // namespace compositionalMultiphaseHybridFVMKernels
 
-} // namespace geosx
+} // namespace geos

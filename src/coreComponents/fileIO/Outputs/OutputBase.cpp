@@ -20,7 +20,7 @@
 #include "common/MpiWrapper.hpp"
 
 
-namespace geosx
+namespace geos
 {
 string OutputBase::m_outputDirectory;
 string OutputBase::m_fileNameRoot;
@@ -89,4 +89,4 @@ void OutputBase::setupDirectoryStructure()
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */

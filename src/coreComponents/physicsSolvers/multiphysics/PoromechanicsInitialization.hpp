@@ -21,7 +21,7 @@
 
 #include "events/tasks/TaskBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -98,6 +98,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSINITIALIZATION_HPP_ */

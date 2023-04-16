@@ -20,14 +20,14 @@
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/PrismUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 
 static localIndex getFaceNodesHex( localIndex const faceNum,
                                    arraySlice1d< localIndex const, cells::NODE_MAP_USD-1 > const & elemNodes,
                                    Span< localIndex > const faceNodes )
 {
-  GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+  GEOS_ERROR_IF_LT( faceNodes.size(), 4 );
   switch( faceNum )
   {
     case 0:
@@ -80,7 +80,7 @@ static localIndex getFaceNodesHex( localIndex const faceNum,
     }
     default:
     {
-      GEOSX_ERROR( "Invalid local face index for element of type Hexahedron: " << faceNum );
+      GEOS_ERROR( "Invalid local face index for element of type Hexahedron: " << faceNum );
     }
   }
   return 4;
@@ -94,7 +94,7 @@ static localIndex getFaceNodesWedge( localIndex const faceNum,
   {
     case 0:
     {
-      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      GEOS_ERROR_IF_LT( faceNodes.size(), 4 );
       faceNodes[0] = elemNodes[0];
       faceNodes[1] = elemNodes[1];
       faceNodes[2] = elemNodes[5];
@@ -103,7 +103,7 @@ static localIndex getFaceNodesWedge( localIndex const faceNum,
     }
     case 1:
     {
-      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      GEOS_ERROR_IF_LT( faceNodes.size(), 4 );
       faceNodes[0] = elemNodes[0];
       faceNodes[1] = elemNodes[2];
       faceNodes[2] = elemNodes[3];
@@ -112,7 +112,7 @@ static localIndex getFaceNodesWedge( localIndex const faceNum,
     }
     case 2:
     {
-      GEOSX_ERROR_IF_LT( faceNodes.size(), 3 );
+      GEOS_ERROR_IF_LT( faceNodes.size(), 3 );
       faceNodes[0] = elemNodes[0];
       faceNodes[1] = elemNodes[4];
       faceNodes[2] = elemNodes[2];
@@ -120,7 +120,7 @@ static localIndex getFaceNodesWedge( localIndex const faceNum,
     }
     case 3:
     {
-      GEOSX_ERROR_IF_LT( faceNodes.size(), 3 );
+      GEOS_ERROR_IF_LT( faceNodes.size(), 3 );
       faceNodes[0] = elemNodes[1];
       faceNodes[1] = elemNodes[3];
       faceNodes[2] = elemNodes[5];
@@ -128,7 +128,7 @@ static localIndex getFaceNodesWedge( localIndex const faceNum,
     }
     case 4:
     {
-      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      GEOS_ERROR_IF_LT( faceNodes.size(), 4 );
       faceNodes[0] = elemNodes[2];
       faceNodes[1] = elemNodes[4];
       faceNodes[2] = elemNodes[5];
@@ -137,7 +137,7 @@ static localIndex getFaceNodesWedge( localIndex const faceNum,
     }
     default:
     {
-      GEOSX_ERROR( "Invalid local face index for element of type Wedge: " << faceNum );
+      GEOS_ERROR( "Invalid local face index for element of type Wedge: " << faceNum );
       return 0;
     }
   }
@@ -147,7 +147,7 @@ static localIndex getFaceNodesTet( localIndex const faceNum,
                                    arraySlice1d< localIndex const, cells::NODE_MAP_USD-1 > const & elemNodes,
                                    Span< localIndex > const faceNodes )
 {
-  GEOSX_ERROR_IF_LT( faceNodes.size(), 3 );
+  GEOS_ERROR_IF_LT( faceNodes.size(), 3 );
   switch( faceNum )
   {
     case 0:
@@ -180,7 +180,7 @@ static localIndex getFaceNodesTet( localIndex const faceNum,
     }
     default:
     {
-      GEOSX_ERROR( "Invalid local face index for element of type Tetrahedron: " << faceNum );
+      GEOS_ERROR( "Invalid local face index for element of type Tetrahedron: " << faceNum );
     }
   }
   return 3;
@@ -194,7 +194,7 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
   {
     case 0:
     {
-      GEOSX_ERROR_IF_LT( faceNodes.size(), 3 );
+      GEOS_ERROR_IF_LT( faceNodes.size(), 3 );
       faceNodes[0] = elemNodes[0];
       faceNodes[1] = elemNodes[1];
       faceNodes[2] = elemNodes[4];
@@ -202,7 +202,7 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
     }
     case 1:
     {
-      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      GEOS_ERROR_IF_LT( faceNodes.size(), 4 );
       faceNodes[0] = elemNodes[0];
       faceNodes[1] = elemNodes[2];
       faceNodes[2] = elemNodes[3];
@@ -211,7 +211,7 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
     }
     case 2:
     {
-      GEOSX_ERROR_IF_LT( faceNodes.size(), 3 );
+      GEOS_ERROR_IF_LT( faceNodes.size(), 3 );
       faceNodes[0] = elemNodes[0];
       faceNodes[1] = elemNodes[4];
       faceNodes[2] = elemNodes[2];
@@ -219,7 +219,7 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
     }
     case 3:
     {
-      GEOSX_ERROR_IF_LT( faceNodes.size(), 3 );
+      GEOS_ERROR_IF_LT( faceNodes.size(), 3 );
       faceNodes[0] = elemNodes[1];
       faceNodes[1] = elemNodes[3];
       faceNodes[2] = elemNodes[4];
@@ -227,7 +227,7 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
     }
     case 4:
     {
-      GEOSX_ERROR_IF_LT( faceNodes.size(), 3 );
+      GEOS_ERROR_IF_LT( faceNodes.size(), 3 );
       faceNodes[0] = elemNodes[2];
       faceNodes[1] = elemNodes[4];
       faceNodes[2] = elemNodes[3];
@@ -235,7 +235,7 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
     }
     default:
     {
-      GEOSX_ERROR( "Invalid local face index for element of type Pyramid: " << faceNum );
+      GEOS_ERROR( "Invalid local face index for element of type Pyramid: " << faceNum );
       return 0;
     }
   }
@@ -295,7 +295,7 @@ localIndex getFaceNodes( ElementType const elementType,
     }
     default:
     {
-      GEOSX_ERROR( "Invalid element type: " << elementType );
+      GEOS_ERROR( "Invalid element type: " << elementType );
     }
   }
   return 0;
@@ -431,9 +431,9 @@ void populateEdgeMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLow
 {
   localIndex const numNodes = edgesByLowestNode.size();
   localIndex const numUniqueEdges = uniqueEdgeOffsets.back();
-  GEOSX_ERROR_IF_NE( numNodes, uniqueEdgeOffsets.size() - 1 );
-  GEOSX_ERROR_IF_NE( numUniqueEdges, edgeToFaceMap.size() );
-  GEOSX_ERROR_IF_NE( numUniqueEdges, edgeToNodeMap.size( 0 ) );
+  GEOS_ERROR_IF_NE( numNodes, uniqueEdgeOffsets.size() - 1 );
+  GEOS_ERROR_IF_NE( numUniqueEdges, edgeToFaceMap.size() );
+  GEOS_ERROR_IF_NE( numUniqueEdges, edgeToNodeMap.size( 0 ) );
 
   // loop over all the nodes.
   forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeIndex )
@@ -524,7 +524,7 @@ localIndex buildEdgeMaps( localIndex const numNodes,
                           ArrayOfArrays< localIndex > & edgeToFaceMap,
                           array2d< localIndex > & edgeToNodeMap )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   ArrayOfArrays< EdgeBuilder > const edgesByLowestNode =
     createEdgesByLowestNode( numNodes, faceToNodeMap );

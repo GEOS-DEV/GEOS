@@ -24,7 +24,7 @@
 #include <tuple>
 #include <cstdio>
 
-namespace geosx
+namespace geos
 {
 
 ChomboCoupler::ChomboCoupler( MPI_Comm const comm, const string & outputPath, const string & inputPath, MeshLevel & mesh ):
@@ -54,7 +54,7 @@ void ChomboCoupler::write( double dt )
 
   localIndex const n_faces = face_connectivity.size();
 
-  GEOSX_LOG_RANK_0( "Gathering face connectivity." );
+  GEOS_LOG_RANK_0( "Gathering face connectivity." );
   /* Copy the face connectivity into a contiguous array. */
   std::int64_t * connectivity_array = new std::int64_t[4 * n_faces];
   for( localIndex i = 0; i < n_faces; ++i )
@@ -79,7 +79,7 @@ void ChomboCoupler::write( double dt )
     }
   } );
 
-  GEOSX_LOG_RANK_0( "Constructing face mask." );
+  GEOS_LOG_RANK_0( "Constructing face mask." );
   bool * faceMask = new bool[n_faces];
   for( localIndex i = 0; i < n_faces; ++i )
   {
@@ -95,7 +95,7 @@ void ChomboCoupler::write( double dt )
   real64 const * pressure_ptr = faces.getReference< real64_array >( "ChomboPressure" ).data();
   face_fields["Pressure"] = std::make_tuple( H5T_NATIVE_DOUBLE, 1, pressure_ptr );
 
-  GEOSX_LOG_RANK_0( "Copying nodal data." );
+  GEOS_LOG_RANK_0( "Copying nodal data." );
   /* Build the node FieldMap. */
   copyNodalData();
 
@@ -104,26 +104,26 @@ void ChomboCoupler::write( double dt )
   node_fields["displacement"] = std::make_tuple( H5T_NATIVE_DOUBLE, 3, m_displacementCopy.data() );
   node_fields["velocity"] = std::make_tuple( H5T_NATIVE_DOUBLE, 3, m_velocityCopy.data() );
 
-  GEOSX_LOG_RANK_0( "Writing file: " << m_outputPath );
+  GEOS_LOG_RANK_0( "Writing file: " << m_outputPath );
   writeBoundaryFile( m_comm, m_outputPath.data(), dt, faceMask,
                      m_face_offset, m_n_faces_written, n_faces, connectivity_array, face_fields,
                      m_node_offset, m_n_nodes_written, m_referencePositionCopy.size( 0 ), node_fields );
 
-  GEOSX_LOG_RANK_0( "File writing complete." );
+  GEOS_LOG_RANK_0( "File writing complete." );
   delete[] connectivity_array;
   delete[] faceMask;
 }
 
 void ChomboCoupler::read( bool usePressures )
 {
-  GEOSX_LOG_RANK_0( "Waiting for file existence: " << m_inputPath );
+  GEOS_LOG_RANK_0( "Waiting for file existence: " << m_inputPath );
   waitForFileExistence( m_comm, m_inputPath.data() );
 
-  GEOSX_LOG_RANK_0( "File found: " << m_inputPath );
+  GEOS_LOG_RANK_0( "File found: " << m_inputPath );
 
   if( usePressures )
   {
-    GEOSX_LOG_RANK_0( "Reading pressures..." );
+    GEOS_LOG_RANK_0( "Reading pressures..." );
 
     FaceManager & faces = m_mesh.getFaceManager();
     NodeManager & nodes = m_mesh.getNodeManager();
@@ -171,12 +171,12 @@ void ChomboCoupler::copyNodalData()
   fields::solidMechanics::arrayViewConst2dLayoutVelocity const & velocity =
     nodes.getField< fields::solidMechanics::velocity >();
 
-  GEOSX_ERROR_IF_NE( referencePos.size( 0 ), numNodes );
-  GEOSX_ERROR_IF_NE( referencePos.size( 1 ), 3 );
-  GEOSX_ERROR_IF_NE( displacement.size( 0 ), numNodes );
-  GEOSX_ERROR_IF_NE( displacement.size( 1 ), 3 );
-  GEOSX_ERROR_IF_NE( velocity.size( 0 ), numNodes );
-  GEOSX_ERROR_IF_NE( velocity.size( 1 ), 3 );
+  GEOS_ERROR_IF_NE( referencePos.size( 0 ), numNodes );
+  GEOS_ERROR_IF_NE( referencePos.size( 1 ), 3 );
+  GEOS_ERROR_IF_NE( displacement.size( 0 ), numNodes );
+  GEOS_ERROR_IF_NE( displacement.size( 1 ), 3 );
+  GEOS_ERROR_IF_NE( velocity.size( 0 ), numNodes );
+  GEOS_ERROR_IF_NE( velocity.size( 1 ), 3 );
 
   m_referencePositionCopy.resizeWithoutInitializationOrDestruction( numNodes, 3 );
   m_displacementCopy.resizeWithoutInitializationOrDestruction( numNodes, 3 );
@@ -194,4 +194,4 @@ void ChomboCoupler::copyNodalData()
 }
 
 
-} // namespace geosx
+} // namespace geos

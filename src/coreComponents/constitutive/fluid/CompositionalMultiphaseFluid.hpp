@@ -16,15 +16,15 @@
  * @file CompositionalMultiphaseFluid.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_COMPOSITIONALMULTIPHASEFLUID_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_COMPOSITIONALMULTIPHASEFLUID_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_COMPOSITIONALMULTIPHASEFLUID_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_COMPOSITIONALMULTIPHASEFLUID_HPP_
 
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/MultiFluidUtils.hpp"
 
 #include "constitutive/PVTPackage/PVTPackage/source/pvt/pvt.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -64,8 +64,7 @@ public:
   {
 public:
 
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+    GEOS_HOST_DEVICE
     virtual void compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -78,8 +77,7 @@ public:
                           arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
                           real64 & totalDensity ) const override;
 
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+    GEOS_HOST_DEVICE
     virtual void compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -92,8 +90,7 @@ public:
                           PhaseComp::SliceType const phaseCompFraction,
                           FluidProp::SliceType const totalDensity ) const override;
 
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+    GEOS_HOST_DEVICE
     virtual void update( localIndex const k,
                          localIndex const q,
                          real64 const pressure,
@@ -156,8 +153,8 @@ private:
 
 };
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void
 CompositionalMultiphaseFluid::KernelWrapper::
   compute( real64 const pressure,
@@ -172,18 +169,18 @@ CompositionalMultiphaseFluid::KernelWrapper::
            arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFrac,
            real64 & totalDens ) const
 {
-  GEOSX_UNUSED_VAR( phaseEnthalpy, phaseInternalEnergy );
+  GEOS_UNUSED_VAR( phaseEnthalpy, phaseInternalEnergy );
 #if defined(GEOSX_DEVICE_COMPILE)
-  GEOSX_ERROR( "This function cannot be used on GPU" );
-  GEOSX_UNUSED_VAR( pressure );
-  GEOSX_UNUSED_VAR( temperature );
-  GEOSX_UNUSED_VAR( composition );
-  GEOSX_UNUSED_VAR( phaseFrac );
-  GEOSX_UNUSED_VAR( phaseDens );
-  GEOSX_UNUSED_VAR( phaseMassDens );
-  GEOSX_UNUSED_VAR( phaseVisc );
-  GEOSX_UNUSED_VAR( phaseCompFrac );
-  GEOSX_UNUSED_VAR( totalDens );
+  GEOS_ERROR( "This function cannot be used on GPU" );
+  GEOS_UNUSED_VAR( pressure );
+  GEOS_UNUSED_VAR( temperature );
+  GEOS_UNUSED_VAR( composition );
+  GEOS_UNUSED_VAR( phaseFrac );
+  GEOS_UNUSED_VAR( phaseDens );
+  GEOS_UNUSED_VAR( phaseMassDens );
+  GEOS_UNUSED_VAR( phaseVisc );
+  GEOS_UNUSED_VAR( phaseCompFrac );
+  GEOS_UNUSED_VAR( totalDens );
 #else
   integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   integer constexpr maxNumPhase = MultiFluidBase::MAX_NUM_PHASES;
@@ -209,8 +206,8 @@ CompositionalMultiphaseFluid::KernelWrapper::
   // 2. Trigger PVTPackage compute and get back phase split
   m_fluid.Update( pressure, temperature, compMoleFrac );
 
-  GEOSX_WARNING_IF( !m_fluid.hasSucceeded(),
-                    "Phase equilibrium calculations not converged" );
+  GEOS_WARNING_IF( !m_fluid.hasSucceeded(),
+                   "Phase equilibrium calculations not converged" );
 
   pvt::MultiphaseSystemProperties const & props = m_fluid.getMultiphaseSystemProperties();
 
@@ -263,8 +260,8 @@ CompositionalMultiphaseFluid::KernelWrapper::
 #endif
 }
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void
 CompositionalMultiphaseFluid::KernelWrapper::
   compute( real64 const pressure,
@@ -279,18 +276,18 @@ CompositionalMultiphaseFluid::KernelWrapper::
            PhaseComp::SliceType const phaseCompFraction,
            FluidProp::SliceType const totalDensity ) const
 {
-  GEOSX_UNUSED_VAR( phaseEnthalpy, phaseInternalEnergy );
+  GEOS_UNUSED_VAR( phaseEnthalpy, phaseInternalEnergy );
 #if defined(GEOSX_DEVICE_COMPILE)
-  GEOSX_ERROR( "This function cannot be used on GPU" );
-  GEOSX_UNUSED_VAR( pressure );
-  GEOSX_UNUSED_VAR( temperature );
-  GEOSX_UNUSED_VAR( composition );
-  GEOSX_UNUSED_VAR( phaseFraction );
-  GEOSX_UNUSED_VAR( phaseDensity );
-  GEOSX_UNUSED_VAR( phaseMassDensity );
-  GEOSX_UNUSED_VAR( phaseViscosity );
-  GEOSX_UNUSED_VAR( phaseCompFraction );
-  GEOSX_UNUSED_VAR( totalDensity );
+  GEOS_ERROR( "This function cannot be used on GPU" );
+  GEOS_UNUSED_VAR( pressure );
+  GEOS_UNUSED_VAR( temperature );
+  GEOS_UNUSED_VAR( composition );
+  GEOS_UNUSED_VAR( phaseFraction );
+  GEOS_UNUSED_VAR( phaseDensity );
+  GEOS_UNUSED_VAR( phaseMassDensity );
+  GEOS_UNUSED_VAR( phaseViscosity );
+  GEOS_UNUSED_VAR( phaseCompFraction );
+  GEOS_UNUSED_VAR( totalDensity );
 #else
 
   using Deriv = multifluid::DerivativeOffset;
@@ -324,8 +321,8 @@ CompositionalMultiphaseFluid::KernelWrapper::
 
   m_fluid.Update( pressure, temperature, compMoleFrac );
 
-  GEOSX_WARNING_IF( !m_fluid.hasSucceeded(),
-                    "Phase equilibrium calculations not converged" );
+  GEOS_WARNING_IF( !m_fluid.hasSucceeded(),
+                   "Phase equilibrium calculations not converged" );
 
   pvt::MultiphaseSystemProperties const & props = m_fluid.getMultiphaseSystemProperties();
 
@@ -414,15 +411,15 @@ CompositionalMultiphaseFluid::KernelWrapper::
 #endif
 }
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void
 CompositionalMultiphaseFluid::KernelWrapper::
   update( localIndex const k,
           localIndex const q,
           real64 const pressure,
           real64 const temperature,
-          arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition ) const
+          arraySlice1d< geos::real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
   compute( pressure,
            temperature,
@@ -439,6 +436,6 @@ CompositionalMultiphaseFluid::KernelWrapper::
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_COMPOSITIONALMULTIPHASEFLUID_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_COMPOSITIONALMULTIPHASEFLUID_HPP_

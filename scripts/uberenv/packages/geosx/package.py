@@ -52,8 +52,8 @@ def cmake_cache_option(name, boolean_value, comment=""):
 class Geosx(CMakePackage, CudaPackage):
     """GEOSX simulation framework."""
 
-    homepage = "https://github.com/GEOSX/GEOSX"
-    git = "https://github.com/GEOSX/GEOSX.git"
+    homepage = "https://github.com/GEOS-DEV/GEOS"
+    git = "https://github.com/GEOS-DEV/GEOS.git"
 
     version('develop', branch='develop', submodules='True')
 

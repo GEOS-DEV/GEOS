@@ -16,13 +16,13 @@
  * @file ParMETISInterface.hpp
  */
 
-#ifndef GEOSX_MESH_GENERATORS_PARMETISINTERFACE_HPP_
-#define GEOSX_MESH_GENERATORS_PARMETISINTERFACE_HPP_
+#ifndef GEOS_MESH_GENERATORS_PARMETISINTERFACE_HPP_
+#define GEOS_MESH_GENERATORS_PARMETISINTERFACE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 
 #if defined(GEOSX_USE_HIP) // still need int32 hypre for the current hip-capable build
@@ -70,6 +70,6 @@ partition( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & graph,
            int const numRefinements );
 
 } // namespace parmetis
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_MESH_GENERATORS_PARMETISINTERFACE_HPP_
+#endif //GEOS_MESH_GENERATORS_PARMETISINTERFACE_HPP_

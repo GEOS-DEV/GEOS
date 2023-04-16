@@ -16,8 +16,8 @@
  * @file SinglePhaseWellKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
 
 #include "constitutive/fluid/SingleFluidFields.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
@@ -29,7 +29,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/SolverBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace singlePhaseWellKernels
@@ -75,7 +75,7 @@ struct ControlEquationHelper
   // add an epsilon to the checks to avoid control changes due to tiny pressure/rate updates
   static constexpr real64 EPS = 1e-15;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   static
   void
@@ -87,7 +87,7 @@ struct ControlEquationHelper
                  real64 const & currentVolRate,
                  WellControls::Control & newControl );
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   static
   void
@@ -184,7 +184,7 @@ struct PerforationKernel
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   static
   void
@@ -342,7 +342,7 @@ public:
     m_density_n( fluid.density_n() )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const iwelem,
                             LinfStackVariables & stack ) const override
   {
@@ -391,12 +391,12 @@ public:
     }
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeL2( localIndex const iwelem,
                           L2StackVariables & stack ) const override
   {
-    GEOSX_UNUSED_VAR( iwelem, stack );
-    GEOSX_ERROR( "The L2 norm is not implemented for SinglePhaseWell" );
+    GEOS_UNUSED_VAR( iwelem, stack );
+    GEOS_ERROR( "The L2 norm is not implemented for SinglePhaseWell" );
   }
 
 
@@ -480,7 +480,7 @@ struct SolutionCheckKernel
   {
     RAJA::ReduceMin< ReducePolicy< POLICY >, localIndex > minVal( 1 );
 
-    forAll< POLICY >( presDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( presDofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( ghostRank[ei] < 0 && presDofNumber[ei] >= 0 )
       {
@@ -499,6 +499,6 @@ struct SolutionCheckKernel
 
 } // end namespace singlePhaseWellKernels
 
-} // end namespace geosx
+} // end namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP

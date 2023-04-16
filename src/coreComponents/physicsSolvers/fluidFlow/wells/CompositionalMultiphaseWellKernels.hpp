@@ -16,8 +16,8 @@
  * @file CompositionalMultiphaseWellKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLKERNELS_HPP
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
@@ -36,7 +36,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace compositionalMultiphaseWellKernels
@@ -82,7 +82,7 @@ struct ControlEquationHelper
   using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   static
   void
@@ -98,7 +98,7 @@ struct ControlEquationHelper
                  WellControls::Control & newControl );
 
   template< integer NC >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   static void
   compute( globalIndex const rankOffset,
@@ -134,7 +134,7 @@ struct FluxKernel
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
   template< integer NC >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   static void
     computeExit( real64 const & dt,
@@ -147,7 +147,7 @@ struct FluxKernel
                  real64 ( &oneSidedFluxJacobian_dPresCompUp )[NC][NC + 1] );
 
   template< integer NC >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   static void
     compute( real64 const & dt,
@@ -185,7 +185,7 @@ struct PressureRelationKernel
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
   template< integer NC >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   static void
     compute( real64 const & gravCoef,
@@ -263,7 +263,7 @@ struct PerforationKernel
 
 
   template< integer NC, integer NP >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   static void
   compute( bool const & disableReservoirToWellFlow,
@@ -338,7 +338,7 @@ struct AccumulationKernel
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
   template< integer NC >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   static void
     compute( integer const numPhases,
@@ -388,7 +388,7 @@ struct VolumeBalanceKernel
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
   template< integer NC >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   static void
     compute( integer const numPhases,
@@ -538,7 +538,7 @@ public:
    * @param[in] totalMassDensityKernelOp the function used to customize the kernel
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   void compute( localIndex const ei,
                 FUNC && totalMassDensityKernelOp = NoOpFunc{} ) const
@@ -693,7 +693,7 @@ public:
     m_totalDens_n( fluid.totalDensity_n() )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const iwelem,
                             LinfStackVariables & stack ) const override
   {
@@ -778,12 +778,12 @@ public:
     }
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeL2( localIndex const iwelem,
                           L2StackVariables & stack ) const override
   {
-    GEOSX_UNUSED_VAR( iwelem, stack );
-    GEOSX_ERROR( "The L2 norm is not implemented for CompositionalMultiphaseWell" );
+    GEOS_UNUSED_VAR( iwelem, stack );
+    GEOS_ERROR( "The L2 norm is not implemented for CompositionalMultiphaseWell" );
   }
 
 
@@ -962,6 +962,6 @@ public:
 
 } // end namespace compositionalMultiphaseWellKernels
 
-} // end namespace geosx
+} // end namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLKERNELS_HPP

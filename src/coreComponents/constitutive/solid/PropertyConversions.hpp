@@ -16,10 +16,10 @@
  * @file PropertyConversions.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_PROPERTYCONVERSIONS_HPP
-#define GEOSX_CONSTITUTIVE_SOLID_PROPERTYCONVERSIONS_HPP
+#ifndef GEOS_CONSTITUTIVE_SOLID_PROPERTYCONVERSIONS_HPP
+#define GEOS_CONSTITUTIVE_SOLID_PROPERTYCONVERSIONS_HPP
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -39,7 +39,7 @@ namespace bulkModAndShearMod
  * @param[in] G Shear modulus
  * @return Young's modulus
  */
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64 toYoungMod( real64 const & K, real64 const & G )
 {
@@ -52,7 +52,7 @@ real64 toYoungMod( real64 const & K, real64 const & G )
  * @param[in] G Shear modulus
  * @return Poisson's ratio
  */
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64 toPoissonRatio( real64 const & K, real64 const & G )
 {
@@ -65,7 +65,7 @@ real64 toPoissonRatio( real64 const & K, real64 const & G )
  * @param[in] G Shear modulus
  * @return First Lamé parameter
  */
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64 toFirstLame( real64 const & K, real64 const & G )
 {
@@ -84,7 +84,7 @@ namespace youngModAndPoissonRatio
  * @param[in] nu Poisson's ratio
  * @return Bulk modulus
  */
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64 toBulkMod( real64 const & E, real64 const & nu )
 {
@@ -97,7 +97,7 @@ real64 toBulkMod( real64 const & E, real64 const & nu )
  * @param[in] nu Poisson's ratio
  * @return Shear modulus
  */
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64 toShearMod( real64 const & E, real64 const & nu )
 {
@@ -116,7 +116,7 @@ namespace shearModAndPoissonRatio
  * @param[in] nu Poisson's ratio
  * @return Bulk modulus
  */
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64 toBulkMod( real64 const & G, real64 const & nu )
 {
@@ -129,7 +129,7 @@ real64 toBulkMod( real64 const & G, real64 const & nu )
  * @param[in] nu Poisson's ratio
  * @return Young's modulus
  */
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64 toYoungMod( real64 const & G, real64 const & nu )
 {
@@ -148,7 +148,7 @@ namespace bulkModAndPoissonRatio
  * @param[in] nu Poisson's ratio
  * @return Young's modulus
  */
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64 toYoungMod( real64 const & K, real64 const & nu )
 {
@@ -161,7 +161,7 @@ real64 toYoungMod( real64 const & K, real64 const & nu )
  * @param[in] nu Poisson's ratio
  * @return Shear modulus
  */
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64 toShearMod( real64 const & K, real64 const & nu )
 {
@@ -180,7 +180,7 @@ namespace bulkModAndYoungMod
  * @param[in] E Young's ratio
  * @return Shear modulus
  */
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64 toShearMod( real64 const & K, real64 const & E )
 {
@@ -193,7 +193,7 @@ real64 toShearMod( real64 const & K, real64 const & E )
  * @param[in] E Young's modulus
  * @return Poisson's ratio
  */
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64 toPoissonRatio( real64 const & K, real64 const & E )
 {
@@ -211,7 +211,7 @@ namespace shearModAndYoungMod
  * @param[in] E Young's modulus
  * @return Poisson's ratio
  */
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64 toPoissonRatio( real64 const & G, real64 const & E )
 {
@@ -224,7 +224,7 @@ real64 toPoissonRatio( real64 const & G, real64 const & E )
  * @param[in] E Young's modulus
  * @return Bulk modulus
  */
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64 toBulkMod( real64 const & G, real64 const & E )
 {
@@ -237,6 +237,6 @@ real64 toBulkMod( real64 const & G, real64 const & E )
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_PROPERTYCONVERSIONS_HPP */
+#endif /* GEOS_CONSTITUTIVE_SOLID_PROPERTYCONVERSIONS_HPP */

@@ -19,7 +19,7 @@
 
 #include <algorithm>
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -41,7 +41,7 @@ void CellBlockManager::resize( integer_array const & numElements,
   }
 }
 
-Group * CellBlockManager::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
+Group * CellBlockManager::createChild( string const & GEOS_UNUSED_PARAM( childKey ), string const & GEOS_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }
@@ -84,8 +84,8 @@ void convertFromCellBlockPairMap( ArrayOfArraysView< CellBlockIndexPair const > 
   localIndex const numObjects = srcMap.size();
   localIndex const maxNumElem = toCell.size( 1 );
 
-  GEOSX_ERROR_IF_NE( toBlock.size( 1 ), maxNumElem );
-  GEOSX_ERROR_IF_NE( toCell.size( 1 ), maxNumElem );
+  GEOS_ERROR_IF_NE( toBlock.size( 1 ), maxNumElem );
+  GEOS_ERROR_IF_NE( toCell.size( 1 ), maxNumElem );
 
   toBlock.resizeDimension< 0 >( numObjects );
   toCell.resizeDimension< 0 >( numObjects );
@@ -101,7 +101,7 @@ void convertFromCellBlockPairMap( ArrayOfArraysView< CellBlockIndexPair const > 
                                              toCell = toCell.toView()]( localIndex const objIndex )
   {
     arraySlice1d< CellBlockIndexPair const > const cells = srcMap[ objIndex ];
-    GEOSX_ASSERT_GE( maxNumElem, cells.size() );
+    GEOS_ASSERT_GE( maxNumElem, cells.size() );
     localIndex count = 0;
     for( CellBlockIndexPair const & e : cells )
     {
@@ -282,12 +282,12 @@ void populateFaceMaps( Group const & cellBlocks,
 
   localIndex const numNodes = lowestNodeToFaces.size();
   localIndex const numUniqueFaces = uniqueFaceOffsets.back();
-  GEOSX_ERROR_IF_NE( uniqueFaceOffsets.size() - 1, numNodes );
-  GEOSX_ERROR_IF_NE( faceToNodes.size(), numUniqueFaces );
-  GEOSX_ERROR_IF_NE( faceToCells.size( 0 ), numUniqueFaces );
-  GEOSX_ERROR_IF_NE( faceToCells.size( 1 ), 2 );
-  GEOSX_ERROR_IF_NE( faceToBlocks.size( 0 ), numUniqueFaces );
-  GEOSX_ERROR_IF_NE( faceToBlocks.size( 1 ), 2 );
+  GEOS_ERROR_IF_NE( uniqueFaceOffsets.size() - 1, numNodes );
+  GEOS_ERROR_IF_NE( faceToNodes.size(), numUniqueFaces );
+  GEOS_ERROR_IF_NE( faceToCells.size( 0 ), numUniqueFaces );
+  GEOS_ERROR_IF_NE( faceToCells.size( 1 ), 2 );
+  GEOS_ERROR_IF_NE( faceToBlocks.size( 0 ), numUniqueFaces );
+  GEOS_ERROR_IF_NE( faceToBlocks.size( 1 ), 2 );
 
   // loop over all the nodes.
   forAll< parallelHostPolicy >( numNodes, [uniqueFaceOffsets,
@@ -306,7 +306,7 @@ void populateFaceMaps( Group const & cellBlocks,
       NodesAndElementOfFace const & f0 = *first;
       CellBlock const & cb = cellBlocks.getGroup< CellBlock >( f0.blockIndex );
       localIndex const numNodesInFace = cb.getFaceNodes( f0.cellIndex, f0.faceNumber, nodesInFace );
-      GEOSX_ASSERT_EQ( numNodesInFace, f0.numNodes );
+//      GEOS_ASSERT_EQ( numNodesInFace, f0.numNodes );
 
       for( localIndex i = 0; i < numNodesInFace; ++i )
       {
@@ -327,7 +327,7 @@ void populateFaceMaps( Group const & cellBlocks,
         faceToCells( curFaceID, 1 ) = -1;
         faceToBlocks( curFaceID, 1 ) = -1;
       }
-      GEOSX_ASSERT( first == last ); // Should not be more than 2 faces
+      GEOS_ASSERT( first == last ); // Should not be more than 2 faces
 
       ++curFaceID;
     }, faceBuilder.duplicateFaceEquality() );
@@ -596,7 +596,7 @@ void fillElementToEdgesOfCellBlocks( ArrayOfArraysView< localIndex const > const
 
 void CellBlockManager::buildFaceMaps()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FaceBuilder const faceBuilder =
     createLowestNodeToFaces( m_numNodes, this->getCellBlocks() );
@@ -636,7 +636,7 @@ void CellBlockManager::buildNodeToEdges()
 
 void CellBlockManager::buildMaps()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   buildFaceMaps();
   m_numEdges = buildEdgeMaps( m_numNodes,

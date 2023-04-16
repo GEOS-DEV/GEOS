@@ -21,7 +21,7 @@
 // TODO: move keys to WellControls
 #include "SinglePhaseWell.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace singlePhaseWellKernels
@@ -29,7 +29,7 @@ namespace singlePhaseWellKernels
 
 /******************************** ControlEquationHelper ********************************/
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void
 ControlEquationHelper::
@@ -83,7 +83,7 @@ ControlEquationHelper::
   }
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void
 ControlEquationHelper::
@@ -131,7 +131,7 @@ ControlEquationHelper::
   }
   else
   {
-    GEOSX_ERROR( "This constraint is not supported in SinglePhaseWell" );
+    GEOS_ERROR( "This constraint is not supported in SinglePhaseWell" );
   }
 
   localRhs[eqnRowIndex] += controlEqn;
@@ -159,7 +159,7 @@ FluxKernel::
           arrayView1d< real64 > const & localRhs )
 {
   // loop over the well elements to compute the fluxes between elements
-  forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
 
     // 1) Compute the flux and its derivatives
@@ -274,7 +274,7 @@ PressureRelationKernel::
   RAJA::ReduceMax< parallelDeviceReduce, localIndex > switchControl( 0 );
 
   // loop over the well elements to compute the pressure relations between well elements
-  forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
 
     localIndex const iwelemNext = nextWellElemIndex[iwelem];
@@ -353,7 +353,7 @@ PressureRelationKernel::
 
 /******************************** PerforationKernel ********************************/
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 void
 PerforationKernel::
@@ -481,7 +481,7 @@ PerforationKernel::
           arrayView2d< real64 > const & dPerfRate_dPres )
 {
 
-  forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
+  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
   {
 
     // get the reservoir (sub)region and element indices
@@ -528,7 +528,7 @@ AccumulationKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
-  forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
 
     if( wellElemGhostRank[iwelem] >= 0 )
@@ -583,7 +583,7 @@ PresInitializationKernel::
   RAJA::ReduceSum< parallelDeviceReduce, real64 > sumDensity( 0 );
   RAJA::ReduceMin< parallelDeviceReduce, real64 > localMinGravCoefDiff( 1e9 );
 
-  forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
+  forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
   {
     // get the reservoir (sub)region and element indices
     localIndex const er = resElementRegion[iperf];
@@ -622,7 +622,7 @@ PresInitializationKernel::
     RAJA::ReduceMin< parallelDeviceReduce, real64 > localRefPres( 1e9 );
     real64 const alpha = ( isProducer ) ? 1 - initialPressureCoef : 1 + initialPressureCoef;
 
-    forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
+    forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
     {
       // get the reservoir (sub)region and element indices
       localIndex const er = resElementRegion[iperf];
@@ -646,7 +646,7 @@ PresInitializationKernel::
 
   RAJA::ReduceMax< parallelDeviceReduce, integer > foundNegativePressure( 0 );
 
-  forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+  forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
     wellElemPressure[iwelem] = refPres + avgDensity * ( wellElemGravCoef[iwelem] - refWellElemGravCoef );
 
@@ -657,9 +657,9 @@ PresInitializationKernel::
   } );
 
 
-  GEOSX_THROW_IF( foundNegativePressure.get() == 1,
-                  "Invalid well initialization: negative pressure was found",
-                  InputError );
+  GEOS_THROW_IF( foundNegativePressure.get() == 1,
+                 "Invalid well initialization: negative pressure was found",
+                 InputError );
 }
 
 /******************************** RateInitializationKernel ********************************/
@@ -677,7 +677,7 @@ RateInitializationKernel::
   bool const isProducer = wellControls.isProducer();
 
   // Estimate the connection rates
-  forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+  forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
     if( control == WellControls::Control::BHP )
     {
@@ -702,4 +702,4 @@ RateInitializationKernel::
 
 } // end namespace singlePhaseWellKernels
 
-} // end namespace geosx
+} // end namespace geos

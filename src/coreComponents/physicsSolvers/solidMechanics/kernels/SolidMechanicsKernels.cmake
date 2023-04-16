@@ -4,11 +4,11 @@
 
 set( kernelPath "coreComponents/physicsSolvers/solidMechanics/kernels" )
 
-set( ExplicitSmallStrainPolicy "geosx::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
-set( ExplicitFiniteStrainPolicy "geosx::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
-set( FixedStressThermoPoroElasticPolicy "geosx::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
-set( ImplicitSmallStrainNewmarkPolicy "geosx::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
-set( ImplicitSmallStrainQuasiStaticPolicy "geosx::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
+set( ExplicitSmallStrainPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
+set( ExplicitFiniteStrainPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
+set( FixedStressThermoPoroElasticPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
+set( ImplicitSmallStrainNewmarkPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
+set( ImplicitSmallStrainQuasiStaticPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
 
 
 configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp.in
@@ -89,7 +89,7 @@ endif( )
         string(REPLACE "," "-" filename ${filename})
         string(REPLACE " " "" filename ${filename})
         message( " -- Generating file: ${filename}")
-        configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/SolidMechanicsFixedStressThermoPoroElasticKernels.cpp.template
+        configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template
                         ${filename} )
           list( APPEND physicsSolvers_sources ${filename} )
 

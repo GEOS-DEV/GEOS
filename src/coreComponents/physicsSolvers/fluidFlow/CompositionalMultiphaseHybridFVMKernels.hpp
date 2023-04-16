@@ -16,8 +16,8 @@
  * @file CompositionalMultiphaseHybridFVMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEHYBRIDFVMKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEHYBRIDFVMKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEHYBRIDFVMKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEHYBRIDFVMKERNELS_HPP
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
@@ -34,7 +34,7 @@
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 namespace compositionalMultiphaseHybridFVMKernels
@@ -85,7 +85,7 @@ struct UpwindingHelper
    * @param[out] upwViscDofNumber the dof number of the upwind cell at this face
    */
   template< integer NC, integer NP >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
     upwindViscousCoefficient( localIndex const (&localIds)[ 3 ],
                               localIndex const (&neighborIds)[ 3 ],
@@ -128,7 +128,7 @@ struct UpwindingHelper
    * @param[inout] dUpwPhaseGravCoef_dCompDens the derivative of the upwinded buoyancy transport coefficient wrt component density
    */
   template< integer NC, integer NP >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
     upwindBuoyancyCoefficient( localIndex const (&localIds)[ 3 ],
                                localIndex const (&neighborIds)[ 3 ],
@@ -164,7 +164,7 @@ struct UpwindingHelper
    * density
    */
   template< integer NC, integer NP >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
     computePhaseGravTerm( localIndex const (&localIds)[ 3 ],
                           localIndex const (&neighborIds)[ 3 ],
@@ -188,7 +188,7 @@ struct UpwindingHelper
    * @param[inout] dTotalMob_dCompDens the derivative of the upwinded total mobility wrt component density
    */
   template< integer NC, integer NP >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
     computeUpwindedTotalMobility( localIndex const (&localIds)[ 3 ],
                                   localIndex const (&neighborIds)[ 3 ],
@@ -214,7 +214,7 @@ struct UpwindingHelper
    * @param[in] eid element index of the downwind element
    * @param[in] posd position (local or neighbor) of the downwind element
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   static
   void
@@ -233,7 +233,7 @@ struct UpwindingHelper
    * @param[out] totalMobPos for each phase, flag specifying with the upwind element is local or neighbor
    */
   template< integer NP >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
     setIndicesForTotalMobilityUpwinding( localIndex const (&localIds)[ 3 ],
                                          localIndex const (&neighborIds)[ 3 ],
@@ -278,7 +278,7 @@ struct AssemblerKernelHelper
    * @param[out] dOneSidedVolFlux_dCompDens the derivatives of the vol fluxes wrt to this element's component density
    */
   template< integer NF, integer NC, integer NP >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
     applyGradient( arrayView1d< real64 const > const & facePres,
                    arrayView1d< real64 const > const & faceGravCoef,
@@ -323,7 +323,7 @@ struct AssemblerKernelHelper
    * @param[inout] localRhs the residual
    */
   template< integer NF, integer NC, integer NP >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   assembleFluxDivergence( localIndex const (&localIds)[ 3 ],
                           globalIndex const rankOffset,
@@ -374,7 +374,7 @@ struct AssemblerKernelHelper
    * @param[inout] dofColIndicesFaceVars degrees of freedom of the faces involved in the flux divergence
    */
   template< integer NF, integer NC, integer NP >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
     assembleViscousFlux( localIndex const ifaceLoc,
                          real64 const (&oneSidedVolFlux)[ NF ],
@@ -412,7 +412,7 @@ struct AssemblerKernelHelper
    * @param[inout] dofColIndicesElemVars degrees of freedom of the cells involved in the flux divergence
    */
   template< integer NF, integer NC, integer NP >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
     assembleBuoyancyFlux( localIndex const ifaceLoc,
                           real64 const (&phaseGravTerm)[ NP ][ NP-1 ],
@@ -440,7 +440,7 @@ struct AssemblerKernelHelper
    * @param[inout] rhs the residual
    */
   template< integer NF, integer NC, integer NP >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   assembleFaceConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
                            arrayView1d< integer const > const & faceGhostRank,
@@ -507,7 +507,7 @@ struct AssemblerKernel
    * @param[inout] rhs the system right-hand side vector
    */
   template< integer NF, integer NC, integer NP >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   compute( localIndex const er, localIndex const esr, localIndex const ei,
            SortedArrayView< localIndex const > const & regionFilter,
@@ -689,7 +689,7 @@ public:
    * @param[in] phaseMobilityKernelOp the function used to customize the kernel
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( localIndex const ei,
                 FUNC && phaseMobilityKernelOp = NoOpFunc{} ) const
   {
@@ -893,7 +893,7 @@ public:
     m_totalDens_n( multiFluidAccessors.get( fields::multifluid::totalDensity_n {} ) )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeMassNormalizer( localIndex const kf,
                               real64 & massNormalizer ) const
   {
@@ -917,7 +917,7 @@ public:
     massNormalizer /= elemCounter; // average mass in the adjacent cells at the previous converged time step
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const kf,
                             LinfStackVariables & stack ) const override
   {
@@ -932,7 +932,7 @@ public:
     }
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeL2( localIndex const kf,
                           L2StackVariables & stack ) const override
   {
@@ -1048,7 +1048,7 @@ struct SolutionCheckKernel
   {
     RAJA::ReduceMin< ReducePolicy< POLICY >, integer > check( 1 );
 
-    forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
+    forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const iface )
     {
       if( ghostRank[iface] < 0 && dofNumber[iface] >= 0 )
       {
@@ -1137,7 +1137,7 @@ void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
     { lambda( std::integral_constant< T, 5 >() ); return;}
     case 6:
     { lambda( std::integral_constant< T, 6 >() ); return;}
-    default: GEOSX_ERROR( "Unknown numFacesInElem value: " << value );
+    default: GEOS_ERROR( "Unknown numFacesInElem value: " << value );
   }
 }
 
@@ -1181,7 +1181,7 @@ void kernelLaunchSelector( integer numFacesInElem, integer numComps, integer num
     }
     else
     {
-      GEOSX_ERROR( "Unsupported number of components: " << numComps );
+      GEOS_ERROR( "Unsupported number of components: " << numComps );
     }
   }
   else if( numPhases == 3 )
@@ -1208,17 +1208,17 @@ void kernelLaunchSelector( integer numFacesInElem, integer numComps, integer num
     }
     else
     {
-      GEOSX_ERROR( "Unsupported number of components: " << numComps );
+      GEOS_ERROR( "Unsupported number of components: " << numComps );
     }
   }
   else
   {
-    GEOSX_ERROR( "Unsupported number of phases: " << numPhases );
+    GEOS_ERROR( "Unsupported number of phases: " << numPhases );
   }
 }
 
 } // namespace compositionalMultiphaseHybridFVMKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEHYBRIDFVMKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEHYBRIDFVMKERNELS_HPP

@@ -20,7 +20,7 @@
 #include "LaplaceFEM.hpp"
 #include "LaplaceFEMKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace dataRepository
@@ -95,7 +95,7 @@ void LaplaceFEM::setupSystem( DomainPartition & domain,
                               ParallelVector & solution,
                               bool const setSparsity )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -142,8 +142,8 @@ void LaplaceFEM::setupSystem( DomainPartition & domain,
    See the implementation in LaplaceFEMKernel.cpp.
  */
 //START_SPHINX_INCLUDE_ASSEMBLY
-void LaplaceFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                                 real64 const GEOSX_UNUSED_PARAM( dt ),
+void LaplaceFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
+                                 real64 const GEOS_UNUSED_PARAM( dt ),
                                  DomainPartition & domain,
                                  DofManager const & dofManager,
                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -178,4 +178,4 @@ void LaplaceFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
 //START_SPHINX_INCLUDE_REGISTER
 REGISTER_CATALOG_ENTRY( SolverBase, LaplaceFEM, string const &, Group * const )
 //END_SPHINX_INCLUDE_REGISTER
-} /* namespace geosx */
+} /* namespace geos */

@@ -16,8 +16,8 @@
  * @file TrilinosSolver.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSSOLVER_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSSOLVER_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_TRILINOSSOLVER_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_TRILINOSSOLVER_HPP_
 
 #include "linearAlgebra/interfaces/trilinos/TrilinosInterface.hpp"
 #include "linearAlgebra/interfaces/trilinos/TrilinosPreconditioner.hpp"
@@ -27,7 +27,7 @@
 
 class AztecOO;
 
-namespace geosx
+namespace geos
 {
 
 /**
