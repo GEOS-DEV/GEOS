@@ -161,7 +161,7 @@ inline void checkDeviceErrors( char const * msg, char const * file, int const li
 #elif GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_HIP
   hipError_t const err = hipGetLastError();
   GEOS_UNUSED_VAR( msg, file, line ); // on crusher geosx_error_if ultimately resolves to an assert, which drops the content on release
-                                       // builds
+                                      // builds
   GEOS_ERROR_IF( err != hipSuccess, GEOS_FMT( "Previous HIP errors found: {} ({} at {}:{})", msg, hipGetErrorString( err ), file, line ) );
 #else
   GEOS_UNUSED_VAR( msg, file, line );

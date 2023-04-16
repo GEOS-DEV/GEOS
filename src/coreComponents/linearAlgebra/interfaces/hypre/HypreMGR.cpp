@@ -57,7 +57,7 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTol( precond.ptr, 0.0 ) );
   GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( precond.ptr, 1 ) );
   GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetPrintLevel( precond.ptr, ((LvArray::integerConversion< HYPRE_Int >( params.logLevel ) == 2) ||
-                                                               (LvArray::integerConversion< HYPRE_Int >( params.logLevel ) > 3)) ? 1 : 0 ) );;
+                                                              (LvArray::integerConversion< HYPRE_Int >( params.logLevel ) > 3)) ? 1 : 0 ) );;
 
   array1d< int > const numComponentsPerField = dofManager->numComponentsPerField();
   dofManager->getLocalDofComponentLabels( mgrData.pointMarkers );

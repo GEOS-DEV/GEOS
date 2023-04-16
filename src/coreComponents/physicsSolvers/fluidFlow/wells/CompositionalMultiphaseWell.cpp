@@ -665,7 +665,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
         if( logLevel >= 2 )
         {
           GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa and T_surface = {} K",
-                                     wellControlsName, surfacePres, surfaceTemp ) );
+                                   wellControlsName, surfacePres, surfaceTemp ) );
 #ifdef GEOSX_USE_HIP
           GEOS_UNUSED_VAR( wellControlsName );
 #endif

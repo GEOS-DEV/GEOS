@@ -276,7 +276,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
         if( logLevel >= 2 )
         {
           GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa",
-                                     wellControlsName, surfacePres ) );
+                                   wellControlsName, surfacePres ) );
 #ifdef GEOSX_USE_HIP
           GEOS_UNUSED_VAR( wellControlsName );
 #endif
