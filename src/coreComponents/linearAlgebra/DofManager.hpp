@@ -177,6 +177,14 @@ public:
                  map< std::pair< string, string >, array1d< string > > const & regions );
 
   /**
+   * @brief Disable the global coupling for a given equation
+   * @param [in] fieldName the name of the field
+   * @param [in] c the index of the equation
+   */
+  void disableGlobalCouplingForEquation( string const & fieldName,
+                                         integer const c );
+
+  /**
    * @brief Add coupling between two fields.
    *
    * The connectivity argument defines how the two fields couple. If the first field has support location A,
@@ -469,6 +477,8 @@ private:
     std::vector< FieldSupport > support;///< list of mesh body/level/region supports
     FieldLocation location;             ///< support location
     integer numComponents = 1;     ///< number of vector components
+    CompMask globallyCoupledComponents; ///< mask to distinguish globally coupled components from locally coupled components (the latter
+                                        ///< don't interact with neighbors)
     localIndex numLocalDof = 0;    ///< number of local rows
     globalIndex numGlobalDof = 0;  ///< number of global rows
     globalIndex blockOffset = 0;   ///< offset of this field's block in a block-wise ordered system
