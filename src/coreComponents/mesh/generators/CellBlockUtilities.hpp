@@ -12,15 +12,15 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MESH_GENERATORS_CELLBLOCKUTILITIES_HPP_
-#define GEOSX_MESH_GENERATORS_CELLBLOCKUTILITIES_HPP_
+#ifndef GEOS_MESH_GENERATORS_CELLBLOCKUTILITIES_HPP_
+#define GEOS_MESH_GENERATORS_CELLBLOCKUTILITIES_HPP_
 
 #include "mesh/ElementType.hpp"
 #include "common/DataTypes.hpp"
 #include "common/Span.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -40,6 +40,17 @@ struct ToCellRelation
    */
   ToCellRelation( T const & toBlockIndex_,
                   T const & toCellIndex_ )
+    : toBlockIndex( toBlockIndex_ ),
+    toCellIndex( toCellIndex_ )
+  { }
+
+  /**
+   * @brief Constructor from moved values.
+   * @param toBlockIndex_ Map containing a list of cell block indices for each object
+   * @param toCellIndex_ Map containing cell indices, same shape as above
+   */
+  ToCellRelation( T && toBlockIndex_,
+                  T && toCellIndex_ )
     : toBlockIndex( toBlockIndex_ ),
     toCellIndex( toCellIndex_ )
   { }
@@ -113,4 +124,4 @@ computeUniqueValueOffsets( ArrayOfArraysView< T const > const & sortedLists, COM
 
 }
 
-#endif // GEOSX_MESH_GENERATORS_CELLBLOCKUTILITIES_HPP_
+#endif // GEOS_MESH_GENERATORS_CELLBLOCKUTILITIES_HPP_

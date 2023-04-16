@@ -20,7 +20,7 @@
 
 #include "SingleFluidFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -98,18 +98,18 @@ void CompressibleSinglePhaseFluid::postProcessInput()
 
   auto const checkNonnegative = [&]( real64 const value, auto const & attribute )
   {
-    GEOSX_THROW_IF_LT_MSG( value, 0.0,
-                           GEOSX_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
-                           InputError );
+    GEOS_THROW_IF_LT_MSG( value, 0.0,
+                          GEOS_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
+                          InputError );
   };
   checkNonnegative( m_compressibility, viewKeyStruct::compressibilityString() );
   checkNonnegative( m_viscosibility, viewKeyStruct::viscosibilityString() );
 
   auto const checkPositive = [&]( real64 const value, auto const & attribute )
   {
-    GEOSX_THROW_IF_LE_MSG( value, 0.0,
-                           GEOSX_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
-                           InputError );
+    GEOS_THROW_IF_LE_MSG( value, 0.0,
+                          GEOS_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
+                          InputError );
   };
   checkPositive( m_referenceDensity, viewKeyStruct::referenceDensityString() );
   checkPositive( m_referenceViscosity, viewKeyStruct::referenceViscosityString() );
@@ -117,9 +117,9 @@ void CompressibleSinglePhaseFluid::postProcessInput()
   // Due to the way update wrapper is currently implemented, we can only support one model type
   auto const checkModelType = [&]( ExponentApproximationType const value, auto const & attribute )
   {
-    GEOSX_THROW_IF_NE_MSG( value, ExponentApproximationType::Linear,
-                           GEOSX_FMT( "{}: invalid model type in attribute '{}' (only linear currently supported)", getFullName(), attribute ),
-                           InputError );
+    GEOS_THROW_IF_NE_MSG( value, ExponentApproximationType::Linear,
+                          GEOS_FMT( "{}: invalid model type in attribute '{}' (only linear currently supported)", getFullName(), attribute ),
+                          InputError );
   };
   checkModelType( m_densityModelType, viewKeyStruct::densityModelTypeString() );
   checkModelType( m_viscosityModelType, viewKeyStruct::viscosityModelTypeString() );
@@ -149,4 +149,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleSinglePhaseFluid, string c
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */

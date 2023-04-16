@@ -23,7 +23,7 @@
 #include "NodeManager.hpp"
 #include "FaceManager.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -112,7 +112,7 @@ MeshLevel::MeshLevel( string const & name,
   MeshLevel( name, parent )
 {
 
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   localIndex const numBasisSupportPoints = order+1;
 
 
@@ -163,7 +163,7 @@ MeshLevel::MeshLevel( string const & name,
       numInternalFaceNodes += numNonEdgeNodesPerFace;
     else
     {
-      GEOSX_ERROR( "need more support for face geometry" );
+      GEOS_ERROR( "need more support for face geometry" );
     }
   }
 
@@ -634,7 +634,7 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
 
 void MeshLevel::generateSets()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NodeManager const & nodeManager = *m_nodeManager;
 
@@ -720,4 +720,4 @@ bool MeshLevel::isShallowCopyOf( MeshLevel const & comparisonLevel ) const
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */
