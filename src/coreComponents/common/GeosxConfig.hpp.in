@@ -179,7 +179,7 @@
 //  the old usage of GEOSX_USE_CUDA, since we detect whether it is defined
 //  rather than a value, not having it in the *same* header can cauase nebulous
 //  compilation problems including the USD of arrays changing depending the scope
-#define GEOSX_USE_DEVICE
+#define GEOS_USE_DEVICE
 #endif
 
 #endif  /* GEOS_CONFIG_HPP */

@@ -170,7 +170,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
            real64 & totalDens ) const
 {
   GEOS_UNUSED_VAR( phaseEnthalpy, phaseInternalEnergy );
-#if defined(GEOSX_DEVICE_COMPILE)
+#if defined(GEOS_DEVICE_COMPILE)
   GEOS_ERROR( "This function cannot be used on GPU" );
   GEOS_UNUSED_VAR( pressure );
   GEOS_UNUSED_VAR( temperature );
@@ -277,7 +277,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
            FluidProp::SliceType const totalDensity ) const
 {
   GEOS_UNUSED_VAR( phaseEnthalpy, phaseInternalEnergy );
-#if defined(GEOSX_DEVICE_COMPILE)
+#if defined(GEOS_DEVICE_COMPILE)
   GEOS_ERROR( "This function cannot be used on GPU" );
   GEOS_UNUSED_VAR( pressure );
   GEOS_UNUSED_VAR( temperature );

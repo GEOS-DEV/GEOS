@@ -52,6 +52,11 @@
 #define PRAGMA_UNROLL
 #endif
 
+#if defined(LVARRAY_DEVICE_COMPILE)
+/// Macro defined when currently compiling on device (only defined in the device context).
+#define GEOS_DEVICE_COMPILE
+#endif
+
 ///@}
 
 /**

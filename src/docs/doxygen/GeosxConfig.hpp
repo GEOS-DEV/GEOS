@@ -82,7 +82,7 @@
 /// Denotes HYPRE using HIP
 #define GEOSX_USE_HYPRE_HIP 2
 /// Macro determining what parellel interface hypre is using
-#define GEOSX_USE_HYPRE_DEVICE GEOSX_USE_HYPRE_CPU
+#define GEOSX_USE_HYPRE_DEVICE GEOSX_USE_HYPRE_HIP
 
 /// Enables use of SuperLU_dist library through HYPRE (CMake option ENABLE_SUPERLU_DIST)
 #define GEOSX_USE_SUPERLU_DIST
@@ -124,13 +124,13 @@
 #define GEOSX_GLOBALINDEX_TYPE_FLAG 2
 
 /// The default block size for GEOSX on this platform
-#define GEOSX_BLOCK_SIZE 32
+#define GEOSX_BLOCK_SIZE 64
 
 /// Version information for HDF5
-#define HDF5_VERSION 1.12.1
+#define HDF5_VERSION 1.12.2
 
 /// Version information for Conduit
-#define Conduit_VERSION 0.8.2
+#define Conduit_VERSION 0.8.6
 
 /// Version information for RAJA
 #define RAJA_VERSION 2022.3.0
@@ -145,7 +145,7 @@
 /* #undef adiak_VERSION */
 
 /// Version information for caliper
-/* #undef caliper_VERSION */
+#define caliper_VERSION 2.8.0
 
 /// Version information for Metis
 #define METIS_VERSION 5.1.0
@@ -154,16 +154,16 @@
 #define PARAMETIS_VERSION 4.0.3
 
 /// Version information for scotch
-#define scotch_VERSION 6.0.9
+/* #undef scotch_VERSION */
 
 /// Version information for superlu_dist
-#define superlu_dist_VERSION 6.3.0
+/* #undef superlu_dist_VERSION */
 
 /// Version information for suitesparse
 #define suitesparse_VERSION 5.7.9
 
 /// Version information for VTK
-#define VTK_VERSION 9.1.0
+/* #undef VTK_VERSION */
 
 /// Version information for fmt
 #define fmt_VERSION 8.0.1
@@ -179,7 +179,7 @@
 //  the old usage of GEOSX_USE_CUDA, since we detect whether it is defined
 //  rather than a value, not having it in the *same* header can cauase nebulous
 //  compilation problems including the USD of arrays changing depending the scope
-#define GEOSX_USE_DEVICE
+#define GEOS_USE_DEVICE
 #endif
 
 #endif  /* GEOS_CONFIG_HPP */
