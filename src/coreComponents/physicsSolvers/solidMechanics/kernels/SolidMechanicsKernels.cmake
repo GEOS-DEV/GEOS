@@ -4,11 +4,11 @@
 
 set( kernelPath "coreComponents/physicsSolvers/solidMechanics/kernels" )
 
-set( ExplicitSmallStrainPolicy "geosx::parallelDevicePolicy<32>" )
-set( ExplicitFiniteStrainPolicy "geosx::parallelDevicePolicy<32>" )
-set( FixedStressThermoPoromechanicsPolicy "geosx::parallelDevicePolicy<32>" )
-set( ImplicitSmallStrainNewmarkPolicy "geosx::parallelDevicePolicy<32>" )
-set( ImplicitSmallStrainQuasiStaticPolicy "geosx::parallelDevicePolicy<32>" )
+set( ExplicitSmallStrainPolicy "geos::parallelDevicePolicy<32>" )
+set( ExplicitFiniteStrainPolicy "geos::parallelDevicePolicy<32>" )
+set( FixedStressThermoPoromechanicsPolicy "geos::parallelDevicePolicy<32>" )
+set( ImplicitSmallStrainNewmarkPolicy "geos::parallelDevicePolicy<32>" )
+set( ImplicitSmallStrainQuasiStaticPolicy "geos::parallelDevicePolicy<32>" )
 
 
 configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp.in

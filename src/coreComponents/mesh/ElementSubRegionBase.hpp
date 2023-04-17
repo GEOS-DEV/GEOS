@@ -16,14 +16,14 @@
  * @file ElementSubRegionBase.hpp
  */
 
-#ifndef GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
-#define GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
+#ifndef GEOS_MESH_ELEMENTSUBREGIONBASE_HPP_
+#define GEOS_MESH_ELEMENTSUBREGIONBASE_HPP_
 
 #include "mesh/ElementType.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class NodeManager;
@@ -94,7 +94,7 @@ public:
    *        the derived class (i.e., element-to-node map, element-to-face map, etc)
    * @param[in] clearIfUnmapped clearIfUnmapped
    */
-  virtual void fixUpDownMaps( bool const clearIfUnmapped ) { GEOSX_UNUSED_VAR( clearIfUnmapped ); }
+  virtual void fixUpDownMaps( bool const clearIfUnmapped ) { GEOS_UNUSED_VAR( clearIfUnmapped ); }
 
 
   /**
@@ -125,7 +125,7 @@ public:
    * @param[in] k cell index
    * @return number of nodes per element
    */
-  virtual localIndex numNodesPerElement( localIndex const k ) const { GEOSX_UNUSED_VAR( k ); return m_numNodesPerElement; }
+  virtual localIndex numNodesPerElement( localIndex const k ) const { GEOS_UNUSED_VAR( k ); return m_numNodesPerElement; }
 
   /**
    * @brief Get the number of faces per element.
@@ -290,6 +290,6 @@ protected:
   }
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_ */
+#endif /* GEOS_MESH_ELEMENTSUBREGIONBASE_HPP_ */

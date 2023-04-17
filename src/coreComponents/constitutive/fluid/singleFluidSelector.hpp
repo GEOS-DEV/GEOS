@@ -15,14 +15,14 @@
 /**
  * @file singlePhaseSelector.hpp
  */
-#ifndef GEOSX_CONSTITUTIVE_FLUID_SINGLEPHASESELECTOR_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_SINGLEPHASESELECTOR_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_SINGLEPHASESELECTOR_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_SINGLEPHASESELECTOR_HPP_
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/fluid/CompressibleSinglePhaseFluid.hpp"
 #include "constitutive/fluid/ThermalCompressibleSinglePhaseFluid.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -46,6 +46,6 @@ void constitutiveUpdatePassThru( SingleFluidBase & fluid,
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_SINGLEPHASESELECTOR_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_SINGLEPHASESELECTOR_HPP_

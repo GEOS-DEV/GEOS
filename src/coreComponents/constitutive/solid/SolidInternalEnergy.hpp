@@ -17,12 +17,12 @@
  */
 
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_SOLIDINTERNALENERGY_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_SOLIDINTERNALENERGY_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_SOLIDINTERNALENERGY_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_SOLIDINTERNALENERGY_HPP_
 
 #include "constitutive/ConstitutiveBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -45,7 +45,7 @@ public:
     m_referenceInternalEnergy( referenceInternalEnergy )
   {}
 
-  GEOSX_DEVICE
+  GEOS_DEVICE
   void update( localIndex const k,
                real64 const & temperature ) const
   {
@@ -54,7 +54,7 @@ public:
              m_dInternalEnergy_dTemperature[k][0] );
   }
 
-  GEOSX_DEVICE
+  GEOS_DEVICE
   void compute( real64 const & temperature,
                 real64 & internalEnergy,
                 real64 & dInternalEnergy_dTemperature ) const
@@ -165,6 +165,6 @@ private:
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_SOLIDINTERNALENERGY_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_SOLIDINTERNALENERGY_HPP_ */

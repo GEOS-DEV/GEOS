@@ -16,10 +16,10 @@
  * @file SinglePhasePoromechanicsFractures.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSFRACTURES_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSFRACTURES_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSFRACTURES_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSFRACTURES_HPP_
 
-namespace geosx
+namespace geos
 {
 
 namespace poromechanicsFracturesKernels
@@ -64,7 +64,7 @@ struct StateUpdateKernel
           arrayView2d< real64 const > const & fractureTraction )
   {
 
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       // update aperture to be equal to the normal displacement jump
       aperture[k] = dispJump[k][0]; // the first component of the jump is the normal one.
@@ -87,6 +87,6 @@ struct StateUpdateKernel
 
 } // namespace poromechanicsFracturesKernels
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSFRACTURES_HPP_
+#endif // GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSFRACTURES_HPP_

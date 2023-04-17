@@ -16,13 +16,13 @@
  * @file ParticleFluid.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUID_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUID_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_PARTICLEFLUID_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_PARTICLEFLUID_HPP_
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "constitutive/fluid/ParticleFluidBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -125,8 +125,8 @@ public:
    */
   ParticleFluidUpdate & operator=( ParticleFluidUpdate && ) = delete;
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   virtual void update( localIndex const k,
                        real64 const proppantConcentration,
                        real64 const fluidDensity,
@@ -153,8 +153,8 @@ public:
 
 private:
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void compute( real64 const proppantConcentration,
                 real64 const fluidDensity,
                 real64 const dFluidDensity_dPressure,
@@ -251,15 +251,15 @@ private:
 
 };
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ParticleFluidUpdate::compute( real64 const proppantConcentration,
                                    real64 const fluidDensity,
-                                   real64 const GEOSX_UNUSED_PARAM( dFluidDensity_dPressure ),
-                                   arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM( dFluidDensity_dComponentConcentration ),
+                                   real64 const GEOS_UNUSED_PARAM( dFluidDensity_dPressure ),
+                                   arraySlice1d< real64 const > const & GEOS_UNUSED_PARAM( dFluidDensity_dComponentConcentration ),
                                    real64 const fluidViscosity,
-                                   real64 const GEOSX_UNUSED_PARAM( dFluidViscosity_dPressure ),
-                                   arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM( dFluidViscosity_dComponentConcentration ),
+                                   real64 const GEOS_UNUSED_PARAM( dFluidViscosity_dPressure ),
+                                   arraySlice1d< real64 const > const & GEOS_UNUSED_PARAM( dFluidViscosity_dComponentConcentration ),
                                    real64 & settlingFactor,
                                    real64 & dSettlingFactor_dPressure,
                                    real64 & dSettlingFactor_dProppantConcentration,
@@ -336,6 +336,6 @@ void ParticleFluidUpdate::compute( real64 const proppantConcentration,
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUID_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_FLUID_PARTICLEFLUID_HPP_ */

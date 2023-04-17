@@ -39,13 +39,13 @@
  *
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_DAMAGE_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_DAMAGE_HPP_
 
 #include "constitutive/solid/SolidBase.hpp"
 #include "InvariantDecompositions.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -110,8 +110,8 @@ public:
 
   //Standard quadratic degradation functions
 
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
   virtual real64 getDegradationValue( localIndex const k,
                                       localIndex const q ) const
   {
@@ -133,24 +133,24 @@ public:
   }
 
 
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
   virtual real64 getDegradationDerivative( real64 const d ) const
   {
     return -2*(1 - d);
   }
 
 
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
   virtual real64 getDegradationSecondDerivative( real64 const d ) const
   {
-    GEOSX_UNUSED_VAR( d );
+    GEOS_UNUSED_VAR( d );
 
     return 2.0;
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const & timeIncrement,
@@ -210,7 +210,7 @@ public:
   // TODO: The code below assumes the strain energy density will never be
   //       evaluated in a non-converged / garbage configuration.
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual real64 getStrainEnergyDensity( localIndex const k,
                                          localIndex const q ) const override
   {
@@ -224,19 +224,19 @@ public:
     return m_strainEnergyDensity( k, q );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 getRegularizationLength() const
   {
     return m_lengthScale;
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 getCriticalFractureEnergy() const
   {
     return m_criticalFractureEnergy;
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual real64 getEnergyThreshold( localIndex const k,
                                      localIndex const q ) const
   {
@@ -350,6 +350,6 @@ protected:
 };
 
 }
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_DAMAGE_HPP_ */

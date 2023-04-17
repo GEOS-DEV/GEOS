@@ -16,8 +16,8 @@
  * @file SinglePhasePoromechanicsFluxKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSFLUXKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSFLUXKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSFLUXKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSFLUXKERNELS_HPP
 
 #include "common/DataTypes.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
@@ -25,7 +25,7 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace singlePhasePoromechanicsFluxKernels
@@ -87,7 +87,7 @@ struct EmbeddedSurfaceFluxKernel
    *
    */
   template< localIndex MAX_NUM_CONNECTIONS >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   compute( localIndex const numFluxElems,
            arraySlice1d< localIndex const > const & seri,
@@ -211,7 +211,7 @@ struct FaceElementFluxKernel
    *
    */
   template< localIndex MAX_NUM_CONNECTIONS >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   compute( localIndex const numFluxElems,
            arraySlice1d< localIndex const > const & seri,
@@ -235,6 +235,6 @@ struct FaceElementFluxKernel
 
 } // namespace singlePhasePoromechanicsFluxKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSFLUXKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSFLUXKERNELS_HPP

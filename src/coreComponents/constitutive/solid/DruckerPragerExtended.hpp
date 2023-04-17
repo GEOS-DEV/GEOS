@@ -16,8 +16,8 @@
  *  @file DruckerPragerExtended.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGEREXTENDED_HPP
-#define GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGEREXTENDED_HPP
+#ifndef GEOS_CONSTITUTIVE_SOLID_DRUCKERPRAGEREXTENDED_HPP
+#define GEOS_CONSTITUTIVE_SOLID_DRUCKERPRAGEREXTENDED_HPP
 
 #include "ElasticIsotropic.hpp"
 #include "InvariantDecompositions.hpp"
@@ -25,7 +25,7 @@
 #include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -91,7 +91,7 @@ public:
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicUpdates::smallStrainUpdate;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const & timeIncrement,
@@ -99,7 +99,7 @@ public:
                                   real64 ( &stress )[6],
                                   real64 ( &stiffness )[6][6] ) const override;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const & timeIncrement,
@@ -116,8 +116,8 @@ public:
                                               real64 ( &stiffness )[6][6] ) const override;
 
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const override final
   {
@@ -157,7 +157,7 @@ private:
   arrayView2d< real64 > const m_oldState;
 
   /// Hyperbolic model for friction hardening
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void hyperbolicModel( real64 const y1,
                         real64 const y2,
                         real64 const m,
@@ -180,8 +180,8 @@ private:
 };
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
                                                       localIndex const q,
                                                       real64 const & timeIncrement,
@@ -352,8 +352,8 @@ void DruckerPragerExtendedUpdates::smallStrainUpdate_ElasticOnly( localIndex con
   return;
 }
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
                                                       localIndex const q,
                                                       real64 const & timeIncrement,
@@ -545,6 +545,6 @@ protected:
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGEREXTENDED_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_DRUCKERPRAGEREXTENDED_HPP_ */

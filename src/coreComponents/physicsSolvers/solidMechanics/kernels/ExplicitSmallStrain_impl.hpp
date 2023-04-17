@@ -16,14 +16,14 @@
  * @file ExplictSmallStrain_impl.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITSMALLTRAIN_IMPL_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITSMALLTRAIN_IMPL_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITSMALLTRAIN_IMPL_HPP_
+#define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITSMALLTRAIN_IMPL_HPP_
 
 //#include "ExplicitFiniteStrain.hpp"
 #include "ExplicitSmallStrain.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 /// Namespace to contain the solid mechanics kernels.
@@ -53,17 +53,17 @@ ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::ExplicitSmall
   m_dt( dt ),
   m_elementList( elementSubRegion.template getReference< SortedArray< localIndex > >( elementListName ).toViewConst() )
 {
-  GEOSX_UNUSED_VAR( edgeManager );
-  GEOSX_UNUSED_VAR( faceManager );
-  GEOSX_UNUSED_VAR( targetRegionIndex );
+  GEOS_UNUSED_VAR( edgeManager );
+  GEOS_UNUSED_VAR( faceManager );
+  GEOS_UNUSED_VAR( targetRegionIndex );
 }
 
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( localIndex const k,
                                                                                StackVariables & stack ) const
 {
@@ -88,8 +88,8 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( l
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel( localIndex const k,
                                                                                                localIndex const q,
                                                                                                StackVariables & stack ) const
@@ -160,8 +160,8 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::complete( localIndex const k,
                                                                                     StackVariables const & stack ) const
 {
@@ -185,13 +185,13 @@ real64
 ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernelLaunch( localIndex const numElems,
                                                                                  KERNEL_TYPE const & kernelComponent )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( numElems );
+  GEOS_UNUSED_VAR( numElems );
 
   localIndex const numProcElems = kernelComponent.m_elementList.size();
   forAll< POLICY >( numProcElems,
-                    [=] GEOSX_DEVICE ( localIndex const index )
+                    [=] GEOS_DEVICE ( localIndex const index )
   {
     localIndex const k = kernelComponent.m_elementList[ index ];
 
@@ -212,6 +212,6 @@ ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernelLaunch(
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITSMALLTRAIN_IMPL_HPP_
+#endif //GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITSMALLTRAIN_IMPL_HPP_
