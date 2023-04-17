@@ -5,7 +5,7 @@ Constitutive Models
 
 Constitutive models describe relations between various physical quantities.
 In a physics simulation they are used to model the response or state of material (solid, fluid, or a mixture) as a function of input variables.
-There are many types of constitutive models available in GEOSX.
+There are many types of constitutive models available in GEOS.
 These models are grouped together based on their input/output interface.
 
 .. toctree::

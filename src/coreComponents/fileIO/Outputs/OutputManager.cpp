@@ -19,7 +19,7 @@
 #include "OutputManager.hpp"
 #include "SiloOutput.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -38,7 +38,7 @@ OutputManager::~OutputManager()
 
 Group * OutputManager::createChild( string const & childKey, string const & childName )
 {
-  GEOSX_LOG_RANK_0( "Adding Output: " << childKey << ", " << childName );
+  GEOS_LOG_RANK_0( "Adding Output: " << childKey << ", " << childName );
   std::unique_ptr< OutputBase > output = OutputBase::CatalogInterface::factory( childKey, childName, this );
   return &this->registerGroup< OutputBase >( childName, std::move( output ) );
 }
@@ -53,4 +53,4 @@ void OutputManager::expandObjectCatalogs()
   }
 }
 
-} /* namespace geosx */
+} /* namespace geos */

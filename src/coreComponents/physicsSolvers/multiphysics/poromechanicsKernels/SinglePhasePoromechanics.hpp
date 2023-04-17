@@ -16,13 +16,13 @@
  * @file SinglePhasePoromechanics.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICS_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICS_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICS_HPP_
 
 #include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace poromechanicsKernels
@@ -30,13 +30,13 @@ namespace poromechanicsKernels
 
 /**
  * @brief Implements kernels for solving quasi-static single-phase poromechanics.
- * @copydoc geosx::finiteElement::ImplicitKernelBase
+ * @copydoc geos::finiteElement::ImplicitKernelBase
  *
  * ### SinglePhasePoroelastic Description
  * Implements the KernelBase interface functions required for solving the
  * quasi-static single-phase poromechanics problem using one of the
  * "finite element kernel application" functions such as
- * geosx::finiteElement::RegionBasedKernelApplication.
+ * geos::finiteElement::RegionBasedKernelApplication.
  *
  */
 template< typename SUBREGION_TYPE,
@@ -76,7 +76,7 @@ public:
 
   /**
    * @brief Constructor
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param gravityVector The gravity vector.
    */
   SinglePhasePoromechanics( NodeManager const & nodeManager,
@@ -97,7 +97,7 @@ public:
   //*****************************************************************************
   /**
    * @class StackVariables
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::StackVariables
+   * @copydoc geos::finiteElement::ImplicitKernelBase::StackVariables
    *
    * Adds a stack array for the displacement, incremental displacement, and the
    * constitutive stiffness.
@@ -107,7 +107,7 @@ public:
 public:
 
     /// Constructor.
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables()
     {}
@@ -139,7 +139,7 @@ public:
    * @param[in] q the quadrature point index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void smallStrainUpdate( localIndex const k,
                           localIndex const q,
                           StackVariables & stack ) const;
@@ -155,7 +155,7 @@ public:
    * @param[in] dSolidDensity_dPressure the derivative of solid density wrt pressure
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeBodyForce( localIndex const k,
                          localIndex const q,
                          real64 const & porosity,
@@ -176,7 +176,7 @@ public:
    * @param[in] dPorosity_dTemperature the derivative of porosity wrt temperature
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFluidIncrement( localIndex const k,
                               localIndex const q,
                               real64 const & porosity,
@@ -198,7 +198,7 @@ public:
    *   totalStress = totalStress( strainIncrement, pressure)
    *   bodyForce   = bodyForce( strainIncrement, pressure)
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
                                      real64 const ( &dNdX )[numNodesPerElem][3],
                                      real64 const & detJxW,
@@ -215,26 +215,26 @@ public:
    *   fluidMass = fluidMass( strainIncrement, pressure)
    *   fluidMassFlux = fluidMassFlux( pressure)
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
                                       real64 const & detJxW,
                                       StackVariables & stack ) const;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const;
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
+   * @copydoc geos::finiteElement::ImplicitKernelBase::complete
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
 
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::kernelLaunch
+   * @copydoc geos::finiteElement::KernelBase::kernelLaunch
    *
    * ### SinglePhasePoromechancis Description
    * Copy of the KernelBase::kernelLaunch function
@@ -295,7 +295,7 @@ public:
    * @param[in] ei the element index
    * @param[in] q the quadrature point index
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( localIndex const ei,
                 localIndex const q ) const
   {
@@ -317,7 +317,7 @@ public:
           localIndex const numQuad,
           KERNEL_TYPE const & kernelComponent )
   {
-    forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       for( localIndex q = 0; q < numQuad; ++q )
       {
@@ -372,7 +372,7 @@ public:
 
 } // namespace poromechanicsKernels
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICS_HPP_
+#endif // GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICS_HPP_

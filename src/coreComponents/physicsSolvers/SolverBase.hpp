@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SOLVERBASE_HPP_
+#define GEOS_PHYSICSSOLVERS_SOLVERBASE_HPP_
 
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
@@ -30,7 +30,7 @@
 
 #include <limits>
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;
@@ -551,7 +551,7 @@ public:
   /*
    * Returns the requirement for the next time-step to the event executing the solver.
    */
-  virtual real64 getTimestepRequest( real64 const GEOSX_UNUSED_PARAM( time ) ) override
+  virtual real64 getTimestepRequest( real64 const GEOS_UNUSED_PARAM( time ) ) override
   {return m_nextDt;};
   /**@}*/
 
@@ -746,7 +746,7 @@ protected:
    * @param subRegion The ElementSubRegionBase that will have constitutive
    *  names set.
    */
-  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const { GEOSX_UNUSED_VAR( subRegion ); }
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); }
 
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE const & getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key );
@@ -806,7 +806,7 @@ private:
    * @param subRegion The ElementSubRegionBase that will have constitutive
    *  names set.
    */
-  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const { GEOSX_UNUSED_VAR( subRegion ); }
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); }
 
   bool solveNonlinearSystem( real64 const & time_n,
                              real64 const & dt,
@@ -823,7 +823,7 @@ string SolverBase::getConstitutiveName( ElementSubRegionBase const & subRegion )
 
   constitutiveModels.forSubGroups< CONSTITUTIVE_BASE_TYPE >( [&]( dataRepository::Group const & model )
   {
-    GEOSX_ERROR_IF( !validName.empty(), "A valid constitutive model was already found." );
+    GEOS_ERROR_IF( !validName.empty(), "A valid constitutive model was already found." );
     validName = model.getName();
   } );
   return validName;
@@ -845,7 +845,7 @@ BASETYPE & SolverBase::getConstitutiveModel( dataRepository::Group & dataGroup, 
   return constitutiveModels.getGroup< BASETYPE >( key );
 }
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif /* GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_SOLVERBASE_HPP_ */

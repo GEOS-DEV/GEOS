@@ -17,14 +17,14 @@
  */
 
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -396,6 +396,6 @@ ENUM_STRINGS( WellControls::Control,
               "uninitialized" );
 
 
-} //namespace geosx
+} //namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP

@@ -28,7 +28,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "WaveSolverUtils.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -92,9 +92,9 @@ localIndex AcousticWaveEquationSEM::getNumNodesPerElem()
 
   FiniteElementDiscretization const * const
   feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
-  GEOSX_THROW_IF( feDiscretization == nullptr,
-                  getName() << ": FE discretization not found: " << m_discretizationName,
-                  InputError );
+  GEOS_THROW_IF( feDiscretization == nullptr,
+                 getName() << ": FE discretization not found: " << m_discretizationName,
+                 InputError );
 
   localIndex numNodesPerElem = 0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
@@ -185,7 +185,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
     arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
     int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-    std::string lifoPrefix = GEOSX_FMT( "lifo/rank_{:05}/pdt2_shot{:06}", rank, m_shotIndex );
+    std::string lifoPrefix = GEOS_FMT( "lifo/rank_{:05}/pdt2_shot{:06}", rank, m_shotIndex );
     m_lifo = std::unique_ptr< lifoStorage< real32 > >( new lifoStorage< real32 >( lifoPrefix, p_dt2, m_lifoOnDevice, m_lifoOnHost, m_lifoSize ) );
 
   } );
@@ -196,13 +196,13 @@ void AcousticWaveEquationSEM::postProcessInput()
 {
 
   WaveSolverBase::postProcessInput();
-  GEOSX_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
-                  "Invalid number of physical coordinates for the sources",
-                  InputError );
+  GEOS_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
+                 "Invalid number of physical coordinates for the sources",
+                 InputError );
 
-  GEOSX_THROW_IF( m_receiverCoordinates.size( 1 ) != 3,
-                  "Invalid number of physical coordinates for the receivers",
-                  InputError );
+  GEOS_THROW_IF( m_receiverCoordinates.size( 1 ) != 3,
+                 "Invalid number of physical coordinates for the receivers",
+                 InputError );
 
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
@@ -216,7 +216,7 @@ void AcousticWaveEquationSEM::postProcessInput()
     }
   }
 
-  GEOSX_THROW_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
+  GEOS_THROW_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
 
   if( m_dtSeismoTrace > 0 )
   {
@@ -285,9 +285,9 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                         CellElementSubRegion & elementSubRegion )
   {
-    GEOSX_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
-                    "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
-                    InputError );
+    GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
+                   "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
+                   InputError );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
@@ -339,8 +339,8 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNum
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
   arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
 
-  GEOSX_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
-  forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const isrc )
+  GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
+  forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsAccessible[isrc] == 1 )
     {
@@ -493,14 +493,14 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartition &
     }
     else
     {
-      GEOSX_ERROR( "This option is not supported yet" );
+      GEOS_ERROR( "This option is not supported yet" );
     }
   } );
 }
 
 void AcousticWaveEquationSEM::initializePML()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   registerWrapper< parametersPML >( viewKeyStruct::parametersPMLString() ).
     setInputFlag( InputFlags::FALSE ).
@@ -570,7 +570,7 @@ void AcousticWaveEquationSEM::initializePML()
         subRegion.getReference< CellElementSubRegion::NodeMapType >( CellElementSubRegion::viewKeyStruct::nodeListString() );
       traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
 
-      forAll< EXEC_POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const l )
+      forAll< EXEC_POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const l )
       {
         localIndex const k = targetSet[ l ];
         localIndex const numNodesPerElem = elemToNodesViewConst[k].size();
@@ -597,7 +597,7 @@ void AcousticWaveEquationSEM::initializePML()
     RAJA::ReduceMax< parallelDeviceReduce, real32 > yMaxInterior( -LvArray::NumericLimits< real32 >::max );
     RAJA::ReduceMax< parallelDeviceReduce, real32 > zMaxInterior( -LvArray::NumericLimits< real32 >::max );
 
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       xMinGlobal.min( X[a][0] );
       yMinGlobal.min( X[a][1] );
@@ -737,15 +737,15 @@ void AcousticWaveEquationSEM::initializePML()
     /// so it can be used by the PML application
     indicatorPML.zero();
 
-    GEOSX_LOG_LEVEL_RANK_0( 1,
-                            "PML parameters are: \n"
-                            << "\t inner boundaries xMin = "<<param.xMinPML<<"\n"
-                            << "\t inner boundaries xMax = "<<param.xMaxPML<<"\n"
-                            << "\t left, front, top max PML thicknesses  = "<<param.thicknessMinXYZPML<<"\n"
-                            << "\t right, back, bottom max PML thicknesses  = "<<param.thicknessMaxXYZPML<<"\n"
-                            << "\t left, front, top average wave speed  = "<<param.waveSpeedMinXYZPML<<"\n"
-                            << "\t right, back, bottom average wave speed  = "<<param.waveSpeedMaxXYZPML<<"\n"
-                            << "\t theoretical reflectivity = "<< param.reflectivityPML );
+    GEOS_LOG_LEVEL_RANK_0( 1,
+                           "PML parameters are: \n"
+                           << "\t inner boundaries xMin = "<<param.xMinPML<<"\n"
+                           << "\t inner boundaries xMax = "<<param.xMaxPML<<"\n"
+                           << "\t left, front, top max PML thicknesses  = "<<param.thicknessMinXYZPML<<"\n"
+                           << "\t right, back, bottom max PML thicknesses  = "<<param.thicknessMaxXYZPML<<"\n"
+                           << "\t left, front, top average wave speed  = "<<param.waveSpeedMinXYZPML<<"\n"
+                           << "\t right, back, bottom average wave speed  = "<<param.waveSpeedMaxXYZPML<<"\n"
+                           << "\t theoretical reflectivity = "<< param.reflectivityPML );
 
   } );
 }
@@ -754,7 +754,7 @@ void AcousticWaveEquationSEM::initializePML()
 
 void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   parametersPML const & param = getReference< parametersPML >( viewKeyStruct::parametersPMLString() );
@@ -874,7 +874,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
                                         MeshLevel & mesh,
-                                        arrayView1d< string const > const & GEOSX_UNUSED_PARAM ( regionNames ) )
+                                        arrayView1d< string const > const & GEOS_UNUSED_PARAM ( regionNames ) )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -891,7 +891,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
       {
         m_lifo->pushWait();
       }
-      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const nodeIdx )
+      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const nodeIdx )
       {
         p_dt2[nodeIdx] = (p_np1[nodeIdx] - 2*p_n[nodeIdx] + p_nm1[nodeIdx])/(dt*dt);
       } );
@@ -904,33 +904,33 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
       }
       else
       {
-        GEOSX_MARK_SCOPE ( DirectWrite );
+        GEOS_MARK_SCOPE ( DirectWrite );
         p_dt2.move( MemorySpace::host, false );
         int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-        std::string fileName = GEOSX_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
+        std::string fileName = GEOS_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
         int lastDirSeparator = fileName.find_last_of( "/\\" );
         std::string dirName = fileName.substr( 0, lastDirSeparator );
         if( string::npos != (size_t)lastDirSeparator && !dirExists( dirName ))
           makeDirsForPath( dirName );
 
-        //std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
+        //std::string fileName = GEOS_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
         //const int fileDesc = open( fileName.c_str(), O_CREAT | O_WRONLY | O_DIRECT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP |
         // S_IROTH | S_IWOTH );
 
         std::ofstream wf( fileName, std::ios::out | std::ios::binary );
-        GEOSX_THROW_IF( !wf,
-                        "Could not open file "<< fileName << " for writting",
-                        InputError );
+        GEOS_THROW_IF( !wf,
+                       "Could not open file "<< fileName << " for writting",
+                       InputError );
         wf.write( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
         wf.close( );
-        GEOSX_THROW_IF( !wf.good(),
-                        "An error occured while writting "<< fileName,
-                        InputError );
+        GEOS_THROW_IF( !wf.good(),
+                       "An error occured while writting "<< fileName,
+                       InputError );
       }
 
     }
 
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       p_nm1[a] = p_n[a];
       p_n[a]   = p_np1[a];
@@ -973,17 +973,17 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
       }
       else
       {
-        GEOSX_MARK_SCOPE ( DirectRead );
+        GEOS_MARK_SCOPE ( DirectRead );
 
         int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-        std::string fileName = GEOSX_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
+        std::string fileName = GEOS_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
         std::ifstream wf( fileName, std::ios::in | std::ios::binary );
-        GEOSX_THROW_IF( !wf,
-                        "Could not open file "<< fileName << " for reading",
-                        InputError );
-        //std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
+        GEOS_THROW_IF( !wf,
+                       "Could not open file "<< fileName << " for reading",
+                       InputError );
+        //std::string fileName = GEOS_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
         //const int fileDesc = open( fileName.c_str(), O_RDONLY | O_DIRECT );
-        //GEOSX_ERROR_IF( fileDesc == -1,
+        //GEOS_ERROR_IF( fileDesc == -1,
         //                "Could not open file "<< fileName << " for reading: " << strerror( errno ) );
         // maybe better with registerTouch()
         p_dt2.move( MemorySpace::host, true );
@@ -999,8 +999,8 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
         constexpr localIndex numNodesPerElem = 8;
 
-        GEOSX_MARK_SCOPE ( updatePartialGradient );
-        forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const eltIdx )
+        GEOS_MARK_SCOPE ( updatePartialGradient );
+        forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const eltIdx )
         {
           for( localIndex i = 0; i < numNodesPerElem; ++i )
           {
@@ -1011,7 +1011,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
       } );
     }
 
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       p_nm1[a] = p_n[a];
       p_n[a]   = p_np1[a];
@@ -1026,9 +1026,9 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                                       integer cycleNumber,
                                                       DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
-  GEOSX_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
+  GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
@@ -1068,8 +1068,8 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
     if( !usePML )
     {
-      GEOSX_MARK_SCOPE ( updateP );
-      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+      GEOS_MARK_SCOPE ( updateP );
+      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
         if( freeSurfaceNodeIndicator[a] != 1 )
         {
@@ -1102,8 +1102,8 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       /// Compute (divV) and (B.pressureGrad - C.auxUGrad) vectors for the PML region
       applyPML( time_n, domain );
 
-      GEOSX_MARK_SCOPE ( updatePWithPML );
-      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+      GEOS_MARK_SCOPE ( updatePWithPML );
+      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
         if( freeSurfaceNodeIndicator[a] != 1 )
         {
@@ -1166,7 +1166,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
 
     /// prepare next step
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       stiffnessVector[a] = 0.0;
       rhs[a] = 0.0;
@@ -1240,4 +1240,4 @@ void AcousticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
 
 REGISTER_CATALOG_ENTRY( SolverBase, AcousticWaveEquationSEM, string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */
