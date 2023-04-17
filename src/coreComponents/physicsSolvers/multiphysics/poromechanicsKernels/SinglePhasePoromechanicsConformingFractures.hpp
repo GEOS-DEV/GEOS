@@ -31,8 +31,8 @@ namespace singlePhasePoromechanicsConformingFracturesKernels
 using namespace fluxKernelsHelper;
 using namespace constitutive;
 
-template< integer NUM_DOF >
-class ConnectorBasedAssemblyKernel : public singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_DOF, SurfaceElementStencilWrapper >
+template< integer NUM_EQN, integer NUM_DOF >
+class ConnectorBasedAssemblyKernel : public singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >
 {
 public:
 
@@ -65,7 +65,7 @@ public:
   using AbstractBase::m_dens;
   using AbstractBase::m_dDens_dPres;
 
-  using Base = singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_DOF, SurfaceElementStencilWrapper >;
+  using Base = singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
   using Base::numDof;
   using Base::numEqn;
   using Base::maxNumElems;
@@ -296,12 +296,13 @@ public:
                    CRSMatrixView< real64, localIndex const > const & dR_dAper )
   {
     integer constexpr NUM_DOF = 1; // pressure
+    integer constexpr NUM_EQN = 1;
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > flowDofNumberAccessor =
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
     flowDofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-    using kernelType = ConnectorBasedAssemblyKernel< NUM_DOF >;
+    using kernelType = ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >;
     typename kernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
     typename kernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );
     typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );

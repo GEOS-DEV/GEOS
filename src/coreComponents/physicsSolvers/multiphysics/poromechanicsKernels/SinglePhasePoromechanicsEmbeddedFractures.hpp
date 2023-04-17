@@ -31,8 +31,8 @@ namespace singlePhasePoromechanicsEmbeddedFracturesKernels
 using namespace fluxKernelsHelper;
 using namespace constitutive;
 
-template< integer NUM_DOF >
-class ConnectorBasedAssemblyKernel : public singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_DOF, SurfaceElementStencilWrapper >
+template< integer NUM_EQN, integer NUM_DOF >
+class ConnectorBasedAssemblyKernel : public singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >
 {
 public:
 
@@ -64,8 +64,9 @@ public:
   using AbstractBase::m_dens;
   using AbstractBase::m_dDens_dPres;
 
-  using Base = singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_DOF, SurfaceElementStencilWrapper >;
+  using Base = singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
   using Base::numDof;
+  using Base::numEqn;
   using Base::maxNumElems;
   using Base::maxNumConns;
   using Base::maxStencilSize;
@@ -73,15 +74,14 @@ public:
   using Base::m_seri;
   using Base::m_sesri;
   using Base::m_sei;
+  using Base::m_ghostRank;
 
 
-  /// Compute time value for the number of equations
-  static constexpr integer numEqn = numDof - 3;
 
   ConnectorBasedAssemblyKernel( globalIndex const rankOffset,
                                 SurfaceElementStencilWrapper const & stencilWrapper,
                                 DofNumberAccessor const & flowDofNumberAccessor,
-                                DofNumberAccessor const & dispDofNumberAccessor,
+                                DofNumberAccessor const & dispJumpDofNumberAccessor,
                                 SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
                                 SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
                                 PermeabilityAccessors const & permeabilityAccessors,
@@ -98,7 +98,7 @@ public:
             dt,
             localMatrix,
             localRhs ),
-    m_dispJumpDofNumber( dispDofNumberAccessor.toNestedViewConst() ),
+    m_dispJumpDofNumber( dispJumpDofNumberAccessor.toNestedViewConst() ),
     m_dPerm_dDispJump( edfmPermeabilityAccessors.get( fields::permeability::dPerm_dDispJump {} ) )
   {}
 
@@ -179,8 +179,7 @@ public:
     localIndex const regionIndex[2]    = {m_seri[iconn][0], m_seri[iconn][1]};
     localIndex const subRegionIndex[2] = {m_sesri[iconn][0], m_sesri[iconn][1]};
     localIndex const elementIndex[2]   = {m_sei[iconn][0], m_sei[iconn][1]};
-
-
+  
     computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
                             trans,
                             dTrans,
@@ -268,6 +267,8 @@ public:
                    arrayView1d< real64 > const & localRhs )
   {
     integer constexpr NUM_DOF = 4; // pressure + jumps
+    integer constexpr NUM_EQN = 1; // pressure + jumps
+
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > pressureDofNumberAccessor =
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( pressureDofKey );
@@ -277,7 +278,7 @@ public:
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( dispJumpDofKey );
     dispJumpDofNumberAccessor.setName( solverName + "/accessors/" + dispJumpDofKey );
 
-    using kernelType = ConnectorBasedAssemblyKernel< NUM_DOF >;
+    using kernelType = ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >;
     typename kernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
     typename kernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );
     typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );

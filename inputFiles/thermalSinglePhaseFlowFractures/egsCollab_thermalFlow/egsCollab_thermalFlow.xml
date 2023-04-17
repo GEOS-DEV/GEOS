@@ -1,0 +1,247 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">>
+    <SinglePhaseFVM
+      name="singleFlow"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      isThermal="1"
+      targetRegions="{ matrix, fracture }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="100"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseFVM>
+
+    <EmbeddedSurfaceGenerator
+       name="SurfaceGenerator"
+       logLevel="1"
+       discretization="FE1"
+       targetRegions="{ matrix, fracture }"
+       fractureRegion="fracture"
+       mpiCommOrder="1"/>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+    <FiniteElements>
+     <FiniteElementSpace
+         name="FE1"
+         order="1"/>
+     </FiniteElements>
+  </NumericalMethods>
+
+  <Mesh>
+     <InternalMesh
+       name="mesh1"
+       elementTypes="{ C3D8 }"
+       xCoords="{ 0, 25, 42, 53.5, 61.25, 66.25, 69.625, 71.875, 146.875 }"
+       yCoords="{ 0, 75 }"
+       zCoords="{ 0, 70, 71.5, 73.75, 77.125, 82.125, 89.875, 101.375, 118.375, 143.375 }"
+       nx="{ 1, 1, 1, 1, 1, 1, 1, 1, 60 }"
+       ny="{ 30 }"
+       nz="{ 56, 1, 1, 1, 1, 1, 1, 1, 1 }"
+       cellBlockNames="{ cb }"/>
+   </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="matrix"
+      cellBlocks="{ cb }"
+      materialList="{ water, rock, thermalCond }"/>
+
+    <SurfaceElementRegion
+       name="fracture"
+       defaultAperture="1e-3"
+       materialList="{ water, fractureFilling, thermalCond }"
+       subRegionType="embeddedElement"/>
+  </ElementRegions>
+
+  <Events
+     maxTime="7.884e10">
+     <SoloEvent
+       name="preFracture"
+       target="/Solvers/SurfaceGenerator"/>
+
+     <PeriodicEvent
+       name="solverApplications"
+       forceDt="7.884e9"
+       target="/Solvers/singleFlow"/>
+
+     <PeriodicEvent
+       name="outputs"
+       forceDt="7.884e9"
+       target="/Outputs/vtkOutput"/>
+
+     <PeriodicEvent
+       name="restarts"
+       timeFrequency="1.971e10"
+       target="/Outputs/restartOutput"/>
+   </Events>
+
+  <Geometry> // ToCheck
+    <BoundedPlane
+       name="FracturePlane"
+       normal="{ 1, 0, 0 }"
+       origin="{ 0.5, 0.5, 0.5 }"
+       lengthVector="{ 0, 1, 0 }"
+       widthVector="{ 0, 0, 1 }"
+       dimensions="{ 0.5, 1 }"/>
+  </Geometry>
+
+  <Constitutive>
+     <ThermalCompressibleSinglePhaseFluid
+       name="water"
+       defaultDensity="1000"
+       defaultViscosity="0.001"
+       referencePressure="0.0"
+       referenceTemperature="0"
+       compressibility="5e-10"
+       thermalExpansionCoeff="3e-4"
+       viscosibility="0.0"
+       volumetricHeatCapacity="4.0e3"
+       referenceInternalEnergy="0.99"/>
+
+     <SinglePhaseConstantThermalConductivity
+       name="thermalCond"
+       thermalConductivityComponents="{ 3.81, 3.81, 3.81 }"/>  
+
+     <CompressibleSolidParallelPlatesPermeability
+       name="fractureFilling"
+       solidModelName="nullSolid"
+       porosityModelName="fracturePorosity"
+       permeabilityModelName="fracturePerm"
+       solidInternalEnergyModelName="rockInternalEnergy"/>
+
+     <CompressibleSolidConstantPermeability
+       name="rock"
+       solidModelName="nullSolid"
+       porosityModelName="rockPorosity"
+       permeabilityModelName="rockPerm"
+       solidInternalEnergyModelName="rockInternalEnergy"/>
+
+     <SolidInternalEnergy
+       name="rockInternalEnergy"
+       volumetricHeatCapacity="2.3345e6"
+       referenceTemperature="0"
+       referenceInternalEnergy="0"/>  
+
+     <NullModel
+       name="nullSolid"/>
+
+     <PressurePorosity
+       name="rockPorosity"
+       defaultReferencePorosity="0.01"
+       referencePressure="0.0"
+       compressibility="0.0"/>
+
+     <ConstantPermeability
+       name="rockPerm"
+       permeabilityComponents="{ 1.0e-20, 1.0e-20, 1.0e-20 }"/>
+
+     <PressurePorosity
+       name="fracturePorosity"
+       defaultReferencePorosity="1.00"
+       referencePressure="0.0"
+       compressibility="7.2e-16"/>
+
+     <ParallelPlatesPermeability
+       name="fracturePerm"/>
+   </Constitutive>
+
+  <FieldSpecifications>
+
+    <FieldSpecification
+       name="Porosity"
+       initialCondition="1"
+       setNames="{ all }"
+       objectPath="ElementRegions/matrix/cb"
+       fieldName="rockPorosity_referencePorosity"
+       scale="0.01"/>
+
+    <FieldSpecification
+       name="fracPorosity"
+       initialCondition="1"
+       setNames="{ all }"
+       objectPath="ElementRegions/fracture"
+       fieldName="fracturePorosity_porosity"
+       scale="1.00"/>
+
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/matrix/cb"
+      fieldName="pressure"
+      scale="2e6"/>
+
+    <FieldSpecification
+      name="initialTemperature"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/matrix/cb"
+      fieldName="temperature"
+      functionName="temperatureField"
+      scale="303.012"/>
+
+    <FieldSpecification
+      name="topTemperature"
+      objectPath="faceManager"
+      fieldName="temperature"
+      scale="296.0153"
+      setNames="{ zpos }"/>
+
+    <FieldSpecification
+      name="botTemperature"
+      objectPath="faceManager"
+      fieldName="temperature"
+      scale="303.012"
+      setNames="{ zneg }"/>
+
+    <FieldSpecification
+      name="xposTemperature"
+      objectPath="faceManager"
+      fieldName="temperature"
+      functionName="temperatureField"
+      scale="1"
+      setNames="{ xpos }"/>
+
+    <FieldSpecification
+      name="xnegTemperature"
+      objectPath="faceManager"
+      fieldName="temperature"
+      functionName="temperatureField"
+      scale="1"
+      setNames="{ xneg }"/>
+
+    <SourceFlux
+      name="sourceTerm"
+      objectPath="ElementRegions/matrix/cb"
+      scale="-0.00001"
+      setNames="{ source }"/>
+
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="temperatureField"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ collab/xlin.geos, collab/ylin.geos, collab/zlin.geos }"
+      voxelFile="collab/temp.geos"/>
+  </Functions>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="thermalFlowFrac_collab"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>
