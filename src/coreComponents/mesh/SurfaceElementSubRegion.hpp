@@ -16,8 +16,8 @@
  * @file SurfaceElementSubRegion.hpp
  */
 
-#ifndef GEOSX_MESH_SURFACEELEMENTSUBREGION_HPP_
-#define GEOSX_MESH_SURFACEELEMENTSUBREGION_HPP_
+#ifndef GEOS_MESH_SURFACEELEMENTSUBREGION_HPP_
+#define GEOS_MESH_SURFACEELEMENTSUBREGION_HPP_
 
 #include "ElementSubRegionBase.hpp"
 #include "InterObjectRelation.hpp"
@@ -25,7 +25,7 @@
 #include "EdgeManager.hpp"
 #include "CellElementSubRegion.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -254,6 +254,6 @@ protected:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* SRC_CORECOMPONENTS_MESH_SURFACEELEMENTSUBREGION_HPP_ */

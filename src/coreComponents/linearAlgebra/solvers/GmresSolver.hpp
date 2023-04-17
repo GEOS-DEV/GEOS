@@ -16,12 +16,12 @@
  * @file GmresSolver.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_SOLVERS_GMRESSOLVER_HPP_
-#define GEOSX_LINEARALGEBRA_SOLVERS_GMRESSOLVER_HPP_
+#ifndef GEOS_LINEARALGEBRA_SOLVERS_GMRESSOLVER_HPP_
+#define GEOS_LINEARALGEBRA_SOLVERS_GMRESSOLVER_HPP_
 
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -101,6 +101,6 @@ protected:
   bool mutable m_kspaceInitialized;
 };
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_SOLVERS_GMRESSOLVER_HPP_
+#endif //GEOS_LINEARALGEBRA_SOLVERS_GMRESSOLVER_HPP_

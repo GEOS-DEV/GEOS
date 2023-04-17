@@ -18,7 +18,7 @@
 
 #include "NewComponent.hpp"
 
-namespace geosx
+namespace geos
 {
 
 NewComponent::NewComponent( string const & name,
@@ -45,4 +45,4 @@ real64 NewComponent::SolverStep( real64 const & /*time_n*/,
 
 REGISTER_CATALOG_ENTRY( SolverBase, NewComponent, string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */
