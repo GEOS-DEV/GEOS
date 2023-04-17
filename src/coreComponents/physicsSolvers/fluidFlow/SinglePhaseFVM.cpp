@@ -37,7 +37,7 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/ThermalSinglePhaseFVMKernels.hpp"
 
-#include "physicsSolvers/multiphysics/SinglePhaseProppantFluxKernels.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseProppantFluxKernels.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp"
 
@@ -51,7 +51,6 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace singlePhaseBaseKernels;
 using namespace singlePhaseFVMKernels;
-using namespace singlePhaseProppantFluxKernels;
 
 template< typename BASE >
 SinglePhaseFVM< BASE >::SinglePhaseFVM( const string & name,
@@ -381,9 +380,9 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-      typename singlePhaseProppantFluxKernels::FaceBasedAssemblyKernelBase::SinglePhaseFlowAccessors flowAccessors( elemManager, getName() );
-      typename singlePhaseProppantFluxKernels::FaceBasedAssemblyKernelBase::SlurryFluidAccessors fluidAccessors( elemManager, getName() );
-      typename singlePhaseProppantFluxKernels::FaceBasedAssemblyKernelBase::ProppantPermeabilityAccessors permAccessors( elemManager, getName() );
+      typename FaceBasedAssemblyKernelBase::SinglePhaseFlowAccessors flowAccessors( elemManager, getName() );
+      typename FaceBasedAssemblyKernelBase::SlurryFluidAccessors fluidAccessors( elemManager, getName() );
+      typename FaceBasedAssemblyKernelBase::ProppantPermeabilityAccessors permAccessors( elemManager, getName() );
 
       singlePhaseProppantFluxKernels::FaceElementFluxKernel::launch( stencilWrapper,
                                                                      dt,
@@ -429,8 +428,6 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOS_UNU
                                                                       MeshLevel const & mesh,
                                                                       arrayView1d< string const > const & )
   {
-    ElementRegionManager const & elemManager = mesh.getElemManager();
-
     fluxApprox.forStencils< CellElementStencilTPFA, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();

@@ -122,7 +122,7 @@ public:
    * Note: this is needed because of the fracture subregions which do not exist at initialization
    */
   virtual void update( arrayView2d< real64 const > const & porosity ) const
-  { GEOSX_UNUSED_VAR( porosity ); }
+  { GEOS_UNUSED_VAR( porosity ); }
 
   /**
    * @brief Getter for the effective conductivities in the subRegion

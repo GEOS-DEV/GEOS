@@ -22,7 +22,7 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace singlePhasePoromechanicsConformingFracturesKernels
@@ -317,6 +317,6 @@ public:
 
 } // namespace SinglePhasePoromechanicsConformingFracturesKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP

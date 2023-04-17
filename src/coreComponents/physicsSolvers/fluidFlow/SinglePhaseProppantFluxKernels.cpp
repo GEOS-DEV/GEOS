@@ -18,9 +18,9 @@
 
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
-#include "singlePhaseProppantFluxKernels.hpp"
+#include "SinglePhaseProppantFluxKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace singlePhaseProppantFluxKernels
@@ -82,7 +82,7 @@ void FaceElementFluxKernel::
 
       // compute transmissibility
       real64 transmissibility[maxNumConnections][2], dTrans_dPres[maxNumConnections][2], dTrans_dDispJump[maxNumConnections][2][3];
-      GEOSX_UNUSED_VAR( dPerm_dPres, dPerm_dDispJump );
+      GEOS_UNUSED_VAR( dPerm_dPres, dPerm_dDispJump );
       stencilWrapper.computeWeights( iconn,
                                      permeability,
                                      permeabilityMultiplier,
@@ -120,8 +120,8 @@ void FaceElementFluxKernel::
         {
           globalIndex const globalRow = pressureDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
           localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
-          GEOSX_ASSERT_GE( localRow, 0 );
-          GEOSX_ASSERT_GT( localMatrix.numRows(), localRow );
+          GEOS_ASSERT_GE( localRow, 0 );
+          GEOS_ASSERT_GT( localMatrix.numRows(), localRow );
 
           RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux[i] );
           localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
@@ -213,4 +213,4 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
 
 }// namespace singlePhaseProppantFluxKernels
 
-} // namespace geosx
+} // namespace geos

@@ -27,7 +27,7 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 namespace singlePhaseProppantFluxKernels
@@ -118,6 +118,6 @@ struct FaceElementFluxKernel
 
 } // namespace singlePhaseProppantFluxKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPROPPANTFLUXKERNELS_HPP
