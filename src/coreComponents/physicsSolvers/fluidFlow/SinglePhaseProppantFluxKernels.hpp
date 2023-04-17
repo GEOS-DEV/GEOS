@@ -13,11 +13,11 @@
  */
 
 /**
- * @file SinglePhasePoromechanicsFluxKernels.hpp
+ * @file SinglePhaseProppantFluxKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSFLUXKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSFLUXKERNELS_HPP
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPROPPANTFLUXKERNELS_HPP
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPROPPANTFLUXKERNELS_HPP
 
 #include "common/DataTypes.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
@@ -30,7 +30,7 @@
 namespace geosx
 {
 
-namespace singlePhasePoromechanicsFluxKernels
+namespace singlePhaseProppantFluxKernels
 {
 
 /******************************** FaceElementFluxKernel ********************************/
@@ -116,8 +116,8 @@ struct FaceElementFluxKernel
 };
 
 
-} // namespace singlePhasePoromechanicsFluxKernels
+} // namespace singlePhaseProppantFluxKernels
 
 } // namespace geosx
 
-#endif //GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSFLUXKERNELS_HPP
+#endif //GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPROPPANTFLUXKERNELS_HPP

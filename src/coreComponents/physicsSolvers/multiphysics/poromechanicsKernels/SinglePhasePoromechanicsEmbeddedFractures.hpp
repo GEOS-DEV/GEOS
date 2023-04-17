@@ -295,7 +295,7 @@ public:
 
 
 
-} // namespace SinglePhasePoromechanicsFluxKernels
+} // namespace SinglePhaseProppantFluxKernels
 
 } // namespace geosx
 

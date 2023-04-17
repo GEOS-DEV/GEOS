@@ -37,7 +37,7 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/ThermalSinglePhaseFVMKernels.hpp"
 
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsFluxKernels.hpp"
+#include "physicsSolvers/multiphysics/SinglePhaseProppantFluxKernels.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp"
 

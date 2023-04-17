@@ -13,17 +13,17 @@
  */
 
 /**
- * @file SinglePhasePoromechanicsFluxKernels.cpp
+ * @file singlePhaseProppantFluxKernels.cpp
  */
 
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
-#include "SinglePhasePoromechanicsFluxKernels.hpp"
+#include "singlePhaseProppantFluxKernels.hpp"
 
 namespace geosx
 {
 
-namespace singlePhasePoromechanicsFluxKernels
+namespace singlePhaseProppantFluxKernels
 {
 
 using namespace fluxKernelsHelper;
@@ -211,6 +211,6 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
 }
 
 
-}// namespace singlePhaseFVMKernels
+}// namespace singlePhaseProppantFluxKernels
 
 } // namespace geosx
