@@ -181,8 +181,8 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     // ideally we would just stop the simulation, but the SurfaceGenerator relies on this behavior
     for( auto const & mapEntry : isTargetSetEmpty )
     {
-      GEOSX_LOG_RANK_0_IF( ( mapEntry.second == 1 ), // target set is empty
-                         GEOSX_FMT( "\nWarning!"
+      GEOS_LOG_RANK_0_IF( ( mapEntry.second == 1 ), // target set is empty
+                         GEOS_FMT( "\nWarning!"
                                     "\n{}: this FieldSpecification targets (an) empty set(s)"
                                     "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`. \n",
                                     fs.getName(), mapEntry.first, fs.getObjectPath() ) );
@@ -193,7 +193,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       char const fieldNameNotFoundMessage[] =
         "\n{}: there is no {} named `{}` under the {} `{}`, check the XML input\n";
       string const errorMsg =
-        GEOSX_FMT( fieldNameNotFoundMessage,
+        GEOS_FMT( fieldNameNotFoundMessage,
                    fs.getName(), FieldSpecificationBase::viewKeyStruct::fieldNameString(), fs.getFieldName(),
                    FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
       if( areAllSetsEmpty )
