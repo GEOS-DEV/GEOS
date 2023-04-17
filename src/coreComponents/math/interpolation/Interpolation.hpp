@@ -16,11 +16,11 @@
  * File: Interpolation.hpp
  */
 
-#ifndef GEOSX_MATH_INTERPOLATION_HPP_
-#define GEOSX_MATH_INTERPOLATION_HPP_
+#ifndef GEOS_MATH_INTERPOLATION_HPP_
+#define GEOS_MATH_INTERPOLATION_HPP_
 
 
-namespace geosx
+namespace geos
 {
 
 namespace interpolation
@@ -92,8 +92,8 @@ real64 parabolicInterpolationThreePoints( real64 const lambdac,
  * @return the interpolated value of function f(x) at x3
  */
 template< typename T >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 T linearInterpolation( T const dx1,
                        T const dx2,
                        T const f1,
@@ -114,8 +114,8 @@ T linearInterpolation( T const dx1,
  * @param[out] df_dx the derivative (wrt x) of the interpolated value of function f(x) at x3
  */
 template< typename T >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void linearInterpolation( T const dx1,
                           T const dx2,
                           T const f1,
@@ -143,8 +143,8 @@ void linearInterpolation( arrayView1d< T const > const & xIn,
                           arrayView1d< T const > const & xOut,
                           arrayView1d< T > const & fOut )
 {
-  GEOSX_ASSERT_EQ_MSG( xIn.size(), fIn.size(), "linearInterpolation: size mismatch in the xIn and fIn input vectors" );
-  GEOSX_ASSERT_EQ_MSG( xOut.size(), fOut.size(), "linearInterpolation: size mismatch in the xOut and fOut input vectors" );
+  GEOS_ASSERT_EQ_MSG( xIn.size(), fIn.size(), "linearInterpolation: size mismatch in the xIn and fIn input vectors" );
+  GEOS_ASSERT_EQ_MSG( xOut.size(), fOut.size(), "linearInterpolation: size mismatch in the xOut and fOut input vectors" );
 
   for( localIndex i = 0; i < xOut.size(); ++i )
   {
@@ -163,4 +163,4 @@ void linearInterpolation( arrayView1d< T const > const & xIn,
 
 }
 
-#endif // GEOSX_MATH_INTERPOLATION_HPP_
+#endif // GEOS_MATH_INTERPOLATION_HPP_
