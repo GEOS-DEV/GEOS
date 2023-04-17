@@ -708,7 +708,7 @@ public:
 //     forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [stencilWrapper, dt, rankOffset, dofNumber, ghostRank,
 //                                                               pres, gravCoef, dens, dDens_dPres, mob,
 //                                                               dMob_dPres, permeability, dPerm_dPres,
-//                                                               seri, sesri, sei, localMatrix, localRhs] GEOSX_HOST_DEVICE ( localIndex
+//                                                               seri, sesri, sei, localMatrix, localRhs] GEOS_HOST_DEVICE ( localIndex
 // const iconn )
 //     {
 //       localIndex const stencilSize = stencilWrapper.stencilSize( iconn );
@@ -782,7 +782,7 @@ public:
 //    *
 //    */
 //   template< localIndex maxNumConnections >
-//   GEOSX_HOST_DEVICE
+//   GEOS_HOST_DEVICE
 //   static void
 //   compute( localIndex const numFluxElems,
 //            arraySlice1d< localIndex const > const & seri,

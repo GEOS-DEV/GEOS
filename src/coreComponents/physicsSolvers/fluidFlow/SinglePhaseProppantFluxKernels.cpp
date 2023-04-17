@@ -57,7 +57,7 @@ void FaceElementFluxKernel::
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
-  forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+  forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
   {
     localIndex const stencilSize = stencilWrapper.stencilSize( iconn );
     localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
@@ -138,7 +138,7 @@ void FaceElementFluxKernel::
 
 
 template< localIndex MAX_NUM_CONNECTIONS >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 FaceElementFluxKernel::compute( localIndex const numFluxElems,
                                 arraySlice1d< localIndex const > const & seri,
