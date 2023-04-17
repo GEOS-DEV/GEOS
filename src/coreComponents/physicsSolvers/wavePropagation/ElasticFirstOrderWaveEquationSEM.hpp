@@ -5,7 +5,7 @@
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2019-     GEOS Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -26,7 +26,7 @@
 
 
 
-namespace geosx
+namespace geos
 {
 
 class ElasticFirstOrderWaveEquationSEM : public WaveSolverBase
@@ -138,7 +138,7 @@ public:
   } waveEquationViewKeys;
 
   /** internal function to the class to compute explicitStep either for backward or forward.
-   * (requires not to be private because it is called from GEOSX_HOST_DEVICE method)
+   * (requires not to be private because it is called from GEOS_HOST_DEVICE method)
    * @param time_n time at the beginning of the step
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
@@ -215,6 +215,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASSTICWAVEEQUATIONSEM_HPP_ */

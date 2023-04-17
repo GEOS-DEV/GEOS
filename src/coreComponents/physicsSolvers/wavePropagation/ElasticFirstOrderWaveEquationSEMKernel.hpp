@@ -5,7 +5,7 @@
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2019-     GEOS Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -16,14 +16,14 @@
  * @file ElasticFirstOrderWaveEquationSEMKernel.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEMKERNEL_HPP_
-#define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEMKERNEL_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEMKERNEL_HPP_
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "WaveSolverUtils.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 /// Namespace to contain the elastic wave kernels.
@@ -89,7 +89,7 @@ struct PrecomputeSourceAndReceiverKernel
           localIndex const rickerOrder )
   {
 
-    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       real64 const center[3] = { elemCenter[k][0],
                                  elemCenter[k][1],
@@ -216,7 +216,7 @@ struct MassMatrixKernel
           arrayView1d< real32 > const mass )
 
   {
-    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
 
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
@@ -281,7 +281,7 @@ struct DampingMatrixKernel
           arrayView1d< real32 > const dampingy,
           arrayView1d< real32 > const dampingz )
   {
-    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const f )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
     {
       // face on the domain boundary and not on free surface
       if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
@@ -370,7 +370,7 @@ struct StressComputation
           arrayView2d< real32 > const stressyz )
 
   {
-    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
@@ -538,14 +538,14 @@ struct VelocityComputation
           arrayView1d< real32 > const uz_np1 )
   {
 
-    forAll< EXEC_POLICY >( size_node, [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< EXEC_POLICY >( size_node, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       ux_np1[a] *= 1.0-((dt/2)*(dampingx[a]/mass[a]));
       uy_np1[a] *= 1.0-((dt/2)*(dampingy[a]/mass[a]));
       uz_np1[a] *= 1.0-((dt/2)*(dampingz[a]/mass[a]));
     } );
 
-    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
 
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
@@ -615,7 +615,7 @@ struct VelocityComputation
       }
 
     } );
-    forAll< EXEC_POLICY >( size_node, [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< EXEC_POLICY >( size_node, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       ux_np1[a] /= 1.0+((dt/2)*(dampingx[a]/mass[a]));
       uy_np1[a] /= 1.0+((dt/2)*(dampingy[a]/mass[a]));
@@ -631,6 +631,6 @@ struct VelocityComputation
 
 } // namespace ElasticFirstOrderWaveEquationSEMKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ElasticFirstOrderWaveEquationSEMKERNEL_HPP_
+#endif //GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ElasticFirstOrderWaveEquationSEMKERNEL_HPP_
