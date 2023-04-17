@@ -110,7 +110,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
         {
           return std::make_unique< H1_Hexahedron_VEM_Gauss1 >();
         }
-        else if( m_formulation == "SEM" || m_formulation == "DG")
+        else if( m_formulation == "SEM" || m_formulation == "DG" )
         {
           return std::make_unique< Q1_Hexahedron_Lagrange_GaussLobatto >();
         }

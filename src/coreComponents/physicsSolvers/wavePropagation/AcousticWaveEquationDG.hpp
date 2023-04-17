@@ -38,7 +38,7 @@ public:
   using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
 
   AcousticWaveEquationDG( const std::string & name,
-                           Group * const parent );
+                          Group * const parent );
 
   virtual ~AcousticWaveEquationDG() override;
 
@@ -99,7 +99,7 @@ public:
   struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
     static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }
-    
+
     static constexpr char const * sourceElemString() { return "sourceElem"; }
     static constexpr char const * receiverElemString() { return "rcvElem"; }
 

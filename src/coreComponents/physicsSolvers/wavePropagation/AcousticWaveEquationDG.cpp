@@ -172,8 +172,8 @@ void AcousticWaveEquationDG::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
                                                                                         CellElementSubRegion & elementSubRegion )
   {
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
-                    "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
-                    InputError );
+                   "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
+                   InputError );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
@@ -221,7 +221,7 @@ void AcousticWaveEquationDG::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
 
 }
 
-//TODO: Modify to use on discontinuous variable 
+//TODO: Modify to use on discontinuous variable
 void AcousticWaveEquationDG::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -283,10 +283,10 @@ void AcousticWaveEquationDG::applyFreeSurfaceBC( real64 const time, DomainPartit
 
 // Here for retrocompatibily
 real64 AcousticWaveEquationDG::explicitStepForward( real64 const & time_n,
-                                                               real64 const & dt,
-                                                               integer cycleNumber,
-                                                               DomainPartition & domain,
-                                                               bool GEOS_UNUSED_PARAM( computeGradient ) )
+                                                    real64 const & dt,
+                                                    integer cycleNumber,
+                                                    DomainPartition & domain,
+                                                    bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   return dtOut;
@@ -295,10 +295,10 @@ real64 AcousticWaveEquationDG::explicitStepForward( real64 const & time_n,
 
 
 real64 AcousticWaveEquationDG::explicitStepBackward( real64 const & time_n,
-                                                                real64 const & dt,
-                                                                integer cycleNumber,
-                                                                DomainPartition & domain,
-                                                                bool GEOS_UNUSED_PARAM( computeGradient ) )
+                                                     real64 const & dt,
+                                                     integer cycleNumber,
+                                                     DomainPartition & domain,
+                                                     bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
   GEOS_ERROR( "Backward propagation for the first-order wave propagator not yet implemented" );
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
@@ -307,9 +307,9 @@ real64 AcousticWaveEquationDG::explicitStepBackward( real64 const & time_n,
 
 
 real64 AcousticWaveEquationDG::explicitStepInternal( real64 const & time_n,
-                                                                real64 const & dt,
-                                                                integer const cycleNumber,
-                                                                DomainPartition & domain )
+                                                     real64 const & dt,
+                                                     integer const cycleNumber,
+                                                     DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -342,12 +342,12 @@ real64 AcousticWaveEquationDG::explicitStepInternal( real64 const & time_n,
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
-        //TODO: Add the launch calling for flux + volumic computation 
+        //TODO: Add the launch calling for flux + volumic computation
       } );
- 
-    // compute the seismic traces since last step.
-    arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
-    compute2dVariableAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
+
+      // compute the seismic traces since last step.
+      arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
+      compute2dVariableAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
 
 
     } );
@@ -401,10 +401,10 @@ void AcousticWaveEquationDG::cleanup( real64 const time_n, integer const, intege
 }
 
 void AcousticWaveEquationDG::compute2dVariableAllSeismoTraces( real64 const time_n,
-                                                                          real64 const dt,
-                                                                          arrayView2d< real32 const > const var_np1,
-                                                                          arrayView2d< real32 const > const var_n,
-                                                                          arrayView2d< real32 > varAtReceivers )
+                                                               real64 const dt,
+                                                               arrayView2d< real32 const > const var_np1,
+                                                               arrayView2d< real32 const > const var_n,
+                                                               arrayView2d< real32 > varAtReceivers )
 {
   localIndex indexSeismoTrace = m_indexSeismoTrace;
   for( real64 timeSeismo;
