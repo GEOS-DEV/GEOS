@@ -5,7 +5,7 @@
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2019-     GEOS Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -28,7 +28,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "WaveSolverUtils.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -171,7 +171,7 @@ void AcousticWaveEquationDG::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                         CellElementSubRegion & elementSubRegion )
   {
-    GEOSX_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
+    GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
                     "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
                     InputError );
 
@@ -276,7 +276,7 @@ void AcousticWaveEquationDG::applyFreeSurfaceBC( real64 const time, DomainPartit
     }
     else
     {
-      GEOSX_ERROR( "This option is not supported yet" );
+      GEOS_ERROR( "This option is not supported yet" );
     }
   } );
 }
@@ -286,7 +286,7 @@ real64 AcousticWaveEquationDG::explicitStepForward( real64 const & time_n,
                                                                real64 const & dt,
                                                                integer cycleNumber,
                                                                DomainPartition & domain,
-                                                               bool GEOSX_UNUSED_PARAM( computeGradient ) )
+                                                               bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   return dtOut;
@@ -298,9 +298,9 @@ real64 AcousticWaveEquationDG::explicitStepBackward( real64 const & time_n,
                                                                 real64 const & dt,
                                                                 integer cycleNumber,
                                                                 DomainPartition & domain,
-                                                                bool GEOSX_UNUSED_PARAM( computeGradient ) )
+                                                                bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
-  GEOSX_ERROR( "Backward propagation for the first-order wave propagator not yet implemented" );
+  GEOS_ERROR( "Backward propagation for the first-order wave propagator not yet implemented" );
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   return dtOut;
 }
@@ -311,16 +311,16 @@ real64 AcousticWaveEquationDG::explicitStepInternal( real64 const & time_n,
                                                                 integer const cycleNumber,
                                                                 DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
+  GEOS_UNUSED_VAR( time_n, dt, cycleNumber );
 
   arrayView2d< real64 const > const sourceConstants = m_sourceConstants.toView();
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toView();
   arrayView1d< localIndex const > const sourceElem = m_sourceElem.toView();
   arrayView2d< real32 const > const sourceValue = m_sourceValue.toView();
 
-  GEOSX_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
+  GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
@@ -420,14 +420,14 @@ void AcousticWaveEquationDG::compute2dVariableAllSeismoTraces( real64 const time
 
 void AcousticWaveEquationDG::initializePML()
 {
-  GEOSX_ERROR( "PML for the first order acoustic wave propagator not yet implemented" );
+  GEOS_ERROR( "PML for the first order acoustic wave propagator not yet implemented" );
 }
 
 void AcousticWaveEquationDG::applyPML( real64 const, DomainPartition & )
 {
-  GEOSX_ERROR( "PML for the first order acoustic wave propagator not yet implemented" );
+  GEOS_ERROR( "PML for the first order acoustic wave propagator not yet implemented" );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, AcousticWaveEquationDG, string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

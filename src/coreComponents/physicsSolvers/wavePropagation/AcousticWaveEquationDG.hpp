@@ -5,7 +5,7 @@
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2019-     GEOS Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -17,8 +17,8 @@
  * @file AcousticWaveEquationDG.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONDG_HPP_
-#define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONDG_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONDG_HPP_
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONDG_HPP_
 
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
@@ -27,7 +27,7 @@
 #include "WaveSolverBaseFields.hpp"
 #include "WaveSolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class AcousticWaveEquationDG : public WaveSolverBase
@@ -107,7 +107,7 @@ public:
 
 
   /** internal function to the class to compute explicitStep either for backward or forward.
-   * (requires not to be private because it is called from GEOSX_HOST_DEVICE method)
+   * (requires not to be private because it is called from GEOS_HOST_DEVICE method)
    * @param time_n time at the beginning of the step
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
@@ -160,6 +160,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_AcousticWaveEquationDG_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONDG_HPP_ */
