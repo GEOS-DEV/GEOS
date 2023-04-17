@@ -16,13 +16,13 @@
  * @file FieldIdentifiers.hpp
  */
 
-#ifndef GEOSX_MESH_MPICOMMUNICATIONS_FIELDIDENTIFIERS_HPP_
-#define GEOSX_MESH_MPICOMMUNICATIONS_FIELDIDENTIFIERS_HPP_
+#ifndef GEOS_MESH_MPICOMMUNICATIONS_FIELDIDENTIFIERS_HPP_
+#define GEOS_MESH_MPICOMMUNICATIONS_FIELDIDENTIFIERS_HPP_
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 /**
  * @brief Enum defining the possible location of a field on the mesh.
@@ -119,7 +119,7 @@ public:
     }
     else
     {
-      GEOSX_ERROR( GEOSX_FMT( "Invalid key, {}, was provided. Location cannot be retrieved.", key ) );
+      GEOS_ERROR( GEOS_FMT( "Invalid key, {}, was provided. Location cannot be retrieved.", key ) );
     }
   }
 
@@ -168,7 +168,7 @@ private:
       }
       case FieldLocation::Elem:
       {
-        GEOSX_ERROR( "An element located field also requires a region name to be specified." );
+        GEOS_ERROR( "An element located field also requires a region name to be specified." );
         break;
       }
     }
@@ -198,6 +198,6 @@ private:
   }
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_MPICOMMUNICATIONS_FIELDIDENTIFIERS_HPP_ */
+#endif /* GEOS_MESH_MPICOMMUNICATIONS_FIELDIDENTIFIERS_HPP_ */

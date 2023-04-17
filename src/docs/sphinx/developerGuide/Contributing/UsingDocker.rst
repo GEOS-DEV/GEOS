@@ -3,8 +3,8 @@
 [Unsupported] Developing inside Docker with precompiled TPL binaries
 ====================================================================
 
-For development purposes, you may want to use the publicly available docker images or the OSX tarball instead of compiling them yourself.
-While this is possible and this page will help you in through this journey, please note that *this is not officially supported by the GEOSX team that reserves the right to modify its workflow or delete elements on which you may have build your own workflow*.
+For development purposes, you may want to use the publicly available docker images instead of compiling them yourself.
+While this is possible and this page will help you in through this journey, please note that *this is not officially supported by the GEOS team that reserves the right to modify its workflow or delete elements on which you may have build your own workflow*.
 
 There are multiple options to use the exposed docker images.
 
@@ -12,6 +12,13 @@ There are multiple options to use the exposed docker images.
   Depending on your choice, please read their documentation carefully so you can add their own requirements on top the TPL images that are already available.
 - Another option is to develop directly inside the container (*i.e.* not remotely).
   Install your favorite development inside the image (be mindful of X display issues), connect to the running container and start hacking!
+- It is also possible to develop directly in the cloud using `GitHub codespaces <https://docs.github.com/en/codespaces>`_.
+  This product will let you buy a machine in the cloud with an environment already configured to build and run ``geos``.
+  To make it work, create a branch and/or fork the repository, then select the version of the TPL you need by replacing the `DEFINE_ME` token in this `Dockerfile <https://github.com/GEOS-DEV/GEOS/blob/develop/.devcontainer/Dockerfile>`_ before creating your ``codespace`` instance.
+  (You may most probably stick to the ``GEOSX_TPL_TAG`` of the ``.travis.yml`` file).
+  *Then clone the submodules*.
+  You do not need to run the ``scripts/config-build.py`` scripts since ``cmake`` and ``vscode`` are already configured.
+  Last, run ``cmake`` through the ``vscode`` interface and start hacking!
 
 You must first `install docker <https://docs.docker.com/get-docker/>`_ on your machine.
 Note that there now exists a `rootless install <https://docs.docker.com/engine/security/rootless/>`_ that may help you in case you are not granted extended permissions on your environment.
@@ -30,13 +37,13 @@ You'll have to add extra tools.
 
 The following `example` is for our ``ubuntu`` flavors.
 You'll notice the arguments ``IMG``, ``VERSION``, ``ORG``.
-While surely overkill for most cases, if you develop in GEOSX on a regular basis you'll appreciate being able to switch containers easily.
-For example, simply create the image ``remote-dev-ubuntu18.04-gcc8:156-642`` by running
+While surely overkill for most cases, if you develop in GEOS on a regular basis you'll appreciate being able to switch containers easily.
+For example, simply create the image ``remote-dev-ubuntu20.04-gcc9:212-910`` by running
 
 .. code-block:: console
 
-    export VERSION=156-642
-    export IMG=ubuntu18.04-gcc8
+    export VERSION=212-910
+    export IMG=ubuntu20.04-gcc9
     export REMOTE_DEV_IMG=remote-dev-${IMG}
     docker build --build-arg ORG=geosx --build-arg IMG=${IMG} --build-arg VERSION=${VERSION} -t ${REMOTE_DEV_IMG}:${VERSION} -f /path/to/Dockerfile .
 
@@ -50,11 +57,12 @@ I like to do
 
 .. code-block:: console
 
-    docker run --cap-add=SYS_PTRACE -d --name ${REMOTE_DEV_IMG}-${VERSION} -p 64000:22 ${REMOTE_DEV_IMG}:${VERSION}
+    docker run --cap-add=SYS_PTRACE -d --name ${REMOTE_DEV_IMG}-${VERSION} -p 64000:22 -p 11111:11111 -p 64010-64020:64010-64020 ${REMOTE_DEV_IMG}:${VERSION}
 
-that creates the container ``remote-dev-ubuntu18.04-gcc8-156-642``, running instance of ``remote-dev-ubuntu18.04-gcc8:156-642``.
+that creates the container ``remote-dev-ubuntu20.04-gcc9-212-910``, running instance of ``remote-dev-ubuntu20.04-gcc9:212-910``.
 
 - Note that you'll have to access your remote development instance though port ``64000`` (forwarded to standard port ``22`` by docker).
+- Additional port ``11111`` and ports from ``64010`` to ``64020`` will be open if you need them (remote `paraview connection <https://docs.paraview.org/en/latest/ReferenceManual/parallelDataVisualization.html>`_ , multiple instances of `gdbserver <https://sourceware.org/gdb/current/onlinedocs/gdb.html/Server.html>`_, ...).
 - Please be aware of how to retrieve your code back: you may want to bind mount volumes and store you code there (``-v``/``--volume=`` options of `docker run <https://docs.docker.com/engine/reference/run/>`_).
 - Change ``docker`` to ``nvidia-docker`` and add the ``--gpus=...`` option for GPUs.
 

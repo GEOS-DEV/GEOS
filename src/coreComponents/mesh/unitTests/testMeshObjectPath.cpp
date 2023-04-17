@@ -23,7 +23,7 @@
 
 #include <gtest/gtest.h>
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -462,4 +462,4 @@ TEST( testMeshObjectPath, forObjectsInPath )
 
 }
 
-} /* namespace geosx */
+} /* namespace geos */

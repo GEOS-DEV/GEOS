@@ -17,15 +17,15 @@
  *
  */
 
-#ifndef GEOSX_MESH_GENERATORS_INTERNALWELLGENERATOR_HPP_
-#define GEOSX_MESH_GENERATORS_INTERNALWELLGENERATOR_HPP_
+#ifndef GEOS_MESH_GENERATORS_INTERNALWELLGENERATOR_HPP_
+#define GEOS_MESH_GENERATORS_INTERNALWELLGENERATOR_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -106,13 +106,6 @@ public:
    * @brief Main function of the class that generates the well geometry
    */
   virtual void generateWellGeometry( );
-
-
-  /**
-   * @brief Main function of the class that generates the well geometry
-   * @param[in] domain the domain object
-   */
-  //virtual void generateMesh( DomainPartition & domain ) override;
 
 
   ///@}
@@ -435,4 +428,4 @@ private:
 
 };
 }
-#endif /* GEOSX_MESH_GENERATORS_INTERNALWELLGENERATOR_HPP_ */
+#endif /* GEOS_MESH_GENERATORS_INTERNALWELLGENERATOR_HPP_ */

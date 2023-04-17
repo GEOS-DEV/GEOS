@@ -21,7 +21,7 @@
 #include "LvArray/src/output.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 WellElementSubRegion::WellElementSubRegion( string const & name, Group * const parent ):
@@ -367,10 +367,9 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
   // this is enforced in the LineBlockABC that currently merges two perforations
   // if they belong to the same well element. This is a temporary solution.
   // TODO: split the well elements that contain multiple perforations, so that no element is shared
-  GEOSX_THROW_IF( sharedElems.size() > 0,
-                  "Well " << lineBlock.getName() << " contains shared well elements",
-                  InputError );
-
+  GEOS_THROW_IF( sharedElems.size() > 0,
+                 "Well " << lineBlock.getName() << " contains shared well elements",
+                 InputError );
 
   // In Steps 1 and 2 we determine the local objects on this rank (elems and nodes)
   // Once this is done, in Steps 3, 4, and 5, we update the nodeManager and wellElementSubRegion (size, maps)
@@ -519,12 +518,12 @@ void WellElementSubRegion::checkPartitioningValidity( LineBlockABC const & lineB
       globalIndex const numBranches = prevElemIdsGlobal[iwelemGlobal].size();
       globalIndex const prevGlobal  = prevElemIdsGlobal[iwelemGlobal][numBranches-1];
 
-      GEOSX_THROW_IF( prevGlobal <= iwelemGlobal || prevGlobal < 0,
-                      "The structure of well " << lineBlock.getName() << " is invalid. " <<
-                      " The main reason for this error is that there may be no perforation" <<
-                      " in the bottom well element of the well, which is required to have" <<
-                      " a well-posed problem.",
-                      InputError );
+      GEOS_THROW_IF( prevGlobal <= iwelemGlobal || prevGlobal < 0,
+                     "The structure of well " << lineBlock.getName() << " is invalid. " <<
+                     " The main reason for this error is that there may be no perforation" <<
+                     " in the bottom well element of the well, which is required to have" <<
+                     " a well-posed problem.",
+                     InputError );
 
       if( elemStatusGlobal[prevGlobal] == WellElemStatus::LOCAL )
       {
@@ -874,8 +873,8 @@ localIndex WellElementSubRegion::packUpDownMapsImpl( buffer_unit_type * & buffer
 
 localIndex WellElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                                    localIndex_array & packList,
-                                                   bool const GEOSX_UNUSED_PARAM( overwriteUpMaps ),
-                                                   bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
+                                                   bool const GEOS_UNUSED_PARAM( overwriteUpMaps ),
+                                                   bool const GEOS_UNUSED_PARAM( overwriteDownMaps ) )
 {
   return bufferOps::Unpack( buffer,
                             nodeList().base().toView(),

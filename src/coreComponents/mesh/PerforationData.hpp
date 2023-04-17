@@ -16,15 +16,15 @@
  * @file PerforationData.hpp
  */
 
-#ifndef GEOSX_MESH_PERFORATIONDATA_HPP
-#define GEOSX_MESH_PERFORATIONDATA_HPP
+#ifndef GEOS_MESH_PERFORATIONDATA_HPP
+#define GEOS_MESH_PERFORATIONDATA_HPP
 
 #include "dataRepository/Group.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/ToElementRelation.hpp"
 #include "mesh/generators/LineBlockABC.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;
@@ -267,6 +267,6 @@ private:
 
 };
 
-} //namespace geosx
+} //namespace geos
 
-#endif //GEOSX_MESH_PERFORATIONDATA_HPP
+#endif //GEOS_MESH_PERFORATIONDATA_HPP

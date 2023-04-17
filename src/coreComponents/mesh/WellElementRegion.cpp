@@ -21,7 +21,7 @@
 #include "common/MpiWrapper.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -63,16 +63,15 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
   subRegion.connectPerforationsToMeshElements( mesh, lineBlock );
 
   globalIndex const matchedPerforations = MpiWrapper::sum( perforationData->size() );
-  GEOSX_THROW_IF( matchedPerforations != numPerforationsGlobal,
-                  "Invalid mapping perforation-to-element in well " << lineBlock.getName() << "." <<
-                  " This happens when GEOSX cannot match a perforation with a reservoir element." <<
-                  " There are two common reasons for this error:\n" <<
-                  " 1- The most common reason for this error is that a perforation is on a section of " <<
-                  " the well polyline located outside the domain.\n" <<
-                  " 2- This error can also happen if a perforation falls on a mesh face or a mesh vertex." <<
-                  " Please try to move the perforation slightly (to the interior of the perforated cell) to see if it fixes the problem.",
-                  InputError );
-
+  GEOS_THROW_IF( matchedPerforations != numPerforationsGlobal,
+                 "Invalid mapping perforation-to-element in well " << lineBlock.getName() << "." <<
+                 " This happens when GEOSX cannot match a perforation with a reservoir element." <<
+                 " There are two common reasons for this error:\n" <<
+                 " 1- The most common reason for this error is that a perforation is on a section of " <<
+                 " the well polyline located outside the domain.\n" <<
+                 " 2- This error can also happen if a perforation falls on a mesh face or a mesh vertex." <<
+                 " Please try to move the perforation slightly (to the interior of the perforated cell) to see if it fixes the problem.",
+                 InputError );
 
   // 2) classify well elements based on connectivity to local mesh partition
   array1d< integer > elemStatusGlobal;
@@ -113,11 +112,11 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
   {
     if( allRankTopElem[irank] >= 0 )
     {
-      GEOSX_ASSERT( topRank < 0 );
+      GEOS_ASSERT( topRank < 0 );
       topRank = irank;
     }
   }
-  GEOSX_ASSERT( topRank >= 0 );
+  GEOS_ASSERT( topRank >= 0 );
   subRegion.setTopRank( topRank );
 
 
@@ -130,4 +129,4 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, WellElementRegion, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

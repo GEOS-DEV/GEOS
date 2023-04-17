@@ -16,8 +16,8 @@
  * @file CellBlockManager.hpp
  */
 
-#ifndef GEOSX_MESH_CELLBLOCKMANAGER_H_
-#define GEOSX_MESH_CELLBLOCKMANAGER_H_
+#ifndef GEOS_MESH_CELLBLOCKMANAGER_H_
+#define GEOS_MESH_CELLBLOCKMANAGER_H_
 
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/CellBlock.hpp"
@@ -27,7 +27,7 @@
 #include "mesh/generators/LineBlockABC.hpp"
 #include "mesh/generators/PartitionDescriptor.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -283,4 +283,4 @@ private:
 };
 
 }
-#endif /* GEOSX_MESH_CELLBLOCKMANAGER_H_ */
+#endif /* GEOS_MESH_CELLBLOCKMANAGER_H_ */

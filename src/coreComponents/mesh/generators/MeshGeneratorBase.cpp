@@ -17,7 +17,7 @@
 #include "mesh/MeshBody.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -29,7 +29,7 @@ MeshGeneratorBase::MeshGeneratorBase( string const & name, Group * const parent 
 
 Group * MeshGeneratorBase::createChild( string const & childKey, string const & childName )
 {
-  GEOSX_LOG_RANK_0( "Adding Mesh attribute: " << childKey << ", " << childName );
+  GEOS_LOG_RANK_0( "Adding Mesh attribute: " << childKey << ", " << childName );
   std::unique_ptr< InternalWellGenerator > wellGen = InternalWellGenerator::CatalogInterface::factory( childKey, childName, this );
   return &this->registerGroup< InternalWellGenerator >( childName, std::move( wellGen ) );
 }

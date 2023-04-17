@@ -26,7 +26,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/HybridFVMHelperKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace compositionalMultiphaseHybridFVMKernels
@@ -131,7 +131,7 @@ UpwindingHelper::
 }
 
 template< integer NC, integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 UpwindingHelper::
   upwindBuoyancyCoefficient( localIndex const (&localIds)[ 3 ],
@@ -267,7 +267,7 @@ UpwindingHelper::
 }
 
 template< integer NC, integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 UpwindingHelper::
   computePhaseGravTerm( localIndex const (&localIds)[ 3 ],
@@ -353,7 +353,7 @@ UpwindingHelper::
 }
 
 template< integer NC, integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 UpwindingHelper::
   computeUpwindedTotalMobility( localIndex const (&localIds)[ 3 ],
@@ -393,7 +393,7 @@ UpwindingHelper::
   }
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 UpwindingHelper::
   setIndicesForMobilityRatioUpwinding( localIndex const (&localIds)[ 3 ],
@@ -427,7 +427,7 @@ UpwindingHelper::
 }
 
 template< integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 UpwindingHelper::
   setIndicesForTotalMobilityUpwinding( localIndex const (&localIds)[ 3 ],
@@ -584,7 +584,7 @@ INST_UpwindingHelperNP( 3 );
 /******************************** AssemblerKernelHelper ********************************/
 
 template< integer NF, integer NC, integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 AssemblerKernelHelper::
   applyGradient( arrayView1d< real64 const > const & facePres,
@@ -687,7 +687,7 @@ AssemblerKernelHelper::
 }
 
 template< integer NF, integer NC, integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 AssemblerKernelHelper::
   assembleFluxDivergence( localIndex const (&localIds)[ 3 ],
@@ -863,8 +863,8 @@ AssemblerKernelHelper::
     localIndex const eqnRowLocalIndex =
       LvArray::integerConversion< localIndex >( elemDofNumber[localIds[0]][localIds[1]][localIds[2]] + ic - rankOffset );
 
-    GEOSX_ASSERT_GE( eqnRowLocalIndex, 0 );
-    GEOSX_ASSERT_GT( localMatrix.numRows(), eqnRowLocalIndex );
+    GEOS_ASSERT_GE( eqnRowLocalIndex, 0 );
+    GEOS_ASSERT_GT( localMatrix.numRows(), eqnRowLocalIndex );
 
     // residual
     localRhs[eqnRowLocalIndex] = localRhs[eqnRowLocalIndex] + divMassFluxes[ic];
@@ -884,7 +884,7 @@ AssemblerKernelHelper::
 }
 
 template< integer NF, integer NC, integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 AssemblerKernelHelper::
   assembleViscousFlux( localIndex const ifaceLoc,
@@ -965,7 +965,7 @@ AssemblerKernelHelper::
 }
 
 template< integer NF, integer NC, integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 AssemblerKernelHelper::
   assembleBuoyancyFlux( localIndex const ifaceLoc,
@@ -1026,7 +1026,7 @@ AssemblerKernelHelper::
 }
 
 template< integer NF, integer NC, integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 AssemblerKernelHelper::
   assembleFaceConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
@@ -1080,8 +1080,8 @@ AssemblerKernelHelper::
     // dof number of this face constraint
     localIndex const eqnLocalRowIndex = LvArray::integerConversion< localIndex >( faceDofNumber[elemToFaces[ifaceLoc]] - rankOffset );
 
-    GEOSX_ASSERT_GE( eqnLocalRowIndex, 0 );
-    GEOSX_ASSERT_GT( localMatrix.numRows(), eqnLocalRowIndex );
+    GEOS_ASSERT_GE( eqnLocalRowIndex, 0 );
+    GEOS_ASSERT_GT( localMatrix.numRows(), eqnLocalRowIndex );
 
     // residual
     RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnLocalRowIndex], flux );
@@ -1241,7 +1241,7 @@ INST_AssemblerKernelHelper( 6, 5, 3 );
 /******************************** AssemblerKernel ********************************/
 
 template< integer NF, integer NC, integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 AssemblerKernel::
   compute( localIndex const er, localIndex const esr, localIndex const ei,
@@ -1504,7 +1504,7 @@ FluxKernel::
 
   // assemble the residual and Jacobian element by element
   // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const ei )
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const ei )
   {
 
     // transmissibility matrix
@@ -1685,4 +1685,4 @@ INST_FluxKernel( 6, 5, 3, mimeticInnerProduct::BdVLMInnerProduct const );
 
 } // namespace compositionalMultiphaseHybridFVMKernels
 
-} // namespace geosx
+} // namespace geos

@@ -21,7 +21,7 @@
 
 #include <fnmatch.h>
 
-namespace geosx
+namespace geos
 {
 
 namespace
@@ -63,7 +63,7 @@ std::vector< string >
 MeshObjectPath::fillPathTokens( string const & path,
                                 dataRepository::Group const & meshBodies ) const
 {
-  std::vector< string > pathTokens = stringutilities::tokenize< std::vector< string > >( path, "/" );
+  std::vector< string > pathTokens = stringutilities::tokenize( path, "/" );
 
   // find where the object specification is in the path
   auto findObjectIndex = [&]() -> int
@@ -80,14 +80,14 @@ MeshObjectPath::fillPathTokens( string const & path,
 
   int objectIndex = findObjectIndex();
 
-  GEOSX_ERROR_IF( objectIndex==-1,
-                  GEOSX_FMT( "Path ({}) does not contain a valid object type. "
-                             "Must contain one of ({},{},{},{})",
-                             path,
-                             MeshLevel::groupStructKeys::nodeManagerString(),
-                             MeshLevel::groupStructKeys::edgeManagerString(),
-                             MeshLevel::groupStructKeys::faceManagerString(),
-                             MeshLevel::groupStructKeys::elemManagerString() ) );
+  GEOS_ERROR_IF( objectIndex==-1,
+                 GEOS_FMT( "Path ({}) does not contain a valid object type. "
+                           "Must contain one of ({},{},{},{})",
+                           path,
+                           MeshLevel::groupStructKeys::nodeManagerString(),
+                           MeshLevel::groupStructKeys::edgeManagerString(),
+                           MeshLevel::groupStructKeys::faceManagerString(),
+                           MeshLevel::groupStructKeys::elemManagerString() ) );
 
   // No MeshBody or MeshLevels were specified. add all of them
   if( objectIndex==0 )
@@ -123,11 +123,11 @@ MeshObjectPath::fillPathTokens( string const & path,
         existingMeshBodyAndLevel += "/n";
       } );
 
-      GEOSX_ERROR_IF( !levelNameFound,
-                      GEOSX_FMT( "Path ({}) specifies an invalid MeshBody or MeshLevel. ",
-                                 "existing MeshBodies: MeshLevels /n",
-                                 path,
-                                 existingMeshBodyAndLevel ) );
+      GEOS_ERROR_IF( !levelNameFound,
+                     GEOS_FMT( "Path ({}) specifies an invalid MeshBody or MeshLevel. ",
+                               "existing MeshBodies: MeshLevels /n",
+                               path,
+                               existingMeshBodyAndLevel ) );
       pathTokens.insert( pathTokens.begin()+1, unidentifiedName );
     }
   }
@@ -136,11 +136,11 @@ MeshObjectPath::fillPathTokens( string const & path,
   objectIndex = findObjectIndex();
   size_t targetTokenLength = pathTokens.size();
 
-  GEOSX_ERROR_IF_NE_MSG( objectIndex, 2,
-                         "Filling of MeshBody and/or MeshLevel in path has failed. Object Index should be 2" );
+  GEOS_ERROR_IF_NE_MSG( objectIndex, 2,
+                        "Filling of MeshBody and/or MeshLevel in path has failed. Object Index should be 2" );
 
-  GEOSX_ERROR_IF( targetTokenLength < 2,
-                  "Filling of MeshBody and/or MeshLevel in path has failed. targetTokenLength should be greater than 2" );
+  GEOS_ERROR_IF( targetTokenLength < 2,
+                 "Filling of MeshBody and/or MeshLevel in path has failed. targetTokenLength should be greater than 2" );
 
   // now we need to fill in any missing region/subregion specifications.
 
@@ -195,7 +195,7 @@ void processTokenRecursive( dataRepository::Group const & parentGroup,
     namesInRepository.emplace_back( group.getName() );
   } );
 
-  for( string const & inputEntry : stringutilities::tokenize< std::vector< string > >( pathToken, " " ) )
+  for( string const & inputEntry : stringutilities::tokenize( pathToken, " " ) )
   {
     bool foundMatch = false;
     for( string const & candidateName : namesInRepository )
@@ -212,12 +212,12 @@ void processTokenRecursive( dataRepository::Group const & parentGroup,
 
       }
     }
-    GEOSX_ERROR_IF( !foundMatch,
-                    GEOSX_FMT( "Specified name ({0}) did not find a match with a object in group ({1}). "
-                               "Objects that are present in ({1}) are:\n{2}",
-                               inputEntry,
-                               parentGroup.getName(),
-                               stringutilities::join( namesInRepository, ", " ) ) );
+    GEOS_ERROR_IF( !foundMatch,
+                   GEOS_FMT( "Specified name ({0}) did not find a match with a object in group ({1}). "
+                             "Objects that are present in ({1}) are:\n{2}",
+                             inputEntry,
+                             parentGroup.getName(),
+                             stringutilities::join( namesInRepository, ", " ) ) );
   }
 }
 
@@ -293,4 +293,4 @@ void MeshObjectPath::printPermutations() const
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */

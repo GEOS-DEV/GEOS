@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MESH_ELEMENTREGIONBASE_HPP
-#define GEOSX_MESH_ELEMENTREGIONBASE_HPP
+#ifndef GEOS_MESH_ELEMENTREGIONBASE_HPP
+#define GEOS_MESH_ELEMENTREGIONBASE_HPP
 
 #include "CellElementSubRegion.hpp"
 #include "FaceElementSubRegion.hpp"
@@ -21,7 +21,7 @@
 #include "mesh/ObjectManagerBase.hpp"
 #include "EmbeddedSurfaceSubRegion.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class FaceManager;
@@ -384,4 +384,4 @@ SUBREGION_TYPE & ElementRegionBase::createElementSubRegion( string const & name 
 
 
 
-#endif /* GEOSX_MESH_ELEMENTREGIONBASE_HPP */
+#endif /* GEOS_MESH_ELEMENTREGIONBASE_HPP */

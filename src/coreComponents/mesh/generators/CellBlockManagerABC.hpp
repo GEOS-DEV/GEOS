@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_CELLBLOCKMANAGERABC_HPP
-#define GEOSX_CELLBLOCKMANAGERABC_HPP
+#ifndef GEOS_CELLBLOCKMANAGERABC_HPP
+#define GEOS_CELLBLOCKMANAGERABC_HPP
 
 #include "CellBlockUtilities.hpp"
 #include "dataRepository/Group.hpp"
@@ -22,7 +22,7 @@
 
 #include <map>
 
-namespace geosx
+namespace geos
 {
 
 /**

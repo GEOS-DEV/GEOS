@@ -31,7 +31,7 @@
 #include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseProppantBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace constitutive;
@@ -45,7 +45,7 @@ void execute3( POROUSWRAPPER_TYPE porousWrapper,
                arrayView1d< real64 const > const & newHydraulicAperture,
                arrayView1d< real64 const > const & proppantPackVolumeFraction )
 {
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
     {
@@ -69,7 +69,7 @@ void SinglePhaseProppantBase::setConstitutiveNames( ElementSubRegionBase & subRe
 {
   string & fluidMaterialName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   fluidMaterialName = SolverBase::getConstitutiveName< SlurryFluidBase >( subRegion );
-  GEOSX_ERROR_IF( fluidMaterialName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
+  GEOS_ERROR_IF( fluidMaterialName.empty(), GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
 }
 
 void SinglePhaseProppantBase::validateConstitutiveModels( DomainPartition & domain ) const
@@ -84,9 +84,9 @@ void SinglePhaseProppantBase::validateConstitutiveModels( DomainPartition & doma
     {
       string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       fluidName = getConstitutiveName< SlurryFluidBase >( subRegion );
-      GEOSX_THROW_IF( fluidName.empty(),
-                      GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
-                      InputError );
+      GEOS_THROW_IF( fluidName.empty(),
+                     GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                     InputError );
     } );
   } );
 }
@@ -104,7 +104,7 @@ SinglePhaseBase::FluidPropViews SinglePhaseProppantBase::getFluidProperties( con
 
 void SinglePhaseProppantBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const pres = dataGroup.getField< fields::flow::pressure >();
   arrayView1d< real64 const > const proppantConcentration = dataGroup.getField< fields::proppant::proppantConcentration >();
@@ -130,7 +130,7 @@ void SinglePhaseProppantBase::updateFluidModel( ObjectManagerBase & dataGroup ) 
 
 void SinglePhaseProppantBase::updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const proppantPackVolumeFraction = subRegion.getField< fields::proppant::proppantPackVolumeFraction >();
 

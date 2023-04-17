@@ -14,9 +14,9 @@
 
 #include "PythonOutput.hpp"
 
-namespace geosx
+namespace geos
 {
 
 REGISTER_CATALOG_ENTRY( OutputBase, PythonOutput, string const &, dataRepository::Group * const )
 
-} // namespace geosx
+} // namespace geos

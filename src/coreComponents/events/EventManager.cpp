@@ -22,7 +22,7 @@
 #include "events/EventBase.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -85,7 +85,7 @@ EventManager::~EventManager()
 
 Group * EventManager::createChild( string const & childKey, string const & childName )
 {
-  GEOSX_LOG_RANK_0( "Adding Event: " << childKey << ", " << childName );
+  GEOS_LOG_RANK_0( "Adding Event: " << childKey << ", " << childName );
   std::unique_ptr< EventBase > event = EventBase::CatalogInterface::factory( childKey, childName, this );
   return &this->registerGroup< EventBase >( childName, std::move( event ) );
 }
@@ -103,7 +103,7 @@ void EventManager::expandObjectCatalogs()
 
 bool EventManager::run( DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   integer exitFlag = 0;
 
@@ -113,6 +113,7 @@ bool EventManager::run( DomainPartition & domain )
   {
     subEvent.getTargetReferences();
     subEvent.getExecutionOrder( eventCounters );
+    subEvent.validate();
   } );
 
   // Set the progress indicators
@@ -124,7 +125,7 @@ bool EventManager::run( DomainPartition & domain )
   // Inform user if it appears this is a mid-loop restart
   if( m_currentSubEvent > 0 )
   {
-    GEOSX_LOG_RANK_0( "Resuming from step " << m_currentSubEvent << " of the event loop." );
+    GEOS_LOG_RANK_0( "Resuming from step " << m_currentSubEvent << " of the event loop." );
   }
   else if( !isZero( m_minTime ) )
   {
@@ -162,7 +163,7 @@ bool EventManager::run( DomainPartition & domain )
 #endif
     }
 
-    GEOSX_LOG_RANK_0( "Time: " << m_time << "s, dt:" << m_dt << "s, Cycle: " << m_cycle );
+    GEOS_LOG_RANK_0( "Time: " << m_time << "s, dt:" << m_dt << "s, Cycle: " << m_cycle );
 
     // Execute
     for(; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent )
@@ -173,9 +174,9 @@ bool EventManager::run( DomainPartition & domain )
       subEvent->checkEvents( m_time, m_dt, m_cycle, domain );
 
       // Print debug information for logLevel >= 1
-      GEOSX_LOG_LEVEL_RANK_0( 1,
-                              "     Event: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->getCurrentEventDtRequest() << ", forecast=" <<
-                              subEvent->getForecast() );
+      GEOS_LOG_LEVEL_RANK_0( 1,
+                             "     Event: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->getCurrentEventDtRequest() << ", forecast=" <<
+                             subEvent->getForecast() );
 
       // Execute, signal events
       bool earlyReturn = false;
@@ -207,7 +208,7 @@ bool EventManager::run( DomainPartition & domain )
   }
 
   // Cleanup
-  GEOSX_LOG_RANK_0( "Cleaning up events" );
+  GEOS_LOG_RANK_0( "Cleaning up events" );
 
   this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
   {
@@ -217,4 +218,4 @@ bool EventManager::run( DomainPartition & domain )
   return false;
 }
 
-} /* namespace geosx */
+} /* namespace geos */

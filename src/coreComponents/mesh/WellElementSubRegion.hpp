@@ -12,15 +12,15 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MESH_WELLELEMENTSUBREGION_HPP_
-#define GEOSX_MESH_WELLELEMENTSUBREGION_HPP_
+#ifndef GEOS_MESH_WELLELEMENTSUBREGION_HPP_
+#define GEOS_MESH_WELLELEMENTSUBREGION_HPP_
 
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/InterObjectRelation.hpp"
 #include "mesh/PerforationData.hpp"
 #include "mesh/generators/LineBlockABC.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -456,6 +456,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_WELLELEMENTSUBREGION_HPP_ */
+#endif /* GEOS_MESH_WELLELEMENTSUBREGION_HPP_ */

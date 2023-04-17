@@ -16,14 +16,14 @@
  * @file SinglePhaseBase.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/ThermalSinglePhaseBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -71,19 +71,6 @@ public:
   virtual ~SinglePhaseBase() override = default;
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
-
-  virtual void setupSystem( DomainPartition & domain,
-                            DofManager & dofManager,
-                            CRSMatrix< real64, globalIndex > & localMatrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution,
-                            bool const setSparsity = true ) override;
-
-  virtual real64
-  solverStep( real64 const & time_n,
-              real64 const & dt,
-              integer const cycleNumber,
-              DomainPartition & domain ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -283,10 +270,6 @@ public:
   void
   updateMobility( ObjectManagerBase & dataGroup ) const;
 
-  /**
-   * @brief Setup stored views into domain data for the current step
-   */
-
   virtual void initializePreSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
@@ -296,20 +279,44 @@ public:
    */
   void computeHydrostaticEquilibrium();
 
+  /**
+   * @brief Utility function to keep the flow variables during a time step (used in poromechanics simulations)
+   * @param[in] keepFlowVariablesConstantDuringInitStep flag to tell the solver to freeze its primary variables during a time step
+   * @detail This function is meant to be called by a specific task before/after the initialization step
+   */
+  void keepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
+  { m_keepFlowVariablesConstantDuringInitStep = keepFlowVariablesConstantDuringInitStep; }
+
+  /**
+   * @brief Function to fix the initial state during the initialization step in coupled problems
+   * @param[in] time current time
+   * @param[in] dt time step
+   * @param[in] dofManager degree-of-freedom manager associated with the linear system
+   * @param[in] domain the domain
+   * @param[in] localMatrix local system matrix
+   * @param[in] localRhs local system right-hand side vector
+   * @detail This function is meant to be called when the flag m_keepFlowVariablesConstantDuringInitStep is on
+   *         The main use case is the initialization step in coupled problems during which we solve an elastic problem for a fixed pressure
+   */
+  void keepFlowVariablesConstantDuringInitStep( real64 const time,
+                                                real64 const dt,
+                                                DofManager const & dofManager,
+                                                DomainPartition & domain,
+                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                arrayView1d< real64 > const & localRhs ) const;
+
 protected:
 
   /**
    * @brief Checks constitutive models for consistency
    * @param[in] domain the domain partition
    */
-  virtual void
-  validateConstitutiveModels( DomainPartition & domain ) const;
+  virtual void validateConstitutiveModels( DomainPartition & domain ) const;
 
   /**
    * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
    */
-  void
-  initializeAquiferBC() const;
+  void initializeAquiferBC() const;
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
@@ -353,11 +360,14 @@ protected:
   /// the input temperature
   real64 m_inputTemperature;
 
+  /// flag to freeze the initial state during initialization in coupled problems
+  integer m_keepFlowVariablesConstantDuringInitStep;
+
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_

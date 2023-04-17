@@ -20,7 +20,7 @@
 #include "RestartFlags.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -77,7 +77,7 @@ string WrapperBase::dumpInputOptions( bool const outputHeader ) const
 
   if( getInputFlag() == InputFlags::OPTIONAL || getInputFlag() == InputFlags::REQUIRED )
   {
-    rval.append( GEOSX_FMT( "  | {:20} | {:9} | {} \n", getName(), InputFlagToString( getInputFlag() ), getDescription() ) );
+    rval.append( GEOS_FMT( "  | {:20} | {:9} | {} \n", getName(), InputFlagToString( getInputFlag() ), getDescription() ) );
   }
 
   return rval;
@@ -106,7 +106,7 @@ int WrapperBase::setTotalviewDisplay() const
 
 
 }
-} /* namespace geosx */
+} /* namespace geos */
 
 #if defined(USE_TOTALVIEW_OUTPUT)
 /**
@@ -115,7 +115,7 @@ int WrapperBase::setTotalviewDisplay() const
  * @param wrapper A pointer to the wrapper that will be displayed.
  * @return 0
  */
-int TV_ttf_display_type( const geosx::dataRepository::WrapperBase * wrapper )
+int TV_ttf_display_type( const geos::dataRepository::WrapperBase * wrapper )
 {
   if( wrapper!=nullptr )
   {

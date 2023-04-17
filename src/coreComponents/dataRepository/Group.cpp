@@ -18,12 +18,11 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
-
 #if defined(GEOSX_USE_PYGEOSX)
 #include "python/PyGroupType.hpp"
 #endif
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -32,7 +31,7 @@ Group::Group( string const & name,
               Group * const parent ):
   Group( name, parent->getConduitNode() )
 {
-  GEOSX_ERROR_IF( parent == nullptr, "Should not be null." );
+  GEOS_ERROR_IF( parent == nullptr, "Should not be null." );
   m_parent = parent;
 }
 
@@ -72,7 +71,7 @@ WrapperBase & Group::registerWrapper( std::unique_ptr< WrapperBase > wrapper )
 
 void Group::deregisterWrapper( string const & name )
 {
-  GEOSX_ERROR_IF( !hasWrapper( name ), "Wrapper " << name << " doesn't exist." );
+  GEOS_ERROR_IF( !hasWrapper( name ), "Wrapper " << name << " doesn't exist." );
   m_wrappers.erase( name );
   m_conduitNode.remove( name );
 }
@@ -159,9 +158,9 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
     else
     {
       // Make sure child names are not duplicated
-      GEOSX_ERROR_IF( std::find( childNames.begin(), childNames.end(), childName ) != childNames.end(),
-                      GEOSX_FMT( "Error: An XML block cannot contain children with duplicated names ({}/{}). ",
-                                 getPath(), childName ) );
+      GEOS_ERROR_IF( std::find( childNames.begin(), childNames.end(), childName ) != childNames.end(),
+                     GEOS_FMT( "Error: An XML block cannot contain children with duplicated names ({}/{}). ",
+                               getPath(), childName ) );
       childNames.emplace_back( childName );
     }
 
@@ -199,12 +198,12 @@ void Group::processInputFile( xmlWrapper::xmlNode const & targetNode )
     string const attributeName = attribute.name();
     if( attributeName != "name" && attributeName != "xmlns:xsi" && attributeName != "xsi:noNamespaceSchemaLocation" )
     {
-      GEOSX_THROW_IF( processedAttributes.count( attributeName ) == 0,
-                      GEOSX_FMT( "XML Node '{}' with name='{}' contains unused attribute '{}'.\n"
-                                 "Valid attributes are:\n{}\nFor more details, please refer to documentation at:\n"
-                                 "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
-                                 targetNode.path(), targetNode.attribute( "name" ).value(), attributeName, dumpInputOptions() ),
-                      InputError );
+      GEOS_THROW_IF( processedAttributes.count( attributeName ) == 0,
+                     GEOS_FMT( "XML Node '{}' with name='{}' contains unused attribute '{}'.\n"
+                               "Valid attributes are:\n{}\nFor more details, please refer to documentation at:\n"
+                               "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
+                               targetNode.path(), targetNode.attribute( "name" ).value(), attributeName, dumpInputOptions() ),
+                     InputError );
     }
   }
 }
@@ -232,9 +231,9 @@ void Group::registerDataOnMeshRecursive( Group & meshBodies )
 
 Group * Group::createChild( string const & childKey, string const & childName )
 {
-  GEOSX_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
-                  "KeyName ("<<childKey<<") not found in Group::Catalog" );
-  GEOSX_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from Group::Catalog." );
+  GEOS_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
+                 "KeyName ("<<childKey<<") not found in Group::Catalog" );
+  GEOS_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from Group::Catalog." );
   return &registerGroup( childName,
                          CatalogInterface::factory( childKey, childName, this ) );
 }
@@ -244,12 +243,12 @@ void Group::printDataHierarchy( integer const indent )
 {
   for( auto & view : wrappers() )
   {
-    GEOSX_LOG( string( indent, '\t' ) << view.second->getName() << ", " << LvArray::system::demangleType( view.second ) );
+    GEOS_LOG( string( indent, '\t' ) << view.second->getName() << ", " << LvArray::system::demangleType( view.second ) );
   }
 
   for( auto & group : m_subGroups )
   {
-    GEOSX_LOG( string( indent, '\t' ) << group.first << ':' );
+    GEOS_LOG( string( indent, '\t' ) << group.first << ':' );
     group.second->printDataHierarchy( indent + 1 );
   }
 }
@@ -270,7 +269,7 @@ string Group::dumpInputOptions() const
 
 void Group::deregisterGroup( string const & name )
 {
-  GEOSX_ERROR_IF( !hasGroup( name ), "Group " << name << " doesn't exist." );
+  GEOS_ERROR_IF( !hasGroup( name ), "Group " << name << " doesn't exist." );
   m_subGroups.erase( name );
   m_conduitNode.remove( name );
 }
@@ -355,7 +354,7 @@ localIndex Group::packImpl( buffer_unit_type * & buffer,
     }
     else
     {
-      GEOSX_ERROR( "Wrapper " << wrapperName << " not found in Group " << getName() << "." );
+      GEOS_ERROR( "Wrapper " << wrapperName << " not found in Group " << getName() << "." );
     }
   }
 
@@ -464,11 +463,11 @@ localIndex Group::unpack( buffer_unit_type const * & buffer,
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOSX_ERROR_IF( groupName != getName(), "Group::unpack(): group names do not match" );
+  GEOS_ERROR_IF( groupName != getName(), "Group::unpack(): group names do not match" );
 
   string wrappersLabel;
   unpackedSize += bufferOps::Unpack( buffer, wrappersLabel );
-  GEOSX_ERROR_IF( wrappersLabel != "Wrappers", "Group::unpack(): wrapper label incorrect" );
+  GEOS_ERROR_IF( wrappersLabel != "Wrappers", "Group::unpack(): wrapper label incorrect" );
 
   localIndex numWrappers;
   unpackedSize += bufferOps::Unpack( buffer, numWrappers );
@@ -484,15 +483,15 @@ localIndex Group::unpack( buffer_unit_type const * & buffer,
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOSX_ERROR_IF( subGroups != "SubGroups", "Group::unpack(): group names do not match" );
+    GEOS_ERROR_IF( subGroups != "SubGroups", "Group::unpack(): group names do not match" );
 
     decltype( m_subGroups.size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOSX_ERROR_IF( numSubGroups != m_subGroups.size(), "Group::unpack(): incorrect number of subGroups" );
+    GEOS_ERROR_IF( numSubGroups != m_subGroups.size(), "Group::unpack(): incorrect number of subGroups" );
 
     for( auto const & index : m_subGroups )
     {
-      GEOSX_UNUSED_VAR( index );
+      GEOS_UNUSED_VAR( index );
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
       unpackedSize += getGroup( subGroupName ).unpack( buffer, packList, recursive, onDevice, events );
@@ -611,8 +610,8 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
         break;
       }
     }
-    GEOSX_ERROR_IF( !foundTarget,
-                    "Could not find the specified path from the starting group." );
+    GEOS_ERROR_IF( !foundTarget,
+                   "Could not find the specified path from the starting group." );
   }
 
   string::size_type currentPosition;
@@ -648,8 +647,8 @@ localIndex Group::getSubGroupIndex( keyType const & key ) const
 
 #if defined(GEOSX_USE_PYGEOSX)
 PyTypeObject * Group::getPythonType() const
-{ return geosx::python::getPyGroupType(); }
+{ return geos::python::getPyGroupType(); }
 #endif
 
 } /* end namespace dataRepository */
-} /* end namespace geosx  */
+} /* end namespace geos  */

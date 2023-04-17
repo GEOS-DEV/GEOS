@@ -16,13 +16,13 @@
  * @file BlockVectorWrapper.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_UTILITIES_BLOCKVECTORWRAPPER_HPP_
-#define GEOSX_LINEARALGEBRA_UTILITIES_BLOCKVECTORWRAPPER_HPP_
+#ifndef GEOS_LINEARALGEBRA_UTILITIES_BLOCKVECTORWRAPPER_HPP_
+#define GEOS_LINEARALGEBRA_UTILITIES_BLOCKVECTORWRAPPER_HPP_
 
 #include "linearAlgebra/utilities/BlockVectorView.hpp"
 #include "common/common.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -73,12 +73,12 @@ public:
    */
   void set( localIndex const blockIndex, VECTOR & vec )
   {
-    GEOSX_LAI_ASSERT_GE( blockIndex, 0 );
-    GEOSX_LAI_ASSERT_GT( this->blockSize(), blockIndex );
+    GEOS_LAI_ASSERT_GE( blockIndex, 0 );
+    GEOS_LAI_ASSERT_GT( this->blockSize(), blockIndex );
     this->setPointer( blockIndex, &vec );
   }
 };
 
-} //namespace geosx
+} //namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_UTILITIES_BLOCKVECTORWRAPPER_HPP_
+#endif //GEOS_LINEARALGEBRA_UTILITIES_BLOCKVECTORWRAPPER_HPP_

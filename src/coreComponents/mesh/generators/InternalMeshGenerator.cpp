@@ -32,7 +32,7 @@
 
 #include <cmath>
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -129,7 +129,7 @@ static int getNumElemPerBox( ElementType const elementType )
     case ElementType::Hexahedron:    return 1;
     default:
     {
-      GEOSX_ERROR( "InternalMeshGenerator: unsupported element type " << elementType );
+      GEOS_ERROR( "InternalMeshGenerator: unsupported element type " << elementType );
       return 0;
     }
   }
@@ -148,7 +148,7 @@ void InternalMeshGenerator::postProcessInput()
     }
     if( failFlag )
     {
-      GEOSX_ERROR( "vertex/element mismatch InternalMeshGenerator::ReadXMLPost()" );
+      GEOS_ERROR( "vertex/element mismatch InternalMeshGenerator::ReadXMLPost()" );
     }
 
     // If specified, check to make sure bias values have the correct length
@@ -161,7 +161,7 @@ void InternalMeshGenerator::postProcessInput()
     }
     if( failFlag )
     {
-      GEOSX_ERROR( "element/bias mismatch InternalMeshGenerator::ReadXMLPost()" );
+      GEOS_ERROR( "element/bias mismatch InternalMeshGenerator::ReadXMLPost()" );
     }
   }
 
@@ -176,7 +176,7 @@ void InternalMeshGenerator::postProcessInput()
     }
     else
     {
-      GEOSX_ERROR( "InternalMeshGenerator: The number of element types is inconsistent with the number of total block." );
+      GEOS_ERROR( "InternalMeshGenerator: The number of element types is inconsistent with the number of total block." );
     }
   }
 
@@ -200,7 +200,7 @@ void InternalMeshGenerator::postProcessInput()
       }
       else
       {
-        GEOSX_ERROR( "Incorrect number of regionLayout entries specified in InternalMeshGenerator::ReadXML()" );
+        GEOS_ERROR( "Incorrect number of regionLayout entries specified in InternalMeshGenerator::ReadXML()" );
       }
     }
   }
@@ -534,7 +534,7 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
     }
     default:
     {
-      GEOSX_ERROR( "InternalMeshGenerator: unsupported element type " << elementType );
+      GEOS_ERROR( "InternalMeshGenerator: unsupported element type " << elementType );
     }
   }
 }
@@ -545,7 +545,7 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
  */
 void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   PartitionDescriptor partitionDescriptor;
   partitionDescriptor.setHasMetisNeighborList( false );
   SpatialPartition partition;
@@ -968,10 +968,10 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
   partitionDescriptor.setSpatialPartition( partition );
   cellBlockManager.setPartitionDescriptor( partitionDescriptor );
-  GEOSX_LOG_RANK_0( GEOSX_FMT( "{}: total number of nodes = {}", getName(),
-                               ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) ) );
-  GEOSX_LOG_RANK_0( GEOSX_FMT( "{}: total number of elems = {}", getName(),
-                               m_numElemsTotal[0] * m_numElemsTotal[1] * m_numElemsTotal[2] ) );
+  GEOS_LOG_RANK_0( GEOSX_FMT( "{}: total number of nodes = {}", getName(),
+                              ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) ) );
+  GEOS_LOG_RANK_0( GEOSX_FMT( "{}: total number of elems = {}", getName(),
+                              m_numElemsTotal[0] * m_numElemsTotal[1] * m_numElemsTotal[2] ) );
 }
 
 void
@@ -1003,4 +1003,4 @@ InternalMeshGenerator::
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalMeshGenerator, string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */
