@@ -16,8 +16,8 @@
  * @file PetscPreconditioner.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_PETSCPRECONDITIONER_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_PETSCPRECONDITIONER_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_PETSCPRECONDITIONER_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_PETSCPRECONDITIONER_HPP_
 
 #include "common/PreconditionerBase.hpp"
 #include "linearAlgebra/interfaces/petsc/PetscInterface.hpp"
@@ -37,7 +37,7 @@ extern "C" struct _p_MatNullSpace;
 
 ///@}
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -131,4 +131,4 @@ private:
 
 }
 
-#endif //GEOSX_LINEARALGEBRA_INTERFACES_PETSCPRECONDITIONER_HPP_
+#endif //GEOS_LINEARALGEBRA_INTERFACES_PETSCPRECONDITIONER_HPP_

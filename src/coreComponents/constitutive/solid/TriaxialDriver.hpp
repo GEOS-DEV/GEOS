@@ -28,7 +28,7 @@
 #include "functions/TableFunction.hpp"
 #include "mesh/DomainPartition.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace constitutive;
@@ -51,12 +51,12 @@ public:
 
   void postProcessInput() override;
 
-  virtual bool execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                        real64 const GEOSX_UNUSED_PARAM( dt ),
-                        integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                        integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                        real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                        DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override;
+  virtual bool execute( real64 const GEOS_UNUSED_PARAM( time_n ),
+                        real64 const GEOS_UNUSED_PARAM( dt ),
+                        integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                        integer const GEOS_UNUSED_PARAM( eventCounter ),
+                        real64 const GEOS_UNUSED_PARAM( eventProgress ),
+                        DomainPartition & GEOS_UNUSED_PARAM( domain ) ) override;
 
   /**
    * @brief Run a strain-controlled test using loading protocol in table
@@ -133,6 +133,6 @@ private:
   static constexpr real64 m_baselineTol = 1e-3; ///< Comparison tolerance for baseline results
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* SRC_CORECOMPONENTS_TASKS_TRIAXIALDRIVER_HPP_ */

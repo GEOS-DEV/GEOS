@@ -12,15 +12,15 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_FILEIO_COUPLING_CHOMBOCOUPLER_HPP_
-#define GEOSX_FILEIO_COUPLING_CHOMBOCOUPLER_HPP_
+#ifndef GEOS_FILEIO_COUPLING_CHOMBOCOUPLER_HPP_
+#define GEOS_FILEIO_COUPLING_CHOMBOCOUPLER_HPP_
 
 #include "common/DataTypes.hpp"
 #include "mesh/MeshLevel.hpp"
 
 
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -88,6 +88,6 @@ private:
   array2d< real64 > m_velocityCopy;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FILEIO_COUPLING_CHOMBOCOUPLER_HPP_ */
+#endif /* GEOS_FILEIO_COUPLING_CHOMBOCOUPLER_HPP_ */

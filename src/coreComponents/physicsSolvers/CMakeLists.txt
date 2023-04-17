@@ -6,6 +6,7 @@ set( physicsSolvers_headers
      NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
      SolverBase.hpp
+     SolverBaseKernels.hpp
      SolverStatistics.hpp
      FieldStatisticsBase.hpp
      contact/ContactSolverBase.hpp
@@ -67,8 +68,9 @@ set( physicsSolvers_headers
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
      multiphysics/HydrofractureSolverKernels.hpp
-     multiphysics/MultiphasePoromechanicsSolver.hpp
+     multiphysics/MultiphasePoromechanics.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
+     multiphysics/PoromechanicsFields.hpp
      multiphysics/PoromechanicsInitialization.hpp
      multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp
      multiphysics/poromechanicsKernels/MultiphasePoromechanics_impl.hpp
@@ -77,10 +79,13 @@ set( physicsSolvers_headers
      multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp
+     multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics.hpp
+     multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics_impl.hpp
      multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp
      multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics_impl.hpp
      multiphysics/SinglePhasePoromechanicsFluxKernels.hpp
-     multiphysics/SinglePhasePoromechanicsSolver.hpp
+     multiphysics/SinglePhasePoromechanics.hpp
      multiphysics/SinglePhasePoromechanicsEmbeddedFractures.hpp
      multiphysics/SinglePhasePoromechanicsConformingFractures.hpp
      multiphysics/SinglePhaseReservoirAndWells.hpp
@@ -97,6 +102,8 @@ set( physicsSolvers_headers
      solidMechanics/kernels/ExplicitFiniteStrain_impl.hpp
      solidMechanics/kernels/ExplicitSmallStrain.hpp
      solidMechanics/kernels/ExplicitSmallStrain_impl.hpp
+     solidMechanics/kernels/FixedStressThermoPoromechanics.hpp
+     solidMechanics/kernels/FixedStressThermoPoromechanics_impl.hpp
      solidMechanics/kernels/ImplicitSmallStrainNewmark.hpp
      solidMechanics/kernels/ImplicitSmallStrainNewmark_impl.hpp
      solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp
@@ -158,10 +165,10 @@ set( physicsSolvers_sources
      multiphysics/CoupledReservoirAndWellsBase.cpp
      multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
-     multiphysics/MultiphasePoromechanicsSolver.cpp
+     multiphysics/MultiphasePoromechanics.cpp
      multiphysics/PhaseFieldFractureSolver.cpp
      multiphysics/PoromechanicsInitialization.cpp
-     multiphysics/SinglePhasePoromechanicsSolver.cpp
+     multiphysics/SinglePhasePoromechanics.cpp
      multiphysics/SinglePhasePoromechanicsEmbeddedFractures.cpp
      multiphysics/SinglePhasePoromechanicsConformingFractures.cpp
      multiphysics/SinglePhasePoromechanicsFluxKernels.cpp

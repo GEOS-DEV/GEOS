@@ -22,7 +22,7 @@
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace stringutilities;
@@ -209,9 +209,9 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
   PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
 
   // initialize salinity and tolerance
-  GEOSX_THROW_IF_LT_MSG( inputParams.size(), 9,
-                         GEOSX_FMT( "{}: insufficient number of model parameters", functionName ),
-                         InputError );
+  GEOS_THROW_IF_LT_MSG( inputParams.size(), 9,
+                        GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
+                        InputError );
 
   real64 tolerance = 1e-9;
   real64 salinity = 0.0;
@@ -225,7 +225,7 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_THROW( GEOSX_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
+    GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
   }
 
   array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
@@ -257,12 +257,12 @@ CO2Solubility::CO2Solubility( string const & name,
                   componentNames,
                   componentMolarWeight )
 {
-  GEOSX_THROW_IF_NE_MSG( phaseNames.size(), 2,
-                         "The CO2Solubility model is a two-phase model",
-                         InputError );
-  GEOSX_THROW_IF_NE_MSG( componentNames.size(), 2,
-                         "The CO2Solubility model is a two-component model",
-                         InputError );
+  GEOS_THROW_IF_NE_MSG( phaseNames.size(), 2,
+                        "The CO2Solubility model is a two-phase model",
+                        InputError );
+  GEOS_THROW_IF_NE_MSG( componentNames.size(), 2,
+                        "The CO2Solubility model is a two-component model",
+                        InputError );
 
   string const expectedCO2ComponentNames[] = { "CO2", "co2" };
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, "componentNames" );
@@ -295,4 +295,4 @@ REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, string const &, string_ar
 
 } // namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos

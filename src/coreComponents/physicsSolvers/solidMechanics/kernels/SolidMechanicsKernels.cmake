@@ -4,10 +4,11 @@
 
 set( kernelPath "coreComponents/physicsSolvers/solidMechanics/kernels" )
 
-set( ExplicitSmallStrainPolicy "geosx::parallelDevicePolicy<32>" )
-set( ExplicitFiniteStrainPolicy "geosx::parallelDevicePolicy<32>" )
-set( ImplicitSmallStrainNewmarkPolicy "geosx::parallelDevicePolicy<32>" )
-set( ImplicitSmallStrainQuasiStaticPolicy "geosx::parallelDevicePolicy<32>" )
+set( ExplicitSmallStrainPolicy "geos::parallelDevicePolicy<32>" )
+set( ExplicitFiniteStrainPolicy "geos::parallelDevicePolicy<32>" )
+set( FixedStressThermoPoromechanicsPolicy "geos::parallelDevicePolicy<32>" )
+set( ImplicitSmallStrainNewmarkPolicy "geos::parallelDevicePolicy<32>" )
+set( ImplicitSmallStrainQuasiStaticPolicy "geos::parallelDevicePolicy<32>" )
 
 
 configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp.in
@@ -26,7 +27,7 @@ set( solidBaseDispatch DamageSpectral<ElasticIsotropic>
                        ElasticIsotropic
                        ElasticTransverseIsotropic
                        ElasticIsotropicPressureDependent
-                       ElasticOrthotropic )
+                       ElasticOrthotropic )             
 
 set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
                            H1_Wedge_Lagrange1_Gauss6
@@ -46,8 +47,8 @@ set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
 
   foreach( KERNELNAME ${kernelNames} )
     foreach( SUBREGION_TYPE  ${subregionList} )
-      foreach( CONSTITUTIVE_TYPE ${solidBaseDispatch} )
-        foreach( FE_TYPE ${finiteElementDispatch} )
+      foreach( FE_TYPE ${finiteElementDispatch} )
+        foreach( CONSTITUTIVE_TYPE ${solidBaseDispatch} )
 
         set( filename "${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/${KERNELNAME}_${SUBREGION_TYPE}_${CONSTITUTIVE_TYPE}_${FE_TYPE}.cpp" )
         string(REPLACE "<" "-" filename ${filename})
@@ -63,3 +64,31 @@ set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
       endforeach()
     endforeach()
   endforeach()
+
+  set( porousSolidDispatch PorousSolid<ElasticIsotropic> )                         
+
+  set( kernelNames SolidMechanicsFixedStressThermoPoromechanicsKernels )
+                         
+  
+  foreach( KERNELNAME ${kernelNames} )
+    foreach( SUBREGION_TYPE  ${subregionList} )
+      foreach( FE_TYPE ${finiteElementDispatch} )
+        foreach( CONSTITUTIVE_TYPE ${porousSolidDispatch} )
+
+        set( filename "${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/${KERNELNAME}_${SUBREGION_TYPE}_${CONSTITUTIVE_TYPE}_${FE_TYPE}.cpp" )
+        string(REPLACE "<" "-" filename ${filename})
+        string(REPLACE ">" "-" filename ${filename})
+        string(REPLACE "," "-" filename ${filename})
+        string(REPLACE " " "" filename ${filename})
+        message( " -- Generating file: ${filename}")
+        configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template
+                        ${filename} )
+          list( APPEND physicsSolvers_sources ${filename} )
+
+        endforeach()
+      endforeach()
+    endforeach()
+  endforeach()
+  
+
+ 

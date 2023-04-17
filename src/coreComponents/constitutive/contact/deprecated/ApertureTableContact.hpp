@@ -16,13 +16,13 @@
  * @file ApertureTableContact.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_CONTACT_APERTURETABLECONTACT_HPP_
-#define GEOSX_CONSTITUTIVE_CONTACT_APERTURETABLECONTACT_HPP_
+#ifndef GEOS_CONSTITUTIVE_CONTACT_APERTURETABLECONTACT_HPP_
+#define GEOS_CONSTITUTIVE_CONTACT_APERTURETABLECONTACT_HPP_
 
 #include "constitutive/contact/ContactBase.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -58,18 +58,18 @@ public:
   /// Deleted move assignment operator
   ApertureTableContactUpdates & operator=( ApertureTableContactUpdates && ) =  delete;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   virtual real64 computeEffectiveAperture( real64 const aperture,
                                            real64 & dEffectiveAperture_dAperture ) const;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   virtual void computeTraction( arraySlice1d< real64 const > const & dispJump,
                                 arraySlice1d< real64 > const & tractionVector,
                                 arraySlice2d< real64 > const & dTractionVector_dJump ) const;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   void addPressureToTraction( real64 const & pressure,
                               bool const isOpen,
@@ -162,7 +162,7 @@ protected:
 
 };
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 real64 ApertureTableContactUpdates::computeEffectiveAperture( real64 const aperture,
                                                               real64 & dEffectiveAperture_dAperture ) const
 {
@@ -172,6 +172,6 @@ real64 ApertureTableContactUpdates::computeEffectiveAperture( real64 const apert
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_CONTACT_APERTURETABLECONTACT_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_CONTACT_APERTURETABLECONTACT_HPP_ */
