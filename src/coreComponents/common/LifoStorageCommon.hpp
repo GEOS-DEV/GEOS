@@ -29,9 +29,9 @@
 #define LIFO_MARK_SCOPE( a )
 #define LIFO_LOG_RANK( a ) std::cerr << a << std::endl;
 #else
-#define LIFO_MARK_FUNCTION GEOSX_MARK_FUNCTION
-#define LIFO_MARK_SCOPE( a ) GEOSX_MARK_SCOPE( a )
-#define LIFO_LOG_RANK( a ) GEOSX_LOG_RANK( a )
+#define LIFO_MARK_FUNCTION GEOS_MARK_FUNCTION
+#define LIFO_MARK_SCOPE( a ) GEOS_MARK_SCOPE( a )
+#define LIFO_LOG_RANK( a ) GEOS_LOG_RANK( a )
 #endif
 
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -40,7 +40,7 @@
 #include "common/MultiMutexesLock.hpp"
 
 
-namespace geosx
+namespace geos
 {
 /**
  * This class is used to store in a LIFO way buffers, first on device, then on host, then on disk.
@@ -154,7 +154,7 @@ public:
    */
   static int computeNumberOfBufferOnHost( int percent, size_t bufferSize, int maxNumberOfBuffers, int numberOfBuffersToStoreOnDevice )
   {
-    GEOSX_ERROR_IF( percent > 100, "Error, percentage of memory should be smallerer than -100, check lifoOnHost (should be greater that -100)" );
+    GEOS_ERROR_IF( percent > 100, "Error, percentage of memory should be smallerer than -100, check lifoOnHost (should be greater that -100)" );
     size_t free = sysconf( _SC_AVPHYS_PAGES ) * sysconf( _SC_PAGESIZE );
     int numberOfBuffersToStoreOnHost = std::max( 1, std::min( ( int )( 0.01 * percent * free / bufferSize ), maxNumberOfBuffers - numberOfBuffersToStoreOnDevice ) );
     double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 ) / MpiWrapper::nodeCommSize();
@@ -247,18 +247,18 @@ protected:
   void writeOnDisk( const T * d, int id )
   {
     LIFO_MARK_FUNCTION;
-    std::string fileName = GEOSX_FMT( "{}_{:08}.dat", m_name, id );
+    std::string fileName = GEOS_FMT( "{}_{:08}.dat", m_name, id );
     int lastDirSeparator = fileName.find_last_of( "/\\" );
     std::string dirName = fileName.substr( 0, lastDirSeparator );
     if( string::npos != (size_t)lastDirSeparator && !dirExists( dirName ))
       makeDirsForPath( dirName );
 
     std::ofstream wf( fileName, std::ios::out | std::ios::binary );
-    GEOSX_ERROR_IF( !wf || wf.fail() || !wf.is_open(),
-                    "Could not open file "<< fileName << " for writting" );
+    GEOS_ERROR_IF( !wf || wf.fail() || !wf.is_open(),
+                   "Could not open file "<< fileName << " for writting" );
     wf.write( (const char *)d, m_bufferSize );
-    GEOSX_ERROR_IF( wf.bad() || wf.fail(),
-                    "An error occured while writting "<< fileName );
+    GEOS_ERROR_IF( wf.bad() || wf.fail(),
+                   "An error occured while writting "<< fileName );
     wf.close();
   }
 
@@ -271,10 +271,10 @@ protected:
   void readOnDisk( T * d, int id )
   {
     LIFO_MARK_FUNCTION;
-    std::string fileName = GEOSX_FMT( "{}_{:08}.dat", m_name, id );
+    std::string fileName = GEOS_FMT( "{}_{:08}.dat", m_name, id );
     std::ifstream wf( fileName, std::ios::in | std::ios::binary );
-    GEOSX_ERROR_IF( !wf,
-                    "Could not open file "<< fileName << " for reading" );
+    GEOS_ERROR_IF( !wf,
+                   "Could not open file "<< fileName << " for reading" );
     wf.read( (char *)d, m_bufferSize );
     wf.close();
     remove( fileName.c_str() );

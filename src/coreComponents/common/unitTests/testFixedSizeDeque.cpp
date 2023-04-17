@@ -8,7 +8,7 @@
 
 #include <gtest/gtest.h>
 
-using namespace geosx;
+using namespace geos;
 
 TEST( FixedSizeDequeTest, ZeroSizedDeque )
 {

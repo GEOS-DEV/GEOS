@@ -19,7 +19,7 @@
 
 #include "codingUtilities/Utilities.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

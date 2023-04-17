@@ -18,7 +18,7 @@
 			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="geosx_dataRepository_PlotLevel">
+	<xsd:simpleType name="geos_dataRepository_PlotLevel">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]+" />
 		</xsd:restriction>
@@ -514,6 +514,10 @@
 					<xsd:selector xpath="CompressibleSolidConstantPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="ConstitutiveCompressibleSolidExponentialDecayPermeabilityUniqueName">
+					<xsd:selector xpath="CompressibleSolidExponentialDecayPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="ConstitutiveCompressibleSolidParallelPlatesPermeabilityUniqueName">
 					<xsd:selector xpath="CompressibleSolidParallelPlatesPermeability" />
 					<xsd:field xpath="@name" />
@@ -572,6 +576,10 @@
 				</xsd:unique>
 				<xsd:unique name="ConstitutiveElasticTransverseIsotropicUniqueName">
 					<xsd:selector xpath="ElasticTransverseIsotropic" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="ConstitutiveExponentialDecayPermeabilityUniqueName">
+					<xsd:selector xpath="ExponentialDecayPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="ConstitutiveExtendedDruckerPragerUniqueName">
@@ -1132,11 +1140,11 @@ This keyword is ignored for single-phase flow simulations-->
 vector - traction is applied to the faces as specified from the scale and direction,
 normal - traction is applied to the faces as a pressure specified from the product of scale and the outward face normal,
 stress - traction is applied to the faces as specified by the inner product of input stress and face normal.-->
-		<xsd:attribute name="tractionType" type="geosx_TractionBoundaryCondition_TractionType" default="vector" />
+		<xsd:attribute name="tractionType" type="geos_TractionBoundaryCondition_TractionType" default="vector" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_TractionBoundaryCondition_TractionType">
+	<xsd:simpleType name="geos_TractionBoundaryCondition_TractionType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|vector|normal|stress" />
 		</xsd:restriction>
@@ -1189,7 +1197,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 * nearest
 * upper
 * lower-->
-		<xsd:attribute name="interpolation" type="geosx_TableFunction_InterpolationType" default="linear" />
+		<xsd:attribute name="interpolation" type="geos_TableFunction_InterpolationType" default="linear" />
 		<!--values => Values for 1D tables-->
 		<xsd:attribute name="values" type="real64_array" default="{0}" />
 		<!--voxelFile => Voxel file name for ND Table-->
@@ -1197,7 +1205,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_TableFunction_InterpolationType">
+	<xsd:simpleType name="geos_TableFunction_InterpolationType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|linear|nearest|upper|lower" />
 		</xsd:restriction>
@@ -1237,14 +1245,14 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CylinderType">
+		<!--firstFaceCenter => Center point of the first face of the cylinder-->
+		<xsd:attribute name="firstFaceCenter" type="R1Tensor" use="required" />
 		<!--innerRadius => Inner radius of the annulus-->
 		<xsd:attribute name="innerRadius" type="real64" default="-1" />
-		<!--point1 => Center point of one (upper or lower) face of the cylinder-->
-		<xsd:attribute name="point1" type="R1Tensor" use="required" />
-		<!--point2 => Center point of the other face of the cylinder-->
-		<xsd:attribute name="point2" type="R1Tensor" use="required" />
-		<!--radius => Radius of the cylinder-->
-		<xsd:attribute name="radius" type="real64" use="required" />
+		<!--outerRadius => Outer radius of the cylinder-->
+		<xsd:attribute name="outerRadius" type="real64" use="required" />
+		<!--secondFaceCenter => Center point of the second face of the cylinder-->
+		<xsd:attribute name="secondFaceCenter" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1379,26 +1387,32 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="VTKMeshType">
-		<!--faceBlocks => Names of the VTK faces to import-->
+		<!--faceBlocks => For multi-block files, names of the face mesh block.-->
 		<xsd:attribute name="faceBlocks" type="string_array" default="{}" />
-		<!--fieldNamesInGEOSX => Names of fields in GEOSX to import into-->
+		<!--fieldNamesInGEOSX => Names of the volumic fields in GEOSX to import into-->
 		<xsd:attribute name="fieldNamesInGEOSX" type="string_array" default="{}" />
-		<!--fieldsToImport => Fields to be imported from the external mesh file-->
+		<!--fieldsToImport => Volumic fields to be imported from the external mesh file-->
 		<xsd:attribute name="fieldsToImport" type="string_array" default="{}" />
 		<!--file => Path to the mesh file-->
 		<xsd:attribute name="file" type="path" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--mainBlockName => For multi-block files, name of the 3d mesh block.-->
+		<xsd:attribute name="mainBlockName" type="string" default="main" />
 		<!--nodesetNames => Names of the VTK nodesets to import-->
 		<xsd:attribute name="nodesetNames" type="string_array" default="{}" />
 		<!--partitionMethod => Method (library) used to partition the mesh-->
-		<xsd:attribute name="partitionMethod" type="geosx_vtk_PartitionMethod" default="parmetis" />
+		<xsd:attribute name="partitionMethod" type="geos_vtk_PartitionMethod" default="parmetis" />
 		<!--partitionRefinement => Number of partitioning refinement iterations (defaults to 1, recommended value).A value of 0 disables graph partitioning and keeps simple kd-tree partitions (not recommended). Values higher than 1 may lead to slightly improved partitioning, but yield diminishing returns.-->
 		<xsd:attribute name="partitionRefinement" type="integer" default="1" />
 		<!--regionAttribute => Name of the VTK cell attribute to use as region marker-->
 		<xsd:attribute name="regionAttribute" type="string" default="attribute" />
 		<!--scale => Scale the coordinates of the vertices by given scale factors (after translation)-->
 		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
+		<!--surfacicFieldsInGEOSX => Names of the surfacic fields in GEOSX to import into-->
+		<xsd:attribute name="surfacicFieldsInGEOSX" type="string_array" default="{}" />
+		<!--surfacicFieldsToImport => Surfacic fields to be imported from the external mesh file-->
+		<xsd:attribute name="surfacicFieldsToImport" type="string_array" default="{}" />
 		<!--translate => Translate the coordinates of the vertices by a given vector (prior to scaling)-->
 		<xsd:attribute name="translate" type="R1Tensor" default="{0,0,0}" />
 		<!--useGlobalIds => Controls the use of global IDs in the input file for cells and points. If set to 0 (default value), the GlobalId arrays in the input mesh are used if available, and generated otherwise. If set to a negative value, the GlobalId arrays in the input mesh are not used, and generated global Ids are automatically generated. If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available-->
@@ -1406,7 +1420,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_vtk_PartitionMethod">
+	<xsd:simpleType name="geos_vtk_PartitionMethod">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|parmetis|ptscotch" />
 		</xsd:restriction>
@@ -1453,7 +1467,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 Available options are: TODO-->
 		<xsd:attribute name="amgAggresiveCoarseningLevels" type="integer" default="0" />
 		<!--amgCoarseSolver => AMG coarsest level solver/smoother type. Available options are: ``default|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|direct|bgs``-->
-		<xsd:attribute name="amgCoarseSolver" type="geosx_LinearSolverParameters_AMG_CoarseType" default="direct" />
+		<xsd:attribute name="amgCoarseSolver" type="geos_LinearSolverParameters_AMG_CoarseType" default="direct" />
 		<!--amgCoarseningType => AMG coarsening algorithm
 Available options are: TODO-->
 		<xsd:attribute name="amgCoarseningType" type="string" default="HMIS" />
@@ -1461,20 +1475,20 @@ Available options are: TODO-->
 Available options are: TODO-->
 		<xsd:attribute name="amgInterpolationType" type="integer" default="6" />
 		<!--amgNullSpaceType => AMG near null space approximation. Available options are:``constantModes|rigidBodyModes``-->
-		<xsd:attribute name="amgNullSpaceType" type="geosx_LinearSolverParameters_AMG_NullSpaceType" default="constantModes" />
+		<xsd:attribute name="amgNullSpaceType" type="geos_LinearSolverParameters_AMG_NullSpaceType" default="constantModes" />
 		<!--amgNumFunctions => AMG number of functions
 Available options are: TODO-->
 		<xsd:attribute name="amgNumFunctions" type="integer" default="1" />
 		<!--amgNumSweeps => AMG smoother sweeps-->
 		<xsd:attribute name="amgNumSweeps" type="integer" default="2" />
 		<!--amgSmootherType => AMG smoother type. Available options are: ``default|jacobi|l1jacobi|fgs|bgs|sgs|l1sgs|chebyshev|ilu0|ilut|ic0|ict``-->
-		<xsd:attribute name="amgSmootherType" type="geosx_LinearSolverParameters_AMG_SmootherType" default="fgs" />
+		<xsd:attribute name="amgSmootherType" type="geos_LinearSolverParameters_AMG_SmootherType" default="fgs" />
 		<!--amgThreshold => AMG strength-of-connection threshold-->
 		<xsd:attribute name="amgThreshold" type="real64" default="0" />
 		<!--directCheckResidual => Whether to check the linear system solution residual-->
 		<xsd:attribute name="directCheckResidual" type="integer" default="0" />
 		<!--directColPerm => How to permute the columns. Available options are: ``none|MMD_AtplusA|MMD_AtA|colAMD|metis|parmetis``-->
-		<xsd:attribute name="directColPerm" type="geosx_LinearSolverParameters_Direct_ColPerm" default="metis" />
+		<xsd:attribute name="directColPerm" type="geos_LinearSolverParameters_Direct_ColPerm" default="metis" />
 		<!--directEquil => Whether to scale the rows and columns of the matrix-->
 		<xsd:attribute name="directEquil" type="integer" default="1" />
 		<!--directIterRef => Whether to perform iterative refinement-->
@@ -1484,7 +1498,7 @@ Available options are: TODO-->
 		<!--directReplTinyPivot => Whether to replace tiny pivots by sqrt(epsilon)*norm(A)-->
 		<xsd:attribute name="directReplTinyPivot" type="integer" default="1" />
 		<!--directRowPerm => How to permute the rows. Available options are: ``none|mc64``-->
-		<xsd:attribute name="directRowPerm" type="geosx_LinearSolverParameters_Direct_RowPerm" default="mc64" />
+		<xsd:attribute name="directRowPerm" type="geos_LinearSolverParameters_Direct_RowPerm" default="mc64" />
 		<!--iluFill => ILU(K) fill factor-->
 		<xsd:attribute name="iluFill" type="integer" default="0" />
 		<!--iluThreshold => ILU(T) threshold factor-->
@@ -1505,43 +1519,43 @@ the relative residual norm satisfies:
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--preconditionerType => Preconditioner type. Available options are: ``none|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|iluk|ilut|icc|ict|amg|mgr|block|direct|bgs``-->
-		<xsd:attribute name="preconditionerType" type="geosx_LinearSolverParameters_PreconditionerType" default="iluk" />
+		<xsd:attribute name="preconditionerType" type="geos_LinearSolverParameters_PreconditionerType" default="iluk" />
 		<!--solverType => Linear solver type. Available options are: ``direct|cg|gmres|fgmres|bicgstab|preconditioner``-->
-		<xsd:attribute name="solverType" type="geosx_LinearSolverParameters_SolverType" default="direct" />
+		<xsd:attribute name="solverType" type="geos_LinearSolverParameters_SolverType" default="direct" />
 		<!--stopIfError => Whether to stop the simulation if the linear solver reports an error-->
 		<xsd:attribute name="stopIfError" type="integer" default="1" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_LinearSolverParameters_AMG_CoarseType">
+	<xsd:simpleType name="geos_LinearSolverParameters_AMG_CoarseType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|default|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|direct|bgs" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="geosx_LinearSolverParameters_AMG_NullSpaceType">
+	<xsd:simpleType name="geos_LinearSolverParameters_AMG_NullSpaceType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|constantModes|rigidBodyModes" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="geosx_LinearSolverParameters_AMG_SmootherType">
+	<xsd:simpleType name="geos_LinearSolverParameters_AMG_SmootherType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|default|jacobi|l1jacobi|fgs|bgs|sgs|l1sgs|chebyshev|ilu0|ilut|ic0|ict" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="geosx_LinearSolverParameters_Direct_ColPerm">
+	<xsd:simpleType name="geos_LinearSolverParameters_Direct_ColPerm">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|none|MMD_AtplusA|MMD_AtA|colAMD|metis|parmetis" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="geosx_LinearSolverParameters_Direct_RowPerm">
+	<xsd:simpleType name="geos_LinearSolverParameters_Direct_RowPerm">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|none|mc64" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="geosx_LinearSolverParameters_PreconditionerType">
+	<xsd:simpleType name="geos_LinearSolverParameters_PreconditionerType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|none|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|iluk|ilut|icc|ict|amg|mgr|block|direct|bgs" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="geosx_LinearSolverParameters_SolverType">
+	<xsd:simpleType name="geos_LinearSolverParameters_SolverType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|direct|cg|gmres|fgmres|bicgstab|preconditioner" />
 		</xsd:restriction>
@@ -1549,19 +1563,21 @@ the relative residual norm satisfies:
 	<xsd:complexType name="NonlinearSolverParametersType">
 		<!--allowNonConverged => Allow non-converged solution to be accepted. (i.e. exit from the Newton loop without achieving the desired tolerance)-->
 		<xsd:attribute name="allowNonConverged" type="integer" default="0" />
-		<!--couplingType => Type of coupling. Options are: Sequential and FullyImplicit-->
-		<xsd:attribute name="couplingType" type="geosx_NonlinearSolverParameters_CouplingType" default="FullyImplicit" />
+		<!--couplingType => Type of coupling. Valid options:
+* FullyImplicit
+* Sequential-->
+		<xsd:attribute name="couplingType" type="geos_NonlinearSolverParameters_CouplingType" default="FullyImplicit" />
 		<!--lineSearchAction => How the line search is to be used. Options are: 
  * None    - Do not use line search.
 * Attempt - Use line search. Allow exit from line search without achieving smaller residual than starting residual.
 * Require - Use line search. If smaller residual than starting resdual is not achieved, cut time step.-->
-		<xsd:attribute name="lineSearchAction" type="geosx_NonlinearSolverParameters_LineSearchAction" default="Attempt" />
+		<xsd:attribute name="lineSearchAction" type="geos_NonlinearSolverParameters_LineSearchAction" default="Attempt" />
 		<!--lineSearchCutFactor => Line search cut factor. For instance, a value of 0.5 will result in the effective application of the last solution by a factor of (0.5, 0.25, 0.125, ...)-->
 		<xsd:attribute name="lineSearchCutFactor" type="real64" default="0.5" />
 		<!--lineSearchInterpolationType => Strategy to cut the solution update during the line search. Options are: 
  * Linear
 * Parabolic-->
-		<xsd:attribute name="lineSearchInterpolationType" type="geosx_NonlinearSolverParameters_LineSearchInterpolationType" default="Linear" />
+		<xsd:attribute name="lineSearchInterpolationType" type="geos_NonlinearSolverParameters_LineSearchInterpolationType" default="Linear" />
 		<!--lineSearchMaxCuts => Maximum number of line search cuts.-->
 		<xsd:attribute name="lineSearchMaxCuts" type="integer" default="4" />
 		<!--logLevel => Log level-->
@@ -1580,6 +1596,10 @@ the relative residual norm satisfies:
 		<xsd:attribute name="newtonMinIter" type="integer" default="1" />
 		<!--newtonTol => The required tolerance in order to exit the Newton iteration loop.-->
 		<xsd:attribute name="newtonTol" type="real64" default="1e-06" />
+		<!--sequentialConvergenceCriterion => Criterion used to check outer-loop convergence in sequential schemes. Valid options:
+* ResidualNorm
+* NumberOfNonlinearIterations-->
+		<xsd:attribute name="sequentialConvergenceCriterion" type="geos_NonlinearSolverParameters_SequentialConvergenceCriterion" default="ResidualNorm" />
 		<!--subcycling => Flag to decide whether to iterate between sequentially coupled solvers or not.-->
 		<xsd:attribute name="subcycling" type="integer" default="0" />
 		<!--timeStepCutFactor => Factor by which the time step will be cut if a timestep cut is required.-->
@@ -1595,21 +1615,26 @@ the relative residual norm satisfies:
 		<!--normType => Norm used by the flow solver to check nonlinear convergence. Valid options:
 * Linfinity
 * L2-->
-		<xsd:attribute name="normType" type="geosx_solverBaseKernels_NormType" default="Linfinity" />
+		<xsd:attribute name="normType" type="geos_solverBaseKernels_NormType" default="Linfinity" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_NonlinearSolverParameters_CouplingType">
+	<xsd:simpleType name="geos_NonlinearSolverParameters_CouplingType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|FullyImplicit|Sequential" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="geosx_NonlinearSolverParameters_LineSearchAction">
+	<xsd:simpleType name="geos_NonlinearSolverParameters_LineSearchAction">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|None|Attempt|Require" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="geosx_NonlinearSolverParameters_LineSearchInterpolationType">
+	<xsd:simpleType name="geos_NonlinearSolverParameters_LineSearchInterpolationType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|Linear|Parabolic" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_NonlinearSolverParameters_SequentialConvergenceCriterion">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|ResidualNorm|NumberOfNonlinearIterations" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="FiniteVolumeType">
@@ -1653,7 +1678,7 @@ the relative residual norm satisfies:
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--plotLevel => Determines which fields to write.-->
-		<xsd:attribute name="plotLevel" type="geosx_dataRepository_PlotLevel" default="1" />
+		<xsd:attribute name="plotLevel" type="geos_dataRepository_PlotLevel" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1735,11 +1760,11 @@ the relative residual norm satisfies:
 		<!--fieldNames => Names of the fields to output. If this attribute is specified, GEOSX outputs all the fields specified by the user, regardless of their `plotLevel`-->
 		<xsd:attribute name="fieldNames" type="string_array" default="{}" />
 		<!--format => Output data format.  Valid options: ``binary``, ``ascii``-->
-		<xsd:attribute name="format" type="geosx_vtk_VTKOutputMode" default="binary" />
+		<xsd:attribute name="format" type="geos_vtk_VTKOutputMode" default="binary" />
 		<!--onlyPlotSpecifiedFieldNames => If this flag is equal to 1, then we only plot the fields listed in `fieldNames`. Otherwise, we plot all the fields with the required `plotLevel`, plus the fields listed in `fieldNames`-->
 		<xsd:attribute name="onlyPlotSpecifiedFieldNames" type="integer" default="0" />
 		<!--outputRegionType => Output region types.  Valid options: ``cell``, ``well``, ``surface``, ``all``-->
-		<xsd:attribute name="outputRegionType" type="geosx_vtk_VTKRegionTypes" default="all" />
+		<xsd:attribute name="outputRegionType" type="geos_vtk_VTKRegionTypes" default="all" />
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--plotFileRoot => Name of the root file for this output.-->
@@ -1753,12 +1778,12 @@ the relative residual norm satisfies:
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_vtk_VTKOutputMode">
+	<xsd:simpleType name="geos_vtk_VTKOutputMode">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|binary|ascii" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="geosx_vtk_VTKRegionTypes">
+	<xsd:simpleType name="geos_vtk_VTKRegionTypes">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|cell|well|surface|all" />
 		</xsd:restriction>
@@ -1944,7 +1969,7 @@ the relative residual norm satisfies:
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_solverBaseKernels_NormType">
+	<xsd:simpleType name="geos_solverBaseKernels_NormType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|Linfinity|L2" />
 		</xsd:restriction>
@@ -2040,7 +2065,7 @@ the relative residual norm satisfies:
 * phaseVolRate
 * totalVolRate
 * uninitialized-->
-		<xsd:attribute name="control" type="geosx_WellControls_Control" use="required" />
+		<xsd:attribute name="control" type="geos_WellControls_Control" use="required" />
 		<!--enableCrossflow => Flag to enable crossflow. Currently only supported for injectors: 
  - If the flag is set to 1, both reservoir-to-well flow and well-to-reservoir flow are allowed at the perforations. 
  - If the flag is set to 0, we only allow well-to-reservoir flow at the perforations.-->
@@ -2081,19 +2106,19 @@ If the status function evaluates to a positive value at the current time, the we
 		<!--type => Well type. Valid options:
 * producer
 * injector-->
-		<xsd:attribute name="type" type="geosx_WellControls_Type" use="required" />
+		<xsd:attribute name="type" type="geos_WellControls_Type" use="required" />
 		<!--useSurfaceConditions => Flag to specify whether rates are checked at surface or reservoir conditions.
 Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="useSurfaceConditions" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_WellControls_Control">
+	<xsd:simpleType name="geos_WellControls_Control">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|BHP|phaseVolRate|totalVolRate|uninitialized" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="geosx_WellControls_Type">
+	<xsd:simpleType name="geos_WellControls_Type">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|producer|injector" />
 		</xsd:restriction>
@@ -2262,11 +2287,11 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--timeIntegrationOption => Time integration method. Options are:
 * SteadyState
 * ImplicitTransient-->
-		<xsd:attribute name="timeIntegrationOption" type="geosx_LaplaceBaseH1_TimeIntegrationOption" use="required" />
+		<xsd:attribute name="timeIntegrationOption" type="geos_LaplaceBaseH1_TimeIntegrationOption" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_LaplaceBaseH1_TimeIntegrationOption">
+	<xsd:simpleType name="geos_LaplaceBaseH1_TimeIntegrationOption">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|SteadyState|ImplicitTransient" />
 		</xsd:restriction>
@@ -2296,13 +2321,13 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 None - Add no stabilization to mass equation,
 Global - Add stabilization to all faces,
 Local - Add stabilization only to interiors of macro elements.-->
-		<xsd:attribute name="stabilizationType" type="geosx_MultiphasePoromechanicsSolver_StabilizationType" default="None" />
+		<xsd:attribute name="stabilizationType" type="geos_MultiphasePoromechanics_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_MultiphasePoromechanicsSolver_StabilizationType">
+	<xsd:simpleType name="geos_MultiphasePoromechanics_StabilizationType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|None|Global|Local" />
 		</xsd:restriction>
@@ -2697,11 +2722,11 @@ Local - Add stabilization only to interiors of macro elements.-->
 * QuasiStatic
 * ImplicitDynamic
 * ExplicitDynamic-->
-		<xsd:attribute name="timeIntegrationOption" type="geosx_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="ExplicitDynamic" />
+		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="ExplicitDynamic" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_SolidMechanicsLagrangianFEM_TimeIntegrationOption">
+	<xsd:simpleType name="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|QuasiStatic|ImplicitDynamic|ExplicitDynamic" />
 		</xsd:restriction>
@@ -2741,7 +2766,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 * QuasiStatic
 * ImplicitDynamic
 * ExplicitDynamic-->
-		<xsd:attribute name="timeIntegrationOption" type="geosx_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="ExplicitDynamic" />
+		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="ExplicitDynamic" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2950,6 +2975,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="CompressibleSolidCarmanKozenyPermeability" type="CompressibleSolidCarmanKozenyPermeabilityType" />
 			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
+			<xsd:element name="CompressibleSolidExponentialDecayPermeability" type="CompressibleSolidExponentialDecayPermeabilityType" />
 			<xsd:element name="CompressibleSolidParallelPlatesPermeability" type="CompressibleSolidParallelPlatesPermeabilityType" />
 			<xsd:element name="CompressibleSolidSlipDependentPermeability" type="CompressibleSolidSlipDependentPermeabilityType" />
 			<xsd:element name="CompressibleSolidWillisRichardsPermeability" type="CompressibleSolidWillisRichardsPermeabilityType" />
@@ -2965,6 +2991,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="ElasticIsotropicPressureDependent" type="ElasticIsotropicPressureDependentType" />
 			<xsd:element name="ElasticOrthotropic" type="ElasticOrthotropicType" />
 			<xsd:element name="ElasticTransverseIsotropic" type="ElasticTransverseIsotropicType" />
+			<xsd:element name="ExponentialDecayPermeability" type="ExponentialDecayPermeabilityType" />
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
 			<xsd:element name="FrictionlessContact" type="FrictionlessContactType" />
 			<xsd:element name="JFunctionCapillaryPressure" type="JFunctionCapillaryPressureType" />
@@ -3004,6 +3031,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 	<xsd:complexType name="BiotPorosityType">
 		<!--defaultReferencePorosity => Default value of the reference porosity-->
 		<xsd:attribute name="defaultReferencePorosity" type="real64" use="required" />
+		<!--defaultThermalExpansionCoefficient => Default thermal expansion coefficient-->
+		<xsd:attribute name="defaultThermalExpansionCoefficient" type="real64" default="0" />
 		<!--grainBulkModulus => Grain bulk modulus-->
 		<xsd:attribute name="grainBulkModulus" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -3182,7 +3211,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 * exponential
 * linear
 * quadratic-->
-		<xsd:attribute name="densityModelType" type="geosx_constitutive_ExponentApproximationType" default="linear" />
+		<xsd:attribute name="densityModelType" type="geos_constitutive_ExponentApproximationType" default="linear" />
 		<!--referenceDensity => Reference fluid density-->
 		<xsd:attribute name="referenceDensity" type="real64" default="1000" />
 		<!--referencePressure => Reference pressure-->
@@ -3195,11 +3224,11 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 * exponential
 * linear
 * quadratic-->
-		<xsd:attribute name="viscosityModelType" type="geosx_constitutive_ExponentApproximationType" default="linear" />
+		<xsd:attribute name="viscosityModelType" type="geos_constitutive_ExponentApproximationType" default="linear" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_constitutive_ExponentApproximationType">
+	<xsd:simpleType name="geos_constitutive_ExponentApproximationType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|exponential|linear|quadratic" />
 		</xsd:restriction>
@@ -3217,6 +3246,18 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompressibleSolidConstantPermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CompressibleSolidExponentialDecayPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
@@ -3568,6 +3609,14 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="ExponentialDecayPermeabilityType">
+		<!--empiricalConstant => an empirical constant.-->
+		<xsd:attribute name="empiricalConstant" type="real64" use="required" />
+		<!--initialPermeability =>  initial permeability of the fracture.-->
+		<xsd:attribute name="initialPermeability" type="R1Tensor" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="ExtendedDruckerPragerType">
 		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
 		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
@@ -3623,7 +3672,7 @@ XY - use the average of the permeabilities in the x and y directions,
 X - only use the permeability in the x direction,
 Y - only use the permeability in the y direction,
 Z - only use the permeability in the z direction.-->
-		<xsd:attribute name="permeabilityDirection" type="geosx_constitutive_JFunctionCapillaryPressure_PermeabilityDirection" use="required" />
+		<xsd:attribute name="permeabilityDirection" type="geos_constitutive_JFunctionCapillaryPressure_PermeabilityDirection" use="required" />
 		<!--permeabilityExponent => Permeability exponent-->
 		<xsd:attribute name="permeabilityExponent" type="real64" default="0.5" />
 		<!--phaseNames => List of fluid phases-->
@@ -3651,7 +3700,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_constitutive_JFunctionCapillaryPressure_PermeabilityDirection">
+	<xsd:simpleType name="geos_constitutive_JFunctionCapillaryPressure_PermeabilityDirection">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|XY|X|Y|Z" />
 		</xsd:restriction>
@@ -3721,7 +3770,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 * Stokes
 * Intermediate
 * Turbulence-->
-		<xsd:attribute name="particleSettlingModel" type="geosx_constitutive_ParticleSettlingModel" use="required" />
+		<xsd:attribute name="particleSettlingModel" type="geos_constitutive_ParticleSettlingModel" use="required" />
 		<!--proppantDensity => Proppant density-->
 		<xsd:attribute name="proppantDensity" type="real64" default="1400" />
 		<!--proppantDiameter => Proppant diameter-->
@@ -3733,7 +3782,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_constitutive_ParticleSettlingModel">
+	<xsd:simpleType name="geos_constitutive_ParticleSettlingModel">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|Stokes|Intermediate|Turbulence" />
 		</xsd:restriction>
@@ -4025,12 +4074,12 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 * exponential
 * linear
 * quadratic-->
-		<xsd:attribute name="densityModelType" type="geosx_constitutive_ExponentApproximationType" default="linear" />
+		<xsd:attribute name="densityModelType" type="geos_constitutive_ExponentApproximationType" default="linear" />
 		<!--internalEnergyModelType => Type of internal energy model. Valid options:
 * exponential
 * linear
 * quadratic-->
-		<xsd:attribute name="internalEnergyModelType" type="geosx_constitutive_ExponentApproximationType" default="linear" />
+		<xsd:attribute name="internalEnergyModelType" type="geos_constitutive_ExponentApproximationType" default="linear" />
 		<!--referenceDensity => Reference fluid density-->
 		<xsd:attribute name="referenceDensity" type="real64" default="1000" />
 		<!--referenceInternalEnergy => Reference fluid internal energy-->
@@ -4049,7 +4098,7 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 * exponential
 * linear
 * quadratic-->
-		<xsd:attribute name="viscosityModelType" type="geosx_constitutive_ExponentApproximationType" default="linear" />
+		<xsd:attribute name="viscosityModelType" type="geos_constitutive_ExponentApproximationType" default="linear" />
 		<!--volumetricHeatCapacity => Fluid volumetric heat capacity. Unit: J/kg/K-->
 		<xsd:attribute name="volumetricHeatCapacity" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -4130,11 +4179,11 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--meshBody => Mesh body that contains this region-->
 		<xsd:attribute name="meshBody" type="string" default="" />
 		<!--subRegionType => Type of surface element subregion. Valid options: {faceElement, embeddedElement}.-->
-		<xsd:attribute name="subRegionType" type="geosx_SurfaceElementRegion_SurfaceSubRegionType" default="faceElement" />
+		<xsd:attribute name="subRegionType" type="geos_SurfaceElementRegion_SurfaceSubRegionType" default="faceElement" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_SurfaceElementRegion_SurfaceSubRegionType">
+	<xsd:simpleType name="geos_SurfaceElementRegion_SurfaceSubRegionType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|faceElement|embeddedElement" />
 		</xsd:restriction>

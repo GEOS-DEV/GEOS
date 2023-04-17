@@ -16,10 +16,10 @@
  * @file MultivariableTableFunctionKernels.hpp
  */
 
-#ifndef GEOSX_FUNCTIONS_MULTIVARIABLETABLEFUNCTIONKERNELS_HPP_
-#define GEOSX_FUNCTIONS_MULTIVARIABLETABLEFUNCTIONKERNELS_HPP_
+#ifndef GEOS_FUNCTIONS_MULTIVARIABLETABLEFUNCTIONKERNELS_HPP_
+#define GEOS_FUNCTIONS_MULTIVARIABLETABLEFUNCTIONKERNELS_HPP_
 
-namespace geosx
+namespace geos
 {
 
 
@@ -88,7 +88,7 @@ public:
  * @param[out] values interpolated operator values
  */
   template< typename IN_ARRAY, typename OUT_ARRAY >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void
   compute( IN_ARRAY const & coordinates,
            OUT_ARRAY && values ) const
@@ -121,7 +121,7 @@ public:
    * @param[out] derivatives derivatives of interpolated operators
    */
   template< typename IN_ARRAY, typename OUT_ARRAY, typename OUT_2D_ARRAY >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void
   compute( IN_ARRAY const & coordinates,
            OUT_ARRAY && values,
@@ -157,7 +157,7 @@ protected:
    * @param[in] hypercubeIndex
    * @return pointer to hypercube data
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   real64 const *
   getHypercubeData( globalIndex const hypercubeIndex ) const
@@ -178,7 +178,7 @@ protected:
    * @param[out] axisMult weight of the right coordinate of target axis interval
    * @return integer target axis interval index
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   integer
   getAxisIntervalIndexLowMult( real64 const axisCoordinate,
@@ -228,7 +228,7 @@ protected:
    * @param[out] values interpolated operator values
    */
   template< typename IN_ARRAY, typename OUT_ARRAY >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   void
   interpolatePoint( IN_ARRAY const & axisCoordinates,
@@ -282,7 +282,7 @@ protected:
    * @param[out] derivatives derivatives of interpolated operators
    */
   template< typename IN_ARRAY, typename OUT_ARRAY, typename OUT_2D_ARRAY >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   void
   interpolatePointWithDerivatives( IN_ARRAY const & axisCoordinates,
@@ -386,6 +386,6 @@ protected:
   arrayView1d< real64 > m_derivatives;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FUNCTIONS_MULTIVARIABLETABLEFUNCTIONKERNELS_HPP_ */
+#endif /* GEOS_FUNCTIONS_MULTIVARIABLETABLEFUNCTIONKERNELS_HPP_ */

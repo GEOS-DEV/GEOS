@@ -27,7 +27,7 @@
 #endif
 
 
-namespace geosx
+namespace geos
 {
 
 void MpiWrapper::barrier( MPI_Comm const & MPI_PARAM( comm ) )
@@ -431,7 +431,7 @@ int MpiWrapper::nodeCommSize()
   MPI_Comm_size( nodeComm, &nodeCommSize );
   return nodeCommSize;
 }
-} /* namespace geosx */
+} /* namespace geos */
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

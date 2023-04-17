@@ -22,7 +22,7 @@
 
 #include "ElasticIsotropic.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -43,4 +43,4 @@ typedef DamageSpectral< ElasticIsotropic > DamageSpectralElasticIsotropic;
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DamageSpectralElasticIsotropic, string const &, Group * const )
 
 }
-} /* namespace geosx */
+} /* namespace geos */

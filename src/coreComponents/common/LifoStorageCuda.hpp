@@ -31,7 +31,7 @@
 #include "common/MultiMutexesLock.hpp"
 #include "common/LifoStorageCommon.hpp"
 
-namespace geosx
+namespace geos
 {
 /**
  * This class is used to store in a LIFO way buffers, first on device, then on host, then on disk.
@@ -71,7 +71,7 @@ public:
     //To be sure 2 pushes are not mixed
     pushWait();
     int id = baseLifo::m_bufferCount++;
-    GEOSX_ERROR_IF( baseLifo::m_hostDeque.capacity() == 0 && m_deviceDeque.capacity() < baseLifo::m_maxNumberOfBuffers,
+    GEOS_ERROR_IF( baseLifo::m_hostDeque.capacity() == 0 && m_deviceDeque.capacity() < baseLifo::m_maxNumberOfBuffers,
                     "Cannot save on a Lifo without host storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
 
     m_pushToDeviceEvents[id] = m_deviceDeque.emplaceFront( array );
@@ -146,9 +146,9 @@ public:
    */
   static int computeNumberOfBufferOnDevice( int percent, size_t bufferSize, int maxNumberOfBuffers )
   {
-    GEOSX_ERROR_IF( percent > 100, "Error, percentage of memory should be smaller than 100, check lifoOnDevice (should be greater than -100)" );
+    GEOS_ERROR_IF( percent > 100, "Error, percentage of memory should be smaller than 100, check lifoOnDevice (should be greater than -100)" );
     size_t free, total;
-    GEOSX_ERROR_IF( cudaSuccess != cudaMemGetInfo( &free, &total ), "Error getting CUDA device available memory" );
+    GEOS_ERROR_IF( cudaSuccess != cudaMemGetInfo( &free, &total ), "Error getting CUDA device available memory" );
     double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 );
     LIFO_LOG_RANK( " LIFO : available memory on device " << freeGB << " GB" );
     return std::min( ( int )( 0.01 * percent * free / bufferSize ), maxNumberOfBuffers );

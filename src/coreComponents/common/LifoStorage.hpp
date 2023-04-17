@@ -32,7 +32,7 @@
 #include "common/LifoStorageCuda.hpp"
 #endif
 
-namespace geosx
+namespace geos
 {
 /**
  * This class is used to store in a LIFO way buffers, first on device, then on host, then on disk.

@@ -28,7 +28,7 @@
 #include "common/TimingMacros.hpp"
 #include "common/LifoStorageCommon.hpp"
 
-namespace geosx
+namespace geos
 {
 /**
  * This class is used to store in a LIFO way buffers, first on device, then on host, then on disk.
@@ -66,7 +66,7 @@ public:
     //To be sure 2 pushes are not mixed
     pushWait();
     int id = baseLifo::m_bufferCount++;
-    GEOSX_ERROR_IF( baseLifo::m_hostDeque.capacity() == 0,
+    GEOS_ERROR_IF( baseLifo::m_hostDeque.capacity() == 0,
                     "Cannot save on a Lifo without host storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
 
     std::packaged_task< void() > task( std::bind( [ this ] ( int pushId, arrayView1d< T > pushedArray ) {

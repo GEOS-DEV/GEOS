@@ -22,7 +22,7 @@
 #include "common/FixedSizeDeque.hpp"
 #include "common/MultiMutexesLock.hpp"
 
-namespace geosx
+namespace geos
 {
 /// Associate mutexes with the fixedSizeDeque
 template< typename T, typename INDEX_TYPE >

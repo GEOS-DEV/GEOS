@@ -13,18 +13,15 @@
  */
 
 /**
- * @file SolidMechanicsFixedStressThermoPoroElasticKernel.hpp
+ * @file FixedStressThermoPoromechanics.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROELASTIC_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROELASTIC_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROMECHANICS_HPP_
+#define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROMECHANICS_HPP_
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace solidMechanicsLagrangianFEMKernels
@@ -32,22 +29,22 @@ namespace solidMechanicsLagrangianFEMKernels
 
 /**
  * @brief Implements kernels for solving the solid part of the fixed-stress thermoporomechanics problem.
- * @copydoc geosx::finiteElement::ImplicitKernelBase
+ * @copydoc geos::finiteElement::ImplicitKernelBase
  * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
  *                            @p SUBREGION_TYPE.
  * @tparam UNUSED An unused parameter since we are assuming that the test and
  *                trial space have the same number of support points.
  *
- * ### FixedStressThermoPoroElastic Description
+ * ### FixedStressThermoPoromechanics Description
  * Implements the KernelBase interface functions required for using the
  * effective stress for the integration of the stress divergence. This is
  * templated on one of the "finite element kernel application" functions
- * such as geosx::finiteElement::RegionBasedKernelApplication.
+ * such as geos::finiteElement::RegionBasedKernelApplication.
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class FixedStressThermoPoroElastic :
+class FixedStressThermoPoromechanics :
   public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
                                             FE_TYPE,
@@ -79,26 +76,26 @@ public:
 
   /**
    * @brief Constructor
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param inputGravityVector The gravity vector.
    */
-  FixedStressThermoPoroElastic( NodeManager const & nodeManager,
-                                EdgeManager const & edgeManager,
-                                FaceManager const & faceManager,
-                                localIndex const targetRegionIndex,
-                                SUBREGION_TYPE const & elementSubRegion,
-                                FE_TYPE const & finiteElementSpace,
-                                CONSTITUTIVE_TYPE & inputConstitutiveType,
-                                arrayView1d< globalIndex const > const inputDofNumber,
-                                globalIndex const rankOffset,
-                                CRSMatrixView< real64, globalIndex const > const inputMatrix,
-                                arrayView1d< real64 > const inputRhs,
-                                real64 const (&inputGravityVector)[3] );
+  FixedStressThermoPoromechanics( NodeManager const & nodeManager,
+                                  EdgeManager const & edgeManager,
+                                  FaceManager const & faceManager,
+                                  localIndex const targetRegionIndex,
+                                  SUBREGION_TYPE const & elementSubRegion,
+                                  FE_TYPE const & finiteElementSpace,
+                                  CONSTITUTIVE_TYPE & inputConstitutiveType,
+                                  arrayView1d< globalIndex const > const inputDofNumber,
+                                  globalIndex const rankOffset,
+                                  CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                                  arrayView1d< real64 > const inputRhs,
+                                  real64 const (&inputGravityVector)[3] );
 
   //*****************************************************************************
   /**
    * @class StackVariables
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::StackVariables
+   * @copydoc geos::finiteElement::ImplicitKernelBase::StackVariables
    *
    * Adds a stack array for the displacement, incremental displacement, and the
    * constitutive stiffness.
@@ -108,7 +105,7 @@ public:
 public:
 
     /// Constructor.
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
                                        xLocal(),
@@ -138,37 +135,37 @@ public:
 
   /**
    * @brief Copy global values from primary field to a local stack array.
-   * @copydoc ::geosx::finiteElement::ImplicitKernelBase::setup
+   * @copydoc ::geos::finiteElement::ImplicitKernelBase::setup
    *
-   * For the FixedStressThermoPoroElastic implementation, global values from the displacement,
+   * For the FixedStressThermoPoromechanics implementation, global values from the displacement,
    * incremental displacement, and degree of freedom numbers are placed into
    * element local stack storage.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const k,
               StackVariables & stack ) const;
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
+   * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
    * For solid mechanics kernels, the strain increment is calculated, and the
    * constitutive update is called. In addition, the constitutive stiffness
    * stack variable is filled by the constitutive model.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const;
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
+   * @copydoc geos::finiteElement::ImplicitKernelBase::complete
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::kernelLaunch
+   * @copydoc geos::finiteElement::KernelBase::kernelLaunch
    */
   template< typename POLICY,
             typename KERNEL_TYPE >
@@ -189,8 +186,8 @@ protected:
   /// The gravity vector.
   real64 const m_gravityVector[3];
 
-  /// The rank global densities
-  arrayView2d< real64 const > const m_density;
+  /// The rank global bulk densities
+  arrayView2d< real64 const > const m_bulkDensity;
 
   /// The rank-global fluid pressure arrays.
   arrayView1d< real64 const > const m_pressure_n;
@@ -209,8 +206,8 @@ protected:
    * @param[in] k Element index.
    * @return A parameter representative of the stiffness matrix dstress/dstrain
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   real64 computeStabilizationScaling( localIndex const k ) const
   {
     // TODO: generalize this to other constitutive models (currently we assume linear elasticity).
@@ -218,18 +215,18 @@ protected:
   }
 };
 
-/// The factory used to construct a FixedStressThermoPoroElastic kernel.
-using FixedStressThermoPoroElasticFactory = finiteElement::KernelFactory< FixedStressThermoPoroElastic,
-                                                                          arrayView1d< globalIndex const > const,
-                                                                          globalIndex,
-                                                                          CRSMatrixView< real64, globalIndex const > const,
-                                                                          arrayView1d< real64 > const,
-                                                                          real64 const (&)[3] >;
+/// The factory used to construct a FixedStressThermoPoromechanics kernel.
+using FixedStressThermoPoromechanicsFactory = finiteElement::KernelFactory< FixedStressThermoPoromechanics,
+                                                                            arrayView1d< globalIndex const > const,
+                                                                            globalIndex,
+                                                                            CRSMatrixView< real64, globalIndex const > const,
+                                                                            arrayView1d< real64 > const,
+                                                                            real64 const (&)[3] >;
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
-} // namespace geosx
+} // namespace geos
 
 #include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
-#endif // GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROELASTIC_HPP_
+#endif // GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROMECHANICS_HPP_

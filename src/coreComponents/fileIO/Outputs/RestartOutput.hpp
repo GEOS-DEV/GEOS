@@ -16,13 +16,13 @@
  * @file RestartOutput.hpp
  */
 
-#ifndef GEOSX_FILEIO_OUTPUTS_RESTARTOUTPUT_HPP_
-#define GEOSX_FILEIO_OUTPUTS_RESTARTOUTPUT_HPP_
+#ifndef GEOS_FILEIO_OUTPUTS_RESTARTOUTPUT_HPP_
+#define GEOS_FILEIO_OUTPUTS_RESTARTOUTPUT_HPP_
 
 #include "OutputBase.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -34,7 +34,7 @@ namespace geosx
 class RestartOutput : public OutputBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
+  /// @copydoc geos::dataRepository::Group::Group(string const & name, Group * const parent)
   RestartOutput( string const & name,
                  Group * const parent );
 
@@ -80,6 +80,6 @@ public:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FILEIO_OUTPUTS_RESTARTOUTPUT_HPP_ */
+#endif /* GEOS_FILEIO_OUTPUTS_RESTARTOUTPUT_HPP_ */

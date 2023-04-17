@@ -23,7 +23,7 @@
 #include "Cylinder.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -35,15 +35,15 @@ Cylinder::Cylinder( const string & name, Group * const parent ):
 {
   registerWrapper( viewKeyStruct::point1String(), &m_point1 ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Center point of one (upper or lower) face of the cylinder" );
+    setDescription( "Center point of the first face of the cylinder" );
 
   registerWrapper( viewKeyStruct::point2String(), &m_point2 ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Center point of the other face of the cylinder" );
+    setDescription( "Center point of the second face of the cylinder" );
 
   registerWrapper( viewKeyStruct::radiusString(), &m_radius ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Radius of the cylinder" );
+    setDescription( "Outer radius of the cylinder" );
 
   registerWrapper( viewKeyStruct::innerRadiusString(), &m_innerRadius ).
     setApplyDefaultValue( -1 ).
@@ -100,4 +100,4 @@ bool Cylinder::isCoordInObject( real64 const ( &targetPt ) [3] ) const
 
 REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Cylinder, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

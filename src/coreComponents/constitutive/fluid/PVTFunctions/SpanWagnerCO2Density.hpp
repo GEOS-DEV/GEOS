@@ -16,8 +16,8 @@
  * @file SpanWagnerCO2Density.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_SPANWAGNERCO2DENSITY_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_SPANWAGNERCO2DENSITY_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_PVTFUNCTIONS_SPANWAGNERCO2DENSITY_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_PVTFUNCTIONS_SPANWAGNERCO2DENSITY_HPP_
 
 #include "PVTFunctionBase.hpp"
 
@@ -25,7 +25,7 @@
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -47,7 +47,7 @@ public:
   {}
 
   template< int USD1 >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -55,7 +55,7 @@ public:
                 bool useMass ) const;
 
   template< int USD1, int USD2, int USD3 >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -124,14 +124,14 @@ private:
 };
 
 template< int USD1 >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void SpanWagnerCO2DensityUpdate::compute( real64 const & pressure,
                                           real64 const & temperature,
                                           arraySlice1d< real64 const, USD1 > const & phaseComposition,
                                           real64 & value,
                                           bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( phaseComposition );
+  GEOS_UNUSED_VAR( phaseComposition );
 
   real64 const input[2] = { pressure, temperature };
   value = m_CO2DensityTable.compute( input );
@@ -143,7 +143,7 @@ void SpanWagnerCO2DensityUpdate::compute( real64 const & pressure,
 }
 
 template< int USD1, int USD2, int USD3 >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void SpanWagnerCO2DensityUpdate::compute( real64 const & pressure,
                                           real64 const & temperature,
                                           arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -152,7 +152,7 @@ void SpanWagnerCO2DensityUpdate::compute( real64 const & pressure,
                                           arraySlice1d< real64, USD3 > const & dValue,
                                           bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( phaseComposition, dPhaseComposition );
+  GEOS_UNUSED_VAR( phaseComposition, dPhaseComposition );
 
   using Deriv = multifluid::DerivativeOffset;
 
@@ -177,6 +177,6 @@ void SpanWagnerCO2DensityUpdate::compute( real64 const & pressure,
 
 } // end namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_SPANWAGNERCO2DENSITY_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_PVTFUNCTIONS_SPANWAGNERCO2DENSITY_HPP_
