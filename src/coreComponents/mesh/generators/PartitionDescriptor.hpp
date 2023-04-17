@@ -55,9 +55,7 @@ public:
    * @param metisNeighborList A reference to the Metis neighbor list.
    */
   void setMetisNeighborList( std::vector< int > const & metisNeighborList ) {
-    for ( int i : metisNeighborList ) {
-      m_metisNeighborList.insert( i );
-    }
+    m_metisNeighborList.insert( metisNeighborList.cbegin(), metisNeighborList.cend() );
   }
 
   /**
