@@ -90,7 +90,7 @@ void CellElementSubRegion::copyFromCellBlock( CellBlockABC const & cellBlock )
   this->m_localToGlobalMap = cellBlock.localToGlobalMap();
 
   this->constructGlobalToLocalMap();
-  const_cast<CellBlockABC &>( cellBlock ).forExternalProperties( [&]( WrapperBase & wrapper )
+  const_cast< CellBlockABC & >( cellBlock ).forExternalProperties( [&]( WrapperBase & wrapper )
   {
     types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
     {
