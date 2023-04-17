@@ -87,7 +87,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     // We have to make sure that the meshLevel is in the target of the boundary conditions
     // This is important for multi-level simulations, such as high-order wave propagation
     MeshObjectPath const & objectPath = fs.getMeshObjectPaths();
-    if ( !objectPath.containsMeshLevel( mesh ) )
+    if( !objectPath.containsMeshLevel( mesh ) )
     {
       return;
     }
@@ -182,7 +182,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     for( auto const & mapEntry : isTargetSetEmpty )
     {
       GEOS_LOG_RANK_0_IF( ( mapEntry.second == 1 ), // target set is empty
-                         GEOS_FMT( "\nWarning!"
+                          GEOS_FMT( "\nWarning!"
                                     "\n{}: this FieldSpecification targets (an) empty set(s)"
                                     "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`. \n",
                                     fs.getName(), mapEntry.first, fs.getObjectPath() ) );
@@ -194,8 +194,8 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
         "\n{}: there is no {} named `{}` under the {} `{}`, check the XML input\n";
       string const errorMsg =
         GEOS_FMT( fieldNameNotFoundMessage,
-                   fs.getName(), FieldSpecificationBase::viewKeyStruct::fieldNameString(), fs.getFieldName(),
-                   FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
+                  fs.getName(), FieldSpecificationBase::viewKeyStruct::fieldNameString(), fs.getFieldName(),
+                  FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
       if( areAllSetsEmpty )
       {
         GEOS_LOG_RANK_0( errorMsg );
