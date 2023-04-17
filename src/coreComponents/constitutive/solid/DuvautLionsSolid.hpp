@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_DUVAUTLIONSSOLID_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_DUVAUTLIONSSOLID_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_DUVAUTLIONSSOLID_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_DUVAUTLIONSSOLID_HPP_
 
 #include "constitutive/solid/SolidBase.hpp"
 #include "ElasticIsotropic.hpp"
@@ -30,7 +30,7 @@
 #include "SolidModelDiscretizationOpsIsotropic.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -65,7 +65,7 @@ public:
 
   using UPDATE_BASE::m_disableInelasticity;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const & timeIncrement,
@@ -110,8 +110,8 @@ public:
 
 //TODO: modify implementation of smallStrainUpdate to use optimized stiffness -
 // this implementation uses full stiffness tensor
-//  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
+//  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const & timeIncrement,
@@ -182,6 +182,6 @@ protected:
 };
 
 }
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_DUVAUTLIONSSOLID_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_DUVAUTLIONSSOLID_HPP_ */

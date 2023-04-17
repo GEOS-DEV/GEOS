@@ -107,7 +107,7 @@ public:
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate_ElasticOnly( localIndex const k,
                                               localIndex const q,
                                               real64 const & timeIncrement,
@@ -125,8 +125,8 @@ public:
     m_oldState[k][q] = m_newState[k][q];
   }
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   virtual void viscousStateUpdate( localIndex const k,
                                    localIndex const q,
                                    real64 beta ) const override
@@ -338,8 +338,8 @@ void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
   return;
 }
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void DruckerPragerExtendedUpdates::smallStrainUpdate_ElasticOnly( localIndex const k,
                                                                   localIndex const q,
                                                                   real64 const & timeIncrement,

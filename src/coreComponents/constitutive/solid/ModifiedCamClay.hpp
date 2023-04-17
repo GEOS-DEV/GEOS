@@ -132,7 +132,7 @@ public:
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate_ElasticOnly( localIndex const k,
                                               localIndex const q,
                                               real64 const & timeIncrement,
@@ -161,8 +161,8 @@ public:
     m_oldPreConsolidationPressure[k][q] = m_newPreConsolidationPressure[k][q];
   }
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   virtual void viscousStateUpdate( localIndex const k,
                                    localIndex const q,
                                    real64 beta ) const override
@@ -227,7 +227,7 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
 {
 
   // Rename variables for easier implementation
-  GEOSX_UNUSED_VAR( timeIncrement );
+  GEOS_UNUSED_VAR( timeIncrement );
   real64 const oldPc  = m_oldPreConsolidationPressure[k][q];   //pre-consolidation pressure
   real64 const mu     = m_shearModulus[k];
   real64 const p0     = m_refPressure;
@@ -440,8 +440,8 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
   return;
 }
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ModifiedCamClayUpdates::smallStrainUpdate_ElasticOnly( localIndex const k,
                                                             localIndex const q,
                                                             real64 const & timeIncrement,
@@ -450,7 +450,7 @@ void ModifiedCamClayUpdates::smallStrainUpdate_ElasticOnly( localIndex const k,
                                                             real64 ( & stiffness )[6][6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
-  GEOSX_UNUSED_VAR( timeIncrement );
+  GEOS_UNUSED_VAR( timeIncrement );
   ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
   return;
 }

@@ -114,7 +114,7 @@ public:
                                  localIndex const q,
                                  real64 ( &elasticStrain )[6] ) const override final;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void viscousStateUpdate( localIndex const k,
                                    localIndex const q,
                                    real64 beta ) const override;
@@ -233,7 +233,7 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
 {
   //smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
   // Rename variables for easier implementation
-  GEOSX_UNUSED_VAR( timeIncrement );
+  GEOS_UNUSED_VAR( timeIncrement );
   real64 const mu     = m_shearModulus[k];
   real64 const p0     = m_refPressure;
   real64 const eps_v0 = m_refStrainVol;
@@ -316,7 +316,7 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
 {
   //smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
   // Rename variables for easier implementation
-  GEOSX_UNUSED_VAR( timeIncrement );
+  GEOS_UNUSED_VAR( timeIncrement );
   real64 const mu     = m_shearModulus[k];
   real64 const p0     = m_refPressure;
   real64 const eps_v0 = m_refStrainVol;
@@ -392,15 +392,15 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   stiffness.m_shearModulus = m_shearModulus[k];
 }
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ElasticIsotropicPressureDependentUpdates::viscousStateUpdate( localIndex const k,
                                                                    localIndex const q,
                                                                    real64 beta ) const
 {
-  GEOSX_UNUSED_VAR( k );
-  GEOSX_UNUSED_VAR( q );
-  GEOSX_UNUSED_VAR( beta );
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( beta );
 }
 
 

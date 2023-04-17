@@ -253,7 +253,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
                                                                       real64 const ( &strainIncrement )[6],
                                                                       real64 ( & stress )[6] ) const
 {
-  GEOSX_UNUSED_VAR( timeIncrement );
+  GEOS_UNUSED_VAR( timeIncrement );
   smallStrainNoStateUpdate_StressOnly( k, q, strainIncrement, stress ); // stress =  incrementalStress
   LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q] );            // stress += m_oldStress
   saveStress( k, q, stress );                                           // m_newStress = stress
@@ -299,14 +299,14 @@ void ElasticTransverseIsotropicUpdates::hypoUpdate( localIndex const k,
                                                     real64 ( & stress )[6],
                                                     real64 ( & stiffness )[6][6] ) const
 {
-  GEOSX_UNUSED_VAR( k );
-  GEOSX_UNUSED_VAR( q );
-  GEOSX_UNUSED_VAR( timeIncrement );
-  GEOSX_UNUSED_VAR( Ddt );
-  GEOSX_UNUSED_VAR( Rot );
-  GEOSX_UNUSED_VAR( stress );
-  GEOSX_UNUSED_VAR( stiffness );
-  GEOSX_ERROR( "hypoUpdate() disabled for anisotropic models when using Hughes-Winget integration" );
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( timeIncrement );
+  GEOS_UNUSED_VAR( Ddt );
+  GEOS_UNUSED_VAR( Rot );
+  GEOS_UNUSED_VAR( stress );
+  GEOS_UNUSED_VAR( stiffness );
+  GEOS_ERROR( "hypoUpdate() disabled for anisotropic models when using Hughes-Winget integration" );
 }
 
 /**

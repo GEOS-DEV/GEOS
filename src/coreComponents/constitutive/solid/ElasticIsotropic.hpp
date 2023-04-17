@@ -140,7 +140,7 @@ public:
     return m_bulkModulus[k];
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void viscousStateUpdate( localIndex const k,
                                    localIndex const q,
                                    real64 beta ) const override;
@@ -280,7 +280,7 @@ void ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                             real64 const ( &strainIncrement )[6],
                                                             real64 ( & stress )[6] ) const
 {
-  GEOSX_UNUSED_VAR( timeIncrement );
+  GEOS_UNUSED_VAR( timeIncrement );
   smallStrainNoStateUpdate_StressOnly( k, q, strainIncrement, stress ); // stress  = incrementalStress
   LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q] );            // stress += m_oldStress
   saveStress( k, q, stress );                                           // m_newStress = stress
@@ -315,15 +315,15 @@ void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
   stiffness.m_shearModulus = m_shearModulus[k];
 }
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ElasticIsotropicUpdates::viscousStateUpdate( localIndex const k,
                                                   localIndex const q,
                                                   real64 beta ) const
 {
-  GEOSX_UNUSED_VAR( k );
-  GEOSX_UNUSED_VAR( q );
-  GEOSX_UNUSED_VAR( beta );
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( beta );
 }
 
 

@@ -186,16 +186,16 @@ public:
                                   real64 ( & stress )[6],
                                   real64 ( & stiffness )[6][6] ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( timeIncrement );
-    GEOSX_UNUSED_VAR( strainIncrement );
-    GEOSX_UNUSED_VAR( stress );
-    GEOSX_UNUSED_VAR( stiffness );
-    GEOSX_ERROR( "smallStrainUpdate() not implemented for this model" );
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( timeIncrement );
+    GEOS_UNUSED_VAR( strainIncrement );
+    GEOS_UNUSED_VAR( stress );
+    GEOS_UNUSED_VAR( stiffness );
+    GEOS_ERROR( "smallStrainUpdate() not implemented for this model" );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate_ElasticOnly( localIndex const k,
                                               localIndex const q,
                                               real64 const & timeIncrement,
@@ -203,13 +203,13 @@ public:
                                               real64 ( & stress )[6],
                                               real64 ( & stiffness )[6][6] ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( timeIncrement );
-    GEOSX_UNUSED_VAR( strainIncrement );
-    GEOSX_UNUSED_VAR( stress );
-    GEOSX_UNUSED_VAR( stiffness );
-    GEOSX_ERROR( "smallStrainUpdate_ElasticOnly() not implemented for this model, or the model is already elastic." );
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( timeIncrement );
+    GEOS_UNUSED_VAR( strainIncrement );
+    GEOS_UNUSED_VAR( stress );
+    GEOS_UNUSED_VAR( stiffness );
+    GEOS_ERROR( "smallStrainUpdate_ElasticOnly() not implemented for this model, or the model is already elastic." );
   }
 
   /**
@@ -351,12 +351,12 @@ public:
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( & stress )[6] ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( timeIncrement );
-    GEOSX_UNUSED_VAR( strainIncrement );
-    GEOSX_UNUSED_VAR( stress );
-    GEOSX_ERROR( "smallStrainUpdate_StressOnly() not implemented for this model" );
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( timeIncrement );
+    GEOS_UNUSED_VAR( strainIncrement );
+    GEOS_UNUSED_VAR( stress );
+    GEOS_ERROR( "smallStrainUpdate_StressOnly() not implemented for this model" );
   }
 
 
@@ -466,15 +466,15 @@ public:
    *
    * @param beta time-dependent parameter
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void viscousStateUpdate( localIndex const k,
                                    localIndex const q,
                                    real64 beta ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( beta );
-    GEOSX_ERROR( "viscousStateUpdate() not implemented for this model" );
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( beta );
+    GEOS_ERROR( "viscousStateUpdate() not implemented for this model" );
   }
 
   /**
