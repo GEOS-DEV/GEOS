@@ -19,7 +19,7 @@
 #include "ReactiveMultiFluidFields.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -63,9 +63,9 @@ void ReactiveMultiFluid::postProcessInput()
 {
   MultiFluidBase::postProcessInput();
 
-  GEOSX_THROW_IF_NE_MSG( numFluidPhases(), 1,
-                         GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
-                         InputError );
+  GEOS_THROW_IF_NE_MSG( numFluidPhases(), 1,
+                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
+                        InputError );
 
   createChemicalReactions();
 }
@@ -93,4 +93,4 @@ void ReactiveMultiFluid::createChemicalReactions()
 
 } //namespace constitutive
 
-} //namespace geosx
+} //namespace geos

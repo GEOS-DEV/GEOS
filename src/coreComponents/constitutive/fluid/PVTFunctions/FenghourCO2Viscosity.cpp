@@ -21,7 +21,7 @@
 #include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -105,7 +105,7 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_THROW( GEOSX_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
+    GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
   }
 
   localIndex const nP = tableCoords.nPressures();
@@ -156,4 +156,4 @@ REGISTER_CATALOG_ENTRY( PVTFunctionBase, FenghourCO2Viscosity, string const &, s
 
 } // namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos

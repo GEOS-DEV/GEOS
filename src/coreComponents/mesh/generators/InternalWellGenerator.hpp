@@ -17,12 +17,12 @@
  *
  */
 
-#ifndef GEOSX_MESH_GENERATORS_INTERNALWELLGENERATOR_HPP_
-#define GEOSX_MESH_GENERATORS_INTERNALWELLGENERATOR_HPP_
+#ifndef GEOS_MESH_GENERATORS_INTERNALWELLGENERATOR_HPP_
+#define GEOS_MESH_GENERATORS_INTERNALWELLGENERATOR_HPP_
 
 #include "MeshGeneratorBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -109,11 +109,11 @@ public:
                            bool isMaterialField,
                            dataRepository::WrapperBase & wrapper ) const override
   {
-    GEOSX_UNUSED_VAR( block );
-    GEOSX_UNUSED_VAR( blockName );
-    GEOSX_UNUSED_VAR( meshFieldName );
-    GEOSX_UNUSED_VAR( isMaterialField );
-    GEOSX_UNUSED_VAR( wrapper );
+    GEOS_UNUSED_VAR( block );
+    GEOS_UNUSED_VAR( blockName );
+    GEOS_UNUSED_VAR( meshFieldName );
+    GEOS_UNUSED_VAR( isMaterialField );
+    GEOS_UNUSED_VAR( wrapper );
   }
 
   ///@}
@@ -394,4 +394,4 @@ private:
 };
 }
 
-#endif /* GEOSX_MESH_GENERATORS_INTERNALWELLGENERATOR_HPP_ */
+#endif /* GEOS_MESH_GENERATORS_INTERNALWELLGENERATOR_HPP_ */

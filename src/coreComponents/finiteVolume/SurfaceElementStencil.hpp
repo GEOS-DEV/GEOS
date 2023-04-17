@@ -16,12 +16,12 @@
  * @file SurfaceElementStencil.hpp
  */
 
-#ifndef GEOSX_FINITEVOLUME_SURFACEELEMENTSTENCIL_HPP_
-#define GEOSX_FINITEVOLUME_SURFACEELEMENTSTENCIL_HPP_
+#ifndef GEOS_FINITEVOLUME_SURFACEELEMENTSTENCIL_HPP_
+#define GEOS_FINITEVOLUME_SURFACEELEMENTSTENCIL_HPP_
 
 #include "StencilBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /// @cond DO_NOT_DOCUMENT
@@ -85,8 +85,8 @@ public:
    * @brief Give the number of stencil entries.
    * @return The number of stencil entries
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   localIndex size() const
   { return m_elementRegionIndices.size(); }
 
@@ -95,8 +95,8 @@ public:
    * @param[in] index the index of which the stencil size is request
    * @return The number of stencil entries for the provided index
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   localIndex stencilSize( localIndex index ) const
   { return m_elementRegionIndices.sizeOfArray( index ); }
 
@@ -106,8 +106,8 @@ public:
    * @param[in] index of the stencil entry for which to query the size
    * @return the number of points.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   localIndex numPointsInFlux( localIndex index ) const
   {
     return stencilSize( index );
@@ -121,7 +121,7 @@ public:
    * @param[out] weight view weights
    * @param[out] dWeight_dVar derivative of the weights w.r.t to the variable
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeWeights( localIndex iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
                        CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
@@ -136,7 +136,7 @@ public:
    * @param[out] weight view weights
    * @param[out] dWeight_dVar derivative of the weights w.r.t to the variable
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeWeights( localIndex iconn,
                        real64 ( &weight )[maxNumConnections][2],
                        real64 ( &dWeight_dVar )[maxNumConnections][2] ) const;
@@ -152,7 +152,7 @@ public:
    * @param[out] dWeight_dVar1 derivative of the weights w.r.t to the variable 1
    * @param[out] dWeight_dVar2 derivative of the weights w.r.t to the variable 2
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeWeights( localIndex iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
                        CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar1,
@@ -169,7 +169,7 @@ public:
    * @param[in] gravityVector gravity vector
    * @param[out] weight view weights
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeWeights( localIndex iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
                        CoefficientAccessor< arrayView3d< real64 const > > const & coefficientMultiplier,
@@ -187,7 +187,7 @@ public:
    * @param[out] weight2 view on the second weights
    * @param[out] geometricWeight view on the purely geometric weights
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeWeights( localIndex iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient1,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient1Multiplier,
@@ -202,10 +202,10 @@ public:
    * @param[in] iconn connection index
    * @param[out] stabilizationWeight view weights
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeStabilizationWeights( localIndex iconn,
                                     real64 ( & stabilizationWeight )[maxNumConnections][2] ) const
-  { GEOSX_UNUSED_VAR( iconn, stabilizationWeight ); }
+  { GEOS_UNUSED_VAR( iconn, stabilizationWeight ); }
 
   /**
    * @brief Accessor to the CellCenterToEdgeCenter vector
@@ -300,7 +300,7 @@ private:
 
 };
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 SurfaceElementStencilWrapper::
   computeWeights( localIndex iconn,
@@ -364,7 +364,7 @@ SurfaceElementStencilWrapper::
   }
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 SurfaceElementStencilWrapper::
   computeWeights( localIndex iconn,
@@ -416,7 +416,7 @@ SurfaceElementStencilWrapper::
 
 
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 SurfaceElementStencilWrapper::
   computeWeights( localIndex iconn,
@@ -495,7 +495,7 @@ SurfaceElementStencilWrapper::
   }
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 SurfaceElementStencilWrapper::
   computeWeights( localIndex iconn,
@@ -554,7 +554,7 @@ SurfaceElementStencilWrapper::
   }
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 SurfaceElementStencilWrapper::
   computeWeights( localIndex iconn,
@@ -596,6 +596,6 @@ SurfaceElementStencilWrapper::
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FINITEVOLUME_SURFACEELEMENTSTENCIL_HPP_ */
+#endif /* GEOS_FINITEVOLUME_SURFACEELEMENTSTENCIL_HPP_ */

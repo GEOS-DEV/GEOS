@@ -26,7 +26,7 @@
 #endif
 
 
-namespace geosx
+namespace geos
 {
 
 void MpiWrapper::barrier( MPI_Comm const & MPI_PARAM( comm ) )
@@ -407,7 +407,7 @@ int MpiWrapper::activeWaitOrderedCompletePhase( const int participants,
   return MPI_SUCCESS;
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

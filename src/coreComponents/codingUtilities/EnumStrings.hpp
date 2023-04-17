@@ -21,8 +21,8 @@
  * of these strings, like stream insertion/extraction operators.
  */
 
-#ifndef GEOSX_CODINGUTILITIES_ENUMSTRINGS_HPP
-#define GEOSX_CODINGUTILITIES_ENUMSTRINGS_HPP
+#ifndef GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP
+#define GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP
 
 #include "StringUtilities.hpp"
 #include "common/DataTypes.hpp"
@@ -32,7 +32,7 @@
 #include <type_traits>
 #include <algorithm>
 
-namespace geosx
+namespace geos
 {
 
 namespace internal
@@ -135,9 +135,9 @@ struct EnumStrings
     auto const & strings = get();
     std::size_t size = std::distance( std::begin( strings ), std::end( strings ) );
     base_type const index = static_cast< base_type >( e );
-    GEOSX_THROW_IF( index >= LvArray::integerConversion< base_type >( size ),
-                    "Invalid value " << index << " of type " << TypeName< ENUM >::brief() << ". Valid range is 0.." << size - 1,
-                    InputError );
+    GEOS_THROW_IF( index >= LvArray::integerConversion< base_type >( size ),
+                   "Invalid value " << index << " of type " << TypeName< ENUM >::brief() << ". Valid range is 0.." << size - 1,
+                   InputError );
     return strings[ index ];
   }
 
@@ -150,9 +150,9 @@ struct EnumStrings
   {
     auto const & strings = get();
     auto const it = std::find( std::begin( strings ), std::end( strings ), s );
-    GEOSX_THROW_IF( it == std::end( strings ),
-                    "Invalid value '" << s << "' of type " << TypeName< enum_type >::brief() << ". Valid options are: " << concat( ", " ),
-                    InputError );
+    GEOS_THROW_IF( it == std::end( strings ),
+                   "Invalid value '" << s << "' of type " << TypeName< enum_type >::brief() << ". Valid options are: " << concat( ", " ),
+                   InputError );
     enum_type const e = static_cast< enum_type >( LvArray::integerConversion< base_type >( std::distance( std::begin( strings ), it ) ) );
     return e;
   }
@@ -179,6 +179,6 @@ struct TypeRegex< ENUM, std::enable_if_t< internal::HasEnumStrings< ENUM > > >
   }
 };
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_CODINGUTILITIES_ENUMSTRINGS_HPP
+#endif //GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP

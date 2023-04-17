@@ -44,7 +44,7 @@
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
  */
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -70,7 +70,7 @@ void SinglePhaseFVM< BASE >::initializePreSubGroups()
 
   if( !fvManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )
   {
-    GEOSX_ERROR( "A discretization deriving from FluxApproximationBase must be selected with SinglePhaseFVM" );
+    GEOS_ERROR( "A discretization deriving from FluxApproximationBase must be selected with SinglePhaseFVM" );
   }
 }
 
@@ -98,7 +98,7 @@ void SinglePhaseFVM< BASE >::setupSystem( DomainPartition & domain,
                                           ParallelVector & solution,
                                           bool const setSparsity )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   BASE::setupSystem( domain,
                      dofManager,
                      localMatrix,
@@ -109,13 +109,13 @@ void SinglePhaseFVM< BASE >::setupSystem( DomainPartition & domain,
 }
 
 template< typename BASE >
-real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                                      real64 const & GEOSX_UNUSED_PARAM( dt ),
+real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                                      real64 const & GEOS_UNUSED_PARAM( dt ),
                                                       DomainPartition const & domain,
                                                       DofManager const & dofManager,
                                                       arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   integer constexpr numNorm = 2; // mass balance and energy balance
   array1d< real64 > localResidualNorm;
@@ -220,8 +220,8 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOSX_UNUSE
 
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
-      std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ",
-                              FlowSolverBase::coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] );
+      std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ",
+                             FlowSolverBase::coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] );
     }
   }
   else
@@ -238,7 +238,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOSX_UNUSE
 
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
-      std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", FlowSolverBase::coupledSolverAttributePrefix(), residualNorm );
+      std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", FlowSolverBase::coupledSolverAttributePrefix(), residualNorm );
     }
   }
   return residualNorm;
@@ -296,14 +296,14 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
 }
 
 template< >
-void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
+void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),
                                                            real64 const dt,
                                                            DomainPartition const & domain,
                                                            DofManager const & dofManager,
                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                            arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -353,14 +353,14 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOSX_UN
 
 
 template<>
-void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
+void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),
                                                                    real64 const dt,
                                                                    DomainPartition const & domain,
                                                                    DofManager const & dofManager,
                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                    arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -409,7 +409,7 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
 
 
 template< typename BASE >
-void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
+void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),
                                                            real64 const dt,
                                                            DomainPartition const & domain,
                                                            DofManager const & dofManager,
@@ -417,7 +417,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
                                                            arrayView1d< real64 > const & localRhs,
                                                            string const & jumpDofKey )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -499,7 +499,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
 }
 
 template< typename BASE >
-void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
+void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),
                                                          real64 const dt,
                                                          DomainPartition const & domain,
                                                          DofManager const & dofManager,
@@ -507,7 +507,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
                                                          arrayView1d< real64 > const & localRhs,
                                                          CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -595,7 +595,7 @@ SinglePhaseFVM< BASE >::applyBoundaryConditions( real64 const time_n,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   BASE::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
   if( !BASE::m_keepFlowVariablesConstantDuringInitStep )
@@ -622,7 +622,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                    arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -655,9 +655,9 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
-                                     this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                     fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
+                                   this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                   fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
       }
 
       if( stencil.size() == 0 )
@@ -688,9 +688,9 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
-                                     this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                     fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
+                                   this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                   fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
       }
 
       if( stencil.size() == 0 )
@@ -755,12 +755,12 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
 }
 
 template<>
-void SinglePhaseFVM< SinglePhaseProppantBase >::applyAquiferBC( real64 const GEOSX_UNUSED_PARAM( time ),
-                                                                real64 const GEOSX_UNUSED_PARAM( dt ),
-                                                                DomainPartition & GEOSX_UNUSED_PARAM( domain ),
-                                                                DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
-                                                                CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
-                                                                arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) ) const
+void SinglePhaseFVM< SinglePhaseProppantBase >::applyAquiferBC( real64 const GEOS_UNUSED_PARAM( time ),
+                                                                real64 const GEOS_UNUSED_PARAM( dt ),
+                                                                DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                                                DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                                                CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                                                arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) const
 {
   // Aquifer does not make sense for proppant flow in fractures
 }
@@ -773,7 +773,7 @@ void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                         arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -842,4 +842,4 @@ typedef SinglePhaseFVM< SinglePhaseProppantBase > Proppant;
 REGISTER_CATALOG_ENTRY( SolverBase, NoProppant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( SolverBase, Proppant, string const &, Group * const )
 }
-} /* namespace geosx */
+} /* namespace geos */

@@ -12,13 +12,13 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MESH_MPICOMMUNICATIONS_PARTITIONBASE_HPP_
-#define GEOSX_MESH_MPICOMMUNICATIONS_PARTITIONBASE_HPP_
+#ifndef GEOS_MESH_MPICOMMUNICATIONS_PARTITIONBASE_HPP_
+#define GEOS_MESH_MPICOMMUNICATIONS_PARTITIONBASE_HPP_
 
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -106,4 +106,4 @@ protected:
 
 }
 
-#endif /* GEOSX_MESH_MPICOMMUNICATIONS_PARTITIONBASE_HPP_ */
+#endif /* GEOS_MESH_MPICOMMUNICATIONS_PARTITIONBASE_HPP_ */

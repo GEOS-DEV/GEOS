@@ -28,7 +28,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -115,7 +115,7 @@ setMGRStrategy()
 {
   if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM )
   {
-    GEOSX_LOG_RANK_0( "The MGR strategy for hybrid FVM is not implemented" );
+    GEOS_LOG_RANK_0( "The MGR strategy for hybrid FVM is not implemented" );
   }
   else
   {
@@ -149,7 +149,7 @@ addCouplingSparsityPattern( DomainPartition const & domain,
                             DofManager const & dofManager,
                             SparsityPatternView< globalIndex > const & pattern ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel const & mesh,
@@ -301,7 +301,7 @@ assembleCouplingTerms( real64 const time_n,
         perforationData->getField< fields::perforation::reservoirElementIndex >();
 
       // loop over the perforations and add the rates to the residual and jacobian
-      forAll< parallelDevicePolicy<> >( perforationData->size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
+      forAll< parallelDevicePolicy<> >( perforationData->size(), [=] GEOS_HOST_DEVICE ( localIndex const iperf )
       {
         // local working variables and arrays
         localIndex eqnRowIndices[ 2 ] = { -1 };
@@ -371,4 +371,4 @@ REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseFlowAndWells, string const &, Gro
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsAndWells, string const &, Group * const )
 }
 
-} /* namespace geosx */
+} /* namespace geos */

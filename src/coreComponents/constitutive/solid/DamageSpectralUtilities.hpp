@@ -23,18 +23,18 @@
  *
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_DAMAGESPECTRALUTILITIES_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_DAMAGESPECTRALUTILITIES_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_DAMAGESPECTRALUTILITIES_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_DAMAGESPECTRALUTILITIES_HPP_
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 #include "LvArray/src/output.hpp"
 #include "LvArray/src/tensorOps.hpp"
-namespace geosx
+namespace geos
 {
 
 //get the positive part only of tensor T using spectral split
-GEOSX_HOST_DEVICE inline
+GEOS_HOST_DEVICE inline
 void PositivePartOfTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& positivePart)[6] )
 {
   real64 positiveEigs[6]={};
@@ -46,7 +46,7 @@ void PositivePartOfTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 
 }
 
 //get the negative part only of tensor T using spectral split
-GEOSX_HOST_DEVICE inline
+GEOS_HOST_DEVICE inline
 void NegativePartOfTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& negativePart)[6] )
 {
   real64 negativeEigs[6]={};
@@ -58,7 +58,7 @@ void NegativePartOfTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 
 }
 
 //implements the : operator between two second-order tensors in voigt form
-GEOSX_HOST_DEVICE inline
+GEOS_HOST_DEVICE inline
 real64 doubleContraction( real64 (& A)[6], real64 (& B)[6] )
 {
   real64 ans = 0;
@@ -78,7 +78,7 @@ real64 doubleContraction( real64 (& A)[6], real64 (& B)[6] )
 
 
 //heaviside function, return 1 for positive, 0 for negatives and 0.5 if argument is zero or very close
-GEOSX_HOST_DEVICE inline
+GEOS_HOST_DEVICE inline
 real64 heaviside( real64 x )
 {
   if( fabs( x ) < 1e-12 )
@@ -93,12 +93,12 @@ real64 heaviside( real64 x )
   {
     return 0;
   }
-  GEOSX_ERROR( "This function was not supposed to reach this line" );
+  GEOS_ERROR( "This function was not supposed to reach this line" );
   return 1000000;
 }
 
 //computes a tensor that enters the calculation of the Jacobian of the Spectral Split - check reference paper for more details
-GEOSX_HOST_DEVICE inline
+GEOS_HOST_DEVICE inline
 void QTensor( real64 const (&eigvector)[3], real64 (& Q)[6][6] )
 {
   real64 M[6]={0};
@@ -113,10 +113,10 @@ void QTensor( real64 const (&eigvector)[3], real64 (& Q)[6][6] )
 }
 
 //computes another tensor that enters the calculation of the Jacobian of the Spectral Split - check reference paper for more details
-GEOSX_HOST_DEVICE inline
+GEOS_HOST_DEVICE inline
 void GTensor( real64 (& eigvec1)[3], real64 (& eigvec2)[3], real64 (& G)[6][6] )
 {
-  GEOSX_UNUSED_VAR( eigvec1, eigvec2, G );
+  GEOS_UNUSED_VAR( eigvec1, eigvec2, G );
   real64 M1[6]={0};
   real64 M2[6]={0};
   LvArray::tensorOps::symRij_eq_AiAj< 3 >( M1, eigvec1 );
@@ -172,7 +172,7 @@ void GTensor( real64 (& eigvec1)[3], real64 (& eigvec2)[3], real64 (& G)[6][6] )
  * Note that we don't take the tensor T as a parameter, only its eigenvectors and eigenvalues.
  *
  */
-GEOSX_HOST_DEVICE inline
+GEOS_HOST_DEVICE inline
 void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& PositiveProjector)[6][6] )
 {
   //test for repeated eigenvalues
@@ -250,7 +250,7 @@ void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
 }
 
 //This is the negative projector, check the documentation of the positive projector for more details.
-GEOSX_HOST_DEVICE inline
+GEOS_HOST_DEVICE inline
 void NegativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& NegativeProjector)[6][6] )
 {
   //test for repeated eigenvalues
@@ -328,7 +328,7 @@ void NegativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
 }
 
 //this function tests the getStiffness function from DamageSpectral.hpp
-GEOSX_HOST_DEVICE inline
+GEOS_HOST_DEVICE inline
 void getStiffnessTest( real64 (& c)[6][6], real64 (& strain)[6], real64 damage )
 {
 
@@ -373,7 +373,7 @@ void getStiffnessTest( real64 (& c)[6][6], real64 (& strain)[6], real64 damage )
 }
 
 //this function tests the GetStress function of DamageSpectral.hpp
-GEOSX_HOST_DEVICE inline
+GEOS_HOST_DEVICE inline
 void getTestStress( real64 (& strain)[6], real64 (& stress)[6] )
 {
 
@@ -415,4 +415,4 @@ void getTestStress( real64 (& strain)[6], real64 (& stress)[6] )
 
 } //namespacegeosx
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_DAMAGESPECTRALUTILITIES_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_DAMAGESPECTRALUTILITIES_HPP_ */

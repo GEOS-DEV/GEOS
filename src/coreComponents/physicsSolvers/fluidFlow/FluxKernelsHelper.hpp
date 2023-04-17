@@ -16,8 +16,8 @@
  * @file FluxKernelsHelper.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_FLUXKERNELSHELPER_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_FLUXKERNELSHELPER_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_FLUXKERNELSHELPER_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_FLUXKERNELSHELPER_HPP
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -25,7 +25,7 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace fluxKernelsHelper
@@ -34,8 +34,8 @@ namespace fluxKernelsHelper
 template< typename VIEWTYPE >
 using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void computeSinglePhaseFlux( localIndex const ( &seri )[2],
                              localIndex const ( &sesri )[2],
                              localIndex const ( &sei )[2],
@@ -162,7 +162,7 @@ struct AquiferBCKernel
 
     RAJA::ReduceSum< parallelDeviceReduce, real64 > targetSetSumFluxes( 0.0 );
 
-    forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+    forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
     {
       localIndex const er  = seri( iconn, Order::ELEM );
       localIndex const esr = sesri( iconn, Order::ELEM );
@@ -188,6 +188,6 @@ struct AquiferBCKernel
 
 } // namespace fluxKernelsHelper
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_FLUXKERNELSHELPER_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_FLUXKERNELSHELPER_HPP

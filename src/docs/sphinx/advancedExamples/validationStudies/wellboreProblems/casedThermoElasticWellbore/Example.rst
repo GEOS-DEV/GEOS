@@ -19,13 +19,13 @@ This example uses the thermal option of the ``SinglePhasePoromechanics`` solver 
 
    Sketch of a cased thermoelastic wellbore 
 
-Solution to this axisymmetric problem can be obtained in the cylindrical coordinate system by using an implicit 1D finite difference method `(Jane and Lee 1999) <https://www.sciencedirect.com/science/article/abs/pii/S0093641399000828>`__. Results of such analysis will be considered as reference solutions to validate GEOSX results.
+Solution to this axisymmetric problem can be obtained in the cylindrical coordinate system by using an implicit 1D finite difference method `(Jane and Lee 1999) <https://www.sciencedirect.com/science/article/abs/pii/S0093641399000828>`__. Results of such analysis will be considered as reference solutions to validate GEOS results.
 
 
 **Input file**
 
 This benchmark example uses no external input files and everything required is
-contained within two GEOSX xml files that are located at:
+contained within two GEOS xml files that are located at:
 
 .. code-block:: console
 
@@ -210,7 +210,7 @@ Also, periodic events are required to trigger the collection of this data on the
 Results and benchmark
 ---------------------------------
 
-A good agreement between the GEOSX results and analytical results for temperature distribution around the cased wellbore is shown in the figures below:
+A good agreement between the GEOS results and analytical results for temperature distribution around the cased wellbore is shown in the figures below:
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/casedThermoElasticWellbore/thermoElastic_casedWellbore_temperature.py
 
@@ -218,7 +218,7 @@ and the validation for the radial displacement around the cased wellbore is show
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/casedThermoElasticWellbore/thermoElastic_casedWellbore_displacement.py
 
-The validations of the total radial and hoop stress (tangent stress) components computed by GEOSX against reference results are shown in the figure below:
+The validations of the total radial and hoop stress (tangent stress) components computed by GEOS against reference results are shown in the figure below:
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/casedThermoElasticWellbore/thermoElastic_casedWellbore_stress.py
 
@@ -229,4 +229,4 @@ To go further
 **Feedback on this example**
 
 This concludes the cased wellbore example.
-For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
+For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOS-DEV/GEOS/issues>`_.

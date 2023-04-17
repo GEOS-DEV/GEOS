@@ -18,7 +18,7 @@
 
 #include "SinglePhaseConstantThermalConductivity.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -85,16 +85,16 @@ void SinglePhaseConstantThermalConductivity::allocateConstitutiveData( dataRepos
 
 void SinglePhaseConstantThermalConductivity::postProcessInput()
 {
-  GEOSX_THROW_IF( m_thermalConductivityComponents[0] <= 0 ||
-                  m_thermalConductivityComponents[1] <= 0 ||
-                  m_thermalConductivityComponents[2] <= 0,
-                  GEOSX_FMT( "{}: the components of the thermal conductivity tensor must be strictly positive",
-                             getFullName() ),
-                  InputError );
+  GEOS_THROW_IF( m_thermalConductivityComponents[0] <= 0 ||
+                 m_thermalConductivityComponents[1] <= 0 ||
+                 m_thermalConductivityComponents[2] <= 0,
+                 GEOS_FMT( "{}: the components of the thermal conductivity tensor must be strictly positive",
+                           getFullName() ),
+                 InputError );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, SinglePhaseConstantThermalConductivity, string const &, Group * const )
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
