@@ -51,7 +51,7 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace singlePhaseBaseKernels;
 using namespace singlePhaseFVMKernels;
-using namespace singlePhasePoromechanicsFluxKernels;
+using namespace singlePhaseProppantFluxKernels;
 
 template< typename BASE >
 SinglePhaseFVM< BASE >::SinglePhaseFVM( const string & name,
@@ -381,28 +381,28 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-      typename FaceBasedAssemblyKernelBase::SinglePhaseFlowAccessors flowAccessors( elemManager, getName() );
-      typename FaceBasedAssemblyKernelBase::SlurryFluidAccessors fluidAccessors( elemManager, getName() );
-      typename FaceBasedAssemblyKernelBase::ProppantPermeabilityAccessors permAccessors( elemManager, getName() );
+      typename singlePhaseProppantFluxKernels::FaceBasedAssemblyKernelBase::SinglePhaseFlowAccessors flowAccessors( elemManager, getName() );
+      typename singlePhaseProppantFluxKernels::FaceBasedAssemblyKernelBase::SlurryFluidAccessors fluidAccessors( elemManager, getName() );
+      typename singlePhaseProppantFluxKernels::FaceBasedAssemblyKernelBase::ProppantPermeabilityAccessors permAccessors( elemManager, getName() );
 
-      FaceElementFluxKernel::launch( stencilWrapper,
-                                     dt,
-                                     dofManager.rankOffset(),
-                                     elemDofNumber.toNestedViewConst(),
-                                     flowAccessors.get< fields::ghostRank >(),
-                                     flowAccessors.get< fields::flow::pressure >(),
-                                     flowAccessors.get< fields::flow::gravityCoefficient >(),
-                                     fluidAccessors.get< fields::singlefluid::density >(),
-                                     fluidAccessors.get< fields::singlefluid::dDensity_dPressure >(),
-                                     flowAccessors.get< fields::flow::mobility >(),
-                                     flowAccessors.get< fields::flow::dMobility_dPressure >(),
-                                     permAccessors.get< fields::permeability::permeability >(),
-                                     permAccessors.get< fields::permeability::dPerm_dPressure >(),
-                                     permAccessors.get< fields::permeability::dPerm_dDispJump >(),
-                                     permAccessors.get< fields::permeability::permeabilityMultiplier >(),
-                                     this->gravityVector(),
-                                     localMatrix,
-                                     localRhs );
+      singlePhaseProppantFluxKernels::FaceElementFluxKernel::launch( stencilWrapper,
+                                                                     dt,
+                                                                     dofManager.rankOffset(),
+                                                                     elemDofNumber.toNestedViewConst(),
+                                                                     flowAccessors.get< fields::ghostRank >(),
+                                                                     flowAccessors.get< fields::flow::pressure >(),
+                                                                     flowAccessors.get< fields::flow::gravityCoefficient >(),
+                                                                     fluidAccessors.get< fields::singlefluid::density >(),
+                                                                     fluidAccessors.get< fields::singlefluid::dDensity_dPressure >(),
+                                                                     flowAccessors.get< fields::flow::mobility >(),
+                                                                     flowAccessors.get< fields::flow::dMobility_dPressure >(),
+                                                                     permAccessors.get< fields::permeability::permeability >(),
+                                                                     permAccessors.get< fields::permeability::dPerm_dPressure >(),
+                                                                     permAccessors.get< fields::permeability::dPerm_dDispJump >(),
+                                                                     permAccessors.get< fields::permeability::permeabilityMultiplier >(),
+                                                                     this->gravityVector(),
+                                                                     localMatrix,
+                                                                     localRhs );
     } );
   } );
 }
