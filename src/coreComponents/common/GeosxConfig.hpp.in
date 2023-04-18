@@ -33,14 +33,13 @@
 #cmakedefine GEOSX_USE_OPENMP
 
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
-#cmakedefine GEOSX_USE_CUDA
-
+#cmakedefine GEOS_USE_CUDA
 
 /// Enables use of CUDA NVToolsExt (CMake option ENABLE_CUDA_NVTOOLSEXT)
-#cmakedefine GEOSX_USE_CUDA_NVTOOLSEXT
+#cmakedefine GEOS_USE_CUDA_NVTOOLSEXT
 
 /// Enables use of HIP (CMake option ENABLE_HIP)
-#cmakedefine GEOSX_USE_HIP
+#cmakedefine GEOS_USE_HIP
 
 /// Enables use of PVTPackage (CMake option ENABLE_PVTPackage)
 #cmakedefine GEOSX_USE_PVTPackage
@@ -78,11 +77,11 @@
 /// Denotes HYPRE using CPU
 #define GEOSX_USE_HYPRE_CPU 0
 /// Denotes HYPRE using CUDA
-#define GEOSX_USE_HYPRE_CUDA 1
+#define GEOS_USE_HYPRE_CUDA 1
 /// Denotes HYPRE using HIP
-#define GEOSX_USE_HYPRE_HIP 2
+#define GEOS_USE_HYPRE_HIP 2
 /// Macro determining what parellel interface hypre is using
-#cmakedefine GEOSX_USE_HYPRE_DEVICE @GEOSX_USE_HYPRE_DEVICE@
+#cmakedefine GEOS_USE_HYPRE_DEVICE @GEOS_USE_HYPRE_DEVICE@
 
 /// Enables use of SuperLU_dist library through HYPRE (CMake option ENABLE_SUPERLU_DIST)
 #cmakedefine GEOSX_USE_SUPERLU_DIST
@@ -174,9 +173,9 @@
 /// Version information for CUDAToolkit
 #cmakedefine CUDAToolkit_VERSION @CUDAToolkit_VERSION@
 
-#if defined(GEOSX_USE_CUDA) || defined(GEOSX_USE_HIP)
+#if defined(GEOS_USE_CUDA) || defined(GEOS_USE_HIP)
 // This needs to be placed into this header in order to appropriately replace
-//  the old usage of GEOSX_USE_CUDA, since we detect whether it is defined
+//  the old usage of GEOS_USE_CUDA, since we detect whether it is defined
 //  rather than a value, not having it in the *same* header can cauase nebulous
 //  compilation problems including the USD of arrays changing depending the scope
 #define GEOS_USE_DEVICE

@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# Base configuration for LC Quartz builds
+# Base configuration for LC Lassen builds
 # Calling configuration file must define the following CMAKE variables:
 #
 # MPI_HOME

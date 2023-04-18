@@ -381,7 +381,7 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
           pres.move( hostMemorySpace, true );
           real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
           pres[ei] += dP;
-#if defined(GEOSX_USE_CUDA)
+#if defined(GEOS_USE_CUDA)
           pres.move( parallelDeviceMemorySpace, false );
 #endif
 
@@ -416,7 +416,7 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
 
           compFrac.move( hostMemorySpace, true );
           compFrac[ei][jc] += perturbParameter;
-#if defined(GEOSX_USE_CUDA)
+#if defined(GEOS_USE_CUDA)
           compFrac.move( parallelDeviceMemorySpace, false );
 #endif
 

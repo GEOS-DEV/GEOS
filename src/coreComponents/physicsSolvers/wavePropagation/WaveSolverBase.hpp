@@ -24,12 +24,12 @@
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "common/lifoStorage.hpp"
-#if !defined( GEOSX_USE_HIP )
+#if !defined( GEOS_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #endif
 
 
-#if !defined( GEOSX_USE_HIP )
+#if !defined( GEOS_USE_HIP )
 #define SEM_FE_TYPES \
   finiteElement::Q1_Hexahedron_Lagrange_GaussLobatto, \
   finiteElement::Q2_Hexahedron_Lagrange_GaussLobatto, \

@@ -67,7 +67,7 @@ void RAJA_INLINE parallelHostSync() { }
 
 #endif
 
-#if defined(GEOSX_USE_CUDA)
+#if defined(GEOS_USE_CUDA)
 
 auto const parallelDeviceMemorySpace = LvArray::MemorySpace::cuda;
 
@@ -93,7 +93,7 @@ RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && stream, const localIndex end
                                  std::forward< LAMBDA >( body ) );
 }
 
-#elif defined(GEOSX_USE_HIP)
+#elif defined(GEOS_USE_HIP)
 
 // auto const parallelDeviceMemorySpace = hostMemorySpace;
 
@@ -182,7 +182,7 @@ struct PolicyMap< RAJA::omp_parallel_for_exec >
 };
 #endif
 
-#if defined(GEOSX_USE_CUDA)
+#if defined(GEOS_USE_CUDA)
 template< unsigned long BLOCK_SIZE >
 struct PolicyMap< RAJA::cuda_exec< BLOCK_SIZE > >
 {
@@ -191,7 +191,7 @@ struct PolicyMap< RAJA::cuda_exec< BLOCK_SIZE > >
 };
 #endif
 
-#if defined(GEOSX_USE_HIP)
+#if defined(GEOS_USE_HIP)
 template< unsigned long BLOCK_SIZE >
 struct PolicyMap< RAJA::hip_exec< BLOCK_SIZE > >
 {

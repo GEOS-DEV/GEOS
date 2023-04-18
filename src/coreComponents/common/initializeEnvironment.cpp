@@ -39,11 +39,11 @@
 #include <omp.h>
 #endif
 
-#if defined( GEOSX_USE_CUDA )
+#if defined( GEOS_USE_CUDA )
 #include <cuda.h>
 #endif
 
-#if defined( GEOSX_USE_HIP )
+#if defined( GEOS_USE_HIP )
 #include <hip/hip_runtime.h>
 #endif
 
@@ -199,7 +199,7 @@ void setupCaliper( cali::ConfigManager & caliperManager,
   // CUDA info
   int cudaRuntimeVersion = 0;
   int cudaDriverVersion = 0;
-#if defined( GEOSX_USE_CUDA )
+#if defined( GEOS_USE_CUDA )
   adiak::value( "CUDA", "On" );
   GEOS_ERROR_IF_NE( cudaSuccess, cudaRuntimeGetVersion( &cudaRuntimeVersion ) );
   GEOS_ERROR_IF_NE( cudaSuccess, cudaDriverGetVersion( &cudaDriverVersion ) );

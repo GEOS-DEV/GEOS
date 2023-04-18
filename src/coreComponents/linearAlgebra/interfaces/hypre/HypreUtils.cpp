@@ -76,7 +76,7 @@ HYPRE_Int SuperLUDistDestroy( HYPRE_Solver solver )
   return hypre_SLUDistDestroy( solver );
 #else
   GEOS_UNUSED_VAR( solver );
-  GEOSX_ERROR( "GEOSX is configured without support for SuperLU_dist." );
+  GEOS_ERROR( "GEOSX is configured without support for SuperLU_dist." );
   return -1;
 #endif
 }

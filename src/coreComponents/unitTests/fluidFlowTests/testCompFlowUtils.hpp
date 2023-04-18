@@ -684,7 +684,7 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
           pres.move( hostMemorySpace, true ); // to get the correct pres after reset
           real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
           pres[ei] += dP;
-#if defined(GEOSX_USE_CUDA)
+#if defined(GEOS_USE_CUDA)
           pres.move( parallelDeviceMemorySpace, false );
 #endif
 
@@ -716,7 +716,7 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
           compDens.move( hostMemorySpace, true ); // to get the correct compDens after reset
           real64 const dRho = perturbParameter * totalDensity;
           compDens[ei][jc] += dRho;
-#if defined(GEOSX_USE_CUDA)
+#if defined(GEOS_USE_CUDA)
           compDens.move( parallelDeviceMemorySpace, false );
 #endif
 
@@ -752,7 +752,7 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
           temp.move( hostMemorySpace, true );
           real64 const dT = perturbParameter * ( temp[ei] + perturbParameter );
           temp[ei] += dT;
-#if defined(GEOSX_USE_CUDA)
+#if defined(GEOS_USE_CUDA)
           temp.move( parallelDeviceMemorySpace, false );
 #endif
 

@@ -226,7 +226,7 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
       facePres.move( hostMemorySpace, true ); // to get the correct facePres after reset
       real64 const dFP = perturbParameter * ( facePres[iface] + perturbParameter );
       facePres[iface] += dFP;
-#if defined(GEOSX_USE_CUDA)
+#if defined(GEOS_USE_CUDA)
       facePres.move( parallelDeviceMemorySpace, false );
 #endif
 
