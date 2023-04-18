@@ -142,6 +142,9 @@ public:
 
     /// @return The key for fractureStencil
     static constexpr char const * fractureStencilString() { return "fractureStencil"; }
+
+    /// @return The key for upwindSchemeName
+    static constexpr char const * upwindSchemeNameString() { return "upwindSchemeName"; }
   };
 
   /**
@@ -171,6 +174,9 @@ public:
    * @param name name of the coefficient.
    */
   void setCoeffName( string const & name );
+
+
+  const string &getUpwindSchemeName() const;
 
 protected:
 
@@ -254,6 +260,9 @@ protected:
 
   /// length scale of the mesh body
   real64 m_lengthScale;
+
+  /// upwind scheme
+  string m_upwindSchemeName;
 
 };
 

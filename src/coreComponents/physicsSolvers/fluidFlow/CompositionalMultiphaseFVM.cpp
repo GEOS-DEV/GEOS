@@ -122,24 +122,26 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      mesh.getElemManager(),
                                                      stencilWrapper,
                                                      dt,
+                                                     fluxApprox.getUpwindSchemeName(),
                                                      localMatrix.toViewConstSizes(),
                                                      localRhs.toView() );
       }
       else
       {
-        isothermalCompositionalMultiphaseFVMKernels::
+          isothermalCompositionalMultiphaseFVMKernels::
           FaceBasedAssemblyKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                     m_numPhases,
-                                                     dofManager.rankOffset(),
-                                                     elemDofKey,
-                                                     m_hasCapPressure,
-                                                     getName(),
-                                                     mesh.getElemManager(),
-                                                     stencilWrapper,
-                                                     dt,
-                                                     localMatrix.toViewConstSizes(),
-                                                     localRhs.toView() );
+          createAndLaunch<parallelDevicePolicy<> >(m_numComponents,
+                                                   m_numPhases,
+                                                   dofManager.rankOffset(),
+                                                   elemDofKey,
+                                                   m_hasCapPressure,
+                                                   getName(),
+                                                   mesh.getElemManager(),
+                                                   stencilWrapper,
+                                                   dt,
+                                                   fluxApprox.getUpwindSchemeName(),
+                                                   localMatrix.toViewConstSizes(),
+                                                   localRhs.toView());
       }
 
     } );
@@ -184,6 +186,7 @@ void CompositionalMultiphaseFVM::assembleStabilizedFluxTerms( real64 const dt,
                                                    mesh.getElemManager(),
                                                    stencilWrapper,
                                                    dt,
+                                                   fluxApprox.getUpwindSchemeName(),
                                                    localMatrix.toViewConstSizes(),
                                                    localRhs.toView() );
 
@@ -741,6 +744,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
 
       if( m_isThermal )
       {
+          //todo (jafranc) extend upwindScheme name if satisfied in isothermalCase
         thermalCompositionalMultiphaseFVMKernels::
           DirichletFaceBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
@@ -753,6 +757,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
                                                      stencilWrapper,
                                                      multiFluidBase,
                                                      dt,
+                                                     fluxApprox.getUpwindSchemeName(),
                                                      localMatrix,
                                                      localRhs );
       }
@@ -770,6 +775,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
                                                      stencilWrapper,
                                                      multiFluidBase,
                                                      dt,
+                                                     fluxApprox.getUpwindSchemeName(),
                                                      localMatrix,
                                                      localRhs );
       }
