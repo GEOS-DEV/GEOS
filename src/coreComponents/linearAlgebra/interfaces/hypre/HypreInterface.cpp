@@ -29,7 +29,7 @@
 #endif
 
 #include "HYPRE_utilities.h"
-#if GEOSX_HYPRE_USE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOSX_HYPRE_USE_DEVICE == GEOS_USE_HYPRE_HIP
+#if GEOS_HYPRE_USE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_HYPRE_USE_DEVICE == GEOS_USE_HYPRE_HIP
 #include "_hypre_utilities.h"
 #include "_hypre_utilities.hpp"
 #endif
@@ -40,7 +40,7 @@ namespace geos
 void HypreInterface::initialize()
 {
   HYPRE_Init();
-#if GEOSX_HYPRE_USE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOSX_HYPRE_USE_DEVICE == GEOS_USE_HYPRE_HIP
+#if GEOS_HYPRE_USE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_HYPRE_USE_DEVICE == GEOS_USE_HYPRE_HIP
   hypre_HandleDefaultExecPolicy( hypre_handle() ) = HYPRE_EXEC_DEVICE;
   hypre_HandleSpgemmUseVendor( hypre_handle() ) = 0;
 #endif

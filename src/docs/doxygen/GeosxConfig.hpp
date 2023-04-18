@@ -30,16 +30,16 @@
 #define GEOSX_USE_MPI
 
 /// Enables use of OpenMP (CMake option ENABLE_OPENMP)
-#define GEOSX_USE_OPENMP
+/* #undef GEOSX_USE_OPENMP */
 
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
-#define GEOS_USE_CUDA
+/* #undef GEOS_USE_CUDA */
 
 /// Enables use of CUDA NVToolsExt (CMake option ENABLE_CUDA_NVTOOLSEXT)
 /* #undef GEOS_USE_CUDA_NVTOOLSEXT */
 
 /// Enables use of HIP (CMake option ENABLE_HIP)
-/* #undef GEOS_USE_HIP */
+#define GEOS_USE_HIP
 
 /// Enables use of PVTPackage (CMake option ENABLE_PVTPackage)
 #define GEOSX_USE_PVTPackage
@@ -81,7 +81,7 @@
 /// Denotes HYPRE using HIP
 #define GEOS_USE_HYPRE_HIP 2
 /// Macro determining what parellel interface hypre is using
-#define GEOS_USE_HYPRE_DEVICE GEOS_USE_HYPRE_CUDA
+#define GEOS_USE_HYPRE_DEVICE GEOS_USE_HYPRE_HIP
 
 /// Enables use of SuperLU_dist library through HYPRE (CMake option ENABLE_SUPERLU_DIST)
 #define GEOSX_USE_SUPERLU_DIST
@@ -123,13 +123,13 @@
 #define GEOSX_GLOBALINDEX_TYPE_FLAG 2
 
 /// The default block size for GEOSX on this platform
-#define GEOSX_BLOCK_SIZE 32
+#define GEOSX_BLOCK_SIZE 64
 
 /// Version information for HDF5
-#define HDF5_VERSION 1.12.1
+#define HDF5_VERSION 1.12.2
 
 /// Version information for Conduit
-#define Conduit_VERSION 0.8.2
+#define Conduit_VERSION 0.8.6
 
 /// Version information for RAJA
 #define RAJA_VERSION 2022.3.0
@@ -141,7 +141,7 @@
 /* #undef chai_VERSION */
 
 /// Version information for adiak
-#define adiak_VERSION ..
+/* #undef adiak_VERSION */
 
 /// Version information for caliper
 #define caliper_VERSION 2.8.0
@@ -153,16 +153,16 @@
 #define PARAMETIS_VERSION 4.0.3
 
 /// Version information for scotch
-#define scotch_VERSION 6.0.9
+/* #undef scotch_VERSION */
 
 /// Version information for superlu_dist
-#define superlu_dist_VERSION 6.3.0
+/* #undef superlu_dist_VERSION */
 
 /// Version information for suitesparse
 #define suitesparse_VERSION 5.7.9
 
 /// Version information for VTK
-#define VTK_VERSION 9.1.0
+/* #undef VTK_VERSION */
 
 /// Version information for fmt
 #define fmt_VERSION 8.0.1

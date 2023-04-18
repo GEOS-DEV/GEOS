@@ -191,37 +191,31 @@ void HypreSolver::setup( HypreMatrix const & mat )
 {
   GEOS_MARK_FUNCTION;
 
-  GEOS_LOG_RANK_0( "Clearing the solver." );
   clear();
   Base::setup( mat );
   Stopwatch timer( m_result.setupTime );
 
-  GEOS_LOG_RANK_0( "Setting up the preconditioner." );
   m_precond.setup( mat );
   m_componentFilterTime = m_precond.componentFilterTime();
   m_makeRestrictorTime = m_precond.makeRestrictorTime();
   m_computeAuuTime = m_precond.computeAuuTime();
 
-  GEOS_LOG_RANK_0( "Creating HypreKrylov solver." );
   m_solver = std::make_unique< HypreSolverWrapper >();
   createHypreKrylovSolver( m_params, mat.comm(), *m_solver );
 
   // Set the preconditioner
-  GEOS_LOG_RANK_0( "Setting preconditioner object." );
   GEOS_LAI_CHECK_ERROR( m_solver->setPrecond( m_solver->ptr,
                                               m_precond.unwrapped().solve,
                                               hypre::dummySetup,
                                               m_precond.unwrapped().ptr ) );
 
   // Setup the solver (need a dummy vector for rhs/sol to avoid hypre segfaulting in setup)
-  GEOS_LOG_RANK_0( "Setting up the solver." );
   HypreVector dummy;
   dummy.create( mat.numLocalRows(), mat.comm() );
   GEOS_LAI_CHECK_ERROR( m_solver->setup( m_solver->ptr,
                                          mat.unwrapped(),
                                          dummy.unwrapped(),
                                          dummy.unwrapped() ) );
-  GEOS_LOG_RANK_0( "Finished setup for the solver." );
 }
 
 int HypreSolver::doSolve( HypreVector const & rhs,

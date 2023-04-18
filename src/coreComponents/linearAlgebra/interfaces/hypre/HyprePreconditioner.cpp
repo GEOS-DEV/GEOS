@@ -331,30 +331,25 @@ HypreMatrix const & HyprePreconditioner::setupPreconditioningMatrix( HypreMatrix
 
   if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr && m_params.mgr.separateComponents )
   {
-    GEOS_LOG_RANK_0( "Setup MGR preconditioner matrix." );
     GEOS_LAI_ASSERT_MSG( mat.dofManager() != nullptr, "MGR preconditioner requires a DofManager instance" );
     HypreMatrix Pu;
     HypreMatrix Auu;
     {
       Stopwatch timer( m_makeRestrictorTime );
-      GEOS_LOG_RANK_0( "Making dofmanger restrictor." );
       mat.dofManager()->makeRestrictor( { { m_params.mgr.displacementFieldName, { 3, true } } }, mat.comm(), true, Pu );
     }
     {
       Stopwatch timer( m_computeAuuTime );
-      GEOS_LOG_RANK_0( "multiplyPtAP." );
       mat.multiplyPtAP( Pu, Auu );
     }
     {
       Stopwatch timer( m_componentFilterTime );
-      GEOS_LOG_RANK_0( "Seperate component filter." );
       Auu.separateComponentFilter( m_precondMatrix, m_params.dofsPerNode );
     }
   }
   else if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::amg && m_params.amg.separateComponents )
   {
     Stopwatch timer( m_componentFilterTime );
-    GEOS_LOG_RANK_0( "Seperate component filter." );
     mat.separateComponentFilter( m_precondMatrix, m_params.dofsPerNode );
     return m_precondMatrix;
   }
@@ -370,7 +365,6 @@ void HyprePreconditioner::setup( Matrix const & mat )
     m_precond = std::make_unique< HyprePrecWrapper >();
     create( mat.dofManager() );
   }
-  GEOS_LOG_RANK_0( "Setup preconditioner matrix." );
   HypreMatrix const & precondMat = setupPreconditioningMatrix( mat );
   Base::setup( precondMat );
 
@@ -387,7 +381,6 @@ void HyprePreconditioner::setup( Matrix const & mat )
     // Perform setup of the main solver, if needed
     if( m_precond->setup )
     {
-      GEOS_LOG_RANK_0( "Setup the actual hypre preconditioner matrix." );
       GEOS_LAI_CHECK_ERROR( m_precond->setup( m_precond->ptr, precondMat.unwrapped(), nullptr, nullptr ) );
     }
     else if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::direct )
@@ -396,7 +389,6 @@ void HyprePreconditioner::setup( Matrix const & mat )
       // and thus we have to reallocate the entire solver data structure
       if( m_precond->ptr && m_precond->destroy )
       {
-        GEOS_LOG_RANK_0( "Destroy the preconditioner matrix." );
         m_precond->destroy( m_precond->ptr );
       }
 #if defined(GEOSX_USE_SUPERLU_DIST)
@@ -404,7 +396,6 @@ void HyprePreconditioner::setup( Matrix const & mat )
 #endif
     }
   }
-  GEOS_LOG_RANK_0( "Finished preconditioner setup." );
 }
 
 void HyprePreconditioner::apply( Vector const & src,
