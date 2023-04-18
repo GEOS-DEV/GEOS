@@ -70,6 +70,7 @@ set( physicsSolvers_headers
      multiphysics/HydrofractureSolverKernels.hpp
      multiphysics/MultiphasePoromechanics.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
+     multiphysics/PoromechanicsInitialization.hpp
      multiphysics/PoromechanicsFields.hpp
      multiphysics/PoromechanicsInitialization.hpp
      multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp
@@ -122,6 +123,8 @@ set( physicsSolvers_headers
      wavePropagation/AcousticWaveEquationSEMKernel.hpp
      wavePropagation/ElasticWaveEquationSEM.hpp
      wavePropagation/ElasticWaveEquationSEMKernel.hpp
+     wavePropagation/ElasticFirstOrderWaveEquationSEM.hpp
+     wavePropagation/ElasticFirstOrderWaveEquationSEMKernel.hpp
      wavePropagation/AcousticFirstOrderWaveEquationSEM.hpp
      wavePropagation/AcousticFirstOrderWaveEquationSEMKernel.hpp
      wavePropagation/AcousticWaveEquationDG.hpp
@@ -187,6 +190,7 @@ set( physicsSolvers_sources
      wavePropagation/WaveSolverBase.cpp
      wavePropagation/AcousticWaveEquationSEM.cpp
      wavePropagation/ElasticWaveEquationSEM.cpp
+     wavePropagation/ElasticFirstOrderWaveEquationSEM.cpp
      wavePropagation/AcousticFirstOrderWaveEquationSEM.cpp
      wavePropagation/AcousticWaveEquationDG.cpp
    )
