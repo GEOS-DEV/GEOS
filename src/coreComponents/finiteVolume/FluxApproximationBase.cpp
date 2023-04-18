@@ -51,10 +51,10 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
     setApplyDefaultValue( 1.0e-8 ).
     setDescription( "Relative tolerance for area calculations." );
 
-  registerWrapper( viewKeyStruct::upwindSchemeNameString(), &m_upwindSchemeName).
-          setInputFlag( InputFlags::OPTIONAL).
-          setApplyDefaultValue( "none").
-          setDescription("Name of the type of upwind scheme.");
+  registerWrapper( viewKeyStruct::upwindSchemeNameString(), &m_upwindSchemeName ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( "none" ).
+    setDescription( "Name of the type of upwind scheme." );
 }
 
 FluxApproximationBase::CatalogInterface::CatalogType &
@@ -189,9 +189,10 @@ void FluxApproximationBase::setCoeffName( string const & name )
   m_coeffName = name;
 }
 
-    const string &FluxApproximationBase::getUpwindSchemeName() const {
-      return m_upwindSchemeName;
-    }
+const string & FluxApproximationBase::upwindSchemeName() const
+{
+  return m_upwindSchemeName;
+}
 
 
 } //namespace geosx

@@ -176,7 +176,7 @@ public:
   void setCoeffName( string const & name );
 
 
-  const string &getUpwindSchemeName() const;
+  const string & upwindSchemeName() const;
 
 protected:
 
