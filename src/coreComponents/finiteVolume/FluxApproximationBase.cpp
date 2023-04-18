@@ -53,7 +53,7 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
 
   registerWrapper( viewKeyStruct::upwindSchemeNameString(), &m_upwindSchemeName ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( "none" ).
+    setApplyDefaultValue( "ppu" ).
     setDescription( "Name of the type of upwind scheme." );
 }
 
