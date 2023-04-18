@@ -302,6 +302,8 @@ auto getElementAccessor(Group const *const group,
 
 }
 
+enum Physics {Viscous, Gravity, Capillary};
+
 using PermeabilityAccessors =
         StencilMaterialAccessors<PermeabilityBase,
                 fields::permeability::permeability,
@@ -453,7 +455,7 @@ void testCompositionalUpwindHU(CompositionalMultiphaseFVM &solver,
                                                                                                          real64 totFlux = 0.;
                                                                                                          real64 potGrad = 0.;
 
-                                                                                                         localIndex k_up_hu_mu[NP]{}, k_up_hu_g[NP]{}, k_up_ppu[NP]{};
+                                                                                                         localIndex k_up_hu_mu[NP]{}, k_up_hu_g[NP]{}, k_up_hu_pc[NP]{}, k_up_ppu[NP]{};
                                                                                                          real64 phaseFlux[NP]{0.0, 0.0};
                                                                                                          real64 dPhaseFlux_dP[NP][numFluxSupportPoints]{};
                                                                                                          real64 dPhaseFlux_dC[NP][numFluxSupportPoints][NC]{};
@@ -462,9 +464,9 @@ void testCompositionalUpwindHU(CompositionalMultiphaseFVM &solver,
                                                                                                          real64 fflow{};
                                                                                                          real64 dFflow_dP[numFluxSupportPoints]{};
                                                                                                          real64 dFflow_dC[numFluxSupportPoints][NC]{};
-                                                                                                         real64 phaseFluxHU{};
-                                                                                                         real64 dPhaseFluxHU_dP[numFluxSupportPoints]{};
-                                                                                                         real64 dPhaseFluxHU_dC[numFluxSupportPoints][NC]{};
+                                                                                                         real64 phaseFluxHU[3][NP]{};
+                                                                                                         real64 dPhaseFluxHU_dP[3][NP][numFluxSupportPoints]{};
+                                                                                                         real64 dPhaseFluxHU_dC[3][NP][numFluxSupportPoints][NC]{};
 
                                                                                                          for (localIndex iconn = 0; iconn < stencil.size(); ++iconn) {
 
@@ -478,7 +480,7 @@ void testCompositionalUpwindHU(CompositionalMultiphaseFVM &solver,
 
                                                                                                              DEFINE_SUBR_FIELDS(1)
                                                                                                              //include cap pressure
-                                                                                                             DEFINE_CAP_FIELDS(0);
+                                                                                                             DEFINE_CAP_FIELDS(1);
                                                                                                              //fluid fetched fields
                                                                                                              DEFINE_FLUID_FIELDS()
 
@@ -515,8 +517,10 @@ void testCompositionalUpwindHU(CompositionalMultiphaseFVM &solver,
                                                                                                                  totFlux += phaseFlux[ip];
                                                                                                              }
 
-                                                                                                             localIndex k_exp_hu_mu[NP] = {1, 1};
-                                                                                                             localIndex k_exp_hu_g[NP] = {0, 1};
+                                                                                                             //expected upwind directions
+                                                                                                             localIndex k_exp_hu_mu[NP] = {1, 1};//as the total flux is negative
+                                                                                                             localIndex k_exp_hu_g[NP] = {0, 1};//lighter phase going up (x positive here), heavier ...
+                                                                                                             localIndex k_exp_hu_pc[NP] = {1, 0};// as pc(o/g) is increasing wrt sg then dir is opposite to grad(Sg)
 
                                                                                                              for (localIndex ip = 0; ip < NP; ++ip) {
 
@@ -547,12 +551,12 @@ void testCompositionalUpwindHU(CompositionalMultiphaseFVM &solver,
                                                                                                                          dFflow_dP,
                                                                                                                          dFflow_dC);
 
-                                                                                                                 phaseFluxHU += fflow * totFlux;
+                                                                                                                 phaseFluxHU[Physics::Viscous][ip] = fflow * totFlux;
 
                                                                                                                  EXPECT_EQ(k_up_hu_mu[ip], k_exp_hu_mu[ip]);
 
                                                                                                                  GEOSX_LOG_RANK(GEOSX_FMT("1/ ip {} , phaseFlux(PPU) {}, phaseFlux(HU) {}",
-                                                                                                                                          ip, phaseFlux[ip], phaseFluxHU ));
+                                                                                                                                          ip, phaseFlux[ip], phaseFluxHU[Physics::Viscous][ip] ));
 
                                                                                                                  localIndex k_up_hu_og = -1;
                                                                                                                  UpwindHelpers::computePotentialFluxes<NC,
@@ -579,16 +583,59 @@ void testCompositionalUpwindHU(CompositionalMultiphaseFVM &solver,
                                                                                                                          capPressureFlag,
                                                                                                                          k_up_hu_g[ip],
                                                                                                                          k_up_hu_og,
-                                                                                                                         phaseFluxHU,
-                                                                                                                         dPhaseFluxHU_dP,
-                                                                                                                         dPhaseFluxHU_dC
+                                                                                                                         phaseFluxHU[Physics::Gravity][ip],
+                                                                                                                         dPhaseFluxHU_dP[Physics::Gravity][ip],
+                                                                                                                         dPhaseFluxHU_dC[Physics::Gravity][ip]
                                                                                                                  );
 
                                                                                                                  GEOSX_LOG_RANK(GEOSX_FMT("2/ ip {} , phaseFlux(PPU) {}, phaseFlux(HU) {}",
-                                                                                                                                          ip, phaseFlux[ip], phaseFluxHU ));
+                                                                                                                                          ip, phaseFlux[ip], phaseFluxHU[Physics::Gravity][ip] ));
                                                                                                                  EXPECT_EQ( k_up_hu_g[ip], k_exp_hu_g[ip]);
-                                                                                                             }
-                                                                                                         }
+
+                                                                                                                 if(capPressureFlag)
+                                                                                                                 {
+                                                                                                                     localIndex k_up_hu_opc = -1;
+                                                                                                                     UpwindHelpers::computePotentialFluxes<NC,
+                                                                                                                             DrivingForces::Capillary,
+                                                                                                                             numFluxSupportPoints, HybridUpwind>(
+                                                                                                                             NP,
+                                                                                                                             ip,
+                                                                                                                             {seri[iconn][0], seri[iconn][1]},
+                                                                                                                             {sesri[iconn][0], sesri[iconn][1]},
+                                                                                                                             {sei[iconn][0], sei[iconn][1]},
+                                                                                                                             {trans[iconn][0], trans[iconn][1]},
+                                                                                                                             {dTrans_dP[iconn][0], dTrans_dP[iconn][1]},
+                                                                                                                             totFlux,
+                                                                                                                             presView.toNestedViewConst(),
+                                                                                                                             gravCoefView.toNestedViewConst(),
+                                                                                                                             phaseMobView.toNestedViewConst(),
+                                                                                                                             dPhaseMobView.toNestedViewConst(),
+                                                                                                                             dPhaseVolFracView.toNestedViewConst(),
+                                                                                                                             dCompFrac_dCompDensView.toNestedViewConst(),
+                                                                                                                             phaseMassDensView.toNestedViewConst(),
+                                                                                                                             dPhaseMassDensView.toNestedViewConst(),
+                                                                                                                             phaseCapPressureView.toNestedViewConst(),
+                                                                                                                             dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
+                                                                                                                             capPressureFlag,
+                                                                                                                             k_up_hu_pc[ip],
+                                                                                                                             k_up_hu_opc,
+                                                                                                                             phaseFluxHU[Physics::Capillary][ip],
+                                                                                                                             dPhaseFluxHU_dP[Physics::Capillary][ip],
+                                                                                                                             dPhaseFluxHU_dC[Physics::Capillary][ip]
+                                                                                                                     );
+                                                                                                                     GEOSX_LOG_RANK(GEOSX_FMT("3/ ip {} , phaseFlux(PPU) {}, phaseFlux(HU) {}",
+                                                                                                                                              ip, phaseFlux[ip], phaseFluxHU[Physics::Capillary][ip] ));
+                                                                                                                     EXPECT_EQ( k_up_hu_pc[ip], k_exp_hu_pc[ip]);
+                                                                                                                 }// if cap
+
+                                                                                                             }//phase loop
+
+                                                                                                             //as two phase test, we can test reciprocity
+                                                                                                             EXPECT_DOUBLE_EQ( phaseFluxHU[Physics::Gravity][0], -phaseFluxHU[Physics::Gravity][1]);
+                                                                                                             EXPECT_DOUBLE_EQ( phaseFluxHU[Physics::Capillary][0], -phaseFluxHU[Physics::Capillary][1]);
+
+
+                                                                                                         }//connexion loop
                                                                                                      });
                                                   });
     });
