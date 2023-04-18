@@ -89,6 +89,7 @@ set( physicsSolvers_headers
      multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp
      multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics_impl.hpp	          
      multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics_impl.hpp
+     multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEmbeddedFractures.hpp
      multiphysics/SinglePhasePoromechanics.hpp
      multiphysics/SinglePhasePoromechanicsEmbeddedFractures.hpp
      multiphysics/SinglePhasePoromechanicsConformingFractures.hpp

@@ -125,6 +125,156 @@ void computeSinglePhaseFlux( localIndex const ( &seri )[2],
 
 }
 
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void computeEnthalpyFlux( localIndex const ( &seri )[2],
+                          localIndex const ( &sesri )[2],
+                          localIndex const ( &sei )[2],
+                          real64 const ( &transmissibility )[2],
+                          ElementViewConst< arrayView2d< real64 const > > const & enthalpy,
+                          ElementViewConst< arrayView2d< real64 const > > const & dEnthalpy_dPressure,
+                          ElementViewConst< arrayView2d< real64 const > > const & dEnthalpy_dTemperature,
+                          ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+                          ElementViewConst< arrayView2d< real64 const > > const & dDens_dTemp,
+                          ElementViewConst< arrayView1d< real64 const > > const & dMob_dTemp,
+                          real64 const & alpha,
+                          real64 const & mobility,
+                          real64 const & potGrad,
+                          real64 const & massFlux,
+                          real64 const ( &dMassFlux_dP )[2],
+                          real64 ( &dMassFlux_dT )[2],
+                          real64 & energyFlux,
+                          real64 ( &dEnergyFlux_dP )[2],
+                          real64 ( &dEnergyFlux_dT )[2] )
+{
+  // Step 1: compute the derivatives of the mean density at the interface wrt temperature
+
+  real64 dDensMean_dT[2]{0.0, 0.0};
+
+  for( integer ke = 0; ke < 2; ++ke )
+  {
+    real64 const dDens_dT = dDens_dTemp[seri[ke]][sesri[ke]][sei[ke]][0];
+    dDensMean_dT[ke] = 0.5 * dDens_dT;
+  }
+
+  // Step 2: compute the derivatives of the potential difference wrt temperature
+  //***** calculation of flux *****
+
+  real64 dGravHead_dT[2]{0.0, 0.0};
+
+  // compute potential difference
+  for( integer ke = 0; ke < 2; ++ke )
+  {
+    localIndex const er  = seri[ke];
+    localIndex const esr = sesri[ke];
+    localIndex const ei  = sei[ke];
+
+    // compute derivative of gravity potential difference wrt temperature
+    real64 const gravD = transmissibility[ke] * gravCoef[er][esr][ei];
+
+    for( integer i = 0; i < 2; ++i )
+    {
+      dGravHead_dT[i] += dDensMean_dT[i] * gravD;
+    }
+  }
+
+  // Step 3: compute the derivatives of the (upwinded) compFlux wrt temperature
+  // *** upwinding ***
+
+  // Step 3.1: compute the derivative of the mass flux wrt temperature
+  for( integer ke = 0; ke < 2; ++ke )
+  {
+    dMassFlux_dT[ke] -= dGravHead_dT[ke];
+  }
+
+  for( integer ke = 0; ke < 2; ++ke )
+  {
+    dMassFlux_dT[ke] *= mobility;
+  }
+
+  real64 dMob_dT[2]{};
+
+  if( alpha <= 0.0 || alpha >= 1.0 )
+  {
+    localIndex const k_up = 1 - localIndex( fmax( fmin( alpha, 1.0 ), 0.0 ) );
+
+    dMob_dT[k_up] = dMob_dTemp[seri[k_up]][sesri[k_up]][sei[k_up]];
+  }
+  else
+  {
+    real64 const mobWeights[2] = { alpha, 1.0 - alpha };
+    for( integer ke = 0; ke < 2; ++ke )
+    {
+      dMob_dT[ke] = mobWeights[ke] * dMob_dTemp[seri[ke]][sesri[ke]][sei[ke]];
+    }
+  }
+
+  // add contribution from upstream cell mobility derivatives
+  for( integer ke = 0; ke < 2; ++ke )
+  {
+    dMassFlux_dT[ke] += dMob_dT[ke] * potGrad;
+  }
+
+  // Step 4: compute the enthalpy flux
+  real64 enthalpyTimesMobWeight = 0.0;
+  real64 dEnthalpy_dP[2]{0.0, 0.0};
+  real64 dEnthalpy_dT[2]{0.0, 0.0};
+
+  if( alpha <= 0.0 || alpha >= 1.0 )
+  {
+    localIndex const k_up = 1 - localIndex( fmax( fmin( alpha, 1.0 ), 0.0 ) );
+
+    enthalpyTimesMobWeight = enthalpy[seri[k_up]][sesri[k_up]][sei[k_up]][0];
+    dEnthalpy_dP[k_up] = dEnthalpy_dPressure[seri[k_up]][sesri[k_up]][sei[k_up]][0];
+    dEnthalpy_dT[k_up] = dEnthalpy_dTemperature[seri[k_up]][sesri[k_up]][sei[k_up]][0];
+  }
+  else
+  {
+    real64 const mobWeights[2] = { alpha, 1.0 - alpha };
+    for( integer ke = 0; ke < 2; ++ke )
+    {
+      enthalpyTimesMobWeight += mobWeights[ke] * enthalpy[seri[ke]][sesri[ke]][sei[ke]][0];
+      dEnthalpy_dP[ke] = mobWeights[ke] * dEnthalpy_dPressure[seri[ke]][sesri[ke]][sei[ke]][0];
+      dEnthalpy_dT[ke] = mobWeights[ke] * dEnthalpy_dTemperature[seri[ke]][sesri[ke]][sei[ke]][0];
+    }
+  }
+
+  energyFlux += massFlux * enthalpyTimesMobWeight;
+
+  for( integer ke = 0; ke < 2; ++ke )
+  {
+    dEnergyFlux_dP[ke] += dMassFlux_dP[ke] * enthalpyTimesMobWeight;
+    dEnergyFlux_dT[ke] += dMassFlux_dT[ke] * enthalpyTimesMobWeight;
+  }
+
+  for( integer ke = 0; ke < 2; ++ke )
+  {
+    dEnergyFlux_dP[ke] += massFlux * dEnthalpy_dP[ke];
+    dEnergyFlux_dT[ke] += massFlux * dEnthalpy_dT[ke];
+  }
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void computeConductiveFlux( localIndex const ( &seri )[2],
+                            localIndex const ( &sesri )[2],
+                            localIndex const ( &sei )[2],
+                            ElementViewConst< arrayView1d< real64 const > > const & temperature,
+                            real64 const ( &thermalTrans )[2],
+                            real64 & energyFlux,
+                            real64 ( & dEnergyFlux_dT )[2] )
+{
+  for( integer ke = 0; ke < 2; ++ke )
+  {
+    localIndex const er  = seri[ke];
+    localIndex const esr = sesri[ke];
+    localIndex const ei  = sei[ke];
+
+    energyFlux += thermalTrans[ke] * temperature[er][esr][ei];
+    dEnergyFlux_dT[ke] += thermalTrans[ke];
+  }
+}
+
 /******************************** AquiferBCKernel ********************************/
 
 /**

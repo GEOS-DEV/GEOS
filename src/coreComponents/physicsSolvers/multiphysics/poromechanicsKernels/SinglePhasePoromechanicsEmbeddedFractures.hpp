@@ -179,7 +179,10 @@ public:
     localIndex const regionIndex[2]    = {m_seri[iconn][0], m_seri[iconn][1]};
     localIndex const subRegionIndex[2] = {m_sesri[iconn][0], m_sesri[iconn][1]};
     localIndex const elementIndex[2]   = {m_sei[iconn][0], m_sei[iconn][1]};
-  
+    real64 alpha = 0.0;
+    real64 mobility = 0.0;
+    real64 potGrad = 0.0;
+
     computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
                             trans,
                             dTrans,
@@ -207,7 +210,7 @@ public:
     }
     for( localIndex ke = 0; ke < 2; ++ke )
     {
-      localIndex const dofIndex = 4*ke;
+      localIndex const dofIndex = numDof*ke;
 
       stack.localFluxJacobian[0][dofIndex]   =  m_dt * dFlux_dP[ke];
       stack.localFluxJacobian[0][dofIndex+1] =  m_dt * dFlux_dDispJump[ke][0];
@@ -220,7 +223,7 @@ public:
       stack.localFluxJacobian[1][dofIndex+3] = -m_dt * dFlux_dDispJump[ke][2];
     }
 
-    kernelOp( );
+    kernelOp( regionIndex, subRegionIndex, elementIndex, iconn, alpha, mobility, potGrad, fluxVal, dFlux_dP );
   }
 
 

@@ -8,7 +8,7 @@
       logLevel="1"
       discretization="singlePhaseTPFA"
       isThermal="1"
-      targetRegions="{ matrix, fracture }">
+      targetRegions="{ matrix }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="100"/>
@@ -20,7 +20,7 @@
        name="SurfaceGenerator"
        logLevel="1"
        discretization="FE1"
-       targetRegions="{ matrix, fracture }"
+       targetRegions="{ matrix }"
        fractureRegion="fracture"
        mpiCommOrder="1"/>
   </Solvers>
@@ -85,7 +85,7 @@
        target="/Outputs/restartOutput"/>
    </Events>
 
-  <Geometry> // ToCheck
+  <Geometry> 
     <BoundedPlane
        name="FracturePlane"
        normal="{ 1, 0, 0 }"
@@ -220,11 +220,11 @@
       scale="1"
       setNames="{ xneg }"/>
 
-    <SourceFlux
+    <!-- <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/matrix/cb"
       scale="-0.00001"
-      setNames="{ source }"/>
+      setNames="{ source }"/> -->
 
   </FieldSpecifications>
 
