@@ -46,7 +46,7 @@ CommandLineOptions g_commandLineOptions;
 
 char const *xmlInput =
   "<Problem>\n"
-  "  <Solvers gravityVector=\"{-981, 0.0, 0.0}\">\n"
+  "  <Solvers gravityVector=\"{-9.81, 0.0, 0.0}\">\n"
   "    <CompositionalMultiphaseFVM name=\"compflow\"\n"
   "                                 logLevel=\"0\"\n"
   "                                 discretization=\"fluidTPFA\"\n"
@@ -63,17 +63,18 @@ char const *xmlInput =
   "  <Mesh>\n"
   "    <InternalMesh name=\"mesh1\"\n"
   "                  elementTypes=\"{C3D8}\" \n"
-  "                  xCoords=\"{0, 3}\"\n"
+  "                  xCoords=\"{0, 2}\"\n"
   "                  yCoords=\"{0, 1}\"\n"
   "                  zCoords=\"{0, 1}\"\n"
-  "                  nx=\"{3}\"\n"
+  "                  nx=\"{2}\"\n"
   "                  ny=\"{1}\"\n"
   "                  nz=\"{1}\"\n"
   "                  cellBlockNames=\"{cb1}\"/>\n"
   "  </Mesh>\n"
   "  <NumericalMethods>\n"
   "    <FiniteVolume>\n"
-  "      <TwoPointFluxApproximation name=\"fluidTPFA\"/>\n"
+  "      <TwoPointFluxApproximation name=\"fluidTPFA\""
+  "         upwindSchemeName=\"hybrid\"/>\n"
   "    </FiniteVolume>\n"
   "  </NumericalMethods>\n"
   "  <ElementRegions>\n"
@@ -81,7 +82,7 @@ char const *xmlInput =
   "  </ElementRegions>\n"
   "  <Constitutive>\n"
   "    <CompositionalMultiphaseFluid name=\"fluid1\"\n"
-  "                                  phaseNames=\"{oil, gas}\"\n"
+  "                                  phaseNames=\"{gas, oil}\"\n"
   "                                  equationsOfState=\"{PR, PR}\"\n"
   "                                  componentNames=\"{N2, C10, C20, H2O}\"\n"
   "                                  componentCriticalPressure=\"{34e5, 25.3e5, 14.6e5, 220.5e5}\"\n"
@@ -103,15 +104,15 @@ char const *xmlInput =
   "                     referencePressure = \"0.0\"\n"
   "                     compressibility=\"1.0e-9\"/>\n"
   "    <BrooksCoreyRelativePermeability name=\"relperm\"\n"
-  "                                     phaseNames=\"{oil, gas}\"\n"
-  "                                     phaseMinVolumeFraction=\"{0.1, 0.15}\"\n"
+  "                                     phaseNames=\"{gas, oil}\"\n"
+  "                                     phaseMinVolumeFraction=\"{0.15, 0.1}\"\n"
   "                                     phaseRelPermExponent=\"{2.0, 2.0}\"\n"
-  "                                     phaseRelPermMaxValue=\"{0.8, 0.9}\"/>\n"
+  "                                     phaseRelPermMaxValue=\"{0.9, 0.9}\"/>\n"
   "    <BrooksCoreyCapillaryPressure name=\"cappressure\"\n"
-  "                                  phaseNames=\"{oil, gas}\"\n"
-  "                                  phaseMinVolumeFraction=\"{0.2, 0.05}\"\n"
-  "                                  phaseCapPressureExponentInv=\"{4.25, 3.5}\"\n"
-  "                                  phaseEntryPressure=\"{0., 1e8}\"\n"
+  "                                  phaseNames=\"{gas, oil}\"\n"
+  "                                  phaseMinVolumeFraction=\"{0.05, 0.2}\"\n"
+  "                                  phaseCapPressureExponentInv=\"{3.5,4.25}\"\n"
+  "                                  phaseEntryPressure=\"{1e8, 0.}\"\n"
   "                                  capPressureEpsilon=\"0.0\"/> \n"
   "    <ConstantPermeability name=\"rockPerm\""
   "                          permeabilityComponents=\"{ 1.0e-17, 1.0e-17, 1.0e-17 }\" />\n"
@@ -158,15 +159,15 @@ char const *xmlInput =
   "  <Functions>\n"
   "    <TableFunction name=\"initialPressureFunc\"\n"
   "                   inputVarNames=\"{elementCenter}\"\n"
-  "                   coordinates=\"{0.0,3.0}\"\n"
-  "                   values=\"{0.5, 1.0}\"/>\n"
+  "                   coordinates=\"{0.0, 2.0}\"\n"
+  "                   values=\"{.501, .5}\"/>\n"
   "    <TableFunction name=\"initialN2\"\n"
   "                   inputVarNames=\"{elementCenter}\"\n"
-  "                   coordinates=\"{0.0, 3.0}\"\n"
+  "                   coordinates=\"{0.0, 2.0}\"\n"
   "                   values=\"{0.6, 0.3}\"/>\n"
   "    <TableFunction name=\"initialC20\"\n"
   "                   inputVarNames=\"{elementCenter}\"\n"
-  "                   coordinates=\"{0.0, 3.0}\"\n"
+  "                   coordinates=\"{0.0, 2.0}\"\n"
   "                   values=\"{0.3, 0.6}\"/>\n"
   "  </Functions>"
   "</Problem>";
@@ -307,6 +308,11 @@ auto getElementAccessor( Group const * const group,
 
 }
 
+  using PermeabilityAccessors =
+    StencilMaterialAccessors< PermeabilityBase,
+                              fields::permeability::permeability,
+                              fields::permeability::dPerm_dPressure >;
+
 template< localIndex NC, localIndex NP >
 void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
                                       DomainPartition & domain )
@@ -327,6 +333,9 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
       string const & capName = subRegion.getReference< string >(
         CompositionalMultiphaseBase::viewKeyStruct::capPressureNamesString());
 
+                  PermeabilityAccessors permeabilityAccessors(elementRegionManager,solver.getName());
+  auto const & permeability = permeabilityAccessors.get( fields::permeability::permeability {} );
+  auto const & dPerm_dPres = permeabilityAccessors.get( fields::permeability::dPerm_dPressure {} );
 
       MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >(
         fluidName );
@@ -340,30 +349,38 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
         domain.getNumericalMethodManager().getFiniteVolumeManager().getFluxApproximation(
           solver.getDiscretizationName());
       fluxApprox.forStencils< CellElementStencilTPFA >( mesh,
-                                                        [&]( auto const & stencil ) {
+                                                        [&]( auto const & stencil ){
 
-        auto const & weights = stencil.getWeights();
         auto const & seri = stencil.getElementRegionIndices();
         auto const & sesri = stencil.getElementSubRegionIndices();
         auto const & sei = stencil.getElementIndices();
         localIndex constexpr numFluxSupportPoints = 2;
+        localIndex constexpr maxNumConn = 1;
 
-        for( localIndex iconn = 0; iconn < stencil.size(); ++iconn ) {
+//        GEOSX_LOG_RANK(GEOSX_FMT("Name of upwind : {}",fluxApprox.getUpwindSchemeName()));
 
-            real64 const trans[numFluxSupportPoints] = {weights[iconn][0], weights[iconn][1]};
-            real64 const dTrans_dP[numFluxSupportPoints] = {0., 0.};
+    for( localIndex iconn = 0; iconn < stencil.size(); ++iconn ) {
+
+            real64 trans[maxNumConn][numFluxSupportPoints]{};
+            real64 dTrans_dP[maxNumConn][numFluxSupportPoints]{};
+
+        auto wrapper = stencil.createKernelWrapper();
+        wrapper.computeWeights( iconn,
+                        permeability,
+                        dPerm_dPres,
+                        trans,
+                        dTrans_dP );
 
             DEFINE_SUBR_FIELDS(1)
             //include cap pressure
-            DEFINE_CAP_FIELDS(1);
-            // -- fluid fetched fields
+            DEFINE_CAP_FIELDS(0);
+            //fluid fetched fields
             DEFINE_FLUID_FIELDS()
 
-            real64 totFlux = 0.;
             real64 potGrad = 0.;
 
             localIndex k_up[NP]{};
-            real64 phaseFlux[NP]{};
+            real64 phaseFlux[NP]{0.0,0.0};
             real64 dPhaseFlux_dP[NP][numFluxSupportPoints]{};
             real64 dPhaseFlux_dC[NP][numFluxSupportPoints][NC]{};
 
@@ -376,8 +393,8 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
                         {seri[iconn][0], seri[iconn][1]},
                         {sesri[iconn][0], sesri[iconn][1]},
                         {sei[iconn][0], sei[iconn][1]},
-                        trans,
-                        dTrans_dP,
+                        {trans[iconn][0], trans[iconn][1]},
+                         {dTrans_dP[iconn][0], dTrans_dP[iconn][1]},
                         presView.toNestedViewConst(),
                         gravCoefView.toNestedViewConst(),
                         phaseMobView.toNestedViewConst(),
@@ -396,7 +413,7 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
                         dPhaseFlux_dC[ip]);
             }
 
-            localIndex k_up_expected[NP]{0,0};
+            localIndex k_up_expected[NP]{0,1};
             for (localIndex ip = 0; ip < NP; ++ip) { EXPECT_EQ(k_up_expected[ip], k_up[ip]); }
 
         }
@@ -594,7 +611,7 @@ protected:
   }
 
   static real64 constexpr time = 0.0;
-  static real64 constexpr dt = 1e2;
+  static real64 constexpr dt = 1e-2;
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
 
   GeosxState state;
