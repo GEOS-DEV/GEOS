@@ -97,16 +97,14 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
     GEOS_LOG_LEVEL_RANK_0( 2, "  done!" );
   }
   cellBlockManager.setPartitionDescriptor( partitionDescriptor );
-  GEOS_LOG_RANK_0( GEOSX_FMT( "{} '{}': generating GEOSX mesh data structure", catalogName(), getName() ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': generating GEOSX mesh data structure", catalogName(), getName() ) );
 
-  MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( this->getName() );
-  meshBody.createMeshLevel( 0 );
 
   GEOS_LOG_LEVEL_RANK_0( 2, "  preprocessing..." );
   m_cellMap = vtk::buildCellMap( *m_vtkMesh, m_attributeName );
 
   GEOS_LOG_LEVEL_RANK_0( 2, "  writing nodes..." );
-  meshBody.setGlobalLengthScale( writeNodes( getLogLevel(), *m_vtkMesh, m_nodesetNames, cellBlockManager, this->m_translate, this->m_scale ) );
+  cellBlockManager.setGlobalLength( writeNodes( getLogLevel(), *m_vtkMesh, m_nodesetNames, cellBlockManager, this->m_translate, this->m_scale ) );
 
   GEOS_LOG_LEVEL_RANK_0( 2, "  writing cells..." );
   writeCells( getLogLevel(), *m_vtkMesh, m_cellMap, cellBlockManager );

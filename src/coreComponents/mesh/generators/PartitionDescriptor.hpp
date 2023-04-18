@@ -22,7 +22,7 @@
 #include <set>
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -54,7 +54,8 @@ public:
    * @brief Sets the list of metis neighbor list.
    * @param metisNeighborList A reference to the Metis neighbor list.
    */
-  void setMetisNeighborList( std::vector< int > const & metisNeighborList ) {
+  void setMetisNeighborList( std::vector< int > const & metisNeighborList )
+  {
     m_metisNeighborList.insert( metisNeighborList.cbegin(), metisNeighborList.cend() );
   }
 

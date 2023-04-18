@@ -22,7 +22,7 @@
 
 
 
-namespace geosx
+namespace geos
 {
 
 LineBlock::LineBlock( string const & name, Group * const parent ):

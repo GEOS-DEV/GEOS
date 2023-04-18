@@ -166,6 +166,10 @@ public:
     return m_globalLengthScale;
   }
 
+  /**
+   * @brief Get the Abstract representation of the CellBlockManager attached to the MeshBody.
+   * @return The CellBlockManager.
+   */
   CellBlockManagerABC const & getCellBlockManager() const
   {
     return this->getGroup< CellBlockManagerABC >( dataRepository::keys::cellManager );

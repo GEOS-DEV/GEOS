@@ -19,7 +19,7 @@
 #include "mesh/generators/InternalWellGenerator.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 /**

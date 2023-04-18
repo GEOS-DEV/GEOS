@@ -968,10 +968,10 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
   partitionDescriptor.setSpatialPartition( partition );
   cellBlockManager.setPartitionDescriptor( partitionDescriptor );
-  GEOS_LOG_RANK_0( GEOSX_FMT( "{}: total number of nodes = {}", getName(),
-                              ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) ) );
-  GEOS_LOG_RANK_0( GEOSX_FMT( "{}: total number of elems = {}", getName(),
-                              m_numElemsTotal[0] * m_numElemsTotal[1] * m_numElemsTotal[2] ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "{}: total number of nodes = {}", getName(),
+                             ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "{}: total number of elems = {}", getName(),
+                             m_numElemsTotal[0] * m_numElemsTotal[1] * m_numElemsTotal[2] ) );
 }
 
 void
