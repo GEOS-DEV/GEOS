@@ -76,19 +76,24 @@ stages:
     - exit_val=$(( 0 | $config_code | $build_code | $unit_code | $integrated_code ))
     - exit $exit_val
     - echo "~~~~~~~~~~ END - cleanup ~~~~~~~~~~~~~"
-  # Job only triggers for scheduled pipelines and through web interface
-  only:
-    refs:
-      - schedules
-      - web
+  # Job triggers for scheduled pipelines,through web interface, or if branch is "next"
+  # Allow job to fail for scheduled nightly runs.
+  # Allow job to fail when running on lassen for "next" branch (failing integrated tests)
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "web"
+      allow_failure: false
+    - if: $CI_COMMIT_BRANCH == "next" && $SYSTEM == "quartz"
+      allow_failure: false
+    - if: $CI_COMMIT_BRANCH == "next" && $SYSTEM == "lassen"
+      allow_failure: true
   # Output a folder of logs files; these are automatically inherited by nightly-job
   artifacts:
     when: always
     paths:
       - quartz/
       - lassen/
-  # Allow job to always fail, so nightly-job in next stage will run
-  allow_failure: true
 
 ####
 # quartz template
@@ -139,12 +144,11 @@ nightly-job:
     - cd nightlyTests
     - ./update.sh
     - echo "~~~~~~~~~~ END - write to nightlyTests Repo ~~~~~~~~~~~~~"
-  only:
-    refs:
-      - schedules
-      - web
-    variables:
-      - $NIGHTLY_TEST_ENABLED
+  # Job triggers for scheduled pipelines or through web interface,
+  # and with NIGHTLY_TEST_ENABLED variable set
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY_TEST_ENABLED
+    - if: $CI_PIPELINE_SOURCE == "web" && $NIGHTLY_TEST_ENABLED
   tags:
    - shell
    - quartz
