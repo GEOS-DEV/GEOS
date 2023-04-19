@@ -467,16 +467,16 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOS_UNU
 
       if( m_isThermal )
       {
-          thermalSinglePhasePoromechanicsEmbeddedFracturesKernels::
-            ConnectorBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                                            dofKey,
-                                                                                            jumpDofKey,
-                                                                                            this->getName(),
-                                                                                            mesh.getElemManager(),
-                                                                                            stencilWrapper,
-                                                                                            dt,
-                                                                                            localMatrix.toViewConstSizes(),
-                                                                                            localRhs.toView() );
+        thermalSinglePhasePoromechanicsEmbeddedFracturesKernels::
+          ConnectorBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                          dofKey,
+                                                                                          jumpDofKey,
+                                                                                          this->getName(),
+                                                                                          mesh.getElemManager(),
+                                                                                          stencilWrapper,
+                                                                                          dt,
+                                                                                          localMatrix.toViewConstSizes(),
+                                                                                          localRhs.toView() );
       }
       else
       {

@@ -72,9 +72,9 @@ public:
 
   using Base = singlePhasePoromechanicsEmbeddedFracturesKernels::ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >;
 
-    using ThermalSinglePhaseFlowAccessors =
-      StencilAccessors< fields::flow::temperature,
-                        fields::flow::dMobility_dTemperature >;
+  using ThermalSinglePhaseFlowAccessors =
+    StencilAccessors< fields::flow::temperature,
+                      fields::flow::dMobility_dTemperature >;
 
   using ThermalSinglePhaseFluidAccessors =
     StencilMaterialAccessors< SingleFluidBase,
@@ -189,7 +189,7 @@ public:
     Base::computeFlux( iconn, stack, [&] ( localIndex const (&seri)[2],
                                            localIndex const (&sesri)[2],
                                            localIndex const (&sei)[2],
-                                           localIndex const ,
+                                           localIndex const,
                                            real64 const & alpha,
                                            real64 const & mobility,
                                            real64 const & potGrad,
@@ -254,7 +254,7 @@ public:
 
         // Step 2: compute temperature difference at the interface
         computeConductiveFlux( seri, sesri, sei, m_temp, thermalTrans, stack.energyFlux, stack.dEnergyFlux_dT );
-        
+
         // add energyFlux and its derivatives to localFlux and localFluxJacobian
         stack.localFlux[k[0]*numEqn + numEqn - 1] += m_dt * stack.energyFlux;
         stack.localFlux[k[1]*numEqn + numEqn - 1] -= m_dt * stack.energyFlux;
@@ -274,94 +274,119 @@ public:
     }
   }
 
+  /**
+   * @brief Performs the complete phase for the kernel.
+   * @param[in] iconn the connection index
+   * @param[inout] stack the stack variables
+   */
+  GEOS_HOST_DEVICE
+  void complete( localIndex const iconn,
+                 StackVariables & stack ) const
+  {
+    // Call SinglePhaseFVMBase::complete to assemble the mass balance equations
+    // In the lambda, add contribution to residual and jacobian into the energy balance equation
+    SinglePhaseFVMBase::complete( iconn, stack, [&] ( integer const i,
+                                                      localIndex const localRow )
+    {
+      // The no. of fluxes is equal to the no. of equations in m_localRhs and m_localMatrix
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &SinglePhaseFVMAbstractBase::m_localRhs[localRow + numEqn-1], stack.localFlux[i * numEqn + numEqn-1] );
+
+      SinglePhaseFVMAbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + numEqn-1,
+                                                                                                      stack.dofColIndices.data(),
+                                                                                                      stack.localFluxJacobian[i * numEqn + numEqn-1].dataIfContiguous(),
+                                                                                                      stack.stencilSize * numDof );
+
+    } );
+  }
+
 
 private:
-  
-  /// Views on temperature
-  ElementViewConst< arrayView1d< real64 const > > const m_temp;
 
-  /// Views on derivatives of fluid mobilities
-  ElementViewConst< arrayView1d< real64 const > > const m_dMob_dTemp;
+    /// Views on temperature
+    ElementViewConst< arrayView1d< real64 const > > const m_temp;
 
-  /// Views on derivatives of fluid densities
-  ElementViewConst< arrayView2d< real64 const > > const m_dDens_dTemp;
+    /// Views on derivatives of fluid mobilities
+    ElementViewConst< arrayView1d< real64 const > > const m_dMob_dTemp;
 
-  /// Views on enthalpies
-  ElementViewConst< arrayView2d< real64 const > > const m_enthalpy;
-  ElementViewConst< arrayView2d< real64 const > > const m_dEnthalpy_dPres;
-  ElementViewConst< arrayView2d< real64 const > > const m_dEnthalpy_dTemp;
+    /// Views on derivatives of fluid densities
+    ElementViewConst< arrayView2d< real64 const > > const m_dDens_dTemp;
 
-  /// View on thermal conductivity
-  ElementViewConst< arrayView3d< real64 const > > m_thermalConductivity;
+    /// Views on enthalpies
+    ElementViewConst< arrayView2d< real64 const > > const m_enthalpy;
+    ElementViewConst< arrayView2d< real64 const > > const m_dEnthalpy_dPres;
+    ElementViewConst< arrayView2d< real64 const > > const m_dEnthalpy_dTemp;
 
-};
+    /// View on thermal conductivity
+    ElementViewConst< arrayView3d< real64 const > > m_thermalConductivity;
+
+  };
 
 
 
 /**
  * @class FaceBasedAssemblyKernelFactory
  */
-class ConnectorBasedAssemblyKernelFactory
-{
+  class ConnectorBasedAssemblyKernelFactory
+  {
 public:
 
-  /**
-   * @brief Create a new kernel and launch
-   * @tparam POLICY the policy used in the RAJA kernel
-   * @tparam STENCILWRAPPER the type of the stencil wrapper
-   * @param[in] rankOffset the offset of my MPI rank
-   * @param[in] dofKey string to get the element degrees of freedom numbers
-   * @param[in] solverName name of the solver (to name accessors)
-   * @param[in] elemManager reference to the element region manager
-   * @param[in] stencilWrapper reference to the stencil wrapper
-   * @param[in] dt time step size
-   * @param[inout] localMatrix the local CRS matrix
-   * @param[inout] localRhs the local right-hand side vector
-   */
-  template< typename POLICY >
-  static void
-  createAndLaunch( globalIndex const rankOffset,
-                   string const & pressureDofKey,
-                   string const & dispJumpDofKey,
-                   string const & solverName,
-                   ElementRegionManager const & elemManager,
-                   SurfaceElementStencilWrapper const & stencilWrapper,
-                   real64 const & dt,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                   arrayView1d< real64 > const & localRhs )
-  {
-    integer constexpr NUM_DOF = 5; // pressure + temperature + jumps
-    integer constexpr NUM_EQN = 2; // mass balance + energy balance
+    /**
+     * @brief Create a new kernel and launch
+     * @tparam POLICY the policy used in the RAJA kernel
+     * @tparam STENCILWRAPPER the type of the stencil wrapper
+     * @param[in] rankOffset the offset of my MPI rank
+     * @param[in] dofKey string to get the element degrees of freedom numbers
+     * @param[in] solverName name of the solver (to name accessors)
+     * @param[in] elemManager reference to the element region manager
+     * @param[in] stencilWrapper reference to the stencil wrapper
+     * @param[in] dt time step size
+     * @param[inout] localMatrix the local CRS matrix
+     * @param[inout] localRhs the local right-hand side vector
+     */
+    template< typename POLICY >
+    static void
+    createAndLaunch( globalIndex const rankOffset,
+                     string const & pressureDofKey,
+                     string const & dispJumpDofKey,
+                     string const & solverName,
+                     ElementRegionManager const & elemManager,
+                     SurfaceElementStencilWrapper const & stencilWrapper,
+                     real64 const & dt,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs )
+    {
+      integer constexpr NUM_DOF = 5; // pressure + temperature + jumps
+      integer constexpr NUM_EQN = 2; // mass balance + energy balance
 
 
-    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > flowDofNumberAccessor =
-      elemManager.constructArrayViewAccessor< globalIndex, 1 >( pressureDofKey );
-    flowDofNumberAccessor.setName( solverName + "/accessors/" + pressureDofKey );
+      ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > flowDofNumberAccessor =
+        elemManager.constructArrayViewAccessor< globalIndex, 1 >( pressureDofKey );
+      flowDofNumberAccessor.setName( solverName + "/accessors/" + pressureDofKey );
 
-    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dispJumpDofNumberAccessor =
-      elemManager.constructArrayViewAccessor< globalIndex, 1 >( dispJumpDofKey );
-    dispJumpDofNumberAccessor.setName( solverName + "/accessors/" + dispJumpDofKey );
+      ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dispJumpDofNumberAccessor =
+        elemManager.constructArrayViewAccessor< globalIndex, 1 >( dispJumpDofKey );
+      dispJumpDofNumberAccessor.setName( solverName + "/accessors/" + dispJumpDofKey );
 
-    using kernelType = ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >;
-    typename kernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
-    typename kernelType::ThermalSinglePhaseFlowAccessors thermalFlowAccessors( elemManager, solverName );
-    
-    typename kernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );
-    typename kernelType::ThermalSinglePhaseFluidAccessors thermalFluidAccessors( elemManager, solverName );
-    
-    typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );
-    typename kernelType::FracturePermeabilityAccessors edfmPermAccessors( elemManager, solverName );
-    typename kernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
+      using kernelType = ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >;
+      typename kernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
+      typename kernelType::ThermalSinglePhaseFlowAccessors thermalFlowAccessors( elemManager, solverName );
 
-    kernelType kernel( rankOffset, stencilWrapper,
-                       flowDofNumberAccessor, dispJumpDofNumberAccessor,
-                       flowAccessors, thermalFlowAccessors, fluidAccessors, thermalFluidAccessors,
-                       permAccessors, edfmPermAccessors, thermalConductivityAccessors,
-                       dt, localMatrix, localRhs );
+      typename kernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );
+      typename kernelType::ThermalSinglePhaseFluidAccessors thermalFluidAccessors( elemManager, solverName );
 
-    kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
-  }
-};
+      typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );
+      typename kernelType::FracturePermeabilityAccessors edfmPermAccessors( elemManager, solverName );
+      typename kernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
+
+      kernelType kernel( rankOffset, stencilWrapper,
+                         flowDofNumberAccessor, dispJumpDofNumberAccessor,
+                         flowAccessors, thermalFlowAccessors, fluidAccessors, thermalFluidAccessors,
+                         permAccessors, edfmPermAccessors, thermalConductivityAccessors,
+                         dt, localMatrix, localRhs );
+
+      kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+    }
+  };
 
 
 

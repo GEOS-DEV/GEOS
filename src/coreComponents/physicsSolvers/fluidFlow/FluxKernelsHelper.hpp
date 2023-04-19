@@ -143,7 +143,7 @@ void computeEnthalpyFlux( localIndex const ( &seri )[2],
                           real64 const & potGrad,
                           real64 const & massFlux,
                           real64 const ( &dMassFlux_dP )[2],
-                          real64 ( &dMassFlux_dT )[2],
+                          real64 ( & dMassFlux_dT )[2],
                           real64 & energyFlux,
                           ENERGYFLUX_DERIVATIVE_TYPE & dEnergyFlux_dP,
                           ENERGYFLUX_DERIVATIVE_TYPE & dEnergyFlux_dT )

@@ -191,7 +191,7 @@ public:
                             m_dDens_dPres,
                             m_mob,
                             m_dMob_dPres,
-                            alpha, 
+                            alpha,
                             mobility,
                             potGrad,
                             fluxVal,
