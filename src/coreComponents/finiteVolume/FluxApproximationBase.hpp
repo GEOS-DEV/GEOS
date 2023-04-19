@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef GEOSX_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
-#define GEOSX_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
+#ifndef GEOS_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
+#define GEOS_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "CellElementStencilTPFA.hpp"
@@ -28,7 +28,7 @@
 #include "SurfaceElementStencil.hpp"
 #include "mesh/DomainPartition.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -291,6 +291,6 @@ void FluxApproximationBase::forStencils( MeshLevel const & mesh, LAMBDA && lambd
   } );
 }
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
+#endif //GEOS_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_

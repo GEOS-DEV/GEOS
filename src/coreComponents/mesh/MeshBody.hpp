@@ -16,13 +16,13 @@
  * @file MeshBody.hpp
  */
 
-#ifndef GEOSX_MESH_MESHBODY_HPP_
-#define GEOSX_MESH_MESHBODY_HPP_
+#ifndef GEOS_MESH_MESHBODY_HPP_
+#define GEOS_MESH_MESHBODY_HPP_
 
 #include "MeshLevel.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 class MeshLevel;
@@ -209,6 +209,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_MESHBODY_HPP_ */
+#endif /* GEOS_MESH_MESHBODY_HPP_ */

@@ -27,7 +27,7 @@
 
 
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -76,7 +76,8 @@ void DomainPartition::initializationOrder( string_array & order )
 
 void DomainPartition::setupBaseLevelMeshGlobalInfo()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
+
 #if defined(GEOSX_USE_MPI)
 
   if( m_metisNeighborList.empty() )
@@ -89,7 +90,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
     {
       int reorder = 0;
       MpiWrapper::cartCreate( MPI_COMM_GEOSX, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm );
-      GEOSX_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications" );
+      GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications" );
     }
     int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
     int nsdof = 3;
@@ -268,4 +269,4 @@ void DomainPartition::addNeighbors( const unsigned int idim,
   }
 }
 
-} /* namespace geosx */
+} /* namespace geos */

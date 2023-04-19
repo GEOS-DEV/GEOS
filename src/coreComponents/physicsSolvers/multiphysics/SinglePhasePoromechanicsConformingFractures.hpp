@@ -16,14 +16,14 @@
  * @file SinglePhasePoromechanicsConformingFractures.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
 
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/contact/LagrangianContactSolver.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class SinglePhasePoromechanicsConformingFractures : public CoupledSolver< SinglePhasePoromechanics, LagrangianContactSolver >
@@ -215,6 +215,6 @@ private:
   string const m_pressureKey = SinglePhaseBase::viewKeyStruct::elemDofFieldString();
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_ */

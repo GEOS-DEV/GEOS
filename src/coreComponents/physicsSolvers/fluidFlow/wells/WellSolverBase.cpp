@@ -27,7 +27,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -140,7 +140,7 @@ void WellSolverBase::setupDofs( DomainPartition const & domain,
 }
 
 void WellSolverBase::implicitStepSetup( real64 const & time_n,
-                                        real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                        real64 const & GEOS_UNUSED_PARAM( dt ),
                                         DomainPartition & domain )
 {
   // Initialize the primary and secondary variables for the first time step
@@ -258,4 +258,4 @@ WellControls & WellSolverBase::getWellControls( WellElementSubRegion const & sub
 WellControls const & WellSolverBase::getWellControls( WellElementSubRegion const & subRegion ) const
 { return this->getGroup< WellControls >( subRegion.getWellControlsName() ); }
 
-} // namespace geosx
+} // namespace geos

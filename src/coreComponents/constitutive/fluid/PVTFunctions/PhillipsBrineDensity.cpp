@@ -20,7 +20,7 @@
 
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace stringutilities;
@@ -79,9 +79,9 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
 
   // initialize salinity
-  GEOSX_THROW_IF_LT_MSG( inputParams.size(), 9,
-                         GEOSX_FMT( "{}: insufficient number of model parameters", functionName ),
-                         InputError );
+  GEOS_THROW_IF_LT_MSG( inputParams.size(), 9,
+                        GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
+                        InputError );
   real64 salinity;
   try
   {
@@ -89,7 +89,7 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   }
   catch( std::invalid_argument const & e )
   {
-    GEOSX_THROW( GEOSX_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
+    GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
   }
 
   array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
@@ -144,4 +144,4 @@ REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineDensity, string const &, s
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

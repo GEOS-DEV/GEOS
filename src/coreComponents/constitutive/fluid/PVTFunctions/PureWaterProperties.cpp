@@ -18,7 +18,7 @@
 
 #include "constitutive/fluid/PVTFunctions/PureWaterProperties.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace stringutilities;
@@ -273,4 +273,4 @@ PureWaterProperties::makeSaturationPressureTable( string const & functionName,
 
 } // namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos

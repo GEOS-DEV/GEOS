@@ -20,7 +20,7 @@
 #include "Logger.hpp"
 #include "Path.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace logger
@@ -98,4 +98,4 @@ void FinalizeLogger()
 
 } // namespace logger
 
-} // namespace geosx
+} // namespace geos
