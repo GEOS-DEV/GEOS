@@ -332,7 +332,7 @@ MeshLevel::MeshLevel( string const & name,
                       int const order ):
   MeshLevel( name, parent, order )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // check that all elements are hexahedra
   source.m_elementManager->forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
@@ -341,7 +341,7 @@ MeshLevel::MeshLevel( string const & name,
     {
       if( sourceSubRegion.getElementType() != ElementType::Hexahedron )
       {
-        GEOSX_ERROR( "Orders higher than one are only available for hexahedral meshes" );
+        GEOS_ERROR( "Orders higher than one are only available for hexahedral meshes" );
       }
     } );
   } );

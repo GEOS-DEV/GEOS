@@ -134,7 +134,7 @@ void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
                                            ElementRegionManager const & elemRegionManager,
                                            bool baseMeshLevel )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   if( baseMeshLevel )
   {
     resize( cellBlockManager.numNodes() );

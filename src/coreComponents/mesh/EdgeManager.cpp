@@ -95,7 +95,7 @@ void EdgeManager::buildEdges( localIndex const numNodes,
 
 void EdgeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager, bool baseMeshLevel )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   if( baseMeshLevel )
   {
     resize( cellBlockManager.numEdges() );
