@@ -24,7 +24,6 @@
 #include "EdgeManager.hpp"
 #include "ElementRegionManager.hpp"
 #include "FaceManager.hpp"
-#include "mesh/generators/CellBlockManager.hpp"
 
 namespace geos
 {
@@ -49,15 +48,6 @@ public:
   MeshLevel( string const & name,
              Group * const parent );
 
-  /**
-   * @brief Constructor for the MeshLevel object.
-   * @param[in] name the name of the MeshLevel object in the repository
-   * @param[in] parent the parent group of the MeshLevel object being constructed
-   * @param[in] order the order of the mesh level
-   */
-  MeshLevel( string const & name,
-             Group * const parent,
-             int order );
 
   /**
    * @brief Constructor to create a shallow MeshLevel.
@@ -71,17 +61,15 @@ public:
 
 
   /**
-   * @brief Constructor for the MeshLevel object. Also updates the data of the given CellBlockManager.
+   * @brief Constructor for the MeshLevel object.
    * @param[in] name the name of the MeshLevel object in the repository
    * @param[in] parent the parent group of the MeshLevel object being constructed
    * @param[in] source The source MeshLevel to build the new one from
-   * @param[out] cellBlockManager the cellBlockManager to be updated
    * @param[in] order The order of the MeshLevel
    */
   MeshLevel( string const & name,
              Group * const parent,
              MeshLevel const & source,
-             CellBlockManager & cellBlockManager,
              int const order );
 
   virtual ~MeshLevel() override;
@@ -270,13 +258,6 @@ public:
    */
   MeshLevel & getShallowParent();
 
-  /**
-   * @brief Returns the order of the mesh level
-   *
-   * @return int
-   */
-  int getOrder() const;
-
   ///@}
 
 private:
@@ -301,8 +282,6 @@ private:
   bool const m_isShallowCopy = false;
 
   MeshLevel * const m_shallowParent;
-
-  int m_order;
 
 };
 

@@ -211,6 +211,148 @@ void transformCellBlockToRegionMap( arrayView2d< localIndex const > const & bloc
 
 } // namespace meshMapUtilities
 
+template< typename T >
+struct NodeKeyHasher
+{
+  std::size_t operator()( const std::array< T, 6 > & arr ) const
+  {
+    std::size_t hash = 0;
+    // use a boost-style hash function
+    for( auto v : arr )
+    {
+      hash ^= std::hash< T >{} ( v )  + 0x9e3779b9 + ( hash << 6 ) + ( hash >> 2 );
+    }
+    return hash;
+  }
+};
+
+template< typename T >
+struct NodeKeyEqual
+{
+  bool operator()( const std::array< T, 6 > & lhs, const std::array< T, 6 > & rhs ) const
+  {
+    return lhs == rhs;
+  }
+};
+
+template< typename T >
+static std::array< T, 6 > createNodeKey( T v )
+{
+  return std::array< T, 6 > { v, -1, -1, -1, -1, -1 };
+}
+
+template< typename T >
+static std::array< T, 6 > createNodeKey( T v1, T v2, int a, int order )
+{
+  if( a == 0 )
+    return createNodeKey( v1 );
+  if( a == order )
+    return createNodeKey( v2 );
+  if( v1 < v2 )
+  {
+    return std::array< T, 6 > { v1, v2, -1, -1, a, -1 };
+  }
+  else
+  {
+    return std::array< T, 6 > { v2, v1, -1, -1, order - a, -1 };
+  }
+}
+
+
+template< typename T >
+static std::array< T, 6 > createNodeKey( T v1, T v2, T v3, T v4, int a, int b, int order )
+{
+  if( a == 0 )
+    return createNodeKey( v1, v3, b, order );
+  if( a == order )
+    return createNodeKey( v2, v4, b, order );
+  if( b == 0 )
+    return createNodeKey( v1, v2, a, order );
+  if( b == order )
+    return createNodeKey( v3, v4, a, order );
+  // arrange the vertices of the face such that v1 is the lowest value, and v2 is lower than v3
+  // this ensures a coherent orientation of all face nodes
+  while( v1 > v2 || v1 > v3 || v1 > v4 || v2 > v3 )
+  {
+    if( v1 > v2 )
+    {
+      std::swap( v1, v2 );
+      std::swap( v3, v4 );
+      a = order - a;
+    }
+    if( v1 > v3 )
+    {
+      std::swap( v1, v3 );
+      std::swap( v2, v4 );
+      b = order - b;
+    }
+    if( v1 > v4 )
+    {
+      std::swap( v1, v4 );
+      std::swap( a, b );
+      a = order - a;
+      b = order - b;
+    }
+    if( v2 > v3 )
+    {
+      std::swap( v2, v3 );
+      std::swap( a, b );
+    }
+  }
+  return std::array< T, 6 > { v1, v2, v3, v4, a, b };
+}
+
+template< typename T >
+static std::array< T, 6 > createNodeKey( T const (&elemNodes)[ 8 ], int q1, int q2, int q3, int order )
+{
+  bool extremal1 = q1 == 0 || q1 == order;
+  bool extremal2 = q2 == 0 || q2 == order;
+  bool extremal3 = q3 == 0 || q3 == order;
+  int v1 = q1/order;
+  int v2 = q2/order;
+  int v3 = q3/order;
+  if( extremal1 && extremal2 && extremal3 )
+  {
+    // vertex node
+    return createNodeKey( elemNodes[ v1 + 2*v2 + 4*v3 ] );
+  }
+  else if( extremal1 && extremal2 )
+  {
+    // edge node on v1, v2
+    return createNodeKey( elemNodes[ v1 + 2*v2 ], elemNodes[ v1 + 2*v2 + 4 ], q3, order );
+  }
+  else if( extremal1 && extremal3 )
+  {
+    // edge node on v1, v3
+    return createNodeKey( elemNodes[ v1 + 4*v3 ], elemNodes[ v1 + 2 + 4*v3 ], q2, order );
+  }
+  else if( extremal2 && extremal3 )
+  {
+    // edge node on v2, v3
+    return createNodeKey( elemNodes[ 2*v2 + 4*v3 ], elemNodes[ 1 + 2*v2 + 4*v3 ], q1, order );
+  }
+  else if( extremal1 )
+  {
+    // face node on the face of type 1
+    return createNodeKey( elemNodes[ v1 ], elemNodes[ v1 + 2 ], elemNodes[ v1 + 4 ], elemNodes[ v1 + 2 + 4 ], q2, q3, order );
+  }
+  else if( extremal2 )
+  {
+    // face node on the face of type 2
+    return createNodeKey( elemNodes[ 2*v2 ], elemNodes[ 1 + 2*v2 ], elemNodes[ 2*v2 + 4 ], elemNodes[ 1 + 2*v2 + 4 ], q1, q3, order );
+  }
+  else if( extremal3 )
+  {
+    // face node on the face of type 3
+    return createNodeKey( elemNodes[ 4*v3 ], elemNodes[ 1 + 4*v3 ], elemNodes[ 2 + 4*v3 ], elemNodes[ 1 + 2 + 4*v3 ], q1, q2, order );
+  }
+  else
+  {
+    // node internal to the cell -- no need for key, it will be created
+    return createNodeKey( -1 );
+  }
+}
+
 } // namespace geos
 
 #endif //GEOS_MESH_UTILITIES_MESHMAPUTILITIES_HPP

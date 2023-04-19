@@ -39,6 +39,7 @@
 #include "functions/FunctionManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
+#include "mesh/generators/CellBlockManager.hpp"
 #include "mesh/MeshManager.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -573,10 +574,12 @@ void ProblemManager::generateMesh()
         // create a high order MeshLevel
         if( order > 1 )
         {
+          MeshLevel & mesh = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
+                                                       discretizationName, order );
+
           CellBlockManager & highOrderCellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
 
-          MeshLevel & mesh = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
-                                                       discretizationName, highOrderCellBlockManager, order );
+          highOrderCellBlockManager.createHighOrderMaps(order, meshBody.getBaseDiscretization(), mesh);
 
           this->generateMeshLevel( mesh,
                                    cellBlockManager,

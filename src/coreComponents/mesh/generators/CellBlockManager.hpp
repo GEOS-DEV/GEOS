@@ -22,7 +22,7 @@
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/CellBlock.hpp"
 #include "mesh/generators/FaceBlock.hpp"
-//#include "mesh/MeshLevel.hpp"
+#include "mesh/MeshLevel.hpp"
 
 namespace geos
 {
@@ -142,7 +142,7 @@ public:
    */
   void setNumNodes( localIndex numNodes, localIndex const order );
 
-  //void createHighOrderMaps( localIndex numNodes, localIndex const order, MeshLevel const & source );
+  void createHighOrderMaps( localIndex const order, MeshLevel const & source, MeshLevel & highOrderMeshLevel);
  
   localIndex numNodes() const override;
 
