@@ -65,4 +65,10 @@ set(ENABLE_DOXYGEN OFF CACHE BOOL "" FORCE)
 # Other
 set(ENABLE_MATHPRESSO OFF CACHE BOOL "")
 
+# PYGEOSX
+set(ENABLE_PYGEOSX ON CACHE BOOL "")
+set(PYTHON_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/lassen-gcc-python/python/bin/python CACHE PATH "")
+set(Python3_ROOT_DIR /usr/gapps/GEOSX/thirdPartyLibs/python/lassen-gcc-python/python CACHE PATH "")
+set(Python3_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/lassen-gcc-python/python/bin/python3 CACHE PATH "")
+
 include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)
