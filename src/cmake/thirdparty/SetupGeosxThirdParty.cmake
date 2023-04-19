@@ -265,6 +265,24 @@ else()
 endif()
 
 ################################
+# FMT
+################################
+if(DEFINED FMT_DIR)
+    message(STATUS "FMT_DIR = ${FMT_DIR}")
+
+    find_package(fmt REQUIRED
+                 PATHS ${FMT_DIR}
+                 NO_DEFAULT_PATH)
+
+    message( " ----> fmt_VERSION = ${fmt_VERSION}")
+
+    set(ENABLE_FMT ON CACHE BOOL "")
+    set(thirdPartyLibs ${thirdPartyLibs} fmt::fmt)
+else()
+    message(FATAL_ERROR "GEOSX requires {fmt}, set FMT_DIR to the {fmt} installation directory.")
+endif()
+
+################################
 # Umpire
 ################################
 if(DEFINED UMPIRE_DIR)
@@ -564,9 +582,14 @@ endif()
 if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
 
+set( CUDA_cusparse_LIBRARY "/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/math_libs/11.7/lib64/libcusparse.so" CACHE PATH "" FORCE )
+set( CUDA_cublas_LIBRARY "/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/math_libs/11.7/lib64/libcublas.so" CACHE PATH "" FORCE )
+set( CUDA_curand_LIBRARY "/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/math_libs/11.7/lib64/libcurand.so" CACHE PATH "" FORCE )
+
     set( HYPRE_DEPENDS blas lapack superlu_dist )
     if( ENABLE_HYPRE_CUDA )
         set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_cublas_LIBRARY} ${CUDA_curand_LIBRARY} )
+        message( "EXTRA_LIBS = ${EXTRA_LIBS}")
         list( APPEND HYPRE_DEPENDS umpire )
     endif()
 
@@ -698,23 +721,6 @@ else()
     message(STATUS "Not using VTK")
 endif()
 
-################################
-# FMT
-################################
-if(DEFINED FMT_DIR)
-    message(STATUS "FMT_DIR = ${FMT_DIR}")
-
-    find_package(fmt REQUIRED
-                 PATHS ${FMT_DIR}
-                 NO_DEFAULT_PATH)
-
-    message( " ----> fmt_VERSION = ${fmt_VERSION}")
-
-    set(ENABLE_FMT ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} fmt::fmt)
-else()
-    message(FATAL_ERROR "GEOSX requires {fmt}, set FMT_DIR to the {fmt} installation directory.")
-endif()
 
 ################################
 # uncrustify

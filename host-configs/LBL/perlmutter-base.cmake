@@ -61,7 +61,10 @@ set(ENABLE_PVTPackage ON CACHE BOOL "")
 set(ENABLE_PETSC OFF CACHE BOOL "" FORCE )
 
 
-  
+set( CUDA_cusparse_LIBRARY "/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/math_libs/11.7/lib64/libcusparse.so " CACHE PATH "" FORCE )
+set( CUDA_cublas_LIBRARY "/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/math_libs/11.7/lib64/libcublas.so" CACHE PATH "" FORCE )
+set( CUDA_curand_LIBRARY "/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/math_libs/11.7/lib64/libcurand.so" CACHE PATH "" FORCE )
+
 set( ENABLE_HYPRE_CUDA ON CACHE BOOL "" FORCE )
 if( ENABLE_HYPRE_CUDA )
     set(ENABLE_TRILINOS OFF CACHE BOOL "" FORCE )
