@@ -196,7 +196,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPa
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
     string const jumpDofKey = dofManager.getKey( fields::contact::dispJump::key() );
-    string const pressureDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
+    string const flowDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
     globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -218,7 +218,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPa
             getSubRegion< CellElementSubRegion >( embeddedSurfacesToCells.m_toElementSubRegion[k][0] );
 
         arrayView1d< globalIndex const > const &
-        pressureDofNumber = subRegion.getReference< globalIndex_array >( pressureDofKey );
+        flowDofNumber = subRegion.getReference< globalIndex_array >( flowDofKey );
 
         localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
 
@@ -233,7 +233,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPa
             rowLengths[localRow + i] += 1;
           }
 
-          localIndex const localPressureRow = LvArray::integerConversion< localIndex >( pressureDofNumber[cellElementIndex] - rankOffset );
+          localIndex const localPressureRow = LvArray::integerConversion< localIndex >( flowDofNumber[cellElementIndex] - rankOffset );
           GEOS_ASSERT_GE( localPressureRow, 0 );
           GEOS_ASSERT_GE( rowLengths.size(), localPressureRow + embeddedSurfaceSubRegion.numOfJumpEnrichments() );
 
@@ -260,11 +260,11 @@ void SinglePhasePoromechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPa
           elemManager.getRegion( seri[iconn][0] ).getSubRegion< EmbeddedSurfaceSubRegion >( sesri[iconn][0] );
 
         arrayView1d< globalIndex const > const &
-        pressureDofNumber =  embeddedSurfaceSubRegion.getReference< globalIndex_array >( pressureDofKey );
+        flowDofNumber =  embeddedSurfaceSubRegion.getReference< globalIndex_array >( flowDofKey );
 
         for( localIndex k0=0; k0<numFluxElems; ++k0 )
         {
-          globalIndex const activeFlowDOF = pressureDofNumber[sei[iconn][k0]];
+          globalIndex const activeFlowDOF = flowDofNumber[sei[iconn][k0]];
           globalIndex const rowNumber = activeFlowDOF - rankOffset;
 
           if( rowNumber >= 0 && rowNumber < rowLengths.size() )
@@ -276,6 +276,11 @@ void SinglePhasePoromechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPa
               if( k1 != k0 )
               {
                 rowLengths[ rowNumber ] += embeddedSurfaceSubRegion.numOfJumpEnrichments(); // number of jump enrichments.
+                if( m_isThermal )
+                {
+                  // energy flux is also coupled to dispJump
+                  rowLengths[ rowNumber + 1 ] += embeddedSurfaceSubRegion.numOfJumpEnrichments();
+                }
               }
             }
           }

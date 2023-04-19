@@ -136,9 +136,6 @@ protected:
 private:
 
   string m_fracturesSolverName;
-  
-  // flag to determine whether or not this is a thermal simulation
-  integer m_isThermal;
 
   SolidMechanicsEmbeddedFractures * m_fracturesSolver;
 

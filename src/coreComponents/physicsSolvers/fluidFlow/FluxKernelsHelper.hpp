@@ -142,9 +142,11 @@ void computeEnthalpyFlux( localIndex const ( &seri )[2],
                           real64 const & mobility,
                           real64 const & potGrad,
                           real64 const & massFlux,
+                          real64 const & dMassFlux_dTrans,
                           real64 const ( &dMassFlux_dP )[2],
                           real64 ( & dMassFlux_dT )[2],
                           real64 & energyFlux,
+                          real64 & dEnergyFlux_dTrans,
                           ENERGYFLUX_DERIVATIVE_TYPE & dEnergyFlux_dP,
                           ENERGYFLUX_DERIVATIVE_TYPE & dEnergyFlux_dT )
 {
@@ -241,6 +243,7 @@ void computeEnthalpyFlux( localIndex const ( &seri )[2],
   }
 
   energyFlux += massFlux * enthalpyTimesMobWeight;
+  dEnergyFlux_dTrans = enthalpyTimesMobWeight * dMassFlux_dTrans;
 
   for( integer ke = 0; ke < 2; ++ke )
   {

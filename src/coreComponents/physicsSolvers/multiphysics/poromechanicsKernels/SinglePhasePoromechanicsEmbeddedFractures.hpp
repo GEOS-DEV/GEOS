@@ -208,7 +208,7 @@ public:
     for( localIndex i=0; i < 3; i++ )
     {
       dFlux_dDispJump[0][i] =   dFlux_dTrans * stack.dTrans_dDispJump[0][0][i];
-      dFlux_dDispJump[1][i] = - dFlux_dTrans * stack.dTrans_dDispJump[0][1][i];
+      dFlux_dDispJump[1][i] = -dFlux_dTrans * stack.dTrans_dDispJump[0][1][i];
     }
     for( localIndex ke = 0; ke < 2; ++ke )
     {
@@ -225,7 +225,7 @@ public:
       stack.localFluxJacobian[1][dofIndex+3] = -m_dt * dFlux_dDispJump[ke][2];
     }
 
-    kernelOp( regionIndex, subRegionIndex, elementIndex, iconn, alpha, mobility, potGrad, fluxVal, dFlux_dP );
+    kernelOp( regionIndex, subRegionIndex, elementIndex, iconn, alpha, mobility, potGrad, fluxVal, dFlux_dTrans, dFlux_dP );
   }
 
 
