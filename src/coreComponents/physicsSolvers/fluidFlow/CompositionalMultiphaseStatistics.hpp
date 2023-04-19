@@ -81,44 +81,101 @@ private:
     constexpr static char const * relpermThresholdString() { return "relpermThreshold"; }
   };
 
-  struct RegionStatistics
+  class RegionStatistics : public dataRepository::Group
   {
-    /// average region pressure
-    real64 averagePressure;
-    /// minimum region pressure
-    real64 minPressure;
-    /// maximum region pressure
-    real64 maxPressure;
+public:
+    RegionStatistics( string const & name,
+                      Group * const parent )
+      : Group( name, parent )
+    {
+      //setInputFlags( dataRepository::InputFlags::REQUIRED );
 
-    /// minimum region delta pressure
-    real64 minDeltaPressure;
-    /// maximum region delta pressure
-    real64 maxDeltaPressure;
+      registerWrapper( viewKeyStruct::phasePoreVolumeString(), &m_phasePoreVolume ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "Phase region phase pore volume" );
 
-    /// average region temperature
-    real64 averageTemperature;
-    /// minimum region temperature
-    real64 minTemperature;
-    /// maximum region temperature
-    real64 maxTemperature;
 
-    /// total region pore volume
-    real64 totalPoreVolume;
-    /// total region uncompacted pore volume
-    real64 totalUncompactedPoreVolume;
+      registerWrapper( viewKeyStruct::phaseMassString(), &m_phaseMass ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "Region phase mass (trapped and non-trapped, immobile and mobile)" );
+
+      registerWrapper( viewKeyStruct::trappedPhaseMassString(), &m_trappedPhaseMass ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "Trapped region phase mass" );
+
+      registerWrapper( viewKeyStruct::immobilePhaseMassString(), &m_immobilePhaseMass ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "Immobile region phase mass" );
+
+      registerWrapper( viewKeyStruct::dissolvedComponentMassString(), &m_dissolvedComponentMass ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "Dissolved region component mass" );
+
+    }
+
+    struct viewKeyStruct
+    {
+      constexpr static char const * phasePoreVolumeString() { return "phasePoreVolume"; }
+      constexpr static char const * phaseMassString() { return "phaseMass"; }
+      constexpr static char const * trappedPhaseMassString() { return "trappedPhaseMass"; }
+      constexpr static char const * immobilePhaseMassString() { return "immobilePhaseMass"; }
+      constexpr static char const * dissolvedComponentMassString() { return "dissolvedComponentMass"; }
+    };
+
+    void init(integer const numPhases, integer const numComps)
+    {
+        m_phasePoreVolume.resizeDimension< 0 >( numPhases );
+        m_phaseMass.resizeDimension< 0 >( numPhases );
+        m_trappedPhaseMass.resizeDimension< 0 >( numPhases );
+        m_immobilePhaseMass.resizeDimension< 0 >( numPhases );
+        m_dissolvedComponentMass.resizeDimension< 0, 1 >( numPhases, numComps );
+    }
+
+private:
+    RegionStatistics() = delete;
+
+
+
+    // /// average region pressure
+    // real64 averagePressure;
+    // /// minimum region pressure
+    // real64 minPressure;
+    // /// maximum region pressure
+    // real64 maxPressure;
+
+    // /// minimum region delta pressure
+    // real64 minDeltaPressure;
+    // /// maximum region delta pressure
+    // real64 maxDeltaPressure;
+
+    // /// average region temperature
+    // real64 averageTemperature;
+    // /// minimum region temperature
+    // real64 minTemperature;
+    // /// maximum region temperature
+    // real64 maxTemperature;
+
+    // /// total region pore volume
+    // real64 totalPoreVolume;
+    // /// total region uncompacted pore volume
+    // real64 totalUncompactedPoreVolume;
+
     /// phase region phase pore volume
-    array1d< real64 > phasePoreVolume;
+    array1d< real64 > m_phasePoreVolume;
 
     /// region phase mass (trapped and non-trapped, immobile and mobile)
-    array1d< real64 > phaseMass;
+    array1d< real64 > m_phaseMass;
     /// trapped region phase mass
-    array1d< real64 > trappedPhaseMass;
+    array1d< real64 > m_trappedPhaseMass;
     /// immobile region phase mass
-    array1d< real64 > immobilePhaseMass;
+    array1d< real64 > m_immobilePhaseMass;
     /// dissolved region component mass
-    array2d< real64 > dissolvedComponentMass;
-
-
+    array2d< real64 > m_dissolvedComponentMass;
   };
 
   /**
@@ -127,7 +184,7 @@ private:
    * @param[in] regionNames the array of target region names
    */
   void computeRegionStatistics( MeshLevel & mesh,
-                                arrayView1d< string const > const & regionNames ) const;
+                                arrayView1d< string const > const & regionNames );
 
   /**
    * @brief Compute CFL numbers
@@ -135,7 +192,7 @@ private:
    * @param[in] domain the domain partition
    */
   void computeCFLNumbers( real64 const & dt,
-                          DomainPartition & domain ) const;
+                          DomainPartition & domain );
 
   void postProcessInput() override;
 
