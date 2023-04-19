@@ -4,13 +4,17 @@
 # Configuration
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PACKAGE_DIR=$SCRIPT_DIR/../src/coreComponents/python/modules
-declare -a TARGET_PACKAGES=("geosx_mesh_tools_package"
-                            "geosx_xml_tools_package"
-                            "hdf5_wrapper_package"
-                            "pygeosx_tools_package")
+declare -a TARGET_PACKAGES=("$PACKAGE_DIR/geosx_mesh_tools_package"
+                            "$PACKAGE_DIR/geosx_xml_tools_package"
+                            "$PACKAGE_DIR/hdf5_wrapper_package"
+                            "$PACKAGE_DIR/pygeosx_tools_package"
+                            "$SCRIPT_DIR/../integratedTests/scripts/geosxats_package")
 declare -a LINK_SCRIPTS=("preprocess_xml"
                          "format_xml"
-                         "convert_abaqus")
+                         "convert_abaqus"
+                         "run_geosxats"
+                         "activate"
+                         "python")
 
 
 # Read input arguments
@@ -84,7 +88,7 @@ then
     for p in "${TARGET_PACKAGES[@]}"
     do
         echo "  $p"
-        RES=$($PYTHON_TARGET -m pip install $PACKAGE_DIR/$p 2>&1)
+        RES=$($PYTHON_TARGET -m pip install $p 2>&1)
         if [[ $RES =~ "Error" ]]
         then
             echo "  (cannot install target packes directly)"
@@ -125,7 +129,7 @@ then
     for p in "${TARGET_PACKAGES[@]}"
     do
         echo "  $p"
-        $PYTHON_TARGET -m pip install $PACKAGE_DIR/$p
+        $PYTHON_TARGET -m pip install $p
     done
 
     # Print user-info
