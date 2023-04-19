@@ -266,8 +266,9 @@ public:
         // Step 2: compute temperature difference at the interface
         real64 energyFlux= 0.0;
         real64 dEnergyFlux_dT[2]{};
-        
+
         computeConductiveFlux( seri, sesri, sei, m_temp, thermalTrans, energyFlux, dEnergyFlux_dT );
+        
         stack.energyFlux += energyFlux;
         for( integer ke = 0; ke < 2; ++ke )
         { 
