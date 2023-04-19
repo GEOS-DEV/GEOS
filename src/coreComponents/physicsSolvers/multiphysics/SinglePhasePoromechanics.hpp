@@ -13,25 +13,25 @@
  */
 
 /**
- * @file SinglePhasePoromechanicsSolver.hpp
+ * @file SinglePhasePoromechanics.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVER_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_
 
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
-namespace geosx
+namespace geos
 {
 
-class SinglePhasePoromechanicsSolver : public CoupledSolver< SolidMechanicsLagrangianFEM,
-                                                             SinglePhaseBase >
+class SinglePhasePoromechanics : public CoupledSolver< SinglePhaseBase,
+                                                       SolidMechanicsLagrangianFEM >
 {
 public:
 
-  using Base = CoupledSolver< SolidMechanicsLagrangianFEM, SinglePhaseBase >;
+  using Base = CoupledSolver< SinglePhaseBase, SolidMechanicsLagrangianFEM >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -40,27 +40,27 @@ public:
 
   enum class SolverType : integer
   {
-    SolidMechanics = 0,
-    Flow = 1
+    Flow = 0,
+    SolidMechanics = 1
   };
 
   /// String used to form the solverName used to register solvers in CoupledSolver
   static string coupledSolverAttributePrefix() { return "poromechanics"; }
 
   /**
-   * @brief main constructor for SinglePhasePoromechanicsSolver objects
-   * @param name the name of this instantiation of SinglePhasePoromechanicsSolver in the repository
-   * @param parent the parent group of this instantiation of SinglePhasePoromechanicsSolver
+   * @brief main constructor for SinglePhasePoromechanics objects
+   * @param name the name of this instantiation of SinglePhasePoromechanics in the repository
+   * @param parent the parent group of this instantiation of SinglePhasePoromechanics
    */
-  SinglePhasePoromechanicsSolver( const string & name,
-                                  Group * const parent );
+  SinglePhasePoromechanics( const string & name,
+                            Group * const parent );
 
   /// Destructor for the class
-  ~SinglePhasePoromechanicsSolver() override {}
+  ~SinglePhasePoromechanics() override {}
 
   /**
    * @brief name of the node manager in the object catalog
-   * @return string that contains the catalog name to generate a new SinglePhasePoromechanicsSolver object through the object catalog.
+   * @return string that contains the catalog name to generate a new SinglePhasePoromechanics object through the object catalog.
    */
   static string catalogName() { return "SinglePhasePoromechanics"; }
 
@@ -141,6 +141,12 @@ protected:
 
 private:
 
+  /**
+   * @brief Helper function to recompute the bulk density
+   * @param[in] subRegion the element subRegion
+   */
+  void updateBulkDensity( ElementSubRegionBase & subRegion );
+
   void createPreconditioner();
 
   template< typename CONSTITUTIVE_BASE,
@@ -154,27 +160,25 @@ private:
                          arrayView1d< real64 > const & localRhs,
                          PARAMS && ... params );
 
-
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
 
   /// Flag to indicate that the solver is going to perform stress initialization
   integer m_performStressInitialization;
-
 };
 
 template< typename CONSTITUTIVE_BASE,
           typename KERNEL_WRAPPER,
           typename ... PARAMS >
-real64 SinglePhasePoromechanicsSolver::assemblyLaunch( MeshLevel & mesh,
-                                                       DofManager const & dofManager,
-                                                       arrayView1d< string const > const & regionNames,
-                                                       string const & materialNamesString,
-                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                       arrayView1d< real64 > const & localRhs,
-                                                       PARAMS && ... params )
+real64 SinglePhasePoromechanics::assemblyLaunch( MeshLevel & mesh,
+                                                 DofManager const & dofManager,
+                                                 arrayView1d< string const > const & regionNames,
+                                                 string const & materialNamesString,
+                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                 arrayView1d< real64 > const & localRhs,
+                                                 PARAMS && ... params )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NodeManager const & nodeManager = mesh.getNodeManager();
 
@@ -201,6 +205,6 @@ real64 SinglePhasePoromechanicsSolver::assemblyLaunch( MeshLevel & mesh,
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVER_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_ */

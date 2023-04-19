@@ -16,12 +16,12 @@
  * @file NoOpPVTFunction.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_NOOPPVTFUNCTION_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_NOOPPVTFUNCTION_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_PVTFUNCTIONS_NOOPPVTFUNCTION_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_PVTFUNCTIONS_NOOPPVTFUNCTION_HPP_
 
 #include "PVTFunctionBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -39,18 +39,18 @@ public:
   {}
 
   template< int USD1 >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
                 real64 & value,
                 bool useMass ) const
   {
-    GEOSX_UNUSED_VAR( pressure, temperature, phaseComposition, value, useMass );
+    GEOS_UNUSED_VAR( pressure, temperature, phaseComposition, value, useMass );
   }
 
   template< int USD1, int USD2, int USD3 >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -59,10 +59,10 @@ public:
                 arraySlice1d< real64, USD3 > const & dValue,
                 bool useMass ) const
   {
-    GEOSX_UNUSED_VAR( pressure, temperature,
-                      phaseComposition, dPhaseComposition,
-                      value, dValue,
-                      useMass );
+    GEOS_UNUSED_VAR( pressure, temperature,
+                     phaseComposition, dPhaseComposition,
+                     value, dValue,
+                     useMass );
   }
 
   virtual void move( LvArray::MemorySpace const space, bool const touch ) override
@@ -85,7 +85,7 @@ public:
                        componentNames,
                        componentMolarWeight )
   {
-    GEOSX_UNUSED_VAR( inputPara );
+    GEOS_UNUSED_VAR( inputPara );
   }
 
   virtual ~NoOpPVTFunction() override = default;
@@ -117,6 +117,6 @@ public:
 
 } // end namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_NOOPPVTFUNCTION_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_PVTFUNCTIONS_NOOPPVTFUNCTION_HPP_

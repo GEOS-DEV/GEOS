@@ -21,7 +21,7 @@
 #include "Path.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -130,4 +130,4 @@ void FinalizeLogger()
 
 } // namespace logger
 
-} // namespace geosx
+} // namespace geos

@@ -21,7 +21,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -115,19 +115,19 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name,
 void InternalWellboreGenerator::postProcessInput()
 {
 
-  GEOSX_ERROR_IF( m_nElems[1].size() > 1,
-                  "Only one block in the theta direction is currently supported. "
-                  "This is specified by the nt keyword in InternalWellbore" );
+  GEOS_ERROR_IF( m_nElems[1].size() > 1,
+                 "Only one block in the theta direction is currently supported. "
+                 "This is specified by the nt keyword in InternalWellbore" );
 
-  GEOSX_ERROR_IF( m_nElems[2].size() > 1,
-                  "Only one block in the z direction is currently supported. "
-                  "This is specified by the nz keyword in InternalWellbore" );
+  GEOS_ERROR_IF( m_nElems[2].size() > 1,
+                 "Only one block in the z direction is currently supported. "
+                 "This is specified by the nz keyword in InternalWellbore" );
 
 
 
-  GEOSX_ERROR_IF( m_trajectory.size( 0 ) != 2 || m_trajectory.size( 1 ) != 3,
-                  "Input for trajectory should be specified in the form of "
-                  "{ { xbottom, ybottom, zbottom }, { xtop, ytop, ztop } }." );
+  GEOS_ERROR_IF( m_trajectory.size( 0 ) != 2 || m_trajectory.size( 1 ) != 3,
+                 "Input for trajectory should be specified in the form of "
+                 "{ { xbottom, ybottom, zbottom }, { xtop, ytop, ztop } }." );
 
   // Project trajectory to bottom and top of the wellbore
   real64 trajectoryVector[3] = {0};
@@ -258,22 +258,22 @@ void InternalWellboreGenerator::postProcessInput()
   }
 
 
-  GEOSX_LOG_RANK_0( "radial elements: "<<m_nElems[0] );
-  GEOSX_LOG_RANK_0( "Radial Coordinates: "<<m_radialCoords );
+  GEOS_LOG_RANK_0( "radial elements: "<<m_nElems[0] );
+  GEOS_LOG_RANK_0( "Radial Coordinates: "<<m_radialCoords );
 
 
   if( m_cartesianOuterBoundary < 1000000 )
   {
-    GEOSX_ERROR_IF( m_cartesianOuterBoundary < 0, "useCartesianOuterBoundary must be > 0" );
+    GEOS_ERROR_IF( m_cartesianOuterBoundary < 0, "useCartesianOuterBoundary must be > 0" );
     real64 const innerLimit = m_vertices[0][m_cartesianOuterBoundary];
     real64 const outerLimit = m_vertices[0].size();
-    GEOSX_ERROR_IF( m_cartesianMappingInnerRadius< 1e98 &&
-                                                   m_cartesianMappingInnerRadius > outerLimit,
-                    "cartesianMappingInnerRadius must be inside the outer radius of the mesh" );
+    GEOS_ERROR_IF( m_cartesianMappingInnerRadius< 1e98 &&
+                                                  m_cartesianMappingInnerRadius > outerLimit,
+                   "cartesianMappingInnerRadius must be inside the outer radius of the mesh" );
 
-    GEOSX_ERROR_IF( m_cartesianMappingInnerRadius < innerLimit,
-                    "cartesianMappingInnerRadius must be outside the radius "
-                    "of the inner boundary of the region specified by useCartesianOuterBoundary" );
+    GEOS_ERROR_IF( m_cartesianMappingInnerRadius < innerLimit,
+                   "cartesianMappingInnerRadius must be outside the radius "
+                   "of the inner boundary of the region specified by useCartesianOuterBoundary" );
 
     if( m_cartesianMappingInnerRadius > 1e98 )
     {
@@ -306,7 +306,7 @@ void InternalWellboreGenerator::
                                           int ( & globalIJK )[3] )
 {
 
-  GEOSX_UNUSED_VAR( partition );
+  GEOS_UNUSED_VAR( partition );
   if( m_isFullAnnulus )
   {
     if( globalIJK[1] == m_nElems[1].back() + 1 )
@@ -506,4 +506,4 @@ void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, n
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalWellboreGenerator, string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */

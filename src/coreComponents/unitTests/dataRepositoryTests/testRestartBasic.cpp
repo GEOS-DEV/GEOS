@@ -28,7 +28,7 @@
 // System includes
 #include <random>
 
-namespace geosx
+namespace geos
 {
 
 CommandLineOptions g_commandLineOptions;
@@ -134,17 +134,17 @@ TYPED_TEST( SingleWrapperTest, WriteAndRead )
 
 } // namespace testing
 } // namespace dataRepository
-} // namespace geosx
+} // namespace geos
 
 int main( int argc, char * argv[] )
 {
   testing::InitGoogleTest( &argc, argv );
 
-  geosx::g_commandLineOptions = *geosx::basicSetup( argc, argv );
+  geos::g_commandLineOptions = *geos::basicSetup( argc, argv );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::basicCleanup();
+  geos::basicCleanup();
 
   return result;
 }

@@ -21,7 +21,7 @@
 
 #include <fnmatch.h>
 
-namespace geosx
+namespace geos
 {
 
 namespace
@@ -80,15 +80,15 @@ MeshObjectPath::fillPathTokens( string const & path,
 
   int objectIndex = findObjectIndex();
 
-  GEOSX_THROW_IF( objectIndex==-1,
-                  GEOSX_FMT( "Path {} does not contain a valid object type. "
-                             "It must contain one of the following: {}, {}, {}, {}",
-                             path,
-                             MeshLevel::groupStructKeys::nodeManagerString(),
-                             MeshLevel::groupStructKeys::edgeManagerString(),
-                             MeshLevel::groupStructKeys::faceManagerString(),
-                             MeshLevel::groupStructKeys::elemManagerString() ),
-                  InputError );
+  GEOS_THROW_IF( objectIndex==-1,
+                 GEOS_FMT( "Path {} does not contain a valid object type. "
+                           "It must contain one of the following: {}, {}, {}, {}",
+                           path,
+                           MeshLevel::groupStructKeys::nodeManagerString(),
+                           MeshLevel::groupStructKeys::edgeManagerString(),
+                           MeshLevel::groupStructKeys::faceManagerString(),
+                           MeshLevel::groupStructKeys::elemManagerString() ),
+                 InputError );
 
   // No MeshBody or MeshLevels were specified. add all of them
   if( objectIndex==0 )
@@ -135,11 +135,11 @@ MeshObjectPath::fillPathTokens( string const & path,
           existingMeshBodiesAndLevels += stringutilities::join( meshLevelsNames, ", " ) + " }\n";
         } );
 
-        GEOSX_THROW( GEOSX_FMT( "Path {0} specifies an invalid MeshBody or MeshLevel. ",
-                                "existing MeshBodies: \n{1}\n",
-                                path,
-                                existingMeshBodiesAndLevels ),
-                     InputError );
+        GEOS_THROW( GEOS_FMT( "Path {0} specifies an invalid MeshBody or MeshLevel. ",
+                              "existing MeshBodies: \n{1}\n",
+                              path,
+                              existingMeshBodiesAndLevels ),
+                    InputError );
       }
       pathTokens.insert( pathTokens.begin()+1, unidentifiedName );
     }
@@ -149,13 +149,13 @@ MeshObjectPath::fillPathTokens( string const & path,
   objectIndex = findObjectIndex();
   size_t targetTokenLength = pathTokens.size();
 
-  GEOSX_THROW_IF_NE_MSG( objectIndex, 2,
-                         "Filling of MeshBody and/or MeshLevel in path has failed. Object Index should be 2",
-                         InputError );
+  GEOS_THROW_IF_NE_MSG( objectIndex, 2,
+                        "Filling of MeshBody and/or MeshLevel in path has failed. Object Index should be 2",
+                        InputError );
 
-  GEOSX_THROW_IF( targetTokenLength < 2,
-                  "Filling of MeshBody and/or MeshLevel in path has failed. targetTokenLength should be greater than 2",
-                  InputError );
+  GEOS_THROW_IF( targetTokenLength < 2,
+                 "Filling of MeshBody and/or MeshLevel in path has failed. targetTokenLength should be greater than 2",
+                 InputError );
 
   // now we need to fill in any missing region/subregion specifications.
 
@@ -231,13 +231,13 @@ void processTokenRecursive( dataRepository::Group const & parentGroup,
 
       }
     }
-    GEOSX_THROW_IF( !foundMatch,
-                    GEOSX_FMT( "{0} doesn't have a child named {1}.\n"
-                               "{0} have the following children: {{ {2} }}",
-                               parentGroup.getName(),
-                               inputEntry,
-                               stringutilities::join( namesInRepository, ", " ) ),
-                    InputError );
+    GEOS_THROW_IF( !foundMatch,
+                   GEOS_FMT( "{0} doesn't have a child named {1}.\n"
+                             "{0} have the following children: {{ {2} }}",
+                             parentGroup.getName(),
+                             inputEntry,
+                             stringutilities::join( namesInRepository, ", " ) ),
+                   InputError );
   }
 }
 
@@ -313,4 +313,4 @@ void MeshObjectPath::printPermutations() const
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */

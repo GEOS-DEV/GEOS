@@ -33,7 +33,7 @@
 #include <numeric>
 #include <functional>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -66,7 +66,7 @@ localIndex DofManager::getFieldIndex( string const & name ) const
 {
   auto const it = std::find_if( m_fields.begin(), m_fields.end(),
                                 [&]( FieldDescription const & f ) { return f.name == name; } );
-  GEOSX_ASSERT_MSG( it != m_fields.end(), "DofManager: field does not exist: " << name );
+  GEOS_ASSERT_MSG( it != m_fields.end(), "DofManager: field does not exist: " << name );
   return std::distance( m_fields.begin(), it );
 }
 
@@ -140,7 +140,7 @@ FieldLocation DofManager::location( string const & fieldName ) const
 
 globalIndex DofManager::globalOffset( string const & fieldName ) const
 {
-  GEOSX_ASSERT_MSG( m_reordered, "Global offset not available until after reorderByRank() has been called." );
+  GEOS_ASSERT_MSG( m_reordered, "Global offset not available until after reorderByRank() has been called." );
   return m_fields[getFieldIndex( fieldName )].globalOffset;
 }
 
@@ -287,8 +287,8 @@ processFieldSupportList( DomainPartition const & domain,
   std::set< std::pair< string, string > > processedMeshLevels;
   for( DofManager::FieldSupport const & r : inputList )
   {
-    GEOSX_ERROR_IF( processedMeshLevels.count( { r.meshBodyName, r.meshLevelName } ) > 0,
-                    GEOSX_FMT( "Duplicate mesh: {}/{}", r.meshBodyName, r.meshLevelName ) );
+    GEOS_ERROR_IF( processedMeshLevels.count( { r.meshBodyName, r.meshLevelName } ) > 0,
+                   GEOS_FMT( "Duplicate mesh: {}/{}", r.meshBodyName, r.meshLevelName ) );
     processedMeshLevels.insert( { r.meshBodyName, r.meshLevelName } );
 
     MeshBody const & body = domain.getMeshBody( r.meshBodyName );
@@ -324,9 +324,9 @@ void DofManager::addField( string const & fieldName,
                            integer const components,
                            std::vector< FieldSupport > const & regions )
 {
-  GEOSX_ASSERT_MSG( m_domain != nullptr, "Domain has not been set" );
-  GEOSX_ERROR_IF( m_reordered, "Cannot add fields after reorderByRank() has been called." );
-  GEOSX_ERROR_IF_GT_MSG( components, MAX_COMP, "Number of components limit exceeded" );
+  GEOS_ASSERT_MSG( m_domain != nullptr, "Domain has not been set" );
+  GEOS_ERROR_IF( m_reordered, "Cannot add fields after reorderByRank() has been called." );
+  GEOS_ERROR_IF_GT_MSG( components, MAX_COMP, "Number of components limit exceeded" );
 
   std::vector< FieldSupport > processedSupports = processFieldSupportList( *m_domain, regions );
 
@@ -390,9 +390,9 @@ processCouplingRegionList( std::set< string > inputList,
     auto const checkSupport = [&regions]( std::set< string > const & fieldRegions, string const & fieldName )
     {
       // Both regions lists are sorted at this point
-      GEOSX_ERROR_IF( !std::includes( fieldRegions.begin(), fieldRegions.end(), regions.begin(), regions.end() ),
-                      GEOSX_FMT( "Coupling domain is not a subset of {}'s support:\nCoupling: {}\nField: {}",
-                                 fieldName, stringutilities::join( regions ), stringutilities::join( fieldRegions ) ) );
+      GEOS_ERROR_IF( !std::includes( fieldRegions.begin(), fieldRegions.end(), regions.begin(), regions.end() ),
+                     GEOS_FMT( "Coupling domain is not a subset of {}'s support:\nCoupling: {}\nField: {}",
+                               fieldName, stringutilities::join( regions ), stringutilities::join( fieldRegions ) ) );
     };
     checkSupport( rowFieldRegions, rowFieldName );
     checkSupport( colFieldRegions, colFieldName );
@@ -445,12 +445,12 @@ processCouplingRegionList( std::vector< DofManager::FieldSupport > inputList,
       {
         auto const comp = [&r]( auto const & f ){ return RegionComp< std::equal_to<> >{} ( r, f ); };
         auto const it = std::find_if( fieldRegions.begin(), fieldRegions.end(), comp );
-        GEOSX_ERROR_IF( it == fieldRegions.end(),
-                        GEOSX_FMT( "Mesh {}/{} not found in support of field {}", r.meshBodyName, r.meshLevelName, fieldName ) );
+        GEOS_ERROR_IF( it == fieldRegions.end(),
+                       GEOS_FMT( "Mesh {}/{} not found in support of field {}", r.meshBodyName, r.meshLevelName, fieldName ) );
 
-        GEOSX_ERROR_IF( !std::includes( it->regionNames.begin(), it->regionNames.end(), r.regionNames.begin(), r.regionNames.end() ),
-                        GEOSX_FMT( "Coupling domain is not a subset of {}'s support:\nCoupling: {}\nField: {}",
-                                   fieldName, stringutilities::join( r.regionNames ), stringutilities::join( it->regionNames ) ) );
+        GEOS_ERROR_IF( !std::includes( it->regionNames.begin(), it->regionNames.end(), r.regionNames.begin(), r.regionNames.end() ),
+                       GEOS_FMT( "Coupling domain is not a subset of {}'s support:\nCoupling: {}\nField: {}",
+                                 fieldName, stringutilities::join( r.regionNames ), stringutilities::join( it->regionNames ) ) );
       }
     };
     checkSupport( rowFieldRegions, rowFieldName );
@@ -468,7 +468,7 @@ void DofManager::addCoupling( string const & rowFieldName,
                               std::vector< FieldSupport > const & supports,
                               bool const symmetric )
 {
-  GEOSX_ASSERT_MSG( m_domain != nullptr, "Domain has not been set" );
+  GEOS_ASSERT_MSG( m_domain != nullptr, "Domain has not been set" );
   localIndex const rowFieldIndex = getFieldIndex( rowFieldName );
   localIndex const colFieldIndex = getFieldIndex( colFieldName );
 
@@ -516,7 +516,7 @@ void DofManager::addCoupling( string const & fieldName,
   localIndex const fieldIndex = getFieldIndex( fieldName );
   FieldDescription const & field = m_fields[fieldIndex];
 
-  GEOSX_ERROR_IF( field.location != FieldLocation::Elem, "Field must be supported on elements in order to use stencil sparsity" );
+  GEOS_ERROR_IF( field.location != FieldLocation::Elem, "Field must be supported on elements in order to use stencil sparsity" );
 
   CouplingDescription & coupling = m_coupling[ {fieldIndex, fieldIndex} ];
   coupling.connector = Connector::Stencil;
@@ -579,7 +579,7 @@ struct ConnLocPatternBuilder
     forMeshLocation< CONN, LOC, true, serialPolicy, SUBREGIONTYPES... >( mesh, regions,
                                                                          [&]( auto const & connIdx,
                                                                               auto const & locIdx,
-                                                                              localIndex const GEOSX_UNUSED_PARAM( k ) )
+                                                                              localIndex const GEOS_UNUSED_PARAM( k ) )
     {
       if( connIdx != connIdxPrev )
       {
@@ -639,7 +639,7 @@ struct ConnLocPatternBuilder< FieldLocation::Elem, FieldLocation::Edge, SUBREGIO
     forMeshLocation< ELEM, EDGE, true, serialPolicy, SUBREGIONTYPES... >( mesh, regions,
                                                                           [&]( auto const & elemIdx,
                                                                                auto const & edgeIdx,
-                                                                               localIndex const GEOSX_UNUSED_PARAM( k ) )
+                                                                               localIndex const GEOS_UNUSED_PARAM( k ) )
     {
       globalIndex const dofOffset = dofIndex[elemIdx[0]][elemIdx[1]][elemIdx[2]];
       if( dofOffset >= 0 )
@@ -782,8 +782,8 @@ void DofManager::setSparsityPatternOneBlock( SparsityPatternView< globalIndex > 
                                              localIndex const rowFieldIndex,
                                              localIndex const colFieldIndex ) const
 {
-  GEOSX_ASSERT( rowFieldIndex >= 0 );
-  GEOSX_ASSERT( colFieldIndex >= 0 );
+  GEOS_ASSERT( rowFieldIndex >= 0 );
+  GEOS_ASSERT( colFieldIndex >= 0 );
 
   FieldDescription const & rowField = m_fields[rowFieldIndex];
   FieldDescription const & colField = m_fields[colFieldIndex];
@@ -839,7 +839,7 @@ void DofManager::setSparsityPatternOneBlock( SparsityPatternView< globalIndex > 
                                          connLocCol );
       } );
     }
-    GEOSX_ASSERT_EQ( connLocRow.numRows(), connLocCol.numRows() );
+    GEOS_ASSERT_EQ( connLocRow.numRows(), connLocCol.numRows() );
 
     // Perform assembly/multiply patterns
     globalIndex const globalDofOffset = rankOffset();
@@ -864,8 +864,8 @@ void DofManager::countRowLengthsFromStencil( arrayView1d< localIndex > const & r
 {
   FieldDescription const & field = m_fields[fieldIndex];
   CouplingDescription const & coupling = m_coupling.at( {fieldIndex, fieldIndex} );
-  GEOSX_ASSERT( coupling.connector == Connector::Stencil );
-  GEOSX_ASSERT( coupling.stencils != nullptr );
+  GEOS_ASSERT( coupling.connector == Connector::Stencil );
+  GEOS_ASSERT( coupling.stencils != nullptr );
 
   localIndex const numComp = field.numComponents;
   globalIndex const rankDofOffset = rankOffset();
@@ -928,8 +928,8 @@ void DofManager::countRowLengthsOneBlock( arrayView1d< localIndex > const & rowL
                                           localIndex const rowFieldIndex,
                                           localIndex const colFieldIndex ) const
 {
-  GEOSX_ASSERT( rowFieldIndex >= 0 );
-  GEOSX_ASSERT( colFieldIndex >= 0 );
+  GEOS_ASSERT( rowFieldIndex >= 0 );
+  GEOS_ASSERT( colFieldIndex >= 0 );
 
   FieldDescription const & rowField = m_fields[rowFieldIndex];
   FieldDescription const & colField = m_fields[colFieldIndex];
@@ -985,7 +985,7 @@ void DofManager::countRowLengthsOneBlock( arrayView1d< localIndex > const & rowL
       } );
     }
 
-    GEOSX_ASSERT_EQ( connLocRow.numRows(), connLocCol.numRows() );
+    GEOS_ASSERT_EQ( connLocRow.numRows(), connLocCol.numRows() );
 
     // Estimate an upper bound on row length by adding adjacent entries on a connector
     globalIndex const rankDofOffset = rankOffset();
@@ -1007,7 +1007,7 @@ void DofManager::countRowLengthsOneBlock( arrayView1d< localIndex > const & rowL
 // Create the sparsity pattern (location-location). Low level interface
 void DofManager::setSparsityPattern( SparsityPattern< globalIndex > & pattern ) const
 {
-  GEOSX_ERROR_IF( !m_reordered, "Cannot set monolithic sparsity pattern before reorderByRank() has been called." );
+  GEOS_ERROR_IF( !m_reordered, "Cannot set monolithic sparsity pattern before reorderByRank() has been called." );
 
   localIndex const numLocalRows = numLocalDofs();
   localIndex const numFields = LvArray::integerConversion< localIndex >( m_fields.size() );
@@ -1050,12 +1050,12 @@ void vectorToFieldKernel( arrayView1d< real64 const > const & localVector,
                           localIndex const dofOffset,
                           DofManager::CompMask const mask )
 {
-  forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+  forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
   {
     if( ghostRank[i] < 0 && dofNumber[i] >= 0 )
     {
       localIndex const lid = dofNumber[i] - dofOffset;
-      GEOSX_ASSERT_GE( lid, 0 );
+      GEOS_ASSERT_GE( lid, 0 );
 
       integer fieldComp = 0;
       for( integer const vecComp : mask )
@@ -1105,16 +1105,16 @@ void fieldToVectorKernel( arrayView1d< real64 > const & localVector,
                           FIELD_VIEW const & field,
                           arrayView1d< globalIndex const > const & dofNumber,
                           arrayView1d< integer const > const & ghostRank,
-                          real64 const GEOSX_UNUSED_PARAM( scalingFactor ),
+                          real64 const GEOS_UNUSED_PARAM( scalingFactor ),
                           localIndex const dofOffset,
                           DofManager::CompMask const mask )
 {
-  forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+  forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
   {
     if( ghostRank[i] < 0 && dofNumber[i] >= 0 )
     {
       localIndex const lid = dofNumber[i] - dofOffset;
-      GEOSX_ASSERT_GE( lid, 0 );
+      GEOS_ASSERT_GE( lid, 0 );
 
       integer fieldComp = 0;
       for( integer const vecComp : mask )
@@ -1293,7 +1293,7 @@ void DofManager::addFieldToVector( arrayView1d< real64 > const & localVector,
 
 void DofManager::reorderByRank()
 {
-  GEOSX_LAI_ASSERT( !m_reordered );
+  GEOS_LAI_ASSERT( !m_reordered );
 
   for( FieldDescription & field : m_fields )
   {
@@ -1387,7 +1387,7 @@ void DofManager::setupFrom( DofManager const & source,
     if( it != selection.end() )
     {
       SubComponent const & sc = *it;
-      GEOSX_ASSERT_GE( field.numComponents, sc.mask.size() );
+      GEOS_ASSERT_GE( field.numComponents, sc.mask.size() );
       addField( field.name, field.location, sc.mask.size(), field.support );
     }
   }
@@ -1411,7 +1411,7 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
                                  bool const transpose,
                                  MATRIX & restrictor ) const
 {
-  GEOSX_ERROR_IF( !m_reordered, "Cannot make restrictors before reorderByRank() has been called." );
+  GEOS_ERROR_IF( !m_reordered, "Cannot make restrictors before reorderByRank() has been called." );
 
   // 1. Populate selected fields and compute some basic dimensions
   // array1d< FieldDescription > fieldsSelected( selection.size() );
@@ -1568,7 +1568,7 @@ void DofManager::printFieldInfo( std::ostream & os ) const
           }
           default:
           {
-            GEOSX_ERROR( "Invalid connector type: " << static_cast< int >( m_coupling.at( {i, j} ).connector ) );
+            GEOS_ERROR( "Invalid connector type: " << static_cast< int >( m_coupling.at( {i, j} ).connector ) );
           }
         }
         if( j < numFields - 1 )
@@ -1608,4 +1608,4 @@ MAKE_DOFMANAGER_METHOD_INST( HypreInterface )
 MAKE_DOFMANAGER_METHOD_INST( PetscInterface )
 #endif
 
-} // namespace geosx
+} // namespace geos

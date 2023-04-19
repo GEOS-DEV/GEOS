@@ -14,7 +14,7 @@
 
 #include "HistoryCollectionBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 void HistoryCollectionBase::initializePostSubGroups()
@@ -30,13 +30,13 @@ localIndex HistoryCollectionBase::numCollectors() const
 void HistoryCollectionBase::registerBufferProvider( localIndex collectionIdx,
                                                     BufferProvider bufferProvider )
 {
-  GEOSX_ERROR_IF( collectionIdx < 0 || collectionIdx >= this->numCollectors(), "Invalid collection index specified." );
+  GEOS_ERROR_IF( collectionIdx < 0 || collectionIdx >= this->numCollectors(), "Invalid collection index specified." );
   m_bufferProviders[collectionIdx] = bufferProvider;
 }
 
 HistoryCollection & HistoryCollectionBase::getMetaDataCollector( localIndex metaIdx )
 {
-  GEOSX_ASSERT_MSG( metaIdx >= 0 && metaIdx < numMetaDataCollectors(), "Requesting nonexistent meta collector index." );
+  GEOS_ASSERT_MSG( metaIdx >= 0 && metaIdx < numMetaDataCollectors(), "Requesting nonexistent meta collector index." );
   return *m_metaDataCollectors[ metaIdx ].get( );
 }
 
@@ -61,9 +61,9 @@ bool HistoryCollectionBase::execute( real64 const time_n,
   {
     // std::function defines the == and =! comparable against nullptr_t to check the
     // function pointer is actually assigned (an error would be thrown on the call attempt even so)
-    GEOSX_ERROR_IF( m_bufferProviders[collectionIdx] == nullptr,
-                    "History collection buffer retrieval function is unassigned, did you declare a related TimeHistoryOutput event?" );
-    // using GEOSX_ERROR_IF_EQ caused type issues since the values are used in streams
+    GEOS_ERROR_IF( m_bufferProviders[collectionIdx] == nullptr,
+                   "History collection buffer retrieval function is unassigned, did you declare a related TimeHistoryOutput event?" );
+    // using GEOS_ERROR_IF_EQ caused type issues since the values are used in streams
     this->updateSetsIndices( domain );
     HistoryMetadata hmd = this->getMetaData( domain, collectionIdx );
     buffer_unit_type * buffer = m_bufferProviders[collectionIdx]( hmd.size( 0 ) );
@@ -120,9 +120,9 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
           }
         } );
 
-        GEOSX_ERROR_IF( !bodyFound,
-                        GEOSX_FMT( "MeshBody ({}) is specified, but not found.",
-                                   targetTokens[0] ) );
+        GEOS_ERROR_IF( !bodyFound,
+                       GEOS_FMT( "MeshBody ({}) is specified, but not found.",
+                                 targetTokens[0] ) );
       }
 
 

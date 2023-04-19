@@ -16,14 +16,14 @@
  * @file SeparateComponentPreconditioner.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_SOLVERS_SEPARATECOMPONENTPRECONDITIONER_HPP_
-#define GEOSX_LINEARALGEBRA_SOLVERS_SEPARATECOMPONENTPRECONDITIONER_HPP_
+#ifndef GEOS_LINEARALGEBRA_SOLVERS_SEPARATECOMPONENTPRECONDITIONER_HPP_
+#define GEOS_LINEARALGEBRA_SOLVERS_SEPARATECOMPONENTPRECONDITIONER_HPP_
 
 #include "linearAlgebra/common/PreconditionerBase.hpp"
 
 #include <memory>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -85,7 +85,7 @@ public:
    */
   Matrix const & separateComponentMatrix() const
   {
-    GEOSX_LAI_ASSERT( Base::ready() );
+    GEOS_LAI_ASSERT( Base::ready() );
     return m_matSC;
   }
 
@@ -112,4 +112,4 @@ private:
 
 }
 
-#endif //GEOSX_LINEARALGEBRA_SOLVERS_SEPARATECOMPONENTPRECONDITIONER_HPP_
+#endif //GEOS_LINEARALGEBRA_SOLVERS_SEPARATECOMPONENTPRECONDITIONER_HPP_

@@ -17,12 +17,12 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_
+#define GEOS_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_
 
 #include "physicsSolvers/contact/ContactSolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class SolidMechanicsLagrangianFEM;
@@ -143,9 +143,6 @@ public:
 
   string getStabilizationName() const { return m_stabilizationName; }
 
-  bool isElementInOpenState( FaceElementSubRegion const & subRegion,
-                             localIndex const kfe ) const;
-
 protected:
   virtual void postProcessInput() override final;
 
@@ -184,6 +181,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_ */

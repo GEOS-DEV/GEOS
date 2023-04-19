@@ -16,15 +16,15 @@
  * @file CapillaryPressureBase.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSUREBASE_HPP
-#define GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSUREBASE_HPP
+#ifndef GEOS_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSUREBASE_HPP
+#define GEOS_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSUREBASE_HPP
 
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/capillaryPressure/layouts.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -38,21 +38,21 @@ public:
    * @brief Get number of elements in this wrapper.
    * @return number of elements
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex numElems() const { return m_phaseCapPressure.size( 0 ); }
 
   /**
    * @brief Get number of gauss points per element.
    * @return number of gauss points per element
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex numGauss() const { return m_phaseCapPressure.size( 1 ); }
 
   /**
    * @brief Get number of fluid phases.
    * @return number of phases
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   integer numPhases() const { return LvArray::integerConversion< integer >( m_phaseTypes.size() ); }
 
 protected:
@@ -75,7 +75,7 @@ protected:
 
 private:
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
                        arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const = 0;
@@ -113,7 +113,7 @@ public:
    */
   virtual void initializeRockState( arrayView2d< real64 const > const & initialPorosity,
                                     arrayView3d< real64 const > const & initialPermeability ) const
-  { GEOSX_UNUSED_VAR( initialPorosity, initialPermeability ); }
+  { GEOS_UNUSED_VAR( initialPorosity, initialPermeability ); }
 
   /**
    * @brief Save the capillary pressure state (needed when capillary pressure depends on porosity and permeability)
@@ -127,7 +127,7 @@ public:
    */
   virtual void saveConvergedRockState( arrayView2d< real64 const > const & convergedPorosity,
                                        arrayView3d< real64 const > const & convergedPermeability ) const
-  { GEOSX_UNUSED_VAR( convergedPorosity, convergedPermeability ); }
+  { GEOS_UNUSED_VAR( convergedPorosity, convergedPermeability ); }
 
   /*
    * @brief Getter for the number of fluid phases
@@ -193,6 +193,6 @@ protected:
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSUREBASE_HPP
+#endif //GEOS_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSUREBASE_HPP

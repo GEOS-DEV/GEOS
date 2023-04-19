@@ -17,7 +17,7 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 FieldSpecificationManager * FieldSpecificationManager::m_instance = nullptr;
@@ -29,22 +29,22 @@ FieldSpecificationManager::FieldSpecificationManager( string const & name, Group
 {
   setInputFlags( InputFlags::OPTIONAL );
 
-  GEOSX_ERROR_IF( m_instance != nullptr, "Only one FieldSpecificationManager can exist at a time." );
+  GEOS_ERROR_IF( m_instance != nullptr, "Only one FieldSpecificationManager can exist at a time." );
   m_instance = this;
 
 }
 
 FieldSpecificationManager::~FieldSpecificationManager()
 {
-  GEOSX_ERROR_IF( m_instance != this, "m_instance != this should not be possible." );
+  GEOS_ERROR_IF( m_instance != this, "m_instance != this should not be possible." );
   m_instance = nullptr;
 }
 
 
 FieldSpecificationManager & FieldSpecificationManager::getInstance()
 {
-  GEOSX_ERROR_IF( m_instance == nullptr,
-                  "FieldSpecificationManager has not been constructed, or is already been destructed." );
+  GEOS_ERROR_IF( m_instance == nullptr,
+                 "FieldSpecificationManager has not been constructed, or is already been destructed." );
   return *m_instance;
 }
 
@@ -164,21 +164,21 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       {
         missingSetNames.emplace_back( mapEntry.first );
       }
-      GEOSX_THROW( GEOSX_FMT( "\n{}: there is/are no set(s) named `{}` under the {} `{}`, check the XML input\n",
-                              fs.getName(), fmt::join( missingSetNames, ", " ), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() ),
-                   InputError );
+      GEOS_THROW( GEOS_FMT( "\n{}: there is/are no set(s) named `{}` under the {} `{}`, check the XML input\n",
+                            fs.getName(), fmt::join( missingSetNames, ", " ), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() ),
+                  InputError );
     }
 
     // if a target set is empty, we issue a warning
     // ideally we would just stop the simulation, but the SurfaceGenerator relies on this behavior
     for( auto const & mapEntry : isTargetSetEmpty )
     {
-      GEOSX_LOG_RANK_0_IF( mapEntry.second == 1, // target set is empty
-                           GEOSX_FMT( "\nWarning!"
-                                      "\n{}: this FieldSpecification targets (an) empty set(s)"
-                                      "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`. \n",
-                                      fs.getName(), mapEntry.first,
-                                      fs.getObjectPath(), fs.getObjectPath(), fs.getObjectPath(), fs.getObjectPath() ) );
+      GEOS_LOG_RANK_0_IF( mapEntry.second == 1, // target set is empty
+                          GEOS_FMT( "\nWarning!"
+                                    "\n{}: this FieldSpecification targets (an) empty set(s)"
+                                    "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`. \n",
+                                    fs.getName(), mapEntry.first,
+                                    fs.getObjectPath(), fs.getObjectPath(), fs.getObjectPath(), fs.getObjectPath() ) );
     }
 
     if( isFieldNameFound == 0 )
@@ -186,16 +186,16 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       char const fieldNameNotFoundMessage[] =
         "\n{}: there is no {} named `{}` under the {} `{}`, check the XML input\n";
       string const errorMsg =
-        GEOSX_FMT( fieldNameNotFoundMessage,
-                   fs.getName(), FieldSpecificationBase::viewKeyStruct::fieldNameString(), fs.getFieldName(),
-                   FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath(), fs.getFieldName() );
+        GEOS_FMT( fieldNameNotFoundMessage,
+                  fs.getName(), FieldSpecificationBase::viewKeyStruct::fieldNameString(), fs.getFieldName(),
+                  FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath(), fs.getFieldName() );
       if( areAllSetsEmpty )
       {
-        GEOSX_LOG_RANK_0( errorMsg );
+        GEOS_LOG_RANK_0( errorMsg );
       }
       else
       {
-        GEOSX_THROW( errorMsg, InputError );
+        GEOS_THROW( errorMsg, InputError );
       }
     }
   } );
@@ -220,4 +220,4 @@ void FieldSpecificationManager::applyInitialConditions( MeshLevel & mesh ) const
   } );
 }
 
-} /* namespace geosx */
+} /* namespace geos */
