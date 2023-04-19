@@ -75,7 +75,7 @@
 #endif
 
 /// Denotes HYPRE using CPU
-#define GEOSX_USE_HYPRE_CPU 0
+#define GEOS_USE_HYPRE_CPU 0
 /// Denotes HYPRE using CUDA
 #define GEOS_USE_HYPRE_CUDA 1
 /// Denotes HYPRE using HIP

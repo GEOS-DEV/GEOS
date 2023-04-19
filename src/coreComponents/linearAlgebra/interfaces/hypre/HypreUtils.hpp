@@ -141,8 +141,8 @@ constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_HOST;
 //          pass ( localIndex * ) to hypre except when it is on the GPU, in
 //          which case we are using int for localIndex.
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-// static_assert( sizeof( HYPRE_Int ) == sizeof( geos::localIndex ),
-//                "HYPRE_Int and geos::localIndex must have the same size" );
+static_assert( sizeof( HYPRE_Int ) == sizeof( geos::localIndex ),
+               "HYPRE_Int and geos::localIndex must have the same size" );
 static_assert( std::is_signed< HYPRE_Int >::value == std::is_signed< geos::localIndex >::value,
                "HYPRE_Int and geos::localIndex must both be signed or unsigned" );
 #endif

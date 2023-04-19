@@ -330,7 +330,7 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
 
   GEOS_LAI_ASSERT( insertable() );
 
-#if GEOS_HYPRE_USE_DEVICE == GEOS_HYPRE_USE_CUDA || GEOS_HYPRE_USE_DEVICE == GEOS_HYPRE_USE_HIP
+#if GEOS_USE_HYPRE_DEVICE == GEOS_HYPRE_USE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_HYPRE_USE_HIP
   array1d< HYPRE_BigInt > rowIndexDevice( 1 );
   array1d< HYPRE_BigInt > colIndexDevice( 1 );
   array1d< HYPRE_Int > ncolsDevice( 1 );
@@ -411,7 +411,7 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
 {
   GEOS_LAI_ASSERT( insertable() );
 
-#if GEOS_HYPRE_USE_DEVICE == GEOS_HYPRE_USE_CUDA || GEOS_HYPRE_USE_DEVICE == GEOS_HYPRE_USE_HIP
+#if GEOS_USE_HYPRE_DEVICE == GEOS_HYPRE_USE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_HYPRE_USE_HIP
   array1d< globalIndex > rowIndexDevice( 1 );
   array1d< HYPRE_Int > ncolsDevice( 1 );
 
@@ -564,7 +564,7 @@ void HypreMatrix::insert( arrayView1d< globalIndex const > const & rowIndices,
   {
     nCols[i] = 1;
   }
-#if GEOS_HYPRE_USE_DEVICE == GEOS_HYPRE_USE_CUDA || GEOS_HYPRE_USE_DEVICE == GEOS_HYPRE_USE_HIP
+#if GEOS_USE_HYPRE_DEVICE == GEOS_HYPRE_USE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_HYPRE_USE_HIP
   rowIndices.move( parallelDeviceMemorySpace, false );
   colIndices.move( parallelDeviceMemorySpace, false );
   values.move( parallelDeviceMemorySpace, false );

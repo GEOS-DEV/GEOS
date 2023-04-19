@@ -362,7 +362,6 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
     }
   } );
 
-  // std::cout << MpiWrapper::commRank( MPI_COMM_GEOSX ) << " : " << m_maxForce << std::endl;
   applyContactConstraint( dofManager, domain, localMatrix, localRhs );
 }
 

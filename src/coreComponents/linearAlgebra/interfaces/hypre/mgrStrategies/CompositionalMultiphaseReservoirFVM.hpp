@@ -133,7 +133,7 @@ public:
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxType( precond.ptr, toUnderlyingPtr( m_levelFRelaxType ) ));
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetNumRelaxSweeps( precond.ptr, 1 ));
 
-#if GEOS_HYPRE_USE_DEVICE == GEOS_HYPRE_USE_CUDA || GEOS_HYPRE_USE_DEVICE == GEOS_HYPRE_USE_HIP
+#if GEOS_USE_HYPRE_DEVICE == GEOS_HYPRE_USE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_HYPRE_USE_HIP
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) ); // l1-Jacobi
 #endif
 

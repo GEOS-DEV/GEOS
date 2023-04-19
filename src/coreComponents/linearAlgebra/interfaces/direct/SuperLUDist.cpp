@@ -34,7 +34,7 @@ namespace geos
 
 // Check matching requirements on index/value types between GEOSX and SuperLU_Dist
 
-#if GEOS_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_CPU
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CPU
 static_assert( sizeof( int_t ) == sizeof( globalIndex ),
                "SuperLU_Dist int_t and geos::globalIndex must have the same size" );
 

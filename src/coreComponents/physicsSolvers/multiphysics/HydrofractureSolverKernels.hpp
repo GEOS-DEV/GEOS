@@ -53,22 +53,7 @@ struct DeformationUpdateKernel
 #endif
           )
   {
-    forAll< POLICY >( size, [elemsToFaces,
-                             faceToNodeMap,
-                             u,
-                             faceNormal,
-                             aperture,
-                             contactWrapper,
-                             hydraulicAperture,
-#ifdef GEOSX_USE_SEPERATION_COEFFICIENT
-                             apertureAtFailure,
-                             seperationCoeff0,
-                             seperationCoeff,
-                             dSeperationCoeff_dAper,
-#endif
-                             area,
-                             volume,
-                             deltaVolume] GEOS_HOST_DEVICE ( localIndex const kfe )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const kfe )
     {
       localIndex const kf0 = elemsToFaces[kfe][0];
       localIndex const kf1 = elemsToFaces[kfe][1];
