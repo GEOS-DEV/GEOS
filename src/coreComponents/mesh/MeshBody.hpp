@@ -57,16 +57,6 @@ public:
    */
   MeshLevel & createMeshLevel( string const & name );
 
-  /**
-   * @brief Create a new mesh level from a source MeshLevel.
-   * @param sourceLevelName The name of the source MeshLevel.
-   * @param newLevelName The name of the new MeshLevel.
-   * @param order The order of the new MeshLevel.
-   * @return A reference to the new MeshLevel.
-   */
-  MeshLevel & createMeshLevel( string const & sourceLevelName,
-                               string const & newLevelName,
-                               int const order );
 
   /**
    * @brief Create a new mesh level from a source MeshLevel. Also fills the CellBlockManager data.
@@ -78,7 +68,7 @@ public:
    */
   MeshLevel & createMeshLevel( string const & sourceLevelName,
                                string const & newLevelName,
-                               CellBlockManagerABC & cellBlockManager,
+                               CellBlockManager & cellBlockManager,
                                int const order );
 
   /**

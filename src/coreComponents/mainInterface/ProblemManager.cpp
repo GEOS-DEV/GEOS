@@ -573,8 +573,10 @@ void ProblemManager::generateMesh()
         // create a high order MeshLevel
         if( order > 1 )
         {
+          CellBlockManager & highOrderCellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
+
           MeshLevel & mesh = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
-                                                       discretizationName, cellBlockManager, order );
+                                                       discretizationName, highOrderCellBlockManager, order );
 
           this->generateMeshLevel( mesh,
                                    cellBlockManager,

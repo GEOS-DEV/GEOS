@@ -22,6 +22,7 @@
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/CellBlock.hpp"
 #include "mesh/generators/FaceBlock.hpp"
+//#include "mesh/MeshLevel.hpp"
 
 namespace geos
 {
@@ -58,7 +59,7 @@ public:
    *
    * @note This is meant to be used as a values setter.
    */
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > getNodePositions() override;
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > getNodePositions();
 
   ArrayOfArrays< localIndex > getNodeToEdges() const override;
 
@@ -74,7 +75,7 @@ public:
    *
    * @note This is meant to be used as a values setter.
    */
-  arrayView2d< localIndex > getEdgeToNodes() override;
+  arrayView2d< localIndex > getEdgeToNodes();
 
   ArrayOfArrays< localIndex > getEdgeToFaces() const override;
 
@@ -86,7 +87,7 @@ public:
    *
    * @note This is meant to be used as a values setter.
    */
-  ArrayOfArrays< localIndex > & getFaceToNodes() override;
+  ArrayOfArrays< localIndex > & getFaceToNodes();
 
   ArrayOfArrays< localIndex > getFaceToEdges() const override;
 
@@ -100,7 +101,7 @@ public:
    *
    * @note This is meant to be used as a values setter.
    */
-  arrayView2d< localIndex, cells::NODE_MAP_USD > getElemToNodes( string const & name, localIndex const numNodesPartition ) override;
+  arrayView2d< localIndex, cells::NODE_MAP_USD > getElemToNodes( string const & name, localIndex const numNodesPartition ) ;
 
   array1d< globalIndex > getNodeLocalToGlobal() const override;
 
@@ -110,7 +111,7 @@ public:
    *
    * @note This is meant to be used as a values setter.
    */
-  arrayView1d< globalIndex > getNodeLocalToGlobal() override;
+  arrayView1d< globalIndex > getNodeLocalToGlobal();
 
   std::map< string, SortedArray< localIndex > > const & getNodeSets() const override;
 
@@ -122,7 +123,7 @@ public:
    * While the values are sorted arrays which sizes are meant to be managed by the client code.
    * This member function is meant to be used like a setter.
    */
-  std::map< string, SortedArray< localIndex > > & getNodeSets() override;
+  std::map< string, SortedArray< localIndex > > & getNodeSets() ;
 
   /**
    * @brief Defines the number of nodes and resizes some underlying arrays appropriately.
@@ -139,8 +140,10 @@ public:
    *
    * The nodes coordinates and nodes local to global mappings get resized to @p numNodes.
    */
-  void setNumNodes( localIndex numNodes, localIndex const order ) override;
+  void setNumNodes( localIndex numNodes, localIndex const order );
 
+  //void createHighOrderMaps( localIndex numNodes, localIndex const order, MeshLevel const & source );
+ 
   localIndex numNodes() const override;
 
   localIndex numEdges() const override;

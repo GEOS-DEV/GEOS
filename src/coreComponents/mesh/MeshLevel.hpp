@@ -24,7 +24,7 @@
 #include "EdgeManager.hpp"
 #include "ElementRegionManager.hpp"
 #include "FaceManager.hpp"
-#include "mesh/generators/CellBlockManagerABC.hpp"
+#include "mesh/generators/CellBlockManager.hpp"
 
 namespace geos
 {
@@ -71,18 +71,6 @@ public:
 
 
   /**
-   * @brief Constructor for the MeshLevel object.
-   * @param[in] name the name of the MeshLevel object in the repository
-   * @param[in] parent the parent group of the MeshLevel object being constructed
-   * @param[in] source The source MeshLevel to build the new one from
-   * @param[in] order The order of the MeshLevel
-   */
-  MeshLevel( string const & name,
-             Group * const parent,
-             MeshLevel const & source,
-             int const order );
-
-  /**
    * @brief Constructor for the MeshLevel object. Also updates the data of the given CellBlockManager.
    * @param[in] name the name of the MeshLevel object in the repository
    * @param[in] parent the parent group of the MeshLevel object being constructed
@@ -93,7 +81,7 @@ public:
   MeshLevel( string const & name,
              Group * const parent,
              MeshLevel const & source,
-             CellBlockManagerABC & cellBlockManager,
+             CellBlockManager & cellBlockManager,
              int const order );
 
   virtual ~MeshLevel() override;

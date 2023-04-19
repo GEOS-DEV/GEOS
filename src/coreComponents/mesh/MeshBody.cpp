@@ -43,19 +43,7 @@ MeshLevel & MeshBody::createMeshLevel( string const & name )
 
 MeshLevel & MeshBody::createMeshLevel( string const & sourceLevelName,
                                        string const & newLevelName,
-                                       int const order )
-{
-  MeshLevel const & sourceMeshLevel = this->getMeshLevel( sourceLevelName );
-  return m_meshLevels.registerGroup( newLevelName,
-                                     std::make_unique< MeshLevel >( newLevelName,
-                                                                    this,
-                                                                    sourceMeshLevel,
-                                                                    order ) );
-}
-
-MeshLevel & MeshBody::createMeshLevel( string const & sourceLevelName,
-                                       string const & newLevelName,
-                                       CellBlockManagerABC & cellBlockManager,
+                                       CellBlockManager & cellBlockManager,
                                        int const order )
 {
   MeshLevel const & sourceMeshLevel = this->getMeshLevel( sourceLevelName );

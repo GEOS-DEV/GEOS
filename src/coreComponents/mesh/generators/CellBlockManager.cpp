@@ -801,5 +801,14 @@ std::map< string, SortedArray< localIndex > > & CellBlockManager::getNodeSets()
 {
   return m_nodeSets;
 }
+/*
+void CellBlockManager::createHighOrderMaps( localIndex numNodes, localIndex const order, MeshLevel const & source )
+{
+  
+  setNumNodes(numNodes, order);
+}
+*/
+
+
 
 }
