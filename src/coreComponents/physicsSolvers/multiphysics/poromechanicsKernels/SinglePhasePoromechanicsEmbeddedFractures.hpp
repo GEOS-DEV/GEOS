@@ -207,8 +207,8 @@ public:
     real64 dFlux_dDispJump[2][3] = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
     for( localIndex i=0; i < 3; i++ )
     {
-      dFlux_dDispJump[0][i] = m_dt * dFlux_dTrans * stack.dTrans_dDispJump[0][0][i];
-      dFlux_dDispJump[1][i] = -m_dt * dFlux_dTrans * stack.dTrans_dDispJump[0][1][i];
+      dFlux_dDispJump[0][i] =   dFlux_dTrans * stack.dTrans_dDispJump[0][0][i];
+      dFlux_dDispJump[1][i] = - dFlux_dTrans * stack.dTrans_dDispJump[0][1][i];
     }
     for( localIndex ke = 0; ke < 2; ++ke )
     {
