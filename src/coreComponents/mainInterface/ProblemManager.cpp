@@ -579,7 +579,7 @@ void ProblemManager::generateMesh()
 
           CellBlockManager & highOrderCellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
 
-          highOrderCellBlockManager.createHighOrderMaps(order, meshBody.getBaseDiscretization(), mesh);
+          highOrderCellBlockManager.createHighOrderMaps( order, meshBody.getBaseDiscretization(), mesh );
 
           this->generateMeshLevel( mesh,
                                    cellBlockManager,

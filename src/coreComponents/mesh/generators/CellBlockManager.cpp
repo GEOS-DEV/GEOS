@@ -866,7 +866,7 @@ static void trilinearInterp( real64 const alpha,
   }
 }
 
-void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel const & source, MeshLevel & highOrderMeshLevel)
+void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel const & source, MeshLevel & highOrderMeshLevel )
 {
 
   // constants for hex mesh
@@ -903,7 +903,7 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
                              + numLocalFaces * numInternalNodesPerFace
                              + numLocalCells * numInternalNodesPerCell;
   this->setNumNodes( numLocalNodes, order );
-  
+
   //-- -------------------------------------
   // initialize the node local to global map
   // ---------------------------------------
@@ -976,7 +976,7 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
       else
       {
         nodeID = nodeIDs[ nodeKey ];
-     }
+      }
       edgeToNodeMapNew[ iter_edge ][ q ] = nodeID;
     }
   }
@@ -1096,7 +1096,7 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
   {
     // create element region with the same name as source element region "Region"
     CellElementRegion & region = *(dynamic_cast< CellElementRegion * >( highOrderMeshLevel.getElemManager().createChild( sourceRegion.getCatalogName(),
-                                                                                                       sourceRegion.getName() ) ) );
+                                                                                                                         sourceRegion.getName() ) ) );
     // add cell block to the new element region with the same name as cell block name from source element region
     region.addCellBlockNames( sourceRegion.getCellBlockNames() );
 

@@ -101,7 +101,7 @@ public:
    *
    * @note This is meant to be used as a values setter.
    */
-  arrayView2d< localIndex, cells::NODE_MAP_USD > getElemToNodes( string const & name, localIndex const numNodesPartition ) ;
+  arrayView2d< localIndex, cells::NODE_MAP_USD > getElemToNodes( string const & name, localIndex const numNodesPartition );
 
   array1d< globalIndex > getNodeLocalToGlobal() const override;
 
@@ -123,7 +123,7 @@ public:
    * While the values are sorted arrays which sizes are meant to be managed by the client code.
    * This member function is meant to be used like a setter.
    */
-  std::map< string, SortedArray< localIndex > > & getNodeSets() ;
+  std::map< string, SortedArray< localIndex > > & getNodeSets();
 
   /**
    * @brief Defines the number of nodes and resizes some underlying arrays appropriately.
@@ -142,8 +142,8 @@ public:
    */
   void setNumNodes( localIndex numNodes, localIndex const order );
 
-  void createHighOrderMaps( localIndex const order, MeshLevel const & source, MeshLevel & highOrderMeshLevel);
- 
+  void createHighOrderMaps( localIndex const order, MeshLevel const & source, MeshLevel & highOrderMeshLevel );
+
   localIndex numNodes() const override;
 
   localIndex numEdges() const override;
