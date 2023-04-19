@@ -167,6 +167,9 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
     {
       real64 fluxVal = 0.0;
       real64 dFlux_dTrans = 0.0;
+      real64 alpha = 0.0;
+      real64 mobility = 0.0;
+      real64 potGrad = 0.0;
       real64 trans[2] = {transmissibility[connectionIndex][0], transmissibility[connectionIndex][1]};
       real64 dTrans[2] = { dTrans_dPres[connectionIndex][0], dTrans_dPres[connectionIndex][1] };
       real64 dFlux_dP[2] = {0.0, 0.0};
@@ -183,6 +186,9 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
                               dDens_dPres,
                               mob,
                               dMob_dPres,
+                              alpha, 
+                              mobility,
+                              potGrad,
                               fluxVal,
                               dFlux_dP,
                               dFlux_dTrans );

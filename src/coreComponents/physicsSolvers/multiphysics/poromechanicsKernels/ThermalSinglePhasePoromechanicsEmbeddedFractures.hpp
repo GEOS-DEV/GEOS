@@ -190,17 +190,14 @@ public:
                                            localIndex const (&sesri)[2],
                                            localIndex const (&sei)[2],
                                            localIndex const ,
-                                           real64 const alpha,
-                                           real64 const mobility,
+                                           real64 const & alpha,
+                                           real64 const & mobility,
                                            real64 const & potGrad,
                                            real64 const & massFlux,
                                            real64 const (&dMassFlux_dP)[2] )
     {
       real64 trans[2] = {stack.transmissibility[0][0], stack.transmissibility[0][1]};
       real64 dMassFlux_dT[2]{};
-      real64 energyFlux = 0.0;
-      real64 dEnergyFlux_dP[2]{};
-      real64 dEnergyFlux_dT[2]{};
 
       computeEnthalpyFlux( seri, sesri, sei,
                            trans,
@@ -216,9 +213,9 @@ public:
                            massFlux,
                            dMassFlux_dP,
                            dMassFlux_dT,
-                           energyFlux,
-                           dEnergyFlux_dP,
-                           dEnergyFlux_dT );
+                           stack.energyFlux,
+                           stack.dEnergyFlux_dP,
+                           stack.dEnergyFlux_dT );
 
       // add dMassFlux_dT to localFluxJacobian
       for( integer ke = 0; ke < 2; ++ke )
@@ -227,14 +224,6 @@ public:
         stack.localFluxJacobian[0*numEqn][localDofIndexTemp] += m_dt * dMassFlux_dT[ke];
         stack.localFluxJacobian[1*numEqn][localDofIndexTemp] -= m_dt * dMassFlux_dT[ke];
       }
-
-      stack.energyFlux = energyFlux;
-      for( integer ke = 0; ke < 2; ++ke )
-      {
-        stack.dEnergyFlux_dP[ke] = dEnergyFlux_dP[ke];
-        stack.dEnergyFlux_dT[ke] = dEnergyFlux_dT[ke];
-      }
-
     } );
 
     // *****************************************************
@@ -264,16 +253,8 @@ public:
         localIndex const sei[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
         // Step 2: compute temperature difference at the interface
-        real64 energyFlux= 0.0;
-        real64 dEnergyFlux_dT[2]{};
-
-        computeConductiveFlux( seri, sesri, sei, m_temp, thermalTrans, energyFlux, dEnergyFlux_dT );
+        computeConductiveFlux( seri, sesri, sei, m_temp, thermalTrans, stack.energyFlux, stack.dEnergyFlux_dT );
         
-        stack.energyFlux += energyFlux;
-        for( integer ke = 0; ke < 2; ++ke )
-        { 
-          stack.dEnergyFlux_dT[ke] += dEnergyFlux_dT[ke];
-        }
         // add energyFlux and its derivatives to localFlux and localFluxJacobian
         stack.localFlux[k[0]*numEqn + numEqn - 1] += m_dt * stack.energyFlux;
         stack.localFlux[k[1]*numEqn + numEqn - 1] -= m_dt * stack.energyFlux;

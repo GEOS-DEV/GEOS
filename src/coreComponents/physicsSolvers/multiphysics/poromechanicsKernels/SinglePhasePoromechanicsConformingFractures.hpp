@@ -182,6 +182,9 @@ public:
       {
         real64 fluxVal = 0.0;
         real64 dFlux_dTrans = 0.0;
+        real64 alpha = 0.0;
+        real64 mobility = 0.0;
+        real64 potGrad = 0.0;
         real64 const trans[2] = { stack.transmissibility[connectionIndex][0], stack.transmissibility[connectionIndex][1] };
         real64 const dTrans[2] = { stack.dTrans_dPres[connectionIndex][0], stack.dTrans_dPres[connectionIndex][1] };
         real64 dFlux_dP[2] = { 0.0, 0.0 };
@@ -198,6 +201,9 @@ public:
                                 m_dDens_dPres,
                                 m_mob,
                                 m_dMob_dPres,
+                                alpha, 
+                                mobility,
+                                potGrad,
                                 fluxVal,
                                 dFlux_dP,
                                 dFlux_dTrans );

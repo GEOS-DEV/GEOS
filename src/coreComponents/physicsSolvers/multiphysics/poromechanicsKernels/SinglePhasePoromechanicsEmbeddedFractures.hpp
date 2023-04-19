@@ -171,7 +171,6 @@ public:
 
     real64 fluxVal = 0.0;
     real64 dFlux_dTrans = 0.0;
-
     /// EDFM connections are always only between 2 elements. There are no star connections.
     real64 trans[2] = {stack.transmissibility[0][0], stack.transmissibility[0][1]};
     real64 dTrans[2] = { stack.dTrans_dPres[0][0], stack.dTrans_dPres[0][1] };
@@ -192,6 +191,9 @@ public:
                             m_dDens_dPres,
                             m_mob,
                             m_dMob_dPres,
+                            alpha, 
+                            mobility,
+                            potGrad,
                             fluxVal,
                             dFlux_dP,
                             dFlux_dTrans );

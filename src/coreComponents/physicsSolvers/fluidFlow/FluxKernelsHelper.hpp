@@ -47,6 +47,9 @@ void computeSinglePhaseFlux( localIndex const ( &seri )[2],
                              ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
                              ElementViewConst< arrayView1d< real64 const > > const & mob,
                              ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
+                             real64 & alpha,
+                             real64 & mobility,
+                             real64 & potGrad,
                              real64 & fluxVal,
                              real64 ( & dFlux_dP )[2],
                              real64 & dFlux_dTrans )
@@ -62,11 +65,10 @@ void computeSinglePhaseFlux( localIndex const ( &seri )[2],
   }
 
   // compute potential difference
-  real64 potDif = 0.0;
-  real64 dPotDif_dTrans = 0.0;
+  real64 dpotGrad_dTrans = 0.0;
   real64 sumWeightGrav = 0.0;
   real64 potScale = 0.0;
-  int signPotDiff[2] = {1, -1};
+  int signpotGradf[2] = {1, -1};
 
   for( localIndex ke = 0; ke < 2; ++ke )
   {
@@ -78,8 +80,8 @@ void computeSinglePhaseFlux( localIndex const ( &seri )[2],
     real64 const gravD = gravCoef[er][esr][ei];
     real64 const pot = transmissibility[ke] * ( pressure - densMean * gravD );
 
-    potDif += pot;
-    dPotDif_dTrans += signPotDiff[ke] * ( pressure - densMean * gravD );
+    potGrad += pot;
+    dpotGrad_dTrans += signpotGradf[ke] * ( pressure - densMean * gravD );
     sumWeightGrav += transmissibility[ke] * gravD;
 
     potScale = fmax( potScale, fabs( pot ) );
@@ -90,9 +92,8 @@ void computeSinglePhaseFlux( localIndex const ( &seri )[2],
   real64 const upwAbsTol = fmax( potScale * upwRelTol, LvArray::NumericLimits< real64 >::epsilon );
 
   // decide mobility coefficients - smooth variation in [-upwAbsTol; upwAbsTol]
-  real64 const alpha = ( potDif + upwAbsTol ) / ( 2 * upwAbsTol );
+  alpha = ( potGrad + upwAbsTol ) / ( 2 * upwAbsTol );
 
-  real64 mobility{};
   real64 dMobility_dP[2]{};
   if( alpha <= 0.0 || alpha >= 1.0 )
   {
@@ -113,20 +114,20 @@ void computeSinglePhaseFlux( localIndex const ( &seri )[2],
   }
 
   // compute the final flux and derivative w.r.t transmissibility
-  fluxVal = mobility * potDif;
+  fluxVal = mobility * potGrad;
 
-  dFlux_dTrans = mobility * dPotDif_dTrans;
+  dFlux_dTrans = mobility * dpotGrad_dTrans;
 
   for( localIndex ke = 0; ke < 2; ++ke )
   {
     dFlux_dP[ke] = mobility * ( transmissibility[ke] - dDensMean_dP[ke] * sumWeightGrav )
-                   + dMobility_dP[ke] * potDif + dFlux_dTrans * dTrans_dPres[ke];
+                   + dMobility_dP[ke] * potGrad + dFlux_dTrans * dTrans_dPres[ke];
   }
 
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+template< typename ENERGYFLUX_DERIVATIVE_TYPE >
 void computeEnthalpyFlux( localIndex const ( &seri )[2],
                           localIndex const ( &sesri )[2],
                           localIndex const ( &sei )[2],
@@ -144,8 +145,8 @@ void computeEnthalpyFlux( localIndex const ( &seri )[2],
                           real64 const ( &dMassFlux_dP )[2],
                           real64 ( &dMassFlux_dT )[2],
                           real64 & energyFlux,
-                          real64 ( &dEnergyFlux_dP )[2],
-                          real64 ( &dEnergyFlux_dT )[2] )
+                          ENERGYFLUX_DERIVATIVE_TYPE & dEnergyFlux_dP,
+                          ENERGYFLUX_DERIVATIVE_TYPE & dEnergyFlux_dT )
 {
   // Step 1: compute the derivatives of the mean density at the interface wrt temperature
 
@@ -255,14 +256,14 @@ void computeEnthalpyFlux( localIndex const ( &seri )[2],
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+template< typename ENERGYFLUX_DERIVATIVE_TYPE >
 void computeConductiveFlux( localIndex const ( &seri )[2],
                             localIndex const ( &sesri )[2],
                             localIndex const ( &sei )[2],
                             ElementViewConst< arrayView1d< real64 const > > const & temperature,
                             real64 const ( &thermalTrans )[2],
                             real64 & energyFlux,
-                            real64 ( & dEnergyFlux_dT )[2] )
+                            ENERGYFLUX_DERIVATIVE_TYPE & dEnergyFlux_dT )
 {
   for( integer ke = 0; ke < 2; ++ke )
   {
