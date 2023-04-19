@@ -85,6 +85,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::registerDataOnMesh( dataReposito
 
 void SinglePhasePoromechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
+  SinglePhasePoromechanics::initializePostInitialConditionsPreSubGroups();
+
   updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
 }
 

@@ -232,7 +232,6 @@ public:
     // Note that this term is computed using an explicit treatment of conductivity for now
 
     // Step 1: compute the thermal transmissibilities at this face
-    // We follow how the thermal compositional multi-phase solver does to update the thermal transmissibility
     m_stencilWrapper.computeWeights( iconn,
                                      m_thermalConductivity,
                                      m_thermalConductivity, // we have to pass something here, so we just use thermal conductivity
