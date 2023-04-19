@@ -566,15 +566,13 @@
 		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 		<!--pressureNp1AtReceivers => Pressure value at each receiver for each timestep-->
 		<xsd:attribute name="pressureNp1AtReceivers" type="real32_array2d" />
-		<!--receiverConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
-		<xsd:attribute name="receiverConstants" type="real64_array2d" />
 		<!--receiverIsLocal => Flag that indicates whether the receiver is local to this MPI rank-->
 		<xsd:attribute name="receiverIsLocal" type="integer_array" />
 		<!--receiverNodeIds => Indices of the nodes (in the right order) for each receiver point-->
 		<xsd:attribute name="receiverNodeIds" type="integer_array2d" />
-		<!--sourceConstants => Constant part of the source for the nodes listed in m_sourceNodeIds-->
+		<!--sourceConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
 		<xsd:attribute name="sourceConstants" type="real64_array2d" />
-		<!--sourceIsAccessible => Flag that indicates whether the source is accessible to this MPI rank-->
+		<!--sourceIsAccessible => Flag that indicates whether the source is local to this MPI rank-->
 		<xsd:attribute name="sourceIsAccessible" type="integer_array" />
 		<!--sourceNodeIds => Indices of the nodes (in the right order) for each source point-->
 		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
