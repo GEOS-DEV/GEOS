@@ -24,7 +24,7 @@
 // Tests the Group::getGroup() and getPath() methods
 TEST( testGroupPath, testGlobalPaths )
 {
-  using namespace geosx;
+  using namespace geos;
   using namespace dataRepository;
 
   char const *  xmlInput =
@@ -119,11 +119,11 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::GeosxState state( geosx::basicSetup( argc, argv, false ) );
+  geos::GeosxState state( geos::basicSetup( argc, argv, false ) );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::basicCleanup();
+  geos::basicCleanup();
 
   return result;
 }

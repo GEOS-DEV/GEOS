@@ -210,9 +210,9 @@ void processTokenRecursive( dataRepository::Group const & parentGroup,
     namesInRepository.emplace_back( group.getName() );
   } );
 
-  GEOSX_THROW_IF( namesInRepository.empty(),
-                  GEOSX_FMT( "{0} doesn't have any children.", parentGroup.getName()),
-                  InputError );
+  GEOS_THROW_IF( namesInRepository.empty(),
+                 GEOS_FMT( "{0} doesn't have any children.", parentGroup.getName()),
+                 InputError );
 
   for( string const & inputEntry : stringutilities::tokenize( pathToken, " " ) )
   {

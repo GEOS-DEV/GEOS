@@ -151,9 +151,9 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
             }
           } );
 
-          GEOSX_ERROR_IF( !levelFound,
-                          GEOSX_FMT( "MeshLevel ({}) is specified, but not found.",
-                                     targetTokens[1] ) );
+          GEOS_ERROR_IF( !levelFound,
+                         GEOS_FMT( "MeshLevel ({}) is specified, but not found.",
+                                   targetTokens[1] ) );
         }
       }
       else if( !meshBody.getMeshLevels().hasGroup< MeshLevel >( targetTokens[1] ) )
@@ -194,9 +194,9 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
             string const targetTokensStr = stringutilities::join( targetTokens.begin(),
                                                                   targetTokens.begin()+pathLevel,
                                                                   '/' );
-            GEOSX_THROW( targetTokens[pathLevel] << " not found in path " <<
-                         objectPath << std::endl << targetGroup->dumpSubGroupsNames(),
-                         std::domain_error );
+            GEOS_THROW( targetTokens[pathLevel] << " not found in path " <<
+                        objectPath << std::endl << targetGroup->dumpSubGroupsNames(),
+                        std::domain_error );
           }
         }
       }
