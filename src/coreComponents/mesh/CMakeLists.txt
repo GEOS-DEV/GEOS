@@ -160,6 +160,6 @@ endif()
 
 if( ENABLE_TESTS )
     add_subdirectory( unitTests )
-endif
+endif( )
 
 geosx_add_code_checks( PREFIX mesh )
