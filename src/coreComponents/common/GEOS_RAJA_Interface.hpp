@@ -39,7 +39,7 @@ using serialReduce = RAJA::seq_reduce;
 using serialStream = RAJA::resources::Host;
 using serialEvent = RAJA::resources::HostEvent;
 
-#if defined(GEOSX_USE_OPENMP)
+#if defined( GEOSX_USE_OPENMP )
 
 auto const parallelHostMemorySpace = hostMemorySpace;
 
@@ -67,7 +67,7 @@ void RAJA_INLINE parallelHostSync() { }
 
 #endif
 
-#if defined(GEOS_USE_CUDA)
+#if defined( GEOS_USE_CUDA )
 
 auto const parallelDeviceMemorySpace = LvArray::MemorySpace::cuda;
 
@@ -93,20 +93,7 @@ RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && stream, const localIndex end
                                  std::forward< LAMBDA >( body ) );
 }
 
-#elif defined(GEOS_USE_HIP)
-
-// auto const parallelDeviceMemorySpace = hostMemorySpace;
-
-// template< unsigned long BLOCK_SIZE = GEOSX_BLOCK_SIZE >
-// using parallelDevicePolicy = parallelHostPolicy;
-
-// using parallelDeviceStream = parallelHostStream;
-// using parallelDeviceEvent = parallelHostEvent;
-
-// using parallelDeviceReduce = parallelHostReduce;
-// using parallelDeviceAtomic = parallelHostAtomic;
-
-// void RAJA_INLINE parallelDeviceSync() {  }
+#elif defined( GEOS_USE_HIP )
 
 auto const parallelDeviceMemorySpace = LvArray::MemorySpace::hip;
 
@@ -225,10 +212,9 @@ RAJA_INLINE bool testAllDeviceEvents( parallelDeviceEvents & events )
 
 RAJA_INLINE void waitAllDeviceEvents( parallelDeviceEvents & events )
 {
-  GEOS_UNUSED_VAR( events );
   // poll device events for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
   // 10 nsecs ~= 30 clock cycles @ 3Ghz
-  // GEOS_ASYNC_WAIT( 6000000000, 10, testAllDeviceEvents( events ) );
+  GEOS_ASYNC_WAIT( 6000000000, 10, testAllDeviceEvents( events ) );
 }
 
 template< typename POLICY, typename INDEX, typename LAMBDA >

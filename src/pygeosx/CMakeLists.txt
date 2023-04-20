@@ -33,8 +33,9 @@ geosx_add_code_checks( PREFIX pygeosx )
 
 install(TARGETS pygeosx LIBRARY DESTINATION lib)
 
-# add_subdirectory( unitTests )
-
+if(GEOSX_ENABLE_TESTS)
+  add_subdirectory( unitTests )
+endif( )
 
 # Python formatting
 if ( ENABLE_YAPF )

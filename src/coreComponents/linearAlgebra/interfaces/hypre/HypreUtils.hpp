@@ -110,27 +110,24 @@ constexpr LvArray::MemorySpace getLvArrayMemorySpace( HYPRE_MemoryLocation const
   }
 }
 
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+
 /// Execution policy for operations on hypre data
 using execPolicy = parallelDevicePolicy<>;
 /// Memory space used by hypre matrix/vector objects
 constexpr LvArray::MemorySpace memorySpace = parallelDeviceMemorySpace;
 /// Memory location used by hypre matrix/vector objects
 constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_DEVICE;
-#elif GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-/// Execution policy for operations on hypre data
-using execPolicy = parallelDevicePolicy<>;
-/// Memory space used by hypre matrix/vector objects
-constexpr LvArray::MemorySpace memorySpace = parallelDeviceMemorySpace;
-/// Memory location used by hypre matrix/vector objects
-constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_DEVICE;
+
 #else
+
 /// Execution policy for operations on hypre data
 using execPolicy = parallelHostPolicy;
 /// Memory space used by hypre matrix/vector objects
 constexpr LvArray::MemorySpace memorySpace = hostMemorySpace;
 /// Memory location used by hypre matrix/vector objects
 constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_HOST;
+
 #endif
 
 // Check matching requirements on index/value types between GEOSX and Hypre

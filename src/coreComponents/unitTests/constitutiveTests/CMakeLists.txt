@@ -45,18 +45,6 @@ if( ENABLE_PVTPackage )
     set( dependencyList ${dependencyList} PVTPackage )
 endif()
 
-if( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
-endif()
-
-if( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
-endif()
-
 #
 # Add gtest C++ based tests
 #

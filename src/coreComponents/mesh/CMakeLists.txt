@@ -118,10 +118,6 @@ set( mesh_sources
 
 set( dependencyList ${parallelDeps} schema dataRepository constitutive finiteElement parmetis metis )
 
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
-endif()
-
 if( ENABLE_VTK )
     message(STATUS "Adding VTKMeshGenerator sources and headers")
     set( mesh_headers ${mesh_headers}
@@ -162,7 +158,8 @@ if( ENABLE_VTK )
     set_source_files_properties( generators/VTKMeshGeneratorTools.cpp PROPERTIES LANGUAGE CXX )
 endif()
 
-# if( ENABLE_TESTS )
-#     add_subdirectory( unitTests )
-# endif
+if( ENABLE_TESTS )
+    add_subdirectory( unitTests )
+endif
+
 geosx_add_code_checks( PREFIX mesh )

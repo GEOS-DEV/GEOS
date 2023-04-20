@@ -62,7 +62,6 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   array1d< int > const numComponentsPerField = dofManager->numComponentsPerField();
   dofManager->getLocalDofComponentLabels( mgrData.pointMarkers );
 
-#if 0
   if( params.logLevel >= 1 )
   {
     GEOS_LOG_RANK_0( numComponentsPerField );
@@ -71,7 +70,6 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   {
     GEOS_LOG_RANK_VAR( mgrData.pointMarkers );
   }
-#endif
 
   switch( params.mgr.strategy )
   {
