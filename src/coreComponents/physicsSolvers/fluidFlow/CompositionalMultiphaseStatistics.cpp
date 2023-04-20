@@ -98,13 +98,13 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
     {
       for( integer i = 0; i < regionNames.size(); ++i )
       {
-        ElementRegionBase & region = elemManager.getRegion( regionNames[i] );       
+        ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
 
-        region.registerGroup< RegionStatistics >( viewKeyStruct::regionStatisticsString() ).          
+        region.registerGroup< RegionStatistics >( viewKeyStruct::regionStatisticsString() ).
           setRestartFlags( RestartFlags::NO_WRITE );
-        
+
         RegionStatistics & regionStatistics = region.getGroup< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
-        regionStatistics.init(numPhases, numComps);
+        regionStatistics.init( numPhases, numComps );
       }
     }
 

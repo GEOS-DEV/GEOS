@@ -127,13 +127,13 @@ public:
       constexpr static char const * dissolvedComponentMassString() { return "dissolvedComponentMass"; }
     };
 
-    void init(integer const numPhases, integer const numComps)
+    void init( integer const numPhases, integer const numComps )
     {
-        m_phasePoreVolume.resizeDimension< 0 >( numPhases );
-        m_phaseMass.resizeDimension< 0 >( numPhases );
-        m_trappedPhaseMass.resizeDimension< 0 >( numPhases );
-        m_immobilePhaseMass.resizeDimension< 0 >( numPhases );
-        m_dissolvedComponentMass.resizeDimension< 0, 1 >( numPhases, numComps );
+      m_phasePoreVolume.resizeDimension< 0 >( numPhases );
+      m_phaseMass.resizeDimension< 0 >( numPhases );
+      m_trappedPhaseMass.resizeDimension< 0 >( numPhases );
+      m_immobilePhaseMass.resizeDimension< 0 >( numPhases );
+      m_dissolvedComponentMass.resizeDimension< 0, 1 >( numPhases, numComps );
     }
 
 private:
