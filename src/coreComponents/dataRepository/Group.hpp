@@ -26,6 +26,7 @@
 #include "RestartFlags.hpp"
 #include "Wrapper.hpp"
 #include "xmlWrapper.hpp"
+#include "SourceContext.hpp"
 
 
 #include <iostream>
@@ -323,7 +324,7 @@ public:
   T & getGroup( KEY const & key )
   {
     Group * const child = m_subGroups[ key ];
-    GEOS_THROW_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
+    GEOS_THROW_IF( child == nullptr, "Group " << getSourceContext() << " doesn't have a child " << key, std::domain_error );
     return dynamicCast< T & >( *child );
   }
 
@@ -334,7 +335,7 @@ public:
   T const & getGroup( KEY const & key ) const
   {
     Group const * const child = m_subGroups[ key ];
-    GEOS_THROW_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
+    GEOS_THROW_IF( child == nullptr, "Group " << getSourceContext() << " doesn't have a child " << key, std::domain_error );
     return dynamicCast< T const & >( *child );
   }
 
@@ -725,7 +726,8 @@ public:
    *        file and put them into the wrapped values for this group.
    * @param[in] targetNode the XML node that to extract input values from.
    */
-  void processInputFileRecursive( xmlWrapper::xmlNode & targetNode );
+  void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
+                                  xmlWrapper::xmlNode & targetNode );
 
   /**
    * @brief Recursively call postProcessInput() to apply post processing after
@@ -1047,7 +1049,7 @@ public:
   WrapperBase const & getWrapperBase( KEY const & key ) const
   {
     WrapperBase const * const wrapper = m_wrappers[ key ];
-    GEOS_THROW_IF( wrapper == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
+    GEOS_THROW_IF( wrapper == nullptr, "Group " << getSourceContext() << " doesn't have a child " << key, std::domain_error );
     return *wrapper;
   }
 
@@ -1058,7 +1060,7 @@ public:
   WrapperBase & getWrapperBase( KEY const & key )
   {
     WrapperBase * const wrapper = m_wrappers[ key ];
-    GEOS_THROW_IF( wrapper == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
+    GEOS_THROW_IF( wrapper == nullptr, "Group " << getSourceContext() << " doesn't have a child " << key, std::domain_error );
     return *wrapper;
   }
 
@@ -1249,13 +1251,19 @@ public:
   string getPath() const;
 
   /**
+   * @return A SourceContext object that can helps to contextualize this Group.
+   */
+  SourceContext const & getSourceContext() const
+  { return *m_sourceContext; }
+
+  /**
    * @brief Access the group's parent.
    * @return reference to parent Group
    * @throw std::domain_error if the Group doesn't have a parent.
    */
   Group & getParent()
   {
-    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getPath() << " does not have a parent.", std::domain_error );
+    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getSourceContext() << " does not have a parent.", std::domain_error );
     return *m_parent;
   }
 
@@ -1264,7 +1272,7 @@ public:
    */
   Group const & getParent() const
   {
-    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getPath() << " does not have a parent.", std::domain_error );
+    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getSourceContext() << " does not have a parent.", std::domain_error );
     return *m_parent;
   }
 
@@ -1445,7 +1453,8 @@ private:
    *   wrapped values for this group.
    * @param[in] targetNode the XML node that to extract input values from.
    */
-  virtual void processInputFile( xmlWrapper::xmlNode const & targetNode );
+  virtual void processInputFile( xmlWrapper::xmlDocument const & xmlDocument,
+                                 xmlWrapper::xmlNode const & targetNode );
 
   Group const & getBaseGroupByPath( string const & path ) const;
 
@@ -1507,6 +1516,9 @@ private:
 
   /// Reference to the conduit::Node that mirrors this group
   conduit::Node & m_conduitNode;
+
+  /// A SourceContext object that can helps to contextualize this Group.
+  std::unique_ptr< SourceContext > m_sourceContext;
 
 };
 

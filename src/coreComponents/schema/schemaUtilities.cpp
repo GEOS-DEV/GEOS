@@ -52,7 +52,7 @@ void ConvertDocumentationToSchema( string const & fname,
   </xsd:schema>";
 
   xmlWrapper::xmlDocument schemaTree;
-  schemaTree.load_string( schemaBase.c_str());
+  schemaTree.load_string( schemaBase.c_str() );
   xmlWrapper::xmlNode schemaRoot = schemaTree.child( "xsd:schema" );
 
   // Build the simple schema types

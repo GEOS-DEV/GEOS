@@ -22,12 +22,13 @@ set( dataRepository_headers
      WrapperBase.hpp
      wrapperHelpers.hpp
      xmlWrapper.hpp
-   )
-
-#
-# Specify all sources
-#
-set( dataRepository_sources
+     SourceContext.hpp
+     )
+     
+     #
+     # Specify all sources
+     #
+     set( dataRepository_sources
      BufferOpsDevice.cpp
      ConduitRestart.cpp
      ExecutableGroup.cpp
@@ -35,7 +36,8 @@ set( dataRepository_sources
      Utilities.cpp
      WrapperBase.cpp
      xmlWrapper.cpp
-   )
+     SourceContext.cpp
+     )
 
 set( dependencyList codingUtilities )
 

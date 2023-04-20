@@ -13,11 +13,13 @@
  */
 
 // Source includes
+#include <regex>
 #include "Group.hpp"
 #include "ConduitRestart.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
+#include "SourceContext.hpp"
 #if defined(GEOSX_USE_PYGEOSX)
 #include "python/PyGroupType.hpp"
 #endif
@@ -47,7 +49,8 @@ Group::Group( string const & name,
   m_logLevel( 0 ),
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
   m_input_flags( InputFlags::INVALID ),
-  m_conduitNode( rootNode[ name ] )
+  m_conduitNode( rootNode[ name ] ),
+  m_sourceContext( std::make_unique< GroupContext >( *this ) )
 {}
 
 Group::~Group()
@@ -131,9 +134,10 @@ string Group::getPath() const
   return noProblem.empty() ? "/" : noProblem;
 }
 
-void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
+void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
+                                       xmlWrapper::xmlNode & targetNode )
 {
-  xmlWrapper::addIncludedXML( targetNode );
+  xmlDocument.addIncludedXML( targetNode );
 
   // Handle the case where the node was imported from a different input file
   // Set the path prefix to make sure all relative Path variables are interpreted correctly
@@ -141,8 +145,7 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
   xmlWrapper::xmlAttribute filePath = targetNode.attribute( xmlWrapper::filePathString );
   if( filePath )
   {
-    Path::pathPrefix() = splitPath( filePath.value() ).first;
-    targetNode.remove_attribute( filePath );
+    Path::pathPrefix() = getAbsolutePath( splitPath( filePath.value() ).first );
   }
 
   // Loop over the child nodes of the targetNode
@@ -158,9 +161,14 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
     else
     {
       // Make sure child names are not duplicated
-      GEOS_ERROR_IF( std::find( childNames.begin(), childNames.end(), childName ) != childNames.end(),
-                     GEOS_FMT( "Error: An XML block cannot contain children with duplicated names ({}/{}). ",
-                               getPath(), childName ) );
+      if( std::find( childNames.begin(), childNames.end(), childName ) != childNames.end() )
+      {
+        GEOS_ERROR( GEOS_FMT( "Error: An XML block cannot contain children with duplicated names.\n"
+                              "Error detected at node {} with name = {} ({}:l.{})",
+                              childNode.path(), childName, xmlDocument.getFilePath(),
+                              xmlDocument.getNodePosition( childNode ).line ) );
+      }
+
       childNames.emplace_back( childName );
     }
 
@@ -172,22 +180,31 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
     }
     if( newChild != nullptr )
     {
-      newChild->processInputFileRecursive( childNode );
+      newChild->processInputFileRecursive( xmlDocument, childNode );
     }
   }
 
-  processInputFile( targetNode );
+  processInputFile( xmlDocument, targetNode );
 
   // Restore original prefix once the node is processed
   Path::pathPrefix() = oldPrefix;
 }
 
-void Group::processInputFile( xmlWrapper::xmlNode const & targetNode )
+void Group::processInputFile( xmlWrapper::xmlDocument const & xmlDocument,
+                              xmlWrapper::xmlNode const & targetNode )
 {
+  xmlWrapper::xmlNodePos nodePos = xmlDocument.getNodePosition( targetNode );
+
+  if( nodePos.isFound() )
+  {
+    m_sourceContext = std::make_unique< FileContext >( *this, nodePos, targetNode.name() );
+  }
+
+
   std::set< string > processedAttributes;
   for( std::pair< string const, WrapperBase * > & pair : m_wrappers )
   {
-    if( pair.second->processInputFile( targetNode ) )
+    if( pair.second->processInputFile( targetNode, nodePos ) )
     {
       processedAttributes.insert( pair.first );
     }
@@ -196,13 +213,14 @@ void Group::processInputFile( xmlWrapper::xmlNode const & targetNode )
   for( xmlWrapper::xmlAttribute attribute : targetNode.attributes() )
   {
     string const attributeName = attribute.name();
-    if( attributeName != "name" && attributeName != "xmlns:xsi" && attributeName != "xsi:noNamespaceSchemaLocation" )
+    if( !xmlWrapper::isFileMetadataAttribute( attributeName ) )
     {
       GEOS_THROW_IF( processedAttributes.count( attributeName ) == 0,
-                     GEOS_FMT( "XML Node '{}' with name='{}' contains unused attribute '{}'.\n"
+                     GEOS_FMT( "XML Node at '{}' with name={} contains unused attribute '{}'.\n"
                                "Valid attributes are:\n{}\nFor more details, please refer to documentation at:\n"
                                "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
-                               targetNode.path(), targetNode.attribute( "name" ).value(), attributeName, dumpInputOptions() ),
+                               targetNode.path(), m_sourceContext->toString(), attributeName,
+                               dumpInputOptions() ),
                      InputError );
     }
   }
@@ -354,7 +372,7 @@ localIndex Group::packImpl( buffer_unit_type * & buffer,
     }
     else
     {
-      GEOS_ERROR( "Wrapper " << wrapperName << " not found in Group " << getName() << "." );
+      GEOS_ERROR( "Wrapper " << wrapperName << " not found in Group " << getSourceContext() << "." );
     }
   }
 

@@ -95,7 +95,7 @@ void testModifiedCamClayDriver()
   }
 
   xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child( "Constitutive" );
-  constitutiveManager.processInputFileRecursive( xmlConstitutiveNode );
+  constitutiveManager.processInputFileRecursive( xmlDocument, xmlConstitutiveNode );
   constitutiveManager.postProcessInputRecursive();
 
   localIndex constexpr numElem = 2;

@@ -200,20 +200,20 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
     setApplyDefaultValue( mpiSize );
 
   xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( dataRepository::keys::ProblemManager );
-  problemManager.processInputFileRecursive( xmlProblemNode );
+  problemManager.processInputFileRecursive( xmlDocument, xmlProblemNode );
 
   DomainPartition & domain = problemManager.getDomainPartition();
 
   constitutive::ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
-  constitutiveManager.processInputFileRecursive( topLevelNode );
+  constitutiveManager.processInputFileRecursive( xmlDocument, topLevelNode );
 
   MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
 
   ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
   topLevelNode = xmlProblemNode.child( elementManager.getName().c_str());
-  elementManager.processInputFileRecursive( topLevelNode );
+  elementManager.processInputFileRecursive( xmlDocument, topLevelNode );
 
   problemManager.problemSetup();
   problemManager.applyInitialConditions();

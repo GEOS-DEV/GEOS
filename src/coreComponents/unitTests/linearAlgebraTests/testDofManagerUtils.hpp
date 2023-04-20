@@ -53,7 +53,7 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
     setApplyDefaultValue( mpiSize );
 
   xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( dataRepository::keys::ProblemManager );
-  problemManager->processInputFileRecursive( xmlProblemNode );
+  problemManager->processInputFileRecursive( xmlDocument, xmlProblemNode );
 
   // Open mesh levels
   DomainPartition & domain = problemManager->getDomainPartition();
@@ -62,7 +62,7 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
 
   ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
-  elementManager.processInputFileRecursive( topLevelNode );
+  elementManager.processInputFileRecursive( xmlDocument, topLevelNode );
   elementManager.postProcessInputRecursive();
 
   problemManager->problemSetup();

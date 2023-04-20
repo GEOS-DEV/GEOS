@@ -18,6 +18,7 @@
 
 #include "Group.hpp"
 #include "RestartFlags.hpp"
+#include "SourceContext.hpp"
 
 
 namespace geos
@@ -37,7 +38,8 @@ WrapperBase::WrapperBase( string const & name,
   m_successfulReadFromInput( false ),
   m_description(),
   m_registeringObjects(),
-  m_conduitNode( parent.getConduitNode()[ name ] )
+  m_conduitNode( parent.getConduitNode()[ name ] ),
+  m_sourceContext( std::make_unique< WrapperContext >( *this ) )
 {}
 
 
@@ -103,6 +105,15 @@ int WrapperBase::setTotalviewDisplay() const
   return 0;
 }
 #endif
+
+void WrapperBase::createSourceContext( xmlWrapper::xmlNodePos const & nodePos )
+{
+  xmlWrapper::xmlAttributePos attPos = nodePos.getAttributeLine( m_name );
+  if( nodePos.isFound() && attPos.isFound() )
+  {
+    m_sourceContext = std::make_unique< FileContext >( *this, attPos );
+  }
+}
 
 
 }

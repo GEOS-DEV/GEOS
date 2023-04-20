@@ -45,6 +45,7 @@ namespace dataRepository
 {
 
 class Group;
+class SourceContext;
 
 /**
  * @class WrapperBase
@@ -181,7 +182,8 @@ public:
    * @param targetNode the xml node to initialize from.
    * @return True iff the wrapper initialized itself from the file.
    */
-  virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode ) = 0;
+  virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode,
+                                 xmlWrapper::xmlNodePos const & nodePos ) = 0;
 
   /**
    * @brief Push the data in the wrapper into a Conduit blueprint field.
@@ -413,6 +415,24 @@ public:
   string getPath() const;
 
   /**
+   * @return A SourceContext object that can helps to contextualize this Group.
+   */
+  SourceContext const & getSourceContext() const
+  { return *m_sourceContext; }
+
+  /**
+   * @brief Return the group that contains this Wrapper.
+   */
+  Group & getParent()
+  { return *m_parent; }
+
+  /**
+   * @copydoc getParent()
+   */
+  Group const & getParent() const
+  { return *m_parent; }
+
+  /**
    * @brief Set the InputFlag of the wrapper.
    * @param input the new InputFlags value
    * @return a pointer to this wrapper
@@ -612,6 +632,12 @@ protected:
 
   /// @endcond
 
+  /**
+   * @brief Sets the m_sourceContext to a FileContext by retrieving the attribute file line.
+   * @param nodePos the xml node position of the node containing this wrapper source attribute.
+   */
+  void createSourceContext( xmlWrapper::xmlNodePos const & nodePos );
+
 protected:
 
   /// Name of the object that is being wrapped
@@ -643,6 +669,9 @@ protected:
 
   /// A reference to the corresponding conduit::Node.
   conduit::Node & m_conduitNode;
+
+  /// A SourceContext object that can helps to contextualize this Group.
+  std::unique_ptr< SourceContext > m_sourceContext;
 
 private:
 

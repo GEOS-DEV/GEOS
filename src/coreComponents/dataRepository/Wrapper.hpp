@@ -606,7 +606,8 @@ public:
     return ss.str();
   }
 
-  virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode ) override
+  virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode,
+                                 xmlWrapper::xmlNodePos const & nodePos ) override
   {
     InputFlags const inputFlag = getInputFlag();
     if( inputFlag >= InputFlags::OPTIONAL )
@@ -631,6 +632,9 @@ public:
                                                                      targetNode,
                                                                      getDefaultValueStruct() );
       }
+
+      if( m_successfulReadFromInput )
+        createSourceContext( nodePos );
 
       return true;
     }

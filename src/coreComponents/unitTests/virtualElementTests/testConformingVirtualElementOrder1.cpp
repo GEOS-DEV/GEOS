@@ -292,7 +292,7 @@ TEST( ConformingVirtualElementOrder1, hexahedra )
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
 
   ProblemManager & problemManager = state.getProblemManager();
-  problemManager.processInputFileRecursive( xmlProblemNode );
+  problemManager.processInputFileRecursive( inputFile, xmlProblemNode );
 
   // Open mesh levels
   DomainPartition & domain  = problemManager.getDomainPartition();
@@ -302,7 +302,7 @@ TEST( ConformingVirtualElementOrder1, hexahedra )
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
   ElementRegionManager & elementManager = mesh.getElemManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
-  elementManager.processInputFileRecursive( topLevelNode );
+  elementManager.processInputFileRecursive( inputFile, topLevelNode );
   elementManager.postProcessInputRecursive();
   problemManager.problemSetup();
 
@@ -345,7 +345,7 @@ TEST( ConformingVirtualElementOrder1, wedges )
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
 
   ProblemManager & problemManager = state.getProblemManager();
-  problemManager.processInputFileRecursive( xmlProblemNode );
+  problemManager.processInputFileRecursive( inputFile, xmlProblemNode );
 
   // Open mesh levels
   DomainPartition & domain  = problemManager.getDomainPartition();
@@ -355,7 +355,7 @@ TEST( ConformingVirtualElementOrder1, wedges )
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
   ElementRegionManager & elementManager = mesh.getElemManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
-  elementManager.processInputFileRecursive( topLevelNode );
+  elementManager.processInputFileRecursive( inputFile, topLevelNode );
   elementManager.postProcessInputRecursive();
   problemManager.problemSetup();
 
