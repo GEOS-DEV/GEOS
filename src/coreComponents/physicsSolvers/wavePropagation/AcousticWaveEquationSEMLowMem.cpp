@@ -156,7 +156,7 @@ void AcousticWaveEquationSEMLowMem::registerDataOnMesh( Group & meshBodies )
                                fields::PressureDoubleDerivative,
                                fields::ForcingRHS,
                                fields::MassVector,
-                               fields::DampingVector,
+                               fields::NodeToDampingIdx,
                                fields::StiffnessVector,
                                fields::FreeSurfaceNodeIndicator >( this->getName() );
 
@@ -377,8 +377,20 @@ void AcousticWaveEquationSEMLowMem::initializePostInitialConditionsPreSubGroups(
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
     arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
-    //arrayView2d< real32 const, nodes::REFERENCE_POSITION_USD > const X32 = nodeManager.referencePosition32().toViewConst();
+    /// array of indicators: 1 if a face is on on free surface; 0 otherwise
+    arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X64 = nodeManager.referencePosition().toViewConst();
+    arrayView2d< real32 const, nodes::REFERENCE_POSITION_USD > const X32 = nodeManager.referencePosition32().toViewConst();
+
+    real64 sdiff = 0.0;
+    real64 s2 = 0.0;
+    for (int i = 0; i < X32.size( 0 ); i++) {
+      for (int j = 0; j < 3; j++) {
+        sdiff += ( X64[i][j] - X32[i][j] ) * ( X64[i][j] - X32[i][j] );
+        s2 += X64[i][j]*X64[i][j];
+      }
+    }
+    std::cout << "relative error between X64 and X32 : " << sdiff/s2 << std::endl;
 
     /// get face to node map
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
@@ -386,12 +398,7 @@ void AcousticWaveEquationSEMLowMem::initializePostInitialConditionsPreSubGroups(
     // mass matrix to be computed in this function
     arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVector >();
     mass.zero();
-    /// damping matrix to be computed for each dof in the boundary of the mesh
-    arrayView1d< real32 > const damping = nodeManager.getField< fields::DampingVector >();
-    damping.zero();
 
-    /// get array of indicators: 1 if face is on the free surface; 0 otherwise
-    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
 
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
@@ -409,12 +416,43 @@ void AcousticWaveEquationSEMLowMem::initializePostInitialConditionsPreSubGroups(
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
+
+        /// damping matrix to be computed for each dof in the boundary of the mesh
+        std::set<int> dampingNodesSet;
+        arrayView1d< localIndex > const nodeToDampingIdx = nodeManager.getField< fields::NodeToDampingIdx >();
+
+
+        /// get array of indicators: 1 if face is on the free surface; 0 otherwise
         using FE_TYPE = TYPEOFREF( finiteElement );
+        constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
+
+        for ( int f = 0; f < faceManager.size(); f++ )
+        {
+          // face on the domain boundary and not on free surface
+          if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
+          {
+            for( localIndex q = 0; q < numNodesPerFace; ++q )
+            {
+              dampingNodesSet.insert(facesToNodes[f][q]);
+            }
+          }
+        }
+        m_dampingVector.resize( dampingNodesSet.size() );
+        m_dampingNodes.resize( dampingNodesSet.size() );
+        m_dampingVector.zero();
+      
+        int i = 0;
+        for ( int k : dampingNodesSet )
+        {
+          m_dampingNodes[i] = k;
+          nodeToDampingIdx[k] = i;
+          i++;
+        }
 
         acousticWaveEquationSEMLowMemKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
         kernelM.template launch< parallelHostPolicy, AtomicPolicy< parallelHostPolicy > >( elementSubRegion.size(),
-                                                                                           X,
+                                                                                           X64,
                                                                                            elemsToNodes,
                                                                                            velocity,
                                                                                            mass );
@@ -422,13 +460,14 @@ void AcousticWaveEquationSEMLowMem::initializePostInitialConditionsPreSubGroups(
         acousticWaveEquationSEMLowMemKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
         kernelD.template launch< parallelHostPolicy, AtomicPolicy< parallelHostPolicy > >( faceManager.size(),
-                                                                                           X,
+                                                                                           X64,
                                                                                            facesToElements,
                                                                                            facesToNodes,
                                                                                            facesDomainBoundaryIndicator,
                                                                                            freeSurfaceFaceIndicator,
                                                                                            velocity,
-                                                                                           damping );
+                                                                                           nodeToDampingIdx,
+                                                                                           m_dampingVector );
       } );
     } );
   } );
@@ -540,7 +579,6 @@ void AcousticWaveEquationSEMLowMem::initializePML()
     NodeManager & nodeManager = mesh.getNodeManager();
     /// WARNING: the array below is one of the PML auxiliary variables
     arrayView1d< real32 > const indicatorPML = nodeManager.getField< fields::AuxiliaryVar4PML >();
-    //arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
     arrayView2d< real32 const, nodes::REFERENCE_POSITION_USD > const X32 = nodeManager.referencePosition32().toViewConst();
     indicatorPML.zero();
 
@@ -682,17 +720,17 @@ void AcousticWaveEquationSEMLowMem::initializePML()
 
         acousticWaveEquationSEMLowMemKernels::
           waveSpeedPMLKernel< FE_TYPE > kernel( finiteElement );
-        // kernel.template launch< parallelHostPolicy, AtomicPolicy< parallelHostPolicy > >
-        //   ( targetSet,
-        //     X32,
-        //     elemToNodesViewConst,
-        //     vel,
-        //     xMin,
-        //     xMax,
-        //     cMin,
-        //     cMax,
-        //     counterMin,
-        //     counterMax );
+        kernel.template launch< parallelHostPolicy, AtomicPolicy< parallelHostPolicy > >
+          ( targetSet,
+            X32,
+            elemToNodesViewConst,
+            vel,
+            xMin,
+            xMax,
+            cMin,
+            cMax,
+            counterMin,
+            counterMax );
       } );
     } );
 
@@ -831,23 +869,23 @@ void AcousticWaveEquationSEMLowMem::applyPML( real64 const time, DomainPartition
         /// apply the PML kernel
         acousticWaveEquationSEMLowMemKernels::
           PMLKernel< FE_TYPE > kernel( finiteElement );
-        // kernel.template launch< parallelHostPolicy, AtomicPolicy< parallelHostPolicy > >
-        //   ( targetSet,
-        //   X32,
-        //   elemToNodesViewConst,
-        //   vel,
-        //   p_n,
-        //   v_n,
-        //   u_n,
-        //   xMin,
-        //   xMax,
-        //   dMin,
-        //   dMax,
-        //   cMin,
-        //   cMax,
-        //   r,
-        //   grad_n,
-        //   divV_n );
+        kernel.template launch< parallelHostPolicy, AtomicPolicy< parallelHostPolicy > >
+          ( targetSet,
+            X32,
+            elemToNodesViewConst,
+            vel,
+            p_n,
+            v_n,
+            u_n,
+            xMin,
+            xMax,
+            dMin,
+            dMax,
+            cMin,
+            cMax,
+            r,
+            grad_n,
+            divV_n );
       } );
     } );
   } );
@@ -1028,8 +1066,7 @@ real64 AcousticWaveEquationSEMLowMem::explicitStepInternal( real64 const & time_
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVector >();
-    arrayView1d< real32 const > const damping = nodeManager.getField< fields::DampingVector >();
+    arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVector >();
 
     arrayView1d< real32 > const p_nm1 = nodeManager.getField< fields::Pressure_nm1 >();
     arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_n >();
@@ -1060,17 +1097,46 @@ real64 AcousticWaveEquationSEMLowMem::explicitStepInternal( real64 const & time_
     if( !usePML )
     {
       GEOSX_MARK_SCOPE ( updateP );
+      arrayView1d< real32 > dampingVector( m_dampingVector );
+      arrayView1d< localIndex > dampingNodes( m_dampingNodes );
+      // p_n+1 = 2 * p_n * m - (m - 0.5*dt*damping) * p_n-1 + dt2*(rhs-stiffness))/(m + 0.5*dt*damping)
+      // 1) p_n+1 = mass
+      // 2) if damp : p_n+1 += -0.5*dt*damping
+      // 3) p_n+1 = (p_n+1*p_nm1 + 2*m*p_n + dt2*(rhs-stiffness))/mass
+      // 4) if damp : p_n+1 *= mass/(mass + 0.5*dt*damping);
+
       forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
       {
         if( freeSurfaceNodeIndicator[a] != 1 )
         {
-          p_np1[a] = p_n[a];
-          p_np1[a] *= 2.0*mass[a];
-          p_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
-          p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
-          p_np1[a] /= mass[a]+0.5*dt*damping[a];
+          p_np1[a] = mass[a];
         }
       } );
+
+      forAll< parallelDevicePolicy< 32 > >( dampingVector.size(), [=] GEOSX_HOST_DEVICE ( localIndex const b )
+      {
+        int a = dampingNodes[b];
+        p_np1[a] += -0.5*dt*dampingVector[b];
+      } );
+
+      forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+      {
+        if( freeSurfaceNodeIndicator[a] != 1 )
+        {
+          p_np1[a] *= -p_nm1[a];
+          p_np1[a] += p_n[a]*2.0*mass[a];
+          p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
+          p_np1[a] /= mass[a];
+        }
+      } );
+
+      forAll< parallelDevicePolicy< 32 > >( dampingVector.size(), [=] GEOSX_HOST_DEVICE ( localIndex const b )
+      {
+        int a = dampingNodes[b];
+        p_np1[a] *= mass[a];
+        p_np1[a] /= (mass[a]+0.5*dt*dampingVector[b]);
+      } );
+
     }
     else
     {
@@ -1079,7 +1145,7 @@ real64 AcousticWaveEquationSEMLowMem::explicitStepInternal( real64 const & time_
       arrayView2d< real32 > const grad_n = nodeManager.getField< fields::AuxiliaryVar2PML >();
       arrayView1d< real32 > const divV_n = nodeManager.getField< fields::AuxiliaryVar3PML >();
       arrayView1d< real32 > const u_n = nodeManager.getField< fields::AuxiliaryVar4PML >();
-      //arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X64 = nodeManager.referencePosition().toViewConst();
       arrayView2d< real32 const, nodes::REFERENCE_POSITION_USD > const X32 = nodeManager.referencePosition32().toViewConst();
 
       real32 const xMin[ 3 ] = {param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};

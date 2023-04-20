@@ -268,7 +268,8 @@ struct DampingMatrixKernel
           arrayView1d< integer const > const facesDomainBoundaryIndicator,
           arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
           arrayView1d< real32 const > const velocity,
-          arrayView1d< real32 > const damping )
+          arrayView1d< localIndex const > nodeToDampingIdx,
+          arrayView1d< real32 > const dampingTerms )
   {
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const f )
     {
@@ -297,7 +298,7 @@ struct DampingMatrixKernel
         for( localIndex q = 0; q < numNodesPerFace; ++q )
         {
           real32 const localIncrement = alpha * m_finiteElement.computeDampingTerm( q, xLocal );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &damping[facesToNodes[f][q]], localIncrement );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &dampingTerms[nodeToDampingIdx[facesToNodes[f][q]]], localIncrement );
         }
       }
     } ); // end loop over element
@@ -404,7 +405,7 @@ struct PMLKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( SortedArrayView< localIndex const > const targetSet,
-          arrayView2d< real32 const > const X,
+          arrayView2d< real32 const, nodes::REFERENCE_POSITION_USD > const X,
           traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst,
           arrayView1d< real32 const > const velocity,
           arrayView1d< real32 const > const p_n,
@@ -551,7 +552,7 @@ struct waveSpeedPMLKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( SortedArrayView< localIndex const > const targetSet,
-          arrayView2d< real32 const > const X,
+          arrayView2d< real32 const, nodes::REFERENCE_POSITION_USD > const X,
           traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst,
           arrayView1d< real32 const > const velocity,
           real32 const (&xMin)[3],
