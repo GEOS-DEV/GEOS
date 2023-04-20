@@ -160,7 +160,7 @@ struct UpwindHelpers
         }
       }
 
-      GEOSX_LOG_RANK( GEOSX_FMT( "ei : {} pres : {}", ei, pres[er][esr][ei] ));
+//      GEOSX_LOG_RANK( GEOSX_FMT( "ei : {} pres : {}", ei, pres[er][esr][ei] ));
       presGrad += transmissibility[i] * (pres[er][esr][ei] - capPressure);
       dPresGrad_dP[i] += transmissibility[i] * (1 - dCapPressure_dP)
                          + dTrans_dPres[i] * (pres[er][esr][ei] - capPressure);

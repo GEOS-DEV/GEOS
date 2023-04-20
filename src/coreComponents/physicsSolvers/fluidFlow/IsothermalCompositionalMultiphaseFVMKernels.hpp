@@ -1165,7 +1165,7 @@ public:
 
       kernelComponent.setup( iconn, stack );
 
-      if(kernelComponent.upwindSchemeName() == "none" )
+      if(kernelComponent.upwindSchemeName() == "ppu" )
         kernelComponent.computeFlux( iconn, stack );
       else
       {
