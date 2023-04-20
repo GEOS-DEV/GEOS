@@ -115,6 +115,18 @@ void WrapperBase::createSourceContext( xmlWrapper::xmlNodePos const & nodePos )
   }
 }
 
+void WrapperBase::processInputException( std::exception const & ex,
+                                         xmlWrapper::xmlNode const & targetNode ) const
+{
+  xmlWrapper::xmlAttribute const & attribute = targetNode.attribute( getName().c_str() );
+  string const inputStr = string( attribute.value() );
+  string subExStr = string( "***** XML parsing error in " ) + targetNode.path() +
+                    " (name=" + targetNode.attribute( "name" ).value() + ")/" + attribute.name() +
+                    "\n***** Input value: '" + inputStr + "'\n";
+
+  throw InputError( subExStr + ex.what() );
+}
+
 
 }
 } /* namespace geos */
