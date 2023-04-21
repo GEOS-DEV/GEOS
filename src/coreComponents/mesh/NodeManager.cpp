@@ -135,8 +135,10 @@ void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
 
   m_referencePosition = cellBlockManager.getNodePositions();
   m_referencePosition32.resize( m_referencePosition.size( 0 ), m_referencePosition.size( 1 ) );
-  for ( int i = 0; i < m_referencePosition.size( 0 ); i++ ) {
-    for ( int j = 0; j < m_referencePosition.size( 1 ); j++ ) {
+  for( int i = 0; i < m_referencePosition.size( 0 ); i++ )
+  {
+    for( int j = 0; j < m_referencePosition.size( 1 ); j++ )
+    {
       m_referencePosition32[i][j] = m_referencePosition[i][j];
     }
   }

@@ -34,7 +34,7 @@ namespace geosx
 using namespace dataRepository;
 
 AcousticWaveEquationSEMLowMem::AcousticWaveEquationSEMLowMem( const std::string & name,
-                                                  Group * const parent ):
+                                                              Group * const parent ):
   WaveSolverBase( name,
                   parent )
 {
@@ -240,7 +240,7 @@ void AcousticWaveEquationSEMLowMem::postProcessInput()
 }
 
 void AcousticWaveEquationSEMLowMem::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                                     arrayView1d< string const > const & regionNames )
 {
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
@@ -384,8 +384,10 @@ void AcousticWaveEquationSEMLowMem::initializePostInitialConditionsPreSubGroups(
 
     real64 sdiff = 0.0;
     real64 s2 = 0.0;
-    for (int i = 0; i < X32.size( 0 ); i++) {
-      for (int j = 0; j < 3; j++) {
+    for( int i = 0; i < X32.size( 0 ); i++ )
+    {
+      for( int j = 0; j < 3; j++ )
+      {
         sdiff += ( X64[i][j] - X32[i][j] ) * ( X64[i][j] - X32[i][j] );
         s2 += X64[i][j]*X64[i][j];
       }
@@ -418,7 +420,7 @@ void AcousticWaveEquationSEMLowMem::initializePostInitialConditionsPreSubGroups(
       {
 
         /// damping matrix to be computed for each dof in the boundary of the mesh
-        std::set<int> dampingNodesSet;
+        std::set< int > dampingNodesSet;
         arrayView1d< localIndex > const nodeToDampingIdx = nodeManager.getField< fields::NodeToDampingIdx >();
 
 
@@ -426,23 +428,23 @@ void AcousticWaveEquationSEMLowMem::initializePostInitialConditionsPreSubGroups(
         using FE_TYPE = TYPEOFREF( finiteElement );
         constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
 
-        for ( int f = 0; f < faceManager.size(); f++ )
+        for( int f = 0; f < faceManager.size(); f++ )
         {
           // face on the domain boundary and not on free surface
           if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
           {
             for( localIndex q = 0; q < numNodesPerFace; ++q )
             {
-              dampingNodesSet.insert(facesToNodes[f][q]);
+              dampingNodesSet.insert( facesToNodes[f][q] );
             }
           }
         }
         m_dampingVector.resize( dampingNodesSet.size() );
         m_dampingNodes.resize( dampingNodesSet.size() );
         m_dampingVector.zero();
-      
+
         int i = 0;
-        for ( int k : dampingNodesSet )
+        for( int k : dampingNodesSet )
         {
           m_dampingNodes[i] = k;
           nodeToDampingIdx[k] = i;
@@ -609,7 +611,7 @@ void AcousticWaveEquationSEMLowMem::initializePML()
         subRegion.getReference< CellElementSubRegion::NodeMapType >( CellElementSubRegion::viewKeyStruct::nodeListString() );
       traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
 
-      forAll<parallelHostPolicy >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const l )
+      forAll< parallelHostPolicy >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const l )
       {
         localIndex const k = targetSet[ l ];
         localIndex const numNodesPerElem = elemToNodesViewConst[k].size();
@@ -722,15 +724,15 @@ void AcousticWaveEquationSEMLowMem::initializePML()
           waveSpeedPMLKernel< FE_TYPE > kernel( finiteElement );
         kernel.template launch< parallelHostPolicy, AtomicPolicy< parallelHostPolicy > >
           ( targetSet,
-            X32,
-            elemToNodesViewConst,
-            vel,
-            xMin,
-            xMax,
-            cMin,
-            cMax,
-            counterMin,
-            counterMax );
+          X32,
+          elemToNodesViewConst,
+          vel,
+          xMin,
+          xMax,
+          cMin,
+          cMax,
+          counterMin,
+          counterMax );
       } );
     } );
 
@@ -871,21 +873,21 @@ void AcousticWaveEquationSEMLowMem::applyPML( real64 const time, DomainPartition
           PMLKernel< FE_TYPE > kernel( finiteElement );
         kernel.template launch< parallelHostPolicy, AtomicPolicy< parallelHostPolicy > >
           ( targetSet,
-            X32,
-            elemToNodesViewConst,
-            vel,
-            p_n,
-            v_n,
-            u_n,
-            xMin,
-            xMax,
-            dMin,
-            dMax,
-            cMin,
-            cMax,
-            r,
-            grad_n,
-            divV_n );
+          X32,
+          elemToNodesViewConst,
+          vel,
+          p_n,
+          v_n,
+          u_n,
+          xMin,
+          xMax,
+          dMin,
+          dMax,
+          cMin,
+          cMax,
+          r,
+          grad_n,
+          divV_n );
       } );
     } );
   } );
@@ -971,10 +973,10 @@ real64 AcousticWaveEquationSEMLowMem::explicitStepForward( real64 const & time_n
 
 
 real64 AcousticWaveEquationSEMLowMem::explicitStepBackward( real64 const & time_n,
-                                                      real64 const & dt,
-                                                      integer cycleNumber,
-                                                      DomainPartition & domain,
-                                                      bool computeGradient )
+                                                            real64 const & dt,
+                                                            integer cycleNumber,
+                                                            DomainPartition & domain,
+                                                            bool computeGradient )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
@@ -1051,9 +1053,9 @@ real64 AcousticWaveEquationSEMLowMem::explicitStepBackward( real64 const & time_
 }
 
 real64 AcousticWaveEquationSEMLowMem::explicitStepInternal( real64 const & time_n,
-                                                      real64 const & dt,
-                                                      integer cycleNumber,
-                                                      DomainPartition & domain )
+                                                            real64 const & dt,
+                                                            integer cycleNumber,
+                                                            DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1241,10 +1243,10 @@ real64 AcousticWaveEquationSEMLowMem::explicitStepInternal( real64 const & time_
 }
 
 void AcousticWaveEquationSEMLowMem::cleanup( real64 const time_n,
-                                       integer const cycleNumber,
-                                       integer const eventCounter,
-                                       real64 const eventProgress,
-                                       DomainPartition & domain )
+                                             integer const cycleNumber,
+                                             integer const eventCounter,
+                                             real64 const eventProgress,
+                                             DomainPartition & domain )
 {
   // call the base class cleanup (for reporting purposes)
   SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
@@ -1263,10 +1265,10 @@ void AcousticWaveEquationSEMLowMem::cleanup( real64 const time_n,
 }
 
 void AcousticWaveEquationSEMLowMem::computeAllSeismoTraces( real64 const time_n,
-                                                      real64 const dt,
-                                                      arrayView1d< real32 const > const var_np1,
-                                                      arrayView1d< real32 const > const var_n,
-                                                      arrayView2d< real32 > varAtReceivers )
+                                                            real64 const dt,
+                                                            arrayView1d< real32 const > const var_np1,
+                                                            arrayView1d< real32 const > const var_n,
+                                                            arrayView2d< real32 > varAtReceivers )
 {
 
   /*
