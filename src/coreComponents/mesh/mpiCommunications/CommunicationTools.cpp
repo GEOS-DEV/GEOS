@@ -497,7 +497,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
   {
     int const neighborRank = neighbors[ i ].neighborRank();
 
-    MpiWrapper::iSend( objectManager.getNeighborData( neighborRank ).nonLocalGhosts().toViewConst(),
+    MpiWrapper::iSend( objectManager.getNeighborData( neighborRank ).nonLocalGhosts().toView(),
                        neighborRank,
                        nonLocalGhostsTag,
                        MPI_COMM_GEOSX,
