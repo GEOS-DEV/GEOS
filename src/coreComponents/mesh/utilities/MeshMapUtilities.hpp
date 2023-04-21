@@ -211,9 +211,17 @@ void transformCellBlockToRegionMap( arrayView2d< localIndex const > const & bloc
 
 } // namespace meshMapUtilities
 
+/**
+ * @brief Strucure used to hash interpolation arrays representing high-order nodes. 
+ * @tparam T type of node index, usually a local or global index
+ */
 template< typename T >
 struct NodeKeyHasher
 {
+  /**
+   * @brief operator used to assign a hash to an interpolation array representing a high-order node.
+   * @param arr the array corresponding to the node to be hashed
+   */
   std::size_t operator()( const std::array< T, 6 > & arr ) const
   {
     std::size_t hash = 0;
@@ -226,21 +234,44 @@ struct NodeKeyHasher
   }
 };
 
+/**
+ * @brief Strucure used to define an equivalence relation on interpolation arrays representing high-order nodes. 
+ * @tparam T type of node index, usually a local or global index
+ */
 template< typename T >
 struct NodeKeyEqual
 {
+  /**
+   * @brief operator used to define an equivalence relation on interpolation arrays representing high-order nodes.
+   * @param lhs array corresponding to the first node
+   * @param rhs array corresponding to second node
+   * @return true if the two arrays are considered equal, false otherwise
+   */
   bool operator()( const std::array< T, 6 > & lhs, const std::array< T, 6 > & rhs ) const
   {
     return lhs == rhs;
   }
 };
 
+/**
+ * @brief @return a unique interpolation array representing a high-order node coincident with a mesh vertex.
+ * @tparam T type of node index, usually a local or global index
+ * @param v the mesh vertex on which the high-order node lies.
+ */
 template< typename T >
 static std::array< T, 6 > createNodeKey( T v )
 {
   return std::array< T, 6 > { v, -1, -1, -1, -1, -1 };
 }
 
+/**
+ * @brief @return a unique interpolation array representing a high-order node on an edge.
+ * @tparam T type of node index, usually a local or global index
+ * @param v1 the first mesh vertex defining the edge.
+ * @param v2 the second mesh vertex defining the edge.
+ * @param a the interpolation parameter, meaning that the node is 'a' steps away from v1 towards v2
+ * @param order the order of the discretization
+ */
 template< typename T >
 static std::array< T, 6 > createNodeKey( T v1, T v2, int a, int order )
 {
@@ -258,7 +289,17 @@ static std::array< T, 6 > createNodeKey( T v1, T v2, int a, int order )
   }
 }
 
-
+/**
+ * @brief @return a unique interpolation array representing a high-order node on an face.
+ * @tparam T type of node index, usually a local or global index
+ * @param v1 the first mesh vertex defining the face.
+ * @param v2 the second mesh vertex defining the face.
+ * @param v3 the third mesh vertex defining the face.
+ * @param v4 the fourth mesh vertex defining the face.
+ * @param a the first interpolation parameter, meaning that the node is 'a' steps away from v1 towards v2 (and v3 towards v4)
+ * @param b the second interpolation parameter, meaning that the node is 'b' steps away from v1 towards v2 (and v3 towards v4)
+ * @param order the order of the discretization
+ */
 template< typename T >
 static std::array< T, 6 > createNodeKey( T v1, T v2, T v3, T v4, int a, int b, int order )
 {
@@ -302,6 +343,15 @@ static std::array< T, 6 > createNodeKey( T v1, T v2, T v3, T v4, int a, int b, i
   return std::array< T, 6 > { v1, v2, v3, v4, a, b };
 }
 
+/**
+ * @brief @return the unique interpolation array representing a Gauss-Lobatto node inside an element.
+ * @tparam T type of node index, usually a local or global index
+ * @param elemNodes indices of the nodes defining the element
+ * @param q1 first interpolation parameter
+ * @param q2 second interpolation parameter
+ * @param q3 third interpolation parameter
+ * @param order the order of the discretization
+ */
 template< typename T >
 static std::array< T, 6 > createNodeKey( T const (&elemNodes)[ 8 ], int q1, int q2, int q3, int order )
 {
