@@ -142,6 +142,12 @@ public:
    */
   void setNumNodes( localIndex numNodes, localIndex const order );
 
+  /**
+   * @brief Creates the maps for a higher-order discretization
+   * @param[in] order The order of the cell block
+   * @param[in] source The source Mesh Level
+   * @param[in] highOrderMeshLevel the high-order Mesh Level
+   */
   void createHighOrderMaps( localIndex const order, MeshLevel const & source, MeshLevel & highOrderMeshLevel );
 
   localIndex numNodes() const override;
