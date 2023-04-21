@@ -16,7 +16,7 @@
 #include "TableRelativePermeability.hpp"
 
 
-namespace geosx
+namespace geos
 {
-template void RelpermDriver::runTest< geosx::constitutive::TableRelativePermeability >( geosx::constitutive::TableRelativePermeability &, arrayView2d< real64 > const & );
+template void RelpermDriver::runTest< geos::constitutive::TableRelativePermeability >( geos::constitutive::TableRelativePermeability &, arrayView2d< real64 > const & );
 }

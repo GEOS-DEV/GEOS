@@ -26,7 +26,7 @@
 #include "mesh/ToElementRelation.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -78,7 +78,7 @@ void NodeManager::constructGlobalToLocalMap( CellBlockManagerABC const & cellBlo
 void NodeManager::buildSets( CellBlockManagerABC const & cellBlockManager,
                              GeometricObjectManager const & geometries )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // Let's first copy the sets from the cell block manager.
   for( const auto & nameArray: cellBlockManager.getNodeSets() )
@@ -88,6 +88,11 @@ void NodeManager::buildSets( CellBlockManagerABC const & cellBlockManager,
   }
 
   // Now let's copy them from the geometric objects.
+  buildGeometricSets( geometries );
+}
+
+void NodeManager::buildGeometricSets( GeometricObjectManager const & geometries )
+{
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = this->referencePosition();
   localIndex const numNodes = this->size();
 
@@ -129,7 +134,7 @@ void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
 void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
                                            ElementRegionManager const & elemRegionManager )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   resize( cellBlockManager.numNodes() );
 
@@ -225,13 +230,13 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                           bool const overwriteUpMaps,
                                           bool const )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   localIndex unPackedSize = 0;
 
   string temp;
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOSX_ERROR_IF( temp != viewKeyStruct::edgeListString(), "" );
+  GEOS_ERROR_IF( temp != viewKeyStruct::edgeListString(), "" );
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toEdgesRelation,
                                      packList,
@@ -241,7 +246,7 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                      overwriteUpMaps );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOSX_ERROR_IF( temp != viewKeyStruct::faceListString(), "" );
+  GEOS_ERROR_IF( temp != viewKeyStruct::faceListString(), "" );
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation,
                                      packList,
@@ -251,7 +256,7 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                      overwriteUpMaps );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOSX_ERROR_IF( temp != viewKeyStruct::elementListString(), "" );
+  GEOS_ERROR_IF( temp != viewKeyStruct::elementListString(), "" );
   unPackedSize += bufferOps::Unpack( buffer,
                                      this->m_toElements,
                                      packList,

@@ -23,7 +23,7 @@
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -102,7 +102,7 @@ void FluxApproximationBase::initializePreSubGroups()
 
 void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -185,4 +185,4 @@ void FluxApproximationBase::setCoeffName( string const & name )
 }
 
 
-} //namespace geosx
+} //namespace geos

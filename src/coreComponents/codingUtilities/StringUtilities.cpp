@@ -23,7 +23,7 @@
 #include <cstdlib>
 #include <cmath>
 
-namespace geosx
+namespace geos
 {
 namespace stringutilities
 {
@@ -89,8 +89,8 @@ string toMetricPrefixString( T const & value )
   snprintf( temp, 8, "%5.*f %c", p, scaledValue, prefixes[a+5] );
   rval = temp;
 
-  GEOSX_ERROR_IF( rval.empty(),
-                  GEOSX_FMT( "The value of {} was not able to be converted with a metric prefix", value ) );
+  GEOS_ERROR_IF( rval.empty(),
+                 GEOS_FMT( "The value of {} was not able to be converted with a metric prefix", value ) );
 
 
   return rval;

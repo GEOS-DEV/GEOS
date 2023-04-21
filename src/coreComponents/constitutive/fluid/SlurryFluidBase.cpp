@@ -20,7 +20,7 @@
 
 #include "SlurryFluidFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -87,14 +87,14 @@ void SlurryFluidBase::postProcessInput()
 
   localIndex const NC = numFluidComponents();
 
-  GEOSX_ERROR_IF( m_defaultComponentDensity.size() != NC,
-                  "The number of default density values is not the same as the component number" );
+  GEOS_ERROR_IF( m_defaultComponentDensity.size() != NC,
+                 "The number of default density values is not the same as the component number" );
 
-  GEOSX_ERROR_IF( m_defaultComponentCompressibility.size() != NC,
-                  "The number of default compressibility values is not the same as the component number" );
+  GEOS_ERROR_IF( m_defaultComponentCompressibility.size() != NC,
+                 "The number of default compressibility values is not the same as the component number" );
 
-  GEOSX_ERROR_IF( m_defaultComponentViscosity.size() != NC,
-                  "The number of default viscosity values is not the same as the component number" );
+  GEOS_ERROR_IF( m_defaultComponentViscosity.size() != NC,
+                 "The number of default viscosity values is not the same as the component number" );
 
 }
 
@@ -135,4 +135,4 @@ void SlurryFluidBase::allocateConstitutiveData( Group & parent,
 
 } //namespace constitutive
 
-} //namespace geosx
+} //namespace geos

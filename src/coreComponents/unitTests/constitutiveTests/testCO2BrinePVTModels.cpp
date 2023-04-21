@@ -31,13 +31,13 @@
 // TPL includes
 #include <gtest/gtest.h>
 
-using namespace geosx;
-using namespace geosx::testing;
-using namespace geosx::constitutive;
-using namespace geosx::dataRepository;
-using namespace geosx::stringutilities;
-using namespace geosx::constitutive::PVTProps;
-using namespace geosx::constitutive::multifluid;
+using namespace geos;
+using namespace geos::testing;
+using namespace geos::constitutive;
+using namespace geos::dataRepository;
+using namespace geos::stringutilities;
+using namespace geos::constitutive::PVTProps;
+using namespace geos::constitutive::multifluid;
 
 /// Input tables written into temporary files during testing
 
@@ -367,8 +367,8 @@ std::unique_ptr< MODEL > makePVTFunction( string const & filename,
                                                componentMolarWeight );
     }
   }
-  GEOSX_ERROR_IF( pvtFunction == nullptr,
-                  "Could not find " << key << " in " << filename );
+  GEOS_ERROR_IF( pvtFunction == nullptr,
+                 "Could not find " << key << " in " << filename );
 
   return pvtFunction;
 }
@@ -408,8 +408,8 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
                                               componentMolarWeight );
     }
   }
-  GEOSX_ERROR_IF( flashModel == nullptr,
-                  "Could not find " << key << " in " << filename );
+  GEOS_ERROR_IF( flashModel == nullptr,
+                 "Could not find " << key << " in " << filename );
 
   return flashModel;
 }
@@ -1114,11 +1114,11 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::GeosxState state( geosx::basicSetup( argc, argv ) );
+  geos::GeosxState state( geos::basicSetup( argc, argv ) );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::basicCleanup();
+  geos::basicCleanup();
 
   return result;
 }

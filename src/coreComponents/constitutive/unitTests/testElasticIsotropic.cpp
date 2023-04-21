@@ -21,8 +21,8 @@
 #include <gtest/gtest.h>
 #include <conduit.hpp>
 
-using namespace geosx;
-using namespace ::geosx::constitutive;
+using namespace geos;
+using namespace ::geos::constitutive;
 
 TEST( ElasticIsotropicTests, testAllocation )
 {
@@ -73,9 +73,9 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
   xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(), inputStream.size() );
   if( !xmlResult )
   {
-    GEOSX_LOG_RANK_0( "XML parsed with errors!" );
-    GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+    GEOS_LOG_RANK_0( "XML parsed with errors!" );
+    GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
+    GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
 
   xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child( "Constitutive" );

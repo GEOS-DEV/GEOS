@@ -5,8 +5,8 @@
  * Contains a CMake-generated list of macros that define a particular build configuration.
  */
 
-#ifndef GEOSX_COMMON_CONFIG_HPP
-#define GEOSX_COMMON_CONFIG_HPP
+#ifndef GEOS_COMMON_CONFIG_HPP
+#define GEOS_COMMON_CONFIG_HPP
 
 /// Enables floating point exceptions
 #define GEOSX_USE_FPE
@@ -114,10 +114,10 @@
 /* #undef chai_VERSION */
 
 /// Version information for adiak
-/* #undef adiak_VERSION */
+#define adiak_VERSION ..
 
 /// Version information for caliper
-/* #undef caliper_VERSION */
+#define caliper_VERSION 2.8.0
 
 /// Version information for Metis
 #define METIS_VERSION 5.1.0
@@ -147,5 +147,5 @@
 /* #undef CUDAToolkit_VERSION */
 
 
-#endif  /* GEOSX_CONFIG_HPP */
+#endif  /* GEOS_CONFIG_HPP */
 

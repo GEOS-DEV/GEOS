@@ -16,12 +16,12 @@
  * @file ThermalCompositionalMultiphaseBaseKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
 
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace thermalCompositionalMultiphaseBaseKernels
@@ -62,7 +62,7 @@ public:
    * @brief Compute the phase volume fractions in an element
    * @param[in] ei the element index
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( localIndex const ei ) const
   {
     using Deriv = multifluid::DerivativeOffset;
@@ -191,6 +191,7 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
     : Base( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs ),
+    m_dPoro_dTemp( solid.getDporosity_dTemperature() ),
     m_phaseInternalEnergy_n( fluid.phaseInternalEnergy_n() ),
     m_phaseInternalEnergy( fluid.phaseInternalEnergy() ),
     m_dPhaseInternalEnergy( fluid.dPhaseInternalEnergy() ),
@@ -203,7 +204,7 @@ public:
   {
 public:
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables()
       : Base::StackVariables()
     {}
@@ -215,6 +216,9 @@ public:
     using Base::StackVariables::dofIndices;
     using Base::StackVariables::localResidual;
     using Base::StackVariables::localJacobian;
+
+    // derivative of pore volume wrt temperature
+    real64 dPoreVolume_dTemp = 0.0;
 
     // Solid energy
 
@@ -237,22 +241,27 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const ei,
               StackVariables & stack ) const
   {
     Base::setup( ei, stack );
 
+    // derivative of pore volume wrt temperature
+    stack.dPoreVolume_dTemp = m_volume[ei] * m_dPoro_dTemp[ei][0];
+
     // initialize the solid volume
     real64 const solidVolume = m_volume[ei] * ( 1.0 - m_porosity[ei][0] );
     real64 const solidVolume_n = m_volume[ei] * ( 1.0 - m_porosity_n[ei][0] );
     real64 const dSolidVolume_dPres = -m_volume[ei] * m_dPoro_dPres[ei][0];
+    real64 const dSolidVolume_dTemp = -stack.dPoreVolume_dTemp;
 
     // initialize the solid internal energy
     stack.solidEnergy = solidVolume * m_rockInternalEnergy[ei][0];
     stack.solidEnergy_n = solidVolume_n * m_rockInternalEnergy_n[ei][0];
     stack.dSolidEnergy_dPres = dSolidVolume_dPres * m_rockInternalEnergy[ei][0];
-    stack.dSolidEnergy_dTemp = solidVolume * m_dRockInternalEnergy_dTemp[ei][0];
+    stack.dSolidEnergy_dTemp = solidVolume * m_dRockInternalEnergy_dTemp[ei][0]
+                               + dSolidVolume_dTemp * m_rockInternalEnergy[ei][0];
   }
 
   /**
@@ -261,7 +270,7 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeAccumulation( localIndex const ei,
                             StackVariables & stack ) const
   {
@@ -294,8 +303,8 @@ public:
 
       // Step 1: assemble the derivatives of the component mass balance equations with respect to temperature
 
-      real64 const dPhaseAmount_dT = stack.poreVolume
-                                     * (dPhaseVolFrac[ip][Deriv::dT] * phaseDens[ip] + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dT] );
+      real64 const dPhaseAmount_dT = stack.dPoreVolume_dTemp * phaseVolFrac[ip] * phaseDens[ip]
+                                     + stack.poreVolume * (dPhaseVolFrac[ip][Deriv::dT] * phaseDens[ip] + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dT] );
       for( integer ic = 0; ic < numComp; ++ic )
       {
         stack.localJacobian[ic][numDof-1] += dPhaseAmount_dT * phaseCompFrac[ip][ic]
@@ -342,7 +351,7 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeVolumeBalance( localIndex const ei,
                              StackVariables & stack ) const
   {
@@ -350,7 +359,7 @@ public:
 
     Base::computeVolumeBalance( ei, stack, [&] ( real64 const & oneMinusPhaseVolFraction )
     {
-      GEOSX_UNUSED_VAR( oneMinusPhaseVolFraction );
+      GEOS_UNUSED_VAR( oneMinusPhaseVolFraction );
 
       arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac = m_dPhaseVolFrac[ei];
 
@@ -361,7 +370,7 @@ public:
     } );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void complete( localIndex const ei,
                  StackVariables & stack ) const
   {
@@ -377,6 +386,9 @@ public:
   }
 
 protected:
+
+  /// View on derivative of porosity w.r.t temperature
+  arrayView2d< real64 const > const m_dPoro_dTemp;
 
   /// Views on phase internal energy
   arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseInternalEnergy_n;
@@ -448,7 +460,7 @@ struct FluidUpdateKernel
           arrayView1d< real64 const > const & temp,
           arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
@@ -465,7 +477,7 @@ struct FluidUpdateKernel
           arrayView1d< real64 const > const & temp,
           arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
   {
-    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
@@ -487,7 +499,7 @@ struct SolidInternalEnergyUpdateKernel
           SOLID_INTERNAL_ENERGY_WRAPPER const & solidInternalEnergyWrapper,
           arrayView1d< real64 const > const & temp )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       solidInternalEnergyWrapper.update( k, temp[k] );
     } );
@@ -551,7 +563,7 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeScalingFactor( localIndex const ei,
                              StackVariables & stack ) const
   {
@@ -685,7 +697,7 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeSolutionCheck( localIndex const ei,
                              StackVariables & stack ) const
   {
@@ -791,7 +803,7 @@ public:
     m_solidInternalEnergy_n( solidInternalEnergy.getInternalEnergy_n() )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeMassEnergyNormalizers( localIndex const ei,
                                      real64 & massNormalizer,
                                      real64 & energyNormalizer ) const
@@ -807,7 +819,7 @@ public:
     energyNormalizer = LvArray::math::max( minNormalizer, LvArray::math::abs( energyNormalizer ) );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const ei,
                             LinfStackVariables & stack ) const override
   {
@@ -843,7 +855,7 @@ public:
     }
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeL2( localIndex const ei,
                           L2StackVariables & stack ) const override
   {
@@ -955,7 +967,7 @@ public:
 
 } // namespace thermalCompositionalMultiphaseBaseKernels
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP

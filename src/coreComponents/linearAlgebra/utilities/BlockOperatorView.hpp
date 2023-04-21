@@ -16,8 +16,8 @@
  * @file BlockOperatorView.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_UTILITIES_BLOCKOPERATORVIEW_HPP_
-#define GEOSX_LINEARALGEBRA_UTILITIES_BLOCKOPERATORVIEW_HPP_
+#ifndef GEOS_LINEARALGEBRA_UTILITIES_BLOCKOPERATORVIEW_HPP_
+#define GEOS_LINEARALGEBRA_UTILITIES_BLOCKOPERATORVIEW_HPP_
 
 #include "codingUtilities/SFINAE_Macros.hpp"
 #include "linearAlgebra/common/LinearOperator.hpp"
@@ -25,7 +25,7 @@
 #include "common/traits.hpp"
 #include "linearAlgebra/common/common.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -215,7 +215,7 @@ public:
    */
   OPERATOR const & block( localIndex const blockRowIndex, localIndex const blockColIndex ) const
   {
-    GEOSX_LAI_ASSERT( m_operators( blockRowIndex, blockColIndex ) != nullptr );
+    GEOS_LAI_ASSERT( m_operators( blockRowIndex, blockColIndex ) != nullptr );
     return *m_operators( blockRowIndex, blockColIndex );
   }
 
@@ -224,7 +224,7 @@ public:
    */
   OPERATOR & block( localIndex const blockRowIndex, localIndex const blockColIndex )
   {
-    GEOSX_LAI_ASSERT( m_operators( blockRowIndex, blockColIndex ) != nullptr );
+    GEOS_LAI_ASSERT( m_operators( blockRowIndex, blockColIndex ) != nullptr );
     return *m_operators( blockRowIndex, blockColIndex );
   }
 
@@ -256,8 +256,8 @@ protected:
   BlockOperatorView( localIndex const nRows, localIndex const nCols )
     : m_operators( nRows, nCols )
   {
-    GEOSX_LAI_ASSERT_GT( nRows, 0 );
-    GEOSX_LAI_ASSERT_GT( nCols, 0 );
+    GEOS_LAI_ASSERT_GT( nRows, 0 );
+    GEOS_LAI_ASSERT_GT( nCols, 0 );
   }
 
   /**
@@ -280,10 +280,10 @@ protected:
    */
   void setPointer( localIndex const blockRowIndex, localIndex const blockColIndex, OPERATOR * op )
   {
-    GEOSX_LAI_ASSERT_GE( blockRowIndex, 0 );
-    GEOSX_LAI_ASSERT_GT( numBlockRows(), blockRowIndex );
-    GEOSX_LAI_ASSERT_GE( blockColIndex, 0 );
-    GEOSX_LAI_ASSERT_GT( numBlockCols(), blockColIndex );
+    GEOS_LAI_ASSERT_GE( blockRowIndex, 0 );
+    GEOS_LAI_ASSERT_GT( numBlockRows(), blockRowIndex );
+    GEOS_LAI_ASSERT_GE( blockColIndex, 0 );
+    GEOS_LAI_ASSERT_GT( numBlockCols(), blockColIndex );
     m_operators( blockRowIndex, blockColIndex ) = op;
   }
 
@@ -342,4 +342,4 @@ auto BlockOperatorView< VECTOR, OPERATOR >::computeColSize( FUNC func ) const ->
 }// end geosx namespace
 
 
-#endif /*GEOSX_LINEARALGEBRA_UTILITIES_BLOCKOPERATORVIEW_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_UTILITIES_BLOCKOPERATORVIEW_HPP_*/
