@@ -8,11 +8,12 @@ declare -a TARGET_PACKAGES=("$PACKAGE_DIR/geosx_mesh_tools_package"
                             "$PACKAGE_DIR/geosx_xml_tools_package"
                             "$PACKAGE_DIR/hdf5_wrapper_package"
                             "$PACKAGE_DIR/pygeosx_tools_package"
-                            "$SCRIPT_DIR/../integratedTests/scripts/geosxats_package")
+                            "$SCRIPT_DIR/../integratedTests/scripts/geos_ats_package")
 declare -a LINK_SCRIPTS=("preprocess_xml"
                          "format_xml"
                          "convert_abaqus"
-                         "run_geosxats"
+                         "run_geos_ats"
+                         "setup_ats_environment"
                          "activate"
                          "python")
 
