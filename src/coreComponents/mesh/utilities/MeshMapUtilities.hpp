@@ -212,14 +212,14 @@ void transformCellBlockToRegionMap( arrayView2d< localIndex const > const & bloc
 } // namespace meshMapUtilities
 
 /**
- * @brief Strucure used to hash interpolation arrays representing high-order nodes. 
+ * @brief Strucure used to hash interpolation arrays representing high-order nodes.
  * @tparam T type of node index, usually a local or global index
  */
 template< typename T >
 struct NodeKeyHasher
 {
   /**
-   * @brief operator used to assign a hash to an interpolation array representing a high-order node.
+   * @brief @return the hash of an interpolation array representing a high-order node.
    * @param arr the array corresponding to the node to be hashed
    */
   std::size_t operator()( const std::array< T, 6 > & arr ) const
@@ -235,17 +235,16 @@ struct NodeKeyHasher
 };
 
 /**
- * @brief Strucure used to define an equivalence relation on interpolation arrays representing high-order nodes. 
+ * @brief Strucure used to define an equivalence relation on interpolation arrays representing high-order nodes.
  * @tparam T type of node index, usually a local or global index
  */
 template< typename T >
 struct NodeKeyEqual
 {
   /**
-   * @brief operator used to define an equivalence relation on interpolation arrays representing high-order nodes.
+   * @brief @return true if two interpolation arrays are considered equal, false otherwise
    * @param lhs array corresponding to the first node
    * @param rhs array corresponding to second node
-   * @return true if the two arrays are considered equal, false otherwise
    */
   bool operator()( const std::array< T, 6 > & lhs, const std::array< T, 6 > & rhs ) const
   {
