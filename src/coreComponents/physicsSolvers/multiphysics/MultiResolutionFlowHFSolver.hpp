@@ -171,6 +171,12 @@ private:
   //indicator of insertion of new fracture elements
   bool m_addedFractureElements;
 
+  //map from base to patch elements
+  map<globalIndex, set<globalIndex>> m_baseToPatchElementRelation;
+
+  //map from patch to base elements
+  map<globalIndex, globalIndex> m_patchToBaseElementRelation;
+
 };
 
 } /* namespace geosx */

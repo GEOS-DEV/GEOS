@@ -652,7 +652,7 @@ bool EmbeddedSurfaceGenerator::propagationStep3D()
   //GEOSX_LOG_LEVEL_RANK_0( 2, "end function" );
 
   // Add the embedded elements to the fracture stencil.
-  //addToFractureStencil( domain );
+  addToFractureStencil( domain );
   return added;
 }
 
