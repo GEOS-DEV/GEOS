@@ -16,9 +16,9 @@ set( porousSolidDispatch PorousSolid<DruckerPragerExtended>
                          PorousSolid<DelftEgg>
                          PorousSolid<DruckerPrager>
                          PorousSolid<ElasticIsotropic>
-##                         PorousSolid<ElasticTransverseIsotropic>
+                         PorousSolid<ElasticTransverseIsotropic>
                          PorousSolid<ElasticIsotropicPressureDependent>
-##                         PorousSolid<ElasticOrthotropic>
+                         PorousSolid<ElasticOrthotropic>
                          PorousSolid<DamageSpectral<ElasticIsotropic>>
                          PorousSolid<DamageVolDev<ElasticIsotropic>>
                          PorousSolid<Damage<ElasticIsotropic>> )
