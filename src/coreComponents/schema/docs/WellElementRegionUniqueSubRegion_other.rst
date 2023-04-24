@@ -12,7 +12,7 @@ isExternal                 integer_array                                        
 localToGlobalMap           globalIndex_array                                                                                          Array that contains a map from localIndex to globalIndex. 
 nextWellElementIndex       integer_array                                                                                              (no description available)                                
 nextWellElementIndexGlobal integer_array                                                                                              (no description available)                                
-nodeList                   geos_InterObjectRelation< LvArray_Array< int, 2, camp_int_seq< long, 0l, 1l >, int, LvArray_ChaiBuffer > > (no description available)                                
+nodeList                   geos_InterObjectRelation< LvArray_Array< int, 2, camp_int_seq< long, 1l, 0l >, int, LvArray_ChaiBuffer > > (no description available)                                
 numEdgesPerElement         integer                                                                                                    (no description available)                                
 numFacesPerElement         integer                                                                                                    (no description available)                                
 numNodesPerElement         integer                                                                                                    (no description available)                                

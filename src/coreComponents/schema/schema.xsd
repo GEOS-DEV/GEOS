@@ -201,16 +201,8 @@
 				</xsd:unique>
 			</xsd:element>
 			<xsd:element name="Functions" type="FunctionsType" maxOccurs="1">
-				<xsd:unique name="FunctionsCompositeFunctionUniqueName">
-					<xsd:selector xpath="CompositeFunction" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
 				<xsd:unique name="FunctionsMultivariableTableFunctionUniqueName">
 					<xsd:selector xpath="MultivariableTableFunction" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="FunctionsSymbolicFunctionUniqueName">
-					<xsd:selector xpath="SymbolicFunction" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="FunctionsTableFunctionUniqueName">
@@ -239,10 +231,6 @@
 			<xsd:element name="Mesh" type="MeshType" minOccurs="1" maxOccurs="1">
 				<xsd:unique name="MeshInternalMeshUniqueName">
 					<xsd:selector xpath="InternalMesh" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="MeshInternalWellUniqueName">
-					<xsd:selector xpath="InternalWell" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="MeshInternalWellboreUniqueName">
@@ -1151,37 +1139,13 @@ stress - traction is applied to the faces as specified by the inner product of i
 	</xsd:simpleType>
 	<xsd:complexType name="FunctionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="CompositeFunction" type="CompositeFunctionType" />
 			<xsd:element name="MultivariableTableFunction" type="MultivariableTableFunctionType" />
-			<xsd:element name="SymbolicFunction" type="SymbolicFunctionType" />
 			<xsd:element name="TableFunction" type="TableFunctionType" />
 		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="CompositeFunctionType">
-		<!--expression => Composite math expression-->
-		<xsd:attribute name="expression" type="string" default="" />
-		<!--functionNames => List of source functions. The order must match the variableNames argument.-->
-		<xsd:attribute name="functionNames" type="string_array" default="{}" />
-		<!--inputVarNames => Name of fields are input to function.-->
-		<xsd:attribute name="inputVarNames" type="string_array" default="{}" />
-		<!--variableNames => List of variables in expression-->
-		<xsd:attribute name="variableNames" type="string_array" default="{}" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="MultivariableTableFunctionType">
 		<!--inputVarNames => Name of fields are input to function.-->
 		<xsd:attribute name="inputVarNames" type="string_array" default="{}" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="SymbolicFunctionType">
-		<!--expression => Symbolic math expression-->
-		<xsd:attribute name="expression" type="string" use="required" />
-		<!--inputVarNames => Name of fields are input to function.-->
-		<xsd:attribute name="inputVarNames" type="string_array" default="{}" />
-		<!--variableNames => List of variables in expression.  The order must match the evaluate argument-->
-		<xsd:attribute name="variableNames" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1269,12 +1233,6 @@ stress - traction is applied to the faces as specified by the inner product of i
 	<xsd:complexType name="MeshType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
-			<xsd:element name="InternalWell" type="InternalWellType">
-				<xsd:unique name="InternalWellPerforationUniqueName">
-					<xsd:selector xpath="Perforation" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-			</xsd:element>
 			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
 			<xsd:element name="VTKMesh" type="VTKMeshType" />
 		</xsd:choice>
@@ -1306,41 +1264,6 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="zBias" type="real64_array" default="{1}" />
 		<!--zCoords => z-coordinates of each mesh block vertex-->
 		<xsd:attribute name="zCoords" type="real64_array" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="InternalWellType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="Perforation" type="PerforationType" />
-		</xsd:choice>
-		<!--logLevel => Log level-->
-		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--meshName => Name of the reservoir mesh associated with this well-->
-		<xsd:attribute name="meshName" type="string" use="required" />
-		<!--minElementLength => Minimum length of a well element, computed as (segment length / number of elements per segment ) [m]-->
-		<xsd:attribute name="minElementLength" type="real64" default="0.001" />
-		<!--minSegmentLength => Minimum length of a well segment [m]-->
-		<xsd:attribute name="minSegmentLength" type="real64" default="0.01" />
-		<!--numElementsPerSegment => Number of well elements per polyline segment-->
-		<xsd:attribute name="numElementsPerSegment" type="integer" use="required" />
-		<!--polylineNodeCoords => Physical coordinates of the well polyline nodes-->
-		<xsd:attribute name="polylineNodeCoords" type="real64_array2d" use="required" />
-		<!--polylineSegmentConn => Connectivity of the polyline segments-->
-		<xsd:attribute name="polylineSegmentConn" type="globalIndex_array2d" use="required" />
-		<!--radius => Radius of the well [m]-->
-		<xsd:attribute name="radius" type="real64" use="required" />
-		<!--wellControlsName => Name of the set of constraints associated with this well-->
-		<xsd:attribute name="wellControlsName" type="string" use="required" />
-		<!--wellRegionName => Name of the well element region-->
-		<xsd:attribute name="wellRegionName" type="string" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="PerforationType">
-		<!--distanceFromHead => Linear distance from well head to the perforation-->
-		<xsd:attribute name="distanceFromHead" type="real64" use="required" />
-		<!--transmissibility => Perforation transmissibility-->
-		<xsd:attribute name="transmissibility" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
