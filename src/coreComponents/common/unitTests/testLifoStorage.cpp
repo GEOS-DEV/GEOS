@@ -105,7 +105,7 @@ void testLifoStorageBig( int elemCnt, int numberOfElementsOnDevice, int numberOf
   {
 
     float * dataPointer = array.data();
-    forAll< POLICY >( elemCnt, [dataPointer, j, elemCnt] GEOSX_HOST_DEVICE ( int i ) { dataPointer[ i ] = j*elemCnt+i; } );
+    forAll< POLICY >( elemCnt, [dataPointer, j, elemCnt] GEOS_HOST_DEVICE ( int i ) { dataPointer[ i ] = j*elemCnt+i; } );
     lifo.push( array );
   }
 
@@ -113,7 +113,7 @@ void testLifoStorageBig( int elemCnt, int numberOfElementsOnDevice, int numberOf
   {
     lifo.pop( array );
     float * dataPointer = array.data();
-    forAll< POLICY >( elemCnt, [dataPointer, j, elemCnt] GEOSX_HOST_DEVICE ( int i )
+    forAll< POLICY >( elemCnt, [dataPointer, j, elemCnt] GEOS_HOST_DEVICE ( int i )
     {
       PORTABLE_EXPECT_EQ( dataPointer[ i ], (float)(10-j-1)*elemCnt+i );
     } );

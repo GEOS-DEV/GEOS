@@ -72,7 +72,7 @@ public:
     pushWait();
     int id = baseLifo::m_bufferCount++;
     GEOS_ERROR_IF( baseLifo::m_hostDeque.capacity() == 0 && m_deviceDeque.capacity() < baseLifo::m_maxNumberOfBuffers,
-                    "Cannot save on a Lifo without host storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
+                   "Cannot save on a Lifo without host storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
 
     m_pushToDeviceEvents[id] = m_deviceDeque.emplaceFront( array );
 
