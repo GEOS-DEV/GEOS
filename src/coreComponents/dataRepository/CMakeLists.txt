@@ -22,7 +22,7 @@ set( dataRepository_headers
      WrapperBase.hpp
      wrapperHelpers.hpp
      xmlWrapper.hpp
-     SourceContext.hpp
+     DataContext.hpp
      )
 
 #
@@ -36,7 +36,7 @@ set( dataRepository_sources
      Utilities.cpp
      WrapperBase.cpp
      xmlWrapper.cpp
-     SourceContext.cpp
+     DataContext.cpp
      )
 
 set( dependencyList codingUtilities )

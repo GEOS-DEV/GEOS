@@ -13,7 +13,7 @@
  */
 
 /**
- * @file SourceContext.cpp
+ * @file DataContext.cpp
  */
 
 //#include "codingUtilities/StringUtilities.hpp"
@@ -27,12 +27,12 @@ namespace dataRepository
 {
 
 
-SourceContext::SourceContext( string const & objectName, bool const isFileContext ):
+DataContext::DataContext( string const & objectName, bool const isDataFileContext ):
   m_objectName( objectName ),
-  m_isFileContext( isFileContext )
+  m_isDataFileContext( isDataFileContext )
 {}
 
-std::ostream & operator<<( std::ostream & os, SourceContext const & sc )
+std::ostream & operator<<( std::ostream & os, DataContext const & sc )
 {
   os << sc.toString();
   return os;
@@ -40,7 +40,7 @@ std::ostream & operator<<( std::ostream & os, SourceContext const & sc )
 
 
 GroupContext::GroupContext( Group & group, string const & objectName ):
-  SourceContext( objectName, false ),
+  DataContext( objectName, false ),
   m_group( group )
 {}
 GroupContext::GroupContext( Group & group ):
@@ -49,7 +49,7 @@ GroupContext::GroupContext( Group & group ):
 
 string GroupContext::toString() const
 {
-  // it would be possible to insert the FileContext::toString() of parent objects when it exists, but is it relevant ?
+  // it would be possible to insert the DataFileContext::toString() of parent objects when it exists, but is it relevant ?
   return m_group.getPath();
 }
 
@@ -60,22 +60,22 @@ WrapperContext::WrapperContext( WrapperBase & wrapper ):
 
 string WrapperContext::toString() const
 {
-  // if possible, we show the FileContext of the parent.
-  if( m_group.getSourceContext().isFileContext() )
+  // if possible, we show the DataFileContext of the parent.
+  if( m_group.getDataContext().isDataFileContext() )
   {
-    return m_group.getSourceContext().toString() + ", attribute " + m_objectName;
+    return m_group.getDataContext().toString() + ", attribute " + m_objectName;
   }
   else
   {
-    // it would be possible to insert the FileContext::toString() of parent objects when it exists, but is it relevant ?
+    // it would be possible to insert the DataFileContext::toString() of parent objects when it exists, but is it relevant ?
     return m_group.getPath() + "/" + m_objectName;
   }
 }
 
 
-FileContext::FileContext( Group & group, xmlWrapper::xmlNodePos const & nodePos,
+DataFileContext::DataFileContext( Group & group, xmlWrapper::xmlNodePos const & nodePos,
                           string const & nodeTagName ):
-  SourceContext( group.getName(), true ),
+  DataContext( group.getName(), true ),
   m_typeName( nodeTagName ),
   m_filePath( nodePos.filePath ),
   m_line( nodePos.line ),
@@ -83,8 +83,8 @@ FileContext::FileContext( Group & group, xmlWrapper::xmlNodePos const & nodePos,
   m_offset( nodePos.offset )
 {}
 
-FileContext::FileContext( WrapperBase & wrapper, xmlWrapper::xmlAttributePos const & attPos ):
-  SourceContext( wrapper.getParent().getName() + "/" + wrapper.getName(), true ),
+DataFileContext::DataFileContext( WrapperBase & wrapper, xmlWrapper::xmlAttributePos const & attPos ):
+  DataContext( wrapper.getParent().getName() + "/" + wrapper.getName(), true ),
   m_typeName( wrapper.getName() ),
   m_filePath( attPos.filePath ),
   m_line( attPos.line ),
@@ -92,7 +92,7 @@ FileContext::FileContext( WrapperBase & wrapper, xmlWrapper::xmlAttributePos con
   m_offset( attPos.offset )
 {}
 
-string FileContext::toString() const
+string DataFileContext::toString() const
 {
   std::ostringstream oss;
   oss << m_objectName << " (" << m_filePath;

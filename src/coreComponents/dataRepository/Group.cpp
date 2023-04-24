@@ -19,7 +19,7 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
-#include "SourceContext.hpp"
+#include "DataContext.hpp"
 #if defined(GEOSX_USE_PYGEOSX)
 #include "python/PyGroupType.hpp"
 #endif
@@ -50,7 +50,7 @@ Group::Group( string const & name,
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
   m_input_flags( InputFlags::INVALID ),
   m_conduitNode( rootNode[ name ] ),
-  m_sourceContext( std::make_unique< GroupContext >( *this ) )
+  m_dataContext( std::make_unique< GroupContext >( *this ) )
 {}
 
 Group::~Group()
@@ -195,7 +195,7 @@ void Group::processInputFile( xmlWrapper::xmlDocument const & xmlDocument,
 
   if( nodePos.isFound() )
   {
-    m_sourceContext = std::make_unique< FileContext >( *this, nodePos, targetNode.name() );
+    m_dataContext = std::make_unique< DataFileContext >( *this, nodePos, targetNode.name() );
   }
 
 
@@ -217,7 +217,7 @@ void Group::processInputFile( xmlWrapper::xmlDocument const & xmlDocument,
                      GEOS_FMT( "XML Node at '{}' with name={} contains unused attribute '{}'.\n"
                                "Valid attributes are:\n{}\nFor more details, please refer to documentation at:\n"
                                "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
-                               targetNode.path(), m_sourceContext->toString(), attributeName,
+                               targetNode.path(), m_dataContext->toString(), attributeName,
                                dumpInputOptions() ),
                      InputError );
     }
@@ -396,7 +396,7 @@ localIndex Group::packImpl( buffer_unit_type * & buffer,
     }
     else
     {
-      GEOS_ERROR( "Wrapper " << wrapperName << " not found in Group " << getSourceContext() << "." );
+      GEOS_ERROR( "Wrapper " << wrapperName << " not found in Group " << getDataContext() << "." );
     }
   }
 

@@ -45,7 +45,7 @@ namespace dataRepository
 {
 
 class Group;
-class SourceContext;
+class DataContext;
 
 /**
  * @class WrapperBase
@@ -415,10 +415,10 @@ public:
   string getPath() const;
 
   /**
-   * @return A SourceContext object that can helps to contextualize this Group.
+   * @return A DataContext object that can helps to contextualize this Group.
    */
-  SourceContext const & getSourceContext() const
-  { return *m_sourceContext; }
+  DataContext const & getDataContext() const
+  { return *m_dataContext; }
 
   /**
    * @brief Return the group that contains this Wrapper.
@@ -633,10 +633,10 @@ protected:
   /// @endcond
 
   /**
-   * @brief Sets the m_sourceContext to a FileContext by retrieving the attribute file line.
+   * @brief Sets the m_dataContext to a DataFileContext by retrieving the attribute file line.
    * @param nodePos the xml node position of the node containing this wrapper source attribute.
    */
-  void createSourceContext( xmlWrapper::xmlNodePos const & nodePos );
+  void createDataContext( xmlWrapper::xmlNodePos const & nodePos );
 
   /**
    * @brief Helper method to process an exception that has been thrown during xml parsing.
@@ -677,8 +677,8 @@ protected:
   /// A reference to the corresponding conduit::Node.
   conduit::Node & m_conduitNode;
 
-  /// A SourceContext object that can helps to contextualize this Group.
-  std::unique_ptr< SourceContext > m_sourceContext;
+  /// A DataContext object that can helps to contextualize this Group.
+  std::unique_ptr< DataContext > m_dataContext;
 
 private:
 

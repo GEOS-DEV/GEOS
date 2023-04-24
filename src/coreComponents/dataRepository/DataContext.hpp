@@ -13,7 +13,7 @@
  */
 
 /**
- * @file SourceContext.hpp
+ * @file DataContext.hpp
  */
 
 #ifndef GEOS_DATAREPOSITORY_SOURCECONTEXT_HPP_
@@ -32,20 +32,20 @@ namespace dataRepository
 class Group;
 class WrapperBase;
 
-/// This abstract class stores data that helps to retrieve from where a object comes from :
-/// - from which position in a file (if applicable), see FileContext,
+/// This abstract class stores data that helps to retrieve an object:
+/// - from which position in a file (if applicable), see DataFileContext,
 /// - where it is located in the data hierarchy, see GroupContext and WrapperContext.
-/// Typically, the target object contain an unique_ptr< SourceContext > instance of this class.
-class SourceContext
+/// Typically, the target object contain an unique_ptr< DataContext > instance of this class.
+class DataContext
 {
 public:
 
   /**
-   * @brief Construct a new SourceContext object.
+   * @brief Construct a new DataContext object.
    * @param objectName the target object name
-   * @param isFileContext true if this Context is a FileContext (see isFileContext for more infos)
+   * @param isDataFileContext true if this Context is a DataFileContext (see isDataFileContext for more infos)
    */
-  SourceContext( string const & objectName, bool isFileContext );
+  DataContext( string const & objectName, bool isDataFileContext );
 
   /**
    * @return A string that mention all the known informations to retrieve from where the target
@@ -57,31 +57,31 @@ public:
   { return m_objectName; }
 
   /**
-   * @brief In some cases, we need to know if a SourceContext is from a file. It means that it
-   * is a more user-friendly information compared to other SourceContext classes.
+   * @brief In some cases, we need to know if a DataContext is from a file. It means that it
+   * is a more user-friendly information compared to other DataContext classes.
    * @return true if the context is from a file.
    */
-  bool isFileContext() const
-  { return m_isFileContext; }
+  bool isDataFileContext() const
+  { return m_isDataFileContext; }
 
   /**
    * @brief Insert toString() result in a stream.
    */
-  friend std::ostream & operator<<( std::ostream & os, const SourceContext & dt );
+  friend std::ostream & operator<<( std::ostream & os, const DataContext & dt );
 
 protected:
 
   /// see getObjectName()
   string const m_objectName;
 
-  /// see isFileContext()
-  bool const m_isFileContext;
+  /// see isDataFileContext()
+  bool const m_isDataFileContext;
 
 };
 
 /// Helps to know where a Group is in the hierarchy.
-/// See SourceContext class for more infos.
-class GroupContext : public SourceContext
+/// See DataContext class for more infos.
+class GroupContext : public DataContext
 {
 public:
 
@@ -97,7 +97,7 @@ public:
   Group & getGroup() const;
 
   /**
-   * @copydoc SourceContext::toString()
+   * @copydoc DataContext::toString()
    */
   virtual string toString() const;
 
@@ -116,7 +116,7 @@ protected:
 };
 
 /// Helps to know the source context of a Wrapper in the hierarchy, or in the source file, if possible.
-/// See SourceContext class for more infos.
+/// See DataContext class for more infos.
 class WrapperContext final : public GroupContext
 {
 public:
@@ -127,26 +127,26 @@ public:
   WrapperContext( WrapperBase & wrapper );
 
   /**
-   * @copydoc SourceContext::toString()
+   * @copydoc DataContext::toString()
    */
   virtual string toString() const;
 
 };
 
-/// Helps to know from where a Group or a Wrapper has been declared in the source file.
-/// See SourceContext class for more infos.
-class FileContext final : public SourceContext
+/// Helps to know from where a Group or a Wrapper has been declared in its source file (a xml typically).
+/// See DataContext class for more infos.
+class DataFileContext final : public DataContext
 {
 public:
 
   /**
    * @brief Construct the file context of a Group from an xml node.
    */
-  FileContext( Group & group, xmlWrapper::xmlNodePos const & nodePos, string const & nodeTagName );
+  DataFileContext( Group & group, xmlWrapper::xmlNodePos const & nodePos, string const & nodeTagName );
   /**
    * @brief Construct the file context of a Group from an xml attribute.
    */
-  FileContext( WrapperBase & wrapper, xmlWrapper::xmlAttributePos const & attPos );
+  DataFileContext( WrapperBase & wrapper, xmlWrapper::xmlAttributePos const & attPos );
 
   virtual string toString() const;
 

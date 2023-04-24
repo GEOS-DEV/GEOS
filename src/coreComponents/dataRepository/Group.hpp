@@ -26,7 +26,7 @@
 #include "RestartFlags.hpp"
 #include "Wrapper.hpp"
 #include "xmlWrapper.hpp"
-#include "SourceContext.hpp"
+#include "DataContext.hpp"
 
 
 #include <iostream>
@@ -335,7 +335,7 @@ public:
   {
     Group * const child = m_subGroups[ key ];
     GEOS_THROW_IF( child == nullptr,
-                   "Group " << getSourceContext() << " has no child named " << key << std::endl
+                   "Group " << getDataContext() << " has no child named " << key << std::endl
                             << dumpSubGroupsNames(),
                    std::domain_error );
 
@@ -350,7 +350,7 @@ public:
   {
     Group const * const child = m_subGroups[ key ];
     GEOS_THROW_IF( child == nullptr,
-                   "Group " << getSourceContext() << " has no child named " << key << std::endl
+                   "Group " << getDataContext() << " has no child named " << key << std::endl
                             << dumpSubGroupsNames(),
                    std::domain_error );
 
@@ -1073,7 +1073,7 @@ public:
   {
     WrapperBase const * const wrapper = m_wrappers[ key ];
     GEOS_THROW_IF( wrapper == nullptr,
-                   "Group " << getSourceContext() << " has no wrapper named " << key << std::endl
+                   "Group " << getDataContext() << " has no wrapper named " << key << std::endl
                             << dumpWrappersNames(),
                    std::domain_error );
 
@@ -1088,7 +1088,7 @@ public:
   {
     WrapperBase * const wrapper = m_wrappers[ key ];
     GEOS_THROW_IF( wrapper == nullptr,
-                   "Group " << getSourceContext() << " has no wrapper named " << key << std::endl
+                   "Group " << getDataContext() << " has no wrapper named " << key << std::endl
                             << dumpWrappersNames(),
                    std::domain_error );
 
@@ -1288,10 +1288,10 @@ public:
   string getPath() const;
 
   /**
-   * @return A SourceContext object that can helps to contextualize this Group.
+   * @return A DataContext object that can helps to contextualize this Group.
    */
-  SourceContext const & getSourceContext() const
-  { return *m_sourceContext; }
+  DataContext const & getDataContext() const
+  { return *m_dataContext; }
 
   /**
    * @brief Access the group's parent.
@@ -1300,7 +1300,7 @@ public:
    */
   Group & getParent()
   {
-    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getSourceContext() << " does not have a parent.", std::domain_error );
+    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getDataContext() << " does not have a parent.", std::domain_error );
     return *m_parent;
   }
 
@@ -1309,7 +1309,7 @@ public:
    */
   Group const & getParent() const
   {
-    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getSourceContext() << " does not have a parent.", std::domain_error );
+    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getDataContext() << " does not have a parent.", std::domain_error );
     return *m_parent;
   }
 
@@ -1554,8 +1554,8 @@ private:
   /// Reference to the conduit::Node that mirrors this group
   conduit::Node & m_conduitNode;
 
-  /// A SourceContext object that can helps to contextualize this Group.
-  std::unique_ptr< SourceContext > m_sourceContext;
+  /// A DataContext object that can helps to contextualize this Group.
+  std::unique_ptr< DataContext > m_dataContext;
 
 };
 

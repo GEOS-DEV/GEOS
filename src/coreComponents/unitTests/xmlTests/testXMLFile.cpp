@@ -19,7 +19,7 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/FieldSpecificationBase.hpp"
 #include "dataRepository/Group.hpp"
-#include "dataRepository/SourceContext.hpp"
+#include "dataRepository/DataContext.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
@@ -84,18 +84,18 @@ void getElementsRecursive( xmlDocument const & document, xmlNode const & targetN
   }
 }
 /**
- * @brief Verify if the FileContext data correctly locates from where the object comes from (in the
+ * @brief Verify if the DataFileContext data correctly locates from where the object comes from (in the
  * correct document/include, at the correct line and at the correct character offset).
  * @param document root xml document (which potentially contains includes).
- * @param fileContext the FileContext to verify.
+ * @param fileContext the DataFileContext to verify.
  */
-void verifyFileContext( FileContext const & fileContext,
-                        xmlDocument const & document )
+void verifyDataFileContext( DataFileContext const & fileContext,
+                            xmlDocument const & document )
 {
   string const & strToVerify = fileContext.getTypeName();
   string const & errInfos = "Verifying " + strToVerify + " in " + fileContext.toString();
 
-  // verifying if all FileContext data have been found
+  // verifying if all DataFileContext data have been found
   EXPECT_FALSE( fileContext.getFilePath().empty() ) << errInfos;
   EXPECT_FALSE( fileContext.getObjectName().empty() ) << errInfos;
   EXPECT_FALSE( fileContext.getTypeName().empty() ) << errInfos;
@@ -114,7 +114,7 @@ void verifyFileContext( FileContext const & fileContext,
   EXPECT_LT( fileContext.getOffset() + strToVerify.size(), buffer->size() ) << errInfos;
   EXPECT_EQ( strToVerify, buffer->substr( fileContext.getOffset(), strToVerify.size() ) ) << errInfos;
 
-  // Were trying to reach the line return by FileContext::getLine()
+  // Were trying to reach the line return by DataFileContext::getLine()
   for( size_t offset=0;
        offset < buffer->size() && curLine < fileContext.getLine();
        ++offset )
@@ -140,38 +140,38 @@ void verifyFileContext( FileContext const & fileContext,
 }
 /**
  * @brief Verifies if the specified group, its children, and the associated wrappers have a
- * FileContext object that correctly locate from where the objects where declared in the
+ * DataFileContext object that correctly locate from where the objects where declared in the
  * source file.
  * @param document root xml document (which potentially contains includes).
  * @param group The group to (recursively) verify.
  * @param verifCount a set that will be filled with the names, with the form
  * "GroupName" or "GroupName/WrapperName".
  */
-void verifyGroupFileContextRecursive( xmlDocument const & document, Group const & group,
-                                      std::set< string > & verifications )
+void verifyGroupDataFileContextRecursive( xmlDocument const & document, Group const & group,
+                                          std::set< string > & verifications )
 {
   // GEOS_LOG( "Verifying "<< group.getName());
-  if( group.getSourceContext().isFileContext() )
+  if( group.getDataContext().isDataFileContext() )
   {
-    verifyFileContext( dynamic_cast< FileContext const & >( group.getSourceContext() ),
-                       document );
+    verifyDataFileContext( dynamic_cast< DataFileContext const & >( group.getDataContext() ),
+                           document );
     verifications.emplace( group.getName() );
   }
 
   for( auto const & wrapperIterator : group.wrappers() )
   {
     WrapperBase const * wrapper = wrapperIterator.second;
-    if( wrapper->getSourceContext().isFileContext() )
+    if( wrapper->getDataContext().isDataFileContext() )
     {
-      verifyFileContext( dynamic_cast< FileContext const & >( wrapper->getSourceContext() ),
-                         document );
+      verifyDataFileContext( dynamic_cast< DataFileContext const & >( wrapper->getDataContext() ),
+                             document );
       verifications.emplace( group.getName() + '/' + wrapper->getName() );
     }
   }
 
   for( auto subGroup : group.getSubGroups() )
   {
-    verifyGroupFileContextRecursive( document, *subGroup.second, verifications );
+    verifyGroupDataFileContextRecursive( document, *subGroup.second, verifications );
   }
 }
 
@@ -217,7 +217,7 @@ TEST( testXML, testXMLFileLines )
   getElementsRecursive( xmlDocument, xmlDocument.root().child( "Problem" ), expectedElements );
 
   std::set< string > verifiedElements;
-  verifyGroupFileContextRecursive( xmlDocument, problemManager, verifiedElements );
+  verifyGroupDataFileContextRecursive( xmlDocument, problemManager, verifiedElements );
 
   std::set< string > notFound = getDifference( expectedElements, verifiedElements );
   EXPECT_TRUE( notFound.empty() ) << "Infos : There should not exists xml element that were not in "
@@ -226,7 +226,7 @@ TEST( testXML, testXMLFileLines )
 
   std::set< string > notExpected = getDifference( verifiedElements, expectedElements );
   EXPECT_TRUE( notExpected.empty() ) << "Infos : There should not exists an object in the Group "
-                                        "hierarchy that contains a FileContext but which were not "
+                                        "hierarchy that contains a DataFileContext but which were not "
                                         "declared in the Xml.\nNot in XML hierarchy : {"
                                      << stringutilities::join( notExpected, "," ) << "}";
 }

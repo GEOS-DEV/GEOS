@@ -641,7 +641,7 @@ public:
       }
 
       if( m_successfulReadFromInput )
-        createSourceContext( nodePos );
+        createDataContext( nodePos );
 
       return true;
     }
