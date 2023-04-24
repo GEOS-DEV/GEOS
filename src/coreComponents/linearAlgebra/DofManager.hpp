@@ -185,6 +185,14 @@ public:
                                          integer const c );
 
   /**
+   * @brief Disable the global coupling for a set of equations
+   * @param [in] fieldName the name of the field
+   * @param [in] components the indices of the equations
+   */
+  void disableGlobalCouplingForEquations( string const & fieldName,
+                                          arrayView1d< integer const > const components );
+
+  /**
    * @brief Add coupling between two fields.
    *
    * The connectivity argument defines how the two fields couple. If the first field has support location A,

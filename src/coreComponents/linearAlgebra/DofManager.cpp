@@ -371,8 +371,17 @@ void DofManager::disableGlobalCouplingForEquation( string const & fieldName,
                                                    integer const c )
 {
   FieldDescription & field = m_fields[getFieldIndex( fieldName )];
-  GEOS_ASSERT_GT( field.globallyCoupledComponents.size(), c );
   field.globallyCoupledComponents.unset( c ); // this equation will not interact with neighbors
+}
+
+void DofManager::disableGlobalCouplingForEquations( string const & fieldName,
+                                                    arrayView1d< integer const > const components )
+{
+  FieldDescription & field = m_fields[getFieldIndex( fieldName )];
+  for( integer c = 0; c < components.size(); ++c )
+  {
+    field.globallyCoupledComponents.unset( c ); // this equation will not interact with neighbors
+  }
 }
 
 namespace
@@ -905,7 +914,8 @@ void DofManager::setSparsityPatternOneBlock( SparsityPatternView< globalIndex > 
           {
             colDofIndices[c] = dofNumber + c;
           }
-          for( integer const c : locallyCoupledComponents ) // add a non-zero for locally coupled components only
+          // add a non-zero for locally coupled components since diagonal terms for globally coupled components have been added already
+          for( integer const c : locallyCoupledComponents )
           {
             pattern.insertNonZeros( dofNumber - rankDofOffset + c, colDofIndices.begin(), colDofIndices.end() );
           }
@@ -1092,7 +1102,8 @@ void DofManager::countRowLengthsOneBlock( arrayView1d< localIndex > const & rowL
           globalIndex const dofNumber = ArrayHelper::value( dofIndexArray, locIdx );
           if( dofNumber >= 0 && dofNumber < rowLengths.size() )
           {
-            for( integer const c : locallyCoupledComponents ) // add a non-zero for globally coupled components only
+            // add a non-zero for locally coupled components since diagonal terms for globally coupled components have been added already
+            for( integer const c : locallyCoupledComponents )
             {
               RAJA::atomicAdd( parallelHostAtomic{}, &rowLengths[dofNumber + c], rowField.numComponents );
             }
