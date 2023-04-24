@@ -161,7 +161,7 @@ void LagrangianContactSolver::initializePreSubGroups()
   {
 
     FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_stabilizationName );
-    fluxApprox.setFieldName( contact::traction::key() );
+    fluxApprox.addFieldName( contact::traction::key() );
     fluxApprox.setCoeffName( "penaltyStiffness" );
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,

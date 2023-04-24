@@ -34,7 +34,7 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( viewKeyStruct::fieldNameString(), &m_fieldName ).
+  registerWrapper( viewKeyStruct::fieldNameString(), &m_fieldNames ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Name of primary solution field" );
 
@@ -121,51 +121,56 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
         Group & stencilGroup = stencilParentGroup.getGroup( getName() );
         // For each face-based Dirichlet boundary condition on target field, create a boundary stencil
         // TODO: Apply() should take a MeshLevel directly
-        fsManager.apply< FaceManager >( 0.0, // time = 0
-                                        mesh,
-                                        m_fieldName,
-                                        [&] ( FieldSpecificationBase const &,
-                                              string const & setName,
-                                              SortedArrayView< localIndex const > const &,
-                                              FaceManager const &,
-                                              string const & )
+
+        for( auto const & fieldName : m_fieldNames )
         {
-          registerBoundaryStencil( stencilGroup, setName );
-        } );
 
-        // For each aquifer boundary condition, create a boundary stencil
-        fsManager.apply< FaceManager,
-                         AquiferBoundaryCondition >( 0.0, // time = 0
-                                                     mesh,
-                                                     AquiferBoundaryCondition::catalogName(),
-                                                     [&] ( AquiferBoundaryCondition const &,
-                                                           string const & setName,
-                                                           SortedArrayView< localIndex const > const &,
-                                                           FaceManager const &,
-                                                           string const & )
-        {
-          registerAquiferStencil( stencilGroup, setName );
-        } );
+          fsManager.apply< FaceManager >( 0.0, // time = 0
+                                          mesh,
+                                          fieldName,
+                                          [&] ( FieldSpecificationBase const &,
+                                                string const & setName,
+                                                SortedArrayView< localIndex const > const &,
+                                                FaceManager const &,
+                                                string const & )
+          {
+            registerBoundaryStencil( stencilGroup, setName );
+          } );
 
-        // Compute the main cell-based stencil
-        computeCellStencil( mesh );
+          // For each aquifer boundary condition, create a boundary stencil
+          fsManager.apply< FaceManager,
+                           AquiferBoundaryCondition >( 0.0, // time = 0
+                                                       mesh,
+                                                       AquiferBoundaryCondition::catalogName(),
+                                                       [&] ( AquiferBoundaryCondition const &,
+                                                             string const & setName,
+                                                             SortedArrayView< localIndex const > const &,
+                                                             FaceManager const &,
+                                                             string const & )
+          {
+            registerAquiferStencil( stencilGroup, setName );
+          } );
 
-        // Compute the fracture related stencils (within the fracture itself,
-        // but between the fracture and the matrix as well).
-        computeFractureStencil( mesh );
+          // Compute the main cell-based stencil
+          computeCellStencil( mesh );
 
-        // For each face-based boundary condition on target field, compute the boundary stencil weights
-        fsManager.apply< FaceManager >( 0.0,
-                                        mesh,
-                                        m_fieldName,
-                                        [&] ( FieldSpecificationBase const &,
-                                              string const & setName,
-                                              SortedArrayView< localIndex const > const & faceSet,
-                                              FaceManager const &,
-                                              string const & )
-        {
-          computeBoundaryStencil( mesh, setName, faceSet );
-        } );
+          // Compute the fracture related stencils (within the fracture itself,
+          // but between the fracture and the matrix as well).
+          computeFractureStencil( mesh );
+
+          // For each face-based boundary condition on target field, compute the boundary stencil weights
+          fsManager.apply< FaceManager >( 0.0,
+                                          mesh,
+                                          fieldName,
+                                          [&] ( FieldSpecificationBase const &,
+                                                string const & setName,
+                                                SortedArrayView< localIndex const > const & faceSet,
+                                                FaceManager const &,
+                                                string const & )
+          {
+            computeBoundaryStencil( mesh, setName, faceSet );
+          } );
+        }
 
         // Compute the aquifer stencil weights
         computeAquiferStencil( domain, mesh );
@@ -174,9 +179,9 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
   } );
 }
 
-void FluxApproximationBase::setFieldName( string const & name )
+void FluxApproximationBase::addFieldName( string const & name )
 {
-  m_fieldName = name;
+  m_fieldNames.emplace_back( name );
 }
 
 void FluxApproximationBase::setCoeffName( string const & name )

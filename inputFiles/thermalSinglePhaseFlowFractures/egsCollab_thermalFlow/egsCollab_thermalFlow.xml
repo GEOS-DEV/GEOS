@@ -11,18 +11,11 @@
       targetRegions="{ matrix }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
-        newtonMaxIter="100"/>
+        newtonMaxIter="100"
+        maxAllowedResidualNorm="1e25"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhaseFVM>
-
-    <EmbeddedSurfaceGenerator
-       name="SurfaceGenerator"
-       logLevel="1"
-       discretization="FE1"
-       targetRegions="{ matrix }"
-       fractureRegion="fracture"
-       mpiCommOrder="1"/>
   </Solvers>
 
   <NumericalMethods>
@@ -30,24 +23,30 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"/>
     </FiniteVolume>
-    <FiniteElements>
-     <FiniteElementSpace
-         name="FE1"
-         order="1"/>
-     </FiniteElements>
   </NumericalMethods>
 
   <Mesh>
-     <InternalMesh
+    <InternalMesh
+       name="mesh1"
+       elementTypes="{ C3D8 }"
+       xCoords="{ 0, 60, 80, 146.875 }"
+       yCoords="{ 0, 75 }"
+       zCoords="{ 0, 0.625, 60, 80, 143.375, 144 }"
+       nx="{ 10, 20, 10 }"
+       ny="{ 30 }"
+       nz="{ 1, 10, 20, 10, 1 }"
+       cellBlockNames="{ cb }"/>
+
+    <!-- <InternalMesh
        name="mesh1"
        elementTypes="{ C3D8 }"
        xCoords="{ 0, 25, 42, 53.5, 61.25, 66.25, 69.625, 71.875, 146.875 }"
        yCoords="{ 0, 75 }"
        zCoords="{ 0, 70, 71.5, 73.75, 77.125, 82.125, 89.875, 101.375, 118.375, 143.375 }"
-       nx="{ 1, 1, 1, 1, 1, 1, 1, 1, 60 }"
-       ny="{ 30 }"
-       nz="{ 56, 1, 1, 1, 1, 1, 1, 1, 1 }"
-       cellBlockNames="{ cb }"/>
+       nx="{ 1, 1, 1, 1, 1, 1, 1, 20 }"
+       ny="{ 15 }"
+       nz="{ 10, 1, 1, 1, 1, 1, 1, 1, 1 }"
+       cellBlockNames="{ cb }"/> -->   
    </Mesh>
 
   <ElementRegions>
@@ -55,44 +54,42 @@
       name="matrix"
       cellBlocks="{ cb }"
       materialList="{ water, rock, thermalCond }"/>
-
-    <SurfaceElementRegion
-       name="fracture"
-       defaultAperture="1e-3"
-       materialList="{ water, fractureFilling, thermalCond }"
-       subRegionType="embeddedElement"/>
   </ElementRegions>
 
   <Events
      maxTime="7.884e10">
-     <SoloEvent
-       name="preFracture"
-       target="/Solvers/SurfaceGenerator"/>
+     <PeriodicEvent
+       name="solverApplications0"
+       forceDt="0.01"
+       beginTime="0.00"
+       endTime="0.01"
+       target="/Solvers/singleFlow"/>
 
      <PeriodicEvent
-       name="solverApplications"
+       name="solverApplications1"
        forceDt="7.884e9"
        target="/Solvers/singleFlow"/>
 
      <PeriodicEvent
        name="outputs"
-       forceDt="7.884e9"
+       cycleFrequency="1"
        target="/Outputs/vtkOutput"/>
-
-     <PeriodicEvent
-       name="restarts"
-       timeFrequency="1.971e10"
-       target="/Outputs/restartOutput"/>
    </Events>
 
-  <Geometry> 
-    <BoundedPlane
-       name="FracturePlane"
-       normal="{ 1, 0, 0 }"
-       origin="{ 0.5, 0.5, 0.5 }"
-       lengthVector="{ 0, 1, 0 }"
-       widthVector="{ 0, 0, 1 }"
-       dimensions="{ 0.5, 1 }"/>
+  <Geometry>
+    <Box
+    name="bottomBoundary"
+    xMin="{ -0.01, -0.01, -0.01 }"
+    xMax="{ 200, 200, 0.75 }"/>
+    <Box
+    name="topBoundary"
+    xMin="{ -0.01, -0.01, 143.3 }"
+    xMax="{ 200, 200, 144 }"/>
+    <Cylinder
+    name="Drift"
+    firstFaceCenter="{ 73.425, -0.1, 72 }"
+    secondFaceCenter="{ 73.425, 75, 72 }"
+    outerRadius="4"/>
   </Geometry>
 
   <Constitutive>
@@ -100,10 +97,10 @@
        name="water"
        defaultDensity="1000"
        defaultViscosity="0.001"
-       referencePressure="0.0"
-       referenceTemperature="0"
-       compressibility="5e-10"
-       thermalExpansionCoeff="3e-4"
+       referencePressure="1.0e5"
+       referenceTemperature="273.0"
+       compressibility="0.0"
+       thermalExpansionCoeff="0.0"
        viscosibility="0.0"
        volumetricHeatCapacity="4.0e3"
        referenceInternalEnergy="0.99"/>
@@ -161,79 +158,91 @@
        name="Porosity"
        initialCondition="1"
        setNames="{ all }"
-       objectPath="ElementRegions/matrix/cb"
+       objectPath="ElementRegions/matrix"
        fieldName="rockPorosity_referencePorosity"
        scale="0.01"/>
-
-    <FieldSpecification
-       name="fracPorosity"
-       initialCondition="1"
-       setNames="{ all }"
-       objectPath="ElementRegions/fracture"
-       fieldName="fracturePorosity_porosity"
-       scale="1.00"/>
 
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/matrix/cb"
+      objectPath="ElementRegions/matrix"
       fieldName="pressure"
-      scale="2e6"/>
+      scale="3e5"/>
 
     <FieldSpecification
       name="initialTemperature"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/matrix/cb"
+      objectPath="ElementRegions/matrix"
       fieldName="temperature"
       functionName="temperatureField"
-      scale="303.012"/>
+      scale="1"/>
+
+    <!-- <FieldSpecification
+      name="topPressure"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="3e5"
+      setNames="{ zpos }"/> -->
 
     <FieldSpecification
+      name="topPressure"
+      objectPath="ElementRegions/matrix"
+      fieldName="pressure"
+      scale="3e5"
+      setNames="{ topBoundary }"/>  
+    
+    <FieldSpecification
       name="topTemperature"
-      objectPath="faceManager"
+      objectPath="ElementRegions/matrix"
       fieldName="temperature"
       scale="296.0153"
-      setNames="{ zpos }"/>
+      setNames="{ topBoundary }"/>
 
     <FieldSpecification
       name="botTemperature"
-      objectPath="faceManager"
+      objectPath="ElementRegions/matrix"
       fieldName="temperature"
       scale="303.012"
-      setNames="{ zneg }"/>
-
+      setNames="{ bottomBoundary }"/>
+      
     <FieldSpecification
+      name="DriftTemperature"
+      objectPath="ElementRegions/matrix"
+      fieldName="temperature"
+      scale="250.012"
+      setNames="{ Drift }"/>   
+
+    <!-- Face b.c. are not working for now. -->
+    <!-- <FieldSpecification
       name="xposTemperature"
       objectPath="faceManager"
       fieldName="temperature"
       functionName="temperatureField"
       scale="1"
       setNames="{ xpos }"/>
-
     <FieldSpecification
       name="xnegTemperature"
       objectPath="faceManager"
       fieldName="temperature"
       functionName="temperatureField"
       scale="1"
-      setNames="{ xneg }"/>
-
+      setNames="{ xneg }"/> -->
     <!-- <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/matrix/cb"
       scale="-0.00001"
       setNames="{ source }"/> -->
-
   </FieldSpecifications>
 
   <Functions>
     <TableFunction
       name="temperatureField"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ collab/xlin.geos, collab/ylin.geos, collab/zlin.geos }"
-      voxelFile="collab/temp.geos"/>
+      coordinateFiles="{ bc_data/xlin.geos, bc_data/ylin.geos, bc_data/zlin.geos }"
+      voxelFile="bc_data/temp.geos"
+      interpolation="linear"/>
   </Functions>
 
   <Outputs>

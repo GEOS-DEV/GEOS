@@ -662,7 +662,6 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       {
         return;
       }
-
       // Specify the bc value of the field
       fs.applyFieldValue< FieldSpecificationEqual,
                           parallelDevicePolicy<> >( targetSet,
