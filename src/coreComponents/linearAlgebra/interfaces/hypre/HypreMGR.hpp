@@ -89,8 +89,8 @@ protected:
   MGRInterpolationType m_levelInterpType[numLevels];      ///< Interpolation type for each level
   MGRRestrictionType m_levelRestrictType[numLevels];      ///< Restriction type for each level
   MGRCoarseGridMethod m_levelCoarseGridMethod[numLevels]; ///< Coarse grid method for each level
-  HYPRE_Int m_levelSmoothType[numLevels]{ -1 };           ///< Smoother type for each level
-  HYPRE_Int m_levelSmoothIters[numLevels]{ -1 };          ///< Number of smoother iterations for each level
+  HYPRE_Int m_levelGlobalSmootherType[numLevels]{ -1 };           ///< Global smoother type for each level
+  HYPRE_Int m_levelGlobalSmootherIters[numLevels]{ -1 };          ///< Number of global smoother iterations for each level
 
   HYPRE_Int m_numRestrictSweeps{ -1 }; ///< Number of restrict sweeps
   HYPRE_Int m_numInterpSweeps{ -1 };   ///< Number of interpolation sweeps
@@ -159,6 +159,83 @@ protected:
     mgrData.mechSolver.destroy = HYPRE_BoomerAMGDestroy;
 
     HYPRE_MGRSetFSolver( precond.ptr, mgrData.mechSolver.solve, mgrData.mechSolver.setup, mgrData.mechSolver.ptr );
+  }
+
+  /**
+   * @brief Helper function that sets the reduction features common to all mgr strategies
+   * @param precond the preconditioner wrapper
+   * @param numLevels the number of reduction levels
+   * @param mgrData auxiliary MGR data
+   */
+  void setReduction( HyprePrecWrapper & precond,
+                     HYPRE_Int numLevels,
+                     HypreMGRData & mgrData )
+                     
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCpointsByPointMarkerArray( precond.ptr,
+                                                                 m_numBlocks, numLevels,
+                                                                 m_numLabels, m_ptrLabels,
+                                                                 mgrData.pointMarkers.data() ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( precond.ptr, toUnderlyingPtr( m_levelInterpType ) ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelRestrictType( precond.ptr, toUnderlyingPtr( m_levelRestrictType ) ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, toUnderlyingPtr( m_levelCoarseGridMethod ) ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( precond.ptr, 1 ));
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothType( precond.ptr, m_levelGlobalSmootherType ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothIters( precond.ptr, m_levelGlobalSmootherIters ) );
+  }
+
+  /**
+   * @brief Set up BoomerAMG to perform the coarse solve for the pressure reduced system
+   * @param solver the coarse solver wrapper
+   */
+  void setPressureAMG( HyprePrecWrapper & solver )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &solver.ptr ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( solver.ptr, 0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( solver.ptr, 1 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( solver.ptr, 1 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( solver.ptr, 0.0 ) );
+  #ifdef GEOSX_USE_HYPRE_CUDA
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( solver.ptr, 1 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( solver.ptr, toUnderlying( AMGCoarseningType::PMIS ) ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( solver.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( solver.ptr, 2 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( solver.ptr, 1.0 ) );
+  #else
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( solver.ptr, 1 ) );
+  #endif
+  
+    solver.setup = HYPRE_BoomerAMGSetup;
+    solver.solve = HYPRE_BoomerAMGSolve;
+    solver.destroy = HYPRE_BoomerAMGDestroy;
+  }
+
+  /**
+   * @brief Set up BoomerAMG to perform the coarse solve for the pressure/temperature reduced system
+   * @param solver the coarse solver wrapper
+   */
+  void setPressureTemperatureAMG( HyprePrecWrapper & solver )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &solver.ptr ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( solver.ptr, 0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( solver.ptr, 1 ) );
+    // TODO: keep or not 1 aggressive level?
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( solver.ptr, 1 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( solver.ptr, 0.0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( solver.ptr, 2 ) ); // pressure and temperature (CPTR)
+  #ifdef GEOSX_USE_HYPRE_CUDA
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( solver.ptr, 1 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( solver.ptr, toUnderlying( AMGCoarseningType::PMIS ) ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( solver.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( solver.ptr, 2 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( solver.ptr, 1.0 ) );
+  #else
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( solver.ptr, 1 ) );
+  #endif
+  
+    solver.setup = HYPRE_BoomerAMGSetup;
+    solver.solve = HYPRE_BoomerAMGSolve;
+    solver.destroy = HYPRE_BoomerAMGDestroy;
   }
 
 };
