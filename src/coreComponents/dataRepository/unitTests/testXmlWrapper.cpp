@@ -16,7 +16,6 @@
 
 #include "dataRepository/xmlWrapper.hpp"
 
-const char IGNORE_OUTPUT[] = ".*";
 
 using namespace geos;
 
