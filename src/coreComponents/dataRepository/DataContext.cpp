@@ -95,15 +95,18 @@ DataFileContext::DataFileContext( WrapperBase & wrapper, xmlWrapper::xmlAttribut
 string DataFileContext::toString() const
 {
   std::ostringstream oss;
-  oss << m_objectName << " (" << m_filePath;
+  oss << m_objectName;
   if( m_line != xmlWrapper::xmlDocument::npos )
   {
-    oss << ": l." << m_line << ")";
+    oss << " (" << splitPath( m_filePath ).second << ", l." << m_line << ")";
+  }
+  else if ( m_offset != xmlWrapper::xmlDocument::npos )
+  {
+    oss << " (" << splitPath( m_filePath ).second <<  ", offset " << m_offset << ")";
   }
   else
   {
-    // line hasn't been found, filename is probably wrong too, we just output the character offset.
-    oss <<  ": offset " << m_offset << ")";
+    oss << " (Source file not found)";
   }
   return oss.str();
 }

@@ -621,10 +621,11 @@ public:
                                                                        targetNode,
                                                                        inputFlag == InputFlags::REQUIRED );
           GEOS_THROW_IF( !m_successfulReadFromInput,
-                         GEOS_FMT( "XML Node '{}' with name='{}' is missing required attribute '{}'."
+                         GEOS_FMT( "XML Node {} ({}) with name={} is missing required attribute {}."
                                    "Available options are:\n{}\nFor more details, please refer to documentation at:\n"
                                    "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
-                                   targetNode.path(), targetNode.attribute( "name" ).value(), getName(), dumpInputOptions( true ) ),
+                                   targetNode.name(), nodePos.toString(), targetNode.attribute( "name" ).value(),
+                                   getName(), dumpInputOptions( true ) ),
                          InputError );
         }
         else
@@ -637,7 +638,7 @@ public:
       }
       catch( std::exception const & ex )
       {
-        processInputException( ex, targetNode );
+        processInputException( ex, targetNode, nodePos );
       }
 
       if( m_successfulReadFromInput )

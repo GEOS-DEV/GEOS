@@ -328,11 +328,8 @@ xmlNodePos xmlDocument::getNodePosition( xmlNode const & node ) const
 
 xmlNodePos::xmlNodePos( xmlDocument const & document_, string const & filePath_, size_t line_,
                         size_t offsetInLine_, size_t offset_ ):
-  document( document_ ),
-  filePath( filePath_ ),
-  line( line_ ),
-  offsetInLine( offsetInLine_ ),
-  offset( offset_ )
+  xmlAttributePos( filePath_, line_, offsetInLine_, offset_ ),
+  document( document_ )
 {}
 
 bool xmlNodePos::isFound() const
@@ -376,6 +373,24 @@ xmlAttributePos::xmlAttributePos( string const & filePath_, size_t line_, size_t
 
 bool xmlAttributePos::isFound() const
 { return offset != xmlDocument::npos; }
+
+string xmlAttributePos::toString() const
+{
+  if( line != xmlDocument::npos )
+  {
+    return splitPath( filePath ).second + ", l." + std::to_string( line );
+  }
+  else if( offset != xmlDocument::npos )
+  {
+    // line hasn't been found, we output the character offset.
+    return splitPath( filePath ).second + ", offset " + std::to_string( offset );
+  }
+  else
+  {
+    // offset hasn't been found, filename is probably wrong too, we just output an error.
+    return "Source file not found";
+  }
+}
 
 } /* namespace xmlWrapper */
 

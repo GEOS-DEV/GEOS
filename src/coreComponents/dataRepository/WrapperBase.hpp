@@ -643,7 +643,8 @@ protected:
    * @param ex The caught exception.
    * @param targetNode The node from which this Group is interpreted.
    */
-  void processInputException( std::exception const & ex, xmlWrapper::xmlNode const & targetNode ) const;
+  void processInputException( std::exception const & ex, xmlWrapper::xmlNode const & targetNode,
+                              xmlWrapper::xmlNodePos const & nodePos ) const;
 
 protected:
 

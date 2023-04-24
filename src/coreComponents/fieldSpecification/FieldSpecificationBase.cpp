@@ -103,7 +103,7 @@ void FieldSpecificationBase::setMeshObjectPath( Group const & meshBodies )
   }
   catch( InputError const & e )
   {
-    throw InputError( e, getName() + " has a wrong objectPath: " + m_objectPath + "\n" );
+    throw InputError( e, getDataContext().toString() + " has a wrong objectPath: " + m_objectPath + "\n" );
   }
 }
 

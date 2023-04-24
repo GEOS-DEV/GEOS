@@ -116,15 +116,28 @@ void WrapperBase::createDataContext( xmlWrapper::xmlNodePos const & nodePos )
 }
 
 void WrapperBase::processInputException( std::exception const & ex,
-                                         xmlWrapper::xmlNode const & targetNode ) const
+                                         xmlWrapper::xmlNode const & targetNode,
+                                         xmlWrapper::xmlNodePos const & nodePos ) const
 {
   xmlWrapper::xmlAttribute const & attribute = targetNode.attribute( getName().c_str() );
   string const inputStr = string( attribute.value() );
-  string subExStr = string( "***** XML parsing error in " ) + targetNode.path() +
-                    " (name=" + targetNode.attribute( "name" ).value() + ")/" + attribute.name() +
-                    "\n***** Input value: '" + inputStr + "'\n";
+  xmlWrapper::xmlAttributePos const attPos = nodePos.getAttributeLine( inputStr );
+  std::ostringstream oss;
 
-  throw InputError( subExStr + ex.what() );
+  oss << "***** XML parsing error at node ";
+  if( nodePos.isFound() )
+  {
+    oss << "named " << targetNode.attribute( "name" ).value() << ", attribute " << attribute.name()
+        << '(' << splitPath( attPos.isFound() ? attPos.filePath : nodePos.filePath ).second
+        << ", l." << ( attPos.isFound() ? attPos.line : nodePos.line ) << ").";
+  }
+  else
+  {
+    oss << targetNode.path() << " (name=" << targetNode.attribute( "name" ).value() << ")/" << attribute.name();
+  }
+  oss << "\n***** Input value: '" << inputStr << "'\n" << ex.what();
+
+  throw InputError( oss.str() );
 }
 
 

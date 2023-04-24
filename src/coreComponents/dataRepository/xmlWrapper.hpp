@@ -64,15 +64,15 @@ class xmlDocument;
 /// Stores the source file path, and position in the file of a xml attribute.
 struct xmlAttributePos
 {
-  /// Path of the file containing this node
+  /// Path of the file containing this element
   string filePath;
-  /// Line of this node in the file that contains it (starting from 1).
+  /// Line of this element in the file that contains it (starting from 1).
   /// Equals to xmlDocument::npos if it couldn't be determined.
   size_t const line;
-  /// Character offset of this node in the line that contains it (starting from 1)
+  /// Character offset of this element in the line that contains it (starting from 1)
   /// Equals to xmlDocument::npos if it couldn't be determined.
   size_t const offsetInLine;
-  /// Character offset of this node in the file that contains it (starting from 0)
+  /// Character offset of this element in the file that contains it (starting from 0)
   /// Equals to xmlDocument::npos if it couldn't be determined.
   size_t const offset;
 
@@ -84,25 +84,18 @@ struct xmlAttributePos
    * @return false if the position is undetermined.
    */
   bool isFound() const;
+  /**
+   * @return returns a string to locate the node (typically the source file and line).
+   */
+  string toString() const;
 };
 
 /// Stores the source document, file path, and position in the file of a xml node.
 /// It can help to retrieve the position (xmlAttributePos) of a xml attribute.
-struct xmlNodePos
+struct xmlNodePos : xmlAttributePos
 {
   /// Reference of the main xmlDocument that contains all original file buffers.
   xmlDocument const & document;
-  /// Path of the file containing this node
-  string const filePath;
-  /// Line of this node in the file that contains it (starting from 1)
-  /// Equals to xmlDocument::npos if it couldn't be determined.
-  size_t const line;
-  /// Character offset of this node in the line that contains it (starting from 1)
-  /// Equals to xmlDocument::npos if it couldn't be determined.
-  size_t const offsetInLine;
-  /// Character offset of this node in the file that contains it (starting from 0)
-  /// Equals to xmlDocument::npos if it couldn't be determined.
-  size_t const offset;
 
   /**
    * @brief Constructor of this struct.
