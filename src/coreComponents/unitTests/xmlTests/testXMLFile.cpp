@@ -50,8 +50,8 @@ TEST( testXML, testXMLFile )
  * "GroupName/WrapperName". The node name is supposed to be the name attribute value, it it exists,
  * or the tag name.
  */
-void getGEOSElementsRecursive( xmlDocument const & document, xmlNode const & targetNode,
-                               std::set< string > & elementNames )
+void getElementsRecursive( xmlDocument const & document, xmlNode const & targetNode,
+                           std::set< string > & elementNames )
 {
   // Store here every node name that only exist in the xml (and not in the Group hierarchy).
   static const std::set< string > xmlOnlyNodes {
@@ -80,7 +80,7 @@ void getGEOSElementsRecursive( xmlDocument const & document, xmlNode const & tar
 
   for( xmlNode subNode : targetNode.children() )
   {
-    getGEOSElementsRecursive( document, subNode, elementNames );
+    getElementsRecursive( document, subNode, elementNames );
   }
 }
 /**
@@ -191,7 +191,7 @@ std::set< string > getDifference( std::set< string > & setA,
   return std::set< string >( result.begin(), result.end() );
 }
 
-// Tests 
+// Tests
 // - if the line information of each nodes and attributes can be retrieved,
 // - if the resulting Group & Wrapper hierarchy matches with the input xml documents and includes hierarchy.
 TEST( testXML, testXMLFileLines )
@@ -214,7 +214,7 @@ TEST( testXML, testXMLFileLines )
   }
 
   std::set< string > expectedElements;
-  getGEOSElementsRecursive( xmlDocument, xmlDocument.root().child( "Problem" ), expectedElements );
+  getElementsRecursive( xmlDocument, xmlDocument.root().child( "Problem" ), expectedElements );
 
   std::set< string > verifiedElements;
   verifyGroupFileContextRecursive( xmlDocument, problemManager, verifiedElements );

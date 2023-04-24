@@ -24,11 +24,11 @@ set( dataRepository_headers
      xmlWrapper.hpp
      SourceContext.hpp
      )
-     
-     #
-     # Specify all sources
-     #
-     set( dataRepository_sources
+
+#
+# Specify all sources
+#
+set( dataRepository_sources
      BufferOpsDevice.cpp
      ConduitRestart.cpp
      ExecutableGroup.cpp
@@ -47,12 +47,14 @@ endif()
 
 if( ENABLE_PYGEOSX )
   list( APPEND dataRepository_headers
-	python/PyGroup.hpp 
-	python/PyGroupType.hpp 
-	python/PyWrapper.hpp )
+        python/PyGroup.hpp 
+        python/PyGroupType.hpp 
+        python/PyWrapper.hpp
+        )
   list( APPEND dataRepository_sources
-	python/PyGroup.cpp 
-	python/PyWrapper.cpp ) 
+        python/PyGroup.cpp 
+        python/PyWrapper.cpp
+        ) 
   list( APPEND dependencyList Python3::Python pylvarray )  
 endif()
 
@@ -62,10 +64,10 @@ blt_add_library( NAME       dataRepository
                  HEADERS    ${dataRepository_headers}
                  DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
-               )
+                 )
 
 target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
-geosx_add_code_checks(PREFIX dataRepository )
+geosx_add_code_checks( PREFIX dataRepository )
 
 add_subdirectory( unitTests )

@@ -161,13 +161,11 @@ void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
     else
     {
       // Make sure child names are not duplicated
-      if( std::find( childNames.begin(), childNames.end(), childName ) != childNames.end() )
-      {
-        GEOS_ERROR( GEOS_FMT( "Error: An XML block cannot contain children with duplicated names.\n"
-                              "Error detected at node {} with name = {} ({}:l.{})",
-                              childNode.path(), childName, xmlDocument.getFilePath(),
-                              xmlDocument.getNodePosition( childNode ).line ) );
-      }
+      GEOS_ERROR_IF( std::find( childNames.begin(), childNames.end(), childName ) != childNames.end(),
+                     GEOS_FMT( "Error: An XML block cannot contain children with duplicated names.\n"
+                               "Error detected at node {} with name = {} ({}:l.{})",
+                               childNode.path(), childName, xmlDocument.getFilePath(),
+                               xmlDocument.getNodePosition( childNode ).line ) );
 
       childNames.emplace_back( childName );
     }
