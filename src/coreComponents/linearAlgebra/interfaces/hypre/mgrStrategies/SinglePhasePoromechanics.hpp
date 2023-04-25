@@ -78,7 +78,7 @@ public:
               HypreMGRData & mgrData )
   {
     setReduction( precond, numLevels, mgrData );
-    
+
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( precond.ptr, 0 ));
 
     // Configure the BoomerAMG solver used as F-relaxation for the first level

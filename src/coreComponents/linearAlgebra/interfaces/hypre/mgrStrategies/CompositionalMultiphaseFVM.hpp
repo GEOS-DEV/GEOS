@@ -98,7 +98,7 @@ public:
               HypreMGRData & mgrData )
   {
     setReduction( precond, numLevels, mgrData );
-    
+
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
     setPressureAMG( mgrData.coarseSolver );
   }

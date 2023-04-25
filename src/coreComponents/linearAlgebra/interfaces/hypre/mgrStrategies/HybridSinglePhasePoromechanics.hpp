@@ -81,7 +81,7 @@ public:
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::none;
-    m_levelGlobalSmootherIters[1] = 0; 
+    m_levelGlobalSmootherIters[1] = 0;
   }
 
   /**

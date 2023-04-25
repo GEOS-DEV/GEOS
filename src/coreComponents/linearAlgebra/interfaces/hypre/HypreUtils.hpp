@@ -474,9 +474,9 @@ enum class MGRCoarseGridMethod : HYPRE_Int
 //  */
 // enum class MGRFRelaxationMethod : HYPRE_Int
 // {
-  // singleLevel = 0, //!< single-level relaxation
-  // multilevel = 1,  //!< multilevel relaxation
-  // amgVCycle = 2    //!< multilevel relaxation
+// singleLevel = 0, //!< single-level relaxation
+// multilevel = 1,  //!< multilevel relaxation
+// amgVCycle = 2    //!< multilevel relaxation
 // };
 
 /**

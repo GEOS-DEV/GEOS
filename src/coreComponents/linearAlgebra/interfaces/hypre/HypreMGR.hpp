@@ -139,7 +139,7 @@ protected:
   void setReduction( HyprePrecWrapper & precond,
                      HYPRE_Int numLevels,
                      HypreMGRData & mgrData )
-                     
+
   {
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCpointsByPointMarkerArray( precond.ptr,
                                                                  m_numBlocks, numLevels,
@@ -203,7 +203,7 @@ protected:
   #else
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( solver.ptr, 1 ) );
   #endif
-  
+
     solver.setup = HYPRE_BoomerAMGSetup;
     solver.solve = HYPRE_BoomerAMGSolve;
     solver.destroy = HYPRE_BoomerAMGDestroy;
@@ -231,7 +231,7 @@ protected:
   #else
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( solver.ptr, 1 ) );
   #endif
-  
+
     solver.setup = HYPRE_BoomerAMGSetup;
     solver.solve = HYPRE_BoomerAMGSolve;
     solver.destroy = HYPRE_BoomerAMGDestroy;
@@ -241,8 +241,8 @@ protected:
    * @brief Set up BoomerAMG to perform the mechanics F-solve for the first F-relaxation
    * @param precond the preconditioner wrapper
    * @param mgrData auxiliary MGR data
-   * 
-   * @note This function should be rethought once MGR allows for customizing boomerAMG (or 
+   *
+   * @note This function should be rethought once MGR allows for customizing boomerAMG (or
    *       any other solver) for F-relaxation at any level
    */
   void setMechanicsFSolver( HyprePrecWrapper & precond,
