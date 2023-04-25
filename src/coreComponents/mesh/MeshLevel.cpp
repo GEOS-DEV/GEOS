@@ -113,6 +113,89 @@ MeshLevel::MeshLevel( string const & name,
 {
   GEOS_MARK_FUNCTION;
 
+  // constants for hex mesh
+  localIndex const numNodesPerEdge = ( order+1 );
+  //localIndex const numNodesPerCell = ( order+1 )*( order+1 )*( order+1 );
+
+  localIndex const numInternalNodesPerEdge = ( order-1 );
+  localIndex const numInternalNodesPerFace = ( order-1 )*( order-1 );
+  localIndex const numInternalNodesPerCell = ( order-1 )*( order-1 )*( order-1 );
+
+  localIndex const numLocalVertices = source.m_nodeManager->size();
+  localIndex const numLocalEdges = source.m_edgeManager->size();
+  localIndex const numLocalFaces = source.m_faceManager->size();
+/*
+  localIndex const maxVertexGlobalID = source.getNodeManager().maxGlobalIndex() + 1;
+  localIndex const maxEdgeGlobalID = source.getEdgeManager().maxGlobalIndex() + 1;
+  localIndex const maxFaceGlobalID = source.getFaceManager().maxGlobalIndex() + 1;
+*/
+
+  localIndex numLocalCells = 0;
+  source.m_elementManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
+  {
+    numLocalCells+= sourceSubRegion.size();
+  } );
+
+  ////////////////////////////////
+  // Get the new number of nodes
+  ////////////////////////////////
+  localIndex numLocalNodes = numLocalVertices
+                             + numLocalEdges * numInternalNodesPerEdge
+                             + numLocalFaces * numInternalNodesPerFace
+                             + numLocalCells * numInternalNodesPerCell;
+
+
+  //CellBlockManagerABC & cellBlockManager = parent->getGroup< CellBlockManagerABC >( keys::cellManager );
+
+  /////////////////////////
+  // Nodes
+  //////////////////////////
+
+  m_nodeManager->resize( numLocalNodes );
+  arrayView1d< globalIndex const > const nodeLocalToGlobalSource = source.m_nodeManager->localToGlobalMap();
+
+  /////////////////////////
+  // Edges
+  //////////////////////////
+
+  // the total number of nodes: to add the number of non-vertex edge nodes
+  m_edgeManager->resize( numLocalEdges );
+  m_edgeManager->getDomainBoundaryIndicator() = source.m_edgeManager->getDomainBoundaryIndicator();
+
+  arrayView1d< globalIndex const > const edgeLocalToGlobal = m_edgeManager->localToGlobalMap();
+  for( localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < numLocalEdges; iter_localToGlobalsize++ )
+  {
+    m_edgeManager->localToGlobalMap()[iter_localToGlobalsize] = source.m_edgeManager->localToGlobalMap()[iter_localToGlobalsize];
+  }
+  m_edgeManager->constructGlobalToLocalMap();
+  m_edgeManager->nodeList().resize( numLocalEdges, numNodesPerEdge );
+
+
+  /////////////////////////
+  // Faces
+  //////////////////////////
+
+  m_faceManager->resize( numLocalFaces );
+  m_faceManager->faceCenter() = source.m_faceManager->faceCenter();
+  m_faceManager->faceNormal() = source.m_faceManager->faceNormal();
+
+  // copy the faces-to-edgs map from source
+  m_faceManager->edgeList() = source.m_faceManager->edgeList();
+  // copy the faces-to-elements map from source
+  m_faceManager->elementList() = source.m_faceManager->elementList();
+  m_faceManager->elementRegionList() = source.m_faceManager->elementRegionList();
+  m_faceManager->elementSubRegionList() = source.m_faceManager->elementSubRegionList();
+  // copy the faces-boundaryIndicator from source
+  m_faceManager->getDomainBoundaryIndicator() = source.m_faceManager->getDomainBoundaryIndicator();
+
+  arrayView1d< globalIndex const > const faceLocalToGlobal = m_faceManager->localToGlobalMap();
+  for( localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < numLocalFaces; iter_localToGlobalsize++ )
+  {
+    m_faceManager->localToGlobalMap()[iter_localToGlobalsize] = source.m_faceManager->localToGlobalMap()[iter_localToGlobalsize];
+  }
+  m_faceManager->constructGlobalToLocalMap();
+
+
   // check that all elements are hexahedra
   source.m_elementManager->forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
   {
@@ -124,6 +207,12 @@ MeshLevel::MeshLevel( string const & name,
       }
     } );
   } );
+
+  /////////////////////////
+  // NodesSets
+  //////////////////////////
+
+  this->generateSets();
 }
 
 

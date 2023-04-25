@@ -654,11 +654,6 @@ ArrayOfArrays< localIndex > CellBlockManager::getFaceToNodes() const
   return m_faceToNodes;
 }
 
-ArrayOfArrays< localIndex > & CellBlockManager::getFaceToNodes()
-{
-  return m_faceToNodes;
-}
-
 ArrayOfArrays< localIndex > CellBlockManager::getNodeToFaces() const
 {
   return meshMapUtilities::transposeIndexMap< parallelHostPolicy >( m_faceToNodes.toViewConst(),
@@ -722,11 +717,6 @@ array2d< localIndex > CellBlockManager::getEdgeToNodes() const
   return m_edgeToNodes;
 }
 
-arrayView2d< localIndex > CellBlockManager::getEdgeToNodes()
-{
-  return m_edgeToNodes.toView();
-}
-
 ArrayOfArrays< localIndex > CellBlockManager::getFaceToEdges() const
 {
   return m_faceToEdges;
@@ -771,16 +761,6 @@ void CellBlockManager::setNumNodes( localIndex numNodes )
   m_nodeLocalToGlobal.resize( m_numNodes );
   m_nodeLocalToGlobal.setValues< serialPolicy >( -1 );
 }
-
-void CellBlockManager::setNumNodes( localIndex numNodes, localIndex const order )
-{
-  m_numNodes = numNodes;
-  m_nodesPositions.resize( m_numNodes );
-  m_nodeLocalToGlobal.resize( m_numNodes );
-  m_nodeLocalToGlobal.setValues< serialPolicy >( -1 );
-  m_edgeToNodes.resize( m_numEdges, order+1 );
-}
-
 
 array1d< globalIndex > CellBlockManager::getNodeLocalToGlobal() const
 {
@@ -871,6 +851,7 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
 
   // constants for hex mesh
 
+
   localIndex const numVerticesPerCell = 8;
   localIndex const numNodesPerEdge = ( order+1 );
   localIndex const numNodesPerFace = ( order+1 )*( order+1 );
@@ -879,37 +860,42 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
   localIndex const numInternalNodesPerEdge = ( order-1 );
   localIndex const numInternalNodesPerFace = ( order-1 )*( order-1 );
   localIndex const numInternalNodesPerCell = ( order-1 )*( order-1 )*( order-1 );
-  localIndex const numLocalVertices = source.getNodeManager().size();
-  localIndex const numLocalEdges = source.getEdgeManager().size();
-  localIndex const numLocalFaces = source.getFaceManager().size();
+
+  localIndex const numLocalVertices = this->numNodes();
+  localIndex const numLocalEdges = this->numEdges();
+  localIndex const numLocalFaces = this->numFaces();
 
   localIndex const maxVertexGlobalID = source.getNodeManager().maxGlobalIndex() + 1;
   localIndex const maxEdgeGlobalID = source.getEdgeManager().maxGlobalIndex() + 1;
   localIndex const maxFaceGlobalID = source.getFaceManager().maxGlobalIndex() + 1;
 
-  localIndex n1 = 0;
-
-  source.getElemManager().forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
+  localIndex numLocalCells = 0;
+  this->getCellBlocks().forSubGroups<CellBlock>( [&]( CellBlock & cellBlock )
   {
-    n1 += sourceSubRegion.size();
-  } );
+    numLocalCells += cellBlock.numElements();
+  });
 
-  localIndex const numLocalCells = n1;
   ////////////////////////////////
   // Get the new number of nodes
   ////////////////////////////////
+
   localIndex numLocalNodes = numLocalVertices
                              + numLocalEdges * numInternalNodesPerEdge
                              + numLocalFaces * numInternalNodesPerFace
                              + numLocalCells * numInternalNodesPerCell;
-  this->setNumNodes( numLocalNodes, order );
 
-  //-- -------------------------------------
+  m_numNodes = numLocalNodes;
+  m_nodeLocalToGlobal.resize( m_numNodes );
+  m_edgeToNodes.resize( m_numEdges, order+1 );
+  m_nodesPositions.resize( m_numNodes );
+
+
+ //-- -------------------------------------
   // initialize the node local to global map
   // ---------------------------------------
 
   arrayView1d< globalIndex const > const nodeLocalToGlobalSource = source.getNodeManager().localToGlobalMap();
-  arrayView1d< globalIndex > nodeLocalToGlobalNew = this->getNodeLocalToGlobal();
+  arrayView1d< globalIndex > nodeLocalToGlobalNew = m_nodeLocalToGlobal.toView();
 
   // hash map that contains unique vertices and their indices for shared nodes.
   // a vertex is identified by 6 integers [i1 i2 i3 i4 a b], as follows
@@ -951,7 +937,7 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
   // -------------------------------------
 
   // get information from the source (base mesh-level) edge-to-node map
-  arrayView2d< localIndex > edgeToNodeMapNew = this->getEdgeToNodes();
+  arrayView2d< localIndex > edgeToNodeMapNew = m_edgeToNodes.toView();
   highOrderMeshLevel.getEdgeManager().nodeList().resize( numLocalEdges, numNodesPerEdge );
   // create / retrieve nodes on edges
   localIndex offset = maxVertexGlobalID;
@@ -985,28 +971,10 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
   // Faces
   //////////////////////////
 
-  highOrderMeshLevel.getFaceManager().resize( numLocalFaces );
-  highOrderMeshLevel.getFaceManager().faceCenter() = source.getFaceManager().faceCenter();
-  highOrderMeshLevel.getFaceManager().faceNormal() = source.getFaceManager().faceNormal();
-
-  // copy the faces-to-edgs map from source
-  highOrderMeshLevel.getFaceManager().edgeList() = source.getFaceManager().edgeList();
-  // copy the faces-to-elements map from source
-  highOrderMeshLevel.getFaceManager().elementList() = source.getFaceManager().elementList();
-  highOrderMeshLevel.getFaceManager().elementRegionList() = source.getFaceManager().elementRegionList();
-  highOrderMeshLevel.getFaceManager().elementSubRegionList() = source.getFaceManager().elementSubRegionList();
-  // copy the faces-boundaryIndicator from source
-  highOrderMeshLevel.getFaceManager().getDomainBoundaryIndicator() = source.getFaceManager().getDomainBoundaryIndicator();
-
   arrayView1d< globalIndex const > const faceLocalToGlobal = highOrderMeshLevel.getFaceManager().localToGlobalMap();
-  for( localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < numLocalFaces; iter_localToGlobalsize++ )
-  {
-    highOrderMeshLevel.getFaceManager().localToGlobalMap()[iter_localToGlobalsize] = source.getFaceManager().localToGlobalMap()[iter_localToGlobalsize];
-  }
-  highOrderMeshLevel.getFaceManager().constructGlobalToLocalMap();
 
   // initialize faceToNodeMap for the high-order mesh-level
-  ArrayOfArrays< localIndex > & faceToNodeMapNew = this->getFaceToNodes();
+  ArrayOfArrays< localIndex > & faceToNodeMapNew = m_faceToNodes;
   // number of elements in each row of the map as capacity
   array1d< localIndex > counts( faceToNodeMapNew.size());
   counts.setValues< parallelHostPolicy >( numNodesPerFace );
@@ -1014,8 +982,7 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
   faceToNodeMapNew.resizeFromCapacities< parallelHostPolicy >( faceToNodeMapNew.size(), counts.data() );
   // setup initial values of the faceToNodeMap using emplaceBack
   forAll< parallelHostPolicy >( faceToNodeMapNew.size(),
-                                [faceToNodeMapNew = faceToNodeMapNew.toView()]
-                                  ( localIndex const faceIndex )
+        [ faceToNodeMapNew = faceToNodeMapNew.toView() ]( localIndex const faceIndex )
   {
     for( localIndex i = 0; i < faceToNodeMapNew.capacityOfArray( faceIndex ); ++i )
     {
@@ -1067,8 +1034,6 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
   }
 
   // add all nodes to the target set "all"
-  highOrderMeshLevel.getNodeManager().resize( numLocalNodes );
-
   SortedArray< localIndex > & allNodesSet = this->getNodeSets()[ "all" ];
   allNodesSet.reserve( numLocalNodes );
 
@@ -1114,32 +1079,11 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
 
       newSubRegion.resize( sourceSubRegion.size() );
 
-      // copy new elemCenter map from source
-      array2d< real64 > & elemCenterNew = newSubRegion.getElementCenter();
-      arrayView2d< real64 const > const elemCenterOld = sourceSubRegion.getElementCenter();
-      elemCenterNew = elemCenterOld;
-
-      // copy the elements-to-faces map from source
-      arrayView2d< localIndex const > const & elemsToFacesSource = sourceSubRegion.faceList();
-      array2d< localIndex > & elemsToFacesNew = newSubRegion.faceList();
-      elemsToFacesNew = elemsToFacesSource;
-
-      // copy the elements-to-edges map from source
-      arrayView2d< localIndex const > const & elemsToEdgesSource = sourceSubRegion.edgeList();
-      array2d< localIndex > & elemsToEdgesNew = newSubRegion.edgeList();
-      elemsToEdgesNew = elemsToEdgesSource;
-
-
       // initialize the elements-to-nodes map
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
       arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodesNew = this->getElemToNodes( newSubRegion.getName(), numNodesPerCell );
 
       arrayView1d< globalIndex const > const elementLocalToGlobal = sourceSubRegion.localToGlobalMap();
-      for( localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < sourceSubRegion.localToGlobalMap().size(); iter_localToGlobalsize++ )
-      {
-        newSubRegion.localToGlobalMap()[iter_localToGlobalsize] = sourceSubRegion.localToGlobalMap()[iter_localToGlobalsize];
-      }
-      newSubRegion.constructGlobalToLocalMap();
 
       // then loop through all the elements and assign the globalID according to the globalID of the Element
       // and insert the new local to global ID ( for the internal nodes of elements ) into the nodeLocalToGlobal
@@ -1193,7 +1137,6 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
       }
     } );
   } );
-  highOrderMeshLevel.generateSets();
 }
 
 }
