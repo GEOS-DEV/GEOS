@@ -101,7 +101,7 @@ struct ConstitutivePassThru< SolidBase >
 
 /**
  * @struct ConstitutivePassThruTriaxialDriver
-*/
+ */
 template< typename BASETYPE >
 struct ConstitutivePassThruTriaxialDriver;
 
