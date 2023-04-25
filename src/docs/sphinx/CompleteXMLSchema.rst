@@ -141,6 +141,13 @@ Element: ChomboIO
 .. include:: ../../coreComponents/schema/docs/ChomboIO.rst
 
 
+.. _XML_CompositeFunction:
+
+Element: CompositeFunction
+==========================
+.. include:: ../../coreComponents/schema/docs/CompositeFunction.rst
+
+
 .. _XML_CompositionalMultiphaseFVM:
 
 Element: CompositionalMultiphaseFVM
@@ -307,6 +314,13 @@ Element: Dirichlet
 Element: DruckerPrager
 ======================
 .. include:: ../../coreComponents/schema/docs/DruckerPrager.rst
+
+
+.. _XML_ElasticFirstOrderSEM:
+
+Element: ElasticFirstOrderSEM
+=============================
+.. include:: ../../coreComponents/schema/docs/ElasticFirstOrderSEM.rst
 
 
 .. _XML_ElasticIsotropic:
@@ -1016,6 +1030,13 @@ Element: SurfaceGenerator
 .. include:: ../../coreComponents/schema/docs/SurfaceGenerator.rst
 
 
+.. _XML_SymbolicFunction:
+
+Element: SymbolicFunction
+=========================
+.. include:: ../../coreComponents/schema/docs/SymbolicFunction.rst
+
+
 .. _XML_TableCapillaryPressure:
 
 Element: TableCapillaryPressure
@@ -1293,6 +1314,13 @@ Datastructure: ChomboIO
 .. include:: ../../coreComponents/schema/docs/ChomboIO_other.rst
 
 
+.. _DATASTRUCTURE_CompositeFunction:
+
+Datastructure: CompositeFunction
+================================
+.. include:: ../../coreComponents/schema/docs/CompositeFunction_other.rst
+
+
 .. _DATASTRUCTURE_CompositionalMultiphaseFVM:
 
 Datastructure: CompositionalMultiphaseFVM
@@ -1466,6 +1494,13 @@ Datastructure: Dirichlet
 Datastructure: DruckerPrager
 ============================
 .. include:: ../../coreComponents/schema/docs/DruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_ElasticFirstOrderSEM:
+
+Datastructure: ElasticFirstOrderSEM
+===================================
+.. include:: ../../coreComponents/schema/docs/ElasticFirstOrderSEM_other.rst
 
 
 .. _DATASTRUCTURE_ElasticIsotropic:
@@ -2194,6 +2229,13 @@ Datastructure: SurfaceElementRegion
 Datastructure: SurfaceGenerator
 ===============================
 .. include:: ../../coreComponents/schema/docs/SurfaceGenerator_other.rst
+
+
+.. _DATASTRUCTURE_SymbolicFunction:
+
+Datastructure: SymbolicFunction
+===============================
+.. include:: ../../coreComponents/schema/docs/SymbolicFunction_other.rst
 
 
 .. _DATASTRUCTURE_TableCapillaryPressure:
