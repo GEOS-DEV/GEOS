@@ -77,16 +77,6 @@ public:
 
   ToCellRelation< array2d< localIndex > > getFaceToElements() const override;
 
-  /**
-   * @brief Returns a mutable view to the vector holding the elements to nodes map, after resizing it.
-   * @param name The name of the cell block
-   * @param numNodesPartition The number of nodes in the partition, used for resizing
-   * @return The reference
-   *
-   * @note This is meant to be used as a values setter.
-   */
-  arrayView2d< localIndex, cells::NODE_MAP_USD > getElemToNodes( string const & name, localIndex const numNodesPartition );
-
   array1d< globalIndex > getNodeLocalToGlobal() const override;
 
   /**

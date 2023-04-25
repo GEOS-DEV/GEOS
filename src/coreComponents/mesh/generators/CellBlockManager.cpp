@@ -370,7 +370,7 @@ void resizeFaceMaps( FaceBuilder const & faceBuilder,
 
   faceToNodeMap.resizeFromCapacities< parallelHostPolicy >( numUniqueFaces, numNodesPerFace.data() );
 
-  // Each face may belong to _maximum_ 2 e(ements.
+  // Each face may belong to _maximum_ 2 elements.
   // If it belongs to only one, we put `-1` for the undefined value.
   faceToCellMap.resize( numUniqueFaces, 2 );
   faceToBlockMap.resize( numUniqueFaces, 2 );
@@ -664,12 +664,6 @@ ArrayOfArrays< localIndex > CellBlockManager::getNodeToFaces() const
 ToCellRelation< array2d< localIndex > > CellBlockManager::getFaceToElements() const
 {
   return m_faceToCells;
-}
-
-arrayView2d< localIndex, cells::NODE_MAP_USD > CellBlockManager::getElemToNodes( string const & name, localIndex const numNodesPartition )
-{
-  this->getCellBlock( name ).resizeNumNodes( numNodesPartition );
-  return this->getCellBlock( name ).getElemToNode();
 }
 
 const Group & CellBlockManager::getCellBlocks() const
