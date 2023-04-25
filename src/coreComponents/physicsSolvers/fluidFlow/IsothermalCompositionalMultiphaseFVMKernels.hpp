@@ -436,6 +436,8 @@ public:
   FaceBasedAssemblyKernel( integer const numPhases,
                            globalIndex const rankOffset,
                            integer const hasCapPressure,
+                           integer const useC1PPU,
+                           real64 const epsC1PPU,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
                            CompFlowAccessors const & compFlowAccessors,
@@ -459,7 +461,9 @@ public:
     m_stencilWrapper( stencilWrapper ),
     m_seri( stencilWrapper.getElementRegionIndices() ),
     m_sesri( stencilWrapper.getElementSubRegionIndices() ),
-    m_sei( stencilWrapper.getElementIndices() )
+    m_sei( stencilWrapper.getElementIndices() ),
+    m_useC1PPU( useC1PPU ),
+    m_epsC1PPU( epsC1PPU )
   {}
 
   /**
@@ -717,39 +721,114 @@ public:
           localIndex const esr_up = sesri[k_up];
           localIndex const ei_up  = sei[k_up];
 
-          real64 const mobility = m_phaseMob[er_up][esr_up][ei_up][ip];
-
-          // skip the phase flux if phase not present or immobile upstream
-          if( LvArray::math::abs( mobility ) < 1e-20 ) // TODO better constant
+          // C1PPU
+          real64 const smoEps = m_epsC1PPU;
+          if (m_useC1PPU > 0 && smoEps > 0)
           {
-            continue;
-          }
+            real64 const mobility_i = m_phaseMob[seri[0]][sesri[0]][sei[0]][ip];
+            real64 const mobility_j = m_phaseMob[seri[1]][sesri[1]][sei[1]][ip];
 
-          // pressure gradient depends on all points in the stencil
-          for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
-          {
-            dPhaseFlux_dP[ke] += dPresGrad_dP[ke] - dGravHead_dP[ke];
-            dPhaseFlux_dP[ke] *= mobility;
-            for( integer jc = 0; jc < numComp; ++jc )
+            GEOSX_ASSERT(numFluxSupportPoints == 2);
+            real64 const dMobDiff_sign[numFluxSupportPoints] = {-1.0, 1.0};
+
+            // compute phase flux
+            real64 const tmpSqrt = sqrt(potGrad * potGrad + smoEps * smoEps);
+            real64 const smoMax = 0.5 * (-potGrad + tmpSqrt);
+
+            phaseFlux = potGrad * mobility_i - smoMax * (mobility_j - mobility_i);
+
+            // derivativess
+
+            // first part, mobility derivative
+
+            // dP
+            real64 const dMob_dP = m_dPhaseMob[seri[0]][sesri[0]][sei[0]][ip][Deriv::dP];
+            dPhaseFlux_dP[0] += potGrad * dMob_dP;
+            
+            // dC
+            arraySlice1d<real64 const, compflow::USD_PHASE_DC - 2>
+                dPhaseMobSub = m_dPhaseMob[seri[0]][sesri[0]][sei[0]][ip];
+
+            for (integer jc = 0; jc < numComp; ++jc) 
             {
-              dPhaseFlux_dC[ke][jc] += dPresGrad_dC[ke][jc] - dGravHead_dC[ke][jc];
-              dPhaseFlux_dC[ke][jc] *= mobility;
+              dPhaseFlux_dC[0][jc] += potGrad * dPhaseMobSub[Deriv::dC + jc];
+            }
+
+            real64 const tmpInv = 1.0 / tmpSqrt;
+            real64 const dSmoMax_x = 0.5 * (1.0 - potGrad * tmpInv);
+
+            // pressure gradient and mobility difference depend on all points in the stencil
+
+            for (integer ke = 0; ke < numFluxSupportPoints; ++ke) 
+            {
+              // dP
+
+              real64 const dPotGrad_dP = dPresGrad_dP[ke] - dGravHead_dP[ke];
+
+              // first part
+              dPhaseFlux_dP[ke] += dPotGrad_dP * mobility_i;
+
+              // second part
+              real64 const dSmoMax_dP = -dPotGrad_dP * dSmoMax_x;
+              dPhaseFlux_dP[ke] += -dSmoMax_dP * (mobility_j - mobility_i);
+
+              real64 const dMob_dP = m_dPhaseMob[seri[ke]][sesri[ke]][sei[ke]][ip][Deriv::dP];
+              dPhaseFlux_dP[ke] += -smoMax * dMobDiff_sign[ke] * dMob_dP;
+
+              // dC
+
+              arraySlice1d<real64 const, compflow::USD_PHASE_DC - 2>
+                  dPhaseMobSub = m_dPhaseMob[seri[ke]][sesri[ke]][sei[ke]][ip];
+
+              for (integer jc = 0; jc < numComp; ++jc) 
+              {
+                real64 const dPotGrad_dC = dPresGrad_dC[ke][jc] - dGravHead_dC[ke][jc];
+
+                // first part
+                dPhaseFlux_dC[ke][jc] += dPotGrad_dC * mobility_i;
+
+                // second part
+                real64 const dSmoMax_dC = -dPotGrad_dC * dSmoMax_x;
+                dPhaseFlux_dC[ke][jc] += -dSmoMax_dC * (mobility_j - mobility_i);
+                dPhaseFlux_dC[ke][jc] += -smoMax * dMobDiff_sign[ke] * dPhaseMobSub[Deriv::dC + jc];
+              }
+            }
+          } 
+          else // default PPU
+          {
+            real64 const mobility = m_phaseMob[er_up][esr_up][ei_up][ip];
+
+            // skip the phase flux if phase not present or immobile upstream
+            if( LvArray::math::abs( mobility ) < 1e-20 ) // TODO better constant
+            {
+              continue;
+            }
+
+            // compute phase flux using upwind mobility.
+            phaseFlux = mobility * potGrad;
+
+            // pressure gradient depends on all points in the stencil
+            for( integer ke = 0; ke < numFluxSupportPoints; ++ke ) 
+            {
+              dPhaseFlux_dP[ke] += mobility * (dPresGrad_dP[ke] - dGravHead_dP[ke]);
+              for( integer jc = 0; jc < numComp; ++jc ) 
+              {
+                dPhaseFlux_dC[ke][jc] += mobility * (dPresGrad_dC[ke][jc] - dGravHead_dC[ke][jc]);
+              }
+            }
+
+            // add contribution from upstream cell mobility derivatives
+            real64 const dMob_dP  = m_dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dP];
+            arraySlice1d< real64 const, compflow::USD_PHASE_DC - 2 > dPhaseMobSub = 
+              m_dPhaseMob[er_up][esr_up][ei_up][ip];
+
+            dPhaseFlux_dP[k_up] += dMob_dP * potGrad;
+            for( integer jc = 0; jc < numComp; ++jc ) 
+            {
+              dPhaseFlux_dC[k_up][jc] += dPhaseMobSub[Deriv::dC+jc] * potGrad;
             }
           }
-          // compute phase flux using upwind mobility.
-          phaseFlux = mobility * potGrad;
-
-          real64 const dMob_dP  = m_dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dP];
-          arraySlice1d< real64 const, compflow::USD_PHASE_DC - 2 > dPhaseMobSub =
-            m_dPhaseMob[er_up][esr_up][ei_up][ip];
-
-          // add contribution from upstream cell mobility derivatives
-          dPhaseFlux_dP[k_up] += dMob_dP * potGrad;
-          for( integer jc = 0; jc < numComp; ++jc )
-          {
-            dPhaseFlux_dC[k_up][jc] += dPhaseMobSub[Deriv::dC+jc] * potGrad;
-          }
-
+          
           // slice some constitutive arrays to avoid too much indexing in component loop
           arraySlice1d< real64 const, multifluid::USD_PHASE_COMP-3 > phaseCompFracSub =
             m_phaseCompFrac[er_up][esr_up][ei_up][0][ip];
@@ -908,6 +987,12 @@ protected:
   typename STENCILWRAPPER::IndexContainerViewConstType const m_seri;
   typename STENCILWRAPPER::IndexContainerViewConstType const m_sesri;
   typename STENCILWRAPPER::IndexContainerViewConstType const m_sei;
+
+  /// Flag to specify whether use C1-PPU or not
+  integer const m_useC1PPU;
+
+  /// Tolerance for C1-PPU smoothing
+  real64 const m_epsC1PPU;
 };
 
 /**

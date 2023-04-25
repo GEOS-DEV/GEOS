@@ -144,6 +144,15 @@ public:
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) const override;
 
+  struct viewKeyStruct : CompositionalMultiphaseBase::viewKeyStruct
+  {
+    // inputs
+
+    static constexpr char const * useC1PPUString() { return "useC1PPU"; }
+    static constexpr char const * epsC1PPUString() { return "epsC1PPU"; }
+
+  };
+
 protected:
 
   virtual void
@@ -183,7 +192,13 @@ private:
                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                              arrayView1d< real64 > const & localRhs );
 
-  // no data needed here, see CompositionalMultiphaseBase
+  // data, see also CompositionalMultiphaseBase
+
+  /// flag indicating whether C1-PPU scheme should be used
+  integer m_useC1PPU;
+
+  /// C1-PPU smoothing tolerance
+  real64 m_epsC1PPU;
 
 };
 

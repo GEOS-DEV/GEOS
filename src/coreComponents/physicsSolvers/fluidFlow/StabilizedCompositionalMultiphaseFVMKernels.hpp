@@ -137,6 +137,8 @@ public:
     : Base( numPhases,
             rankOffset,
             hasCapPressure,
+            0,    // no C1-PPU
+            0.0,  //
             stencilWrapper,
             dofNumberAccessor,
             compFlowAccessors,
