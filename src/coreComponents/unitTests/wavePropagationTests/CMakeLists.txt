@@ -17,7 +17,7 @@ foreach(test ${gtest_geosx_tests})
     blt_add_executable( NAME ${test_name}
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                        DEPENDS_ON ${dependencyList}  )
+                        DEPENDS_ON ${dependencyList} pugixml::pugixml pugixml fmt::fmt )
 
     # Guard to prevent GCC (version 8) from giving warnings due
     # to some sort of possible conversion from int to long unsigned.
