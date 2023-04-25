@@ -29,10 +29,14 @@ set(ENABLE_OPENMP ON CACHE BOOL "")
 set(ENABLE_PVTPackage ON CACHE BOOL "")
 set(ENABLE_PETSC OFF CACHE BOOL "Enables PETSc." FORCE)
 
+# PYGEOSX
+set(ENABLE_PYGEOSX ON CACHE BOOL "")
+set(Python3_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/python/bin/python3 CACHE PATH "")
+
 # YAPF python formatting
-set(YAPF_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-toss4-gcc-python/python/bin/yapf CACHE PATH "" FORCE)
+set(YAPF_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/python/bin/yapf CACHE PATH "" FORCE)
 
 # Sphinx
-set(SPHINX_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-toss4-gcc-python/python/bin/sphinx-build CACHE PATH "" FORCE)
+set(SPHINX_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/python/bin/sphinx-build CACHE PATH "" FORCE)
 
 include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)

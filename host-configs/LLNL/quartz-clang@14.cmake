@@ -16,8 +16,4 @@ set(MKL_LIBRARIES ${MKL_ROOT}/lib/intel64/libmkl_intel_lp64.so
                   ${MKL_ROOT}/lib/intel64/libmkl_core.so
                   CACHE STRING "")
 
-# PYGEOSX
-set(ENABLE_PYGEOSX ON CACHE BOOL "")
-set(Python3_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-toss4-gcc-python/python/bin/python3 CACHE PATH "")
-
 include(${CMAKE_CURRENT_LIST_DIR}/quartz-base.cmake)
