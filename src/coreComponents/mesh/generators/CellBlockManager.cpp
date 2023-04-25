@@ -878,17 +878,21 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
                              + numLocalFaces * numInternalNodesPerFace
                              + numLocalCells * numInternalNodesPerCell;
 
+  array1d< globalIndex > const nodeLocalToGlobalSource ( m_nodeLocalToGlobal );
+  array2d< localIndex > const edgeToNodesMapSource( source.getEdgeManager().nodeList() );
+  ArrayOfArrays< localIndex > const faceToNodesMapSource( source.getFaceManager().nodeList() );
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > const refPosSource ( m_nodesPositions ); 
+
   m_numNodes = numLocalNodes;
   m_nodeLocalToGlobal.resize( m_numNodes );
   m_edgeToNodes.resize( m_numEdges, order+1 );
   m_nodesPositions.resize( m_numNodes );
 
 
- //-- -------------------------------------
+  // ---------------------------------------
   // initialize the node local to global map
   // ---------------------------------------
 
-  arrayView1d< globalIndex const > const nodeLocalToGlobalSource = source.getNodeManager().localToGlobalMap();
   arrayView1d< globalIndex > nodeLocalToGlobalNew = m_nodeLocalToGlobal.toView();
 
   // hash map that contains unique vertices and their indices for shared nodes.
@@ -906,7 +910,7 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
   localIndex localNodeID = 0;
   for( localIndex iter_vertex=0; iter_vertex < numLocalVertices; iter_vertex++ )
   {
-    nodeLocalToGlobalNew[ localNodeID ] = nodeLocalToGlobalSource[ iter_vertex ];
+    nodeLocalToGlobalNew[ localNodeID ] = nodeLocalToGlobalSource.toView()[ iter_vertex ];
     nodeIDs[ createNodeKey( iter_vertex ) ] = localNodeID;
     localNodeID++;
   }
@@ -915,16 +919,7 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
   // Edges
   //////////////////////////
 
-  // the total number of nodes: to add the number of non-vertex edge nodes
-  highOrderMeshLevel.getEdgeManager().resize( numLocalEdges );
-  highOrderMeshLevel.getEdgeManager().getDomainBoundaryIndicator() = source.getEdgeManager().getDomainBoundaryIndicator();
-
   arrayView1d< globalIndex const > const edgeLocalToGlobal = highOrderMeshLevel.getEdgeManager().localToGlobalMap();
-  for( localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < numLocalEdges; iter_localToGlobalsize++ )
-  {
-    highOrderMeshLevel.getEdgeManager().localToGlobalMap()[iter_localToGlobalsize] = source.getEdgeManager().localToGlobalMap()[iter_localToGlobalsize];
-  }
-  highOrderMeshLevel.getEdgeManager().constructGlobalToLocalMap();
 
   // -------------------------------------
   // ---- initialize edge-to-node map ----
@@ -932,14 +927,14 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
 
   // get information from the source (base mesh-level) edge-to-node map
   arrayView2d< localIndex > edgeToNodeMapNew = m_edgeToNodes.toView();
-  highOrderMeshLevel.getEdgeManager().nodeList().resize( numLocalEdges, numNodesPerEdge );
+  //highOrderMeshLevel.getEdgeManager().nodeList().resize( numLocalEdges, numNodesPerEdge );
   // create / retrieve nodes on edges
   localIndex offset = maxVertexGlobalID;
   for( localIndex iter_edge = 0; iter_edge < numLocalEdges; iter_edge++ )
   {
     localIndex newEdgeNodes = 0;
-    localIndex v1 = source.getEdgeManager().nodeList()[ iter_edge ][ 0 ];
-    localIndex v2 = source.getEdgeManager().nodeList()[ iter_edge ][ 1 ];
+    localIndex v1 = edgeToNodesMapSource[ iter_edge ][ 0 ];
+    localIndex v2 = edgeToNodesMapSource[ iter_edge ][ 1 ];
     for( int q=0; q<numNodesPerEdge; q++ )
     {
       localIndex nodeID;
@@ -992,15 +987,15 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
   offset = maxVertexGlobalID + maxEdgeGlobalID * numInternalNodesPerEdge;
   for( localIndex iter_face = 0; iter_face < numLocalFaces; iter_face++ )
   {
-    localIndex v1 = source.getFaceManager().nodeList()[ iter_face ][ 0 ];
-    localIndex v2 = source.getFaceManager().nodeList()[ iter_face ][ 1 ];
-    localIndex v3 = source.getFaceManager().nodeList()[ iter_face ][ 2 ];
-    localIndex v4 = source.getFaceManager().nodeList()[ iter_face ][ 3 ];
+    localIndex v1 = faceToNodesMapSource[ iter_face ][ 0 ];
+    localIndex v2 = faceToNodesMapSource[ iter_face ][ 1 ];
+    localIndex v3 = faceToNodesMapSource[ iter_face ][ 2 ];
+    localIndex v4 = faceToNodesMapSource[ iter_face ][ 3 ];
     std::swap( v3, v4 );
-    globalIndex gv1 = nodeLocalToGlobalSource[v1];
-    globalIndex gv2 = nodeLocalToGlobalSource[v2];
-    globalIndex gv3 = nodeLocalToGlobalSource[v3];
-    globalIndex gv4 = nodeLocalToGlobalSource[v4];
+    globalIndex gv1 = nodeLocalToGlobalSource.toView()[v1];
+    globalIndex gv2 = nodeLocalToGlobalSource.toView()[v2];
+    globalIndex gv3 = nodeLocalToGlobalSource.toView()[v3];
+    globalIndex gv4 = nodeLocalToGlobalSource.toView()[v4];
     for( int q1=0; q1<numNodesPerEdge; q1++ )
     {
       for( int q2=0; q2<numNodesPerEdge; q2++ )
@@ -1041,7 +1036,7 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
   //////////////////////////
 
   // also assign node coordinates using trilinear interpolation in th elements
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const refPosSource = source.getNodeManager().referencePosition();
+  //arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const refPosSource = source.getNodeManager().referencePosition();
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > refPosNew = this->getNodePositions();
   refPosNew.setValues< parallelHostPolicy >( -1.0 );
 
