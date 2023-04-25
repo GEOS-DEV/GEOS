@@ -85,9 +85,10 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': reading mesh from {}", catalogName(), getName(), m_filePath ) );
   {
     GEOS_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
-    vtkSmartPointer< vtkDataSet > loadedMesh = vtk::loadMesh( m_filePath, m_mainBlockName );
+    vtk::AllMeshes allMeshes = vtk::loadAllMeshes( m_filePath, m_mainBlockName, m_faceBlockNames );
     GEOS_LOG_LEVEL_RANK_0( 2, "  redistributing mesh..." );
-    m_vtkMesh = vtk::redistributeMesh( *loadedMesh, comm, m_partitionMethod, m_partitionRefinement, m_useGlobalIds );
+    m_vtkMesh = vtk::redistributeMesh( *allMeshes.main, allMeshes.faceBlocks, comm, m_partitionMethod, m_partitionRefinement, m_useGlobalIds );
+    m_faceBlockMeshes = allMeshes.faceBlocks;
     GEOS_LOG_LEVEL_RANK_0( 2, "  finding neighbor ranks..." );
     std::vector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, comm );
     std::vector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
@@ -118,9 +119,9 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   GEOS_LOG_LEVEL_RANK_0( 2, "  building connectivity maps..." );
   cellBlockManager.buildMaps();
 
-  for( string const & faceBlockName: m_faceBlockNames )
+  for( auto nameToMesh: m_faceBlockMeshes )
   {
-    m_faceBlockMeshes[faceBlockName] = importFractureNetwork( m_filePath, faceBlockName, m_vtkMesh, cellBlockManager );
+    importFractureNetwork( nameToMesh.first, nameToMesh.second, m_vtkMesh, cellBlockManager );
   }
 
   GEOS_LOG_LEVEL_RANK_0( 2, "  done!" );

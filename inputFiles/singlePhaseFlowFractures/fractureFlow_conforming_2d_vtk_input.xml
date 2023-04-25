@@ -18,13 +18,25 @@
   </Solvers>
 
   <Mesh>
+<!--    <VTKMesh-->
+<!--      name="mesh1"-->
+<!--      useGlobalIds="0"-->
+<!--      file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/cube-3x1x1.vtu"/>-->
+
+<!--    <VTKMesh-->
+<!--      name="mesh1"-->
+<!--      useGlobalIds="0"-->
+<!--      faceBlocks="{fracture}"-->
+<!--      file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/toy.vtm"/>-->
+
     <VTKMesh
       surfacicFieldsToImport="{aperture}"
       surfacicFieldsInGEOSX="{elementAperture}"
       name="mesh1"
-      useGlobalIds="1"
+      useGlobalIds="0"
       faceBlocks="{fracture}"
-      file="tShapedFracturedCube.vtm"/>
+      file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/tShapedFracturedCube.vtm"/>
+<!--      file="tShapedFracturedCube.vtm"/>-->
   </Mesh>
 
   <Geometry>

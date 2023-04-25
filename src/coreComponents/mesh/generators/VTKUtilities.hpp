@@ -68,14 +68,29 @@ using CellMapType = std::map< ElementType, std::unordered_map< int, std::vector<
  */
 vtkSmartPointer< vtkMultiProcessController > getController();
 
+struct AllMeshes
+{
+  vtkSmartPointer< vtkDataSet > main;
+  std::map< string, vtkSmartPointer< vtkDataSet > > faceBlocks;
+
+  AllMeshes( vtkSmartPointer< vtkDataSet > const & main_,
+             std::map< string, vtkSmartPointer< vtkDataSet>> const & faceBlocks_ )
+    : main( main_ ),
+      faceBlocks( faceBlocks_ )
+  { }
+};
+
 /**
  * @brief Load the VTK file into the VTK data structure
  * @param[in] filePath the Path of the file to load
- * @param[in] blockName The name of the block to import (will be considered for multi-block files only).
- * @return a vtk mesh
+ * @param[in] mainBlockName The name of the block to import (will be considered for multi-block files only).
+ * @param[in] faceBlockNames The names of the face blocks to import  (will be considered for multi-block files only).
+ * @return The compound of the main mesh and the face block meshes.
  */
-vtkSmartPointer< vtkDataSet > loadMesh( Path const & filePath,
-                                        const string & blockName = "" );
+AllMeshes loadAllMeshes( Path const & filePath,
+                         string const & mainBlockName,
+                         array1d <string> const & faceBlockNames,
+                         bool forceRead = false );
 
 /**
  * @brief Compute the rank neighbor candidate list.
@@ -96,6 +111,7 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes );
  */
 vtkSmartPointer< vtkDataSet >
 redistributeMesh( vtkDataSet & loadedMesh,
+                  std::map< string, vtkSmartPointer< vtkDataSet > > & namesTofractures,
                   MPI_Comm const comm,
                   PartitionMethod const method,
                   int const partitionRefinement,

@@ -223,7 +223,7 @@ public:
     // Field data key for duplicated nodes.
     constexpr char key[] = "duplicated_nodes";
 
-    vtkIntArray const * duplicatedNodes = vtkIntArray::FastDownCast( faceMesh->GetPointData()->GetArray( key ) );
+    vtkIdTypeArray const * duplicatedNodes = vtkIdTypeArray::FastDownCast( faceMesh->GetPointData()->GetArray( key ) );
     GEOS_ERROR_IF( duplicatedNodes == nullptr, "Could not find valid field \"" << key << "\" for fracture \"" << faceBlockName << "\"." );
 
     vtkIdType const numTuples = duplicatedNodes->GetNumberOfTuples();
@@ -597,16 +597,15 @@ ArrayOfArrays< localIndex > computeElem2dToNodes( vtkIdType num2dElements,
 }
 
 
-vtkSmartPointer< vtkDataSet > importFractureNetwork( Path const & filePath,
-                                                     string const & faceBlockName,
-                                                     vtkSmartPointer< vtkDataSet > mesh,
-                                                     CellBlockManager & cellBlockManager )
+void importFractureNetwork( string const & faceBlockName,
+                            vtkSmartPointer< vtkDataSet > faceMesh,
+                            vtkSmartPointer< vtkDataSet > mesh,
+                            CellBlockManager & cellBlockManager )
 {
   ArrayOfArrays< localIndex > const faceToNodes = cellBlockManager.getFaceToNodes();
   geos::internal::ElementToFace const elemToFaces( cellBlockManager.getCellBlocks() );
   ArrayOfArrays< localIndex > const nodeToEdges = cellBlockManager.getNodeToEdges();
 
-  vtkSmartPointer< vtkDataSet > faceMesh = vtk::loadMesh( filePath, faceBlockName );
   DuplicatedNodes const duplicatedNodes( faceBlockName, faceMesh );
   // Add the appropriate validations (only 2d cells...)
 
@@ -637,8 +636,6 @@ vtkSmartPointer< vtkDataSet > importFractureNetwork( Path const & filePath,
   faceBlock.set2dFaceTo2dElems( std::move( face2dToElems2d ) );
   faceBlock.set2dElemToFaces( std::move( elem2dTo3d.elem2dToFaces ) );
   faceBlock.set2dElemToElems( std::move( elem2dTo3d.elem2dToElem3d ) );
-
-  return faceMesh;
 }
 
 } // end of namespace

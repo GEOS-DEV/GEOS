@@ -46,6 +46,10 @@ meshToDual( ArrayOfArraysView< int64_t const, int64_t > const & elemToNodes,
 {
   idx_t const numElems = elemToNodes.size();
 
+  GEOS_ASSERT_EQ_MSG( std::accumulate( elemToNodes.getSizes(), elemToNodes.getSizes() + numElems, 0 ),
+                      elemToNodes.valueCapacity(),
+                      "Internal error. The element to nodes mapping must be strictly allocated for compatibility with a third party library." );
+
   idx_t numflag = 0;
   idx_t ncommonnodes = minCommonNodes;
   idx_t * xadj;
