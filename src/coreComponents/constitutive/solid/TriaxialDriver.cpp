@@ -439,7 +439,7 @@ bool TriaxialDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
   // base type to a known model type.  the lambda here then executes the
   // appropriate test driver. note that these calls will move data to device if available.
 
-  ConstitutivePassThru< SolidBase >::execute( baseSolid, [&]( auto & selectedSolid )
+  ConstitutivePassThruTriaxialDriver< SolidBase >::execute( baseSolid, [&]( auto & selectedSolid )
   {
     using SOLID_TYPE = TYPEOFREF( selectedSolid );
 
