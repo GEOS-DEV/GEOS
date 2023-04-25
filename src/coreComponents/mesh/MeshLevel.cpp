@@ -115,7 +115,7 @@ MeshLevel::MeshLevel( string const & name,
 
   // constants for hex mesh
   localIndex const numNodesPerEdge = ( order+1 );
-  //localIndex const numNodesPerCell = ( order+1 )*( order+1 )*( order+1 );
+  localIndex const numNodesPerCell = ( order+1 )*( order+1 )*( order+1 );
 
   localIndex const numInternalNodesPerEdge = ( order-1 );
   localIndex const numInternalNodesPerFace = ( order-1 )*( order-1 );
@@ -196,17 +196,63 @@ MeshLevel::MeshLevel( string const & name,
   m_faceManager->constructGlobalToLocalMap();
 
 
+  /////////////////////////
+  // Elements
+  //////////////////////////
+
   // check that all elements are hexahedra
   source.m_elementManager->forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
   {
+    // create element region with the same name as source element region "Region"
+    CellElementRegion & region = *(dynamic_cast< CellElementRegion * >( m_elementManager->createChild( sourceRegion.getCatalogName(),
+                                                                                                       sourceRegion.getName() ) ) );
+    // add cell block to the new element region with the same name as cell block name from source element region
+    region.addCellBlockNames( sourceRegion.getCellBlockNames() );
+
     sourceRegion.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
     {
       if( sourceSubRegion.getElementType() != ElementType::Hexahedron )
       {
         GEOS_ERROR( "Current order number "<<order<<" is higher than one are only available for hexahedral meshes." );
       }
+
+      // create element sub region with the same name as source element sub region "cb"
+      CellElementSubRegion & newSubRegion = region.getSubRegions().registerGroup< CellElementSubRegion >( sourceSubRegion.getName() );
+      newSubRegion.setElementType( sourceSubRegion.getElementType() );
+
+      // resize per elements value for the new sub region with the new number of nodes per element
+      newSubRegion.resizePerElementValues( numNodesPerCell,
+                                           sourceSubRegion.numEdgesPerElement(),
+                                           sourceSubRegion.numFacesPerElement() );
+
+      newSubRegion.resize( sourceSubRegion.size() );
+
+      // copy new elemCenter map from source
+      array2d< real64 > & elemCenterNew = newSubRegion.getElementCenter();
+      arrayView2d< real64 const > const elemCenterOld = sourceSubRegion.getElementCenter();
+      elemCenterNew = elemCenterOld;
+
+      // copy the elements-to-faces map from source
+      arrayView2d< localIndex const > const & elemsToFacesSource = sourceSubRegion.faceList();
+      array2d< localIndex > & elemsToFacesNew = newSubRegion.faceList();
+      elemsToFacesNew = elemsToFacesSource;
+
+      // copy the elements-to-edges map from source
+      arrayView2d< localIndex const > const & elemsToEdgesSource = sourceSubRegion.edgeList();
+      array2d< localIndex > & elemsToEdgesNew = newSubRegion.edgeList();
+      elemsToEdgesNew = elemsToEdgesSource;
+
+      arrayView1d< globalIndex const > const elementLocalToGlobal = sourceSubRegion.localToGlobalMap();
+      for( localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < sourceSubRegion.localToGlobalMap().size(); iter_localToGlobalsize++ )
+      {   
+        newSubRegion.localToGlobalMap()[iter_localToGlobalsize] = sourceSubRegion.localToGlobalMap()[iter_localToGlobalsize];
+      }   
+      newSubRegion.constructGlobalToLocalMap();
+
     } );
   } );
+
+
 
   /////////////////////////
   // NodesSets

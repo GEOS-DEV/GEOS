@@ -1059,29 +1059,18 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
   std::array< localIndex, 6 > const nullKey = std::array< localIndex, 6 >{ -1, -1, -1, -1, -1, -1 };
   source.getElemManager().forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
   {
-    // create element region with the same name as source element region "Region"
-    CellElementRegion & region = *(dynamic_cast< CellElementRegion * >( highOrderMeshLevel.getElemManager().createChild( sourceRegion.getCatalogName(),
-                                                                                                                         sourceRegion.getName() ) ) );
-    // add cell block to the new element region with the same name as cell block name from source element region
-    region.addCellBlockNames( sourceRegion.getCellBlockNames() );
-
     sourceRegion.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
     {
-
-      // create element sub region with the same name as source element sub region "cb"
-      CellElementSubRegion & newSubRegion = region.getSubRegions().registerGroup< CellElementSubRegion >( sourceSubRegion.getName() );
-      newSubRegion.setElementType( sourceSubRegion.getElementType() );
-
-      // resize per elements value for the new sub region with the new number of nodes per element
-      newSubRegion.resizePerElementValues( numNodesPerCell,
-                                           sourceSubRegion.numEdgesPerElement(),
-                                           sourceSubRegion.numFacesPerElement() );
-
-      newSubRegion.resize( sourceSubRegion.size() );
-
       // initialize the elements-to-nodes map
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
-      arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodesNew = this->getElemToNodes( newSubRegion.getName(), numNodesPerCell );
+      arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodesNew; 
+
+      this->getCellBlocks().forSubGroups<CellBlock>( [&]( CellBlock & cellBlock )
+      {
+        cellBlock.resizeNumNodes( numNodesPerCell );
+        elemsToNodesNew = cellBlock.getElemToNode();
+      });
+
 
       arrayView1d< globalIndex const > const elementLocalToGlobal = sourceSubRegion.localToGlobalMap();
 
