@@ -65,13 +65,16 @@ public:
 
     setupLabels();
 
-    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
+#ifdef GEOSX_USE_HYPRE_CUDA // Why a different relaxation type for CPU and GPU?
+    m_levelFRelaxType[0]          = MGRFRelaxationType::l1jacobi;
+#else
+    m_levelFRelaxType[0]          = MGRFRelaxationType::jacobi;
+#endif
+    m_levelFRelaxIters[0]         = 1;
     m_levelInterpType[0]       = MGRInterpolationType::injection;
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::cprLikeBlockDiag;
-
-    // ILU smoothing for the system made of pressure and component fractions
-    m_levelGlobalSmootherType[0]  = 16;
+    m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::ilu0;
     m_levelGlobalSmootherIters[0] = 1;
   }
 
@@ -87,15 +90,6 @@ public:
     setReduction( precond, numLevels, mgrData );
 
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 )); // truncate intermediate/coarse grids
-
-    // Note: uncommenting HYPRE_MGRSetLevelFRelaxMethod and commenting HYPRE_MGRSetRelaxType breaks the recipe. This requires further
-    // investigation
-    //GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, toUnderlyingPtr( m_levelFRelaxMethod ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, 0 ));
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetNumRelaxSweeps( precond.ptr, 1 ));
-#ifdef GEOSX_USE_HYPRE_CUDA
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
-#endif
 
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
     setPressureAMG( mgrData.coarseSolver );

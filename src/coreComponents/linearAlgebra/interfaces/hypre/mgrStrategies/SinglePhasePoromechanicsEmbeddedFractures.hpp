@@ -68,13 +68,15 @@ public:
     setupLabels();
 
     // Level 0
-    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel;
+    m_levelFRelaxType[0]          = MGRFRelaxationType::jacobi;
+    m_levelFRelaxIters[0]         = 1;
     m_levelInterpType[0]       = MGRInterpolationType::blockJacobi;
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
 
     // Level 1
-    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::amgVCycle;
+    m_levelFRelaxType[1]          = MGRFRelaxationType::amgVCycle;
+    m_levelFRelaxIters[1]         = 1;
     m_levelInterpType[1]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::nonGalerkin;
@@ -96,7 +98,8 @@ public:
                                                                  m_numLabels, m_ptrLabels,
                                                                  mgrData.pointMarkers.data() ) );
 
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, toUnderlyingPtr( m_levelFRelaxMethod ) ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxType( precond.ptr, toUnderlyingPtr( m_levelFRelaxType ) ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelNumRelaxSweeps( precond.ptr, m_levelGlobalSmootherIters ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( precond.ptr, toUnderlyingPtr( m_levelInterpType ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelRestrictType( precond.ptr, toUnderlyingPtr( m_levelRestrictType ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, toUnderlyingPtr( m_levelCoarseGridMethod ) ) );

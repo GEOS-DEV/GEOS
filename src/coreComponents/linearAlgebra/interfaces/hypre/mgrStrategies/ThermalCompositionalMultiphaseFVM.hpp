@@ -66,20 +66,28 @@ public:
 
     setupLabels();
 
-    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
+#ifdef GEOSX_USE_HYPRE_CUDA
+    m_levelFRelaxType[0]          = MGRFRelaxationType::l1jacobi;
+#else
+    m_levelFRelaxType[0]          = MGRFRelaxationType::jacobi;
+#endif
+    m_levelFRelaxIters[0]         = 1;
     m_levelInterpType[0]       = MGRInterpolationType::jacobi; // Diagonal scaling (Jacobi)
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin; // Standard Galerkin
+    m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::ilu0;
+    m_levelGlobalSmootherIters[0] = 1;
 
-    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
+#ifdef GEOSX_USE_HYPRE_CUDA
+    m_levelFRelaxType[1]          = MGRFRelaxationType::l1jacobi;
+#else
+    m_levelFRelaxType[1]          = MGRFRelaxationType::jacobi;
+#endif
+    m_levelFRelaxIters[1]         = 1;
     m_levelInterpType[1]       = MGRInterpolationType::injection; // Injection
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::cprLikeBlockDiag; // Non-Galerkin Quasi-IMPES CPR
-
-    m_levelGlobalSmootherType[0]  = 16;
-    m_levelGlobalSmootherIters[0] = 1;
-    // Block GS smoothing for the system made of pressure and densities (except the last one)
-    m_levelGlobalSmootherType[1]  = 1;
+    m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::blockGaussSeidel;
     m_levelGlobalSmootherIters[1] = 1;
   }
 
@@ -95,15 +103,6 @@ public:
     setReduction( precond, numLevels, mgrData );
 
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 )); // Low tolerance to remove only zeros
-
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, toUnderlyingPtr( m_levelFRelaxMethod ) ) );
-
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::jacobi ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetNumRelaxSweeps( precond.ptr, 1 ));
-
-#ifdef GEOSX_USE_HYPRE_CUDA
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
-#endif
 
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure/temperature reduced system
     setPressureTemperatureAMG( mgrData.coarseSolver );

@@ -74,28 +74,30 @@ public:
     setupLabels();
 
     // Level 0
-    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::amgVCycle;
+    m_levelFRelaxType[0]          = MGRFRelaxationType::amgVCycle;
+    m_levelFRelaxIters[0]         = 1;
     m_levelInterpType[0]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::nonGalerkin;
+    m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
+    m_levelGlobalSmootherIters[0] = 0;
 
     // Level 1
-    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
+    m_levelFRelaxType[1]          = MGRFRelaxationType::jacobi;
+    m_levelFRelaxIters[1]         = 1;
     m_levelInterpType[1]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::galerkin;
+    m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::ilu0;
+    m_levelGlobalSmootherIters[1] = 1;
 
     // Level 2
-    m_levelFRelaxMethod[2]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
+    m_levelFRelaxType[2]          = MGRFRelaxationType::jacobi;
+    m_levelFRelaxIters[2]         = 1;
     m_levelInterpType[2]       = MGRInterpolationType::injection;
     m_levelRestrictType[2]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[2] = MGRCoarseGridMethod::cprLikeBlockDiag;
-
-    // ILU smoothing for the system made of pressure, densities, and temperature
-    m_levelGlobalSmootherType[1]  = 16;
-    m_levelGlobalSmootherIters[1] = 1;
-    // Block GS smoothing for the system made of pressure, densities (except the last one), and temperature
-    m_levelGlobalSmootherType[2]  = 1;
+    m_levelGlobalSmootherType[2]  = MGRGlobalSmootherType::blockGaussSeidel;
     m_levelGlobalSmootherIters[2] = 1;
   }
 
@@ -110,7 +112,6 @@ public:
   {
     setReduction( precond, numLevels, mgrData );
 
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, toUnderlyingPtr( m_levelFRelaxMethod ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( precond.ptr, 0 ));
 
     // CHECK: the mechanics solver setup was missing: was there a reason?

@@ -83,35 +83,39 @@ public:
     setupLabels();
 
     // Level 0
-    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
     m_levelFRelaxType[0]       = MGRFRelaxationType::gsElimWInverse; // gaussian elimination for the well block
+    m_levelFRelaxIters[0]         = 1;
     m_levelInterpType[0]       = MGRInterpolationType::blockJacobi;
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
+    m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
+    m_levelGlobalSmootherIters[0] = 0;
 
     // Level 1
-    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
     m_levelFRelaxType[1]       = MGRFRelaxationType::jacobi; //default, i.e. Jacobi
+    m_levelFRelaxIters[1]         = 1;
     m_levelInterpType[1]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::galerkin;
+    m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::none;
+    m_levelGlobalSmootherIters[1] = 0;
 
     // Level 2
-    m_levelFRelaxMethod[2]     = MGRFRelaxationMethod::singleLevel;
     m_levelFRelaxType[2]       = MGRFRelaxationType::jacobi; //default, i.e. Jacobi
+    m_levelFRelaxIters[2]         = 1;
     m_levelInterpType[2]       = MGRInterpolationType::injection;
     m_levelRestrictType[2]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[2] = MGRCoarseGridMethod::cprLikeBlockDiag;
+    m_levelGlobalSmootherType[2]  = MGRGlobalSmootherType::none;
+    m_levelGlobalSmootherIters[2] = 0;
 
     // Level 3
-    m_levelFRelaxMethod[3]     = MGRFRelaxationMethod::singleLevel;
     m_levelFRelaxType[3]       = MGRFRelaxationType::jacobi; //default, i.e. Jacobi
+    m_levelFRelaxIters[3]         = 1;
     m_levelInterpType[3]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[3]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[3] = MGRCoarseGridMethod::galerkin;
-
-    // Use block-GS for the condensed system
-    m_levelGlobalSmootherType[3] = 1;
+    m_levelGlobalSmootherType[3]  = MGRGlobalSmootherType::blockGaussSeidel;
     m_levelGlobalSmootherIters[3] = 1;
   }
 
@@ -125,10 +129,6 @@ public:
               HyprePrecWrapper & precond,
               HypreMGRData & mgrData )
   {
-    setReduction( precond, numLevels, mgrData );
-
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 ));
-
     // if the wells are shut, using Gaussian elimination as F-relaxation for the well block is an overkill
     // in that case, we just use Jacobi
     if( mgrParams.areWellsShut )
@@ -136,11 +136,10 @@ public:
       m_levelFRelaxType[0] = MGRFRelaxationType::jacobi;
     }
 
-    // Note: uncomment HYPRE_MGRSetLevelFRelaxMethod and comment HYPRE_MGRSetRelaxType breaks the recipe, this requires further
-    // investigation
-    //GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, toUnderlyingPtr( m_levelFRelaxMethod ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxType( precond.ptr, toUnderlyingPtr( m_levelFRelaxType ) ));
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetNumRelaxSweeps( precond.ptr, 1 ));
+    setReduction( precond, numLevels, mgrData );
+
+    // Still needed?
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 ));
 
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
     setPressureAMG( mgrData.coarseSolver );

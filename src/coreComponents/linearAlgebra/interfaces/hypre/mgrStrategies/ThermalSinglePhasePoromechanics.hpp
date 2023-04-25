@@ -61,12 +61,13 @@ public:
     setupLabels();
 
     // Level 0
-    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::amgVCycle;
+    m_levelFRelaxType[0]          = MGRFRelaxationType::amgVCycle;
+    m_levelFRelaxIters[0]         = 1;
     m_levelInterpType[0]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::nonGalerkin;
-
-    m_numGlobalSmoothSweeps = 0;
+    m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
+    m_levelGlobalSmootherIters[0] = 0;
   }
 
   /**
@@ -80,7 +81,6 @@ public:
   {
     setReduction( precond, numLevels, mgrData );
 
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, toUnderlyingPtr( m_levelFRelaxMethod ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( precond.ptr, 0 ));
 
     // CHECK: the mechanics solver setup was missing: was there a reason?

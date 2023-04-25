@@ -468,16 +468,16 @@ enum class MGRCoarseGridMethod : HYPRE_Int
                          //!< inverse
 };
 
-/**
- * @enum MGRFRelaxationMethod
- * @brief This enum class specifies the F-relaxation strategy.
- */
-enum class MGRFRelaxationMethod : HYPRE_Int
-{
-  singleLevel = 0, //!< single-level relaxation
-  multilevel = 1,  //!< multilevel relaxation
-  amgVCycle = 2    //!< multilevel relaxation
-};
+// /**
+//  * @enum MGRFRelaxationMethod
+//  * @brief This enum class specifies the F-relaxation strategy.
+//  */
+// enum class MGRFRelaxationMethod : HYPRE_Int
+// {
+  // singleLevel = 0, //!< single-level relaxation
+  // multilevel = 1,  //!< multilevel relaxation
+  // amgVCycle = 2    //!< multilevel relaxation
+// };
 
 /**
  * @enum MGRFRelaxationType
@@ -485,6 +485,7 @@ enum class MGRFRelaxationMethod : HYPRE_Int
  */
 enum class MGRFRelaxationType : HYPRE_Int
 {
+  none = -1,                        //!< no F-relaxation if performed
   jacobi = 0,                       //!< Jacobi
   singleVCycleSmoother = 1,         //!< V(1,0) cycle smoother
   amgVCycle = 2,                    //!< Full AMG VCycle solver
@@ -506,9 +507,11 @@ enum class MGRFRelaxationType : HYPRE_Int
  */
 enum class MGRGlobalSmootherType : HYPRE_Int
 {
-  blockJacobi = 0, //!< block Jacobi (default)
-  jacobi = 1,      //!< Jacobi
-  ilu0 = 16        //!< incomplete LU factorization
+  none = -1,            //!< no global smoothing is performed (default)
+  blockJacobi = 0,      //!< block Jacobi
+  blockGaussSeidel = 1, //!< block Jacobi
+  jacobi = 2,           //!< Jacobi
+  ilu0 = 16             //!< incomplete LU factorization
 };
 
 } // namespace hypre

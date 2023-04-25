@@ -84,16 +84,17 @@ protected:
   HYPRE_Int m_numLabels[numLevels]{ -1 };              ///< Number of dof labels kept
   HYPRE_Int * m_ptrLabels[numLevels]{ nullptr };       ///< Pointers to each level's labels, as consumed by MGR
 
-  MGRFRelaxationMethod m_levelFRelaxMethod[numLevels];    ///< F-relaxation strategy for each level (single or multilevel)
-  MGRFRelaxationType m_levelFRelaxType[numLevels];        ///< F-relaxation type for each level
-  MGRInterpolationType m_levelInterpType[numLevels];      ///< Interpolation type for each level
-  MGRRestrictionType m_levelRestrictType[numLevels];      ///< Restriction type for each level
-  MGRCoarseGridMethod m_levelCoarseGridMethod[numLevels]; ///< Coarse grid method for each level
-  HYPRE_Int m_levelGlobalSmootherType[numLevels]{ -1 };           ///< Global smoother type for each level
-  HYPRE_Int m_levelGlobalSmootherIters[numLevels]{ -1 };          ///< Number of global smoother iterations for each level
+  MGRFRelaxationType m_levelFRelaxType[numLevels];           ///< F-relaxation type for each level
+  HYPRE_Int m_levelFRelaxIters[numLevels]{ -1 };             ///< Number of F-relaxation iterations for each level
+  MGRInterpolationType m_levelInterpType[numLevels];         ///< Interpolation type for each level
+  MGRRestrictionType m_levelRestrictType[numLevels];         ///< Restriction type for each level
+  MGRCoarseGridMethod m_levelCoarseGridMethod[numLevels];    ///< Coarse grid method for each level
+  MGRGlobalSmootherType m_levelGlobalSmootherType[numLevels]; ///< Global smoother type for each level
+  HYPRE_Int m_levelGlobalSmootherIters[numLevels]{ -1 };     ///< Number of global smoother iterations for each level
 
-  HYPRE_Int m_numRestrictSweeps{ -1 }; ///< Number of restrict sweeps
-  HYPRE_Int m_numInterpSweeps{ -1 };   ///< Number of interpolation sweeps
+  // Do we need to expose these? They are not used at the moment
+  // HYPRE_Int m_numRestrictSweeps{ -1 }; ///< Number of restrict sweeps
+  // HYPRE_Int m_numInterpSweeps{ -1 };   ///< Number of interpolation sweeps
 
   HYPRE_Int m_numRelaxSweeps{ -1 }; ///< F-relaxation number of sweeps
 
@@ -109,11 +110,11 @@ protected:
   {
     for( HYPRE_Int i = 0; i < numLevels; ++i )
     {
-      m_levelFRelaxMethod[i]     = MGRFRelaxationMethod::singleLevel;
-      m_levelFRelaxType[i]       = MGRFRelaxationType::jacobi;
-      m_levelInterpType[i]       = MGRInterpolationType::jacobi;
-      m_levelRestrictType[i]     = MGRRestrictionType::injection;
-      m_levelCoarseGridMethod[i] = MGRCoarseGridMethod::galerkin;
+      m_levelFRelaxType[i]         = MGRFRelaxationType::jacobi;
+      m_levelInterpType[i]         = MGRInterpolationType::jacobi;
+      m_levelRestrictType[i]       = MGRRestrictionType::injection;
+      m_levelCoarseGridMethod[i]   = MGRCoarseGridMethod::galerkin;
+      m_levelGlobalSmootherType[i] = MGRGlobalSmootherType::none;
     }
   }
 
@@ -127,38 +128,6 @@ protected:
       m_numLabels[i] = m_labels[i].size();
       m_ptrLabels[i] = m_labels[i].data();
     }
-  }
-
-  /**
-   * @brief Set up BoomerAMG to perform the mechanics F-solve for the first F-relaxation
-   * @param precond the preconditioner wrapper
-   * @param mgrData auxiliary MGR data
-   */
-  void setMechanicsFSolver( HyprePrecWrapper & precond,
-                            HypreMGRData & mgrData ) const
-  {
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.mechSolver.ptr ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.mechSolver.ptr, 0.0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.mechSolver.ptr, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( mgrData.mechSolver.ptr, 1.0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( mgrData.mechSolver.ptr, 0.8 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.mechSolver.ptr, 0 ) );
-
-#ifdef GEOSX_USE_HYPRE_CUDA
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( mgrData.mechSolver.ptr, hypre::getAMGCoarseningType( "PMIS" ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.mechSolver.ptr, hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( mgrData.mechSolver.ptr, 2 ) );
-#else
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.mechSolver.ptr, 1 ) );
-#endif
-
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( mgrData.mechSolver.ptr, 3 ) );
-
-    mgrData.mechSolver.setup = HYPRE_BoomerAMGSetup;
-    mgrData.mechSolver.solve = HYPRE_BoomerAMGSolve;
-    mgrData.mechSolver.destroy = HYPRE_BoomerAMGDestroy;
-
-    HYPRE_MGRSetFSolver( precond.ptr, mgrData.mechSolver.solve, mgrData.mechSolver.setup, mgrData.mechSolver.ptr );
   }
 
   /**
@@ -176,17 +145,47 @@ protected:
                                                                  m_numBlocks, numLevels,
                                                                  m_numLabels, m_ptrLabels,
                                                                  mgrData.pointMarkers.data() ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxType( precond.ptr, toUnderlyingPtr( m_levelFRelaxType ) ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelNumRelaxSweeps( precond.ptr, m_levelFRelaxIters ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( precond.ptr, toUnderlyingPtr( m_levelInterpType ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelRestrictType( precond.ptr, toUnderlyingPtr( m_levelRestrictType ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, toUnderlyingPtr( m_levelCoarseGridMethod ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( precond.ptr, 1 ));
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothType( precond.ptr, m_levelGlobalSmootherType ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothType( precond.ptr, toUnderlyingPtr( m_levelGlobalSmootherType ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothIters( precond.ptr, m_levelGlobalSmootherIters ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( precond.ptr, 1 ));
   }
 
   /**
-   * @brief Set up BoomerAMG to perform the coarse solve for the pressure reduced system
-   * @param solver the coarse solver wrapper
+   * @brief Set up BoomerAMG to perform the solve for the displacement system
+   * @param solver the solver wrapper
+   */
+  void setDisplacementAMG( HyprePrecWrapper & solver )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &solver.ptr ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( solver.ptr, 0.0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( solver.ptr, 1 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( solver.ptr, 1.0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( solver.ptr, 0.8 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( solver.ptr, 0 ) );
+
+#ifdef GEOSX_USE_HYPRE_CUDA
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( solver.ptr, hypre::getAMGCoarseningType( "PMIS" ) ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( solver.ptr, hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( solver.ptr, 2 ) );
+#else
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( solver.ptr, 1 ) );
+#endif
+
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( solver.ptr, 3 ) );
+
+    solver.setup = HYPRE_BoomerAMGSetup;
+    solver.solve = HYPRE_BoomerAMGSolve;
+    solver.destroy = HYPRE_BoomerAMGDestroy;
+  }
+
+  /**
+   * @brief Set up BoomerAMG to perform the solve for the pressure system
+   * @param solver the solver wrapper
    */
   void setPressureAMG( HyprePrecWrapper & solver )
   {
@@ -211,8 +210,8 @@ protected:
   }
 
   /**
-   * @brief Set up BoomerAMG to perform the coarse solve for the pressure/temperature reduced system
-   * @param solver the coarse solver wrapper
+   * @brief Set up BoomerAMG to perform the solve for the pressure/temperature system
+   * @param solver the solver wrapper
    */
   void setPressureTemperatureAMG( HyprePrecWrapper & solver )
   {
@@ -236,6 +235,21 @@ protected:
     solver.setup = HYPRE_BoomerAMGSetup;
     solver.solve = HYPRE_BoomerAMGSolve;
     solver.destroy = HYPRE_BoomerAMGDestroy;
+  }
+
+  /**
+   * @brief Set up BoomerAMG to perform the mechanics F-solve for the first F-relaxation
+   * @param precond the preconditioner wrapper
+   * @param mgrData auxiliary MGR data
+   * 
+   * @note This function should be rethought once MGR allows for customizing boomerAMG (or 
+   *       any other solver) for F-relaxation at any level
+   */
+  void setMechanicsFSolver( HyprePrecWrapper & precond,
+                            HypreMGRData & mgrData )
+  {
+    setDisplacementAMG( mgrData.mechSolver );
+    HYPRE_MGRSetFSolver( precond.ptr, mgrData.mechSolver.solve, mgrData.mechSolver.setup, mgrData.mechSolver.ptr );
   }
 
 };
