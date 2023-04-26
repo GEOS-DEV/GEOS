@@ -879,8 +879,8 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
                              + numLocalCells * numInternalNodesPerCell;
 
   array1d< globalIndex > const nodeLocalToGlobalSource ( m_nodeLocalToGlobal );
-  array2d< localIndex > const edgeToNodesMapSource( source.getEdgeManager().nodeList() );
-  ArrayOfArrays< localIndex > const faceToNodesMapSource( source.getFaceManager().nodeList() );
+  array2d< localIndex > const edgeToNodesMapSource( m_edgeToNodes );
+  ArrayOfArrays< localIndex > const faceToNodesMapSource( m_faceToNodes );
   array2d< real64, nodes::REFERENCE_POSITION_PERM > const refPosSource ( m_nodesPositions ); 
 
   m_numNodes = numLocalNodes;
@@ -925,9 +925,7 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
   // ---- initialize edge-to-node map ----
   // -------------------------------------
 
-  // get information from the source (base mesh-level) edge-to-node map
   arrayView2d< localIndex > edgeToNodeMapNew = m_edgeToNodes.toView();
-  //highOrderMeshLevel.getEdgeManager().nodeList().resize( numLocalEdges, numNodesPerEdge );
   // create / retrieve nodes on edges
   localIndex offset = maxVertexGlobalID;
   for( localIndex iter_edge = 0; iter_edge < numLocalEdges; iter_edge++ )
@@ -1036,7 +1034,6 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
   //////////////////////////
 
   // also assign node coordinates using trilinear interpolation in th elements
-  //arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const refPosSource = source.getNodeManager().referencePosition();
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > refPosNew = this->getNodePositions();
   refPosNew.setValues< parallelHostPolicy >( -1.0 );
 
@@ -1046,75 +1043,69 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
   localIndex elemMeshVertices[ numVerticesPerCell ] = { };
   offset = maxVertexGlobalID + maxEdgeGlobalID * numInternalNodesPerEdge + maxFaceGlobalID * numInternalNodesPerFace;
   std::array< localIndex, 6 > const nullKey = std::array< localIndex, 6 >{ -1, -1, -1, -1, -1, -1 };
-  source.getElemManager().forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
+
+  // initialize the elements-to-nodes map
+  arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodesNew; 
+
+  this->getCellBlocks().forSubGroups<CellBlock>( [&]( CellBlock & cellBlock )
   {
-    sourceRegion.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
+    arrayView1d< globalIndex > elementLocalToGlobal( cellBlock.localToGlobalMap() );
+    array2d< localIndex, cells::NODE_MAP_PERMUTATION > elemsToNodesSource ( cellBlock.getElemToNodes() );
+
+    cellBlock.resizeNumNodes( numNodesPerCell );
+    elemsToNodesNew = cellBlock.getElemToNode();
+
+    // then loop through all the elements and assign the globalID according to the globalID of the Element
+    // and insert the new local to global ID ( for the internal nodes of elements ) into the nodeLocalToGlobal
+    // retrieve finite element type
+    for( localIndex iter_elem = 0; iter_elem < numLocalCells; ++iter_elem )
     {
-      // initialize the elements-to-nodes map
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
-      arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodesNew; 
-
-      this->getCellBlocks().forSubGroups<CellBlock>( [&]( CellBlock & cellBlock )
+      localIndex newCellNodes = 0;
+      for( localIndex iter_vertex = 0; iter_vertex < numVerticesPerCell; iter_vertex++ )
       {
-        cellBlock.resizeNumNodes( numNodesPerCell );
-        elemsToNodesNew = cellBlock.getElemToNode();
-      });
-
-
-      arrayView1d< globalIndex const > const elementLocalToGlobal = sourceSubRegion.localToGlobalMap();
-
-      // then loop through all the elements and assign the globalID according to the globalID of the Element
-      // and insert the new local to global ID ( for the internal nodes of elements ) into the nodeLocalToGlobal
-      // retrieve finite element type
-      for( localIndex iter_elem = 0; iter_elem < numLocalCells; ++iter_elem )
-      {
-        localIndex newCellNodes = 0;
-        for( localIndex iter_vertex = 0; iter_vertex < numVerticesPerCell; iter_vertex++ )
+        elemMeshVertices[ iter_vertex ] = elemsToNodesSource[ iter_elem ][ iter_vertex ];
+        for( int i =0; i < 3; i++ )
         {
-          elemMeshVertices[ iter_vertex ] = elemsToNodesSource[ iter_elem ][ iter_vertex ];
-          for( int i =0; i < 3; i++ )
-          {
-            Xmesh[ iter_vertex ][ i ] = refPosSource[ elemMeshVertices[ iter_vertex ] ][ i ];
-          }
-        }
-
-        for( int q = 0; q < numNodesPerCell; q++ )
-        {
-          localIndex nodeID;
-          int dof = q;
-          int q1 = dof % numNodesPerEdge;
-          dof /= ( numNodesPerEdge );
-          int q2 = dof % ( numNodesPerEdge );
-          dof /= ( numNodesPerEdge );
-          int q3 = dof % ( numNodesPerEdge );
-          // compute node coords
-          real64 alpha = ( glCoords[ q1 ] + 1.0 ) / 2.0;
-          real64 beta = ( glCoords[ q2 ] + 1.0 ) / 2.0;
-          real64 gamma = ( glCoords[ q3 ] + 1.0 ) / 2.0;
-          trilinearInterp( alpha, beta, gamma, Xmesh, X );
-          // find node ID
-          std::array< localIndex, 6 > nodeKey = createNodeKey( elemMeshVertices, q1, q2, q3, order );
-          if( nodeKey == nullKey )
-          {
-            // the node is internal to a cell -- create it
-            nodeID = localNodeID;
-            nodeLocalToGlobalNew[ nodeID ] = offset + elementLocalToGlobal[ iter_elem ] * numInternalNodesPerCell + newCellNodes;
-            localNodeID++;
-            newCellNodes++;
-          }
-          else
-          {
-            nodeID = nodeIDs[ nodeKey ];
-          }
-          for( int i=0; i<3; i++ )
-          {
-            refPosNew( nodeID, i ) = X[ i ];
-          }
-          elemsToNodesNew[ iter_elem ][ q ] = nodeID;
+          Xmesh[ iter_vertex ][ i ] = refPosSource[ elemMeshVertices[ iter_vertex ] ][ i ];
         }
       }
-    } );
-  } );
+
+      for( int q = 0; q < numNodesPerCell; q++ )
+      {
+        localIndex nodeID;
+        int dof = q;
+        int q1 = dof % numNodesPerEdge;
+        dof /= ( numNodesPerEdge );
+        int q2 = dof % ( numNodesPerEdge );
+        dof /= ( numNodesPerEdge );
+        int q3 = dof % ( numNodesPerEdge );
+        // compute node coords
+        real64 alpha = ( glCoords[ q1 ] + 1.0 ) / 2.0;
+        real64 beta = ( glCoords[ q2 ] + 1.0 ) / 2.0;
+        real64 gamma = ( glCoords[ q3 ] + 1.0 ) / 2.0;
+        trilinearInterp( alpha, beta, gamma, Xmesh, X );
+        // find node ID
+        std::array< localIndex, 6 > nodeKey = createNodeKey( elemMeshVertices, q1, q2, q3, order );
+        if( nodeKey == nullKey )
+        {
+          // the node is internal to a cell -- create it
+          nodeID = localNodeID;
+          nodeLocalToGlobalNew[ nodeID ] = offset + elementLocalToGlobal[ iter_elem ] * numInternalNodesPerCell + newCellNodes;
+          localNodeID++;
+          newCellNodes++;
+        }
+        else
+        {
+          nodeID = nodeIDs[ nodeKey ];
+        }
+        for( int i=0; i<3; i++ )
+        {
+          refPosNew( nodeID, i ) = X[ i ];
+        }
+        elemsToNodesNew[ iter_elem ][ q ] = nodeID;
+      }
+    }
+  });
 }
 
 }
