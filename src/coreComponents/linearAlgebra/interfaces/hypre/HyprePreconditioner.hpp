@@ -16,8 +16,8 @@
  * @file HyprePreconditioner.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREPRECONDITIONER_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREPRECONDITIONER_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_HYPREPRECONDITIONER_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_HYPREPRECONDITIONER_HPP_
 
 #include "common/PreconditionerBase.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreInterface.hpp"
@@ -25,7 +25,7 @@
 
 #include <memory>
 
-namespace geosx
+namespace geos
 {
 
 /// Forward-declared struct that hosts pointers to preconditioner functions
@@ -156,4 +156,4 @@ private:
 
 }
 
-#endif //GEOSX_LINEARALGEBRA_INTERFACES_HYPREPRECONDITIONER_HPP_
+#endif //GEOS_LINEARALGEBRA_INTERFACES_HYPREPRECONDITIONER_HPP_

@@ -2,7 +2,7 @@
 Developer Guide
 ###############################################################################
 
-Welcome to the GEOSX developer guide.
+Welcome to the GEOS developer guide.
 
 .. toctree::
    :maxdepth: 3

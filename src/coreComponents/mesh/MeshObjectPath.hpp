@@ -16,14 +16,14 @@
  * @file MeshObjectPath.hpp
  */
 
-#ifndef GEOSX_MESH_MESHOBJECTPATH_HPP_
-#define GEOSX_MESH_MESHOBJECTPATH_HPP_
+#ifndef GEOS_MESH_MESHOBJECTPATH_HPP_
+#define GEOS_MESH_MESHOBJECTPATH_HPP_
 
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "MeshLevel.hpp"
 
-namespace geosx
+namespace geos
 {
 class MeshBody;
 class MeshLevel;
@@ -62,6 +62,7 @@ public:
    *
    * @param path The path string
    * @param meshBodies  The Group that contains all MeshBody objects
+   * @throw InputError when the input path is wrong.
    */
   MeshObjectPath( string const path,
                   dataRepository::Group const & meshBodies );
@@ -215,11 +216,11 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #include "MeshBody.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -296,7 +297,7 @@ void MeshObjectPath::forObjectsInPath( std::pair< string const, std::map< string
           }
           else
           {
-            GEOSX_ERROR( "You shouldn't be here" );
+            GEOS_ERROR( "You shouldn't be here" );
           }
         }
       }
@@ -364,6 +365,6 @@ void MeshObjectPath::forObjectsInPath( MeshLevel & meshLevel,
 
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_MESHOBJECTPATH_HPP_ */
+#endif /* GEOS_MESH_MESHOBJECTPATH_HPP_ */

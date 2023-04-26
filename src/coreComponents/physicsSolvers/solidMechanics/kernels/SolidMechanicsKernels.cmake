@@ -4,11 +4,11 @@
 
 set( kernelPath "coreComponents/physicsSolvers/solidMechanics/kernels" )
 
-set( ExplicitSmallStrainPolicy "geosx::parallelDevicePolicy<32>" )
-set( ExplicitFiniteStrainPolicy "geosx::parallelDevicePolicy<32>" )
-set( FixedStressThermoPoroElasticPolicy "geosx::parallelDevicePolicy<32>" )
-set( ImplicitSmallStrainNewmarkPolicy "geosx::parallelDevicePolicy<32>" )
-set( ImplicitSmallStrainQuasiStaticPolicy "geosx::parallelDevicePolicy<32>" )
+set( ExplicitSmallStrainPolicy "geos::parallelDevicePolicy<32>" )
+set( ExplicitFiniteStrainPolicy "geos::parallelDevicePolicy<32>" )
+set( FixedStressThermoPoromechanicsPolicy "geos::parallelDevicePolicy<32>" )
+set( ImplicitSmallStrainNewmarkPolicy "geos::parallelDevicePolicy<32>" )
+set( ImplicitSmallStrainQuasiStaticPolicy "geos::parallelDevicePolicy<32>" )
 
 
 configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp.in
@@ -67,7 +67,7 @@ set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
 
   set( porousSolidDispatch PorousSolid<ElasticIsotropic> )                         
 
-  set( kernelNames SolidMechanicsFixedStressThermoPoroElasticKernels )
+  set( kernelNames SolidMechanicsFixedStressThermoPoromechanicsKernels )
                          
   
   foreach( KERNELNAME ${kernelNames} )
@@ -81,7 +81,7 @@ set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
         string(REPLACE "," "-" filename ${filename})
         string(REPLACE " " "" filename ${filename})
         message( " -- Generating file: ${filename}")
-        configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/SolidMechanicsFixedStressThermoPoroElasticKernels.cpp.template
+        configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template
                         ${filename} )
           list( APPEND physicsSolvers_sources ${filename} )
 

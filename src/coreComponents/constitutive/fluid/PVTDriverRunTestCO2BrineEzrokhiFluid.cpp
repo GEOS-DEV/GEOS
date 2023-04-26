@@ -11,7 +11,7 @@
 #include "CO2BrineFluid.hpp"
 
 
-namespace geosx
+namespace geos
 {
 template void PVTDriver::runTest< constitutive::CO2BrineEzrokhiFluid >( constitutive::CO2BrineEzrokhiFluid &, arrayView2d< real64 > const & );
 }

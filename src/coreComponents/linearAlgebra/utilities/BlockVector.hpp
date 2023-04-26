@@ -16,12 +16,12 @@
  * @file BlockVector.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_UTILITIES_BLOCKVECTOR_HPP_
-#define GEOSX_LINEARALGEBRA_UTILITIES_BLOCKVECTOR_HPP_
+#ifndef GEOS_LINEARALGEBRA_UTILITIES_BLOCKVECTOR_HPP_
+#define GEOS_LINEARALGEBRA_UTILITIES_BLOCKVECTOR_HPP_
 
 #include "linearAlgebra/utilities/BlockVectorView.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -151,6 +151,6 @@ private:
   array1d< VECTOR > m_vectorStorage;
 };
 
-} //namespace geosx
+} //namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_UTILITIES_BLOCKVECTOR_HPP_
+#endif //GEOS_LINEARALGEBRA_UTILITIES_BLOCKVECTOR_HPP_

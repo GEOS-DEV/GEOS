@@ -67,7 +67,7 @@
 
 #include <numeric>
 
-namespace geosx
+namespace geos
 {
 
 namespace vtk
@@ -252,7 +252,7 @@ vtkSmartPointer< vtkCellArray > getCellArray( vtkDataSet & mesh )
   }
   else
   {
-    GEOSX_ERROR( "Unsupported mesh format" );
+    GEOS_ERROR( "Unsupported mesh format" );
   }
   return cells;
 }
@@ -366,7 +366,7 @@ VTKLegacyDatasetType getVTKLegacyDatasetType( vtkSmartPointer< vtkDataSetReader 
   }
   else
   {
-    GEOSX_ERROR( "Unsupported legacy VTK dataset format" );
+    GEOS_ERROR( "Unsupported legacy VTK dataset format" );
   }
   return {};
 }
@@ -414,7 +414,7 @@ loadMesh( Path const & filePath,
       vtkCompositeDataSet * compositeDataSet = reader->GetOutput();
       if( !compositeDataSet->IsA( "vtkMultiBlockDataSet" ) )
       {
-        GEOSX_ERROR( "Unsupported vtk multi-block format in file \"" << filePath << "\"" );
+        GEOS_ERROR( "Unsupported vtk multi-block format in file \"" << filePath << "\"" );
       }
       vtkMultiBlockDataSet * multiBlockDataSet = vtkMultiBlockDataSet::SafeDownCast( compositeDataSet );
 
@@ -433,7 +433,7 @@ loadMesh( Path const & filePath,
           }
         }
       }
-      GEOSX_ERROR( "Could not find mesh \"" << blockName << "\" in multi-block vtk file \"" << filePath << "\"" );
+      GEOS_ERROR( "Could not find mesh \"" << blockName << "\" in multi-block vtk file \"" << filePath << "\"" );
       return {};
     }
     case VTKMeshExtension::vtk:
@@ -465,7 +465,7 @@ loadMesh( Path const & filePath,
     case VTKMeshExtension::pvti: return parallelRead( vtkSmartPointer< vtkXMLPImageDataReader >::New() );
     default:
     {
-      GEOSX_ERROR( extension << " is not a recognized extension for VTKMesh. Please use .vtk, .vtu, .vtr, .vts, .vti, .pvtu, .pvtr, .pvts or .ptvi." );
+      GEOS_ERROR( extension << " is not a recognized extension for VTKMesh. Please use .vtk, .vtu, .vtr, .vts, .vti, .pvtu, .pvtr, .pvts or .ptvi." );
       break;
     }
   }
@@ -482,7 +482,7 @@ loadMesh( Path const & filePath,
 vtkSmartPointer< vtkDataSet >
 generateGlobalIDs( vtkDataSet & mesh )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   vtkNew< vtkGenerateGlobalIds > generator;
   generator->SetInputDataObject( &mesh );
@@ -505,7 +505,7 @@ redistributeByCellGraph( vtkDataSet & mesh,
                          MPI_Comm const comm,
                          int const numRefinements )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   int64_t const numElems = mesh.GetNumberOfCells();
   int64_t const numProcs = MpiWrapper::commSize( comm );
@@ -533,15 +533,15 @@ redistributeByCellGraph( vtkDataSet & mesh,
       case PartitionMethod::ptscotch:
       {
 #ifdef GEOSX_USE_SCOTCH
-        GEOSX_WARNING_IF( numRefinements > 0, "Partition refinement is not supported by 'ptscotch' partitioning method" );
+        GEOS_WARNING_IF( numRefinements > 0, "Partition refinement is not supported by 'ptscotch' partitioning method" );
         return ptscotch::partition( graph.toViewConst(), numProcs, comm );
 #else
-        GEOSX_THROW( "GEOSX must be built with Scotch support (ENABLE_SCOTCH=ON) to use 'ptscotch' partitioning method", InputError );
+        GEOS_THROW( "GEOSX must be built with Scotch support (ENABLE_SCOTCH=ON) to use 'ptscotch' partitioning method", InputError );
 #endif
       }
       default:
       {
-        GEOSX_THROW( "Unknown partition method", InputError );
+        GEOS_THROW( "Unknown partition method", InputError );
       }
     }
   }();
@@ -558,7 +558,7 @@ redistributeByCellGraph( vtkDataSet & mesh,
 vtkSmartPointer< vtkDataSet >
 redistributeByKdTree( vtkDataSet & mesh )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // Use a VTK filter which employs a kd-tree partition internally
   vtkNew< vtkRedistributeDataSetFilter > rdsf;
@@ -600,7 +600,7 @@ redistributeMesh( vtkDataSet & loadedMesh,
                   int const partitionRefinement,
                   int const useGlobalIds )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // Generate global IDs for vertices and cells, if needed
   vtkSmartPointer< vtkDataSet > mesh;
@@ -608,23 +608,23 @@ redistributeMesh( vtkDataSet & loadedMesh,
                             && loadedMesh.GetCellData()->GetGlobalIds() != nullptr;
   if( useGlobalIds > 0 && !globalIdsAvailable )
   {
-    GEOSX_ERROR( "Global IDs strictly required (useGlobalId > 0) but unavailable. Set useGlobalIds to 0 to build them automatically." );
+    GEOS_ERROR( "Global IDs strictly required (useGlobalId > 0) but unavailable. Set useGlobalIds to 0 to build them automatically." );
   }
   else if( useGlobalIds >= 0 && globalIdsAvailable )
   {
     mesh = &loadedMesh;
     vtkIdTypeArray const * const globalCellId = vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() );
     vtkIdTypeArray const * const globalPointId = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
-    GEOSX_ERROR_IF( globalCellId->GetNumberOfComponents() != 1 && globalCellId->GetNumberOfTuples() != mesh->GetNumberOfCells(),
-                    "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
-    GEOSX_ERROR_IF( globalPointId->GetNumberOfComponents() != 1 && globalPointId->GetNumberOfTuples() != mesh->GetNumberOfPoints(),
-                    "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
+    GEOS_ERROR_IF( globalCellId->GetNumberOfComponents() != 1 && globalCellId->GetNumberOfTuples() != mesh->GetNumberOfCells(),
+                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
+    GEOS_ERROR_IF( globalPointId->GetNumberOfComponents() != 1 && globalPointId->GetNumberOfTuples() != mesh->GetNumberOfPoints(),
+                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
 
-    GEOSX_LOG_RANK_0( "Using global Ids defined in VTK mesh" );
+    GEOS_LOG_RANK_0( "Using global Ids defined in VTK mesh" );
   }
   else
   {
-    GEOSX_LOG_RANK_0( "Generating global Ids from VTK mesh" );
+    GEOS_LOG_RANK_0( "Generating global Ids from VTK mesh" );
     vtkNew< vtkGenerateGlobalIds > generator;
     generator->SetInputDataObject( &loadedMesh );
     generator->Update();
@@ -655,9 +655,9 @@ redistributeMesh( vtkDataSet & loadedMesh,
  * @param cell The vtk cell VTK_POLYHEDRON
  * @return The geosx element type associated to VTK_POLYHEDRON
  */
-geosx::ElementType buildGeosxPolyhedronType( vtkCell * const cell )
+geos::ElementType buildGeosxPolyhedronType( vtkCell * const cell )
 {
-  GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input for polyhedronType() must be a VTK_POLYHEDRON." );
+  GEOS_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input for polyhedronType() must be a VTK_POLYHEDRON." );
 
   localIndex const numFaces = cell->GetNumberOfFaces();
   localIndex numTriangles = 0;
@@ -679,27 +679,27 @@ geosx::ElementType buildGeosxPolyhedronType( vtkCell * const cell )
 
   if( numTriangles == 4 && numFaces == 4 )
   {
-    return geosx::ElementType::Tetrahedron;
+    return geos::ElementType::Tetrahedron;
   }
 
   if( numQuads == 6 && numFaces == 6 )
   {
-    return geosx::ElementType::Hexahedron;
+    return geos::ElementType::Hexahedron;
   }
 
   if( numTriangles == 2 && numQuads == 3 && numFaces == 5 )
   {
-    return geosx::ElementType::Wedge;
+    return geos::ElementType::Wedge;
   }
 
   if( numTriangles == 4 && numQuads == 1 && numFaces == 5 )
   {
-    return geosx::ElementType::Pyramid;
+    return geos::ElementType::Pyramid;
   }
 
   if( numFaces - numQuads != 2 )
   {
-    return geosx::ElementType::Polyhedron;
+    return geos::ElementType::Polyhedron;
   }
 
   // Check if the polyhedron is a prism
@@ -728,22 +728,22 @@ geosx::ElementType buildGeosxPolyhedronType( vtkCell * const cell )
 
   if( quadsPoints != noQuadsPoints )
   {
-    return geosx::ElementType::Polyhedron;
+    return geos::ElementType::Polyhedron;
   }
 
   // The polyhedron is a prism
   switch( numQuads )
   {
-    case 5:  return geosx::ElementType::Prism5;
-    case 6:  return geosx::ElementType::Prism6;
-    case 7:  return geosx::ElementType::Prism7;
-    case 8:  return geosx::ElementType::Prism8;
-    case 9:  return geosx::ElementType::Prism9;
-    case 10: return geosx::ElementType::Prism10;
-    case 11: return geosx::ElementType::Prism11;
+    case 5:  return geos::ElementType::Prism5;
+    case 6:  return geos::ElementType::Prism6;
+    case 7:  return geos::ElementType::Prism7;
+    case 8:  return geos::ElementType::Prism8;
+    case 9:  return geos::ElementType::Prism9;
+    case 10: return geos::ElementType::Prism10;
+    case 11: return geos::ElementType::Prism11;
     default:
     {
-      GEOSX_ERROR( "Prism with " << numQuads << " sides is not supported." );
+      GEOS_ERROR( "Prism with " << numQuads << " sides is not supported." );
       return{};
     }
   }
@@ -773,7 +773,7 @@ ElementType convertVtkToGeosxElementType( vtkCell *cell )
     case VTK_POLYHEDRON:       return buildGeosxPolyhedronType( cell );
     default:
     {
-      GEOSX_ERROR( cell->GetCellType() << " is not a recognized cell type to be used with the VTKMeshGenerator" );
+      GEOS_ERROR( cell->GetCellType() << " is not a recognized cell type to be used with the VTKMeshGenerator" );
       return {};
     }
   }
@@ -846,7 +846,7 @@ splitCellsByType( vtkDataSet & mesh )
       }
       default:
       {
-        GEOSX_ERROR( "Invalid element dimension: " << getElementDim( type ) );
+        GEOS_ERROR( "Invalid element dimension: " << getElementDim( type ) );
       }
     }
   }
@@ -878,8 +878,8 @@ splitCellsByTypeAndAttribute( std::map< ElementType, std::vector< vtkIdType > > 
     }
     else
     {
-      GEOSX_ERROR_IF_NE_MSG( attributeDataArray->GetNumberOfComponents(), 1,
-                             "Invalid number of components in attribute array" );
+      GEOS_ERROR_IF_NE_MSG( attributeDataArray->GetNumberOfComponents(), 1,
+                            "Invalid number of components in attribute array" );
       vtkArrayDispatch::Dispatch::Execute( attributeDataArray, [&]( auto const * attributeArray )
       {
         using ArrayType = TYPEOFPTR( attributeArray );
@@ -956,7 +956,7 @@ void extendCellMapWithRemoteKeys( CellMapType & cellMap )
  */
 std::vector< localIndex > getTetrahedronNodeOrderingFromPolyhedron( vtkCell * const cell )
 {
-  GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
+  GEOS_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
 
   real64 vectorA[3];
   real64 vectorB[3];
@@ -998,7 +998,7 @@ std::vector< localIndex > getTetrahedronNodeOrderingFromPolyhedron( vtkCell * co
  */
 std::vector< localIndex > getHexahedronNodeOrderingFromPolyhedron( vtkCell * const cell )
 {
-  GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
+  GEOS_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
 
   localIndex iFace;
   std::vector< localIndex > nodeOrder( 8 );
@@ -1073,7 +1073,7 @@ std::vector< localIndex > getHexahedronNodeOrderingFromPolyhedron( vtkCell * con
  */
 std::vector< localIndex > getWedgeNodeOrderingFromPolyhedron( vtkCell * const cell )
 {
-  GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
+  GEOS_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
 
   localIndex iFace;
   std::vector< localIndex > nodeTri0( 3 );
@@ -1097,7 +1097,7 @@ std::vector< localIndex > getWedgeNodeOrderingFromPolyhedron( vtkCell * const ce
     }
   }
 
-  GEOSX_ERROR_IF( iFace == numFaces, "Invalid wedge." );
+  GEOS_ERROR_IF( iFace == numFaces, "Invalid wedge." );
 
   // Get global pointIds for the first triangle
   for( localIndex i = 0; i < 3; ++i )
@@ -1169,7 +1169,7 @@ std::vector< localIndex > getWedgeNodeOrderingFromPolyhedron( vtkCell * const ce
  */
 std::vector< localIndex > getPyramidNodeOrderingFromPolyhedron( vtkCell * const cell )
 {
-  GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
+  GEOS_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
 
   localIndex iPoint;
   localIndex iFace;
@@ -1192,7 +1192,7 @@ std::vector< localIndex > getPyramidNodeOrderingFromPolyhedron( vtkCell * const 
     }
   }
 
-  GEOSX_ERROR_IF( iFace == numFaces, "Invalid pyramid." );
+  GEOS_ERROR_IF( iFace == numFaces, "Invalid pyramid." );
 
   // Get global pointIds for the base
   vtkCell * cellFace = cell->GetFace( iFace );
@@ -1244,7 +1244,7 @@ std::vector< localIndex > getPyramidNodeOrderingFromPolyhedron( vtkCell * const 
 template< integer NUM_SIDES >
 std::vector< localIndex > getPrismNodeOrderingFromPolyhedron( vtkCell * const cell )
 {
-  GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
+  GEOS_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
 
   localIndex iFace;
   std::vector< localIndex > nodeOrder( 2*NUM_SIDES );
@@ -1266,7 +1266,7 @@ std::vector< localIndex > getPrismNodeOrderingFromPolyhedron( vtkCell * const ce
     }
   }
 
-  GEOSX_ERROR_IF( iFace == numFaces, "Invalid prism." );
+  GEOS_ERROR_IF( iFace == numFaces, "Invalid prism." );
 
   // Get global pointIds for the first base
   vtkCell *cellFace = cell->GetFace( iFace );
@@ -1377,7 +1377,7 @@ std::vector< int > getVtkToGeosxNodeOrdering( ElementType const elemType )
     case ElementType::Prism6:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
     default:
     {
-      GEOSX_ERROR( "Cannot get vtk to geosx node ordering based on geosx element type " << elemType );
+      GEOS_ERROR( "Cannot get vtk to geosx node ordering based on geosx element type " << elemType );
       break;
     }
   }
@@ -1401,7 +1401,7 @@ std::vector< int > getVtkToGeosxNodeOrdering( VTKCellType const vtkType )
     case VTK_HEXAGONAL_PRISM:  return getVtkToGeosxNodeOrdering( ElementType::Prism6 );
     default:
     {
-      GEOSX_ERROR( "Cannot get vtk to geosx node ordering based on vtk cell type " << vtkType );
+      GEOS_ERROR( "Cannot get vtk to geosx node ordering based on vtk cell type " << vtkType );
       break;
     }
   }
@@ -1411,7 +1411,7 @@ std::vector< int > getVtkToGeosxNodeOrdering( VTKCellType const vtkType )
 std::vector< int > getVtkToGeosxPolyhedronNodeOrdering( ElementType const elemType,
                                                         vtkCell *cell )
 {
-  GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
+  GEOS_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
   switch( elemType )
   {
     case ElementType::Tetrahedron: return getTetrahedronNodeOrderingFromPolyhedron( cell );
@@ -1427,7 +1427,7 @@ std::vector< int > getVtkToGeosxPolyhedronNodeOrdering( ElementType const elemTy
     case ElementType::Prism11:     return getPrismNodeOrderingFromPolyhedron< 11 >( cell );
     default:
     {
-      GEOSX_ERROR( "Unsupported VTK polyhedral cell" );
+      GEOS_ERROR( "Unsupported VTK polyhedral cell" );
       break;
     }
   }
@@ -1448,7 +1448,7 @@ void fillCellBlock( vtkDataSet & mesh,
   arrayView2d< localIndex, cells::NODE_MAP_USD > const cellToVertex = cellBlock.getElemToNode();
   arrayView1d< globalIndex > const & localToGlobal = cellBlock.localToGlobalMap();
   vtkIdTypeArray const * const globalCellId = vtkIdTypeArray::FastDownCast( mesh.GetCellData()->GetGlobalIds() );
-  GEOSX_ERROR_IF( !cellIds.empty() && globalCellId == nullptr, "Global cell IDs have not been generated" );
+  GEOS_ERROR_IF( !cellIds.empty() && globalCellId == nullptr, "Global cell IDs have not been generated" );
 
   localIndex cellCount = 0;
   auto const writeCell = [&]( vtkIdType const c, vtkCell * const cell, auto const & nodeOrder )
@@ -1518,7 +1518,7 @@ string getElementTypeName( ElementType const type )
     case ElementType::Polyhedron:  return "polyhedra";
     default:
     {
-      GEOSX_ERROR( "Element type '" << type << "' is not supported" );
+      GEOS_ERROR( "Element type '" << type << "' is not supported" );
       return {};
     }
   }
@@ -1560,8 +1560,8 @@ void importMaterialField( std::vector< vtkIdType > const & cellIds,
 
     localIndex const numComponentsSrc = LvArray::integerConversion< localIndex >( vtkArray->GetNumberOfComponents() );
     localIndex const numComponentsDst = wrapperT.numArrayComp() / view.size( 1 );
-    GEOSX_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
-                           "Mismatch in number of components for field " << vtkArray->GetName() );
+    GEOS_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
+                          "Mismatch in number of components for field " << vtkArray->GetName() );
 
     vtkArrayDispatch::DispatchByValueType< vtkArrayDispatch::Reals >::Execute( vtkArray, [&]( auto const * srcArray )
     {
@@ -1596,8 +1596,8 @@ void importRegularField( std::vector< vtkIdType > const & cellIds,
 
     localIndex const numComponentsSrc = LvArray::integerConversion< localIndex >( vtkArray->GetNumberOfComponents() );
     localIndex const numComponentsDst = wrapperT.numArrayComp();
-    GEOSX_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
-                           "Mismatch in number of components for field " << vtkArray->GetName() );
+    GEOS_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
+                          "Mismatch in number of components for field " << vtkArray->GetName() );
 
     vtkArrayDispatch::DispatchByValueType< vtkArrayDispatch::Reals >::Execute( vtkArray, [&]( auto const * srcArray )
     {
@@ -1663,18 +1663,18 @@ void printMeshStatistics( vtkDataSet & mesh,
   if( rank == 0 )
   {
     int const widthGlobal = static_cast< int >( std::log10( std::max( numGlobalElems, numGlobalNodes ) ) + 1 );
-    GEOSX_LOG( GEOSX_FMT( "Number of nodes: {:>{}}", numGlobalNodes, widthGlobal ) );
-    GEOSX_LOG( GEOSX_FMT( "  Number of elems: {:>{}}", numGlobalElems, widthGlobal ) );
+    GEOS_LOG( GEOS_FMT( "Number of nodes: {:>{}}", numGlobalNodes, widthGlobal ) );
+    GEOS_LOG( GEOS_FMT( "  Number of elems: {:>{}}", numGlobalElems, widthGlobal ) );
     for( auto const & typeCount: elemCounts )
     {
-      GEOSX_LOG( GEOSX_FMT( "{:>17}: {:>{}}", toString( typeCount.first ), typeCount.second, widthGlobal ) );
+      GEOS_LOG( GEOS_FMT( "{:>17}: {:>{}}", toString( typeCount.first ), typeCount.second, widthGlobal ) );
     }
 
     int const widthLocal = static_cast< int >( std::log10( maxLocalElems ) + 1 );
-    GEOSX_LOG( GEOSX_FMT( "Load balancing: {1:>{0}} {2:>{0}} {3:>{0}}\n"
-                          "(element/rank): {4:>{0}} {5:>{0}} {6:>{0}}",
-                          widthLocal, "min", "avg", "max",
-                          minLocalElems, avgLocalElems, maxLocalElems ) );
+    GEOS_LOG( GEOS_FMT( "Load balancing: {1:>{0}} {2:>{0}} {3:>{0}}\n"
+                        "(element/rank): {4:>{0}} {5:>{0}} {6:>{0}}",
+                        widthLocal, "min", "avg", "max",
+                        minLocalElems, avgLocalElems, maxLocalElems ) );
   }
 }
 
@@ -1688,14 +1688,14 @@ findArraysForImport( vtkDataSet & mesh,
   for( string const & sourceName : srcFieldNames )
   {
     vtkAbstractArray * const curArray = cellData.GetAbstractArray( sourceName.c_str() );
-    GEOSX_THROW_IF( curArray == nullptr,
-                    GEOSX_FMT( "Source field '{}' not found in dataset", sourceName ),
-                    InputError );
+    GEOS_THROW_IF( curArray == nullptr,
+                   GEOS_FMT( "Source field '{}' not found in dataset", sourceName ),
+                   InputError );
 
     int const dataType = curArray->GetDataType();
-    GEOSX_ERROR_IF( dataType != VTK_FLOAT && dataType != VTK_DOUBLE,
-                    GEOSX_FMT( "Source field '{}' has unsupported type: {} (expected floating point type)",
-                               sourceName, curArray->GetDataTypeAsString() ) );
+    GEOS_ERROR_IF( dataType != VTK_FLOAT && dataType != VTK_DOUBLE,
+                   GEOS_FMT( "Source field '{}' has unsupported type: {} (expected floating point type)",
+                             sourceName, curArray->GetDataTypeAsString() ) );
     arrays.push_back( vtkDataArray::SafeDownCast( curArray ) );
   }
 
@@ -1709,14 +1709,14 @@ findArrayForImport( vtkDataSet & mesh,
   vtkCellData & cellData = *mesh.GetCellData();
 
   vtkAbstractArray * const curArray = cellData.GetAbstractArray( sourceName.c_str() );
-  GEOSX_THROW_IF( curArray == nullptr,
-                  GEOSX_FMT( "Source field '{}' not found in dataset", sourceName ),
-                  InputError );
+  GEOS_THROW_IF( curArray == nullptr,
+                 GEOS_FMT( "Source field '{}' not found in dataset", sourceName ),
+                 InputError );
 
   int const dataType = curArray->GetDataType();
-  GEOSX_ERROR_IF( dataType != VTK_FLOAT && dataType != VTK_DOUBLE,
-                  GEOSX_FMT( "Source field '{}' has unsupported type: {} (expected floating point type)",
-                             sourceName, curArray->GetDataTypeAsString() ) );
+  GEOS_ERROR_IF( dataType != VTK_FLOAT && dataType != VTK_DOUBLE,
+                 GEOS_FMT( "Source field '{}' has unsupported type: {} (expected floating point type)",
+                           sourceName, curArray->GetDataTypeAsString() ) );
   return vtkDataArray::SafeDownCast( curArray );
 }
 
@@ -1734,7 +1734,7 @@ bool hasArray( vtkDataSet & mesh, string const & sourceName )
  */
 string buildCellBlockName( ElementType const type, int const regionId )
 {
-  GEOSX_ERROR_IF_LT_MSG( regionId, -1, "Invalid region id" );
+  GEOS_ERROR_IF_LT_MSG( regionId, -1, "Invalid region id" );
   string const cellTypeName = getElementTypeName( type );
   return regionId != -1 ? std::to_string( regionId ) + "_" + cellTypeName : cellTypeName;
 }
@@ -1760,12 +1760,12 @@ void importNodesets( integer const logLevel,
 
   for( int i=0; i < nodesetNames.size(); ++i )
   {
-    GEOSX_LOG_RANK_0_IF( logLevel >= 2, "    " + nodesetNames[i] );
+    GEOS_LOG_RANK_0_IF( logLevel >= 2, "    " + nodesetNames[i] );
 
     vtkAbstractArray * const curArray = mesh.GetPointData()->GetAbstractArray( nodesetNames[i].c_str() );
-    GEOSX_THROW_IF( curArray == nullptr,
-                    GEOSX_FMT( "Target nodeset '{}' not found in mesh", nodesetNames[i] ),
-                    InputError );
+    GEOS_THROW_IF( curArray == nullptr,
+                   GEOS_FMT( "Target nodeset '{}' not found in mesh", nodesetNames[i] ),
+                   InputError );
     vtkTypeInt64Array const & nodesetMask = *vtkTypeInt64Array::FastDownCast( curArray );
 
     SortedArray< localIndex > & targetNodeset = nodeSets[ nodesetNames[i] ];
@@ -1783,8 +1783,8 @@ real64 writeNodes( integer const logLevel,
                    vtkDataSet & mesh,
                    string_array & nodesetNames,
                    CellBlockManager & cellBlockManager,
-                   const geosx::R1Tensor & translate,
-                   const geosx::R1Tensor & scale )
+                   const geos::R1Tensor & translate,
+                   const geos::R1Tensor & scale )
 {
   localIndex const numPts = LvArray::integerConversion< localIndex >( mesh.GetNumberOfPoints() );
   cellBlockManager.setNumNodes( numPts );
@@ -1808,11 +1808,11 @@ real64 writeNodes( integer const logLevel,
 
     // TODO: remove this check once the input mesh is cleaned of duplicate points via a filter
     //       and make launch policy parallel again
-    GEOSX_ERROR_IF( nodeGlobalIds.count( pointGlobalID ) > 0,
-                    GEOSX_FMT( "Duplicate point detected: globalID = {}\n"
-                               "Consider cleaning the dataset in Paraview using 'Clean to grid' filter.\n"
-                               "Make sure partitionRefinement is set to 1 or higher (this may help).",
-                               pointGlobalID ) );
+    GEOS_ERROR_IF( nodeGlobalIds.count( pointGlobalID ) > 0,
+                   GEOS_FMT( "Duplicate point detected: globalID = {}\n"
+                             "Consider cleaning the dataset in Paraview using 'Clean to grid' filter.\n"
+                             "Make sure partitionRefinement is set to 1 or higher (this may help).",
+                             pointGlobalID ) );
     nodeGlobalIds.insert( pointGlobalID );
   } );
 
@@ -1845,7 +1845,7 @@ real64 writeNodes( integer const logLevel,
 
 void writeCells( integer const logLevel,
                  vtkDataSet & mesh,
-                 const geosx::vtk::CellMapType & cellMap,
+                 const geos::vtk::CellMapType & cellMap,
                  CellBlockManager & cellBlockManager )
 {
   // Creates a new cell block for each region and for each type of cell.
@@ -1863,7 +1863,7 @@ void writeCells( integer const logLevel,
       std::vector< vtkIdType > const & cellIds = regionCells.second;
 
       string const cellBlockName = vtk::buildCellBlockName( elemType, regionId );
-      GEOSX_LOG_RANK_0_IF( logLevel >= 1, "Importing cell block " << cellBlockName );
+      GEOS_LOG_RANK_0_IF( logLevel >= 1, "Importing cell block " << cellBlockName );
 
       // Create and resize the cell block.
       CellBlock & cellBlock = cellBlockManager.registerCellBlock( cellBlockName );
@@ -1877,7 +1877,7 @@ void writeCells( integer const logLevel,
 
 void writeSurfaces( integer const logLevel,
                     vtkDataSet & mesh,
-                    const geosx::vtk::CellMapType & cellMap,
+                    const geos::vtk::CellMapType & cellMap,
                     CellBlockManager & cellBlockManager )
 {
   if( cellMap.count( ElementType::Polygon ) == 0 )
@@ -1891,7 +1891,7 @@ void writeSurfaces( integer const logLevel,
     int const surfaceId = surfaceCells.first;
     std::vector< vtkIdType > const & cellIds = surfaceCells.second;
     string const surfaceName = std::to_string( surfaceId );
-    GEOSX_LOG_RANK_0_IF( logLevel >= 1, "Importing surface " << surfaceName );
+    GEOS_LOG_RANK_0_IF( logLevel >= 1, "Importing surface " << surfaceName );
 
     // Get or create all surfaces (even those which are empty in this rank)
     SortedArray< localIndex > & curNodeSet = nodeSets[ surfaceName ];
@@ -1908,4 +1908,4 @@ void writeSurfaces( integer const logLevel,
 }
 
 
-} // namespace geosx
+} // namespace geos

@@ -16,8 +16,8 @@
  * @file ElementRegionManager.hpp
  */
 
-#ifndef GEOSX_MESH_ELEMENTREGIONMANAGER_HPP
-#define GEOSX_MESH_ELEMENTREGIONMANAGER_HPP
+#ifndef GEOS_MESH_ELEMENTREGIONMANAGER_HPP
+#define GEOS_MESH_ELEMENTREGIONMANAGER_HPP
 
 #include "constitutive/ConstitutiveManager.hpp"
 #include "CellElementRegion.hpp"
@@ -28,7 +28,7 @@
 #include "SurfaceElementRegion.hpp"
 #include "WellElementRegion.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class MeshManager;
@@ -225,6 +225,7 @@ public:
    * @brief Get a element region.
    * @param key The key of element region, either name or number.
    * @return Reference to const T.
+   * @throw std::domain_error if the requested region doesn't exist.
    */
   template< typename T=ElementRegionBase, typename KEY_TYPE=void >
   T const & getRegion( KEY_TYPE const & key ) const
@@ -236,6 +237,7 @@ public:
    * @brief Get a element region.
    * @param key The key of the element region, either name or number.
    * @return Reference to T.
+   * @throw std::domain_error if the requested region doesn't exist.
    */
   template< typename T=ElementRegionBase, typename KEY_TYPE=void >
   T & getRegion( KEY_TYPE const & key )
@@ -1429,7 +1431,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
     localIndex const er = regionMap.getIndex( regionNames[k] );
     if( er >=0 )
     {
-      GEOSX_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
       ElementRegionBase const & region = getRegion( er );
 
       region.forElementSubRegionsIndex( [&]( localIndex const esr,
@@ -1445,7 +1447,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
         }
         else
         {
-          GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialKeyName[k] << " does not contain " << viewName );
+          GEOS_ERROR_IF( !allowMissingViews, "Material " << materialKeyName[k] << " does not contain " << viewName );
         }
       } );
     }
@@ -1477,7 +1479,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
     localIndex const er = regionMap.getIndex( regionNames[k] );
     if( er >=0 )
     {
-      GEOSX_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
       ElementRegionBase & region = getRegion( er );
 
       region.forElementSubRegionsIndex( [&]( localIndex const esr, ElementSubRegionBase & subRegion )
@@ -1492,7 +1494,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
         }
         else
         {
-          GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialName << " does not contain " << viewName );
+          GEOS_ERROR_IF( !allowMissingViews, "Material " << materialName << " does not contain " << viewName );
         }
       } );
     }
@@ -1517,7 +1519,7 @@ template< typename MATERIAL_TYPE, typename FIELD_TRAIT >
 ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename FIELD_TRAIT::type > >
 ElementRegionManager::constructMaterialFieldAccessor( bool const allowMissingViews ) const
 {
-  GEOSX_UNUSED_VAR( allowMissingViews );
+  GEOS_UNUSED_VAR( allowMissingViews );
   return constructMaterialViewAccessor< MATERIAL_TYPE, typename FIELD_TRAIT::type,
                                         traits::ViewTypeConst< typename FIELD_TRAIT::type > >( FIELD_TRAIT::key() );
 }
@@ -1648,4 +1650,4 @@ ElementRegionManager::constructFullConstitutiveAccessor( constitutive::Constitut
 }
 
 }
-#endif /* GEOSX_MESH_ELEMENTREGIONMANAGER_HPP */
+#endif /* GEOS_MESH_ELEMENTREGIONMANAGER_HPP */

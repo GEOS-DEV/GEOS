@@ -16,15 +16,15 @@
  * @file ExecutableGroup.hpp
  */
 
-#ifndef GEOSX_DATAREPOSITORY_EXECUTABLEGROUP_HPP_
-#define GEOSX_DATAREPOSITORY_EXECUTABLEGROUP_HPP_
+#ifndef GEOS_DATAREPOSITORY_EXECUTABLEGROUP_HPP_
+#define GEOS_DATAREPOSITORY_EXECUTABLEGROUP_HPP_
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "common/DataTypes.hpp"
 #include "Group.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;
@@ -93,7 +93,7 @@ public:
    */
   virtual real64 getTimestepRequest( real64 const time )
   {
-    GEOSX_UNUSED_VAR( time );
+    GEOS_UNUSED_VAR( time );
     return 1e99;
   }
 
@@ -132,4 +132,4 @@ ENUM_STRINGS( ExecutableGroup::TimesteppingBehavior,
 }
 
 
-#endif /* GEOSX_DATAREPOSITORY_EXECUTABLEGROUP_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_EXECUTABLEGROUP_HPP_ */

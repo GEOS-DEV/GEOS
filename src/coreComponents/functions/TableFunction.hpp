@@ -16,15 +16,15 @@
  * @file TableFunction.hpp
  */
 
-#ifndef GEOSX_FUNCTIONS_TABLEFUNCTION_HPP_
-#define GEOSX_FUNCTIONS_TABLEFUNCTION_HPP_
+#ifndef GEOS_FUNCTIONS_TABLEFUNCTION_HPP_
+#define GEOS_FUNCTIONS_TABLEFUNCTION_HPP_
 
 #include "FunctionBase.hpp"
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -85,7 +85,7 @@ public:
      * @return interpolated value
      */
     template< typename IN_ARRAY >
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     real64 compute( IN_ARRAY const & input ) const;
 
     /**
@@ -95,7 +95,7 @@ public:
      * @return interpolated value
      */
     template< typename IN_ARRAY, typename OUT_ARRAY >
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     real64 compute( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const;
 
     /**
@@ -136,7 +136,7 @@ private:
      * @return interpolated value
      */
     template< typename IN_ARRAY >
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     real64
     interpolateLinear( IN_ARRAY const & input ) const;
 
@@ -147,7 +147,7 @@ private:
      * @return interpolated value
      */
     template< typename IN_ARRAY, typename OUT_ARRAY >
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     real64
     interpolateLinear( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const;
 
@@ -157,7 +157,7 @@ private:
      * @return interpolated value
      */
     template< typename IN_ARRAY >
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     real64
     interpolateRound( IN_ARRAY const & input ) const;
 
@@ -168,7 +168,7 @@ private:
      * @return interpolated value
      */
     template< typename IN_ARRAY, typename OUT_ARRAY >
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     real64
     interpolateRound( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const;
 
@@ -334,7 +334,7 @@ private:
 };
 
 template< typename IN_ARRAY >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 real64
 TableFunction::KernelWrapper::compute( IN_ARRAY const & input ) const
 {
@@ -349,7 +349,7 @@ TableFunction::KernelWrapper::compute( IN_ARRAY const & input ) const
 }
 
 template< typename IN_ARRAY >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 real64
 TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
 {
@@ -421,7 +421,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
 }
 
 template< typename IN_ARRAY >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 real64
 TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input ) const
 {
@@ -482,7 +482,7 @@ TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input ) const
 }
 
 template< typename IN_ARRAY, typename OUT_ARRAY >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 real64
 TableFunction::KernelWrapper::compute( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
 {
@@ -499,7 +499,7 @@ TableFunction::KernelWrapper::compute( IN_ARRAY const & input, OUT_ARRAY && deri
 }
 
 template< typename IN_ARRAY, typename OUT_ARRAY >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 real64
 TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
 {
@@ -599,12 +599,12 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARR
 }
 
 template< typename IN_ARRAY, typename OUT_ARRAY >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 real64
 TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
 {
-  GEOSX_UNUSED_VAR( input, derivatives );
-  GEOSX_ERROR( "Rounding interpolation with derivatives not implemented" );
+  GEOS_UNUSED_VAR( input, derivatives );
+  GEOS_ERROR( "Rounding interpolation with derivatives not implemented" );
   return 0.0;
 }
 
@@ -615,6 +615,6 @@ ENUM_STRINGS( TableFunction::InterpolationType,
               "upper",
               "lower" );
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FUNCTIONS_TABLEFUNCTION_HPP_ */
+#endif /* GEOS_FUNCTIONS_TABLEFUNCTION_HPP_ */

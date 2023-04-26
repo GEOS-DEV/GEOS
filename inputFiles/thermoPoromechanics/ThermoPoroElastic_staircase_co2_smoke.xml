@@ -181,7 +181,8 @@
     <BiotPorosity
       name="rockPorosityChannel"
       grainBulkModulus="1.0e27"
-      defaultReferencePorosity="0.2"/>
+      defaultReferencePorosity="0.2"
+      defaultThermalExpansionCoefficient="1e-5"/>
 
     <PorousElasticIsotropic
       name="porousRockBarrier"
@@ -201,7 +202,8 @@
     <BiotPorosity
       name="rockPorosityBarrier"
       grainBulkModulus="1.0e27"
-      defaultReferencePorosity="0.05"/>
+      defaultReferencePorosity="0.05"
+      defaultThermalExpansionCoefficient="1e-5"/>
 
     <SolidInternalEnergy
       name="rockInternalEnergy"
