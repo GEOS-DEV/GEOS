@@ -39,4 +39,14 @@ set(YAPF_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/pyt
 # Sphinx
 set(SPHINX_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/python/bin/sphinx-build CACHE PATH "" FORCE)
 
+# MKL
+set(ENABLE_MKL ON CACHE BOOL "")
+set(MKL_ROOT /usr/tce/packages/mkl/mkl-2022.1.0)
+set(MKL_INCLUDE_DIRS ${MKL_ROOT}/include CACHE STRING "")
+set(MKL_LIBRARIES ${MKL_ROOT}/lib/intel64/libmkl_intel_lp64.so
+                  ${MKL_ROOT}/lib/intel64/libmkl_gnu_thread.so
+                  ${MKL_ROOT}/lib/intel64/libmkl_core.so
+                  CACHE STRING "")
+
+
 include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)
