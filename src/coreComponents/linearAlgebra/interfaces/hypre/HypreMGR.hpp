@@ -141,6 +141,20 @@ protected:
                      HypreMGRData & mgrData )
 
   {
+    // Ensure that if no F-relaxation or global smoothing is chosen the corresponding number
+    // of iteration is set to 0
+    for( HYPRE_Int i = 0; i < numLevels; ++i )
+    {
+      if( m_levelFRelaxType[i] == MGRFRelaxationType::none )
+      {
+        m_levelFRelaxIters[i] = 0;
+      }
+      if( m_levelGlobalSmootherType[i] == MGRGlobalSmootherType::none )
+      {
+        m_levelGlobalSmootherIters[i] = 0;
+      }
+    }
+
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCpointsByPointMarkerArray( precond.ptr,
                                                                  m_numBlocks, numLevels,
                                                                  m_numLabels, m_ptrLabels,

@@ -73,7 +73,6 @@ public:
     m_levelRestrictType[0]        = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0]    = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
-    m_levelGlobalSmootherIters[0] = 0;
 
 #ifdef GEOSX_USE_HYPRE_CUDA
     m_levelFRelaxType[1]          = MGRFRelaxationType::l1jacobi;

@@ -75,7 +75,6 @@ public:
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
-    m_levelGlobalSmootherIters[0] = 0;
 
     // Level 1
 #ifdef GEOSX_USE_HYPRE_CUDA
@@ -88,7 +87,6 @@ public:
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::none;
-    m_levelGlobalSmootherIters[1] = 0;
   }
 
   /**

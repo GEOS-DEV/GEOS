@@ -71,17 +71,14 @@ public:
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::nonGalerkin;
     m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
-    m_levelGlobalSmootherIters[0] = 0;
 
     // Level 1
-    // when hypre allows
     m_levelFRelaxType[1]          = MGRFRelaxationType::l1jacobi;
     m_levelFRelaxIters[1]         = 1;
     m_levelInterpType[1]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::none;
-    m_levelGlobalSmootherIters[1] = 0;
   }
 
   /**
