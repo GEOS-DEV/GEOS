@@ -92,14 +92,15 @@ protected:
   MGRGlobalSmootherType m_levelGlobalSmootherType[numLevels]; ///< Global smoother type for each level
   HYPRE_Int m_levelGlobalSmootherIters[numLevels]{ -1 };     ///< Number of global smoother iterations for each level
 
-  // Do we need to expose these? They are not used at the moment
+  // *** Do we need to expose these? They are not used at the moment ***
   // HYPRE_Int m_numRestrictSweeps{ -1 }; ///< Number of restrict sweeps
   // HYPRE_Int m_numInterpSweeps{ -1 };   ///< Number of interpolation sweeps
 
-  HYPRE_Int m_numRelaxSweeps{ -1 }; ///< F-relaxation number of sweeps
+  // *** We can remove this options, all specs are on a per-level basis
+  // HYPRE_Int m_numRelaxSweeps{ -1 }; ///< F-relaxation number of sweeps
 
-  MGRGlobalSmootherType m_globalSmoothType{ MGRGlobalSmootherType::blockJacobi }; ///< Global smoothing type
-  HYPRE_Int m_numGlobalSmoothSweeps{ -1 }; ///< Global smoothing number of iterations
+  // MGRGlobalSmootherType m_globalSmoothType{ MGRGlobalSmootherType::blockJacobi }; ///< Global smoothing type
+  // HYPRE_Int m_numGlobalSmoothSweeps{ -1 }; ///< Global smoothing number of iterations
 
   /**
    * @brief Constructor.
