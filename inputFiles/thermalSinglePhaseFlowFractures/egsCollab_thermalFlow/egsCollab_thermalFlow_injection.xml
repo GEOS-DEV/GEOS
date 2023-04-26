@@ -12,7 +12,8 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
         newtonMaxIter="25"
-        maxAllowedResidualNorm="1e25"/>
+        maxAllowedResidualNorm="1e25"
+        lineSearchAction="None"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhaseFVM>
@@ -93,22 +94,18 @@
     name="bottomBoundary"
     xMin="{ -0.01, -0.01, -0.01 }"
     xMax="{ 200, 200, 0.75 }"/>
-    <Box
-    name="topBoundary"
-    xMin="{ -0.01, -0.01, 143.3 }"
-    xMax="{ 200, 200, 144 }"/>
     <Cylinder
     name="Drift"
     firstFaceCenter="{ 73.425, -0.1, 72 }"
     secondFaceCenter="{ 73.425, 75, 72 }"
     outerRadius="4"/>
-    <BoundedPlane
-      name="FracturePlane"
-      origin="{ 40, 37.5, 25 }"
-      normal="{-0.0, 0.866025403784439,-0.5}"
-      lengthVector="{1.0, 0.0, -0.0}"
-      widthVector="{0.0,-0.5,-0.866025403784439}" 
-      dimensions="{ 80, 100 }"/>
+    <BoundedPlane 
+    name="FracturePlane" 
+    normal="{0.296198132726024,0.813797681349374,-0.5}" 
+    origin="{40.0, 37.5,10.}" 
+    lengthVector="{0.860365606244012,-0.0, 0.50967737206234}"
+    widthVector="{0.414774263620574,-0.581148289019578,-0.700163535474126}"
+    dimensions="{80, 300}"/>
   </Geometry>
 
   <Constitutive>
