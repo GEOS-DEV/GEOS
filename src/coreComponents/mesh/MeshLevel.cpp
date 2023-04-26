@@ -124,11 +124,11 @@ MeshLevel::MeshLevel( string const & name,
   localIndex const numLocalVertices = source.m_nodeManager->size();
   localIndex const numLocalEdges = source.m_edgeManager->size();
   localIndex const numLocalFaces = source.m_faceManager->size();
-/*
+
   localIndex const maxVertexGlobalID = source.getNodeManager().maxGlobalIndex() + 1;
   localIndex const maxEdgeGlobalID = source.getEdgeManager().maxGlobalIndex() + 1;
   localIndex const maxFaceGlobalID = source.getFaceManager().maxGlobalIndex() + 1;
-*/
+
   localIndex numLocalCells = 0;
   source.m_elementManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
   {
@@ -248,7 +248,6 @@ MeshLevel::MeshLevel( string const & name,
       }   
       newSubRegion.constructGlobalToLocalMap();
 
-/*
       CellBlockManagerABC & cellBlockManager = parent->getGroup< CellBlockManagerABC >( keys::cellManager );
       array1d< globalIndex > maxGlobalID (3);
       maxGlobalID[0] = maxVertexGlobalID;
@@ -259,7 +258,6 @@ MeshLevel::MeshLevel( string const & name,
                                               maxGlobalID,
                                               edgeLocalToGlobal,
                                               faceLocalToGlobal );
-*/
     } );
   } );
 

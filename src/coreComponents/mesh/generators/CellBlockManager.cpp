@@ -840,7 +840,8 @@ static void trilinearInterp( real64 const alpha,
   }
 }
 
-void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel const & source, MeshLevel & highOrderMeshLevel )
+void CellBlockManager::generateHighOrderMaps( localIndex const order, array1d< globalIndex > maxGlobalID, 
+         arrayView1d< globalIndex const > const edgeLocalToGlobal, arrayView1d< globalIndex const > const faceLocalToGlobal)
 {
 
   // constants for hex mesh
@@ -859,9 +860,9 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
   localIndex const numLocalEdges = this->numEdges();
   localIndex const numLocalFaces = this->numFaces();
 
-  localIndex const maxVertexGlobalID = source.getNodeManager().maxGlobalIndex() + 1;
-  localIndex const maxEdgeGlobalID = source.getEdgeManager().maxGlobalIndex() + 1;
-  localIndex const maxFaceGlobalID = source.getFaceManager().maxGlobalIndex() + 1;
+  localIndex const maxVertexGlobalID = maxGlobalID[0];
+  localIndex const maxEdgeGlobalID = maxGlobalID[1];
+  localIndex const maxFaceGlobalID = maxGlobalID[2];
 
   localIndex numLocalCells = 0;
   this->getCellBlocks().forSubGroups<CellBlock>( [&]( CellBlock & cellBlock )
@@ -919,8 +920,6 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
   // Edges
   //////////////////////////
 
-  arrayView1d< globalIndex const > const edgeLocalToGlobal = highOrderMeshLevel.getEdgeManager().localToGlobalMap();
-
   // -------------------------------------
   // ---- initialize edge-to-node map ----
   // -------------------------------------
@@ -957,8 +956,6 @@ void CellBlockManager::createHighOrderMaps( localIndex const order, MeshLevel co
   /////////////////////////
   // Faces
   //////////////////////////
-
-  arrayView1d< globalIndex const > const faceLocalToGlobal = highOrderMeshLevel.getFaceManager().localToGlobalMap();
 
   // initialize faceToNodeMap for the high-order mesh-level
   ArrayOfArrays< localIndex > & faceToNodeMapNew = m_faceToNodes;

@@ -22,7 +22,6 @@
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/CellBlock.hpp"
 #include "mesh/generators/FaceBlock.hpp"
-#include "mesh/MeshLevel.hpp"
 
 namespace geos
 {
@@ -108,12 +107,14 @@ public:
   void setNumNodes( localIndex numNodes ); // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
 
   /**
-   * @brief Creates the maps for a higher-order discretization
-   * @param[in] order The order of the cell block
-   * @param[in] source The source Mesh Level
-   * @param[in] highOrderMeshLevel the high-order Mesh Level
+   * @brief Creates the maps for a higher-order mesh-level 
+   * @param[in] order: The order of the cell block
+   * @param[in] maxGlobalID: An array contains the maximum globalID for nodes, edges and faces.
+   * @param[in] edgeLocalToGlobal: the local to global map for edges
+   * @param[in] faceLocalToGlobal: the local to global map for faces
    */
-  void createHighOrderMaps( localIndex const order, MeshLevel const & source, MeshLevel & highOrderMeshLevel );
+  void generateHighOrderMaps( localIndex const order, array1d< globalIndex > maxGlobalID, 
+               arrayView1d< globalIndex const > const edgeLocalToGlobal, arrayView1d< globalIndex const > const faceLocalToGlobal);
 
   localIndex numNodes() const override;
 
