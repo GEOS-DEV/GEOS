@@ -83,7 +83,7 @@ public:
               HyprePrecWrapper & precond,
               HypreMGRData & mgrData )
   {
-    setReduction( precond, numLevels, mgrData );
+    setReduction( precond, mgrData );
 
     // Configure the BoomerAMG solver used as mgr coarse solver for the displacement reduced system
     // (note that no separate displacement component approach is used here)

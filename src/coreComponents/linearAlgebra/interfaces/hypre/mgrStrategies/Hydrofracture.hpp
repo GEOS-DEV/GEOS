@@ -76,7 +76,7 @@ public:
               HyprePrecWrapper & precond,
               HypreMGRData & mgrData )
   {
-    setReduction( precond, numLevels, mgrData );
+    setReduction( precond, mgrData );
 
     // Configure the BoomerAMG solver used as F-relaxation for the first level
     setMechanicsFSolver( precond, mgrData );

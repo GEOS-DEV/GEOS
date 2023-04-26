@@ -134,11 +134,9 @@ protected:
   /**
    * @brief Helper function that sets the reduction features common to all mgr strategies
    * @param precond the preconditioner wrapper
-   * @param numLevels the number of reduction levels
    * @param mgrData auxiliary MGR data
    */
   void setReduction( HyprePrecWrapper & precond,
-                     HYPRE_Int numLevels,
                      HypreMGRData & mgrData )
 
   {

@@ -87,7 +87,7 @@ public:
               HyprePrecWrapper & precond,
               HypreMGRData & mgrData )
   {
-    setReduction( precond, numLevels, mgrData );
+    setReduction( precond, mgrData );
 
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 )); // truncate intermediate/coarse grids
 

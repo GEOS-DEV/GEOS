@@ -133,7 +133,7 @@ public:
       m_levelFRelaxType[0] = MGRFRelaxationType::jacobi;
     }
 
-    setReduction( precond, numLevels, mgrData );
+    setReduction( precond, mgrData );
 
     // Still needed?
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 ));

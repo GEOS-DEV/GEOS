@@ -134,7 +134,7 @@ public:
       m_levelFRelaxType[1] = MGRFRelaxationType::jacobi;
     }
 
-    setReduction( precond, numLevels, mgrData );
+    setReduction( precond, mgrData );
 
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( precond.ptr, 0 ));
 

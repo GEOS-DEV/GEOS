@@ -114,7 +114,7 @@ public:
       m_levelFRelaxType[0] = MGRFRelaxationType::jacobi;
     }
 
-    setReduction( precond, numLevels, mgrData );
+    setReduction( precond, mgrData );
 
     // I assumed this is related to the fill in generated while eliminating
     // the volume constraint. Is it still needed now that the sparsity
