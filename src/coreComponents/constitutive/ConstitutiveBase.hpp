@@ -16,14 +16,14 @@
  * @file ConstitutiveBase.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_CONSTITUTIVEBASE_HPP_
-#define GEOSX_CONSTITUTIVE_CONSTITUTIVEBASE_HPP_
+#ifndef GEOS_CONSTITUTIVE_CONSTITUTIVEBASE_HPP_
+#define GEOS_CONSTITUTIVE_CONSTITUTIVEBASE_HPP_
 
 #include "dataRepository/ObjectCatalog.hpp"
 #include "common/DataTypes.hpp"
 #include "dataRepository/Group.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -159,8 +159,6 @@ private:
 
   localIndex m_numQuadraturePoints;
 };
-
-
 
 }
 }

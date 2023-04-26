@@ -16,8 +16,8 @@
  *  @file ElasticIsotropicPressureDependent.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_ELASTICISOTROPICPRESSUREDEPENDENT_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_ELASTICISOTROPICPRESSUREDEPENDENT_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_ELASTICISOTROPICPRESSUREDEPENDENT_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_ELASTICISOTROPICPRESSUREDEPENDENT_HPP_
 
 #include "SolidBase.hpp"
 #include "InvariantDecompositions.hpp"
@@ -26,7 +26,7 @@
 #include "constitutive/ExponentialRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -47,6 +47,7 @@ public:
    * @param[in] refStrainVol        The value of the volumetric strain data for each element.
    * @param[in] recompressionIndex  The ArrayView holding the recompression index data for each element.
    * @param[in] shearModulus        The ArrayView holding the shear modulus data for each element.
+   * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] newStress           The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress           The ArrayView holding the old stress data from the previous converged step for each quadrature point.
    * @param[in] disableInelasticity Flag to disable plastic response for inelastic models
@@ -55,10 +56,11 @@ public:
                                             real64 const & refStrainVol,
                                             arrayView1d< real64 const > const & recompressionIndex,
                                             arrayView1d< real64 const > const & shearModulus,
+                                            arrayView1d< real64 const > const & thermalExpansionCoefficient,
                                             arrayView3d< real64, solid::STRESS_USD > const & newStress,
                                             arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                                             bool const & disableInelasticity ):
-    SolidBaseUpdates( newStress, oldStress, disableInelasticity ),
+    SolidBaseUpdates( newStress, oldStress, thermalExpansionCoefficient, disableInelasticity ),
     m_refPressure( refPressure ),
     m_refStrainVol( refStrainVol ),
     m_recompressionIndex( recompressionIndex ),
@@ -86,26 +88,26 @@ public:
   /// Use base version of saveConvergedState
   using SolidBaseUpdates::saveConvergedState;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   real64 ( &stiffness )[6][6] ) const override;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k,
                                     localIndex const q,
                                     real64 ( &stiffness )[6][6] ) const override;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void getElasticStrain( localIndex const k,
                                  localIndex const q,
                                  real64 ( &elasticStrain )[6] ) const override final;
@@ -127,8 +129,8 @@ protected:
 };
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ElasticIsotropicPressureDependentUpdates::getElasticStiffness( localIndex const k,
                                                                     localIndex const q,
                                                                     real64 ( & stiffness )[6][6] ) const
@@ -176,8 +178,8 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStiffness( localIndex c
 }
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ElasticIsotropicPressureDependentUpdates::getElasticStrain( localIndex const k,
                                                                  localIndex const q,
                                                                  real64 ( & elasticStrain)[6] ) const
@@ -214,8 +216,8 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStrain( localIndex cons
 }
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex const k,
                                                                   localIndex const q,
                                                                   real64 const ( &strainIncrement )[6],
@@ -296,8 +298,8 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
 }
 
 //TODO: implement the discretizationOps version of smallStrainUpdate
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex const k,
                                                                   localIndex const q,
                                                                   real64 const ( &strainIncrement )[6],
@@ -501,6 +503,7 @@ public:
                                                        m_refStrainVol,
                                                        m_recompressionIndex,
                                                        m_shearModulus,
+                                                       m_thermalExpansionCoefficient,
                                                        m_newStress,
                                                        m_oldStress,
                                                        m_disableInelasticity );
@@ -511,6 +514,7 @@ public:
                                                        m_refStrainVol,
                                                        m_recompressionIndex,
                                                        m_shearModulus,
+                                                       m_thermalExpansionCoefficient,
                                                        arrayView3d< real64, solid::STRESS_USD >(),
                                                        arrayView3d< real64, solid::STRESS_USD >(),
                                                        m_disableInelasticity );
@@ -533,6 +537,7 @@ public:
                           m_refStrainVol,
                           m_recompressionIndex,
                           m_shearModulus,
+                          m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
                           m_disableInelasticity );
@@ -567,11 +572,10 @@ protected:
 
   /// The shear modulus for each upper level dimension (i.e. cell) of *this
   array1d< real64 > m_shearModulus;
-
 };
 
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_ELASTICISOTROPICPRESSUREDEPENDENT_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_ELASTICISOTROPICPRESSUREDEPENDENT_HPP_ */

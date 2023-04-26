@@ -16,8 +16,8 @@
  * @file SinglePhaseFVMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVMKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVMKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVMKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVMKERNELS_HPP
 
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
@@ -38,7 +38,7 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace singlePhaseFVMKernels
@@ -246,7 +246,7 @@ public:
      * @param[in] size size of the stencil for this connection
      * @param[in] numElems number of elements for this connection
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
       : stencilSize( size ),
       numFluxElems( numElems ),
@@ -287,7 +287,7 @@ public:
    * @param[in] iconn the connection index
    * @return the size of the stencil at this connection
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex stencilSize( localIndex const iconn ) const
   { return m_sei[iconn].size(); }
 
@@ -296,7 +296,7 @@ public:
    * @param[in] iconn the connection index
    * @return the number of elements at this connection
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex numPointsInFlux( localIndex const iconn ) const
   { return m_stencilWrapper.numPointsInFlux( iconn ); }
 
@@ -305,7 +305,7 @@ public:
    * @param[in] iconn the connection index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const iconn,
               StackVariables & stack ) const
   {
@@ -329,7 +329,7 @@ public:
    * @param[in] NoOpFunc the function used to customize the computation of the flux
    */
   template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
                     FUNC && kernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
@@ -503,7 +503,7 @@ public:
    * @param[inout] stack the stack variables
    */
   template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack,
                  FUNC && kernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
@@ -517,8 +517,8 @@ public:
       {
         globalIndex const globalRow = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
         localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
-        GEOSX_ASSERT_GE( localRow, 0 );
-        GEOSX_ASSERT_GT( m_localMatrix.numRows(), localRow );
+        GEOS_ASSERT_GE( localRow, 0 );
+        GEOS_ASSERT_GT( m_localMatrix.numRows(), localRow );
 
         RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow], stack.localFlux[i * numEqn] );
         m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
@@ -544,9 +544,9 @@ public:
   launch( localIndex const numConnections,
           KERNEL_TYPE const & kernelComponent )
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
-    forAll< POLICY >( numConnections, [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+    forAll< POLICY >( numConnections, [=] GEOS_HOST_DEVICE ( localIndex const iconn )
     {
       typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
                                                   kernelComponent.numPointsInFlux( iconn ) );
@@ -711,7 +711,7 @@ struct FluxKernel
     forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [stencilWrapper, dt, rankOffset, dofNumber, ghostRank,
                                                               pres, gravCoef, dens, dDens_dPres, mob,
                                                               dMob_dPres, permeability, dPerm_dPres,
-                                                              seri, sesri, sei, localMatrix, localRhs] GEOSX_HOST_DEVICE ( localIndex const iconn )
+                                                              seri, sesri, sei, localMatrix, localRhs] GEOS_HOST_DEVICE ( localIndex const iconn )
     {
       localIndex const stencilSize = stencilWrapper.stencilSize( iconn );
       localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
@@ -763,8 +763,8 @@ struct FluxKernel
         {
           globalIndex const globalRow = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
           localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
-          GEOSX_ASSERT_GE( localRow, 0 );
-          GEOSX_ASSERT_GT( localMatrix.numRows(), localRow );
+          GEOS_ASSERT_GE( localRow, 0 );
+          GEOS_ASSERT_GT( localMatrix.numRows(), localRow );
 
           RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux[i] );
           localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
@@ -784,7 +784,7 @@ struct FluxKernel
    *
    */
   template< localIndex maxNumConnections >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   compute( localIndex const numFluxElems,
            arraySlice1d< localIndex const > const & seri,
@@ -854,14 +854,42 @@ struct FluxKernel
  * @tparam FLUIDWRAPPER the type of the fluid wrapper
  * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
  */
-template< typename FLUIDWRAPPER >
-class DirichletFaceBasedAssemblyKernel : public FaceBasedAssemblyKernel< 1,
+template< integer NUM_DOF, typename FLUIDWRAPPER >
+class DirichletFaceBasedAssemblyKernel : public FaceBasedAssemblyKernel< NUM_DOF,
                                                                          BoundaryStencilWrapper >
 {
 public:
 
-  using Base = singlePhaseFVMKernels::FaceBasedAssemblyKernel< 1,
+  using AbstractBase = singlePhaseFVMKernels::FaceBasedAssemblyKernelBase;
+  using DofNumberAccessor = AbstractBase::DofNumberAccessor;
+  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
+  using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
+  using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
+
+  using AbstractBase::m_dt;
+  using AbstractBase::m_rankOffset;
+  using AbstractBase::m_dofNumber;
+  using AbstractBase::m_ghostRank;
+  using AbstractBase::m_gravCoef;
+  using AbstractBase::m_pres;
+  using AbstractBase::m_mob;
+  using AbstractBase::m_dMob_dPres;
+  using AbstractBase::m_dens;
+  using AbstractBase::m_dDens_dPres;
+  using AbstractBase::m_permeability;
+  using AbstractBase::m_dPerm_dPres;
+
+  using AbstractBase::m_localMatrix;
+  using AbstractBase::m_localRhs;
+
+  using Base = singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_DOF,
                                                                BoundaryStencilWrapper >;
+  using Base::numDof;
+  using Base::numEqn;
+  using Base::m_stencilWrapper;
+  using Base::m_seri;
+  using Base::m_sesri;
+  using Base::m_sei;
 
   /**
    * @brief Constructor for the kernel interface
@@ -902,7 +930,6 @@ public:
     m_fluidWrapper( fluidWrapper )
   {}
 
-
   /**
    * @struct StackVariables
    * @brief Kernel variables (dof numbers, jacobian and residual) located on the stack
@@ -916,16 +943,23 @@ public:
      * @param[in] size size of the stencil for this connection
      * @param[in] numElems number of elements for this connection
      */
-    GEOSX_HOST_DEVICE
-    StackVariables( localIndex const GEOSX_UNUSED_PARAM( size ),
-                    localIndex GEOSX_UNUSED_PARAM( numElems ) )
+    GEOS_HOST_DEVICE
+    StackVariables( localIndex const GEOS_UNUSED_PARAM( size ),
+                    localIndex GEOS_UNUSED_PARAM( numElems ) )
     {}
 
+    /// Transmissibility
+    real64 transmissibility = 0.0;
+
+    /// Indices of the matrix rows/columns corresponding to the dofs in this face
+    globalIndex dofColIndices[numDof]{};
+
     /// Storage for the face local residual
-    real64 localFlux;
+    real64 localFlux[numEqn]{};
 
     /// Storage for the face local Jacobian
-    real64 localFluxJacobian;
+    real64 localFluxJacobian[numEqn][numDof]{};
+
   };
 
 
@@ -934,11 +968,17 @@ public:
    * @param[in] iconn the connection index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const iconn,
               StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR( iconn, stack );
+    globalIndex const offset =
+      m_dofNumber[m_seri( iconn, BoundaryStencil::Order::ELEM )][m_sesri( iconn, BoundaryStencil::Order::ELEM )][m_sei( iconn, BoundaryStencil::Order::ELEM )];
+
+    for( integer jdof = 0; jdof < numDof; ++jdof )
+    {
+      stack.dofColIndices[jdof] = offset + jdof;
+    }
   }
 
   /**
@@ -949,10 +989,10 @@ public:
    * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
    */
   template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
-                    FUNC && GEOSX_UNUSED_PARAM( compFluxKernelOp ) = singlePhaseBaseKernels::NoOpFunc{} ) const
+                    FUNC && compFluxKernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
   {
     using Order = BoundaryStencil::Order;
     localIndex constexpr numElems = BoundaryStencil::maxNumPointsInFlux;
@@ -984,19 +1024,29 @@ public:
                           - densMean * (m_gravCoef[er][esr][ei] - m_faceGravCoef[kf]);
     real64 const dPotDif_dP = 1.0 - dDens_dP * m_gravCoef[er][esr][ei];
 
-    real64 trans;
     real64 dTrans_dPerm[3];
-    m_stencilWrapper.computeWeights( iconn, m_permeability, trans, dTrans_dPerm );
+    m_stencilWrapper.computeWeights( iconn, m_permeability, stack.transmissibility, dTrans_dPerm );
     real64 const dTrans_dPres = LvArray::tensorOps::AiBi< 3 >( dTrans_dPerm, m_dPerm_dPres[er][esr][ei][0] );
 
-    real64 const f = trans * potDif;
-    real64 const dF_dP = trans * dPotDif_dP + dTrans_dPres * potDif;
+    real64 const f = stack.transmissibility * potDif;
+    real64 const dF_dP = stack.transmissibility * dPotDif_dP + dTrans_dPres * potDif;
 
     // Upwind mobility
     localIndex const k_up = ( potDif >= 0 ) ? Order::ELEM : Order::FACE;
+    real64 const mobility_up = mobility[k_up];
+    real64 const dMobility_dP_up = dMobility_dP[k_up];
 
-    stack.localFlux = m_dt * mobility[k_up] * f;
-    stack.localFluxJacobian = m_dt * ( mobility[k_up] * dF_dP + dMobility_dP[k_up] * f );
+    // call the lambda in the phase loop to allow the reuse of the fluxes and their derivatives
+    // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
+
+    compFluxKernelOp( er, esr, ei, kf, f, dF_dP, mobility_up, dMobility_dP_up );
+
+    // *** end of upwinding
+
+    // Populate local flux vector and derivatives
+
+    stack.localFlux[0] = m_dt * mobility[k_up] * f;
+    stack.localFluxJacobian[0][0] = m_dt * ( mobility_up * dF_dP + dMobility_dP_up * f );
   }
 
   /**
@@ -1005,10 +1055,10 @@ public:
    * @param[inout] stack the stack variables
    */
   template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack,
-                 FUNC && GEOSX_UNUSED_PARAM( assemblyKernelOp ) = singlePhaseBaseKernels::NoOpFunc{} ) const
+                 FUNC && assemblyKernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
   {
     using Order = BoundaryStencil::Order;
 
@@ -1022,8 +1072,15 @@ public:
       globalIndex const dofIndex = m_dofNumber[er][esr][ei];
       localIndex const localRow = LvArray::integerConversion< localIndex >( dofIndex - m_rankOffset );
 
-      RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow], stack.localFlux );
-      m_localMatrix.addToRow< parallelDeviceAtomic >( localRow, &dofIndex, &stack.localFluxJacobian, 1 );
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow], stack.localFlux[0] );
+
+      AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
+        ( localRow,
+        stack.dofColIndices,
+        stack.localFluxJacobian[0],
+        numDof );
+
+      assemblyKernelOp( localRow );
     }
   }
 
@@ -1037,6 +1094,7 @@ protected:
 
   /// Reference to the fluid wrapper
   FLUIDWRAPPER const m_fluidWrapper;
+
 };
 
 
@@ -1079,7 +1137,8 @@ public:
       using FluidType = TYPEOFREF( fluid );
       typename FluidType::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
 
-      using kernelType = DirichletFaceBasedAssemblyKernel< typename FluidType::KernelWrapper >;
+      integer constexpr NUM_DOF = 1;
+      using kernelType = DirichletFaceBasedAssemblyKernel< NUM_DOF, typename FluidType::KernelWrapper >;
 
       ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
@@ -1126,7 +1185,7 @@ struct AquiferBCKernel
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   compute( real64 const & aquiferVolFlux,
            real64 const & dAquiferVolFlux_dPres,
@@ -1173,7 +1232,7 @@ struct AquiferBCKernel
     BoundaryStencil::IndexContainerViewConstType const & sefi = stencil.getElementIndices();
     BoundaryStencil::WeightContainerViewConstType const & weight = stencil.getWeights();
 
-    forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+    forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
     {
 
       // working variables
@@ -1210,8 +1269,8 @@ struct AquiferBCKernel
       {
         globalIndex const globalRow = dofNumber[er][esr][ei];
         localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
-        GEOSX_ASSERT_GE( localRow, 0 );
-        GEOSX_ASSERT_GT( localMatrix.numRows(), localRow );
+        GEOS_ASSERT_GE( localRow, 0 );
+        GEOS_ASSERT_GT( localMatrix.numRows(), localRow );
 
         RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux );
         localMatrix.addToRow< parallelDeviceAtomic >( localRow,
@@ -1227,6 +1286,6 @@ struct AquiferBCKernel
 
 } // namespace singlePhaseFVMKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVMKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVMKERNELS_HPP

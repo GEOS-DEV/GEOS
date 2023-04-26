@@ -16,8 +16,8 @@
  * @file DomainPartition.hpp
  */
 
-#ifndef GEOSX_MESH_DOMAINPARTITION_HPP_
-#define GEOSX_MESH_DOMAINPARTITION_HPP_
+#ifndef GEOS_MESH_DOMAINPARTITION_HPP_
+#define GEOS_MESH_DOMAINPARTITION_HPP_
 
 #include "common/MpiWrapper.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -26,7 +26,7 @@
 #include "mesh/MeshBody.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class SiloFile;
@@ -175,6 +175,16 @@ public:
   { return this->getGroup( groupKeys.meshBodies ); }
 
   /**
+   * @brief Check if a MeshBody is present given a name.
+   * @tparam KEY_TYPE The type of the key used to look up the MeshBody.
+   * @param key The key to the MeshBody.
+   * @return True is the MeshBody exists in the domain.
+   */
+  template< typename KEY_TYPE >
+  bool hasMeshBody( KEY_TYPE const & key ) const
+  { return getMeshBodies().hasGroup< MeshBody >( key ); }
+
+  /**
    * @brief Get a MeshBody by name, const version.
    * @tparam KEY_TYPE The type of the key used to look up the MeshBody.
    * @param key The key to the MeshBody.
@@ -279,6 +289,6 @@ private:
   std::vector< NeighborCommunicator > m_neighbors;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_DOMAINPARTITION_HPP_ */
+#endif /* GEOS_MESH_DOMAINPARTITION_HPP_ */

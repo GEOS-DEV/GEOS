@@ -18,7 +18,7 @@
 
 #include "DirichletBoundaryCondition.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -38,4 +38,4 @@ DirichletBoundaryCondition::~DirichletBoundaryCondition()
 
 REGISTER_CATALOG_ENTRY( FieldSpecificationBase, DirichletBoundaryCondition, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

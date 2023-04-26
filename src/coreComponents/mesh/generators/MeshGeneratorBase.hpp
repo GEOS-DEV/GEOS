@@ -16,14 +16,15 @@
  * @file MeshGeneratorBase.hpp
  */
 
-#ifndef GEOSX_MESH_GENERATORS_MESHGENERATORBASE_HPP
-#define GEOSX_MESH_GENERATORS_MESHGENERATORBASE_HPP
+#ifndef GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
+#define GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 
 #include "dataRepository/Group.hpp"
+#include "dataRepository/WrapperBase.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace dataRepository
@@ -78,13 +79,28 @@ public:
   virtual void generateMesh( DomainPartition & domain ) = 0;
 
   /**
-   * @brief Import data from external sources (e.g. dataset that comes with a mesh).
-   * @param[in] domain the domain partition
+   * @brief Describe which kind of block must be considered.
    */
-  virtual void importFields( DomainPartition & domain ) const
+  enum struct Block
   {
-    GEOSX_UNUSED_VAR( domain );
-  }
+    VOLUMIC,
+    SURFACIC,
+    LINEIC
+  };
+
+  /**
+   * @brief import field from the mesh on the array accessible via the given wrapper.
+   * @param block Type of block to import from.
+   * @param blockName name of the block to copy data from.
+   * @param meshFieldName name of the field in the meshd
+   * @param isMaterialField Indicate if we want to import material or regular fields
+   * @param wrapper Wrapper to access the array
+   */
+  virtual void importFieldOnArray( Block block,
+                                   string const & blockName,
+                                   string const & meshFieldName,
+                                   bool isMaterialField,
+                                   dataRepository::WrapperBase & wrapper ) const = 0;
 
   /**
    * @brief Free internal resources associated with mesh/data import.
@@ -93,8 +109,26 @@ public:
    * Once this method is called, they can release any memory allocated.
    */
   virtual void freeResources() {}
-};
 
+  /**
+   * @brief Get the name mapping between mesh volumic field names and internal GEOSX volumic field names.
+   * @return The string to string mapping of field names.
+   */
+  std::map< string, string > const & getVolumicFieldsMapping() const { return m_volumicFields; }
+
+  /**
+   * @brief Get the name mapping between mesh surfacic field names and internal GEOSX surfacic field names.
+   * @return The string to string mapping of field names.
+   */
+  std::map< string, string > const & getSurfacicFieldsMapping() const { return m_surfacicFields; }
+
+protected:
+  /// Mapping from volumic field source to GEOSX field.
+  std::map< string, string > m_volumicFields;
+
+  /// Mapping from surfacic field source to GEOSX field.
+  std::map< string, string > m_surfacicFields;
+};
 }
 
-#endif /* GEOSX_MESH_GENERATORS_MESHGENERATORBASE_HPP */
+#endif /* GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP */

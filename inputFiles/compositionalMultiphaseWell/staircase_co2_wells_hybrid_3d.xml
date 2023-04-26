@@ -59,9 +59,9 @@
 
     <VTKMesh
       name="mesh1"
-      file="staircase3d_tet.vtu"
-      fieldsToImport="{ FluidComposition }"
-      fieldNamesInGEOSX="{ globalCompFraction }"
+      file="staircase3d_tet_with_properties.vtu"
+      fieldsToImport="{ FluidComposition, PERM, PORO }"
+      fieldNamesInGEOSX="{ globalCompFraction, rockPerm_permeability, rockPorosity_referencePorosity }"
       partitionRefinement="1"
       logLevel="2"/>
 

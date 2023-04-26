@@ -16,13 +16,13 @@
  * @file FieldIdentifiers.hpp
  */
 
-#ifndef GEOSX_MESH_MPICOMMUNICATIONS_FIELDIDENTIFIERS_HPP_
-#define GEOSX_MESH_MPICOMMUNICATIONS_FIELDIDENTIFIERS_HPP_
+#ifndef GEOS_MESH_MPICOMMUNICATIONS_FIELDIDENTIFIERS_HPP_
+#define GEOS_MESH_MPICOMMUNICATIONS_FIELDIDENTIFIERS_HPP_
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 /**
  * @brief Enum defining the possible location of a field on the mesh.
@@ -62,24 +62,15 @@ public:
  * @param fieldNames vector of names of the  element-based fields to be added to the map.
  * @param regionNames vector of the regions on which these fields exist.
  */
-  void addElementFields( std::vector< string > const & fieldNames, std::vector< string > const & regionNames )
+  template< typename T = std::vector< string > >
+  void addElementFields( std::vector< string > const & fieldNames, T const & regionNames )
   {
-    for( string const & regionName : regionNames )
+    for( auto const & regionName : regionNames )
     {
       addFields( fieldNames, generateKey( regionName ) );
     }
   }
-/**
- * @brief
- *
- * @param fieldNames array1d of names of the element-based fields to be added to the map.
- * @param regionNames vector of the regions on which these fields exist.
- */
-  void addElementFields( std::vector< string > const & fieldNames, arrayView1d< string const > const & regionNames )
-  {
-    std::vector< string > regions( regionNames.begin(), regionNames.end());
-    addElementFields( fieldNames, regions );
-  }
+
 /**
  * @brief Get the Fields object which is the map containing the fields existing for each location.
  *
@@ -128,7 +119,7 @@ public:
     }
     else
     {
-      GEOSX_ERROR( GEOSX_FMT( "Invalid key, {}, was provided. Location cannot be retrieved.", key ) );
+      GEOS_ERROR( GEOS_FMT( "Invalid key, {}, was provided. Location cannot be retrieved.", key ) );
     }
   }
 
@@ -177,7 +168,7 @@ private:
       }
       case FieldLocation::Elem:
       {
-        GEOSX_ERROR( "An element located field also requires a region name to be specified." );
+        GEOS_ERROR( "An element located field also requires a region name to be specified." );
         break;
       }
     }
@@ -207,6 +198,6 @@ private:
   }
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_MPICOMMUNICATIONS_FIELDIDENTIFIERS_HPP_ */
+#endif /* GEOS_MESH_MPICOMMUNICATIONS_FIELDIDENTIFIERS_HPP_ */

@@ -26,7 +26,7 @@
 #include "BufferOps.hpp"
 #include "mesh/MeshFields.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -79,8 +79,8 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   m_surfaceElementsToCells.resize( 0, 1 );
 }
 
-void EmbeddedSurfaceSubRegion::calculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
-                                                                    FaceManager const & GEOSX_UNUSED_PARAM( facemanager ) )
+void EmbeddedSurfaceSubRegion::calculateElementGeometricQuantities( NodeManager const & GEOS_UNUSED_PARAM( nodeManager ),
+                                                                    FaceManager const & GEOS_UNUSED_PARAM( facemanager ) )
 {
   // loop over the elements
   forAll< parallelHostPolicy >( this->size(), [=] ( localIndex const k )
@@ -104,33 +104,6 @@ void EmbeddedSurfaceSubRegion::calculateElementGeometricQuantities( arrayView2d<
 
   // update volume
   m_elementVolume[k] = m_elementAperture[k] * m_elementArea[k];
-}
-
-void EmbeddedSurfaceSubRegion::computeConnectivityIndex( localIndex const k,
-                                                         arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes,
-                                                         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodesCoord )
-{
-  // 1. Compute average distance
-  // TODO: This is a pretty bad approximation of the average distance and proper numerical integration should
-  // be implemented.
-  real64 averageDistance = 0.0;
-
-  localIndex const cellIndex = m_surfaceElementsToCells.m_toElementIndex[k][0];
-  localIndex const numOfNodes = cellToNodes.size( 1 );
-
-  real64 nodeToFracCenter[3];
-  for( localIndex a=0; a < numOfNodes; a++ )
-  {
-    localIndex const nodeIndex = cellToNodes[cellIndex][a];
-    LvArray::tensorOps::copy< 3 >( nodeToFracCenter, nodesCoord[nodeIndex] );
-    LvArray::tensorOps::subtract< 3 >( nodeToFracCenter, m_elementCenter[k] );
-    real64 distance = LvArray::tensorOps::AiBi< 3 >( nodeToFracCenter, m_normalVector[k] );
-    averageDistance += std::sqrt( distance * distance );
-  }
-  averageDistance /= numOfNodes;
-
-  //2. Compute connectivity index
-  m_connectivityIndex[k] = m_elementArea[ k ] / averageDistance;
 }
 
 bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface( localIndex const cellIndex,
@@ -252,7 +225,7 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface( localIndex const cellIndex
       }
       if( isNew )
       {
-        // Add the point to the node Manager if it's not a ghost
+        // Add the point to the node Manager
         globalIndex parentEdgeID = edgeLocalToGlobal[ pointParentIndex[ originalIndices[ j ] ] ];
         nodeIndex = embSurfNodeManager.size();
 
@@ -266,7 +239,6 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface( localIndex const cellIndex
 
         array1d< globalIndex > & parentEdgeGlobalIndex = embSurfNodeManager.getParentEdgeGlobalIndex();
         parentEdgeGlobalIndex[nodeIndex] = parentEdgeID;
-
       }
       elemNodes[ j ] =  nodeIndex;
     }
@@ -349,13 +321,13 @@ localIndex EmbeddedSurfaceSubRegion::packUpDownMapsImpl( buffer_unit_type * & bu
 localIndex EmbeddedSurfaceSubRegion::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                                        localIndex_array & packList,
                                                        bool const overwriteUpMaps,
-                                                       bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
+                                                       bool const GEOS_UNUSED_PARAM( overwriteDownMaps ) )
 {
   localIndex unPackedSize = 0;
 
   string nodeListString;
   unPackedSize += bufferOps::Unpack( buffer, nodeListString );
-  GEOSX_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString() );
+  GEOS_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString() );
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toNodesRelation,
                                      packList,
@@ -365,7 +337,7 @@ localIndex EmbeddedSurfaceSubRegion::unpackUpDownMaps( buffer_unit_type const * 
 
   string elementListString;
   unPackedSize += bufferOps::Unpack( buffer, elementListString );
-  GEOSX_ERROR_IF_NE( elementListString, viewKeyStruct::surfaceElementsToCellRegionsString() );
+  GEOS_ERROR_IF_NE( elementListString, viewKeyStruct::surfaceElementsToCellRegionsString() );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_surfaceElementsToCells,
@@ -376,4 +348,4 @@ localIndex EmbeddedSurfaceSubRegion::unpackUpDownMaps( buffer_unit_type const * 
   return unPackedSize;
 }
 
-} /* namespace geosx */
+} /* namespace geos */

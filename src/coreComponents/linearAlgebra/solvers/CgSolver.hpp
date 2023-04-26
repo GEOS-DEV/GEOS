@@ -16,12 +16,12 @@
  * @file CgSolver.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_SOLVERS_CGSOLVER_HPP_
-#define GEOSX_LINEARALGEBRA_SOLVERS_CGSOLVER_HPP_
+#ifndef GEOS_LINEARALGEBRA_SOLVERS_CGSOLVER_HPP_
+#define GEOS_LINEARALGEBRA_SOLVERS_CGSOLVER_HPP_
 
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -98,4 +98,4 @@ protected:
 
 } // namespace GEOSX
 
-#endif /*GEOSX_LINEARALGEBRA_SOLVERS_CGSOLVER_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_SOLVERS_CGSOLVER_HPP_*/

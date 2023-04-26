@@ -16,14 +16,14 @@
  * @file FaceManager.hpp
  */
 
-#ifndef GEOSX_MESH_FACEMANAGER_HPP_
-#define GEOSX_MESH_FACEMANAGER_HPP_
+#ifndef GEOS_MESH_FACEMANAGER_HPP_
+#define GEOS_MESH_FACEMANAGER_HPP_
 
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "ToElementRelation.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class NodeManager;
@@ -403,7 +403,7 @@ public:
    * In particular, any mismatch like @a (e.g.) <tt>f -> (e0, e1)</tt> and
    * <tt>f -> (er1, er0)</tt> will probably result in a bug.
    * @warning @p e, @p er or @p esr will equal -1 if undefined.
-   * @see geosx::NodeManager::elementList that shares the same kind of pattern.
+   * @see geos::NodeManager::elementList that shares the same kind of pattern.
    */
   array2d< localIndex > & elementList() { return m_toElements.m_toElementIndex; }
 
@@ -470,7 +470,7 @@ private:
   array2d< real64 > m_faceNormal;
 
   /// constant expression of the maximum number of nodes per faces
-  constexpr static int MAX_FACE_NODES = 9;
+  constexpr static int MAX_FACE_NODES = 11;
 
 };
 

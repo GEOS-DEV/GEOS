@@ -14,7 +14,7 @@
 
 #include "PVTOData.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -56,4 +56,4 @@ PVTOData::KernelWrapper::KernelWrapper( arrayView1d< real64 const > const & Rs,
 
 } //namespace constitutive
 
-} //namespace geosx
+} //namespace geos

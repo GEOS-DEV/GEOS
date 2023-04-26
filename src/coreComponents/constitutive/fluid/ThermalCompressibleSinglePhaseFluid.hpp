@@ -16,15 +16,15 @@
  * @file ThermalCompressibleSinglePhaseFluid.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_THERMALCOMPRESSIBLESINGLEPHASEFLUID_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_THERMALCOMPRESSIBLESINGLEPHASEFLUID_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_THERMALCOMPRESSIBLESINGLEPHASEFLUID_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_THERMALCOMPRESSIBLESINGLEPHASEFLUID_HPP_
 
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/CompressibleSinglePhaseFluid.hpp"
 
 #include "constitutive/ExponentialRelation.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -91,8 +91,8 @@ public:
   /// Deleted move assignment operator
   ThermalCompressibleSinglePhaseUpdate & operator=( ThermalCompressibleSinglePhaseUpdate && ) = delete;
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   virtual void compute( real64 const pressure,
                         real64 & density,
                         real64 & viscosity ) const override
@@ -101,8 +101,8 @@ public:
     m_viscRelation.compute( pressure, viscosity );
   }
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   virtual void compute( real64 const pressure,
                         real64 & density,
                         real64 & dDensity_dPressure,
@@ -113,8 +113,8 @@ public:
     m_viscRelation.compute( pressure, viscosity, dViscosity_dPressure );
   }
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   virtual void compute( real64 const pressure,
                         real64 const temperature,
                         real64 & density,
@@ -145,8 +145,8 @@ public:
 
   }
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure ) const override
@@ -158,8 +158,8 @@ public:
              m_dVisc_dPres[k][q] );
   }
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure,
@@ -280,6 +280,6 @@ private:
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_FLUID_THERMALCOMPRESSIBLESINGLEPHASEFLUID_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_FLUID_THERMALCOMPRESSIBLESINGLEPHASEFLUID_HPP_ */

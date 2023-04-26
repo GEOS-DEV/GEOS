@@ -8,6 +8,13 @@ Input Schema Definitions
 :download:`XML Schema <../../coreComponents/schema/docs/../schema.xsd>`
 
 
+.. _XML_AcousticFirstOrderSEM:
+
+Element: AcousticFirstOrderSEM
+==============================
+.. include:: ../../coreComponents/schema/docs/AcousticFirstOrderSEM.rst
+
+
 .. _XML_AcousticSEM:
 
 Element: AcousticSEM
@@ -204,6 +211,13 @@ Element: CompressibleSolidConstantPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidConstantPermeability.rst
 
 
+.. _XML_CompressibleSolidExponentialDecayPermeability:
+
+Element: CompressibleSolidExponentialDecayPermeability
+======================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidExponentialDecayPermeability.rst
+
+
 .. _XML_CompressibleSolidParallelPlatesPermeability:
 
 Element: CompressibleSolidParallelPlatesPermeability
@@ -356,6 +370,13 @@ Element: EmbeddedSurfaceGenerator
 Element: Events
 ===============
 .. include:: ../../coreComponents/schema/docs/Events.rst
+
+
+.. _XML_ExponentialDecayPermeability:
+
+Element: ExponentialDecayPermeability
+=====================================
+.. include:: ../../coreComponents/schema/docs/ExponentialDecayPermeability.rst
 
 
 .. _XML_ExtendedDruckerPrager:
@@ -552,6 +573,13 @@ Element: MultiPhaseVolumeWeightedThermalConductivity
 Element: MultiphasePoromechanics
 ================================
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics.rst
+
+
+.. _XML_MultiphasePoromechanicsInitialization:
+
+Element: MultiphasePoromechanicsInitialization
+==============================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanicsInitialization.rst
 
 
 .. _XML_MultiphasePoromechanicsReservoir:
@@ -785,11 +813,32 @@ Element: Python
 .. include:: ../../coreComponents/schema/docs/Python.rst
 
 
+.. _XML_ReactiveBrine:
+
+Element: ReactiveBrine
+======================
+.. include:: ../../coreComponents/schema/docs/ReactiveBrine.rst
+
+
+.. _XML_ReactiveBrineThermal:
+
+Element: ReactiveBrineThermal
+=============================
+.. include:: ../../coreComponents/schema/docs/ReactiveBrineThermal.rst
+
+
 .. _XML_ReactiveCompositionalMultiphaseOBL:
 
 Element: ReactiveCompositionalMultiphaseOBL
 ===========================================
 .. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL.rst
+
+
+.. _XML_ReactiveFluidDriver:
+
+Element: ReactiveFluidDriver
+============================
+.. include:: ../../coreComponents/schema/docs/ReactiveFluidDriver.rst
 
 
 .. _XML_RelpermDriver:
@@ -860,6 +909,13 @@ Element: SinglePhasePoromechanicsConformingFractures
 Element: SinglePhasePoromechanicsEmbeddedFractures
 ==================================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures.rst
+
+
+.. _XML_SinglePhasePoromechanicsInitialization:
+
+Element: SinglePhasePoromechanicsInitialization
+===============================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsInitialization.rst
 
 
 .. _XML_SinglePhasePoromechanicsReservoir:
@@ -1132,6 +1188,13 @@ Datastructure Definitions
 ********************************
 
 
+.. _DATASTRUCTURE_AcousticFirstOrderSEM:
+
+Datastructure: AcousticFirstOrderSEM
+====================================
+.. include:: ../../coreComponents/schema/docs/AcousticFirstOrderSEM_other.rst
+
+
 .. _DATASTRUCTURE_AcousticSEM:
 
 Datastructure: AcousticSEM
@@ -1328,6 +1391,13 @@ Datastructure: CompressibleSolidConstantPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidConstantPermeability_other.rst
 
 
+.. _DATASTRUCTURE_CompressibleSolidExponentialDecayPermeability:
+
+Datastructure: CompressibleSolidExponentialDecayPermeability
+============================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidExponentialDecayPermeability_other.rst
+
+
 .. _DATASTRUCTURE_CompressibleSolidParallelPlatesPermeability:
 
 Datastructure: CompressibleSolidParallelPlatesPermeability
@@ -1487,6 +1557,13 @@ Datastructure: EmbeddedSurfaceGenerator
 Datastructure: Events
 =====================
 .. include:: ../../coreComponents/schema/docs/Events_other.rst
+
+
+.. _DATASTRUCTURE_ExponentialDecayPermeability:
+
+Datastructure: ExponentialDecayPermeability
+===========================================
+.. include:: ../../coreComponents/schema/docs/ExponentialDecayPermeability_other.rst
 
 
 .. _DATASTRUCTURE_ExtendedDruckerPrager:
@@ -1697,6 +1774,13 @@ Datastructure: MultiPhaseVolumeWeightedThermalConductivity
 Datastructure: MultiphasePoromechanics
 ======================================
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics_other.rst
+
+
+.. _DATASTRUCTURE_MultiphasePoromechanicsInitialization:
+
+Datastructure: MultiphasePoromechanicsInitialization
+====================================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanicsInitialization_other.rst
 
 
 .. _DATASTRUCTURE_MultiphasePoromechanicsReservoir:
@@ -1930,11 +2014,32 @@ Datastructure: Python
 .. include:: ../../coreComponents/schema/docs/Python_other.rst
 
 
+.. _DATASTRUCTURE_ReactiveBrine:
+
+Datastructure: ReactiveBrine
+============================
+.. include:: ../../coreComponents/schema/docs/ReactiveBrine_other.rst
+
+
+.. _DATASTRUCTURE_ReactiveBrineThermal:
+
+Datastructure: ReactiveBrineThermal
+===================================
+.. include:: ../../coreComponents/schema/docs/ReactiveBrineThermal_other.rst
+
+
 .. _DATASTRUCTURE_ReactiveCompositionalMultiphaseOBL:
 
 Datastructure: ReactiveCompositionalMultiphaseOBL
 =================================================
 .. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL_other.rst
+
+
+.. _DATASTRUCTURE_ReactiveFluidDriver:
+
+Datastructure: ReactiveFluidDriver
+==================================
+.. include:: ../../coreComponents/schema/docs/ReactiveFluidDriver_other.rst
 
 
 .. _DATASTRUCTURE_RelpermDriver:
@@ -2005,6 +2110,13 @@ Datastructure: SinglePhasePoromechanicsConformingFractures
 Datastructure: SinglePhasePoromechanicsEmbeddedFractures
 ========================================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhasePoromechanicsInitialization:
+
+Datastructure: SinglePhasePoromechanicsInitialization
+=====================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsInitialization_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhasePoromechanicsReservoir:

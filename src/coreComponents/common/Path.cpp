@@ -21,7 +21,7 @@
 #include <dirent.h>
 #include <vector>
 
-namespace geosx
+namespace geos
 {
 
 std::string getAbsolutePath( std::string const & path )
@@ -47,11 +47,11 @@ std::string getAbsolutePath( std::string const & path )
   }();
 
   char const * const cwd = getcwd( buf, PATH_MAX ) ? buf : "";
-  GEOSX_THROW( GEOSX_FMT( "Could not resolve absolute path for: {}.\n"
-                          "The following error occurred: {}.\n"
-                          "Current working directory is: {}.\n",
-                          path, reason, cwd ),
-               InputError );
+  GEOS_THROW( GEOS_FMT( "Could not resolve absolute path for: {}.\n"
+                        "The following error occurred: {}.\n"
+                        "Current working directory is: {}.\n",
+                        path, reason, cwd ),
+              InputError );
 }
 
 std::istream & operator>>( std::istream & is, Path & p )
@@ -111,7 +111,7 @@ void makeDirectory( std::string const & path )
 {
   constexpr mode_t mode = 0770; // user and group rwx permissions
   int const err = mkdir( path.c_str(), mode );
-  GEOSX_THROW_IF( err && ( errno != EEXIST ), "Failed to create directory: " << path, std::runtime_error );
+  GEOS_THROW_IF( err && ( errno != EEXIST ), "Failed to create directory: " << path, std::runtime_error );
 }
 
 void makeDirsForPath( std::string const & path )
@@ -125,4 +125,4 @@ void makeDirsForPath( std::string const & path )
   while( pos != std::string::npos );
 }
 
-} /* end namespace geosx */
+} /* end namespace geos */

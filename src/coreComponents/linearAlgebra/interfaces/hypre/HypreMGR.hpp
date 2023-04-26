@@ -16,8 +16,10 @@
  * @file HypreMGR.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSTRATEGIES_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSTRATEGIES_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRSTRATEGIES_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRSTRATEGIES_HPP_
+
+#include "linearAlgebra/common/common.hpp"
 
 #include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
@@ -26,7 +28,7 @@
 
 #include <_hypre_utilities.h>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -82,7 +84,8 @@ protected:
   HYPRE_Int m_numLabels[numLevels]{ -1 };              ///< Number of dof labels kept
   HYPRE_Int * m_ptrLabels[numLevels]{ nullptr };       ///< Pointers to each level's labels, as consumed by MGR
 
-  MGRFRelaxationMethod m_levelFRelaxMethod[numLevels];    ///< F-relaxation method for each level
+  MGRFRelaxationMethod m_levelFRelaxMethod[numLevels];    ///< F-relaxation strategy for each level (single or multilevel)
+  MGRFRelaxationType m_levelFRelaxType[numLevels];        ///< F-relaxation type for each level
   MGRInterpolationType m_levelInterpType[numLevels];      ///< Interpolation type for each level
   MGRRestrictionType m_levelRestrictType[numLevels];      ///< Restriction type for each level
   MGRCoarseGridMethod m_levelCoarseGridMethod[numLevels]; ///< Coarse grid method for each level
@@ -107,6 +110,7 @@ protected:
     for( HYPRE_Int i = 0; i < numLevels; ++i )
     {
       m_levelFRelaxMethod[i]     = MGRFRelaxationMethod::singleLevel;
+      m_levelFRelaxType[i]       = MGRFRelaxationType::jacobi;
       m_levelInterpType[i]       = MGRInterpolationType::jacobi;
       m_levelRestrictType[i]     = MGRRestrictionType::injection;
       m_levelCoarseGridMethod[i] = MGRCoarseGridMethod::galerkin;
@@ -124,6 +128,39 @@ protected:
       m_ptrLabels[i] = m_labels[i].data();
     }
   }
+
+  /**
+   * @brief Set up BoomerAMG to perform the mechanics F-solve for the first F-relaxation
+   * @param precond the preconditioner wrapper
+   * @param mgrData auxiliary MGR data
+   */
+  void setMechanicsFSolver( HyprePrecWrapper & precond,
+                            HypreMGRData & mgrData ) const
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.mechSolver.ptr ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.mechSolver.ptr, 0.0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.mechSolver.ptr, 1 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( mgrData.mechSolver.ptr, 1.0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( mgrData.mechSolver.ptr, 0.8 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.mechSolver.ptr, 0 ) );
+
+#ifdef GEOSX_USE_HYPRE_CUDA
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( mgrData.mechSolver.ptr, hypre::getAMGCoarseningType( "PMIS" ) ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.mechSolver.ptr, hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( mgrData.mechSolver.ptr, 2 ) );
+#else
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.mechSolver.ptr, 1 ) );
+#endif
+
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( mgrData.mechSolver.ptr, 3 ) );
+
+    mgrData.mechSolver.setup = HYPRE_BoomerAMGSetup;
+    mgrData.mechSolver.solve = HYPRE_BoomerAMGSolve;
+    mgrData.mechSolver.destroy = HYPRE_BoomerAMGDestroy;
+
+    HYPRE_MGRSetFSolver( precond.ptr, mgrData.mechSolver.solve, mgrData.mechSolver.setup, mgrData.mechSolver.ptr );
+  }
+
 };
 
 /**
@@ -142,6 +179,6 @@ void createMGR( LinearSolverParameters const & params,
 
 } // namespace hypre
 
-} // namespace geosx
+} // namespace geos
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSTRATEGIES_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRSTRATEGIES_HPP_*/

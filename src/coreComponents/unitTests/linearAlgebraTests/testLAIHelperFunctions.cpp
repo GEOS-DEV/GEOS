@@ -29,7 +29,7 @@
 
 #include <gtest/gtest.h>
 
-using namespace geosx;
+using namespace geos;
 
 char const * xmlInput =
   "<Problem>"
@@ -60,7 +60,7 @@ protected:
     Base(),
     state( std::make_unique< CommandLineOptions >() )
   {
-    geosx::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
+    geos::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
     mesh = &state.getProblemManager().getDomainPartition().getMeshBody( 0 ).getBaseDiscretization();
   }
 
@@ -77,7 +77,7 @@ void assembleGlobalIndexVector( arrayView1d< globalIndex const > const & localTo
                                 integer const numDofPerPoint,
                                 arrayView1d< real64 > const & values )
 {
-  forAll< parallelDevicePolicy<> >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     if( dofNumber[k] >= 0 && ghostRank[k] < 0 )
     {
@@ -104,8 +104,8 @@ TYPED_TEST_P( LAIHelperFunctionsTest, nodalVectorPermutation )
   DofManager dofManager( "test" );
   dofManager.setDomain( domain );
 
-  std::vector< DofManager::Regions > regions;
-  DofManager::Regions region = { "mesh1", "Level0", {"region1"} };
+  std::vector< DofManager::FieldSupport > regions;
+  DofManager::FieldSupport region = { "mesh1", "Level0", {"region1"} };
   regions.emplace_back( region );
 
   dofManager.addField( "nodalVariable", FieldLocation::Node, 3, regions );
@@ -155,8 +155,8 @@ TYPED_TEST_P( LAIHelperFunctionsTest, cellCenteredVectorPermutation )
   DofManager dofManager( "test" );
   dofManager.setDomain( domain );
 
-  std::vector< DofManager::Regions > regions;
-  DofManager::Regions region = { "mesh1", "Level0", {"region1"} };
+  std::vector< DofManager::FieldSupport > regions;
+  DofManager::FieldSupport region = { "mesh1", "Level0", {"region1"} };
   regions.emplace_back( region );
 
   dofManager.addField( fieldName, FieldLocation::Elem, numDofPerCell, regions );
@@ -217,8 +217,8 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, LAIHelperFunctionsTest, PetscInterface, )
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-  geosx::basicSetup( argc, argv );
+  geos::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
-  geosx::basicCleanup();
+  geos::basicCleanup();
   return result;
 }

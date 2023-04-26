@@ -30,13 +30,15 @@
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshFields.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
+#include "mesh/utilities/CIcomputationKernel.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/simpleGeometricObjects/BoundedPlane.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 using namespace constitutive;
@@ -68,6 +70,9 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
   registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( "FractureRegion" );
+
+  // this->getWrapper< string >( viewKeyStruct::discretizationString() ).
+  // setInputFlag( InputFlags::FALSE );
 
   registerWrapper( viewKeyStruct::mpiCommOrderString(), &m_mpiCommOrder ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -182,12 +187,10 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
             if( added )
             {
-              GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
+              GEOS_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
 
               // Add the information to the CellElementSubRegion
               subRegion.addFracturedElement( cellIndex, localNumberOfSurfaceElems );
-
-              embeddedSurfaceSubRegion.computeConnectivityIndex( localNumberOfSurfaceElems, cellToNodes, nodesCoord );
 
               newObjects.newElements[ {embeddedSurfaceRegion.getIndexInParent(), embeddedSurfaceSubRegion.getIndexInParent()} ].insert( localNumberOfSurfaceElems );
 
@@ -198,6 +201,27 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
       } );// end loop over cells
     } );// end loop over subregions
   } );// end loop over thick planes
+
+  // Launch kernel to compute connectivity index of each fractured element.
+  elemManager.forElementSubRegionsComplete< CellElementSubRegion >(
+    [&]( localIndex const, localIndex const, ElementRegionBase &, CellElementSubRegion & subRegion )
+  {
+    finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+
+    finiteElement::dispatchlowOrder3D( subRegionFE, [&] ( auto const finiteElement )
+    {
+      using FE_TYPE = decltype( finiteElement );
+
+      auto kernel = CIcomputationKernel< FE_TYPE >( finiteElement,
+                                                    nodeManager,
+                                                    subRegion,
+                                                    embeddedSurfaceSubRegion );
+
+      using KERNEL_TYPE = decltype( kernel );
+
+      KERNEL_TYPE::template launchCIComputationKernel< parallelDevicePolicy< 32 >, KERNEL_TYPE >( kernel );
+    } );
+  } );
 
   // add all new nodes to newObject list
   for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
@@ -242,9 +266,9 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 void EmbeddedSurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 {}
 
-real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                             real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                             const int GEOSX_UNUSED_PARAM( cycleNumber ),
+real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                             real64 const & GEOS_UNUSED_PARAM( dt ),
+                                             const int GEOS_UNUSED_PARAM( cycleNumber ),
                                              DomainPartition & domain )
 {
   real64 rval = 0;
@@ -253,6 +277,31 @@ real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOSX_UNUSED_PARAM( 
    */
   // Add the embedded elements to the fracture stencil.
   addToFractureStencil( domain );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & meshLevel,
+                                                                arrayView1d< string const > const & )
+  {
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
+    SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
+
+    EmbeddedSurfaceSubRegion & fractureSubRegion = fractureRegion.getUniqueSubRegion< EmbeddedSurfaceSubRegion >();
+
+    // Compute gravity coefficient for new elements so that gravity term is correctly computed
+    real64 const gravVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+
+    if( fractureSubRegion.hasField< fields::flow::gravityCoefficient >() )
+    {
+      arrayView2d< real64 const > const elemCenter = fractureSubRegion.getElementCenter();
+
+      arrayView1d< real64 > const gravityCoef = fractureSubRegion.getField< fields::flow::gravityCoefficient >();
+
+      forAll< parallelHostPolicy >( fractureSubRegion.size(), [=] ( localIndex const ei )
+      {
+        gravityCoef[ ei ] = LvArray::tensorOps::AiBi< 3 >( elemCenter[ ei ], gravVector );
+      } );
+    }
+  } );
 
   return rval;
 }
@@ -300,7 +349,7 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
     totalNumberOfSurfaceElements += numberOfSurfaceElemsPerRank[rank];
   }
 
-  GEOSX_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: " << totalNumberOfSurfaceElements );
+  GEOS_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: " << totalNumberOfSurfaceElements );
 
   arrayView1d< globalIndex > const & elemLocalToGlobal = embeddedSurfaceSubRegion.localToGlobalMap();
 
@@ -376,4 +425,4 @@ REGISTER_CATALOG_ENTRY( SolverBase,
                         EmbeddedSurfaceGenerator,
                         string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

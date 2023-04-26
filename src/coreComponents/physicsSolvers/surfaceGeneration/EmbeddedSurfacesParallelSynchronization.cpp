@@ -26,7 +26,7 @@
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 namespace  embeddedSurfacesParallelSynchronization
@@ -57,7 +57,7 @@ void packNewNodes( NeighborCommunicator * const neighbor,
   {
     if( nodeGhostRank[ni] == neighborRank )
     {
-      // a node is sent if it is a ghost neighborRank
+      // a node is sent if it is a ghost on neighborRank
       newNodesToSend.emplace_back( ni );
     }
     else
@@ -86,7 +86,7 @@ void packNewNodes( NeighborCommunicator * const neighbor,
 
   packedSize += nodeManager.packNewNodesGlobalMaps( sendBufferPtr, newNodesToSend );
 
-  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 }
 
 void unpackNewNodes( NeighborCommunicator * const neighbor,
@@ -227,7 +227,7 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
   packedSize += nodeManager.pack( sendBufferPtr, newNodesToSend, 0, false, packEvents );
   packedSize += elemManager.pack( sendBufferPtr, newElemsToSend );
 
-  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 }
 
 void unpackNewToGhosts( NeighborCommunicator * const neighbor,
@@ -337,7 +337,7 @@ void packFracturedToGhosts( NeighborCommunicator * const neighbor,
 
   packedSize += elemManager.packFracturedElements( sendBufferPtr, elemsToSend, fractureRegionName );
 
-  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 }
 
 void unpackFracturedToGhosts( NeighborCommunicator * const neighbor,
@@ -621,4 +621,4 @@ void sychronizeTopology( MeshLevel & mesh,
 
 } /* embeddedSurfacesParallelSynchronization */
 
-} /* namespace geosx */
+} /* namespace geos */

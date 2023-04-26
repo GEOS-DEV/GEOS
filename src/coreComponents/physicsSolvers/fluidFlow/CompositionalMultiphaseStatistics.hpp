@@ -21,7 +21,7 @@
 
 #include "physicsSolvers/FieldStatisticsBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class CompositionalMultiphaseBase;
@@ -77,6 +77,8 @@ private:
     constexpr static char const * computeRegionStatisticsString() { return "computeRegionStatistics"; }
     /// String for the region statistics
     constexpr static char const * regionStatisticsString() { return "regionStatistics"; }
+    /// String for the relperm threshold
+    constexpr static char const * relpermThresholdString() { return "relpermThreshold"; }
   };
 
   struct RegionStatistics
@@ -107,10 +109,12 @@ private:
     /// phase region phase pore volume
     array1d< real64 > phasePoreVolume;
 
-    /// region phase mass (trapped and non-trapped)
+    /// region phase mass (trapped and non-trapped, immobile and mobile)
     array1d< real64 > phaseMass;
     /// trapped region phase mass
     array1d< real64 > trappedPhaseMass;
+    /// immobile region phase mass
+    array1d< real64 > immobilePhaseMass;
     /// dissolved region component mass
     array2d< real64 > dissolvedComponentMass;
 
@@ -143,9 +147,12 @@ private:
   /// Flag to decide whether region statistics are computed or not
   integer m_computeRegionStatistics;
 
+  /// Threshold to decide whether a phase is considered "mobile" or not
+  real64 m_relpermThreshold;
+
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICS_HPP_ */

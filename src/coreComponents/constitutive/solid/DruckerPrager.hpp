@@ -16,8 +16,8 @@
  *  @file DruckerPrager.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP
-#define GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP
+#ifndef GEOS_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP
+#define GEOS_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP
 
 #include "ElasticIsotropic.hpp"
 #include "InvariantDecompositions.hpp"
@@ -25,7 +25,7 @@
 #include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -49,7 +49,9 @@ public:
    * @param[in] newCohesion The ArrayView holding the new cohesion data for each element.
    * @param[in] oldCohesion The ArrayView holding the old cohesion data for each element.
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
+   * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
+   * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point.
    */
@@ -60,10 +62,11 @@ public:
                         arrayView2d< real64 > const & oldCohesion,
                         arrayView1d< real64 const > const & bulkModulus,
                         arrayView1d< real64 const > const & shearModulus,
+                        arrayView1d< real64 const > const & thermalExpansionCoefficient,
                         arrayView3d< real64, solid::STRESS_USD > const & newStress,
                         arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                         bool const & disableInelasticity ):
-    ElasticIsotropicUpdates( bulkModulus, shearModulus, newStress, oldStress, disableInelasticity ),
+    ElasticIsotropicUpdates( bulkModulus, shearModulus, thermalExpansionCoefficient, newStress, oldStress, disableInelasticity ),
     m_friction( friction ),
     m_dilation( dilation ),
     m_hardening( hardening ),
@@ -92,22 +95,22 @@ public:
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicUpdates::smallStrainUpdate;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   real64 ( &stiffness )[6][6] ) const override final;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const final;
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const override final
   {
@@ -134,8 +137,8 @@ private:
 };
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
                                               localIndex const q,
                                               real64 const ( &strainIncrement )[6],
@@ -291,8 +294,8 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 }
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
                                               localIndex const q,
                                               real64 const ( &strainIncrement )[6],
@@ -397,6 +400,7 @@ public:
                                  m_oldCohesion,
                                  m_bulkModulus,
                                  m_shearModulus,
+                                 m_thermalExpansionCoefficient,
                                  m_newStress,
                                  m_oldStress,
                                  m_disableInelasticity );
@@ -420,6 +424,7 @@ public:
                           m_oldCohesion,
                           m_bulkModulus,
                           m_shearModulus,
+                          m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
                           m_disableInelasticity );
@@ -459,6 +464,6 @@ protected:
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP_ */
