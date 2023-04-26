@@ -840,8 +840,12 @@ static void trilinearInterp( real64 const alpha,
   }
 }
 
-void CellBlockManager::generateHighOrderMaps( localIndex const order, array1d< globalIndex > maxGlobalID,
-                                              arrayView1d< globalIndex const > const edgeLocalToGlobal, arrayView1d< globalIndex const > const faceLocalToGlobal )
+void CellBlockManager::generateHighOrderMaps( localIndex const order,
+                                              globalIndex const maxVertexGlobalID,
+                                              globalIndex const maxEdgeGlobalID,
+                                              globalIndex const maxFaceGlobalID,
+                                              arrayView1d< globalIndex const > const edgeLocalToGlobal, 
+                                              arrayView1d< globalIndex const > const faceLocalToGlobal )
 {
 
   // constants for hex mesh
@@ -859,10 +863,6 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order, array1d< g
   localIndex const numLocalVertices = this->numNodes();
   localIndex const numLocalEdges = this->numEdges();
   localIndex const numLocalFaces = this->numFaces();
-
-  localIndex const maxVertexGlobalID = maxGlobalID[0];
-  localIndex const maxEdgeGlobalID = maxGlobalID[1];
-  localIndex const maxFaceGlobalID = maxGlobalID[2];
 
   localIndex numLocalCells = 0;
   this->getCellBlocks().forSubGroups< CellBlock >( [&]( CellBlock & cellBlock )

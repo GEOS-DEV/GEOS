@@ -106,10 +106,10 @@ MeshLevel::MeshLevel( string const & name,
 
 
 MeshLevel::MeshLevel( string const & name,
-                      Group * const parent,
+                      Group * const meshBody,
                       MeshLevel const & source,
                       int const order ):
-  MeshLevel( name, parent )
+  MeshLevel( name, meshBody )
 {
   GEOS_MARK_FUNCTION;
 
@@ -125,9 +125,9 @@ MeshLevel::MeshLevel( string const & name,
   localIndex const numLocalEdges = source.m_edgeManager->size();
   localIndex const numLocalFaces = source.m_faceManager->size();
 
-  localIndex const maxVertexGlobalID = source.getNodeManager().maxGlobalIndex() + 1;
-  localIndex const maxEdgeGlobalID = source.getEdgeManager().maxGlobalIndex() + 1;
-  localIndex const maxFaceGlobalID = source.getFaceManager().maxGlobalIndex() + 1;
+  globalIndex const maxVertexGlobalID = source.getNodeManager().maxGlobalIndex() + 1;
+  globalIndex const maxEdgeGlobalID = source.getEdgeManager().maxGlobalIndex() + 1;
+  globalIndex const maxFaceGlobalID = source.getFaceManager().maxGlobalIndex() + 1;
 
   localIndex numLocalCells = 0;
   source.m_elementManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
@@ -143,15 +143,11 @@ MeshLevel::MeshLevel( string const & name,
                              + numLocalFaces * numInternalNodesPerFace
                              + numLocalCells * numInternalNodesPerCell;
 
-
-  //CellBlockManagerABC & cellBlockManager = parent->getGroup< CellBlockManagerABC >( keys::cellManager );
-
   /////////////////////////
   // Nodes
   //////////////////////////
 
   m_nodeManager->resize( numLocalNodes );
-  arrayView1d< globalIndex const > const nodeLocalToGlobalSource = source.m_nodeManager->localToGlobalMap();
 
   /////////////////////////
   // Edges
@@ -161,7 +157,6 @@ MeshLevel::MeshLevel( string const & name,
   m_edgeManager->resize( numLocalEdges );
   m_edgeManager->getDomainBoundaryIndicator() = source.m_edgeManager->getDomainBoundaryIndicator();
 
-  arrayView1d< globalIndex const > const edgeLocalToGlobal = m_edgeManager->localToGlobalMap();
   for( localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < numLocalEdges; iter_localToGlobalsize++ )
   {
     m_edgeManager->localToGlobalMap()[iter_localToGlobalsize] = source.m_edgeManager->localToGlobalMap()[iter_localToGlobalsize];
@@ -241,21 +236,20 @@ MeshLevel::MeshLevel( string const & name,
       array2d< localIndex > & elemsToEdgesNew = newSubRegion.edgeList();
       elemsToEdgesNew = elemsToEdgesSource;
 
-      arrayView1d< globalIndex const > const elementLocalToGlobal = sourceSubRegion.localToGlobalMap();
       for( localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < sourceSubRegion.localToGlobalMap().size(); iter_localToGlobalsize++ )
       {
         newSubRegion.localToGlobalMap()[iter_localToGlobalsize] = sourceSubRegion.localToGlobalMap()[iter_localToGlobalsize];
       }
       newSubRegion.constructGlobalToLocalMap();
 
-      CellBlockManagerABC & cellBlockManager = parent->getGroup< CellBlockManagerABC >( keys::cellManager );
-      array1d< globalIndex > maxGlobalID ( 3 );
-      maxGlobalID[0] = maxVertexGlobalID;
-      maxGlobalID[1] = maxEdgeGlobalID;
-      maxGlobalID[2] = maxFaceGlobalID;
+      CellBlockManagerABC & cellBlockManager = meshBody->getGroup< CellBlockManagerABC >( keys::cellManager );
+
+      arrayView1d< globalIndex const > const edgeLocalToGlobal = m_edgeManager->localToGlobalMap();
 
       cellBlockManager.generateHighOrderMaps( order,
-                                              maxGlobalID,
+                                              maxVertexGlobalID,
+                                              maxEdgeGlobalID,
+                                              maxFaceGlobalID,
                                               edgeLocalToGlobal,
                                               faceLocalToGlobal );
     } );

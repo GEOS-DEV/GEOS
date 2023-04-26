@@ -193,14 +193,19 @@ public:
   virtual std::map< string, SortedArray< localIndex > > const & getNodeSets() const = 0;
 
   /**
-   * @brief Generates the high-order maps for this cell block manager.
-   * @param order The order of the discretization.
-   * @param maxGlobalID A map containing the maximum global IDs for vertices, edges and faces.
-   * @param edgeLocalToGlobal The local to global map for edges.
-   * @param faceLocalToGlobal The local to global map for faces.
+   * @brief Generates in place the high-order maps for this cell block manager.
+   * @param[in] order The order of the discretization.
+   * @param[in] maxVertexGlobalID: maximum globalID for nodes
+   * @param[in] maxEdgeGlobalID: maximum globalID for edges
+   * @param[in] maxFaceGlobalID: maximum globalID for faces
+   * @param[in] edgeLocalToGlobal The local to global map for edges.
+   * @param[in] faceLocalToGlobal The local to global map for faces.
    */
-  virtual void generateHighOrderMaps( localIndex const order, array1d< globalIndex > maxGlobalID,
-                                      arrayView1d< globalIndex const > const edgeLocalToGlobal, arrayView1d< globalIndex const > const faceLocalToGlobal ) = 0;
+  virtual void generateHighOrderMaps( localIndex const order,
+                                      globalIndex const maxVertexGlobalID,
+                                      globalIndex const maxEdgeGlobalID, globalIndex const maxFaceGlobalID,
+                                      arrayView1d< globalIndex const > const edgeLocalToGlobal, 
+                                      arrayView1d< globalIndex const > const faceLocalToGlobal ) = 0;
 
 };
 

@@ -106,15 +106,12 @@ public:
    */
   void setNumNodes( localIndex numNodes ); // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
 
-  /**
-   * @brief Creates the maps for a higher-order mesh-level
-   * @param[in] order: The order of the cell block
-   * @param[in] maxGlobalID: An array contains the maximum globalID for nodes, edges and faces.
-   * @param[in] edgeLocalToGlobal: the local to global map for edges
-   * @param[in] faceLocalToGlobal: the local to global map for faces
-   */
-  void generateHighOrderMaps( localIndex const order, array1d< globalIndex > maxGlobalID,
-                              arrayView1d< globalIndex const > const edgeLocalToGlobal, arrayView1d< globalIndex const > const faceLocalToGlobal );
+  void generateHighOrderMaps( localIndex const order,
+                              globalIndex const maxVertexGlobalID,
+                              globalIndex const maxEdgeGlobalID,
+                              globalIndex const maxFaceGlobalID,
+                              arrayView1d< globalIndex const > const edgeLocalToGlobal, 
+                              arrayView1d< globalIndex const > const faceLocalToGlobal ) override;
 
   localIndex numNodes() const override;
 
