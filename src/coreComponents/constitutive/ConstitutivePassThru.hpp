@@ -104,6 +104,7 @@ struct ConstitutivePassThruTriaxialDriver;
 
 /**
  * Specialization for models that derive from SolidBase.
+ * NOTE: this is only a temporary dispatch to reduce the compilation time.
  */
 template<>
 struct ConstitutivePassThruTriaxialDriver< SolidBase >
@@ -200,22 +201,7 @@ struct ConstitutivePassThru< DamageBase >
                                                                         std::forward< LAMBDA >( lambda ) );
   }
 };
-/**
- * Specialization for the rate-dependent models.
- */
-template<>
-struct ConstitutivePassThru< DuvautLionsBase >
-{
-  template< typename LAMBDA >
-  static void execute( ConstitutiveBase & constitutiveRelation,
-                       LAMBDA && lambda )
-  {
-    ConstitutivePassThruHandler< DuvautLionsSolid< ModifiedCamClay >,
-                                 DuvautLionsSolid< DruckerPragerExtended >,
-                                 DuvautLionsSolid< DruckerPrager > >::execute( constitutiveRelation,
-                                                                               std::forward< LAMBDA >( lambda ) );
-  }
-};
+
 
 
 /**

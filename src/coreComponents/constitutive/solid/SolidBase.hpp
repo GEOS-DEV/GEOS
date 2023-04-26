@@ -179,12 +179,15 @@ public:
    * @param[out] stiffness New tangent stiffness value
    */
   GEOS_HOST_DEVICE
-  virtual void smallStrainUpdate( localIndex const k,
-                                  localIndex const q,
-                                  real64 const & timeIncrement,
-                                  real64 const ( &strainIncrement )[6],
-                                  real64 ( & stress )[6],
-                                  real64 ( & stiffness )[6][6] ) const
+  /**
+   * this function is not virtual to avoid a compilation warning with nvcc.
+   */
+  void smallStrainUpdate( localIndex const k,
+                          localIndex const q,
+                          real64 const & timeIncrement,
+                          real64 const ( &strainIncrement )[6],
+                          real64 ( & stress )[6],
+                          real64 ( & stiffness )[6][6] ) const
   {
     GEOS_UNUSED_VAR( k );
     GEOS_UNUSED_VAR( q );
