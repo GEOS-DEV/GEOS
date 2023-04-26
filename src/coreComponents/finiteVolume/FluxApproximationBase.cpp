@@ -112,16 +112,21 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
     m_lengthScale = meshBody.getGlobalLengthScale();
     meshBody.forMeshLevels( [&]( MeshLevel & mesh )
     {
-
       if( !(mesh.isShallowCopy() ) )
       {
         // Group structure: mesh1/finiteVolumeStencils/myTPFA
+
+        // Compute the main cell-based stencil
+        computeCellStencil( mesh );
+
+        // Compute the fracture related stencils (within the fracture itself,
+        // but between the fracture and the matrix as well).
+        computeFractureStencil( mesh );
 
         Group & stencilParentGroup = mesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
         Group & stencilGroup = stencilParentGroup.getGroup( getName() );
         // For each face-based Dirichlet boundary condition on target field, create a boundary stencil
         // TODO: Apply() should take a MeshLevel directly
-
         for( auto const & fieldName : m_fieldNames )
         {
 
@@ -130,48 +135,30 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
                                           fieldName,
                                           [&] ( FieldSpecificationBase const &,
                                                 string const & setName,
-                                                SortedArrayView< localIndex const > const &,
-                                                FaceManager const &,
-                                                string const & )
-          {
-            registerBoundaryStencil( stencilGroup, setName );
-          } );
-
-          // For each aquifer boundary condition, create a boundary stencil
-          fsManager.apply< FaceManager,
-                           AquiferBoundaryCondition >( 0.0, // time = 0
-                                                       mesh,
-                                                       AquiferBoundaryCondition::catalogName(),
-                                                       [&] ( AquiferBoundaryCondition const &,
-                                                             string const & setName,
-                                                             SortedArrayView< localIndex const > const &,
-                                                             FaceManager const &,
-                                                             string const & )
-          {
-            registerAquiferStencil( stencilGroup, setName );
-          } );
-
-          // Compute the main cell-based stencil
-          computeCellStencil( mesh );
-
-          // Compute the fracture related stencils (within the fracture itself,
-          // but between the fracture and the matrix as well).
-          computeFractureStencil( mesh );
-
-          // For each face-based boundary condition on target field, compute the boundary stencil weights
-          fsManager.apply< FaceManager >( 0.0,
-                                          mesh,
-                                          fieldName,
-                                          [&] ( FieldSpecificationBase const &,
-                                                string const & setName,
                                                 SortedArrayView< localIndex const > const & faceSet,
                                                 FaceManager const &,
                                                 string const & )
           {
-            computeBoundaryStencil( mesh, setName, faceSet );
+            if( !stencilGroup.hasWrapper( setName ) )
+            {
+              registerBoundaryStencil( stencilGroup, setName );
+              computeBoundaryStencil( mesh, setName, faceSet );
+            }
           } );
         }
-
+        // For each aquifer boundary condition, create a boundary stencil
+        fsManager.apply< FaceManager,
+                         AquiferBoundaryCondition >( 0.0,   // time = 0
+                                                     mesh,
+                                                     AquiferBoundaryCondition::catalogName(),
+                                                     [&] ( AquiferBoundaryCondition const &,
+                                                           string const & setName,
+                                                           SortedArrayView< localIndex const > const &,
+                                                           FaceManager const &,
+                                                           string const & )
+        {
+          registerAquiferStencil( stencilGroup, setName );
+        } );
         // Compute the aquifer stencil weights
         computeAquiferStencil( domain, mesh );
       }

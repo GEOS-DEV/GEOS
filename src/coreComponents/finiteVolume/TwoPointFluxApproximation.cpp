@@ -952,8 +952,12 @@ void TwoPointFluxApproximation::addEmbeddedFracturesToStencils( MeshLevel & mesh
 
 void TwoPointFluxApproximation::registerBoundaryStencil( Group & stencilGroup, string const & setName ) const
 {
-  stencilGroup.registerWrapper< BoundaryStencil >( setName ).
-    setRestartFlags( RestartFlags::NO_WRITE );
+  if( !stencilGroup.hasWrapper( setName ) )
+  {
+    // if not there yet, let's register the set name as a wrapper
+    stencilGroup.registerWrapper< BoundaryStencil >( setName ).
+      setRestartFlags( RestartFlags::NO_WRITE );
+  }
 }
 
 void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,

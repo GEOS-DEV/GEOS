@@ -609,6 +609,10 @@ char const faceBcLogMessage[] =
   "the <{}> boundary condition '{}' is applied to the face set '{}' in '{}'. "
   "\nThe total number of target faces (including ghost faces) is {}. "
   "\nNote that if this number is equal to zero, the boundary condition will not be applied on this face set.";
+
+char const incompleteBCLogmessage[] = "SinglePhaseFVM {}: at time {}, one or more Face boundary conditions are not complete. "
+                                      "Both pressure and tempeature must be specified, one is missing.";
+
 }
 
 
@@ -637,86 +641,97 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
     FaceManager & faceManager = mesh.getFaceManager();
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    // Take BCs defined for "temperature" field and apply values to "faceTemperature"
-
-    fsManager.apply< FaceManager >( time_n + dt,
-                                    mesh,
-                                    fields::flow::temperature::key(),
-                                    [&] ( FieldSpecificationBase const & fs,
-                                          string const & setName,
-                                          SortedArrayView< localIndex const > const & targetSet,
-                                          FaceManager & targetGroup,
-                                          string const & )
+    if( m_isThermal )
     {
-      BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
-
-      if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+      std::set< string > pressureSets;
+      std::set< string > temperatureSets;
+      // Take BCs defined for "pressure" field and apply values to "facePressure"
+      fsManager.apply< FaceManager >( time_n + dt,
+                                      mesh,
+                                      fields::flow::pressure::key(),
+                                      [&] ( FieldSpecificationBase const & fs,
+                                            string const & setName,
+                                            SortedArrayView< localIndex const > const & targetSet,
+                                            FaceManager & targetGroup,
+                                            string const & )
       {
-        globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
-                                   this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                   fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
-      }
+        BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
 
-      if( stencil.size() == 0 )
+        if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+        {
+          globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
+          GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
+                                     this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                     fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+        }
+
+        if( stencil.size() == 0 )
+        {
+          return;
+        }
+
+        pressureSets.insert( setName );
+        // first, evaluate BC to get primary field values (pressure)
+        fs.applyFieldValue< FieldSpecificationEqual,
+                            parallelDevicePolicy<> >( targetSet,
+                                                      time_n + dt,
+                                                      targetGroup,
+                                                      fields::flow::facePressure::key() );
+      } );
+
+      // Take BCs defined for "temperature" field and apply values to "faceTemperature"
+      fsManager.apply< FaceManager >( time_n + dt,
+                                      mesh,
+                                      fields::flow::temperature::key(),
+                                      [&] ( FieldSpecificationBase const & fs,
+                                            string const & setName,
+                                            SortedArrayView< localIndex const > const & targetSet,
+                                            FaceManager & targetGroup,
+                                            string const & )
       {
-        return;
-      }
-      // Specify the bc value of the field
-      fs.applyFieldValue< FieldSpecificationEqual,
-                          parallelDevicePolicy<> >( targetSet,
-                                                    time_n + dt,
-                                                    targetGroup,
-                                                    fields::flow::faceTemperature::key() );
-    } );
+        BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
 
-    // Take BCs defined for "pressure" field and apply values to "facePressure"
-    fsManager.apply< FaceManager >( time_n + dt,
-                                    mesh,
-                                    fields::flow::pressure::key(),
-                                    [&] ( FieldSpecificationBase const & fs,
-                                          string const & setName,
-                                          SortedArrayView< localIndex const > const & targetSet,
-                                          FaceManager & targetGroup,
-                                          string const & )
-    {
-      BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
+        if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+        {
+          globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
+          GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
+                                     this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                     fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+        }
 
-      if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+        if( stencil.size() == 0 )
+        {
+          return;
+        }
+
+        temperatureSets.insert( setName );
+        // Specify the bc value of the field
+        fs.applyFieldValue< FieldSpecificationEqual,
+                            parallelDevicePolicy<> >( targetSet,
+                                                      time_n + dt,
+                                                      targetGroup,
+                                                      fields::flow::faceTemperature::key() );
+
+      } );
+
+      GEOS_ERROR_IF( pressureSets != temperatureSets, GEOS_FMT( incompleteBCLogmessage, this->getName(), time_n + dt ) );
+
+      // Take BCs defined for "temperature" field and apply values to "faceTemperature"
+      for( auto const & setName : temperatureSets )
       {
-        globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
-                                   this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                   fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
-      }
+        BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
+        BoundaryStencilWrapper const stencilWrapper = stencil.createKernelWrapper();
 
-      if( stencil.size() == 0 )
-      {
-        return;
-      }
+        // TODO: currently we just use model from the first cell in this stencil
+        //       since it's not clear how to create fluid kernel wrappers for arbitrary models.
+        //       Can we just use cell properties for an approximate flux computation?
+        //       Then we can forget about capturing the fluid model.
+        localIndex const er = stencil.getElementRegionIndices()( 0, 0 );
+        localIndex const esr = stencil.getElementSubRegionIndices()( 0, 0 );
+        ElementSubRegionBase & subRegion = mesh.getElemManager().getRegion( er ).getSubRegion( esr );
+        string const & fluidName = subRegion.getReference< string >( BASE::viewKeyStruct::fluidNamesString() );
+        SingleFluidBase & fluidBase = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
 
-      // first, evaluate BC to get primary field values (pressure)
-      fs.applyFieldValue< FieldSpecificationEqual,
-                          parallelDevicePolicy<> >( targetSet,
-                                                    time_n + dt,
-                                                    targetGroup,
-                                                    fields::flow::facePressure::key() );
-
-
-      // TODO: currently we just use model from the first cell in this stencil
-      //       since it's not clear how to create fluid kernel wrappers for arbitrary models.
-      //       Can we just use cell properties for an approximate flux computation?
-      //       Then we can forget about capturing the fluid model.
-      localIndex const er = stencil.getElementRegionIndices()( 0, 0 );
-      localIndex const esr = stencil.getElementSubRegionIndices()( 0, 0 );
-      ElementSubRegionBase & subRegion = mesh.getElemManager().getRegion( er ).getSubRegion( esr );
-      string const & fluidName = subRegion.getReference< string >( BASE::viewKeyStruct::fluidNamesString() );
-      SingleFluidBase & fluidBase = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
-
-      BoundaryStencilWrapper const stencilWrapper = stencil.createKernelWrapper();
-
-      if( m_isThermal )
-      {
         thermalSinglePhaseFVMKernels::
           DirichletFaceBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
@@ -730,8 +745,54 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                                                      localMatrix,
                                                      localRhs );
       }
-      else
+    }
+    else
+    {
+      // Take BCs defined for "pressure" field and apply values to "facePressure"
+      fsManager.apply< FaceManager >( time_n + dt,
+                                      mesh,
+                                      fields::flow::pressure::key(),
+                                      [&] ( FieldSpecificationBase const & fs,
+                                            string const & setName,
+                                            SortedArrayView< localIndex const > const & targetSet,
+                                            FaceManager & targetGroup,
+                                            string const & )
       {
+        BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
+
+        if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+        {
+          globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
+          GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
+                                     this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                     fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+        }
+
+        if( stencil.size() == 0 )
+        {
+          return;
+        }
+
+        // first, evaluate BC to get primary field values (pressure)
+        fs.applyFieldValue< FieldSpecificationEqual,
+                            parallelDevicePolicy<> >( targetSet,
+                                                      time_n + dt,
+                                                      targetGroup,
+                                                      fields::flow::facePressure::key() );
+
+
+        // TODO: currently we just use model from the first cell in this stencil
+        //       since it's not clear how to create fluid kernel wrappers for arbitrary models.
+        //       Can we just use cell properties for an approximate flux computation?
+        //       Then we can forget about capturing the fluid model.
+        localIndex const er = stencil.getElementRegionIndices()( 0, 0 );
+        localIndex const esr = stencil.getElementSubRegionIndices()( 0, 0 );
+        ElementSubRegionBase & subRegion = mesh.getElemManager().getRegion( er ).getSubRegion( esr );
+        string const & fluidName = subRegion.getReference< string >( BASE::viewKeyStruct::fluidNamesString() );
+        SingleFluidBase & fluidBase = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
+
+        BoundaryStencilWrapper const stencilWrapper = stencil.createKernelWrapper();
+
         singlePhaseFVMKernels::
           DirichletFaceBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
@@ -744,11 +805,10 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                                                      dt,
                                                      localMatrix,
                                                      localRhs );
-      }
-    } );
+
+      } );
+    }
   } );
-
-
 }
 
 template<>
