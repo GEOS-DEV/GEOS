@@ -57,6 +57,9 @@ public:
    */
   static string catalogName() { return "MeshGeneratorBase"; }
 
+  /// This function is used to expand any catalogs in the data structure
+  virtual void expandObjectCatalogs() override;
+
   /// using alias for templated Catalog meshGenerator type
   using CatalogInterface = dataRepository::CatalogInterface< MeshGeneratorBase, string const &, Group * const >;
 

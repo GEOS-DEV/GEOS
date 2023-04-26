@@ -1685,6 +1685,13 @@ Datastructure: InternalMesh
 .. include:: ../../coreComponents/schema/docs/InternalMesh_other.rst
 
 
+.. _DATASTRUCTURE_InternalWell:
+
+Datastructure: InternalWell
+===========================
+.. include:: ../../coreComponents/schema/docs/InternalWell_other.rst
+
+
 .. _DATASTRUCTURE_InternalWellbore:
 
 Datastructure: InternalWellbore
@@ -1865,6 +1872,13 @@ Datastructure: Parameters
 Datastructure: ParticleFluid
 ============================
 .. include:: ../../coreComponents/schema/docs/ParticleFluid_other.rst
+
+
+.. _DATASTRUCTURE_Perforation:
+
+Datastructure: Perforation
+==========================
+.. include:: ../../coreComponents/schema/docs/Perforation_other.rst
 
 
 .. _DATASTRUCTURE_PeriodicEvent:

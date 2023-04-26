@@ -34,6 +34,15 @@ Group * MeshGeneratorBase::createChild( string const & childKey, string const & 
   return &this->registerGroup< InternalWellGenerator >( childName, std::move( wellGen ) );
 }
 
+void MeshGeneratorBase::expandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from MeshGeneratorBase here
+  for( auto & catalogIter: InternalWellGenerator::getCatalog())
+  {
+    createChild( catalogIter.first, catalogIter.first );
+  }
+}
+
 MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::getCatalog()
 {
   static MeshGeneratorBase::CatalogInterface::CatalogType catalog;

@@ -1274,6 +1274,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="InternalMeshType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
 		<!--cellBlockNames => Names of each mesh block-->
 		<xsd:attribute name="cellBlockNames" type="string_array" use="required" />
 		<!--elementTypes => Element types of each mesh block-->
@@ -1304,6 +1305,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="InternalWellboreType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
 		<!--autoSpaceRadialElems => Automatically set number and spacing of elements in the radial direction. This overrides the values of nr!Value in each block indicates factor to scale the radial increment.Larger numbers indicate larger radial elements.-->
 		<xsd:attribute name="autoSpaceRadialElems" type="real64_array" default="{-1}" />
 		<!--cartesianMappingInnerRadius => If using a Cartesian aligned outer boundary, this is inner radius at which to start the mapping.-->
@@ -1346,6 +1348,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="VTKMeshType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
 		<!--faceBlocks => For multi-block files, names of the face mesh block.-->
 		<xsd:attribute name="faceBlocks" type="string_array" default="{}" />
 		<!--fieldNamesInGEOSX => Names of the volumic fields in GEOSX to import into-->
