@@ -28,7 +28,7 @@ class Hypre(AutotoolsPackage, CudaPackage, ROCmPackage):
     test_requires_compiler = True
 
     # GEOSX EDIT START
-    version('2.24.0geosx', commit='b93beb946541cd425749254f511e1d805e944fea')
+    version('2.27.0geosx', commit='52802b646e371663095d9a15b70f51d30c353975')
     # GEOSX EDIT END
 
     version("develop", branch="master")
@@ -290,6 +290,11 @@ class Hypre(AutotoolsPackage, CudaPackage, ROCmPackage):
             env.set("CUDA_PATH", spec["cuda"].prefix)
             # In CUDA builds hypre currently doesn't handle flags correctly
             env.append_flags("CXXFLAGS", "-O2" if "~debug" in spec else "-g")
+
+            # GEOSX EDIT START
+            # Linking static hypre to shared geosx, requires -fPIC flag to link
+            env.append_flags("CXXFLAGS", "-fPIC" if "~shared" in spec else "")
+            # GEOSX EDIT END
 
         if "+rocm" in spec:
             # As of 2022/04/05, the following are set by 'llvm-amdgpu' and

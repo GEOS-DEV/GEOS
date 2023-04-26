@@ -141,9 +141,9 @@ class Geosx(CMakePackage, CudaPackage):
     trilinos_packages = '+aztec+stratimikos~amesos2~anasazi~belos~ifpack2~muelu~sacado+thyra'
     depends_on('trilinos@13.4.0 ' + trilinos_build_options + trilinos_packages, when='+trilinos')
 
-    depends_on('hypre@2.24.0geosx+superlu-dist+mixedint+mpi+openmp', when='+hypre~cuda')
+    depends_on('hypre@2.27.0geosx+superlu-dist+mixedint+mpi+openmp', when='+hypre~cuda')
 
-    depends_on('hypre@2.24.0geosx+cuda+superlu-dist+mixedint+mpi+openmp+umpire+unified-memory', when='+hypre+cuda')
+    depends_on('hypre@2.27.0geosx+cuda+superlu-dist+mixedint+mpi+openmp+umpire+unified-memory', when='+hypre+cuda')
     with when('+cuda'):
         for sm_ in CudaPackage.cuda_arch_values:
             depends_on('hypre+cuda cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))

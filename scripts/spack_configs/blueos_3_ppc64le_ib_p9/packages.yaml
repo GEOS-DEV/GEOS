@@ -28,8 +28,8 @@ packages:
   cuda:
     buildable: False
     externals:
-    - spec: cuda@11.1.1 +allow-unsupported-compilers
-      prefix: /usr/tce/packages/cuda/cuda-11.1.1
+    - spec: cuda@11.2.2 +allow-unsupported-compilers
+      prefix: /usr/tce/packages/cuda/cuda-11.2.0
 
   # System level packages to not build
   cmake:
