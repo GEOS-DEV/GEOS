@@ -243,17 +243,17 @@ MeshLevel::MeshLevel( string const & name,
 
       arrayView1d< globalIndex const > const elementLocalToGlobal = sourceSubRegion.localToGlobalMap();
       for( localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < sourceSubRegion.localToGlobalMap().size(); iter_localToGlobalsize++ )
-      {   
+      {
         newSubRegion.localToGlobalMap()[iter_localToGlobalsize] = sourceSubRegion.localToGlobalMap()[iter_localToGlobalsize];
-      }   
+      }
       newSubRegion.constructGlobalToLocalMap();
 
       CellBlockManagerABC & cellBlockManager = parent->getGroup< CellBlockManagerABC >( keys::cellManager );
-      array1d< globalIndex > maxGlobalID (3);
+      array1d< globalIndex > maxGlobalID ( 3 );
       maxGlobalID[0] = maxVertexGlobalID;
-      maxGlobalID[1] = maxEdgeGlobalID; 
+      maxGlobalID[1] = maxEdgeGlobalID;
       maxGlobalID[2] = maxFaceGlobalID;
- 
+
       cellBlockManager.generateHighOrderMaps( order,
                                               maxGlobalID,
                                               edgeLocalToGlobal,

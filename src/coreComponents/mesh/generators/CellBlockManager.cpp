@@ -840,8 +840,8 @@ static void trilinearInterp( real64 const alpha,
   }
 }
 
-void CellBlockManager::generateHighOrderMaps( localIndex const order, array1d< globalIndex > maxGlobalID, 
-         arrayView1d< globalIndex const > const edgeLocalToGlobal, arrayView1d< globalIndex const > const faceLocalToGlobal)
+void CellBlockManager::generateHighOrderMaps( localIndex const order, array1d< globalIndex > maxGlobalID,
+                                              arrayView1d< globalIndex const > const edgeLocalToGlobal, arrayView1d< globalIndex const > const faceLocalToGlobal )
 {
 
   // constants for hex mesh
@@ -865,10 +865,10 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order, array1d< g
   localIndex const maxFaceGlobalID = maxGlobalID[2];
 
   localIndex numLocalCells = 0;
-  this->getCellBlocks().forSubGroups<CellBlock>( [&]( CellBlock & cellBlock )
+  this->getCellBlocks().forSubGroups< CellBlock >( [&]( CellBlock & cellBlock )
   {
     numLocalCells += cellBlock.numElements();
-  });
+  } );
 
   ////////////////////////////////
   // Get the new number of nodes
@@ -882,7 +882,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order, array1d< g
   array1d< globalIndex > const nodeLocalToGlobalSource ( m_nodeLocalToGlobal );
   array2d< localIndex > const edgeToNodesMapSource( m_edgeToNodes );
   ArrayOfArrays< localIndex > const faceToNodesMapSource( m_faceToNodes );
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > const refPosSource ( m_nodesPositions ); 
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > const refPosSource ( m_nodesPositions );
 
   m_numNodes = numLocalNodes;
   m_nodeLocalToGlobal.resize( m_numNodes );
@@ -966,7 +966,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order, array1d< g
   faceToNodeMapNew.resizeFromCapacities< parallelHostPolicy >( faceToNodeMapNew.size(), counts.data() );
   // setup initial values of the faceToNodeMap using emplaceBack
   forAll< parallelHostPolicy >( faceToNodeMapNew.size(),
-        [ faceToNodeMapNew = faceToNodeMapNew.toView() ]( localIndex const faceIndex )
+                                [ faceToNodeMapNew = faceToNodeMapNew.toView() ]( localIndex const faceIndex )
   {
     for( localIndex i = 0; i < faceToNodeMapNew.capacityOfArray( faceIndex ); ++i )
     {
@@ -1042,9 +1042,9 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order, array1d< g
   std::array< localIndex, 6 > const nullKey = std::array< localIndex, 6 >{ -1, -1, -1, -1, -1, -1 };
 
   // initialize the elements-to-nodes map
-  arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodesNew; 
+  arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodesNew;
 
-  this->getCellBlocks().forSubGroups<CellBlock>( [&]( CellBlock & cellBlock )
+  this->getCellBlocks().forSubGroups< CellBlock >( [&]( CellBlock & cellBlock )
   {
     arrayView1d< globalIndex > elementLocalToGlobal( cellBlock.localToGlobalMap() );
     array2d< localIndex, cells::NODE_MAP_PERMUTATION > elemsToNodesSource ( cellBlock.getElemToNodes() );
@@ -1102,7 +1102,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order, array1d< g
         elemsToNodesNew[ iter_elem ][ q ] = nodeID;
       }
     }
-  });
+  } );
 }
 
 }

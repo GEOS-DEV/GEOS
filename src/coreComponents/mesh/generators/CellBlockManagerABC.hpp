@@ -192,8 +192,8 @@ public:
    */
   virtual std::map< string, SortedArray< localIndex > > const & getNodeSets() const = 0;
 
-  virtual void generateHighOrderMaps( localIndex const order, array1d< globalIndex > maxGlobalID, 
-               arrayView1d< globalIndex const > const edgeLocalToGlobal, arrayView1d< globalIndex const > const faceLocalToGlobal) = 0;
+  virtual void generateHighOrderMaps( localIndex const order, array1d< globalIndex > maxGlobalID,
+                                      arrayView1d< globalIndex const > const edgeLocalToGlobal, arrayView1d< globalIndex const > const faceLocalToGlobal ) = 0;
 
 };
 
