@@ -722,16 +722,14 @@ public:
           localIndex const ei_up  = sei[k_up];
 
           // C1PPU
-          real64 const smoEps = m_epsC1PPU;
-          if (m_useC1PPU > 0 && smoEps > 0)
+          if (m_useC1PPU > 0 && m_epsC1PPU > 0)
           {
+            GEOSX_ASSERT(numFluxSupportPoints == 2);
             real64 const mobility_i = m_phaseMob[seri[0]][sesri[0]][sei[0]][ip];
             real64 const mobility_j = m_phaseMob[seri[1]][sesri[1]][sei[1]][ip];
 
-            GEOSX_ASSERT(numFluxSupportPoints == 2);
-            real64 const dMobDiff_sign[numFluxSupportPoints] = {-1.0, 1.0};
-
             // compute phase flux
+            real64 const smoEps = m_epsC1PPU;
             real64 const tmpSqrt = sqrt(potGrad * potGrad + smoEps * smoEps);
             real64 const smoMax = 0.5 * (-potGrad + tmpSqrt);
 
@@ -758,7 +756,7 @@ public:
             real64 const dSmoMax_x = 0.5 * (1.0 - potGrad * tmpInv);
 
             // pressure gradient and mobility difference depend on all points in the stencil
-
+            real64 const dMobDiff_sign[numFluxSupportPoints] = {-1.0, 1.0};
             for (integer ke = 0; ke < numFluxSupportPoints; ++ke) 
             {
               // dP
