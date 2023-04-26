@@ -19,7 +19,7 @@
 #include "TriaxialDriver.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 using namespace constitutive;
@@ -74,9 +74,9 @@ TriaxialDriver::~TriaxialDriver()
 void TriaxialDriver::postProcessInput()
 {
 
-  GEOSX_THROW_IF( m_mode != "stressControl" && m_mode != "strainControl" && m_mode != "mixedControl",
-                  "Test mode \'" << m_mode << "\' not recognized.",
-                  InputError );
+  GEOS_THROW_IF( m_mode != "stressControl" && m_mode != "strainControl" && m_mode != "mixedControl",
+                 "Test mode \'" << m_mode << "\' not recognized.",
+                 InputError );
 
   // initialize table functions
 
@@ -146,13 +146,13 @@ void TriaxialDriver::postProcessInput()
   // double check the initial stress value is consistent with any function values that
   // may overwrite it.
 
-  GEOSX_THROW_IF( !isEqual( m_initialStress, m_table( 0, SIG0 ), 1e-6 ),
-                  "Initial stress values indicated by initialStress and axialFunction(time=0) appear inconsistent",
-                  InputError );
+  GEOS_THROW_IF( !isEqual( m_initialStress, m_table( 0, SIG0 ), 1e-6 ),
+                 "Initial stress values indicated by initialStress and axialFunction(time=0) appear inconsistent",
+                 InputError );
 
-  GEOSX_THROW_IF( !isEqual( m_initialStress, m_table( 0, SIG1 ), 1e-6 ),
-                  "Initial stress values indicated by initialStress and radialFunction(time=0) appear inconsistent",
-                  InputError );
+  GEOS_THROW_IF( !isEqual( m_initialStress, m_table( 0, SIG1 ), 1e-6 ),
+                 "Initial stress values indicated by initialStress and radialFunction(time=0) appear inconsistent",
+                 InputError );
 }
 
 
@@ -162,7 +162,7 @@ void TriaxialDriver::runStrainControlTest( SOLID_TYPE & solid, arrayView2d< real
   typename SOLID_TYPE::KernelWrapper updates = solid.createKernelUpdates();
   localIndex const numSteps = m_numSteps;
 
-  forAll< parallelDevicePolicy<> >( 1, [=]  GEOSX_HOST_DEVICE ( integer const ei )
+  forAll< parallelDevicePolicy<> >( 1, [=]  GEOS_HOST_DEVICE ( integer const ei )
   {
     real64 stress[6] = {};
     real64 strainIncrement[6] = {};
@@ -196,7 +196,7 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
   integer const maxCuts = m_maxCuts;
   real64 const newtonTol = m_newtonTol;
 
-  forAll< parallelDevicePolicy<> >( 1, [=]  GEOSX_HOST_DEVICE ( integer const ei )
+  forAll< parallelDevicePolicy<> >( 1, [=]  GEOS_HOST_DEVICE ( integer const ei )
   {
     real64 stress[6] = {};
     real64 strainIncrement[6] = {};
@@ -277,7 +277,7 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
   integer const maxCuts = m_maxCuts;
   real64 const newtonTol = m_newtonTol;
 
-  forAll< parallelDevicePolicy<> >( 1, [=]  GEOSX_HOST_DEVICE ( integer const ei )
+  forAll< parallelDevicePolicy<> >( 1, [=]  GEOS_HOST_DEVICE ( integer const ei )
   {
     real64 stress[6] = {};
     real64 strainIncrement[6] = {};
@@ -372,16 +372,16 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
 }
 
 
-bool TriaxialDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                              real64 const GEOSX_UNUSED_PARAM( dt ),
-                              integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                              integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                              real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                              DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+bool TriaxialDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
+                              real64 const GEOS_UNUSED_PARAM( dt ),
+                              integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                              integer const GEOS_UNUSED_PARAM( eventCounter ),
+                              real64 const GEOS_UNUSED_PARAM( eventProgress ),
+                              DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   // this code only makes sense in serial
 
-  GEOSX_THROW_IF( MpiWrapper::commRank() > 0, "Triaxial Driver should only be run in serial", std::runtime_error );
+  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "Triaxial Driver should only be run in serial", std::runtime_error );
 
   // get the solid out of the constitutive manager.
   // for the moment it is of type SolidBase.
@@ -394,16 +394,16 @@ bool TriaxialDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
 
   if( getLogLevel() > 0 )
   {
-    GEOSX_LOG_RANK_0( "Launching Triaxial Driver" );
-    GEOSX_LOG_RANK_0( "  Material .......... " << m_solidMaterialName );
-    GEOSX_LOG_RANK_0( "  Type .............. " << baseSolid.getCatalogName() );
-    GEOSX_LOG_RANK_0( "  Mode .............. " << m_mode );
-    GEOSX_LOG_RANK_0( "  Axial Control ..... " << m_axialFunctionName );
-    GEOSX_LOG_RANK_0( "  Radial Control .... " << m_radialFunctionName );
-    GEOSX_LOG_RANK_0( "  Initial Stress .... " << m_initialStress );
-    GEOSX_LOG_RANK_0( "  Steps ............. " << m_numSteps );
-    GEOSX_LOG_RANK_0( "  Output ............ " << m_outputFile );
-    GEOSX_LOG_RANK_0( "  Baseline .......... " << m_baselineFile );
+    GEOS_LOG_RANK_0( "Launching Triaxial Driver" );
+    GEOS_LOG_RANK_0( "  Material .......... " << m_solidMaterialName );
+    GEOS_LOG_RANK_0( "  Type .............. " << baseSolid.getCatalogName() );
+    GEOS_LOG_RANK_0( "  Mode .............. " << m_mode );
+    GEOS_LOG_RANK_0( "  Axial Control ..... " << m_axialFunctionName );
+    GEOS_LOG_RANK_0( "  Radial Control .... " << m_radialFunctionName );
+    GEOS_LOG_RANK_0( "  Initial Stress .... " << m_initialStress );
+    GEOS_LOG_RANK_0( "  Steps ............. " << m_numSteps );
+    GEOS_LOG_RANK_0( "  Output ............ " << m_outputFile );
+    GEOS_LOG_RANK_0( "  Baseline .......... " << m_baselineFile );
   }
 
   // create a dummy discretization with one quadrature point for
@@ -473,9 +473,9 @@ void TriaxialDriver::validateResults()
   {
     if( m_table( n, NORM ) > m_newtonTol )
     {
-      GEOSX_LOG_RANK_0( "WARNING: Material driver failed to converge at loadstep " << n << "." );
-      GEOSX_LOG_RANK_0( "         This usually indicates the material has completely failed and/or the loading state is inadmissible." );
-      GEOSX_LOG_RANK_0( "         In rare cases, it may indicate a problem in the material model implementation." );
+      GEOS_LOG_RANK_0( "WARNING: Material driver failed to converge at loadstep " << n << "." );
+      GEOS_LOG_RANK_0( "         This usually indicates the material has completely failed and/or the loading state is inadmissible." );
+      GEOS_LOG_RANK_0( "         In rare cases, it may indicate a problem in the material model implementation." );
 
       for( integer col=EPS0; col<ITER; ++col )
       {
@@ -526,7 +526,7 @@ void TriaxialDriver::compareWithBaseline()
   // open baseline file
 
   std::ifstream file( m_baselineFile.c_str() );
-  GEOSX_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
+  GEOS_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
 
   // discard file header
 
@@ -548,15 +548,15 @@ void TriaxialDriver::compareWithBaseline()
   {
     for( integer col=0; col < m_table.size( 1 ); ++col )
     {
-      GEOSX_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
+      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
       file >> value;
 
       if( col < ITER ) // only compare "real" data columns
       {
         error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
-        GEOSX_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
-                                                                                            << " (row " << row+10 << " with header)"
-                                                                                            << " and column " << col+1, std::runtime_error );
+        GEOS_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
+                                                                                           << " (row " << row+10 << " with header)"
+                                                                                           << " and column " << col+1, std::runtime_error );
       }
     }
   }
@@ -564,13 +564,13 @@ void TriaxialDriver::compareWithBaseline()
   // check we actually reached the end of the baseline file
 
   file >> value;
-  GEOSX_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
+  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
 
   // success
 
   if( getLogLevel() > 0 )
   {
-    GEOSX_LOG_RANK_0( "  Comparison ........ Internal results consistent with baseline." );
+    GEOS_LOG_RANK_0( "  Comparison ........ Internal results consistent with baseline." );
   }
 
   file.close();
@@ -581,4 +581,4 @@ REGISTER_CATALOG_ENTRY( TaskBase,
                         TriaxialDriver,
                         string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

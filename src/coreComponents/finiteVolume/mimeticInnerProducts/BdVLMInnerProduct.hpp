@@ -16,14 +16,14 @@
  * @file BdVLMInnerProduct.hpp
  */
 
-#ifndef GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_BDVLMINNERPRODUCT_HPP_
-#define GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_BDVLMINNERPRODUCT_HPP_
+#ifndef GEOS_FINITEVOLUME_MIMETICINNERPRODUCTS_BDVLMINNERPRODUCT_HPP_
+#define GEOS_FINITEVOLUME_MIMETICINNERPRODUCTS_BDVLMINNERPRODUCT_HPP_
 
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductHelpers.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace mimeticInnerProduct
 {
@@ -53,7 +53,7 @@ public:
    * @details Reference: Beirao da Veiga, Lipnikov, Manzini, "The mimetic finite-difference method for elliptic problems"
    */
   template< localIndex NF >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
            arrayView1d< real64 const > const & transMultiplier,
@@ -68,7 +68,7 @@ public:
 };
 
 template< localIndex NF >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 BdVLMInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                             arrayView1d< real64 const > const & transMultiplier,
@@ -80,7 +80,7 @@ BdVLMInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION
                             real64 const & lengthTolerance,
                             arraySlice2d< real64 > const & transMatrix )
 {
-  GEOSX_UNUSED_VAR( elemVolume );
+  GEOS_UNUSED_VAR( elemVolume );
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
   real64 const weightToleranceInv = 1e30 / lengthTolerance;
 
@@ -208,7 +208,7 @@ BdVLMInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION
 
 } // end namespace mimeticInnerProduct
 
-} // end namespace geosx
+} // end namespace geos
 
 
-#endif //GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_BDVLMINNERPRODUCT_HPP_
+#endif //GEOS_FINITEVOLUME_MIMETICINNERPRODUCTS_BDVLMINNERPRODUCT_HPP_

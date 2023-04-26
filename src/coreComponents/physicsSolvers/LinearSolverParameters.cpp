@@ -18,7 +18,7 @@
 
 #include "LinearSolverParameters.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -206,29 +206,29 @@ void LinearSolverParametersInput::postProcessInput()
 
   static const std::set< integer > binaryOptions = { 0, 1 };
 
-  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.stopIfError ) == 0, viewKeyStruct::stopIfErrorString() << " option can be either 0 (false) or 1 (true)" );
-  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.checkResidual ) == 0, viewKeyStruct::directCheckResidualString() << " option can be either 0 (false) or 1 (true)" );
-  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.equilibrate ) == 0, viewKeyStruct::directEquilString() << " option can be either 0 (false) or 1 (true)" );
-  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.replaceTinyPivot ) == 0, viewKeyStruct::directReplTinyPivotString() << " option can be either 0 (false) or 1 (true)" );
-  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.iterativeRefine ) == 0, viewKeyStruct::directIterRefString() << " option can be either 0 (false) or 1 (true)" );
-  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.parallel ) == 0, viewKeyStruct::directParallelString() << " option can be either 0 (false) or 1 (true)" );
+  GEOS_ERROR_IF( binaryOptions.count( m_parameters.stopIfError ) == 0, viewKeyStruct::stopIfErrorString() << " option can be either 0 (false) or 1 (true)" );
+  GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.checkResidual ) == 0, viewKeyStruct::directCheckResidualString() << " option can be either 0 (false) or 1 (true)" );
+  GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.equilibrate ) == 0, viewKeyStruct::directEquilString() << " option can be either 0 (false) or 1 (true)" );
+  GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.replaceTinyPivot ) == 0, viewKeyStruct::directReplTinyPivotString() << " option can be either 0 (false) or 1 (true)" );
+  GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.iterativeRefine ) == 0, viewKeyStruct::directIterRefString() << " option can be either 0 (false) or 1 (true)" );
+  GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.parallel ) == 0, viewKeyStruct::directParallelString() << " option can be either 0 (false) or 1 (true)" );
 
-  GEOSX_ERROR_IF_LT_MSG( m_parameters.krylov.maxIterations, 0, "Invalid value of " << viewKeyStruct::krylovMaxIterString() );
-  GEOSX_ERROR_IF_LT_MSG( m_parameters.krylov.maxRestart, 0, "Invalid value of " << viewKeyStruct::krylovMaxRestartString() );
+  GEOS_ERROR_IF_LT_MSG( m_parameters.krylov.maxIterations, 0, "Invalid value of " << viewKeyStruct::krylovMaxIterString() );
+  GEOS_ERROR_IF_LT_MSG( m_parameters.krylov.maxRestart, 0, "Invalid value of " << viewKeyStruct::krylovMaxRestartString() );
 
-  GEOSX_ERROR_IF_LT_MSG( m_parameters.krylov.relTolerance, 0.0, "Invalid value of " << viewKeyStruct::krylovTolString() );
-  GEOSX_ERROR_IF_GT_MSG( m_parameters.krylov.relTolerance, 1.0, "Invalid value of " << viewKeyStruct::krylovTolString() );
+  GEOS_ERROR_IF_LT_MSG( m_parameters.krylov.relTolerance, 0.0, "Invalid value of " << viewKeyStruct::krylovTolString() );
+  GEOS_ERROR_IF_GT_MSG( m_parameters.krylov.relTolerance, 1.0, "Invalid value of " << viewKeyStruct::krylovTolString() );
 
-  GEOSX_ERROR_IF_LT_MSG( m_parameters.ifact.fill, 0, "Invalid value of " << viewKeyStruct::iluFillString() );
-  GEOSX_ERROR_IF_LT_MSG( m_parameters.ifact.threshold, 0.0, "Invalid value of " << viewKeyStruct::iluThresholdString() );
+  GEOS_ERROR_IF_LT_MSG( m_parameters.ifact.fill, 0, "Invalid value of " << viewKeyStruct::iluFillString() );
+  GEOS_ERROR_IF_LT_MSG( m_parameters.ifact.threshold, 0.0, "Invalid value of " << viewKeyStruct::iluThresholdString() );
 
-  GEOSX_ERROR_IF_LT_MSG( m_parameters.amg.numSweeps, 0, "Invalid value of " << viewKeyStruct::amgNumSweepsString() );
-  GEOSX_ERROR_IF_LT_MSG( m_parameters.amg.threshold, 0.0, "Invalid value of " << viewKeyStruct::amgThresholdString() );
-  GEOSX_ERROR_IF_GT_MSG( m_parameters.amg.threshold, 1.0, "Invalid value of " << viewKeyStruct::amgThresholdString() );
+  GEOS_ERROR_IF_LT_MSG( m_parameters.amg.numSweeps, 0, "Invalid value of " << viewKeyStruct::amgNumSweepsString() );
+  GEOS_ERROR_IF_LT_MSG( m_parameters.amg.threshold, 0.0, "Invalid value of " << viewKeyStruct::amgThresholdString() );
+  GEOS_ERROR_IF_GT_MSG( m_parameters.amg.threshold, 1.0, "Invalid value of " << viewKeyStruct::amgThresholdString() );
 
   // TODO input validation for other AMG parameters ?
 }
 
 REGISTER_CATALOG_ENTRY( Group, LinearSolverParametersInput, string const &, Group * const )
 
-} // namespace geosx
+} // namespace geos

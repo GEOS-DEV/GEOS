@@ -16,12 +16,12 @@
  * @file FlowSolverBaseFields.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_FLOWSOLVERBASEFIELDS_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_FLOWSOLVERBASEFIELDS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_FLOWSOLVERBASEFIELDS_HPP_
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_FLOWSOLVERBASEFIELDS_HPP_
 
 #include "mesh/MeshFields.hpp"
 
-namespace geosx
+namespace geos
 {
 /**
  * A scope for field traits.
@@ -104,6 +104,14 @@ DECLARE_FIELD( temperature_n,
                WRITE_AND_READ,
                "Temperature at the previous converged time step" );
 
+DECLARE_FIELD( initialTemperature,
+               "initialTemperature",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Initial temperature" );
+
 DECLARE_FIELD( netToGross,
                "netToGross",
                array1d< real64 >,
@@ -135,6 +143,14 @@ DECLARE_FIELD( hydraulicAperture,
                LEVEL_0,
                WRITE_AND_READ,
                "Hydraulic aperture" );
+
+DECLARE_FIELD( minimumHydraulicAperture,
+               "minimumHydraulicAperture",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "minimum value of the hydraulic aperture" );
 
 DECLARE_FIELD( gravityCoefficient,
                "gravityCoefficient",
@@ -198,4 +214,4 @@ DECLARE_FIELD( transMultiplier,
 
 }
 
-#endif // GEOSX_PHYSICSSOLVERS_FLUIDFLOW_FLOWSOLVERBASEFIELDS_HPP_
+#endif // GEOS_PHYSICSSOLVERS_FLUIDFLOW_FLOWSOLVERBASEFIELDS_HPP_

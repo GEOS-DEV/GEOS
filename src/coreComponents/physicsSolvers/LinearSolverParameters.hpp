@@ -16,13 +16,13 @@
  * @file LinearSolverParameters.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_LINEARSOLVERPARAMETERS_HPP_
-#define GEOSX_PHYSICSSOLVERS_LINEARSOLVERPARAMETERS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_LINEARSOLVERPARAMETERS_HPP_
+#define GEOS_PHYSICSSOLVERS_LINEARSOLVERPARAMETERS_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -142,6 +142,6 @@ private:
 
 };
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_LINEARSOLVERPARAMETERS_HPP_
+#endif //GEOS_PHYSICSSOLVERS_LINEARSOLVERPARAMETERS_HPP_

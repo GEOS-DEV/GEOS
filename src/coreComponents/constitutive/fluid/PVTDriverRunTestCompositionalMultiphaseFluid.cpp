@@ -11,7 +11,7 @@
 #include "CompositionalMultiphaseFluid.hpp"
 
 
-namespace geosx
+namespace geos
 {
 template void PVTDriver::runTest< constitutive::CompositionalMultiphaseFluid >( constitutive::CompositionalMultiphaseFluid &, arrayView2d< real64 > const & );
 }

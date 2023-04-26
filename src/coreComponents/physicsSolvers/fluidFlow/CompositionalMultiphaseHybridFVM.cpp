@@ -36,7 +36,7 @@
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
  */
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -55,7 +55,7 @@ CompositionalMultiphaseHybridFVM::CompositionalMultiphaseHybridFVM( const std::s
 
 void CompositionalMultiphaseHybridFVM::registerDataOnMesh( Group & meshBodies )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // 1) Register the elem-centered data
   CompositionalMultiphaseBase::registerDataOnMesh( meshBodies );
@@ -84,20 +84,20 @@ void CompositionalMultiphaseHybridFVM::initializePreSubGroups()
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  GEOSX_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
-                  catalogName() << " " << getName() <<
-                  ": the HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM",
-                  InputError );
+  GEOS_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
+                 catalogName() << " " << getName() <<
+                 ": the HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM",
+                 InputError );
 
-  GEOSX_THROW_IF( m_hasCapPressure,
-                  catalogName() << " " << getName() <<
-                  ": capillary pressure is not yet supported by CompositionalMultiphaseHybridFVM",
-                  InputError );
+  GEOS_THROW_IF( m_hasCapPressure,
+                 catalogName() << " " << getName() <<
+                 ": capillary pressure is not yet supported by CompositionalMultiphaseHybridFVM",
+                 InputError );
 }
 
 void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -110,7 +110,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
       dynamicCast< QuasiTPFAInnerProduct const * >( &mimeticInnerProductBase )  ||
       dynamicCast< SimpleInnerProduct const * >( &mimeticInnerProductBase ) )
   {
-    GEOSX_ERROR( "The QuasiRT, QuasiTPFA, and Simple inner products are only available in SinglePhaseHybridFVM" );
+    GEOS_ERROR( "The QuasiRT, QuasiTPFA, and Simple inner products are only available in SinglePhaseHybridFVM" );
   }
 
   m_lengthTolerance = domain.getMeshBody( 0 ).getGlobalLengthScale() * 1e-8;
@@ -136,22 +136,22 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
     arrayView1d< real64 const > const & transMultiplier = faceManager.getField< fields::flow::transMultiplier >();
 
     RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
-    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
+    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const iface )
     {
       minVal.min( transMultiplier[iface] );
     } );
 
-    GEOSX_THROW_IF( minVal.get() <= 0.0,
-                    catalogName() << " " << getName()
-                                  << ": the transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
-                    std::runtime_error );
+    GEOS_THROW_IF( minVal.get() <= 0.0,
+                   catalogName() << " " << getName()
+                                 << ": the transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
+                   std::runtime_error );
 
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
-      GEOSX_LOG_RANK_0( catalogName() << " " << getName() <<
-                        "An aquifer boundary condition named " << bc.getName() << " was requested in the XML file. \n"
-                                                                                  "This type of boundary condition is not yet supported by CompositionalMultiphaseHybridFVM and will be ignored" );
+      GEOS_LOG_RANK_0( catalogName() << " " << getName() <<
+                       "An aquifer boundary condition named " << bc.getName() << " was requested in the XML file. \n"
+                                                                                 "This type of boundary condition is not yet supported by CompositionalMultiphaseHybridFVM and will be ignored" );
     } );
   } );
 
@@ -228,7 +228,7 @@ void CompositionalMultiphaseHybridFVM::implicitStepSetup( real64 const & time_n,
                                                           real64 const & dt,
                                                           DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // setup the elem-centered fields
   CompositionalMultiphaseBase::implicitStepSetup( time_n, dt, domain );
@@ -250,10 +250,10 @@ void CompositionalMultiphaseHybridFVM::implicitStepSetup( real64 const & time_n,
 }
 
 
-void CompositionalMultiphaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+void CompositionalMultiphaseHybridFVM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                                   DofManager & dofManager ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // setup the connectivity of elem fields
   // we need Connectivity::Face because of the two-point upwinding
@@ -291,7 +291,7 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                           arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -420,7 +420,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
                                                                    DofManager const & dofManager,
                                                                    arrayView1d< real64 const > const & localSolution )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   bool const skipCompFracDamping = m_maxCompFracChange >= 1.0;
   bool const skipPresDamping = m_maxRelativePresChange >= 1.0;
@@ -470,7 +470,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
     globalIndex const rankOffset = dofManager.rankOffset();
 
     RAJA::ReduceMin< parallelDeviceReduce, real64 > minFaceVal( 1.0 );
-    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
+    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const iface )
     {
       if( faceGhostRank[iface] < 0 && faceDofNumber[iface] >= 0 )
       {
@@ -501,7 +501,7 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition cons
                                                             arrayView1d< real64 const > const & localSolution,
                                                             real64 const scalingFactor )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   integer localCheck = 1;
@@ -510,7 +510,7 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition cons
                                                                 MeshLevel const & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    // 1. check cell-centered variables for each region
+    // check cell-centered variables for each region
     mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames, [&]( localIndex const,
                                                                                           ElementSubRegionBase const & subRegion )
     {
@@ -528,28 +528,6 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition cons
 
       localCheck = std::min( localCheck, subRegionSolutionCheck );
     } );
-
-    // 2. check face-centered variables in the domain
-
-    FaceManager const & faceManager = mesh.getFaceManager();
-    string const faceDofKey = dofManager.getKey( viewKeyStruct::faceDofFieldString() );
-    arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
-    arrayView1d< globalIndex const > const faceDofNumber =
-      faceManager.getReference< array1d< globalIndex > >( faceDofKey );
-    arrayView1d< real64 const > const facePres =
-      faceManager.getField< fields::flow::facePressure >();
-
-    // check that face pressure is non-negative
-    integer const faceSolutionCheck =
-      compositionalMultiphaseHybridFVMKernels::
-        SolutionCheckKernel::launch< parallelDevicePolicy<> >( localSolution,
-                                                               dofManager.rankOffset(),
-                                                               faceDofNumber,
-                                                               faceGhostRank,
-                                                               facePres,
-                                                               scalingFactor );
-    localCheck = std::min( localCheck, faceSolutionCheck );
-
   } );
 
   return MpiWrapper::min( localCheck );
@@ -562,7 +540,7 @@ void CompositionalMultiphaseHybridFVM::applyBoundaryConditions( real64 const tim
                                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                 arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   CompositionalMultiphaseBase::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
@@ -576,9 +554,9 @@ void CompositionalMultiphaseHybridFVM::applyAquiferBC( real64 const time,
                                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                        arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( time, dt, dofManager, domain, localMatrix, localRhs );
+  GEOS_UNUSED_VAR( time, dt, dofManager, domain, localMatrix, localRhs );
 
 }
 
@@ -586,26 +564,35 @@ void CompositionalMultiphaseHybridFVM::saveAquiferConvergedState( real64 const &
                                                                   real64 const & dt,
                                                                   DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( time, dt, domain );
+  GEOS_UNUSED_VAR( time, dt, domain );
 }
 
 
-real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition const & domain,
+real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                                                real64 const & dt,
+                                                                DomainPartition const & domain,
                                                                 DofManager const & dofManager,
                                                                 arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
+
+  real64 localResidualNorm = 0.0;
+  real64 localResidualNormalizer = 0.0;
+
+  solverBaseKernels::NormType const normType = getNonlinearSolverParameters().normType();
 
   // local residual
-  real64 localResidualNorm = 0;
   globalIndex const rankOffset = dofManager.rankOffset();
+  string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+  string const faceDofKey = dofManager.getKey( viewKeyStruct::faceDofFieldString() );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
+    ElementRegionManager const & elemManager = mesh.getElemManager();
     FaceManager const & faceManager = mesh.getFaceManager();
 
     // here we compute the cell-centered residual norm in the derived class
@@ -613,86 +600,105 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
 
     // get a view into local residual vector
 
-    string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-    string const faceDofKey = dofManager.getKey( viewKeyStruct::faceDofFieldString() );
-
-
-    StencilAccessors< fields::elementVolume,
-                      fields::flow::phaseMobility_n >
-    compFlowAccessors( mesh.getElemManager(), getName() );
-
-
-    // 1. Compute the residual for the mass conservation equations
-
-    mesh.getElemManager().forElementSubRegionsComplete< ElementSubRegionBase >( regionNames,
-                                                                                [&]( localIndex const,
-                                                                                     localIndex const,
-                                                                                     localIndex const,
-                                                                                     ElementRegionBase const &,
-                                                                                     ElementSubRegionBase const & subRegion )
+    elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   ElementSubRegionBase const & subRegion )
     {
-      arrayView1d< globalIndex const > const & elemDofNumber = subRegion.getReference< array1d< globalIndex > >( elemDofKey );
-      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-      arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
+      real64 subRegionResidualNorm[1]{};
+      real64 subRegionResidualNormalizer[1]{};
 
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-      arrayView2d< real64 const, multifluid::USD_FLUID > const & totalDens_n = fluid.totalDensity_n();
 
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
       CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
-      arrayView1d< real64 const > const & referencePorosity = solid.getReferencePorosity();
 
-      real64 subRegionResidualNorm = 0.0;
+      // step 1.1: compute the norm in the subRegion
+
       isothermalCompositionalMultiphaseBaseKernels::
-        ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
-                                                              rankOffset,
-                                                              numFluidComponents(),
-                                                              elemDofNumber,
-                                                              elemGhostRank,
-                                                              referencePorosity,
-                                                              volume,
-                                                              totalDens_n,
-                                                              subRegionResidualNorm );
-      localResidualNorm += subRegionResidualNorm;
+        ResidualNormKernelFactory::
+        createAndLaunch< parallelDevicePolicy<> >( normType,
+                                                   numFluidComponents(),
+                                                   rankOffset,
+                                                   elemDofKey,
+                                                   localRhs,
+                                                   subRegion,
+                                                   fluid,
+                                                   solid,
+                                                   subRegionResidualNorm,
+                                                   subRegionResidualNormalizer );
+
+      // step 1.2: reduction across meshBodies/regions/subRegions
+
+      if( normType == solverBaseKernels::NormType::Linf )
+      {
+        if( subRegionResidualNorm[0] > localResidualNorm )
+        {
+          localResidualNorm = subRegionResidualNorm[0];
+        }
+      }
+      else
+      {
+        localResidualNorm += subRegionResidualNorm[0];
+        localResidualNormalizer += subRegionResidualNormalizer[0];
+      }
     } );
 
-    arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
-    arrayView1d< globalIndex const > const & faceDofNumber =
-      faceManager.getReference< array1d< globalIndex > >( faceDofKey );
+    // step 2: compute the residual for the face-based constraints
 
-    arrayView2d< localIndex const > const & elemRegionList    = faceManager.elementRegionList();
-    arrayView2d< localIndex const > const & elemSubRegionList = faceManager.elementSubRegionList();
-    arrayView2d< localIndex const > const & elemList          = faceManager.elementList();
+    real64 faceResidualNorm[1]{};
+    real64 faceResidualNormalizer[1]{};
 
-    // 2. Compute the residual for the face-based constraints
-    real64 faceResidualNorm = 0.0;
+    // step 2.1: compute the norm for the local faces
+
     compositionalMultiphaseHybridFVMKernels::
-      ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
-                                                            rankOffset,
-                                                            numFluidPhases(),
-                                                            faceDofNumber.toNestedViewConst(),
-                                                            faceGhostRank.toNestedViewConst(),
-                                                            m_regionFilter.toViewConst(),
-                                                            elemRegionList.toNestedViewConst(),
-                                                            elemSubRegionList.toNestedViewConst(),
-                                                            elemList.toNestedViewConst(),
-                                                            compFlowAccessors.get( fields::elementVolume{} ),
-                                                            compFlowAccessors.get( fields::flow::phaseMobility_n{} ),
-                                                            faceResidualNorm );
-    localResidualNorm += faceResidualNorm;
+      ResidualNormKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( normType,
+                                                 rankOffset,
+                                                 faceDofKey,
+                                                 localRhs,
+                                                 m_regionFilter.toViewConst(),
+                                                 getName(),
+                                                 elemManager,
+                                                 faceManager,
+                                                 dt,
+                                                 faceResidualNorm,
+                                                 faceResidualNormalizer );
+
+    // step 2.2: reduction across meshBodies/regions/subRegions
+
+    if( normType == solverBaseKernels::NormType::Linf )
+    {
+      if( faceResidualNorm[0] > localResidualNorm )
+      {
+        localResidualNorm = faceResidualNorm[0];
+      }
+    }
+    else
+    {
+      localResidualNorm += faceResidualNorm[0];
+      localResidualNormalizer += faceResidualNormalizer[0];
+    }
   } );
 
-  // 3. Combine the two norms
+  // step 3: second reduction across MPI ranks
 
-  // compute global residual norm
-  real64 const residual = std::sqrt( MpiWrapper::sum( localResidualNorm ) );
-  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+  real64 residualNorm = 0.0;
+  if( normType == solverBaseKernels::NormType::Linf )
   {
-    GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residual );
+    solverBaseKernels::LinfResidualNormHelper::computeGlobalNorm( localResidualNorm, residualNorm );
+  }
+  else
+  {
+    solverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm, localResidualNormalizer, residualNorm );
   }
 
-  return residual;
+  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+  {
+    std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
+  }
+
+  return residualNorm;
 }
 
 void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & dofManager,
@@ -700,7 +706,7 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
                                                             real64 const scalingFactor,
                                                             DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // 1. apply the elem-based update
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
@@ -756,7 +762,7 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
 
 void CompositionalMultiphaseHybridFVM::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // 1. Reset the cell-centered fields
   CompositionalMultiphaseBase::resetStateToBeginningOfStep( domain );
@@ -778,7 +784,7 @@ void CompositionalMultiphaseHybridFVM::resetStateToBeginningOfStep( DomainPartit
 
 void CompositionalMultiphaseHybridFVM::updatePhaseMobility( ObjectManagerBase & dataGroup ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   MultiFluidBase const & fluid =
     getConstitutiveModel< MultiFluidBase >( dataGroup,
@@ -797,4 +803,4 @@ void CompositionalMultiphaseHybridFVM::updatePhaseMobility( ObjectManagerBase & 
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseHybridFVM, std::string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */
