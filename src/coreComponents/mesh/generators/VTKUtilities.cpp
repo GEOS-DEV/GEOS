@@ -601,7 +601,10 @@ generateGlobalIDs( vtkDataSet & mesh )
  * @param[in] numRefinements the number of refinements for PTScotch
  * @return the vtk grid redistributed
  */
-vtkSmartPointer< vtkDataSet >
+std::tuple<
+  vtkSmartPointer< vtkDataSet >, // main
+  std::vector< vtkSmartPointer< vtkDataSet > > // fractures
+>
 redistributeByCellGraph( vtkDataSet & mesh,
                          std::vector< vtkSmartPointer< vtkDataSet > > & fractures,
                          PartitionMethod const method,
@@ -705,8 +708,7 @@ redistributeByCellGraph( vtkDataSet & mesh,
     finalFractures.emplace_back( finalFracMesh );
   }
 
-//  return { finalMesh, splitFractures };
-  return finalMesh;
+  return {finalMesh, finalFractures};
 }
 
 /**
@@ -753,7 +755,7 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes )
   return neighbors;
 }
 
-vtkSmartPointer< vtkDataSet >
+AllMeshes
 redistributeMesh( vtkDataSet & loadedMesh,
                   std::map< string, vtkSmartPointer< vtkDataSet > > & namesTofractures,
                   MPI_Comm const comm,
@@ -816,13 +818,20 @@ redistributeMesh( vtkDataSet & loadedMesh,
     mesh = redistributeByKdTree( *mesh );
   }
 
+  AllMeshes result;
   // Redistribute the mesh again using higher-quality graph partitioner
   if( partitionRefinement > 0 )
   {
-    mesh = redistributeByCellGraph( *mesh, fractures, method, comm, partitionRefinement - 1 );
+    auto meshes = redistributeByCellGraph( *mesh, fractures, method, comm, partitionRefinement - 1 );
+    result.main = std::get< 0 >( meshes );
+    auto fracs = std::get< 1 >( meshes ); // TODO terrible code...
+    for (auto const & nf: namesTofractures)
+    {
+      result.faceBlocks[nf.first] = fracs.front();
+    }
   }
 
-  return mesh;
+  return result;
 }
 
 /**

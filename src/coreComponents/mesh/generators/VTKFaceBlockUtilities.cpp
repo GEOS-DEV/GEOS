@@ -47,68 +47,24 @@ public:
    * @param[in] cellBlocks The cell blocks group.
    */
   explicit ElementToFace( dataRepository::Group const & cellBlocks )
-    : m_localToGlobalMaps( cellBlocks.numSubGroups() ),
-    m_elemToFacesMaps( cellBlocks.numSubGroups() )
   {
-    // In order not to copy all the mappings into a main bigger mapping,
-    // we base our implementation on the fact that for practical cases,
-    // cell blocks will contain multiple continuous ranges of cell indices.
-    // Storing those ranges and relying on the fact that numbering is continuous within each range,
-    // will save memory at the cost of look ups.
-    // Note that it's not required that the whole cell block contains a continuous.
-    // It can contain multiple chunks. Chucks of size one are supported.
     localIndex const numCellBlocks = cellBlocks.numSubGroups();
-    for( int i = 0; i < numCellBlocks; ++i )
+    for( int c = 0; c < numCellBlocks; ++c )
     {
-      CellBlock const & cb = cellBlocks.getGroup< CellBlock >( i );
-      m_localToGlobalMaps[i] = cb.localToGlobalMapConstView();
-      m_elemToFacesMaps[i] = cb.getElemToFacesConstView();
-    }
+      CellBlock const & cb = cellBlocks.getGroup< CellBlock >( c );
+      auto const & l2g = cb.localToGlobalMapConstView();
 
-    for( int i = 0; i < numCellBlocks; ++i )
-    {
-      arrayView1d< globalIndex const > const l2g = m_localToGlobalMaps[i];
-      int const size = l2g.size();
-      for( int j = 0, start = 0; j < size - 1; ++j )
+      std::map< globalIndex, localIndex > g2l;
+
+      for (auto l = 0; l < l2g.size(); ++l)
       {
-        // This branching tests if cell indices is still continuous.
-        // If it's not the case, we store a range and start another one.
-        //
-        // The `else if` branch is here to properly define the last range.
-        //
-        // The `-1` offset value is a placeholder before the real value is computed (in the next block of code).
-        if( l2g[j] + 1 != l2g[j + 1] )
-        {
-          m_ranges[{ l2g[start], l2g[j] + 1 }] = { i, -1 };
-          start = j + 1;
-        }
-        else if( j + 1 == size - 1 )
-        {
-          m_ranges[{ l2g[start], l2g[j + 1] + 1 }] = { i, -1 };
-        }
+        const globalIndex & g = l2g[l];
+        m_elementToCellBlock[g] = c;
+        g2l[g] = l;
       }
-    }
 
-    // We hereafter compute the indices offsets,
-    // such that we're able to convert a global index into an index local to the cell block.
-    // The algorithm is more or less an accumulation,
-    // but we must be careful to count the local indices cell block by cell block.
-    std::vector< int > cellBlockOffsets( numCellBlocks, 0 );
-    for( std::pair< Range const, CellBlockInfo > & p: m_ranges )
-    {
-      Range const & range = p.first;
-      CellBlockInfo & cb = p.second;
-      size_t const cbi = cb.index;
-      int & offset = cb.offset;
-
-      offset = cellBlockOffsets[cbi];
-      for( size_t i = 0; i < cellBlockOffsets.size(); ++i )
-      {
-        if( i != cbi )
-        {
-          cellBlockOffsets[i] += range.max - range.min;
-        }
-      }
+      m_cbgl[c] = g2l;
+      m_cbglf[c] = cb.getElemToFacesConstView();
     }
   }
 
@@ -119,7 +75,7 @@ public:
    */
   int getCellBlockIndex( vtkIdType const & ei ) const
   {
-    return getCellBlockInfo( ei ).index;
+    return m_elementToCellBlock.at( ei );
   }
 
   /**
@@ -129,8 +85,8 @@ public:
    */
   localIndex getElementIndexInCellBlock( vtkIdType const & ei ) const
   {
-    CellBlockInfo const & cbInfo = getCellBlockInfo( ei );
-    return ei - cbInfo.offset;
+    localIndex const & cbi = getCellBlockIndex( ei );
+    return m_cbgl.at( cbi ).at( ei );
   }
 
   /**
@@ -140,72 +96,21 @@ public:
    */
   auto operator[]( vtkIdType const & ei ) const
   {
-    CellBlockInfo const & cbInfo = getCellBlockInfo( ei );
-    arrayView2d< localIndex const > const & e2f = m_elemToFacesMaps[cbInfo.index];
-    return e2f[ei - cbInfo.offset];
+    localIndex const & cbi = getCellBlockIndex( ei );
+    localIndex const & e = m_cbgl.at( cbi ).at( ei );
+    arrayView2d< localIndex const > const & e2f = m_cbglf.at( cbi );
+    return e2f[e];
   }
 
 private:
+  /// global element index to the local cell block index
+  std::map< globalIndex, localIndex > m_elementToCellBlock;  // TODO use a vector.
 
-  struct Range
-  {
-    /// Minimum index of the range (included).
-    globalIndex min;
-    /// Maximum index of the range (excluded).
-    globalIndex max;
+  /// Cell block index to a mapping from global element index to the local (to the cell block?) element index.
+  std::map< localIndex , std::map< globalIndex, localIndex > > m_cbgl;
 
-    /**
-     * @brief Compares two ranges. Lower indices will be considered lower than higher ranges.
-     * @param other The right hand side.
-     * @return The comparison result.
-     */
-    bool operator<( Range const & other ) const
-    {
-      return std::tie( min, max ) < std::tie( other.min, other.max );
-    }
-  };
-
-  struct CellBlockInfo
-  {
-    /// Index of the cell block.
-    int index;
-    /// Element index offset (subtracting @p offset from global numbering gives the numbering in the cell block).
-    int offset;
-  };
-
-  /**
-   * @brief Return the cell block information for element @p ei.
-   * @param ei The global index of the element.
-   * @return The cell block information.
-   *
-   * The cell block information contains which cell block (index) contains the global element that matches the @p range.
-   * It also contains which offset should be subtracted in order to compute the local (to the cell block) indexing of the global element.
-   */
-  CellBlockInfo const & getCellBlockInfo( vtkIdType const & ei ) const
-  {
-    auto const it = std::find_if( m_ranges.cbegin(), m_ranges.cend(), [&]( std::pair< Range, CellBlockInfo > const & p ) -> bool
-    {
-      return p.first.min <= ei && ei < p.first.max;
-    } );
-
-    return it->second;
-  }
-
-  /**
-   * @brief Stores the cell block information for each given global element index range.
-   * Lower bound included, upper bound excluded.
-   */
-  std::map< Range, CellBlockInfo > m_ranges;
-  /**
-   * @brief The local to global map, for each cell block.
-   * The indexing the the same as the cell block indexing.
-   */
-  std::vector< arrayView1d< globalIndex const > > m_localToGlobalMaps;
-  /**
-   * @brief The element to faces map, for each cell block.
-   * The indexing the the same as the cell block indexing.
-   */
-  std::vector< arrayView2d< localIndex const > > m_elemToFacesMaps;
+  /// Cell block index to a mapping from global element index to the faces indices.
+  std::map< localIndex , arrayView2d< localIndex const > > m_cbglf;
 };
 
 } // end of namespace internal
@@ -341,10 +246,23 @@ ArrayOfArrays< localIndex > computeFace2dToElems2d( vtkPolyData * edges,
  *
  * @see FaceBlockABC::get2dFaceToEdge for more information.
  */
-array1d< localIndex > computeFace2dToEdge( vtkPolyData * edges,
+array1d< localIndex > computeFace2dToEdge( vtkSmartPointer< vtkDataSet > mesh,
+                                           vtkPolyData * edges,
                                            DuplicatedNodes const & duplicatedNodes,
                                            ArrayOfArraysView< localIndex const > nodeToEdges )
 {
+  vtkIdTypeArray const * globalPtIds = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
+  std::map< globalIndex , std::vector< localIndex > > n2e;
+  for( auto i = 0; i < nodeToEdges.size(); ++i )
+  {
+    std::vector< localIndex > es;
+    for( auto j = 0; j < nodeToEdges[i].size(); ++j )
+    {
+      es.push_back( nodeToEdges[i][j] );
+    }
+    n2e[globalPtIds->GetValue( i )] = es;
+  }
+
   auto const comp = []( std::pair< vtkIdType, int > const & l, std::pair< vtkIdType, int > const & r ) { return l.second < r.second; };
   array1d< localIndex > face2dToEdge( edges->GetNumberOfCells() );
   // We loop over all the (duplicated) nodes of each edge.
@@ -365,7 +283,8 @@ array1d< localIndex > computeFace2dToEdge( vtkPolyData * edges,
     std::map< vtkIdType, int > edgeCount;
     for( auto const & d: allDuplicatedNodesOfEdge )
     {
-      for( localIndex const & val: nodeToEdges[d] )
+//      for( localIndex const & val: nodeToEdges[d] )  // TODO allDuplicatedNodesOfEdge contains global indices and nodeToEdges uses local indices as input key.
+      for( localIndex const & val: n2e[d] )  // TODO allDuplicatedNodesOfEdge contains global indices and nodeToEdges uses local indices as input key.
       {
         edgeCount[val]++;
       }
@@ -473,6 +392,21 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
   vtkIdTypeArray const * boundaryPoints = vtkIdTypeArray::FastDownCast( boundary->GetPointData()->GetArray( boundaryPointsName ) );
   vtkIdTypeArray const * boundaryCells = vtkIdTypeArray::FastDownCast( boundary->GetCellData()->GetArray( boundaryCellsName ) );
 
+  vtkIdTypeArray const * globalPtIds = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
+  vtkIdTypeArray const * globalCellIds = vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() );
+
+//  ArrayOfArrays< globalIndex > f2n;
+//  f2n.resizeFromCapacities< parallelHostPolicy >( faceToNodes.size(),
+//                                                  faceToNodes.getSizes() ); // f2n points to global node indices
+//  for( auto i = 0; i < faceToNodes.size(); ++i )
+//  {
+//    auto const & src = faceToNodes[i];
+//    for( int j = 0; j < src.size(); ++j )
+//    {
+//      f2n.emplace( i, j, globalPtIds->GetValue( src[j] ) );
+//    }
+//  }
+
   // Let's build the elem2d to elem3d mapping. We need to find the 3d elements!
   // First we compute the mapping from all the boundary nodes to the 3d elements that rely on those nodes.
   std::map< vtkIdType, std::vector< vtkIdType > > nodesToCellsFull;
@@ -483,7 +417,8 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
     for( int j = 0; j < pointIds->GetNumberOfIds(); ++j )
     {
       vtkIdType const pointId = boundaryPoints->GetValue( pointIds->GetId( j ) );
-      nodesToCellsFull[pointId].emplace_back( cellId );
+//      nodesToCellsFull[pointId].emplace_back( cellId );
+      nodesToCellsFull[globalPtIds->GetValue( pointId )].emplace_back( globalCellIds->GetValue( cellId ) );
     }
   }
 
@@ -499,9 +434,13 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
 
     for( vtkIdType const & n: allDuplicatedNodes )
     {
-      std::vector< vtkIdType > const & tmp = nodesToCellsFull.at( n );
-      std::set< vtkIdType > const cells{ tmp.cbegin(), tmp.cend() };
-      nodesToCells[n] = cells;
+      auto const iter = nodesToCellsFull.find( n );
+      if( iter != nodesToCellsFull.cend() )
+      {
+        std::vector< vtkIdType > const & tmp = iter->second;
+        std::set< vtkIdType > const cells{ tmp.cbegin(), tmp.cend() };
+        nodesToCells[n] = cells;
+      }
     }
   }
 
@@ -528,10 +467,18 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
     std::map< vtkIdType, std::set< vtkIdType > > elem3dToDuplicatedNodes;
     for( vtkIdType const & n: duplicatedPointOfElem2d )
     {
-      for( vtkIdType const & c: nodesToCells.at( n ) )
+      auto const ncs = nodesToCells.find( n );
+      if( ncs != nodesToCells.cend() )
       {
-        elem3dToDuplicatedNodes[c].insert( n );
+        for( vtkIdType const & c: ncs->second )
+        {
+          elem3dToDuplicatedNodes[c].insert( n );
+        }
       }
+//      for( vtkIdType const & c: nodesToCells.at( n ) )
+//      {
+//        elem3dToDuplicatedNodes[c].insert( n );
+//      }
     }
     // Last we extract which of those candidate 3d elements are the ones actually neighboring the 2d element.
     for( auto const & e2n: elem3dToDuplicatedNodes )
@@ -548,7 +495,14 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
         {
           localIndex const faceIndex = faces[j];
           auto nodes = faceToNodes[faceIndex];
-          if( std::set< vtkIdType >( nodes.begin(), nodes.end() ) == e2n.second )
+//          auto nodes = f2n[faceIndex];
+          std::set< vtkIdType > globalNodes;
+          for( auto const & n: nodes )
+          {
+            globalNodes.insert( globalPtIds->GetValue( n ) );
+          }
+//          if( std::set< vtkIdType >( nodes.begin(), nodes.end() ) == e2n.second )
+          if( globalNodes == e2n.second )
           {
             elem2dToFaces[i][idx] = faceIndex;
             elem2dToCellBlock[i][idx] = elemToFaces.getCellBlockIndex( e2n.first );
@@ -580,6 +534,8 @@ ArrayOfArrays< localIndex > computeElem2dToNodes( vtkIdType num2dElements,
   {
     for( localIndex const & faceIndex: elem2dToFaces[elem2dIndex] )
     {
+      if( faceIndex < 0 )
+      { continue; }
       std::set< localIndex > tmp;
       for( auto j = 0; j < faceToNodes[faceIndex].size(); ++j )
       {
@@ -622,14 +578,14 @@ void importFractureNetwork( string const & faceBlockName,
   ArrayOfArrays< localIndex > elem2dToNodes = computeElem2dToNodes( num2dElements, faceToNodes.toViewConst(), elem2dTo3d.elem2dToFaces.toViewConst() );
 
   ArrayOfArrays< localIndex > face2dToElems2d = computeFace2dToElems2d( edges, faceMesh );
-  array1d< localIndex > face2dToEdge = computeFace2dToEdge( edges, duplicatedNodes, nodeToEdges.toViewConst() );
+  array1d< localIndex > face2dToEdge = computeFace2dToEdge( mesh, edges, duplicatedNodes, nodeToEdges.toViewConst() );
   ArrayOfArrays< localIndex > const elem2dToFace2d = computeElem2dToFace2d( num2dElements, face2dToElems2d.toViewConst() );
   ArrayOfArrays< localIndex > elem2DToEdges = computeElem2dToEdges( num2dElements, face2dToEdge.toViewConst(), elem2dToFace2d.toViewConst() );
 
   // Mappings are now computed. Just create the face block by value.
   FaceBlock & faceBlock = cellBlockManager.registerFaceBlock( faceBlockName );
-  faceBlock.setNum2DElements( num2dElements );
-  faceBlock.setNum2DFaces( num2dFaces );
+  faceBlock.setNum2dElements( num2dElements );
+  faceBlock.setNum2dFaces( num2dFaces );
   faceBlock.set2dElemToNodes( std::move( elem2dToNodes ) );
   faceBlock.set2dElemToEdges( std::move( elem2DToEdges ) );
   faceBlock.set2dFaceToEdge( std::move( face2dToEdge ) );

@@ -73,6 +73,8 @@ struct AllMeshes
   vtkSmartPointer< vtkDataSet > main;
   std::map< string, vtkSmartPointer< vtkDataSet > > faceBlocks;
 
+  AllMeshes() = default;
+
   AllMeshes( vtkSmartPointer< vtkDataSet > const & main_,
              std::map< string, vtkSmartPointer< vtkDataSet>> const & faceBlocks_ )
     : main( main_ ),
@@ -109,7 +111,7 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes );
  * @param[in] useGlobalIds controls whether global id arrays from the vtk input should be used
  * @return the vtk grid redistributed
  */
-vtkSmartPointer< vtkDataSet >
+AllMeshes
 redistributeMesh( vtkDataSet & loadedMesh,
                   std::map< string, vtkSmartPointer< vtkDataSet > > & namesTofractures,
                   MPI_Comm const comm,

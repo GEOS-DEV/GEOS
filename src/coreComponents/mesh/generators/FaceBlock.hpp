@@ -59,13 +59,13 @@ public:
    * @brief Defines the number of 2d elements.
    * @param num2DElements The input value.
    */
-  void setNum2DElements( localIndex num2DElements );
+  void setNum2dElements( localIndex num2DElements );
 
   /**
    * @brief Defines the number of 2d faces.
    * @param num2DFaces The input value.
    */
-  void setNum2DFaces( localIndex num2DFaces );
+  void setNum2dFaces( localIndex num2DFaces );
 
   /**
    * @brief Defines the 2d elements to nodes mapping.

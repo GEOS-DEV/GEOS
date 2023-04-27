@@ -57,12 +57,12 @@ ArrayOfArrays< localIndex > FaceBlock::get2dFaceTo2dElems() const
   return m_2dFaceTo2dElems;
 }
 
-void FaceBlock::setNum2DElements( localIndex num2DElements )
+void FaceBlock::setNum2dElements( localIndex num2DElements )
 {
   m_num2dElements = num2DElements;
 }
 
-void FaceBlock::setNum2DFaces( localIndex num2DFaces )
+void FaceBlock::setNum2dFaces( localIndex num2DFaces )
 {
   m_num2dFaces = num2DFaces;
 }

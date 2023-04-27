@@ -87,8 +87,9 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
     GEOS_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
     vtk::AllMeshes allMeshes = vtk::loadAllMeshes( m_filePath, m_mainBlockName, m_faceBlockNames );
     GEOS_LOG_LEVEL_RANK_0( 2, "  redistributing mesh..." );
-    m_vtkMesh = vtk::redistributeMesh( *allMeshes.main, allMeshes.faceBlocks, comm, m_partitionMethod, m_partitionRefinement, m_useGlobalIds );
-    m_faceBlockMeshes = allMeshes.faceBlocks;
+    vtk::AllMeshes redistributedMeshes = vtk::redistributeMesh( *allMeshes.main, allMeshes.faceBlocks, comm, m_partitionMethod, m_partitionRefinement, m_useGlobalIds );
+    m_vtkMesh = redistributedMeshes.main;
+    m_faceBlockMeshes = redistributedMeshes.faceBlocks;
     GEOS_LOG_LEVEL_RANK_0( 2, "  finding neighbor ranks..." );
     std::vector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, comm );
     std::vector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
