@@ -31,7 +31,8 @@ set(ENABLE_PETSC OFF CACHE BOOL "Enables PETSc." FORCE)
 
 # PYGEOSX
 set(ENABLE_PYGEOSX ON CACHE BOOL "")
-set(Python3_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/python/bin/python3 CACHE PATH "")
+set(Python3_ROOT_DIR /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/python CACHE PATH "")
+set(Python3_EXECUTABLE ${Python3_ROOT_DIR}/bin/python3 CACHE PATH "")
 
 # YAPF python formatting
 set(YAPF_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/python/bin/yapf CACHE PATH "" FORCE)
