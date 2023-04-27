@@ -3,6 +3,7 @@
 ========================== =========================================================================================================== ========================================================= 
 Name                       Type                                                                                                        Description                                               
 ========================== =========================================================================================================== ========================================================= 
+domain2DBoundaryIndicator  integer_array                                                                                               (no description available)                                
 domainBoundaryIndicator    integer_array                                                                                               (no description available)                                
 elementCenter              real64_array2d                                                                                              (no description available)                                
 elementVolume              real64_array                                                                                                (no description available)                                

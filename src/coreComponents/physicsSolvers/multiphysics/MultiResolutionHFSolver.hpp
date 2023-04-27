@@ -47,7 +47,7 @@ public:
     return "MultiResolutionHF";
   }
 
-  virtual void registerDataOnMesh( Group & meshBodies );
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   virtual void
   implicitStepSetup( real64 const & time_n,

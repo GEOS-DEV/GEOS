@@ -124,7 +124,7 @@
       defaultBulkModulus="1.750e5"
       defaultShearModulus="8.077e4"
       lengthScale="0.25"
-      criticalFractureEnergy="54.0"
+      defaultCriticalFractureEnergy="54.0"
       criticalStrainEnergy="14.88"/>
   </Constitutive>
 

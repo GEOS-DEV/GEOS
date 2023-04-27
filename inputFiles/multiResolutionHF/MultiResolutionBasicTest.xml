@@ -194,7 +194,7 @@
       defaultShearModulus="3.00e5"
       lengthScale="0.2"
       degradationLowerLimit="1e-6"
-      criticalFractureEnergy="2.7"
+      defaultCriticalFractureEnergy="2.7"
       criticalStrainEnergy="16.875"/>
 
     <FrictionlessContact

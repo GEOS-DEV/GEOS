@@ -58,127 +58,6 @@ using namespace dataRepository;
 using namespace constitutive;
 
 GEOSX_HOST_DEVICE inline
-void buildBaseToPatchMaps(const MeshLevel & base, const MeshLevel & patch)
-{
-  //need to get base and patch elem managers
-  ElementRegionManager & baseElemManager  = base.getElemManager();
-  FaceManager & baseFaceManager = base.getFaceManager();
-  ElementRegionManager & patchElemManager = patch.getElemManager();
-  array2d<real64> & baseFaceCenters  = baseFaceManager.faceCenter();
-  array2d<real64> & baseFaceNormals  = baseFaceManager.faceNormal();
-  
-  //get base element faces
-
-  //here we will loop over all element of base and patch and write the relation between them in the maps
-  //loop over all base subregions
-  baseElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
-  {
-    FixedOneToManyRelation baseFaceList = cellElementSubRegion.faceList();
-    array2d<real64> & baseElemCenters  = cellElementSubRegion.getElementCenter();
-    arrayView1d< integer const > const baseGhostRank = cellElementSubRegion.ghostRank();
-    //loop over all elements
-    forAll< serialPolicy >( cellElementSubRegion.size(), [&] ( localIndex const k )
-    {
-      //skip ghosts from global
-      if(baseGhostRank[k]>=0)
-      {
-        //get element faces
-        for(int f=0; f<baseFaceList[k].size(); f++)
-        {
-          //check relative position of centers
-          array1d<real64> faceCenter = baseFaceCenters[f];
-          array1d<real64> faceNormal = baseFaceNormals[f];
-          array1d<real64> baseCenter = baseElemCenters[k];
-          //loop over all sub elements of patch
-          patchElemManager.forElementSubRegion< CellElementSubRegion >( [&]( CellElementSubRegion const & patchCellElementSubRegion )
-          {
-            arrayView1d< integer const > const patchGhostRank = patchCellElementSubRegion.ghostRank();
-            array2d<real64> & patchElemCenters  = patchCellElementSubRegion.getElementCenter();
-            forAll< serialPolicy >( patchCellElementSubRegion.size(), [&] ( localIndex const n )
-            {
-              //skip ghosts
-              if(patchGhostRank[n]>=0)
-              {              
-                array1d<real> patchCenter = patchElemCenters[n];
-                //v1
-                LvArray::tensorOps::subtract< 3 >(baseCenter,faceCenter);
-                LvArray::tensorOps::subtract< 3 >(patchCenter,faceCenter);
-                s1 = LvArray::tensorOps::AiBi< 3 >(baseCenter, faceNormal);
-                s2 = LvArray::tensorOps::AiBi< 3 >(patchCenter, faceNormal);
-                if(s1*s2 > 0)
-                {
-                  //patch element n is inside base element k
-                  //update maps accordingly
-                  //get globalIndices
-                  globalIndex K = patchCellElementSubRegion.localToGlobalMap()[k];
-                  globalIndex N = cellElementSubRegion.localToGlobalMap()[n];
-                  m_patchToBaseElementRelation[N] = K;
-                  //if K is already in the map, just add another patchElem to its set
-                  if(m_baseToPatchElementRelation.find(K)!=m_baseToPatchElementRelation.end())
-                  {
-                    m_baseToPatchElementRelation[K].insert(N);
-                  }
-                  else
-                  {
-                    m_baseToPatchElementRelation[K] = {N};
-                  }
-                  
-                }
-              }
-            });
-
-          });
-
-        }
-      }
-
-    });
-  });
-
-  //MPI communication to synchronize the maps accross ranks - straight from my buddy chatGPT
-  // Gather the local maps from all ranks onto each rank
-  MPI_Comm comm = base.getComm();
-  int commSize;
-  MPI_Comm_size(MPI_COMM_GEOSX, &commSize);
-  std::vector<map<globalIndex, set<globalIndex>>> allBaseToPatchMaps(commSize);
-  std::vector<map<globalIndex, globalIndex>> allPatchToBaseMaps(commSize);
-
-  MPI_Allgather(&m_baseToPatchElementRelation, sizeof(m_baseToPatchElementRelation), MPI_BYTE,
-                allBaseToPatchMaps.data(), sizeof(m_baseToPatchElementRelation), MPI_BYTE,
-                MPI_COMM_GEOSX);
-  MPI_Allgather(&m_patchToBaseElementRelation, sizeof(m_patchToBaseElementRelation), MPI_BYTE,
-                allPatchToBaseMaps.data(), sizeof(m_patchToBaseElementRelation), MPI_BYTE,
-                MPI_COMM_GEOSX);
-
-  // Merge the gathered maps into a single map on each rank
-  map<globalIndex, set<globalIndex>> mergedBaseToPatchMap;
-  map<globalIndex, globalIndex> mergedPatchToBaseMap;
-
-  for (int rank = 0; rank < commSize; ++rank) {
-    for (auto& entry : allBaseToPatchMaps[rank]) {
-      const auto& globalIndex = entry.first;
-      const auto& patchIndices = entry.second;
-      if (mergedBaseToPatchMap.find(globalIndex) != mergedBaseToPatchMap.end()) {
-        mergedBaseToPatchMap[globalIndex].insert(patchIndices.begin(), patchIndices.end());
-      } else {
-        mergedBaseToPatchMap[globalIndex] = patchIndices;
-      }
-    }
-
-    for (auto& entry : allPatchToBaseMaps[rank]) {
-      const auto& globalIndex = entry.first;
-      const auto& baseIndex = entry.second;
-      mergedPatchToBaseMap[globalIndex] = baseIndex;
-    }
-  }
-
-  // Update the local maps to include the merged maps
-  m_baseToPatchElementRelation = mergedBaseToPatchMap;
-  m_patchToBaseElementRelation = mergedPatchToBaseMap;
-  
-}
-
-GEOSX_HOST_DEVICE inline
 void coarseToFineStructuredElemMap(localIndex const coarseElemIndex,
                                    localIndex const GEOSX_UNUSED_PARAM(coarseNx), 
                                    localIndex const coarseNy,
@@ -207,12 +86,12 @@ void coarseToFineStructuredElemMap(localIndex const coarseElemIndex,
 
 GEOSX_HOST_DEVICE inline
 localIndex fineToCoarseStructuredElemMap(localIndex const fineElemIndex,
-                                               localIndex const GEOSX_UNUSED_PARAM(coarseNx), 
-                                               localIndex const coarseNy,
-                                               localIndex const coarseNz,
-                                               localIndex const fineRx,
-                                               localIndex const fineRy,
-                                               localIndex const fineRz)   
+                                         localIndex const GEOSX_UNUSED_PARAM(coarseNx), 
+                                         localIndex const coarseNy,
+                                         localIndex const coarseNz,
+                                         localIndex const fineRx,
+                                         localIndex const fineRy,
+                                         localIndex const fineRz)   
 {
     localIndex coarseElemIndex = 0;
     localIndex x = fineElemIndex/(fineRy*coarseNy*fineRz*coarseNz);
@@ -259,6 +138,151 @@ MultiResolutionFlowHFSolver::MultiResolutionFlowHFSolver( const string & name,
 
 }
 
+void MultiResolutionFlowHFSolver::buildBaseToPatchMaps(const MeshLevel & base, const MeshLevel & patch)
+{
+  //need to get base and patch elem managers
+  ElementRegionManager const & baseElemManager  = base.getElemManager();
+  FaceManager const & baseFaceManager = base.getFaceManager();
+  ElementRegionManager const & patchElemManager = patch.getElemManager();
+  arrayView2d<const real64> const & baseFaceCenters  = baseFaceManager.faceCenter();
+  arrayView2d<const real64> const & baseFaceNormals  = baseFaceManager.faceNormal();
+  //get elem to face map
+  //elem -> elemToFaces -> loop over these faces only
+  
+  //get base element faces
+
+  //here we will loop over all element of base and patch and write the relation between them in the maps
+  //loop over all base subregions
+  baseElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
+  {
+    array2d< localIndex > const & baseFaceList = cellElementSubRegion.faceList();
+    arrayView2d< const real64 > const & baseElemCenters  = cellElementSubRegion.getElementCenter();
+    arrayView1d< integer const > const baseGhostRank = cellElementSubRegion.ghostRank();
+    //loop over all elements
+    forAll< serialPolicy >( cellElementSubRegion.size(), [&] ( localIndex const k )
+    {
+      //skip ghosts from global
+      if(baseGhostRank[k]<0)
+      {
+        arraySlice1d<const real64> baseCenter = baseElemCenters[k];
+        patchElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & patchCellElementSubRegion )
+        {
+          arrayView1d< integer const > const & patchGhostRank = patchCellElementSubRegion.ghostRank();
+          arrayView2d< const real64> const & patchElemCenters  = patchCellElementSubRegion.getElementCenter();
+          forAll< serialPolicy >( patchCellElementSubRegion.size(), [&] ( localIndex const n )
+          {
+            //skip ghosts
+            if(patchGhostRank[n]<0)
+            {              
+                arraySlice1d<const real64> patchCenter = patchElemCenters[n];
+                bool isInside = true;
+                //loop over faces of base element
+                for(int f=0; f<baseFaceList[k].size(); f++)
+                {
+                  arraySlice1d<const real64> faceCenter = baseFaceCenters[baseFaceList[k][f]];
+                  arraySlice1d<const real64> faceNormal = baseFaceNormals[baseFaceList[k][f]];
+                  //array1d<real64> baseCenterMod = {baseCenter[0], baseCenter[1], baseCenter[2]};
+                  //array1d<real64> patchCenterMod = {patchCenter[0], patchCenter[1], patchCenter[2]};
+                  //I need these copies because the tensorOps doesnt work on ArraySlices
+                  R1Tensor baseCenterMod = {baseCenter[0], baseCenter[1], baseCenter[2]};
+                  R1Tensor patchCenterMod = {patchCenter[0], patchCenter[1], patchCenter[2]};                  
+                  //baseCenterMod[0] = baseCenter[0]; baseCenterMod[1] = baseCenter[1]; baseCenterMod[2] = baseCenter[2];
+                  //patchCenterMod[0] = patchCenter[0]; patchCenterMod[1] = patchCenter[1]; patchCenterMod[2] = patchCenter[2];
+                  LvArray::tensorOps::subtract< 3 >(baseCenterMod,faceCenter);
+                  LvArray::tensorOps::subtract< 3 >(patchCenterMod,faceCenter);
+                  real64 s1 = LvArray::tensorOps::AiBi< 3 >(baseCenterMod, faceNormal);
+                  real64 s2 = LvArray::tensorOps::AiBi< 3 >(patchCenterMod, faceNormal);
+                  //std::cout<<"Base Element: "<<K<<", Patch Element: "<<N<<std::endl;
+                  bool debugMode = false;
+                  if(k==0 && n<12 && debugMode)
+                  {
+                    //DEBUG INFO
+                    std::cout<<"Base element "<<k<<"\n";
+                    std::cout<<"Patch element "<<n<<"\n";
+                    std::cout<<"Face "<<f<<", s1*s2 = "<<s1*s2<<std::endl;
+                    std::cout<<"baseCenter: ["<<baseCenter[0]<<", "<<baseCenter[1]<<", "<<baseCenter[2]<<"]\n";
+                    std::cout<<"patchCenter: ["<<patchCenter[0]<<", "<<patchCenter[1]<<", "<<patchCenter[2]<<"]\n";
+                    std::cout<<"baseCenterMod: ["<<baseCenterMod[0]<<", "<<baseCenterMod[1]<<", "<<baseCenterMod[2]<<"]\n";
+                    std::cout<<"patchCenterMod: ["<<patchCenterMod[0]<<", "<<patchCenterMod[1]<<", "<<patchCenterMod[2]<<"]\n";
+                    std::cout<<"faceCenter: ["<<faceCenter[0]<<", "<<faceCenter[1]<<", "<<faceCenter[2]<<"]\n";
+                    std::cout<<"faceNormal: ["<<faceNormal[0]<<", "<<faceNormal[1]<<", "<<faceNormal[2]<<"]\n";
+                  }
+                  if(s1*s2 <= 0)
+                  {
+                    isInside = false;
+                  }
+                }
+                if(isInside)
+                {
+                  //get globalIndices
+                  globalIndex N = patchCellElementSubRegion.localToGlobalMap()[n];
+                  globalIndex K = cellElementSubRegion.localToGlobalMap()[k];
+                  //std::cout<<"s1*s2>0 / Base Element: "<<K<<", Patch Element: "<<N<<std::endl;
+                  m_patchToBaseElementRelation[N] = K;
+                  //if K is already in the map, just add another patchElem to its set
+                  if(m_baseToPatchElementRelation.find(K)!=m_baseToPatchElementRelation.end())
+                  {
+                    m_baseToPatchElementRelation[K].insert(N);
+                  }
+                  else
+                  {
+                    m_baseToPatchElementRelation[K] = {N};
+                  }
+                }
+            }
+          });
+
+        });
+
+        //}
+      }
+
+    });
+  });
+
+  //MPI communication to synchronize the maps accross ranks - straight from my buddy chatGPT
+  // Gather the local maps from all ranks onto each rank
+  // MPI_Comm comm = base.getComm();
+  // int commSize;
+  // MPI_Comm_size(MPI_COMM_GEOSX, &commSize);
+  // std::vector<map<globalIndex, set<globalIndex>>> allBaseToPatchMaps(commSize);
+  // std::vector<map<globalIndex, globalIndex>> allPatchToBaseMaps(commSize);
+
+  // MPI_Allgather(&m_baseToPatchElementRelation, sizeof(m_baseToPatchElementRelation), MPI_BYTE,
+  //               allBaseToPatchMaps.data(), sizeof(m_baseToPatchElementRelation), MPI_BYTE,
+  //               MPI_COMM_GEOSX);
+  // MPI_Allgather(&m_patchToBaseElementRelation, sizeof(m_patchToBaseElementRelation), MPI_BYTE,
+  //               allPatchToBaseMaps.data(), sizeof(m_patchToBaseElementRelation), MPI_BYTE,
+  //               MPI_COMM_GEOSX);
+
+  // // Merge the gathered maps into a single map on each rank
+  // map<globalIndex, set<globalIndex>> mergedBaseToPatchMap;
+  // map<globalIndex, globalIndex> mergedPatchToBaseMap;
+
+  // for (int rank = 0; rank < commSize; ++rank) {
+  //   for (auto& entry : allBaseToPatchMaps[rank]) {
+  //     const auto& globalIndex = entry.first;
+  //     const auto& patchIndices = entry.second;
+  //     if (mergedBaseToPatchMap.find(globalIndex) != mergedBaseToPatchMap.end()) {
+  //       mergedBaseToPatchMap[globalIndex].insert(patchIndices.begin(), patchIndices.end());
+  //     } else {
+  //       mergedBaseToPatchMap[globalIndex] = patchIndices;
+  //     }
+  //   }
+
+  //   for (auto& entry : allPatchToBaseMaps[rank]) {
+  //     const auto& globalIndex = entry.first;
+  //     const auto& baseIndex = entry.second;
+  //     mergedPatchToBaseMap[globalIndex] = baseIndex;
+  //   }
+  // }
+
+  // // Update the local maps to include the merged maps
+  // m_baseToPatchElementRelation = mergedBaseToPatchMap;
+  // m_patchToBaseElementRelation = mergedPatchToBaseMap;
+  
+}
+
 void MultiResolutionFlowHFSolver::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
   //GEOSX_UNUSED_VAR( meshBodies );
@@ -302,7 +326,7 @@ void MultiResolutionFlowHFSolver::registerDataOnMesh( dataRepository::Group & me
     const MeshLevel & base  = meshBodies.getGroup<MeshBody>(0).getBaseDiscretization();
     const MeshLevel & patch = meshBodies.getGroup<MeshBody>(1).getBaseDiscretization();
 
-    buildBaseToPatchMaps(base, patch)
+    buildBaseToPatchMaps(base, patch);
 
   // } );
 }
@@ -519,7 +543,7 @@ void MultiResolutionFlowHFSolver::prepareSubProblemBCs( MeshLevel const & base,
 }
 
 void MultiResolutionFlowHFSolver::testElemMappingPatchToBase( MeshLevel & GEOSX_UNUSED_PARAM(base),
-                                                          MeshLevel & patch )
+                                                              MeshLevel & patch )
 {
   //for every elem in base
   //call coarseToFineStructuredElemMap
@@ -530,13 +554,16 @@ void MultiResolutionFlowHFSolver::testElemMappingPatchToBase( MeshLevel & GEOSX_
   //get accessor to elemental field
   ElementRegionManager::ElementViewAccessor< arrayView1d< localIndex > > const fineToCoarseMap =
   patchElemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( "fineToCoarseMap" );
-  //fineToCoarseMap[0][0][0] = fineToCoarseStructuredElemMap(0,5,5,5,3,3,3);
   patchElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
-
+    arrayView1d< integer const > const & patchGhostRank = cellElementSubRegion.ghostRank();
     forAll< serialPolicy >( cellElementSubRegion.size(), [&] ( localIndex const k )
     {
-      fineToCoarseMap[0][0][k] = fineToCoarseStructuredElemMap(k,5,5,5,3,3,3);
+      if(patchGhostRank[k]<0)
+      {                 
+        globalIndex K = cellElementSubRegion.localToGlobalMap()[k];
+        fineToCoarseMap[0][0][K] = m_patchToBaseElementRelation[K];
+      }
     } );
   } );  
 }
@@ -550,30 +577,23 @@ void MultiResolutionFlowHFSolver::testElemMappingBaseToPatch( MeshLevel & base,
   //this should be exactly the same as the function above
   ElementRegionManager & coarseElemManager = base.getElemManager();
   ElementRegionManager & patchElemManager = patch.getElemManager();
-
+  
   //get accessor to elemental field
   ElementRegionManager::ElementViewAccessor< arrayView1d< localIndex > > const coarseToFineMap =
   patchElemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( "coarseToFineMap" );
-  localIndex rx=3;
-  localIndex ry=3;
-  localIndex rz=3;
-  //R1Tensor refElem = coarseToFineStructuredElemMap(0,5,5,5,rx,ry,rz);
+
   coarseElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
-    forAll< serialPolicy >( cellElementSubRegion.size(), [&] ( localIndex const K )
+    arrayView1d< integer const > const & baseGhostRank = cellElementSubRegion.ghostRank();
+    forAll< serialPolicy >( cellElementSubRegion.size(), [&] ( localIndex const k )
     {
-      localIndex triplet[3];
-      coarseToFineStructuredElemMap(K,5,5,5,rx,ry,rz,triplet);
-      GEOSX_LOG_LEVEL_RANK_0( 3, "Base elem index: " << K << " triplet: ( "<<triplet[0]<<", "<<triplet[1]<<", "<<triplet[2]<<" )\n" );
-      for(int i=0; i<rx; i++){
-        for(int j=0; j<ry; j++){
-          for(int k=0; k<rz; k++){
-            localIndex fineK = (triplet[0] + i)*ry*5*rz*5 + (triplet[1] + j)*rz*5 + (triplet[2] + k);
-            if(fineK > 0){
-                GEOSX_LOG_LEVEL_RANK_0( 3, "fineK: " << fineK << " from base elem: "<<K<<"\n" );
-            }
-            coarseToFineMap[0][0][fineK] = K;
-          }        
+      //loop over all fines in m_baseToPatchElementRelation[K]
+      if(baseGhostRank[k]<0)
+      {
+        globalIndex K = cellElementSubRegion.localToGlobalMap()[k];
+        for(auto fineElem:m_baseToPatchElementRelation[K])
+        {
+            coarseToFineMap[0][0][fineElem] = K;          
         }
       }
     } );
@@ -597,7 +617,7 @@ real64 MultiResolutionFlowHFSolver::utilGetElemAverageDamage(globalIndex const p
 
     const constitutive::Damage< ElasticIsotropic > & damageUpdates = subRegion.getConstitutiveModel< Damage< ElasticIsotropic > >( damageModelName );
 
-    arrayView2d< const real64 > allElemCenters = subRegion.getElementCenter();
+    //arrayView2d< const real64 > allElemCenters = subRegion.getElementCenter();
 
     const arrayView2d< real64 const > qp_damage = damageUpdates.getDamage();
 
@@ -641,8 +661,9 @@ void MultiResolutionFlowHFSolver::initializeCrackFront( MeshLevel & base )
   baseElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
     m_baseCrackFront.clear();
-    auto elemToFaceList = cellElementSubRegion.faceList();
-    arrayView1d< integer const > const ghostRank = cellElementSubRegion.ghostRank();
+    //auto elemToFaceList = cellElementSubRegion.faceList();
+    array2d< localIndex > const & elemToFaceList = cellElementSubRegion.faceList();
+    //arrayView1d< integer const > const ghostRank = cellElementSubRegion.ghostRank();
     SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
     //TODO: can we make this a forall?
     //PARALLEL: Do ghost elements count as fracturedElements? - YES
@@ -693,10 +714,10 @@ void MultiResolutionFlowHFSolver::cutDamagedElements( MeshLevel & base,
   //ghosts
   arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
   
-  FaceManager const & baseFaceManager = base.getFaceManager();
-  auto elemToFaceList = subRegion.faceList();
-  auto faceToElemList = baseFaceManager.elementList();
-  auto faceNormals = baseFaceManager.faceNormal();
+  //FaceManager const & baseFaceManager = base.getFaceManager();
+  //array2d< localIndex > const & elemToFaceList = subRegion.faceList();
+  //auto faceToElemList = baseFaceManager.elementList();
+  //auto faceNormals = baseFaceManager.faceNormal();
   // Get domain
   MeshManager & meshManager = this->getGroupByPath< MeshManager >( "/Problem/Mesh");
   integer Nx = meshManager.getGroup<InternalMeshGenerator>(0).getNx();
@@ -995,8 +1016,8 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
     // anytime the base crack changes
 
 
-    // testElemMappingPatchToBase( domain.getMeshBody( baseTarget.first ).getBaseDiscretization(), 
-    //                             domain.getMeshBody( patchTarget.first ).getBaseDiscretization() );
+    testElemMappingPatchToBase( domain.getMeshBody( baseTarget.first ).getBaseDiscretization(), 
+                                domain.getMeshBody( patchTarget.first ).getBaseDiscretization() );
 
     // testElemMappingBaseToPatch( domain.getMeshBody( baseTarget.first ).getBaseDiscretization(), 
     //                             domain.getMeshBody( patchTarget.first ).getBaseDiscretization() );
@@ -1058,7 +1079,7 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
     patchSolver.implicitStepComplete( time_n, dt, domain );
     baseSolver.implicitStepComplete( time_n, dt, domain );
     patchSolidSolver.setInternalBoundaryConditions( m_nodeFixDisp, m_fixedDispList );
-    writeBasePressuresToPatch(base, patch);
+    //writeBasePressuresToPatch(base, patch);
 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", PatchSolver: " );
 

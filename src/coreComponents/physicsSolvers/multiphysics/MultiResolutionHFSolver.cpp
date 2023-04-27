@@ -469,7 +469,7 @@ real64 MultiResolutionHFSolver::utilGetElemAverageDamage(globalIndex const patch
 
     const constitutive::Damage< ElasticIsotropic > & damageUpdates = subRegion.getConstitutiveModel< Damage< ElasticIsotropic > >( damageModelName );
 
-    arrayView2d< const real64 > allElemCenters = subRegion.getElementCenter();
+    //arrayView2d< const real64 > allElemCenters = subRegion.getElementCenter();
 
     const arrayView2d< real64 const > qp_damage = damageUpdates.getDamage();
 
@@ -513,8 +513,9 @@ void MultiResolutionHFSolver::initializeCrackFront( MeshLevel & base )
   baseElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
     m_baseCrackFront.clear();
-    auto elemToFaceList = cellElementSubRegion.faceList();
-    arrayView1d< integer const > const ghostRank = cellElementSubRegion.ghostRank();
+    //auto elemToFaceList = cellElementSubRegion.faceList();
+    array2d< localIndex > const & elemToFaceList = cellElementSubRegion.faceList();
+    //arrayView1d< integer const > const ghostRank = cellElementSubRegion.ghostRank();
     SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
     //TODO: can we make this a forall?
     //PARALLEL: Do ghost elements count as fracturedElements? - YES
@@ -565,10 +566,10 @@ void MultiResolutionHFSolver::cutDamagedElements( MeshLevel & base,
   //ghosts
   arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
   
-  FaceManager const & baseFaceManager = base.getFaceManager();
-  auto elemToFaceList = subRegion.faceList();
-  auto faceToElemList = baseFaceManager.elementList();
-  auto faceNormals = baseFaceManager.faceNormal();
+  //FaceManager const & baseFaceManager = base.getFaceManager();
+  //array2d< localIndex > const & elemToFaceList = subRegion.faceList();
+  //auto faceToElemList = baseFaceManager.elementList();
+  //auto faceNormals = baseFaceManager.faceNormal();
   // Get domain
   MeshManager & meshManager = this->getGroupByPath< MeshManager >( "/Problem/Mesh");
   integer Nx = meshManager.getGroup<InternalMeshGenerator>(0).getNx();

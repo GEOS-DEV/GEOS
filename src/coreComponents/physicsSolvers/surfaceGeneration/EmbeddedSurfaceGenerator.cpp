@@ -519,7 +519,7 @@ bool EmbeddedSurfaceGenerator::propagationStep3D()
   ElementRegionBase & elementRegion = elemManager.getRegion( er );
   CellElementSubRegion & subRegion = elementRegion.getSubRegion< CellElementSubRegion >( esr );
   arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();  
-  arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes = subRegion.nodeList();
+  //arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes = subRegion.nodeList();
   FixedOneToManyRelation const & cellToEdges = subRegion.edgeList();
   arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
   auto fracturedElements = subRegion.fracturedElementsList();
@@ -769,6 +769,7 @@ void EmbeddedSurfaceGenerator::updateGlobalIndices( ElementRegionManager & elemM
 
   globalIndexOffset[0] = elemManager.maxGlobalIndex(); // should be like elemManager.getMaxGlobalIndex();
   localIndex totalNumberOfNewSurfaceElements = numberOfNewSurfaceElemsPerRank[ 0 ];  // Sum across all ranks
+  GEOSX_UNUSED_VAR(totalNumberOfNewSurfaceElements);
   for( int rank = 1; rank < commSize; ++rank )
   {
     globalIndexOffset[rank] = globalIndexOffset[rank - 1] + numberOfNewSurfaceElemsPerRank[rank - 1];

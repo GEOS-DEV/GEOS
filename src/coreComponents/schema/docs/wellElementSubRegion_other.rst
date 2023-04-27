@@ -3,6 +3,7 @@
 ========================= ===================================================================== ====================================================================== 
 Name                      Type                                                                  Description                                                            
 ========================= ===================================================================== ====================================================================== 
+domain2DBoundaryIndicator integer_array                                                         (no description available)                                             
 domainBoundaryIndicator   integer_array                                                         (no description available)                                             
 ghostRank                 integer_array                                                         (no description available)                                             
 globalToLocalMap          geosx_mapBase< long long, int, std_integral_constant< bool, false > > (no description available)                                             

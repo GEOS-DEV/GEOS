@@ -493,7 +493,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
   {
     int const neighborRank = neighbors[ i ].neighborRank();
 
-    MpiWrapper::iSend( objectManager.getNeighborData( neighborRank ).nonLocalGhosts().toViewConst(),
+    MpiWrapper::iSend( objectManager.getNeighborData( neighborRank ).nonLocalGhosts().toView(),
                        neighborRank,
                        nonLocalGhostsTag,
                        MPI_COMM_GEOSX,
@@ -767,6 +767,7 @@ void CommunicationTools::asyncSendRecv( std::vector< NeighborCommunicator > & ne
                                         bool onDevice,
                                         parallelDeviceEvents & events )
 {
+  std::cout<<"this rank is: "<<MpiWrapper::commRank( MPI_COMM_GEOSX )<<" ENTERING ASYNC SEND RECV"<<", icomm.size = "<<icomm.size()<<std::endl;
   GEOSX_MARK_FUNCTION;
   if( onDevice )
   {
@@ -779,17 +780,20 @@ void CommunicationTools::asyncSendRecv( std::vector< NeighborCommunicator > & ne
   for( std::size_t count = 0; count < neighbors.size(); ++count )
   {
     int neighborIndex;
+    //std::cout<<"this rank is: "<<MpiWrapper::commRank( MPI_COMM_GEOSX )<<" before waitAny - STUCK HERE"<<std::endl;
     MpiWrapper::waitAny( icomm.size(),
                          icomm.mpiRecvBufferSizeRequest(),
                          &neighborIndex,
                          icomm.mpiRecvBufferSizeStatus() );
+    //std::cout<<"this rank is: "<<MpiWrapper::commRank( MPI_COMM_GEOSX )<<" after waitAny - STUCK HERE"<<std::endl;                     
 
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
-
+    //std::cout<<"before mpiISendReceiveBuffers - STUCK HERE"<<std::endl;
     neighbor.mpiISendReceiveBuffers( icomm.commID(),
                                      icomm.mpiSendBufferRequest( neighborIndex ),
                                      icomm.mpiRecvBufferRequest( neighborIndex ),
                                      MPI_COMM_GEOSX );
+    //std::cout<<"after mpiISendReceiveBuffers - STUCK HERE"<<std::endl;                                 
   }
 }
 
@@ -802,7 +806,9 @@ void CommunicationTools::synchronizePackSendRecv( FieldIdentifiers const & field
   GEOSX_MARK_FUNCTION;
   parallelDeviceEvents events;
   asyncPack( fieldsToBeSync, mesh, neighbors, icomm, onDevice, events );
+  std::cout<<"before asyncSendRecv - STUCK HERE"<<std::endl;
   asyncSendRecv( neighbors, icomm, onDevice, events );
+  std::cout<<"after asyncSendRecv - STUCK HERE"<<std::endl;
 }
 
 
@@ -887,11 +893,14 @@ void CommunicationTools::synchronizeFields( FieldIdentifiers const & fieldsToBeS
                                             std::vector< NeighborCommunicator > & neighbors,
                                             bool onDevice )
 {
+  std::cout<<"inside CommTools"<<std::endl;
   MPI_iCommData icomm( getCommID() );
   icomm.resize( neighbors.size() );
   synchronizePackSendRecvSizes( fieldsToBeSync, mesh, neighbors, icomm, onDevice );
   synchronizePackSendRecv( fieldsToBeSync, mesh, neighbors, icomm, onDevice );
+  std::cout<<"after packSendRecv - STUCK HERE"<<std::endl;
   synchronizeUnpack( mesh, neighbors, icomm, onDevice );
+  std::cout<<"leaving CommTools"<<std::endl;
 }
 
 } /* namespace geosx */

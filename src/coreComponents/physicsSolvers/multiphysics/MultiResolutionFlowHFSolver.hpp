@@ -48,7 +48,10 @@ public:
     return "MultiResolutionFlowHF";
   }
 
-  virtual void registerDataOnMesh( Group & meshBodies );
+  void buildBaseToPatchMaps( const MeshLevel & base, 
+                             const MeshLevel & patch );
+
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   virtual void
   implicitStepSetup( real64 const & time_n,

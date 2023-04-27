@@ -56,7 +56,7 @@
       defaultBulkModulus="1.67e4"
       defaultShearModulus="1.25e4"
       lengthScale="0.4"
-      criticalFractureEnergy="4e-3"
+      defaultCriticalFractureEnergy="4e-3"
       criticalStrainEnergy="0"
       extDrivingForceFlag="1"
       tensileStrength="5.0"

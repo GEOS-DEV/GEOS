@@ -141,6 +141,13 @@ Element: ChomboIO
 .. include:: ../../coreComponents/schema/docs/ChomboIO.rst
 
 
+.. _XML_Circle:
+
+Element: Circle
+===============
+.. include:: ../../coreComponents/schema/docs/Circle.rst
+
+
 .. _XML_CompositeFunction:
 
 Element: CompositeFunction
@@ -554,6 +561,13 @@ Element: MultiPhaseVolumeWeightedThermalConductivity
 .. include:: ../../coreComponents/schema/docs/MultiPhaseVolumeWeightedThermalConductivity.rst
 
 
+.. _XML_MultiResolutionFlowHF:
+
+Element: MultiResolutionFlowHF
+==============================
+.. include:: ../../coreComponents/schema/docs/MultiResolutionFlowHF.rst
+
+
 .. _XML_MultiResolutionHF:
 
 Element: MultiResolutionHF
@@ -804,6 +818,13 @@ Element: ProppantTransport
 Element: Python
 ===============
 .. include:: ../../coreComponents/schema/docs/Python.rst
+
+
+.. _XML_RTheta:
+
+Element: RTheta
+===============
+.. include:: ../../coreComponents/schema/docs/RTheta.rst
 
 
 .. _XML_ReactiveBrine:
@@ -1314,6 +1335,13 @@ Datastructure: ChomboIO
 .. include:: ../../coreComponents/schema/docs/ChomboIO_other.rst
 
 
+.. _DATASTRUCTURE_Circle:
+
+Datastructure: Circle
+=====================
+.. include:: ../../coreComponents/schema/docs/Circle_other.rst
+
+
 .. _DATASTRUCTURE_CompositeFunction:
 
 Datastructure: CompositeFunction
@@ -1748,6 +1776,13 @@ Datastructure: MultiPhaseVolumeWeightedThermalConductivity
 .. include:: ../../coreComponents/schema/docs/MultiPhaseVolumeWeightedThermalConductivity_other.rst
 
 
+.. _DATASTRUCTURE_MultiResolutionFlowHF:
+
+Datastructure: MultiResolutionFlowHF
+====================================
+.. include:: ../../coreComponents/schema/docs/MultiResolutionFlowHF_other.rst
+
+
 .. _DATASTRUCTURE_MultiResolutionHF:
 
 Datastructure: MultiResolutionHF
@@ -1998,6 +2033,13 @@ Datastructure: ProppantTransport
 Datastructure: Python
 =====================
 .. include:: ../../coreComponents/schema/docs/Python_other.rst
+
+
+.. _DATASTRUCTURE_RTheta:
+
+Datastructure: RTheta
+=====================
+.. include:: ../../coreComponents/schema/docs/RTheta_other.rst
 
 
 .. _DATASTRUCTURE_ReactiveBrine:

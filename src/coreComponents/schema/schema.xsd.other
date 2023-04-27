@@ -319,7 +319,9 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="BoundedPlane" type="BoundedPlaneType" />
 			<xsd:element name="Box" type="BoxType" />
+			<xsd:element name="Circle" type="CircleType" />
 			<xsd:element name="Cylinder" type="CylinderType" />
+			<xsd:element name="RTheta" type="RThetaType" />
 			<xsd:element name="ThickPlane" type="ThickPlaneType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -332,7 +334,9 @@
 		<!--sinStrike => (no description available)-->
 		<xsd:attribute name="sinStrike" type="real64" />
 	</xsd:complexType>
+	<xsd:complexType name="CircleType" />
 	<xsd:complexType name="CylinderType" />
+	<xsd:complexType name="RThetaType" />
 	<xsd:complexType name="ThickPlaneType" />
 	<xsd:complexType name="IncludedType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -460,6 +464,7 @@
 			<xsd:element name="Hydrofracture" type="HydrofractureType" />
 			<xsd:element name="LagrangianContact" type="LagrangianContactType" />
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
+			<xsd:element name="MultiResolutionFlowHF" type="MultiResolutionFlowHFType" />
 			<xsd:element name="MultiResolutionHF" type="MultiResolutionHFType" />
 			<xsd:element name="MultiphasePoromechanics" type="MultiphasePoromechanicsType" />
 			<xsd:element name="MultiphasePoromechanicsReservoir" type="MultiphasePoromechanicsReservoirType" />
@@ -716,6 +721,17 @@
 		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="LaplaceFEMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+	</xsd:complexType>
+	<xsd:complexType name="MultiResolutionFlowHFType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
@@ -1520,6 +1536,8 @@
 	<xsd:complexType name="DamageElasticIsotropicType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
 		<xsd:attribute name="bulkModulus" type="real64_array" />
+		<!--criticalFractureEnergy => Critical fracture energy-->
+		<xsd:attribute name="criticalFractureEnergy" type="real64_array" />
 		<!--damage => Material Damage Variable-->
 		<xsd:attribute name="damage" type="real64_array2d" />
 		<!--damageGrad => Material Damage Gradient-->
@@ -1544,6 +1562,8 @@
 	<xsd:complexType name="DamageSpectralElasticIsotropicType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
 		<xsd:attribute name="bulkModulus" type="real64_array" />
+		<!--criticalFractureEnergy => Critical fracture energy-->
+		<xsd:attribute name="criticalFractureEnergy" type="real64_array" />
 		<!--damage => Material Damage Variable-->
 		<xsd:attribute name="damage" type="real64_array2d" />
 		<!--damageGrad => Material Damage Gradient-->
@@ -1560,17 +1580,16 @@
 		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
-<<<<<<< HEAD
 		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
-=======
 		<!--volumetricStrain => Volumetric strain-->
 		<xsd:attribute name="volumetricStrain" type="real64_array2d" />
->>>>>>> feature/andrembcosta/pressurizedPhaseField
 	</xsd:complexType>
 	<xsd:complexType name="DamageVolDevElasticIsotropicType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
 		<xsd:attribute name="bulkModulus" type="real64_array" />
+		<!--criticalFractureEnergy => Critical fracture energy-->
+		<xsd:attribute name="criticalFractureEnergy" type="real64_array" />
 		<!--damage => Material Damage Variable-->
 		<xsd:attribute name="damage" type="real64_array2d" />
 		<!--damageGrad => Material Damage Gradient-->
@@ -1587,13 +1606,10 @@
 		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
-<<<<<<< HEAD
 		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
-=======
 		<!--volumetricStrain => Volumetric strain-->
 		<xsd:attribute name="volumetricStrain" type="real64_array2d" />
->>>>>>> feature/andrembcosta/pressurizedPhaseField
 	</xsd:complexType>
 	<xsd:complexType name="DeadOilFluidType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
@@ -2292,6 +2308,8 @@
 			<xsd:element name="SurfaceElementRegion" type="SurfaceElementRegionType" />
 			<xsd:element name="WellElementRegion" type="WellElementRegionType" />
 		</xsd:choice>
+		<!--domain2DBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domain2DBoundaryIndicator" type="integer_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--ghostRank => (no description available)-->
@@ -2314,6 +2332,8 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
+		<!--domain2DBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domain2DBoundaryIndicator" type="integer_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--faceList => (no description available)-->
@@ -2334,6 +2354,8 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
+		<!--domain2DBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domain2DBoundaryIndicator" type="integer_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--faceList => (no description available)-->
@@ -2354,6 +2376,8 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
+		<!--domain2DBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domain2DBoundaryIndicator" type="integer_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
@@ -2384,6 +2408,8 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
+		<!--domain2DBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domain2DBoundaryIndicator" type="integer_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
@@ -2422,6 +2448,8 @@
 		</xsd:choice>
 		<!--ReferencePosition => (no description available)-->
 		<xsd:attribute name="ReferencePosition" type="real64_array2d" />
+		<!--domain2DBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domain2DBoundaryIndicator" type="integer_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
@@ -2451,6 +2479,8 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
+		<!--domain2DBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domain2DBoundaryIndicator" type="integer_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--ghostRank => (no description available)-->
@@ -2473,6 +2503,8 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
+		<!--domain2DBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domain2DBoundaryIndicator" type="integer_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--ghostRank => (no description available)-->
@@ -2490,6 +2522,8 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
+		<!--domain2DBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domain2DBoundaryIndicator" type="integer_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--ghostRank => (no description available)-->
@@ -2512,6 +2546,8 @@
 			<xsd:element name="sets" type="setsType" />
 			<xsd:element name="wellElementSubRegion" type="wellElementSubRegionType" />
 		</xsd:choice>
+		<!--domain2DBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domain2DBoundaryIndicator" type="integer_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--elementCenter => (no description available)-->
@@ -2553,6 +2589,8 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
+		<!--domain2DBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domain2DBoundaryIndicator" type="integer_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--ghostRank => (no description available)-->

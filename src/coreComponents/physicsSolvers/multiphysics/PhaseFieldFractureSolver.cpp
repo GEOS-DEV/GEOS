@@ -362,18 +362,18 @@ void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & doma
 
           arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_newDamage;
           arrayView3d< real64 > const damageGradOnMaterial = constitutiveUpdate.m_damageGrad;
-          arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemNodes = elementSubRegion.nodeList();
+          //arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemNodes = elementSubRegion.nodeList();
 
           auto const & elemsToNodes = elementSubRegion.nodeList().toViewConst();
 
           finiteElement::FiniteElementBase const &
           fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( discretizationName );
           finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe, [=, &elementSubRegion] ( auto & finiteElement )
-                                                                                   //finiteElement::FiniteElementDispatchHandler<
-                                                                                   // ALL_FE_TYPES >::dispatch3D( fe, [xNodes, nodalDamage,
-                                                                                   // &elementSubRegion, damageFieldOnMaterial,
-                                                                                   // damageGradOnMaterial, elemNodes, elemsToNodes]( auto &
-                                                                                   // finiteElement )
+                                                                                  //  finiteElement::FiniteElementDispatchHandler<
+                                                                                  //  ALL_FE_TYPES >::dispatch3D( fe, [xNodes, nodalDamage,
+                                                                                  //  &elementSubRegion, damageFieldOnMaterial,
+                                                                                  //  damageGradOnMaterial, elemNodes, elemsToNodes]( auto &
+                                                                                  //  finiteElement )
           {
             using FE_TYPE = TYPEOFREF( finiteElement );
 
