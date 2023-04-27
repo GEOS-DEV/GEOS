@@ -493,7 +493,7 @@ public:
   {
     auto const & stress = m_newStress[k][q];
 
-    real64 strain[6];
+    real64 strain[6]{};
     getElasticStrain( k, q, strain );
 
     real64 energy = 0;
@@ -557,11 +557,11 @@ public:
                                                     real64 const ( &strainIncrement )[6],
                                                     real64 ( & stiffnessFD )[6][6] ) const
   {
-    real64 stiffness[6][6];      // coded stiffness
-    real64 stress[6];            // original stress
-    real64 stressFD[6];          // perturbed stress
-    real64 strainIncrementFD[6]; // perturbed strain
-    real64 norm = 0;             // norm for scaling (note: method is fragile w.r.t. scaling)
+    real64 stiffness[6][6]{};      // coded stiffness
+    real64 stress[6]{};            // original stress
+    real64 stressFD[6]{};          // perturbed stress
+    real64 strainIncrementFD[6]{}; // perturbed strain
+    real64 norm = 0;               // norm for scaling (note: method is fragile w.r.t. scaling)
 
     for( localIndex i=0; i<6; ++i )
     {
@@ -614,9 +614,9 @@ public:
                                   real64 const ( &strainIncrement )[6],
                                   bool print = false ) const
   {
-    real64 stiffness[6][6];     // coded stiffness
-    real64 stiffnessFD[6][6];   // finite difference approximation
-    real64 stress[6];           // original stress
+    real64 stiffness[6][6]{};     // coded stiffness
+    real64 stiffnessFD[6][6]{};   // finite difference approximation
+    real64 stress[6]{};           // original stress
 
     smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
     computeSmallStrainFiniteDifferenceStiffness( k, q, timeIncrement, strainIncrement, stiffnessFD );
