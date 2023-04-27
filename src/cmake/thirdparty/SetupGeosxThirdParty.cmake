@@ -839,8 +839,8 @@ option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" O
 
 #     find_and_register(NAME FesapiCpp
 #                  INCLUDE_DIRECTORIES ${FESAPI_DIR}/include
-#                  LIBRARY_DIRECTORIES ${FESAPI_DIR}/lib
-#                  HEADER fesapi/nsDefinitions.h
+#                  LIBRARY_DIRECTORIES ${FESAPI_DIR}/lib    
+#                  HEADER fesapi/nsDefinitions.h             
 #                  LIBRARIES FesapiCpp
 #                  DEPENDS hdf5)
 
