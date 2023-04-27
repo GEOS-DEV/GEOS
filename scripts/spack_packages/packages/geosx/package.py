@@ -139,7 +139,7 @@ class Geosx(CMakePackage, CudaPackage):
 
     trilinos_build_options = '+openmp'
     trilinos_packages = '+aztec+stratimikos~amesos2~anasazi~belos~ifpack2~muelu~sacado+thyra'
-    depends_on('trilinos@13.4.0 ' + trilinos_build_options + trilinos_packages, when='+trilinos')
+    depends_on('trilinos@13.4.1 ' + trilinos_build_options + trilinos_packages, when='+trilinos')
 
     depends_on('hypre@2.27.0geosx+superlu-dist+mixedint+mpi+openmp', when='+hypre~cuda')
 
