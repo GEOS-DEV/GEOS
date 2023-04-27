@@ -17,6 +17,7 @@
  */
 
 #include "MeshLevel.hpp"
+#include "LvArray/src/memcpy.hpp"
 
 #include "EdgeManager.hpp"
 #include "ElementRegionManager.hpp"
@@ -157,10 +158,10 @@ MeshLevel::MeshLevel( string const & name,
   m_edgeManager->resize( numLocalEdges );
   m_edgeManager->getDomainBoundaryIndicator() = source.m_edgeManager->getDomainBoundaryIndicator();
 
-  for( localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < numLocalEdges; iter_localToGlobalsize++ )
-  {
-    m_edgeManager->localToGlobalMap()[iter_localToGlobalsize] = source.m_edgeManager->localToGlobalMap()[iter_localToGlobalsize];
-  }
+  arrayView1d< globalIndex > edgeLocalToGlobal = m_edgeManager->localToGlobalMap();
+  arrayView1d< globalIndex const > sourceEdgeLocalToGlobal = source.m_edgeManager->localToGlobalMap();
+  LvArray::memcpy( edgeLocalToGlobal.toSlice(), sourceEdgeLocalToGlobal.toSlice() );
+
   m_edgeManager->constructGlobalToLocalMap();
   m_edgeManager->nodeList().resize( numLocalEdges, numNodesPerEdge );
 
@@ -182,13 +183,11 @@ MeshLevel::MeshLevel( string const & name,
   // copy the faces-boundaryIndicator from source
   m_faceManager->getDomainBoundaryIndicator() = source.m_faceManager->getDomainBoundaryIndicator();
 
-  arrayView1d< globalIndex const > const faceLocalToGlobal = m_faceManager->localToGlobalMap();
-  for( localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < numLocalFaces; iter_localToGlobalsize++ )
-  {
-    m_faceManager->localToGlobalMap()[iter_localToGlobalsize] = source.m_faceManager->localToGlobalMap()[iter_localToGlobalsize];
-  }
-  m_faceManager->constructGlobalToLocalMap();
+  arrayView1d< globalIndex > faceLocalToGlobal = m_faceManager->localToGlobalMap();
+  arrayView1d< globalIndex const > sourceFaceLocalToGlobal = source.m_faceManager->localToGlobalMap();
+  LvArray::memcpy( faceLocalToGlobal.toSlice(), sourceFaceLocalToGlobal.toSlice() );
 
+  m_faceManager->constructGlobalToLocalMap();
 
   /////////////////////////
   // Elements
@@ -243,8 +242,6 @@ MeshLevel::MeshLevel( string const & name,
       newSubRegion.constructGlobalToLocalMap();
 
       CellBlockManagerABC & cellBlockManager = meshBody->getGroup< CellBlockManagerABC >( keys::cellManager );
-
-      arrayView1d< globalIndex const > const edgeLocalToGlobal = m_edgeManager->localToGlobalMap();
 
       cellBlockManager.generateHighOrderMaps( order,
                                               maxVertexGlobalID,
