@@ -1288,20 +1288,22 @@ public:
   string getPath() const;
 
   /**
-   * @return A DataContext object that can helps to contextualize this Group.
+   * @return DataContext object that that stores contextual information on this group that can be
+   * used in output messages.
    */
   DataContext const & getDataContext() const
   { return *m_dataContext; }
 
   /**
-   * @brief Get the DataContext object that can help to contextualize a wrapper stored in this Group.
+   * @return DataContext object that that stores contextual information on a wrapper contained by
+   * this group that can be used in output messages.
    * @tparam KEY The lookup type.
    * @param key The value used to lookup the wrapper.
    * @throw std::domain_error if the wrapper doesn't exist.
    */
   template< typename KEY >
   DataContext const & getWrapperDataContext( KEY key ) const
-  { return getWrapperBase<KEY>( key ).getDataContext(); }
+  { return getWrapperBase< KEY >( key ).getDataContext(); }
 
   /**
    * @brief Access the group's parent.
@@ -1564,7 +1566,8 @@ private:
   /// Reference to the conduit::Node that mirrors this group
   conduit::Node & m_conduitNode;
 
-  /// A DataContext object that can helps to contextualize this Group.
+  /// A DataContext object used to provide contextual information on this Group,
+  /// if it is created from an input XML file, the line or offset in that file.
   std::unique_ptr< DataContext > m_dataContext;
 
 };

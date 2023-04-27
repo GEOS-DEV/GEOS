@@ -74,13 +74,13 @@ template void stringToInputVariable( Tensor< real64, 3 > & target, string const 
 template void stringToInputVariable( Tensor< real64, 6 > & target, string const & inputValue );
 
 /**
- * @brief Adds the filePath and character offset infos on the node in filePathString
+ * @brief Adds the filePath and character offset info on the node in filePathString
  * and charOffsetString attributes. This function allow to keep track of the source
  * filename & offset of each node.
  * @param node the target node to add the informations on.
  * @param filePath the absolute path of the xml file containing the node.
  */
-void addNodeFileInfos( xmlNode node, string const & filePath )
+void addNodeFileInfo( xmlNode node, string const & filePath )
 {
   // we keep the file path and the character offset on each node so we keep track of these
   // informations, even if the nodes are manipulated within the xml hierarchy.
@@ -89,13 +89,13 @@ void addNodeFileInfos( xmlNode node, string const & filePath )
 
   for( xmlNode subNode : node.children() )
   {
-    addNodeFileInfos( subNode, filePath );
+    addNodeFileInfo( subNode, filePath );
   }
 }
 /**
- * @brief Returns true if the addNodeFileInfos() command has been called of the specified node.
+ * @brief Returns true if the addNodeFileInfo() command has been called of the specified node.
  */
-bool xmlDocument::hasNodeFileInfos() const
+bool xmlDocument::hasNodeFileInfo() const
 { return !first_child().attribute( filePathString ).empty(); }
 
 void xmlDocument::addIncludedXML( xmlNode & targetNode, int const level )
@@ -125,7 +125,7 @@ void xmlDocument::addIncludedXML( xmlNode & targetNode, int const level )
 
       xmlDocument includedXmlDocument;
       xmlResult const result = includedXmlDocument.load_file( includedFilePath.c_str(),
-                                                              hasNodeFileInfos() );
+                                                              hasNodeFileInfo() );
       GEOS_THROW_IF( !result, GEOS_FMT( "Errors found while parsing included XML file {}\n"
                                         "Description: {}\nOffset: {}",
                                         includedFilePath, result.description(), result.offset ),
@@ -211,30 +211,30 @@ xmlDocument::xmlDocument():
   m_rootFilePath( "CodeIncludedXML" + std::to_string( documentId++ ) )
 {}
 
-xmlResult xmlDocument::load_string( const pugi::char_t * contents, bool loadNodeFileInfos,
+xmlResult xmlDocument::load_string( const pugi::char_t * contents, bool loadNodeFileInfo,
                                     unsigned int options )
 {
   xmlResult result = pugi::xml_document::load_string( contents, options );
 
   // keeping a copy of original buffer to allow line retrieval
-  if( loadNodeFileInfos )
+  if( loadNodeFileInfo )
   {
     new (&m_originalBuffers) map< string, string >();
     m_originalBuffers[m_rootFilePath] = string( contents );
 
-    addNodeFileInfos( first_child(), m_rootFilePath );
+    addNodeFileInfo( first_child(), m_rootFilePath );
   }
 
   return result;
 }
-xmlResult xmlDocument::load_file( const char * path, bool loadNodeFileInfos,
+xmlResult xmlDocument::load_file( const char * path, bool loadNodeFileInfo,
                                   unsigned int options, pugi::xml_encoding encoding )
 {
   xmlResult result = pugi::xml_document::load_file( path, options, encoding );
   m_rootFilePath = getAbsolutePath( path );
 
   // keeping a copy of original buffer to allow line retrieval
-  if( loadNodeFileInfos )
+  if( loadNodeFileInfo )
   {
     std::ifstream t( path );
     std::stringstream buffer;
@@ -243,23 +243,23 @@ xmlResult xmlDocument::load_file( const char * path, bool loadNodeFileInfos,
     new (&m_originalBuffers) map< string, string >();
     m_originalBuffers[m_rootFilePath] = string( buffer.str() );
 
-    addNodeFileInfos( first_child(), getAbsolutePath( m_rootFilePath ) );
+    addNodeFileInfo( first_child(), getAbsolutePath( m_rootFilePath ) );
   }
 
   return result;
 }
-xmlResult xmlDocument::load_buffer( const void * contents, size_t size, bool loadNodeFileInfos,
+xmlResult xmlDocument::load_buffer( const void * contents, size_t size, bool loadNodeFileInfo,
                                     unsigned int options, pugi::xml_encoding encoding )
 {
   xmlResult result = pugi::xml_document::load_buffer( contents, size, options, encoding );
 
   //keeping a copy of original buffer
-  if( loadNodeFileInfos )
+  if( loadNodeFileInfo )
   {
     new (&m_originalBuffers) map< string, string >();
     m_originalBuffers[m_rootFilePath] = string( ( char const * )contents, size );
 
-    addNodeFileInfos( first_child(), m_rootFilePath );
+    addNodeFileInfo( first_child(), m_rootFilePath );
   }
 
   return result;
@@ -310,7 +310,7 @@ xmlNodePos xmlDocument::getNodePosition( xmlNode const & node ) const
       oss << "Node from file=" << filePath << ", path=" << node.path() << ", offset=" << offset;
       oss << " could not be found: ";
       oss << ( sourceBuffer == m_originalBuffers.end() ?
-               ( filePathAtt.empty() ? "Source file not found." : "Source file infos not loaded") :
+               ( filePathAtt.empty() ? "Source file not found." : "Source file info not loaded") :
                ( offset > 0 && offset + nodeName.size() < sourceBuffer->second.size() ?
                  "The offset doesn't lead to this node." :
                  "Offset out of bounds." )

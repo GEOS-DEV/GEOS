@@ -62,7 +62,7 @@ void WrapperBase::copyWrapperAttributes( WrapperBase const & source )
 
 string WrapperBase::getPath() const
 {
-  // In the Conduit node heirarchy everything begins with 'Problem', we should change it so that
+  // In the Conduit node hierarchy everything begins with 'Problem', we should change it so that
   // the ProblemManager actually uses the root Conduit Node but that will require a full rebaseline.
   string const noProblem = m_conduitNode.path().substr( std::strlen( dataRepository::keys::ProblemManager ) - 1 );
   return noProblem.empty() ? "/" : noProblem;

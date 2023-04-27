@@ -33,7 +33,7 @@ Group::Group( string const & name,
               Group * const parent ):
   Group( name, parent->getConduitNode() )
 {
-  GEOS_ERROR_IF( parent == nullptr, "Should not be null." );
+  GEOS_ERROR_IF( parent == nullptr, "Should not be null (for Group named " << name << ")." );
   m_parent = parent;
 }
 
@@ -74,7 +74,8 @@ WrapperBase & Group::registerWrapper( std::unique_ptr< WrapperBase > wrapper )
 
 void Group::deregisterWrapper( string const & name )
 {
-  GEOS_ERROR_IF( !hasWrapper( name ), "Wrapper " << name << " doesn't exist." );
+  GEOS_ERROR_IF( !hasWrapper( name ),
+                 "Wrapper " << name << " doesn't exist in Group" << getDataContext() << '.' );
   m_wrappers.erase( name );
   m_conduitNode.remove( name );
 }
@@ -128,7 +129,7 @@ void Group::reserve( indexType const newSize )
 
 string Group::getPath() const
 {
-  // In the Conduit node heirarchy everything begins with 'Problem', we should change it so that
+  // In the Conduit node hierarchy everything begins with 'Problem', we should change it so that
   // the ProblemManager actually uses the root Conduit Node but that will require a full rebaseline.
   string const noProblem = getConduitNode().path().substr( stringutilities::cstrlen( dataRepository::keys::ProblemManager ) );
   return noProblem.empty() ? "/" : noProblem;

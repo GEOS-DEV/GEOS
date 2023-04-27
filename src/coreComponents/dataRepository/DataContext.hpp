@@ -16,8 +16,8 @@
  * @file DataContext.hpp
  */
 
-#ifndef GEOS_DATAREPOSITORY_SOURCECONTEXT_HPP_
-#define GEOS_DATAREPOSITORY_SOURCECONTEXT_HPP_
+#ifndef GEOS_DATAREPOSITORY_DATACONTEXT_HPP_
+#define GEOS_DATAREPOSITORY_DATACONTEXT_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
@@ -32,10 +32,10 @@ namespace dataRepository
 class Group;
 class WrapperBase;
 
-/// This abstract class stores data that helps to retrieve an object:
-/// - from which position in a file (if applicable), see DataFileContext,
-/// - where it is located in the data hierarchy, see GroupContext and WrapperContext.
-/// Typically, the target object contain an unique_ptr< DataContext > instance of this class.
+/// DataContext is an abstract class storing contextual information on an object:
+/// - its line position in a file, if applicable, implementation in DataFileContext,
+/// - its location in the data hierarchy, implementation in GroupContext and WrapperContext.
+/// Typically, the target object contains an unique_ptr< DataContext > instance of this class.
 class DataContext
 {
 public:
@@ -43,7 +43,7 @@ public:
   /**
    * @brief Construct a new DataContext object.
    * @param objectName the target object name
-   * @param isDataFileContext true if this Context is a DataFileContext (see isDataFileContext for more infos)
+   * @param isDataFileContext true if this Context is a DataFileContext
    */
   DataContext( string const & objectName, bool isDataFileContext );
 
@@ -57,15 +57,14 @@ public:
   { return m_objectName; }
 
   /**
-   * @brief In some cases, we need to know if a DataContext is from a file. It means that it
-   * is a more user-friendly information compared to other DataContext classes.
+   * @brief Flag on availability of file information. Used to provide more user-friendly information.
    * @return true if the context is from a file.
    */
   bool isDataFileContext() const
   { return m_isDataFileContext; }
 
   /**
-   * @brief Insert toString() result in a stream.
+   * @brief Insert contextual information in the provided stream.
    */
   friend std::ostream & operator<<( std::ostream & os, const DataContext & dt );
 
@@ -80,24 +79,24 @@ protected:
 };
 
 /// Helps to know where a Group is in the hierarchy.
-/// See DataContext class for more infos.
+/// See DataContext class for more info.
 class GroupContext : public DataContext
 {
 public:
 
   /**
    * @brief Construct a new GroupContext object
-   * @param group see getGroup()
+   * @param group The reference to the Group related to this GroupContext.
    */
   GroupContext( Group & group );
 
   /**
-   * @brief Get the target Group object (wrapper's parent in case of a WrapperContext).
+   * @brief Get the reference to the Group related to this GroupContext.
    */
   Group & getGroup() const;
 
   /**
-   * @copydoc DataContext::toString()
+   * @return the group path.
    */
   virtual string toString() const;
 
@@ -105,18 +104,18 @@ protected:
 
   /**
    * @brief Construct a new GroupContext object
-   * @param group see getGroup()
+   * @param group The reference to the Group related to this GroupContext.
    * @param objectName Target object name.
    */
   GroupContext( Group & group, string const & objectName );
 
-  /// see getGroup()
+  /// The reference to the Group related to this GroupContext.
   Group & m_group;
 
 };
 
-/// Helps to know the source context of a Wrapper in the hierarchy, or in the source file, if possible.
-/// See DataContext class for more infos.
+/// Dedicated implementation of GroupContext for Wrapper.
+/// See DataContext class for more info.
 class WrapperContext final : public GroupContext
 {
 public:
@@ -127,14 +126,13 @@ public:
   WrapperContext( WrapperBase & wrapper );
 
   /**
-   * @copydoc DataContext::toString()
+   * @return the parent group DataContext followed by the wrapper name.
    */
   virtual string toString() const;
 
 };
 
-/// Helps to know from where a Group or a Wrapper has been declared in its source file (a xml typically).
-/// See DataContext class for more infos.
+/// Stores information to retrieve where a Group or Wrapper has been declared in the input source file (e.g. XML)
 class DataFileContext final : public DataContext
 {
 public:
@@ -148,6 +146,9 @@ public:
    */
   DataFileContext( WrapperBase & wrapper, xmlWrapper::xmlAttributePos const & attPos );
 
+  /**
+   * @return the target object name followed by the the file and line declaring it.
+   */
   virtual string toString() const;
 
   /**
@@ -202,4 +203,4 @@ protected:
 
 } /* namespace geos */
 
-#endif /* GEOS_DATAREPOSITORY_INPUTFLAGS_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_DATACONTEXT_HPP_ */

@@ -415,7 +415,8 @@ public:
   string getPath() const;
 
   /**
-   * @return A DataContext object that can helps to contextualize this Group.
+   * @return DataContext object that that stores contextual information on this group that can be
+   * used in output messages.
    */
   DataContext const & getDataContext() const
   { return *m_dataContext; }

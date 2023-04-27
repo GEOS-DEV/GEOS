@@ -93,26 +93,26 @@ void verifyDataFileContext( DataFileContext const & fileContext,
                             xmlDocument const & document )
 {
   string const & strToVerify = fileContext.getTypeName();
-  string const & errInfos = "Verifying " + strToVerify + " in " + fileContext.toString();
+  string const & errInfo = "Verifying " + strToVerify + " in " + fileContext.toString();
 
   // verifying if all DataFileContext data have been found
-  EXPECT_FALSE( fileContext.getFilePath().empty() ) << errInfos;
-  EXPECT_FALSE( fileContext.getObjectName().empty() ) << errInfos;
-  EXPECT_FALSE( fileContext.getTypeName().empty() ) << errInfos;
-  EXPECT_NE( fileContext.getOffset(), xmlDocument::npos ) << errInfos;
-  EXPECT_NE( fileContext.getLine(), xmlDocument::npos ) << errInfos;
-  EXPECT_NE( fileContext.getOffsetInLine(), xmlDocument::npos ) << errInfos;
+  EXPECT_FALSE( fileContext.getFilePath().empty() ) << errInfo;
+  EXPECT_FALSE( fileContext.getObjectName().empty() ) << errInfo;
+  EXPECT_FALSE( fileContext.getTypeName().empty() ) << errInfo;
+  EXPECT_NE( fileContext.getOffset(), xmlDocument::npos ) << errInfo;
+  EXPECT_NE( fileContext.getLine(), xmlDocument::npos ) << errInfo;
+  EXPECT_NE( fileContext.getOffsetInLine(), xmlDocument::npos ) << errInfo;
 
   // will crash if the source buffer specified by fileContext.getFilePath() isn't available
   string const * buffer = document.getOriginalBuffer( fileContext.getFilePath() );
-  EXPECT_NE( buffer, nullptr ) << errInfos;
+  EXPECT_NE( buffer, nullptr ) << errInfo;
 
   size_t curLine = 1;
   bool lineFound = false;
 
   // Does fileContext.getOffset() locates the object?
-  EXPECT_LT( fileContext.getOffset() + strToVerify.size(), buffer->size() ) << errInfos;
-  EXPECT_EQ( strToVerify, buffer->substr( fileContext.getOffset(), strToVerify.size() ) ) << errInfos;
+  EXPECT_LT( fileContext.getOffset() + strToVerify.size(), buffer->size() ) << errInfo;
+  EXPECT_EQ( strToVerify, buffer->substr( fileContext.getOffset(), strToVerify.size() ) ) << errInfo;
 
   // Were trying to reach the line return by DataFileContext::getLine()
   for( size_t offset=0;
@@ -129,9 +129,9 @@ void verifyDataFileContext( DataFileContext const & fileContext,
     {
       // Does fileContext.getLine() and fileContext.getOffsetInLine() locates the object?
       EXPECT_LT( offset + fileContext.getOffsetInLine() + strToVerify.size(),
-                 buffer->size() ) << errInfos;
+                 buffer->size() ) << errInfo;
       EXPECT_EQ( strToVerify,
-                 buffer->substr( offset + fileContext.getOffsetInLine(), strToVerify.size() ) ) << errInfos;
+                 buffer->substr( offset + fileContext.getOffsetInLine(), strToVerify.size() ) ) << errInfo;
       lineFound = true;
     }
   }
@@ -192,7 +192,7 @@ std::set< string > getDifference( std::set< string > & setA,
 }
 
 // Tests
-// - if the line information of each nodes and attributes can be retrieved,
+// - if the line information of each nodes and attributes can be all retrieved,
 // - if the resulting Group & Wrapper hierarchy matches with the input xml documents and includes hierarchy.
 TEST( testXML, testXMLFileLines )
 {
@@ -220,12 +220,12 @@ TEST( testXML, testXMLFileLines )
   verifyGroupDataFileContextRecursive( xmlDocument, problemManager, verifiedElements );
 
   std::set< string > notFound = getDifference( expectedElements, verifiedElements );
-  EXPECT_TRUE( notFound.empty() ) << "Infos : There should not exists xml element that were not in "
+  EXPECT_TRUE( notFound.empty() ) << "Info : There should not exist xml element that were not in "
                                      "the Group hierarchy.\nNot in Group hierarchy : {"
                                   << stringutilities::join( notFound, "," ) << "}";
 
   std::set< string > notExpected = getDifference( verifiedElements, expectedElements );
-  EXPECT_TRUE( notExpected.empty() ) << "Infos : There should not exists an object in the Group "
+  EXPECT_TRUE( notExpected.empty() ) << "Info : There should not exist an object in the Group "
                                         "hierarchy that contains a DataFileContext but which were not "
                                         "declared in the Xml.\nNot in XML hierarchy : {"
                                      << stringutilities::join( notExpected, "," ) << "}";

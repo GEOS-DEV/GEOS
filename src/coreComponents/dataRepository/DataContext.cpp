@@ -16,7 +16,6 @@
  * @file DataContext.cpp
  */
 
-//#include "codingUtilities/StringUtilities.hpp"
 #include "Group.hpp"
 #include "WrapperBase.hpp"
 #include "../mainInterface/ProblemManager.hpp"
@@ -74,7 +73,7 @@ string WrapperContext::toString() const
 
 
 DataFileContext::DataFileContext( Group & group, xmlWrapper::xmlNodePos const & nodePos,
-                          string const & nodeTagName ):
+                                  string const & nodeTagName ):
   DataContext( group.getName(), true ),
   m_typeName( nodeTagName ),
   m_filePath( nodePos.filePath ),
@@ -100,7 +99,7 @@ string DataFileContext::toString() const
   {
     oss << " (" << splitPath( m_filePath ).second << ", l." << m_line << ")";
   }
-  else if ( m_offset != xmlWrapper::xmlDocument::npos )
+  else if( m_offset != xmlWrapper::xmlDocument::npos )
   {
     oss << " (" << splitPath( m_filePath ).second <<  ", offset " << m_offset << ")";
   }

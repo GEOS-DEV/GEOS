@@ -66,8 +66,8 @@ struct xmlAttributePos
 {
   /// Path of the file containing this element
   string filePath;
-  /// Line of this element in the file that contains it (starting from 1).
-  /// Equals to xmlDocument::npos if it couldn't be determined.
+  /// Line where the element is defined. Start at 1.
+  /// Default value is xmlDocument::npos
   size_t const line;
   /// Character offset of this element in the line that contains it (starting from 1)
   /// Equals to xmlDocument::npos if it couldn't be determined.
@@ -81,17 +81,16 @@ struct xmlAttributePos
    */
   xmlAttributePos( string const & filePath, size_t line, size_t offsetInLine, size_t offset );
   /**
-   * @return false if the position is undetermined.
+   * @return false if the position is undefined.
    */
   bool isFound() const;
   /**
-   * @return returns a string to locate the node (typically the source file and line).
+   * @return a string containing the file name and position in the file.
    */
   string toString() const;
 };
 
-/// Stores the source document, file path, and position in the file of a xml node.
-/// It can help to retrieve the position (xmlAttributePos) of a xml attribute.
+/// Used to retrieve the position of dataRepository::Wrapper in XML
 struct xmlNodePos : xmlAttributePos
 {
   /// Reference of the main xmlDocument that contains all original file buffers.
@@ -102,7 +101,7 @@ struct xmlNodePos : xmlAttributePos
    */
   xmlNodePos( xmlDocument const & document, string const & filePath, size_t line, size_t offsetInLine, size_t offset );
   /**
-   * @return false if the position is undetermined.
+   * @return false if the position is undefined.
    */
   bool isFound() const;
   /**
@@ -117,7 +116,7 @@ struct xmlNodePos : xmlAttributePos
 class xmlDocument : public pugi::xml_document
 {
 public:
-  /// Error value for when an offset / line position is undetermined.
+  /// Error value for when an offset / line position is undefined.
   static const size_t npos;
 
   /**
@@ -146,33 +145,32 @@ public:
   string const & getFilePath() const;
   /**
    * @brief Compute the position of the given node if the node file information are loaded.
-   * @throws an InputError if the node position couldn't be determined despite the node source file
-   * informations being loaded.
+   * @throws an InputError if the node position is not found and source file is loaded.
    */
   xmlNodePos getNodePosition( xmlWrapper::xmlNode const & node ) const;
 
   /**
    * @brief Load document from zero-terminated string. No encoding conversions are applied.
    * Wrapper of pugi::xml_document::load_buffer() method.
-   * @param loadNodeFileInfos Load the node source file infos, allowing getNodePosition() to work.
+   * @param loadNodeFileInfo Load the node source file info, allowing getNodePosition() to work.
    */
-  xmlResult load_string( const pugi::char_t * contents, bool loadNodeFileInfos = false,
+  xmlResult load_string( const pugi::char_t * contents, bool loadNodeFileInfo = false,
                          unsigned int options = pugi::parse_default );
 
   /**
    * @brief Load document from file. Wrapper of pugi::xml_document::load_buffer() method.
-   * @param loadNodeFileInfos Load the node source file infos, allowing getNodePosition() to work.
+   * @param loadNodeFileInfo Load the node source file info, allowing getNodePosition() to work.
    */
-  xmlResult load_file( const char * path, bool loadNodeFileInfos = false,
+  xmlResult load_file( const char * path, bool loadNodeFileInfo = false,
                        unsigned int options = pugi::parse_default,
                        pugi::xml_encoding encoding = pugi::encoding_auto );
 
   /**
    * @brief Load document from buffer. Copies/converts the buffer, so it may be deleted or changed
    * after the function returns. Wrapper of pugi::xml_document::load_buffer() method.
-   * @param loadNodeFileInfos Load the node source file infos, allowing getNodePosition() to work.
+   * @param loadNodeFileInfo Load the node source file info, allowing getNodePosition() to work.
    */
-  xmlResult load_buffer( const void * contents, size_t size, bool loadNodeFileInfos = false,
+  xmlResult load_buffer( const void * contents, size_t size, bool loadNodeFileInfo = false,
                          unsigned int options = pugi::parse_default,
                          pugi::xml_encoding encoding = pugi::encoding_auto );
 
@@ -216,20 +214,17 @@ public:
   void addIncludedXML( xmlNode & targetNode, int level = 0 );
 
   /**
-   * @brief True if loadNodeFileInfos was true during the last load_X call.
+   * @brief True if loadNodeFileInfo was true during the last load_X call.
    */
-  bool hasNodeFileInfos() const;
+  bool hasNodeFileInfo() const;
 
 private:
-  /// Map containing the original buffers of the document and its includes, indexed by file path.
-  /// We're keeping these original buffer to retrieve the source file and line of nodes and
-  /// attributes (the pugixml buffer cannot help to determine these informations as it is private
-  /// and processed).
+  /// Used to retrieve node positions as pugixml buffer is private and processed.
   map< string, string > m_originalBuffers;
   /// see getFilePath()
   string m_rootFilePath;
-  // see hasNodeFileInfos()
-  bool m_hasNodeFileInfos;
+  // see hasNodeFileInfo()
+  bool m_hasNodeFileInfo;
 };
 
 /**
@@ -267,8 +262,7 @@ string buildMultipleInputXML( string_array const & inputFileList,
                               string const & outputDir = {} );
 
 /**
- * @brief Returns if the attribute with the specified name declares metadata relative to the xml
- * file (needed by the xml reader) rather than "true data" relative to geos objects.
+ * @return if the attribute with the specified name declares metadata relative to the xml
  */
 bool isFileMetadataAttribute( string const & name );
 
