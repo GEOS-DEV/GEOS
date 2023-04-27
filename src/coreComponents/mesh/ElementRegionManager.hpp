@@ -225,6 +225,7 @@ public:
    * @brief Get a element region.
    * @param key The key of element region, either name or number.
    * @return Reference to const T.
+   * @throw std::domain_error if the requested region doesn't exist.
    */
   template< typename T=ElementRegionBase, typename KEY_TYPE=void >
   T const & getRegion( KEY_TYPE const & key ) const
@@ -236,6 +237,7 @@ public:
    * @brief Get a element region.
    * @param key The key of the element region, either name or number.
    * @return Reference to T.
+   * @throw std::domain_error if the requested region doesn't exist.
    */
   template< typename T=ElementRegionBase, typename KEY_TYPE=void >
   T & getRegion( KEY_TYPE const & key )
