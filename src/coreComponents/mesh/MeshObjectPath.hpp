@@ -62,6 +62,7 @@ public:
    *
    * @param path The path string
    * @param meshBodies  The Group that contains all MeshBody objects
+   * @throw InputError when the input path is wrong.
    */
   MeshObjectPath( string const path,
                   dataRepository::Group const & meshBodies );
