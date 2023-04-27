@@ -471,7 +471,7 @@ private:
   array2d< real64 > m_faceNormal;
 
   /// constant expression of the maximum number of nodes per faces
-  constexpr static int MAX_FACE_NODES = 36;
+  constexpr static int MAX_FACE_NODES = 16;
 
 };
 
