@@ -235,10 +235,10 @@ MeshLevel::MeshLevel( string const & name,
       array2d< localIndex > & elemsToEdgesNew = newSubRegion.edgeList();
       elemsToEdgesNew = elemsToEdgesSource;
 
-      for( localIndex iter_localToGlobalsize = 0; iter_localToGlobalsize < sourceSubRegion.localToGlobalMap().size(); iter_localToGlobalsize++ )
-      {
-        newSubRegion.localToGlobalMap()[iter_localToGlobalsize] = sourceSubRegion.localToGlobalMap()[iter_localToGlobalsize];
-      }
+      arrayView1d< globalIndex > newSubRegionLocalToGlobal = newSubRegion.localToGlobalMap();
+      arrayView1d< globalIndex const > sourceSubRegionLocalToGlobal = sourceSubRegion.localToGlobalMap();
+      LvArray::memcpy( newSubRegionLocalToGlobal.toSlice(), sourceSubRegionLocalToGlobal.toSlice() );
+
       newSubRegion.constructGlobalToLocalMap();
 
       CellBlockManagerABC & cellBlockManager = meshBody->getGroup< CellBlockManagerABC >( keys::cellManager );

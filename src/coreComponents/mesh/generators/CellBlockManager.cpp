@@ -905,7 +905,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
   // interpolation parameters 'a' and 'b'.
   //   We assume that v1 is the smallest, and that v2 < v3. Then these nodes are identified with [v1 v2 v3 v4 a b]
   // - cell nodes are encountered only once, and thus do not need to be put in the hash map
-  std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex >, NodeKeyEqual< localIndex > > nodeIDs;
+  std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
 
   // Create new nodes, with local and global IDs
   localIndex localNodeID = 0;
