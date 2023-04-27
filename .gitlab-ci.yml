@@ -33,7 +33,7 @@ stages:
     # CONFIGURE
     - echo "~~~~~~~~~~ START - configure ~~~~~~~~~~~"
     - config_code=0
-    - python scripts/config-build.py -hc host-configs/LLNL/${HOST_CONFIG} -bt Release -bp build -DENABLE_DOXYGEN=OFF 2>&1 | tee ${SYSTEM}/${SYSTEM}_configure.log || config_code=$?
+    - python3 scripts/config-build.py -hc host-configs/LLNL/${HOST_CONFIG} -bt Release -bp build -DENABLE_DOXYGEN=OFF 2>&1 | tee ${SYSTEM}/${SYSTEM}_configure.log || config_code=$?
     - mv ${SYSTEM}/${SYSTEM}_configure.log ${SYSTEM}/${SYSTEM}_configure_$([ $config_code == 0 ] && echo "SUCCESS" || echo "FAILURE").log
     - echo "~~~~~~~~~~ END - configure ~~~~~~~~~~~~~"
 
