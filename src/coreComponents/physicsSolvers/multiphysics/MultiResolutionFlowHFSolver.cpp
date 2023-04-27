@@ -562,14 +562,14 @@ void MultiResolutionFlowHFSolver::testElemMappingPatchToBase( MeshLevel & GEOSX_
       if(patchGhostRank[k]<0)
       {                 
         globalIndex K = cellElementSubRegion.localToGlobalMap()[k];
-        fineToCoarseMap[0][0][K] = m_patchToBaseElementRelation[K];
+        fineToCoarseMap[0][0][k] = m_patchToBaseElementRelation[K];
       }
     } );
   } );  
 }
 
 void MultiResolutionFlowHFSolver::testElemMappingBaseToPatch( MeshLevel & base,
-                                                          MeshLevel & patch )
+                                                              MeshLevel & patch )
 {
   //for every elem in patch
   //call fineToCoarseStructuredElemMap
@@ -577,6 +577,7 @@ void MultiResolutionFlowHFSolver::testElemMappingBaseToPatch( MeshLevel & base,
   //this should be exactly the same as the function above
   ElementRegionManager & coarseElemManager = base.getElemManager();
   ElementRegionManager & patchElemManager = patch.getElemManager();
+  CellElementSubRegion const & patchElementSubRegion = patchElemManager.getRegion(0).getSubRegion< CellElementSubRegion >( 0 );
   
   //get accessor to elemental field
   ElementRegionManager::ElementViewAccessor< arrayView1d< localIndex > > const coarseToFineMap =
@@ -593,7 +594,8 @@ void MultiResolutionFlowHFSolver::testElemMappingBaseToPatch( MeshLevel & base,
         globalIndex K = cellElementSubRegion.localToGlobalMap()[k];
         for(auto fineElem:m_baseToPatchElementRelation[K])
         {
-            coarseToFineMap[0][0][fineElem] = K;          
+          localIndex fineElemLocal = patchElementSubRegion.globalToLocalMap().at(fineElem);
+          coarseToFineMap[0][0][fineElemLocal] = K;          
         }
       }
     } );
@@ -832,7 +834,7 @@ void MultiResolutionFlowHFSolver::writeBasePressuresToPatch(MeshLevel & base,
   ElementRegionManager & baseElemManager = base.getElemManager();
 
   // Hard-coded region and subRegion
-  
+  std::cout<<"entering WRITE PRESSURES TO PATCH FUNCTION"<<std::endl; 
   ElementRegionBase const & baseMatrixElementRegion = baseElemManager.getRegion( 0 );
   ElementRegionBase const & baseFractureElementRegion = baseElemManager.getRegion( 1 );
   CellElementSubRegion const & patchSubRegion = patchElemManager.getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
@@ -882,6 +884,7 @@ void MultiResolutionFlowHFSolver::writeBasePressuresToPatch(MeshLevel & base,
   });
   // Exchange the sizes of the data across all ranks.
   array1d< int > dataSizes( MpiWrapper::commSize() );
+  std::cout<<"before allGather call in WRITE_PRESSURES_TO_PATCH"<<std::endl;
   MpiWrapper::allGather( LvArray::integerConversion< int >( toSend.size(0)*toSend.size(1) ), dataSizes, MPI_COMM_GEOSX );
 
   int const totalDataSize = std::accumulate( dataSizes.begin(), dataSizes.end(), 0 );
@@ -889,7 +892,7 @@ void MultiResolutionFlowHFSolver::writeBasePressuresToPatch(MeshLevel & base,
   array2d<real64> allData( totalDataSize/4, 4 );
   std::vector< int > mpiDisplacements( MpiWrapper::commSize(), 0 );
   std::partial_sum( dataSizes.begin(), dataSizes.end() - 1, mpiDisplacements.begin() + 1 );
-
+  std::cout<<"before allgatherv call in WRITE_PRESSURES_TO_PATCH"<<std::endl;
   MpiWrapper::allgatherv( toSend.data(), 
                           toSend.size(0)*toSend.size(1), 
                           allData.data(),
@@ -897,7 +900,7 @@ void MultiResolutionFlowHFSolver::writeBasePressuresToPatch(MeshLevel & base,
                           mpiDisplacements.data(), 
                           MPI_COMM_GEOSX );                         
   arrayView2d< const real64 > patchElemCenters = patchElemManager.getRegion(0).getSubRegion< CellElementSubRegion >(0).getElementCenter();
-
+  std::cout<<"before forAll loop in WRITE_PRESSURES_TO_PATCH"<<std::endl;
   forAll< serialPolicy >( patchSubRegion.size(), [&] ( localIndex const k )
   {
     //convert patch element index to base - first convert patch to global index
@@ -1019,8 +1022,8 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
     testElemMappingPatchToBase( domain.getMeshBody( baseTarget.first ).getBaseDiscretization(), 
                                 domain.getMeshBody( patchTarget.first ).getBaseDiscretization() );
 
-    // testElemMappingBaseToPatch( domain.getMeshBody( baseTarget.first ).getBaseDiscretization(), 
-    //                             domain.getMeshBody( patchTarget.first ).getBaseDiscretization() );
+    testElemMappingBaseToPatch( domain.getMeshBody( baseTarget.first ).getBaseDiscretization(), 
+                                domain.getMeshBody( patchTarget.first ).getBaseDiscretization() );
 
     CRSMatrix< real64, globalIndex > & patchDamageLocalMatrix = patchDamageSolver.getLocalMatrix();
     this->setInitialCrackDamageBCs( patchDamageSolver.getDofManager(), patchDamageLocalMatrix.toViewConstSizes(), patch,
@@ -1079,7 +1082,7 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
     patchSolver.implicitStepComplete( time_n, dt, domain );
     baseSolver.implicitStepComplete( time_n, dt, domain );
     patchSolidSolver.setInternalBoundaryConditions( m_nodeFixDisp, m_fixedDispList );
-    //writeBasePressuresToPatch(base, patch);
+    writeBasePressuresToPatch(base, patch);
 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", PatchSolver: " );
 
