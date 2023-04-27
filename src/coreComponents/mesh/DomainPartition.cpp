@@ -123,7 +123,7 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
 
   for( std::size_t i = 0; i < m_neighbors.size(); ++i )
   {
-    MpiWrapper::iSend( firstNeighborRanks.toView(), m_neighbors[ i ].neighborRank(), neighborsTag, MPI_COMM_GEOSX, &requests[ i ] );
+    MpiWrapper::iSend( firstNeighborRanks.toViewConst(), m_neighbors[ i ].neighborRank(), neighborsTag, MPI_COMM_GEOSX, &requests[ i ] );
   }
 
   // This set will contain the second (neighbor of) neighbors ranks.
