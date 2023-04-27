@@ -724,7 +724,8 @@ public:
           // C1PPU
           if( m_useC1PPU > 0 && m_epsC1PPU > 0 )
           {
-            GEOSX_ASSERT( numFluxSupportPoints == 2 );
+            GEOS_ASSERT( numFluxSupportPoints == 2 );
+
             real64 const mobility_i = m_phaseMob[seri[0]][sesri[0]][sei[0]][ip];
             real64 const mobility_j = m_phaseMob[seri[1]][sesri[1]][sei[1]][ip];
 
