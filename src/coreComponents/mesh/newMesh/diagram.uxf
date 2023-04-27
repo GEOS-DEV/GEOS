@@ -1,0 +1,69 @@
+<diagram program="umletino" version="15.1"><zoom_level>10</zoom_level><help_text>Space for diagram notes</help_text><element><id>UMLClass</id><coordinates><x>80</x><y>69</y><w>390</w><h>140</h></coordinates><panel_attributes>
+template=CELL_TYPES, CONNECTIVITES
+Mesh
+--
+
+--
++auto getCell&lt; CELL_TYPE &gt;( int const  cell_index );
+
+style=autoresize
+  </panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>80</x><y>259</y><w>350</w><h>120</h></coordinates><panel_attributes>
+template=GEOMETRY, MAPPING
+Cell
+--
+
+--
++auto getJacobian( Point&lt;dim&gt; const &amp; point );
+style=autoresize
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>730</x><y>79</y><w>90</w><h>110</h></coordinates><panel_attributes>
+template=
+Connectivity
+--
+
+--
+style=autoresize
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>750</x><y>369</y><w>230</w><h>440</h></coordinates><panel_attributes>
+template=DIMENSION
+Geometry
+--
+
+--
+
+--
+Define the manifold
+vertices, edges, faces, volume
+
+0D 
+point/vertex
+
+1D
+line/segement
+
+2D
+triangle
+square
+polygon
+
+3D
+tet,
+wedge
+pyramid
+hex
+polyhedral
+
+style=autoresize
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>50</x><y>469</y><w>650</w><h>200</h></coordinates><panel_attributes>
+template=REFERENCE_DIMENSION, PHYSICAL_DIMENSION
+Map
+--
+
+--
++ PhysicalPoint referenceToPhysicalMapping( ReferencePoint )
++ Matrix&lt;PHYSICAL_DIMENSION, REFERENCE_DIMENSION&gt; Jacobian( ReferencePoint )
+--
+Transformation Mapping
+  - Isoparametric Mapping
+  - Rotation
+  - Translation
+style=autoresize
+</panel_attributes><additional_attributes></additional_attributes></element></diagram>
