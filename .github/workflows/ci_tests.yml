@@ -30,9 +30,13 @@ jobs:
     steps:
     - name: Check that the PR is assigned
       run: |
+        id=$(curl -H "Accept: application/vnd.github+json" \
+           https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }} \
+           | jq '.assignee.id')
         echo "Is PR Assigned? (Check for Assignee ID)"
-        echo ${{ toJSON(github.event.pull_request.assignee.id) }}
-        if [[ ${{ toJSON(github.event.pull_request.assignee.id) }} != null ]]; then "true" ; else "false"; fi
+        echo $id
+        if [[ $id != null ]]; then "true" ; else "false"; fi
+
   check-submodules:
     needs: [check_pull_request_is_not_a_draft]
     runs-on: ubuntu-latest
