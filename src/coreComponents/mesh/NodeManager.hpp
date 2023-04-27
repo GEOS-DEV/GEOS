@@ -407,6 +407,8 @@ public:
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > referencePosition() const
   { return m_referencePosition; }
+  arrayView2d< real32 const, nodes::REFERENCE_POSITION_USD > referencePosition32() const
+  { return m_referencePosition32; }
   //END_SPHINX_REFPOS_ACCESS
 
   ///@}
