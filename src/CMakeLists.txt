@@ -1,6 +1,5 @@
 cmake_minimum_required( VERSION 3.9 )
 
-include(GNUInstallDirs)
 # At the moment we are manually passing the cuda arch flag.
 if(${CMAKE_VERSION} VERSION_GREATER "3.18.0")
   cmake_policy(SET CMP0104 OLD)
@@ -10,6 +9,7 @@ endif()
 # GEOSX
 ################################
 project( geosx LANGUAGES C CXX )
+include(GNUInstallDirs)
 set( BLT_CXX_STD "c++14" CACHE STRING "Version of C++ standard" )
 if(CMAKE_BUILD_TYPE EQUAL "Debug")
   set( ENABLE_WARNINGS_AS_ERRORS "OFF" CACHE PATH "")
