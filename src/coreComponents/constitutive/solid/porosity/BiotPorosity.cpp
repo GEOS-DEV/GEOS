@@ -19,7 +19,7 @@
 #include "BiotPorosity.hpp"
 #include "PorosityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -35,11 +35,14 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Grain bulk modulus" );
 
+  registerWrapper( viewKeyStruct::defaultThermalExpansionCoefficientString(), &m_defaultThermalExpansionCoefficient ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default thermal expansion coefficient" );
+
   registerField( fields::porosity::biotCoefficient{}, &m_biotCoefficient );
 
-  registerWrapper( viewKeyStruct::thermalExpansionCoefficientString(), &m_thermalExpansionCoefficient ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "Thermal expansion coefficient" );
+  registerField( fields::porosity::thermalExpansionCoefficient{}, &m_thermalExpansionCoefficient );
 
   registerWrapper( viewKeyStruct::meanStressIncrementString(), &m_meanStressIncrement ).
     setApplyDefaultValue( 0.0 ).
@@ -61,7 +64,9 @@ void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
 void BiotPorosity::postProcessInput()
 {
   PorosityBase::postProcessInput();
-  // TODO valdate input
+
+  getWrapper< array1d< real64 > >( fields::porosity::thermalExpansionCoefficient::key() ).
+    setApplyDefaultValue( m_defaultThermalExpansionCoefficient );
 }
 
 void BiotPorosity::initializeState() const
@@ -74,7 +79,7 @@ void BiotPorosity::initializeState() const
   arrayView2d< real64 >             porosity_n  = m_porosity_n;
   arrayView2d< real64 >         initialPorosity = m_initialPorosity;
 
-  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( numE, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < numQ; ++q )
     {
@@ -88,4 +93,4 @@ void BiotPorosity::initializeState() const
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BiotPorosity, string const &, Group * const )
 } /* namespace constitutive */
-} /* namespace geosx */
+} /* namespace geos */

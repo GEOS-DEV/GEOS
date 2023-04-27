@@ -12,12 +12,12 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_FILEIO_VTK_VTKVTMWRITER_HPP_
-#define GEOSX_FILEIO_VTK_VTKVTMWRITER_HPP_
+#ifndef GEOS_FILEIO_VTK_VTKVTMWRITER_HPP_
+#define GEOS_FILEIO_VTK_VTKVTMWRITER_HPP_
 
 #include "dataRepository/xmlWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace vtk
 {
@@ -64,6 +64,6 @@ private:
 };
 
 } // namespace vtk
-} // namespace geosx
+} // namespace geos
 
 #endif

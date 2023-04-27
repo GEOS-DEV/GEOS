@@ -16,8 +16,8 @@
  * @file VTKMeshGeneratorTools.hpp
  */
 
-#ifndef GEOSX_VTK_MESH_GENERATORS_VTKMESHGENERATORTOOLS_HPP_
-#define GEOSX_VTK_MESH_GENERATORS_VTKMESHGENERATORTOOLS_HPP_
+#ifndef GEOS_VTK_MESH_GENERATORS_VTKMESHGENERATORTOOLS_HPP_
+#define GEOS_VTK_MESH_GENERATORS_VTKMESHGENERATORTOOLS_HPP_
 
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
@@ -31,7 +31,7 @@
 // Collision of includes leads to all kinds of impossible to fix compilation errors.
 // Thankfully, no link errors, owing to namespace versioning employed by {fmt}.
 
-namespace geosx
+namespace geos
 {
 namespace vtk
 {
@@ -60,6 +60,6 @@ std::vector< vtkBoundingBox >
 exchangeBoundingBoxes( vtkDataSet & dataSet, MPI_Comm mpiComm );
 
 } // namespace vtk
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_VTK_MESH_GENERATORS_VTKMESHGENERATORTOOLS_HPP_
+#endif //GEOS_VTK_MESH_GENERATORS_VTKMESHGENERATORTOOLS_HPP_

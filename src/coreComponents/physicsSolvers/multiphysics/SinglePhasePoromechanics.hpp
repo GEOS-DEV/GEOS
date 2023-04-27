@@ -16,22 +16,22 @@
  * @file SinglePhasePoromechanics.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_
 
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
-namespace geosx
+namespace geos
 {
 
-class SinglePhasePoromechanics : public CoupledSolver< SolidMechanicsLagrangianFEM,
-                                                       SinglePhaseBase >
+class SinglePhasePoromechanics : public CoupledSolver< SinglePhaseBase,
+                                                       SolidMechanicsLagrangianFEM >
 {
 public:
 
-  using Base = CoupledSolver< SolidMechanicsLagrangianFEM, SinglePhaseBase >;
+  using Base = CoupledSolver< SinglePhaseBase, SolidMechanicsLagrangianFEM >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -40,8 +40,8 @@ public:
 
   enum class SolverType : integer
   {
-    SolidMechanics = 0,
-    Flow = 1
+    Flow = 0,
+    SolidMechanics = 1
   };
 
   /// String used to form the solverName used to register solvers in CoupledSolver
@@ -141,6 +141,12 @@ protected:
 
 private:
 
+  /**
+   * @brief Helper function to recompute the bulk density
+   * @param[in] subRegion the element subRegion
+   */
+  void updateBulkDensity( ElementSubRegionBase & subRegion );
+
   void createPreconditioner();
 
   template< typename CONSTITUTIVE_BASE,
@@ -154,13 +160,11 @@ private:
                          arrayView1d< real64 > const & localRhs,
                          PARAMS && ... params );
 
-
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
 
   /// Flag to indicate that the solver is going to perform stress initialization
   integer m_performStressInitialization;
-
 };
 
 template< typename CONSTITUTIVE_BASE,
@@ -174,7 +178,7 @@ real64 SinglePhasePoromechanics::assemblyLaunch( MeshLevel & mesh,
                                                  arrayView1d< real64 > const & localRhs,
                                                  PARAMS && ... params )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NodeManager const & nodeManager = mesh.getNodeManager();
 
@@ -201,6 +205,6 @@ real64 SinglePhasePoromechanics::assemblyLaunch( MeshLevel & mesh,
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_ */

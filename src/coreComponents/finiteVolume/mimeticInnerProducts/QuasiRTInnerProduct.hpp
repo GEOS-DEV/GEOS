@@ -16,12 +16,12 @@
  * @file QuasiRTInnerProduct.hpp
  */
 
-#ifndef GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_QUASIRTINNERPRODUCT_HPP_
-#define GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_QUASIRTINNERPRODUCT_HPP_
+#ifndef GEOS_FINITEVOLUME_MIMETICINNERPRODUCTS_QUASIRTINNERPRODUCT_HPP_
+#define GEOS_FINITEVOLUME_MIMETICINNERPRODUCTS_QUASIRTINNERPRODUCT_HPP_
 
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace mimeticInnerProduct
 {
@@ -50,7 +50,7 @@ public:
    * @details Reference: K-A Lie, An Introduction to Reservoir Simulation Using MATLAB/GNU Octave (2019)
    */
   template< localIndex NF >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
            arrayView1d< real64 const > const & transMultiplier,
@@ -65,7 +65,7 @@ public:
 };
 
 template< localIndex NF >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 QuasiRTInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                               arrayView1d< real64 const > const & transMultiplier,
@@ -91,6 +91,6 @@ QuasiRTInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITI
 
 } // end namespace mimeticInnerProduct
 
-} // end namespace geosx
+} // end namespace geos
 
-#endif //GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_QUASIRTINNERPRODUCT_HPP_
+#endif //GEOS_FINITEVOLUME_MIMETICINNERPRODUCTS_QUASIRTINNERPRODUCT_HPP_

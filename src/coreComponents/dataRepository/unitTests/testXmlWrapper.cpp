@@ -18,7 +18,7 @@
 
 const char IGNORE_OUTPUT[] = ".*";
 
-using namespace geosx;
+using namespace geos;
 
 TEST( testXmlWrapper, array3d_errors )
 {

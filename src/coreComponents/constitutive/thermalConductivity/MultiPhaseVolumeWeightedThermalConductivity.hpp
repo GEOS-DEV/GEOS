@@ -16,13 +16,13 @@
  * @file MultiPhaseVolumeWeightedThermalConductivity.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_VOLUMEWEIGHTEDTHERMALCONDUCTIVITY_HPP_
-#define GEOSX_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_VOLUMEWEIGHTEDTHERMALCONDUCTIVITY_HPP_
+#ifndef GEOS_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_VOLUMEWEIGHTEDTHERMALCONDUCTIVITY_HPP_
+#define GEOS_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_VOLUMEWEIGHTEDTHERMALCONDUCTIVITY_HPP_
 
 #include "constitutive/thermalConductivity/MultiPhaseThermalConductivityBase.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -59,7 +59,7 @@ public:
    * @param[out] effectiveConductivity the cell effective conductivity
    * @param[out] dEffectiveConductivity_dPhaseVolFrac the cell derivative of effective conductivity wrt phase volume fractions
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & laggedPorosity,
                 arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
                 arraySlice1d< real64 const > const rockThermalConductivity,
@@ -84,7 +84,7 @@ public:
     }
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const & laggedPorosity,
@@ -177,7 +177,7 @@ private:
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif //GEOSX_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_VOLUMEWEIGHTEDTHERMALCONDUCTIVITY_HPP_
+#endif //GEOS_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_VOLUMEWEIGHTEDTHERMALCONDUCTIVITY_HPP_

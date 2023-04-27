@@ -19,7 +19,7 @@ Parameters
 
 The model represented by ``<CompositionalMultiphaseFluid>`` node in the input.
 Under the hood this is a wrapper around ``PVTPackage`` library, which is included as a submodule.
-In order to use the model, GEOSX must be built with ``-DENABLE_PVTPACKAGE=ON`` (default).
+In order to use the model, GEOS must be built with ``-DENABLE_PVTPACKAGE=ON`` (default).
 
 The following attributes are supported:
 

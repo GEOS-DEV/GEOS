@@ -15,15 +15,15 @@
 /**
  * @file reactiveFluidSelector.hpp
  */
-#ifndef GEOSX_CONSTITUTIVE_FLUID_REACTIVEFLUIDSELECTOR_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_REACTIVEFLUIDSELECTOR_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_REACTIVEFLUIDSELECTOR_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_REACTIVEFLUIDSELECTOR_HPP_
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/fluid/ReactiveBrineFluid.hpp"
 
 #include "common/GeosxConfig.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -47,6 +47,6 @@ void constitutiveUpdatePassThru( ReactiveMultiFluid & fluid,
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_REACTIVEFLUIDSELECTOR_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_REACTIVEFLUIDSELECTOR_HPP_

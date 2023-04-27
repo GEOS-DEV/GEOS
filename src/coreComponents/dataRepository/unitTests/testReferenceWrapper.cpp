@@ -23,7 +23,7 @@
 #include <typeindex>
 #include <vector>
 
-using namespace geosx;
+using namespace geos;
 using namespace LvArray;
 
 TEST( testReferenceWrapper, testIntWrapper )

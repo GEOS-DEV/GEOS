@@ -20,7 +20,7 @@
 
 #include "ElementRegionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 
@@ -67,4 +67,4 @@ void insert( OrderedVariableToManyElementRelation & relation,
   }
 }
 
-} /* namespace geosx */
+} /* namespace geos */

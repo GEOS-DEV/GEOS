@@ -18,7 +18,7 @@
 
 #include "SolidInternalEnergy.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -75,7 +75,7 @@ void SolidInternalEnergy::saveConvergedState() const
   arrayView2d< real64 const > internalEnergy   = m_internalEnergy;
   arrayView2d< real64 >       internalEnergy_n = m_internalEnergy_n;
 
-  forAll< parallelDevicePolicy<> >( internalEnergy.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( internalEnergy.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     internalEnergy_n[k][0] = internalEnergy[k][0];
   } );
@@ -85,4 +85,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, SolidInternalEnergy, string const &, G
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */

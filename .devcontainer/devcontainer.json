@@ -1,0 +1,25 @@
+{
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "runArgs": [
+        "--cap-add=ALL"
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools-extension-pack",
+                "GitHub.vscode-pull-request-github",
+                "eamodio.gitlens",
+                "fredericbonnet.cmake-test-adapter",
+                "redhat.vscode-xml"
+            ]
+        }
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/sshd:1": {
+            "version": "latest"
+        }
+    },
+    "postCreateCommand": "/usr/bin/ln -s /workspaces/GEOS/.vscode-codespaces /workspaces/GEOS/.vscode"
+}
