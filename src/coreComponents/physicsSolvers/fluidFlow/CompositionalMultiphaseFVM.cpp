@@ -57,7 +57,7 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Use C1-PPU flux" );
   this->registerWrapper( viewKeyStruct::epsC1PPUString(), &m_epsC1PPU ).
-    setApplyDefaultValue( 0 ).
+    setApplyDefaultValue( 1e-10 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Tolerance for C1-PPU smoothing" );
 }
