@@ -1294,6 +1294,16 @@ public:
   { return *m_dataContext; }
 
   /**
+   * @brief Get the DataContext object that can help to contextualize a wrapper stored in this Group.
+   * @tparam KEY The lookup type.
+   * @param key The value used to lookup the wrapper.
+   * @throw std::domain_error if the wrapper doesn't exist.
+   */
+  template< typename KEY >
+  DataContext const & getWrapperDataContext( KEY key ) const
+  { return getWrapperBase<KEY>( key ).getDataContext(); }
+
+  /**
    * @brief Access the group's parent.
    * @return reference to parent Group
    * @throw std::domain_error if the Group doesn't have a parent.
