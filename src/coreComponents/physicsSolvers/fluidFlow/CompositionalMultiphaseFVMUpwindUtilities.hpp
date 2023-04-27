@@ -11,7 +11,6 @@
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
-
 /**
  * @file CompositionalMultiphaseFVMUpwindUtilities.hpp
  */
@@ -45,6 +44,12 @@ struct UpwindHelpers
 
   using Deriv = constitutive::multifluid::DerivativeOffset;
 
+  /// Minimal mobility for fractional flow construction
+  static constexpr real64 minTotMob = 1e-12;
+
+  /***
+   * @brief section grouping pure utilities functions
+   */
 
   /**
    * @brief Form the PhasePotentialUpwind from pressure gradient and gravitational heads (legacy)
@@ -160,7 +165,6 @@ struct UpwindHelpers
         }
       }
 
-//      GEOSX_LOG_RANK( GEOSX_FMT( "ei : {} pres : {}", ei, pres[er][esr][ei] ));
       presGrad += transmissibility[i] * (pres[er][esr][ei] - capPressure);
       dPresGrad_dP[i] += transmissibility[i] * (1 - dCapPressure_dP)
                          + dTrans_dPres[i] * (pres[er][esr][ei] - capPressure);
@@ -318,6 +322,10 @@ struct UpwindHelpers
     }
   }
 
+
+  /***
+   * @brief section grouping acting functions that are used for fractional flow formulation
+   */
 
   /**
    * @brief Function returning upwinded mobility (and derivatives)  of specified phase as well as uppwind direction
@@ -529,6 +537,7 @@ struct UpwindHelpers
     //guard against no flow region
     if( std::fabs( mainMob ) > 1e-20 )
     {
+      totMob = LvArray::math::max( totMob, minTotMob );
       fractionalFlow = mainMob / totMob;
       dFractionalFlow_dP[k_up_main] = dMMob_dP / totMob;
       for( localIndex jc = 0; jc < numComp; ++jc )
@@ -552,14 +561,35 @@ struct UpwindHelpers
   /**
    * @brief  Struct defining formation of potential from different Physics (flagged by enum type T) to be used
    *            in Upwind discretization schemes
-   * @tparam numComp
+   * @tparam numComp number of component
    * @tparam T the concerned physics (Viscou,Gravity or Capillary)
-   * @tparam numFluxSupportPoints
+   * @tparam numFluxSupportPoints number of point in the stencil
    */
   template< localIndex numComp, DrivingForces T, localIndex numFluxSupportPoints >
   struct computePotential
   {
-
+    /**
+     * @brief functor member computing the potential to be specialized (here empty)
+     * @param numPhase total number of fluid phases
+     * @param ip index of the selected fluid phase
+     * @param seri cell region index array for the stencil
+     * @param sesri cell subregion index array for the stencil
+     * @param sei cell element region index array for the stencil
+     * @param transmissibility pair of half transmissibility for the selected interface
+     * @param dTrans_dPres pair of half transmissibility for the selected interface
+     * @param totFlux total flux needed for fractional flow formulation
+     * @param gravCoeff condensed gravity projected contribution
+     * @param dCompFrac_dCompDens derivatives of component fraction wrt component densities
+     * @param phaseMassDens phase mass densities
+     * @param dPhaseMassDens table of stacked derivatives of phase mass densities
+     * @param dPhaseVolFrac table of stacked derivatives of phase volume fractions
+     * @param phaseCapPressure phase capillary pressure
+     * @param dPhaseCapPressure_dPhaseVolFrac derivative of phase capillary pressure wrt phase volume fraction
+     * @param[out] potentialHead head difference for the selected driving force potential
+     * @param[out] dPotentialHead_dP pressure derivative of the head difference for the selected driving force potential
+     * @param[out] dPotentialHead_dC component wise derivative of head difference for the selected driving force potential
+     * @param[out] dProp_dComp resuting properties derivative through chain rule
+     */
     GEOSX_HOST_DEVICE
     static void compute( localIndex const numPhase,
                          localIndex const ip,
@@ -582,12 +612,16 @@ struct UpwindHelpers
                          real64 (& dProp_dComp)[numComp] ) {};
   };
 
-/*****/
-
+  /*! @copydoc computePotential
+   */
   template< localIndex numComp, localIndex numFluxSupportPoints >
   struct computePotential< numComp, DrivingForces::Viscous, numFluxSupportPoints >
   {
 
+    /*! @copydoc computePotential::compute
+     *
+     * @brief specialization for viscous driving forces which only relies on total flux
+     */
     GEOSX_HOST_DEVICE
     static void compute( localIndex const GEOSX_UNUSED_PARAM( numPhase ),
                          localIndex const GEOSX_UNUSED_PARAM( ip ),
@@ -621,20 +655,15 @@ struct UpwindHelpers
     }
   };
 
+  /*! @copydoc computePotential
+   */
   template< localIndex numComp, localIndex numFluxSupportPoints >
   struct computePotential< numComp, DrivingForces::Gravity, numFluxSupportPoints >
   {
-/**
- * @brief Form gravitational head for phase from gravity and massDensities
- * @tparam NC number of components
- * @tparam NUM_ELEMS number of elements neighbors of considered face
- * @param ip phase concerned
- * @param stencilSize number of points in the stencil
- * @param seri arraySlice of the stencil implied element region index
- * @param sesri arraySlice of the stencil implied element subregion index
- * @param sei arraySlice of the stencil implied element index
- * @param stencilWeights weights associated with elements in the stencil
- */
+    /*! @copydoc computePotential::compute
+     *
+     * @brief specialization for gravitational driving forces which only relies on total flux
+     */
     GEOSX_HOST_DEVICE
     static void compute( localIndex const GEOSX_UNUSED_PARAM( numPhase ),
                          localIndex const ip,
@@ -727,22 +756,15 @@ struct UpwindHelpers
     }
   };
 
-  /**
-   * @brief Form capillary head
-   * @tparam NC
-   * @tparam NUM_ELEMS
-   * @param ip
-   * @param stencilSize
-   * @param seri
-   * @param sesri
-   * @param sei
-   * @param stencilWeights
+  /*! @copydoc computePotential
    */
-
   template< localIndex numComp, localIndex numFluxSupportPoints >
   struct computePotential< numComp, DrivingForces::Capillary, numFluxSupportPoints >
   {
-
+    /*! @copydoc computePotential::compute
+     *
+     * @brief specialization for capillary driving forces which only relies on total flux
+     */
     GEOSX_HOST_DEVICE
     static void compute( localIndex const numPhase,
                          localIndex const ip,
@@ -799,7 +821,38 @@ struct UpwindHelpers
   };
 
 
-  //Form potential-related parts of fluxes
+  /// Form potential-related parts of fluxes
+  /***
+   *  Compute the flux resulting from the potential given by the driving force
+   * @tparam numComp
+   * @tparam T
+   * @tparam numFluxSupportPoints
+   * @tparam UPWIND Upwind Scheme selected
+   * @param numPhase
+   * @param ip
+   * @param seri
+   * @param sesri
+   * @param sei
+   * @param transmissibility
+   * @param dTrans_dPres
+   * @param totFlux
+   * @param pres
+   * @param gravCoef
+   * @param phaseMob
+   * @param dPhaseMob
+   * @param dPhaseVolFrac
+   * @param dCompFrac_dCompDens
+   * @param phaseMassDens
+   * @param dPhaseMassDens
+   * @param phaseCapPressure
+   * @param dPhaseCapPressure_dPhaseVolFrac
+   * @param capPressureFlag
+   * @param k_up
+   * @param k_up_o
+   * @param phaseFlux
+   * @param dPhaseFlux_dP
+   * @param dPhaseFlux_dC
+   */
   template< localIndex numComp, DrivingForces T, localIndex numFluxSupportPoints, template< DrivingForces > class UPWIND >
   GEOSX_HOST_DEVICE
   static void computePotentialFluxes( localIndex const numPhase,
@@ -837,7 +890,7 @@ struct UpwindHelpers
     real64 dPot_dC[numFluxSupportPoints][numComp]{};
     real64 dProp_dC[numComp]{};
 
-    //SIZE depends on T (if gravity then MAX_STENCIL, if Cap then NUM_ELEMS)
+    //
     UpwindHelpers::computePotential< numComp, T, numFluxSupportPoints >::compute( numPhase,
                                                                                   ip,
                                                                                   seri,
@@ -988,8 +1041,6 @@ struct UpwindHelpers
 
 /**
  * @brief Template base class for different upwind Scheme
- * @tparam NC number of components
- * @tparam NUM_ELEMS number of elements neighbors of considered face
  * @tparam T physics concerned by the scheme if specialized
  */
 template< DrivingForces T >
@@ -1039,6 +1090,8 @@ public:
   {
     real64 pot{};
 
+    /// each derived concrete class has to define a computePotential method that is calling UpwindScheme::potential method with a specific
+    /// lamda defining how to get these potentials
     UPWIND< T >::template computePotential< numComp, numFluxSupportPoints >( numPhase,
                                                                              ip,
                                                                              seri,
@@ -1063,8 +1116,8 @@ public:
     upwindDir = (pot > 0) ? 0 : 1;
   }
 
-  //refactor getPotential - 3 overload// by phase
-
+  /// templated way of evaluating the potential (to the exception of viscous one) which relies on
+  /// up-or-downwinded mobility terms pre-multiplying potential differences
   template< localIndex numComp, localIndex numFluxSupportPoints, typename LAMBDA >
   GEOSX_HOST_DEVICE
   static void potential( localIndex numPhase,
@@ -1121,8 +1174,7 @@ public:
 /**
  * @brief  Class describing the Hybrid Upwind scheme as defined in "Consistent upwinding for sequential fully implicit
  *         multiscale compositional simulation" (Moncorge,2020)
- * @tparam NC number of components
- * @tparam NUM_ELEMS number of elements neighbors of considered face
+ * @tparam T physics concerned by the scheme if specialized
  */
 template< DrivingForces T >
 class HybridUpwind : public UpwindScheme< T >
@@ -1194,8 +1246,7 @@ public:
 
 /**
  * @brief Specialization of the Viscous term as it does not fit the generic framework summing over other phases
- * @tparam NC number of components
- * @tparam NUM_ELEMS number of elements neighbors of considered face
+ * @tparam T physics concerned by the scheme if specialized
  */
 template<>
 class HybridUpwind< DrivingForces::Viscous > : public UpwindScheme< DrivingForces::Viscous >
