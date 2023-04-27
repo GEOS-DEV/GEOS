@@ -107,7 +107,7 @@ static std::vector< int > getVtkConnectivity( ElementType const elementType )
     case ElementType::Vertex:        return { 0 };
     case ElementType::Line:          return { 0, 1 };
     case ElementType::Triangle:      return { 0, 1, 2 };
-    case ElementType::Quadrilateral: return { 0, 1, 2, 3 };  // TODO check
+    case ElementType::Quadrilateral: return { 0, 1, 3, 2 };  // TODO check
     case ElementType::Polygon:       return { };  // TODO
     case ElementType::Tetrahedron:   return { 0, 1, 2, 3 };
     case ElementType::Pyramid:       return { 0, 1, 3, 2, 4 };
@@ -276,12 +276,12 @@ getSurface( FaceElementSubRegion const & subRegion,
   geosx2VTKIndexing.reserve( subRegion.size() * subRegion.numNodesPerElement() );
   localIndex nodeIndexInVTK = 0;
   std::vector< vtkIdType > connectivity( subRegion.numNodesPerElement() );
-  std::vector< int > const vtkOrdering = getVtkConnectivity( subRegion.getElementType() );
 
   for( localIndex ei = 0; ei < subRegion.size(); ei++ )
   {
+    std::vector< int > const vtkOrdering = getVtkConnectivity( subRegion.getElementType( ei ) );
     auto const & elem = nodeListPerElement[ei];
-    for( localIndex i = 0; i < elem.size(); ++i )
+    for( size_t i = 0; i < vtkOrdering.size(); ++i )
     {
       auto const & VTKIndexPos = geosx2VTKIndexing.find( elem[vtkOrdering[i]] );
       if( VTKIndexPos == geosx2VTKIndexing.end() )
@@ -293,7 +293,7 @@ getSurface( FaceElementSubRegion const & subRegion,
         connectivity[i] = VTKIndexPos->second;
       }
     }
-    cellsArray->InsertNextCell( elem.size(), connectivity.data() );
+    cellsArray->InsertNextCell( vtkOrdering.size(), connectivity.data() );
   }
 
   auto points = vtkSmartPointer< vtkPoints >::New();
@@ -306,22 +306,7 @@ getSurface( FaceElementSubRegion const & subRegion,
     points->SetPoint( nodeIndex.second, point[0], point[1], point[2] );
   }
 
-  VTKCellType const type = [&]()
-  {
-    switch( subRegion.numNodesPerElement() )
-    {
-      case 6: return VTK_WEDGE;
-      case 8: return VTK_HEXAHEDRON;
-      default:
-      {
-        GEOS_ERROR( GEOS_FMT( "Elements with {} nodes can't be output in the subregion {}",
-                              subRegion.numNodesPerElement(), subRegion.getName() ) );
-        return VTK_POLYGON;
-      }
-    }
-  }();
-
-  return { type, cellsArray, points };
+  return { VTK_POLYGON, cellsArray, points };
 }
 
 /**

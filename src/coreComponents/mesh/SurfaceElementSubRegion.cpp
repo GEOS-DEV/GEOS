@@ -86,5 +86,21 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
 SurfaceElementSubRegion::~SurfaceElementSubRegion()
 {}
 
+ElementType SurfaceElementSubRegion::getElementType( localIndex ei ) const
+{
+  switch( m_toNodesRelation[ei].size() )
+  {
+    case 3:
+    case 6:
+      return ElementType::Triangle;
+    case 4:
+    case 8:
+      return ElementType::Quadrilateral;
+    default:
+      GEOS_ERROR( "Unsupported surfacic element type." );
+      return {};
+  }
+}
+
 
 } /* namespace geos */

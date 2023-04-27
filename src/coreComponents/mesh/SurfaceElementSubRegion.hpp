@@ -232,6 +232,10 @@ public:
     constexpr static char const * surfaceElementToParentPlaneString() { return "surfaceElementToParentPlane"; }
   };
 
+  using ElementSubRegionBase::getElementType;
+
+  ElementType getElementType( localIndex ei ) const;
+
 protected:
 
   /// Map between the surface elements and the cells

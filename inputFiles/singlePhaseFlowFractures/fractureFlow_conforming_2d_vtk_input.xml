@@ -186,6 +186,7 @@
     <VTK
       name="vtkOutput"
       format="ascii"
+      writeGhostCells="1"
       plotFileRoot="fractureFlow_conforming_2d_vtk_input-vtk"/>
 
     <Silo
