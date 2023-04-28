@@ -30,6 +30,9 @@ stages:
 
     - mkdir ${SYSTEM}
 
+    # geosxats needs python2 to run
+    - module load python/2
+
     # CONFIGURE
     - echo "~~~~~~~~~~ START - configure ~~~~~~~~~~~"
     - config_code=0
@@ -117,9 +120,9 @@ stages:
 
 ####
 # quartz job
-quartz_clang_10_0_0_build:
+quartz_clang_14_build:
   variables:
-    HOST_CONFIG: "quartz-clang@10.0.0.cmake"
+    HOST_CONFIG: "quartz-clang@14.cmake"
   extends: [.build_on_quartz]
 
 ####
