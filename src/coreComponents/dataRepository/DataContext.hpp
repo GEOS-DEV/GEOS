@@ -22,6 +22,7 @@
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
 #include "xmlWrapper.hpp"
+#include "common/Format.hpp"
 
 namespace geos
 {
@@ -46,6 +47,11 @@ public:
    * @param isDataFileContext true if this Context is a DataFileContext
    */
   DataContext( string const & objectName, bool isDataFileContext );
+
+  /**
+   * @brief Destroy the DataContext object
+   */
+  virtual ~DataContext() {}
 
   /**
    * @return A string that mention all the known informations to retrieve from where the target
@@ -91,6 +97,11 @@ public:
   GroupContext( Group & group );
 
   /**
+   * @brief Destroy the GroupContext object
+   */
+  virtual ~GroupContext() {}
+
+  /**
    * @brief Get the reference to the Group related to this GroupContext.
    */
   Group & getGroup() const;
@@ -126,6 +137,11 @@ public:
   WrapperContext( WrapperBase & wrapper );
 
   /**
+   * @brief Destroy the WrapperContext object
+   */
+  virtual ~WrapperContext() {}
+
+  /**
    * @return the parent group DataContext followed by the wrapper name.
    */
   virtual string toString() const;
@@ -145,6 +161,11 @@ public:
    * @brief Construct the file context of a Group from an xml attribute.
    */
   DataFileContext( WrapperBase & wrapper, xmlWrapper::xmlAttributePos const & attPos );
+
+  /**
+   * @brief Destroy the DataFileContext object
+   */
+  virtual ~DataFileContext() {}
 
   /**
    * @return the target object name followed by the the file and line declaring it.
@@ -199,8 +220,34 @@ protected:
 
 };
 
+
 } /* namespace dataRepository */
 
 } /* namespace geos */
+
+#ifdef GEOSX_USE_FMT
+#define GEOS_FMT_NS_PREFIX fmt
+#else
+#define GEOS_FMT_NS_PREFIX std
+#endif
+
+/// Formatter to be able to directly use a DataContext as a GEOS_FMT() argument.
+template<>
+struct GEOS_FMT_NS_PREFIX::formatter< geos::dataRepository::DataContext >
+{
+  /**
+   * @brief Format the specified dataContext to a string.
+   */
+  auto format( geos::dataRepository::DataContext const & dataContext, format_context & ctx )
+  {
+    return format_to( ctx.out(), dataContext.toString() );
+  }
+
+  /**
+   * @brief Method to parse a dataContext from a string. Not implemented!
+   */
+  constexpr auto parse( format_parse_context & ctx )
+  { return ctx.begin(); }
+};
 
 #endif /* GEOS_DATAREPOSITORY_DATACONTEXT_HPP_ */
