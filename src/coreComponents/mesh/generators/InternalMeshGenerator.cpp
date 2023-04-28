@@ -129,7 +129,7 @@ static int getNumElemPerBox( ElementType const elementType )
     case ElementType::Hexahedron:    return 1;
     default:
     {
-      GEOS_ERROR( "InternalMeshGenerator: unsupported element type " << elementType );
+      GEOS_THROW( "Unsupported element type " << elementType, InputError );
       return 0;
     }
   }
@@ -148,7 +148,7 @@ void InternalMeshGenerator::postProcessInput()
     }
     if( failFlag )
     {
-      GEOS_ERROR( "vertex/element mismatch InternalMeshGenerator::ReadXMLPost()" );
+      GEOS_ERROR( getDataContext() << ": vertex/element mismatch InternalMeshGenerator::ReadXMLPost()" );
     }
 
     // If specified, check to make sure bias values have the correct length
@@ -161,7 +161,7 @@ void InternalMeshGenerator::postProcessInput()
     }
     if( failFlag )
     {
-      GEOS_ERROR( "element/bias mismatch InternalMeshGenerator::ReadXMLPost()" );
+      GEOS_ERROR( getDataContext() << ": element/bias mismatch InternalMeshGenerator::ReadXMLPost()" );
     }
   }
 
@@ -176,13 +176,22 @@ void InternalMeshGenerator::postProcessInput()
     }
     else
     {
-      GEOS_ERROR( "InternalMeshGenerator: The number of element types is inconsistent with the number of total block." );
+      GEOS_ERROR( getDataContext() << ": InternalMeshGenerator: The number of element types is"
+                                      " inconsistent with the number of total block." );
     }
   }
 
   for( localIndex i = 0; i < LvArray::integerConversion< localIndex >( m_elementType.size() ); ++i )
   {
-    m_numElePerBox[i] = getNumElemPerBox( EnumStrings< ElementType >::fromString( m_elementType[i] ) );
+    try
+    {
+      m_numElePerBox[i] = getNumElemPerBox( EnumStrings< ElementType >::fromString( m_elementType[i] ) );
+    } catch( InputError const & e )
+    {
+      WrapperBase const & wrapper = getWrapperBase( viewKeyStruct::elementTypesString() );
+      throw InputError( e, "InternalMesh " + wrapper.getDataContext().toString() +
+                        ", element index = " + std::to_string( i ) + ": " );
+    }
   }
 
   {
@@ -200,7 +209,8 @@ void InternalMeshGenerator::postProcessInput()
       }
       else
       {
-        GEOS_ERROR( "Incorrect number of regionLayout entries specified in InternalMeshGenerator::ReadXML()" );
+        GEOS_ERROR( getDataContext() << ": Incorrect number of regionLayout entries specified in"
+                                        " InternalMeshGenerator::ReadXML()" );
       }
     }
   }

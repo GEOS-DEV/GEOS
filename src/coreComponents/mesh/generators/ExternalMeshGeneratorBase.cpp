@@ -59,29 +59,30 @@ ExternalMeshGeneratorBase::ExternalMeshGeneratorBase( string const & name,
 
 void ExternalMeshGeneratorBase::postProcessInput()
 {
-  auto const checkSizes = [meshName = getName()]( arrayView1d< string const > from,
-                                                  arrayView1d< string const > to,
-                                                  string const & fromKey,
-                                                  string const & toKey )
+  auto const checkSizes = [this]( arrayView1d< string const > from, arrayView1d< string const > to,
+                                  string const & fromKey, string const & toKey )
   {
     GEOS_THROW_IF_NE_MSG( from.size(), to.size(),
-                          "Mesh '" << meshName << "': attributes '" << fromKey << "' and '" << toKey << "' must contain the same number of values.",
+                          getWrapperDataContext( fromKey ) <<
+                          " and " << getWrapperDataContext( toKey ) <<
+                          " must contain the same number of values.",
                           InputError );
   };
   checkSizes( m_volumicFieldsToImport, m_volumicFieldsInGEOSX, viewKeyStruct::volumicFieldsToImportString(), viewKeyStruct::volumicFieldsInGEOSXString() );
   checkSizes( m_surfacicFieldsToImport, m_surfacicFieldsInGEOSX, viewKeyStruct::surfacicFieldsToImportString(), viewKeyStruct::surfacicFieldsInGEOSXString() );
 
-  auto const checkDuplicates = [meshName = getName()]( arrayView1d< string const > v )
+  auto const checkDuplicates = [this]( arrayView1d< string const > v, string const & key )
   {
     std::set< string > const tmp{ v.begin(), v.end() };
     bool const hasDuplicates = tmp.size() != LvArray::integerConversion< std::size_t >( v.size() );
 
     GEOS_THROW_IF( hasDuplicates,
-                   "Mesh '" << meshName << "': '" << stringutilities::join( v, ", " ) << "' already present in list of fields to import.",
+                   getWrapperDataContext( key ) << ": '" << stringutilities::join( v, ", " ) <<
+                   "' already present in list of fields to import.",
                    InputError );
   };
-  checkDuplicates( m_volumicFieldsInGEOSX );
-  checkDuplicates( m_surfacicFieldsInGEOSX );
+  checkDuplicates( m_volumicFieldsInGEOSX, viewKeyStruct::volumicFieldsInGEOSXString() );
+  checkDuplicates( m_surfacicFieldsInGEOSX, viewKeyStruct::surfacicFieldsInGEOSXString() );
 
   // Building the fields mapping from the two separated input/output vectors.
   auto const buildMapping = [&]( arrayView1d< string const > from,

@@ -368,7 +368,7 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
   // if they belong to the same well element. This is a temporary solution.
   // TODO: split the well elements that contain multiple perforations, so that no element is shared
   GEOS_THROW_IF( sharedElems.size() > 0,
-                 "Well " << wellGeometry.getName() << " contains shared well elements",
+                 "InternalWell " << wellGeometry.getDataContext() << " contains shared well elements",
                  InputError );
 
 
@@ -520,7 +520,7 @@ void WellElementSubRegion::checkPartitioningValidity( InternalWellGenerator cons
       globalIndex const prevGlobal  = prevElemIdsGlobal[iwelemGlobal][numBranches-1];
 
       GEOS_THROW_IF( prevGlobal <= iwelemGlobal || prevGlobal < 0,
-                     "The structure of well " << wellGeometry.getName() << " is invalid. " <<
+                     "The structure of well " << wellGeometry.getDataContext() << " is invalid. " <<
                      " The main reason for this error is that there may be no perforation" <<
                      " in the bottom well element of the well, which is required to have" <<
                      " a well-posed problem.",

@@ -27,7 +27,8 @@ MeshGeneratorBase::MeshGeneratorBase( string const & name, Group * const parent 
 Group * MeshGeneratorBase::createChild( string const & childKey, string const & childName )
 {
   // Mesh generators generally don't have child XML nodes, must override this method to enable
-  GEOS_THROW( GEOS_FMT( "Mesh '{}': invalid child XML node '{}' of type {}", getName(), childName, childKey ),
+  GEOS_THROW( GEOS_FMT( "Mesh '{}': invalid child XML node '{}' of type {}",
+                        getDataContext(), childName, childKey ),
               InputError );
 }
 

@@ -116,17 +116,18 @@ void InternalWellboreGenerator::postProcessInput()
 {
 
   GEOS_ERROR_IF( m_nElems[1].size() > 1,
-                 "Only one block in the theta direction is currently supported. "
-                 "This is specified by the nt keyword in InternalWellbore" );
+                 getWrapperDataContext( viewKeyStruct::yElemsString() ) <<
+                 ": Only one block in the theta direction is currently supported. " );
 
   GEOS_ERROR_IF( m_nElems[2].size() > 1,
-                 "Only one block in the z direction is currently supported. "
-                 "This is specified by the nz keyword in InternalWellbore" );
+                 getWrapperDataContext( viewKeyStruct::yElemsString() ) <<
+                 ": Only one block in the z direction is currently supported. " );
 
 
 
   GEOS_ERROR_IF( m_trajectory.size( 0 ) != 2 || m_trajectory.size( 1 ) != 3,
-                 "Input for trajectory should be specified in the form of "
+                 getWrapperDataContext( viewKeyStruct::trajectoryString() ) <<
+                 ": Input for trajectory should be specified in the form of "
                  "{ { xbottom, ybottom, zbottom }, { xtop, ytop, ztop } }." );
 
   // Project trajectory to bottom and top of the wellbore
@@ -264,16 +265,19 @@ void InternalWellboreGenerator::postProcessInput()
 
   if( m_cartesianOuterBoundary < 1000000 )
   {
-    GEOS_ERROR_IF( m_cartesianOuterBoundary < 0, "useCartesianOuterBoundary must be > 0" );
+    GEOS_ERROR_IF( m_cartesianOuterBoundary < 0,
+                   getWrapperDataContext( viewKeyStruct::cartesianOuterBoundaryString() ) <<
+                   " must be > 0" );
     real64 const innerLimit = m_vertices[0][m_cartesianOuterBoundary];
     real64 const outerLimit = m_vertices[0].size();
-    GEOS_ERROR_IF( m_cartesianMappingInnerRadius< 1e98 &&
-                                                  m_cartesianMappingInnerRadius > outerLimit,
-                   "cartesianMappingInnerRadius must be inside the outer radius of the mesh" );
+    GEOS_ERROR_IF( m_cartesianMappingInnerRadius > outerLimit && m_cartesianMappingInnerRadius < 1e98,
+                   getWrapperDataContext( viewKeyStruct::cartesianMappingInnerRadiusString() ) <<
+                   " must be inside the outer radius of the mesh" );
 
-    GEOS_ERROR_IF( m_cartesianMappingInnerRadius < innerLimit,
-                   "cartesianMappingInnerRadius must be outside the radius "
-                   "of the inner boundary of the region specified by useCartesianOuterBoundary" );
+    GEOS_ERROR_IF_LT_MSG( m_cartesianMappingInnerRadius, innerLimit,
+                          getWrapperDataContext( viewKeyStruct::cartesianMappingInnerRadiusString() ) <<
+                          " must be outside the radius of the inner boundary of the region specified by " <<
+                          getWrapperDataContext( viewKeyStruct::cartesianOuterBoundaryString() ) );
 
     if( m_cartesianMappingInnerRadius > 1e98 )
     {
