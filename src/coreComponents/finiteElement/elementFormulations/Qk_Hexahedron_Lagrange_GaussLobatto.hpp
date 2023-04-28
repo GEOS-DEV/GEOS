@@ -370,6 +370,24 @@ public:
                       real64 const (&X)[numNodesPerFace][3] );
 
   /**
+   * @brief compute the non-zero contributions for the penalization matrix (DG) in the case where
+   *   we take in account the contribution of the neighbour L of element K.
+   *   The shape functions here are integrated over a face and the position of the coefficient will depends 
+   *   on the the face of the element we are located
+   * @param q the quadrature point index
+   * @param X Array containing the coordinates of the support points.
+   * @param face the local face of the element we currently are
+   * @param func Callback function accepting three parameters: i,j, M^(K,L)_ij
+   */
+  template< typename FUNC >
+  GEOS_HOST_DEVICE
+  static void
+  computeKLMassMatrix(int q,
+                      real64 const (&X)[numNodesPerFace][3],
+                      int face,
+                      FUNC && func );
+
+  /**
    * @brief computes the matrix B, defined as J^{-T}J^{-1}/det(J), where J is the Jacobian matrix,
    *   at the given Gauss-Lobatto point.
    * @param qa The 1d quadrature point index in xi0 direction (0,1)
@@ -813,6 +831,116 @@ computeDampingTerm( int q,
   B[1] = J[0][1]*J[0][1]+J[1][1]*J[1][1]+J[2][1]*J[2][1];
   B[2] = J[0][0]*J[0][1]+J[1][0]*J[1][1]+J[2][0]*J[2][1];
   return sqrt( LvArray::math::abs( LvArray::tensorOps::symDeterminant< 2 >( B ) ) )*GL_BASIS::weight( qa )*GL_BASIS::weight( qb );
+}
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeKLMassMatrix(int q,
+                    real64 const (&X)[numNodesPerFace][3],
+                    int face,
+                    FUNC && func)
+{
+  real64 B[3];
+  real64 J[3][2] = {{0}};
+  int qa, qb;
+  GL_BASIS::TensorProduct2D::multiIndex( q, qa, qb );
+  jacobianTransformation2d( qa, qb, X, J );
+  // compute J^T.J, using Voigt notation for B
+  B[0] = J[0][0]*J[0][0]+J[1][0]*J[1][0]+J[2][0]*J[2][0];
+  B[1] = J[0][1]*J[0][1]+J[1][1]*J[1][1]+J[2][1]*J[2][1];
+  B[2] = J[0][0]*J[0][1]+J[1][0]*J[1][1]+J[2][0]*J[2][1];
+
+  //Left face 
+  if (face==0)
+  {
+    for (localIndex i1 = 0; i1 < num1dNodes; ++i1)
+    {
+      for ( localIndex i2 = 0; i2 < num1dNodes; ++i2)
+      {
+        func(GL_BASIS::TensorProduct3D::linearIndex( 0, i1, i2 ),
+             GL_BASIS::TensorProduct3D::linearIndex( 1, num1dNodes-i1, num1dNodes-i2 ),
+             sqrt( LvArray::math::abs( LvArray::tensorOps::symDeterminant< 2 >( B ) ) )*GL_BASIS::weight( i1 )*GL_BASIS::weight( i2 ));
+      }
+      
+    }
+    
+  }
+  //Right face
+  else if (face==1)
+  {
+    for (localIndex i1 = 0; i1 < num1dNodes; ++i1)
+    {
+      for ( localIndex i2 = 0; i2 < num1dNodes; ++i2)
+      {
+        func(GL_BASIS::TensorProduct3D::linearIndex( 1, i1, i2 ),
+             GL_BASIS::TensorProduct3D::linearIndex( 0, num1dNodes-i1, num1dNodes-i2 ),
+             sqrt( LvArray::math::abs( LvArray::tensorOps::symDeterminant< 2 >( B ) ) )*GL_BASIS::weight( i1 )*GL_BASIS::weight( i2 ));
+      }
+      
+    }
+  }
+  //Bottom face
+  else if (face==2)
+  {
+    for (localIndex i1 = 0; i1 < num1dNodes; ++i1)
+    {
+      for ( localIndex i2 = 0; i2 < num1dNodes; ++i2)
+      {
+        func(GL_BASIS::TensorProduct3D::linearIndex( i1, 0, i2 ),
+             GL_BASIS::TensorProduct3D::linearIndex( num1dNodes-i1, 1, num1dNodes-i2 ),
+             sqrt( LvArray::math::abs( LvArray::tensorOps::symDeterminant< 2 >( B ) ) )*GL_BASIS::weight( i1 )*GL_BASIS::weight( i2 ));
+      }
+      
+    }
+  }
+  //Top face
+  else if (face==3)
+  {
+    for (localIndex i1 = 0; i1 < num1dNodes; ++i1)
+    {
+      for ( localIndex i2 = 0; i2 < num1dNodes; ++i2)
+      {
+        func(GL_BASIS::TensorProduct3D::linearIndex( i1, 1, i2 ),
+             GL_BASIS::TensorProduct3D::linearIndex( num1dNodes-i1, 0, num1dNodes-i2 ),
+             sqrt( LvArray::math::abs( LvArray::tensorOps::symDeterminant< 2 >( B ) ) )*GL_BASIS::weight( i1 )*GL_BASIS::weight( i2 ));
+      }
+      
+    }
+  }
+  //Back face
+  else if (face==4)
+  {
+    for (localIndex i1 = 0; i1 < num1dNodes; ++i1)
+    {
+      for ( localIndex i2 = 0; i2 < num1dNodes; ++i2)
+      {
+        func(GL_BASIS::TensorProduct3D::linearIndex( i1, i2, 0 ),
+             GL_BASIS::TensorProduct3D::linearIndex( num1dNodes-i1, num1dNodes-i2, 1 ),
+             sqrt( LvArray::math::abs( LvArray::tensorOps::symDeterminant< 2 >( B ) ) )*GL_BASIS::weight( i1 )*GL_BASIS::weight( i2 ));
+      }
+      
+    }
+  }
+  //Front face
+  else if (face==4)
+  {
+    for (localIndex i1 = 0; i1 < num1dNodes; ++i1)
+    {
+      for ( localIndex i2 = 0; i2 < num1dNodes; ++i2)
+      {
+        func(GL_BASIS::TensorProduct3D::linearIndex( i1, i2, 1 ),
+             GL_BASIS::TensorProduct3D::linearIndex( num1dNodes-i1, num1dNodes-i2, 0 ),
+             sqrt( LvArray::math::abs( LvArray::tensorOps::symDeterminant< 2 >( B ) ) )*GL_BASIS::weight( i1 )*GL_BASIS::weight( i2 ));
+      }
+      
+    }
+  }
+  
+
 }
 
 /**
