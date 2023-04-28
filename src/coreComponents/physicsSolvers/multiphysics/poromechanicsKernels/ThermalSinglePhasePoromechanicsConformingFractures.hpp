@@ -388,7 +388,7 @@ public:
                        flowDofNumberAccessor,
                        flowAccessors, thermalFlowAccessors, fluidAccessors, thermalFluidAccessors,
                        permAccessors, edfmPermAccessors, thermalConductivityAccessors,
-                       dt, localMatrix, localRhs );
+                       dt, localMatrix, localRhs, dR_dAper );
 
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
   }

@@ -41,6 +41,7 @@
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsConformingFractures.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -559,16 +560,16 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
 
       if( m_isThermal )
       {
-        //   thermalSinglePhasePoromechanicsConformingFracturesKernels::
-        //     ConnectorBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-        //                                                                                     dofKey,
-        //                                                                                     jumpDofKey,
-        //                                                                                     getName(),
-        //                                                                                     mesh.getElemManager(),
-        //                                                                                     stencilWrapper,
-        //                                                                                     dt,
-        //                                                                                     localMatrix.toViewConstSizes(),
-        //                                                                                     localRhs.toView() );
+        thermalSinglePhasePoromechanicsConformingFracturesKernels::
+          ConnectorBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                          dofKey,
+                                                                                          this->getName(),
+                                                                                          mesh.getElemManager(),
+                                                                                          stencilWrapper,
+                                                                                          dt,
+                                                                                          localMatrix.toViewConstSizes(),
+                                                                                          localRhs.toView(),
+                                                                                          dR_dAper );
       }
       else
       {
