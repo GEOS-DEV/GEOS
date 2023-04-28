@@ -30,6 +30,9 @@ stages:
 
     - mkdir ${SYSTEM}
 
+    # geosxats needs python2 to run
+    - module load python/2
+
     # CONFIGURE
     - echo "~~~~~~~~~~ START - configure ~~~~~~~~~~~"
     - config_code=0
