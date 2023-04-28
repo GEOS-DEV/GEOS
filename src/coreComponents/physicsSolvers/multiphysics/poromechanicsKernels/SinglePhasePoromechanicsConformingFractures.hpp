@@ -209,24 +209,24 @@ public:
                                 dFlux_dTrans );
 
         // populate local flux vector and derivatives
-        stack.localFlux[k[0]] += m_dt * fluxVal;
-        stack.localFlux[k[1]] -= m_dt * fluxVal;
+        stack.localFlux[k[0]* numDof] += m_dt * fluxVal;
+        stack.localFlux[k[1]* numDof] -= m_dt * fluxVal;
 
         real64 dFlux_dAper[2] = {0.0, 0.0};
         dFlux_dAper[0] =  m_dt * dFlux_dTrans * stack.dTrans_dDispJump[connectionIndex][0][0];
         dFlux_dAper[1] = -m_dt * dFlux_dTrans * stack.dTrans_dDispJump[connectionIndex][1][0];
-
-        stack.localFluxJacobian[k[0]][k[0]] += dFlux_dP[0] * m_dt;
-        stack.localFluxJacobian[k[0]][k[1]] += dFlux_dP[1] * m_dt;
-        stack.localFluxJacobian[k[1]][k[0]] -= dFlux_dP[0] * m_dt;
-        stack.localFluxJacobian[k[1]][k[1]] -= dFlux_dP[1] * m_dt;
+        
+        stack.localFluxJacobian[k[0]*numEqn][k[0]* numDof] += dFlux_dP[0] * m_dt;
+        stack.localFluxJacobian[k[0]*numEqn][k[1]* numDof] += dFlux_dP[1] * m_dt;
+        stack.localFluxJacobian[k[1]*numEqn][k[0]* numDof] -= dFlux_dP[0] * m_dt;
+        stack.localFluxJacobian[k[1]*numEqn][k[1]* numDof] -= dFlux_dP[1] * m_dt;
 
         stack.dFlux_dAperture[k[0]][k[0]] += dFlux_dAper[0];
         stack.dFlux_dAperture[k[0]][k[1]] += dFlux_dAper[1];
         stack.dFlux_dAperture[k[1]][k[0]] -= dFlux_dAper[0];
         stack.dFlux_dAperture[k[1]][k[1]] -= dFlux_dAper[1];
 
-        kernelOp( );
+        kernelOp( k, regionIndex, subRegionIndex, elementIndex, iconn, alpha, mobility, potGrad, fluxVal, dFlux_dTrans, dFlux_dP );
         connectionIndex++;
       }
     }

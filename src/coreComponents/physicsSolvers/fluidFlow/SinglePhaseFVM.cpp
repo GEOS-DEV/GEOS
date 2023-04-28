@@ -63,6 +63,11 @@ template< typename BASE >
 void SinglePhaseFVM< BASE >::initializePreSubGroups()
 {
   BASE::initializePreSubGroups();
+  
+  // if ( m_isThermal )
+  // {
+  //   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::thermalSinglePhaseFVM
+  // }
 
   DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
