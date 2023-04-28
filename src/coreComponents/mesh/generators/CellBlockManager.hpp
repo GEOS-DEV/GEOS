@@ -110,7 +110,7 @@ public:
                               globalIndex const maxVertexGlobalID,
                               globalIndex const maxEdgeGlobalID,
                               globalIndex const maxFaceGlobalID,
-                              arrayView1d< globalIndex const > const edgeLocalToGlobal, 
+                              arrayView1d< globalIndex const > const edgeLocalToGlobal,
                               arrayView1d< globalIndex const > const faceLocalToGlobal ) override;
 
   localIndex numNodes() const override;

@@ -844,7 +844,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                                               globalIndex const maxVertexGlobalID,
                                               globalIndex const maxEdgeGlobalID,
                                               globalIndex const maxFaceGlobalID,
-                                              arrayView1d< globalIndex const > const edgeLocalToGlobal, 
+                                              arrayView1d< globalIndex const > const edgeLocalToGlobal,
                                               arrayView1d< globalIndex const > const faceLocalToGlobal )
 {
 
