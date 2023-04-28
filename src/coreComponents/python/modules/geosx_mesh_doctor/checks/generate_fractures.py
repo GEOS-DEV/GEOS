@@ -26,7 +26,7 @@ from vtkmodules.vtkCommonDataModel import (
 from vtkmodules.vtkFiltersGeometry import (
     vtkMarkBoundaryFilter,
 )
-from vtk.util.numpy_support import (
+from vtkmodules.util.numpy_support import (
     vtk_to_numpy,
     numpy_to_vtk,
 )

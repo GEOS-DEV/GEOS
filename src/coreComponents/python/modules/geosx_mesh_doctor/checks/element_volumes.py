@@ -13,7 +13,7 @@ from vtkmodules.vtkFiltersVerdict import (
     vtkCellSizeFilter,
     vtkMeshQuality,
 )
-from vtk.util.numpy_support import (
+from vtkmodules.util.numpy_support import (
     vtk_to_numpy,
 )
 

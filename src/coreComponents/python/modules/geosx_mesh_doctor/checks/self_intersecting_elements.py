@@ -9,7 +9,7 @@ from vtkmodules.vtkCommonCore import (
     vtkOutputWindow,
     vtkFileOutputWindow
 )
-from vtk.util.numpy_support import (
+from vtkmodules.util.numpy_support import (
     vtk_to_numpy,
 )
 

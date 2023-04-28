@@ -22,7 +22,7 @@ from vtkmodules.vtkCommonDataModel import (
     VTK_VOXEL,
     VTK_WEDGE,
 )
-from vtk.util.numpy_support import (
+from vtkmodules.util.numpy_support import (
     vtk_to_numpy,
 )
 

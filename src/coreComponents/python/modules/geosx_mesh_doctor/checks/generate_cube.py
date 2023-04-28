@@ -14,7 +14,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkRectilinearGrid,
     vtkUnstructuredGrid,
 )
-from vtk.util.numpy_support import (
+from vtkmodules.util.numpy_support import (
     numpy_to_vtk,
 )
 
