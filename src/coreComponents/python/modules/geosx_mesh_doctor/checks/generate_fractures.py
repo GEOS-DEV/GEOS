@@ -30,6 +30,7 @@ from vtkmodules.util.numpy_support import (
     vtk_to_numpy,
     numpy_to_vtk,
 )
+from vtkmodules.util.vtkConstants import VTK_ID_TYPE
 
 import networkx
 
@@ -490,7 +491,7 @@ def __generate_fracture_mesh(mesh: vtkUnstructuredGrid,
     for i, n in enumerate(fracture_nodes):
         for j, m in enumerate(duplicated_nodes_info.duplicated_nodes[n]):
             field[i, j] = m
-    array = numpy_to_vtk(field)
+    array = numpy_to_vtk(field, array_type=VTK_ID_TYPE)
     array.SetName("duplicated_nodes")
 
     fracture_mesh = vtkUnstructuredGrid()  # We could be using vtkPolyData, but it's not supported by GEOSX for now.

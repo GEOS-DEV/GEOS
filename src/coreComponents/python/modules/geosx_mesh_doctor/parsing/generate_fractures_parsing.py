@@ -34,7 +34,7 @@ def fill_subparser(subparsers) -> None:
                    help=f"[string]: If the \"{__FIELD_POLICY}\" {__POLICY} is selected, defines which field will be considered to define the fractures.")
     p.add_argument('--' + __FIELD_VALUES,
                    type=str,
-                   help=f"[list of integers]: If the \"{__FIELD_POLICY}\" {__POLICY} is selected, which changes of the field will be considered as a fracture.")
+                   help=f"[list of comma separated integers]: If the \"{__FIELD_POLICY}\" {__POLICY} is selected, which changes of the field will be considered as a fracture.")
     vtk_output_parsing.fill_vtk_output_subparser(p)
     vtk_output_parsing.fill_vtk_output_subparser(p, prefix=__FRACTURE_PREFIX)
 
