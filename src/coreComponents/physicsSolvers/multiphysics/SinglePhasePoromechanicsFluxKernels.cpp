@@ -530,8 +530,8 @@ void FaceElementFluxKernel::
 
       // compute transmissibility
       real64 transmissibility[maxNumConnections][2]{};
-      dTrans_dPres[maxNumConnections][2]{};
-      dTrans_dDispJump[maxNumConnections][2][3]{};
+      real64 dTrans_dPres[maxNumConnections][2]{};
+      real64 dTrans_dDispJump[maxNumConnections][2][3]{};
       GEOS_UNUSED_VAR( dPerm_dPres, dPerm_dDispJump );
       stencilWrapper.computeWeights( iconn,
                                      permeability,
