@@ -561,9 +561,8 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
           for( localIndex ip = 0; ip < NP; ++ip )
           {
 
-            UpwindHelpers::computeFractionalFlow< NC, numFluxSupportPoints,
-                                                  DrivingForces::Viscous,
-                                                  HybridUpwind >(
+            UpwindHelpers::computeFractionalFlowViscous< NC, numFluxSupportPoints,
+                                                         HybridUpwind >(
               NP,
               ip,
               {seri[iconn][0], seri[iconn][1]},
@@ -596,9 +595,8 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
                                        ip, phaseFlux[ip], phaseFluxHU[Physics::Viscous][ip] ));
 
             localIndex k_up_hu_og = -1;
-            UpwindHelpers::computePotentialFluxes< NC,
-                                                   DrivingForces::Gravity,
-                                                   numFluxSupportPoints, HybridUpwind >(
+            UpwindHelpers::computePotentialFluxesGravity< NC,
+                                                          numFluxSupportPoints, HybridUpwind >(
               NP,
               ip,
               {seri[iconn][0], seri[iconn][1]},
@@ -632,9 +630,8 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
             if( capPressureFlag )
             {
               localIndex k_up_hu_opc = -1;
-              UpwindHelpers::computePotentialFluxes< NC,
-                                                     DrivingForces::Capillary,
-                                                     numFluxSupportPoints, HybridUpwind >(
+              UpwindHelpers::computePotentialFluxesCapillary< NC,
+                                                              numFluxSupportPoints, HybridUpwind >(
                 NP,
                 ip,
                 {seri[iconn][0], seri[iconn][1]},

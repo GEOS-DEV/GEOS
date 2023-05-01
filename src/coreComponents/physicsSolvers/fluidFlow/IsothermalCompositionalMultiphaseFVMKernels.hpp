@@ -727,7 +727,7 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
    */
-  template< typename FUNC = NoOpFunc, template< DrivingForces > class UpwindSchemeType >
+  template< typename FUNC = NoOpFunc, class UpwindSchemeType >
   GEOSX_HOST_DEVICE
   void computeFractionalFlowFlux( localIndex const iconn,
                                   StackVariables & stack,
@@ -861,31 +861,30 @@ public:
           // and the fractional flow for viscous part as \lambda_i^{up}/\sum_{NP}(\lambda_j^{up}) with up decided upon
           // the Upwind strategy
           localIndex k_up = -1;
-          UpwindHelpers::computeFractionalFlow< numComp, numFluxSupportPoints,
-                                                DrivingForces::Viscous,
-                                                UpwindSchemeType >( m_numPhases,
-                                                                    ip,
-                                                                    seri,
-                                                                    sesri,
-                                                                    sei,
-                                                                    trans,
-                                                                    dTrans_dPres,
-                                                                    totFlux,
-                                                                    m_pres,
-                                                                    m_gravCoef,
-                                                                    m_dCompFrac_dCompDens,
-                                                                    m_phaseMassDens,
-                                                                    m_dPhaseMassDens,
-                                                                    m_phaseMob,
-                                                                    m_dPhaseMob,
-                                                                    m_dPhaseVolFrac,
-                                                                    m_phaseCapPressure,
-                                                                    m_dPhaseCapPressure_dPhaseVolFrac,
-                                                                    m_hasCapPressure,
-                                                                    k_up,
-                                                                    fractionalFlow,
-                                                                    dFractionFlow_dP,
-                                                                    dFractionalFlow_dC );
+          UpwindHelpers::computeFractionalFlowViscous< numComp, numFluxSupportPoints,
+                                                       UpwindSchemeType >( m_numPhases,
+                                                                           ip,
+                                                                           seri,
+                                                                           sesri,
+                                                                           sei,
+                                                                           trans,
+                                                                           dTrans_dPres,
+                                                                           totFlux,
+                                                                           m_pres,
+                                                                           m_gravCoef,
+                                                                           m_dCompFrac_dCompDens,
+                                                                           m_phaseMassDens,
+                                                                           m_dPhaseMassDens,
+                                                                           m_phaseMob,
+                                                                           m_dPhaseMob,
+                                                                           m_dPhaseVolFrac,
+                                                                           m_phaseCapPressure,
+                                                                           m_dPhaseCapPressure_dPhaseVolFrac,
+                                                                           m_hasCapPressure,
+                                                                           k_up,
+                                                                           fractionalFlow,
+                                                                           dFractionFlow_dP,
+                                                                           dFractionalFlow_dC );
 
 
           /// Assembling the viscous flux (and derivatives) from fractional flow and total velocity as \phi_{\mu} = f_i^{up,\mu} uT
@@ -948,9 +947,8 @@ public:
           real64 gravitationalPhaseFlux_dP[numFluxSupportPoints]{};
           real64 gravitationalPhaseFlux_dC[numFluxSupportPoints][numComp]{};
 
-          UpwindHelpers::computePotentialFluxes< numComp,
-                                                 DrivingForces::Gravity,
-                                                 numFluxSupportPoints, UpwindSchemeType >(
+          UpwindHelpers::computePotentialFluxesGravity< numComp,
+                                                        numFluxSupportPoints, UpwindSchemeType >(
             m_numPhases,
             ip,
             seri,
@@ -1018,9 +1016,8 @@ public:
             real64 capillaryPhaseFlux_dP[numFluxSupportPoints]{};
             real64 capillaryPhaseFlux_dC[numFluxSupportPoints][numComp]{};
 
-            UpwindHelpers::computePotentialFluxes< numComp,
-                                                   DrivingForces::Capillary,
-                                                   numFluxSupportPoints, UpwindSchemeType >(
+            UpwindHelpers::computePotentialFluxesCapillary< numComp,
+                                                            numFluxSupportPoints, UpwindSchemeType >(
               m_numPhases,
               ip,
               seri,
