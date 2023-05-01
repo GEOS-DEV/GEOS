@@ -1100,12 +1100,13 @@ void DofManager::countRowLengthsOneBlock( arrayView1d< localIndex > const & rowL
         forMeshLocation< LOC, false, serialPolicy >( mesh, regions, [&]( auto const locIdx )
         {
           globalIndex const dofNumber = ArrayHelper::value( dofIndexArray, locIdx );
-          if( dofNumber >= 0 && dofNumber < rowLengths.size() )
+          localIndex const localDofNumber = dofNumber - rankDofOffset;
+          if( localDofNumber >= 0 && localDofNumber < rowLengths.size() )
           {
             // add a non-zero for locally coupled components since diagonal terms for globally coupled components have been added already
             for( integer const c : locallyCoupledComponents )
             {
-              RAJA::atomicAdd( parallelHostAtomic{}, &rowLengths[dofNumber + c], rowField.numComponents );
+              RAJA::atomicAdd( parallelHostAtomic{}, &rowLengths[localDofNumber + c], rowField.numComponents );
             }
           }
         } );
