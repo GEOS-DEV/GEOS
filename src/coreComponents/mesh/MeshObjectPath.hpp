@@ -95,6 +95,13 @@ public:
     return m_pathPermutations;
   }
 
+  /**
+   * @brief Helper function to decide whether a given meshLevel is in the objectPath
+   * @param[in] meshLevel the mesh level that we want to search for in the objectPath
+   * @return true if the meshLevel is in the objectPath, false otherwise
+   * @details An example use case is in the validation of boundary conditions
+   */
+  bool containsMeshLevel( MeshLevel const & meshLevel ) const;
 
   /**
    * @brief LLoop over objects in the path and execute a callback function.
@@ -333,8 +340,6 @@ void MeshObjectPath::forObjectsInPath( dataRepository::Group const & meshBodies,
     }
   }
 }
-
-
 
 template< typename OBJECT_TYPE,
           typename FUNC >
