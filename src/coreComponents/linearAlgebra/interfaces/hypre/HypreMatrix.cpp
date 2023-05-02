@@ -149,7 +149,7 @@ void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const
                           localIndex const numLocalColumns,
                           MPI_Comm const & comm )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   RAJA::ReduceMax< ReducePolicy< hypre::execPolicy >, localIndex > maxRowEntries( 0 );
   forAll< hypre::execPolicy >( localMatrix.numRows(),
@@ -261,7 +261,7 @@ void HypreMatrix::open()
 
 void HypreMatrix::close()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_LAI_ASSERT( !closed() );
 
@@ -324,7 +324,7 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
                           globalIndex const colIndex0,
                           real64 const value0 )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_LAI_ASSERT( insertable() );
 
@@ -373,7 +373,7 @@ void HypreMatrix::add( globalIndex const rowIndex,
                        real64 const * values,
                        localIndex size )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_LAI_ASSERT( modifiable() );
 
@@ -391,7 +391,7 @@ void HypreMatrix::set( globalIndex const rowIndex,
                        real64 const * values,
                        localIndex size )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_LAI_ASSERT( modifiable() );
   GEOS_LAI_ASSERT_GE( rowIndex, ilower() );
@@ -411,7 +411,7 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
                           real64 const * values,
                           localIndex size )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_LAI_ASSERT( insertable() );
 
@@ -445,7 +445,7 @@ void HypreMatrix::add( globalIndex const rowIndex,
                        arraySlice1d< globalIndex const > const & colIndices,
                        arraySlice1d< real64 const > const & values )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_LAI_ASSERT( modifiable() );
 
@@ -462,7 +462,7 @@ void HypreMatrix::set( globalIndex const rowIndex,
                        arraySlice1d< globalIndex const > const & colIndices,
                        arraySlice1d< real64 const > const & values )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_LAI_ASSERT( modifiable() );
   GEOS_LAI_ASSERT_GE( rowIndex, ilower() );
@@ -481,7 +481,7 @@ void HypreMatrix::insert( globalIndex const rowIndex,
                           arraySlice1d< globalIndex const > const & colIndices,
                           arraySlice1d< real64 const > const & values )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_LAI_ASSERT( insertable() );
 
@@ -564,7 +564,7 @@ void HypreMatrix::insert( arrayView1d< globalIndex const > const & rowIndices,
                           arrayView1d< globalIndex const > const & colIndices,
                           arrayView1d< real64 const > const & values )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   GEOS_LAI_ASSERT_EQ( rowIndices.size(), colIndices.size() );
   GEOS_LAI_ASSERT_GE( rowIndices.size(), values.size() );
@@ -838,7 +838,7 @@ void HypreMatrix::rescaleRows( arrayView1d< globalIndex const > const & rowIndic
 void HypreMatrix::separateComponentFilter( HypreMatrix & dst,
                                            integer const dofsPerNode ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   localIndex const maxRowEntries = maxRowLength();
   integer const temp = maxRowEntries % dofsPerNode;

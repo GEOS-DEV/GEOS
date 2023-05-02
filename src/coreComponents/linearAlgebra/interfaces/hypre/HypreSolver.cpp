@@ -195,7 +195,7 @@ void createHypreKrylovSolver( LinearSolverParameters const & params,
 
 void HypreSolver::setup( HypreMatrix const & mat )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   clear();
   Base::setup( mat );
@@ -244,7 +244,7 @@ void HypreSolver::apply( HypreVector const & rhs,
 void HypreSolver::solve( HypreVector const & rhs,
                          HypreVector & sol ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   if( isZero( rhs.norm2(), 0.0 ) )
   {
