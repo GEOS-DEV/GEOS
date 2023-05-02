@@ -11,8 +11,6 @@
       temperature="300"
       initialDt="1000"
       useMass="1"
-      useC1PPU="1"
-      epsC1PPU="1e-8"
       targetPhaseVolFractionChangeInTimeStep="0.5"
       targetRelativePressureChangeInTimeStep="0.5"
       solutionChangeScalingFactor="0"
@@ -35,7 +33,9 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"/>
+        name="fluidTPFA"
+        useC1PPU="1"
+        epsC1PPU="1e-8"/>
     </FiniteVolume>
   </NumericalMethods>
   <!-- SPHINX_NUMERICAL_END -->

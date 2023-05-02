@@ -142,6 +142,13 @@ public:
 
     /// @return The key for fractureStencil
     static constexpr char const * fractureStencilString() { return "fractureStencil"; }
+
+    /// @return The key for useC1PPU
+    static constexpr char const * useC1PPUString() { return "useC1PPU"; }
+
+    /// @return The key for epsC1PPU
+    static constexpr char const * epsC1PPUString() { return "epsC1PPU"; }
+
   };
 
   /**
@@ -171,6 +178,9 @@ public:
    * @param name name of the coefficient.
    */
   void setCoeffName( string const & name );
+
+  integer useC1PPU() const { return m_useC1PPU; }
+  real64 epsC1PPU() const { return m_epsC1PPU; }
 
 protected:
 
@@ -254,6 +264,12 @@ protected:
 
   /// length scale of the mesh body
   real64 m_lengthScale;
+
+  /// flag indicating whether C1-PPU scheme should be used
+  integer m_useC1PPU;
+
+  /// C1-PPU smoothing tolerance
+  real64 m_epsC1PPU;
 
 };
 

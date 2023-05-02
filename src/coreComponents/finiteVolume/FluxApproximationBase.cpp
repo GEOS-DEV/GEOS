@@ -50,6 +50,15 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0e-8 ).
     setDescription( "Relative tolerance for area calculations." );
+
+  this->registerWrapper( viewKeyStruct::useC1PPUString(), &m_useC1PPU ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Use C1-PPU flux" );
+  this->registerWrapper( viewKeyStruct::epsC1PPUString(), &m_epsC1PPU ).
+    setApplyDefaultValue( 1e-10 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Tolerance for C1-PPU smoothing" );
 }
 
 FluxApproximationBase::CatalogInterface::CatalogType &

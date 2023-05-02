@@ -722,6 +722,7 @@ public:
           localIndex const ei_up  = sei[k_up];
 
           // C1PPU
+          // see https://doi.org/10.1016/j.advwatres.2017.07.028
           if( m_useC1PPU > 0 && m_epsC1PPU > 0 )
           {
             GEOS_ASSERT( numFluxSupportPoints == 2 );
@@ -729,7 +730,7 @@ public:
             real64 const mobility_i = m_phaseMob[seri[0]][sesri[0]][sei[0]][ip];
             real64 const mobility_j = m_phaseMob[seri[1]][sesri[1]][sei[1]][ip];
 
-            // compute phase flux
+            // compute phase flux, see Eqs. (66) and (69) from the reference above
             real64 const smoEps = m_epsC1PPU;
             real64 const tmpSqrt = sqrt( potGrad * potGrad + smoEps * smoEps );
             real64 const smoMax = 0.5 * (-potGrad + tmpSqrt);
@@ -741,16 +742,19 @@ public:
             // first part, mobility derivative
 
             // dP
-            real64 const dMob_dP = m_dPhaseMob[seri[0]][sesri[0]][sei[0]][ip][Deriv::dP];
-            dPhaseFlux_dP[0] += potGrad * dMob_dP;
+            {
+              real64 const dMob_dP = m_dPhaseMob[seri[0]][sesri[0]][sei[0]][ip][Deriv::dP];
+              dPhaseFlux_dP[0] += potGrad * dMob_dP;
+            }
 
             // dC
-            arraySlice1d< real64 const, compflow::USD_PHASE_DC - 2 >
-            dPhaseMobSub = m_dPhaseMob[seri[0]][sesri[0]][sei[0]][ip];
-
-            for( integer jc = 0; jc < numComp; ++jc )
             {
-              dPhaseFlux_dC[0][jc] += potGrad * dPhaseMobSub[Deriv::dC + jc];
+              arraySlice1d< real64 const, compflow::USD_PHASE_DC - 2 >
+              dPhaseMobSub = m_dPhaseMob[seri[0]][sesri[0]][sei[0]][ip];
+              for( integer jc = 0; jc < numComp; ++jc )
+              {
+                dPhaseFlux_dC[0][jc] += potGrad * dPhaseMobSub[Deriv::dC + jc];
+              }
             }
 
             real64 const tmpInv = 1.0 / tmpSqrt;
@@ -1024,6 +1028,8 @@ public:
                    globalIndex const rankOffset,
                    string const & dofKey,
                    integer const hasCapPressure,
+                   integer const useC1PPU,
+                   real64 const epsC1PPU,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
@@ -1046,7 +1052,7 @@ public:
       typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
       typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
-      kernelType kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
+      kernelType kernel( numPhases, rankOffset, hasCapPressure, useC1PPU, epsC1PPU, stencilWrapper, dofNumberAccessor,
                          compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
                          dt, localMatrix, localRhs );
       kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );

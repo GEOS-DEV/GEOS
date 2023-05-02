@@ -51,16 +51,7 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
                                                         Group * const parent )
   :
   CompositionalMultiphaseBase( name, parent )
-{
-  this->registerWrapper( viewKeyStruct::useC1PPUString(), &m_useC1PPU ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Use C1-PPU flux" );
-  this->registerWrapper( viewKeyStruct::epsC1PPUString(), &m_epsC1PPU ).
-    setApplyDefaultValue( 1e-10 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Tolerance for C1-PPU smoothing" );
-}
+{}
 
 void CompositionalMultiphaseFVM::initializePreSubGroups()
 {
@@ -143,8 +134,8 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      dofManager.rankOffset(),
                                                      elemDofKey,
                                                      m_hasCapPressure,
-                                                     m_useC1PPU,
-                                                     m_epsC1PPU,
+                                                     fluxApprox.useC1PPU(),
+                                                     fluxApprox.epsC1PPU(),
                                                      getName(),
                                                      mesh.getElemManager(),
                                                      stencilWrapper,
