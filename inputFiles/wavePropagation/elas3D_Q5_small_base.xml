@@ -25,23 +25,23 @@
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solverApplications"
-      forceDt="0.001"
+      forceDt="0.0005"
       target="/Solvers/elasticSolver"/>
 
     <!-- two events to output pressure in an hdf5 file -->
     <PeriodicEvent
       name="timeHistoryCollectionx"
-      timeFrequency="0.001"
+      timeFrequency="0.0005"
       targetExactTimestep="1"
       target="/Tasks/displacementxCollection"/>
     <PeriodicEvent
       name="timeHistoryCollectiony"
-      timeFrequency="0.001"
+      timeFrequency="0.0005"
       targetExactTimestep="1"
       target="/Tasks/displacementyCollection"/>
     <PeriodicEvent
       name="timeHistoryCollectionz"
-      timeFrequency="0.001"
+      timeFrequency="0.0005"
       targetExactTimestep="1"
       target="/Tasks/displacementzCollection"/>
     <PeriodicEvent
@@ -73,7 +73,7 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        order="3"
+        order="5"
         formulation="SEM"/>
     </FiniteElements>
   </NumericalMethods>

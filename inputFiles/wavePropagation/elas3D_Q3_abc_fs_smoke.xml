@@ -13,9 +13,9 @@
       xCoords="{ 0, 101 }"
       yCoords="{ 0, 101 }"
       zCoords="{ 0, 101 }"
-      nx="{ 5 }"
-      ny="{ 5 }"
-      nz="{ 5 }"
+      nx="{ 3 }"
+      ny="{ 3 }"
+      nz="{ 3 }"
       cellBlockNames="{ cb }"/>
   </Mesh>
 
@@ -30,7 +30,7 @@
   <FieldSpecifications>
     <FieldSpecification
       name="zposFreeSurface"
-      objectPath="faceManager"
+      objectPath="mesh/FE1/faceManager"
       fieldName="FreeSurface"
       setNames="{ zpos }"/>
   </FieldSpecifications>
