@@ -316,6 +316,13 @@ Element: DruckerPrager
 .. include:: ../../coreComponents/schema/docs/DruckerPrager.rst
 
 
+.. _XML_ElasticFirstOrderSEM:
+
+Element: ElasticFirstOrderSEM
+=============================
+.. include:: ../../coreComponents/schema/docs/ElasticFirstOrderSEM.rst
+
+
 .. _XML_ElasticIsotropic:
 
 Element: ElasticIsotropic
@@ -1501,6 +1508,13 @@ Datastructure: Dirichlet
 Datastructure: DruckerPrager
 ============================
 .. include:: ../../coreComponents/schema/docs/DruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_ElasticFirstOrderSEM:
+
+Datastructure: ElasticFirstOrderSEM
+===================================
+.. include:: ../../coreComponents/schema/docs/ElasticFirstOrderSEM_other.rst
 
 
 .. _DATASTRUCTURE_ElasticIsotropic:
