@@ -14,7 +14,8 @@ An interface allow user to pull and convert from docker repository.
     singularity pull docker://jafranc/geosx_u22-g11-omp41
 
 The docker image located at *docker://jafranc/geosx_u22-g11-omp41* has been generated from *geosx/ubuntu22.04-gcc11:213-913*
-with an extra layer cloning and compiling the develop version of GEOSX. It is organized as:
+CI container with an extra layer cloning and compiling the develop version of GEOSX. An example of a _Dockerfile_ producing such
+a container can be found at *src/docs/sphinx/developerGuide/Contributing/Docker_to_singularity.Dockerfile*. It is organized as:
 
 .. code-block::
     :caption: Organization of the docker/singularity image

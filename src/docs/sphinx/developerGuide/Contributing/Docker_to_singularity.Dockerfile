@@ -12,10 +12,10 @@
 #   DOCKER_ROOT_IMAGE has to be chosen among different geosx tpl images on dockerhub
 #   GEOSX_TPL_DIR a.k.a can then be get via
 #           > export GEOSX_TPL_DIR=$(docker run --rm ${DOCKER_ROOT_IMAGE} /bin/bash -c 'echo ${GEOSX_TPL_DIR}')
-#    HOST_CONFIG has to be set to e.g. environment.cmake
+#   HOST_CONFIG has to be set to e.g. environment.cmake
 
 ARG DOCKER_ROOT_IMAGE
-ARG HOST_CONFIG
+ARG HOST_CONFIG=environment.cmake
 ARG GEOSX_TPL_DIR
 
 FROM ${DOCKER_ROOT_IMAGE} as tpl_toolchain_intersect_geosx_toolchain
@@ -45,7 +45,7 @@ RUN apt-get -y install \
 ARG GEOSX_SRC_DIR=/tmp/src
 ARG GEOSX_BUILD_DIR=${GEOSX_SRC_DIR}/build
 
-RUN git clone https://github.com/GEOSX/GEOSX.git ${GEOSX_SRC_DIR}
+RUN git clone https://github.com/GEOS-DEV/GEOS.git ${GEOSX_SRC_DIR}
 WORKDIR ${GEOSX_SRC_DIR}
 RUN git pull
 RUN git submodule update --init src/cmake/blt
@@ -57,7 +57,6 @@ RUN git submodule update
 
 ENV ENABLE_HYPRE=ON
 ENV ENABLE_CUDA=OFF
-#--hostconfig=${HOST_CONFIG}
 RUN python3 scripts/config-build.py --hostconfig=./host-configs/${HOST_CONFIG} --buildtype=Release --buildpath=${GEOSX_BUILD_DIR} --installpath=/opt/GEOSX/GEOSX-version
 WORKDIR ${GEOSX_BUILD_DIR}
 RUN make -j 8 && make install
@@ -65,21 +64,4 @@ RUN make -j 8 && make install
 RUN mv ${GEOSX_SRC_DIR}/inputFiles/ /opt/GEOSX/
 RUN rm -rf /tmp/src
 
-#slurm
-#for singularity to work
-## RUN apt-get install -y slurm-wlm\
-## 	systemd \
-## 	munge\
-## 	wget
-##
-## RUN chmod 777 /etc/slurm
-## RUN wget https://raw.githubusercontent.com/jafranc/cmake-utils/slum-utils/slurm.conf
-## RUN mv slurm.conf /etc/slurm/slurm.conf
-## RUN chmod 755 /etc/slurm
-## RUN systemctl start slurmctld
-## RUN systemctl start slurmd
-## RUN scontrol update nodename=localhost state=idle
-
-
-#CMD ["/opt/GEOSX/bin/geosx"]
 CMD ["/opt/GEOSX/GEOSX-version/bin/geosx"]
