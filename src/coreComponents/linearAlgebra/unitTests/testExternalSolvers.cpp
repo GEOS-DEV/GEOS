@@ -83,7 +83,7 @@ LinearSolverParameters params_CG_AMG()
   parameters.isSymmetric = true;
   parameters.solverType = LinearSolverParameters::SolverType::cg;
   parameters.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
-  parameters.amg.smootherType = geos::LinearSolverParameters::AMG::SmootherType::fgs;
+  parameters.amg.smootherType = geos::LinearSolverParameters::AMG::SmootherType::sgs;
   parameters.amg.coarseType = geos::LinearSolverParameters::AMG::CoarseType::direct;
   return parameters;
 }
