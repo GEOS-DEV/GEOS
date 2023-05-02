@@ -65,6 +65,9 @@ set(ENABLE_DOXYGEN OFF CACHE BOOL "" FORCE)
 # Other
 set(ENABLE_MATHPRESSO OFF CACHE BOOL "")
 
+# YAPF python formatting
+set(YAPF_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/lassen-gcc-python/python/bin/yapf CACHE PATH "" FORCE)
+
 # PYGEOSX
 set(ENABLE_PYGEOSX ON CACHE BOOL "")
 set(PYTHON_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/lassen-gcc-python/python/bin/python CACHE PATH "")

@@ -25,26 +25,6 @@ def extract_cmake_location(file_path):
     return None
 
 
-def setup_ats(scripts_dir, build_path):
-    bin_dir = os.path.join(build_path, "bin")
-    ats_dir = os.path.abspath(os.path.join(scripts_dir, "..", "integratedTests"))
-    ats_update_dir = os.path.join(ats_dir, "tests", "allTests")
-    # geosxats_path = os.path.join(ats_dir, "geosxats", "geosxats")
-    geosxats_path = os.path.join(build_path, "bin", "run_geosxats")
-
-    # Create a symbolic link to test directory
-    os.symlink(ats_update_dir, os.path.join(build_path, "integratedTests"))
-
-    # Write the bash script to run ats.
-    ats_script_path = os.path.join(build_path, "geosxats.sh")
-    with open(ats_script_path, "w") as f:
-        f.write("#!/bin/bash\n{} {} --workingDir {} \"$@\"\n".format(geosxats_path, bin_dir, ats_update_dir))
-
-    # Make the script executable
-    st = os.stat(ats_script_path)
-    os.chmod(ats_script_path, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-
-
 def parse_args(cli_arguments):
     """
     Parse command line arguments into an ArgumentParser instance.
@@ -174,8 +154,6 @@ def main(calling_script, args, unknown_args):
 
     logging.info("Creating build directory '%s'..." % build_path)
     os.makedirs(build_path)
-
-    setup_ats(scripts_dir, build_path)
 
     #####################
     # Setup Install Dir
