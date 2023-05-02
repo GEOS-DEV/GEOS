@@ -31,7 +31,7 @@
 #include "_hypre_utilities.hpp"
 #endif
 
-namespace geosx
+namespace geos
 {
 
 void HypreInterface::initialize()
@@ -46,13 +46,13 @@ void HypreInterface::initialize()
   // Hypre version info
 #if defined(HYPRE_DEVELOP_STRING)
 #if defined(HYPRE_BRANCH_NAME)
-  GEOSX_LOG_RANK_0( "  - hypre development version: " << HYPRE_DEVELOP_STRING <<
-                    " (" << HYPRE_BRANCH_NAME << ")" );
+  GEOS_LOG_RANK_0( "  - hypre development version: " << HYPRE_DEVELOP_STRING <<
+                   " (" << HYPRE_BRANCH_NAME << ")" );
 #else
-  GEOSX_LOG_RANK_0( "  - hypre development version: " << HYPRE_DEVELOP_STRING );
+  GEOS_LOG_RANK_0( "  - hypre development version: " << HYPRE_DEVELOP_STRING );
 #endif
 #elif defined(HYPRE_RELEASE_VERSION)
-  GEOSX_LOG_RANK_0( "  - hypre release version: " << HYPRE_RELEASE_VERSION );
+  GEOS_LOG_RANK_0( "  - hypre release version: " << HYPRE_RELEASE_VERSION );
 #endif
 }
 
@@ -82,14 +82,14 @@ HypreInterface::createSolver( LinearSolverParameters params )
 }
 
 std::unique_ptr< PreconditionerBase< HypreInterface > >
-geosx::HypreInterface::createPreconditioner( LinearSolverParameters params )
+geos::HypreInterface::createPreconditioner( LinearSolverParameters params )
 {
   return std::make_unique< HyprePreconditioner >( std::move( params ) );
 }
 
 std::unique_ptr< PreconditionerBase< HypreInterface > >
-geosx::HypreInterface::createPreconditioner( LinearSolverParameters params,
-                                             array1d< HypreVector > const & nearNullKernel )
+geos::HypreInterface::createPreconditioner( LinearSolverParameters params,
+                                            array1d< HypreVector > const & nearNullKernel )
 {
   return std::make_unique< HyprePreconditioner >( std::move( params ), nearNullKernel );
 }

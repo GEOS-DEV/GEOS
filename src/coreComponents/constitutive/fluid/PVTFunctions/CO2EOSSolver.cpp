@@ -19,7 +19,7 @@
 #include "constitutive/fluid/PVTFunctions/CO2EOSSolver.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -139,11 +139,11 @@ CO2EOSSolver::solve( string const & name,
     }
   }
 
-  GEOSX_THROW_IF( !newtonHasConverged,
-                  name << ": Newton's method failed to converge for pair "
-                       << "( pressure = " << pres*presMultiplierForReporting << " Pa, temperature = " << temp+273.15 << " K) :"
-                       << " final residual = " << res << ", final update = " << update << ", tolerance = " << tolerance,
-                  InputError );
+  GEOS_THROW_IF( !newtonHasConverged,
+                 name << ": Newton's method failed to converge for pair "
+                      << "( pressure = " << pres*presMultiplierForReporting << " Pa, temperature = " << temp+273.15 << " K) :"
+                      << " final residual = " << res << ", final update = " << update << ", tolerance = " << tolerance,
+                 InputError );
   return var;
 }
 
@@ -153,4 +153,4 @@ CO2EOSSolver::solve( string const & name,
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

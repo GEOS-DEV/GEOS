@@ -20,7 +20,7 @@
 
 #include "SingleFluidFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -77,9 +77,9 @@ void ThermalCompressibleSinglePhaseFluid::postProcessInput()
 
   auto const checkNonnegative = [&]( real64 const value, auto const & attribute )
   {
-    GEOSX_THROW_IF_LT_MSG( value, 0.0,
-                           GEOSX_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
-                           InputError );
+    GEOS_THROW_IF_LT_MSG( value, 0.0,
+                          GEOS_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
+                          InputError );
   };
 
   checkNonnegative( m_thermalExpansionCoeff, viewKeyStruct::thermalExpansionCoeffString() );
@@ -89,9 +89,9 @@ void ThermalCompressibleSinglePhaseFluid::postProcessInput()
   // Due to the way update wrapper is currently implemented, we can only support one model type
   auto const checkModelType = [&]( ExponentApproximationType const value, auto const & attribute )
   {
-    GEOSX_THROW_IF( value != ExponentApproximationType::Linear && value != ExponentApproximationType::Full,
-                    GEOSX_FMT( "{}: invalid model type in attribute '{}' (only linear or fully exponential currently supported)", getFullName(), attribute ),
-                    InputError );
+    GEOS_THROW_IF( value != ExponentApproximationType::Linear && value != ExponentApproximationType::Full,
+                   GEOS_FMT( "{}: invalid model type in attribute '{}' (only linear or fully exponential currently supported)", getFullName(), attribute ),
+                   InputError );
   };
   checkModelType( m_internalEnergyModelType, viewKeyStruct::internalEnergyModelTypeString() );
 }
@@ -121,4 +121,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, ThermalCompressibleSinglePhaseFluid, s
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */

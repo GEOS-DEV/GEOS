@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SOLVERBASE_HPP_
+#define GEOS_PHYSICSSOLVERS_SOLVERBASE_HPP_
 
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
@@ -30,7 +30,7 @@
 
 #include <limits>
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;
@@ -178,10 +178,6 @@ public:
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
    * @param domain the domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   * @param solution the solution vector
    * @return return the timestep that was achieved during the step.
    *
    * This function implements a nonlinear newton method for implicit problems. It requires that the
@@ -201,7 +197,7 @@ public:
    * @param cycleNumber the current cycle number
    * @param domain the domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
+   * @param localMatrix the system matrix
    * @param rhs the system right-hand side vector
    * @param solution the solution vector
    * @param lastResidual (in) target value below which to reduce residual norm, (out) achieved residual norm
@@ -231,7 +227,7 @@ public:
    * @param cycleNumber the current cycle number
    * @param domain the domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
+   * @param localMatrix the system matrix
    * @param rhs the system right-hand side vector
    * @param solution the solution vector
    * @param lastResidual (in) target value below which to reduce residual norm, (out) achieved residual norm
@@ -257,10 +253,6 @@ public:
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
    * @param domain the domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   * @param solution the solution vector
    * @return return the timestep that was achieved during the step.
    *
    * This function implements a single linear step. Similar to the nonlinear step, however it
@@ -279,10 +271,6 @@ public:
    * @param time_n the time at the beginning of the step
    * @param dt the desired timestep
    * @param domain the domain partition
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   * @param solution the solution vector
    *
    * This function should contain any step level initialization required to perform an implicit
    * step.
@@ -307,7 +295,7 @@ public:
    * @brief Set up the linear system (DOF indices and sparsity patterns)
    * @param domain the domain containing the mesh and fields
    * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
+   * @param localMatrix the system matrix
    * @param rhs the system right-hand side vector
    * @param solution the solution vector
    *
@@ -328,7 +316,7 @@ public:
    * @param dt the desired timestep
    * @param domain the domain partition
    * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
+   * @param localMatrix the system matrix
    * @param rhs the system right-hand side vector
    * @return the residual for convergence evaluation
    *
@@ -351,12 +339,12 @@ public:
 
   /**
    * @brief apply boundary condition to system
-   * @param domain the domain partition
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   * @param dofManager degree-of-freedom manager associated with the linear system
    * @param time the time at the beginning of the step
    * @param dt the desired timestep
+   * @param domain the domain partition
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localMatrix the system matrix
+   * @param rhs the system right-hand side vector
    *
    * This function applies all boundary conditions to the linear system. This is essentially a
    * completion of the system assembly, but is separated for use in coupled solvers.
@@ -399,26 +387,29 @@ public:
 
   /**
    * @brief calculate the norm of the global system residual
-   * @param rhs the system right-hand side vector
-   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param time the time at the beginning of the step
+   * @param dt the desired timestep
    * @param domain the domain partition
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localRhs the system right-hand side vector
    * @return norm of the residual
    *
    * This function returns the norm of global residual vector, which is suitable for comparison with
    * a tolerance.
    */
   virtual real64
-  calculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( real64 const & time,
+                         real64 const & dt,
+                         DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs );
 
   /**
    * @brief function to apply a linear system solver to the assembled system.
+   * @param dofManager degree-of-freedom manager associated with the linear system
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    * @param solution the solution vector
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param solution the solver parameters to set the parameters of the linear system
    *
    * This function calls the linear solver package to perform a single linear solve on the block
    * system. The derived physics solver is required to specify the call, as no default is provided.
@@ -560,7 +551,7 @@ public:
   /*
    * Returns the requirement for the next time-step to the event executing the solver.
    */
-  virtual real64 getTimestepRequest( real64 const GEOSX_UNUSED_PARAM( time ) ) override
+  virtual real64 getTimestepRequest( real64 const GEOS_UNUSED_PARAM( time ) ) override
   {return m_nextDt;};
   /**@}*/
 
@@ -735,7 +726,6 @@ public:
   }
 protected:
 
-
   static real64 eisenstatWalker( real64 const newNewtonNorm,
                                  real64 const oldNewtonNorm,
                                  real64 const weakestTol );
@@ -756,7 +746,7 @@ protected:
    * @param subRegion The ElementSubRegionBase that will have constitutive
    *  names set.
    */
-  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const { GEOSX_UNUSED_VAR( subRegion ); }
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); }
 
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE const & getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key );
@@ -816,7 +806,7 @@ private:
    * @param subRegion The ElementSubRegionBase that will have constitutive
    *  names set.
    */
-  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const { GEOSX_UNUSED_VAR( subRegion ); }
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); }
 
   bool solveNonlinearSystem( real64 const & time_n,
                              real64 const & dt,
@@ -833,7 +823,7 @@ string SolverBase::getConstitutiveName( ElementSubRegionBase const & subRegion )
 
   constitutiveModels.forSubGroups< CONSTITUTIVE_BASE_TYPE >( [&]( dataRepository::Group const & model )
   {
-    GEOSX_ERROR_IF( !validName.empty(), "A valid constitutive model was already found." );
+    GEOS_ERROR_IF( !validName.empty(), "A valid constitutive model was already found." );
     validName = model.getName();
   } );
   return validName;
@@ -855,7 +845,7 @@ BASETYPE & SolverBase::getConstitutiveModel( dataRepository::Group & dataGroup, 
   return constitutiveModels.getGroup< BASETYPE >( key );
 }
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif /* GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_SOLVERBASE_HPP_ */

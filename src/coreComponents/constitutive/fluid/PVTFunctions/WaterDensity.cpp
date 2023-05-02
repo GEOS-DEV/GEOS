@@ -20,7 +20,7 @@
 #include "constitutive/fluid/PVTFunctions/PureWaterProperties.hpp"
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace stringutilities;
@@ -40,7 +40,7 @@ WaterDensity::WaterDensity( string const & name,
                    componentNames,
                    componentMolarWeight )
 {
-  GEOSX_UNUSED_VAR( inputParams );
+  GEOS_UNUSED_VAR( inputParams );
   m_waterDensityTable = PureWaterProperties::makeSaturationDensityTable( m_functionName, FunctionManager::getInstance() );
 }
 
@@ -57,4 +57,4 @@ REGISTER_CATALOG_ENTRY( PVTFunctionBase, WaterDensity, string const &, string_ar
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

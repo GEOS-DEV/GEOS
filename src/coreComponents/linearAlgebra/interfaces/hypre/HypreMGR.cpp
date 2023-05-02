@@ -36,10 +36,12 @@
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseFVM.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalSinglePhasePoromechanics.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalMultiphasePoromechanics.hpp"
 
 #include "LvArray/src/output.hpp"
 
-namespace geosx
+namespace geos
 {
 
 void hypre::mgr::createMGR( LinearSolverParameters const & params,
@@ -47,25 +49,26 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
                             HyprePrecWrapper & precond,
                             HypreMGRData & mgrData )
 {
-  GEOSX_ERROR_IF( dofManager == nullptr, "MGR preconditioner requires a DofManager instance" );
+  GEOS_ERROR_IF( dofManager == nullptr, "MGR preconditioner requires a DofManager instance" );
 
-  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRCreate( &precond.ptr ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_MGRCreate( &precond.ptr ) );
 
   // Hypre's parameters to use MGR as a preconditioner
-  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetTol( precond.ptr, 0.0 ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( precond.ptr, 1 ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetPrintLevel( precond.ptr, LvArray::integerConversion< HYPRE_Int >( params.logLevel ) ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTol( precond.ptr, 0.0 ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( precond.ptr, 1 ) );
+  HYPRE_Int logLevel = LvArray::math::min( LvArray::integerConversion< HYPRE_Int >( params.logLevel - 1 ), 0 );
+  GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetPrintLevel( precond.ptr, logLevel ) );
 
   array1d< int > const numComponentsPerField = dofManager->numComponentsPerField();
   dofManager->getLocalDofComponentLabels( mgrData.pointMarkers );
 
   if( params.logLevel >= 1 )
   {
-    GEOSX_LOG_RANK_0( numComponentsPerField );
+    GEOS_LOG_RANK_0( numComponentsPerField );
   }
   if( params.logLevel >= 2 )
   {
-    GEOSX_LOG_RANK_VAR( mgrData.pointMarkers );
+    GEOS_LOG_RANK_VAR( mgrData.pointMarkers );
   }
 
   switch( params.mgr.strategy )
@@ -105,6 +108,11 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
       setStrategy< HybridSinglePhasePoromechanics >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
+    case LinearSolverParameters::MGR::StrategyType::thermalSinglePhasePoromechanics:
+    {
+      setStrategy< ThermalSinglePhasePoromechanics >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
     case LinearSolverParameters::MGR::StrategyType::hydrofracture:
     {
       setStrategy< Hydrofracture >( params.mgr, numComponentsPerField, precond, mgrData );
@@ -123,6 +131,11 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     case LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsReservoirFVM:
     {
       setStrategy< MultiphasePoromechanicsReservoirFVM >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::thermalMultiphasePoromechanics:
+    {
+      setStrategy< ThermalMultiphasePoromechanics >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
     case LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM:
@@ -157,18 +170,17 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     }
     default:
     {
-      GEOSX_ERROR( "Unsupported MGR strategy: " << params.mgr.strategy );
+      GEOS_ERROR( "Unsupported MGR strategy: " << params.mgr.strategy );
     }
   }
 
-  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseSolver( precond.ptr,
-                                                   mgrData.coarseSolver.solve,
-                                                   mgrData.coarseSolver.setup,
-                                                   mgrData.coarseSolver.ptr ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseSolver( precond.ptr,
+                                                  mgrData.coarseSolver.solve,
+                                                  mgrData.coarseSolver.setup,
+                                                  mgrData.coarseSolver.ptr ) );
   precond.setup = HYPRE_MGRSetup;
   precond.solve = HYPRE_MGRSolve;
   precond.destroy = HYPRE_MGRDestroy;
-
 }
 
-} // namespace geosx
+} // namespace geos

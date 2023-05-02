@@ -15,13 +15,13 @@
 /**
  * @file particleFluidSelector.hpp
  */
-#ifndef GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUIDSELECTOR_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUIDSELECTOR_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_PARTICLEFLUIDSELECTOR_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_PARTICLEFLUIDSELECTOR_HPP_
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/fluid/ParticleFluid.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -43,6 +43,6 @@ void constitutiveUpdatePassThru( ParticleFluidBase & fluid,
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUIDSELECTOR_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_PARTICLEFLUIDSELECTOR_HPP_

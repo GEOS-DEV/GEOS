@@ -16,8 +16,8 @@
  * @file testLinearAlgebraUtils.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP_
-#define GEOSX_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP_
+#ifndef GEOS_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP_
+#define GEOS_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/initializeEnvironment.hpp"
@@ -29,7 +29,7 @@
 
 #include <gtest/gtest.h>
 
-namespace geosx
+namespace geos
 {
 namespace testing
 {
@@ -44,14 +44,14 @@ public:
   LinearAlgebraTestScope( int argc, char * * argv )
   {
     ::testing::InitGoogleTest( &argc, argv );
-    geosx::setupEnvironment( argc, argv );
+    geos::setupEnvironment( argc, argv );
     setupLAI();
   }
 
   ~LinearAlgebraTestScope()
   {
     finalizeLAI();
-    geosx::cleanupEnvironment();
+    geos::cleanupEnvironment();
   }
 };
 
@@ -91,7 +91,7 @@ void computeIdentity( MPI_Comm comm,
 
   // Loop over rows to fill the matrix
   forAll< parallelDevicePolicy<> >( LvArray::integerConversion< localIndex >( iupper - ilower ),
-                                    [=] GEOSX_DEVICE ( localIndex const localRow )
+                                    [=] GEOS_DEVICE ( localIndex const localRow )
   {
     // Set the values for global row i
     globalIndex const i = localRow + ilower;
@@ -137,7 +137,7 @@ void compute2DLaplaceOperator( MPI_Comm comm,
 
   // Loop over rows to fill the matrix
   forAll< parallelDevicePolicy<> >( LvArray::integerConversion< localIndex >( iupper - ilower ),
-                                    [matrixView, n, N, ilower] GEOSX_DEVICE ( localIndex const localRow )
+                                    [matrixView, n, N, ilower] GEOS_DEVICE ( localIndex const localRow )
   {
 
     // Allocate arrays to fill the matrix (values and columns)
@@ -202,7 +202,7 @@ void compute2DLaplaceOperator( MPI_Comm comm,
  * @param nu Poisson ratio
  * @return the quad element stiffness matrix
  */
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline stackArray2d< real64, 8*8 > Q12d_local( real64 const & hx,
                                                real64 const & hy,
                                                real64 const & E,
@@ -289,7 +289,7 @@ inline stackArray2d< real64, 8*8 > Q12d_local( real64 const & hx,
  * @param nCellsX number of cells in the X-direction
  * @param localDofIndex indices of local degrees of freedom
  */
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void computeQuadElementDofIndices( globalIndex const & iCell,
                                           globalIndex const & nCellsX,
                                           globalIndex (& localDofIndex)[8] )
@@ -339,7 +339,7 @@ void compute2DElasticityOperator( MPI_Comm const comm,
   int const rank = MpiWrapper::commRank( comm );
   int const nproc = MpiWrapper::commSize( comm );
 
-  GEOSX_ERROR_IF( nCellsY < nproc, "Less than one cell row per processor is not supported" );
+  GEOS_ERROR_IF( nCellsY < nproc, "Less than one cell row per processor is not supported" );
 
   real64 const hx = domainSizeX / nCellsX;
   real64 const hy = domainSizeY / nCellsY;
@@ -392,7 +392,7 @@ void compute2DElasticityOperator( MPI_Comm const comm,
   }
 #else // not working on Lassen
   SparsityPatternView< globalIndex > sparsityView = sparsity.toView();
-  forAll< parallelDevicePolicy<> >( iEnd-iStart, [=] GEOSX_DEVICE ( localIndex const iCell )
+  forAll< parallelDevicePolicy<> >( iEnd-iStart, [=] GEOS_DEVICE ( localIndex const iCell )
   {
     // Loop over grid cells
     globalIndex localDofIndex[8];
@@ -420,7 +420,7 @@ void compute2DElasticityOperator( MPI_Comm const comm,
   CRSMatrixView< real64, globalIndex > matrixView = matrix.toView();
 
   forAll< parallelDevicePolicy<> >( LvArray::integerConversion< localIndex >( iEnd - iStart ),
-                                    [=] GEOSX_DEVICE ( localIndex const iCell )
+                                    [=] GEOS_DEVICE ( localIndex const iCell )
   {
     // Loop over grid cells
     globalIndex dofIndex[8];
@@ -442,7 +442,7 @@ void compute2DElasticityOperator( MPI_Comm const comm,
   // Impose Dirichlet boundary conditions: fix domain bottom (first 2*(nCellsX + 1) rows of matrix)
   if( rank == 0 )
   {
-    forAll< parallelDevicePolicy<> >( 2 * (nCellsX + 1), [=] GEOSX_DEVICE ( localIndex const localRow )
+    forAll< parallelDevicePolicy<> >( 2 * (nCellsX + 1), [=] GEOS_DEVICE ( localIndex const localRow )
     {
       arraySlice1d< globalIndex const > const columns = matrixView.getColumns( localRow );
       arraySlice1d< real64 > const entries = matrixView.getEntries( localRow );
@@ -465,6 +465,6 @@ void compute2DElasticityOperator( MPI_Comm const comm,
 ///@}
 
 } // namespace testing
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP_
+#endif //GEOS_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP_

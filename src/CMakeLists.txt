@@ -9,8 +9,13 @@ endif()
 # GEOSX
 ################################
 project( geosx LANGUAGES C CXX )
+include(GNUInstallDirs)
 set( BLT_CXX_STD "c++14" CACHE STRING "Version of C++ standard" )
-set( ENABLE_WARNINGS_AS_ERRORS "ON" CACHE PATH "" )
+if(CMAKE_BUILD_TYPE EQUAL "Debug")
+  set( ENABLE_WARNINGS_AS_ERRORS "OFF" CACHE PATH "")
+else()
+  set( ENABLE_WARNINGS_AS_ERRORS "ON" CACHE PATH "")
+endif()
 set( CMAKE_ENABLE_EXPORTS ON )
 
 #set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
@@ -169,8 +174,22 @@ endif()
 
 
 install( DIRECTORY ../examples/
-         DESTINATION examples )
+         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${CMAKE_PROJECT_NAME}/examples )
 
 install( DIRECTORY ../scripts/
-         DESTINATION scripts )
+         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${CMAKE_PROJECT_NAME}/scripts )
 
+add_custom_target( geosx_generate_install_schema
+         ALL
+         COMMAND geosx -s ${CMAKE_BINARY_DIR}/schema.xsd >generate_schema.log 2>&1 || (cat generate_schema.log && exit 1)
+         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+         DEPENDS geosx
+         COMMENT "Generating XML schema to install"
+         )
+
+if (NOT GEOSX_INSTALL_SCHEMA)
+  set_target_properties(geosx_generate_install_schema PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
+endif()
+
+install( FILES ${CMAKE_BINARY_DIR}/schema.xsd
+         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${CMAKE_PROJECT_NAME}/schema OPTIONAL)

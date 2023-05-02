@@ -24,7 +24,7 @@
 #include "physicsSolvers/multiphysics/HydrofractureSolverKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace constitutive;
@@ -124,7 +124,7 @@ void HydrofractureSolver::initializePreSubGroups()
     {
       string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       porousName = getConstitutiveName< CoupledSolidBase >( subRegion );
-      GEOSX_ERROR_IF( porousName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+      GEOS_ERROR_IF( porousName.empty(), GEOS_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
     } );
   } );
 }
@@ -233,7 +233,7 @@ real64 HydrofractureSolver::fullyCoupledSolverStep( real64 const & time_n,
 
       if( getLogLevel() >= 1 )
       {
-        GEOSX_LOG_RANK_0( "++ Fracture propagation. Re-entering Newton Solve." );
+        GEOS_LOG_RANK_0( "++ Fracture propagation. Re-entering Newton Solve." );
       }
     }
   }
@@ -321,7 +321,7 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
 void HydrofractureSolver::setupCoupling( DomainPartition const & domain,
                                          DofManager & dofManager ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
 
   string const solidDiscretizationName = solidMechanicsSolver()->getDiscretizationName();
@@ -365,9 +365,9 @@ void HydrofractureSolver::setupSystem( DomainPartition & domain,
                                        ParallelVector & solution,
                                        bool const setSparsity )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( setSparsity );
+  GEOS_UNUSED_VAR( setSparsity );
 
   dofManager.setDomain( domain );
 
@@ -421,7 +421,7 @@ void HydrofractureSolver::addFluxApertureCouplingNNZ( DomainPartition & domain,
                                                       DofManager & dofManager,
                                                       arrayView1d< localIndex > const & rowLengths ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
 
@@ -480,7 +480,7 @@ void HydrofractureSolver::addFluxApertureCouplingSparsityPattern( DomainPartitio
                                                                   DofManager & dofManager,
                                                                   SparsityPatternView< globalIndex > const & pattern ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
 
@@ -554,7 +554,7 @@ void HydrofractureSolver::assembleSystem( real64 const time,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   solidMechanicsSolver()->assembleSystem( time,
                                           dt,
@@ -587,7 +587,7 @@ HydrofractureSolver::
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
 
   FaceManager const & faceManager = mesh.getFaceManager();
@@ -688,7 +688,7 @@ HydrofractureSolver::
   assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & domain,
                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   string const presDofKey = m_dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
   string const dispDofKey = m_dofManager.getKey( solidMechanics::totalDisplacement::key() );
@@ -762,7 +762,7 @@ void HydrofractureSolver::updateState( DomainPartition & domain )
 real64 HydrofractureSolver::setNextDt( real64 const & currentDt,
                                        DomainPartition & domain )
 {
-  GEOSX_UNUSED_VAR( domain );
+  GEOS_UNUSED_VAR( domain );
   real64 nextDt = 0.0;
 
   if( m_numResolves[0] == 0 && m_numResolves[1] == 0 )
@@ -775,7 +775,7 @@ real64 HydrofractureSolver::setNextDt( real64 const & currentDt,
     nextDt = surfaceGenerator.getTimestepRequest() < 1e99 ? surfaceGenerator.getTimestepRequest() : currentDt;
   }
 
-  GEOSX_LOG_LEVEL_RANK_0( 3, this->getName() << ": nextDt request is "  << nextDt );
+  GEOS_LOG_LEVEL_RANK_0( 3, this->getName() << ": nextDt request is "  << nextDt );
   return nextDt;
 }
 
@@ -845,4 +845,4 @@ void HydrofractureSolver::setUpDflux_dApertureMatrix( DomainPartition & domain,
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, HydrofractureSolver, string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */
