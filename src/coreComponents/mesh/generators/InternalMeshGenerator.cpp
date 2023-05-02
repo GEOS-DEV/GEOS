@@ -539,16 +539,11 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
   }
 }
 
-/**
- * @param partition
- * @param domain
- */
-void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager )
+void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager,  PartitionDescriptor & partitionDescriptor )
 {
   GEOS_MARK_FUNCTION;
-  PartitionDescriptor partitionDescriptor;
   partitionDescriptor.setHasMetisNeighborList( false );
-  SpatialPartition partition;
+  SpatialPartition partition = partitionDescriptor.getSpatialPartition( );
   // Partition based on even spacing to get load balance
   // Partition geometrical boundaries will be corrected in the end.
   {
@@ -967,7 +962,6 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
   cellBlockManager.buildMaps();
 
   partitionDescriptor.setSpatialPartition( partition );
-  cellBlockManager.setPartitionDescriptor( partitionDescriptor );
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: total number of nodes = {}", getName(),
                              ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) ) );
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: total number of elems = {}", getName(),

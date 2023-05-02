@@ -73,11 +73,10 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
                     " If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available" );
 }
 
-void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager )
+void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, PartitionDescriptor & partitionDescriptor )
 {
   // TODO refactor void MeshGeneratorBase::generateMesh( DomainPartition & domain )
   GEOS_MARK_FUNCTION;
-  PartitionDescriptor partitionDescriptor;
   partitionDescriptor.setHasMetisNeighborList( true );
 
   MPI_Comm const comm = MPI_COMM_GEOSX;
@@ -96,7 +95,6 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
     partitionDescriptor.setMetisNeighborList( std::move( neighbors ) );
     GEOS_LOG_LEVEL_RANK_0( 2, "  done!" );
   }
-  cellBlockManager.setPartitionDescriptor( partitionDescriptor );
   GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': generating GEOSX mesh data structure", catalogName(), getName() ) );
 
 

@@ -186,14 +186,6 @@ public:
     this->getGroup( viewKeyStruct::cellBlocks() ).forSubGroups< CellBlock >( lambda );
   }
 
-  PartitionDescriptor const & getPartitionDescriptor() const override { return m_partitionDescriptor; }
-
-  /**
-   * @brief Set a reference to the partition descriptor.
-   * @param partitionDescriptor The PartitionDescriptor
-   */
-  void setPartitionDescriptor( PartitionDescriptor const & partitionDescriptor ) { m_partitionDescriptor = partitionDescriptor; }
-
   real64 getGlobalLength() const override { return m_globalLength; }
   /**
    * @brief Setter for the global length
@@ -271,8 +263,6 @@ private:
   array1d< globalIndex > m_nodeLocalToGlobal;
 
   std::map< string, SortedArray< localIndex > > m_nodeSets;
-
-  PartitionDescriptor m_partitionDescriptor;
 
   real64 m_globalLength;
 

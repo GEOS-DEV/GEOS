@@ -50,11 +50,7 @@ public:
    */
   static string catalogName() { return "InternalMesh"; }
 
-  /**
-   * @brief Fill cellBlockManager with all the mesh informations
-   * @param cellBlockManager the CellBlockManager to fill
-   */
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager ) override;
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, PartitionDescriptor & partitionDescriptor ) override;
 
   void importFieldOnArray( Block block,
                            string const & blockName,

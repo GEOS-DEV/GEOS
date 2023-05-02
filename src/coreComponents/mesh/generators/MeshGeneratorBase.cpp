@@ -49,11 +49,11 @@ MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::getCatalog
   return catalog;
 }
 
-CellBlockManagerABC & MeshGeneratorBase::generateMesh( Group & parent )
+CellBlockManagerABC & MeshGeneratorBase::generateMesh( Group & parent, PartitionDescriptor & partitionDescriptor )
 {
   CellBlockManager & cellBlockManager = parent.registerGroup< CellBlockManager >( keys::cellManager );
 
-  fillCellBlockManager( cellBlockManager );
+  fillCellBlockManager( cellBlockManager, partitionDescriptor );
 
   this->attachWellInfo( cellBlockManager );
 

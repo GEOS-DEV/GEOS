@@ -80,9 +80,10 @@ public:
   /**
    * @brief Generate the mesh object the input mesh object.
    * @param parent The parent group of the CellBlockManager.
+   * @param[in, out] partitionDescriptor Handler to describe the partition
    * @return The generated CellBlockManagerABC
    */
-  CellBlockManagerABC & generateMesh( Group & parent );
+  CellBlockManagerABC & generateMesh( Group & parent, PartitionDescriptor & partitionDescriptor );
 
   /**
    * @brief Describe which kind of block must be considered.
@@ -132,9 +133,10 @@ private:
   /**
    * @brief Fill the cellBlockManager object .
    * @param[in] cellBlockManager to fill with the mesh informations
+   * @param[in, out] partitionDescriptor Handler to describe the partition
    * @return The global length scale
    */
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager ) = 0;
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, PartitionDescriptor & partitionDescriptor ) = 0;
 
   void attachWellInfo( CellBlockManager & cellBlockManager );
 
