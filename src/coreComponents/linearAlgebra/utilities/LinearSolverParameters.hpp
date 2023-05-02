@@ -114,11 +114,11 @@ struct LinearSolverParameters
   /// Krylov-method parameters
   struct Krylov
   {
-    real64  relTolerance = 1e-6;      ///< Relative convergence tolerance for iterative solvers
+    real64 relTolerance = 1e-6;       ///< Relative convergence tolerance for iterative solvers
     integer maxIterations = 200;      ///< Max iterations before declaring convergence failure
     integer maxRestart = 200;         ///< Max number of vectors in Krylov basis before restarting
     integer useAdaptiveTol = false;   ///< Use Eisenstat-Walker adaptive tolerance
-    real64  weakestTol = 1e-3;        ///< Weakest allowed tolerance when using adaptive method
+    real64 weakestTol = 1e-3;         ///< Weakest allowed tolerance when using adaptive method
   }
   krylov;                             ///< Krylov-method parameter struct
 
@@ -227,23 +227,24 @@ struct LinearSolverParameters
       rigidBodyModes      ///< Rigid body modes
     };
 
-    integer        maxLevels = 20;                            ///< Maximum no. of coarsening levels
-    CycleType      cycleType = CycleType::V;                  ///< AMG cycle type
-    SmootherType   smootherType = SmootherType::fgs;          ///< Smoother type
-    real64         relaxWeight = 1.0;                         ///< Relaxation weight
-    CoarseType     coarseType = CoarseType::direct;           ///< Coarse-level solver/smoother
+    integer maxLevels = 20;                                   ///< Maximum no. of coarsening levels
+    CycleType cycleType = CycleType::V;                       ///< AMG cycle type
+    SmootherType smootherType = SmootherType::fgs;            ///< Smoother type
+    real64 relaxWeight = 1.0;                                 ///< Relaxation weight
+    CoarseType coarseType = CoarseType::direct;               ///< Coarse-level solver/smoother
     CoarseningType coarseningType = CoarseningType::HMIS;     ///< Coarsening algorithm
-    InterpType     interpolationType = InterpType::extendedI; ///< Interpolation algorithm
-    integer        interpolationMaxNonZeros = 4;              ///< Interpolation - Max. nonzeros/row
-    integer        numSweeps = 1;                             ///< Number of smoother sweeps
-    integer        numFunctions = 1;                          ///< Number of amg functions
-    integer        aggressiveNumPaths = 1;                    ///< Number of paths agg. coarsening.
-    integer        aggressiveNumLevels = 0;                   ///< Number of lvls agg. coarsening.
-    AggInterpType  aggressiveInterpType = AggInterpType::multipass; ///< Interp. type for agg. coarsening.
-    PreOrPost      preOrPostSmoothing = PreOrPost::both;      ///< Pre and/or post smoothing
-    real64         threshold = 0.0;                           ///< Threshold for "strong connections" (for classical and smoothed-aggregation AMG)
-    integer        separateComponents = false;                ///< Apply a separate component filter before AMG construction
-    NullSpaceType  nullSpaceType = NullSpaceType::constantModes; ///< Null space type [constantModes,rigidBodyModes]
+    InterpType interpolationType = InterpType::extendedI;     ///< Interpolation algorithm
+    integer interpolationMaxNonZeros = 4;                     ///< Interpolation - Max. nonzeros/row
+    integer numSweeps = 1;                                    ///< Number of smoother sweeps
+    integer numFunctions = 1;                                 ///< Number of amg functions
+    integer aggressiveNumPaths = 1;                           ///< Number of paths agg. coarsening.
+    integer aggressiveNumLevels = 0;                          ///< Number of lvls agg. coarsening.
+    AggInterpType aggressiveInterpType = AggInterpType::multipass;  ///< Interp. type for agg. coarsening.
+    PreOrPost preOrPostSmoothing = PreOrPost::both;           ///< Pre and/or post smoothing
+    real64 threshold = 0.0;                                   ///< Threshold for "strong connections" (for classical and
+                                                              ///< smoothed-aggregation AMG)
+    integer separateComponents = false;                       ///< Apply a separate component filter before AMG construction
+    NullSpaceType nullSpaceType = NullSpaceType::constantModes;  ///< Null space type [constantModes,rigidBodyModes]
   }
   amg;                                              ///< Algebraic Multigrid (AMG) parameters
 

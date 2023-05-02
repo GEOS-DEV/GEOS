@@ -167,10 +167,10 @@ void createAMG( LinearSolverParameters const & params,
 
   // Interpolation options
   {
-     HYPRE_Int const interpType = hypre::getAMGInterpolationType( params.amg.interpolationType );
+    HYPRE_Int const interpType = hypre::getAMGInterpolationType( params.amg.interpolationType );
 
-     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpType( precond.ptr, interpType ) );
-     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPMaxElmts( precond.ptr, params.amg.interpolationMaxNonZeros ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpType( precond.ptr, interpType ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPMaxElmts( precond.ptr, params.amg.interpolationMaxNonZeros ) );
   }
 
   GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( precond.ptr, params.amg.numFunctions ) );
