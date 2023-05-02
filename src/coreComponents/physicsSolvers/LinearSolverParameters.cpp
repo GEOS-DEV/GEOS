@@ -124,6 +124,11 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setDescription( "AMG smoother type. Available options are: "
                     "``" + EnumStrings< LinearSolverParameters::AMG::SmootherType >::concat( "|" ) + "``" );
 
+  registerWrapper( viewKeyStruct::amgRelaxWeight(), &m_parameters.amg.relaxWeight ).
+    setApplyDefaultValue( m_parameters.amg.relaxWeight ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG relaxation factor for the smoother" );
+
   registerWrapper( viewKeyStruct::amgCoarseString(), &m_parameters.amg.coarseType ).
     setApplyDefaultValue( m_parameters.amg.coarseType ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -131,33 +136,52 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
                     "``" + EnumStrings< LinearSolverParameters::AMG::CoarseType >::concat( "|" ) + "``" );
 
   registerWrapper( viewKeyStruct::amgCoarseningString(), &m_parameters.amg.coarseningType ).
-    setApplyDefaultValue( "HMIS" ).
+    setApplyDefaultValue( m_parameters.amg.coarseningType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "AMG coarsening algorithm\n"
-                    "Available options are: TODO" );
+    setDescription( "AMG coarsening algorithm. Available options are: "
+                    "``" + EnumStrings< LinearSolverParameters::AMG::CoarseningType >::concat( "|" ) + "``" );
 
   registerWrapper( viewKeyStruct::amgInterpolationString(), &m_parameters.amg.interpolationType ).
-    setApplyDefaultValue( 6 ).
+    setApplyDefaultValue( m_parameters.amg.interpolationType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "AMG interpolation algorithm\n"
-                    "Available options are: TODO" );
+    setDescription( "AMG interpolation algorithm. Available options are: "
+                    "``" + EnumStrings< LinearSolverParameters::AMG::InterpType >::concat( "|" ) + "``" );
+
+  registerWrapper( viewKeyStruct::amgInterpMaxNonZerosString(), &m_parameters.amg.interpolationMaxNonZeros ).
+    setApplyDefaultValue( m_parameters.amg.interpolationMaxNonZeros ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG interpolation maximum number of nonzeros per row" );
 
   registerWrapper( viewKeyStruct::amgNumFunctionsString(), &m_parameters.amg.numFunctions ).
-    setApplyDefaultValue( 1 ).
+    setApplyDefaultValue( m_parameters.amg.numFunctions ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "AMG number of functions\n"
-                    "Available options are: TODO" );
+    setDescription( "AMG number of functions" );
 
-  registerWrapper( viewKeyStruct::amgAggresiveNumLevelsString(), &m_parameters.amg.aggresiveNumLevels ).
-    setApplyDefaultValue( 0 ).
+  registerWrapper( viewKeyStruct::amgAggressiveNumPathsString(), &m_parameters.amg.aggressiveNumPaths ).
+    setApplyDefaultValue( m_parameters.amg.aggressiveNumPaths ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "AMG number levels for aggressive coarsening \n"
-                    "Available options are: TODO" );
+    setDescription( "AMG number of paths for aggressive coarsening" );
+
+  registerWrapper( viewKeyStruct::amgAggressiveNumLevelsString(), &m_parameters.amg.aggressiveNumLevels ).
+    setApplyDefaultValue( m_parameters.amg.aggressiveNumLevels ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG number of levels for aggressive coarsening" );
+
+  registerWrapper( viewKeyStruct::amgAggressiveInterpTypeString(), &m_parameters.amg.aggressiveInterpType ).
+    setApplyDefaultValue( m_parameters.amg.aggressiveInterpType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG aggressive interpolation algorithm. Available options are: "
+                    "``" + EnumStrings< LinearSolverParameters::AMG::AggInterpType >::concat( "|" ) + "``" );
 
   registerWrapper( viewKeyStruct::amgThresholdString(), &m_parameters.amg.threshold ).
     setApplyDefaultValue( m_parameters.amg.threshold ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "AMG strength-of-connection threshold" );
+
+  registerWrapper( viewKeyStruct::amgSeparateComponentsString(), &m_parameters.amg.separateComponents ).
+    setApplyDefaultValue( m_parameters.amg.separateComponents ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG apply separate component filter for multi-variable problems" );
 
   registerWrapper( viewKeyStruct::amgNullSpaceTypeString(), &m_parameters.amg.nullSpaceType ).
     setApplyDefaultValue( m_parameters.amg.nullSpaceType ).
