@@ -28,8 +28,9 @@ def extract_cmake_location(file_path):
 def setup_ats(scripts_dir, build_path):
     bin_dir = os.path.join(build_path, "bin")
     ats_dir = os.path.abspath(os.path.join(scripts_dir, "..", "integratedTests"))
-    ats_update_dir = os.path.join(ats_dir, "update", "run")
-    geosxats_path = os.path.join(ats_dir, "geosxats", "geosxats")
+    ats_update_dir = os.path.join(ats_dir, "tests", "allTests")
+    # geosxats_path = os.path.join(ats_dir, "geosxats", "geosxats")
+    geosxats_path = os.path.join(build_path, "bin", "run_geosxats")
 
     # Create a symbolic link to test directory
     os.symlink(ats_update_dir, os.path.join(build_path, "integratedTests"))
