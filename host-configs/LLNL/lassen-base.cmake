@@ -76,6 +76,6 @@ set(Python3_ROOT_DIR /usr/gapps/GEOSX/thirdPartyLibs/python/lassen-gcc-python/py
 set(Python3_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/lassen-gcc-python/python/bin/python3 CACHE PATH "")
 
 # ATS
-set(ATS_ARGUMENTS "--ats jsrun_omp --ats jsrun_bind=packed"  CACHE PATH "")
+set(ATS_ARGUMENTS "--ats jsrun_omp --ats jsrun_bind=packed"  CACHE STRING "")
 
 include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)
