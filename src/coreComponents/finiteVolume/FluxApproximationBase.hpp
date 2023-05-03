@@ -31,16 +31,27 @@
 namespace geos
 {
 
+/**
+ * @brief Upwinding scheme.
+ */
 enum class UpwindingScheme : integer
 {
   PPU,    ///< PPU upwinding
   C1PPU,  ///< C1-PPU upwinding from https://doi.org/10.1016/j.advwatres.2017.07.028
 };
 
+/**
+ * @brief Strings for upwinding scheme.
+ */
 ENUM_STRINGS( UpwindingScheme,
               "PPU",
               "C1PPU" );
 
+/**
+ * @struct UpwindingParameters
+ *
+ * Structure to store upwinding parameters, such as upwinding scheme and related tolerances etc.
+ */
 struct UpwindingParameters
 {
   /// PPU or C1-PPU
@@ -198,6 +209,10 @@ public:
    */
   void setCoeffName( string const & name );
 
+  /**
+   * @brief get the upwinding parameters.
+   * @return upwinding parameters structure.
+   */
   UpwindingParameters const & upwindingParams() const { return m_upwindingParams; }
 
 protected:
