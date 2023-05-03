@@ -69,7 +69,7 @@
   /// Parsed hypre version information
   #define HYPRE_VERSION_MAJOR 2
   /// Parsed hypre version information
-  #define HYPRE_VERSION_MINOR 27
+  #define HYPRE_VERSION_MINOR 28
   /// Parsed hypre version information
   #define HYPRE_VERSION_PATCH 0
 #endif
@@ -168,7 +168,7 @@
 #define fmt_VERSION 8.0.1
 
 /// Version information for python
-#define Python3_VERSION 3.10.8
+/* #undef Python3_VERSION */
 
 /// Version information for CUDAToolkit
 /* #undef CUDAToolkit_VERSION */
