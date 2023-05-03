@@ -80,8 +80,8 @@ computeProjectors( localIndex const & cellIndex,
   // - loop over faces and perform computations on the boundary
   real64 outFaceNormals[6][3];
   std::ofstream fileFacesIntegrals;
-  std::ostringstream facesIntegrals (OutputBase::getOutputDirectory() + "facesIntegrals.csv", std::ostringstream::ate);
-  fileFacesIntegrals.open(facesIntegrals.str(), std::ios_base::app);
+  std::ostringstream facesIntegrals ( OutputBase::getOutputDirectory() + "/facesIntegrals.csv", std::ostringstream::ate );
+  fileFacesIntegrals.open( facesIntegrals.str(), std::ios_base::app );
   for( localIndex numFace = 0; numFace < numCellFaces; ++numFace )
   {
     localIndex const faceIndex = elementToFaceMap[ cellIndex ][ numFace ];
@@ -105,13 +105,13 @@ computeProjectors( localIndex const & cellIndex,
     }
   }
   std::ofstream fileFaceNormals;
-  fileFaceNormals.open(OutputBase::getOutputDirectory() + "faceNormals.csv", std::ios_base::app);
+  fileFaceNormals.open( OutputBase::getOutputDirectory() + "/faceNormals.csv", std::ios_base::app );
   for( localIndex i = 0; i < 3; ++i )
   {
     fileFaceNormals << cellIndex << ",";
     for( localIndex numFace = 0; numFace < numCellFaces; ++numFace )
     {
-      fileFaceNormals << std::setprecision(16) << outFaceNormals[numFace][i]*faceAreas[ elementToFaceMap[ cellIndex ][ numFace ] ] << ",";
+      fileFaceNormals << std::setprecision( 16 ) << outFaceNormals[numFace][i]*faceAreas[ elementToFaceMap[ cellIndex ][ numFace ] ] << ",";
     }
     fileFaceNormals << std::endl;
   }
@@ -153,7 +153,7 @@ computeProjectors( localIndex const & cellIndex,
                           threeDMonomialIntegrals );
     for( localIndex i = 0; i < numFaceNodes; ++i )
     {
-      fileFacesIntegrals << faceBasisIntegrals[i]/faceArea << ",";
+      fileFacesIntegrals << std::setprecision( 16 ) << faceBasisIntegrals[i]/faceArea << ",";
     }
     fileFacesIntegrals << "\n";
 
@@ -307,13 +307,13 @@ computeProjectors( localIndex const & cellIndex,
     piNablaVemDofsMinusIdentity[ numBasisFunction ][ numBasisFunction ] -= 1;
   }
   std::ofstream derivativesFile;
-  derivativesFile.open(OutputBase::getOutputDirectory() + "derivatives.csv",std::ios_base::app);
+  derivativesFile.open( OutputBase::getOutputDirectory() + "/derivatives.csv", std::ios_base::app );
   for( localIndex i = 0; i < 3; ++i )
   {
     derivativesFile << cellIndex << ",";
     for( localIndex numBasisFunction = 0; numBasisFunction < numCellPoints; ++numBasisFunction )
     {
-      derivativesFile << basisDerivativesIntegralMean[numBasisFunction][i] << ",";
+      derivativesFile << std::setprecision( 16 ) << basisDerivativesIntegralMean[numBasisFunction][i] << ",";
     }
     derivativesFile << std::endl;
   }
