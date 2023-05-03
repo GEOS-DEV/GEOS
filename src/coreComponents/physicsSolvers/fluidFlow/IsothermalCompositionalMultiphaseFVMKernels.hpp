@@ -711,16 +711,17 @@ public:
             }
           }
 
-          // *** upwinding ***
           // compute phase potential gradient
           real64 const potGrad = presGrad - gravHead;
 
-          // choose upstream cell
-          localIndex const k_up = (potGrad >= 0) ? 0 : 1;
+          // phase flux and derivatives
 
-          localIndex const er_up  = seri[k_up];
-          localIndex const esr_up = sesri[k_up];
-          localIndex const ei_up  = sei[k_up];
+          // *** upwinding ***
+          // will be assigned below
+          localIndex k_up = -1;
+          localIndex er_up = -1;
+          localIndex esr_up = -1;
+          localIndex ei_up = -1;
 
           // C1PPU
           // see https://doi.org/10.1016/j.advwatres.2017.07.028
@@ -797,9 +798,24 @@ public:
                 dPhaseFlux_dC[ke][jc] += -smoMax * dMobDiff_sign[ke] * dPhaseMobSub[Deriv::dC + jc];
               }
             }
+
+            // choose upstream cell for composition upwinding
+            k_up = (phaseFlux >= 0) ? 0 : 1;
+
+            er_up  = seri[k_up];
+            esr_up = sesri[k_up];
+            ei_up  = sei[k_up];
+
           }
           else // default PPU
           {
+            // choose upstream cell
+            k_up = (potGrad >= 0) ? 0 : 1;
+
+            er_up  = seri[k_up];
+            esr_up = sesri[k_up];
+            ei_up  = sei[k_up];
+
             real64 const mobility = m_phaseMob[er_up][esr_up][ei_up][ip];
 
             // skip the phase flux if phase not present or immobile upstream
@@ -832,6 +848,8 @@ public:
               dPhaseFlux_dC[k_up][jc] += dPhaseMobSub[Deriv::dC+jc] * potGrad;
             }
           }
+
+          // component flux and derivatives
 
           // slice some constitutive arrays to avoid too much indexing in component loop
           arraySlice1d< real64 const, multifluid::USD_PHASE_COMP-3 > phaseCompFracSub =
