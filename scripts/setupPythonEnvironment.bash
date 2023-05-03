@@ -172,35 +172,48 @@ fi
 
 
 # Link key scripts to the bin directory
+declare -a MOD_SEARCH_PATH=("$(dirname $PYTHON_TARGET)"
+                            "~/.local/bin"
+                            "~/local/bin")
+
+
 if [ -n "${BIN_DIR}" ]
 then
     echo "Linking key scripts to bin directory..."
-    MOD_PATH="$(dirname $PYTHON_TARGET)"
 
     for p in "${LINK_SCRIPTS[@]}"
     do
         echo "  $p"
+        package_found="0"
 
-        # Check to see if the tool exists
-        pp=
-        if [ -f "$MOD_PATH/$p" ]
-        then
-            pp="$MOD_PATH/$p"
-        fi
+        for MOD_PATH in "${MOD_SEARCH_PATH[@]}"
+        do
+            # Check to see if the tool exists
+            pp=
+            if [ -f "$MOD_PATH/$p" ]
+            then
+                pp="$MOD_PATH/$p"
+            fi
 
-        # Remove any old links if necessary
-        if [ -f "$BIN_DIR/$p" ]
-        then
-            rm $BIN_DIR/$p
-        fi
+            # Remove any old links if necessary
+            if [ -f "$BIN_DIR/$p" ]
+            then
+                rm $BIN_DIR/$p
+            fi
 
-        # Create links
-        if [ -z "$pp" ]
+            # Create links
+            if [ ! -z "$pp" ]
+            then
+                echo "    (found $p as $pp)"
+                ln -s $pp $BIN_DIR/$p 
+                package_found="1"
+                break
+            fi
+        done
+
+        if [[ "$package_found" == "0" ]]
         then
-            echo "  (could not find where $p is installed)"      
-        else
-            echo "  (found $p as $pp)"
-            ln -s $pp $BIN_DIR/$p 
+            echo "    (could not find where $p is installed)" 
         fi
     done
 
