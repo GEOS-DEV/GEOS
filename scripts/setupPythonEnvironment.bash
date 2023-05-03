@@ -173,8 +173,8 @@ fi
 
 # Link key scripts to the bin directory
 declare -a MOD_SEARCH_PATH=("$(dirname $PYTHON_TARGET)"
-                            "~/.local/bin"
-                            "~/local/bin")
+                            "$HOME/.local/bin"
+                            "$HOME/local/bin")
 
 
 if [ -n "${BIN_DIR}" ]
@@ -190,6 +190,7 @@ then
         do
             # Check to see if the tool exists
             pp=
+            echo "$MOD_PATH/$p"
             if [ -f "$MOD_PATH/$p" ]
             then
                 pp="$MOD_PATH/$p"
