@@ -138,7 +138,8 @@ MultiResolutionFlowHFSolver::MultiResolutionFlowHFSolver( const string & name,
 
 }
 
-void MultiResolutionFlowHFSolver::buildBaseToPatchMaps(const MeshLevel & base, const MeshLevel & patch)
+void MultiResolutionFlowHFSolver::buildBaseToPatchMaps(const MeshLevel & base, 
+                                                       const MeshLevel & patch)
 {
   //need to get base and patch elem managers
   ElementRegionManager const & baseElemManager  = base.getElemManager();
@@ -337,8 +338,8 @@ MultiResolutionFlowHFSolver::~MultiResolutionFlowHFSolver()
 }
 
 void MultiResolutionFlowHFSolver::implicitStepSetup( real64 const & time_n,
-                                                 real64 const & dt,
-                                                 DomainPartition & domain )
+                                                     real64 const & dt,
+                                                     DomainPartition & domain )
 {
   m_baseSolver->implicitStepSetup( time_n, dt, domain );
   m_patchSolver->implicitStepSetup( time_n, dt, domain );
@@ -361,9 +362,9 @@ void MultiResolutionFlowHFSolver::resetStateToBeginningOfStep( DomainPartition &
 }
 
 real64 MultiResolutionFlowHFSolver::solverStep( real64 const & time_n,
-                                            real64 const & dt,
-                                            int const cycleNumber,
-                                            DomainPartition & domain )
+                                                real64 const & dt,
+                                                int const cycleNumber,
+                                                DomainPartition & domain )
 {
   real64 dtReturn = dt;
   dtReturn = splitOperatorStep( time_n, dt, cycleNumber, domain );
@@ -373,9 +374,9 @@ real64 MultiResolutionFlowHFSolver::solverStep( real64 const & time_n,
 // this function will loop over all subdomain nodes and check their distance to the prescribed discrete crack. If the
 // distance is smaller than 1 element size (subdomain), we set the damage in this node to be fixed at 1.
 void MultiResolutionFlowHFSolver::setInitialCrackDamageBCs( DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
-                                                        CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
-                                                        MeshLevel const & patch,
-                                                        MeshLevel const & GEOSX_UNUSED_PARAM(base) )
+                                                            CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
+                                                            MeshLevel const & patch,
+                                                            MeshLevel const & GEOSX_UNUSED_PARAM(base) )
 {
   GEOSX_MARK_FUNCTION;
   //ElementRegionManager const & baseElemManager = base.getElemManager();
@@ -410,8 +411,8 @@ void MultiResolutionFlowHFSolver::setInitialCrackDamageBCs( DofManager const & G
 }
 
 void MultiResolutionFlowHFSolver::findNewlyDamagedElements(SortedArray<localIndex> GEOSX_UNUSED_PARAM(toCutElems), 
-                                                       MeshLevel const & GEOSX_UNUSED_PARAM(base), 
-                                                       MeshLevel const & GEOSX_UNUSED_PARAM(patch))
+                                                           MeshLevel const & GEOSX_UNUSED_PARAM(base), 
+                                                           MeshLevel const & GEOSX_UNUSED_PARAM(patch))
 {
   //loop over all coarse elements - meshLevel base
   // baseElementManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
@@ -495,7 +496,7 @@ void MultiResolutionFlowHFSolver::findPhaseFieldTip( R1Tensor & tip,
 
 //The function prepares a list of dofs and u values that will be used by the patch solver to set the boundary conditions
 void MultiResolutionFlowHFSolver::prepareSubProblemBCs( MeshLevel const & base,
-                                                    MeshLevel & patch )
+                                                        MeshLevel & patch )
 {
   GEOSX_MARK_FUNCTION;
   m_nodeFixDisp.zero();
@@ -594,6 +595,14 @@ void MultiResolutionFlowHFSolver::testElemMappingBaseToPatch( MeshLevel & base,
         globalIndex K = cellElementSubRegion.localToGlobalMap()[k];
         for(auto fineElem:m_baseToPatchElementRelation[K])
         {
+          // try{
+          //   localIndex fineElemLocal = patchElementSubRegion.globalToLocalMap().at(fineElem);
+          //   coarseToFineMap[0][0][fineElemLocal] = K;   
+          //   throw;
+          // }
+          // catch (...){
+          //   std::cout<<"rank "<<MpiWrapper::commRank( MPI_COMM_GEOSX )<<" failed in globalToLocalMap at patchElementSubRegion "<<fineElem<<std::endl;
+          // }  
           localIndex fineElemLocal = patchElementSubRegion.globalToLocalMap().at(fineElem);
           coarseToFineMap[0][0][fineElemLocal] = K;          
         }
@@ -605,7 +614,7 @@ void MultiResolutionFlowHFSolver::testElemMappingBaseToPatch( MeshLevel & base,
 
 
 real64 MultiResolutionFlowHFSolver::utilGetElemAverageDamage(globalIndex const patchElemNum,
-                                                         MeshLevel const & patch)
+                                                             MeshLevel const & patch)
 {
 
     ElementRegionManager const & elemManager = patch.getElemManager();
@@ -638,7 +647,6 @@ real64 MultiResolutionFlowHFSolver::utilGetElemAverageDamage(globalIndex const p
     for( localIndex q=0; q<numQuadraturePointsPerElem; q++ )
     {
       //get damage at quadrature point i
-      //std::cout<<"this rank is: "<<MpiWrapper::commRank( MPI_COMM_GEOSX )<<" patchElemNum is: "<<patchElemNum<<std::endl;
       average_d = average_d + qp_damage( subRegion.globalToLocalMap().at(patchElemNum), q )/8.0;
     }
     //GEOSX_LOG_LEVEL( 2, "after damage call\n" );
@@ -701,7 +709,7 @@ void MultiResolutionFlowHFSolver::initializeCrackFront( MeshLevel & base )
 }                                                   
 
 void MultiResolutionFlowHFSolver::cutDamagedElements( MeshLevel & base,
-                                                  MeshLevel const & patch )
+                                                      MeshLevel const & patch )
 {
 
   EmbeddedSurfaceGenerator &
@@ -741,9 +749,6 @@ void MultiResolutionFlowHFSolver::cutDamagedElements( MeshLevel & base,
 
   for(auto && elem:baseFrontCopy)
   {
-    // if(ghostRank[elem]>=0){
-    //   continue;
-    // }
     //PARALLEL: split the work to the right rank
     localIndex triplet[3];
     integer fracCount = 0;
@@ -783,35 +788,6 @@ void MultiResolutionFlowHFSolver::cutDamagedElements( MeshLevel & base,
   m_addedFractureElements = efemGenerator.propagationStep3D();
   initializeCrackFront(base);
 
-  //SortedArray<localIndex> const & toCutList = efemGenerator.getCutList();
-  // for (auto elem:toCutList)
-  // {
-  //   //add non-fractured neighbors to fron
-  //   for(auto && face:elemToFaceList[elem])
-  //   {
-  //     if(pow(faceNormals[face][1],2) + pow(faceNormals[face][2],2) < 1e-6) //remove faces with normal pointing in x direction
-  //     {
-  //       continue; //these faces dont contain fractures
-  //     }
-  //     for(auto && neighbor:faceToElemList[face])
-  //     {
-  //       if(neighbor == elem){
-  //         continue;
-  //       }
-  //       if(!fracturedElements.contains(neighbor) && !m_baseCrackFront.contains(neighbor) && neighbor > -1)
-  //       {
-  //         GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << neighbor << " being added to front "<<"\n" );
-  //         m_baseCrackFront.insert(neighbor);
-  //         frontIndicator[0][0][neighbor] = 1;
-  //       }
-  //     }
-  //   }
-  //   //remove from front
-  //   GEOSX_LOG_LEVEL_RANK_0( 1, "base element " << elem << " removed from front "<<"\n" );
-  //   m_baseCrackFront.remove(elem);
-  //   frontIndicator[0][0][elem] = 0;
-  // }
-
   efemGenerator.emptyCutList();
 
   MpiWrapper::barrier();
@@ -822,19 +798,12 @@ void MultiResolutionFlowHFSolver::writeBasePressuresToPatch(MeshLevel & base,
                                                             MeshLevel & patch)
 {
   using namespace fields::flow;
-        //register fake pressures for testing purposes
-        // elementSubRegion.template registerWrapper< array1d< real64 > >( "hardCodedPMatrixName" ).
-        //   setPlotLevel( PlotLevel::LEVEL_1 ).
-        //   setDescription( "matrix pressure field for testing purposes only" );
-        // elementSubRegion.template registerWrapper< array1d< real64 > >( "hardCodedPFractureName" ).
-        //   setPlotLevel( PlotLevel::LEVEL_1 ).
-        //   setDescription( "fracture pressure field for testing purposes only" );
+
   ElementRegionManager & patchElemManager = patch.getElemManager();
 
   ElementRegionManager & baseElemManager = base.getElemManager();
 
   // Hard-coded region and subRegion
-  std::cout<<"entering WRITE PRESSURES TO PATCH FUNCTION"<<std::endl; 
   ElementRegionBase const & baseMatrixElementRegion = baseElemManager.getRegion( 0 );
   ElementRegionBase const & baseFractureElementRegion = baseElemManager.getRegion( 1 );
   CellElementSubRegion const & patchSubRegion = patchElemManager.getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
@@ -848,18 +817,6 @@ void MultiResolutionFlowHFSolver::writeBasePressuresToPatch(MeshLevel & base,
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const patchFracturePressure =
   patchElemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "hardCodedPFractureName" );
 
-  //get all mesh quantities
-  MeshManager & meshManager = this->getGroupByPath< MeshManager >( "/Problem/Mesh");
-  integer Nx = meshManager.getGroup<InternalMeshGenerator>(0).getNx();
-  integer Ny = meshManager.getGroup<InternalMeshGenerator>(0).getNy();
-  integer Nz = meshManager.getGroup<InternalMeshGenerator>(0).getNz();
-  integer nx = meshManager.getGroup<InternalMeshGenerator>(1).getNx();
-  integer ny = meshManager.getGroup<InternalMeshGenerator>(1).getNy();
-  integer nz = meshManager.getGroup<InternalMeshGenerator>(1).getNz();
-  localIndex rx=nx/Nx;
-  localIndex ry=ny/Ny;
-  localIndex rz=nz/Nz;
-
   //get fields from SinglePhaseFlow problem (or maybe multiphase later)
   arrayView1d< real64 const > const baseMatrixPressure = baseMatrixSubRegion.getField< fields::flow::pressure >();
 
@@ -871,7 +828,6 @@ void MultiResolutionFlowHFSolver::writeBasePressuresToPatch(MeshLevel & base,
   //allgather fracture cell centers and pressure values - be careful with ghosts
   //get cell centers of all fracture elements
   arrayView2d< const real64 > allFracElemCenters = baseFractureSubRegion.getElementCenter();
-
   array2d< real64 > toSend(baseFractureSubRegion.size(),4);
   forAll< serialPolicy >(baseFractureSubRegion.size(), [&] (localIndex const k)
   {
@@ -884,7 +840,6 @@ void MultiResolutionFlowHFSolver::writeBasePressuresToPatch(MeshLevel & base,
   });
   // Exchange the sizes of the data across all ranks.
   array1d< int > dataSizes( MpiWrapper::commSize() );
-  std::cout<<"before allGather call in WRITE_PRESSURES_TO_PATCH"<<std::endl;
   MpiWrapper::allGather( LvArray::integerConversion< int >( toSend.size(0)*toSend.size(1) ), dataSizes, MPI_COMM_GEOSX );
 
   int const totalDataSize = std::accumulate( dataSizes.begin(), dataSizes.end(), 0 );
@@ -892,7 +847,6 @@ void MultiResolutionFlowHFSolver::writeBasePressuresToPatch(MeshLevel & base,
   array2d<real64> allData( totalDataSize/4, 4 );
   std::vector< int > mpiDisplacements( MpiWrapper::commSize(), 0 );
   std::partial_sum( dataSizes.begin(), dataSizes.end() - 1, mpiDisplacements.begin() + 1 );
-  std::cout<<"before allgatherv call in WRITE_PRESSURES_TO_PATCH"<<std::endl;
   MpiWrapper::allgatherv( toSend.data(), 
                           toSend.size(0)*toSend.size(1), 
                           allData.data(),
@@ -900,49 +854,53 @@ void MultiResolutionFlowHFSolver::writeBasePressuresToPatch(MeshLevel & base,
                           mpiDisplacements.data(), 
                           MPI_COMM_GEOSX );                         
   arrayView2d< const real64 > patchElemCenters = patchElemManager.getRegion(0).getSubRegion< CellElementSubRegion >(0).getElementCenter();
-  std::cout<<"before forAll loop in WRITE_PRESSURES_TO_PATCH"<<std::endl;
+  arrayView1d< integer const > const & patchGhostRank = patchSubRegion.ghostRank();
   forAll< serialPolicy >( patchSubRegion.size(), [&] ( localIndex const k )
   {
     //convert patch element index to base - first convert patch to global index
     //this probably needs to be done at ghosts or require a sync operation at the end
-    globalIndex K = patchSubRegion.localToGlobalMap()[k];
-    globalIndex baseK = fineToCoarseStructuredElemMap(K,Nx,Ny,Nz,rx,ry,rz);
-    localIndex basek = 0;
-    try{
+    if(patchGhostRank[k]<0){
+      globalIndex K = patchSubRegion.localToGlobalMap()[k];
+      globalIndex baseK = m_patchToBaseElementRelation[K];
+      //globalIndex baseK = fineToCoarseStructuredElemMap(K,Nx,Ny,Nz,rx,ry,rz);
+      localIndex basek = 0;
       basek = baseMatrixSubRegion.globalToLocalMap().at(baseK);
-      throw;
-    }
-    catch (...){
-      std::cout<<"rank "<<MpiWrapper::commRank( MPI_COMM_GEOSX )<<" failed in globalToLocalMap at baseGlobalElement "<<baseK<<std::endl;
-    }
+      // try{
+      //   basek = baseMatrixSubRegion.globalToLocalMap().at(baseK);
+      //   throw;
+      // }
+      // catch (...){
+      //   std::cout<<"rank "<<MpiWrapper::commRank( MPI_COMM_GEOSX )<<" failed in globalToLocalMap at baseGlobalElement "<<baseK<<std::endl;
+      // }
+      patchMatrixPressure[0][0][k] = baseMatrixPressure[basek];
 
-    patchMatrixPressure[0][0][k] = baseMatrixPressure[basek];
-
-    R1Tensor patchElemCenter;
-    patchElemCenter[0] = patchElemCenters[k][0];
-    patchElemCenter[1] = patchElemCenters[k][1];
-    patchElemCenter[2] = patchElemCenters[k][2];
-    localIndex minIndex = 0;
-    real64 minDist = 1.0e20;
-    for(localIndex j=0; j<allData.size(0); j++)
-    {
-      R1Tensor currFracElemCenter;
-      currFracElemCenter[0] = allData[j][0];
-      currFracElemCenter[1] = allData[j][1];
-      currFracElemCenter[2] = allData[j][2];
-      
-      R1Tensor centerCopy = LVARRAY_TENSOROPS_INIT_LOCAL_3( patchElemCenter );
-      LvArray::tensorOps::subtract< 3 >( centerCopy, currFracElemCenter );
-      real64 dist = LvArray::tensorOps::l2Norm< 3 >( centerCopy );
-      if(dist < minDist){
-        minDist = dist;
-        minIndex = j;
+      R1Tensor patchElemCenter;
+      patchElemCenter[0] = patchElemCenters[k][0];
+      patchElemCenter[1] = patchElemCenters[k][1];
+      patchElemCenter[2] = patchElemCenters[k][2];
+      localIndex minIndex = 0;
+      real64 minDist = 1.0e20;
+      for(localIndex j=0; j<allData.size(0); j++)
+      {
+        R1Tensor currFracElemCenter;
+        currFracElemCenter[0] = allData[j][0];
+        currFracElemCenter[1] = allData[j][1];
+        currFracElemCenter[2] = allData[j][2];
+        
+        R1Tensor centerCopy = LVARRAY_TENSOROPS_INIT_LOCAL_3( patchElemCenter );
+        LvArray::tensorOps::subtract< 3 >( centerCopy, currFracElemCenter );
+        real64 dist = LvArray::tensorOps::l2Norm< 3 >( centerCopy );
+        if(dist < minDist){
+          minDist = dist;
+          minIndex = j;
+        }
       }
-    }
-    if(k==1){
-      std::cout<<"P_f copied from base: "<<allData[minIndex][3]<<std::endl;
-    }
-    patchFracturePressure[0][0][k] = allData[minIndex][3]; //TODO: needs to find closest fracture cell from base
+
+      if(k==1){
+        std::cout<<"P_f copied from base: "<<allData[minIndex][3]<<std::endl;
+      }
+      patchFracturePressure[0][0][k] = allData[minIndex][3];
+    } //TODO: needs to find closest fracture cell from base
   } );
       
 }
@@ -1052,7 +1010,6 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
       break;  
     }
 
-    std::cout<<"base solver, time_n: "<<time_n<<" dt: "<<dtReturn<<" cycleNumber: "<<cycleNumber<<std::endl;
     dtReturnTemporary = baseSolver.nonlinearImplicitStep( time_n,
                                                           dtReturn,
                                                           cycleNumber,

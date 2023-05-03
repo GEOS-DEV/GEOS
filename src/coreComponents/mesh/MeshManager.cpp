@@ -156,12 +156,10 @@ void MeshManager::importFields( DomainPartition & domain )
           generator.importFieldsOnArray( subRegion.getName(), meshFieldName, isMaterialField, wrapper );
         }
       } );
-      std::cout<<"stuck"<<std::endl;
       CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, meshLevel, domain.getNeighbors(), false );
     } );
     generator.freeResources();
   } );
-  std::cout<<"leaving meshManager"<<std::endl;
 }
 
 } /* namespace geosx */
