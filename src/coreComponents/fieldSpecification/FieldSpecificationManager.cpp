@@ -164,8 +164,9 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       {
         missingSetNames.emplace_back( mapEntry.first );
       }
-      GEOS_THROW( GEOS_FMT( "\n{}: there is/are no set(s) named `{}` under the {} `{}`, check the XML input\n",
-                            fs.getName(), fmt::join( missingSetNames, ", " ), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() ),
+      GEOS_THROW( GEOS_FMT( "\n{0}: there is/are no set(s) named `{1}` under the {2} `{3}`, check the XML input\n",
+                            fs.getDataContext(), fmt::join( missingSetNames, ", " ), 
+                            FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() ),
                   InputError );
     }
 
@@ -174,21 +175,19 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     for( auto const & mapEntry : isTargetSetEmpty )
     {
       GEOS_LOG_RANK_0_IF( mapEntry.second == 1, // target set is empty
-                          GEOS_FMT( "\nWarning!"
-                                    "\n{}: this FieldSpecification targets (an) empty set(s)"
-                                    "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`. \n",
-                                    fs.getName(), mapEntry.first,
-                                    fs.getObjectPath(), fs.getObjectPath(), fs.getObjectPath(), fs.getObjectPath() ) );
+                          GEOS_FMT( "\nWarning!\n{0}: this FieldSpecification targets (an) empty set(s)"
+                                    "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{1}` in `{2}`. \n",
+                                    fs.getDataContext(), mapEntry.first, fs.getObjectPath() ) );
     }
 
     if( isFieldNameFound == 0 )
     {
       char const fieldNameNotFoundMessage[] =
-        "\n{}: there is no {} named `{}` under the {} `{}`, check the XML input\n";
+        "\n{0}: there is no {1} named `{2}` under the {3} `{4}`, check the XML input\n";
       string const errorMsg =
         GEOS_FMT( fieldNameNotFoundMessage,
-                  fs.getName(), FieldSpecificationBase::viewKeyStruct::fieldNameString(), fs.getFieldName(),
-                  FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath(), fs.getFieldName() );
+                  fs.getDataContext(), FieldSpecificationBase::viewKeyStruct::fieldNameString(),
+                  fs.getFieldName(), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
       if( areAllSetsEmpty )
       {
         GEOS_LOG_RANK_0( errorMsg );
