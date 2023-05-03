@@ -77,8 +77,9 @@ void createHypreGMRES( LinearSolverParameters const & params,
   GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetTol( solver.ptr, params.krylov.relTolerance ) );
 
   // Default for now
-  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetPrintLevel( solver.ptr, params.logLevel ) ); // print iteration info
-  //GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetPrintLevel( solver, 0 ) ); // print iteration info
+  HYPRE_Int logLevel = (params.logLevel >= 3) ? 1 : 0;
+
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetPrintLevel( solver.ptr, logLevel ) ); // print iteration info
   GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetLogging( solver.ptr, 1 ) ); /* needed to get run info later */
 
   solver.setPrecond = HYPRE_ParCSRGMRESSetPrecond;
@@ -99,8 +100,9 @@ void createHypreFlexGMRES( LinearSolverParameters const & params,
   GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetTol( solver.ptr, params.krylov.relTolerance ) );
 
   // Default for now
-  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetPrintLevel( solver.ptr, params.logLevel ) ); // print iteration info
-  //GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetPrintLevel( solver, 0 ) ); // print iteration info
+  HYPRE_Int logLevel = (params.logLevel >= 3) ? 2 : 0;
+
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetPrintLevel( solver.ptr, logLevel ) ); // print iteration info
   GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetLogging( solver.ptr, 1 ) ); /* needed to get run info later */
 
   solver.setPrecond = HYPRE_ParCSRFlexGMRESSetPrecond;
@@ -120,7 +122,9 @@ void createHypreBiCGSTAB( LinearSolverParameters const & params,
   GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetTol( solver.ptr, params.krylov.relTolerance ) );
 
   // Default for now
-  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetPrintLevel( solver.ptr, params.logLevel ) ); // print iteration info
+  HYPRE_Int logLevel = (params.logLevel >= 3) ? 1 : 0;
+
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetPrintLevel( solver.ptr, logLevel ) ); // print iteration info
   GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetLogging( solver.ptr, 1 ) ); // needed to get run info later
 
   solver.setPrecond = HYPRE_ParCSRBiCGSTABSetPrecond;
@@ -140,7 +144,9 @@ void createHypreCG( LinearSolverParameters const & params,
   GEOS_LAI_CHECK_ERROR( HYPRE_PCGSetTol( solver.ptr, params.krylov.relTolerance ) );
 
   // Default for now
-  GEOS_LAI_CHECK_ERROR( HYPRE_PCGSetPrintLevel( solver.ptr, params.logLevel ) ); /* print the iteration info */
+  HYPRE_Int logLevel = (params.logLevel >= 3) ? 1 : 0;
+
+  GEOS_LAI_CHECK_ERROR( HYPRE_PCGSetPrintLevel( solver.ptr, logLevel ) ); /* print the iteration info */
   GEOS_LAI_CHECK_ERROR( HYPRE_PCGSetLogging( solver.ptr, 1 ) );    /* needed to get run info later */
   GEOS_LAI_CHECK_ERROR( HYPRE_PCGSetTwoNorm( solver.ptr, 1 ) );    /* use the two norm as the stopping criteria */
 

@@ -201,7 +201,6 @@ MeshLevel::MeshLevel( string const & name,
     {
       allNodes.insert( a );
     }
-
   }
 
 

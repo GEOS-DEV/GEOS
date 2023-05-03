@@ -374,6 +374,8 @@ void HypreMatrix::add( globalIndex const rowIndex,
                        real64 const * values,
                        localIndex size )
 {
+  GEOS_MARK_FUNCTION;
+
   GEOS_LAI_ASSERT( modifiable() );
 
   HYPRE_Int ncols = LvArray::integerConversion< HYPRE_Int >( size );
@@ -390,6 +392,8 @@ void HypreMatrix::set( globalIndex const rowIndex,
                        real64 const * values,
                        localIndex size )
 {
+  GEOS_MARK_FUNCTION;
+
   GEOS_LAI_ASSERT( modifiable() );
   GEOS_LAI_ASSERT_GE( rowIndex, ilower() );
   GEOS_LAI_ASSERT_GT( iupper(), rowIndex );
@@ -408,6 +412,8 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
                           real64 const * values,
                           localIndex size )
 {
+  GEOS_MARK_FUNCTION;
+
   GEOS_LAI_ASSERT( insertable() );
 
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
@@ -440,6 +446,8 @@ void HypreMatrix::add( globalIndex const rowIndex,
                        arraySlice1d< globalIndex const > const & colIndices,
                        arraySlice1d< real64 const > const & values )
 {
+  GEOS_MARK_FUNCTION;
+
   GEOS_LAI_ASSERT( modifiable() );
 
   HYPRE_Int ncols = LvArray::integerConversion< HYPRE_Int >( colIndices.size() );
@@ -455,6 +463,8 @@ void HypreMatrix::set( globalIndex const rowIndex,
                        arraySlice1d< globalIndex const > const & colIndices,
                        arraySlice1d< real64 const > const & values )
 {
+  GEOS_MARK_FUNCTION;
+
   GEOS_LAI_ASSERT( modifiable() );
   GEOS_LAI_ASSERT_GE( rowIndex, ilower() );
   GEOS_LAI_ASSERT_GT( iupper(), rowIndex );
@@ -472,6 +482,8 @@ void HypreMatrix::insert( globalIndex const rowIndex,
                           arraySlice1d< globalIndex const > const & colIndices,
                           arraySlice1d< real64 const > const & values )
 {
+  GEOS_MARK_FUNCTION;
+
   GEOS_LAI_ASSERT( insertable() );
 
   HYPRE_Int ncols = LvArray::integerConversion< HYPRE_Int >( colIndices.size() );
@@ -553,6 +565,8 @@ void HypreMatrix::insert( arrayView1d< globalIndex const > const & rowIndices,
                           arrayView1d< globalIndex const > const & colIndices,
                           arrayView1d< real64 const > const & values )
 {
+  GEOS_MARK_FUNCTION;
+
   GEOS_LAI_ASSERT_EQ( rowIndices.size(), colIndices.size() );
   GEOS_LAI_ASSERT_GE( rowIndices.size(), values.size() );
 
@@ -825,6 +839,7 @@ void HypreMatrix::rescaleRows( arrayView1d< globalIndex const > const & rowIndic
 void HypreMatrix::separateComponentFilter( HypreMatrix & dst,
                                            integer const dofsPerNode ) const
 {
+  GEOS_MARK_FUNCTION;
 
   localIndex const maxRowEntries = maxRowLength();
   integer const temp = maxRowEntries % dofsPerNode;
