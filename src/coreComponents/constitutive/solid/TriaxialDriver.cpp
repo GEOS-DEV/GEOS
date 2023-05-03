@@ -75,7 +75,7 @@ void TriaxialDriver::postProcessInput()
 {
 
   GEOS_THROW_IF( m_mode != "stressControl" && m_mode != "strainControl" && m_mode != "mixedControl",
-                 "Test mode \'" << m_mode << "\' not recognized.",
+                 getDataContext() << ": Test mode \'" << m_mode << "\' not recognized.",
                  InputError );
 
   // initialize table functions
@@ -147,11 +147,11 @@ void TriaxialDriver::postProcessInput()
   // may overwrite it.
 
   GEOS_THROW_IF( !isEqual( m_initialStress, m_table( 0, SIG0 ), 1e-6 ),
-                 "Initial stress values indicated by initialStress and axialFunction(time=0) appear inconsistent",
+                 getDataContext() << ": Initial stress values indicated by initialStress and axialFunction(time=0) appear inconsistent",
                  InputError );
 
   GEOS_THROW_IF( !isEqual( m_initialStress, m_table( 0, SIG1 ), 1e-6 ),
-                 "Initial stress values indicated by initialStress and radialFunction(time=0) appear inconsistent",
+                 getDataContext() << ": Initial stress values indicated by initialStress and radialFunction(time=0) appear inconsistent",
                  InputError );
 }
 

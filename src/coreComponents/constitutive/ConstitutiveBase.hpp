@@ -85,9 +85,14 @@ public:
 
   /**
    * @brief Get full name of the model.
-   * @return full name, consisting of XML (catalog) name and actual model name
+   * @return full name, consisting of XML (catalog) name and actual model name, and if possible
+   * followed by the xml file and line.
    */
-  string getFullName() const { return getCatalogName() + " " + getName(); }
+  string getFullName() const
+  {
+    return getCatalogName() + " " +
+           ( getDataContext().isDataFileContext() ? getDataContext().toString() : getName() );
+  }
 
   ///@}
 
