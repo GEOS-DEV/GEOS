@@ -40,6 +40,9 @@ set(YAPF_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/pyt
 # Sphinx
 set(SPHINX_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/python/bin/sphinx-build CACHE PATH "" FORCE)
 
+
+set(ENABLE_FESAPI OFF CACHE BOOL "" FORCE)
+
 # MKL
 set(ENABLE_MKL ON CACHE BOOL "")
 set(MKL_ROOT /usr/tce/packages/mkl/mkl-2022.1.0)
