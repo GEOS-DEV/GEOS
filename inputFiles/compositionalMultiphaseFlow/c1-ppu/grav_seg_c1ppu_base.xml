@@ -34,7 +34,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="fluidTPFA"
-        useC1PPU="1"
+        upwindingScheme="C1PPU"
         epsC1PPU="1e-8"/>
     </FiniteVolume>
   </NumericalMethods>

@@ -40,6 +40,7 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
+#include "finiteVolume/FluxApproximationBase.hpp"
 
 namespace geos
 {
@@ -436,7 +437,7 @@ public:
   FaceBasedAssemblyKernel( integer const numPhases,
                            globalIndex const rankOffset,
                            integer const hasCapPressure,
-                           integer const useC1PPU,
+                           UpwindingScheme const upwindingScheme,
                            real64 const epsC1PPU,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
@@ -462,7 +463,7 @@ public:
     m_seri( stencilWrapper.getElementRegionIndices() ),
     m_sesri( stencilWrapper.getElementSubRegionIndices() ),
     m_sei( stencilWrapper.getElementIndices() ),
-    m_useC1PPU( useC1PPU ),
+    m_upwindingScheme( upwindingScheme ),
     m_epsC1PPU( epsC1PPU )
   {}
 
@@ -723,9 +724,9 @@ public:
 
           // C1PPU
           // see https://doi.org/10.1016/j.advwatres.2017.07.028
-          if( m_useC1PPU > 0 && m_epsC1PPU > 0 )
+          if( m_upwindingScheme == UpwindingScheme::C1PPU && m_epsC1PPU > 0 )
           {
-            GEOS_ASSERT( numFluxSupportPoints == 2 );
+            // assuming TPFA in the code below
 
             real64 const mobility_i = m_phaseMob[seri[0]][sesri[0]][sei[0]][ip];
             real64 const mobility_j = m_phaseMob[seri[1]][sesri[1]][sei[1]][ip];
@@ -991,8 +992,8 @@ protected:
   typename STENCILWRAPPER::IndexContainerViewConstType const m_sesri;
   typename STENCILWRAPPER::IndexContainerViewConstType const m_sei;
 
-  /// Flag to specify whether use C1-PPU or not
-  integer const m_useC1PPU;
+  /// Upwinding scheme
+  UpwindingScheme m_upwindingScheme;
 
   /// Tolerance for C1-PPU smoothing
   real64 const m_epsC1PPU;
@@ -1028,8 +1029,7 @@ public:
                    globalIndex const rankOffset,
                    string const & dofKey,
                    integer const hasCapPressure,
-                   integer const useC1PPU,
-                   real64 const epsC1PPU,
+                   UpwindingParameters upwindingParams,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
@@ -1052,7 +1052,7 @@ public:
       typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
       typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
-      kernelType kernel( numPhases, rankOffset, hasCapPressure, useC1PPU, epsC1PPU, stencilWrapper, dofNumberAccessor,
+      kernelType kernel( numPhases, rankOffset, hasCapPressure, upwindingParams.upwindingScheme, upwindingParams.epsC1PPU, stencilWrapper, dofNumberAccessor,
                          compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
                          dt, localMatrix, localRhs );
       kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
@@ -1154,8 +1154,8 @@ public:
     : Base( numPhases,
             rankOffset,
             hasCapPressure,
-            0,      // no C1-PPU
-            0.0,    //
+            UpwindingScheme::PPU,  // no
+            0.0,                   // C1-PPU
             stencilWrapper,
             dofNumberAccessor,
             compFlowAccessors,

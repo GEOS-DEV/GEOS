@@ -257,8 +257,8 @@ public:
     : Base( numPhases,
             rankOffset,
             hasCapPressure,
-            0,    // no C1-PPU
-            0.0,  //
+            UpwindingScheme::PPU, // no
+            0.0,                  // C1-PPU
             stencilWrapper,
             dofNumberAccessor,
             compFlowAccessors,

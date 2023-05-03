@@ -51,11 +51,13 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
     setApplyDefaultValue( 1.0e-8 ).
     setDescription( "Relative tolerance for area calculations." );
 
-  this->registerWrapper( viewKeyStruct::useC1PPUString(), &m_useC1PPU ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Use C1-PPU flux" );
-  this->registerWrapper( viewKeyStruct::epsC1PPUString(), &m_epsC1PPU ).
+  registerWrapper( viewKeyStruct::upwindingSchemeString(), &m_upwindingParams.upwindingScheme ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setApplyDefaultValue( UpwindingScheme::PPU ).
+    setDescription( "Type of upwinding scheme. "
+                    "Valid options:\n* " + EnumStrings< UpwindingScheme >::concat( "\n* " ) );
+
+  registerWrapper( viewKeyStruct::epsC1PPUString(), &m_upwindingParams.epsC1PPU ).
     setApplyDefaultValue( 1e-10 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Tolerance for C1-PPU smoothing" );

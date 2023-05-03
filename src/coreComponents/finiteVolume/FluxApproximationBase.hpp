@@ -31,6 +31,25 @@
 namespace geos
 {
 
+enum class UpwindingScheme : integer
+{
+  PPU,    ///< PPU upwinding
+  C1PPU,  ///< C1-PPU upwinding from https://doi.org/10.1016/j.advwatres.2017.07.028
+};
+
+ENUM_STRINGS( UpwindingScheme,
+              "PPU",
+              "C1PPU" );
+
+struct UpwindingParameters
+{
+  /// PPU or C1-PPU
+  UpwindingScheme upwindingScheme;
+
+  /// C1-PPU smoothing tolerance
+  real64 epsC1PPU;
+};
+
 /**
  * @class FluxApproximationBase
  *
@@ -143,8 +162,8 @@ public:
     /// @return The key for fractureStencil
     static constexpr char const * fractureStencilString() { return "fractureStencil"; }
 
-    /// @return The key for useC1PPU
-    static constexpr char const * useC1PPUString() { return "useC1PPU"; }
+    /// @return The key for upwindingScheme
+    static constexpr char const * upwindingSchemeString() { return "upwindingScheme"; }
 
     /// @return The key for epsC1PPU
     static constexpr char const * epsC1PPUString() { return "epsC1PPU"; }
@@ -179,8 +198,7 @@ public:
    */
   void setCoeffName( string const & name );
 
-  integer useC1PPU() const { return m_useC1PPU; }
-  real64 epsC1PPU() const { return m_epsC1PPU; }
+  UpwindingParameters const & upwindingParams() const { return m_upwindingParams; }
 
 protected:
 
@@ -265,11 +283,8 @@ protected:
   /// length scale of the mesh body
   real64 m_lengthScale;
 
-  /// flag indicating whether C1-PPU scheme should be used
-  integer m_useC1PPU;
-
-  /// C1-PPU smoothing tolerance
-  real64 m_epsC1PPU;
+  /// upwinding parameters
+  UpwindingParameters m_upwindingParams;
 
 };
 
