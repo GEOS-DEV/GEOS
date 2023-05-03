@@ -93,7 +93,7 @@ localIndex AcousticWaveEquationSEM::getNumNodesPerElem()
   FiniteElementDiscretization const * const
   feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
   GEOS_THROW_IF( feDiscretization == nullptr,
-                 getName() << ": FE discretization not found: " << m_discretizationName,
+                 getWrapperDataContext( viewKeyStruct::discretizationString() ) << ": FE discretization " << m_discretizationName << " not found.",
                  InputError );
 
   localIndex numNodesPerElem = 0;
@@ -197,10 +197,12 @@ void AcousticWaveEquationSEM::postProcessInput()
 
   WaveSolverBase::postProcessInput();
   GEOS_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
+                 getWrapperDataContext( viewKeyStruct::sourceCoordinatesString() ) <<
                  "Invalid number of physical coordinates for the sources",
                  InputError );
 
   GEOS_THROW_IF( m_receiverCoordinates.size( 1 ) != 3,
+                 getWrapperDataContext( viewKeyStruct::receiverCoordinatesString() ) <<
                  "Invalid number of physical coordinates for the receivers",
                  InputError );
 
@@ -216,7 +218,10 @@ void AcousticWaveEquationSEM::postProcessInput()
     }
   }
 
-  GEOS_THROW_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
+  GEOS_THROW_IF( dt < epsilonLoc*maxTime,
+                 getDataContext() << ": Value for dt (" << dt <<
+                 ") is smaller than local threshold (" << epsilonLoc << ").",
+                 std::runtime_error );
 
   if( m_dtSeismoTrace > 0 )
   {
@@ -286,7 +291,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
                                                                                         CellElementSubRegion & elementSubRegion )
   {
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
-                   "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
+                   getDataContext() << ": Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
                    InputError );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
@@ -339,7 +344,9 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNum
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
   arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
 
-  GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
+  GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ),
+                 getDataContext() << ": Too many steps compared to array size",
+                 std::runtime_error );
   forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsAccessible[isrc] == 1 )
@@ -919,12 +926,12 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
         std::ofstream wf( fileName, std::ios::out | std::ios::binary );
         GEOS_THROW_IF( !wf,
-                       "Could not open file "<< fileName << " for writting",
+                       getDataContext() << ": Could not open file "<< fileName << " for writting",
                        InputError );
         wf.write( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
         wf.close( );
         GEOS_THROW_IF( !wf.good(),
-                       "An error occured while writting "<< fileName,
+                       getDataContext() << ": An error occured while writting "<< fileName,
                        InputError );
       }
 
@@ -979,7 +986,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         std::string fileName = GEOS_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
         std::ifstream wf( fileName, std::ios::in | std::ios::binary );
         GEOS_THROW_IF( !wf,
-                       "Could not open file "<< fileName << " for reading",
+                       getDataContext() << ": Could not open file "<< fileName << " for reading",
                        InputError );
         //std::string fileName = GEOS_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
         //const int fileDesc = open( fileName.c_str(), O_RDONLY | O_DIRECT );
