@@ -82,9 +82,11 @@ void createAMG( LinearSolverParameters const & params,
   GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &precond.ptr ) );
 
   // Hypre's parameters to use BoomerAMG as a preconditioner
+  HYPRE_Int logLevel = (params.logLevel == 2 || params.logLevel >= 4) ? 1 : 0;
+
   GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( precond.ptr, 0.0 ) );
   GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( precond.ptr, 1 ) );
-  GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( precond.ptr, LvArray::integerConversion< HYPRE_Int >( params.logLevel ) ) );;
+  GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( precond.ptr, logLevel ) );
   GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( precond.ptr, params.dofsPerNode ) );
 
   // Set maximum number of multigrid levels (default 25)
@@ -157,20 +159,30 @@ void createAMG( LinearSolverParameters const & params,
     }
   }
 
+  // Set relaxation weight
+  GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxWt( precond.ptr, params.amg.relaxWeight ) );
+
   // Coarsening options: Only PMIS is supported on GPU
   GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( precond.ptr, hypre::getAMGCoarseningType( params.amg.coarseningType ) ) );
 
-  // Interpolation options: Use options 3, 6, 14 or 15.
-  GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpType( precond.ptr, params.amg.interpolationType ) );
+  // Interpolation options
+  {
+    HYPRE_Int const interpType = hypre::getAMGInterpolationType( params.amg.interpolationType );
+
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpType( precond.ptr, interpType ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPMaxElmts( precond.ptr, params.amg.interpolationMaxNonZeros ) );
+  }
 
   GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( precond.ptr, params.amg.numFunctions ) );
 
-  if( params.amg.aggresiveNumLevels )
+  if( params.amg.aggressiveNumLevels )
   {
-    HYPRE_BoomerAMGSetAggNumLevels( precond.ptr, params.amg.aggresiveNumLevels ); // agg_num_levels = 1
-  }
+    HYPRE_Int const aggInterpType = hypre::getAMGAggressiveInterpolationType( params.amg.aggressiveInterpType );
 
-  HYPRE_BoomerAMGSetAggInterpType( precond.ptr, 5 ); // agg_interp_type = 5,7
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumPaths( precond.ptr, params.amg.aggressiveNumPaths ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( precond.ptr, params.amg.aggressiveNumLevels ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggInterpType( precond.ptr, aggInterpType ) );
+  }
 
   // Set coarsest level solver
   HYPRE_Int const coarseType = hypre::getAMGCoarseType( params.amg.coarseType );
@@ -326,6 +338,8 @@ void HyprePreconditioner::create( DofManager const * const dofManager )
 
 HypreMatrix const & HyprePreconditioner::setupPreconditioningMatrix( HypreMatrix const & mat )
 {
+  GEOS_MARK_FUNCTION;
+
   if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr && m_params.mgr.separateComponents )
   {
     GEOS_LAI_ASSERT_MSG( mat.dofManager() != nullptr, "MGR preconditioner requires a DofManager instance" );
@@ -355,6 +369,8 @@ HypreMatrix const & HyprePreconditioner::setupPreconditioningMatrix( HypreMatrix
 
 void HyprePreconditioner::setup( Matrix const & mat )
 {
+  GEOS_MARK_FUNCTION;
+
   if( !m_precond )
   {
     m_precond = std::make_unique< HyprePrecWrapper >();
