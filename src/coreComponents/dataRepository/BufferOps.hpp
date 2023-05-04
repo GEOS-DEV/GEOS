@@ -97,11 +97,15 @@ template< typename T_KEY, typename T_VAL, typename SORTED >
 constexpr bool is_map_host_packable_by_index< mapBase< T_KEY, T_VAL, SORTED > > = is_host_packable< T_KEY > &&
                                                                                   is_host_packable_by_index< T_VAL >;
 
+template< typename T >
+constexpr bool is_host_scalar_packable_v =  std::is_trivial< T >::value ||
+                                               std::is_arithmetic< T >::value;
+
 //------------------------------------------------------------------------------
 // Pack(buffer,var)
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T >
-typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
+typename std::enable_if< is_host_scalar_packable_v< T >, localIndex >::type
 Pack( buffer_unit_type * & buffer,
       T const & var );
 
@@ -237,7 +241,7 @@ PackByIndex( buffer_unit_type * & GEOS_UNUSED_PARAM( buffer ),
 // Unpack(buffer,var)
 //------------------------------------------------------------------------------
 template< typename T >
-typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
+typename std::enable_if< is_host_scalar_packable_v< T >, localIndex >::type
 Unpack( buffer_unit_type const * & buffer,
         T & var );
 

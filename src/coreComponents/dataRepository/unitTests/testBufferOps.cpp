@@ -46,9 +46,18 @@ TEST( testGeosxTraits, test_is_array_packable )
 }
 
 
-TEST( testGeosxTraits, test_is_packable_map )
+TEST( testGeosxTraits, test_is_host_packable_map )
 {
   static_assert( is_host_packable_map< map< string, int > >, "Should be true." );
   static_assert( is_host_packable_map< map< string, array1d< int > > >, "Should be true." );
   static_assert( !is_host_packable_map< map< string, std::pair< int, int > > >, "Should be false" );
+}
+
+TEST( testGeosxTraits, test_is_host_scalar_packable_v )
+{
+  static_assert( is_host_scalar_packable_v< int >, "Should be true." );
+  static_assert( is_host_scalar_packable_v< double >, "Should be true." );
+  static_assert( !is_host_scalar_packable_v< R1Tensor >, "Should be false" );
+  static_assert( !is_host_scalar_packable_v< string >, "Should be false" );
+  static_assert( !is_host_scalar_packable_v< array1d< double > >, "Should be false." );
 }

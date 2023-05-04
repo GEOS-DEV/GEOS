@@ -114,10 +114,10 @@
 /* #undef chai_VERSION */
 
 /// Version information for adiak
-#define adiak_VERSION ..
+/* #undef adiak_VERSION */
 
 /// Version information for caliper
-#define caliper_VERSION 2.8.0
+/* #undef caliper_VERSION */
 
 /// Version information for Metis
 #define METIS_VERSION 5.1.0
@@ -126,7 +126,7 @@
 #define PARAMETIS_VERSION 4.0.3
 
 /// Version information for scotch 
-#define scotch_VERSION 6.0.9
+/* #undef scotch_VERSION */
 
 /// Version information for superlu_dist
 #define superlu_dist_VERSION 6.3.0
@@ -141,7 +141,7 @@
 #define fmt_VERSION 8.0.1
 
 /// Version information for python
-#define Python3_VERSION 3.10.8
+/* #undef Python3_VERSION */
 
 /// Version information for CUDAToolkit
 /* #undef CUDAToolkit_VERSION */

@@ -125,6 +125,7 @@ public:
     }
     if( m_wrapperBase.isPackable() )
     {
+      parallelDeviceEvents events;
       EXPECT_EQ( m_wrapperBase.pack< false >( null, false, events ), value );
     }
   }
@@ -139,25 +140,27 @@ public:
     }
     if( m_wrapper.isPackable() )
     {
+      parallelDeviceEvents events;
       EXPECT_EQ( m_wrapper.packByIndex< false >( null, indices.toView(), false, events ), value );
     }
     if( m_wrapperBase.isPackable() )
     {
+      parallelDeviceEvents events;
       EXPECT_EQ( m_wrapperBase.packByIndex< false >( null, indices.toView(), false, events ), value );
     }
   }
 
   void testPack( localIndex size, buffer_unit_type * value )
   {
-    buffer_unit_type * null = NULL;
     if( m_wrapper.isPackable() )
     {
       parallelDeviceEvents events;
-      EXPECT_EQ( m_wrapper.pack< false >( null, false, events ), value );
+      EXPECT_EQ( m_wrapper.pack< false >( value, false, events ), size );
     }
     if( m_wrapperBase.isPackable() )
     {
-      EXPECT_EQ( m_wrapperBase.pack< false >( null, false, events ), value );
+      parallelDeviceEvents events;
+      EXPECT_EQ( m_wrapperBase.pack< false >( value, false, events ), size );
     }
   }
 

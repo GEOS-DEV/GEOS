@@ -823,7 +823,7 @@ private:
     {
       string name;
       unpackedSize += bufferOps::Unpack( buffer, name );
-      GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
+      GEOS_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
       unpackedSize += wrapperHelpers::UnpackDevice( buffer, referenceAsView(), events );
     }
     else
@@ -840,7 +840,7 @@ private:
     {
       string name;
       unpackedSize += bufferOps::Unpack( buffer, name );
-      GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
+      GEOS_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
     }
     unpackedSize += bufferOps::Unpack( buffer, *m_data );
     return unpackedSize;
@@ -876,7 +876,7 @@ private:
     {
       string name;
       unpackedSize += bufferOps::Unpack( buffer, name );
-      GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
+      GEOS_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
     }
     unpackedSize += wrapperHelpers::UnpackByIndex( buffer, *m_data, unpackIndices );
     return unpackedSize;
@@ -889,7 +889,7 @@ private:
     {
       string name;
       unpackedSize += bufferOps::Unpack( buffer, name );
-      GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
+      GEOS_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
       unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
     }
     else

@@ -31,7 +31,7 @@ namespace bufferOps
 {
 
 template< bool DO_PACKING, typename T >
-typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
+typename std::enable_if< is_host_scalar_packable_v< T >, localIndex >::type
 Pack( buffer_unit_type * & buffer, T const & var )
 {
   localIndex const sizeOfPackedChars = sizeof(T);
@@ -310,7 +310,7 @@ PackByIndex( buffer_unit_type * & buffer,
 // Unpack(buffer,var)
 //------------------------------------------------------------------------------
 template< typename T >
-typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
+typename std::enable_if< is_host_scalar_packable_v< T >, localIndex >::type
 Unpack( buffer_unit_type const * & buffer,
         T & var )
 {
