@@ -196,7 +196,7 @@
       setNames="{ all }"
       objectPath="ElementRegions"
       fieldName="pressure"
-      scale="3e5"/>
+      scale="2e6"/>
 
     <FieldSpecification
       name="initialTemperature"
@@ -211,7 +211,7 @@
       name="topPressure"
       objectPath="faceManager"
       fieldName="pressure"
-      scale="3e5"
+      scale="2e6"
       setNames="{ zpos }"
       logLevel="0"/>
 
@@ -234,24 +234,9 @@
       name="DriftTemperature"
       objectPath="ElementRegions/matrix"
       fieldName="temperature"
-      scale="294"
+      scale="291.65"
       setNames="{ Drift }"/>   
-
-    <!-- Face b.c. are not working for now. -->
-    <!-- <FieldSpecification
-      name="xposTemperature"
-      objectPath="faceManager"
-      fieldName="temperature"
-      functionName="temperatureField"
-      scale="1"
-      setNames="{ xpos }"/>
-    <FieldSpecification
-      name="xnegTemperature"
-      objectPath="faceManager"
-      fieldName="temperature"
-      functionName="temperatureField"
-      scale="1"
-      setNames="{ xneg }"/> -->
+      
     <!-- <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/matrix/cb"
@@ -277,8 +262,5 @@
     <VTK
       name="vtkOutput"
       plotFileRoot="thermalFlowFrac_collab"/>
-
-    <Restart
-      name="restartOutput"/>
   </Outputs>
 </Problem>

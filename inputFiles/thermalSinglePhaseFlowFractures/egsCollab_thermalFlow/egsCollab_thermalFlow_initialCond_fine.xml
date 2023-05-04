@@ -1,0 +1,51 @@
+<?xml version="1.0" ?>
+
+<Problem>
+   <Included>
+    <File name="./egsCollab_thermalFlow_initialCond_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
+    <SinglePhaseFVM
+      name="singleFlow"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      isThermal="1"
+      targetRegions="{ matrix }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="100"
+        maxAllowedResidualNorm="1e25"/>
+      <LinearSolverParameters
+        directParallel="0"
+        solverType="gmres"
+        preconditionerType="amg"/>
+    </SinglePhaseFVM>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+       name="mesh1"
+       elementTypes="{ C3D8 }"
+       xCoords="{ 0, 60, 86.875, 146.875 }"
+       yCoords="{ 0, 75 }"
+       zCoords="{ 0, 0.625, 60, 84, 144 }"
+       nx="{ 40, 80, 40 }"
+       ny="{ 20 }"
+       nz="{ 1, 40, 40, 40 }"
+       cellBlockNames="{ cb }"/>
+
+    <!-- <InternalMesh
+       name="mesh1"
+       elementTypes="{ C3D8 }"
+       xCoords="{ 0, 25, 42, 53.5, 61.25, 66.25, 69.625, 71.875, 146.875 }"
+       yCoords="{ 0, 75 }"
+       zCoords="{ 0, 70, 71.5, 73.75, 77.125, 82.125, 89.875, 101.375, 118.375, 143.375 }"
+       nx="{ 1, 1, 1, 1, 1, 1, 1, 20 }"
+       ny="{ 15 }"
+       nz="{ 10, 1, 1, 1, 1, 1, 1, 1, 1 }"
+       cellBlockNames="{ cb }"/> -->   
+   </Mesh>
+
+</Problem>

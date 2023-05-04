@@ -1,53 +1,12 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers
-    gravityVector="{ 0.0, 0.0, -9.81 }">>
-    <SinglePhaseFVM
-      name="singleFlow"
-      logLevel="1"
-      discretization="singlePhaseTPFA"
-      isThermal="1"
-      targetRegions="{ matrix }">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="100"
-        maxAllowedResidualNorm="1e25"/>
-      <LinearSolverParameters
-        directParallel="0"/>
-    </SinglePhaseFVM>
-  </Solvers>
-
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
-
-  <Mesh>
-    <InternalMesh
-       name="mesh1"
-       elementTypes="{ C3D8 }"
-       xCoords="{ 0, 60, 80, 146.875 }"
-       yCoords="{ 0, 75 }"
-       zCoords="{ 0, 0.625, 60, 80, 143.375, 144 }"
-       nx="{ 10, 20, 10 }"
-       ny="{ 30 }"
-       nz="{ 1, 10, 20, 10, 1 }"
-       cellBlockNames="{ cb }"/>
-
-    <!-- <InternalMesh
-       name="mesh1"
-       elementTypes="{ C3D8 }"
-       xCoords="{ 0, 25, 42, 53.5, 61.25, 66.25, 69.625, 71.875, 146.875 }"
-       yCoords="{ 0, 75 }"
-       zCoords="{ 0, 70, 71.5, 73.75, 77.125, 82.125, 89.875, 101.375, 118.375, 143.375 }"
-       nx="{ 1, 1, 1, 1, 1, 1, 1, 20 }"
-       ny="{ 15 }"
-       nz="{ 10, 1, 1, 1, 1, 1, 1, 1, 1 }"
-       cellBlockNames="{ cb }"/> -->   
-   </Mesh>
 
   <ElementRegions>
     <CellElementRegion
@@ -168,7 +127,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/matrix"
       fieldName="pressure"
-      scale="3e5"/>
+      scale="2e6"/>
 
     <FieldSpecification
       name="initialTemperature"
@@ -179,26 +138,19 @@
       functionName="temperatureField"
       scale="1"/>
 
-    <!-- <FieldSpecification
+    <FieldSpecification
       name="topPressure"
       objectPath="faceManager"
       fieldName="pressure"
-      scale="3e5"
-      setNames="{ zpos }"/> -->
-
-    <FieldSpecification
-      name="topPressure"
-      objectPath="ElementRegions/matrix"
-      fieldName="pressure"
-      scale="3e5"
-      setNames="{ topBoundary }"/>  
+      scale="2e6"
+      setNames="{ zpos }"/>
     
     <FieldSpecification
       name="topTemperature"
-      objectPath="ElementRegions/matrix"
+      objectPath="faceManager"
       fieldName="temperature"
       scale="296.0153"
-      setNames="{ topBoundary }"/>
+      setNames="{ zpos }"/>
 
     <FieldSpecification
       name="botTemperature"
@@ -211,29 +163,8 @@
       name="DriftTemperature"
       objectPath="ElementRegions/matrix"
       fieldName="temperature"
-      scale="250.012"
+      scale="291.65"
       setNames="{ Drift }"/>   
-
-    <!-- Face b.c. are not working for now. -->
-    <!-- <FieldSpecification
-      name="xposTemperature"
-      objectPath="faceManager"
-      fieldName="temperature"
-      functionName="temperatureField"
-      scale="1"
-      setNames="{ xpos }"/>
-    <FieldSpecification
-      name="xnegTemperature"
-      objectPath="faceManager"
-      fieldName="temperature"
-      functionName="temperatureField"
-      scale="1"
-      setNames="{ xneg }"/> -->
-    <!-- <SourceFlux
-      name="sourceTerm"
-      objectPath="ElementRegions/matrix/cb"
-      scale="-0.00001"
-      setNames="{ source }"/> -->
   </FieldSpecifications>
 
   <Functions>

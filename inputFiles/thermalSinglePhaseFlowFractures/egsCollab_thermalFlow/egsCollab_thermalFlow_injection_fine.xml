@@ -1,0 +1,49 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+  <File name="./egsCollab_thermalFlow_injection_base.xml"/>
+  </Included>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
+    <SinglePhaseFVM
+      name="singleFlow"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      isThermal="1"
+      targetRegions="{ matrix, fracture }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-4"
+        newtonMaxIter="25"
+        maxAllowedResidualNorm="1e25"
+        lineSearchAction="None"/>
+      <LinearSolverParameters
+        directParallel="0"
+        solverType="gmres"
+        preconditionerType="amg"/>
+    </SinglePhaseFVM>
+
+     <EmbeddedSurfaceGenerator
+      name="SurfaceGenerator"
+      discretization="FE1"
+      targetRegions="{ matrix }"
+      fractureRegion="fracture"
+      logLevel="1"
+      mpiCommOrder="1"/>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+       name="mesh1"
+       elementTypes="{ C3D8 }"
+       xCoords="{ 0, 60, 86.875, 146.875 }"
+       yCoords="{ 0, 75 }"
+       zCoords="{ 0, 0.625, 60, 84, 144 }"
+       nx="{ 40, 80, 40 }"
+       ny="{ 20 }"
+       nz="{ 1, 40, 40, 40 }"
+       cellBlockNames="{ cb }"/>
+   </Mesh>
+   
+</Problem>
