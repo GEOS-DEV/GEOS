@@ -4,24 +4,36 @@ packages:
     compiler: [gcc, clang]
     providers:
       mpi: [mvapich2]
-      blas: [intel-mkl]
-      lapack: [intel-mkl]
+      # blas: [intel-mkl]
+      # lapack: [intel-mkl]
+      blas: [intel-oneapi-mkl]
+      lapack: [intel-oneapi-mkl]
 
   # Lock down which MPI we are using
   mvapich2:
     buildable: False
     externals:
       - spec: mvapich2@2.3%gcc@12.1.1
-        prefix: /usr/tce/packages/mvapich2/mvapich2-2.3.6-gcc-12.1.1/
+        prefix: /usr/tce/packages/mvapich2/mvapich2-2.3.6-gcc-12.1.1-magic
+        # prefix: /usr/tce/packages/mvapich2/mvapich2-2.3.6-gcc-12.1.1
       - spec: mvapich2@2.3%clang@14.0.6
-        prefix:  /usr/tce/packages/mvapich2/mvapich2-2.3.6-clang-14.0.6
+        # prefix:  /usr/tce/packages/mvapich2/mvapich2-2.3.6-clang-14.0.6
+        prefix:  /usr/tce/packages/mvapich2/mvapich2-2.3.6-clang-14.0.6-magic
+
 
   # Lock down blas, lapack implementation
-  intel-mkl:
-    buildable: False
+  # intel-mkl:
+  #   buildable: False
+# -    externals:
+# -      - spec: intel-mkl@2022.1.0 threads=openmp
+# # -        prefix: /usr/tce/packages/mkl/mkl-2022.1.0/
+  #       modules:
+  #       - intel/2022.1.0
+  intel-oneapi-mkl:
     externals:
-      - spec: intel-mkl@2022.1.0 threads=openmp
-        prefix: /usr/tce/packages/mkl/mkl-2022.1.0/
+      - spec: "intel-oneapi-mkl@2023.0.0"
+        prefix: /opt/intel/oneapi
+    buildable: False
 
   # System level packages to not build
   papi:
@@ -30,11 +42,11 @@ packages:
       - spec: papi@6.0.0.1
         prefix: /usr/tce/packages/papi/papi-6.0.0.1/
   cmake:
-    version: [3.22.4]
+    version: [3.23.1]
     buildable: false
     externals:
-    - spec: cmake@3.22.4
-      prefix: /usr/tce/packages/cmake/cmake-3.22.4
+    - spec: cmake@3.23.1
+      prefix: /usr/tce/packages/cmake/cmake-3.23.1
   readline:
     externals:
     - spec: readline@7.0

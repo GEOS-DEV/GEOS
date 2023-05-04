@@ -58,7 +58,7 @@ class Geosx(CMakePackage, CudaPackage):
     variant('shared', default=True, description='Build Shared Libs.')
     variant('caliper', default=True, description='Build Caliper support.')
     variant('vtk', default=True, description='Build VTK support.')
-    variant('fesapi', default=True, description='Build fesapi support.')
+    variant('fesapi', default=False, description='Build fesapi support.')
     variant('trilinos', default=True, description='Build Trilinos support.')
     variant('hypre', default=True, description='Build HYPRE support.')
     variant('petsc', default=False, description='Build PETSc support.')
@@ -141,9 +141,9 @@ class Geosx(CMakePackage, CudaPackage):
     trilinos_packages = '+aztec+stratimikos~amesos2~anasazi~belos~ifpack2~muelu~sacado+thyra'
     depends_on('trilinos@13.4.1 ' + trilinos_build_options + trilinos_packages, when='+trilinos')
 
-    depends_on('hypre@2.27.0geosx+superlu-dist+mixedint+mpi+openmp', when='+hypre~cuda')
+    depends_on('hypre@2.28.0geosx+superlu-dist+mixedint+mpi+openmp', when='+hypre~cuda')
 
-    depends_on('hypre@2.27.0geosx+cuda+superlu-dist+mixedint+mpi+openmp+umpire+unified-memory', when='+hypre+cuda')
+    depends_on('hypre@2.28.0geosx+cuda+superlu-dist+mixedint+mpi+openmp+umpire+unified-memory', when='+hypre+cuda')
     with when('+cuda'):
         for sm_ in CudaPackage.cuda_arch_values:
             depends_on('hypre+cuda cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))
@@ -391,7 +391,11 @@ class Geosx(CMakePackage, CudaPackage):
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# System Math Libraries\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
-            if '+mkl' in spec:
+            if '+intel-oneapi-mkl' in spec:
+                cfg.write(cmake_cache_option('ENABLE_MKL', True))
+                cfg.write(cmake_cache_entry('MKL_INCLUDE_DIRS', spec['intel-oneapi-mkl'].prefix.include))
+                cfg.write(cmake_cache_list('MKL_LIBRARIES', spec['intel-oneapi-mkl'].libs))
+            elif '+mkl' in spec:
                 cfg.write(cmake_cache_option('ENABLE_MKL', True))
                 cfg.write(cmake_cache_entry('MKL_INCLUDE_DIRS', spec['intel-mkl'].prefix.include))
                 cfg.write(cmake_cache_list('MKL_LIBRARIES', spec['intel-mkl'].libs))
