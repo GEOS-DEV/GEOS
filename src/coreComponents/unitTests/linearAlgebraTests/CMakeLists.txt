@@ -14,13 +14,29 @@ else()
   list( APPEND dependencyList ${geosx_core_libs} )
 endif()
 
+if (TARGET pugixml::pugixml)
+  set( dependencyList ${dependencyList} pugixml::pugixml )
+endif()
+
+if (TARGET pugixml)
+  set( dependencyList ${dependencyList} pugixml )
+endif()
+
+if (TARGET fmt::fmt)
+  set( dependencyList ${dependencyList} fmt::fmt )
+endif()
+
+if (TARGET fmt)
+  set( dependencyList ${dependencyList} fmt )
+endif()
+
 foreach(test ${LAI_tests})
   get_filename_component( test_name ${test} NAME_WE )
 
   blt_add_executable( NAME ${test_name}
                       SOURCES ${test}
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                      DEPENDS_ON ${dependencyList} pugixml::pugixml pugixml fmt::fmt
+                      DEPENDS_ON ${dependencyList}
                     )
 
 if ( ENABLE_MPI )
