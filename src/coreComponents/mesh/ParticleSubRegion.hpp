@@ -76,12 +76,7 @@ public:
    * @brief Set the ghost rank of particles in this subregion
    * @param rank the mpi rank to which all particles in this subregion (in this partition) will have their ghost rank set to
    */
-  void setParticleRank( int rank, int np );
-
-  /**
-   * @brief Get the maximum number of nodes a particle could map to
-   */
-  int numNodesMappedTo();
+  void setParticleRank( int const rank );
 
   /**
    * @brief Fill the ParticleSubRegion by copying those of the source ParticleBlock
@@ -90,39 +85,6 @@ public:
   void copyFromParticleBlock( ParticleBlockABC & particleBlock );
 
   ///@}
-
-  void flagOutOfRangeParticles( std::array< real64, 3 > const & xGlobalMin,
-                                std::array< real64, 3 > const & xGlobalMax,
-                                std::array< real64, 3 > const & hEl,
-                                arrayView1d< int > const isBad );
-
-  /**
-   * @brief This function modifies m_particleRVectors using the particle deformation gradient. Used by solvers.
-   * @param p the local particle index
-   * @param F the particle deformation gradient
-   * @param intialRVectors the particle's initial R-Vectors
-   */
-  void computeRVectors( int const p,
-                        arraySlice2d< real64 const > const F,
-                        arraySlice2d< real64 const > const initialRVectors );
-
-  void cpdiDomainScaling( real64 lCrit,
-                          int m_planeStrain );
-
-  void getMappedNodes( int const p,
-                       std::array< real64, 3 > const & xMin,
-                       std::array< real64, 3 > const & hx,
-                       array3d< int > const & ijkMap,
-                       arrayView1d< localIndex > const nodeIDs );
-
-  void getAllWeights( int const p,
-                      std::array< real64, 3 > const & xMin,
-                      std::array< real64, 3 > const & hx,
-                      array3d< int > const & ijkMap,
-                      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const g_X,
-                      arrayView1d< int > const nodeIDs,
-                      arrayView1d< real64 > const weights,
-                      arrayView2d< real64 > const gradWeights );
 
   /**
    * @name Miscellaneous

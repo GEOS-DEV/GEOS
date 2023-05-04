@@ -348,10 +348,25 @@ public:
                                      real64 const & maxDamageA,
                                      real64 const & maxDamageB );
 
+  void flagOutOfRangeParticles( ParticleManager & particleManager );
+
+  void computeRVectors( ParticleManager & particleManager );
+
+  void cpdiDomainScaling( ParticleManager & particleManager );
+
+  void resizeMappingArrays( ParticleManager & particleManager );
+
+  void populateMappingArrays( ParticleManager & particleManager,
+                              NodeManager & nodeManager );
+
 protected:
   virtual void postProcessInput() override final;
 
   virtual void setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const override;
+
+  std::vector< array2d< localIndex > > m_mappedNodes; // mappedNodes[subregion index][particle index][node index]. dims = {# of subregions, # of particles, # of nodes a particle on the subregion maps to}
+  std::vector< array2d< real64 > > m_shapeFunctionValues; // mappedNodes[subregion][particle][nodal shape function value]. dims = {# of subregions, # of particles, # of nodes a particle on the subregion maps to}
+  std::vector< array3d< real64 > > m_shapeFunctionGradientValues; // mappedNodes[subregion][particle][nodal shape function gradient value][direction]. dims = {# of subregions, # of particles, # of nodes a particle on the subregion maps to, 3}
 
   int m_solverProfiling;
   std::vector< real64 > m_profilingTimes;
@@ -392,19 +407,17 @@ protected:
   int m_planeStrain;
   int m_numDims;
 
-  std::array< real64, 3 > m_hEl;                // Grid spacing in x-y-z
-  std::array< real64, 3 > m_xLocalMin;          // Minimum local grid coordinate including ghost nodes
-  std::array< real64, 3 > m_xLocalMax;          // Maximum local grid coordinate including ghost nodes
-  std::array< real64, 3 > m_xLocalMinNoGhost;   // Minimum local grid coordinate EXCLUDING ghost nodes
-  std::array< real64, 3 > m_xLocalMaxNoGhost;   // Maximum local grid coordinate EXCLUDING ghost nodes
-  std::array< real64, 3 > m_xGlobalMin;         // Minimum global grid coordinate excluding buffer nodes
-  std::array< real64, 3 > m_xGlobalMax;         // Maximum global grid coordinate excluding buffer nodes
-  std::array< real64, 3 > m_partitionExtent;    // Length of each edge of partition including buffer and ghost cells
-  std::array< real64, 3 > m_domainExtent;       // Length of each edge of global domain excluding buffer cells
-  std::array< int, 3 > m_nEl;                   // Number of elements in each grid direction including buffer and ghost cells
-  array3d< int > m_ijkMap;                      // Map from indices in each spatial dimension to local node ID
-
-  int m_voigtMap[3][3];
+  real64 m_hEl[3];                // Grid spacing in x-y-z
+  real64 m_xLocalMin[3];          // Minimum local grid coordinate including ghost nodes
+  real64 m_xLocalMax[3];          // Maximum local grid coordinate including ghost nodes
+  real64 m_xLocalMinNoGhost[3];   // Minimum local grid coordinate EXCLUDING ghost nodes
+  real64 m_xLocalMaxNoGhost[3];   // Maximum local grid coordinate EXCLUDING ghost nodes
+  real64 m_xGlobalMin[3];         // Minimum global grid coordinate excluding buffer nodes
+  real64 m_xGlobalMax[3];         // Maximum global grid coordinate excluding buffer nodes
+  real64 m_partitionExtent[3];    // Length of each edge of partition including buffer and ghost cells
+  real64 m_domainExtent[3];       // Length of each edge of global domain excluding buffer cells
+  int m_nEl[3];                   // Number of elements in each grid direction including buffer and ghost cells
+  array3d< int > m_ijkMap;        // Map from indices in each spatial dimension to local node ID
 
 private:
   struct BinKey
