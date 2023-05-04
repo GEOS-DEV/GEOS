@@ -207,7 +207,7 @@ EmbeddedSurfaceToCellStencilWrapper::
 
   // DFM does not use fracture permeability but here it is used
   // we impose t1 = t0 to be consistent with DFM implementation for comparison
-  // TODO add the contribution of fracture for both DFM and EDFM 
+  // TODO add the contribution of fracture for both DFM and EDFM
   real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( coefficient[er0][esr0][ei0][0] );
   // real64 const t1 = m_weights[iconn][1] * LvArray::tensorOps::l2Norm< 3 >( coefficient[er1][esr1][ei1][0] );
   real64 const t1 = t0;
@@ -236,7 +236,7 @@ EmbeddedSurfaceToCellStencilWrapper::
 {
   // DFM does not use fracture permeability but here it is used
   // we impose t1 = t0 to be consistent with DFM implementation for comparison
-  // TODO add the contribution of fracture for both DFM and EDFM 
+  // TODO add the contribution of fracture for both DFM and EDFM
   real64 const t0 = m_weights[iconn][0];
   // real64 const t1 = m_weights[iconn][1];
   real64 const t1 = t0;
@@ -277,7 +277,7 @@ EmbeddedSurfaceToCellStencilWrapper::
 
   // DFM does not use fracture permeability but here it is used
   // we impose t1 = t0 to be consistent with DFM implementation for comparison
-  // TODO add the contribution of fracture for both DFM and EDFM 
+  // TODO add the contribution of fracture for both DFM and EDFM
   real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( coefficient[er0][esr0][ei0][0] );
   // real64 const t1 = m_weights[iconn][1] * LvArray::tensorOps::l2Norm< 3 >( coefficient[er1][esr1][ei1][0] );
   real64 const t1 = t0;
