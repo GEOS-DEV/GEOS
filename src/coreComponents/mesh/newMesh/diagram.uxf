@@ -1,18 +1,18 @@
-<diagram program="umletino" version="15.1"><zoom_level>10</zoom_level><help_text>Space for diagram notes</help_text><element><id>UMLClass</id><coordinates><x>30</x><y>180</y><w>460</w><h>210</h></coordinates><panel_attributes>
+<diagram program="umletino" version="15.1"><zoom_level>10</zoom_level><help_text>Space for diagram notes</help_text><element><id>UMLClass</id><coordinates><x>30</x><y>180</y><w>520</w><h>210</h></coordinates><panel_attributes>
 template=GEOMETRY, MAPPING
 Cell
 --
 static constexpr space_dim;
 static constexpr geometry_dim;
-+auto applyMapping( ReferencePoint&lt;space_dim&gt; const &amp; point );
-+auto getJacobian( ReferencePoint&lt;space_dim&gt; const &amp; point );
-+auto computePhysicalNormal( auto reference_normal );
++constexpr auto applyMapping( ReferencePoint&lt;space_dim&gt; const &amp; point );
++constexpr auto getJacobian( ReferencePoint&lt;space_dim&gt; const &amp; point );
++constexpr auto computePhysicalNormal( auto reference_normal );
 --
 
 style=autoresize
 
 
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>550</x><y>10</y><w>260</w><h>150</h></coordinates><panel_attributes>
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>830</x><y>10</y><w>260</w><h>150</h></coordinates><panel_attributes>
 MeshConnectivity
 --
 - structured/unstructured connectivity
@@ -22,15 +22,16 @@ MeshConnectivity
 --
 Is this too vague of a concept?
 style=autoresize
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>580</x><y>390</y><w>360</w><h>470</h></coordinates><panel_attributes>
-Geometry
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>580</x><y>390</y><w>360</w><h>460</h></coordinates><panel_attributes>
+StaticGeometry (Interface)
 --
 static constexpr Integer space_dim;
 static constexpr Integer geometry_dim;
 static constexpr Integer num_faces;
+constexpr Integer getNumNFaces&lt; Integer &gt;();
 constexpr auto getReferenceNormal( Integer const face_id );
 --
-
+Note: this interface seems to break for generic polyhedral.
 --
 Define the manifold
 vertices, edges, faces, volume
@@ -44,24 +45,22 @@ line/segement
 2D
 triangle
 square
-polygon
 
 3D
 tet,
 wedge
 pyramid
 hex
-polyhedral
 
 style=autoresize
 </panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>0</x><y>420</y><w>570</w><h>290</h></coordinates><panel_attributes>
-Map
+Mapping (Interface)
 --
-static constexpr Integer REFERENCE_DIMENSION;
-static constexpr Integer PHYSICAL_DIMENSION;
+static constexpr Integer input_dim;
+static constexpr Integer output_dim;
 + using physical_coordinates = PhysicalPoint;
 + using jacobian = Matrix&lt; PHYSICAL_DIMENSION, REFERENCE_DIMENSION &gt; / std::tuple&lt; ... &gt; / ??;
-+ physical_coordinates applyReferenceToPhysicalMapping( ReferencePoint )
++ constexpr physical_coordinates applyReferenceToPhysicalMapping( ReferencePoint )
 + jacobian computeJacobian( ReferencePoint )
 --
 Transformation Mapping
@@ -73,17 +72,18 @@ Transformation Mapping
   - Physical mapping
   - Tensor mapping, e.g. F(x,y) = { F(x), F(y) }
 style=autoresize
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>40</x><y>0</y><w>500</w><h>150</h></coordinates><panel_attributes>
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>40</x><y>0</y><w>520</w><h>170</h></coordinates><panel_attributes>
 template=CELL_TYPES..., CONNECTIVITES...
 Mesh : public CONNECTIVITIES...
 --
 using cell_types = std::tuple&lt; CELL_TYPES... &gt;;
-+auto getCell&lt; CELL_TYPE &gt;( GlobalIndex&lt; CELL_TYPE &gt;  cell_index );
-+std::Variant&lt; CELL_TYPES... &gt; getCell( GlobalIndex const cell_index );
++ Integer getNumberOfCells&lt; CELL_TYPE &gt;();
++ CELL_TYPE getCell&lt; CELL_TYPE &gt;( LocalIndex&lt; CELL_TYPE &gt;  cell_index );
++ std::Variant&lt; CELL_TYPES... &gt; getCell( LocalIndex const cell_index );
 --
 
 style=autoresize
-  </panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>540</x><y>190</y><w>390</w><h>180</h></coordinates><panel_attributes>
+  </panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>770</x><y>190</y><w>390</w><h>180</h></coordinates><panel_attributes>
 template=MeshConnectivity
 ElementConnectivity
 --
@@ -94,5 +94,29 @@ ElementConnectivity
 - Edge neighbors
 - Vertex neighbors
 - std::Array&lt; Stencil::size &gt; getNeighbors( ) ? ( refine )
+style=autoresize
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>950</x><y>390</y><w>360</w><h>350</h></coordinates><panel_attributes>
+template=Stored N-faces...
+DynamicGeometry (Interface)
+--
+static Integer space_dim;
+static Integer geometry_dim;
+static Integer num_faces;
+Integer getNumNFaces&lt; Integer &gt;();
+auto getReferenceNormal( Integer const face_id );
+--
+
+--
+Define the manifold
+vertices, edges, faces, volume
+
+
+
+2D
+polygon
+
+3D
+polyhedra
+
 style=autoresize
 </panel_attributes><additional_attributes></additional_attributes></element></diagram>
