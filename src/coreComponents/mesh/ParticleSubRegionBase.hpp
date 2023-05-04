@@ -223,7 +223,6 @@ public:
   T & getConstitutiveModel( string const & name )
   { return m_constitutiveModels.getGroup< T >( name ); }
 
-
   /**
    * @brief Get the type of particle in this subregion.
    * @return the type of particle in this subregion
@@ -237,6 +236,39 @@ public:
    */
   virtual void setParticleType( ParticleType const particleType )
   { m_particleType = particleType; }
+
+  /**
+   * @brief Get the number of vertices for particles in this subregion.
+   * @return the type of particle in this subregion
+   */
+  int numberOfVerticesPerParticle() const
+  { return m_numVerticesPerParticle; }
+
+  /**
+   * @brief Set the number of vertices for particles in this subregion.
+   * @param[in] particleType the particle type
+   */
+  virtual void setNumberOfVerticesPerParticle( ParticleType const particleType )
+  {
+    switch( particleType )
+    {
+      case ParticleType::SinglePoint:
+      {
+        m_numVerticesPerParticle = 1;
+        break;
+      }
+      case ParticleType::CPDI:
+      {
+        m_numVerticesPerParticle = 8;
+        break;
+      }
+      default:
+      {
+        GEOSX_ERROR( "Particle type \"" << m_particleType << "\" is not yet supported." );
+        break;
+      }
+    }
+  }
 
   /**
    * @brief Provide an immutable accessor to the particle neighbor list.
@@ -321,6 +353,9 @@ private:
 protected:
   /// Boolean indicating whether the particle subregion contains particles needing r-vectors defining their domain extent.
   bool m_hasRVectors;
+
+  /// The number of vertices each particle has
+  int m_numVerticesPerParticle;
 
   /// Member level field for particle ghost ranks
   array1d< int > m_particleRank;

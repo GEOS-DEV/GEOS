@@ -151,7 +151,7 @@ void ParticleSubRegionBase::updateMaps()
 {
   arrayView1d< globalIndex > const localToGlobalMap = m_localToGlobalMap;
   arrayView1d< globalIndex const > const particleID = m_particleID;
-  forAll< parallelHostPolicy >( this->size(), [=] GEOSX_HOST ( localIndex const p ) // TODO: must be on host
+  forAll< serialPolicy >( this->size(), [=] GEOSX_HOST ( localIndex const p ) // TODO: must be on host because constructGlobalToLocalMap has to be on host?
   {
     localToGlobalMap[p] = particleID[p];
   } );
