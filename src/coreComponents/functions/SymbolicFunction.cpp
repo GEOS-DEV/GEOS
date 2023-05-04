@@ -19,7 +19,7 @@
 #include "SymbolicFunction.hpp"
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace dataRepository
@@ -67,8 +67,8 @@ public:
     string const s = m_stream.str();
     if( !s.empty() )
     {
-      GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': JIT compiler produced the following output:\n{}",
-                                   SymbolicFunction::catalogName(), m_name, s ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': JIT compiler produced the following output:\n{}",
+                                 SymbolicFunction::catalogName(), m_name, s ) );
     }
   }
 
@@ -76,23 +76,23 @@ public:
                     unsigned int line,
                     unsigned int column,
                     const char * const message,
-                    size_t const GEOSX_UNUSED_PARAM( size ) ) override
+                    size_t const GEOS_UNUSED_PARAM( size ) ) override
   {
     switch( type )
     {
       case kMessageError:
       {
-        m_stream << GEOSX_FMT( "[ERROR]: {} (line {}, column {})\n", message, line, column );
+        m_stream << GEOS_FMT( "[ERROR]: {} (line {}, column {})\n", message, line, column );
         break;
       }
       case kMessageWarning:
       {
-        m_stream << GEOSX_FMT( "[WARNING]: {} (line {}, column {})\n", message, line, column );
+        m_stream << GEOS_FMT( "[WARNING]: {} (line {}, column {})\n", message, line, column );
         break;
       }
       default:
       {
-        m_stream << GEOSX_FMT( "[OTHER]\n{}", message );
+        m_stream << GEOS_FMT( "[OTHER]\n{}", message );
         break;
       }
     }
@@ -121,9 +121,9 @@ void SymbolicFunction::initializeFunction()
     GeosxMathpressoLogger outputLog( getName() );
     return parserExpression.compile( parserContext, m_expression.c_str(), mathpresso::kNoOptions, &outputLog );
   }();
-  GEOSX_ERROR_IF( err != mathpresso::kErrorOk, "MathPresso JIT Compiler Error" );
+  GEOS_ERROR_IF( err != mathpresso::kErrorOk, "MathPresso JIT Compiler Error" );
 }
 
 REGISTER_CATALOG_ENTRY( FunctionBase, SymbolicFunction, string const &, Group * const )
 
-} // namespace geosx
+} // namespace geos

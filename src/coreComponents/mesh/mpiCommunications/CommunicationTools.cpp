@@ -28,7 +28,7 @@
 
 #include <algorithm>
 
-namespace geosx
+namespace geos
 {
 
 
@@ -43,20 +43,20 @@ CommunicationTools::CommunicationTools()
     m_freeCommIDs.insert( i );
   }
 
-  GEOSX_ERROR_IF( m_instance != nullptr, "Only one CommunicationTools can exist at a time." );
+  GEOS_ERROR_IF( m_instance != nullptr, "Only one CommunicationTools can exist at a time." );
   m_instance = this;
 }
 
 CommunicationTools::~CommunicationTools()
 {
-  GEOSX_ERROR_IF( m_instance != this, "m_instance != this should not be possible." );
+  GEOS_ERROR_IF( m_instance != this, "m_instance != this should not be possible." );
   m_instance = nullptr;
 }
 
 CommunicationTools & CommunicationTools::getInstance()
 {
-  GEOSX_ERROR_IF( m_instance == nullptr,
-                  "CommunicationTools has not been constructed, or is already been destructed." );
+  GEOS_ERROR_IF( m_instance == nullptr,
+                 "CommunicationTools has not been constructed, or is already been destructed." );
   return *m_instance;
 }
 
@@ -65,7 +65,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
                                               NodeManager const & compositionObject,
                                               std::vector< NeighborCommunicator > & neighbors )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   arrayView1d< integer > const & ghostRank = object.ghostRank();
   ghostRank.setValues< serialPolicy >( -2 );
 
@@ -285,9 +285,9 @@ void CommunicationTools::assignNewGlobalIndices( ObjectManagerBase & object,
   localIndex nIndicesAssigned = 0;
   for( localIndex const newLocalIndex : indexList )
   {
-    GEOSX_ERROR_IF( localToGlobal[newLocalIndex] != -1,
-                    "Local object " << newLocalIndex << " should be new but already has a global index "
-                                    << localToGlobal[newLocalIndex] );
+    GEOS_ERROR_IF( localToGlobal[newLocalIndex] != -1,
+                   "Local object " << newLocalIndex << " should be new but already has a global index "
+                                   << localToGlobal[newLocalIndex] );
 
     localToGlobal[newLocalIndex] = object.maxGlobalIndex() + glocalIndexOffset + nIndicesAssigned + 1;
     object.updateGlobalToLocalMap( newLocalIndex );
@@ -322,9 +322,9 @@ CommunicationTools::assignNewGlobalIndices( ElementRegionManager & elementManage
 
     for( localIndex const newLocalIndex : indexList )
     {
-      GEOSX_ERROR_IF( localToGlobal[newLocalIndex] != -1,
-                      "Local object " << newLocalIndex << " should be new but already has a global index "
-                                      << localToGlobal[newLocalIndex] );
+      GEOS_ERROR_IF( localToGlobal[newLocalIndex] != -1,
+                     "Local object " << newLocalIndex << " should be new but already has a global index "
+                                     << localToGlobal[newLocalIndex] );
 
       localToGlobal[newLocalIndex] = elementManager.maxGlobalIndex() + glocalIndexOffset + nIndicesAssigned + 1;
       subRegion.updateGlobalToLocalMap( newLocalIndex );
@@ -341,7 +341,7 @@ CommunicationTools::
   findMatchedPartitionBoundaryObjects( ObjectManagerBase & objectManager,
                                        std::vector< NeighborCommunicator > & allNeighbors )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   arrayView1d< integer > const & domainBoundaryIndicator = objectManager.getDomainBoundaryIndicator();
 
   array1d< globalIndex > const globalPartitionBoundaryObjectsIndices = objectManager.constructGlobalListOfBoundaryObjects();
@@ -435,8 +435,8 @@ void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
       if( ghostRank[ recvIdx ] != neighborRank )
       {
         error = true;
-        GEOSX_LOG_RANK( "Receiving " << recvIdx << " from " << neighborRank <<
-                        " but ghostRank[ " << recvIdx << " ] is " << ghostRank[ recvIdx ] );
+        GEOS_LOG_RANK( "Receiving " << recvIdx << " from " << neighborRank <<
+                       " but ghostRank[ " << recvIdx << " ] is " << ghostRank[ recvIdx ] );
       }
     }
 
@@ -446,8 +446,8 @@ void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
       if( ghostRank[ sendIdx ] != -1 )
       {
         error = true;
-        GEOSX_LOG_RANK( "Sending " << sendIdx << " to " << neighborRank <<
-                        " but ghostRank[ " << sendIdx << " ] is " << ghostRank[ sendIdx ] );
+        GEOS_LOG_RANK( "Sending " << sendIdx << " to " << neighborRank <<
+                       " but ghostRank[ " << sendIdx << " ] is " << ghostRank[ sendIdx ] );
       }
     }
 
@@ -455,12 +455,12 @@ void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
     if( !nonLocalGhosts.empty() )
     {
       error = true;
-      GEOSX_LOG_RANK( "Expected to send 0 non local ghosts to rank " << neighborRank <<
-                      " but sending " << nonLocalGhosts.size() );
+      GEOS_LOG_RANK( "Expected to send 0 non local ghosts to rank " << neighborRank <<
+                     " but sending " << nonLocalGhosts.size() );
     }
   }
 
-  GEOSX_ERROR_IF( error, "Encountered a ghosting inconsistency in " << objectManager.getName() );
+  GEOS_ERROR_IF( error, "Encountered a ghosting inconsistency in " << objectManager.getName() );
 }
 
 /**
@@ -476,7 +476,7 @@ void removeFromCommList( std::vector< localIndex > const & indicesToRemove, arra
   } );
 
   localIndex const nRemoved = commIndices.end() - itr;
-  GEOSX_ERROR_IF_NE( nRemoved, localIndex( indicesToRemove.size() ) );
+  GEOS_ERROR_IF_NE( nRemoved, localIndex( indicesToRemove.size() ) );
   commIndices.resize( commIndices.size() - nRemoved );
 }
 
@@ -623,7 +623,7 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
                                       std::vector< NeighborCommunicator > & neighbors,
                                       bool const unorderedComms )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   MPI_iCommData commData( getCommID() );
   commData.resize( neighbors.size() );
 
@@ -744,7 +744,7 @@ void CommunicationTools::synchronizePackSendRecvSizes( FieldIdentifiers const & 
                                                        std::vector< NeighborCommunicator > & neighbors,
                                                        MPI_iCommData & icomm )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   icomm.setFieldsToBeSync( fieldsToBeSync );
   icomm.resize( neighbors.size() );
 
@@ -771,7 +771,7 @@ void CommunicationTools::asyncPack( FieldIdentifiers const & fieldsToBeSync,
                                     MPI_iCommData & icomm,
                                     parallelDeviceEvents & events )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   for( NeighborCommunicator & neighbor : neighbors )
   {
     neighbor.packCommBufferForSync( fieldsToBeSync, mesh, icomm.commID(), events );
@@ -782,7 +782,7 @@ void CommunicationTools::asyncSendRecv( std::vector< NeighborCommunicator > & ne
                                         MPI_iCommData & icomm,
                                         parallelDeviceEvents & events )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   waitAllDeviceEvents( events );
 
 
@@ -811,7 +811,7 @@ void CommunicationTools::synchronizePackSendRecv( FieldIdentifiers const & field
                                                   std::vector< NeighborCommunicator > & neighbors,
                                                   MPI_iCommData & icomm )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   parallelDeviceEvents events;
   asyncPack( fieldsToBeSync, mesh, neighbors, icomm, events );
   asyncSendRecv( neighbors, icomm, events );
@@ -823,7 +823,7 @@ bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
                                       MPI_iCommData & icomm,
                                       parallelDeviceEvents & events )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   int recvCount = 0;
   std::vector< int > neighborIndices;
@@ -863,10 +863,10 @@ void CommunicationTools::finalizeUnpack( MeshLevel & mesh,
                                          MPI_iCommData & icomm,
                                          parallelDeviceEvents & events )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // poll mpi for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
-  GEOSX_ASYNC_WAIT( 6000000000, 10, asyncUnpack( mesh, neighbors, icomm, events ) );
+  GEOS_ASYNC_WAIT( 6000000000, 10, asyncUnpack( mesh, neighbors, icomm, events ) );
   waitAllDeviceEvents( events );
 
   MpiWrapper::waitAll( icomm.size(),
@@ -883,7 +883,7 @@ void CommunicationTools::synchronizeUnpack( MeshLevel & mesh,
                                             std::vector< NeighborCommunicator > & neighbors,
                                             MPI_iCommData & icomm )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   parallelDeviceEvents events;
   finalizeUnpack( mesh, neighbors, icomm, events );
 }
@@ -899,4 +899,4 @@ void CommunicationTools::synchronizeFields( FieldIdentifiers const & fieldsToBeS
   synchronizeUnpack( mesh, neighbors, icomm );
 }
 
-} /* namespace geosx */
+} /* namespace geos */

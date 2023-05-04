@@ -16,8 +16,8 @@
  * @file HypreUtils.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -30,13 +30,13 @@
 
 #ifdef GEOSX_USE_HYPRE_CUDA
 /// Host-device marker for custom hypre kernels
-#define GEOSX_HYPRE_DEVICE GEOSX_DEVICE
+#define GEOS_HYPRE_DEVICE GEOS_DEVICE
 #else
 /// Host-device marker for custom hypre kernels
-#define GEOSX_HYPRE_DEVICE
+#define GEOS_HYPRE_DEVICE
 #endif
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -124,10 +124,10 @@ constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_HOST;
 //          pass ( localIndex * ) to hypre except when it is on the GPU, in
 //          which case we are using int for localIndex.
 #ifdef GEOSX_USE_HYPRE_CUDA
-static_assert( sizeof( HYPRE_Int ) == sizeof( geosx::localIndex ),
-               "HYPRE_Int and geosx::localIndex must have the same size" );
-static_assert( std::is_signed< HYPRE_Int >::value == std::is_signed< geosx::localIndex >::value,
-               "HYPRE_Int and geosx::localIndex must both be signed or unsigned" );
+static_assert( sizeof( HYPRE_Int ) == sizeof( geos::localIndex ),
+               "HYPRE_Int and geos::localIndex must have the same size" );
+static_assert( std::is_signed< HYPRE_Int >::value == std::is_signed< geos::localIndex >::value,
+               "HYPRE_Int and geos::localIndex must both be signed or unsigned" );
 #endif
 
 /**
@@ -140,9 +140,9 @@ inline void checkDeviceErrors( char const * msg, char const * file, int const li
 {
 #ifdef GEOSX_USE_HYPRE_CUDA
   cudaError_t const err = cudaGetLastError();
-  GEOSX_ERROR_IF( err != cudaSuccess, GEOSX_FMT( "Previous CUDA errors found: {} ({} at {}:{})", msg, cudaGetErrorString( err ), file, line ) );
+  GEOS_ERROR_IF( err != cudaSuccess, GEOS_FMT( "Previous CUDA errors found: {} ({} at {}:{})", msg, cudaGetErrorString( err ), file, line ) );
 #else
-  GEOSX_UNUSED_VAR( msg, file, line );
+  GEOS_UNUSED_VAR( msg, file, line );
 #endif
 }
 
@@ -150,23 +150,23 @@ inline void checkDeviceErrors( char const * msg, char const * file, int const li
  * @brief Check for previous device errors and report with line information.
  * @param msg custom message to add
  */
-#define GEOSX_HYPRE_CHECK_DEVICE_ERRORS( msg ) ::geosx::hypre::checkDeviceErrors( msg, __FILE__, __LINE__ )
+#define GEOS_HYPRE_CHECK_DEVICE_ERRORS( msg ) ::geos::hypre::checkDeviceErrors( msg, __FILE__, __LINE__ )
 
-static_assert( sizeof( HYPRE_BigInt ) == sizeof( geosx::globalIndex ),
-               "HYPRE_BigInt and geosx::globalIndex must have the same size" );
+static_assert( sizeof( HYPRE_BigInt ) == sizeof( geos::globalIndex ),
+               "HYPRE_BigInt and geos::globalIndex must have the same size" );
 
-static_assert( std::is_signed< HYPRE_BigInt >::value == std::is_signed< geosx::globalIndex >::value,
-               "HYPRE_BigInt and geosx::globalIndex must both be signed or unsigned" );
+static_assert( std::is_signed< HYPRE_BigInt >::value == std::is_signed< geos::globalIndex >::value,
+               "HYPRE_BigInt and geos::globalIndex must both be signed or unsigned" );
 
-static_assert( std::is_same< HYPRE_Real, geosx::real64 >::value,
-               "HYPRE_Real and geosx::real64 must be the same type" );
+static_assert( std::is_same< HYPRE_Real, geos::real64 >::value,
+               "HYPRE_Real and geos::real64 must be the same type" );
 
 /**
  * @brief Converts a non-const array from GEOSX globalIndex type to HYPRE_BigInt.
  * @param[in] index the input array
  * @return the converted array
  */
-inline HYPRE_BigInt * toHypreBigInt( geosx::globalIndex * const index )
+inline HYPRE_BigInt * toHypreBigInt( geos::globalIndex * const index )
 {
   return reinterpret_cast< HYPRE_BigInt * >(index);
 }
@@ -176,7 +176,7 @@ inline HYPRE_BigInt * toHypreBigInt( geosx::globalIndex * const index )
  * @param[in] index the input array
  * @return the converted array
  */
-inline HYPRE_BigInt const * toHypreBigInt( geosx::globalIndex const * const index )
+inline HYPRE_BigInt const * toHypreBigInt( geos::globalIndex const * const index )
 {
   return reinterpret_cast< HYPRE_BigInt const * >(index);
 }
@@ -305,6 +305,52 @@ inline HYPRE_Int getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType
 }
 
 /**
+ * @brief Returns hypre's identifier of the AMG interpolation type.
+ * @param type AMG interpolation type
+ * @return hypre AMG interpolation type identifier code
+ */
+inline HYPRE_Int getAMGInterpolationType( LinearSolverParameters::AMG::InterpType const & type )
+{
+  static map< LinearSolverParameters::AMG::InterpType, HYPRE_Int > const typeMap =
+  {
+    { LinearSolverParameters::AMG::InterpType::default_, -1 },
+    { LinearSolverParameters::AMG::InterpType::modifiedClassical, 0 },
+    { LinearSolverParameters::AMG::InterpType::direct, 3 },
+    { LinearSolverParameters::AMG::InterpType::multipass, 4 },
+    { LinearSolverParameters::AMG::InterpType::extendedI, 6 },
+    { LinearSolverParameters::AMG::InterpType::standard, 8 },
+    { LinearSolverParameters::AMG::InterpType::extended, 14 },
+    { LinearSolverParameters::AMG::InterpType::directBAMG, 15 },
+    { LinearSolverParameters::AMG::InterpType::modifiedExtended, 16 },
+    { LinearSolverParameters::AMG::InterpType::modifiedExtendedI, 17 },
+    { LinearSolverParameters::AMG::InterpType::modifiedExtendedE, 18 },
+  };
+  return findOption( typeMap, type, "multigrid interpolation", "HyprePreconditioner" );
+}
+
+/**
+ * @brief Returns hypre's identifier of the AMG aggressive interpolation type.
+ * @param type AMG aggressive interpolation type
+ * @return hypre AMG aggressive interpolation type identifier code
+ */
+inline HYPRE_Int getAMGAggressiveInterpolationType( LinearSolverParameters::AMG::AggInterpType const & type )
+{
+  static map< LinearSolverParameters::AMG::AggInterpType, HYPRE_Int > const typeMap =
+  {
+    { LinearSolverParameters::AMG::AggInterpType::default_, -1 },
+    { LinearSolverParameters::AMG::AggInterpType::extendedIStage2, 1 },
+    { LinearSolverParameters::AMG::AggInterpType::standardStage2, 2 },
+    { LinearSolverParameters::AMG::AggInterpType::extendedStage2, 3 },
+    { LinearSolverParameters::AMG::AggInterpType::multipass, 4 },
+    { LinearSolverParameters::AMG::AggInterpType::modifiedExtended, 5 },
+    { LinearSolverParameters::AMG::AggInterpType::modifiedExtendedI, 6 },
+    { LinearSolverParameters::AMG::AggInterpType::modifiedExtendedE, 7 },
+    { LinearSolverParameters::AMG::AggInterpType::modifiedMultipass, 8 },
+  };
+  return findOption( typeMap, type, "multigrid aggressive interpolation", "HyprePreconditioner" );
+}
+
+/**
  * @brief Returns hypre's identifier of the AMG ILU smoother type.
  * @param type AMG ILU smoother type
  * @return hypre AMG ILU smoother type identifier code
@@ -350,19 +396,16 @@ inline HYPRE_Int getAMGCoarseType( LinearSolverParameters::AMG::CoarseType const
  * @param type AMG coarsening type
  * @return hypre AMG coarsening type identifier code
  */
-inline HYPRE_Int getAMGCoarseningType( string const & type )
+inline HYPRE_Int getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType const & type )
 {
-  static map< string, HYPRE_Int > const typeMap =
+  static map< LinearSolverParameters::AMG::CoarseningType, HYPRE_Int > const typeMap =
   {
-    { "CLJP", 0 },
-    { "Ruge-Stueben", 3 },
-    { "Falgout", 6 },
-    { "CLJPDebug", 7 },
-    { "PMIS", 8 },
-    { "PMISDebug", 9 },
-    { "HMIS", 10 },
-    { "CGC", 21 },
-    { "CGC-E", 22 }
+    { LinearSolverParameters::AMG::CoarseningType::default_, -1 },
+    { LinearSolverParameters::AMG::CoarseningType::CLJP, 0 },
+    { LinearSolverParameters::AMG::CoarseningType::RugeStueben, 3 },
+    { LinearSolverParameters::AMG::CoarseningType::Falgout, 6 },
+    { LinearSolverParameters::AMG::CoarseningType::PMIS, 8 },
+    { LinearSolverParameters::AMG::CoarseningType::HMIS, 10 },
   };
   return findOption( typeMap, type, "multigrid coarsening", "HyprePreconditioner" );
 }
@@ -513,6 +556,6 @@ enum class MGRGlobalSmootherType : HYPRE_Int
 
 } // namespace hypre
 
-} // namespace geosx
+} // namespace geos
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_*/

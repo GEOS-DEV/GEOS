@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_DATAREPOSITORY_BUFFEROPSDEVICE_H_
-#define GEOSX_DATAREPOSITORY_BUFFEROPSDEVICE_H_
+#ifndef GEOS_DATAREPOSITORY_BUFFEROPSDEVICE_H_
+#define GEOS_DATAREPOSITORY_BUFFEROPSDEVICE_H_
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -25,7 +25,7 @@
 
 #include <type_traits>
 
-namespace geosx
+namespace geos
 {
 
 namespace bufferOps
@@ -62,18 +62,18 @@ constexpr bool is_device_packable_by_index = is_device_packable_array< T >;
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 localIndex
 PackPointerDevice( buffer_unit_type * & buffer,
-                   T const * const GEOSX_RESTRICT var,
+                   T const * const GEOS_RESTRICT var,
                    localIndex const length );
 
 //------------------------------------------------------------------------------
 template< typename T >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 localIndex
 UnpackPointerDevice( buffer_unit_type const * & buffer,
-                     T * const GEOSX_RESTRICT var,
+                     T * const GEOS_RESTRICT var,
                      localIndex const expectedLength );
 
 //------------------------------------------------------------------------------
@@ -85,13 +85,13 @@ PackDevice( buffer_unit_type * & buffer,
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 localIndex
-PackDevice( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
-            T const & GEOSX_UNUSED_PARAM( var ),
-            parallelDeviceEvents & GEOSX_UNUSED_PARAM( events ) )
+PackDevice( buffer_unit_type * & GEOS_UNUSED_PARAM( buffer ),
+            T const & GEOS_UNUSED_PARAM( var ),
+            parallelDeviceEvents & GEOS_UNUSED_PARAM( events ) )
 {
-  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable." );
+  GEOS_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable." );
   return 0;
 }
 
@@ -106,12 +106,12 @@ PackByIndexDevice( buffer_unit_type * & buffer,
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, typename T_INDICES >
 localIndex
-PackByIndexDevice( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
-                   T const & GEOSX_UNUSED_PARAM( var ),
-                   T_INDICES const & GEOSX_UNUSED_PARAM( indices ),
-                   parallelDeviceEvents & GEOSX_UNUSED_PARAM( events ) )
+PackByIndexDevice( buffer_unit_type * & GEOS_UNUSED_PARAM( buffer ),
+                   T const & GEOS_UNUSED_PARAM( var ),
+                   T_INDICES const & GEOS_UNUSED_PARAM( indices ),
+                   parallelDeviceEvents & GEOS_UNUSED_PARAM( events ) )
 {
-  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable by index." );
+  GEOS_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable by index." );
   return 0;
 }
 
@@ -125,11 +125,11 @@ UnpackDevice( buffer_unit_type const * & buffer,
 //------------------------------------------------------------------------------
 template< typename T >
 localIndex
-UnpackDevice( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ),
-              T & GEOSX_UNUSED_PARAM( var ),
-              parallelDeviceEvents & GEOSX_UNUSED_PARAM( events ) )
+UnpackDevice( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ),
+              T & GEOS_UNUSED_PARAM( var ),
+              parallelDeviceEvents & GEOS_UNUSED_PARAM( events ) )
 {
-  GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable." );
+  GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable." );
   return 0;
 }
 
@@ -144,31 +144,31 @@ UnpackByIndexDevice ( buffer_unit_type const * & buffer,
 //------------------------------------------------------------------------------
 template< typename T, typename T_INDICES >
 localIndex
-UnpackByIndexDevice( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ),
-                     T & GEOSX_UNUSED_PARAM( var ),
-                     T_INDICES const & GEOSX_UNUSED_PARAM( indices ),
-                     parallelDeviceEvents & GEOSX_UNUSED_PARAM( events ) )
+UnpackByIndexDevice( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ),
+                     T & GEOS_UNUSED_PARAM( var ),
+                     T_INDICES const & GEOS_UNUSED_PARAM( indices ),
+                     parallelDeviceEvents & GEOS_UNUSED_PARAM( events ) )
 {
-  GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") but type is not packable by index." );
+  GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") but type is not packable by index." );
   return 0;
 }
 
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 localIndex
 PackDataPointerDevice( buffer_unit_type * & buffer,
-                       T const * const GEOSX_RESTRICT var,
+                       T const * const GEOS_RESTRICT var,
                        localIndex const length,
                        parallelDeviceEvents & events );
 
 //------------------------------------------------------------------------------
 template< typename T >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 localIndex
 UnpackDataPointerDevice( buffer_unit_type const * & buffer,
-                         T * const GEOSX_RESTRICT var,
+                         T * const GEOS_RESTRICT var,
                          localIndex const expectedLength,
                          parallelDeviceEvents & events );
 
@@ -181,13 +181,13 @@ PackDataDevice( buffer_unit_type * & buffer,
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 localIndex
-PackDataDevice( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
-                T const & GEOSX_UNUSED_PARAM( var ),
-                parallelDeviceEvents & GEOSX_UNUSED_PARAM( events ) )
+PackDataDevice( buffer_unit_type * & GEOS_UNUSED_PARAM( buffer ),
+                T const & GEOS_UNUSED_PARAM( var ),
+                parallelDeviceEvents & GEOS_UNUSED_PARAM( events ) )
 {
-  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable." );
+  GEOS_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable." );
   return 0;
 }
 
@@ -202,12 +202,12 @@ PackDataByIndexDevice ( buffer_unit_type * & buffer,
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, typename T_INDICES >
 localIndex
-PackDataByIndexDevice( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
-                       T const & GEOSX_UNUSED_PARAM( var ),
-                       T_INDICES const & GEOSX_UNUSED_PARAM( indices ),
-                       parallelDeviceEvents & GEOSX_UNUSED_PARAM( events ) )
+PackDataByIndexDevice( buffer_unit_type * & GEOS_UNUSED_PARAM( buffer ),
+                       T const & GEOS_UNUSED_PARAM( var ),
+                       T_INDICES const & GEOS_UNUSED_PARAM( indices ),
+                       parallelDeviceEvents & GEOS_UNUSED_PARAM( events ) )
 {
-  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable by index." );
+  GEOS_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable by index." );
   return 0;
 }
 
@@ -221,11 +221,11 @@ UnpackDataDevice( buffer_unit_type const * & buffer,
 //------------------------------------------------------------------------------
 template< typename T >
 localIndex
-UnpackDataDevice( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ),
-                  T & GEOSX_UNUSED_PARAM( var ),
-                  parallelDeviceEvents & GEOSX_UNUSED_PARAM( events ) )
+UnpackDataDevice( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ),
+                  T & GEOS_UNUSED_PARAM( var ),
+                  parallelDeviceEvents & GEOS_UNUSED_PARAM( events ) )
 {
-  GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable." );
+  GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable." );
   return 0;
 }
 
@@ -240,16 +240,16 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
 //------------------------------------------------------------------------------
 template< typename T, typename T_INDICES >
 localIndex
-UnpackDataByIndexDevice( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ),
-                         T & GEOSX_UNUSED_PARAM( var ),
-                         T_INDICES const & GEOSX_UNUSED_PARAM( indices ),
-                         parallelDeviceEvents & GEOSX_UNUSED_PARAM( events ) )
+UnpackDataByIndexDevice( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ),
+                         T & GEOS_UNUSED_PARAM( var ),
+                         T_INDICES const & GEOS_UNUSED_PARAM( indices ),
+                         parallelDeviceEvents & GEOS_UNUSED_PARAM( events ) )
 {
-  GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") but type is not packable by index." );
+  GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") but type is not packable by index." );
   return 0;
 }
 
 } // namespace bufferOps
-} // namespace geosx
+} // namespace geos
 
-#endif // GEOSX_DATAREPOSITORY_BUFFEROPSDEVICE_H_
+#endif // GEOS_DATAREPOSITORY_BUFFEROPSDEVICE_H_

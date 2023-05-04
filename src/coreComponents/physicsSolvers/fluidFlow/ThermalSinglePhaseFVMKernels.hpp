@@ -16,15 +16,15 @@
  * @file ThermalSinglePhaseFVMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEFVMKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEFVMKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEFVMKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEFVMKERNELS_HPP
 
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivityBase.hpp"
 #include "constitutive/thermalConductivity/ThermalConductivityFields.hpp"
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivityFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace thermalSinglePhaseFVMKernels
@@ -141,7 +141,7 @@ public:
   {
 public:
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
       : Base::StackVariables( size, numElems ),
       energyFlux( 0.0 ),
@@ -177,7 +177,7 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
@@ -381,7 +381,7 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack ) const
   {
@@ -608,7 +608,7 @@ public:
      * @param[in] size size of the stencil for this connection
      * @param[in] numElems number of elements for this connection
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables( localIndex const size,
                     localIndex numElems ):
       Base::StackVariables( size,
@@ -633,7 +633,7 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
@@ -706,7 +706,7 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack ) const
   {
@@ -825,6 +825,6 @@ public:
 
 } // namespace thermalSinglePhaseFVMKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEFVMKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEFVMKERNELS_HPP

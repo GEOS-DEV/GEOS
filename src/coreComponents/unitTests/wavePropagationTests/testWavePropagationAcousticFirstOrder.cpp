@@ -27,9 +27,9 @@
 
 #include <gtest/gtest.h>
 
-using namespace geosx;
-using namespace geosx::dataRepository;
-using namespace geosx::testing;
+using namespace geos;
+using namespace geos::dataRepository;
+using namespace geos::testing;
 
 CommandLineOptions g_commandLineOptions;
 
@@ -135,15 +135,15 @@ char const * xmlInput =
   "      fieldName=\"pressure_np1\"/>\n"
   "    <PackCollection\n"
   "      name=\"waveFieldUxCollection\"\n"
-  "      objectPath=\"mesh/FE1/ElementRegions/Region/cb\"\n"
+  "      objectPath=\"ElementRegions/Region/cb\"\n"
   "      fieldName=\"velocity_x\"/>\n"
   "    <PackCollection\n"
   "      name=\"waveFieldUyCollection\"\n"
-  "      objectPath=\"mesh/FE1/ElementRegions/Region/cb\"\n"
+  "      objectPath=\"ElementRegions/Region/cb\"\n"
   "      fieldName=\"velocity_y\"/>\n"
   "    <PackCollection\n"
   "      name=\"waveFieldUzCollection\"\n"
-  "      objectPath=\"mesh/FE1/ElementRegions/Region/cb\"\n"
+  "      objectPath=\"ElementRegions/Region/cb\"\n"
   "      fieldName=\"velocity_z\"/>\n"
 
   "  </Tasks>\n"
@@ -252,8 +252,8 @@ TEST_F( AcousticFirstOrderWaveEquationSEMTest, SeismoTrace )
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-  g_commandLineOptions = *geosx::basicSetup( argc, argv );
+  g_commandLineOptions = *geos::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
-  geosx::basicCleanup();
+  geos::basicCleanup();
   return result;
 }

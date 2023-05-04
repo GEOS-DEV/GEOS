@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_PYTHON_PYGROUP_HPP_
-#define GEOSX_PYTHON_PYGROUP_HPP_
+#ifndef GEOS_PYTHON_PYGROUP_HPP_
+#define GEOS_PYTHON_PYGROUP_HPP_
 
 // Source includes
 #include "dataRepository/Group.hpp"
@@ -21,7 +21,7 @@
 
 #include "PyWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace python
 {
@@ -33,6 +33,6 @@ PyObject * createNewPyGroup( dataRepository::Group & group );
 
 
 } // namespace python
-} // namespace geosx
+} // namespace geos
 
 #endif

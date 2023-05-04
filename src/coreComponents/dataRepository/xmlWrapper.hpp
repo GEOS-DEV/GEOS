@@ -16,8 +16,8 @@
  * @file xmlWrapper.hpp
  */
 
-#ifndef GEOSX_DATAREPOSITORY_XMLWRAPPER_HPP_
-#define GEOSX_DATAREPOSITORY_XMLWRAPPER_HPP_
+#ifndef GEOS_DATAREPOSITORY_XMLWRAPPER_HPP_
+#define GEOS_DATAREPOSITORY_XMLWRAPPER_HPP_
 
 // Source includes
 #include "common/DataTypes.hpp"
@@ -33,7 +33,7 @@
 #include <algorithm>
 #include <sstream>
 
-namespace geosx
+namespace geos
 {
 
 
@@ -120,9 +120,9 @@ stringToInputVariable( T & target, string const & value )
 {
   std::istringstream ss( value );
   ss >> target;
-  GEOSX_THROW_IF( ss.fail() || !ss.eof(),
-                  "Error detected while parsing string: \"" << value << "\"",
-                  InputError );
+  GEOS_THROW_IF( ss.fail() || !ss.eof(),
+                 "Error detected while parsing string: \"" << value << "\"",
+                 InputError );
 }
 
 /**
@@ -200,7 +200,7 @@ template< typename T, typename U >
 std::enable_if_t< !internal::canParseVariable< T >, bool >
 readAttributeAsType( T &, string const & name, xmlNode const &, U const & )
 {
-  GEOSX_THROW( "Cannot parse key with name ("<<name<<") with the given type " << LvArray::system::demangleType< T >(), InputError );
+  GEOS_THROW( "Cannot parse key with name ("<<name<<") with the given type " << LvArray::system::demangleType< T >(), InputError );
 }
 
 /**
@@ -304,6 +304,6 @@ readAttributeAsType( T & rval,
 
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /*GEOSX_DATAREPOSITORY_XMLWRAPPER_HPP_ */
+#endif /*GEOS_DATAREPOSITORY_XMLWRAPPER_HPP_ */

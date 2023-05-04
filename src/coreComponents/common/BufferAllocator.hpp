@@ -16,8 +16,8 @@
  * @file BufferAllocator.hpp
  */
 
-#ifndef GEOSX_COMMON_BUFFERALLOCATOR_HPP
-#define GEOSX_COMMON_BUFFERALLOCATOR_HPP
+#ifndef GEOS_COMMON_BUFFERALLOCATOR_HPP
+#define GEOS_COMMON_BUFFERALLOCATOR_HPP
 
 #include "common/GeosxConfig.hpp"
 
@@ -25,7 +25,7 @@
 #include <umpire/ResourceManager.hpp>
 #include <umpire/TypedAllocator.hpp>
 
-namespace geosx
+namespace geos
 {
 /**
  * @brief Set the current desired behaviour of the BufferAllocator

@@ -20,7 +20,7 @@
 #include <gtest/gtest.h>
 #include <conduit.hpp>
 
-using namespace geosx;
+using namespace geos;
 using namespace dataRepository;
 
 template< typename T >

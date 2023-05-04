@@ -16,8 +16,8 @@
  * @file Wrapper.hpp
  */
 
-#ifndef GEOSX_DATAREPOSITORY_WRAPPER_HPP_
-#define GEOSX_DATAREPOSITORY_WRAPPER_HPP_
+#ifndef GEOS_DATAREPOSITORY_WRAPPER_HPP_
+#define GEOS_DATAREPOSITORY_WRAPPER_HPP_
 
 // Source inclues
 #include "wrapperHelpers.hpp"
@@ -40,7 +40,7 @@
 #include <cstdlib>
 #include <type_traits>
 
-namespace geosx
+namespace geos
 {
 
 namespace dataRepository
@@ -190,7 +190,7 @@ public:
 
   virtual void copyWrapper( WrapperBase const & source ) override
   {
-    GEOSX_ERROR_IF( source.getName() != m_name, "Tried to copy wrapper with a different name" );
+    GEOS_ERROR_IF( source.getName() != m_name, "Tried to copy wrapper with a different name" );
     copyWrapperAttributes( source );
     copyData( source );
   }
@@ -219,8 +219,8 @@ public:
    */
   static Wrapper & cast( WrapperBase & wrapper )
   {
-    GEOSX_ERROR_IF( wrapper.getTypeId() != typeid( T ),
-                    "Invalid downcast to Wrapper< " << LvArray::system::demangleType< T >() << " >" );
+    GEOS_ERROR_IF( wrapper.getTypeId() != typeid( T ),
+                   "Invalid downcast to Wrapper< " << LvArray::system::demangleType< T >() << " >" );
     return static_cast< Wrapper< T > & >( wrapper );
   }
 
@@ -232,8 +232,8 @@ public:
    */
   static Wrapper< T > const & cast( WrapperBase const & wrapper )
   {
-    GEOSX_ERROR_IF( wrapper.getTypeId() != typeid( T ),
-                    "Invalid downcast to Wrapper< " << LvArray::system::demangleType< T >() << " >" );
+    GEOS_ERROR_IF( wrapper.getTypeId() != typeid( T ),
+                   "Invalid downcast to Wrapper< " << LvArray::system::demangleType< T >() << " >" );
     return static_cast< Wrapper< T > const & >( wrapper );
   }
 
@@ -266,7 +266,7 @@ public:
   virtual
   HistoryMetadata getHistoryMetadata( localIndex const packCount = -1 ) const override final
   {
-    return geosx::getHistoryMetadata( getName(), referenceAsView( ), numArrayComp(), packCount );
+    return geos::getHistoryMetadata( getName(), referenceAsView( ), numArrayComp(), packCount );
   }
 
   /**
@@ -440,7 +440,7 @@ public:
    * @return reference to T, or in the case of an Array, a reference to an
    *         ArrayView<T const> const.
    */
-  GEOSX_DECLTYPE_AUTO_RETURN reference() const
+  GEOS_DECLTYPE_AUTO_RETURN reference() const
   { return referenceAsView(); }
 
   /**
@@ -452,7 +452,7 @@ public:
    * themselves into views. For other types, a regular reference is returned.
    */
   template< typename _T=T, typename=std::enable_if_t< traits::HasMemberFunction_toView< _T > > >
-  GEOSX_DECLTYPE_AUTO_RETURN referenceAsView()
+  GEOS_DECLTYPE_AUTO_RETURN referenceAsView()
   { return m_data->toView(); }
 
   /**
@@ -466,7 +466,7 @@ public:
    * @copydoc referenceAsView()
    */
   template< typename _T=T, typename=std::enable_if_t< traits::HasMemberFunction_toView< _T > > >
-  GEOSX_DECLTYPE_AUTO_RETURN referenceAsView() const
+  GEOS_DECLTYPE_AUTO_RETURN referenceAsView() const
   { return m_data->toViewConst(); }
 
   /**
@@ -576,12 +576,12 @@ public:
                                                                      getName(),
                                                                      targetNode,
                                                                      inputFlag == InputFlags::REQUIRED );
-        GEOSX_THROW_IF( !m_successfulReadFromInput,
-                        GEOSX_FMT( "XML Node '{}' with name='{}' is missing required attribute '{}'."
-                                   "Available options are:\n{}\nFor more details, please refer to documentation at:\n"
-                                   "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
-                                   targetNode.path(), targetNode.attribute( "name" ).value(), getName(), dumpInputOptions( true ) ),
-                        InputError );
+        GEOS_THROW_IF( !m_successfulReadFromInput,
+                       GEOS_FMT( "XML Node '{}' with name='{}' is missing required attribute '{}'."
+                                 "Available options are:\n{}\nFor more details, please refer to documentation at:\n"
+                                 "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
+                                 targetNode.path(), targetNode.attribute( "name" ).value(), getName(), dumpInputOptions( true ) ),
+                       InputError );
       }
       else
       {
@@ -625,7 +625,7 @@ public:
     auto ptr = wrapperHelpers::averageOverSecondDim( reference() );
     using U = typename decltype( ptr )::element_type;
 
-    GEOSX_ERROR_IF( ptr == nullptr, "Failed to average over the second dimension of." );
+    GEOS_ERROR_IF( ptr == nullptr, "Failed to average over the second dimension of." );
 
     auto ret = std::make_unique< Wrapper< U > >( name, group, std::move( ptr ) );
     for( integer dim = 2; dim < numArrayDims(); ++dim )
@@ -1112,22 +1112,22 @@ private:
 
 }
 
-} // end of namespace geosx
+} // end of namespace geos
 
 // Do not remove the following commented code since it's used for debugging with TotalView.
 //template< typename T >
-//int TV_ttf_display_type( geosx::dataRepository::Wrapper<T> const * wrapper)
+//int TV_ttf_display_type( geos::dataRepository::Wrapper<T> const * wrapper)
 //{
 //  std::cout<<"Executing "<<wrapper->totalviewTypeName()<<"::TV_ttf_display_type()"<<std::endl;
 //  return TV_ttf_format_raw;
 //}
 //
-//template int TV_ttf_display_type( geosx::dataRepository::Wrapper<int> const * wrapper );
+//template int TV_ttf_display_type( geos::dataRepository::Wrapper<int> const * wrapper );
 //
 //template< typename T >
-//void geosx::dataRepository::Wrapper<T>::tvTemplateInstantiation()
+//void geos::dataRepository::Wrapper<T>::tvTemplateInstantiation()
 //{
 //  TV_ttf_display_type<T>(this);
 //}
 
-#endif /* GEOSX_DATAREPOSITORY_WRAPPER_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_WRAPPER_HPP_ */

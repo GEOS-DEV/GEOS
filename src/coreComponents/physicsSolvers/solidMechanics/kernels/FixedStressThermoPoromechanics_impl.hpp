@@ -13,15 +13,18 @@
  */
 
 /**
- * @file FixedStressThermoPoroElasticKernel_impl.hpp
+ * @file FixedStressThermoPoromechanics_impl.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROELASTIC_IMPL_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROELASTIC_IMPL_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROMECHANICS_IMPL_HPP_
+#define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROMECHANICS_IMPL_HPP_
 
-#include "FixedStressThermoPoroElasticKernel.hpp"
+#include "FixedStressThermoPoromechanics.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace solidMechanicsLagrangianFEMKernels
@@ -31,19 +34,19 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 
-FixedStressThermoPoroElastic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
-FixedStressThermoPoroElastic( NodeManager const & nodeManager,
-                              EdgeManager const & edgeManager,
-                              FaceManager const & faceManager,
-                              localIndex const targetRegionIndex,
-                              SUBREGION_TYPE const & elementSubRegion,
-                              FE_TYPE const & finiteElementSpace,
-                              CONSTITUTIVE_TYPE & inputConstitutiveType,
-                              arrayView1d< globalIndex const > const inputDofNumber,
-                              globalIndex const rankOffset,
-                              CRSMatrixView< real64, globalIndex const > const inputMatrix,
-                              arrayView1d< real64 > const inputRhs,
-                              real64 const (&inputGravityVector)[3] ):
+FixedStressThermoPoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+FixedStressThermoPoromechanics( NodeManager const & nodeManager,
+                                EdgeManager const & edgeManager,
+                                FaceManager const & faceManager,
+                                localIndex const targetRegionIndex,
+                                SUBREGION_TYPE const & elementSubRegion,
+                                FE_TYPE const & finiteElementSpace,
+                                CONSTITUTIVE_TYPE & inputConstitutiveType,
+                                arrayView1d< globalIndex const > const inputDofNumber,
+                                globalIndex const rankOffset,
+                                CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                                arrayView1d< real64 > const inputRhs,
+                                real64 const (&inputGravityVector)[3] ):
   Base( nodeManager,
         edgeManager,
         faceManager,
@@ -59,7 +62,7 @@ FixedStressThermoPoroElastic( NodeManager const & nodeManager,
   m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
   m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
   m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
-  m_density( inputConstitutiveType.getDensity() ),
+  m_bulkDensity( elementSubRegion.template getField< fields::poromechanics::bulkDensity >() ),
   m_pressure_n( elementSubRegion.template getField< fields::flow::pressure_n >() ),
   m_pressure( elementSubRegion.template getField< fields::flow::pressure >() ),
   m_initialTemperature( elementSubRegion.template getField< fields::flow::initialTemperature >() ),
@@ -70,16 +73,16 @@ FixedStressThermoPoroElastic( NodeManager const & nodeManager,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void FixedStressThermoPoroElastic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void FixedStressThermoPoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 setup( localIndex const k,
        StackVariables & stack ) const
 {
   m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
   localIndex const numSupportPoints =
     m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
-  stack.numRows =  3 * numSupportPoints;
+  stack.numRows = 3 * numSupportPoints;
   stack.numCols = stack.numRows;
 
   for( localIndex a = 0; a < numSupportPoints; ++a )
@@ -110,9 +113,9 @@ setup( localIndex const k,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void FixedStressThermoPoroElastic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void FixedStressThermoPoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 quadraturePointKernel( localIndex const k,
                        localIndex const q,
                        StackVariables & stack ) const
@@ -129,6 +132,8 @@ quadraturePointKernel( localIndex const k,
   FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 
   // Evaluate total stress and its derivatives
+  // TODO: allow for a customization of the kernel to pass the average pressure to the small strain update (to account for cap pressure
+  // later)
   m_constitutiveUpdate.smallStrainUpdatePoromechanicsFixedStress( k,
                                                                   q,
                                                                   m_pressure_n[k],
@@ -145,9 +150,10 @@ quadraturePointKernel( localIndex const k,
   }
 
   // Here we consider the bodyForce is purely from the solid
-  real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q )* detJxW,
-                                   m_gravityVector[1] * m_density( k, q )* detJxW,
-                                   m_gravityVector[2] * m_density( k, q )* detJxW };
+  // Warning: here, we lag (in iteration) the displacement dependence of bulkDensity
+  real64 const gravityForce[3] = { m_gravityVector[0] * m_bulkDensity( k, q )* detJxW,
+                                   m_gravityVector[1] * m_bulkDensity( k, q )* detJxW,
+                                   m_gravityVector[2] * m_bulkDensity( k, q )* detJxW };
 
   real64 N[numNodesPerElem];
   FE_TYPE::calcN( q, stack.feStack, N );
@@ -169,13 +175,13 @@ quadraturePointKernel( localIndex const k,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 FixedStressThermoPoroElastic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 FixedStressThermoPoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 complete( localIndex const k,
           StackVariables & stack ) const
 {
-  GEOSX_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( k );
   real64 maxForce = 0;
 
   // TODO: Does this work if BTDB is non-symmetric?
@@ -208,14 +214,14 @@ template< typename SUBREGION_TYPE,
 template< typename POLICY,
           typename KERNEL_TYPE >
 real64
-FixedStressThermoPoroElastic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernelLaunch( localIndex const numElems,
-                                                                                          KERNEL_TYPE const & kernelComponent )
+FixedStressThermoPoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernelLaunch( localIndex const numElems,
+                                                                                            KERNEL_TYPE const & kernelComponent )
 {
   return Base::template kernelLaunch< POLICY, KERNEL_TYPE >( numElems, kernelComponent );
 }
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif // GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROELASTIC_IMPL_HPP_
+#endif // GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROMECHANICS_IMPL_HPP_

@@ -16,7 +16,7 @@
 
 #include "dataRepository/BufferOps.hpp"
 
-using namespace geosx;
+using namespace geos;
 using namespace bufferOps;
 
 
@@ -48,7 +48,7 @@ TEST( testGeosxTraits, test_is_array_packable )
 
 TEST( testGeosxTraits, test_is_packable_map )
 {
-  static_assert( is_packable_map< map< string, int > >, "Should be true." );
-  static_assert( is_packable_map< map< string, array1d< int > > >, "Should be true." );
-  static_assert( !is_packable_map< map< string, std::pair< int, int > > >, "Should be false" );
+  static_assert( is_host_packable_map< map< string, int > >, "Should be true." );
+  static_assert( is_host_packable_map< map< string, array1d< int > > >, "Should be true." );
+  static_assert( !is_host_packable_map< map< string, std::pair< int, int > > >, "Should be false" );
 }
