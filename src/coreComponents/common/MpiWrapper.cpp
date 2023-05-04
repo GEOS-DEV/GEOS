@@ -308,14 +308,13 @@ double MpiWrapper::wtime( void )
 
 }
 
-int MpiWrapper::activeWaitAny( const int count, MPI_Request array_of_requests[], std::function< void ( int ) > func )
+int MpiWrapper::activeWaitAny( const int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[], std::function< MPI_Request ( int ) > func )
 {
   int cmp = 0;
   while( cmp < count )
   {
     int idx = 0;
-    MPI_Status stat;
-    int err = waitAny( count, array_of_requests, &idx, &stat );
+    int err = waitAny( count, array_of_requests, &idx, array_of_statuses );
     if( err != MPI_SUCCESS )
       return err;
     if( idx != MPI_UNDEFINED )   // only if all(requests == MPI_REQUEST_NULL)
@@ -327,15 +326,17 @@ int MpiWrapper::activeWaitAny( const int count, MPI_Request array_of_requests[],
   return MPI_SUCCESS;
 }
 
-int MpiWrapper::activeWaitSome( const int count, MPI_Request array_of_requests[], std::function< void ( int ) > func )
+int MpiWrapper::activeWaitSome( const int count,
+                                MPI_Request array_of_requests[],
+                                MPI_Status array_of_statuses[],
+                                std::function< MPI_Request ( int ) > func )
 {
   int cmp = 0;
   while( cmp < count )
   {
     int rcvd = 0;
     std::vector< int > indices( count, -1 );
-    std::vector< MPI_Status > stats( count );
-    int err = waitSome( count, array_of_requests, &rcvd, &indices[0], &stats[0] );
+    int err = waitSome( count, array_of_requests, &rcvd, &indices[0], array_of_statuses );
     if( err != MPI_SUCCESS )
       return err;
     if( rcvd > 0 )
@@ -353,39 +354,31 @@ int MpiWrapper::activeWaitSome( const int count, MPI_Request array_of_requests[]
   return MPI_SUCCESS;
 }
 
-int MpiWrapper::activeWaitSomePartialPhase( const int participants,
-                                            std::vector< std::function< MPI_Request ( int ) > > const & phases )
-{
-  const int num_phases = sizeof(phases.size());
-  std::vector< MPI_Request > phase_requests( participants * num_phases, MPI_REQUEST_NULL );
-  for( int idx = 0; idx < participants; ++idx )
-  {
-    phase_requests[idx] = phases[0]( idx );
-  }
-  auto phase_invocation = [&] ( int idx )
-  {
-    int phase = (idx / participants) + 1;
-    int phase_idx = idx % participants;
-    phase_requests[idx + participants] = phases[phase]( phase_idx );
-  };
-  return activeWaitSome( participants * num_phases, &phase_requests[0], phase_invocation );
-}
 
 int MpiWrapper::activeWaitSomeCompletePhase( const int participants,
-                                             std::vector< std::function< MPI_Request ( int ) > > const & phases )
+                                             std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases )
 {
   const int num_phases = phases.size();
-  std::vector< MPI_Request > phase_requests( num_phases * participants, MPI_REQUEST_NULL );
-  for( int idx = 0; idx < participants; ++idx )
-  {
-    phase_requests[idx] = phases[0]( idx );
-  }
   int err = 0;
-  for( int phase = 1; phase < num_phases; ++phase )
+  for( int phase = 0; phase < num_phases; ++phase )
   {
-    int prev_phase = phase - 1;
-    auto phase_wrapper = [&] ( int idx ) { phase_requests[ ( phase * participants ) + idx ] = phases[phase]( idx ); };
-    err = activeWaitSome( participants, &phase_requests[prev_phase * participants], phase_wrapper );
+    MPI_Request * const requests = std::get< 0 >( phases[phase] );
+    MPI_Status * const statuses = std::get< 1 >( phases[phase] );
+    std::function< MPI_Request ( int ) > func = std::get< 2 >( phases[phase] );
+    if( requests!=nullptr )
+    {
+      err = activeWaitSome( participants,
+                            requests,
+                            statuses,
+                            func );
+    }
+    else
+    {
+      for( int idx = 0; idx < participants; ++idx )
+      {
+        func( idx );
+      }
+    }
     if( err != MPI_SUCCESS )
       break;
   }
@@ -393,21 +386,22 @@ int MpiWrapper::activeWaitSomeCompletePhase( const int participants,
 }
 
 int MpiWrapper::activeWaitOrderedCompletePhase( const int participants,
-                                                std::vector< std::function< MPI_Request ( int ) > > const & phases )
+                                                std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases )
 {
   const int num_phases = phases.size();
-  std::vector< MPI_Request > phase_requests( participants );
-  for( int idx = 0; idx < participants; ++idx )
+  for( int phase = 0; phase < num_phases; ++phase )
   {
-    phase_requests[idx] = phases[0]( idx );
-  }
-  for( int phase = 1; phase < num_phases; ++phase )
-  {
+    MPI_Request * const requests = std::get< 0 >( phases[phase] );
+    MPI_Status * const statuses = std::get< 1 >( phases[phase] );
+    std::function< MPI_Request ( int ) > func = std::get< 2 >( phases[phase] );
+
     for( int idx = 0; idx < participants; ++idx )
     {
-      MPI_Status stat;
-      wait( &phase_requests[idx], &stat );
-      phase_requests[idx] = phases[phase]( idx );
+      if( requests!=nullptr )
+      {
+        wait( &requests[idx], &statuses[idx] );
+      }
+      func( idx );
     }
   }
   return MPI_SUCCESS;

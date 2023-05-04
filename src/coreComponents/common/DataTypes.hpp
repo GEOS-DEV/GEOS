@@ -50,7 +50,7 @@
 #endif
 
 #include <cassert>
-#include <cmath>
+//#include <cmath>
 #include <cstdint>
 #include <iostream>
 #include <memory>
@@ -151,6 +151,16 @@ using buffer_type = std::vector< buffer_unit_type, BufferAllocator< buffer_unit_
 /// Type of storage for communication buffers.
 using buffer_type = std::vector< buffer_unit_type >;
 #endif
+
+///@}
+
+/**
+ * @name Alias for timestamp in GEOSX.
+ */
+///@{
+
+/// Timestamp type (used to perform actions such a sparsity pattern computation after mesh modifications)
+using Timestamp = unsigned long long int;
 
 ///@}
 

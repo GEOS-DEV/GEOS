@@ -20,7 +20,6 @@ option( RAJA_ENABLE_OPENMP "" OFF )
 option( RAJA_ENABLE_CUDA "" OFF )
 option( RAJA_ENABLE_TESTS "" OFF )
 
-option( ENABLE_PAMELA "" ON )
 option( ENABLE_PVTPackage "" ON )
 
 option( ENABLE_UNCRUSTIFY "" ON )
@@ -74,6 +73,8 @@ else()
 endif()
 
 ### BUILD & BLT SETUP ###
+
+option( GEOSX_INSTALL_SCHEMA "Enables schema generation and installation" ON )
 
 option( GEOSX_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" OFF )
 

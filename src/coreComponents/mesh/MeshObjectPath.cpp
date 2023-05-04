@@ -63,7 +63,7 @@ std::vector< string >
 MeshObjectPath::fillPathTokens( string const & path,
                                 dataRepository::Group const & meshBodies ) const
 {
-  std::vector< string > pathTokens = stringutilities::tokenize< std::vector< string > >( path, "/" );
+  std::vector< string > pathTokens = stringutilities::tokenize( path, "/" );
 
   // find where the object specification is in the path
   auto findObjectIndex = [&]() -> int
@@ -195,7 +195,7 @@ void processTokenRecursive( dataRepository::Group const & parentGroup,
     namesInRepository.emplace_back( group.getName() );
   } );
 
-  for( string const & inputEntry : stringutilities::tokenize< std::vector< string > >( pathToken, " " ) )
+  for( string const & inputEntry : stringutilities::tokenize( pathToken, " " ) )
   {
     bool foundMatch = false;
     for( string const & candidateName : namesInRepository )

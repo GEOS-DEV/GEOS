@@ -23,6 +23,7 @@
 #include "linearAlgebra/common/LinearOperator.hpp"
 #include "linearAlgebra/utilities/BlockVector.hpp"
 #include "common/traits.hpp"
+#include "linearAlgebra/common/common.hpp"
 
 namespace geosx
 {

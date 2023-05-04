@@ -142,6 +142,13 @@ void TableFunction::reInitializeFunction()
   for( localIndex ii = 0; ii < m_coordinates.size(); ++ii )
   {
     increment *= m_coordinates.sizeOfArray( ii );
+    for( localIndex j = 1; j < m_coordinates[ii].size(); ++j )
+    {
+      GEOSX_THROW_IF( m_coordinates[ii][j] - m_coordinates[ii][j-1] <= 0,
+                      GEOSX_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
+                                 catalogName(), getName(), ii ),
+                      InputError );
+    }
   }
   if( m_coordinates.size() > 0 && !m_values.empty() ) // coordinates and values have been set
   {

@@ -16,11 +16,14 @@
  * @file SolidMechanicsLagrangianFEM.cpp
  */
 
+#define GEOSX_DISPATCH_VEM
+
 #include "SolidMechanicsLagrangianFEM.hpp"
 #include "kernels/ImplicitSmallStrainNewmark.hpp"
 #include "kernels/ImplicitSmallStrainQuasiStatic.hpp"
 #include "kernels/ExplicitSmallStrain.hpp"
 #include "kernels/ExplicitFiniteStrain.hpp"
+#include "kernels/FixedStressThermoPoroElasticKernel.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -34,6 +37,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/FaceElementSubRegion.hpp"
+#include "mesh/CellElementSubRegion.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
 namespace geosx
@@ -54,7 +58,8 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_maxForce( 0.0 ),
   m_maxNumResolves( 10 ),
   m_strainTheory( 0 ),
-  m_iComm( CommunicationTools::getInstance().getCommID() )
+  m_iComm( CommunicationTools::getInstance().getCommID() ),
+  m_fixedStressUpdateThermoPoroElasticityFlag( 0 )
 {
 
   registerWrapper( viewKeyStruct::newmarkGammaString(), &m_newmarkGamma ).
@@ -119,7 +124,6 @@ void SolidMechanicsLagrangianFEM::postProcessInput()
   linParams.isSymmetric = true;
   linParams.dofsPerNode = 3;
   linParams.amg.separateComponents = true;
-
 }
 
 SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
@@ -211,6 +215,7 @@ void SolidMechanicsLagrangianFEM::setConstitutiveNamesCallSuper( ElementSubRegio
   string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
   solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
   GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
+
 }
 
 void SolidMechanicsLagrangianFEM::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
@@ -307,7 +312,8 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
     Group & nodeSets = nodes.sets();
 
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
-
+    FaceManager const & faceManager = mesh.getFaceManager();
+    EdgeManager const & edgeManager = mesh.getEdgeManager();
     arrayView1d< real64 > & mass = nodes.getField< solidMechanics::mass >();
 
     arrayView1d< integer const > const & nodeGhostRank = nodes.ghostRank();
@@ -358,20 +364,33 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
                                                                                  [&] ( auto const finiteElement )
         {
           using FE_TYPE = TYPEOFREF( finiteElement );
+          using SUBREGION_TYPE = TYPEOFREF( elementSubRegion );
 
-          constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+          typename FE_TYPE::template MeshData< SUBREGION_TYPE > meshData;
+          finiteElement::FiniteElementBase::initialize< FE_TYPE, SUBREGION_TYPE >( nodes,
+                                                                                   edgeManager,
+                                                                                   faceManager,
+                                                                                   elementSubRegion,
+                                                                                   meshData );
+
+          constexpr localIndex maxSupportPoints = FE_TYPE::maxSupportPoints;
           constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
-          real64 N[numNodesPerElem];
+          real64 N[maxSupportPoints];
           for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
           {
+            typename FE_TYPE::StackVariables feStack;
+            finiteElement.template setup< FE_TYPE >( k, meshData, feStack );
+            localIndex const numSupportPoints =
+              finiteElement.template numSupportPoints< FE_TYPE >( feStack );
+
             for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
             {
               real64 const detJ = 1;//finiteElement.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
-              FE_TYPE::calcN( q, N );
+              FE_TYPE::calcN( q, feStack, N );
 
-              for( localIndex a=0; a< numNodesPerElem; ++a )
+              for( localIndex a=0; a< numSupportPoints; ++a )
               {
 //                mass[elemsToNodes[k][a]] += rho[k][q] * detJ[k][q] * N[a];
                 mass[elemsToNodes[k][a]] += rho[k][q] * detJ * N[a];
@@ -421,8 +440,6 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
   } );
 }
 
-
-
 real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
                                                 real64 const & dt,
                                                 const int cycleNumber,
@@ -451,7 +468,15 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
     implicitStepSetup( time_n, dt, domain );
     for( int solveIter=0; solveIter<maxNumResolves; ++solveIter )
     {
-      setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
+
+      Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
+
+      // Only build the sparsity pattern if the mesh has changed
+      if( meshModificationTimestamp > getSystemSetupTimestamp() || globallyFractured )
+      {
+        setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
+        setSystemSetupTimestamp( meshModificationTimestamp );
+      }
 
       dtReturn = nonlinearImplicitStep( time_n,
                                         dt,
@@ -942,28 +967,41 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
   localMatrix.zero();
   localRhs.zero();
 
-  if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
+  if( m_fixedStressUpdateThermoPoroElasticityFlag )
   {
     GEOSX_UNUSED_VAR( dt );
-    assemblyLaunch< constitutive::SolidBase,
-                    solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
-                                                                              dofManager,
-                                                                              localMatrix,
-                                                                              localRhs );
+    assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: chage once there is a cmake solution
+                    solidMechanicsLagrangianFEMKernels::FixedStressThermoPoroElasticFactory >( domain,
+                                                                                               dofManager,
+                                                                                               localMatrix,
+                                                                                               localRhs );
   }
-  else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
+  else
   {
-    assemblyLaunch< constitutive::SolidBase,
-                    solidMechanicsLagrangianFEMKernels::ImplicitNewmarkFactory >( domain,
-                                                                                  dofManager,
-                                                                                  localMatrix,
-                                                                                  localRhs,
-                                                                                  m_newmarkGamma,
-                                                                                  m_newmarkBeta,
-                                                                                  m_massDamping,
-                                                                                  m_stiffnessDamping,
-                                                                                  dt );
+    if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
+    {
+      GEOSX_UNUSED_VAR( dt );
+      assemblyLaunch< constitutive::SolidBase,
+                      solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
+                                                                                dofManager,
+                                                                                localMatrix,
+                                                                                localRhs );
+    }
+    else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
+    {
+      assemblyLaunch< constitutive::SolidBase,
+                      solidMechanicsLagrangianFEMKernels::ImplicitNewmarkFactory >( domain,
+                                                                                    dofManager,
+                                                                                    localMatrix,
+                                                                                    localRhs,
+                                                                                    m_newmarkGamma,
+                                                                                    m_newmarkBeta,
+                                                                                    m_massDamping,
+                                                                                    m_stiffnessDamping,
+                                                                                    dt );
+    }
   }
+
 }
 
 void
@@ -1022,7 +1060,9 @@ SolidMechanicsLagrangianFEM::
 
 real64
 SolidMechanicsLagrangianFEM::
-  calculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                         real64 const & GEOSX_UNUSED_PARAM( dt ),
+                         DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs )
 {
@@ -1099,7 +1139,7 @@ SolidMechanicsLagrangianFEM::
 
   if( getLogLevel() >= 1 && logger::internal::rank==0 )
   {
-    std::cout << GEOSX_FMT( "( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), totalResidualNorm );
+    std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), totalResidualNorm );
   }
 
   return totalResidualNorm;
@@ -1292,6 +1332,11 @@ SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition const & d
   GEOSX_UNUSED_VAR( domain, dofManager, localSolution );
 
   return 1.0;
+}
+
+void SolidMechanicsLagrangianFEM::turnOnFixedStressThermoPoroElasticityFlag()
+{
+  m_fixedStressUpdateThermoPoroElasticityFlag = 1;
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianFEM, string const &, dataRepository::Group * const )

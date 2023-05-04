@@ -266,6 +266,10 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
     }
   }
 
+  MpiWrapper::waitAll( neighbors.size(), commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
+  MpiWrapper::waitAll( neighbors.size(), commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
+
+
   object.constructGlobalToLocalMap();
 
   object.setMaxGlobalIndex();
@@ -486,7 +490,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
 {
   int nonLocalGhostsTag = 45;
 
-  std::vector< MPI_Request > nonLocalGhostsRequests( neighbors.size() );
+  std::vector< MPI_Request > nonLocalGhostsRequests( neighbors.size(), MPI_REQUEST_NULL );
 
   /// For each neighbor send them the indices of their ghosts that they mistakenly believe are owned by this rank.
   for( std::size_t i = 0; i < neighbors.size(); ++i )
@@ -601,7 +605,9 @@ void removeUnusedNeighbors( NodeManager & nodeManager,
  * @param phases list of phases.
  * @param unorderedComms if true complete the communications of each phase in the order they are received.
  */
-void waitOrderedOrWaitAll( int const n, std::vector< std::function< MPI_Request ( int ) > > const & phases, bool const unorderedComms )
+void waitOrderedOrWaitAll( int const n,
+                           std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases,
+                           bool const unorderedComms )
 {
   if( unorderedComms )
   {
@@ -650,23 +656,24 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
     return MPI_REQUEST_NULL;
   };
 
-  waitOrderedOrWaitAll( neighbors.size(), { sendGhosts, postRecv, unpackGhosts }, unorderedComms );
+  waitOrderedOrWaitAll( neighbors.size(),
+                        { std::make_tuple( static_cast< MPI_Request * >(nullptr), static_cast< MPI_Status * >(nullptr), sendGhosts ),
+                          std::make_tuple( commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus(), postRecv ),
+                          std::make_tuple( commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus(), unpackGhosts ) },
+                        unorderedComms );
+
+  // There are cases where the multiple waitOrderedOrWaitAll methods here will clash with
+  // each other. This typically occurs at higher processor counts (>256) and large meshes
+  // with ~14M elements. Adding the following waitAll methods ensures that the underlying
+  // async MPI communication will not interfere with subsequent async communication calls.
+  // The underlying problem is that for a given phase of async communication, the same
+  // tag numbers are used. This will at least isolate the async calls from each other.
+  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
+  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
 
   nodeManager.setReceiveLists();
   edgeManager.setReceiveLists();
   faceManager.setReceiveLists();
-
-  // at present removing this barrier allows a nondeterministic mpi error to happen on lassen
-  //   it occurs less than 5% of the time and happens when a process enters the recv phase in
-  //   the sync list exchange while another process still has not unpacked the ghosts received from
-  //   the first process. Depending on the mpi implementation the sync send from the first process
-  //   can be recv'd by the second process instead of the ghost send which has already been sent but
-  //   not necessarily received.
-  // Some restructuring to ensure this can't happen ( can also probably just change the send/recv tagging )
-  //   can eliminate this. But at present runtimes are the same in either case, as time is mostly just
-  //   shifted from the waitall in UnpackAndRebuildSyncLists since the processes are more 'in-sync' when
-  //   hitting that point after introducing this barrier.
-  MpiWrapper::barrier();
 
   auto sendSyncLists = [&] ( int idx )
   {
@@ -687,13 +694,31 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
     return MPI_REQUEST_NULL;
   };
 
-  waitOrderedOrWaitAll( neighbors.size(), { sendSyncLists, postRecv, rebuildSyncLists }, unorderedComms );
+  waitOrderedOrWaitAll( neighbors.size(),
+                        { std::make_tuple( static_cast< MPI_Request * >(nullptr), static_cast< MPI_Status * >(nullptr), sendSyncLists ),
+                          std::make_tuple( commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus(), postRecv ),
+                          std::make_tuple( commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus(), rebuildSyncLists ) },
+                        unorderedComms );
+
+  // See above comments for the reason behind these waitAll commands
+  // RE: isolate multiple async-wait calls
+  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
+  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
 
   fixReceiveLists( nodeManager, neighbors );
   fixReceiveLists( edgeManager, neighbors );
   fixReceiveLists( faceManager, neighbors );
 
-  waitOrderedOrWaitAll( neighbors.size(), { sendSyncLists, postRecv, rebuildSyncLists }, unorderedComms );
+  waitOrderedOrWaitAll( neighbors.size(),
+                        { std::make_tuple( static_cast< MPI_Request * >(nullptr), static_cast< MPI_Status * >(nullptr), sendSyncLists ),
+                          std::make_tuple( commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus(), postRecv ),
+                          std::make_tuple( commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus(), rebuildSyncLists ) },
+                        unorderedComms );
+
+  // See above comments for the reason behind these waitAll commands
+  // RE: isolate multiple async-wait
+  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
+  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
 
   nodeManager.fixUpDownMaps( false );
   verifyGhostingConsistency( nodeManager, neighbors );

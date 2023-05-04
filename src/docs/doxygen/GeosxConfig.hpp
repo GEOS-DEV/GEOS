@@ -105,10 +105,10 @@
 #define Conduit_VERSION 0.8.2
 
 /// Version information for RAJA
-#define RAJA_VERSION 2022.3.0
+#define RAJA_VERSION 2022.10.5
 
 /// Version information for umpire
-#define umpire_VERSION 2022.3.0
+#define umpire_VERSION 2022.10.0
 
 /// Version information for chai
 /* #undef chai_VERSION */

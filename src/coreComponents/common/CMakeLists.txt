@@ -20,7 +20,9 @@ set( common_headers
      TypeDispatch.hpp
      initializeEnvironment.hpp
    )
-
+if ( ENABLE_CUDA )
+  list( APPEND common_headers lifoStorage.hpp )
+endif()
 #
 # Specify all sources
 #
@@ -33,7 +35,7 @@ set( common_sources
      initializeEnvironment.cpp
    )
 
-set( dependencyList lvarray pugixml RAJA chai conduit::conduit fmt::fmt )
+set( dependencyList fmt::fmt lvarray pugixml RAJA  chai conduit::conduit  )
 
 if ( ENABLE_MKL )
   set( dependencyList ${dependencyList} mkl )

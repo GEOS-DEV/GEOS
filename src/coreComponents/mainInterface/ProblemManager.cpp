@@ -478,7 +478,7 @@ void ProblemManager::postProcessInput()
   {
     partition.setPartitions( xpar, ypar, zpar );
     int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
-    // Case : Using MPI domain decomposition and partition are not defined (mainly pamela usage)
+    // Case : Using MPI domain decomposition and partition are not defined (mainly for external mesh readers)
     if( mpiSize > 1 && xpar == 1 && ypar == 1 && zpar == 1 )
     {
       //TODO  confirm creates no issues with MPI_Cart_Create
@@ -628,12 +628,7 @@ void ProblemManager::importFields()
   GEOSX_MARK_FUNCTION;
   DomainPartition & domain = getDomainPartition();
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
-
-  meshManager.forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & generator )
-  {
-    generator.importFields( domain );
-    generator.freeResources();
-  } );
+  meshManager.importFields( domain );
 }
 
 void ProblemManager::applyNumericalMethods()
@@ -987,6 +982,10 @@ void ProblemManager::applyInitialConditions()
   {
     meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
     {
+      if( !meshLevel.isShallowCopy() ) // to avoid messages printed three times
+      {
+        m_fieldSpecificationManager->validateBoundaryConditions( meshLevel );
+      }
       m_fieldSpecificationManager->applyInitialConditions( meshLevel );
     } );
   } );

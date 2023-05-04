@@ -53,7 +53,6 @@ public:
 
     this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
       setInputFlag( dataRepository::InputFlags::FALSE );
-
   }
 
   /// deleted copy constructor
@@ -165,11 +164,20 @@ public:
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override
   {
+    /// Fully-coupled assembly.
+
+    // 1. we sync the nonlinear convergence history. The coupled solver parameters are the one being
+    // used. We want to propagate the info to subsolvers. It can be important for solvers that
+    // have special treatment for specific iterations.
+    synchronizeNonLinearParameters();
+
+    // 2. Assemble matrix blocks of each individual solver
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
       solver->assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
     } );
 
+    // 3. Assemble coupling blocks
     assembleCouplingTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
   }
 
@@ -203,42 +211,44 @@ public:
     } );
   }
 
-
-  virtual real64
+  /// This method is meant to be kept final. Derived CoupledSolvers are expected, if needed,
+  /// to override fullyCoupledSolverStep and/or sequentiallyCoupledSolverStep.
+  real64
   solverStep( real64 const & time_n,
               real64 const & dt,
               int const cycleNumber,
-              DomainPartition & domain ) override
+              DomainPartition & domain ) override final
   {
     GEOSX_MARK_FUNCTION;
 
-    real64 dt_return = dt;
+    if( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::FullyImplicit )
+    {
+      return fullyCoupledSolverStep( time_n, dt, cycleNumber, domain );
+    }
+    else if( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
+    {
+      return sequentiallyCoupledSolverStep( time_n, dt, cycleNumber, domain );
+    }
+    else
+    {
+      GEOSX_ERROR( "Invalid coupling type option." );
+      return 0;
+    }
 
-    // setup the coupled linear system
-    setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
-
-    // setup reservoir and well systems
-    implicitStepSetup( time_n, dt, domain );
-
-    // currently the only method is implicit time integration
-    dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
-
-    // complete time step in reservoir and well systems
-    implicitStepComplete( time_n, dt_return, domain );
-
-    return dt_return;
   }
 
 
   virtual real64
-  calculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( real64 const & time_n,
+                         real64 const & dt,
+                         DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override
   {
     real64 norm = 0.0;
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      real64 const singlePhysicsNorm = solver->calculateResidualNorm( domain, dofManager, localRhs );
+      real64 const singlePhysicsNorm = solver->calculateResidualNorm( time_n, dt, domain, dofManager, localRhs );
       norm += singlePhysicsNorm * singlePhysicsNorm;
     } );
 
@@ -307,10 +317,166 @@ public:
 
 protected:
 
+  /**
+   * @brief Fully coupled solution approach solution step.
+   *
+   * @param time_n the current time
+   * @param dt timestep size
+   * @param cycleNumber
+   * @param domain the domain partition
+   * @return real64 size of the accepted timestep
+   */
+  virtual real64 fullyCoupledSolverStep( real64 const & time_n,
+                                         real64 const & dt,
+                                         int const cycleNumber,
+                                         DomainPartition & domain )
+  {
+    return SolverBase::solverStep( time_n, dt, cycleNumber, domain );
+  }
+
+  /**
+   * @brief Sequentially coupled solver step. It solves a nonlinear system of
+   * equations using a sequential approach.
+   *
+   * @param time_n the current time
+   * @param dt timestep size
+   * @param cycleNumber
+   * @param domain the domain partition
+   * @return real64 size of the accepted timestep
+   */
+  virtual real64 sequentiallyCoupledSolverStep( real64 const & time_n,
+                                                real64 const & dt,
+                                                int const cycleNumber,
+                                                DomainPartition & domain )
+  {
+    GEOSX_MARK_FUNCTION;
+
+    real64 dtReturn = dt;
+
+    real64 dtReturnTemporary;
+
+    Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
+
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+
+      // Only build the sparsity pattern if the mesh has changed
+      if( meshModificationTimestamp > solver->getSystemSetupTimestamp() )
+      {
+        solver->setupSystem( domain,
+                             solver->getDofManager(),
+                             solver->getLocalMatrix(),
+                             solver->getSystemRhs(),
+                             solver->getSystemSolution() );
+        solver->setSystemSetupTimestamp( meshModificationTimestamp );
+      }
+
+      solver->implicitStepSetup( time_n, dt, domain );
+
+    } );
+
+    NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
+    integer & iter = solverParams.m_numNewtonIterations;
+    iter = 0;
+    bool isConverged = false;
+    /// Sequential coupling loop
+    while( iter < solverParams.m_maxIterNewton )
+    {
+      if( iter == 0 )
+      {
+        // Reset the states of all solvers if any of them had to restart
+        forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+        {
+          solver->resetStateToBeginningOfStep( domain );
+        } );
+        resetStateToBeginningOfStep( domain );
+      }
+
+      forEachArgInTuple( m_solvers, [&]( auto & solver, auto idx )
+      {
+        GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "  Iteration {:2}: {}", iter+1, solver->getName() ) );
+        dtReturnTemporary = solver->nonlinearImplicitStep( time_n,
+                                                           dtReturn,
+                                                           cycleNumber,
+                                                           domain );
+
+        mapSolutionBetweenSolvers( domain, idx() );
+
+        if( dtReturnTemporary < dtReturn )
+        {
+          iter = 0;
+          dtReturn = dtReturnTemporary;
+        }
+      } );
+
+      isConverged = checkSequentialConvergence( iter );
+
+      if( isConverged )
+      {
+        break;
+      }
+      // Add convergence check:
+      ++iter;
+    }
+
+    GEOSX_ERROR_IF( !isConverged, getName() << "::sequentiallyCoupledSolverStep did not converge!" );
+
+    implicitStepComplete( time_n, dt, domain );
+
+    return dtReturn;
+  }
+
+  /**
+   * @brief Maps the solution obtained from one solver to the fields used by the other solver(s)
+   *
+   * @param Domain the domain parition
+   * @param solverType the index of the solver withing this coupled solver.
+   */
+  virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
+  {
+    GEOSX_UNUSED_VAR( domain, solverType );
+  }
+
+  bool checkSequentialConvergence( int const & iter ) const
+  {
+    bool isConverged = true;
+    if( getNonlinearSolverParameters().m_subcyclingOption == 0 )
+    {
+      GEOSX_LOG_LEVEL_RANK_0( 1, "***** Single Pass solver, no subcycling *****\n" );
+    }
+    else
+    {
+      // TODO: a better convergence check could/should be found.
+      forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+      {
+        if( solver->getNonlinearSolverParameters().m_numNewtonIterations > solver->getNonlinearSolverParameters().m_minIterNewton )
+        {
+          isConverged = false;
+        }
+      } );
+      if( isConverged )
+      {
+        GEOSX_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter + 1 << " iterations! *****\n" );
+      }
+    }
+    return isConverged;
+  }
+
   virtual void
   postProcessInput() override
   {
     setSubSolvers();
+  }
+
+  struct viewKeyStruct : SolverBase::viewKeyStruct {};
+
+  void synchronizeNonLinearParameters()
+  {
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      solver->getNonlinearSolverParameters().m_numNewtonIterations =
+        m_nonlinearSolverParameters.m_numNewtonIterations;
+    } );
   }
 
   /// Pointers of the single-physics solvers
@@ -318,7 +484,6 @@ protected:
 
   /// Names of the single-physics solvers
   std::array< string, sizeof...( SOLVERS ) > m_names;
-
 };
 
 } /* namespace geosx */

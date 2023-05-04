@@ -45,6 +45,9 @@ public:
     return "LagrangianContact";
   }
 
+  /// String used to form the solverName used to register single-physics solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "LagrangianContact"; }
+
   virtual void initializePreSubGroups() override;
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override final;
@@ -80,7 +83,9 @@ public:
                   arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  calculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( real64 const & time,
+                         real64 const & dt,
+                         DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
@@ -99,17 +104,20 @@ public:
 
   void updateState( DomainPartition & domain ) override final;
 
-  void assembleForceResidualDerivativeWrtTraction( DomainPartition & domain,
+  void assembleForceResidualDerivativeWrtTraction( MeshLevel const & mesh,
+                                                   arrayView1d< string const > const & regionNames,
                                                    DofManager const & dofManager,
                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                    arrayView1d< real64 > const & localRhs );
 
-  void assembleTractionResidualDerivativeWrtDisplacementAndTraction( DomainPartition const & domain,
+  void assembleTractionResidualDerivativeWrtDisplacementAndTraction( MeshLevel const & mesh,
+                                                                     arrayView1d< string const > const & regionNames,
                                                                      DofManager const & dofManager,
                                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                      arrayView1d< real64 > const & localRhs );
 
-  void assembleStabilization( DomainPartition const & domain,
+  void assembleStabilization( MeshLevel const & mesh,
+                              NumericalMethodsManager const & numericalMethodManager,
                               DofManager const & dofManager,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs );
@@ -132,6 +140,8 @@ public:
                              array1d< real64 > & nodalArea ) const;
 
   real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
+
+  string getStabilizationName() const { return m_stabilizationName; }
 
 protected:
   virtual void postProcessInput() override final;

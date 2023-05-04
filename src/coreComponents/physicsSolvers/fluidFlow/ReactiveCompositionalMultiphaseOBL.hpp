@@ -106,12 +106,6 @@ public:
    */
   /**@{*/
 
-  virtual real64
-  solverStep( real64 const & time_n,
-              real64 const & dt,
-              integer const cycleNumber,
-              DomainPartition & domain ) override;
-
   virtual void
   implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
@@ -146,7 +140,9 @@ public:
              DofManager & dofManager ) const override;
 
   virtual real64
-  calculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( real64 const & time_n,
+                         real64 const & dt,
+                         DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
@@ -349,9 +345,6 @@ private:
 
   /// flag indicating whether DARTS L2 norm is used for Newton convergence criterion
   integer m_useDARTSL2Norm;
-
-  /// flag to decide whether the sparsity pattern has to be formed again
-  bool m_systemSetupDone;
 };
 
 
