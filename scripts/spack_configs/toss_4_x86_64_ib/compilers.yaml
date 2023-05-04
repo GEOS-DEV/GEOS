@@ -2,13 +2,17 @@ compilers:
 - compiler:
     spec: clang@14.0.6
     paths:
-      cc: /usr/tce/packages/clang/clang-14.0.6/bin/clang
-      cxx: /usr/tce/packages/clang/clang-14.0.6/bin/clang++
-      f77: /usr/tce/packages/gcc/gcc-12.1.1/bin/gfortran
-      fc: /usr/tce/packages/gcc/gcc-12.1.1/bin/gfortran
-    flags:
-      cflags: --gcc-toolchain=/usr/tce/packages/gcc/gcc-12.1.1
-      cxxflags: --gcc-toolchain=/usr/tce/packages/gcc/gcc-12.1.1
+      cc: /usr/tce/packages/clang/clang-14.0.6-magic/bin/clang
+      cxx: /usr/tce/packages/clang/clang-14.0.6-magic/bin/clang++
+      f77: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/gfortran
+      fc: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/gfortran
+      # cc: /usr/tce/packages/clang/clang-14.0.6/bin/clang
+      # cxx: /usr/tce/packages/clang/clang-14.0.6/bin/clang++
+      # f77: /usr/tce/packages/gcc/gcc-12.1.1/bin/gfortran
+      # fc: /usr/tce/packages/gcc/gcc-12.1.1/bin/gfortran
+    # flags:
+    #   cflags: --gcc-toolchain=/usr/tce/packages/gcc/gcc-12.1.1
+    #   cxxflags: --gcc-toolchain=/usr/tce/packages/gcc/gcc-12.1.1
     operating_system: rhel8
     target: x86_64
     modules: []
@@ -17,10 +21,14 @@ compilers:
 - compiler:
     spec: gcc@12.1.1
     paths:
-      cc: /usr/tce/packages/gcc/gcc-12.1.1/bin/gcc
-      cxx: /usr/tce/packages/gcc/gcc-12.1.1/bin/g++
-      f77: /usr/tce/packages/gcc/gcc-12.1.1/bin/gfortran
-      fc: /usr/tce/packages/gcc/gcc-12.1.1/bin/gfortran
+      # cc: /usr/tce/packages/gcc/gcc-12.1.1/bin/gcc
+      # cxx: /usr/tce/packages/gcc/gcc-12.1.1/bin/g++
+      # f77: /usr/tce/packages/gcc/gcc-12.1.1/bin/gfortran
+      # fc: /usr/tce/packages/gcc/gcc-12.1.1/bin/gfortran
+      cc: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/gcc
+      cxx: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/g++
+      f77: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/gfortran
+      fc: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/gfortran
     flags: {}
     operating_system: rhel8
     target: x86_64
