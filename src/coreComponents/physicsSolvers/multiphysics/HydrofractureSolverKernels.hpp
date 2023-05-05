@@ -17,12 +17,12 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVERKERNELS_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVERKERNELS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVERKERNELS_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVERKERNELS_HPP_
 
 #include "HydrofractureSolverKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace hydrofractureSolverKernels
@@ -53,7 +53,7 @@ struct DeformationUpdateKernel
 #endif
           )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const kfe )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const kfe )
     {
       localIndex const kf0 = elemsToFaces[kfe][0];
       localIndex const kf1 = elemsToFaces[kfe][1];
@@ -97,7 +97,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
 {
 
   template< typename CONTACT_WRAPPER >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   computeAccumulationDerivative( CONTACT_WRAPPER const & contactWrapper,
                                  localIndex const numNodesPerFace,
@@ -123,7 +123,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
 
           real64 dHydraulicAperture_dAperture = 0;
           real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture, dHydraulicAperture_dAperture );
-          GEOSX_UNUSED_VAR( hydraulicAperture );
+          GEOS_UNUSED_VAR( hydraulicAperture );
           real64 const dAper_dU = dHydraulicAperture_dAperture * dGap_dU;
 
           dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dens * area * dAper_dU;
@@ -133,7 +133,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
   }
 
   template< typename CONTACT_WRAPPER >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   computeFluxDerivative( CONTACT_WRAPPER const & contactWrapper,
                          localIndex const kfe2,
@@ -164,7 +164,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
 
           real64 dHydraulicAperture_dAperture = 0.0;
           real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture[ei2], dHydraulicAperture_dAperture );
-          GEOSX_UNUSED_VAR( hydraulicAperture );
+          GEOS_UNUSED_VAR( hydraulicAperture );
           real64 const dAper_dU = dHydraulicAperture_dAperture * dGap_dU;
 
           dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dAper_dU;
@@ -189,7 +189,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
           CRSMatrixView< real64 const, localIndex const > const dFluxResidual_dAperture,
           CRSMatrixView< real64, globalIndex const > const & localMatrix )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex ei )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex ei )
     {
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[ei][0] );
 
@@ -254,6 +254,6 @@ struct FluidMassResidualDerivativeAssemblyKernel
 
 } /* namespace hydrofractureSolverKernels */
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVERKERNELS_HPP_
+#endif // GEOS_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVERKERNELS_HPP_

@@ -16,8 +16,8 @@
  * @file CommunicationTools.hpp
  */
 
-#ifndef GEOSX_MESH_MPICOMMUNICATIONS_COMMUNICATIONTOOLS_HPP_
-#define GEOSX_MESH_MPICOMMUNICATIONS_COMMUNICATIONTOOLS_HPP_
+#ifndef GEOS_MESH_MPICOMMUNICATIONS_COMMUNICATIONTOOLS_HPP_
+#define GEOS_MESH_MPICOMMUNICATIONS_COMMUNICATIONTOOLS_HPP_
 
 #include "CommID.hpp"
 
@@ -28,7 +28,7 @@
 
 #include <set>
 
-namespace geosx
+namespace geos
 {
 
 
@@ -127,6 +127,6 @@ private:
 
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_MPICOMMUNICATIONS_COMMUNICATIONTOOLS_HPP_ */
+#endif /* GEOS_MESH_MPICOMMUNICATIONS_COMMUNICATIONTOOLS_HPP_ */

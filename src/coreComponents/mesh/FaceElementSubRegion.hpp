@@ -16,13 +16,13 @@
  * @file FaceElementSubRegion.hpp
  */
 
-#ifndef GEOSX_MESH_FACEELEMENTSUBREGION_HPP_
-#define GEOSX_MESH_FACEELEMENTSUBREGION_HPP_
+#ifndef GEOS_MESH_FACEELEMENTSUBREGION_HPP_
+#define GEOS_MESH_FACEELEMENTSUBREGION_HPP_
 
 #include "SurfaceElementSubRegion.hpp"
 #include "mesh/generators/FaceBlockABC.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -274,6 +274,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_FACEELEMENTSUBREGION_HPP_ */
+#endif /* GEOS_MESH_FACEELEMENTSUBREGION_HPP_ */

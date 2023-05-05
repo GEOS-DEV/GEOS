@@ -16,14 +16,14 @@
  * @file VTKOutput.hpp
  */
 
-#ifndef GEOSX_FILEIO_OUTPUTS_VTKOUTPUT_HPP_
-#define GEOSX_FILEIO_OUTPUTS_VTKOUTPUT_HPP_
+#ifndef GEOS_FILEIO_OUTPUTS_VTKOUTPUT_HPP_
+#define GEOS_FILEIO_OUTPUTS_VTKOUTPUT_HPP_
 
 #include "OutputBase.hpp"
 #include "fileIO/vtk/VTKPolyDataWriterInterface.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -33,7 +33,7 @@ class VTKOutput : public OutputBase
 {
 public:
 
-  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
+  /// @copydoc geos::dataRepository::Group::Group(string const & name, Group * const parent)
   VTKOutput( string const & name, Group * const parent );
 
   /// Destructor
@@ -131,6 +131,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FILEIO_OUTPUTS_VTKOUTPUT_HPP_ */
+#endif /* GEOS_FILEIO_OUTPUTS_VTKOUTPUT_HPP_ */

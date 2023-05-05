@@ -14,8 +14,8 @@
 
 /** @file */
 
-#ifndef GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_
-#define GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_
+#ifndef GEOS_DATAREPOSITORY_WRAPPERBASE_HPP_
+#define GEOS_DATAREPOSITORY_WRAPPERBASE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -39,7 +39,7 @@ class Node;
 }
 
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -106,6 +106,12 @@ public:
    *        Ie elementByteSize() * size() gives the size of memory pointed to by voidPointer().
    */
   virtual localIndex elementByteSize() const = 0;
+
+  /**
+   * @brief @return the number of bytes allocated for the wrapped object.
+   */
+  virtual size_t bytesAllocated() const = 0;
+
 
   /**
    * @brief Calls T::resize( num_dims, dims )
@@ -710,6 +716,6 @@ private:
 };
 
 } /// namespace dataRepository
-} /// namespace geosx
+} /// namespace geos
 
-#endif /* GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_WRAPPERBASE_HPP_ */

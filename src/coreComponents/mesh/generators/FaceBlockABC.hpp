@@ -12,14 +12,14 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_FACEBLOCKABC_HPP
-#define GEOSX_FACEBLOCKABC_HPP
+#ifndef GEOS_FACEBLOCKABC_HPP
+#define GEOS_FACEBLOCKABC_HPP
 
 #include "CellBlockUtilities.hpp"
 #include "dataRepository/Group.hpp"
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

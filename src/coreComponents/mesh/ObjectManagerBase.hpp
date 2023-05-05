@@ -16,14 +16,14 @@
  * @file ObjectManagerBase.hpp
  */
 
-#ifndef GEOSX_MESH_OBJECTMANAGERBASE_HPP_
-#define GEOSX_MESH_OBJECTMANAGERBASE_HPP_
+#ifndef GEOS_MESH_OBJECTMANAGERBASE_HPP_
+#define GEOS_MESH_OBJECTMANAGERBASE_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "common/TimingMacros.hpp"
 #include "mpiCommunications/NeighborData.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -151,7 +151,7 @@ public:
    */
   virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
   {
-    GEOSX_UNUSED_VAR( packList );
+    GEOS_UNUSED_VAR( packList );
     return 0;
   }
 
@@ -164,8 +164,8 @@ public:
   virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
                                      arrayView1d< localIndex const > const & packList ) const
   {
-    GEOSX_UNUSED_VAR( buffer );
-    GEOSX_UNUSED_VAR( packList );
+    GEOS_UNUSED_VAR( buffer );
+    GEOS_UNUSED_VAR( packList );
     return 0;
   }
 
@@ -182,10 +182,10 @@ public:
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps )
   {
-    GEOSX_UNUSED_VAR( buffer );
-    GEOSX_UNUSED_VAR( packList );
-    GEOSX_UNUSED_VAR( overwriteUpMaps );
-    GEOSX_UNUSED_VAR( overwriteDownMaps );
+    GEOS_UNUSED_VAR( buffer );
+    GEOS_UNUSED_VAR( packList );
+    GEOS_UNUSED_VAR( overwriteUpMaps );
+    GEOS_UNUSED_VAR( overwriteDownMaps );
     return 0;
   }
 
@@ -289,7 +289,7 @@ public:
   void moveSets( LvArray::MemorySpace const targetSpace );
 
   /**
-   * @copydoc geosx::dataRepository::Group::resize(indexType const)
+   * @copydoc geos::dataRepository::Group::resize(indexType const)
    * @return Always 0, whatever the new size is.
    */
   localIndex resize( localIndex const newSize,
@@ -357,7 +357,7 @@ public:
   virtual ArrayOfSets< globalIndex >
   extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager )
   {
-    GEOSX_UNUSED_VAR( nodeManager );
+    GEOS_UNUSED_VAR( nodeManager );
     return {};
   }
 
@@ -623,7 +623,7 @@ public:
    * @return A const reference to a view to const field.
    */
   template< typename FIELD_TRAIT >
-  GEOSX_DECLTYPE_AUTO_RETURN getField() const
+  GEOS_DECLTYPE_AUTO_RETURN getField() const
   {
     return this->getWrapper< typename FIELD_TRAIT::type >( FIELD_TRAIT::key() ).reference();
   }
@@ -635,7 +635,7 @@ public:
    * @return A reference to the field.
    */
   template< typename FIELD_TRAIT >
-  GEOSX_DECLTYPE_AUTO_RETURN getField()
+  GEOS_DECLTYPE_AUTO_RETURN getField()
   {
     return this->getWrapper< typename FIELD_TRAIT::type >( FIELD_TRAIT::key() ).reference();
   }
@@ -972,7 +972,7 @@ void ObjectManagerBase::fixUpDownMaps( TYPE_RELATION & relation,
                                        map< localIndex, array1d< globalIndex > > & unmappedIndices,
                                        bool const )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   bool allValuesMapped = true;
   unordered_map< globalIndex, localIndex > const & globalToLocal = relation.relatedObjectGlobalToLocal();
@@ -995,10 +995,10 @@ void ObjectManagerBase::fixUpDownMaps( TYPE_RELATION & relation,
           allValuesMapped = false;
         }
       }
-      GEOSX_ERROR_IF( relation[li][a]==unmappedLocalIndexValue, "Index not set" );
+      GEOS_ERROR_IF( relation[li][a]==unmappedLocalIndexValue, "Index not set" );
     }
   }
-  GEOSX_ERROR_IF( !allValuesMapped, "some values of unmappedIndices were not used" );
+  GEOS_ERROR_IF( !allValuesMapped, "some values of unmappedIndices were not used" );
   unmappedIndices.clear();
 }
 
@@ -1008,7 +1008,7 @@ void ObjectManagerBase::fixUpDownMaps( TYPE_RELATION & relation,
                                        map< localIndex, SortedArray< globalIndex > > & unmappedIndices,
                                        bool const clearIfUnmapped )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   unordered_map< globalIndex, localIndex > const & globalToLocal = relation.RelatedObjectGlobalToLocal();
   for( map< localIndex, SortedArray< globalIndex > >::iterator iter = unmappedIndices.begin();
@@ -1045,7 +1045,7 @@ void ObjectManagerBase::fixUpDownMaps( ArrayOfSets< localIndex > & relation,
                                        map< localIndex, SortedArray< globalIndex > > & unmappedIndices,
                                        bool const clearIfUnmapped )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   for( map< localIndex, SortedArray< globalIndex > >::iterator iter = unmappedIndices.begin();
        iter != unmappedIndices.end();
@@ -1075,12 +1075,12 @@ void ObjectManagerBase::fixUpDownMaps( ArrayOfSets< localIndex > & relation,
   unmappedIndices.clear();
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
 
 /**
  * @brief Alias to ObjectManagerBase
  */
-typedef geosx::ObjectManagerBase ObjectDataStructureBaseT;
+typedef geos::ObjectManagerBase ObjectDataStructureBaseT;
 
-#endif /* GEOSX_MESH_OBJECTMANAGERBASE_HPP_ */
+#endif /* GEOS_MESH_OBJECTMANAGERBASE_HPP_ */

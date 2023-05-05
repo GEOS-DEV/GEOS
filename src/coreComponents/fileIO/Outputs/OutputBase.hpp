@@ -15,14 +15,14 @@
 /**
  * @file OutputBase.hpp
  */
-#ifndef GEOSX_FILEIO_OUTPUTS_OUTPUTBASE_HPP_
-#define GEOSX_FILEIO_OUTPUTS_OUTPUTBASE_HPP_
+#ifndef GEOS_FILEIO_OUTPUTS_OUTPUTBASE_HPP_
+#define GEOS_FILEIO_OUTPUTS_OUTPUTBASE_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -33,7 +33,7 @@ namespace geosx
 class OutputBase : public ExecutableGroup
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   explicit OutputBase( string const & name, Group * const parent );
 
   /// Destructor
@@ -115,6 +115,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FILEIO_OUTPUTS_OUTPUTBASE_HPP_ */
+#endif /* GEOS_FILEIO_OUTPUTS_OUTPUTBASE_HPP_ */
