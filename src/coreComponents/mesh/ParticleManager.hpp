@@ -27,7 +27,7 @@
 #include "mesh/ObjectManagerBase.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class MeshManager;
@@ -1292,7 +1292,7 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
     localIndex const er = regionMap.getIndex( regionNames[k] );
     if( er >=0 )
     {
-      GEOSX_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
       ParticleRegionBase const & region = getRegion( er );
 
       region.forParticleSubRegionsIndex( [&]( localIndex const esr,
@@ -1308,7 +1308,7 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
         }
         else
         {
-          GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialKeyName[k] << " does not contain " << viewName );
+          GEOS_ERROR_IF( !allowMissingViews, "Material " << materialKeyName[k] << " does not contain " << viewName );
         }
       } );
     }
@@ -1340,7 +1340,7 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
     localIndex const er = regionMap.getIndex( regionNames[k] );
     if( er >=0 )
     {
-      GEOSX_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
       ParticleRegionBase & region = getRegion( er );
 
       region.forParticleSubRegionsIndex( [&]( localIndex const esr, ParticleSubRegionBase & subRegion )
@@ -1355,7 +1355,7 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
         }
         else
         {
-          GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialName << " does not contain " << viewName );
+          GEOS_ERROR_IF( !allowMissingViews, "Material " << materialName << " does not contain " << viewName );
         }
       } );
     }
@@ -1380,7 +1380,7 @@ template< typename MATERIAL_TYPE, typename FIELD_TRAIT >
 ParticleManager::ParticleViewAccessor< traits::ViewTypeConst< typename FIELD_TRAIT::type > >
 ParticleManager::constructMaterialFieldAccessor( bool const allowMissingViews ) const
 {
-  GEOSX_UNUSED_VAR( allowMissingViews );
+  GEOS_UNUSED_VAR( allowMissingViews );
   return constructMaterialViewAccessor< MATERIAL_TYPE, typename FIELD_TRAIT::type,
                                         traits::ViewTypeConst< typename FIELD_TRAIT::type > >( FIELD_TRAIT::key() );
 }

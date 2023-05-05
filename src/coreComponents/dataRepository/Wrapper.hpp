@@ -548,7 +548,7 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   void erase( std::set< localIndex> const & indicesToErase ) override
   {
-    GEOSX_ERROR_IF( indicesToErase.size() == 0, "Wrapper::erase() can only be called on a populated set of indices!");
+    GEOS_ERROR_IF( indicesToErase.size() == 0, "Wrapper::erase() can only be called on a populated set of indices!");
     erase_wrapper::erase( reference(), indicesToErase );
   }
 

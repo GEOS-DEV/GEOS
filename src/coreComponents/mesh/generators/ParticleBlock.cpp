@@ -21,7 +21,7 @@
 
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -67,7 +67,7 @@ void ParticleBlock::setParticleType( ParticleType const particleType )
     }
     default:
     {
-      GEOSX_ERROR( "Invalid particle type: " << m_particleType );
+      GEOS_ERROR( "Invalid particle type: " << m_particleType );
     }
   }
 }

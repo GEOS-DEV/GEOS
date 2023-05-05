@@ -23,7 +23,7 @@
 #include "physicsSolvers/solidMechanics/kernels/ExplicitFiniteStrain.hpp"
 #include "physicsSolvers/solidMechanics/MPMSolverFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace solidMechanicsMPMKernels
@@ -56,7 +56,7 @@ struct StateUpdateKernel
     arrayView3d< real64, solid::STRESS_USD > const newStress = constitutiveWrapper.m_newStress;
     
     // Perform constitutive call
-    forAll< POLICY >( indices.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< POLICY >( indices.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       // Particle index
       localIndex const p = indices[k];
@@ -108,7 +108,7 @@ struct StateUpdateKernel
 
 } // namespace solidMechanicsMPMKernels
 
-} // namespace geosx
+} // namespace geos
 
 
 #endif /* GEOSX_PHYSICSSOLVERS_CONTACT_EXPLICITMPM_HPP_ */

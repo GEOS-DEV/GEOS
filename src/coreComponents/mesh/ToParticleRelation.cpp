@@ -20,7 +20,7 @@
 
 #include "ParticleManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 
@@ -101,4 +101,4 @@ void reserveNeighbors( OrderedVariableToManyParticleRelation & relation,
   relation.m_toParticleIndex.reserveValues( numToReserve );
 }
 
-} /* namespace geosx */
+} /* namespace geos */

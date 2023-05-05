@@ -22,7 +22,7 @@
 #include "codingUtilities/EnumStrings.hpp"
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class ParticleManager;
@@ -61,7 +61,11 @@ public:
 
   virtual void generateMesh( DomainPartition & domain ) override;
 
-  void importFieldsOnArray( string const & cellBlockName, string const & meshFieldNam, bool isMaterialField, dataRepository::WrapperBase & wrapper ) const override;
+  void importFieldOnArray( Block block,
+                           string const & blockName,
+                           string const & meshFieldName,
+                           bool isMaterialField,
+                           dataRepository::WrapperBase & wrapper ) const override;
 
 protected:
 
@@ -104,6 +108,6 @@ public:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_GENERATORS_PARTICLEMESHGENERATOR_HPP */

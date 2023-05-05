@@ -992,7 +992,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
       for( auto & materialName : materialList )
       {
         constitutiveManager.hangConstitutiveRelation( materialName, &particleSubRegion, numQuadraturePoints );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
+        GEOS_LOG_RANK_0( GEOS_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
                                      meshBodyName,
                                      meshLevelName,
                                      regionName,

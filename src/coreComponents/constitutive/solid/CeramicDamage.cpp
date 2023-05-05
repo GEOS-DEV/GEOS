@@ -18,7 +18,7 @@
 
 #include "CeramicDamage.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 namespace constitutive
@@ -87,10 +87,10 @@ void CeramicDamage::postProcessInput()
 {
   ElasticIsotropic::postProcessInput();
 
-  GEOSX_THROW_IF( m_tensileStrength < 0.0, "Tensile strength must be a positive number.", InputError );
-  GEOSX_THROW_IF( m_compressiveStrength < m_tensileStrength, "Compressive strength must be greater than tensile strength.", InputError );
-  GEOSX_THROW_IF( m_maximumStrength < m_compressiveStrength, "Maximum theoretical strength must be greater than compressive strength.", InputError );
-  GEOSX_THROW_IF( m_crackSpeed < 0.0, "Crack speed must be a positive number.", InputError );
+  GEOS_THROW_IF( m_tensileStrength < 0.0, "Tensile strength must be a positive number.", InputError );
+  GEOS_THROW_IF( m_compressiveStrength < m_tensileStrength, "Compressive strength must be greater than tensile strength.", InputError );
+  GEOS_THROW_IF( m_maximumStrength < m_compressiveStrength, "Maximum theoretical strength must be greater than compressive strength.", InputError );
+  GEOS_THROW_IF( m_crackSpeed < 0.0, "Crack speed must be a positive number.", InputError );
 }
 
 
@@ -102,4 +102,4 @@ void CeramicDamage::saveConvergedState() const
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CeramicDamage, std::string const &, Group * const )
 }
-} /* namespace geosx */
+} /* namespace geos */

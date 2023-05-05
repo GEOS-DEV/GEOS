@@ -19,7 +19,7 @@
 #include "ParticleSubRegionBase.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -138,7 +138,7 @@ void ParticleSubRegionBase::setActiveParticleIndices()
   m_activeParticleIndices.move( LvArray::MemorySpace::host ); // TODO: Is this needed?
   m_activeParticleIndices.clear();
   arrayView1d< int const > const particleRank = m_particleRank.toViewConst();
-  forAll< serialPolicy >( this->size(), [&, particleRank] GEOSX_HOST ( localIndex const p ) // This must be on host since we're dealing with a sorted array. Parallelize with atomics?
+  forAll< serialPolicy >( this->size(), [&, particleRank] GEOS_HOST ( localIndex const p ) // This must be on host since we're dealing with a sorted array. Parallelize with atomics?
   {
     if( particleRank[p] == MpiWrapper::commRank( MPI_COMM_GEOSX ) )
     {
@@ -151,11 +151,11 @@ void ParticleSubRegionBase::updateMaps()
 {
   arrayView1d< globalIndex > const localToGlobalMap = m_localToGlobalMap;
   arrayView1d< globalIndex const > const particleID = m_particleID;
-  forAll< serialPolicy >( this->size(), [=] GEOSX_HOST ( localIndex const p ) // TODO: must be on host because constructGlobalToLocalMap has to be on host?
+  forAll< serialPolicy >( this->size(), [=] GEOS_HOST ( localIndex const p ) // TODO: must be on host because constructGlobalToLocalMap has to be on host?
   {
     localToGlobalMap[p] = particleID[p];
   } );
   this->constructGlobalToLocalMap();
 }
 
-} /* namespace geosx */
+} /* namespace geos */

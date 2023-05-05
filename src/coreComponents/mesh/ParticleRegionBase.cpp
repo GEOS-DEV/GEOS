@@ -19,7 +19,7 @@
 #include "constitutive/solid/SolidBase.hpp"
 
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -64,7 +64,7 @@ string ParticleRegionBase::verifyMeshBodyName( Group const & meshBodies,
     {
       meshBodyName = onlyMeshBodyName;
     }
-    GEOSX_ERROR_IF_NE_MSG( onlyMeshBodyName,
+    GEOS_ERROR_IF_NE_MSG( onlyMeshBodyName,
                            meshBodyName,
                            "MeshBody specified does not match MeshBody in hierarchy.");
   }
@@ -78,7 +78,7 @@ string ParticleRegionBase::verifyMeshBodyName( Group const & meshBodies,
         meshBodyFound = true;
       }
     });
-    GEOSX_ERROR_IF( !meshBodyFound, "MeshBody was not found");
+    GEOS_ERROR_IF( !meshBodyFound, "MeshBody was not found");
   }
 
 return meshBodyName;
