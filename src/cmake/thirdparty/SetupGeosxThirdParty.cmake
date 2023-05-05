@@ -750,7 +750,7 @@ endif()
 # Python
 ################################
 if(ENABLE_PYGEOSX)
-    find_package(Python3 REQUIRED
+    find_package(Python3 3.7.0...3.11.2 REQUIRED
                  COMPONENTS Development NumPy)
 
     message( " ----> $Python3_VERSION = ${Python3_VERSION}")
@@ -769,6 +769,9 @@ if(ENABLE_PYGEOSX)
     set(thirdPartyLibs ${thirdPartyLibs} Python3::Python Python3::NumPy)
 else()
     message(STATUS "Not building pygeosx.")
+    find_package(Python3 3.7.0...3.11.2
+                 OPTIONAL_COMPONENTS Development NumPy)
+    message(STATUS "Python3_EXECUTABLE=${Python3_EXECUTABLE}")
 endif()
 
 ################################
