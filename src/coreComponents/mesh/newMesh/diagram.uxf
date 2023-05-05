@@ -172,10 +172,14 @@ cell_type cell;
 connectivity_type connectivity;
 --
 
-style=autoresize</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>980</x><y>540</y><w>560</w><h>130</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;540;110</additional_attributes></element><element><id>Relation</id><coordinates><x>570</x><y>370</y><w>110</w><h>350</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>90;10;10;330</additional_attributes></element><element><id>Relation</id><coordinates><x>590</x><y>540</y><w>230</w><h>180</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>210;10;10;160</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1720</x><y>140</y><w>330</w><h>310</h></coordinates><panel_attributes>template &lt; Connectivity &gt;
+style=autoresize</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>980</x><y>540</y><w>560</w><h>130</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;540;110</additional_attributes></element><element><id>Relation</id><coordinates><x>570</x><y>370</y><w>110</w><h>350</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>90;10;10;330</additional_attributes></element><element><id>Relation</id><coordinates><x>590</x><y>540</y><w>230</w><h>180</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>210;10;10;160</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1720</x><y>140</y><w>380</w><h>370</h></coordinates><panel_attributes>template &lt; Connectivity &gt;
 StoredConnectivities
 --
 Find a way to not override when multiple connectivities?
+
+using index_type = typename Connectivity::index_type;
+
+Connectivity getConnectivity&lt; Connectivity &gt;( index_type index );
 
 struct host_data_struct
 {
@@ -192,7 +196,7 @@ style=autoresize
 
 
 
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1530</x><y>440</y><w>360</w><h>230</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>340;10;10;210</additional_attributes></element><element><id>Relation</id><coordinates><x>1480</x><y>190</y><w>260</w><h>100</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;240;80</additional_attributes></element><element><id>Relation</id><coordinates><x>1480</x><y>40</y><w>850</w><h>50</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;830;30</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1860</x><y>660</y><w>280</w><h>160</h></coordinates><panel_attributes>template=MeshDataStructures...
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1530</x><y>500</y><w>360</w><h>170</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>340;10;10;150</additional_attributes></element><element><id>Relation</id><coordinates><x>1480</x><y>190</y><w>260</w><h>100</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;240;80</additional_attributes></element><element><id>Relation</id><coordinates><x>1480</x><y>40</y><w>850</w><h>50</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;830;30</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1860</x><y>660</y><w>280</w><h>160</h></coordinates><panel_attributes>template=MeshDataStructures...
 GeometricConnectivity
 --
 - edge to vertices
@@ -202,11 +206,12 @@ GeometricConnectivity
 - face to vertices
 - N-faces to M-faces where M &lt;= N?
 
-style=autoresize</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1960</x><y>440</y><w>50</w><h>250</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>30;10;10;230</additional_attributes></element><element><id>UMLClass</id><coordinates><x>2200</x><y>660</y><w>360</w><h>120</h></coordinates><panel_attributes>template=MeshDataStructures...
+style=autoresize</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1960</x><y>500</y><w>50</w><h>190</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>30;10;10;170</additional_attributes></element><element><id>UMLClass</id><coordinates><x>2200</x><y>660</y><w>360</w><h>120</h></coordinates><panel_attributes>template=MeshDataStructures...
 MeshConnectivity
 --
 - Describe how a mesh is related to another mesh
 - Should we use that to describe a body?
 - Use this for well and embedded fractures?
 
-style=autoresize</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>2010</x><y>440</y><w>370</w><h>250</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;350;230</additional_attributes></element></diagram>
+style=autoresize</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>2010</x><y>500</y><w>370</w><h>190</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;350;170</additional_attributes></element><element><id>Relation</id><coordinates><x>900</x><y>370</y><w>80</w><h>80</h></coordinates><panel_attributes>lt=&lt;-
+output</panel_attributes><additional_attributes>10;60;60;10</additional_attributes></element></diagram>
