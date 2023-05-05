@@ -52,5 +52,7 @@ set(MKL_LIBRARIES ${MKL_ROOT}/lib/intel64/libmkl_intel_lp64.so
                   ${MKL_ROOT}/lib/intel64/libmkl_core.so
                   CACHE STRING "")
 
+# ATS
+set(ATS_ARGUMENTS "--machine slurm36"  CACHE STRING "")
 
 include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)

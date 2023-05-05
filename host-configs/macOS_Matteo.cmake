@@ -36,4 +36,7 @@ if(NOT ( EXISTS "${GEOSX_TPL_DIR}" AND IS_DIRECTORY "${GEOSX_TPL_DIR}" ) )
     set(GEOSX_TPL_DIR "${CMAKE_SOURCE_DIR}/../../thirdPartyLibs/install-macOS_Matteo-release" CACHE PATH "" FORCE )
 endif()
 
+# ATS
+set(ATS_ARGUMENTS "--machine openmpi --ats openmpi_mpirun=/Users/cusini1/local/bin/mpirun"  CACHE PATH "")
+
 include(${CMAKE_CURRENT_LIST_DIR}/tpls.cmake)
