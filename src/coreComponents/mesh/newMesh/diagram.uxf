@@ -1,5 +1,5 @@
-<diagram program="umletino" version="15.1"><zoom_level>10</zoom_level><help_text>Space for diagram notes</help_text><element><id>UMLClass</id><coordinates><x>30</x><y>180</y><w>520</w><h>210</h></coordinates><panel_attributes>
-template=GEOMETRY, MAPPING
+<diagram program="umletino" version="15.1"><zoom_level>10</zoom_level><help_text>Space for diagram notes</help_text><element><id>UMLClass</id><coordinates><x>360</x><y>690</y><w>530</w><h>210</h></coordinates><panel_attributes>
+template=ReferenceCell, Mapping
 Cell
 --
 static constexpr space_dim;
@@ -12,17 +12,22 @@ static constexpr geometry_dim;
 style=autoresize
 
 
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>830</x><y>10</y><w>260</w><h>150</h></coordinates><panel_attributes>
-MeshConnectivity
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>2310</x><y>60</y><w>420</w><h>230</h></coordinates><panel_attributes>
+MeshDataStructure ( Interface )
 --
-- structured/unstructured connectivity
-- conforming/non-conforming connectivity
-- static/adaptive
-- refinement by superposition/substitution
+
 --
-Is this too vague of a concept?
+- Cartesian mesh
+- Block structured
+- MultiLevel mesh, e.g. Level 0 unstructured, Level 1 static cartesian
+- Refinement by superposition? Is this another case of MultiLevel mesh?
+- Face-vertex data structure ( refinement unfriendly )
+- Half-edge data structure ( refinement friendly )
+- AMR oriented?
+- Compressed Sparse Row
+
 style=autoresize
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>580</x><y>390</y><w>360</w><h>460</h></coordinates><panel_attributes>
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>630</x><y>1110</y><w>440</w><h>490</h></coordinates><panel_attributes>template=NFacesRepresentations...
 StaticGeometry (Interface)
 --
 static constexpr Integer space_dim;
@@ -35,6 +40,8 @@ Note: this interface seems to break for generic polyhedral.
 --
 Define the manifold
 vertices, edges, faces, volume
+
+static constexpr mesh?
 
 0D 
 point/vertex
@@ -53,7 +60,7 @@ pyramid
 hex
 
 style=autoresize
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>0</x><y>420</y><w>570</w><h>290</h></coordinates><panel_attributes>
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>0</x><y>950</y><w>570</w><h>290</h></coordinates><panel_attributes>
 Mapping (Interface)
 --
 static constexpr Integer input_dim;
@@ -72,31 +79,62 @@ Transformation Mapping
   - Physical mapping
   - Tensor mapping, e.g. F(x,y) = { F(x), F(y) }
 style=autoresize
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>40</x><y>0</y><w>520</w><h>170</h></coordinates><panel_attributes>
-template=CELL_TYPES..., CONNECTIVITES...
-Mesh : public CONNECTIVITIES...
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>600</x><y>0</y><w>1070</w><h>380</h></coordinates><panel_attributes>
+template=CELL_TYPES..., MESH_DATA_STRUCTURES..., CONNECTIVITIES...
+Mesh : public MESH_DATA_STRUCTURES..., public CONNECTIVITIES...
 --
 using cell_types = std::tuple&lt; CELL_TYPES... &gt;;
 + Integer getNumberOfCells&lt; CELL_TYPE &gt;();
-+ CELL_TYPE getCell&lt; CELL_TYPE &gt;( LocalIndex&lt; CELL_TYPE &gt;  cell_index );
++ ConnectedCell&lt; CELL_TYPE, ELEMENT_CONNECTIVITY_TYPE &gt; getCell&lt; ELEMENT_CONNECTIVITY_TYPE, CELL_TYPE &gt;( LocalIndex&lt; CELL_TYPE &gt;  cell_index );
 + std::Variant&lt; CELL_TYPES... &gt; getCell( LocalIndex const cell_index );
++ Differentiate these functions for host_device_data?
 --
+Should we define host_data, host_device_data, device_data?
+Should we use tuples instead to give better inspection features?
+
+struct host_data_struct : public typename Connectivities::host_data_struct...
+{ } host_data;
+
+struct host_device_data_struct : public typename Connectivities::host_device_data_struct...
+{ } host_device_data;
+
+Meant to be constructed from host_device_data?
+struct device_data_struct : public typename Connectivities::device_data_struct...
+{ } device_data;
+
 
 style=autoresize
-  </panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>770</x><y>190</y><w>390</w><h>180</h></coordinates><panel_attributes>
-template=MeshConnectivity
-ElementConnectivity
+  </panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1320</x><y>640</y><w>460</w><h>430</h></coordinates><panel_attributes>
+template=MeshDataStructures...
+ElementConnectivity ( Interface )
+--
+Typically described adjacency from a single element perspective
 --
 - structure used in kernels to process element local info
 - defines neighbors in some sense (face, edge, vertex)
+- structured/unstructured connectivity
+- conforming/non-conforming connectivity
 --
-- Face neighbors
-- Edge neighbors
+- Face neighbors:
+FaceNeighborsIndices getFaceNeighbors( element_index )
+{
+   return getNFaceNeighbors&lt; geometry_dim -1 &gt;( element_index );
+}
+
+- Edge neighbors:
+EdgeNeighborsIndices getEdgeNeighbors( element_index )
+{ return getNFaceNeighbors&lt; 1 &gt;( element_index ); }
+
 - Vertex neighbors
-- std::Array&lt; Stencil::size &gt; getNeighbors( ) ? ( refine )
+VertexNeighborsIndices getVertexNeighbors( element_index )
+{ return getNFaceNeighbors&lt; 0 &gt;( element_index ); }
+
+- Stencil neighbors:
+Stencil::index_type getStencilNeighbors( element_index );
+
 style=autoresize
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>950</x><y>390</y><w>360</w><h>350</h></coordinates><panel_attributes>
-template=Stored N-faces...
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1110</x><y>1120</y><w>380</w><h>320</h></coordinates><panel_attributes>
+template=NFacesRepresentations...
 DynamicGeometry (Interface)
 --
 static Integer space_dim;
@@ -110,8 +148,6 @@ auto getReferenceNormal( Integer const face_id );
 Define the manifold
 vertices, edges, faces, volume
 
-
-
 2D
 polygon
 
@@ -119,4 +155,50 @@ polygon
 polyhedra
 
 style=autoresize
-</panel_attributes><additional_attributes></additional_attributes></element></diagram>
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>680</x><y>930</y><w>630</w><h>110</h></coordinates><panel_attributes>template=Geometry
+ReferenceCell
+--
+using geometry_type = Geometry;
+static constexpr Geometry geometry = makeReferenceGeometry&lt; Geometry &gt;();
+--
+We can make this work for non constexpr constructible geometries by using functions instead values.
+style=autoresize</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>270</x><y>890</y><w>260</w><h>80</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>240;10;10;60</additional_attributes></element><element><id>Relation</id><coordinates><x>630</x><y>890</y><w>320</w><h>70</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;300;50</additional_attributes></element><element><id>Relation</id><coordinates><x>810</x><y>1030</y><w>50</w><h>100</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>30;10;10;80</additional_attributes></element><element><id>Relation</id><coordinates><x>920</x><y>1030</y><w>370</w><h>120</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;350;100</additional_attributes></element><element><id>UMLClass</id><coordinates><x>670</x><y>420</y><w>610</w><h>130</h></coordinates><panel_attributes>template=CELL_TYPE, ELEMENT_CONNECTIVITY_TYPE
+ConnectedCell
+--
+Mostly a pair of a Cell with a data structure representing the requested connectivity
+--
+cell_type cell;
+connectivity_type connectivity;
+--
+
+style=autoresize</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>980</x><y>540</y><w>560</w><h>130</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;540;110</additional_attributes></element><element><id>Relation</id><coordinates><x>570</x><y>370</y><w>110</w><h>350</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>90;10;10;330</additional_attributes></element><element><id>Relation</id><coordinates><x>590</x><y>540</y><w>230</w><h>180</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>210;10;10;160</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1720</x><y>140</y><w>330</w><h>310</h></coordinates><panel_attributes>template &lt; Connectivity &gt;
+StoredConnectivities
+--
+Find a way to not override when multiple connectivities?
+
+struct host_data_struct
+{
+   LvArray&lt; Connectivity &gt; connectivities;
+} host_data;
+
+struct host_device_data_struct
+{
+   LvArrayView&lt; Connectivity &gt; connectivities;
+} host_device_data;
+
+style=autoresize
+
+
+
+
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1530</x><y>440</y><w>360</w><h>230</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>340;10;10;210</additional_attributes></element><element><id>Relation</id><coordinates><x>1480</x><y>190</y><w>260</w><h>100</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;240;80</additional_attributes></element><element><id>Relation</id><coordinates><x>1480</x><y>40</y><w>850</w><h>50</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;830;30</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1860</x><y>660</y><w>280</w><h>160</h></coordinates><panel_attributes>template=MeshDataStructures...
+GeometricConnectivity
+--
+- edge to vertices
+- face to vertices
+- edge to edge
+- face to edge
+- face to vertices
+- N-faces to M-faces where M &lt;= N?
+
+style=autoresize</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1960</x><y>440</y><w>50</w><h>250</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>30;10;10;230</additional_attributes></element></diagram>
