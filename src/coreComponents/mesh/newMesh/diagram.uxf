@@ -12,11 +12,12 @@ static constexpr geometry_dim;
 style=autoresize
 
 
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>2310</x><y>60</y><w>420</w><h>230</h></coordinates><panel_attributes>
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>2310</x><y>60</y><w>420</w><h>240</h></coordinates><panel_attributes>
 MeshDataStructure ( Interface )
 --
 
 --
+- Mesh node coordinates
 - Cartesian mesh
 - Block structured
 - MultiLevel mesh, e.g. Level 0 unstructured, Level 1 static cartesian
@@ -201,4 +202,11 @@ GeometricConnectivity
 - face to vertices
 - N-faces to M-faces where M &lt;= N?
 
-style=autoresize</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1960</x><y>440</y><w>50</w><h>250</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>30;10;10;230</additional_attributes></element></diagram>
+style=autoresize</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1960</x><y>440</y><w>50</w><h>250</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>30;10;10;230</additional_attributes></element><element><id>UMLClass</id><coordinates><x>2200</x><y>660</y><w>360</w><h>120</h></coordinates><panel_attributes>template=MeshDataStructures...
+MeshConnectivity
+--
+- Describe how a mesh is related to another mesh
+- Should we use that to describe a body?
+- Use this for well and embedded fractures?
+
+style=autoresize</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>2010</x><y>440</y><w>370</w><h>250</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;350;230</additional_attributes></element></diagram>
