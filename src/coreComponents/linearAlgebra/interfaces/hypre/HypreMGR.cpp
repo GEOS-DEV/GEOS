@@ -56,7 +56,8 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   // Hypre's parameters to use MGR as a preconditioner
   GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTol( precond.ptr, 0.0 ) );
   GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( precond.ptr, 1 ) );
-  GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetPrintLevel( precond.ptr, LvArray::integerConversion< HYPRE_Int >( params.logLevel ) ) );
+  HYPRE_Int logLevel = LvArray::math::min( LvArray::integerConversion< HYPRE_Int >( params.logLevel - 1 ), LvArray::integerConversion< HYPRE_Int >( 0 ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetPrintLevel( precond.ptr, logLevel ) );
 
   array1d< int > const numComponentsPerField = dofManager->numComponentsPerField();
   dofManager->getLocalDofComponentLabels( mgrData.pointMarkers );
@@ -180,7 +181,6 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   precond.setup = HYPRE_MGRSetup;
   precond.solve = HYPRE_MGRSolve;
   precond.destroy = HYPRE_MGRDestroy;
-
 }
 
 } // namespace geos
