@@ -143,6 +143,23 @@ public:
     return m_shearModulus[k];
   }
 
+  // TODO: confirm hyper stress/strain measures before activatiing
+
+  /*
+     GEOS_HOST_DEVICE
+     virtual void hyperUpdate( localIndex const k,
+                            localIndex const q,
+                            real64 const ( & FminusI )[3][3],
+                            real64 ( & stress )[6] ) const override final;
+
+     GEOS_HOST_DEVICE
+     virtual void hyperUpdate( localIndex const k,
+                            localIndex const q,
+                            real64 const ( & FminusI )[3][3],
+                            real64 ( & stress )[6],
+                            real64 ( & stiffness )[6][6] ) const override final;
+   */
+
 protected:
 
   /// A reference to the ArrayView holding the bulk modulus for each element.
@@ -291,6 +308,59 @@ void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
   stiffness.m_bulkModulus = m_bulkModulus[k];
   stiffness.m_shearModulus = m_shearModulus[k];
 }
+
+
+// TODO: need to confirm stress / strain measures before activating hyper inferface
+/*
+   GEOS_HOST_DEVICE
+   GEOS_FORCE_INLINE
+   void ElasticIsotropicUpdates::hyperUpdate( localIndex const k,
+                                           localIndex const q,
+                                           real64 const (&FmI)[3][3],
+                                           real64 ( & stress )[ 6 ] ) const
+   {
+   GEOS_UNUSED_VAR(q);
+
+   real64 const C1 = 0.5 * m_shearModulus[k];
+   real64 const D1 = 0.5 * m_bulkModulus[k];
+   real64 const detFm1 = FmI[0][0] + FmI[1][1] + FmI[2][2]
+                        - FmI[1][2]*FmI[2][1] + FmI[1][1]*FmI[2][2]
+ + FmI[0][2]*(-FmI[2][0] - FmI[1][1]*FmI[2][0] + FmI[1][0]*FmI[2][1])
+ + FmI[0][1]*(-FmI[1][0] + FmI[1][2]*FmI[2][0] - FmI[1][0]*FmI[2][2])
+ + FmI[0][0]*( FmI[1][1] - FmI[1][2]*FmI[2][1] + FmI[2][2] + FmI[1][1]*FmI[2][2]);
+
+
+   real64 const p = -2 * D1 * ( detFm1 + 1.0 ) * detFm1;
+   real64 devB[6] = { 1/3 * (2 * FmI[0][0] * (2 + FmI[0][0]) - FmI[1][1] * (2 + FmI[1][1]) - FmI[2][2] * (2 + FmI[2][2])
+ ++
+                            2 * FmI[0][1]*FmI[0][1] + 2 * FmI[0][2] * FmI[0][2] - FmI[1][0] * FmI[1][0] - FmI[1][2] *
+ +FmI[1][2] -
+                            FmI[2][0] * FmI[2][0] - FmI[2][1] * FmI[2][1]),
+                     1/3 * (-FmI[0][0] * (2 + FmI[0][0]) + 2 * FmI[1][1] * ( 2 + FmI[1][1]) - FmI[2][2] * (2 +
+ +FmI[2][2]) -
+                            FmI[0][1]*FmI[0][1] - FmI[0][2]*FmI[0][2] + 2 * FmI[1][0]*FmI[1][0] + 2 *
+ +FmI[1][2]*FmI[1][2] - FmI[2][0]*FmI[2][0] - FmI[2][1]*
+                            FmI[2][1]),
+                     1/3 *(-FmI[0][0] * (2 + FmI[0][0]) - FmI[1][1] * (2 + FmI[1][1]) + 2 * FmI[2][2] * (2 + FmI[2][2])
+ +-
+                           FmI[0][1]*FmI[0][1] - FmI[0][2]*FmI[0][2] - FmI[1][0]*FmI[1][0] - FmI[1][2]*FmI[1][2] + 2 *
+ +FmI[2][0]*FmI[2][0] + 2 * FmI[2][1]*
+                           FmI[2][1]),
+                     FmI[1][2] + FmI[1][0] * FmI[2][0] + FmI[2][1] + FmI[1][1]*FmI[2][1] + FmI[1][2]*FmI[2][2],
+                     FmI[0][2] + FmI[2][0] + FmI[0][0] * FmI[2][0] + FmI[0][1]*FmI[2][1] + FmI[0][2]*FmI[2][2],
+                     FmI[0][1] + FmI[1][0] + FmI[0][0] * FmI[1][0] + FmI[0][1]*FmI[1][1] + FmI[0][2]*FmI[1][2]
+   };
+
+   real64 const C = 2 * C1 / pow( detFm1 + 1, 2.0/3.0 );
+   stress[0] = -p + C * devB[0];
+   stress[1] = -p + C * devB[1];
+   stress[2] = -p + C * devB[2];
+   stress[3] = C * devB[3];
+   stress[4] = C * devB[4];
+   stress[5] = C * devB[5];
+   }
+ */
+
 
 /**
  * @class ElasticIsotropic
