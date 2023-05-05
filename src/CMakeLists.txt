@@ -221,3 +221,13 @@ endif()
 
 install( FILES ${CMAKE_BINARY_DIR}/schema.xsd
          DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${CMAKE_PROJECT_NAME}/schema OPTIONAL)
+
+
+################################
+# Add integratedTests
+################################
+if( EXISTS "${CMAKE_SOURCE_DIR}/../integratedTests/CMakeLists.txt")
+  add_subdirectory( ${CMAKE_SOURCE_DIR}/../integratedTests integratedTests )
+else()
+  message( "Could not find the integratedTests submodule" )
+endif()
