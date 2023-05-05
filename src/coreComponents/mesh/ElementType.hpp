@@ -16,12 +16,12 @@
  * @file ElementType.hpp
  */
 
-#ifndef GEOSX_MESH_ELEMENTTYPE_HPP
-#define GEOSX_MESH_ELEMENTTYPE_HPP
+#ifndef GEOS_MESH_ELEMENTTYPE_HPP
+#define GEOS_MESH_ELEMENTTYPE_HPP
 
 #include "codingUtilities/EnumStrings.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -40,7 +40,7 @@ enum class ElementType : integer
   Hexahedron,    ///< Eight-node hexahedral element
   Prism5,        ///< Ten-node pentagonal prism
   Prism6,        ///< Twelve-node hexagonal prism
-  Prism7,        ///< HeptagonalPrism
+  Prism7,        ///< Heptagonal prism
   Prism8,        ///< Octagonal prism
   Prism9,        ///< Nonagonal prism
   Prism10,       ///< Decagonal prism
@@ -109,6 +109,6 @@ ENUM_STRINGS( ElementType,
               "HendecagonalPrism",
               "Polyhedron" );
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_MESH_ELEMENTTYPE_HPP
+#endif //GEOS_MESH_ELEMENTTYPE_HPP

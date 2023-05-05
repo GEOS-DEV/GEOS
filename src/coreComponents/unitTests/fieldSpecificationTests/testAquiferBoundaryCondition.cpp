@@ -25,8 +25,8 @@
 // TPL includes
 #include <gtest/gtest.h>
 
-using namespace geosx;
-using namespace geosx::dataRepository;
+using namespace geos;
+using namespace geos::dataRepository;
 
 
 TEST( FieldSpecification, Aquifer )

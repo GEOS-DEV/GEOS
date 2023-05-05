@@ -16,13 +16,13 @@
  * @file ConstantPermeability.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_PERMEABILITY_CONSTANTPERMEABILITY_HPP_
-#define GEOSX_CONSTITUTIVE_PERMEABILITY_CONSTANTPERMEABILITY_HPP_
+#ifndef GEOS_CONSTITUTIVE_PERMEABILITY_CONSTANTPERMEABILITY_HPP_
+#define GEOS_CONSTITUTIVE_PERMEABILITY_CONSTANTPERMEABILITY_HPP_
 
 #include "constitutive/permeability/PermeabilityBase.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -88,7 +88,7 @@ private:
 
 }/* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 
-#endif //GEOSX_CONSTITUTIVE_PERMEABILITY_FRACTUREPERMEABILITY_HPP_
+#endif //GEOS_CONSTITUTIVE_PERMEABILITY_FRACTUREPERMEABILITY_HPP_

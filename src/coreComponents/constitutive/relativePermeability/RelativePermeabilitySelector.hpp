@@ -16,8 +16,8 @@
  * @file relativePermeabilitySelector.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_RELATIVEPERMEABILITY_RELATIVEPERMEABILITYSELECTOR_HPP
-#define GEOSX_CONSTITUTIVE_RELATIVEPERMEABILITY_RELATIVEPERMEABILITYSELECTOR_HPP
+#ifndef GEOS_CONSTITUTIVE_RELATIVEPERMEABILITY_RELATIVEPERMEABILITYSELECTOR_HPP
+#define GEOS_CONSTITUTIVE_RELATIVEPERMEABILITY_RELATIVEPERMEABILITYSELECTOR_HPP
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp"
@@ -26,7 +26,7 @@
 #include "constitutive/relativePermeability/TableRelativePermeabilityHysteresis.hpp"
 #include "constitutive/relativePermeability/VanGenuchtenBakerRelativePermeability.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -67,6 +67,6 @@ void constitutiveUpdatePassThru( RelativePermeabilityBase & relPerm,
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_RELATIVEPERMEABILITY_RELATIVEPERMEABILITYSELECTOR_HPP
+#endif //GEOS_CONSTITUTIVE_RELATIVEPERMEABILITY_RELATIVEPERMEABILITYSELECTOR_HPP

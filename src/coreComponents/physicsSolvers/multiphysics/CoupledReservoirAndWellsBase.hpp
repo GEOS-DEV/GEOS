@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_
 
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 
@@ -29,7 +29,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace coupledReservoirAndWellsInternal
@@ -120,9 +120,9 @@ public:
                ParallelVector & solution,
                bool const setSparsity = true ) override
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
-    GEOSX_UNUSED_VAR( setSparsity );
+    GEOS_UNUSED_VAR( setSparsity );
 
     dofManager.setDomain( domain );
 
@@ -236,14 +236,14 @@ public:
           arrayView1d< localIndex const > const resElemIndex =
             perforationData.getField< fields::perforation::reservoirElementIndex >();
 
-          forAll< serialPolicy >( perforationData.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
+          forAll< serialPolicy >( perforationData.size(), [=] GEOS_HOST_DEVICE ( localIndex const iperf )
           {
-            GEOSX_LOG_RANK( GEOSX_FMT( "Perforation at ({},{},{}); perforated element center: ({},{},{}); transmissibility: {} Pa.s.rm^3/s/Pa",
-                                       perfLocation[iperf][0], perfLocation[iperf][1], perfLocation[iperf][2],
-                                       elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][0],
-                                       elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][1],
-                                       elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][2],
-                                       perfTrans[iperf] ) );
+            GEOS_LOG_RANK( GEOS_FMT( "Perforation at ({},{},{}); perforated element center: ({},{},{}); transmissibility: {} Pa.s.rm^3/s/Pa",
+                                     perfLocation[iperf][0], perfLocation[iperf][1], perfLocation[iperf][2],
+                                     elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][0],
+                                     elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][1],
+                                     elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][2],
+                                     perfTrans[iperf] ) );
           } );
         }
       } );
@@ -299,6 +299,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_ */

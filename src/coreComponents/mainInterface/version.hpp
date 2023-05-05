@@ -17,7 +17,7 @@
  */
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 /**
  * @brief Get GEOSX version.

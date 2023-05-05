@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_CELLBLOCKABC_HPP
-#define GEOSX_CELLBLOCKABC_HPP
+#ifndef GEOS_CELLBLOCKABC_HPP
+#define GEOS_CELLBLOCKABC_HPP
 
 #include "dataRepository/Group.hpp"
 #include "mesh/ElementType.hpp"
@@ -21,7 +21,7 @@
 
 #include <vector>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -141,4 +141,4 @@ private:
 
 }
 
-#endif //GEOSX_CELLBLOCKABC_HPP
+#endif //GEOS_CELLBLOCKABC_HPP

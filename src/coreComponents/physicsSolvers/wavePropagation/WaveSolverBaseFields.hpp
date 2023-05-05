@@ -17,13 +17,13 @@
  * @file AcousticFirstOrderWaveEquationSEM.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION__HPP_WAVESOLVERBASEFIELDS
-#define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION__HPP_WAVESOLVERBASEFIELDS
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION__HPP_WAVESOLVERBASEFIELDS
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION__HPP_WAVESOLVERBASEFIELDS
 
 #include "common/DataLayouts.hpp"
 #include "mesh/MeshFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace fields
@@ -95,6 +95,7 @@ DECLARE_FIELD( MediumVelocity,
                NOPLOT,
                WRITE_AND_READ,
                "Medium velocity of the cell" );
+
 DECLARE_FIELD( MediumDensity,
                "mediumDensity",
                array1d< real32 >,
@@ -119,11 +120,139 @@ DECLARE_FIELD( FreeSurfaceNodeIndicator,
                WRITE_AND_READ,
                "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
 
+DECLARE_FIELD( Displacementx_np1,
+               "displacementx_np1",
+               array1d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "x-component of displacement at time n+1." );
+
+DECLARE_FIELD( Displacementy_np1,
+               "displacementy_np1",
+               array1d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "y-component of displacement at time n+1." );
+
+DECLARE_FIELD( Displacementz_np1,
+               "displacementz_np1",
+               array1d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "z-component of displacement at time n+1." );
+
+DECLARE_FIELD( Stresstensorxx,
+               "stresstensorxx",
+               array2d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "xx-components of the stress tensor." );
+
+DECLARE_FIELD( Stresstensoryy,
+               "stresstensoryy",
+               array2d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "yy-components of the stress tensor." );
+
+DECLARE_FIELD( Stresstensorzz,
+               "stresstensorzz",
+               array2d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "zz-components of the stress tensor." );
+
+DECLARE_FIELD( Stresstensorxy,
+               "stresstensorxy",
+               array2d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "xy-components of the stress tensor (symetric of yx-component)." );
+
+DECLARE_FIELD( Stresstensorxz,
+               "stresstensorxz",
+               array2d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "xz-components of the stress tensor (symetric of zx-component)." );
+
+DECLARE_FIELD( Stresstensoryz,
+               "stresstensoryz",
+               array2d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "yz-components of the stress tensor (symetric of zy-component)." );
+
+DECLARE_FIELD( DampingVectorx,
+               "dampingVectorx",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal Damping Matrix in x-direction." );
+
+DECLARE_FIELD( DampingVectory,
+               "dampingVectory",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal Damping Matrix in y-direction." );
+
+DECLARE_FIELD( DampingVectorz,
+               "dampingVectorz",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal Damping Matrix in z-direction." );
+
+DECLARE_FIELD( MediumVelocityVp,
+               "mediumVelocityVp",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "P-waves speed in the cell" );
+
+DECLARE_FIELD( MediumVelocityVs,
+               "mediumVelocityVs",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "S-waves speed in the cell" );
+
+DECLARE_FIELD( Lambda,
+               "lambda",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "First Lame parameter: lambda" );
+
+DECLARE_FIELD( Mu,
+               "mu",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Second Lame parameter: mu" );
+
 
 }
 
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_AcousticFirstOrderWaveEquationSEM_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION__HPP_WAVESOLVERBASEFIELDS */

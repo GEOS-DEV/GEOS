@@ -16,14 +16,14 @@
  * @file CompressibleSinglePhaseFluid.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_COMPRESSIBLESINGLEPHASEFLUID_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_COMPRESSIBLESINGLEPHASEFLUID_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_COMPRESSIBLESINGLEPHASEFLUID_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_COMPRESSIBLESINGLEPHASEFLUID_HPP_
 
 #include "constitutive/fluid/SingleFluidBase.hpp"
 
 #include "constitutive/ExponentialRelation.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -68,8 +68,8 @@ public:
   /// Deleted move assignment operator
   CompressibleSinglePhaseUpdate & operator=( CompressibleSinglePhaseUpdate && ) = delete;
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   virtual void compute( real64 const pressure,
                         real64 & density,
                         real64 & viscosity ) const override
@@ -78,8 +78,8 @@ public:
     m_viscRelation.compute( pressure, viscosity );
   }
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   virtual void compute( real64 const pressure,
                         real64 & density,
                         real64 & dDensity_dPressure,
@@ -90,30 +90,30 @@ public:
     m_viscRelation.compute( pressure, viscosity, dViscosity_dPressure );
   }
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   virtual void compute( real64 const pressure,
-                        real64 const GEOSX_UNUSED_PARAM( temperature ),
+                        real64 const GEOS_UNUSED_PARAM( temperature ),
                         real64 & density,
                         real64 & dDensity_dPressure,
-                        real64 & GEOSX_UNUSED_PARAM( dDensity_dTemperature ),
+                        real64 & GEOS_UNUSED_PARAM( dDensity_dTemperature ),
                         real64 & viscosity,
                         real64 & dViscosity_dPressure,
-                        real64 & GEOSX_UNUSED_PARAM( dViscosity_dTemperature ),
-                        real64 & GEOSX_UNUSED_PARAM( internalEnergy ),
-                        real64 & GEOSX_UNUSED_PARAM( dInternalEnergy_dPressure ),
-                        real64 & GEOSX_UNUSED_PARAM( dInternalEnergy_dTemperature ),
-                        real64 & GEOSX_UNUSED_PARAM( enthalpy ),
-                        real64 & GEOSX_UNUSED_PARAM( dEnthalpy_dPressure ),
-                        real64 & GEOSX_UNUSED_PARAM( dEnthalpy_dTemperature ) ) const override
+                        real64 & GEOS_UNUSED_PARAM( dViscosity_dTemperature ),
+                        real64 & GEOS_UNUSED_PARAM( internalEnergy ),
+                        real64 & GEOS_UNUSED_PARAM( dInternalEnergy_dPressure ),
+                        real64 & GEOS_UNUSED_PARAM( dInternalEnergy_dTemperature ),
+                        real64 & GEOS_UNUSED_PARAM( enthalpy ),
+                        real64 & GEOS_UNUSED_PARAM( dEnthalpy_dPressure ),
+                        real64 & GEOS_UNUSED_PARAM( dEnthalpy_dTemperature ) ) const override
   {
     m_densRelation.compute( pressure, density, dDensity_dPressure );
     m_viscRelation.compute( pressure, viscosity, dViscosity_dPressure );
   }
 
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure ) const override
@@ -125,12 +125,12 @@ public:
              m_dVisc_dPres[k][q] );
   }
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure,
-                       real64 const GEOSX_UNUSED_PARAM( temperature ) ) const override
+                       real64 const GEOS_UNUSED_PARAM( temperature ) ) const override
   {
     compute( pressure,
              m_density[k][q],
@@ -224,6 +224,6 @@ protected:
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_FLUID_COMPRESSIBLESINGLEPHASEFLUID_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_FLUID_COMPRESSIBLESINGLEPHASEFLUID_HPP_ */

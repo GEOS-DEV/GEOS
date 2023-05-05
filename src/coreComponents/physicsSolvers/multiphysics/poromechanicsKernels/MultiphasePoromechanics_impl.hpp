@@ -16,18 +16,17 @@
  * @file MultiphasePoromechanics_impl.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_MULTIPHASEPOROMECHANICS_IMPL_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_MULTIPHASEPOROMECHANICS_IMPL_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_MULTIPHASEPOROMECHANICS_IMPL_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_MULTIPHASEPOROMECHANICS_IMPL_HPP_
 
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "finiteElement/BilinearFormUtilities.hpp"
 #include "finiteElement/LinearFormUtilities.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace poromechanicsKernels
@@ -74,8 +73,8 @@ MultiphasePoromechanics( NodeManager const & nodeManager,
   m_numComponents( numComponents ),
   m_numPhases( numPhases )
 {
-  GEOSX_ERROR_IF_GT_MSG( m_numComponents, maxNumComponents,
-                         "MultiphasePoromechanics solver allows at most " << maxNumComponents << " components at the moment" );
+  GEOS_ERROR_IF_GT_MSG( m_numComponents, maxNumComponents,
+                        "MultiphasePoromechanics solver allows at most " << maxNumComponents << " components at the moment" );
 
   // extract fluid constitutive data views
   {
@@ -98,7 +97,7 @@ MultiphasePoromechanics( NodeManager const & nodeManager,
 
 /**
  * @brief Copy global values from primary field to a local stack array.
- * @copydoc ::geosx::finiteElement::ImplicitKernelBase::setup
+ * @copydoc ::geos::finiteElement::ImplicitKernelBase::setup
  *
  * For the MultiphasePoromechanics implementation, global values from the displacement,
  * incremental displacement, and degree of freedom numbers are placed into
@@ -107,8 +106,8 @@ MultiphasePoromechanics( NodeManager const & nodeManager,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 setup( localIndex const k,
        StackVariables & stack ) const
@@ -128,8 +127,8 @@ setup( localIndex const k,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 smallStrainUpdate( localIndex const k,
                    localIndex const q,
@@ -161,16 +160,13 @@ smallStrainUpdate( localIndex const k,
                                                        dSolidDensity_dPressure );
 
   // Step 2: compute the body force
-  if( m_gravityAcceleration > 0.0 )
-  {
-    computeBodyForce( k, q,
-                      porosity,
-                      dPorosity_dVolStrain,
-                      dPorosity_dPressure,
-                      dPorosity_dTemperature,
-                      dSolidDensity_dPressure,
-                      stack );
-  }
+  computeBodyForce( k, q,
+                    porosity,
+                    dPorosity_dVolStrain,
+                    dPorosity_dPressure,
+                    dPorosity_dTemperature,
+                    dSolidDensity_dPressure,
+                    stack );
 
   // Step 3: compute fluid mass increment
   computeFluidIncrement( k, q,
@@ -183,10 +179,7 @@ smallStrainUpdate( localIndex const k,
 
   // Step 4: compute pore volume constraint
   computePoreVolumeConstraint( k,
-                               porosity,
-                               dPorosity_dVolStrain,
-                               dPorosity_dPressure,
-                               dPorosity_dTemperature,
+                               porosity_n,
                                stack );
 }
 
@@ -194,8 +187,8 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 template< typename FUNC >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 computeBodyForce( localIndex const k,
                   localIndex const q,
@@ -209,7 +202,7 @@ computeBodyForce( localIndex const k,
 {
   using Deriv = constitutive::multifluid::DerivativeOffset;
 
-  GEOSX_UNUSED_VAR( dPorosity_dTemperature );
+  GEOS_UNUSED_VAR( dPorosity_dTemperature );
 
   arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const phaseMassDensity = m_fluidPhaseMassDensity[k][q];
   arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const dPhaseMassDensity = m_dFluidPhaseMassDensity[k][q];
@@ -267,8 +260,8 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 template< typename FUNC >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 computeFluidIncrement( localIndex const k,
                        localIndex const q,
@@ -282,7 +275,7 @@ computeFluidIncrement( localIndex const k,
 {
   using Deriv = constitutive::multifluid::DerivativeOffset;
 
-  GEOSX_UNUSED_VAR( dPorosity_dTemperature );
+  GEOS_UNUSED_VAR( dPorosity_dTemperature );
 
   // temporary work arrays and slices
   real64 dPhaseAmount_dC[maxNumComponents]{};
@@ -363,19 +356,14 @@ computeFluidIncrement( localIndex const k,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 computePoreVolumeConstraint( localIndex const k,
-                             real64 const & porosity,
-                             real64 const & dPorosity_dVolStrain,
-                             real64 const & dPorosity_dPressure,
-                             real64 const & dPorosity_dTemperature,
+                             real64 const & porosity_n,
                              StackVariables & stack ) const
 {
   using Deriv = constitutive::multifluid::DerivativeOffset;
-
-  GEOSX_UNUSED_VAR( dPorosity_dVolStrain, dPorosity_dTemperature );
 
   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const phaseVolFrac = m_fluidPhaseVolFrac[k];
   arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dFluidPhaseVolFrac[k];
@@ -387,22 +375,21 @@ computePoreVolumeConstraint( localIndex const k,
   for( integer ip = 0; ip < m_numPhases; ++ip )
   {
     stack.poreVolConstraint -= phaseVolFrac( ip );
-    stack.dPoreVolConstraint_dPressure += -dPhaseVolFrac( ip, Deriv::dP ) * porosity
-                                          - phaseVolFrac( ip ) * dPorosity_dPressure;
+    stack.dPoreVolConstraint_dPressure -= dPhaseVolFrac( ip, Deriv::dP ) * porosity_n;
 
     for( integer jc = 0; jc < m_numComponents; ++jc )
     {
-      stack.dPoreVolConstraint_dComponents[0][jc] -= dPhaseVolFrac( ip, Deriv::dC+jc ) * porosity;
+      stack.dPoreVolConstraint_dComponents[0][jc] -= dPhaseVolFrac( ip, Deriv::dC+jc ) * porosity_n;
     }
   }
-  stack.poreVolConstraint *= porosity;
+  stack.poreVolConstraint *= porosity_n;
 }
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
                               real64 const ( &dNdX )[numNodesPerElem][3],
@@ -425,16 +412,13 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
     stack.totalStress,
     -detJxW );
 
-  if( m_gravityAcceleration > 0.0 )
-  {
-    LinearFormUtilities::compute< displacementTestSpace,
-                                  DifferentialOperator::Identity >
-    (
-      stack.localResidualMomentum,
-      N,
-      stack.bodyForce,
-      detJxW );
-  }
+  LinearFormUtilities::compute< displacementTestSpace,
+                                DifferentialOperator::Identity >
+  (
+    stack.localResidualMomentum,
+    N,
+    stack.bodyForce,
+    detJxW );
 
   // Step 2: compute local linear momentum balance residual derivatives with respect to displacement
   BilinearFormUtilities::compute< displacementTestSpace,
@@ -448,19 +432,16 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
     dNdX,
     -detJxW );
 
-  if( m_gravityAcceleration > 0.0 )
-  {
-    BilinearFormUtilities::compute< displacementTestSpace,
-                                    displacementTrialSpace,
-                                    DifferentialOperator::Identity,
-                                    DifferentialOperator::Divergence >
-    (
-      stack.dLocalResidualMomentum_dDisplacement,
-      N,
-      stack.dBodyForce_dVolStrainIncrement,
-      dNdX,
-      detJxW );
-  }
+  BilinearFormUtilities::compute< displacementTestSpace,
+                                  displacementTrialSpace,
+                                  DifferentialOperator::Identity,
+                                  DifferentialOperator::Divergence >
+  (
+    stack.dLocalResidualMomentum_dDisplacement,
+    N,
+    stack.dBodyForce_dVolStrainIncrement,
+    dNdX,
+    detJxW );
 
   // Step 3: compute local linear momentum balance residual derivatives with respect to pressure
   BilinearFormUtilities::compute< displacementTestSpace,
@@ -474,41 +455,35 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
     1.0,
     -detJxW );
 
-  if( m_gravityAcceleration > 0.0 )
-  {
-    BilinearFormUtilities::compute< displacementTestSpace,
-                                    pressureTrialSpace,
-                                    DifferentialOperator::Identity,
-                                    DifferentialOperator::Identity >
-    (
-      stack.dLocalResidualMomentum_dPressure,
-      N,
-      stack.dBodyForce_dPressure,
-      1.0,
-      detJxW );
-  }
+  BilinearFormUtilities::compute< displacementTestSpace,
+                                  pressureTrialSpace,
+                                  DifferentialOperator::Identity,
+                                  DifferentialOperator::Identity >
+  (
+    stack.dLocalResidualMomentum_dPressure,
+    N,
+    stack.dBodyForce_dPressure,
+    1.0,
+    detJxW );
 
   // Step 4: compute local linear momentum balance residual derivatives with respect to components
-  if( m_gravityAcceleration > 0.0 )
-  {
-    BilinearFormUtilities::compute< displacementTestSpace,
-                                    FunctionSpace::P0,
-                                    DifferentialOperator::Identity,
-                                    DifferentialOperator::Identity >
-    (
-      stack.dLocalResidualMomentum_dComponents,
-      N,
-      stack.dBodyForce_dComponents,
-      1.0,
-      detJxW );
-  }
+  BilinearFormUtilities::compute< displacementTestSpace,
+                                  FunctionSpace::P0,
+                                  DifferentialOperator::Identity,
+                                  DifferentialOperator::Identity >
+  (
+    stack.dLocalResidualMomentum_dComponents,
+    N,
+    stack.dBodyForce_dComponents,
+    1.0,
+    detJxW );
 }
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
                                real64 const & detJxW,
@@ -607,8 +582,8 @@ assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 quadraturePointKernel( localIndex const k,
                        localIndex const q,
@@ -641,20 +616,20 @@ quadraturePointKernel( localIndex const k,
 }
 
 /**
- * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
+ * @copydoc geos::finiteElement::ImplicitKernelBase::complete
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 complete( localIndex const k,
           StackVariables & stack ) const
 {
   using namespace compositionalMultiphaseUtilities;
 
-  GEOSX_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( k );
 
   real64 maxForce = 0;
   localIndex const numSupportPoints =
@@ -746,13 +721,13 @@ real64 MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 kernelLaunch( localIndex const numElems,
               KERNEL_TYPE const & kernelComponent )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // Define a RAJA reduction variable to get the maximum residual contribution.
   RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
 
   forAll< POLICY >( numElems,
-                    [=] GEOSX_HOST_DEVICE ( localIndex const k )
+                    [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     typename KERNEL_TYPE::StackVariables stack;
 
@@ -770,6 +745,6 @@ kernelLaunch( localIndex const numElems,
 
 } // namespace poromechanicsKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICS_IMPL_HPP_
+#endif // GEOS_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICS_IMPL_HPP_

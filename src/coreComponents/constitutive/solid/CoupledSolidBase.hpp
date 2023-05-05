@@ -17,8 +17,8 @@
  * @file CoupledSolid.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLIDBASE_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLIDBASE_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_COUPLEDSOLIDBASE_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_COUPLEDSOLIDBASE_HPP_
 
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
@@ -26,7 +26,7 @@
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -102,6 +102,13 @@ public:
   arrayView2d< real64 const > const  getDporosity_dPressure() const
   { return getBasePorosityModel().dPorosity_dPressure(); }
 
+  /**
+   * @brief get the dPorosity_dTemperature.
+   * return a constant arrayView2d to dPorosity_dTemperature
+   */
+  arrayView2d< real64 const > const  getDporosity_dTemperature() const
+  { return getBasePorosityModel().dPorosity_dTemperature(); }
+
 
   /**
    * @brief get the old internal energy.
@@ -152,6 +159,16 @@ public:
   {
     return getBaseSolidModel().getShearModulus();
   }
+
+  /*
+   * @brief get the current solid density
+   * return a constant arrayView2d to solid density
+   */
+  arrayView2d< real64 const > const getDensity() const
+  {
+    return getBaseSolidModel().getDensity();
+  }
+
 
   /*
    * @brief get the current biot coefficient
@@ -230,4 +247,4 @@ private:
 
 }
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_ */

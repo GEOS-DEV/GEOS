@@ -16,14 +16,14 @@
  * @file EquilibriumReaction.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_CHEMICALREACTIONS_REACTIONBASE_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_CHEMICALREACTIONS_REACTIONBASE_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_CHEMICALREACTIONS_REACTIONBASE_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_CHEMICALREACTIONS_REACTIONBASE_HPP_
 
 #include "ReactionsBase.hpp"
 
 #include "constitutive/fluid/layouts.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -117,6 +117,6 @@ private:
 
 } // end namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_CHEMICALREACTIONS_REACTIONBASE_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_CHEMICALREACTIONS_REACTIONBASE_HPP_

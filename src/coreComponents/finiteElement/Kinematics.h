@@ -23,12 +23,12 @@
 //***** DECLARATIONS **********************************************************
 //*****************************************************************************
 
-namespace geosx
+namespace geos
 {
 
 template< int N, typename ARRAY_2D >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void CalculateGradients( real64 ( & gradient0 )[ 3 ][ 3 ],
                          real64 ( & gradient1 )[ 3 ][ 3 ],
                          real64 const ( &var0 )[ N ][ 3 ],
@@ -45,8 +45,8 @@ void CalculateGradients( real64 ( & gradient0 )[ 3 ][ 3 ],
   }
 }
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void HughesWinget( real64 ( & Rot )[ 3 ][ 3 ], real64 ( & Dadt )[ 6 ], real64 const ( &G )[ 3 ][ 3 ] )
 {
   //Dadt = 0.5*(G + GT);

@@ -79,6 +79,7 @@ def main():
     
     plt.legend(loc='upper left')
     plt.show()
+    #plt.savefig(' temperature.png')
     
 if __name__ == "__main__":
     main()

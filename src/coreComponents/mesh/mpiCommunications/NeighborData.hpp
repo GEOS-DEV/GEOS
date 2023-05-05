@@ -16,13 +16,13 @@
  * @file NeighborData.hpp
  */
 
-#ifndef GEOSX_MESH_MPICOMMUNICATIONS_NEIGHBORDATA_HPP_
-#define GEOSX_MESH_MPICOMMUNICATIONS_NEIGHBORDATA_HPP_
+#ifndef GEOS_MESH_MPICOMMUNICATIONS_NEIGHBORDATA_HPP_
+#define GEOS_MESH_MPICOMMUNICATIONS_NEIGHBORDATA_HPP_
 
 #include "common/DataTypes.hpp"
 #include "dataRepository/Group.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -127,6 +127,6 @@ private:
   array1d< std::pair< globalIndex, int > > m_nonLocalGhosts;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_MPICOMMUNICATIONS_NEIGHBORDATA_HPP_ */
+#endif /* GEOS_MESH_MPICOMMUNICATIONS_NEIGHBORDATA_HPP_ */

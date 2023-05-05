@@ -18,13 +18,13 @@
 
 #include "SinglePhaseFVM.hpp"
 
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -41,7 +41,7 @@
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
  */
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -67,7 +67,7 @@ void SinglePhaseFVM< BASE >::initializePreSubGroups()
 
   if( !fvManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )
   {
-    GEOSX_ERROR( "A discretization deriving from FluxApproximationBase must be selected with SinglePhaseFVM" );
+    GEOS_ERROR( "A discretization deriving from FluxApproximationBase must be selected with SinglePhaseFVM" );
   }
 }
 
@@ -95,7 +95,7 @@ void SinglePhaseFVM< BASE >::setupSystem( DomainPartition & domain,
                                           ParallelVector & solution,
                                           bool const setSparsity )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   BASE::setupSystem( domain,
                      dofManager,
                      localMatrix,
@@ -106,128 +106,139 @@ void SinglePhaseFVM< BASE >::setupSystem( DomainPartition & domain,
 }
 
 template< typename BASE >
-real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & domain,
+real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                                      real64 const & GEOS_UNUSED_PARAM( dt ),
+                                                      DomainPartition const & domain,
                                                       DofManager const & dofManager,
                                                       arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
-  real64 residual = 0.0;
-  real64 residualFlowAllMeshes = 0.0;
-  real64 residualEnergyAllMeshes = 0.0;
-  integer numMeshTargets = 0;
+  integer constexpr numNorm = 2; // mass balance and energy balance
+  array1d< real64 > localResidualNorm;
+  array1d< real64 > localResidualNormalizer;
+  localResidualNorm.resize( numNorm );
+  localResidualNormalizer.resize( numNorm );
 
-  string const dofKey = dofManager.getKey( BASE::viewKeyStruct::elemDofFieldString() );
+  solverBaseKernels::NormType const normType = BASE::getNonlinearSolverParameters().normType();
+
   globalIndex const rankOffset = dofManager.rankOffset();
+  string const dofKey = dofManager.getKey( BASE::viewKeyStruct::elemDofFieldString() );
 
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                       MeshLevel const & mesh,
                                                                       arrayView1d< string const > const & regionNames )
   {
-    real64 localFlowResidualNorm[3] = { 0.0, 0.0, 0.0 };
-    real64 localEnergyResidualNorm[3] = { 0.0, 0.0, 0.0 };
-
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase const & subRegion )
     {
-      arrayView1d< globalIndex const > const & dofNumber = subRegion.template getReference< array1d< globalIndex > >( dofKey );
-      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-      arrayView1d< real64 const > const & volume         = subRegion.getElementVolume();
+      real64 subRegionResidualNorm[numNorm]{};
+      real64 subRegionResidualNormalizer[numNorm]{};
 
-      SingleFluidBase const & fluidModel =
-        SolverBase::getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( BASE::viewKeyStruct::fluidNamesString() ) );
-      arrayView2d< real64 const > const & density_n = fluidModel.density_n();
+      string const & fluidName = subRegion.template getReference< string >( BASE::viewKeyStruct::fluidNamesString() );
+      SingleFluidBase const & fluid = SolverBase::getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
 
-      CoupledSolidBase const & solidModel =
-        SolverBase::getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( BASE::viewKeyStruct::solidNamesString() ) );
-      arrayView2d< real64 const > const & porosity_n = solidModel.getPorosity_n();
+      string const & solidName = subRegion.template getReference< string >( BASE::viewKeyStruct::solidNamesString() );
+      CoupledSolidBase const & solid = SolverBase::getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+
+      // step 1: compute the norm in the subRegion
 
       if( m_isThermal )
       {
-        arrayView2d< real64 const > const & fluidInternalEnergy_n = fluidModel.internalEnergy_n();
+        string const & solidInternalEnergyName = subRegion.template getReference< string >( BASE::viewKeyStruct::solidInternalEnergyNamesString() );
+        SolidInternalEnergy const & solidInternalEnergy = SolverBase::getConstitutiveModel< SolidInternalEnergy >( subRegion, solidInternalEnergyName );
 
-        SolidInternalEnergy const & solidInternalEnergy =
-          SolverBase::getConstitutiveModel< SolidInternalEnergy >( subRegion, subRegion.template getReference< string >( BASE::viewKeyStruct::solidInternalEnergyNamesString() ) );
-        arrayView2d< real64 const > const solidInternalEnergy_n = solidInternalEnergy.getInternalEnergy_n();
-
-        thermalSinglePhaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
-                                                                                             rankOffset,
-                                                                                             dofNumber,
-                                                                                             elemGhostRank,
-                                                                                             volume,
-                                                                                             density_n,
-                                                                                             porosity_n,
-                                                                                             fluidInternalEnergy_n,
-                                                                                             solidInternalEnergy_n,
-                                                                                             localFlowResidualNorm,
-                                                                                             localEnergyResidualNorm );
-
+        thermalSinglePhaseBaseKernels::
+          ResidualNormKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( normType,
+                                                     rankOffset,
+                                                     dofKey,
+                                                     localRhs,
+                                                     subRegion,
+                                                     fluid,
+                                                     solid,
+                                                     solidInternalEnergy,
+                                                     subRegionResidualNorm,
+                                                     subRegionResidualNormalizer );
       }
       else
       {
-        singlePhaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
-                                                                                      rankOffset,
-                                                                                      dofNumber,
-                                                                                      elemGhostRank,
-                                                                                      volume,
-                                                                                      density_n,
-                                                                                      porosity_n,
-                                                                                      localFlowResidualNorm );
+        real64 subRegionFlowResidualNorm[1]{};
+        real64 subRegionFlowResidualNormalizer[1]{};
+        singlePhaseBaseKernels::
+          ResidualNormKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( normType,
+                                                     rankOffset,
+                                                     dofKey,
+                                                     localRhs,
+                                                     subRegion,
+                                                     fluid,
+                                                     solid,
+                                                     subRegionFlowResidualNorm,
+                                                     subRegionFlowResidualNormalizer );
+        subRegionResidualNorm[0] = subRegionFlowResidualNorm[0];
+        subRegionResidualNormalizer[0] = subRegionFlowResidualNormalizer[0];
+      }
+
+      // step 2: first reduction across meshBodies/regions/subRegions
+
+      if( normType == solverBaseKernels::NormType::Linf )
+      {
+        solverBaseKernels::LinfResidualNormHelper::
+          updateLocalNorm< numNorm >( subRegionResidualNorm, localResidualNorm );
+      }
+      else
+      {
+        solverBaseKernels::L2ResidualNormHelper::
+          updateLocalNorm< numNorm >( subRegionResidualNorm, subRegionResidualNormalizer, localResidualNorm, localResidualNormalizer );
       }
     } );
-
-    // compute global residual norm
-
-    real64 globalFlowResidualNorm[3] = {0, 0, 0};
-
-    MpiWrapper::allReduce( localFlowResidualNorm,
-                           globalFlowResidualNorm,
-                           3,
-                           MPI_SUM,
-                           MPI_COMM_GEOSX );
-
-    residualFlowAllMeshes += sqrt( globalFlowResidualNorm[0] ) / ( ( globalFlowResidualNorm[1] + m_fluxEstimate ) / (globalFlowResidualNorm[2]+1) );
-
-    if( m_isThermal )
-    {
-      real64 globalEnergyResidualNorm[3] = {0, 0, 0};
-
-      MpiWrapper::allReduce( localEnergyResidualNorm,
-                             globalEnergyResidualNorm,
-                             3,
-                             MPI_SUM,
-                             MPI_COMM_GEOSX );
-
-      residualEnergyAllMeshes += sqrt( globalEnergyResidualNorm[0] ) / ( globalEnergyResidualNorm[1] / (globalEnergyResidualNorm[2]+1));
-    }
-
-    numMeshTargets++;
   } );
 
+  // step 3: second reduction across MPI ranks
+
+  real64 residualNorm = 0.0;
   if( m_isThermal )
   {
-    real64 const flowResidual = residualFlowAllMeshes / numMeshTargets;
-    real64 const energyResidual = residualEnergyAllMeshes / numMeshTargets;
+    array1d< real64 > globalResidualNorm;
+    globalResidualNorm.resize( numNorm );
+    if( normType == solverBaseKernels::NormType::Linf )
+    {
+      solverBaseKernels::LinfResidualNormHelper::
+        computeGlobalNorm( localResidualNorm, globalResidualNorm );
+    }
+    else
+    {
+      solverBaseKernels::L2ResidualNormHelper::
+        computeGlobalNorm( localResidualNorm, localResidualNormalizer, globalResidualNorm );
+    }
+    residualNorm = sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
 
-    residual = std::sqrt( flowResidual*flowResidual + energyResidual*energyResidual );
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
-      std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ", FlowSolverBase::coupledSolverAttributePrefix(), flowResidual, energyResidual );
+      std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ",
+                             FlowSolverBase::coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] );
     }
   }
   else
   {
-    real64 const flowResidual = residualFlowAllMeshes / numMeshTargets;
 
-    residual = flowResidual;
+    if( normType == solverBaseKernels::NormType::Linf )
+    {
+      solverBaseKernels::LinfResidualNormHelper::computeGlobalNorm( localResidualNorm[0], residualNorm );
+    }
+    else
+    {
+      solverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm[0], localResidualNormalizer[0], residualNorm );
+    }
+
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
-      std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", FlowSolverBase::coupledSolverAttributePrefix(), residual );
+      std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", FlowSolverBase::coupledSolverAttributePrefix(), residualNorm );
     }
   }
-
-  return residual;
+  return residualNorm;
 }
 
 
@@ -282,14 +293,14 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
 }
 
 template< >
-void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
+void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),
                                                            real64 const dt,
                                                            DomainPartition const & domain,
                                                            DofManager const & dofManager,
                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                            arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -301,11 +312,6 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOSX_UN
                                                                 MeshLevel const & mesh,
                                                                 arrayView1d< string const > const & )
   {
-    ElementRegionManager const & elemManager = mesh.getElemManager();
-    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
-    elemDofNumber = elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
-    elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
-
     fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
@@ -344,14 +350,14 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOSX_UN
 
 
 template<>
-void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
+void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),
                                                                    real64 const dt,
                                                                    DomainPartition const & domain,
                                                                    DofManager const & dofManager,
                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                    arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -400,7 +406,7 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
 
 
 template< typename BASE >
-void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
+void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),
                                                            real64 const dt,
                                                            DomainPartition const & domain,
                                                            DofManager const & dofManager,
@@ -408,7 +414,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
                                                            arrayView1d< real64 > const & localRhs,
                                                            string const & jumpDofKey )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -464,7 +470,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
 }
 
 template< typename BASE >
-void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
+void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),
                                                          real64 const dt,
                                                          DomainPartition const & domain,
                                                          DofManager const & dofManager,
@@ -472,7 +478,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
                                                          arrayView1d< real64 > const & localRhs,
                                                          CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -533,7 +539,7 @@ SinglePhaseFVM< BASE >::applyBoundaryConditions( real64 const time_n,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   BASE::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
   if( !BASE::m_keepFlowVariablesConstantDuringInitStep )
@@ -560,7 +566,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                    arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -593,9 +599,9 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
-                                     this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                     fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
+                                   this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                   fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
       }
 
       if( stencil.size() == 0 )
@@ -626,9 +632,9 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
-                                     this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                     fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
+                                   this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                   fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
       }
 
       if( stencil.size() == 0 )
@@ -693,12 +699,12 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
 }
 
 template<>
-void SinglePhaseFVM< SinglePhaseProppantBase >::applyAquiferBC( real64 const GEOSX_UNUSED_PARAM( time ),
-                                                                real64 const GEOSX_UNUSED_PARAM( dt ),
-                                                                DomainPartition & GEOSX_UNUSED_PARAM( domain ),
-                                                                DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
-                                                                CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
-                                                                arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) ) const
+void SinglePhaseFVM< SinglePhaseProppantBase >::applyAquiferBC( real64 const GEOS_UNUSED_PARAM( time ),
+                                                                real64 const GEOS_UNUSED_PARAM( dt ),
+                                                                DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                                                DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                                                CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                                                arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) const
 {
   // Aquifer does not make sense for proppant flow in fractures
 }
@@ -711,7 +717,7 @@ void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                         arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -780,4 +786,4 @@ typedef SinglePhaseFVM< SinglePhaseProppantBase > Proppant;
 REGISTER_CATALOG_ENTRY( SolverBase, NoProppant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( SolverBase, Proppant, string const &, Group * const )
 }
-} /* namespace geosx */
+} /* namespace geos */

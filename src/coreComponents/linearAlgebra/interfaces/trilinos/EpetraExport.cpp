@@ -27,7 +27,7 @@
 #include <Epetra_Vector.h>
 #include <Epetra_Import.h>
 
-namespace geosx
+namespace geos
 {
 
 EpetraExport::EpetraExport() = default;
@@ -72,7 +72,7 @@ void EpetraExport::exportCRS( EpetraMatrix const & mat,
     int * ia;
     int * ja;
     real64 * va;
-    GEOSX_LAI_CHECK_ERROR( localMatrix->ExtractCrsDataPointers( ia, ja, va ) );
+    GEOS_LAI_CHECK_ERROR( localMatrix->ExtractCrsDataPointers( ia, ja, va ) );
 
     // contains the global ID of local columns
     globalIndex const * const globalColumns = localMatrix->ColMap().MyGlobalElements64();
@@ -140,4 +140,4 @@ INST_EPETRA_EXPORT_CRS( long long, long long );
 
 #undef INST_EPETRA_EXPORT_CRS
 
-} // namespace geosx
+} // namespace geos

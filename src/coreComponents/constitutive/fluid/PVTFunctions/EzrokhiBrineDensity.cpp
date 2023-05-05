@@ -22,7 +22,7 @@
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace stringutilities;
@@ -58,9 +58,9 @@ void EzrokhiBrineDensity::makeCoefficients( string_array const & inputPara )
   // Reference : Zaytsev, I.D. and Aseyev, G.G. Properties of Aqueous Solutions of Electrolytes, Boca Raton, Florida, USA CRC Press (1993).
 
   m_waterCompressibility = 4.5e-10; // Pa-1
-  GEOSX_THROW_IF_LT_MSG( inputPara.size(), 5,
-                         GEOSX_FMT( "{}: insufficient number of model parameters", m_functionName ),
-                         InputError );
+  GEOS_THROW_IF_LT_MSG( inputPara.size(), 5,
+                        GEOS_FMT( "{}: insufficient number of model parameters", m_functionName ),
+                        InputError );
 
   try
   {
@@ -71,7 +71,7 @@ void EzrokhiBrineDensity::makeCoefficients( string_array const & inputPara )
   }
   catch( std::invalid_argument const & e )
   {
-    GEOSX_THROW( GEOSX_FMT( "{}: invalid model parameter value '{}'", m_functionName, e.what() ), InputError );
+    GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value '{}'", m_functionName, e.what() ), InputError );
   }
 }
 
@@ -95,4 +95,4 @@ REGISTER_CATALOG_ENTRY( PVTFunctionBase, EzrokhiBrineDensity, string const &, st
 
 } // namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos

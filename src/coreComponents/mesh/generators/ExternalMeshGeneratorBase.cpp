@@ -12,13 +12,9 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file ExternalMeshGeneratorBase.cpp
- */
-
 #include "ExternalMeshGeneratorBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -44,35 +40,63 @@ ExternalMeshGeneratorBase::ExternalMeshGeneratorBase( string const & name,
     setApplyDefaultValue( { 1.0, 1.0, 1.0 } ).
     setDescription( "Scale the coordinates of the vertices by given scale factors (after translation)" );
 
-  registerWrapper( viewKeyStruct::fieldsToImportString(), &m_fieldsToImport ).
+  registerWrapper( viewKeyStruct::volumicFieldsToImportString(), &m_volumicFieldsToImport ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Fields to be imported from the external mesh file" );
+    setDescription( "Volumic fields to be imported from the external mesh file" );
 
-  registerWrapper( viewKeyStruct::fieldNamesInGEOSXString(), &m_fieldNamesInGEOSX ).
+  registerWrapper( viewKeyStruct::volumicFieldsInGEOSXString(), &m_volumicFieldsInGEOSX ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Names of fields in GEOSX to import into" );
+    setDescription( "Names of the volumic fields in GEOSX to import into" );
+
+  registerWrapper( viewKeyStruct::surfacicFieldsToImportString(), &m_surfacicFieldsToImport ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Surfacic fields to be imported from the external mesh file" );
+
+  registerWrapper( viewKeyStruct::surfacicFieldsInGEOSXString(), &m_surfacicFieldsInGEOSX ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Names of the surfacic fields in GEOSX to import into" );
 }
 
 void ExternalMeshGeneratorBase::postProcessInput()
 {
-  GEOSX_THROW_IF_NE_MSG( m_fieldsToImport.size(), m_fieldNamesInGEOSX.size(),
-                         GEOSX_FMT( "Mesh '{}': attributes '{}' and '{}' must contain the same number of values",
-                                    getName(),
-                                    viewKeyStruct::fieldsToImportString(),
-                                    viewKeyStruct::fieldNamesInGEOSXString() ),
-                         InputError );
+  auto const checkSizes = [meshName = getName()]( arrayView1d< string const > from,
+                                                  arrayView1d< string const > to,
+                                                  string const & fromKey,
+                                                  string const & toKey )
+  {
+    GEOS_THROW_IF_NE_MSG( from.size(), to.size(),
+                          "Mesh '" << meshName << "': attributes '" << fromKey << "' and '" << toKey << "' must contain the same number of values.",
+                          InputError );
+  };
+  checkSizes( m_volumicFieldsToImport, m_volumicFieldsInGEOSX, viewKeyStruct::volumicFieldsToImportString(), viewKeyStruct::volumicFieldsInGEOSXString() );
+  checkSizes( m_surfacicFieldsToImport, m_surfacicFieldsInGEOSX, viewKeyStruct::surfacicFieldsToImportString(), viewKeyStruct::surfacicFieldsInGEOSXString() );
+
+  auto const checkDuplicates = [meshName = getName()]( arrayView1d< string const > v )
+  {
+    std::set< string > const tmp{ v.begin(), v.end() };
+    bool const hasDuplicates = tmp.size() != LvArray::integerConversion< std::size_t >( v.size() );
+
+    GEOS_THROW_IF( hasDuplicates,
+                   "Mesh '" << meshName << "': '" << stringutilities::join( v, ", " ) << "' already present in list of fields to import.",
+                   InputError );
+  };
+  checkDuplicates( m_volumicFieldsInGEOSX );
+  checkDuplicates( m_surfacicFieldsInGEOSX );
 
   // Building the fields mapping from the two separated input/output vectors.
-  for( int i = 0; i < m_fieldsToImport.size(); i++ )
+  auto const buildMapping = [&]( arrayView1d< string const > from,
+                                 arrayView1d< string const > to ) -> std::map< string, string >
   {
-    GEOSX_THROW_IF( m_fieldsMapping.count( m_fieldsToImport[ i ] ) > 0,
-                    GEOSX_FMT( "Mesh '{}': '{}' allready present in list of fields to import",
-                               getName(),
-                               m_fieldsToImport[ i ] ),
-                    InputError );
+    std::map< string, string > mapping;
+    for( int i = 0; i < from.size(); i++ )
+    {
+      mapping[from[i]] = to[i];
+    }
+    return mapping;
+  };
 
-    MeshGeneratorBase::m_fieldsMapping[ m_fieldsToImport[ i ] ] = m_fieldNamesInGEOSX[ i ];
-  }
+  MeshGeneratorBase::m_volumicFields = buildMapping( m_volumicFieldsToImport.toViewConst(), m_volumicFieldsInGEOSX.toViewConst() );
+  MeshGeneratorBase::m_surfacicFields = buildMapping( m_surfacicFieldsToImport.toViewConst(), m_surfacicFieldsInGEOSX.toViewConst() );
 }
 
-} // namespace geosx
+} // namespace geos

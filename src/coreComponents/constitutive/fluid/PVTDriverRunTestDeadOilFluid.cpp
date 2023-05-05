@@ -12,7 +12,7 @@
 #include "BlackOilFluid.hpp"
 
 
-namespace geosx
+namespace geos
 {
 template void PVTDriver::runTest< constitutive::DeadOilFluid >( constitutive::DeadOilFluid &, arrayView2d< real64 > const & );
 template void PVTDriver::runTest< constitutive::BlackOilFluid >( constitutive::BlackOilFluid &, arrayView2d< real64 > const & );

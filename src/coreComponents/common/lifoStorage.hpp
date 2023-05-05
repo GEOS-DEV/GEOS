@@ -26,11 +26,11 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/TimingMacros.hpp"
 
-#define LIFO_MARK_FUNCTION if( std::getenv( "LIFO_TRACE_ON" ) != NULL ) { GEOSX_MARK_FUNCTION; }
-#define LIFO_MARK_SCOPE( a )  if( std::getenv( "LIFO_TRACE_ON" ) != NULL ) { GEOSX_MARK_SCOPE( a ); }
+#define LIFO_MARK_FUNCTION if( std::getenv( "LIFO_TRACE_ON" ) != NULL ) { GEOS_MARK_FUNCTION; }
+#define LIFO_MARK_SCOPE( a )  if( std::getenv( "LIFO_TRACE_ON" ) != NULL ) { GEOS_MARK_SCOPE( a ); }
 
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -373,7 +373,7 @@ public:
 #endif
   {
 #ifndef GEOSX_USE_CUDA
-    GEOSX_UNUSED_VAR( numberOfBuffersToStoreOnDevice );
+    GEOS_UNUSED_VAR( numberOfBuffersToStoreOnDevice );
 #endif
     m_worker[0] = std::thread( &lifoStorage< T >::wait_and_consume_tasks, this, 0 );
     m_worker[1] = std::thread( &lifoStorage< T >::wait_and_consume_tasks, this, 1 );
@@ -411,8 +411,8 @@ public:
     //To be sure 2 pushes are not mixed
     pushWait();
     int id = m_bufferCount++;
-    GEOSX_ERROR_IF( m_hostDeque.capacity() == 0,
-                    "Cannot save on a Lifo without host storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
+    GEOS_ERROR_IF( m_hostDeque.capacity() == 0,
+                   "Cannot save on a Lifo without host storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
 
 #ifdef GEOSX_USE_CUDA
     if( m_deviceDeque.capacity() > 0 )
@@ -421,7 +421,7 @@ public:
 
       if( m_maxNumberOfBuffers - id > (int)m_deviceDeque.capacity() )
       {
-        LIFO_MARK_SCOPE( geosx::lifoStorage< T >::pushAddTasks );
+        LIFO_MARK_SCOPE( geos::lifoStorage< T >::pushAddTasks );
         // This buffer will go to host memory, and maybe on disk
         std::packaged_task< void() > task( std::bind( &lifoStorage< T >::deviceToHost, this, id ) );
         {
@@ -439,7 +439,7 @@ public:
 
         if( m_maxNumberOfBuffers - pushId > (int)m_hostDeque.capacity() )
         {
-          LIFO_MARK_SCOPE( geosx::lifoStorage< T >::pushAddTasks );
+          LIFO_MARK_SCOPE( geos::lifoStorage< T >::pushAddTasks );
           // This buffer will go to host memory, and maybe on disk
           std::packaged_task< void() > t2( std::bind( &lifoStorage< T >::hostToDisk, this, pushId ) );
           {
@@ -513,7 +513,7 @@ public:
 
       if( id >= (int)m_deviceDeque.capacity() )
       {
-        LIFO_MARK_SCOPE( geosx::lifoStorage< T >::popAddTasks );
+        LIFO_MARK_SCOPE( geos::lifoStorage< T >::popAddTasks );
         // Trigger pull one buffer from host, and maybe from disk
         std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDevice, this, id - m_deviceDeque.capacity() ) );
         {
@@ -531,7 +531,7 @@ public:
 
         if( popId >= (int)m_hostDeque.capacity() )
         {
-          LIFO_MARK_SCOPE( geosx::lifoStorage< T >::popAddTasks );
+          LIFO_MARK_SCOPE( geos::lifoStorage< T >::popAddTasks );
           // Trigger pull one buffer from host, and maybe from disk
           std::packaged_task< void() > task2( std::bind( &lifoStorage< T >::diskToHost, this, popId  - m_hostDeque.capacity() ) );
           {
@@ -693,18 +693,18 @@ private:
   void writeOnDisk( const T * d, int id )
   {
     LIFO_MARK_FUNCTION;
-    std::string fileName = GEOSX_FMT( "{}_{:08}.dat", m_name, id );
+    std::string fileName = GEOS_FMT( "{}_{:08}.dat", m_name, id );
     int lastDirSeparator = fileName.find_last_of( "/\\" );
     std::string dirName = fileName.substr( 0, lastDirSeparator );
     if( string::npos != (size_t)lastDirSeparator && !dirExists( dirName ))
       makeDirsForPath( dirName );
 
     std::ofstream wf( fileName, std::ios::out | std::ios::binary );
-    GEOSX_ERROR_IF( !wf || wf.fail() || !wf.is_open(),
-                    "Could not open file "<< fileName << " for writting" );
+    GEOS_ERROR_IF( !wf || wf.fail() || !wf.is_open(),
+                   "Could not open file "<< fileName << " for writting" );
     wf.write( (const char *)d, m_bufferSize );
-    GEOSX_ERROR_IF( wf.bad() || wf.fail(),
-                    "An error occured while writting "<< fileName );
+    GEOS_ERROR_IF( wf.bad() || wf.fail(),
+                   "An error occured while writting "<< fileName );
     wf.close();
   }
 
@@ -717,10 +717,10 @@ private:
   void readOnDisk( T * d, int id )
   {
     LIFO_MARK_FUNCTION;
-    std::string fileName = GEOSX_FMT( "{}_{:08}.dat", m_name, id );
+    std::string fileName = GEOS_FMT( "{}_{:08}.dat", m_name, id );
     std::ifstream wf( fileName, std::ios::in | std::ios::binary );
-    GEOSX_ERROR_IF( !wf,
-                    "Could not open file "<< fileName << " for reading" );
+    GEOS_ERROR_IF( !wf,
+                   "Could not open file "<< fileName << " for reading" );
     wf.read( (char *)d, m_bufferSize );
     wf.close();
     remove( fileName.c_str() );

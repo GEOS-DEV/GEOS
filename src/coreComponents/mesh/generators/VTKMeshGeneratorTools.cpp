@@ -25,7 +25,7 @@
 // NOTE: do NOT include anything from GEOSX here.
 // See full explanation in VTKMeshGeneratorTools.hpp.
 
-namespace geosx
+namespace geos
 {
 namespace vtk
 {
@@ -173,4 +173,4 @@ exchangeBoundingBoxes( vtkDataSet & dataSet, MPI_Comm mpiComm )
 }
 
 } // namespace vtk
-} // namespace geosx
+} // namespace geos

@@ -16,8 +16,8 @@
  * @file EmbeddedSurfaceSubRegion.hpp
  */
 
-#ifndef GEOSX_MESH_EMBEDDEDSURFACESUBREGION_HPP_
-#define GEOSX_MESH_EMBEDDEDSURFACESUBREGION_HPP_
+#ifndef GEOS_MESH_EMBEDDEDSURFACESUBREGION_HPP_
+#define GEOS_MESH_EMBEDDEDSURFACESUBREGION_HPP_
 
 #include "SurfaceElementSubRegion.hpp"
 #include "InterObjectRelation.hpp"
@@ -27,7 +27,7 @@
 #include "CellElementSubRegion.hpp"
 #include "simpleGeometricObjects/BoundedPlane.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -316,6 +316,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_EMBEDDEDSURFACESUBREGION_HPP_ */
+#endif /* GEOS_MESH_EMBEDDEDSURFACESUBREGION_HPP_ */

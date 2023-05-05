@@ -16,7 +16,7 @@
 
 #include "mesh/generators/CellBlockUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -35,6 +35,7 @@ void CellBlock::setElementType( ElementType elementType )
       m_numNodesPerElement = 8;
       m_numEdgesPerElement = 12;
       m_numFacesPerElement = 6;
+      m_maxNodesPerFace = 4;
       break;
     }
     case ElementType::Tetrahedron:
@@ -42,6 +43,7 @@ void CellBlock::setElementType( ElementType elementType )
       m_numNodesPerElement = 4;
       m_numEdgesPerElement = 6;
       m_numFacesPerElement = 4;
+      m_maxNodesPerFace = 3;
       break;
     }
     case ElementType::Wedge:
@@ -49,6 +51,7 @@ void CellBlock::setElementType( ElementType elementType )
       m_numNodesPerElement = 6;
       m_numEdgesPerElement = 9;
       m_numFacesPerElement = 5;
+      m_maxNodesPerFace = 4;
       break;
     }
     case ElementType::Pyramid:
@@ -56,6 +59,7 @@ void CellBlock::setElementType( ElementType elementType )
       m_numNodesPerElement = 5;
       m_numEdgesPerElement = 8;
       m_numFacesPerElement = 5;
+      m_maxNodesPerFace = 4;
       break;
     }
     case ElementType::Prism5:
@@ -63,6 +67,7 @@ void CellBlock::setElementType( ElementType elementType )
       m_numNodesPerElement = 10;
       m_numEdgesPerElement = 15;
       m_numFacesPerElement = 7;
+      m_maxNodesPerFace = 5;
       break;
     }
     case ElementType::Prism6:
@@ -70,6 +75,7 @@ void CellBlock::setElementType( ElementType elementType )
       m_numNodesPerElement = 12;
       m_numEdgesPerElement = 18;
       m_numFacesPerElement = 8;
+      m_maxNodesPerFace = 6;
       break;
     }
     case ElementType::Prism7:
@@ -77,6 +83,7 @@ void CellBlock::setElementType( ElementType elementType )
       m_numNodesPerElement = 14;
       m_numEdgesPerElement = 21;
       m_numFacesPerElement = 9;
+      m_maxNodesPerFace = 7;
       break;
     }
     case ElementType::Prism8:
@@ -84,6 +91,7 @@ void CellBlock::setElementType( ElementType elementType )
       m_numNodesPerElement = 16;
       m_numEdgesPerElement = 24;
       m_numFacesPerElement = 10;
+      m_maxNodesPerFace = 8;
       break;
     }
     case ElementType::Prism9:
@@ -91,6 +99,7 @@ void CellBlock::setElementType( ElementType elementType )
       m_numNodesPerElement = 18;
       m_numEdgesPerElement = 27;
       m_numFacesPerElement = 11;
+      m_maxNodesPerFace = 9;
       break;
     }
     case ElementType::Prism10:
@@ -98,6 +107,7 @@ void CellBlock::setElementType( ElementType elementType )
       m_numNodesPerElement = 20;
       m_numEdgesPerElement = 30;
       m_numFacesPerElement = 12;
+      m_maxNodesPerFace = 10;
       break;
     }
     case ElementType::Prism11:
@@ -105,11 +115,12 @@ void CellBlock::setElementType( ElementType elementType )
       m_numNodesPerElement = 22;
       m_numEdgesPerElement = 33;
       m_numFacesPerElement = 13;
+      m_maxNodesPerFace = 11;
       break;
     }
     default:
     {
-      GEOSX_ERROR( "Invalid element type " << m_elementType << " for CellBlock " << getName() );
+      GEOS_ERROR( "Invalid element type " << m_elementType << " for CellBlock " << getName() );
     }
   }
 
@@ -136,11 +147,11 @@ localIndex CellBlock::getFaceNodes( localIndex const cellIndex,
                                     localIndex const faceNum,
                                     Span< localIndex > const nodesInFaces ) const
 {
-  return geosx::getFaceNodes( m_elementType,
-                              cellIndex,
-                              faceNum,
-                              m_elementsToNodes,
-                              nodesInFaces );
+  return geos::getFaceNodes( m_elementType,
+                             cellIndex,
+                             faceNum,
+                             m_elementsToNodes,
+                             nodesInFaces );
 }
 
 }

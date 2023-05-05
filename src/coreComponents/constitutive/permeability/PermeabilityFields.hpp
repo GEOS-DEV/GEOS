@@ -16,12 +16,12 @@
  * @file PermeabilityFields.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_PERMEABILITYFIELDS_HPP_
-#define GEOSX_CONSTITUTIVE_PERMEABILITYFIELDS_HPP_
+#ifndef GEOS_CONSTITUTIVE_PERMEABILITYFIELDS_HPP_
+#define GEOS_CONSTITUTIVE_PERMEABILITYFIELDS_HPP_
 
 #include "mesh/MeshFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace fields
@@ -84,4 +84,4 @@ DECLARE_FIELD( permeabilityMultiplier,
 
 }
 
-#endif // GEOSX_CONSTITUTIVE_PERMEABILITYFIELDS_HPP_
+#endif // GEOS_CONSTITUTIVE_PERMEABILITYFIELDS_HPP_

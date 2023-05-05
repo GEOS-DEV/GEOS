@@ -20,11 +20,11 @@
 #include "mainInterface/initialization.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
-using namespace geosx;
-using namespace geosx::testing;
-using namespace geosx::constitutive;
-using namespace geosx::constitutive::relperm;
-using namespace geosx::dataRepository;
+using namespace geos;
+using namespace geos::testing;
+using namespace geos::constitutive;
+using namespace geos::constitutive::relperm;
+using namespace geos::dataRepository;
 
 // The point of this unit test is to carefully trace drainage-imbibition cycles and
 // verify that hysteresis works well for relative permeability and ultimately, capillary pressure.
@@ -358,11 +358,11 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::GeosxState state( geosx::basicSetup( argc, argv ) );
+  geos::GeosxState state( geos::basicSetup( argc, argv ) );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::basicCleanup();
+  geos::basicCleanup();
 
   return result;
 }

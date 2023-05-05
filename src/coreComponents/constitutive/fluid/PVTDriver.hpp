@@ -16,12 +16,12 @@
  * @file PVTDriver.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTDRIVER_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_PVTDRIVER_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_PVTDRIVER_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_PVTDRIVER_HPP_
 
 #include "events/tasks/TaskBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -41,12 +41,12 @@ public:
 
   void postProcessInput() override;
 
-  virtual bool execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                        real64 const GEOSX_UNUSED_PARAM( dt ),
-                        integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                        integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                        real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                        DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override;
+  virtual bool execute( real64 const GEOS_UNUSED_PARAM( time_n ),
+                        real64 const GEOS_UNUSED_PARAM( dt ),
+                        integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                        integer const GEOS_UNUSED_PARAM( eventCounter ),
+                        real64 const GEOS_UNUSED_PARAM( eventProgress ),
+                        DomainPartition & GEOS_UNUSED_PARAM( domain ) ) override;
 
   /**
    * @brief Run test using loading protocol in table
@@ -102,6 +102,6 @@ private:
   static constexpr real64 m_baselineTol = 1e-3; ///< Comparison tolerance for baseline results
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_FLUID_PVTDRIVER_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_FLUID_PVTDRIVER_HPP_ */

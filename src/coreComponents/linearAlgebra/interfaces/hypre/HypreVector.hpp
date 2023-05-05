@@ -16,8 +16,8 @@
  * @file HypreVector.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREVECTOR_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREVECTOR_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_HYPREVECTOR_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_HYPREVECTOR_HPP_
 
 #include "linearAlgebra/interfaces/VectorBase.hpp"
 
@@ -37,7 +37,7 @@ struct hypre_ParVector_struct;
 
 ///@}
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -211,6 +211,6 @@ private:
 
 };
 
-}// end namespace geosx
+}// end namespace geos
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREVECTOR_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_INTERFACES_HYPREVECTOR_HPP_*/

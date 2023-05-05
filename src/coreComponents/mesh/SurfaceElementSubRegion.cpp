@@ -21,7 +21,7 @@
 #include "SurfaceElementSubRegion.hpp"
 #include "ElementRegionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -87,4 +87,4 @@ SurfaceElementSubRegion::~SurfaceElementSubRegion()
 {}
 
 
-} /* namespace geosx */
+} /* namespace geos */

@@ -16,8 +16,8 @@
  * @file DofManager.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_
-#define GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_
+#ifndef GEOS_LINEARALGEBRA_DOFMANAGER_HPP_
+#define GEOS_LINEARALGEBRA_DOFMANAGER_HPP_
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/utilities/ComponentMask.hpp"
@@ -25,7 +25,7 @@
 
 #include <numeric>
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;
@@ -175,6 +175,22 @@ public:
                  FieldLocation location,
                  integer components,
                  map< std::pair< string, string >, array1d< string > > const & regions );
+
+  /**
+   * @brief Disable the global coupling for a given equation
+   * @param [in] fieldName the name of the field
+   * @param [in] c the index of the equation
+   */
+  void disableGlobalCouplingForEquation( string const & fieldName,
+                                         integer const c );
+
+  /**
+   * @brief Disable the global coupling for a set of equations
+   * @param [in] fieldName the name of the field
+   * @param [in] components the indices of the equations
+   */
+  void disableGlobalCouplingForEquations( string const & fieldName,
+                                          arrayView1d< integer const > const components );
 
   /**
    * @brief Add coupling between two fields.
@@ -469,6 +485,8 @@ private:
     std::vector< FieldSupport > support;///< list of mesh body/level/region supports
     FieldLocation location;             ///< support location
     integer numComponents = 1;     ///< number of vector components
+    CompMask globallyCoupledComponents; ///< mask to distinguish globally coupled components from locally coupled components (the latter
+                                        ///< don't interact with neighbors)
     localIndex numLocalDof = 0;    ///< number of local rows
     globalIndex numGlobalDof = 0;  ///< number of global rows
     globalIndex blockOffset = 0;   ///< offset of this field's block in a block-wise ordered system
@@ -591,6 +609,6 @@ private:
   bool m_reordered = false;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /*GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_DOFMANAGER_HPP_*/

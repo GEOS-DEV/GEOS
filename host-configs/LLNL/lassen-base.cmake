@@ -42,6 +42,7 @@ set(ESSL_LIBRARIES /usr/tcetmp/packages/essl/essl-6.2.1/lib64/libesslsmpcuda.so
 # TPL
 set(ENABLE_PAPI OFF CACHE BOOL "")
 set(SILO_BUILD_TYPE powerpc64-unknown-linux-gnu CACHE STRING "")
+set(ENABLE_FESAPI OFF CACHE BOOL "" FORCE)
 
 # GEOSX specific options
 set(ENABLE_PVTPackage ON CACHE BOOL "")
@@ -64,5 +65,17 @@ set(ENABLE_DOXYGEN OFF CACHE BOOL "" FORCE)
 
 # Other
 set(ENABLE_MATHPRESSO OFF CACHE BOOL "")
+
+# YAPF python formatting
+set(YAPF_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/lassen-gcc-python/python/bin/yapf CACHE PATH "" FORCE)
+
+# PYGEOSX
+set(ENABLE_PYGEOSX ON CACHE BOOL "")
+set(PYTHON_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/lassen-gcc-python/python/bin/python CACHE PATH "")
+set(Python3_ROOT_DIR /usr/gapps/GEOSX/thirdPartyLibs/python/lassen-gcc-python/python CACHE PATH "")
+set(Python3_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/lassen-gcc-python/python/bin/python3 CACHE PATH "")
+
+# ATS
+set(ATS_ARGUMENTS "--ats jsrun_omp --ats jsrun_bind=packed"  CACHE STRING "")
 
 include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)

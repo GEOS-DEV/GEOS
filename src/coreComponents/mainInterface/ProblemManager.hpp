@@ -17,12 +17,12 @@
  */
 
 
-#ifndef GEOSX_MAININTERFACE_PROBLEMMANAGER_HPP_
-#define GEOSX_MAININTERFACE_PROBLEMMANAGER_HPP_
+#ifndef GEOS_MAININTERFACE_PROBLEMMANAGER_HPP_
+#define GEOS_MAININTERFACE_PROBLEMMANAGER_HPP_
 
 #include "events/EventManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class PhysicsSolverManager;
@@ -273,7 +273,7 @@ public:
    */
   FunctionManager & getFunctionManager()
   {
-    GEOSX_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
+    GEOS_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
     return *m_functionManager;
   }
 
@@ -283,7 +283,7 @@ public:
    */
   FunctionManager const & getFunctionManager() const
   {
-    GEOSX_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
+    GEOS_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
     return *m_functionManager;
   }
 
@@ -293,7 +293,7 @@ public:
    */
   FieldSpecificationManager & getFieldSpecificationManager()
   {
-    GEOSX_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
+    GEOS_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
     return *m_fieldSpecificationManager;
   }
 
@@ -303,7 +303,7 @@ public:
    */
   FieldSpecificationManager const & getFieldSpecificationManager() const
   {
-    GEOSX_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
+    GEOS_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
     return *m_fieldSpecificationManager;
   }
 
@@ -373,6 +373,6 @@ private:
   FieldSpecificationManager * m_fieldSpecificationManager;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MAININTERFACE_PROBLEMMANAGER_HPP_ */
+#endif /* GEOS_MAININTERFACE_PROBLEMMANAGER_HPP_ */

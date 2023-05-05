@@ -28,7 +28,7 @@
 
 #include <fstream>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -117,16 +117,16 @@ void PVTDriver::postProcessInput()
 }
 
 
-bool PVTDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                         real64 const GEOSX_UNUSED_PARAM( dt ),
-                         integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                         integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                         DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+bool PVTDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
+                         real64 const GEOS_UNUSED_PARAM( dt ),
+                         integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                         integer const GEOS_UNUSED_PARAM( eventCounter ),
+                         real64 const GEOS_UNUSED_PARAM( eventProgress ),
+                         DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   // this code only makes sense in serial
 
-  GEOSX_THROW_IF( MpiWrapper::commRank() > 0, "PVTDriver should only be run in serial", std::runtime_error );
+  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "PVTDriver should only be run in serial", std::runtime_error );
 
   // get the fluid out of the constitutive manager.
   // for the moment it is of type MultiFluidBase.
@@ -138,16 +138,16 @@ bool PVTDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
 
   if( getLogLevel() > 0 )
   {
-    GEOSX_LOG_RANK_0( "Launching PVT Driver" );
-    GEOSX_LOG_RANK_0( "  Fluid .................. " << m_fluidName );
-    GEOSX_LOG_RANK_0( "  Type ................... " << baseFluid.getCatalogName() );
-    GEOSX_LOG_RANK_0( "  No. of Phases .......... " << m_numPhases );
-    GEOSX_LOG_RANK_0( "  No. of Components ...... " << m_numComponents );
-    GEOSX_LOG_RANK_0( "  Pressure Control ....... " << m_pressureFunctionName );
-    GEOSX_LOG_RANK_0( "  Temperature Control .... " << m_temperatureFunctionName );
-    GEOSX_LOG_RANK_0( "  Steps .................. " << m_numSteps );
-    GEOSX_LOG_RANK_0( "  Output ................. " << m_outputFile );
-    GEOSX_LOG_RANK_0( "  Baseline ............... " << m_baselineFile );
+    GEOS_LOG_RANK_0( "Launching PVT Driver" );
+    GEOS_LOG_RANK_0( "  Fluid .................. " << m_fluidName );
+    GEOS_LOG_RANK_0( "  Type ................... " << baseFluid.getCatalogName() );
+    GEOS_LOG_RANK_0( "  No. of Phases .......... " << m_numPhases );
+    GEOS_LOG_RANK_0( "  No. of Components ...... " << m_numComponents );
+    GEOS_LOG_RANK_0( "  Pressure Control ....... " << m_pressureFunctionName );
+    GEOS_LOG_RANK_0( "  Temperature Control .... " << m_temperatureFunctionName );
+    GEOS_LOG_RANK_0( "  Steps .................. " << m_numSteps );
+    GEOS_LOG_RANK_0( "  Output ................. " << m_outputFile );
+    GEOS_LOG_RANK_0( "  Baseline ............... " << m_baselineFile );
   }
 
   // create a dummy discretization with one quadrature point for
@@ -220,7 +220,7 @@ void PVTDriver::compareWithBaseline()
   // open baseline file
 
   std::ifstream file( m_baselineFile.c_str() );
-  GEOSX_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
+  GEOS_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
 
   // discard file header
 
@@ -240,26 +240,26 @@ void PVTDriver::compareWithBaseline()
   {
     for( integer col=0; col < m_table.size( 1 ); ++col )
     {
-      GEOSX_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
+      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
       file >> value;
 
       real64 const error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
-      GEOSX_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
-                                                                                          << " (row " << row+m_numColumns << " with header)"
-                                                                                          << " and column " << col+1, std::runtime_error );
+      GEOS_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
+                                                                                         << " (row " << row+m_numColumns << " with header)"
+                                                                                         << " and column " << col+1, std::runtime_error );
     }
   }
 
   // check we actually reached the end of the baseline file
 
   file >> value;
-  GEOSX_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
+  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
 
   // success
 
   if( getLogLevel() > 0 )
   {
-    GEOSX_LOG_RANK_0( "  Comparison ............. Internal results consistent with baseline." );
+    GEOS_LOG_RANK_0( "  Comparison ............. Internal results consistent with baseline." );
   }
 
   file.close();
@@ -270,4 +270,4 @@ REGISTER_CATALOG_ENTRY( TaskBase,
                         PVTDriver,
                         string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

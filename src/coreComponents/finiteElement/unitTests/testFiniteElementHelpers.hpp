@@ -1,10 +1,10 @@
-#ifndef GEOSX_FINITEELEMENT_UNITTESTS_TESTFINITEELEMENTHELPERS_HPP_
-#define GEOSX_FINITEELEMENT_UNITTESTS_TESTFINITEELEMENTHELPERS_HPP_
+#ifndef GEOS_FINITEELEMENT_UNITTESTS_TESTFINITEELEMENTHELPERS_HPP_
+#define GEOS_FINITEELEMENT_UNITTESTS_TESTFINITEELEMENTHELPERS_HPP_
 
 #include "common/DataTypes.hpp"
 #include <cstdlib>
 
-namespace geosx
+namespace geos
 {
 inline real64 rando( real64 const min,
                      real64 const max )

@@ -23,7 +23,7 @@
 #include <gtest/gtest.h>
 #include <conduit.hpp>
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -471,18 +471,18 @@ TEST( testRestartExtended, testRestartExtended )
 }
 
 } /* end namespace dataRepository */
-} /* end namespace geosx */
+} /* end namespace geos */
 
 
 int main( int argc, char * argv[] )
 {
   testing::InitGoogleTest( &argc, argv );
 
-  geosx::basicSetup( argc, argv );
+  geos::basicSetup( argc, argv );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::basicCleanup();
+  geos::basicCleanup();
 
   return result;
 }

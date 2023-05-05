@@ -16,12 +16,12 @@
  * @file FlowSolverBase.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
+#define GEOS_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -67,18 +67,12 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    // input data
-    static constexpr char const * referencePorosityString() { return "referencePorosity"; }
-    static constexpr char const * permeabilityString() { return "permeability"; }
-
     // misc inputs
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
     static constexpr char const * solidNamesString() { return "solidNames"; }
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
-    static constexpr char const * inputFluxEstimateString() { return "inputFluxEstimate"; }
-
   };
 
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
@@ -128,6 +122,12 @@ protected:
                                           real64 const & dt,
                                           DomainPartition & domain );
 
+  /**
+   * @brief Utility function to save the converged state
+   * @param[in] subRegion the element subRegion
+   */
+  virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const;
+
   virtual void precomputeData( MeshLevel & mesh,
                                arrayView1d< string const > const & regionNames );
 
@@ -143,9 +143,6 @@ protected:
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
 
-  real64 m_fluxEstimate;
-
-
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
@@ -155,4 +152,4 @@ private:
 
 }
 
-#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
+#endif //GEOS_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_

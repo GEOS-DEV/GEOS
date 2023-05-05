@@ -27,10 +27,10 @@
 // TPL includes
 #include <gtest/gtest.h>
 
-using namespace geosx;
-using namespace geosx::mimeticInnerProduct;
-using namespace geosx::computationalGeometry;
-using namespace geosx::testing;
+using namespace geos;
+using namespace geos::mimeticInnerProduct;
+using namespace geos::computationalGeometry;
+using namespace geos::testing;
 
 struct InnerProductType
 {
@@ -64,8 +64,8 @@ void computeVolumeAndCenter( array2d< real64, nodes::REFERENCE_POSITION_PERM > c
 {
   localIndex const numNodes = toNodes.size();
 
-  GEOSX_ERROR_IF( numNodes != 8 && numNodes != 4,
-                  "This number of nodes is not supported in the test yet" );
+  GEOS_ERROR_IF( numNodes != 8 && numNodes != 4,
+                 "This number of nodes is not supported in the test yet" );
 
   LvArray::tensorOps::fill< 3 >( elemCenter, 0.0 );
 
@@ -912,11 +912,11 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::basicSetup( argc, argv );
+  geos::basicSetup( argc, argv );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::basicCleanup();
+  geos::basicCleanup();
 
   return result;
 }

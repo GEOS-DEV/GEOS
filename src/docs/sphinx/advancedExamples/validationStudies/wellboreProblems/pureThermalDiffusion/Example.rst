@@ -30,7 +30,7 @@ where :math:`r` is the radial coordinate, :math:`T_{in}` is the temperature appl
 **Input file**
 
 This benchmark example uses no external input file and everything required is
-contained within two GEOSX xml files that are located at:
+contained within two GEOS xml files that are located at:
 
 .. code-block:: console
 
@@ -86,7 +86,7 @@ The initial temperature, the imposed temperature at the curved wellbore surface 
   :start-after: <!-- SPHINX_FieldSpecificationImposedTemperature -->
   :end-before: <!-- SPHINX_FieldSpecificationImposedTemperatureEnd -->
 
-Although a pure thermal diffusion problem is considered, it is also required to define specifications for fluid pressure, as thermal transfer is always coupled with fluid flow in GEOSX. In this example, fluid pressure is set to zero everywhere to mimic a pure thermal diffusion problem as
+Although a pure thermal diffusion problem is considered, it is also required to define specifications for fluid pressure, as thermal transfer is always coupled with fluid flow in GEOS. In this example, fluid pressure is set to zero everywhere to mimic a pure thermal diffusion problem as
 
 .. literalinclude:: ../../../../../../../inputFiles/singlePhaseFlow/thermalCompressible_2d_base.xml
   :language: xml
@@ -97,7 +97,7 @@ Although a pure thermal diffusion problem is considered, it is also required to 
 Results and benchmark
 ---------------------------------
 
-A good agreement between the GEOSX results and analytical results is shown in the figure below:
+A good agreement between the GEOS results and analytical results is shown in the figure below:
 
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/pureThermalDiffusion/pureThermalDiffusionAroundWellbore.py
@@ -117,4 +117,4 @@ To go further
 **Feedback on this example**
 
 This concludes the example of pure thermal diffusion problem around a wellbore.
-For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
+For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOS-DEV/GEOS/issues>`_.

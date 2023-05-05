@@ -16,12 +16,12 @@
  * @file DirichletBoundaryCondition.hpp
  */
 
-#ifndef GEOSX_FIELDSPECIFICATION_DIRICHLETBOUNDARYCONDITION_HPP_
-#define GEOSX_FIELDSPECIFICATION_DIRICHLETBOUNDARYCONDITION_HPP_
+#ifndef GEOS_FIELDSPECIFICATION_DIRICHLETBOUNDARYCONDITION_HPP_
+#define GEOS_FIELDSPECIFICATION_DIRICHLETBOUNDARYCONDITION_HPP_
 
 #include "FieldSpecificationBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -31,7 +31,7 @@ namespace geosx
 class DirichletBoundaryCondition : public FieldSpecificationBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   DirichletBoundaryCondition( string const & name, dataRepository::Group * const parent );
 
   /**
@@ -57,6 +57,6 @@ public:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FIELDSPECIFICATION_DIRICHLETBOUNDARYCONDITION_HPP_ */
+#endif /* GEOS_FIELDSPECIFICATION_DIRICHLETBOUNDARYCONDITION_HPP_ */

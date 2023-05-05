@@ -16,13 +16,13 @@
  * @file singlePhaseThermalConductivitySelector.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYSELECTOR_HPP
-#define GEOSX_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYSELECTOR_HPP
+#ifndef GEOS_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYSELECTOR_HPP
+#define GEOS_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYSELECTOR_HPP
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/thermalConductivity/SinglePhaseConstantThermalConductivity.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -44,6 +44,6 @@ void constitutiveUpdatePassThru( SinglePhaseThermalConductivityBase & thermalCon
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYSELECTOR_HPP
+#endif //GEOS_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYSELECTOR_HPP

@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_RAJAINTERFACE_RAJAINTERFACE_HPP
-#define GEOSX_RAJAINTERFACE_RAJAINTERFACE_HPP
+#ifndef GEOS_RAJAINTERFACE_RAJAINTERFACE_HPP
+#define GEOS_RAJAINTERFACE_RAJAINTERFACE_HPP
 
 // Source includes
 #include "common/DataTypes.hpp"
@@ -24,9 +24,9 @@
 #include <chrono>
 #include <thread>
 
-#define GEOSX_ASYNC_WAIT( UPPER, NANOSLEEP, TEST ) while( !TEST ) { }
+#define GEOS_ASYNC_WAIT( UPPER, NANOSLEEP, TEST ) while( !TEST ) { }
 
-namespace geosx
+namespace geos
 {
 
 using serialPolicy = RAJA::loop_exec;
@@ -101,7 +101,7 @@ using parallelDeviceAtomic = parallelHostAtomic;
 void RAJA_INLINE parallelDeviceSync() { parallelHostSync( ); }
 
 template< typename POLICY, typename RESOURCE, typename LAMBDA >
-RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && GEOSX_UNUSED_PARAM( stream ), const localIndex end, LAMBDA && body )
+RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && GEOS_UNUSED_PARAM( stream ), const localIndex end, LAMBDA && body )
 {
   RAJA::forall< POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, end ), std::forward< LAMBDA >( body ) );
   return parallelDeviceEvent();
@@ -168,7 +168,7 @@ RAJA_INLINE void waitAllDeviceEvents( parallelDeviceEvents & events )
 {
   // poll device events for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
   // 10 nsecs ~= 30 clock cycles @ 3Ghz
-  GEOSX_ASYNC_WAIT( 6000000000, 10, testAllDeviceEvents( events ) );
+  GEOS_ASYNC_WAIT( 6000000000, 10, testAllDeviceEvents( events ) );
 }
 
 template< typename POLICY, typename INDEX, typename LAMBDA >
@@ -183,6 +183,6 @@ RAJA_INLINE void forRange( INDEX const begin, INDEX const end, LAMBDA && body )
   RAJA::forall< POLICY >( RAJA::TypedRangeSegment< INDEX >( begin, end ), std::forward< LAMBDA >( body ) );
 }
 
-} // namespace geosx
+} // namespace geos
 
-#endif // GEOSX_RAJAINTERFACE_RAJAINTERFACE_HPP
+#endif // GEOS_RAJAINTERFACE_RAJAINTERFACE_HPP

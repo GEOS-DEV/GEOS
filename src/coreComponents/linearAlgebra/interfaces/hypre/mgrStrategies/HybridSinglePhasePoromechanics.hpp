@@ -16,12 +16,12 @@
  * @file HybridSinglePhasePoromechanics.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRHYBRIDSINGLEPHASEPOROMECHANICS_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRHYBRIDSINGLEPHASEPOROMECHANICS_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRHYBRIDSINGLEPHASEPOROMECHANICS_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRHYBRIDSINGLEPHASEPOROMECHANICS_HPP_
 
 #include "linearAlgebra/interfaces/hypre/HypreMGR.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace hypre
@@ -87,23 +87,23 @@ public:
               HyprePrecWrapper & precond,
               HypreMGRData & mgrData )
   {
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCpointsByPointMarkerArray( precond.ptr,
-                                                                  m_numBlocks, numLevels,
-                                                                  m_numLabels, m_ptrLabels,
-                                                                  mgrData.pointMarkers.data() ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCpointsByPointMarkerArray( precond.ptr,
+                                                                 m_numBlocks, numLevels,
+                                                                 m_numLabels, m_ptrLabels,
+                                                                 mgrData.pointMarkers.data() ) );
 
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, toUnderlyingPtr( m_levelFRelaxMethod ) ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( precond.ptr, toUnderlyingPtr( m_levelInterpType ) ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelRestrictType( precond.ptr, toUnderlyingPtr( m_levelRestrictType ) ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, toUnderlyingPtr( m_levelCoarseGridMethod ) ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( precond.ptr, 1 ));
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( precond.ptr, 0 ));
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, toUnderlyingPtr( m_levelFRelaxMethod ) ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( precond.ptr, toUnderlyingPtr( m_levelInterpType ) ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelRestrictType( precond.ptr, toUnderlyingPtr( m_levelRestrictType ) ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, toUnderlyingPtr( m_levelCoarseGridMethod ) ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( precond.ptr, 1 ));
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( precond.ptr, 0 ));
 
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.coarseSolver.ptr ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 0 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 1 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.coarseSolver.ptr, 0.0 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.coarseSolver.ptr, 1 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.coarseSolver.ptr ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 1 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.coarseSolver.ptr, 0.0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.coarseSolver.ptr, 1 ) );
 
     mgrData.coarseSolver.setup = HYPRE_BoomerAMGSetup;
     mgrData.coarseSolver.solve = HYPRE_BoomerAMGSolve;
@@ -118,6 +118,6 @@ public:
 
 } // namespace hypre
 
-} // namespace geosx
+} // namespace geos
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRHYBRIDSINGLEPHASEPOROMECHANICS_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRHYBRIDSINGLEPHASEPOROMECHANICS_HPP_*/

@@ -16,13 +16,13 @@
  * @file HybridMimeticDiscretization.hpp
  */
 
-#ifndef GEOSX_FINITEVOLUME_HYBRIDMIMETICDISCRETIZATION_HPP_
-#define GEOSX_FINITEVOLUME_HYBRIDMIMETICDISCRETIZATION_HPP_
+#ifndef GEOS_FINITEVOLUME_HYBRIDMIMETICDISCRETIZATION_HPP_
+#define GEOS_FINITEVOLUME_HYBRIDMIMETICDISCRETIZATION_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -97,4 +97,4 @@ private:
 }
 
 
-#endif //GEOSX_FINITEVOLUME_HYBRIDMIMETICDISCRETIZATION_HPP_
+#endif //GEOS_FINITEVOLUME_HYBRIDMIMETICDISCRETIZATION_HPP_

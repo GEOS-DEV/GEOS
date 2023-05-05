@@ -16,12 +16,12 @@
  * @file ParticleFluidBase.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUIDBASE_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUIDBASE_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_PARTICLEFLUIDBASE_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_PARTICLEFLUIDBASE_HPP_
 
 #include "constitutive/ConstitutiveBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -38,14 +38,14 @@ public:
    * @brief Get number of elements in this wrapper.
    * @return number of elements
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex numElems() const { return m_settlingFactor.size( 0 ); }
 
   /**
    * @brief Get number of gauss points per element.
    * @return number of gauss points per element
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex numGauss() const { return m_settlingFactor.size( 1 ); };
 
 protected:
@@ -126,7 +126,7 @@ private:
    * @param[in] dFluidViscosity_dPressure derivatives of the fluid viscosity wrt the pressure
    * @param[in] dFluidViscosity_dComponentConcentration derivatives of the fluid viscosity wrt the composition
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        real64 const proppantConcentration,
                        real64 const fluidDensity,
@@ -185,6 +185,6 @@ private:
 
 } //namespace constitutive
 
-} //namespace geosx
+} //namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUIDBASE_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_PARTICLEFLUIDBASE_HPP_

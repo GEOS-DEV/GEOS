@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MESH_UTILITIES_STRUCTUREDGRIDUTILITIES_HPP
-#define GEOSX_MESH_UTILITIES_STRUCTUREDGRIDUTILITIES_HPP
+#ifndef GEOS_MESH_UTILITIES_STRUCTUREDGRIDUTILITIES_HPP
+#define GEOS_MESH_UTILITIES_STRUCTUREDGRIDUTILITIES_HPP
 
 /**
  * @file StructuredGridUtilities.hpp
@@ -60,8 +60,8 @@ void map_index< 1 >( const int index,
                      const int nnx,
                      std::vector< int > & indices )
 {
-  GEOSX_ASSERT_GT( nnx, index );
-  GEOSX_DEBUG_VAR( nnx );
+  GEOS_ASSERT_GT( nnx, index );
+  GEOS_DEBUG_VAR( nnx );
   indices[0] = index;
 }
 
@@ -71,7 +71,7 @@ void map_index< 2 >( const int index,
                      const int nnx,
                      std::vector< int > & indices )
 {
-  GEOSX_ASSERT_GT( nnx*nnx, index );
+  GEOS_ASSERT_GT( nnx*nnx, index );
   indices[0] = index % nnx;
   indices[1] = index / nnx;
 }
@@ -82,7 +82,7 @@ void map_index< 3 >( const int index,
                      const int nnx,
                      std::vector< int > & indices )
 {
-  GEOSX_ASSERT_GT( nnx*nnx*nnx, index );
+  GEOS_ASSERT_GT( nnx*nnx*nnx, index );
   indices[0] = index % nnx;
   indices[1] = (index / nnx) % nnx;
   indices[2] = index / (nnx*nnx);
@@ -92,4 +92,4 @@ void map_index< 3 >( const int index,
 
 } /* namespace structuredGrid */
 
-#endif /* GEOSX_MESH_UTILITIES_STRUCTUREDGRIDUTILITIES_HPP */
+#endif /* GEOS_MESH_UTILITIES_STRUCTUREDGRIDUTILITIES_HPP */

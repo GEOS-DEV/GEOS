@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_LINEARALGEBRA_SOLVERS_KRYLOVSOLVER_HPP_
-#define GEOSX_LINEARALGEBRA_SOLVERS_KRYLOVSOLVER_HPP_
+#ifndef GEOS_LINEARALGEBRA_SOLVERS_KRYLOVSOLVER_HPP_
+#define GEOS_LINEARALGEBRA_SOLVERS_KRYLOVSOLVER_HPP_
 
 #include "linearAlgebra/utilities/BlockVectorView.hpp"
 #include "linearAlgebra/utilities/BlockVector.hpp"
@@ -21,7 +21,7 @@
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/utilities/LinearSolverResult.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -219,6 +219,6 @@ protected:
   mutable array1d< real64 > m_residualNorms;
 };
 
-} //namespace geosx
+} //namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_SOLVERS_KRYLOVSOLVER_HPP_
+#endif //GEOS_LINEARALGEBRA_SOLVERS_KRYLOVSOLVER_HPP_

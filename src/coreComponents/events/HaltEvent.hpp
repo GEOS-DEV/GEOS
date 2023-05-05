@@ -17,12 +17,12 @@
  */
 
 
-#ifndef GEOSX_EVENTS_HALTEVENT_HPP_
-#define GEOSX_EVENTS_HALTEVENT_HPP_
+#ifndef GEOS_EVENTS_HALTEVENT_HPP_
+#define GEOS_EVENTS_HALTEVENT_HPP_
 
 #include "events/EventBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -80,6 +80,6 @@ public:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_EVENTS_HALTEVENT_HPP_ */
+#endif /* GEOS_EVENTS_HALTEVENT_HPP_ */

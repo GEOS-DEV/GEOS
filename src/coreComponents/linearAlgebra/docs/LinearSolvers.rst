@@ -20,7 +20,7 @@ For example, in a classical linear elastostatics problem :math:`\mathsf{A}` is t
 
 This solution stage represents the most computationally expensive portion of a typical simulation.
 Solution algorithms generally belong to two families of methods: direct methods and iterative methods.
-In GEOSX both options are made available wrapping around well-established open-source linear algebra libraries, namely
+In GEOS both options are made available wrapping around well-established open-source linear algebra libraries, namely
 `HYPRE <https://computation.llnl.gov/projects/hypre-scalable-linear-solvers-multigrid-methods>`__,
 `PETSc <https://www.mcs.anl.gov/petsc/>`__,
 `SuperLU <http://crd-legacy.lbl.gov/~xiaoye/SuperLU/>`__, and
@@ -38,7 +38,7 @@ Irrespective of the selected direct solver implementation, three stages can be i
 (#) **Solve Stage**: the solution to the linear systems involving the factorized matrix is computed
 (#) **Finalize Stage**: the systems involving the factorized matrix have been solved and the direct solver lifetime ends
 
-The default option in GEOSX relies on `SuperLU <http://crd-legacy.lbl.gov/~xiaoye/SuperLU/>`__, a general purpose library for the direct solution of large, sparse, nonsymmetric systems of linear equations, that is called taking advantage of the interface provided in `HYPRE <https://computation.llnl.gov/projects/hypre-scalable-linear-solvers-multigrid-methods>`__.
+The default option in GEOS relies on `SuperLU <http://crd-legacy.lbl.gov/~xiaoye/SuperLU/>`__, a general purpose library for the direct solution of large, sparse, nonsymmetric systems of linear equations, that is called taking advantage of the interface provided in `HYPRE <https://computation.llnl.gov/projects/hypre-scalable-linear-solvers-multigrid-methods>`__.
 
 ******************
 Iterative  methods
@@ -119,7 +119,7 @@ This section provides a brief description of the available preconditioners.
 HYPRE MGR Preconditioner
 ************************
 
-MGR stands for multigrid reduction, a multigrid method that uses the interpolation, restriction operators, and the Galerkin triple product, to reduce a linear system to a smaller one, similar to a Schur complement approach. As such, it is designed to target block linear systems resulting from discretizations of multiphysics problems. GEOSX uses MGR through an implementation in `HYPRE <https://computation.llnl.gov/projects/hypre-scalable-linear-solvers-multigrid-methods>`__. More information regarding MGR can be found `here <https://hypre.readthedocs.io/en/latest/solvers-mgr.html>`__. Currently, MGR strategies are implemented for hydraulic fracturing, poroelastic, compositional flow with and without wells. More multiphysics solvers with MGR will be enabled in the future.
+MGR stands for multigrid reduction, a multigrid method that uses the interpolation, restriction operators, and the Galerkin triple product, to reduce a linear system to a smaller one, similar to a Schur complement approach. As such, it is designed to target block linear systems resulting from discretizations of multiphysics problems. GEOS uses MGR through an implementation in `HYPRE <https://computation.llnl.gov/projects/hypre-scalable-linear-solvers-multigrid-methods>`__. More information regarding MGR can be found `here <https://hypre.readthedocs.io/en/latest/solvers-mgr.html>`__. Currently, MGR strategies are implemented for hydraulic fracturing, poroelastic, compositional flow with and without wells. More multiphysics solvers with MGR will be enabled in the future.
 
 To use MGR for a specific block system, several components need to be specified.
 

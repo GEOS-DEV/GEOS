@@ -23,11 +23,11 @@
 #include <gtest/gtest.h>
 #include <conduit.hpp>
 
-using namespace geosx;
+using namespace geos;
 
 TEST( testXML, testXMLFile )
 {
-  geosx::ProblemManager & problemManager = geosx::getGlobalState().getProblemManager();
+  geos::ProblemManager & problemManager = geos::getGlobalState().getProblemManager();
   problemManager.parseCommandLineInput();
   problemManager.parseInputFile();
 

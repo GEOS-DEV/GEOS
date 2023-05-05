@@ -8,14 +8,14 @@ Introduction
 ------------
 
 When calibrating fluid material parameters to experimental or other reference data, it can be a hassle to launch a full flow simulation just to confirm density, viscosity, and other fluid properties are behaving as expected.  
-Instead, GEOSX provides a ``PVTDriver`` allowing the user to test fluid property models for a well defined set of pressure, temperature, and composition conditions.  
-The driver itself is launched like any other GEOSX simulation, but with a particular XML structure:
+Instead, GEOS provides a ``PVTDriver`` allowing the user to test fluid property models for a well defined set of pressure, temperature, and composition conditions.  
+The driver itself is launched like any other GEOS simulation, but with a particular XML structure:
 
 .. code-block:: sh
 
    ./bin/geosx -i myFluidTest.xml
 
-This driver will work for any multi-phase fluid model (e.g. black-oil, co2-brine, compositional multiphase) enabled within GEOSX.    
+This driver will work for any multi-phase fluid model (e.g. black-oil, co2-brine, compositional multiphase) enabled within GEOS.    
 
 XML Structure
 -------------
@@ -26,7 +26,7 @@ Here, we will walk through an example file included in the source tree at
 
    src/coreComponents/unitTests/constitutiveTests/testPVT_docExample.xml
 
-The first thing to note is that the XML file structure is identical to a standard GEOSX input deck.  
+The first thing to note is that the XML file structure is identical to a standard GEOS input deck.  
 In fact, once the constitutive block is calibrated, one could start adding solver and discretization blocks to the same file to create a proper field simulation.  
 This makes it easy to go back and forth between calibration and simulation.
 
@@ -111,7 +111,7 @@ This file can be readily plotted using any number of plotting tools.  Each row c
 Unit Testing
 ------------
 
-The development team also uses the PVTDriver to perform unit testing on the various fluid models within GEOSX.  
+The development team also uses the PVTDriver to perform unit testing on the various fluid models within GEOS.  
 The optional argument ``baseline`` can be used to point to a previous output file that has been validated  (e.g. against experimental benchmarks or reference codes).  
 If such a file is specified, the driver will perform a testing run and then compare the new results against the baseline.  
 In this way, any regressions in the fluid models can be quickly identified.
