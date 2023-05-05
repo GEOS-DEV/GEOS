@@ -20,7 +20,7 @@
 
 #include "constitutive/permeability/PermeabilityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -82,4 +82,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, ProppantPermeability, string const &, 
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */

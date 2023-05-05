@@ -16,12 +16,12 @@
  * @file CommID.hpp
  */
 
-#ifndef GEOSX_MESH_MPICOMMUNICATIONS_COMMID_HPP_
-#define GEOSX_MESH_MPICOMMUNICATIONS_COMMID_HPP_
+#ifndef GEOS_MESH_MPICOMMUNICATIONS_COMMID_HPP_
+#define GEOS_MESH_MPICOMMUNICATIONS_COMMID_HPP_
 
 #include <set>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -70,6 +70,6 @@ private:
   int m_id = -1;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_MPICOMMUNICATIONS_COMMID_HPP_ */
+#endif /* GEOS_MESH_MPICOMMUNICATIONS_COMMID_HPP_ */

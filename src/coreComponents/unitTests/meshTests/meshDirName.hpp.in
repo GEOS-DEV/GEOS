@@ -1,6 +1,6 @@
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 static string const testMeshDir = "@TEST_MESH_DIR@";

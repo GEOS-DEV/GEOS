@@ -12,13 +12,13 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERIDENTITY_HPP_
-#define GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERIDENTITY_HPP_
+#ifndef GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERIDENTITY_HPP_
+#define GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERIDENTITY_HPP_
 
 #include "linearAlgebra/common/LinearOperator.hpp"
 #include "linearAlgebra/common/PreconditionerBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -50,12 +50,12 @@ public:
   virtual void apply( Vector const & src,
                       Vector & dst ) const override
   {
-    GEOSX_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
-    GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
+    GEOS_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
+    GEOS_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
     dst.copy( src );
   }
 };
 
 }
 
-#endif //GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERIDENTITY_HPP_
+#endif //GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERIDENTITY_HPP_

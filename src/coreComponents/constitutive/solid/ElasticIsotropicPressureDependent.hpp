@@ -16,8 +16,8 @@
  *  @file ElasticIsotropicPressureDependent.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_ELASTICISOTROPICPRESSUREDEPENDENT_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_ELASTICISOTROPICPRESSUREDEPENDENT_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_ELASTICISOTROPICPRESSUREDEPENDENT_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_ELASTICISOTROPICPRESSUREDEPENDENT_HPP_
 
 #include "SolidBase.hpp"
 #include "InvariantDecompositions.hpp"
@@ -26,7 +26,7 @@
 #include "constitutive/ExponentialRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -88,26 +88,26 @@ public:
   /// Use base version of saveConvergedState
   using SolidBaseUpdates::saveConvergedState;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   real64 ( &stiffness )[6][6] ) const override;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k,
                                     localIndex const q,
                                     real64 ( &stiffness )[6][6] ) const override;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void getElasticStrain( localIndex const k,
                                  localIndex const q,
                                  real64 ( &elasticStrain )[6] ) const override final;
@@ -129,8 +129,8 @@ protected:
 };
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ElasticIsotropicPressureDependentUpdates::getElasticStiffness( localIndex const k,
                                                                     localIndex const q,
                                                                     real64 ( & stiffness )[6][6] ) const
@@ -178,8 +178,8 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStiffness( localIndex c
 }
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ElasticIsotropicPressureDependentUpdates::getElasticStrain( localIndex const k,
                                                                  localIndex const q,
                                                                  real64 ( & elasticStrain)[6] ) const
@@ -216,8 +216,8 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStrain( localIndex cons
 }
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex const k,
                                                                   localIndex const q,
                                                                   real64 const ( &strainIncrement )[6],
@@ -298,8 +298,8 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
 }
 
 //TODO: implement the discretizationOps version of smallStrainUpdate
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex const k,
                                                                   localIndex const q,
                                                                   real64 const ( &strainIncrement )[6],
@@ -576,6 +576,6 @@ protected:
 
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_ELASTICISOTROPICPRESSUREDEPENDENT_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_ELASTICISOTROPICPRESSUREDEPENDENT_HPP_ */

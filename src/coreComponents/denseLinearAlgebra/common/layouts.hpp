@@ -15,12 +15,12 @@
 /**
  * @file common.hpp
  */
-#ifndef GEOSX_DENSELINEARALGEBRA_COMMON_LAYOUTS_HPP_
-#define GEOSX_DENSELINEARALGEBRA_COMMON_LAYOUTS_HPP_
+#ifndef GEOS_DENSELINEARALGEBRA_COMMON_LAYOUTS_HPP_
+#define GEOS_DENSELINEARALGEBRA_COMMON_LAYOUTS_HPP_
 
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -43,4 +43,4 @@ struct MatrixLayout
 
 }
 
-#endif //GEOSX_DENSELINEARALGEBRA_COMMON_COMMON_HPP_
+#endif //GEOS_DENSELINEARALGEBRA_COMMON_COMMON_HPP_

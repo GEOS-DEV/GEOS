@@ -16,8 +16,8 @@
  * @file InterfaceTypes.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_INTERFACETYPES_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_INTERFACETYPES_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_INTERFACETYPES_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_INTERFACETYPES_HPP_
 
 #include "common/GeosxConfig.hpp"
 
@@ -33,11 +33,11 @@
 #include "linearAlgebra/interfaces/petsc/PetscInterface.hpp"
 #endif
 
-namespace geosx
+namespace geos
 {
 
 /// Alias for current interface
-using LAInterface = GEOSX_CONCAT( GEOSX_LA_INTERFACE, Interface );
+using LAInterface = GEOS_CONCAT( GEOSX_LA_INTERFACE, Interface );
 
 /// Alias for ParallelMatrix
 using ParallelMatrix = LAInterface::ParallelMatrix;
@@ -81,4 +81,4 @@ inline void finalizeLAI()
 
 
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_INTERFACETYPES_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_INTERFACES_INTERFACETYPES_HPP_*/

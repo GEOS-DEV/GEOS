@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_FILEIO_TIMEHISTORY_HDFFILE_HPP_
-#define GEOSX_FILEIO_TIMEHISTORY_HDFFILE_HPP_
+#ifndef GEOS_FILEIO_TIMEHISTORY_HDFFILE_HPP_
+#define GEOS_FILEIO_TIMEHISTORY_HDFFILE_HPP_
 
 
 #include "dataRepository/HistoryDataSpec.hpp"
@@ -22,7 +22,7 @@
 
 #include <hdf5.h>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -85,16 +85,16 @@ public:
 
   virtual buffer_unit_type * getBufferHead() override;
 
-  /// @copydoc geosx::BufferedHistoryIO::init
+  /// @copydoc geos::BufferedHistoryIO::init
   virtual void init( bool existsOkay ) override;
 
-  /// @copydoc geosx::BufferedHistoryIO::write
+  /// @copydoc geos::BufferedHistoryIO::write
   virtual void write( ) override;
 
-  /// @copydoc geosx::BufferedHistoryIO::compressInFile
+  /// @copydoc geos::BufferedHistoryIO::compressInFile
   virtual void compressInFile( ) override;
 
-  /// @copydoc geosx::BufferedHistoryIO::updateCollectingCount
+  /// @copydoc geos::BufferedHistoryIO::updateCollectingCount
   virtual void updateCollectingCount( localIndex count ) override;
 
   localIndex getBufferedCount() override

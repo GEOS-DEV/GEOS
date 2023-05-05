@@ -1,10 +1,10 @@
 .. _InstallWin:
 
-[Unsupported] Installing GEOSX on Windows machines using Docker
+[Unsupported] Installing GEOS on Windows machines using Docker
 =================================================================
 
-In this section, we will install GEOSX on a Windows machine using a ``Docker`` container with a precompiled version of
-GEOSX's third party libraries (TPL). These steps are an adaptation of `ref:UsingDocker` for the Windows environment.
+In this section, we will install GEOS on a Windows machine using a ``Docker`` container with a precompiled version of
+GEOS's third party libraries (TPL). These steps are an adaptation of `ref:UsingDocker` for the Windows environment.
 In the following sections, we will be using *Ubuntu* based image as an example.
 
 1. Install *Docker Desktop*
@@ -71,8 +71,8 @@ Let us edit the ``Dockerfile``, which is the declarative file for out container:
 .. literalinclude:: Dockerfile-remote-dev.example
    :linenos:
 
-This file enriches a base image already containing the GEOSX's TPL as well as extra utils, such as ``cmake`` and preparing for ssh connexion.
-In the end, we will be able to run it in a detached mode, and connect to it to run and develop in GEOSX.
+This file enriches a base image already containing the GEOS's TPL as well as extra utils, such as ``cmake`` and preparing for ssh connexion.
+In the end, we will be able to run it in a detached mode, and connect to it to run and develop in GEOS.
 
 There are two things you may have noticed reading through the ``Dockerfile`` :
 
@@ -197,7 +197,7 @@ Trying to launch a case using ``mpirun``, you might get the following warning
 
 .. code:: console
 
-    root@b105f9ead860:/tmp# mpirun -np 4 /app/code/GEOSX/build-environment-debug/bin/geosx -i [geosx-case].xml -x 4 -y1 -z1
+    root@b105f9ead860:/tmp# mpirun -np 4 /app/code/GEOS/build-environment-debug/bin/geosx -i [geosx-case].xml -x 4 -y1 -z1
     --------------------------------------------------------------------------
     mpirun has detected an attempt to run as root.
     Running at root is *strongly* discouraged as any mistake (e.g., in
@@ -217,7 +217,7 @@ A possible workaround is to create a new user account and a run folder from this
     root@b105f9ead860:~# su runner
     runner@b105f9ead860:/root$ mkdir -p /tmp/geosx && cd /tmp/geosx/
     runner@b105f9ead860:/tmp/geosx$ cp [path-to-case]/[geosx-case].xml .
-    runner@b105f9ead860:/tmp/geosx$ ${MPIEXEC} -np 4 /app/code/GEOSX/build-environment-debug/bin/geosx -i [geosx-case].xml -x 4 -y 1 -z 1
+    runner@b105f9ead860:/tmp/geosx$ ${MPIEXEC} -np 4 /app/code/GEOS/build-environment-debug/bin/geosx -i [geosx-case].xml -x 4 -y 1 -z 1
 
 
 .. GPU ?? https://docs.docker.com/desktop/windows/wsl/#gpu-support

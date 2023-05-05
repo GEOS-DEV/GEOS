@@ -20,8 +20,8 @@
 // TPL includes
 #include <gtest/gtest.h>
 
-using namespace geosx;
-using namespace geosx::singlePhaseFVMKernels;
+using namespace geos;
+using namespace geos::singlePhaseFVMKernels;
 
 
 template< localIndex stencilSize >
@@ -223,11 +223,11 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::basicSetup( argc, argv );
+  geos::basicSetup( argc, argv );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::basicCleanup();
+  geos::basicCleanup();
 
   return result;
 }

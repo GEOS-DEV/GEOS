@@ -15,7 +15,7 @@
 #include "FunctionManager.hpp"
 #include "CompositeFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace dataRepository
@@ -67,7 +67,7 @@ void CompositeFunction::initializeFunction()
   // compile
   parserContext.addBuiltIns();
   mathpresso::Error err = parserExpression.compile( parserContext, m_expression.c_str(), mathpresso::kNoOptions );
-  GEOSX_ERROR_IF( err != mathpresso::kErrorOk, "JIT Compiler Error" );
+  GEOS_ERROR_IF( err != mathpresso::kErrorOk, "JIT Compiler Error" );
 
   // Grab pointers to sub functions
   FunctionManager & functionManager = FunctionManager::getInstance();
@@ -120,4 +120,4 @@ real64 CompositeFunction::evaluate( real64 const * const input ) const
 
 REGISTER_CATALOG_ENTRY( FunctionBase, CompositeFunction, string const &, Group * const )
 
-} // namespace geosx
+} // namespace geos

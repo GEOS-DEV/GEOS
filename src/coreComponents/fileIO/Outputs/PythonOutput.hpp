@@ -16,12 +16,12 @@
  * @file PythonOutput.hpp
  */
 
-#ifndef GEOSX_FILEIO_OUTPUTS_PYTHONOUTPUT_HPP_
-#define GEOSX_FILEIO_OUTPUTS_PYTHONOUTPUT_HPP_
+#ifndef GEOS_FILEIO_OUTPUTS_PYTHONOUTPUT_HPP_
+#define GEOS_FILEIO_OUTPUTS_PYTHONOUTPUT_HPP_
 
 #include "fileIO/Outputs/OutputBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -66,17 +66,17 @@ public:
                         real64 const eventProgress,
                         DomainPartition & domain ) override
   {
-    GEOSX_UNUSED_VAR( time_n );
-    GEOSX_UNUSED_VAR( dt );
-    GEOSX_UNUSED_VAR( cycleNumber );
-    GEOSX_UNUSED_VAR( eventCounter );
-    GEOSX_UNUSED_VAR( eventProgress );
-    GEOSX_UNUSED_VAR( domain );
+    GEOS_UNUSED_VAR( time_n );
+    GEOS_UNUSED_VAR( dt );
+    GEOS_UNUSED_VAR( cycleNumber );
+    GEOS_UNUSED_VAR( eventCounter );
+    GEOS_UNUSED_VAR( eventProgress );
+    GEOS_UNUSED_VAR( domain );
     return true;
   }
 };
 
 
-} // namespace geosx
+} // namespace geos
 
-#endif // GEOSX_FILEIO_OUTPUTS_PYTHONOUTPUT_HPP_
+#endif // GEOS_FILEIO_OUTPUTS_PYTHONOUTPUT_HPP_

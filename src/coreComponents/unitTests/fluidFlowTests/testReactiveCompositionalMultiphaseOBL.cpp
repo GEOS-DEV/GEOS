@@ -22,11 +22,11 @@
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
 
-using namespace geosx;
-using namespace geosx::dataRepository;
-using namespace geosx::constitutive;
-using namespace geosx::constitutive::multifluid;
-using namespace geosx::testing;
+using namespace geos;
+using namespace geos::dataRepository;
+using namespace geos::constitutive;
+using namespace geos::constitutive::multifluid;
+using namespace geos::testing;
 
 CommandLineOptions g_commandLineOptions;
 
@@ -548,8 +548,8 @@ TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_accumulation )
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-  g_commandLineOptions = *geosx::basicSetup( argc, argv );
+  g_commandLineOptions = *geos::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
-  geosx::basicCleanup();
+  geos::basicCleanup();
   return result;
 }

@@ -19,9 +19,12 @@
 
   <Mesh>
     <VTKMesh
+      surfacicFieldsToImport="{aperture}"
+      surfacicFieldsInGEOSX="{elementAperture}"
       name="mesh1"
-      faceBlocks="{fracture_info}"
-      file="tShapedFracturedCube.vtk"/>
+      useGlobalIds="1"
+      faceBlocks="{fracture}"
+      file="tShapedFracturedCube.vtm"/>
   </Mesh>
 
   <Geometry>
@@ -80,12 +83,12 @@
   <ElementRegions>
     <CellElementRegion
       name="Region"
-      cellBlocks="{ hexahedra }"
+      cellBlocks="{ hexahedra, wedges }"
       materialList="{ water, rock }"/>
 
     <SurfaceElementRegion
       name="Fracture"
-      faceBlock="fracture_info"
+      faceBlock="fracture"
       defaultAperture="1.0e-5"
       materialList="{ water, fractureFilling }"/>
   </ElementRegions>
@@ -139,7 +142,7 @@
       name="Porosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region/hexahedra"
+      objectPath="ElementRegions/Region"
       fieldName="rockPorosity_referencePorosity"
       scale="0.01"/>
 
@@ -155,7 +158,7 @@
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region/hexahedra"
+      objectPath="ElementRegions/Region"
       fieldName="pressure"
       scale="0.0"/>
 
@@ -170,6 +173,7 @@
   <Outputs>
     <VTK
       name="vtkOutput"
+      format="ascii"
       plotFileRoot="fractureFlow_conforming_2d_vtk_input-vtk"/>
 
     <Silo

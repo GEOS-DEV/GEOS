@@ -16,14 +16,14 @@
  * @file ElementSubRegionBase.hpp
  */
 
-#ifndef GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
-#define GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
+#ifndef GEOS_MESH_ELEMENTSUBREGIONBASE_HPP_
+#define GEOS_MESH_ELEMENTSUBREGIONBASE_HPP_
 
 #include "mesh/ElementType.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class NodeManager;
@@ -94,7 +94,7 @@ public:
    *        the derived class (i.e., element-to-node map, element-to-face map, etc)
    * @param[in] clearIfUnmapped clearIfUnmapped
    */
-  virtual void fixUpDownMaps( bool const clearIfUnmapped ) { GEOSX_UNUSED_VAR( clearIfUnmapped ); }
+  virtual void fixUpDownMaps( bool const clearIfUnmapped ) { GEOS_UNUSED_VAR( clearIfUnmapped ); }
 
 
   /**
@@ -121,17 +121,11 @@ public:
   localIndex const & numNodesPerElement() const { return m_numNodesPerElement; }
 
   /**
-   * @brief Set the number of nodes per element in the subregion.
-   * @param input The new number of nodes per element in the subregion.
-   */
-  void setNumNodesPerElement( localIndex const input ) { m_numNodesPerElement = input; }
-
-  /**
    * @brief Get the number of nodes per element.
-   * @param[in] k cell index (not used)
+   * @param[in] k cell index
    * @return number of nodes per element
    */
-  virtual localIndex numNodesPerElement( localIndex const k ) const { GEOSX_UNUSED_VAR( k ); return m_numNodesPerElement; }
+  virtual localIndex numNodesPerElement( localIndex const k ) const { GEOS_UNUSED_VAR( k ); return m_numNodesPerElement; }
 
   /**
    * @brief Get the number of faces per element.
@@ -140,24 +134,10 @@ public:
   localIndex const & numFacesPerElement() const { return m_numFacesPerElement; }
 
   /**
-   * @brief Sets the number of faces per element.
-   * @param input The number of faces per element to set for this ElementSubRegion.
-   */
-  void setNumFacesPerElement( localIndex const input ) { m_numFacesPerElement = input; }
-
-  /**
    * @brief Gets the number of edges per element.
    * @return input The number of edges per element in this ElementSubRegion.
    */
   localIndex const & numEdgesPerElement() const { return m_numEdgesPerElement; }
-
-  /**
-   * @brief Sets the number of edges per element.
-   * @param input The number of edges per element to set for this ElementSubRegion.
-   */
-  void setNumEdgesPerElement( localIndex const input ) { m_numEdgesPerElement = input; }
-
-
 
   /**
    * @brief Get the center of each element in this subregion.
@@ -294,22 +274,22 @@ protected:
                                 arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
   {
     arrayView2d< real64 > const & elementCenters = m_elementCenter;
-    localIndex const nNodes = numNodesPerElement();
     auto const e2n = toNodesRelation.toViewConst();
 
     forAll< parallelHostPolicy >( size(), [=]( localIndex const k )
     {
       LvArray::tensorOps::copy< 3 >( elementCenters[k], X[e2n( k, 0 )] );
-      for( localIndex a = 1; a < nNodes; ++a )
+      localIndex const numNodes = this->numNodesPerElement( k );
+      for( localIndex a = 1; a < numNodes; ++a )
       {
         LvArray::tensorOps::add< 3 >( elementCenters[k], X[e2n( k, a )] );
       }
 
-      LvArray::tensorOps::scale< 3 >( elementCenters[k], 1.0 / nNodes );
+      LvArray::tensorOps::scale< 3 >( elementCenters[k], 1.0 / numNodes );
     } );
   }
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_ */
+#endif /* GEOS_MESH_ELEMENTSUBREGIONBASE_HPP_ */

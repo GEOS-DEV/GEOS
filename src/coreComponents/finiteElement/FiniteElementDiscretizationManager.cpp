@@ -20,7 +20,7 @@
 
 #include "FiniteElementDiscretization.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -54,4 +54,4 @@ void FiniteElementDiscretizationManager::expandObjectCatalogs()
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */

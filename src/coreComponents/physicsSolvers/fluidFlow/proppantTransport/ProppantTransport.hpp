@@ -16,14 +16,14 @@
  * @file ProppantTransport.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORT_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORT_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORT_HPP_
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORT_HPP_
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "constitutive/fluid/ParticleFluidBase.hpp"
 #include "constitutive/fluid/SlurryFluidBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace dataRepository
@@ -126,7 +126,9 @@ public:
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  calculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( real64 const & time_n,
+                         real64 const & dt,
+                         DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
@@ -200,7 +202,7 @@ public:
    */
   void updateProppantPackVolume( real64 const time_n, real64 const dt, DomainPartition & domain );
 
-  virtual void updateState ( DomainPartition & domain ) override final { GEOSX_UNUSED_VAR( domain ); };
+  virtual void updateState ( DomainPartition & domain ) override final { GEOS_UNUSED_VAR( domain ); };
 
   /**
    * @brief Function to update fluid and proppant properties
@@ -245,6 +247,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORT_HPP_
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORT_HPP_

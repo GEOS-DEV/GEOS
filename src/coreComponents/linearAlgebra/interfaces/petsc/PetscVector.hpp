@@ -16,8 +16,8 @@
  * @file PetscVector.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_PETSCVECTOR_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_PETSCVECTOR_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_PETSCVECTOR_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_PETSCVECTOR_HPP_
 
 #include "linearAlgebra/interfaces/VectorBase.hpp"
 
@@ -34,7 +34,7 @@ extern "C" struct _p_Vec;
 
 ///@}
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -212,4 +212,4 @@ private:
 
 } // end geosx namespace
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_PETSCVECTOR_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_INTERFACES_PETSCVECTOR_HPP_*/

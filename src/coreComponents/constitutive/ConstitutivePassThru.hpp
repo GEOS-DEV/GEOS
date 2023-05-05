@@ -17,8 +17,8 @@
  * @file ConstitutivePassThru.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
-#define GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
+#ifndef GEOS_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
+#define GEOS_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
 
 #include "ConstitutivePassThruHandler.hpp"
 #include "NullModel.hpp"
@@ -41,13 +41,14 @@
 #include "solid/porosity/ProppantPorosity.hpp"
 #include "permeability/ConstantPermeability.hpp"
 #include "permeability/CarmanKozenyPermeability.hpp"
+#include "permeability/ExponentialDecayPermeability.hpp"
 #include "permeability/ParallelPlatesPermeability.hpp"
 #include "permeability/ProppantPermeability.hpp"
 #include "permeability/SlipDependentPermeability.hpp"
 #include "permeability/WillisRichardsPermeability.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -114,9 +115,33 @@ struct ConstitutivePassThru< NullModel >
     }
     else
     {
-      GEOSX_ERROR( "ConstitutivePassThru< NullModel >::execute failed. The constitutive relation is named "
-                   << constitutiveRelation.getName() << " with type "
-                   << LvArray::system::demangleType( constitutiveRelation ) );
+      GEOS_ERROR( "ConstitutivePassThru< NullModel >::execute failed. The constitutive relation is named "
+                  << constitutiveRelation.getName() << " with type "
+                  << LvArray::system::demangleType( constitutiveRelation ) );
+    }
+  }
+};
+
+
+/**
+ * Specialization for the PorousSolid< ElasticIsotropic > model.
+ */
+template<>
+struct ConstitutivePassThru< PorousSolid< ElasticIsotropic > >
+{
+  template< typename LAMBDA >
+  static
+  void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    if( auto * const ptr = dynamic_cast< PorousSolid< ElasticIsotropic > * >( &constitutiveRelation ) )
+    {
+      lambda( *ptr );
+    }
+    else
+    {
+      GEOS_ERROR( "ConstitutivePassThru< PorousSolid< ElasticIsotropic > >::execute failed. The constitutive relation is named "
+                  << constitutiveRelation.getName() << " with type "
+                  << LvArray::system::demangleType( constitutiveRelation ) );
     }
   }
 };
@@ -174,6 +199,7 @@ struct ConstitutivePassThru< CompressibleSolidBase >
   {
     ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
+                                 CompressibleSolid< PressurePorosity, ExponentialDecayPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
                                  CompressibleSolid< PressurePorosity, WillisRichardsPermeability >
@@ -186,6 +212,7 @@ struct ConstitutivePassThru< CompressibleSolidBase >
   {
     ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
+                                 CompressibleSolid< PressurePorosity, ExponentialDecayPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
                                  CompressibleSolid< PressurePorosity, WillisRichardsPermeability >
@@ -210,9 +237,9 @@ struct ConstitutivePassThru< ProppantSolid< ProppantPorosity, ProppantPermeabili
     }
     else
     {
-      GEOSX_ERROR( "ConstitutivePassThru< ProppantSolid >::execute failed. The constitutive relation is named "
-                   << constitutiveRelation.getName() << " with type "
-                   << LvArray::system::demangleType( constitutiveRelation ) );
+      GEOS_ERROR( "ConstitutivePassThru< ProppantSolid >::execute failed. The constitutive relation is named "
+                  << constitutiveRelation.getName() << " with type "
+                  << LvArray::system::demangleType( constitutiveRelation ) );
     }
   }
 };
@@ -229,6 +256,7 @@ struct ConstitutivePassThru< CoupledSolidBase >
   {
     ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
+                                 CompressibleSolid< PressurePorosity, ExponentialDecayPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
                                  CompressibleSolid< PressurePorosity, WillisRichardsPermeability >,
@@ -251,6 +279,7 @@ struct ConstitutivePassThru< CoupledSolidBase >
   {
     ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
+                                 CompressibleSolid< PressurePorosity, ExponentialDecayPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
                                  CompressibleSolid< PressurePorosity, WillisRichardsPermeability >,
@@ -271,6 +300,6 @@ struct ConstitutivePassThru< CoupledSolidBase >
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_ */

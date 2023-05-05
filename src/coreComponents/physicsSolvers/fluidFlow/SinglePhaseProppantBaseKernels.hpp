@@ -15,13 +15,13 @@
 /**
  * @file SinglePhaseProppantBaseKernels.hpp
  */
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEPROPPANTBASEKERNELS_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEPROPPANTBASEKERNELS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEPROPPANTBASEKERNELS_HPP_
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEPROPPANTBASEKERNELS_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace singlePhaseProppantBaseKernels
@@ -39,7 +39,7 @@ struct FluidUpdateKernel
                       arrayView2d< real64 const > const & cellBasedFlux,
                       arrayView1d< integer const > const & isProppantBoundaryElement )
   {
-    forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
 
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
@@ -58,6 +58,6 @@ struct FluidUpdateKernel
 
 } // namespace singlePhaseProppantBaseKernels
 
-} //namespace geosx
+} //namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEPROPPANTBASEKERNELS_HPP_
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEPROPPANTBASEKERNELS_HPP_

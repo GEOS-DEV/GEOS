@@ -26,7 +26,7 @@
 
 TEST( testTriaxial, testTriaxial )
 {
-  geosx::GeosxState & state = geosx::getGlobalState();
+  geos::GeosxState & state = geos::getGlobalState();
 
   state.initializeDataRepository();
   state.applyInitialConditions();
@@ -37,11 +37,11 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::GeosxState state( geosx::basicSetup( argc, argv, true ) );
+  geos::GeosxState state( geos::basicSetup( argc, argv, true ) );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::basicCleanup();
+  geos::basicCleanup();
 
   return result;
 }

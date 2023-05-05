@@ -16,14 +16,14 @@
  * @file EventBase.hpp
  */
 
-#ifndef GEOSX_EVENTS_EVENTSBASE_HPP_
-#define GEOSX_EVENTS_EVENTSBASE_HPP_
+#ifndef GEOS_EVENTS_EVENTSBASE_HPP_
+#define GEOS_EVENTS_EVENTSBASE_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -156,10 +156,15 @@ public:
    */
   virtual real64 getEventTypeDtRequest( real64 const time )
   {
-    GEOSX_UNUSED_VAR( time );
+    GEOS_UNUSED_VAR( time );
     return std::numeric_limits< real64 >::max();
   }
 
+  /**
+   * @brief Helper function to validate the consistency of the event input
+   * @note We cannot use postProcessInput here because we can perform the validation only after the m_target pointer is set
+   */
+  virtual void validate() const {};
 
   /**
    * @brief Count the number of events/sub-events
@@ -343,6 +348,6 @@ private:
   ExecutableGroup * m_target;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_EVENTS_EVENTSBASE_HPP_ */
+#endif /* GEOS_EVENTS_EVENTSBASE_HPP_ */

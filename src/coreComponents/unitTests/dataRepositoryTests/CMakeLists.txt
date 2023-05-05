@@ -8,7 +8,8 @@ set( dataRepository_tests
      testRestartExtended.cpp
      testPacking.cpp
      testWrapperHelpers.cpp
-   )
+     testGroupPath.cpp
+     )
 
 set( dependencyList gtest )
 

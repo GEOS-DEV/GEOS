@@ -1,9 +1,9 @@
-#ifndef GEOSX_PYTHON_PYSOLVERTYPE_HPP_
-#define GEOSX_PYTHON_PYSOLVERTYPE_HPP_
+#ifndef GEOS_PYTHON_PYSOLVERTYPE_HPP_
+#define GEOS_PYTHON_PYSOLVERTYPE_HPP_
 
 #include "LvArray/src/python/pythonForwardDeclarations.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace python
 {
@@ -12,6 +12,6 @@ namespace python
 PyTypeObject * getPySolverType();
 
 } // namespace python
-} // namespace geosx
+} // namespace geos
 
 #endif

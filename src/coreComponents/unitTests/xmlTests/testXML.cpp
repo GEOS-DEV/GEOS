@@ -74,7 +74,7 @@ TEST( testXML, testXMLString )
     "  </Constitutive>\n"
     "</Problem>";
 
-  geosx::getGlobalState().getProblemManager().parseInputString( xmlInput );
+  geos::getGlobalState().getProblemManager().parseInputString( xmlInput );
 }
 
 TEST( testXML, testXMLStringExpectedFail )
@@ -85,7 +85,7 @@ TEST( testXML, testXMLStringExpectedFail )
     "  <Solvers>\n"
     "</Problem>";
 
-  EXPECT_THROW( geosx::getGlobalState().getProblemManager().parseInputString( xmlInput ), geosx::InputError );
+  EXPECT_THROW( geos::getGlobalState().getProblemManager().parseInputString( xmlInput ), geos::InputError );
 }
 
 
@@ -93,11 +93,11 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::GeosxState state( geosx::basicSetup( argc, argv, false ) );
+  geos::GeosxState state( geos::basicSetup( argc, argv, false ) );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::basicCleanup();
+  geos::basicCleanup();
 
   return result;
 }

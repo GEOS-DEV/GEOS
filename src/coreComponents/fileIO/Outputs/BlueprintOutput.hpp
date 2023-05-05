@@ -16,12 +16,12 @@
  * @file BlueprintOutput.hpp
  */
 
-#ifndef GEOSX_FILEIO_OUTPUTS_BLUEPRINTOUTPUT_HPP_
-#define GEOSX_FILEIO_OUTPUTS_BLUEPRINTOUTPUT_HPP_
+#ifndef GEOS_FILEIO_OUTPUTS_BLUEPRINTOUTPUT_HPP_
+#define GEOS_FILEIO_OUTPUTS_BLUEPRINTOUTPUT_HPP_
 
 #include "fileIO/Outputs/OutputBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 // Forward declarations
@@ -131,6 +131,6 @@ private:
 };
 
 
-} // namespace geosx
+} // namespace geos
 
-#endif // GEOSX_FILEIO_OUTPUTS_BLUEPRINTOUTPUT_HPP_
+#endif // GEOS_FILEIO_OUTPUTS_BLUEPRINTOUTPUT_HPP_

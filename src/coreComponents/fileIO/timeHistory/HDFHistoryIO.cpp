@@ -4,7 +4,7 @@
 
 #include "common/MpiWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -233,7 +233,7 @@ void HDFHistoryIO::init( bool existsOkay )
     {
       updateDatasetExtent( m_writeLimit );
     }
-    GEOSX_ERROR_IF( inTarget && !existsOkay, "Dataset (" + m_name + ") already exists in output file: " + m_filename );
+    GEOS_ERROR_IF( inTarget && !existsOkay, "Dataset (" + m_name + ") already exists in output file: " + m_filename );
   }
 }
 

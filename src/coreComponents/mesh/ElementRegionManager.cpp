@@ -26,7 +26,7 @@
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "schema/schemaUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -44,7 +44,7 @@ ElementRegionManager::~ElementRegionManager()
 
 void ElementRegionManager::resize( integer_array const & numElements,
                                    string_array const & regionNames,
-                                   string_array const & GEOSX_UNUSED_PARAM( elementTypes ) )
+                                   string_array const & GEOS_UNUSED_PARAM( elementTypes ) )
 {
   localIndex const n_regions = LvArray::integerConversion< localIndex >( regionNames.size());
   for( localIndex reg=0; reg<n_regions; ++reg )
@@ -67,9 +67,9 @@ void ElementRegionManager::setMaxGlobalIndex()
 
 Group * ElementRegionManager::createChild( string const & childKey, string const & childName )
 {
-  GEOSX_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
-                  "KeyName ("<<childKey<<") not found in ObjectManager::Catalog" );
-  GEOSX_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog." );
+  GEOS_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
+                 "KeyName ("<<childKey<<") not found in ObjectManager::Catalog" );
+  GEOS_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog." );
 
   Group & elementRegions = this->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
   return &elementRegions.registerGroup( childName,
@@ -190,8 +190,8 @@ void ElementRegionManager::generateWells( MeshManager & meshManager,
 
     globalIndex const numWellElemsGlobal = MpiWrapper::sum( subRegion.size() );
 
-    GEOSX_ERROR_IF( numWellElemsGlobal != wellGeometry.getNumElements(),
-                    "Invalid partitioning in well " << subRegionName );
+    GEOS_ERROR_IF( numWellElemsGlobal != wellGeometry.getNumElements(),
+                   "Invalid partitioning in well " << subRegionName );
 
   } );
 
@@ -201,7 +201,7 @@ void ElementRegionManager::generateWells( MeshManager & meshManager,
 
 void ElementRegionManager::buildSets( NodeManager const & nodeManager )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   dataRepository::Group const & nodeSets = nodeManager.sets();
 
@@ -335,7 +335,7 @@ int ElementRegionManager::unpackImpl( buffer_unit_type const * & buffer,
   string name;
   unpackedSize += bufferOps::Unpack( buffer, name );
 
-  GEOSX_ERROR_IF( name != this->getName(), "Unpacked name (" << name << ") does not equal object name (" << this->getName() << ")" );
+  GEOS_ERROR_IF( name != this->getName(), "Unpacked name (" << name << ") does not equal object name (" << this->getName() << ")" );
 
   localIndex numRegionsRead;
   unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
@@ -665,10 +665,10 @@ ElementRegionManager::getCellBlockToSubRegionMap( CellBlockManagerABC const & ce
                                                                        CellElementSubRegion const & subRegion )
   {
     localIndex const blockIndex = cellBlocks.getIndex( subRegion.getName() );
-    GEOSX_ERROR_IF( blockIndex == Group::subGroupMap::KeyIndex::invalid_index,
-                    GEOSX_FMT( "Cell block not found for subregion {}/{}", region.getName(), subRegion.getName() ) );
-    GEOSX_ERROR_IF( blockMap( blockIndex, 1 ) != -1,
-                    GEOSX_FMT( "Cell block {} mapped to more than one subregion", subRegion.getName() ) );
+    GEOS_ERROR_IF( blockIndex == Group::subGroupMap::KeyIndex::invalid_index,
+                   GEOS_FMT( "Cell block not found for subregion {}/{}", region.getName(), subRegion.getName() ) );
+    GEOS_ERROR_IF( blockMap( blockIndex, 1 ) != -1,
+                   GEOS_FMT( "Cell block {} mapped to more than one subregion", subRegion.getName() ) );
 
     blockMap( blockIndex, 0 ) = er;
     blockMap( blockIndex, 1 ) = esr;

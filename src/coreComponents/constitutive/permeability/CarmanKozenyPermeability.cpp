@@ -18,7 +18,7 @@
 
 #include "CarmanKozenyPermeability.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -59,4 +59,4 @@ void CarmanKozenyPermeability::allocateConstitutiveData( dataRepository::Group &
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CarmanKozenyPermeability, string const &, Group * const )
 
 }
-} /* namespace geosx */
+} /* namespace geos */

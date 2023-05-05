@@ -750,7 +750,7 @@ endif()
 # Python
 ################################
 if(ENABLE_PYGEOSX)
-    find_package(Python3 REQUIRED
+    find_package(Python3 3.7.0...3.11.2 REQUIRED
                  COMPONENTS Development NumPy)
 
     message( " ----> $Python3_VERSION = ${Python3_VERSION}")
@@ -769,6 +769,9 @@ if(ENABLE_PYGEOSX)
     set(thirdPartyLibs ${thirdPartyLibs} Python3::Python Python3::NumPy)
 else()
     message(STATUS "Not building pygeosx.")
+    find_package(Python3 3.7.0...3.11.2
+                 OPTIONAL_COMPONENTS Development NumPy)
+    message(STATUS "Python3_EXECUTABLE=${Python3_EXECUTABLE}")
 endif()
 
 ################################
@@ -783,21 +786,21 @@ option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" O
 ################################
 # Fesapi
 ################################
-if(DEFINED FESAPI_DIR)
-    message(STATUS "FESAPI_DIR = ${FESAPI_DIR}")
+# if(DEFINED FESAPI_DIR)
+#     message(STATUS "FESAPI_DIR = ${FESAPI_DIR}")
 
-    find_and_register(NAME FesapiCpp
-                 INCLUDE_DIRECTORIES ${FESAPI_DIR}/include
-                 LIBRARY_DIRECTORIES ${FESAPI_DIR}/lib    
-                 HEADER fesapi/nsDefinitions.h             
-                 LIBRARIES FesapiCpp
-                 DEPENDS hdf5)
+#     find_and_register(NAME FesapiCpp
+#                  INCLUDE_DIRECTORIES ${FESAPI_DIR}/include
+#                  LIBRARY_DIRECTORIES ${FESAPI_DIR}/lib    
+#                  HEADER fesapi/nsDefinitions.h             
+#                  LIBRARIES FesapiCpp
+#                  DEPENDS hdf5)
 
-    set(FESAPI_DIR ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} FesapiCpp)
-else()
+#     set(FESAPI_DIR ON CACHE BOOL "")
+#     set(thirdPartyLibs ${thirdPartyLibs} FesapiCpp)
+# else()
     message(STATUS "Not using Fesapi")
-endif()
+# endif()
 
 message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")
 

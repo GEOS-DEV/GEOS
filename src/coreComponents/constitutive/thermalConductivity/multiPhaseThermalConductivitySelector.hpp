@@ -16,14 +16,14 @@
  * @file multiPhaseThermalConductivitySelector.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYSELECTOR_HPP
-#define GEOSX_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYSELECTOR_HPP
+#ifndef GEOS_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYSELECTOR_HPP
+#define GEOS_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYSELECTOR_HPP
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/thermalConductivity/MultiPhaseConstantThermalConductivity.hpp"
 #include "constitutive/thermalConductivity/MultiPhaseVolumeWeightedThermalConductivity.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -47,6 +47,6 @@ void constitutiveUpdatePassThru( MultiPhaseThermalConductivityBase & thermalCond
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYSELECTOR_HPP
+#endif //GEOS_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYSELECTOR_HPP

@@ -23,10 +23,10 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "unitTests/fluidFlowTests/testSingleFlowUtils.hpp"
 
-using namespace geosx;
-using namespace geosx::dataRepository;
-using namespace geosx::constitutive;
-using namespace geosx::testing;
+using namespace geos;
+using namespace geos::dataRepository;
+using namespace geos::constitutive;
+using namespace geos::testing;
 
 CommandLineOptions g_commandLineOptions;
 
@@ -304,8 +304,8 @@ TEST_F( ThermalSinglePhaseFlowTest, jacobianNumericalCheck_accumulationBalance )
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-  g_commandLineOptions = *geosx::basicSetup( argc, argv );
+  g_commandLineOptions = *geos::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
-  geosx::basicCleanup();
+  geos::basicCleanup();
   return result;
 }

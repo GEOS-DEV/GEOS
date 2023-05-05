@@ -16,12 +16,12 @@
  * @file PorosityFields.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_POROSITY_POROSITYFIELDS_HPP
-#define GEOSX_CONSTITUTIVE_SOLID_POROSITY_POROSITYFIELDS_HPP
+#ifndef GEOS_CONSTITUTIVE_SOLID_POROSITY_POROSITYFIELDS_HPP
+#define GEOS_CONSTITUTIVE_SOLID_POROSITY_POROSITYFIELDS_HPP
 
 #include "mesh/MeshFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace fields
@@ -54,6 +54,14 @@ DECLARE_FIELD( dPorosity_dPressure,
                WRITE_AND_READ,
                "Derivative of rock porosity with respect to pressure" );
 
+DECLARE_FIELD( dPorosity_dTemperature,
+               "dPorosity_dTemperature",
+               array2d< real64 >,
+               0.0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of rock porosity with respect to temperature" );
+
 DECLARE_FIELD( initialPorosity,
                "initialPorosity",
                array2d< real64 >,
@@ -78,10 +86,18 @@ DECLARE_FIELD( biotCoefficient,
                WRITE_AND_READ,
                "Biot coefficient" );
 
-}
+DECLARE_FIELD( thermalExpansionCoefficient,
+               "thermalExpansionCoefficient",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Thermal expansion coefficient" );
 
 }
 
 }
 
-#endif // GEOSX_CONSTITUTIVE_SOLID_POROSITY_POROSITYFIELDS_HPP_
+}
+
+#endif // GEOS_CONSTITUTIVE_SOLID_POROSITY_POROSITYFIELDS_HPP_

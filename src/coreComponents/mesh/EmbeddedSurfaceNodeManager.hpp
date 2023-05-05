@@ -16,14 +16,14 @@
  * @file EmbeddedSurfaceNodeManager.hpp
  */
 
-#ifndef GEOSX_MESH_EMBEDDEDSURFACENODEMANAGER_HPP_
-#define GEOSX_MESH_EMBEDDEDSURFACENODEMANAGER_HPP_
+#ifndef GEOS_MESH_EMBEDDEDSURFACENODEMANAGER_HPP_
+#define GEOS_MESH_EMBEDDEDSURFACENODEMANAGER_HPP_
 
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "ToElementRelation.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class EdgeManager;

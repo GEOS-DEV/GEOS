@@ -9,7 +9,7 @@ Fracture Intersection Problem
 **Context**
 
 In this example, two fractures intersecting at a right angle are simulated using a Lagrange contact model in a 2D infinite domain and subjected to a constant uniaxial compressive remote stress. Numerical solutions based on the symmetric-Galerkin boundary element
-method `(Phan et al., 2003)  <https://onlinelibrary.wiley.com/doi/10.1002/nme.707>`__ is used to verify the accuracy of the GEOSX results for the normal traction, normal opening, and shear slippage on the fracture surfaces, considering frictional contact and fracture-fracture interaction. In this example, the ``TimeHistory`` function and a Python script are used to output and post-process multi-dimensional data (traction and displacement on the fracture surfaces).
+method `(Phan et al., 2003)  <https://onlinelibrary.wiley.com/doi/10.1002/nme.707>`__ is used to verify the accuracy of the GEOS results for the normal traction, normal opening, and shear slippage on the fracture surfaces, considering frictional contact and fracture-fracture interaction. In this example, the ``TimeHistory`` function and a Python script are used to output and post-process multi-dimensional data (traction and displacement on the fracture surfaces).
 
 
 **Input file**
@@ -88,7 +88,7 @@ Refinement is necessary to conform with the fracture geometry specified in the `
 Solid mechanics solver
 ------------------------
 
-GEOSX is a multiphysics simulation platform.
+GEOS is a multiphysics simulation platform.
 Different combinations of
 physics solvers can be applied
 in different regions of the domain at different stages of the simulation.
@@ -97,7 +97,7 @@ The ``Solvers`` tag in the XML file is used to list and parameterize these solve
 To specify a coupling between two different solvers, we define and characterize each single-physics solver separately.
 Then, we customize a *coupling solver* between these single-physics solvers as an additional solver.
 This approach allows for generality and flexibility in constructing multiphysics solvers.
-Each single-physics solver should be given a meaningful and distinct name, because GEOSX recognizes these single-physics solvers
+Each single-physics solver should be given a meaningful and distinct name, because GEOS recognizes these single-physics solvers
 by their given names to create the coupling.
 
 To setup a coupling between rock and fracture deformations, we define three different solvers:
@@ -151,7 +151,7 @@ In this example, ``tractionCollection`` and ``displacementJumpCollection`` tasks
     :end-before: <!-- SPHINX_TASKS_END -->
 
 These two tasks are triggered using the ``Event`` manager with a ``PeriodicEvent`` defined for these recurring tasks. 
-GEOSX writes two files named after the string defined in the ``filename`` keyword and formatted as HDF5 files (displacementJump_history.hdf5 and traction_history.hdf5). The TimeHistory file contains the collected time history information from each specified time history collector.
+GEOS writes two files named after the string defined in the ``filename`` keyword and formatted as HDF5 files (displacementJump_history.hdf5 and traction_history.hdf5). The TimeHistory file contains the collected time history information from each specified time history collector.
 This information includes datasets for the simulation time, element center defined in the local coordinate system, and the time history information.
 A Python script is used to read and plot any specified subset of the time history data for verification and visualization. 
 
@@ -177,7 +177,7 @@ These boundary conditions are set up through the ``FieldSpecifications`` section
     :end-before: <!-- SPHINX_BC_END -->
 
 
-Note that the remote stress and internal fracture pressure has a negative value, due to the negative sign convention for compressive stresses in GEOSX. 
+Note that the remote stress and internal fracture pressure has a negative value, due to the negative sign convention for compressive stresses in GEOS. 
 
  
 The parameters used in the simulation are summarized in the following table.
@@ -227,7 +227,7 @@ The next figure shows the distribution of relative shear displacement values alo
    Simulation result of fracture slip 
 
 
-The figure below compares the results from GEOSX (marks) and the corresponding literature reference solution (solid curves) for the normal traction and slip distributions along the horizontal fracture and opening of the vertical fracture. GEOSX reliably captures the mechanical interactions between two intersected fractures and shows excellent agreement with the reference solution. Due to sliding of the horizontal fracture, GEOSX prediction as well as the reference solution on the normal opening of pressurized vertical fracture deviates away from Sneddon's analytical solution, especially near the intersection point. 
+The figure below compares the results from GEOS (marks) and the corresponding literature reference solution (solid curves) for the normal traction and slip distributions along the horizontal fracture and opening of the vertical fracture. GEOS reliably captures the mechanical interactions between two intersected fractures and shows excellent agreement with the reference solution. Due to sliding of the horizontal fracture, GEOS prediction as well as the reference solution on the normal opening of pressurized vertical fracture deviates away from Sneddon's analytical solution, especially near the intersection point. 
 
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/faultMechanics/intersectFrac/intersectFracFigure.py
@@ -243,7 +243,7 @@ To go further
 
 **Feedback on this example**
 
-For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
+For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOS-DEV/GEOS/issues>`_.
 
 
 

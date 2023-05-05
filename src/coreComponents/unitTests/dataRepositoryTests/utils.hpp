@@ -7,7 +7,7 @@
 /// System includes
 #include <random>
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {

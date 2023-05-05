@@ -24,7 +24,7 @@
 #include "mesh/MeshForLoopInterface.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -92,4 +92,4 @@ HybridMimeticDiscretization & FiniteVolumeManager::getHybridMimeticDiscretizatio
 }
 
 
-} // namespace geosx
+} // namespace geos

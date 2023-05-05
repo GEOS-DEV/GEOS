@@ -16,14 +16,14 @@
  * @file SimpleInnerProduct.hpp
  */
 
-#ifndef GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_SIMPLEINNERPRODUCT_HPP_
-#define GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_SIMPLEINNERPRODUCT_HPP_
+#ifndef GEOS_FINITEVOLUME_MIMETICINNERPRODUCTS_SIMPLEINNERPRODUCT_HPP_
+#define GEOS_FINITEVOLUME_MIMETICINNERPRODUCTS_SIMPLEINNERPRODUCT_HPP_
 
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductHelpers.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace mimeticInnerProduct
 {
@@ -52,7 +52,7 @@ public:
    * @details Reference: K-A Lie, An Introduction to Reservoir Simulation Using MATLAB/GNU Octave (2019)
    */
   template< localIndex NF >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
            arrayView1d< real64 const > const & transMultiplier,
@@ -67,7 +67,7 @@ public:
 };
 
 template< localIndex NF >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 SimpleInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                              arrayView1d< real64 const > const & transMultiplier,
@@ -196,7 +196,7 @@ SimpleInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITIO
 
 } // end namespace mimeticInnerProduct
 
-} // end namespace geosx
+} // end namespace geos
 
 
-#endif //GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_SIMPLEINNERPRODUCT_HPP_
+#endif //GEOS_FINITEVOLUME_MIMETICINNERPRODUCTS_SIMPLEINNERPRODUCT_HPP_

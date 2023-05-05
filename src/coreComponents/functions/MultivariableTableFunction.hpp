@@ -16,15 +16,15 @@
  * @file MultivariableTableFunction.hpp
  */
 
-#ifndef GEOSX_FUNCTIONS_MULTIVARIABLETABLEFUNCTION_HPP_
-#define GEOSX_FUNCTIONS_MULTIVARIABLETABLEFUNCTION_HPP_
+#ifndef GEOS_FUNCTIONS_MULTIVARIABLETABLEFUNCTION_HPP_
+#define GEOS_FUNCTIONS_MULTIVARIABLETABLEFUNCTION_HPP_
 
 #include "FunctionBase.hpp"
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -99,12 +99,12 @@ public:
                  SortedArrayView< localIndex const > const & set,
                  arrayView1d< real64 > const & result ) const override final
   {
-    GEOSX_UNUSED_VAR( group );
-    GEOSX_UNUSED_VAR( time );
-    GEOSX_UNUSED_VAR( set );
-    GEOSX_UNUSED_VAR( result );
+    GEOS_UNUSED_VAR( group );
+    GEOS_UNUSED_VAR( time );
+    GEOS_UNUSED_VAR( set );
+    GEOS_UNUSED_VAR( result );
 
-    GEOSX_ERROR( "This method is not supported by MultivariableTableFunction" );
+    GEOS_ERROR( "This method is not supported by MultivariableTableFunction" );
 
   };
 
@@ -115,9 +115,9 @@ public:
    */
   virtual real64 evaluate( real64 const * const input ) const override final
   {
-    GEOSX_UNUSED_VAR( input );
+    GEOS_UNUSED_VAR( input );
 
-    GEOSX_ERROR( "This method is not supported by MultivariableTableFunction" );
+    GEOS_ERROR( "This method is not supported by MultivariableTableFunction" );
     return 0;
   };
 
@@ -228,6 +228,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FUNCTIONS_MULTIVARIABLETABLEFUNCTION_HPP_ */
+#endif /* GEOS_FUNCTIONS_MULTIVARIABLETABLEFUNCTION_HPP_ */

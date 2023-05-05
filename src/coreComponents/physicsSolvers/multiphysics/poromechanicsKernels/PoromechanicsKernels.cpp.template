@@ -2,7 +2,6 @@
 #include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanics_impl.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics_impl.hpp"
 #include "policies.hpp"
 
 
@@ -14,7 +13,7 @@ template real64 NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >::kerne
                                                                                         NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > const & ); \
 
 
-namespace geosx
+namespace geos
 {
 using namespace constitutive;
 using namespace finiteElement;
@@ -22,10 +21,6 @@ namespace poromechanicsKernels
 {
   INSTANTIATION( SinglePhasePoromechanics )
   INSTANTIATION( MultiphasePoromechanics )  
-}
-namespace thermalPoromechanicsKernels
-{
-  INSTANTIATION( ThermalSinglePhasePoromechanics )
 }
 namespace poromechanicsEFEMKernels
 {

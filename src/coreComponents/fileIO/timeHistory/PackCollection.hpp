@@ -12,13 +12,13 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_FILEIO_TIMEHISTORY_PACKCOLLECTION_HPP_
-#define GEOSX_FILEIO_TIMEHISTORY_PACKCOLLECTION_HPP_
+#ifndef GEOS_FILEIO_TIMEHISTORY_PACKCOLLECTION_HPP_
+#define GEOS_FILEIO_TIMEHISTORY_PACKCOLLECTION_HPP_
 
 #include "mesh/DomainPartition.hpp"
 #include "HistoryCollectionBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -43,10 +43,10 @@ public:
 
   virtual void initializePostSubGroups() override;
 
-  /// @copydoc geosx::HistoryCollection::getMetaData
+  /// @copydoc geos::HistoryCollection::getMetaData
   virtual HistoryMetadata getMetaData( DomainPartition const & domain, localIndex collectionIdx ) const override;
 
-  /// @copydoc geosx::HistoryCollection::getTargetName
+  /// @copydoc geos::HistoryCollection::getTargetName
   virtual const string & getTargetName() const override
   {
     return m_fieldName;
@@ -92,7 +92,7 @@ private:
     m_disableCoordCollection = true;
   }
 
-  /// @copydoc geosx::HistoryCollection::collect
+  /// @copydoc geos::HistoryCollection::collect
   void collect( DomainPartition const & domain,
                 localIndex const collectionIdx,
                 buffer_unit_type * & buffer ) override;

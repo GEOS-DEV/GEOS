@@ -103,7 +103,7 @@ protected:
   void testParseBuffer() const
   {
     std::vector< T > vec;
-    char const * ptr = geosx::parseBuffer( input.data(), input.data() + input.size(), vec, issep );
+    char const * ptr = geos::parseBuffer( input.data(), input.data() + input.size(), vec, issep );
     EXPECT_EQ( ptr, input.data() + input.size() );
     compareToReference( vec );
   }
@@ -112,19 +112,19 @@ protected:
   {
     std::vector< T > vec;
     auto const issep_invalid = []( char const c ){ return c == '|'; };
-    char const * ptr = geosx::parseBuffer( input.data(), input.data() + input.size(), vec, issep_invalid );
+    char const * ptr = geos::parseBuffer( input.data(), input.data() + input.size(), vec, issep_invalid );
     EXPECT_NE( ptr, input.data() + input.size() );
   }
 
   void testParseFile() const
   {
-    std::string const fname = GEOSX_FMT( "testParsing_{}_input", typeid(T).name() );
+    std::string const fname = GEOS_FMT( "testParsing_{}_input", typeid(T).name() );
     std::ofstream os( fname );
     os << input;
     os.close();
 
     std::vector< T > vec;
-    geosx::parseFile( fname, vec, issep );
+    geos::parseFile( fname, vec, issep );
     compareToReference( vec );
 
     std::remove( fname.c_str() );
@@ -132,14 +132,14 @@ protected:
 
   void testParseFileInvalid() const
   {
-    std::string const fname = GEOSX_FMT( "testParsing_{}_input_invalid", typeid(T).name() );
+    std::string const fname = GEOS_FMT( "testParsing_{}_input_invalid", typeid(T).name() );
     std::ofstream os( fname );
     os << input;
     os.close();
 
     std::vector< T > vec;
     auto const issep_invalid = []( char const c ){ return c == '|'; };
-    EXPECT_THROW( geosx::parseFile( fname, vec, issep_invalid ), std::runtime_error );
+    EXPECT_THROW( geos::parseFile( fname, vec, issep_invalid ), std::runtime_error );
 
     std::remove( fname.c_str() );
   }

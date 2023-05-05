@@ -19,7 +19,7 @@
 #include "functions/FunctionManager.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -92,17 +92,17 @@ BlackOilFluidBase::BlackOilFluidBase( string const & name,
 
 void BlackOilFluidBase::fillWaterData( array1d< array1d< real64 > > const & tableValues )
 {
-  GEOSX_THROW_IF_NE_MSG( tableValues.size(), 1,
-                         getFullName() << ": the water table must contain one line and only one",
-                         InputError );
-  GEOSX_THROW_IF_NE_MSG( tableValues[0].size(), 4,
-                         getFullName() << ": four columns (pressure, formation volume factor, compressibility, and viscosity) are expected for water",
-                         InputError );
+  GEOS_THROW_IF_NE_MSG( tableValues.size(), 1,
+                        getFullName() << ": the water table must contain one line and only one",
+                        InputError );
+  GEOS_THROW_IF_NE_MSG( tableValues[0].size(), 4,
+                        getFullName() << ": four columns (pressure, formation volume factor, compressibility, and viscosity) are expected for water",
+                        InputError );
 
-  GEOSX_THROW_IF( m_waterParams.referencePressure > 0.0 || m_waterParams.formationVolFactor > 0.0 ||
-                  m_waterParams.compressibility > 0.0 || m_waterParams.viscosity > 0.0,
-                  getFullName() << ": input is redundant (user provided both water data and a water pvt file)",
-                  InputError );
+  GEOS_THROW_IF( m_waterParams.referencePressure > 0.0 || m_waterParams.formationVolFactor > 0.0 ||
+                 m_waterParams.compressibility > 0.0 || m_waterParams.viscosity > 0.0,
+                 getFullName() << ": input is redundant (user provided both water data and a water pvt file)",
+                 InputError );
 
   m_waterParams.referencePressure = tableValues[0][0];
   m_waterParams.formationVolFactor = tableValues[0][1];
@@ -122,9 +122,9 @@ void BlackOilFluidBase::fillHydrocarbonData( integer const ip,
 
   for( localIndex i = 0; i < tableValues.size(); ++i )
   {
-    GEOSX_THROW_IF_NE_MSG( tableValues[i].size(), 3,
-                           getFullName() << ": three columns (pressure, formation volume factor, and viscosity) are expected for oil and gas",
-                           InputError );
+    GEOS_THROW_IF_NE_MSG( tableValues[i].size(), 3,
+                          getFullName() << ": three columns (pressure, formation volume factor, and viscosity) are expected for oil and gas",
+                          InputError );
 
     pressureCoords[0][i] = tableValues[i][0];
     formationVolFactor[i] = tableValues[i][1];
@@ -186,9 +186,9 @@ void BlackOilFluidBase::postProcessInput()
 
   auto const checkInputSize = [&]( auto const & array, auto const & attribute )
   {
-    GEOSX_THROW_IF_NE_MSG( array.size(), m_phaseNames.size(),
-                           GEOSX_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
-                           InputError );
+    GEOS_THROW_IF_NE_MSG( array.size(), m_phaseNames.size(),
+                          GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
+                          InputError );
   };
   checkInputSize( m_surfacePhaseMassDensity, viewKeyStruct::surfacePhaseMassDensitiesString() );
   checkInputSize( m_componentMolarWeight, viewKeyStruct::componentMolarWeightString() );
@@ -215,9 +215,9 @@ void BlackOilFluidBase::createAllKernelWrappers()
 {
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
-  GEOSX_THROW_IF( m_hydrocarbonPhaseOrder.size() != 1 && m_hydrocarbonPhaseOrder.size() != 2,
-                  GEOSX_FMT( "{}: the number of hydrocarbon phases must be 1 (oil) or 2 (oil+gas)", getFullName() ),
-                  InputError );
+  GEOS_THROW_IF( m_hydrocarbonPhaseOrder.size() != 1 && m_hydrocarbonPhaseOrder.size() != 2,
+                 GEOS_FMT( "{}: the number of hydrocarbon phases must be 1 (oil) or 2 (oil+gas)", getFullName() ),
+                 InputError );
 
   if( m_formationVolFactorTables.empty() && m_viscosityTables.empty() )
   {
@@ -242,31 +242,31 @@ void BlackOilFluidBase::validateTable( TableFunction const & table,
                                        bool warningIfDecreasing ) const
 {
   arrayView1d< real64 const > const property = table.getValues();
-  GEOSX_THROW_IF_NE_MSG( table.getInterpolationMethod(), TableFunction::InterpolationType::Linear,
-                         GEOSX_FMT( "{}: in table '{}' interpolation method must be linear", getFullName(), table.getName() ),
-                         InputError );
-  GEOSX_THROW_IF_LT_MSG( property.size(), 2,
-                         GEOSX_FMT( "{}: table '{}' must contain at least two values", getFullName(), table.getName() ),
-                         InputError );
+  GEOS_THROW_IF_NE_MSG( table.getInterpolationMethod(), TableFunction::InterpolationType::Linear,
+                        GEOS_FMT( "{}: in table '{}' interpolation method must be linear", getFullName(), table.getName() ),
+                        InputError );
+  GEOS_THROW_IF_LT_MSG( property.size(), 2,
+                        GEOS_FMT( "{}: table '{}' must contain at least two values", getFullName(), table.getName() ),
+                        InputError );
 
   // we don't check the first interval, as the first value may be used to specify surface conditions
   // we only issue a warning here, as we still want to allow this configuration
   for( localIndex i = 3; i < property.size(); ++i )
   {
-    GEOSX_THROW_IF( (property[i] - property[i-1]) * (property[i-1] - property[i-2]) < 0,
-                    GEOSX_FMT( "{}: in table '{}', viscosity values must be monotone", getFullName(), table.getName() ),
-                    InputError );
+    GEOS_THROW_IF( (property[i] - property[i-1]) * (property[i-1] - property[i-2]) < 0,
+                   GEOS_FMT( "{}: in table '{}', viscosity values must be monotone", getFullName(), table.getName() ),
+                   InputError );
   }
 
   // we don't check the first value, as it may be used to specify surface conditions
   for( localIndex i = 2; i < property.size(); ++i )
   {
-    GEOSX_LOG_RANK_0_IF( ( property[i] - property[i-1] < 0 ) && warningIfDecreasing,
-                         GEOSX_FMT( "{}: Warning! in table '{}', values must be increasing as a function of pressure, please check your PVT tables",
-                                    getFullName(), table.getName() ) );
-    GEOSX_LOG_RANK_0_IF( ( property[i] - property[i-1] > 0 ) && !warningIfDecreasing,
-                         GEOSX_FMT( "{}: Warning! In table '{}', values must be decreasing as a function of pressure, please check your PVT tables",
-                                    getFullName(), table.getName() ) );
+    GEOS_LOG_RANK_0_IF( ( property[i] - property[i-1] < 0 ) && warningIfDecreasing,
+                        GEOS_FMT( "{}: Warning! in table '{}', values must be increasing as a function of pressure, please check your PVT tables",
+                                  getFullName(), table.getName() ) );
+    GEOS_LOG_RANK_0_IF( ( property[i] - property[i-1] > 0 ) && !warningIfDecreasing,
+                        GEOS_FMT( "{}: Warning! In table '{}', values must be decreasing as a function of pressure, please check your PVT tables",
+                                  getFullName(), table.getName() ) );
   }
 }
 
@@ -275,9 +275,9 @@ void BlackOilFluidBase::validateWaterParams() const
 {
   auto const checkPositiveValue = [&]( real64 const value, auto const & attribute )
   {
-    GEOSX_THROW_IF_LE_MSG( value, 0.0,
-                           GEOSX_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
-                           InputError );
+    GEOS_THROW_IF_LE_MSG( value, 0.0,
+                          GEOS_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
+                          InputError );
   };
   checkPositiveValue( m_waterParams.referencePressure, viewKeyStruct::waterRefPressureString() );
   checkPositiveValue( m_waterParams.formationVolFactor, viewKeyStruct::waterFormationVolumeFactorString() );
@@ -324,4 +324,4 @@ BlackOilFluidBase::KernelWrapper::
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

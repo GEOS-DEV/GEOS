@@ -21,7 +21,7 @@
 #include "constitutive/fluid/PVTFunctions/CO2EOSSolver.hpp"
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace stringutilities;
@@ -223,7 +223,7 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_THROW( GEOSX_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
+    GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
   }
 
   array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
@@ -296,4 +296,4 @@ REGISTER_CATALOG_ENTRY( PVTFunctionBase, SpanWagnerCO2Density, string const &, s
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

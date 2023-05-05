@@ -16,13 +16,13 @@
  * @file ImplicitSmallStrainNewmark.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINNEWMARK_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINNEWMARK_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINNEWMARK_HPP_
+#define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINNEWMARK_HPP_
 
 #include "ImplicitSmallStrainQuasiStatic.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 namespace solidMechanicsLagrangianFEMKernels
@@ -37,7 +37,7 @@ namespace solidMechanicsLagrangianFEMKernels
  * Implements the KernelBase interface functions required for solving the
  * equations of motion using with an Implicit Newmark's Method with one of the
  * "finite element kernel application" functions such as
- * geosx::finiteElement::RegionBasedKernelApplication.
+ * geos::finiteElement::RegionBasedKernelApplication.
  *
  */
 template< typename SUBREGION_TYPE,
@@ -115,7 +115,7 @@ public:
     using Base::StackVariables::maxNumCols;
 
     /// Constructor.
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
             dRdU_InertiaMassDamping{ {0.0} },
@@ -142,17 +142,17 @@ public:
    * predictor, and the incremental displacement predictor are placed into
    * element local stack storage.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const k,
               StackVariables & stack ) const;
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
+   * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
    *
    * The ImplcitNewmark kernel adds the calculation of the inertia damping,
    * jacobian and residual contributions.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const;
@@ -163,12 +163,12 @@ public:
    * The ImplicitNewmark implementation adds residual and jacobian
    * contributions from  stiffness based damping.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::kernelLaunch
+   * @copydoc geos::finiteElement::KernelBase::kernelLaunch
    */
   template< typename POLICY,
             typename KERNEL_TYPE >
@@ -217,8 +217,8 @@ using ImplicitNewmarkFactory = finiteElement::KernelFactory< ImplicitSmallStrain
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
-} // namespace geosx
+} // namespace geos
 
 #include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
-#endif //GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINNEWMARK_HPP_
+#endif //GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINNEWMARK_HPP_

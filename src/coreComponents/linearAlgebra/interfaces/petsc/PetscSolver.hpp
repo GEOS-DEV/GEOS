@@ -16,8 +16,8 @@
  * @file PetscSolver.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_PETSCSOLVER_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_PETSCSOLVER_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_PETSCSOLVER_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_PETSCSOLVER_HPP_
 
 #include "linearAlgebra/interfaces/petsc/PetscInterface.hpp"
 #include "linearAlgebra/interfaces/petsc/PetscPreconditioner.hpp"
@@ -26,7 +26,7 @@
 /// Forward declare PETSC's solver struct
 extern "C" struct _p_KSP;
 
-namespace geosx
+namespace geos
 {
 
 /**

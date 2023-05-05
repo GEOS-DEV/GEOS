@@ -16,14 +16,14 @@
  * @file FunctionManager.hpp
  */
 
-#ifndef GEOSX_FUNCTIONS_FUNCTIONMANAGER_HPP_
-#define GEOSX_FUNCTIONS_FUNCTIONMANAGER_HPP_
+#ifndef GEOS_FUNCTIONS_FUNCTIONMANAGER_HPP_
+#define GEOS_FUNCTIONS_FUNCTIONMANAGER_HPP_
 
 #include "FunctionBase.hpp"
 
 #include "dataRepository/Group.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -34,7 +34,7 @@ namespace geosx
 class FunctionManager : public dataRepository::Group
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   FunctionManager( const string & name,
                    dataRepository::Group * const parent );
 
@@ -71,6 +71,6 @@ private:
   static FunctionManager * m_instance;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FUNCTIONS_FUNCTIONMANAGER_HPP_ */
+#endif /* GEOS_FUNCTIONS_FUNCTIONMANAGER_HPP_ */

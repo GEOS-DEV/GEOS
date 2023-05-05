@@ -26,9 +26,9 @@
 // TPL includes
 #include <gtest/gtest.h>
 
-using namespace geosx;
-using namespace geosx::constitutive;
-using namespace geosx::dataRepository;
+using namespace geos;
+using namespace geos::constitutive;
+using namespace geos::dataRepository;
 
 
 void RegisterAndApplyField( DomainPartition & domain,
@@ -82,19 +82,19 @@ TEST( FieldSpecification, Recursive )
     CellBlockManager & cellBlockManager = domain.registerGroup< CellBlockManager >( keys::cellManager );
 
     CellBlock & reg0Hex = cellBlockManager.registerCellBlock( "reg0hex" );
-    reg0Hex.setElementType( geosx::ElementType::Hexahedron );
+    reg0Hex.setElementType( geos::ElementType::Hexahedron );
     reg0Hex.resize( nbHexReg0 );
 
     CellBlock & reg0Tet = cellBlockManager.registerCellBlock( "reg0tet" );
-    reg0Tet.setElementType( geosx::ElementType::Tetrahedron );
+    reg0Tet.setElementType( geos::ElementType::Tetrahedron );
     reg0Tet.resize( nbTetReg0 );
 
     CellBlock & reg1Hex = cellBlockManager.registerCellBlock( "reg1hex" );
-    reg1Hex.setElementType( geosx::ElementType::Hexahedron );
+    reg1Hex.setElementType( geos::ElementType::Hexahedron );
     reg1Hex.resize( nbHexReg1 );
 
     CellBlock & reg1Tet = cellBlockManager.registerCellBlock( "reg1tet" );
-    reg1Tet.setElementType( geosx::ElementType::Tetrahedron );
+    reg1Tet.setElementType( geos::ElementType::Tetrahedron );
     reg1Tet.resize( nbTetReg1 );
 
     reg0.addCellBlockName( reg0Hex.getName() );
@@ -177,7 +177,7 @@ TEST( FieldSpecification, Recursive )
       real64 const & value = field0[er][esr][ei];
       // This `value < x || value > x` is there because of compiler warning (converted to error)
       // making floating points comparisons using `==` impossible even for integers...
-      GEOSX_ERROR_IF( value< 1. || value > 1., "Recursive fields are not set, value is " + std::to_string( value ) + "." );
+      GEOS_ERROR_IF( value< 1. || value > 1., "Recursive fields are not set, value is " + std::to_string( value ) + "." );
     } );
   } );
 
@@ -187,20 +187,20 @@ TEST( FieldSpecification, Recursive )
     forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
       real64 const & value = field1[0][esr][ei];
-      GEOSX_ERROR_IF( value< 2. || value > 2., "Recursive fields are not set, value is " + std::to_string( value ) + "." );
+      GEOS_ERROR_IF( value< 2. || value > 2., "Recursive fields are not set, value is " + std::to_string( value ) + "." );
     } );
   } );
 
   forAll< serialPolicy >( nbHexReg0, [=] ( localIndex const ei )
   {
     real64 const & value = field2[0][0][ei];
-    GEOSX_ERROR_IF( value< 3. || value > 3., "Recursive fields are not set, value is " + std::to_string( value ) + "." );
+    GEOS_ERROR_IF( value< 3. || value > 3., "Recursive fields are not set, value is " + std::to_string( value ) + "." );
   } );
 
   forAll< serialPolicy >( nbTetReg1, [=] ( localIndex const ei )
   {
     real64 const & value = field3[1][1][ei];
-    GEOSX_ERROR_IF( value< 4. || value > 4., "Recursive fields are not set, value is " + std::to_string( value ) + "." );
+    GEOS_ERROR_IF( value< 4. || value > 4., "Recursive fields are not set, value is " + std::to_string( value ) + "." );
   } );
 }
 

@@ -18,7 +18,7 @@
 
 #include "ElasticTransverseIsotropic.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -163,4 +163,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticTransverseIsotropic, string con
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */

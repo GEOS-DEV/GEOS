@@ -78,6 +78,8 @@ def main():
     
     plt.legend(loc='upper left')
     plt.show()
+    # plt.savefig('displacement.png')
+
 
     
 if __name__ == "__main__":

@@ -20,7 +20,7 @@
 #include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
 #include "SinglePhasePoromechanicsFluxKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace singlePhasePoromechanicsFluxKernels
@@ -50,8 +50,8 @@ void EmbeddedSurfaceFluxKernel::
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                            arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_UNUSED_VAR( jumpDofNumber );
-  GEOSX_UNUSED_VAR( dPerm_dDispJump );
+  GEOS_UNUSED_VAR( jumpDofNumber );
+  GEOS_UNUSED_VAR( dPerm_dDispJump );
 
   singlePhaseFVMKernels::FluxKernel::launch( stencilWrapper,
                                              dt,
@@ -90,8 +90,8 @@ void EmbeddedSurfaceFluxKernel::
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_UNUSED_VAR( jumpDofNumber );
-  GEOSX_UNUSED_VAR( dPerm_dDispJump );
+  GEOS_UNUSED_VAR( jumpDofNumber );
+  GEOS_UNUSED_VAR( dPerm_dDispJump );
 
   singlePhaseFVMKernels::FluxKernel::launch( stencilWrapper,
                                              dt,
@@ -138,7 +138,7 @@ void EmbeddedSurfaceFluxKernel::
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
-  forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+  forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
   {
     localIndex const stencilSize = stencilWrapper.stencilSize( iconn );
     localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
@@ -150,9 +150,9 @@ void EmbeddedSurfaceFluxKernel::
     stackArray2d< real64, MAX_NUM_FLUX_ELEMS * maxStencilSize * 4 > localFluxJacobian( numFluxElems, numDofs );
 
     // compute transmissibility
-    real64 transmissibility[SurfaceElementStencilWrapper::maxNumConnections][2];
-    real64 dTrans_dPres[SurfaceElementStencilWrapper::maxNumConnections][2];
-    real64 dTrans_dDispJump[SurfaceElementStencilWrapper::maxNumConnections][2][3];
+    real64 transmissibility[SurfaceElementStencilWrapper::maxNumConnections][2]{};
+    real64 dTrans_dPres[SurfaceElementStencilWrapper::maxNumConnections][2]{};
+    real64 dTrans_dDispJump[SurfaceElementStencilWrapper::maxNumConnections][2][3]{}; // make sure that this is initialized!
 
     stencilWrapper.computeWeights( iconn,
                                    permeability,
@@ -196,8 +196,8 @@ void EmbeddedSurfaceFluxKernel::
       {
         globalIndex const globalRow = pressureDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
         localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
-        GEOSX_ASSERT_GE( localRow, 0 );
-        GEOSX_ASSERT_GT( localMatrix.numRows(), localRow );
+        GEOS_ASSERT_GE( localRow, 0 );
+        GEOS_ASSERT_GT( localMatrix.numRows(), localRow );
 
         RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux[i] );
         localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
@@ -229,7 +229,7 @@ void EmbeddedSurfaceFluxKernel::
            arraySlice1d< real64 > const & flux,
            arraySlice2d< real64 > const & fluxJacobian )
 {
-  GEOSX_UNUSED_VAR( numFluxElems );
+  GEOS_UNUSED_VAR( numFluxElems );
 
   real64 fluxVal = 0.0;
   real64 dFlux_dTrans = 0.0;
@@ -304,8 +304,8 @@ void FaceElementFluxKernel::
                                            arrayView1d< real64 > const & localRhs,
                                            CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {
-  GEOSX_UNUSED_VAR( dPerm_dDispJump );
-  GEOSX_UNUSED_VAR( dR_dAper );
+  GEOS_UNUSED_VAR( dPerm_dDispJump );
+  GEOS_UNUSED_VAR( dR_dAper );
 
   singlePhaseFVMKernels::FluxKernel::launch( stencilWrapper,
                                              dt,
@@ -344,8 +344,8 @@ void FaceElementFluxKernel::
                                              arrayView1d< real64 > const & localRhs,
                                              CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {
-  GEOSX_UNUSED_VAR( dPerm_dDispJump );
-  GEOSX_UNUSED_VAR( dR_dAper );
+  GEOS_UNUSED_VAR( dPerm_dDispJump );
+  GEOS_UNUSED_VAR( dR_dAper );
 
   singlePhaseFVMKernels::FluxKernel::launch( stencilWrapper,
                                              dt,
@@ -391,7 +391,7 @@ void FaceElementFluxKernel::
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
-  forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+  forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
   {
     localIndex const stencilSize = stencilWrapper.stencilSize( iconn );
     localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
@@ -414,9 +414,9 @@ void FaceElementFluxKernel::
       stackArray2d< real64, maxNumFluxElems * maxStencilSize > dFlux_dAper( numFluxElems, stencilSize );
 
       // compute transmissibility
-      real64 transmissibility[SurfaceElementStencilWrapper::maxNumConnections][2];
-      real64 dTrans_dPres[SurfaceElementStencilWrapper::maxNumConnections][2];
-      real64 dTrans_dDispJump[SurfaceElementStencilWrapper::maxNumConnections][2][3];
+      real64 transmissibility[SurfaceElementStencilWrapper::maxNumConnections][2]{};
+      real64 dTrans_dPres[SurfaceElementStencilWrapper::maxNumConnections][2]{};
+      real64 dTrans_dDispJump[SurfaceElementStencilWrapper::maxNumConnections][2][3]{};
 
       stencilWrapper.computeWeights( iconn,
                                      permeability,
@@ -457,8 +457,8 @@ void FaceElementFluxKernel::
         {
           globalIndex const globalRow = pressureDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
           localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
-          GEOSX_ASSERT_GE( localRow, 0 );
-          GEOSX_ASSERT_GT( localMatrix.numRows(), localRow );
+          GEOS_ASSERT_GE( localRow, 0 );
+          GEOS_ASSERT_GT( localMatrix.numRows(), localRow );
 
           RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux[i] );
           localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
@@ -505,7 +505,7 @@ void FaceElementFluxKernel::
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
-  forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+  forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
   {
     localIndex const stencilSize = stencilWrapper.stencilSize( iconn );
     localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
@@ -529,8 +529,10 @@ void FaceElementFluxKernel::
       stackArray2d< real64, maxNumFluxElems * maxStencilSize > dFlux_dAper( numFluxElems, stencilSize );
 
       // compute transmissibility
-      real64 transmissibility[maxNumConnections][2], dTrans_dPres[maxNumConnections][2], dTrans_dDispJump[maxNumConnections][2][3];
-      GEOSX_UNUSED_VAR( dPerm_dPres, dPerm_dDispJump );
+      real64 transmissibility[maxNumConnections][2]{};
+      real64 dTrans_dPres[maxNumConnections][2]{};
+      real64 dTrans_dDispJump[maxNumConnections][2][3]{};
+      GEOS_UNUSED_VAR( dPerm_dPres, dPerm_dDispJump );
       stencilWrapper.computeWeights( iconn,
                                      permeability,
                                      permeabilityMultiplier,
@@ -568,8 +570,8 @@ void FaceElementFluxKernel::
         {
           globalIndex const globalRow = pressureDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
           localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
-          GEOSX_ASSERT_GE( localRow, 0 );
-          GEOSX_ASSERT_GT( localMatrix.numRows(), localRow );
+          GEOS_ASSERT_GE( localRow, 0 );
+          GEOS_ASSERT_GT( localMatrix.numRows(), localRow );
 
           RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux[i] );
           localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
@@ -587,7 +589,7 @@ void FaceElementFluxKernel::
 
 
 template< localIndex MAX_NUM_CONNECTIONS >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 FaceElementFluxKernel::compute( localIndex const numFluxElems,
                                 arraySlice1d< localIndex const > const & seri,
@@ -662,4 +664,4 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
 
 }// namespace singlePhaseFVMKernels
 
-} // namespace geosx
+} // namespace geos

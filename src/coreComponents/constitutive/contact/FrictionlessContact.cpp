@@ -18,7 +18,7 @@
 
 #include "FrictionlessContact.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -52,4 +52,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, FrictionlessContact, string const &, G
 
 } /* end namespace constitutive */
 
-} /* end namespace geosx */
+} /* end namespace geos */

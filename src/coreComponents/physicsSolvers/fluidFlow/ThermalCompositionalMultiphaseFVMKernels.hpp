@@ -16,15 +16,15 @@
  * @file ThermalCompositionalMultiphaseFVMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 
 #include "constitutive/thermalConductivity/MultiPhaseThermalConductivityBase.hpp"
 #include "constitutive/thermalConductivity/ThermalConductivityFields.hpp"
 #include "constitutive/thermalConductivity/MultiPhaseThermalConductivityFields.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace thermalCompositionalMultiphaseFVMKernels
@@ -71,7 +71,7 @@ public:
    * @brief Compute the phase mobilities in an element
    * @param[in] ei the element index
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( localIndex const ei ) const
   {
     using Deriv = multifluid::DerivativeOffset;
@@ -276,7 +276,7 @@ public:
   {
 public:
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
       : Base::StackVariables( size, numElems )
     {}
@@ -301,7 +301,7 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
@@ -561,7 +561,7 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack ) const
   {
@@ -799,7 +799,7 @@ public:
      * @param[in] size size of the stencil for this connection
      * @param[in] numElems number of elements for this connection
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
       : Base::StackVariables( size, numElems )
     {}
@@ -833,7 +833,7 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
@@ -999,7 +999,7 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack ) const
   {
@@ -1112,7 +1112,7 @@ public:
 
 } // namespace thermalCompositionalMultiphaseFVMKernels
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP

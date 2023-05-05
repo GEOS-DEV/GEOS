@@ -21,14 +21,14 @@
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
 using namespace constitutive;
 
-RelpermDriver::RelpermDriver( const geosx::string & name,
-                              geosx::dataRepository::Group * const parent )
+RelpermDriver::RelpermDriver( const geos::string & name,
+                              geos::dataRepository::Group * const parent )
   :
   TaskBase( name, parent )
 {
@@ -97,17 +97,17 @@ void RelpermDriver::postProcessInput()
 }
 
 
-bool RelpermDriver::execute( const geosx::real64 GEOSX_UNUSED_PARAM( time_n ),
-                             const geosx::real64 GEOSX_UNUSED_PARAM( dt ),
-                             const geosx::integer GEOSX_UNUSED_PARAM( cycleNumber ),
-                             const geosx::integer GEOSX_UNUSED_PARAM( eventCounter ),
-                             const geosx::real64 GEOSX_UNUSED_PARAM( eventProgress ),
-                             geosx::DomainPartition &
-                             GEOSX_UNUSED_PARAM( domain ) )
+bool RelpermDriver::execute( const geos::real64 GEOS_UNUSED_PARAM( time_n ),
+                             const geos::real64 GEOS_UNUSED_PARAM( dt ),
+                             const geos::integer GEOS_UNUSED_PARAM( cycleNumber ),
+                             const geos::integer GEOS_UNUSED_PARAM( eventCounter ),
+                             const geos::real64 GEOS_UNUSED_PARAM( eventProgress ),
+                             geos::DomainPartition &
+                             GEOS_UNUSED_PARAM( domain ) )
 {
   // this code only makes sense in serial
 
-  GEOSX_THROW_IF( MpiWrapper::commRank() > 0, "RelpermDriver should only be run in serial", std::runtime_error );
+  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "RelpermDriver should only be run in serial", std::runtime_error );
 
 
   constitutive::ConstitutiveManager
@@ -117,13 +117,13 @@ bool RelpermDriver::execute( const geosx::real64 GEOSX_UNUSED_PARAM( time_n ),
 
   if( getLogLevel() > 0 )
   {
-    GEOSX_LOG_RANK_0( "Launching Relperm Driver" );
-    GEOSX_LOG_RANK_0( "  Relperm .................. " << m_relpermName );
-    GEOSX_LOG_RANK_0( "  Type ................... " << baseRelperm.getCatalogName() );
-    GEOSX_LOG_RANK_0( "  No. of Phases .......... " << m_numPhases );
-    GEOSX_LOG_RANK_0( "  Steps .................. " << m_numSteps );
-    GEOSX_LOG_RANK_0( "  Output ................. " << m_outputFile );
-    GEOSX_LOG_RANK_0( "  Baseline ............... " << m_baselineFile );
+    GEOS_LOG_RANK_0( "Launching Relperm Driver" );
+    GEOS_LOG_RANK_0( "  Relperm .................. " << m_relpermName );
+    GEOS_LOG_RANK_0( "  Type ................... " << baseRelperm.getCatalogName() );
+    GEOS_LOG_RANK_0( "  No. of Phases .......... " << m_numPhases );
+    GEOS_LOG_RANK_0( "  Steps .................. " << m_numSteps );
+    GEOS_LOG_RANK_0( "  Output ................. " << m_outputFile );
+    GEOS_LOG_RANK_0( "  Baseline ............... " << m_baselineFile );
   }
 
   // create a dummy discretization with one quadrature point for
@@ -279,7 +279,7 @@ void RelpermDriver::compareWithBaseline()
   // open baseline file
 
   std::ifstream file( m_baselineFile.c_str() );
-  GEOSX_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
+  GEOS_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
 
   // discard file header
 
@@ -301,29 +301,29 @@ void RelpermDriver::compareWithBaseline()
   {
     for( integer col = 0; col < m_table.size( 1 ); ++col )
     {
-      GEOSX_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
+      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
       file >> value;
 
       real64 const error = fabs( m_table[row][col] - value ) / ( fabs( value ) + 1 );
-      GEOSX_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row + 1
-                                                                                          << " (row "
-                                                                                          << row + m_numColumns
-                                                                                          << " with header)"
-                                                                                          << " and column " << col + 1,
-                      std::runtime_error );
+      GEOS_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row + 1
+                                                                                         << " (row "
+                                                                                         << row + m_numColumns
+                                                                                         << " with header)"
+                                                                                         << " and column " << col + 1,
+                     std::runtime_error );
     }
   }
 
   // check we actually reached the end of the baseline file
 
   file >> value;
-  GEOSX_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
+  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
 
   // success
 
   if( getLogLevel() > 0 )
   {
-    GEOSX_LOG_RANK_0( "  Comparison ............. Internal results consistent with baseline." );
+    GEOS_LOG_RANK_0( "  Comparison ............. Internal results consistent with baseline." );
   }
 
   file.close();

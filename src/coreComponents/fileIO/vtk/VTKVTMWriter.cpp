@@ -17,7 +17,7 @@
 
 #include "common/MpiWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace vtk
 {
@@ -66,4 +66,4 @@ void VTKVTMWriter::addDataSet( std::vector< string > const & blockPath,
 }
 
 } // namespace vtk
-} // namespace geosx
+} // namespace geos

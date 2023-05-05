@@ -22,7 +22,7 @@
 // System includes
 #include <chrono>
 
-using namespace geosx;
+using namespace geos;
 
 
 int main( int argc, char *argv[] )
@@ -54,9 +54,9 @@ int main( int argc, char *argv[] )
 
     std::chrono::system_clock::duration const totalTime = std::chrono::system_clock::now() - startTime;
 
-    GEOSX_LOG_RANK_0( "total time          " << durationToString( totalTime ) );
-    GEOSX_LOG_RANK_0( "initialization time " << durationToString( initTime ) );
-    GEOSX_LOG_RANK_0( "run time            " << durationToString( runTime ) );
+    GEOS_LOG_RANK_0( "total time          " << durationToString( totalTime ) );
+    GEOS_LOG_RANK_0( "initialization time " << durationToString( initTime ) );
+    GEOS_LOG_RANK_0( "run time            " << durationToString( runTime ) );
 
     return 0;
   }
@@ -67,7 +67,7 @@ int main( int argc, char *argv[] )
   }
   catch( std::exception const & e )
   {
-    GEOSX_LOG( e.what() );
+    GEOS_LOG( e.what() );
     LvArray::system::callErrorHandler();
     std::abort();
   }
