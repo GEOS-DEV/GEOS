@@ -1022,20 +1022,14 @@
 		<xsd:attribute name="bcTable" type="real64_array2d" />
 		<!--binSizeMultiplier => Multiplier for setting bin size, used to speed up particle neighbor sorting-->
 		<xsd:attribute name="binSizeMultiplier" type="integer" />
-		<!--domainLengths => Lengths of each side of the computational domain-->
-		<xsd:attribute name="domainLengths" type="std_array&lt;double, 3ul&gt;" />
 		<!--fTable => Array that stores time-dependent grid-aligned stretches interpreted as a global background grid F.-->
 		<xsd:attribute name="fTable" type="real64_array2d" />
-		<!--hEl => Element dimensions-->
-		<xsd:attribute name="hEl" type="std_array&lt;double, 3ul&gt;" />
-		<!--ijkMap => Map from indices in each spatial dimension to local node ID-->
-		<xsd:attribute name="ijkMap" type="integer_array3d" />
+		<!--m_ijkMap => Map from indices in each spatial dimension to local node ID-->
+		<xsd:attribute name="m_ijkMap" type="integer_array3d" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
-		<!--nEl => Number of elements in each spatial dimension-->
-		<xsd:attribute name="nEl" type="std_array&lt;int, 3ul&gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 		<!--numContactFlags => Number of contact flags that can appear due to damage-->
 		<xsd:attribute name="numContactFlags" type="integer" />
 		<!--numContactGroups => Number of prescribed contact groups-->
@@ -1046,18 +1040,6 @@
 		<xsd:attribute name="numVelocityFields" type="integer" />
 		<!--smallMass => The small mass threshold for ignoring extremely low-mass nodes.-->
 		<xsd:attribute name="smallMass" type="real64" />
-		<!--xGlobalMax => Global maximum grid extent excluding buffer cells-->
-		<xsd:attribute name="xGlobalMax" type="std_array&lt;double, 3ul&gt;" />
-		<!--xGlobalMin => Global minimum grid extent excluding buffer cells-->
-		<xsd:attribute name="xGlobalMin" type="std_array&lt;double, 3ul&gt;" />
-		<!--xLocalMax => Local maximum grid extent including ghosts-->
-		<xsd:attribute name="xLocalMax" type="std_array&lt;double, 3ul&gt;" />
-		<!--xLocalMaxNoGhost => Local maximum grid extent excluding ghosts-->
-		<xsd:attribute name="xLocalMaxNoGhost" type="std_array&lt;double, 3ul&gt;" />
-		<!--xLocalMin => Local minimum grid extent including ghosts-->
-		<xsd:attribute name="xLocalMin" type="std_array&lt;double, 3ul&gt;" />
-		<!--xLocalMinNoGhost => Local minimum grid extent excluding ghosts-->
-		<xsd:attribute name="xLocalMinNoGhost" type="std_array&lt;double, 3ul&gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="SurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1548,7 +1530,7 @@
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
-		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFluidType">
@@ -2018,7 +2000,7 @@
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
-		<!--thermalExpansionCoefficient => Thermal Expansion Coefficient Field-->
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 		<!--yieldStress => Array of element yield stresses-->
 		<xsd:attribute name="yieldStress" type="real64_array" />
@@ -2461,7 +2443,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -2748,7 +2730,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->

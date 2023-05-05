@@ -2880,6 +2880,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="cpdiDomainScaling" type="integer" default="0" />
 		<!--damageFieldPartitioning => Flag for using the gradient of the particle damage field to partition material into separate velocity fields-->
 		<xsd:attribute name="damageFieldPartitioning" type="integer" default="0" />
+		<!--directionalOverlapCorrection => Flag for mitigating pile-up of particles at contact interfaces-->
+		<xsd:attribute name="directionalOverlapCorrection" type="integer" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fTableInterpType => The type of F table interpolation. Options are 0 (linear), 1 (cosine), 2 (quintic polynomial).-->
@@ -2900,21 +2902,27 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="prescribedBcTable" type="integer" default="0" />
 		<!--prescribedBoundaryFTable => Flag for whether to have time-dependent boundary conditions described by a global background grid F-->
 		<xsd:attribute name="prescribedBoundaryFTable" type="integer" default="0" />
+		<!--separabilityMinDamage => Damage threshold for field separability-->
+		<xsd:attribute name="separabilityMinDamage" type="real64" default="0.5" />
 		<!--solverProfiling => Flag for timing subroutines in the solver-->
 		<xsd:attribute name="solverProfiling" type="integer" default="0" />
+		<!--surfaceDetection => Flag for automatic surface detection on the 1st cycle-->
+		<xsd:attribute name="surfaceDetection" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeIntegrationOption => Time integration method. Options are:
 * QuasiStatic
 * ImplicitDynamic
 * ExplicitDynamic-->
-		<xsd:attribute name="timeIntegrationOption" type="geosx_SolidMechanicsMPM_TimeIntegrationOption" default="ExplicitDynamic" />
+		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsMPM_TimeIntegrationOption" default="ExplicitDynamic" />
+		<!--treatFullyDamagedAsSingleField => Whether to consolidate fully damaged fields into a single field. Nice for modeling damaged mush.-->
+		<xsd:attribute name="treatFullyDamagedAsSingleField" type="integer" default="1" />
 		<!--useDamageAsSurfaceFlag => Indicates whether particle damage at the beginning of the simulation should be interpreted as a surface flag-->
 		<xsd:attribute name="useDamageAsSurfaceFlag" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_SolidMechanicsMPM_TimeIntegrationOption">
+	<xsd:simpleType name="geos_SolidMechanicsMPM_TimeIntegrationOption">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|QuasiStatic|ImplicitDynamic|ExplicitDynamic" />
 		</xsd:restriction>
@@ -3342,7 +3350,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
 		<!--defaultShearModulus => Default Shear Modulus Parameter-->
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
-		<!--defaultThermalExpansionCoefficient => Default Thermal Expansion Coefficient-->
+		<!--defaultThermalExpansionCoefficient => Default Linear Thermal Expansion Coefficient of the Solid Rock Frame-->
 		<xsd:attribute name="defaultThermalExpansionCoefficient" type="real64" default="0" />
 		<!--defaultYoungModulus => Default Young's Modulus-->
 		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
@@ -3971,7 +3979,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
 		<!--defaultShearModulus => Default Shear Modulus Parameter-->
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
-		<!--defaultThermalExpansionCoefficient => Default Thermal Expansion Coefficient-->
+		<!--defaultThermalExpansionCoefficient => Default Linear Thermal Expansion Coefficient of the Solid Rock Frame-->
 		<xsd:attribute name="defaultThermalExpansionCoefficient" type="real64" default="0" />
 		<!--defaultYieldStress => Default yield stress-->
 		<xsd:attribute name="defaultYieldStress" type="real64" default="1.79769e+308" />
