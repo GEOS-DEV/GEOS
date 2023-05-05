@@ -18,7 +18,7 @@
 
 #include "PerfectlyPlastic.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 namespace constitutive
@@ -57,7 +57,7 @@ void PerfectlyPlastic::postProcessInput()
 {
   ElasticIsotropic::postProcessInput();
 
-  GEOSX_THROW_IF( m_defaultYieldStress < 0.0, "Negative yield stress detected", InputError );
+  GEOS_THROW_IF( m_defaultYieldStress < 0.0, "Negative yield stress detected", InputError );
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::yieldStressString() ).setApplyDefaultValue( m_defaultYieldStress );
 }
@@ -71,4 +71,4 @@ void PerfectlyPlastic::saveConvergedState() const
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PerfectlyPlastic, std::string const &, Group * const )
 }
-} /* namespace geosx */
+} /* namespace geos */

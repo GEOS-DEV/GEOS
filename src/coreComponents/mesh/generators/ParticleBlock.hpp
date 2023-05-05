@@ -21,7 +21,7 @@
 #include "mesh/generators/ParticleBlockABC.hpp"
 #include "mesh/ParticleType.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

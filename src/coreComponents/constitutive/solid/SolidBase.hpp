@@ -201,7 +201,7 @@ public:
    * @param[out] stress New stress value (Cauchy stress)
    * @param[out] stiffness New tangent stiffness value
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate2( localIndex const k,
                                    localIndex const q,
                                    real64 const dt,
@@ -209,7 +209,7 @@ public:
                                    real64 ( & stress )[6],
                                    real64 ( & stiffness )[6][6] ) const
   {
-    GEOSX_UNUSED_VAR( dt );
+    GEOS_UNUSED_VAR( dt );
     smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
   }
 
@@ -309,7 +309,7 @@ public:
    * @param[out] stress New stress value (Cauchy stress)
    * @param[out] stiffness New stiffness value
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void hypoUpdate2( localIndex const k,
                             localIndex const q,
                             real64 const dt,
@@ -427,14 +427,14 @@ public:
    * @param[in] strainIncrement Strain increment in Voight notation (linearized strain)
    * @param[out] stress New stress value (Cauchy stress)
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate2_StressOnly( localIndex const k,
                                               localIndex const q,
                                               real64 const dt,
                                               real64 const ( &strainIncrement )[6],
                                               real64 ( & stress )[6] ) const
   {
-    GEOSX_UNUSED_VAR( dt );
+    GEOS_UNUSED_VAR( dt );
     smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
   }
 
@@ -494,7 +494,7 @@ public:
    * @param[in] RotEnd The incremental rotation tensor
    * @param[out] stress New stress value (Cauchy stress)
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void hypoUpdate2_StressOnly( localIndex const k,
                                        localIndex const q,
                                        real64 const dt,

@@ -20,7 +20,7 @@
 #include "common/DataTypes.hpp"
 #include "dataRepository/Group.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
