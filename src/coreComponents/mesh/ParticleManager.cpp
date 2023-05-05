@@ -24,7 +24,7 @@
 #include "mesh/MeshManager.hpp"
 #include "schema/schemaUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -60,7 +60,7 @@ localIndex ParticleManager::numParticleBlocks() const
 
 void ParticleManager::resize( integer_array const & numParticles,
                               string_array const & regionNames,
-                              string_array const & GEOSX_UNUSED_PARAM( particleTypes ) )
+                              string_array const & GEOS_UNUSED_PARAM( particleTypes ) )
 {
   localIndex const n_regions = LvArray::integerConversion< localIndex >( regionNames.size());
   for( localIndex reg=0; reg<n_regions; ++reg )
@@ -85,9 +85,9 @@ void ParticleManager::setMaxGlobalIndex()
 
 Group * ParticleManager::createChild( string const & childKey, string const & childName )
 {
-  GEOSX_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
+  GEOS_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
                   "KeyName ("<<childKey<<") not found in ObjectManager::Catalog" );
-  GEOSX_LOG_RANK_0( "Adding Object " << childKey << " named " << childName << " from ObjectManager::Catalog." );
+  GEOS_LOG_RANK_0( "Adding Object " << childKey << " named " << childName << " from ObjectManager::Catalog." );
 
   Group & particleRegions = this->getGroup( ParticleManager::groupKeyStruct::particleRegionsGroup() );
   return &particleRegions.registerGroup( childName,
@@ -220,7 +220,7 @@ int ParticleManager::unpackPrivate( buffer_unit_type const * & buffer,
   string name;
   unpackedSize += bufferOps::Unpack( buffer, name );
 
-  GEOSX_ERROR_IF( name != this->getName(), "Unpacked name (" << name << ") does not equal object name (" << this->getName() << ")" );
+  GEOS_ERROR_IF( name != this->getName(), "Unpacked name (" << name << ") does not equal object name (" << this->getName() << ")" );
 
   localIndex numRegionsRead;
   unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );

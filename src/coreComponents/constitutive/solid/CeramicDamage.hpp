@@ -38,7 +38,7 @@
 #include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -114,27 +114,27 @@ public:
   using ElasticIsotropicUpdates::smallStrainUpdate;
   using ElasticIsotropicUpdates::smallStrainUpdate2;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   real64 ( &stiffness )[6][6] ) const override final;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( &stress )[6] ) const override final;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate2( localIndex const k,
                                    localIndex const q,
                                    real64 const dt,
@@ -142,7 +142,7 @@ public:
                                    real64 ( &stress )[6],
                                    real64 ( &stiffness )[6][6] ) const override final;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate2( localIndex const k,
                                    localIndex const q,
                                    real64 const dt,
@@ -150,20 +150,20 @@ public:
                                    real64 ( &stress )[6],
                                    DiscretizationOps & stiffness ) const final;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate2_StressOnly( localIndex const k,
                                               localIndex const q,
                                               real64 const dt,
                                               real64 const ( &strainIncrement )[6],
                                               real64 ( &stress )[6] ) const override final;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void smallStrainUpdateHelper( localIndex const k,
                                 localIndex const q,
                                 real64 const dt,
                                 real64 ( &stress )[6] ) const;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 getStrength( const real64 damage,      // damage
                       const real64 pressure,    // pressure
                       const real64 J2,          // J2 invariant of stress
@@ -171,8 +171,8 @@ public:
                       const real64 mu,          // friction slope
                       const real64 Yt0 ) const; // strength parameter
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const override final
   {
@@ -203,24 +203,24 @@ private:
 };
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
                                               localIndex const q,
                                               real64 const ( &strainIncrement )[6],
                                               real64 ( & stress )[6],
                                               real64 ( & stiffness )[6][6] ) const
 {
-  GEOSX_UNUSED_VAR( k );
-  GEOSX_UNUSED_VAR( q );
-  GEOSX_UNUSED_VAR( strainIncrement );
-  GEOSX_UNUSED_VAR( stress );
-  GEOSX_UNUSED_VAR( stiffness );
-  GEOSX_ERROR( "smallStrainUpdate() not implemented for this model, please use smallStrainUpdate2" );
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( strainIncrement );
+  GEOS_UNUSED_VAR( stress );
+  GEOS_UNUSED_VAR( stiffness );
+  GEOS_ERROR( "smallStrainUpdate() not implemented for this model, please use smallStrainUpdate2" );
 }
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
                                               localIndex const q,
                                               real64 const ( &strainIncrement )[6],
@@ -230,22 +230,22 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
   smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );
 }
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                          localIndex const q,
                                                          real64 const ( &strainIncrement )[6],
                                                          real64 ( & stress )[6] ) const
 {
-  GEOSX_UNUSED_VAR( k );
-  GEOSX_UNUSED_VAR( q );
-  GEOSX_UNUSED_VAR( strainIncrement );
-  GEOSX_UNUSED_VAR( stress );
-  GEOSX_ERROR( "smallStrainUpdate_StressOnly() not implemented for this model, please use smallStrainUpdate2_StressOnly()" );
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( strainIncrement );
+  GEOS_UNUSED_VAR( stress );
+  GEOS_ERROR( "smallStrainUpdate_StressOnly() not implemented for this model, please use smallStrainUpdate2_StressOnly()" );
 }
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void CeramicDamageUpdates::smallStrainUpdate2( localIndex const k,
                                                localIndex const q,
                                                real64 const dt,
@@ -273,8 +273,8 @@ void CeramicDamageUpdates::smallStrainUpdate2( localIndex const k,
 }
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void CeramicDamageUpdates::smallStrainUpdate2( localIndex const k,
                                                localIndex const q,
                                                real64 const dt,
@@ -286,8 +286,8 @@ void CeramicDamageUpdates::smallStrainUpdate2( localIndex const k,
 }
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void CeramicDamageUpdates::smallStrainUpdate2_StressOnly( localIndex const k,
                                                           localIndex const q,
                                                           real64 const dt,
@@ -311,8 +311,8 @@ void CeramicDamageUpdates::smallStrainUpdate2_StressOnly( localIndex const k,
   return;
 }
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
                                                     localIndex const q,
                                                     real64 const dt,
@@ -400,8 +400,8 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   }
 }
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 CeramicDamageUpdates::getStrength( const real64 damage,     // damage
                                           const real64 pressure,   // pressure
                                           const real64 J2,         // J2 invariant of stress
@@ -612,6 +612,6 @@ protected:
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_KINEMATICDAMAGE_HPP_ */

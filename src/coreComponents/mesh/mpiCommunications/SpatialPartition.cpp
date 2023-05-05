@@ -180,7 +180,7 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
 
   {
     //get size of problem and decomposition
-    m_size = MpiWrapper::commSize( MPI_COMM_GEOS );
+    m_size = MpiWrapper::commSize( MPI_COMM_GEOSX );
 
     //check to make sure our dimensions agree
     {
@@ -196,7 +196,7 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
     MPI_Comm cartcomm;
     {
       int reorder = 0;
-      MpiWrapper::cartCreate( MPI_COMM_GEOS, nsdof, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm );
+      MpiWrapper::cartCreate( MPI_COMM_GEOSX, nsdof, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm );
     }
     m_rank = MpiWrapper::commRank( cartcomm );
     MpiWrapper::cartCoords( cartcomm, m_rank, nsdof, m_coords.data());
@@ -363,7 +363,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
     std::vector< localIndex > outOfDomainParticleLocalIndices;
     unsigned int nn = m_neighbors.size(); // Number of partition neighbors.
 
-    forAll< serialPolicy >( subRegion.size(), [&, particleCenter, particleRank] GEOSX_HOST ( localIndex const pp )
+    forAll< serialPolicy >( subRegion.size(), [&, particleCenter, particleRank] GEOS_HOST ( localIndex const pp )
     {
       bool inPartition = true;
       R1Tensor p_x;
@@ -442,7 +442,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
         // The corresponding local index for each item in the request list is stored here:
         particleLocalIndicesRequestedFromNeighbors[n].resize(ni);
 
-        forAll< serialPolicy >( ni, [&, particleRank] GEOSX_HOST ( localIndex const k )
+        forAll< serialPolicy >( ni, [&, particleRank] GEOS_HOST ( localIndex const k )
         {
           int const i = particleListIndicesRequestedFromNeighbors[n][k];
           outOfDomainParticleRequests[i] += 1;
@@ -506,11 +506,11 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
     arrayView2d< real64 > const particleCenterAfter = subRegion.getParticleCenter();
     arrayView1d< int > const particleRankAfter = subRegion.getParticleRank();
     std::set< localIndex > indicesToErase;
-    forAll< serialPolicy >( subRegion.size(), [&, particleRankAfter, particleCenterAfter] GEOSX_HOST ( localIndex const p )
+    forAll< serialPolicy >( subRegion.size(), [&, particleRankAfter, particleCenterAfter] GEOS_HOST ( localIndex const p )
     {
       if( particleRankAfter[p] == -1 )
       {
-        GEOSX_LOG_RANK( "Deleting orphan out-of-domain particle during repartition at p_x = " << particleCenterAfter[p] );
+        GEOS_LOG_RANK( "Deleting orphan out-of-domain particle during repartition at p_x = " << particleCenterAfter[p] );
         indicesToErase.insert(p);
       }
       else if( particleRankAfter[p] != m_rank )
@@ -567,7 +567,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
       std::vector< globalIndex > inDomainMasterParticleGlobalIndices;
       unsigned int nn = m_neighbors.size(); // Number of partition neighbors.
 
-      forAll< serialPolicy >( subRegion.size(), [&, particleCenter, particleRank, particleGlobalID] GEOSX_HOST ( localIndex const p )
+      forAll< serialPolicy >( subRegion.size(), [&, particleCenter, particleRank, particleGlobalID] GEOS_HOST ( localIndex const p )
       {
         bool inPartition = true;
         R1Tensor p_x;
@@ -630,7 +630,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
 
             // This particle should be a ghost on the current processor. See if it already exists here.
             bool alreadyHere = false;
-            forAll< serialPolicy >( subRegion.size(), [&, particleGlobalID, particleRank] GEOSX_HOST ( localIndex const p )
+            forAll< serialPolicy >( subRegion.size(), [&, particleGlobalID, particleRank] GEOS_HOST ( localIndex const p )
             {
               if( gI == particleGlobalID[p] )
               {
@@ -664,7 +664,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
       //     still have ghostRank=-1 are orphans and need to be deleted.
 
       int partitionRank = this->m_rank;
-      forAll< parallelHostPolicy >( subRegion.size(), [=] GEOSX_HOST ( localIndex const p ) // TODO: Worth moving to device?
+      forAll< parallelHostPolicy >( subRegion.size(), [=] GEOS_HOST ( localIndex const p ) // TODO: Worth moving to device?
       {
         if( particleRank[p] != partitionRank )
         {
@@ -719,7 +719,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
       //     a previous step for which the master is no longer in the ghost domain,
       // std::set< localIndex > indicesToErase;
       // arrayView1d< localIndex > const particleRankNew = subRegion.getParticleRank();
-      // forAll< serialPolicy >( subRegion.size(), [=, &indicesToErase] GEOSX_HOST ( localIndex const p ) // parallelize with atomics
+      // forAll< serialPolicy >( subRegion.size(), [=, &indicesToErase] GEOS_HOST ( localIndex const p ) // parallelize with atomics
       // {
       //   if( particleRankNew[p] == -1 )
       //   {
@@ -750,7 +750,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
     buffer_unit_type* sendBufferPtr = sendBuffer.data();                                  // get a pointer to the buffer
     sizeOfPacked += bufferOps::Pack< true >( sendBufferPtr,
                                              particleCoordinatesSendingToNeighbors );     // pack the coordinate list into the buffer
-    GEOSX_ERROR_IF_NE( sizeToBePacked, sizeOfPacked );                                    // make sure the packer is self-consistent
+    GEOS_ERROR_IF_NE( sizeToBePacked, sizeOfPacked );                                    // make sure the packer is self-consistent
 
     // Declare the receive buffers
     array1d<unsigned int> sizeOfReceived(nn);
@@ -774,7 +774,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
                                         1,
                                         receiveRequest[n],
                                         icomm.commID(),
-                                        MPI_COMM_GEOS );
+                                        MPI_COMM_GEOSX );
       }
       MPI_Waitall(nn, sendRequest.data(), sendStatus.data());
       MPI_Waitall(nn, receiveRequest.data(), receiveStatus.data());
@@ -797,7 +797,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
                                         sizeOfReceived[n],
                                         receiveRequest[n],
                                         icomm.commID(),
-                                        MPI_COMM_GEOS );
+                                        MPI_COMM_GEOSX );
       }
       MPI_Waitall(nn, sendRequest.data(), sendStatus.data());
       MPI_Waitall(nn, receiveRequest.data(), receiveStatus.data());
@@ -834,7 +834,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
       buffer_unit_type* sendBufferPtr = sendBuffer[n].data();                         // get a pointer to the buffer
       sizeOfPacked[n] += bufferOps::Pack< true >( sendBufferPtr,
                                                   listSendingToEachNeighbor[n] );     // pack the list of local indices into the buffer
-      GEOSX_ERROR_IF_NE( sizeToBePacked, sizeOfPacked[n] );                           // make sure the packer is self-consistent
+      GEOS_ERROR_IF_NE( sizeToBePacked, sizeOfPacked[n] );                           // make sure the packer is self-consistent
     }
 
     // Declare the receive buffers
@@ -858,7 +858,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
                                         1,
                                         receiveRequest[n],
                                         icomm.commID(),
-                                        MPI_COMM_GEOS );
+                                        MPI_COMM_GEOSX );
       }
       MPI_Waitall(nn, sendRequest.data(), sendStatus.data());
       MPI_Waitall(nn, receiveRequest.data(), receiveStatus.data());
@@ -881,7 +881,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
                                         sizeOfReceived[n],
                                         receiveRequest[n],
                                         icomm.commID(),
-                                        MPI_COMM_GEOS );
+                                        MPI_COMM_GEOSX );
       }
       MPI_Waitall(nn, sendRequest.data(), sendStatus.data());
       MPI_Waitall(nn, receiveRequest.data(), receiveStatus.data());
@@ -913,7 +913,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
       sizeOfPacked[n] = subRegion.particlePack( sendBuffer[n], particleLocalIndicesToSendToEachNeighbor[n].toView(), false );
       sendBuffer[n].resize( sizeOfPacked[n] );
       unsigned int sizeCheck = subRegion.particlePack( sendBuffer[n], particleLocalIndicesToSendToEachNeighbor[n].toView(), true );
-      GEOSX_ERROR_IF_NE( sizeCheck, sizeOfPacked[n]);
+      GEOS_ERROR_IF_NE( sizeCheck, sizeOfPacked[n]);
     }
 
     // Declare the receive buffers
@@ -936,7 +936,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
                                         1,
                                         receiveRequest[n],
                                         icomm.commID(),
-                                        MPI_COMM_GEOS );
+                                        MPI_COMM_GEOSX );
       }
       MPI_Waitall( nn, sendRequest.data(), sendStatus.data() );
       MPI_Waitall( nn, receiveRequest.data(), receiveStatus.data() );
@@ -959,7 +959,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
                                         sizeOfReceived[n],
                                         receiveRequest[n],
                                         icomm.commID(),
-                                        MPI_COMM_GEOS );
+                                        MPI_COMM_GEOSX );
       }
       MPI_Waitall(nn, sendRequest.data(), sendStatus.data());
       MPI_Waitall(nn, receiveRequest.data(), receiveStatus.data());

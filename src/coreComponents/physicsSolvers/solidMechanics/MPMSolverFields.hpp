@@ -21,7 +21,7 @@
 
 #include "mesh/MeshFields.hpp"
 
-namespace geosx
+namespace geos
 {
 /**
  * A scope for field traits.

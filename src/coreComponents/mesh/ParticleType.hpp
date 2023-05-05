@@ -21,7 +21,7 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -42,6 +42,6 @@ ENUM_STRINGS( ParticleType,
               "CPTI",
               "CPDI2" );
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_MESH_PARTICLETYPE_HPP

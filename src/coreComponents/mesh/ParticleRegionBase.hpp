@@ -18,7 +18,7 @@
 #include "ParticleSubRegion.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -79,8 +79,8 @@ public:
    */
   virtual void generateMesh( Group & particleBlocks )
   {
-    GEOSX_UNUSED_VAR( particleBlocks );
-    GEOSX_ERROR( "ParticleRegionBase::GenerateMesh() should be overriden if called." );
+    GEOS_UNUSED_VAR( particleBlocks );
+    GEOS_ERROR( "ParticleRegionBase::GenerateMesh() should be overriden if called." );
   }
 
   ///@}

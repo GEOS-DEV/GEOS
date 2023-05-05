@@ -21,7 +21,7 @@
 
 #include "InterObjectRelation.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class ParticleManager;
@@ -184,6 +184,6 @@ void reserveNeighbors( OrderedVariableToManyParticleRelation & relation,
                        int const numToReserve );
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_TOPARTICLERELATION_HPP_ */

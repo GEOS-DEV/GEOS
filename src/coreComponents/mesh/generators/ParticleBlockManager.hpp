@@ -22,7 +22,7 @@
 #include "mesh/generators/ParticleBlockManagerABC.hpp"
 #include "mesh/generators/ParticleBlock.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

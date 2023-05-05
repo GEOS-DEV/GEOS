@@ -21,7 +21,7 @@
 #include "LvArray/src/SparsityPattern.hpp"
 #include "common/MpiWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -76,7 +76,7 @@ array2d< real64 > ParticleRegion::getParticleCorners() const
     if( !subRegion.hasRVectors() ) // if no r-vectors, return coordinates of a cube centered at the particle with side length = volume^(1/3)
     {
       arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
-      forAll< serialPolicy >( subRegion.size(), [=, &coords, &index] GEOSX_HOST ( localIndex const p )
+      forAll< serialPolicy >( subRegion.size(), [=, &coords, &index] GEOS_HOST ( localIndex const p )
       {
         real64 a = 0.5 * pow( particleVolume[p], 1.0/3.0 ); // cube half-side-length
         for( int corner=0; corner<8; corner++ )
@@ -92,7 +92,7 @@ array2d< real64 > ParticleRegion::getParticleCorners() const
     else
     {
       arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors(); 
-      forAll< serialPolicy >( subRegion.size(), [=, &coords, &index] GEOSX_HOST ( localIndex const p )
+      forAll< serialPolicy >( subRegion.size(), [=, &coords, &index] GEOS_HOST ( localIndex const p )
       {
         for( int corner=0; corner<8; corner++ )
         {
@@ -110,4 +110,4 @@ array2d< real64 > ParticleRegion::getParticleCorners() const
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ParticleRegion, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

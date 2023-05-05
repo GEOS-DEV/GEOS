@@ -29,7 +29,7 @@
 
 #include <cmath>
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -60,8 +60,8 @@ ParticleMeshGenerator::ParticleMeshGenerator( string const & name, Group * const
     setDescription( "Particle types of each particle block" );
 }
 
-Group * ParticleMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ),
-                                            string const & GEOSX_UNUSED_PARAM( childName ) )
+Group * ParticleMeshGenerator::createChild( string const & GEOS_UNUSED_PARAM( childKey ),
+                                            string const & GEOS_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }
@@ -72,10 +72,10 @@ Group * ParticleMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( c
  */
 void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   MeshBody & meshBody = domain.getMeshBody( this->getName() );
-  GEOSX_LOG_RANK( "Generating mesh for " + meshBody.getName() );
+  GEOS_LOG_RANK( "Generating mesh for " + meshBody.getName() );
   MeshLevel & meshLevel0 = meshBody.getBaseDiscretization();
   ParticleManager & particleManager = meshLevel0.getParticleManager();
 
@@ -91,8 +91,8 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     particleBlock.setParticleType( EnumStrings< ParticleType >::fromString( m_particleType[aa++] ) );
   }
 
-  GEOSX_LOG_RANK_0( "MPM particle file path: " << m_particleFilePath );
-  GEOSX_LOG_RANK_0( "MPM header file path: " << m_headerFilePath );
+  GEOS_LOG_RANK_0( "MPM particle file path: " << m_particleFilePath );
+  GEOS_LOG_RANK_0( "MPM header file path: " << m_headerFilePath );
 
   int numMaterials, numParticleTypes;
   map < std::string, std::vector<std::vector<double>> > particleData;
@@ -112,8 +112,8 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
   iss1 >> numMaterials >> numParticleTypes;
   particleTypes.resize(numParticleTypes);
 
-  GEOSX_LOG_RANK_0("Number of particle materials: " << numMaterials);
-  GEOSX_LOG_RANK_0("Number of particle types: " << numParticleTypes);
+  GEOS_LOG_RANK_0("Number of particle materials: " << numMaterials);
+  GEOS_LOG_RANK_0("Number of particle types: " << numParticleTypes);
 
   // Read in the material key
   for(int i=0; i<numMaterials; i++)
@@ -124,7 +124,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     int value; // Material ID
     iss2 >> key >> value;
     materialMap[key] = value;
-    GEOSX_LOG_RANK_0("Material name/ID: " + key + "/" << value);
+    GEOS_LOG_RANK_0("Material name/ID: " + key + "/" << value);
   }
 
   // Read in the particle type key
@@ -278,7 +278,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       }
       else
       {
-        GEOSX_ERROR("Invalid particle type specification! Cannot determine particle volume, aborting.");
+        GEOS_ERROR("Invalid particle type specification! Cannot determine particle volume, aborting.");
       }
 
       // Increment index
@@ -306,29 +306,31 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     }
     numParticles += size;
     particleRegion.resize(size);
-    GEOSX_LOG_RANK("Particle region " << particleRegion.getName() << " contains " << size << " particles on this rank.");
+    GEOS_LOG_RANK("Particle region " << particleRegion.getName() << " contains " << size << " particles on this rank.");
   } );
 
   particleManager.resize(numParticles); // All this does is change m_size for the particleManager, gives a convenient way to get the total number of particles
-  GEOSX_LOG_RANK( "Total number of particles on this rank: " << particleManager.size() );
+  GEOS_LOG_RANK( "Total number of particles on this rank: " << particleManager.size() );
 }
 
 void ParticleMeshGenerator::postProcessInput()
 {
-  GEOSX_LOG_RANK_0("Someone called ParticleMeshGenerator::postProcessInput!");
+  GEOS_LOG_RANK_0("Someone called ParticleMeshGenerator::postProcessInput!");
 }
 
-void ParticleMeshGenerator::importFieldsOnArray( string const & cellBlockName,
-                                                 string const & meshFieldName,
-                                                 bool isMaterialField,
-                                                 dataRepository::WrapperBase & wrapper ) const
+void ParticleMeshGenerator::importFieldOnArray( Block block,
+                                                string const & blockName,
+                                                string const & meshFieldName,
+                                                bool isMaterialField,
+                                                dataRepository::WrapperBase & wrapper ) const
 {
-  GEOSX_UNUSED_VAR( cellBlockName );
-  GEOSX_UNUSED_VAR( meshFieldName );
-  GEOSX_UNUSED_VAR( isMaterialField );
-  GEOSX_UNUSED_VAR( wrapper );
+  GEOS_UNUSED_VAR( block );
+  GEOS_UNUSED_VAR( blockName );
+  GEOS_UNUSED_VAR( meshFieldName );
+  GEOS_UNUSED_VAR( isMaterialField );
+  GEOS_UNUSED_VAR( wrapper );
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, ParticleMeshGenerator, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

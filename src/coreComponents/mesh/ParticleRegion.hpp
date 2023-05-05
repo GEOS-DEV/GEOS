@@ -22,7 +22,7 @@
 
 #include "ParticleRegionBase.hpp"
 
-namespace geosx
+namespace geos
 {
 /**
  * @class ParticleRegion
@@ -125,6 +125,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_PARTICLEREGION_HPP_ */

@@ -26,7 +26,7 @@
 #include "constitutive/solid/SolidBase.hpp"
 #include "ToParticleRelation.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class ParticleManager;
@@ -264,7 +264,7 @@ public:
       }
       default:
       {
-        GEOSX_ERROR( "Particle type \"" << m_particleType << "\" is not yet supported." );
+        GEOS_ERROR( "Particle type \"" << m_particleType << "\" is not yet supported." );
         break;
       }
     }
@@ -393,6 +393,6 @@ protected:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_MESH_PARTICLESUBREGIONBASE_HPP_ */

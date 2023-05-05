@@ -30,7 +30,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "MPMSolverFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class SpatialPartition;
@@ -121,7 +121,7 @@ public:
   virtual void updateState( DomainPartition & domain ) override final
   {
     // There should be nothing to update
-    GEOSX_UNUSED_VAR( domain );
+    GEOS_UNUSED_VAR( domain );
   };
 
   /**@}*/
@@ -236,7 +236,7 @@ public:
                                          real64 const & mA,
                                          real64 const & mB,
                                          arraySlice1d< real64 const > const vA,
-                                         arraySlice1d< real64 const > const GEOSX_UNUSED_PARAM( vB ),
+                                         arraySlice1d< real64 const > const GEOS_UNUSED_PARAM( vB ),
                                          arraySlice1d< real64 const> const qA,
                                          arraySlice1d< real64 const > const qB,
                                          arraySlice1d< real64 const > const nA,
@@ -465,6 +465,6 @@ ENUM_STRINGS( SolidMechanicsMPM::BoundaryConditionOption,
 //**********************************************************************************************************************
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_ */

@@ -19,7 +19,7 @@
 
 #include <algorithm>
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -39,7 +39,7 @@ void ParticleBlockManager::resize( integer_array const & numParticles,
   }
 }
 
-Group * ParticleBlockManager::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
+Group * ParticleBlockManager::createChild( string const & GEOS_UNUSED_PARAM( childKey ), string const & GEOS_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }

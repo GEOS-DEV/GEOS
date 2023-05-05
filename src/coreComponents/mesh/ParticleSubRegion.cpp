@@ -18,7 +18,7 @@
 #include "common/TypeDispatch.hpp"
 #include "mesh/MeshLevel.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 using namespace constitutive;
@@ -38,7 +38,7 @@ ParticleSubRegion::~ParticleSubRegion()
 void ParticleSubRegion::setParticleRank( int const rank )
 {
   arrayView1d< int > const particleRank = m_particleRank;
-  forAll< serialPolicy >( particleRank.size(), [=] GEOSX_HOST_DEVICE ( localIndex const p )
+  forAll< serialPolicy >( particleRank.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
   {
     particleRank[p] = rank;
   } );
@@ -78,4 +78,4 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock 
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ParticleSubRegion, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */
