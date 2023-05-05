@@ -132,9 +132,9 @@ public:
 
   void testPackByIndexSize( localIndex value )
   {
-    buffer_unit_type * null = NULL; 
-    array1d< localIndex > indices(8);
-    for( int ii = 0 ; ii < 8; ++ii )
+    buffer_unit_type * null = NULL;
+    array1d< localIndex > indices( 8 );
+    for( int ii = 0; ii < 8; ++ii )
     {
       indices[ii] = ii * 2;
     }

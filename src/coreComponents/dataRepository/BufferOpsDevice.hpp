@@ -50,7 +50,7 @@ constexpr bool is_device_packable_array< ArrayView< T, NDIM, USD > > = is_device
 template< typename T >
 struct is_device_packable_helper
 {
-  static constexpr bool value = is_noncontainer_device_packable< T > || is_device_packable_array < T >;
+  static constexpr bool value = is_noncontainer_device_packable< T > || is_device_packable_array< T >;
 };
 
 

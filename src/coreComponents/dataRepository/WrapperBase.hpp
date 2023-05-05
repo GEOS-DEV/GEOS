@@ -275,8 +275,8 @@ public:
    */
   template< bool DO_PACKING >
   localIndex pack( buffer_unit_type * & buffer,
-                  bool withMetadata,
-                  parallelDeviceEvents & events ) const
+                   bool withMetadata,
+                   parallelDeviceEvents & events ) const
   {
     return DO_PACKING ? packPrivate( buffer, withMetadata, events ) : packSizePrivate( withMetadata, events );
   }

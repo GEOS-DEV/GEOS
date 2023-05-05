@@ -99,7 +99,7 @@ constexpr bool is_map_host_packable_by_index< mapBase< T_KEY, T_VAL, SORTED > > 
 
 template< typename T >
 constexpr bool is_host_scalar_packable_v =  std::is_trivial< T >::value ||
-                                               std::is_arithmetic< T >::value;
+                                           std::is_arithmetic< T >::value;
 
 //------------------------------------------------------------------------------
 // Pack(buffer,var)

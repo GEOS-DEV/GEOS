@@ -76,7 +76,8 @@ HAS_MEMBER_FUNCTION_NO_RTYPE( getPreviousSpace, );
 
 /**
  * @brief Defines a static constexpr bool HasMemberFunction_end< @p CLASS >
- *        that is true iff the method @p CLASS ::registerTouch( LvArray::MemorySpace ) exists and the return value is convertable to a pointer.
+ *        that is true iff the method @p CLASS ::registerTouch( LvArray::MemorySpace ) exists and the return value is convertable to a
+ * pointer.
  * @tparam CLASS The type to test.
  */
 HAS_MEMBER_FUNCTION_NO_RTYPE( registerTouch, LvArray::MemorySpace::host );
@@ -86,7 +87,7 @@ HAS_MEMBER_FUNCTION_NO_RTYPE( registerTouch, LvArray::MemorySpace::host );
  *        that is true iff the class exposes the set a memory space movement functions defined above.
  * @tparam CLASS The type to test.
  */
-template < typename CLASS >
+template< typename CLASS >
 static constexpr bool HasMemorySpaceFunctions = HasMemberFunction_move< CLASS > && HasMemberFunction_registerTouch< CLASS > && HasMemberFunction_getPreviousSpace< CLASS >;
 
 /**
