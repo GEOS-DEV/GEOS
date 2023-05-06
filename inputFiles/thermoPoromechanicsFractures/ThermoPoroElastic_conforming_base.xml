@@ -1,6 +1,11 @@
 <?xml version="1.0" ?>
 
 <Problem>
+  
+  <Included>
+    <File name="./ThermoPoroElastic_base.xml"/>
+  </Included>
+
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
     <SinglePhasePoromechanicsConformingFractures
@@ -89,76 +94,6 @@
       defaultAperture="5.e-3"/>
   </ElementRegions>
 
-  <Constitutive>
-    <PorousElasticIsotropic
-      name="porousRock"
-      solidModelName="rock"
-      porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"
-      solidInternalEnergyModelName="rockInternalEnergy"/>
-
-    <ElasticIsotropic
-      name="rock"
-      defaultDensity="1"
-      defaultYoungModulus="10.0e9"
-      defaultPoissonRatio="0.2"/>
-
-    <ConstantPermeability
-      name="rockPerm"
-      permeabilityComponents="{ 2.0e-15, 1.0e-15, 1.0e-20 }"/>
-
-    <ThermalCompressibleSinglePhaseFluid
-      name="water"
-      defaultDensity="1000"
-      defaultViscosity="1e-3"
-      referencePressure="0.0"
-      referenceTemperature="0.0"
-      compressibility="0.0"
-      thermalExpansionCoeff="0.0"
-      viscosibility="0.0"
-      volumetricHeatCapacity="1.672e2"
-      referenceInternalEnergy="0.001"/>
-
-    <SinglePhaseConstantThermalConductivity
-      name="thermalCond"
-      thermalConductivityComponents="{ 1e-2, 1e-2, 1e-2 }"/>  
-
-    <SolidInternalEnergy
-      name="rockInternalEnergy"
-      volumetricHeatCapacity="1.672e5"
-      referenceTemperature="0.0"
-      referenceInternalEnergy="0.0"/>  
-
-    <BiotPorosity
-      name="rockPorosity"
-      grainBulkModulus="2.2222e10"
-      defaultReferencePorosity="0.2"/>
-
-    <CompressibleSolidParallelPlatesPermeability
-      name="fractureFilling"
-      solidModelName="nullSolid"
-      porosityModelName="fracturePorosity"
-      permeabilityModelName="fracturePerm"
-      solidInternalEnergyModelName="rockInternalEnergy"/>
-
-    <NullModel
-      name="nullSolid"/>
-
-    <PressurePorosity
-      name="fracturePorosity"
-      defaultReferencePorosity="1.00"
-      referencePressure="0.0"
-      compressibility="0.0"/>
-
-    <ParallelPlatesPermeability
-      name="fracturePerm"/>
-
-    <FrictionlessContact
-      name="fractureContact"
-      penaltyStiffness="4.0e9"
-      apertureTableName="apertureTable"/>    
-  </Constitutive>
-
   <FieldSpecifications>
   <FieldSpecification
       name="frac"
@@ -239,39 +174,40 @@
     setNames="{ zneg, zpos }"/>
 
   <FieldSpecification
-    name="leftPressure"
+    name="facePressure"
     objectPath="faceManager"
     fieldName="pressure"
     scale="0.0"
-    setNames="{ xneg }"/>
+    setNames="{ xneg, xpos }"/>
 
   <FieldSpecification
-    name="rightPressure"
-    objectPath="faceManager"
-    fieldName="pressure"
-    scale="0.0"
-    setNames="{ xpos }"/>
-
-  <FieldSpecification
-    name="leftTemperature"
+    name="faceTemperature"
     objectPath="faceManager"
     fieldName="temperature"
     scale="0.0"
-    setNames="{ xneg }"/>
-
-  <FieldSpecification
-    name="rightTemperature"
-    objectPath="faceManager"
-    fieldName="temperature"
-    scale="0.0"
-    setNames="{ xpos }"/>  
+    setNames="{ xneg, xpos }"/>
   </FieldSpecifications>
 
-  <Functions>
-    <TableFunction
-      name="apertureTable"
-      coordinates="{ -1.0e-3, 0.0 }"
-      values="{ 4.01e-3, 5.0e-3 }"/>
-  </Functions>
-  
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="ThermoPoroElastic_conforming_verticalFrac"
+      plotLevel="2"
+      format="binary"/>
+    <TimeHistory
+      name="pressureHistoryOutput"
+      sources="{/Tasks/pressureCollection}"
+      filename="pressure_history"/> 
+    <TimeHistory
+      name="temperatureHistoryOutput"
+      sources="{/Tasks/temperatureCollection}"
+      filename="temperature_history"/> 
+    <TimeHistory
+      name="apertureOutput"
+      sources="{/Tasks/apertureCollection}"
+      filename="aperture_history"/> 
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
 </Problem>

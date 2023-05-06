@@ -22,14 +22,14 @@
       referencePressure="0.0"
       referenceTemperature="0"
       compressibility="0.0"
-      thermalExpansionCoeff="3e-4"
+      thermalExpansionCoeff="0.0"
       viscosibility="0.0"
       volumetricHeatCapacity="1.672e2"
       referenceInternalEnergy="0.001"/>
 
     <SinglePhaseConstantThermalConductivity
       name="thermalCond"
-      thermalConductivityComponents="{ 1e-1, 1e-1, 1e-1 }"/>  
+      thermalConductivityComponents="{ 1, 1, 1 }"/>  
 
     <CompressibleSolidParallelPlatesPermeability
       name="fractureFilling"
@@ -48,8 +48,8 @@
     <SolidInternalEnergy
       name="rockInternalEnergy"
       volumetricHeatCapacity="1.672e5"
-      referenceTemperature="0"
-      referenceInternalEnergy="0"/>  
+      referenceTemperature="0.0"
+      referenceInternalEnergy="0.0"/>  
 
     <NullModel
       name="nullSolid"/>
