@@ -98,7 +98,7 @@
       referencePressure="0.0"
       referenceTemperature="20.0"
       compressibility="5e-10"
-      thermalExpansionCoeff="1e-5"
+      thermalExpansionCoeff="3e-4"
       viscosibility="0.0"
       volumetricHeatCapacity="1"
       referenceInternalEnergy="1"/>

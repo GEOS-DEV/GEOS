@@ -14,7 +14,7 @@ def stressRotation(stress, phi_x):
 
 def main():
 	# Material properties from input XML file
-	xmlFilePathPrefix = "../../../../../../../inputFiles/wellbore/THM_wellbore"
+	xmlFilePathPrefix = "../../../../../../../inputFiles/wellbore/ThermoPoroElasticWellbore"
 
 	xmlData = analyticalResults.getDataFromXML(xmlFilePathPrefix)
 
@@ -76,26 +76,26 @@ def main():
 	plt.subplot(1,2,1)
 
 	plt.plot( rCoord,
-			  stress_rr_total[9, :],        
+			  stress_rr_total[10, :],        
 			  'r+',
-			  label='GEOSX: t = 1 (min)')
+			  label='GEOS: t = 1 (min)')
 
 	plt.plot( rCoord,
-			  stress_rr_total[23, :],        
+			  stress_rr_total[24, :],        
 			  'b+',
-			  label='GEOSX: t = 1 (hour)')
+			  label='GEOS: t = 1 (hour)')
 	
 	plt.subplot(1,2,2)
 
 	plt.plot( rCoord,
-			  stress_tt_total[9, :],        
+			  stress_tt_total[10, :],        
 			  'r+',
-			  label='GEOSX: t = 1 (min)')
+			  label='GEOS: t = 1 (min)')
 
 	plt.plot( rCoord,
-			  stress_tt_total[23, :],        
+			  stress_tt_total[24, :],        
 			  'b+',
-			  label='GEOSX: t = 1 (hour)')
+			  label='GEOS: t = 1 (hour)')
 	
 	# Plot analytical results at one minute
 	t = 60 #s
@@ -105,13 +105,13 @@ def main():
 	plt.plot( r_anal,
 			  sig_rr_anal,        
 			  'r-',
-			  label='Analytic: t = 1 (min)')
+			  label='Analytical: t = 1 (min)')
 
 	plt.subplot(1,2,2)
 	plt.plot( r_anal,
 			  sig_tt_anal,        
 			  'r-',
-			  label='Analytic: t = 1 (min)')
+			  label='Analytical: t = 1 (min)')
 
 	# Plot analytical results at one hour
 	t = 3600 #s
@@ -121,13 +121,13 @@ def main():
 	plt.plot( r_anal,
 			  sig_rr_anal,        
 			  'b-',
-			  label='Analytic: t = 1 (hour)')
+			  label='Analytical: t = 1 (hour)')
 
 	plt.subplot(1,2,2)
 	plt.plot( r_anal,
 			  sig_tt_anal,        
 			  'b-',
-			  label='Analytic: t = 1 (hour)')
+			  label='Analytical: t = 1 (hour)')
 
 	plt.subplot(1,2,1)
 	plt.grid()
@@ -138,7 +138,7 @@ def main():
 
 	plt.subplot(1,2,2)
 	plt.grid()
-	plt.ylabel('Tangent stress [Pa]')
+	plt.ylabel('Tangential stress [Pa]')
 	plt.xlabel('Radial coordinate [m]')
 	plt.xlim(0.1,0.3)
 	#plt.ylim(0,70e6)
