@@ -227,26 +227,32 @@ struct LinearSolverParameters
       rigidBodyModes      ///< Rigid body modes
     };
 
-    integer maxLevels = 20;                                   ///< Maximum no. of coarsening levels
-    CycleType cycleType = CycleType::V;                       ///< AMG cycle type
-    SmootherType smootherType = SmootherType::fgs;            ///< Smoother type
-    real64 relaxWeight = 1.0;                                 ///< Relaxation weight
-    CoarseType coarseType = CoarseType::direct;               ///< Coarse-level solver/smoother
-    CoarseningType coarseningType = CoarseningType::HMIS;     ///< Coarsening algorithm
-    InterpType interpolationType = InterpType::extendedI;     ///< Interpolation algorithm
-    integer interpolationMaxNonZeros = 4;                     ///< Interpolation - Max. nonzeros/row
-    integer numSweeps = 1;                                    ///< Number of smoother sweeps
-    integer numFunctions = 1;                                 ///< Number of amg functions
-    integer aggressiveNumPaths = 1;                           ///< Number of paths agg. coarsening.
-    integer aggressiveNumLevels = 0;                          ///< Number of lvls agg. coarsening.
+#if defined(GEOSX_USE_HYPRE_CUDA) || defined(GEOSX_USE_HYPRE_HIP)
+    CoarseningType coarseningType = CoarseningType::PMIS;           ///< Coarsening algorithm
+    SmootherType smootherType = SmootherType::l1jacobi;             ///< Smoother type
+#else
+    CoarseningType coarseningType = CoarseningType::HMIS;           ///< Coarsening algorithm
+    SmootherType smootherType = SmootherType::l1sgs;                ///< Smoother type
+#endif
+
+    integer maxLevels = 20;                                         ///< Maximum number of coarsening levels
+    CycleType cycleType = CycleType::V;                             ///< AMG cycle type
+    CoarseType coarseType = CoarseType::direct;                     ///< Coarse-level solver/smoother
+    InterpType interpolationType = InterpType::extendedI;           ///< Interpolation algorithm
+    integer interpolationMaxNonZeros = 4;                           ///< Interpolation - Max. nonzeros/row
+    real64 relaxWeight = 1.0;                                       ///< Relaxation weight
+    integer numSweeps = 1;                                          ///< Number of smoother sweeps
+    integer numFunctions = 1;                                       ///< Number of amg functions
+    integer aggressiveNumPaths = 1;                                 ///< Number of paths agg. coarsening.
+    integer aggressiveNumLevels = 0;                                ///< Number of levels for aggressive coarsening.
     AggInterpType aggressiveInterpType = AggInterpType::multipass;  ///< Interp. type for agg. coarsening.
-    PreOrPost preOrPostSmoothing = PreOrPost::both;           ///< Pre and/or post smoothing
-    real64 threshold = 0.0;                                   ///< Threshold for "strong connections" (for classical and
-                                                              ///< smoothed-aggregation AMG)
-    integer separateComponents = false;                       ///< Apply a separate component filter before AMG construction
-    NullSpaceType nullSpaceType = NullSpaceType::constantModes;  ///< Null space type [constantModes,rigidBodyModes]
+    PreOrPost preOrPostSmoothing = PreOrPost::both;                 ///< Pre and/or post smoothing
+    real64 threshold = 0.0;                                         ///< Threshold for "strong connections" (for classical
+                                                                    ///< and smoothed-aggregation AMG)
+    integer separateComponents = false;                             ///< Apply a separate component filter before AMG construction
+    NullSpaceType nullSpaceType = NullSpaceType::constantModes;     ///< Null space type [constantModes,rigidBodyModes]
   }
-  amg;                                              ///< Algebraic Multigrid (AMG) parameters
+  amg;                                                              ///< Algebraic Multigrid (AMG) parameters
 
   /// Multigrid reduction parameters
   struct MGR
