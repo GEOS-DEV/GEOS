@@ -2,7 +2,8 @@
 
 <Problem>
   <Included>
-  <File name="./fractureMatrixThermalFlow_conforming_base.xml" />
+    <File name="./fractureMatrixThermalFlow_conforming_base.xml" />
+    <File name="./fractureMatrixThermalFlow_conforming_bc_1.xml"/>
   </Included>
 
   <Mesh>

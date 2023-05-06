@@ -3,6 +3,22 @@
 <Problem>
   
   <FieldSpecifications>
+     <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ fracture }" 
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
+
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>  
+      
     <FieldSpecification
       name="Porosity"
       initialCondition="1"

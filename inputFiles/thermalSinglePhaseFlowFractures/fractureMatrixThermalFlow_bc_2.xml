@@ -1,9 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
- 
   <FieldSpecifications>
-
     <FieldSpecification
       name="Porosity"
       initialCondition="1"
@@ -51,31 +49,17 @@
       setNames="{ all }"/>  
 
     <FieldSpecification
-    name="leftPressure"
+    name="facePressure"
     objectPath="faceManager"
     fieldName="pressure"
     scale="0.0"
-    setNames="{ xneg }"/>
+    setNames="{ xpos, xneg }"/>
 
     <FieldSpecification
-    name="rightPressure"
-    objectPath="faceManager"
-    fieldName="pressure"
-    scale="0.0"
-    setNames="{ xpos }"/>
-
-    <FieldSpecification
-    name="leftTemperature"
+    name="faceTemperature"
     objectPath="faceManager"
     fieldName="temperature"
     scale="0.0"
-    setNames="{ xneg }"/>
-
-    <FieldSpecification
-    name="rightTemperature"
-    objectPath="faceManager"
-    fieldName="temperature"
-    scale="0.0"
-    setNames="{ xpos }"/>   
+    setNames="{ xpos, xneg }"/> 
   </FieldSpecifications>
 </Problem>
