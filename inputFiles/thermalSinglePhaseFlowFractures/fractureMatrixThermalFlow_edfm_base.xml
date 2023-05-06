@@ -45,7 +45,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
-      defaultAperture="1e-3"
+      defaultAperture="5.e-3"
       materialList="{ water, fractureFilling, thermalCond }"
       subRegionType="embeddedElement"/>
   </ElementRegions>
@@ -57,15 +57,15 @@
       defaultViscosity="0.001"
       referencePressure="0.0"
       referenceTemperature="0"
-      compressibility="5e-10"
+      compressibility="0.0"
       thermalExpansionCoeff="3e-4"
       viscosibility="0.0"
-      volumetricHeatCapacity="1"
-      referenceInternalEnergy="0.99"/>
+      volumetricHeatCapacity="1.672e2"
+      referenceInternalEnergy="0.001"/>
 
     <SinglePhaseConstantThermalConductivity
       name="thermalCond"
-      thermalConductivityComponents="{ 1.66, 1.66, 1.66 }"/>  
+      thermalConductivityComponents="{ 1e-2, 1e-2, 1e-2 }"/>  
 
     <CompressibleSolidParallelPlatesPermeability
       name="fractureFilling"
@@ -83,7 +83,7 @@
 
     <SolidInternalEnergy
       name="rockInternalEnergy"
-      volumetricHeatCapacity="4.56e6"
+      volumetricHeatCapacity="1.672e5"
       referenceTemperature="0"
       referenceInternalEnergy="0"/>  
 
@@ -92,7 +92,7 @@
 
     <PressurePorosity
       name="rockPorosity"
-      defaultReferencePorosity="0.1"
+      defaultReferencePorosity="0.2"
       referencePressure="0.0"
       compressibility="0.0"/>
 
@@ -109,67 +109,15 @@
     <ParallelPlatesPermeability
       name="fracturePerm"/>
   </Constitutive>
+  
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="fracMatThermalFlow_edfm_vertical"
+      plotLevel="2"
+      format="binary"/>
 
-  <FieldSpecifications>
-
-    <FieldSpecification
-      name="Porosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/RockMatrix/cb1"
-      fieldName="rockPorosity_referencePorosity"
-      scale="0.1"/>
-
-    <FieldSpecification
-      name="fracPorosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Fracture"
-      fieldName="fracturePorosity_porosity"
-      scale="1.00"/>
-
-    <FieldSpecification
-      name="initialPressure"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/RockMatrix/cb1"
-      fieldName="pressure"
-      scale="0.0"/>
-
-    <FieldSpecification
-      name="initialTemperature"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/RockMatrix/cb1"
-      fieldName="temperature"
-      scale="0.0"/>  
-
-    <FieldSpecification
-      name="sourceTermPressure"
-      objectPath="ElementRegions/RockMatrix/cb1"
-      fieldName="pressure"
-      scale="1e7"
-      setNames="{ source }"/>
-
-    <FieldSpecification
-      name="sourceTermTemperature"
-      objectPath="ElementRegions/RockMatrix/cb1"
-      fieldName="temperature"
-      scale="100"
-      setNames="{ source }"/>  
-
-    <FieldSpecification
-      name="sinkTermPressure"
-      objectPath="ElementRegions/RockMatrix/cb1"
-      fieldName="pressure"
-      scale="0.0"
-      setNames="{ sink }"/>
-
-    <FieldSpecification
-      name="sinkTermTemp"
-      objectPath="ElementRegions/RockMatrix/cb1"
-      fieldName="temperature"
-      scale="0.0"
-      setNames="{ sink }"/>  
-  </FieldSpecifications>
+    <Restart
+      name="sidreRestart"/>
+  </Outputs>
 </Problem>

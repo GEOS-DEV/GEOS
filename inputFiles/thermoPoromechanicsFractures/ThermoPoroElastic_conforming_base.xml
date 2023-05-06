@@ -3,15 +3,13 @@
 <Problem>
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
-    <SinglePhasePoromechanicsEmbeddedFractures
+    <SinglePhasePoromechanicsConformingFractures
       name="poroSolver"
-      targetRegions="{ Domain, Fracture }"
+      targetRegions="{ RockMatrix, Fracture }"
       initialDt="1e-3"
-      fracturesSolverName="fractureMechSolver"
-      flowSolverName="flowSolver"
-      solidSolverName="matrixMechSolver"
-      logLevel="1"
-      isThermal="1">
+      LagrangianContactSolverName="fractureMechSolver"
+      poromechanicsSolverName="singlePhasePoromechanicsSolver"
+      logLevel="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="10"
@@ -19,37 +17,48 @@
       <LinearSolverParameters
         directParallel="0"
         solverType="direct"/>
-    </SinglePhasePoromechanicsEmbeddedFractures>
+    </SinglePhasePoromechanicsConformingFractures>
 
-    <SolidMechanicsEmbeddedFractures
-      name="fractureMechSolver"
-      targetRegions="{ Domain, Fracture }"
+    <SinglePhasePoromechanics
+      name="singlePhasePoromechanicsSolver"
       solidSolverName="matrixMechSolver"
+      flowSolverName="flowSolver"
+      logLevel="1"
+      isThermal="1"
+      targetRegions="{ RockMatrix }">
+    </SinglePhasePoromechanics>
+
+    <LagrangianContact
+      name="fractureMechSolver"
+      solidSolverName="matrixMechSolver"
+      stabilizationName="singlePhaseTPFA_stab"
+      logLevel="1"
+      targetRegions="{ RockMatrix, Fracture }"
       fractureRegionName="Fracture"
-      contactRelationName="fractureContact"/>
+      discretization="FE1"
+      contactRelationName="fractureContact"/> 
 
     <SolidMechanicsLagrangianSSLE
       name="matrixMechSolver"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Domain }"/>
+      targetRegions="{ RockMatrix }"/>
 
     <SinglePhaseFVM
       name="flowSolver"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Domain, Fracture }"
+      targetRegions="{ RockMatrix, Fracture }"
       isThermal="1">
       <NonlinearSolverParameters
         normType="L2"/>
     </SinglePhaseFVM>      
-      
 
-    <EmbeddedSurfaceGenerator
-      name="SurfaceGenerator"      
-      targetRegions="{ Domain, Fracture }"
-      discretization="FE1"    
+    <SurfaceGenerator
+      logLevel="0"
+      name="SurfaceGenerator"
+      targetRegions="{ RockMatrix }"
       fractureRegion="Fracture"
-      logLevel="1"
+      rockToughness="1e6"
       mpiCommOrder="1"/>
   </Solvers>
 
@@ -63,18 +72,19 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"/>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA_stab"/>
     </FiniteVolume>
   </NumericalMethods>
 
   <ElementRegions>
     <CellElementRegion
-      name="Domain"
+      name="RockMatrix"
       cellBlocks="{ cb1 }"
       materialList="{ porousRock, water, thermalCond}"/>
 
     <SurfaceElementRegion
       name="Fracture"
-      subRegionType="embeddedElement"
       materialList="{ water, fractureFilling, fractureContact, thermalCond}"
       defaultAperture="5.e-3"/>
   </ElementRegions>
@@ -111,7 +121,7 @@
 
     <SinglePhaseConstantThermalConductivity
       name="thermalCond"
-      thermalConductivityComponents="{ 1e-1, 1e-1, 1e-1 }"/>  
+      thermalConductivityComponents="{ 1e-2, 1e-2, 1e-2 }"/>  
 
     <SolidInternalEnergy
       name="rockInternalEnergy"
@@ -150,6 +160,21 @@
   </Constitutive>
 
   <FieldSpecifications>
+  <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
+      
+  <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ fracture }" 
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
 
   <FieldSpecification
     name="fracPorosity"
@@ -163,7 +188,7 @@
     name="initialPressure"
     initialCondition="1"
     setNames="{ all }"
-    objectPath="ElementRegions/Domain/cb1"
+    objectPath="ElementRegions/RockMatrix/cb1"
     fieldName="pressure"
     scale="0.0"/>
 
@@ -178,7 +203,7 @@
     name="initialTemperature"
     initialCondition="1"
     setNames="{ all }"
-    objectPath="ElementRegions/Domain/cb1"
+    objectPath="ElementRegions/RockMatrix/cb1"
     fieldName="temperature"
     scale="0.0"/>
 
@@ -248,22 +273,5 @@
       coordinates="{ -1.0e-3, 0.0 }"
       values="{ 4.01e-3, 5.0e-3 }"/>
   </Functions>
-
-  <Tasks>
-    <PackCollection
-      name="pressureCollection"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="pressure"/>
-
-    <PackCollection
-      name="apertureCollection"
-      objectPath="ElementRegions/Fracture/FractureSubRegion"
-      fieldName="hydraulicAperture"/> 
-
-    <PackCollection
-      name="temperatureCollection"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="temperature"/>  
-  </Tasks>
   
 </Problem>

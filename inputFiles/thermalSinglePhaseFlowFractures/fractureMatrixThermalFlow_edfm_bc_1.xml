@@ -1,0 +1,66 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  
+  <FieldSpecifications>
+    <FieldSpecification
+      name="Porosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/RockMatrix/cb1"
+      fieldName="rockPorosity_referencePorosity"
+      scale="0.1"/>
+
+    <FieldSpecification
+      name="fracPorosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture"
+      fieldName="fracturePorosity_porosity"
+      scale="1.00"/>
+
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="initialTemperature"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="temperature"
+      scale="0.0"/>  
+
+    <FieldSpecification
+      name="sourceTermPressure"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="1e7"
+      setNames="{ source }"/>
+
+    <FieldSpecification
+      name="sourceTermTemperature"
+      objectPath="ElementRegions"
+      fieldName="temperature"
+      scale="100"
+      setNames="{ source }"/>  
+
+    <FieldSpecification
+      name="sinkTermPressure"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="0.0"
+      setNames="{ sink }"/>
+
+    <FieldSpecification
+      name="sinkTermTemp"
+      objectPath="ElementRegions"
+      fieldName="temperature"
+      scale="0.0"
+      setNames="{ sink }"/>  
+  </FieldSpecifications>
+</Problem>

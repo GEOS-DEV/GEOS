@@ -8,7 +8,7 @@
       logLevel="1"
       discretization="singlePhaseTPFA"
       isThermal="1"
-      targetRegions="{ Domain, Fracture }">
+      targetRegions="{ RockMatrix, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-2"
         newtonMaxIter="8"
@@ -24,79 +24,6 @@
       mpiCommOrder="1"/>
   </Solvers>
 
-  <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ -5, 5 }"
-      yCoords="{ 0, 10 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 10 }"
-      ny="{ 10 }"
-      nz="{ 1 }"
-      cellBlockNames="{ cb1 }"/>
-  </Mesh>
-
-  <Geometry>
-    <Box
-      name="left"
-      xMin="{ -0.01, -0.01, -0.01 }"
-      xMax="{ 1.01, 1.01, 1.01 }"/>
-
-    <Box
-      name="right"
-      xMin="{ 8.99, -0.01, -0.01 }"
-      xMax="{ 10.01, 1.01, 1.01 }"/>
-
-    <Box
-      name="bottom"
-      xMin="{ -0.01, -0.01, -0.01 }"
-      xMax="{ 10.01, 1.11, 1.01 }"/>
-
-    <Box
-      name="top"
-      xMin="{ -0.01, 8.99, -0.01 }"
-      xMax="{ 10.01, 10.01, 1.01 }"/>
-
-    <Box
-      name="fracture"
-      xMin="{ -0.01, -0.01, -0.01 }"
-      xMax="{ 0.01, 10.01, 1.01 }"/>
-
-    <Box
-      name="source"
-      xMin="{ -0.01, -0.01, -0.01 }"
-      xMax="{ 0.01, 1.01, 1.01 }"/>
-  </Geometry>
-
-  <Events
-    maxTime="50000">
-    <!--SoloEvent
-            name="output0"
-            target="/Outputs/siloOutput" / -->
-    <SoloEvent
-      name="preFracture"
-      target="/Solvers/SurfaceGen"/>
-
-    <!--SoloEvent
-            name="output1"
-            target="/Outputs/siloOutput" / -->
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="1e3"
-      target="/Solvers/SinglePhaseFlow"/>
-
-    <PeriodicEvent
-      name="outputs"
-      target="/Outputs/siloOutput"/>
-
-    <PeriodicEvent
-      name="restarts"
-      timeFrequency="25000"
-      targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
-  </Events>
-
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
@@ -106,13 +33,13 @@
 
   <ElementRegions>
     <CellElementRegion
-      name="Domain"
+      name="RockMatrix"
       cellBlocks="{ cb1 }"
       materialList="{ water, rock, thermalCond }"/>
 
     <SurfaceElementRegion
       name="Fracture"
-      defaultAperture="1.0e-5"
+      defaultAperture="1.0e-3"
       materialList="{ water, fractureFilling, thermalCond }"/>
   </ElementRegions>
 
@@ -152,13 +79,13 @@
 
     <PressurePorosity
       name="rockPorosity"
-      defaultReferencePorosity="0.01"
+      defaultReferencePorosity="0.1"
       referencePressure="0.0"
-      compressibility="1.0e-9"/>
+      compressibility="0.0"/>
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 5.0e-19, 5.0e-19, 5.0e-19 }"/>
+      permeabilityComponents="{ 2.0e-15, 2.0e-15, 2.0e-15 }"/>
 
     <PressurePorosity
       name="fracturePorosity"
@@ -189,9 +116,9 @@
       name="Porosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Domain/cb1"
+      objectPath="ElementRegions/RockMatrix/cb1"
       fieldName="rockPorosity_referencePorosity"
-      scale="0.01"/>
+      scale="0.1"/>
 
     <FieldSpecification
       name="fracPorosity"
@@ -205,36 +132,50 @@
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Domain/cb1"
+      objectPath="ElementRegions/RockMatrix/cb1"
       fieldName="pressure"
       scale="0.0"/>
 
-    <FieldSpecification
+   <FieldSpecification
       name="initialTemperature"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Domain/cb1"
+      objectPath="ElementRegions/RockMatrix/cb1"
       fieldName="temperature"
       scale="0.0"/>  
 
     <FieldSpecification
-      name="sourcePressure"
-      objectPath="ElementRegions/Fracture"
+      name="sourceTermPressure"
+      objectPath="ElementRegions/RockMatrix/cb1"
       fieldName="pressure"
-      scale="2.0e6"
+      scale="1e7"
       setNames="{ source }"/>
 
     <FieldSpecification
-      name="sourceTemperature"
-      objectPath="ElementRegions/Fracture"
+      name="sourceTermTemperature"
+      objectPath="ElementRegions/RockMatrix/cb1"
       fieldName="temperature"
       scale="100"
       setNames="{ source }"/>  
+
+    <FieldSpecification
+      name="sinkTermPressure"
+      objectPath="ElementRegions/RockMatrix/cb1"
+      fieldName="pressure"
+      scale="0.0"
+      setNames="{ sink }"/>
+
+    <FieldSpecification
+      name="sinkTermTemp"
+      objectPath="ElementRegions/RockMatrix/cb1"
+      fieldName="temperature"
+      scale="0.0"
+      setNames="{ sink }"/>   
   </FieldSpecifications>
 
   <Outputs>
     <VTK
-      name="siloOutput"
+      name="vtkOutput"
       plotFileRoot="fractureMatrixThermalFlow_conforming"/>
 
     <Restart

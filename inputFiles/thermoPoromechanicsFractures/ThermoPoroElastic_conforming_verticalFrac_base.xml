@@ -2,13 +2,12 @@
 
 <Problem>
   <Included>
-    <File name="./ThermoPoroElastic_efem-edfm_base.xml" />
+    <File name="./ThermoPoroElastic_conforming_base.xml" />
   </Included>
-
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="PoroElastic_efem-edfm_verticalFrac"
+      plotFileRoot="ThermoPoroElastic_conforming_verticalFrac"
       plotLevel="2"
       format="binary"/>
     <TimeHistory
@@ -26,5 +25,23 @@
     <Restart
       name="restartOutput"/>
   </Outputs>
+
+  <Tasks>
+    <PackCollection
+      name="pressureCollection"
+      objectPath="ElementRegions/RockMatrix/cb1"
+      fieldName="pressure"/>
+
+    <PackCollection
+      name="apertureCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="hydraulicAperture"/>
+
+    <PackCollection
+      name="temperatureCollection"
+      objectPath="ElementRegions/RockMatrix/cb1"
+      fieldName="temperature"/>           
+  </Tasks>
   
+
 </Problem>

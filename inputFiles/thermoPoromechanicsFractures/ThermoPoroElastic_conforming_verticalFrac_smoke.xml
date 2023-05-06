@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./ThermoPoroElastic_efem-edfm_verticalFrac_base.xml" />
+    <File name="./ThermoPoroElastic_conforming_verticalFrac_base.xml" />
   </Included>
   
   <Mesh>
@@ -12,20 +12,17 @@
       xCoords="{ 0, 20 }"
       yCoords="{ 0, 20 }"
       zCoords="{ 0, 1 }"
-      nx="{ 11 }"
+      nx="{ 10 }"
       ny="{ 10 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
-    <BoundedPlane
-      name="FracturePlane"
-      normal="{ 1, 0, 0 }"
-      origin="{ 10.0, 10.0, 0.5 }"
-      lengthVector="{ 0, 1, 0 }"
-      widthVector="{ 0, 0, 1 }"
-      dimensions="{ 25, 4 }"/>
+   <Box
+      name="fracture"
+      xMin="{  9.5,-0.01, -0.01 }"
+      xMax="{  10.5, 20.01,  1.01 }"/>
   </Geometry>
 
   
@@ -34,6 +31,10 @@
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGenerator"/>
+
+    <SoloEvent
+    name="preFracPlot"
+    target="/Outputs/vtkOutput"/>  
 
     <PeriodicEvent
       name="pressureHistoryCollection"

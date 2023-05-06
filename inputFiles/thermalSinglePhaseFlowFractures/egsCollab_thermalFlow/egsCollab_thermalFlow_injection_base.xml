@@ -39,19 +39,6 @@
     </FiniteElements>
   </NumericalMethods>
 
-  <Mesh>
-    <InternalMesh
-       name="mesh1"
-       elementTypes="{ C3D8 }"
-       xCoords="{ 0, 60, 86.875, 146.875 }"
-       yCoords="{ 0, 75 }"
-       zCoords="{ 0, 0.625, 60, 84, 144 }"
-       nx="{ 10, 20, 10 }"
-       ny="{ 20 }"
-       nz="{ 1, 10, 20, 10 }"
-       cellBlockNames="{ cb }"/>
-   </Mesh>
-
   <ElementRegions>
     <CellElementRegion
       name="matrix"
@@ -99,13 +86,20 @@
     firstFaceCenter="{ 73.425, -0.1, 72 }"
     secondFaceCenter="{ 73.425, 75, 72 }"
     outerRadius="4"/>
-    <BoundedPlane 
+    <!-- <BoundedPlane 
     name="FracturePlane" 
     normal="{0.296198132726024,0.813797681349374,-0.5}" 
     origin="{40.0, 37.5,10.}" 
     lengthVector="{0.860365606244012,-0.0, 0.50967737206234}"
     widthVector="{0.414774263620574,-0.581148289019578,-0.700163535474126}"
-    dimensions="{80, 300}"/>
+    dimensions="{80, 300}"/> -->
+    <BoundedPlane
+    name="FracturePlane2"
+    normal="{ 0.3569123763, 0.9123044601, 0.2007837838 }"
+    origin="{ 100.0000000000, 37.5000000000, 30.0000000000 }"
+    lengthVector="{ -0.4902994003, 0.0000000000, 0.8715540706 }"
+    widthVector="{ 0.7951226658, -0.4095126032, 0.4473023297 }"
+    dimensions="{ 100, 80 }"/>
   </Geometry>
 
   <Constitutive>
