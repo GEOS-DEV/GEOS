@@ -894,7 +894,7 @@ void HydrofractureSolver::initializeNewFractureElements( DomainPartition & domai
         getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( SinglePhaseBase::viewKeyStruct::fluidNamesString() ) );
       arrayView2d< real64 > const fractureDensity_n  = fluid.density_n();
 
-      forAll< parallelDevicePolicy<> >( newFractureElements.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
+      forAll< parallelDevicePolicy<> >( newFractureElements.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
         localIndex const kfe = newFractureElements[k];
 
