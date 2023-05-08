@@ -31,7 +31,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -75,16 +75,16 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
   {
     ElementRegionManager & elemManager = meshLevel.getElemManager();
 
-    string const componentLabels[3] = { "normal", "tangential1", "tantential2" };
-
     elemManager.forElementRegions< SurfaceElementRegion >( regionNames,
                                                            [&] ( localIndex const,
                                                                  SurfaceElementRegion & region )
     {
+      string const labels[3] = { "normal", "tangent1", "tangent2" };
+
       region.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
       {
         subRegion.registerField< dispJump >( getName() ).
-          setDimLabels( 1, componentLabels ).
+          setDimLabels( 1, labels ).
           reference().resizeDimension< 1 >( 3 );
 
         subRegion.registerField< deltaDispJump >( getName() ).
@@ -94,7 +94,7 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
           reference().resizeDimension< 1 >( 3 );
 
         subRegion.registerField< traction >( getName() ).
-          setDimLabels( 1, componentLabels ).
+          setDimLabels( 1, labels ).
           reference().resizeDimension< 1 >( 3 );
 
         subRegion.registerField< fractureState >( getName() );
@@ -103,32 +103,6 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
       } );
     } );
   } );
-}
-
-real64 ContactSolverBase::solverStep( real64 const & time_n,
-                                      real64 const & dt,
-                                      int const cycleNumber,
-                                      DomainPartition & domain )
-{
-  real64 dtReturn = dt;
-
-  implicitStepSetup( time_n,
-                     dt,
-                     domain );
-
-  setupSystem( domain,
-               m_dofManager,
-               m_localMatrix,
-               m_rhs,
-               m_solution );
-
-  // currently the only method is implicit time integration
-  dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
-
-  // final step for completion of timestep. Typically secondary variable updates and cleanup.
-  implicitStepComplete( time_n, dtReturn, domain );
-
-  return dtReturn;
 }
 
 void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
@@ -204,9 +178,9 @@ void ContactSolverBase::outputConfigurationStatistics( DomainPartition const & d
     {
       computeFractureStateStatistics( mesh, numStick, numSlip, numOpen );
 
-      GEOSX_LOG_RANK_0( GEOSX_FMT( "  Number of element for each fracture state:"
-                                   " stick: {:12} | slip:  {:12} | open:  {:12}",
-                                   numStick, numSlip, numOpen ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( "  Number of element for each fracture state:"
+                                 " stick: {:12} | slip:  {:12} | open:  {:12}",
+                                 numStick, numSlip, numOpen ) );
     } );
   }
 }
@@ -218,7 +192,7 @@ void ContactSolverBase::applyBoundaryConditions( real64 const time,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   if( m_setupSolidSolverDofs )
   {
@@ -231,13 +205,13 @@ void ContactSolverBase::applyBoundaryConditions( real64 const time,
   }
 }
 
-real64 ContactSolverBase::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+real64 ContactSolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                         real64 const & dt,
-                                        const int GEOSX_UNUSED_PARAM( cycleNumber ),
-                                        DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+                                        const int GEOS_UNUSED_PARAM( cycleNumber ),
+                                        DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  GEOSX_MARK_FUNCTION;
-  GEOSX_ERROR( "ExplicitStep non available for contact solvers." );
+  GEOS_MARK_FUNCTION;
+  GEOS_ERROR( "ExplicitStep non available for contact solvers." );
   return dt;
 }
 
@@ -258,4 +232,4 @@ void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) con
   } );
 }
 
-} /* namespace geosx */
+} /* namespace geos */

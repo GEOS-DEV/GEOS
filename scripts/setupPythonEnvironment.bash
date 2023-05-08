@@ -4,13 +4,18 @@
 # Configuration
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PACKAGE_DIR=$SCRIPT_DIR/../src/coreComponents/python/modules
-declare -a TARGET_PACKAGES=("geosx_mesh_tools_package"
-                            "geosx_xml_tools_package"
-                            "hdf5_wrapper_package"
-                            "pygeosx_tools_package")
+declare -a TARGET_PACKAGES=("$PACKAGE_DIR/geosx_mesh_tools_package"
+                            "$PACKAGE_DIR/geosx_xml_tools_package"
+                            "$PACKAGE_DIR/hdf5_wrapper_package"
+                            "$PACKAGE_DIR/pygeosx_tools_package"
+                            "$SCRIPT_DIR/../integratedTests/scripts/geos_ats_package")
 declare -a LINK_SCRIPTS=("preprocess_xml"
                          "format_xml"
-                         "convert_abaqus")
+                         "convert_abaqus"
+                         "run_geos_ats"
+                         "setup_ats_environment"
+                         "activate"
+                         "python")
 
 
 # Read input arguments
@@ -76,6 +81,24 @@ then
 fi
 
 
+# Check to make sure that the python target exists
+echo "Checking the python target..."
+if [ ! -f "$PYTHON_TARGET" ]
+then
+    echo "The target python executable ($PYTHON_TARGET) cannot be found"
+
+    if [[ "$PYTHON_TARGET" == *"PYGEOSX"* ]]
+    then
+        echo "If GEOSX is configured to use pygeosx, you may need to run \"make pygeosx\""
+        echo "before setting up the geosx_python_tools!"
+    else
+        echo "Note: if you use the \"-m\" argument, this script will try to build a version of miniconda"
+        echo "that can support the target tools"
+    fi
+    exit 1
+fi
+
+
 # If a virtual environment is not explicitly requested,
 # try installing packages directly
 if ! $INSTALL_VIRTUAL
@@ -83,13 +106,18 @@ then
     echo "Attempting to install packages directly in target python environment..."
     for p in "${TARGET_PACKAGES[@]}"
     do
-        echo "  $p"
-        RES=$($PYTHON_TARGET -m pip install $PACKAGE_DIR/$p 2>&1)
-        if [[ $RES =~ "Error" ]]
+        if [ -d "$p" ]
         then
-            echo "  (cannot install target packes directly)"
-            INSTALL_VIRTUAL=true
-            break
+            echo "  $p"
+            RES=$($PYTHON_TARGET -m pip install $p 2>&1)
+            if [[ $RES =~ "Error" ]]
+            then
+                echo "  (cannot install target packes directly)"
+                INSTALL_VIRTUAL=true
+                break
+            fi
+        else
+            echo "Could not find target package: $p"
         fi
     done
 fi
@@ -124,8 +152,13 @@ then
     PYTHON_TARGET=$VIRTUAL_PATH/$VIRTUAL_NAME/bin/python
     for p in "${TARGET_PACKAGES[@]}"
     do
-        echo "  $p"
-        $PYTHON_TARGET -m pip install $PACKAGE_DIR/$p
+        if [ -d "$p" ]
+        then
+            echo "  $p"
+            $PYTHON_TARGET -m pip install $p
+        else
+            echo "Could not find target package: $p"
+        fi
     done
 
     # Print user-info
@@ -139,34 +172,59 @@ fi
 
 
 # Link key scripts to the bin directory
+declare -a MOD_SEARCH_PATH=("$(dirname $PYTHON_TARGET)"
+                            "$HOME/.local/bin"
+                            "$HOME/local/bin")
+
+
 if [ -n "${BIN_DIR}" ]
 then
     echo "Linking key scripts to bin directory..."
-    MOD_PATH="$(dirname $PYTHON_TARGET)"
 
     for p in "${LINK_SCRIPTS[@]}"
     do
         echo "  $p"
+        package_found="0"
 
-        pp=
-        if [ -f "$MOD_PATH/$p" ]
-        then
-            pp="$MOD_PATH/$p"
-        else
-            pp="$(which $p)"
-        fi
+        for MOD_PATH in "${MOD_SEARCH_PATH[@]}"
+        do
+            # Check to see if the tool exists
+            pp=
+            echo "$MOD_PATH/$p"
+            if [ -f "$MOD_PATH/$p" ]
+            then
+                pp="$MOD_PATH/$p"
+            fi
 
-        if [ -z "$pp" ]
+            # Remove any old links if necessary
+            if [ -f "$BIN_DIR/$p" ]
+            then
+                rm $BIN_DIR/$p
+            fi
+
+            # Create links
+            if [ ! -z "$pp" ]
+            then
+                echo "    (found $p as $pp)"
+                ln -s $pp $BIN_DIR/$p 
+                package_found="1"
+                break
+            fi
+        done
+
+        if [[ "$package_found" == "0" ]]
         then
-            echo "  (could not find where $p is installed)"      
-        else
-            echo "  (found $p as $pp)"
-            ln -s $pp $BIN_DIR/$p 
+            echo "    (could not find where $p is installed)" 
         fi
     done
 
-    ln -s $SCRIPT_DIR/automatic_xml_preprocess.sh $BIN_DIR/geosx_preprocessed
-    ln -s $SCRIPT_DIR/pygeosx_preprocess.py $BIN_DIR/pygeosx_preprocess.py
+    # Link additional tools from the scripts directory
+    echo "Linking additional scripts to the bin directory..."
+    if [ ! -f "$BIN_DIR/geosx_preprocessed" ]
+    then
+        ln -s $SCRIPT_DIR/automatic_xml_preprocess.sh $BIN_DIR/geosx_preprocessed
+        ln -s $SCRIPT_DIR/pygeosx_preprocess.py $BIN_DIR/pygeosx_preprocess.py
+    fi
 fi
 
 echo "Done!"

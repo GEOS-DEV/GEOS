@@ -19,7 +19,7 @@
 
 #include "CoupledReservoirAndWellsBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace coupledReservoirAndWellsInternal
@@ -85,8 +85,8 @@ addCouplingNumNonzeros( SolverBase const * const solver,
         if( resElemGhostRank[er][esr][ei] < 0 )
         {
           localIndex const localRow = LvArray::integerConversion< localIndex >( resElemDofNumber[er][esr][ei] - rankOffset );
-          GEOSX_ASSERT_GE( localRow, 0 );
-          GEOSX_ASSERT_GE( rowLengths.size(), localRow + resNumDof );
+          GEOS_ASSERT_GE( localRow, 0 );
+          GEOS_ASSERT_GE( rowLengths.size(), localRow + resNumDof );
 
           for( integer idof = 0; idof < resNumDof; ++idof )
           {
@@ -97,8 +97,8 @@ addCouplingNumNonzeros( SolverBase const * const solver,
         if( wellElemGhostRank[iwelem] < 0 )
         {
           localIndex const localRow = LvArray::integerConversion< localIndex >( wellElemDofNumber[iwelem] - rankOffset );
-          GEOSX_ASSERT_GE( localRow, 0 );
-          GEOSX_ASSERT_GE( rowLengths.size(), localRow + wellNumDof );
+          GEOS_ASSERT_GE( localRow, 0 );
+          GEOS_ASSERT_GE( rowLengths.size(), localRow + wellNumDof );
 
           for( integer idof = 0; idof < wellNumDof; ++idof )
           {
@@ -110,6 +110,51 @@ addCouplingNumNonzeros( SolverBase const * const solver,
   } );
 }
 
+bool validateWellPerforations( SolverBase const * const reservoirSolver,
+                               WellSolverBase const * const wellSolver,
+                               DomainPartition const & domain )
+{
+  std::pair< string, string > badPerforation;
+
+  arrayView1d< string const > const flowTargetRegionNames =
+    reservoirSolver->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
+
+  wellSolver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                            MeshLevel const & meshLevel,
+                                                                            arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager const & elemManager = meshLevel.getElemManager();
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const, WellElementSubRegion const & subRegion )
+    {
+      PerforationData const * const perforationData = subRegion.getPerforationData();
+      WellControls const & wellControls = wellSolver->getWellControls( subRegion );
+
+      arrayView1d< localIndex const > const & resElementRegion =
+        perforationData->getField< fields::perforation::reservoirElementRegion >();
+
+      // Loop over perforations and check the reservoir region to which each perforation is connected to
+      // If the name of the region is not in the list of targetted regions, then we have a "bad" connection.
+      for( localIndex iperf = 0; iperf < perforationData->size(); ++iperf )
+      {
+        localIndex const er = resElementRegion[iperf];
+        string const regionName = elemManager.getRegion( er ).getName();
+        if( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), regionName ) == flowTargetRegionNames.end())
+        {
+          badPerforation = {wellControls.getName(), regionName};
+          break;
+        }
+      }
+    } );
+  } );
+
+  localIndex const hasBadPerforations = MpiWrapper::max( badPerforation.first.empty() ? 0 : 1 );
+
+  GEOS_THROW_IF( !badPerforation.first.empty(),
+                 GEOS_FMT( "The well {} has a connection to the region {} which is not targeted by the solver", badPerforation.first, badPerforation.second ),
+                 std::runtime_error );
+  return hasBadPerforations == 0;
 }
 
-} /* namespace geosx */
+}
+
+} /* namespace geos */
