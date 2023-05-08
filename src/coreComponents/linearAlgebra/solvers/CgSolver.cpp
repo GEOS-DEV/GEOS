@@ -58,7 +58,7 @@ CgSolver< VECTOR >::CgSolver( LinearSolverParameters params,
 template< typename VECTOR >
 void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   Stopwatch watch;
 
   // Define residual vector
@@ -115,7 +115,7 @@ void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
 
     // compute alpha
     real64 const pAp = p.dot( Ap );
-    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( pAp )
+    GEOS_KRYLOV_BREAKDOWN_IF_ZERO( pAp )
     real64 const alpha = tau / pAp;
 
     // Update x = x + alpha*p

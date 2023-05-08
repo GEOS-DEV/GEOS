@@ -89,7 +89,21 @@ template< typename VECTOR >
 void GmresSolver< VECTOR >::solve( Vector const & b,
                                    Vector & x ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
+
+  // Function to grow K-space on demand
+  auto const addKspaceVector = [&]( integer const n )
+  {
+    for( integer i = m_kspace.size(); i <= n; ++i )
+    {
+      m_kspace.emplace_back( createTempVector( b ) );
+    }
+  };
+
+  // TEMP: evaluate the speed benefit of pre-allocation vs memory waste.
+  // Rationale: LA packages (e.g. hypre) allocate krylov space this during
+  // setup, so we don't want to include it in the timing of the solve.
+  addKspaceVector( m_params.krylov.maxRestart );
 
   Stopwatch watch;
 
@@ -117,18 +131,9 @@ void GmresSolver< VECTOR >::solve( Vector const & b,
   m_result.status = LinearSolverResult::Status::NotConverged;
   m_residualNorms.clear();
 
-  // Function to grow K-space on demand
-  auto const addKspaceVector = [&]( integer const n )
-  {
-    for( integer i = m_kspace.size(); i <= n; ++i )
-    {
-      m_kspace.emplace_back( createTempVector( b ) );
-    }
-  };
-
   // On subsequent calls to solve(), b must have the same size/distribution
   addKspaceVector( 0 );
-  GEOSX_LAI_ASSERT_EQ( b.localSize(), m_kspace[0].localSize() );
+  GEOS_LAI_ASSERT_EQ( b.localSize(), m_kspace[0].localSize() );
 
   integer & k = m_result.numIterations;
   while( k <= m_params.krylov.maxIterations && m_result.status == LinearSolverResult::Status::NotConverged )
@@ -169,7 +174,7 @@ void GmresSolver< VECTOR >::solve( Vector const & b,
       }
 
       H( j+1, j ) = w.norm2();
-      GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( H( j+1, j ) )
+      GEOS_KRYLOV_BREAKDOWN_IF_ZERO( H( j+1, j ) )
 
       addKspaceVector( j+1 );
       m_kspace[j+1].axpby( 1.0 / H( j+1, j ), w, 0.0 );

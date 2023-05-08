@@ -47,7 +47,7 @@ LinearSolverParameters params_GMRES_ILU()
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 300;
   parameters.solverType = LinearSolverParameters::SolverType::gmres;
-  parameters.preconditionerType = LinearSolverParameters::PreconditionerType::iluk;
+  parameters.preconditionerType = LinearSolverParameters::PreconditionerType::ilu;
   parameters.ifact.fill = 1;
   return parameters;
 }

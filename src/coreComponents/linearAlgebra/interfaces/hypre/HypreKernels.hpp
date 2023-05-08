@@ -223,9 +223,9 @@ void addMatrixEntries( hypre_ParCSRMatrix const * const src,
     HYPRE_BigInt const * const src_colmap = hypre::getOffdColumnMap( src );
     HYPRE_BigInt const * const dst_colmap = hypre::getOffdColumnMap( dst );
     KERNEL::launch( hypre_ParCSRMatrixOffd( src ),
-                    [src_colmap] GEOS_HYPRE_DEVICE( auto i ){ return src_colmap[i]; },
+                    [src_colmap] GEOS_HYPRE_DEVICE ( auto i ){ return src_colmap[i]; },
                     hypre_ParCSRMatrixOffd( dst ),
-                    [dst_colmap] GEOS_HYPRE_DEVICE( auto i ){ return dst_colmap[i]; },
+                    [dst_colmap] GEOS_HYPRE_DEVICE ( auto i ){ return dst_colmap[i]; },
                     scale );
   }
 }
@@ -253,8 +253,8 @@ struct AddEntriesRestrictedKernel
     }
 
     // Allocate contiguous memory to store sorted column permutations of each row
-    array1d< HYPRE_Int > const src_permutation( hypre_CSRMatrixNumNonzeros( src_mat ) );
-    array1d< HYPRE_Int > const dst_permutation( hypre_CSRMatrixNumNonzeros( dst_mat ) );
+    array1d< HYPRE_Int > const src_permutation( src.nnz );
+    array1d< HYPRE_Int > const dst_permutation( dst.nnz );
 
     // Each thread adds one row of src into dst
     forAll< hypre::execPolicy >( dst.nrow,
@@ -333,12 +333,12 @@ struct AddEntriesSamePatternKernel
 
       GEOS_ASSERT_EQ( src_offset, dst_offset );
       GEOS_ASSERT_EQ( src_length, dst_length );
-      GEOSX_DEBUG_VAR( src_length, dst_length, src_indices, dst_indices, src_colmap, dst_colmap );
+      GEOS_DEBUG_VAR( src_length, dst_length, src_indices, dst_indices, src_colmap, dst_colmap );
 
       // NOTE: this assumes that entries are in the exact same order, to avoid creating a sorted view
       for( HYPRE_Int i = 0; i < dst_length; ++i )
       {
-        GEOSX_ASSERT_EQ( src_colmap( src_indices[i] ), dst_colmap( dst_indices[i] ) );
+        GEOS_ASSERT_EQ( src_colmap( src_indices[i] ), dst_colmap( dst_indices[i] ) );
         dst_values[i] += scale * src_values[i];
       }
     } );

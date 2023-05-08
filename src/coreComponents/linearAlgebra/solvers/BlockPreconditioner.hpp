@@ -23,42 +23,10 @@
 #include "linearAlgebra/common/PreconditionerBase.hpp"
 #include "linearAlgebra/utilities/BlockOperator.hpp"
 #include "linearAlgebra/utilities/BlockVector.hpp"
+#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
 namespace geos
 {
-
-/**
- * @brief Type of Schur complement approximation used
- *
- * @todo Need more descriptive names for options
- */
-enum class SchurComplementOption
-{
-  None,                  //!< No Schur complement - just block-GS/block-Jacobi preconditioner
-  FirstBlockDiagonal,    //!< Approximate first block with its diagonal
-  RowsumDiagonalProbing, //!< Rowsum-preserving diagonal approximation constructed with probing
-  FirstBlockUserDefined  //!< User defined preconditioner for the first block
-};
-
-/**
- * @brief Type of block row scaling to apply
- */
-enum class BlockScalingOption
-{
-  None,          //!< No scaling
-  FrobeniusNorm, //!< Equilibrate Frobenius norm of the diagonal blocks
-  UserProvided   //!< User-provided scaling
-};
-
-/**
- * @brief Shape of the block preconditioner
- */
-enum class BlockShapeOption
-{
-  Diagonal,            //!< (D)^{-1}
-  UpperTriangular,     //!< (DU)^{-1}
-  LowerUpperTriangular //!< (LDU)^{-1}
-};
 
 /*
  * Since formulas in Doxygen are broken with 1.8.13 and certain versions of ghostscript,
@@ -112,13 +80,9 @@ public:
 
   /**
    * @brief Constructor.
-   * @param shapeOption preconditioner block shape
-   * @param schurOption type of Schur complement approximation to use
-   * @param scalingOption type of scaling to apply to blocks
+   * @param params block preconditioner parameters
    */
-  explicit BlockPreconditioner( BlockShapeOption const shapeOption,
-                                SchurComplementOption const schurOption,
-                                BlockScalingOption const scalingOption );
+  explicit BlockPreconditioner( LinearSolverParameters::Block params );
 
   /**
    * @brief Setup data for one of the two blocks.
@@ -137,7 +101,17 @@ public:
                    real64 const scaling = 1.0 );
 
   /**
-   * @copydoc setupBlock(localIndex,std::vector<DofManager::SubComponent>,std::unique_ptr<PreconditionerBase<LAI>>,real64)
+   * @brief Setup data for one of the two blocks.
+   * @param blockIndex index of the block to set up
+   * @param blockDofs choice of DoF components (from a monolithic system)
+   * @param solver instance of the inner preconditioner for the block
+   * @param scaling user-provided row scaling coefficient for this block
+   *
+   * @note This version does not take ownership of @p solver that must have its lifetime guaranteed elsewhere.
+   *
+   * @note While not strictly required, it is generally expected that @p blockDofs
+   *       of the two blocks are non-overlapping and their union includes all
+   *       DoF components in the monolithic system.
    */
   void setupBlock( localIndex const blockIndex,
                    std::vector< DofManager::SubComponent > blockDofs,
@@ -156,8 +130,6 @@ public:
    * @name PreconditionerBase interface methods
    */
   ///@{
-
-  using PreconditionerBase< LAI >::setup;
 
   /**
    * @brief Compute the preconditioner from a matrix
@@ -178,6 +150,14 @@ public:
 
   ///@}
 
+  /**
+   * @brief @return the block operator consisting of extracted matrix blocks
+   */
+  BlockOperator< Vector, Matrix > const & blocks() const
+  {
+    return m_matBlocks;
+  }
+
 private:
 
   /**
@@ -196,14 +176,8 @@ private:
    */
   void computeSchurComplement();
 
-  /// Shape of the block preconditioner
-  BlockShapeOption m_shapeOption;
-
-  /// Type of Schur complement to construct
-  SchurComplementOption m_schurOption;
-
-  /// Whether to scale blocks to equilibrate norms
-  BlockScalingOption m_scalingOption;
+  /// Block preconditioner parameters
+  LinearSolverParameters::Block m_params;
 
   /// Description of dof components making up each of the two main blocks
   std::array< std::vector< DofManager::SubComponent >, 2 > m_blockDofs{};

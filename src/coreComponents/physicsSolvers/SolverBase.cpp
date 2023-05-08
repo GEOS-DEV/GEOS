@@ -782,7 +782,8 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
   for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
   {
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ) );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "  Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}",
+                                        dtAttempt, configurationLoopIter, newtonIter ) );
 
     // zero out matrix/rhs before assembly
     m_localMatrix.zero();
@@ -821,14 +822,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     // get residual norm
     real64 residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
 
-
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
-    if( newtonIter > 0 )
-    {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    Last LinSolve(iter,res) = ( {:3}, {:4.2e} ) ; ",
-                                          m_linearSolverResult.numIterations,
-                                          m_linearSolverResult.residualReduction ) );
-    }
 
     // if the residual norm is less than the Newton tolerance we denote that we have
     // converged and break from the Newton loop immediately.
@@ -918,6 +912,10 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     // Increment the solver statistics for reporting purposes
     m_solverStatistics.logNonlinearIteration( m_linearSolverResult.numIterations );
 
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    Linear solve: ( iter, res ) = ( {:3}, {:4.2e} )",
+                                        m_linearSolverResult.numIterations,
+                                        m_linearSolverResult.residualReduction ) );
+
     // Output the linear system solution for debugging purposes
     debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
 
@@ -992,6 +990,12 @@ void SolverBase::setupSystem( DomainPartition & domain,
 
   solution.setName( this->getName() + "/solution" );
   solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+}
+
+std::unique_ptr< PreconditionerBase< LAInterface > >
+SolverBase::createPreconditioner( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) const
+{
+  return LAInterface::createPreconditioner( m_linearSolverParameters.get() );
 }
 
 void SolverBase::assembleSystem( real64 const GEOS_UNUSED_PARAM( time ),

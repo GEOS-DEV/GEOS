@@ -357,7 +357,7 @@ public:
     auto it = labels.begin();
     for( FieldDescription const & field : m_fields )
     {
-      localIndex const numComp = field.numComponents;
+      integer const numComp = field.numComponents;
       localIndex const numSupp = field.numLocalDof / numComp;
       for( localIndex i = 0; i < numSupp; ++i, it += numComp )
       {
@@ -514,13 +514,13 @@ private:
   /**
    * @brief Get field index from string key
    */
-  localIndex getFieldIndex( string const & name ) const;
+  integer getFieldIndex( string const & name ) const;
 
   /**
    * @brief Compute and save dof offsets the field
    * @param fieldIndex index of the field
    */
-  void computeFieldDimensions( localIndex fieldIndex );
+  void computeFieldDimensions( integer const fieldIndex );
 
   /**
    * @brief Create index array for the field
@@ -541,11 +541,11 @@ private:
    * @param colFieldIndex index of col field (must be non-negative)
    */
   void countRowLengthsOneBlock( arrayView1d< localIndex > const & rowLengths,
-                                localIndex rowFieldIndex,
-                                localIndex colFieldIndex ) const;
+                                integer rowFieldIndex,
+                                integer colFieldIndex ) const;
 
   void countRowLengthsFromStencil( arrayView1d< localIndex > const & rowLengths,
-                                   localIndex fieldIndex ) const;
+                                   integer fieldIndex ) const;
 
   /**
    * @brief Populate the sparsity pattern for a coupling block between given fields.
@@ -556,11 +556,11 @@ private:
    * This private function is used as a building block by higher-level SetSparsityPattern()
    */
   void setSparsityPatternOneBlock( SparsityPatternView< globalIndex > const & pattern,
-                                   localIndex rowFieldIndex,
-                                   localIndex colFieldIndex ) const;
+                                   integer rowFieldIndex,
+                                   integer colFieldIndex ) const;
 
   void setSparsityPatternFromStencil( SparsityPatternView< globalIndex > const & pattern,
-                                      localIndex fieldIndex ) const;
+                                      integer fieldIndex ) const;
 
   /**
    * @brief Generic implementation for @ref copyVectorToField and @ref addVectorToField
@@ -606,7 +606,7 @@ private:
   std::vector< FieldDescription > m_fields;
 
   /// Table of connector types within and between fields
-  std::map< std::pair< localIndex, localIndex >, CouplingDescription > m_coupling;
+  std::map< std::pair< integer, integer >, CouplingDescription > m_coupling;
 
   /// Flag indicating that DOFs have been reordered rank-wise.
   bool m_reordered = false;

@@ -57,9 +57,6 @@ public:
   SinglePhasePoromechanics( const string & name,
                             Group * const parent );
 
-  /// Destructor for the class
-  ~SinglePhasePoromechanics() override {}
-
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new SinglePhasePoromechanics object through the object catalog.
@@ -103,12 +100,20 @@ public:
                             ParallelVector & solution,
                             bool const setSparsity = true ) override;
 
+  virtual std::unique_ptr< PreconditionerBase< LAInterface > >
+  createPreconditioner( DomainPartition & domain ) const override;
+
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition & domain,
                                DofManager const & dofManager,
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
+
+  virtual void solveLinearSystem( DofManager const & dofManager,
+                                  ParallelMatrix & matrix,
+                                  ParallelVector & rhs,
+                                  ParallelVector & solution ) override;
 
   virtual void updateState( DomainPartition & domain ) override;
 
@@ -133,6 +138,9 @@ public:
 
     /// Flag to indicate that the solver is going to perform stress initialization
     constexpr static char const * performStressInitializationString() { return "performStressInitialization"; }
+
+    /// Flag to enable block row scaling of the coupled system prior to the linear solve
+    constexpr static char const * linearSystemScalingString() { return "linearSystemScaling"; }
   };
 
 protected:
@@ -148,8 +156,6 @@ private:
    * @param[in] subRegion the element subRegion
    */
   void updateBulkDensity( ElementSubRegionBase & subRegion );
-
-  void createPreconditioner();
 
   template< typename CONSTITUTIVE_BASE,
             typename KERNEL_WRAPPER,
@@ -167,6 +173,12 @@ private:
 
   /// Flag to indicate that the solver is going to perform stress initialization
   integer m_performStressInitialization;
+
+  // input flag indicating whether system scaling should be performed
+  integer m_systemScaling = 0;
+
+  // A vector to perform row/block-wise linear system scaling
+  ParallelVector m_scalingVector;
 };
 
 template< typename CONSTITUTIVE_BASE,

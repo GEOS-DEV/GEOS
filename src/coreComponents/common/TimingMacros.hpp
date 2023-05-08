@@ -95,7 +95,7 @@ namespace timingHelpers
 #include <iostream>
 
 /// Mark a function or scope for timing with a given name
-#define GEOS_CALIPER_MARK_SCOPE(name) cali::Function GEOSX_CONCAT(_cali_ann, __LINE__)(STRINGIZE_NX(name))
+#define GEOS_CALIPER_MARK_SCOPE(name) cali::Function GEOS_CONCAT(_cali_ann, __LINE__)(STRINGIZE_NX(name))
 
 /// Mark a function for timing using a compiler-provided name
 #define GEOS_CALIPER_MARK_FUNCTION cali::Function _cali_ann_func(timingHelpers::stripPF(__PRETTY_FUNCTION__).c_str())

@@ -13,11 +13,11 @@
  */
 
 /**
- * @file CgSolver.hpp
+ * @file RichardsonSolver.hpp
  */
 
-#ifndef GEOS_LINEARALGEBRA_SOLVERS_CGSOLVER_HPP_
-#define GEOS_LINEARALGEBRA_SOLVERS_CGSOLVER_HPP_
+#ifndef GEOSX_LINEARALGEBRA_SOLVERS_RICHARDSONSOLVER_HPP_
+#define GEOSX_LINEARALGEBRA_SOLVERS_RICHARDSONSOLVER_HPP_
 
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
 
@@ -25,23 +25,21 @@ namespace geos
 {
 
 /**
- * @brief This class implements Conjugate Gradient method
- *        for monolithic and block linear operators
- * @tparam VECTOR type of vectors this solver operates on.
- * @note  The notation is consistent with "Iterative Methods for
- *        Linear and Non-Linear Equations" from C.T. Kelley (1995)
- *        and "Iterative Methods for Sparse Linear Systems"
- *        from Y. Saad (2003).
+ * @brief Implements right-preconditioned modified Richardson iteration.
+ * @tparam VECTOR type of vectors this solver operates on
+ * @note Richardson is not a Krylov subspace method, but
+ *       for convenience inherits from KrylovSolver; that
+ *       class should really be renamed to IterativeSolver.
  */
 template< typename VECTOR >
-class CgSolver final : public KrylovSolver< VECTOR >
+class RichardsonSolver final : public KrylovSolver< VECTOR >
 {
 public:
 
-  /// Alias for base type
+  /// Alias for the base type
   using Base = KrylovSolver< VECTOR >;
 
-  /// Alias for template parameter
+  /// Alias for the vector type
   using Vector = typename Base::Vector;
 
   /**
@@ -50,14 +48,14 @@ public:
   ///@{
 
   /**
-   * @brief Constructor.
-   * @param [in] params parameters for the solver
-   * @param [in] A reference to the system matrix.
-   * @param [in] M reference to the preconditioning operator.
+   * @brief Solver object constructor.
+   * @param[in] params  parameters for the solver
+   * @param[in] matrix  reference to the system matrix
+   * @param[in] precond reference to the preconditioning operator
    */
-  CgSolver( LinearSolverParameters params,
-            LinearOperator< Vector > const & A,
-            LinearOperator< Vector > const & M );
+  RichardsonSolver( LinearSolverParameters params,
+                    LinearOperator< Vector > const & matrix,
+                    LinearOperator< Vector > const & precond );
 
   ///@}
 
@@ -75,7 +73,7 @@ public:
 
   virtual string methodName() const override
   {
-    return "CG";
+    return "Richardson";
   };
 
   ///@}
@@ -88,14 +86,17 @@ protected:
   using Base::m_params;
   using Base::m_operator;
   using Base::m_precond;
-  using Base::m_result;
   using Base::m_residualNorms;
+  using Base::m_result;
   using Base::createTempVector;
   using Base::logProgress;
   using Base::logResult;
 
+private:
+
+  real64 m_omega;
 };
 
-} // namespace geos
+} // geosx
 
-#endif /*GEOS_LINEARALGEBRA_SOLVERS_CGSOLVER_HPP_*/
+#endif //GEOSX_LINEARALGEBRA_SOLVERS_RICHARDSONSOLVER_HPP_

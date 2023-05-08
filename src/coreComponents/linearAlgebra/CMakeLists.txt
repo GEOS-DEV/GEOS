@@ -22,6 +22,7 @@ set( linearAlgebra_headers
      solvers/PreconditionerIdentity.hpp
      solvers/PreconditionerJacobi.hpp
      solvers/PreconditionerNull.hpp
+     solvers/RichardsonSolver.hpp
      solvers/SeparateComponentPreconditioner.hpp
      utilities/Arnoldi.hpp
      utilities/BlockOperator.hpp
@@ -49,6 +50,7 @@ set( linearAlgebra_sources
      solvers/CgSolver.cpp
      solvers/GmresSolver.cpp
      solvers/KrylovSolver.cpp
+     solvers/RichardsonSolver.cpp
      solvers/SeparateComponentPreconditioner.cpp
    )
 

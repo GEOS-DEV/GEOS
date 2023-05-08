@@ -62,6 +62,7 @@ function( make_full_config_file
     set( GEOSX_LA_INTERFACE_HYPRE ON )
     set( GEOSX_LA_INTERFACE_TRILINOS OFF )
     set( GEOSX_LA_INTERFACE_PETSC OFF )
+    set( Python3_VERSION "3.10.8" )
 
     configure_file( ${CMAKE_SOURCE_DIR}/coreComponents/common/GeosxConfig.hpp.in
                     ${CMAKE_SOURCE_DIR}/docs/doxygen/GeosxConfig.hpp )
