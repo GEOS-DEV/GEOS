@@ -215,6 +215,19 @@ public:
    */
   ///@{
 
+  /**
+   * @brief Add a property to the CellBlock.
+   * @tparam T type of the property
+   * @param[in] propertyName the name of the property
+   * @return a non-const reference to the property
+   */
+  template< typename T >
+  T & addProperty( string const & propertyName )
+  {
+    m_externalPropertyNames.emplace_back( propertyName );
+    return this->registerWrapper< T >( propertyName ).reference();
+  }
+
   ///@}
 
 private:

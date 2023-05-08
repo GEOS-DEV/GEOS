@@ -164,6 +164,13 @@ Element: ChomboIO
 .. include:: ../../coreComponents/schema/docs/ChomboIO.rst
 
 
+.. _XML_Coarsening:
+
+Element: Coarsening
+===================
+.. include:: ../../coreComponents/schema/docs/Coarsening.rst
+
+
 .. _XML_CompositeFunction:
 
 Element: CompositeFunction
@@ -316,6 +323,13 @@ Element: Constitutive
 Element: Coulomb
 ================
 .. include:: ../../coreComponents/schema/docs/Coulomb.rst
+
+
+.. _XML_Coupled:
+
+Element: Coupled
+================
+.. include:: ../../coreComponents/schema/docs/Coupled.rst
 
 
 .. _XML_CustomPolarObject:
@@ -535,6 +549,13 @@ Element: Geometry
 .. include:: ../../coreComponents/schema/docs/Geometry.rst
 
 
+.. _XML_Graph:
+
+Element: Graph
+==============
+.. include:: ../../coreComponents/schema/docs/Graph.rst
+
+
 .. _XML_HaltEvent:
 
 Element: HaltEvent
@@ -633,11 +654,25 @@ Element: Mesh
 .. include:: ../../coreComponents/schema/docs/Mesh.rst
 
 
+.. _XML_Metis:
+
+Element: Metis
+==============
+.. include:: ../../coreComponents/schema/docs/Metis.rst
+
+
 .. _XML_ModifiedCamClay:
 
 Element: ModifiedCamClay
 ========================
 .. include:: ../../coreComponents/schema/docs/ModifiedCamClay.rst
+
+
+.. _XML_MsRSB:
+
+Element: MsRSB
+==============
+.. include:: ../../coreComponents/schema/docs/MsRSB.rst
 
 
 .. _XML_MultiPhaseConstantThermalConductivity:
@@ -673,6 +708,13 @@ Element: MultiphasePoromechanicsInitialization
 Element: MultiphasePoromechanicsReservoir
 =========================================
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanicsReservoir.rst
+
+
+.. _XML_Multiscale:
+
+Element: Multiscale
+===================
+.. include:: ../../coreComponents/schema/docs/Multiscale.rst
 
 
 .. _XML_MultivariableTableFunction:
@@ -1095,6 +1137,13 @@ Element: SlipDependentPermeability
 .. include:: ../../coreComponents/schema/docs/SlipDependentPermeability.rst
 
 
+.. _XML_Smoother:
+
+Element: Smoother
+=================
+.. include:: ../../coreComponents/schema/docs/Smoother.rst
+
+
 .. _XML_SolidInternalEnergy:
 
 Element: SolidInternalEnergy
@@ -1163,6 +1212,13 @@ Element: Solvers
 Element: SourceFlux
 ===================
 .. include:: ../../coreComponents/schema/docs/SourceFlux.rst
+
+
+.. _XML_Structured:
+
+Element: Structured
+===================
+.. include:: ../../coreComponents/schema/docs/Structured.rst
 
 
 .. _XML_SurfaceElementRegion:
@@ -1519,6 +1575,13 @@ Datastructure: ChomboIO
 .. include:: ../../coreComponents/schema/docs/ChomboIO_other.rst
 
 
+.. _DATASTRUCTURE_Coarsening:
+
+Datastructure: Coarsening
+=========================
+.. include:: ../../coreComponents/schema/docs/Coarsening_other.rst
+
+
 .. _DATASTRUCTURE_CompositeFunction:
 
 Datastructure: CompositeFunction
@@ -1678,6 +1741,13 @@ Datastructure: ConstitutiveModels
 Datastructure: Coulomb
 ======================
 .. include:: ../../coreComponents/schema/docs/Coulomb_other.rst
+
+
+.. _DATASTRUCTURE_Coupled:
+
+Datastructure: Coupled
+======================
+.. include:: ../../coreComponents/schema/docs/Coupled_other.rst
 
 
 .. _DATASTRUCTURE_CustomPolarObject:
@@ -1897,6 +1967,13 @@ Datastructure: Geometry
 .. include:: ../../coreComponents/schema/docs/Geometry_other.rst
 
 
+.. _DATASTRUCTURE_Graph:
+
+Datastructure: Graph
+====================
+.. include:: ../../coreComponents/schema/docs/Graph_other.rst
+
+
 .. _DATASTRUCTURE_HaltEvent:
 
 Datastructure: HaltEvent
@@ -2009,11 +2086,25 @@ Datastructure: MeshBodies
 .. include:: ../../coreComponents/schema/docs/MeshBodies_other.rst
 
 
+.. _DATASTRUCTURE_Metis:
+
+Datastructure: Metis
+====================
+.. include:: ../../coreComponents/schema/docs/Metis_other.rst
+
+
 .. _DATASTRUCTURE_ModifiedCamClay:
 
 Datastructure: ModifiedCamClay
 ==============================
 .. include:: ../../coreComponents/schema/docs/ModifiedCamClay_other.rst
+
+
+.. _DATASTRUCTURE_MsRSB:
+
+Datastructure: MsRSB
+====================
+.. include:: ../../coreComponents/schema/docs/MsRSB_other.rst
 
 
 .. _DATASTRUCTURE_MultiPhaseConstantThermalConductivity:
@@ -2049,6 +2140,13 @@ Datastructure: MultiphasePoromechanicsInitialization
 Datastructure: MultiphasePoromechanicsReservoir
 ===============================================
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanicsReservoir_other.rst
+
+
+.. _DATASTRUCTURE_Multiscale:
+
+Datastructure: Multiscale
+=========================
+.. include:: ../../coreComponents/schema/docs/Multiscale_other.rst
 
 
 .. _DATASTRUCTURE_MultivariableTableFunction:
@@ -2471,6 +2569,13 @@ Datastructure: SlipDependentPermeability
 .. include:: ../../coreComponents/schema/docs/SlipDependentPermeability_other.rst
 
 
+.. _DATASTRUCTURE_Smoother:
+
+Datastructure: Smoother
+=======================
+.. include:: ../../coreComponents/schema/docs/Smoother_other.rst
+
+
 .. _DATASTRUCTURE_SolidInternalEnergy:
 
 Datastructure: SolidInternalEnergy
@@ -2546,6 +2651,13 @@ Datastructure: Solvers
 Datastructure: SourceFlux
 =========================
 .. include:: ../../coreComponents/schema/docs/SourceFlux_other.rst
+
+
+.. _DATASTRUCTURE_Structured:
+
+Datastructure: Structured
+=========================
+.. include:: ../../coreComponents/schema/docs/Structured_other.rst
 
 
 .. _DATASTRUCTURE_SurfaceElementRegion:

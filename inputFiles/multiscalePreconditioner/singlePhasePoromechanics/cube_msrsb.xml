@@ -1,0 +1,122 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="cube_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+
+    <SolidMechanicsLagrangianSSLE
+      name="mechSolver"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
+      logLevel="1"
+      targetRegions="{ region }">
+      <LinearSolverParameters
+        preconditionerType="multiscale"
+        logLevel="0">
+        <Multiscale
+          basisType="msrsb"
+          maxLevels="3"
+          boundarySets="{xneg,xpos,yneg,ypos,zneg,zpos}"
+          debugLevel="0"
+          coarseType="direct">
+          <Smoother
+            type="l1sgs"
+            preOrPost="both"
+            numSweeps="1"/>
+          <Coarsening
+            partitionType="cartesian"
+            ratio="{ 5, 5, 5 }"
+            maxCoarseDof="2000"/>
+          <MsRSB
+            maxIter="100"
+            tolerance="1e-2"
+            relaxation="0.6666666666666666"
+            checkFrequency="5"/>
+        </Multiscale>
+      </LinearSolverParameters>
+    </SolidMechanicsLagrangianSSLE>
+
+    <SinglePhaseFVM
+      name="flowSolver"
+      logLevel="1"
+      discretization="tpfa"
+      targetRegions="{ region }">
+      <LinearSolverParameters
+        preconditionerType="multiscale"
+        logLevel="0">
+        <Multiscale
+          basisType="msrsb"
+          maxLevels="3"
+          boundarySets="{xneg,xpos,yneg,ypos,zneg,zpos}"
+          debugLevel="0"
+          coarseType="direct">
+          <Smoother
+            type="l1sgs"
+            preOrPost="both"
+            numSweeps="1"/>
+          <Coarsening
+            partitionType="cartesian"
+            ratio="{ 5, 5, 5 }"
+            maxCoarseDof="2000"/>
+          <MsRSB
+            maxIter="100"
+            tolerance="1e-2"
+            relaxation="0.6666666666666666"
+            checkFrequency="5"/>
+        </Multiscale>
+      </LinearSolverParameters>
+    </SinglePhaseFVM>
+
+    <SinglePhasePoromechanics
+      name="poroSolver"
+      solidSolverName="mechSolver"
+      flowSolverName="flowSolver"
+      logLevel="1"
+      targetRegions="{ region }">
+      <NonlinearSolverParameters
+        newtonMaxIter="2"
+        newtonTol="1.0e-2"
+        maxTimeStepCuts="1"
+        lineSearchMaxCuts="0"
+        maxAllowedResidualNorm="1e99"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1e-8"
+        krylovMaxIter="500"
+        preconditionerType="multiscale"
+        logLevel="0">
+        <Block
+          shape="DU"
+          schurType="probing"
+          scaling="none"/>
+        <Multiscale
+          basisType="msrsb"
+          maxLevels="3"
+          boundarySets="{xneg,xpos,yneg,ypos,zneg,zpos}"
+          debugLevel="0"
+          coarseType="direct">
+          <Coupled
+            useBlockSmoother="1"/>
+          <Coarsening
+            maxCoarseDof="2000"/>
+          <Smoother
+            type="l1sgs"
+            preOrPost="both"
+            numSweeps="1"/>
+          <MsRSB
+            maxIter="100"
+            tolerance="1e-2"
+            relaxation="0.6666666666666666"
+            checkFrequency="5"/>
+        </Multiscale>
+      </LinearSolverParameters>
+    </SinglePhasePoromechanics>
+
+  </Solvers>
+
+</Problem>

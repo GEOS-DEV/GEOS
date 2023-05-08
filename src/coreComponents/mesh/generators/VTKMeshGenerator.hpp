@@ -22,8 +22,7 @@
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
 
-#include <vtkDataSet.h>
-
+class vtkDataSet;
 namespace geos
 {
 
@@ -102,6 +101,7 @@ private:
   struct viewKeyStruct
   {
     constexpr static char const * regionAttributeString() { return "regionAttribute"; }
+    constexpr static char const * structuredIndexAttributeString() { return "structuredIndexAttribute"; }
     constexpr static char const * mainBlockNameString() { return "mainBlockName"; }
     constexpr static char const * faceBlockNamesString() { return "faceBlocks"; }
     constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
@@ -128,7 +128,10 @@ private:
   vtkSmartPointer< vtkDataSet > m_vtkMesh;
 
   /// Name of VTK dataset attribute used to mark regions
-  string m_attributeName;
+  string m_regionAttributeName;
+
+  /// Name of VTK cell attribute storing (semi-)structured cell index, if available
+  string m_structuredIndexAttributeName;
 
   /// Name of the main block to be imported (for multi-block files).
   string m_mainBlockName;

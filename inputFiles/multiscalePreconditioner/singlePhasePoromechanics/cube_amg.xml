@@ -1,0 +1,59 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="cube_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+
+    <SolidMechanicsLagrangianSSLE
+      name="mechSolver"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
+      logLevel="1"
+      targetRegions="{ region }">
+      <LinearSolverParameters
+        preconditionerType="amg"
+        amgSmootherType="l1sgs"
+        amgNumSweeps="1"
+        logLevel="0"/>
+    </SolidMechanicsLagrangianSSLE>
+
+    <SinglePhaseFVM
+      name="flowSolver"
+      logLevel="1"
+      discretization="tpfa"
+      targetRegions="{ region }">
+      <LinearSolverParameters
+        preconditionerType="amg"
+        amgSmootherType="l1sgs"
+        amgNumSweeps="1"
+        logLevel="0"/>
+    </SinglePhaseFVM>
+
+    <SinglePhasePoromechanics
+      name="poroSolver"
+      solidSolverName="mechSolver"
+      flowSolverName="flowSolver"
+      logLevel="1"
+      targetRegions="{ region }">
+      <NonlinearSolverParameters
+        newtonMaxIter="2"
+        newtonTol="1.0e-2"
+        maxTimeStepCuts="1"
+        lineSearchMaxCuts="0"
+        maxAllowedResidualNorm="1e99"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1e-8"
+        krylovMaxIter="500"
+        preconditionerType="block"
+        logLevel="0"/>
+    </SinglePhasePoromechanics>
+
+  </Solvers>
+
+</Problem>

@@ -146,6 +146,7 @@ public:
   struct groupKeyStruct
   {
     static constexpr char const * blockString() { return "Block"; }
+    static constexpr char const * multiscaleString() { return "Multiscale"; }
   };
 
 private:

@@ -431,9 +431,34 @@
 	<xsd:complexType name="LinearSolverParametersType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Block" type="BlockType" maxOccurs="1" />
+			<xsd:element name="Multiscale" type="MultiscaleType" maxOccurs="1" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BlockType" />
+	<xsd:complexType name="MultiscaleType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Coarsening" type="CoarseningType" maxOccurs="1" />
+			<xsd:element name="Coupled" type="CoupledType" maxOccurs="1" />
+			<xsd:element name="MsRSB" type="MsRSBType" maxOccurs="1" />
+			<xsd:element name="Smoother" type="SmootherType" maxOccurs="1" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="CoarseningType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Graph" type="GraphType" maxOccurs="1" />
+			<xsd:element name="Structured" type="StructuredType" maxOccurs="1" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="GraphType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Metis" type="MetisType" maxOccurs="1" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="MetisType" />
+	<xsd:complexType name="StructuredType" />
+	<xsd:complexType name="CoupledType" />
+	<xsd:complexType name="MsRSBType" />
+	<xsd:complexType name="SmootherType" />
 	<xsd:complexType name="NonlinearSolverParametersType">
 		<!--newtonNumberOfIterations => Number of Newton's iterations.-->
 		<xsd:attribute name="newtonNumberOfIterations" type="integer" />

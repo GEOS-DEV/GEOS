@@ -1592,6 +1592,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="regionAttribute" type="groupNameRef" default="attribute" />
 		<!--scale => Scale the coordinates of the vertices by given scale factors (after translation)-->
 		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
+		<!--structuredIndexAttribute => Name of the VTK cell attribute containing structured cell index (e.g. Cartesian IJK)-->
+		<xsd:attribute name="structuredIndexAttribute" type="string" default="" />
 		<!--surfacicFieldsInGEOSX => Names of the surfacic fields in GEOSX to import into-->
 		<xsd:attribute name="surfacicFieldsInGEOSX" type="groupNameRef_array" default="{}" />
 		<!--surfacicFieldsToImport => Surfacic fields to be imported from the external mesh file-->
@@ -1653,6 +1655,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 	<xsd:complexType name="LinearSolverParametersType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Block" type="BlockType" maxOccurs="1" />
+			<xsd:element name="Multiscale" type="MultiscaleType" maxOccurs="1" />
 		</xsd:choice>
 		<!--amgAggressiveCoarseningLevels => AMG number of levels for aggressive coarsening-->
 		<xsd:attribute name="amgAggressiveCoarseningLevels" type="integer" default="0" />
@@ -1723,7 +1726,7 @@ the relative residual norm satisfies:
 		<xsd:attribute name="krylovWeakestTol" type="real64" default="0.001" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--preconditionerType => Preconditioner type. Available options are: ``none``, ``jacobi``, ``l1jacobi``, ``fgs``, ``sgs``, ``l1sgs``, ``chebyshev``, ``ilu``, ``ilut``, ``ic``, ``ict``, ``amg``, ``mgr``, ``block``, ``direct``, ``bgs``-->
+		<!--preconditionerType => Preconditioner type. Available options are: ``none``, ``jacobi``, ``l1jacobi``, ``fgs``, ``sgs``, ``l1sgs``, ``chebyshev``, ``ilu``, ``ilut``, ``ic``, ``ict``, ``amg``, ``mgr``, ``block``, ``direct``, ``bgs``, ``multiscale``-->
 		<xsd:attribute name="preconditionerType" type="geos_LinearSolverParameters_PreconditionerType" default="ilu" />
 		<!--relaxationWeight => Relaxation weight (omega) for stationary iterations-->
 		<xsd:attribute name="relaxationWeight" type="real64" default="0.666667" />
@@ -1753,6 +1756,130 @@ the relative residual norm satisfies:
 	<xsd:simpleType name="geos_LinearSolverParameters_Block_Shape">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|D|DU|LD|LDU" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="MultiscaleType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Coarsening" type="CoarseningType" maxOccurs="1" />
+			<xsd:element name="Coupled" type="CoupledType" maxOccurs="1" />
+			<xsd:element name="MsRSB" type="MsRSBType" maxOccurs="1" />
+			<xsd:element name="Smoother" type="SmootherType" maxOccurs="1" />
+		</xsd:choice>
+		<!--basisType => Multiscale basis type. Available options are: ``msrsb``-->
+		<xsd:attribute name="basisType" type="geos_LinearSolverParameters_Multiscale_BasisType" default="msrsb" />
+		<!--boundarySets => List of node set names that denote global domain boundaries, improves interpolation when provided.-->
+		<xsd:attribute name="boundarySets" type="string_array" default="{}" />
+		<!--coarseType => Coarsest level solver type. Available options are: ``none``, ``jacobi``, ``l1jacobi``, ``fgs``, ``sgs``, ``l1sgs``, ``chebyshev``, ``ilu``, ``ilut``, ``ic``, ``ict``, ``amg``, ``mgr``, ``block``, ``direct``, ``bgs``, ``multiscale``-->
+		<xsd:attribute name="coarseType" type="geos_LinearSolverParameters_PreconditionerType" default="direct" />
+		<!--debugLevel => Debug level (0 - no debug, 1 - basic progress messages, 2 - detailed output and matrix dumps)-->
+		<xsd:attribute name="debugLevel" type="integer" default="0" />
+		<!--droptol => Dropping tolerance for coarse matrix values (relative to row max)-->
+		<xsd:attribute name="droptol" type="real64" default="0" />
+		<!--galerkin => Whether to use a Galerkin coarse grid (with R = P^T) or not (R = P_0^T)-->
+		<xsd:attribute name="galerkin" type="integer" default="1" />
+		<!--maxLevels => Maximum number of multiscale grid levels (including fine)-->
+		<xsd:attribute name="maxLevels" type="integer" default="5" />
+		<!--separateComponents => Whether to use a separate component approximation prior to constructing multiscale-->
+		<xsd:attribute name="separateComponents" type="integer" default="0" />
+	</xsd:complexType>
+	<xsd:complexType name="CoarseningType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Graph" type="GraphType" maxOccurs="1" />
+			<xsd:element name="Structured" type="StructuredType" maxOccurs="1" />
+		</xsd:choice>
+		<!--maxCoarseDof => limit of coarsening across all ranks (i.e. trim the grid hierarchy globally)-->
+		<xsd:attribute name="maxCoarseDof" type="globalIndex" default="0" />
+		<!--partitionType => Partition type for generating coarse aggregates, valid options: ``graph``, ``cartesian``, ``semistructured``-->
+		<xsd:attribute name="partitionType" type="geos_LinearSolverParameters_Multiscale_Coarsening_PartitionType" default="graph" />
+		<!--ratio => Coarsening ratio (number of fine cells per coarse cell)-->
+		<xsd:attribute name="ratio" type="real64_array" default="{0}" />
+	</xsd:complexType>
+	<xsd:complexType name="GraphType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Metis" type="MetisType" maxOccurs="1" />
+		</xsd:choice>
+		<!--matrixWeights => If >0, specifies matrix weight multiplier when building graph edge weights-->
+		<xsd:attribute name="matrixWeights" type="integer" default="0" />
+		<!--method => Graph partitioning method, valid options: ``metis``, ``scotch``-->
+		<xsd:attribute name="method" type="geos_LinearSolverParameters_Multiscale_Coarsening_Graph_Method" default="metis" />
+		<!--minCommonNodes => Minimum number of nodes shared between two cells when constructing the connectivity graph-->
+		<xsd:attribute name="minCommonNodes" type="integer" default="3" />
+		<!--preserveRegions => Attempt to keep cells from the same region in one aggregate-->
+		<xsd:attribute name="preserveRegions" type="integer" default="0" />
+	</xsd:complexType>
+	<xsd:complexType name="MetisType">
+		<!--method => METIS partitioning method, valid options: ``kway``, ``recursive``-->
+		<xsd:attribute name="method" type="geos_LinearSolverParameters_Multiscale_Coarsening_Graph_Metis_Method" default="kway" />
+		<!--seed => METIS seed parameter-->
+		<xsd:attribute name="seed" type="integer" default="2020" />
+		<!--ufactor => METIS ufactor parameter, affects partitioning balance/edgecut tradeoff-->
+		<xsd:attribute name="ufactor" type="integer" default="30" />
+	</xsd:complexType>
+	<xsd:simpleType name="geos_LinearSolverParameters_Multiscale_Coarsening_Graph_Metis_Method">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|kway|recursive" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_LinearSolverParameters_Multiscale_Coarsening_Graph_Method">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|metis|scotch" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="StructuredType">
+		<!--semicoarsening => Enable semi-coarsening in z-direction, followed by xy-plane-->
+		<xsd:attribute name="semicoarsening" type="integer" default="0" />
+	</xsd:complexType>
+	<xsd:simpleType name="geos_LinearSolverParameters_Multiscale_Coarsening_PartitionType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|graph|cartesian|semistructured" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="CoupledType">
+		<!--useBlockSmoother => Whether to use block smoother-->
+		<xsd:attribute name="useBlockSmoother" type="integer" default="1" />
+	</xsd:complexType>
+	<xsd:complexType name="MsRSBType">
+		<!--checkFrequency => MsRSB basis smoothing convergence check frequency-->
+		<xsd:attribute name="checkFrequency" type="integer" default="10" />
+		<!--maxIter => Maximum number of MsRSB basis smoothing iterations-->
+		<xsd:attribute name="maxIter" type="integer" default="100" />
+		<!--numLayers => Number of extra layers in support region (for supportType = layers)-->
+		<xsd:attribute name="numLayers" type="integer" default="3" />
+		<!--relaxation => MsRSB basis smoothing iteration relaxation parameter-->
+		<xsd:attribute name="relaxation" type="real64" default="0.666667" />
+		<!--supportType => Type of support region construction algorithm-->
+		<xsd:attribute name="supportType" type="geos_LinearSolverParameters_Multiscale_MsRSB_SupportType" default="matching" />
+		<!--tolerance => MsRSB basis smoothing iteration tolerance-->
+		<xsd:attribute name="tolerance" type="real64" default="0.001" />
+		<!--updateFrequency => MsRSB basis smoothing coarse operator update frequency-->
+		<xsd:attribute name="updateFrequency" type="integer" default="10" />
+	</xsd:complexType>
+	<xsd:simpleType name="geos_LinearSolverParameters_Multiscale_MsRSB_SupportType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|layers|matching" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="SmootherType">
+		<!--numSweeps => Number of smoothing sweeps-->
+		<xsd:attribute name="numSweeps" type="integer" default="1" />
+		<!--preOrPost => Pre and/or post smoothing, valid options:``pre``, ``post``, ``both``-->
+		<xsd:attribute name="preOrPost" type="geos_LinearSolverParameters_AMG_PreOrPost" default="both" />
+		<!--type => Smoother type, valid options (not all supported): ``none``, ``jacobi``, ``l1jacobi``, ``fgs``, ``sgs``, ``l1sgs``, ``chebyshev``, ``ilu``, ``ilut``, ``ic``, ``ict``, ``amg``, ``mgr``, ``block``, ``direct``, ``bgs``, ``multiscale``-->
+		<xsd:attribute name="type" type="geos_LinearSolverParameters_PreconditionerType" default="sgs" />
+	</xsd:complexType>
+	<xsd:simpleType name="geos_LinearSolverParameters_AMG_PreOrPost">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|pre|post|both" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_LinearSolverParameters_PreconditionerType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|none|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|ilu|ilut|ic|ict|amg|mgr|block|direct|bgs|multiscale" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_LinearSolverParameters_Multiscale_BasisType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|msrsb" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geos_LinearSolverParameters_AMG_AggInterpType">
@@ -1793,11 +1920,6 @@ the relative residual norm satisfies:
 	<xsd:simpleType name="geos_LinearSolverParameters_Direct_RowPerm">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|none|mc64" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="geos_LinearSolverParameters_PreconditionerType">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|none|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|ilu|ilut|ic|ict|amg|mgr|block|direct|bgs" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geos_LinearSolverParameters_SolverType">

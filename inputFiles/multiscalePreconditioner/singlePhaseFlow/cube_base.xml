@@ -1,0 +1,119 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 100 }"
+      yCoords="{ 0, 100 }"
+      zCoords="{ 0, 100 }"
+      nx="{ 30 }"
+      ny="{ 30 }"
+      nz="{ 30 }"
+      cellBlockNames="{ hex }"/>
+  </Mesh>
+
+  <Events
+    maxTime="10.0">
+
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0"
+      target="/Solvers/flowSolver"/>
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      targetExactTimestep="1"
+      target="/Outputs/vtkOutput"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="region"
+      cellBlocks="{ hex }"
+      materialList="{ water, rock }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      compressibility="0.0"
+      viscosibility="0.0"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPermeability"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.1"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ConstantPermeability
+      name="rockPermeability"
+      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
+  </Constitutive>
+
+  <Geometry>
+    <Box
+      name="source"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 10.01, 10.01, 10.01 }"/>
+
+    <Box
+      name="sink"
+      xMin="{  89.00,  89.00,  89.00 }"
+      xMax="{ 100.01, 100.01, 100.01 }"/>
+  </Geometry>
+
+  <FieldSpecifications>
+
+    <SourceFlux
+      name="sourceTerm"
+      objectPath="ElementRegions/region"
+      scale="-100"
+      functionName="injectionSchedule"
+      setNames="{ source }"/>
+
+    <SourceFlux
+      name="sinkTerm"
+      objectPath="ElementRegions/region"
+      scale="100"
+      functionName="injectionSchedule"
+      setNames="{ sink }"/>
+
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="injectionSchedule"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 10.0 }"
+      values="{ 0.0, 1.0 }"
+      interpolation="linear"/>
+  </Functions>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="cube_flow"/>
+  </Outputs>
+</Problem>

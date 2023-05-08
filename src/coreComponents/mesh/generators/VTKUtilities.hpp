@@ -154,9 +154,11 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes );
  * @param[in] loadedMesh the mesh that was loaded on one or several MPI ranks
  * @param[in] namesToFractures the fracture meshes
  * @param[in] comm the MPI communicator
- * @param[in] method the partitionning method
+ * @param[in] method the partitioning method
  * @param[in] partitionRefinement number of graph partitioning refinement cycles
  * @param[in] useGlobalIds controls whether global id arrays from the vtk input should be used
+ * @param[in] structuredIndexAttributeName VTK array name for structured index attribute, if present
+ * @param[in] numPartZ number of MPI partitions in Z direction (only if @p structuredIndexAttributeName is used)
  * @return the vtk grid redistributed
  */
 AllMeshes
@@ -166,7 +168,9 @@ redistributeMeshes( integer const logLevel,
                     MPI_Comm const comm,
                     PartitionMethod const method,
                     int const partitionRefinement,
-                    int const useGlobalIds );
+                    int const useGlobalIds,
+                    string const & structuredIndexAttributeName,
+                    int const numPartZ );
 
 /**
  * @brief Collect lists of VTK cell indices organized by type and attribute value.
@@ -268,11 +272,13 @@ real64 writeNodes( integer const logLevel,
  * @param[in] logLevel the log level
  * @param[in] mesh The vtkUnstructuredGrid or vtkStructuredGrid that is loaded
  * @param[in] cellMap Map from the surfaces index to the list of cells in this surface in this rank.
+ * @param[in] structuredIndexAttributeName name of the VTK cell array to use as "structured index" attribute (if non-empty)
  * @param[in] cellBlockManager The instance that stores the cell blocks.
  */
 void writeCells( integer const logLevel,
                  vtkDataSet & mesh,
-                 const geos::vtk::CellMapType & cellMap,
+                 vtk::CellMapType const & cellMap,
+                 string const & structuredIndexAttributeName,
                  CellBlockManager & cellBlockManager );
 
 /**

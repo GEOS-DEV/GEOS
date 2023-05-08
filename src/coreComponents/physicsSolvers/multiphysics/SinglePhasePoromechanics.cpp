@@ -22,6 +22,7 @@
 
 #include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
+#include "linearAlgebra/multiscale/MultiscalePreconditioner.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
@@ -97,6 +98,7 @@ SinglePhasePoromechanics< FLOW_SOLVER >::SinglePhasePoromechanics( const string 
   linearSolverParameters.mgr.separateComponents = true;
   linearSolverParameters.mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
   linearSolverParameters.dofsPerNode = 3;
+  linearSolverParameters.multiscale.label = "poro";
 }
 
 template< typename FLOW_SOLVER >
@@ -430,6 +432,10 @@ SinglePhasePoromechanics< FLOW_SOLVER >::createPreconditioner( DomainPartition &
                            flowSolver()->createPreconditioner( domain ) );
 
       return precond;
+    }
+    case LinearSolverParameters::PreconditionerType::multiscale:
+    {
+      return std::make_unique< MultiscalePreconditioner< LAInterface > >( linParams, domain );
     }
     default:
     {

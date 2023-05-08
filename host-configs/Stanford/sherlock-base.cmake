@@ -34,8 +34,9 @@ set(LAPACK_LIBRARIES "/share/software/user/open/openblas/0.3.10/lib/liblapack.so
 # Python options
 #set(ENABLE_PYLVARRAY ON CACHE BOOL "")
 #set(ENABLE_PYGEOSX ON CACHE BOOL "")
-#set(PYTHON_DIR "/share/software/user/open/python/3.6.1" CACHE PATH "")
-#set(Python3_EXECUTABLE "/share/software/user/open/python/3.6.1/bin/python3" CACHE PATH "")
+set(PYTHON_DIR "/share/software/user/open/python/3.6.1" CACHE PATH "")
+set(PYTHON_EXECUTABLE "${PYTHON_DIR}/bin/python3" CACHE PATH "")
+set(PYTHON_POST_EXECUTABLE "${PYTHON_EXECUTABLE}" CACHE PATH "")
 
 set(ENABLE_VALGRIND OFF CACHE BOOL "")
 set(ENABLE_CALIPER ON CACHE BOOL "")

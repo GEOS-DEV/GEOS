@@ -10,6 +10,22 @@ set( linearAlgebra_headers
      interfaces/InterfaceTypes.hpp
      interfaces/MatrixBase.hpp
      interfaces/VectorBase.hpp
+     multiscale/LevelBuilderBase.hpp
+     multiscale/MultiscalePreconditioner.hpp
+     multiscale/mesh/DofManager.hpp
+     multiscale/mesh/MeshData.hpp
+     multiscale/mesh/MeshLevel.hpp
+     multiscale/mesh/MeshObjectManager.hpp
+     multiscale/mesh/MeshUtils.hpp
+     multiscale/mesh/coarsening/CartesianPartitioner.hpp
+     multiscale/mesh/coarsening/Coarsening.hpp
+     multiscale/mesh/coarsening/GraphPartitioner.hpp
+     multiscale/mesh/coarsening/PartitionerBase.hpp
+     multiscale/mesh/coarsening/SemistructuredPartitioner.hpp
+     multiscale/msrsb/MsrsbLevelBuilderBase.hpp
+     multiscale/msrsb/MsrsbLevelBuilderCoupled.hpp
+     multiscale/msrsb/MsrsbLevelBuilder.hpp
+     multiscale/msrsb/MsrsbUtils.hpp
      solvers/BicgstabSolver.hpp
      solvers/BlockPreconditioner.hpp
      solvers/CgSolver.hpp
@@ -41,6 +57,21 @@ set( linearAlgebra_headers
 # Specify all sources
 set( linearAlgebra_sources
      DofManager.cpp
+     multiscale/LevelBuilderBase.cpp
+     multiscale/MultiscalePreconditioner.cpp
+     multiscale/mesh/DofManager.cpp
+     multiscale/mesh/MeshLevel.cpp
+     multiscale/mesh/MeshObjectManager.cpp
+     multiscale/mesh/MeshUtils.cpp
+     multiscale/mesh/coarsening/CartesianPartitioner.cpp
+     multiscale/mesh/coarsening/Coarsening.cpp
+     multiscale/mesh/coarsening/GraphPartitioner.cpp
+     multiscale/mesh/coarsening/PartitionerBase.cpp
+     multiscale/mesh/coarsening/SemistructuredPartitioner.cpp
+     multiscale/msrsb/MsrsbLevelBuilderBase.cpp
+     multiscale/msrsb/MsrsbLevelBuilderCoupled.cpp
+     multiscale/msrsb/MsrsbLevelBuilder.cpp
+     multiscale/msrsb/MsrsbUtils.cpp
      solvers/BicgstabSolver.cpp
      solvers/BlockPreconditioner.cpp
      solvers/CgSolver.cpp
@@ -149,6 +180,20 @@ if( ENABLE_PETSC )
 
     list( APPEND dependencyList petsc )
 
+endif()
+
+# Optionally depend on METIS for multiscale coarsening
+if( ENABLE_METIS )
+    list( APPEND linearAlgebra_headers multiscale/mesh/coarsening/MetisInterface.hpp )
+    list( APPEND linearAlgebra_sources multiscale/mesh/coarsening/MetisInterface.cpp )
+    list( APPEND dependencyList metis )
+endif()
+
+# Optionally depend on SCOTCH for multiscale coarsening
+if( ENABLE_SCOTCH )
+    list( APPEND linearAlgebra_headers multiscale/mesh/coarsening/ScotchInterface.hpp )
+    list( APPEND linearAlgebra_sources multiscale/mesh/coarsening/ScotchInterface.cpp )
+    list( APPEND dependencyList scotch )
 endif()
 
 blt_add_library( NAME       linearAlgebra

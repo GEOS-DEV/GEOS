@@ -52,7 +52,7 @@
     /** The actual type to be registered. */ \
     using type = TYPE; \
     /** The template type T for registration of a container<T>. */ \
-    using dataType = internal::typeHelper_t< TYPE >; \
+    using dataType = ::geos::fields::internal::typeHelper_t< TYPE >; \
     /** @brief @return The default data value for NAME. */ \
     static constexpr dataType defaultValue() \
     { return DEFAULT; } \
@@ -89,6 +89,14 @@ struct typeHelper< TYPE, false >
 template< typename T >
 using typeHelper_t = typename typeHelper< T >::type;
 }
+
+DECLARE_FIELD( StructuredIndex,
+               "structuredIndex",
+               array2d< integer >,
+               -1,
+               NOPLOT,
+               NO_WRITE,
+               "Structured cell index provided by mesh generator" );
 
 DECLARE_FIELD( ghostRank,
                "ghostRank",

@@ -1,0 +1,37 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="cube_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+
+    <SolidMechanicsLagrangianSSLE
+      name="mechSolver"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
+      logLevel="1"
+      targetRegions="{ region }">
+      <NonlinearSolverParameters
+        newtonTol="1e-2"
+        newtonMaxIter="2"
+        lineSearchAction="None"
+        lineSearchMaxCuts="1"
+        maxTimeStepCuts="1"
+        maxAllowedResidualNorm="1e99"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1e-8"
+        krylovMaxIter="500"
+        preconditionerType="amg"
+        amgSmootherType="l1sgs"
+        amgNumSweeps="1"
+        logLevel="0"/>
+    </SolidMechanicsLagrangianSSLE>
+
+  </Solvers>
+
+</Problem>
