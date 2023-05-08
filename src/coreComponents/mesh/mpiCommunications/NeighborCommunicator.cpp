@@ -480,6 +480,19 @@ void NeighborCommunicator::unpackAndRebuildSyncLists( MeshLevel & mesh,
 }
 
 
+int NeighborCommunicator::packCommSizeForSync( string_array const & fieldNames,
+                                               ObjectManagerBase const & manager,
+                                               int const commID,
+                                               bool onDevice,
+                                               parallelDeviceEvents & events )
+{
+  arrayView1d< localIndex const > const & ghostsToSend = manager.getNeighborData( m_neighborRank ).ghostsToSend();
+  localIndex const bufferSize = manager.packSize( fieldNames, ghostsToSend, 0, onDevice, events );
+  m_sendBufferSize[commID] = LvArray::integerConversion< int >( bufferSize );
+  return m_sendBufferSize[commID];
+}
+
+
 int NeighborCommunicator::packCommSizeForSync( FieldIdentifiers const & fieldsToBeSync,
                                                MeshLevel const & mesh,
                                                int const commID,
@@ -534,6 +547,23 @@ int NeighborCommunicator::packCommSizeForSync( FieldIdentifiers const & fieldsTo
   return bufferSize;
 }
 
+void NeighborCommunicator::packCommBufferForSync( string_array const & fieldNames,
+                                                  ObjectManagerBase const & manager,
+                                                  int const commID,
+                                                  bool onDevice,
+                                                  parallelDeviceEvents & events )
+{
+  arrayView1d< localIndex const > const & ghostsToSend = manager.getNeighborData( m_neighborRank ).ghostsToSend();
+
+  buffer_type & sendBuff = sendBuffer( commID );
+  localIndex const bufferSize =  LvArray::integerConversion< localIndex >( sendBuff.size() );
+  buffer_unit_type * sendBufferPtr = sendBuff.data();
+
+  localIndex const packedSize = manager.pack( sendBufferPtr, fieldNames, ghostsToSend, 0, onDevice, events );
+  GEOS_ERROR_IF_NE( bufferSize, packedSize );
+}
+
+
 void NeighborCommunicator::packCommBufferForSync( FieldIdentifiers const & fieldsToBeSync,
                                                   MeshLevel const & mesh,
                                                   int const commID,
@@ -552,10 +582,10 @@ void NeighborCommunicator::packCommBufferForSync( FieldIdentifiers const & field
   arrayView1d< localIndex const > const & faceGhostsToSend = faceManager.getNeighborData( m_neighborRank ).ghostsToSend();
 
   buffer_type & sendBuff = sendBuffer( commID );
-  int const bufferSize =  LvArray::integerConversion< int >( sendBuff.size());
+  localIndex const bufferSize =  LvArray::integerConversion< localIndex >( sendBuff.size() );
   buffer_unit_type * sendBufferPtr = sendBuff.data();
 
-  int packedSize = 0;
+  localIndex packedSize = 0;
 
   for( auto const & iter : fieldsToBeSync.getFields() )
   {
@@ -590,6 +620,19 @@ void NeighborCommunicator::packCommBufferForSync( FieldIdentifiers const & field
   }
 
   GEOS_ERROR_IF_NE( bufferSize, packedSize );
+}
+
+
+void NeighborCommunicator::unpackBufferForSync( ObjectManagerBase & manager,
+                                                int const commID,
+                                                bool onDevice,
+                                                parallelDeviceEvents & events )
+{
+  buffer_type const & receiveBuff = receiveBuffer( commID );
+  buffer_unit_type const * receiveBufferPtr = receiveBuff.data();
+
+  array1d< localIndex > & ghostsToReceive = manager.getNeighborData( m_neighborRank ).ghostsToReceive();
+  manager.unpack( receiveBufferPtr, ghostsToReceive, 0, onDevice, events );
 }
 
 

@@ -89,10 +89,21 @@ public:
                                           std::set< std::set< globalIndex > > const & collocatedNodesBuckets,
                                           std::set< globalIndex > const & requestedNodes );
 
+  void synchronizeFields( string_array const & fieldNames,
+                          ObjectManagerBase & manager,
+                          std::vector< NeighborCommunicator > & neighbors,
+                          bool onDevice );
+
   void synchronizeFields( FieldIdentifiers const & fieldsToBeSync,
                           MeshLevel & mesh,
-                          std::vector< NeighborCommunicator > & allNeighbors,
+                          std::vector< NeighborCommunicator > & neighbors,
                           bool onDevice );
+
+  void synchronizePackSendRecvSizes( string_array const & fieldNames,
+                                     ObjectManagerBase & manager,
+                                     std::vector< NeighborCommunicator > & neighbors,
+                                     MPI_iCommData & icomm,
+                                     bool onDevice );
 
   void synchronizePackSendRecvSizes( FieldIdentifiers const & fieldsToBeSync,
                                      MeshLevel & mesh,
@@ -100,11 +111,24 @@ public:
                                      MPI_iCommData & icomm,
                                      bool onDevice );
 
-  void synchronizePackSendRecv( FieldIdentifiers const & fieldsToBeSync,
-                                MeshLevel & mesh,
-                                std::vector< NeighborCommunicator > & allNeighbors,
+  void synchronizePackSendRecv( string_array const & fieldNames,
+                                ObjectManagerBase & manager,
+                                std::vector< NeighborCommunicator > & neighbors,
                                 MPI_iCommData & icomm,
                                 bool onDevice );
+
+  void synchronizePackSendRecv( FieldIdentifiers const & fieldsToBeSync,
+                                MeshLevel & mesh,
+                                std::vector< NeighborCommunicator > & neighbors,
+                                MPI_iCommData & icomm,
+                                bool onDevice );
+
+  void asyncPack( string_array const & fieldNames,
+                  ObjectManagerBase & manager,
+                  std::vector< NeighborCommunicator > & neighbors,
+                  MPI_iCommData & icomm,
+                  bool onDevice,
+                  parallelDeviceEvents & events );
 
   void asyncPack( FieldIdentifiers const & fieldsToBeSync,
                   MeshLevel & mesh,
@@ -118,10 +142,21 @@ public:
                       bool onDevice,
                       parallelDeviceEvents & events );
 
+  void synchronizeUnpack( ObjectManagerBase & manager,
+                          std::vector< NeighborCommunicator > & neighbors,
+                          MPI_iCommData & icomm,
+                          bool onDevice );
+
   void synchronizeUnpack( MeshLevel & mesh,
                           std::vector< NeighborCommunicator > & neighbors,
                           MPI_iCommData & icomm,
                           bool onDevice );
+
+  bool asyncUnpack( ObjectManagerBase & manager,
+                    std::vector< NeighborCommunicator > & neighbors,
+                    MPI_iCommData & icomm,
+                    bool onDevice,
+                    parallelDeviceEvents & events );
 
   bool asyncUnpack( MeshLevel & mesh,
                     std::vector< NeighborCommunicator > & neighbors,
@@ -129,6 +164,12 @@ public:
                     bool onDevice,
                     parallelDeviceEvents & events,
                     MPI_Op op=MPI_REPLACE );
+
+  void finalizeUnpack( ObjectManagerBase & manager,
+                       std::vector< NeighborCommunicator > & neighbors,
+                       MPI_iCommData & icomm,
+                       bool onDevice,
+                       parallelDeviceEvents & events );
 
   void finalizeUnpack( MeshLevel & mesh,
                        std::vector< NeighborCommunicator > & neighbors,
