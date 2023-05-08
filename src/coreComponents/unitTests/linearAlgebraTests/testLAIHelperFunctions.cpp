@@ -32,22 +32,24 @@
 using namespace geos;
 
 char const * xmlInput =
-  "<Problem>"
-  "  <Mesh>"
-  "    <InternalMesh name=\"mesh1\""
-  "                  elementTypes=\"{C3D8}\""
-  "                  xCoords=\"{0, 1}\""
-  "                  yCoords=\"{0, 1}\""
-  "                  zCoords=\"{0, 1}\""
-  "                  nx=\"{6}\""
-  "                  ny=\"{9}\""
-  "                  nz=\"{5}\""
-  "                  cellBlockNames=\"{block1}\"/>"
-  "  </Mesh>"
-  "  <ElementRegions>"
-  "    <CellElementRegion name=\"region1\" cellBlocks=\"{block1}\" materialList=\"{dummy}\" />"
-  "  </ElementRegions>"
-  "</Problem>";
+  R"xml(
+  <Problem>
+    <Mesh>
+      <InternalMesh name="mesh1"
+                    elementTypes="{C3D8}"
+                    xCoords="{0, 1}"
+                    yCoords="{0, 1}"
+                    zCoords="{0, 1}"
+                    nx="{6}"
+                    ny="{9}"
+                    nz="{5}"
+                    cellBlockNames="{block1}"/>
+    </Mesh>
+    <ElementRegions>
+      <CellElementRegion name="region1" cellBlocks="{block1}" materialList="{dummy}"/>
+    </ElementRegions>
+  </Problem>
+  )xml";
 
 template< typename LAI >
 class LAIHelperFunctionsTest : public ::testing::Test
