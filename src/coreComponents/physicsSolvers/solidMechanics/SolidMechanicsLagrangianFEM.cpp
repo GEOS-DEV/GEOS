@@ -37,6 +37,7 @@
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
+#include "linearAlgebra/multiscale/MultiscalePreconditioner.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -136,6 +137,8 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   LinearSolverParameters & linParams = m_linearSolverParameters.get();
   linParams.dofsPerNode = 3;
   linParams.amg.numFunctions = linParams.dofsPerNode;
+  linParams.multiscale.fieldName = fields::solidMechanics::totalDisplacement::key();
+  linParams.multiscale.label = "mech";
 
   // Must change default value to avoid being overwritten if attribute not specified in XML
   m_linearSolverParameters.getWrapper< integer >( LinearSolverParametersInput::viewKeyStruct::amgSeparateComponentsString() ).setApplyDefaultValue( true );
@@ -1057,6 +1060,10 @@ SolidMechanicsLagrangianFEM::createPreconditioner( DomainPartition & domain ) co
 
   switch( linParams.preconditionerType )
   {
+    case LinearSolverParameters::PreconditionerType::multiscale:
+    {
+      return std::make_unique< MultiscalePreconditioner< LAInterface > >( linParams, domain );
+    }
     default:
     {
       return LAInterface::createPreconditioner( linParams, m_rigidBodyModes );
@@ -1344,6 +1351,17 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
                                                          domain.getNeighbors(),
                                                          true );
   } );
+}
+
+void SolidMechanicsLagrangianFEM::solveLinearSystem( DofManager const & dofManager,
+                                                     ParallelMatrix & matrix,
+                                                     ParallelVector & rhs,
+                                                     ParallelVector & solution )
+{
+  // Flip system sign to ensure matrix is positive definite
+  matrix.scale( -1.0 );
+  rhs.scale( -1.0 );
+  PhysicsSolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition & domain )

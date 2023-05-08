@@ -125,6 +125,11 @@ public:
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override;
 
+  virtual void solveLinearSystem( DofManager const & dofManager,
+                                  ParallelMatrix & matrix,
+                                  ParallelVector & rhs,
+                                  ParallelVector & solution ) override;
+
   virtual void
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,

@@ -30,6 +30,7 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/LogLevelsInfo.hpp"
+#include "linearAlgebra/multiscale/MultiscalePreconditioner.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
@@ -64,6 +65,10 @@ SinglePhaseFVM< BASE >::SinglePhaseFVM( const string & name,
   BASE( name, parent )
 {
   BASE::template addLogLevel< logInfo::Convergence >();
+
+  LinearSolverParameters & linParams = m_linearSolverParameters.get();
+  linParams.multiscale.fieldName = BASE::viewKeyStruct::elemDofFieldString();
+  linParams.multiscale.label = "flow";
 }
 
 template< typename BASE >
@@ -124,9 +129,12 @@ std::unique_ptr< PreconditionerBase< LAInterface > >
 SinglePhaseFVM< BASE >::createPreconditioner( DomainPartition & domain ) const
 {
   LinearSolverParameters const & linParams = m_linearSolverParameters.get();
-  GEOS_UNUSED_VAR( domain );
   switch( linParams.preconditionerType )
   {
+    case LinearSolverParameters::PreconditionerType::multiscale:
+    {
+      return std::make_unique< MultiscalePreconditioner< LAInterface > >( linParams, domain );
+    }
     default:
     {
       return LAInterface::createPreconditioner( linParams );
