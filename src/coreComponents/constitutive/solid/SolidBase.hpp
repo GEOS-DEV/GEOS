@@ -86,24 +86,6 @@ protected:
   /// Deleted move assignment operator
   SolidBaseUpdates & operator=( SolidBaseUpdates && ) =  delete;
 
-  /**
-   * @brief Helper to save point stress back to m_newStress array
-   *
-   * This is mostly defined for improving code readability.
-   *
-   * @param[in] k Element index.
-   * @param[in] q Quadrature point index.
-   * @param[in] stress Stress to be save to m_newStress[k][q]
-   */
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  void saveStress( localIndex const k,
-                   localIndex const q,
-                   real64 const ( &stress )[6] ) const
-  {
-    LvArray::tensorOps::copy< 6 >( m_newStress[k][q], stress );
-  }
-
 public:
 
   /// A reference the current material stress at quadrature points.
@@ -117,18 +99,6 @@ public:
 
   /// Flag to disable inelasticity
   const bool & m_disableInelasticity;
-
-  /**
-   * @name Update Interfaces: Stress and Stiffness
-   *
-   * We define a variety of interfaces for constitutive models using different
-   * strain theories.  Derived classes only need to implement the subset of interfaces
-   * most relevant to them.
-   *
-   * This group of interfaces returns stress and stiffness simultaneously, and
-   * are most useful for implicit finite element formulations.
-   */
-  ///@{
 
   /**
    * @brief Get bulkModulus
@@ -167,6 +137,18 @@ public:
     GEOS_ERROR( "getShearModulus() not implemented for this model" );
     return 0;
   }
+
+  /**
+   * @name Update Interfaces: Stress and Stiffness
+   *
+   * We define a variety of interfaces for constitutive models using different
+   * strain theories.  Derived classes only need to implement the subset of interfaces
+   * most relevant to them.
+   *
+   * This group of interfaces returns stress and stiffness simultaneously, and
+   * are most useful for implicit finite element formulations.
+   */
+  ///@{
 
   /**
    * @brief Small strain update.
@@ -239,86 +221,6 @@ public:
     GEOS_ERROR( "smallStrainNoStateUpdate() not implemented for this model" );
   }
 
-  /**
-   * @brief Hypo update (small strain, large rotation).
-   *
-   * The base class uses a call to the small strain update, followed by
-   * a rotation correction using the Hughes-Winget incrementally objective
-   * algorithm.  One can imagine the material deforming in small strain, but in
-   * a reference frame that rotates to track the body's local rotation.  This
-   * provides a convenient way to extend small strain models to a finite rotation
-   * regime.  From the assumption of small deformations, the Cauchy stress and
-   * Kirchoff stress are approximately equal (det F ~ 1).
-   *
-   * Note that if the derived class has tensorial state variables (beyond the
-   * stress itself) care must be taken to rotate these as well.
-   *
-   * We use a post-rotation of the new stress (as opposed to pre-rotation of the old stress)
-   * as we don't have to unrotate the old stress in the event a rewind is required.
-   * We do not post-rotate the stiffness tensor, which is an approximation, but
-   * should be sufficient for small rotation increments.
-   *
-   * This method does not work for anisotropic properties or yield functions
-   * (without some care) and a co-rotational formulation should be considered instead.
-   *
-   * @param[in] k The element index.
-   * @param[in] q The quadrature point index.
-   * @param[in] Ddt The incremental deformation tensor (rate of deformation tensor * dt)
-   * @param[in] Rot The incremental rotation tensor
-   * @param[out] stress New stress value (Cauchy stress)
-   * @param[out] stiffness New stiffness value
-   */
-  GEOS_HOST_DEVICE
-  virtual void hypoUpdate( localIndex const k,
-                           localIndex const q,
-                           real64 const & timeIncrement,
-                           real64 const ( &Ddt )[6],
-                           real64 const ( &Rot )[3][3],
-                           real64 ( & stress )[6],
-                           real64 ( & stiffness )[6][6] ) const
-  {
-    smallStrainUpdate( k, q, timeIncrement, Ddt, stress, stiffness );
-
-    real64 temp[6] = { 0 };
-    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, m_newStress[ k ][ q ] );
-    LvArray::tensorOps::copy< 6 >( stress, temp );
-    saveStress( k, q, stress );
-  }
-
-  /**
-   * @brief Hyper update (large deformation).
-   *
-   * This version provides an interface for fully-general, large-deformation
-   * models.  The input strain measure is the deformation gradient minus the identity.
-   * The output is the Cauchy stress (true stress in the deformed configuration) to be
-   * consistent with the previous interfaces.  The stiffness is similarly the
-   * stiffness in the deformed configuration.
-   *
-   * @note: This interface is currently a placeholder and has not been extensively
-   * tested.
-   *
-   * @param[in] k The element index.
-   * @param[in] q The quadrature point index.
-   * @param[in] FminusI Deformation gradient minus identity (F-I)
-   * @param[out] stress New stress value (Cauchy stress)
-   * @param[out] stiffness New stiffness value
-   */
-  // TODO: confirm stress and strain measures we want to use
-  GEOS_HOST_DEVICE
-  virtual void hyperUpdate( localIndex const k,
-                            localIndex const q,
-                            real64 const ( &FminusI )[3][3],
-                            real64 ( & stress )[6],
-                            real64 ( & stiffness )[6][6] ) const
-  {
-    GEOS_UNUSED_VAR( k );
-    GEOS_UNUSED_VAR( q );
-    GEOS_UNUSED_VAR( FminusI );
-    GEOS_UNUSED_VAR( stress );
-    GEOS_UNUSED_VAR( stiffness );
-    GEOS_ERROR( "hyperUpdate() not implemented for this model" );
-  }
-
   ///@}
   /**
    * @name Update Interfaces: Stress-Only
@@ -385,52 +287,22 @@ public:
   }
 
   /**
-   * @brief Hypo update, returning only stress
+   * @brief Helper to save point stress back to m_newStress array
    *
-   * @param[in] k The element index.
-   * @param[in] q The quadrature point index.
-   * @param[in] Ddt The incremental deformation tensor (rate of deformation tensor * dt)
-   * @param[in] Rot The incremental rotation tensor
-   * @param[out] stress New stress value (Cauchy stress)
+   * This is mostly defined for improving code readability.
+   *
+   * @param[in] k Element index.
+   * @param[in] q Quadrature point index.
+   * @param[in] stress Stress to be save to m_newStress[k][q]
    */
   GEOS_HOST_DEVICE
-  virtual void hypoUpdate_StressOnly( localIndex const k,
-                                      localIndex const q,
-                                      real64 const & timeIncrement,
-                                      real64 const ( &Ddt )[6],
-                                      real64 const ( &Rot )[3][3],
-                                      real64 ( & stress )[6] ) const
+  GEOS_FORCE_INLINE
+  void saveStress( localIndex const k,
+                   localIndex const q,
+                   real64 const ( &stress )[6] ) const
   {
-    smallStrainUpdate_StressOnly( k, q, timeIncrement, Ddt, stress );
-
-    real64 temp[6] = { 0 };
-    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, m_newStress[ k ][ q ] );
-    LvArray::tensorOps::copy< 6 >( stress, temp );
-    saveStress( k, q, stress );
+    LvArray::tensorOps::copy< 6 >( m_newStress[k][q], stress );
   }
-
-  /**
-   * @brief Hyper update, returning only stresses.
-   *
-   * @param[in] k The element index.
-   * @param[in] q The quadrature point index.
-   * @param[in] FminusI Deformation gradient minus identity (F-I)
-   * @param[out] stress New stress value (Cauchy stress)
-   */
-  GEOS_HOST_DEVICE
-  virtual void hyperUpdate_StressOnly( localIndex const k,
-                                       localIndex const q,
-                                       real64 const ( &FminusI )[3][3],
-                                       real64 ( & stress )[6] ) const
-  {
-    GEOS_UNUSED_VAR( k );
-    GEOS_UNUSED_VAR( q );
-    GEOS_UNUSED_VAR( FminusI );
-    GEOS_UNUSED_VAR( stress );
-    GEOS_ERROR( "hyperUpdate_StressOnly() not implemented for this model" );
-  }
-
-  ///@}
 
   /**
    * @brief Save converged state data at index (k,q)

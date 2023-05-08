@@ -138,17 +138,6 @@ public:
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const final;
 
-  // hypo interface
-
-  GEOS_HOST_DEVICE
-  virtual void hypoUpdate( localIndex const k,
-                           localIndex const q,
-                           real64 const & timeIncrement,
-                           real64 const ( &Ddt )[6],
-                           real64 const ( &Rot )[3][3],
-                           real64 ( &stress )[6],
-                           real64 ( &stiffness )[6][6] ) const override final;
-
   // miscellaneous getters
 
   GEOS_HOST_DEVICE
@@ -287,26 +276,6 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
   stiffness.m_c33 = m_c33[k];
   stiffness.m_c44 = m_c44[k];
   stiffness.m_c66 = m_c66[k];
-}
-
-GEOS_FORCE_INLINE
-GEOS_HOST_DEVICE
-void ElasticTransverseIsotropicUpdates::hypoUpdate( localIndex const k,
-                                                    localIndex const q,
-                                                    real64 const & timeIncrement,
-                                                    real64 const ( &Ddt )[6],
-                                                    real64 const ( &Rot )[3][3],
-                                                    real64 ( & stress )[6],
-                                                    real64 ( & stiffness )[6][6] ) const
-{
-  GEOS_UNUSED_VAR( k );
-  GEOS_UNUSED_VAR( q );
-  GEOS_UNUSED_VAR( timeIncrement );
-  GEOS_UNUSED_VAR( Ddt );
-  GEOS_UNUSED_VAR( Rot );
-  GEOS_UNUSED_VAR( stress );
-  GEOS_UNUSED_VAR( stiffness );
-  GEOS_ERROR( "hypoUpdate() disabled for anisotropic models when using Hughes-Winget integration" );
 }
 
 /**

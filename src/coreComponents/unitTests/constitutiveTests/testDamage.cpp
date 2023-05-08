@@ -17,6 +17,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/ElasticIsotropic.hpp"
 #include "constitutive/solid/DamageSpectral.hpp"
+#include "constitutive/solid/SolidUtilities.hpp"
 
 #include "dataRepository/xmlWrapper.hpp"
 
@@ -78,8 +79,8 @@ TEST( DamageTests, testDamageSpectral )
 
   real64 strainIncrement[6] = {1e-4, 0, 0, 0, 0, 0};
   real64 timeIncrement =0;
-  real64 stress[6];
-  real64 stiffness[6][6];
+  real64 stress[6]{};
+  real64 stiffness[6][6]{};
 
   for( localIndex loadstep=0; loadstep < 50; ++loadstep )
   {
@@ -89,6 +90,5 @@ TEST( DamageTests, testDamageSpectral )
 
   // we now use a finite-difference check of tangent stiffness to confirm
   // the analytical form is working properly.
-  //cmw.checkSmallStrainStiffness( 0, 0, strainIncrement, true );
-  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, timeIncrement, strainIncrement ) );
+  EXPECT_TRUE( SolidUtilities::checkSmallStrainStiffness( cmw, 0, 0, timeIncrement, strainIncrement ) );
 }
