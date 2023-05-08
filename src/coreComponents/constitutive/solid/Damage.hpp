@@ -100,10 +100,6 @@ public:
   using UPDATE_BASE::smallStrainUpdate;
   using UPDATE_BASE::smallStrainNoStateUpdate_StressOnly;
   using UPDATE_BASE::smallStrainUpdate_StressOnly;
-  using UPDATE_BASE::hypoUpdate;
-  using UPDATE_BASE::hypoUpdate_StressOnly;
-  using UPDATE_BASE::hyperUpdate;
-  using UPDATE_BASE::hyperUpdate_StressOnly;
   using UPDATE_BASE::saveConvergedState;
 
   using UPDATE_BASE::m_disableInelasticity;
