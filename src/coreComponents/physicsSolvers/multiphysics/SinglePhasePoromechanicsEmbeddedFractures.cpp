@@ -630,7 +630,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
       flowSolver()->updatePorosityAndPermeability( subRegion );
       // update fluid model
       flowSolver()->updateFluidState( subRegion );
-
+      // update solid internal energy
+      flowSolver()->updateSolidInternalEnergyModel( subRegion );
     } );
   } );
 }

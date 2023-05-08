@@ -425,7 +425,7 @@
 		<!--faceElementToCellStencil => (no description available)-->
 		<xsd:attribute name="faceElementToCellStencil" type="geos_FaceElementToCellStencil" />
 		<!--fieldName => Name of primary solution field-->
-		<xsd:attribute name="fieldName" type="string" />
+		<xsd:attribute name="fieldName" type="string_array" />
 		<!--fractureStencil => (no description available)-->
 		<xsd:attribute name="fractureStencil" type="geos_SurfaceElementStencil" />
 		<!--targetRegions => List of regions to build the stencil for-->

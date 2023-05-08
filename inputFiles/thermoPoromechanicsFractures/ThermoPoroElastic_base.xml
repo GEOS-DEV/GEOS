@@ -33,7 +33,7 @@
 
     <SinglePhaseConstantThermalConductivity
       name="thermalCond"
-      thermalConductivityComponents="{ 1e-2, 1e-2, 1e-2 }"/>  
+      thermalConductivityComponents="{ 1, 1, 1 }"/>  
 
     <SolidInternalEnergy
       name="rockInternalEnergy"
@@ -43,7 +43,7 @@
 
     <BiotPorosity
       name="rockPorosity"
-      grainBulkModulus="2.2222e10"
+      grainBulkModulus="2.2222e27"
       defaultReferencePorosity="0.2"/>
 
     <CompressibleSolidParallelPlatesPermeability

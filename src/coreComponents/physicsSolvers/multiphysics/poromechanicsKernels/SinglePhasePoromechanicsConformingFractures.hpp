@@ -215,7 +215,7 @@ public:
         real64 dFlux_dAper[2] = {0.0, 0.0};
         dFlux_dAper[0] =  m_dt * dFlux_dTrans * stack.dTrans_dDispJump[connectionIndex][0][0];
         dFlux_dAper[1] = -m_dt * dFlux_dTrans * stack.dTrans_dDispJump[connectionIndex][1][0];
-        
+
         stack.localFluxJacobian[k[0]*numEqn][k[0]* numDof] += dFlux_dP[0] * m_dt;
         stack.localFluxJacobian[k[0]*numEqn][k[1]* numDof] += dFlux_dP[1] * m_dt;
         stack.localFluxJacobian[k[1]*numEqn][k[0]* numDof] -= dFlux_dP[0] * m_dt;

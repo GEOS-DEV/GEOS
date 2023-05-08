@@ -14,7 +14,8 @@
       initialDt="1e-3"
       LagrangianContactSolverName="fractureMechSolver"
       poromechanicsSolverName="singlePhasePoromechanicsSolver"
-      logLevel="1">
+      logLevel="1"
+      isThermal="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="10"
@@ -30,7 +31,7 @@
       flowSolverName="flowSolver"
       logLevel="1"
       isThermal="1"
-      targetRegions="{ RockMatrix }">
+      targetRegions="{ RockMatrix, Fracture }">
     </SinglePhasePoromechanics>
 
     <LagrangianContact

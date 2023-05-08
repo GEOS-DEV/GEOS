@@ -13,8 +13,8 @@
       xCoords="{ 0, 1 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 6 }"
-      ny="{ 5 }"
+      nx="{ 2 }"
+      ny="{ 1 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>

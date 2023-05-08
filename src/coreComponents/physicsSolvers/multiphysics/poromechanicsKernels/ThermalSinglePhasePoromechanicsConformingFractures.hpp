@@ -296,7 +296,7 @@ public:
     // Call Base::complete to assemble the mass balance equations
     // In the lambda, add contribution to residual and jacobian into the energy balance equation
     Base::complete( iconn, stack, [&] ( integer const i,
-                                                      localIndex const localRow )
+                                        localIndex const localRow )
     {
       // The no. of fluxes is equal to the no. of equations in m_localRhs and m_localMatrix
       RAJA::atomicAdd( parallelDeviceAtomic{}, &SinglePhaseFVMAbstractBase::m_localRhs[localRow + numEqn-1], stack.localFlux[i * numEqn + numEqn-1] );
@@ -365,7 +365,7 @@ public:
                    arrayView1d< real64 > const & localRhs,
                    CRSMatrixView< real64, localIndex const > const & dR_dAper )
   {
-    integer constexpr NUM_DOF = 2;   // pressure + temperature 
+    integer constexpr NUM_DOF = 2;   // pressure + temperature
     integer constexpr NUM_EQN = 2;   // mass balance + energy balance
 
 
