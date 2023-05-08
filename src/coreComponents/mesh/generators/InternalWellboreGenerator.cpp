@@ -82,7 +82,7 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name,
     setDescription( "Coordinates defining the wellbore trajectory" );
 
   registerWrapper( viewKeyStruct::cartesianOuterBoundaryString(), &m_cartesianOuterBoundary ).
-    setApplyDefaultValue( -1 ).
+    setApplyDefaultValue( 1000000 ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Enforce a Cartesian aligned outer boundary on the outer "
@@ -262,15 +262,40 @@ void InternalWellboreGenerator::postProcessInput()
   GEOS_LOG_RANK_0( "Radial coordinates: "<<m_radialCoords );
 
 
-  if( m_cartesianOuterBoundary >= 0 )
+  // if the cartesian outer boundary has been specified by the user
+  bool const isCartesianOuterBoundarySpecified = m_cartesianOuterBoundary < 1000000;
+  if( isCartesianOuterBoundarySpecified )
   {
-    GEOS_ERROR_IF( m_cartesianOuterBoundary <= 0,
-                   GEOS_FMT( "{} must be stricly larger than 0; to deactivate it, you can either use a negative value or remove it from the xml",
+    // step 1: check the input is valid
+    GEOS_ERROR_IF( m_cartesianOuterBoundary < 0,
+                   GEOS_FMT( "{} must be strictly larger than 0",
                              viewKeyStruct::cartesianOuterBoundaryString() ) );
+
     GEOS_ERROR_IF( m_cartesianOuterBoundary >= m_vertices[0].size()-1,
                    GEOS_FMT( "{} must be strictly smaller than the number of radial blocks (equal to {} here)",
                              viewKeyStruct::cartesianOuterBoundaryString(), m_vertices[0].size()-1 ) );
-    m_cartesianMappingInnerRadius = m_vertices[0][m_cartesianOuterBoundary];
+
+    // step 2: check that the cartesian inner radius is valid
+    bool const isCartesianMappingInnerRadiusSpecified = m_cartesianMappingInnerRadius < 1e98;
+    real64 const innerLimit = m_vertices[0][m_cartesianOuterBoundary];
+    real64 const outerLimit = m_vertices[0][m_vertices[0].size()-1];
+    GEOS_ERROR_IF( isCartesianMappingInnerRadiusSpecified &&
+                   m_cartesianMappingInnerRadius > outerLimit,
+                   GEOS_FMT( "{} must be inside the outer radius of the mesh",
+                             viewKeyStruct::cartesianMappingInnerRadiusString() ) );
+
+    GEOS_ERROR_IF( m_cartesianMappingInnerRadius < innerLimit,
+                   GEOS_FMT( "{} must be outside the radius (equal to {}) of the inner boundary "
+                             "of the region specified by {}",
+                             viewKeyStruct::cartesianMappingInnerRadiusString(), innerLimit,
+                             viewKeyStruct::cartesianOuterBoundaryString() ) );
+
+    // step 3: if cartesianMappingInnerRadius has not been specified,
+    // the inner radius is the input from cartesianMappingInnerRadius
+    if( !isCartesianMappingInnerRadiusSpecified )
+    {
+      m_cartesianMappingInnerRadius = innerLimit;
+    }
   }
 
   InternalMeshGenerator::postProcessInput();
