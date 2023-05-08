@@ -221,19 +221,13 @@ MeshLevel::MeshLevel( string const & name,
       newSubRegion.resize( sourceSubRegion.size() );
 
       // copy new elemCenter map from source
-      array2d< real64 > & elemCenterNew = newSubRegion.getElementCenter();
-      arrayView2d< real64 const > const elemCenterOld = sourceSubRegion.getElementCenter();
-      elemCenterNew = elemCenterOld;
+      newSubRegion.getElementCenter() = sourceSubRegion.getElementCenter();
 
       // copy the elements-to-faces map from source
-      arrayView2d< localIndex const > const & elemsToFacesSource = sourceSubRegion.faceList();
-      array2d< localIndex > & elemsToFacesNew = newSubRegion.faceList();
-      elemsToFacesNew = elemsToFacesSource;
+      newSubRegion.faceList() = sourceSubRegion.faceList();
 
       // copy the elements-to-edges map from source
-      arrayView2d< localIndex const > const & elemsToEdgesSource = sourceSubRegion.edgeList();
-      array2d< localIndex > & elemsToEdgesNew = newSubRegion.edgeList();
-      elemsToEdgesNew = elemsToEdgesSource;
+      newSubRegion.edgeList() = sourceSubRegion.edgeList();
 
       arrayView1d< globalIndex > newSubRegionLocalToGlobal = newSubRegion.localToGlobalMap();
       arrayView1d< globalIndex const > sourceSubRegionLocalToGlobal = sourceSubRegion.localToGlobalMap();
