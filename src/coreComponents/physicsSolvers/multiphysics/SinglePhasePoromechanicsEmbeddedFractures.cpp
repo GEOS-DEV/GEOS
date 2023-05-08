@@ -17,14 +17,13 @@
  */
 
 #include "SinglePhasePoromechanicsEmbeddedFractures.hpp"
-
 #include "constitutive/contact/ContactSelector.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMKernelsHelper.hpp"
-#include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
@@ -425,36 +424,41 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
     arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
     arrayView1d< globalIndex const > const & jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
 
-    string const pDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
+    string const flowDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-
     // 1. Cell-based contributions of standard poroelasticity
-    poromechanicsKernels::SinglePhasePoromechanicsKernelFactory
-    kernelFactory( dispDofNumber,
-                   dofManager.rankOffset(),
-                   localMatrix,
-                   localRhs,
-                   gravityVectorData,
-                   pDofKey,
-                   FlowSolverBase::viewKeyStruct::fluidNamesString() );
-
-    solidMechanicsSolver()->getMaxForce() =
-      finiteElement::
-        regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                      constitutive::PorousSolidBase,
-                                      CellElementSubRegion >( mesh,
-                                                              regionNames,
-                                                              solidMechanicsSolver()->getDiscretizationName(),
-                                                              viewKeyStruct::porousMaterialNamesString(),
-                                                              kernelFactory );
+    if( m_isThermal )
+    {
+      assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
+                      thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory >( mesh,
+                                                                                                   dofManager,
+                                                                                                   regionNames,
+                                                                                                   SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
+                                                                                                   localMatrix,
+                                                                                                   localRhs,
+                                                                                                   flowDofKey,
+                                                                                                   FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    }
+    else
+    {
+      assemblyLaunch< constitutive::PorousSolidBase,
+                      poromechanicsKernels::SinglePhasePoromechanicsKernelFactory >( mesh,
+                                                                                     dofManager,
+                                                                                     regionNames,
+                                                                                     SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
+                                                                                     localMatrix,
+                                                                                     localRhs,
+                                                                                     flowDofKey,
+                                                                                     FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    }
 
     // 2.  Add EFEM poroelastic contribution
     poromechanicsEFEMKernels::SinglePhaseKernelFactory EFEMkernelFactory( subRegion,
                                                                           dispDofNumber,
                                                                           jumpDofNumber,
-                                                                          pDofKey,
+                                                                          flowDofKey,
                                                                           dofManager.rankOffset(),
                                                                           localMatrix,
                                                                           localRhs,
@@ -630,8 +634,11 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
       flowSolver()->updatePorosityAndPermeability( subRegion );
       // update fluid model
       flowSolver()->updateFluidState( subRegion );
-      // update solid internal energy
-      flowSolver()->updateSolidInternalEnergyModel( subRegion );
+      if (m_isThermal)
+      {
+        // update solid internal energy
+        flowSolver()->updateSolidInternalEnergyModel( subRegion );
+      }
     } );
   } );
 }

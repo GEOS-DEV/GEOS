@@ -9,7 +9,7 @@
     gravityVector="{ 0.0, 0.0, 0.0 }">
     <SinglePhasePoromechanicsEmbeddedFractures
       name="poroSolver"
-      targetRegions="{ Domain, Fracture }"
+      targetRegions="{ RockMatrix, Fracture }"
       initialDt="1e-3"
       fracturesSolverName="fractureMechSolver"
       flowSolverName="flowSolver"
@@ -27,7 +27,7 @@
 
     <SolidMechanicsEmbeddedFractures
       name="fractureMechSolver"
-      targetRegions="{ Domain, Fracture }"
+      targetRegions="{ RockMatrix, Fracture }"
       solidSolverName="matrixMechSolver"
       fractureRegionName="Fracture"
       contactRelationName="fractureContact"/>
@@ -36,12 +36,12 @@
       name="matrixMechSolver"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Domain }"/>
+      targetRegions="{ RockMatrix }"/>
 
     <SinglePhaseFVM
       name="flowSolver"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Domain, Fracture }"
+      targetRegions="{ RockMatrix, Fracture }"
       isThermal="1">
       <NonlinearSolverParameters
         normType="L2"/>
@@ -50,7 +50,7 @@
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"      
-      targetRegions="{ Domain, Fracture }"
+      targetRegions="{ RockMatrix, Fracture }"
       discretization="FE1"    
       fractureRegion="Fracture"
       logLevel="1"
@@ -72,7 +72,7 @@
 
   <ElementRegions>
     <CellElementRegion
-      name="Domain"
+      name="RockMatrix"
       cellBlocks="{ cb1 }"
       materialList="{ porousRock, water, thermalCond}"/>
 
@@ -96,7 +96,7 @@
     name="initialPressure"
     initialCondition="1"
     setNames="{ all }"
-    objectPath="ElementRegions/Domain/cb1"
+    objectPath="ElementRegions/RockMatrix/cb1"
     fieldName="pressure"
     scale="0.0"/>
 
@@ -111,7 +111,7 @@
     name="initialTemperature"
     initialCondition="1"
     setNames="{ all }"
-    objectPath="ElementRegions/Domain/cb1"
+    objectPath="ElementRegions/RockMatrix/cb1"
     fieldName="temperature"
     scale="0.0"/>
 
