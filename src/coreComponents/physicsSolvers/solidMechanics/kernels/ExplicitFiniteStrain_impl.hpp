@@ -120,8 +120,8 @@ void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadrat
   real64 stress[ 6 ]{};
   real64 const timeIncrement = 0.0;
   constitutive::SolidUtilities::
-    hypoUpdate_StressOnly( m_constitutiveUpdate, timeIncrement,
-                           k, q, Dadt, Rot, stress );
+    hypoUpdate_StressOnly( m_constitutiveUpdate,
+                           k, q, timeIncrement, Dadt, Rot, stress );
 
   real64 P[ 3 ][ 3 ]{};
   LvArray::tensorOps::Rij_eq_symAikBjk< 3 >( P, stress, fInv );
