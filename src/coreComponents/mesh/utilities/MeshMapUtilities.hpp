@@ -235,24 +235,6 @@ struct NodeKeyHasher
 };
 
 /**
- * @brief Strucure used to define an equivalence relation on interpolation arrays representing high-order nodes.
- * @tparam T type of node index, usually a local or global index
- */
-template< typename T >
-struct NodeKeyEqual
-{
-  /**
-   * @brief @return true if two interpolation arrays are considered equal, false otherwise
-   * @param lhs array corresponding to the first node
-   * @param rhs array corresponding to second node
-   */
-  bool operator()( const std::array< T, 6 > & lhs, const std::array< T, 6 > & rhs ) const
-  {
-    return lhs == rhs;
-  }
-};
-
-/**
  * @brief @return a unique interpolation array representing a high-order node coincident with a mesh vertex.
  * @tparam T type of node index, usually a local or global index
  * @param v the mesh vertex on which the high-order node lies.
