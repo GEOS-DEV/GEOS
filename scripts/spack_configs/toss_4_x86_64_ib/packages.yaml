@@ -42,11 +42,11 @@ packages:
       - spec: papi@6.0.0.1
         prefix: /usr/tce/packages/papi/papi-6.0.0.1/
   cmake:
-    version: [3.23.1]
+    version: [3.26.3]
     buildable: false
     externals:
-    - spec: cmake@3.23.1
-      prefix: /usr/tce/packages/cmake/cmake-3.23.1
+    - spec: cmake@3.26.3
+      prefix: /usr/tce/packages/cmake/cmake-3.26.3
   readline:
     externals:
     - spec: readline@7.0
