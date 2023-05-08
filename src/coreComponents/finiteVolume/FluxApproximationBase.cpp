@@ -59,15 +59,20 @@ FluxApproximationBase::getCatalog()
   return catalog;
 }
 
-void FluxApproximationBase::initializePreSubGroups()
+void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
 {
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  GEOS_MARK_FUNCTION;
 
-  domain.forMeshBodies( [&]( MeshBody & meshBody )
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+  for( auto const & meshBodyRegions : m_targetRegions )
   {
+    MeshBody & meshBody = domain.getMeshBody( meshBodyRegions.first );
+    m_lengthScale = meshBody.getGlobalLengthScale();
     meshBody.forMeshLevels( [&]( MeshLevel & mesh )
     {
-      // Proceed with regular procedure only if the MeshLevel is not a shallow copy
+
       if( !(mesh.isShallowCopy() ) )
       {
         // Group structure: mesh1/finiteVolumeStencils/myTPFA
@@ -78,47 +83,11 @@ void FluxApproximationBase::initializePreSubGroups()
         {
           stencilParentGroup = &(mesh.registerGroup( groupKeyStruct::stencilMeshGroupString() ));
         }
-
         Group & stencilGroup = stencilParentGroup->registerGroup( getName() );
 
         registerCellStencil( stencilGroup );
-
         registerFractureStencil( stencilGroup );
-      }
-      else
-      {
-        // There can be more than one FluxApproximation object so we check if the the group has
-        // already been registered.
-        if( !mesh.hasGroup( groupKeyStruct::stencilMeshGroupString() ) )
-        {
-          Group & parentMesh = mesh.getShallowParent();
-          Group & parentStencilParentGroup = parentMesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
-          mesh.registerGroup( groupKeyStruct::stencilMeshGroupString(), &parentStencilParentGroup );
-        }
-      }
-    } );
-  } );
-}
 
-void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
-{
-  GEOS_MARK_FUNCTION;
-
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-
-  domain.forMeshBodies( [&]( MeshBody & meshBody )
-  {
-    m_lengthScale = meshBody.getGlobalLengthScale();
-    meshBody.forMeshLevels( [&]( MeshLevel & mesh )
-    {
-
-      if( !(mesh.isShallowCopy() ) )
-      {
-        // Group structure: mesh1/finiteVolumeStencils/myTPFA
-
-        Group & stencilParentGroup = mesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
-        Group & stencilGroup = stencilParentGroup.getGroup( getName() );
         // For each face-based Dirichlet boundary condition on target field, create a boundary stencil
         // TODO: Apply() should take a MeshLevel directly
         fsManager.apply< FaceManager >( 0.0, // time = 0
@@ -170,8 +139,19 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
         // Compute the aquifer stencil weights
         computeAquiferStencil( domain, mesh );
       }
+      else
+      {
+        // There can be more than one FluxApproximation object so we check if the the group has
+        // already been registered.
+        if( !mesh.hasGroup( groupKeyStruct::stencilMeshGroupString() ) )
+        {
+          Group & parentMesh = mesh.getShallowParent();
+          Group & parentStencilParentGroup = parentMesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
+          mesh.registerGroup( groupKeyStruct::stencilMeshGroupString(), &parentStencilParentGroup );
+        }
+      }
     } );
-  } );
+  }
 }
 
 void FluxApproximationBase::setFieldName( string const & name )

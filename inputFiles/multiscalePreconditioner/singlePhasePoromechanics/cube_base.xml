@@ -1,0 +1,152 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 100 }"
+      yCoords="{ 0, 100 }"
+      zCoords="{ 0, 100 }"
+      nx="{ 30 }"
+      ny="{ 30 }"
+      nz="{ 30 }"
+      cellBlockNames="{ hex }"/>
+  </Mesh>
+
+  <Events
+    maxTime="1e3">
+
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1e2"
+      target="/Solvers/poroSolver"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1e2"
+      targetExactTimestep="1"
+      target="/Outputs/vtkOutput"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="tpfa"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="region"
+      cellBlocks="{ hex }"
+      materialList="{ rock, water }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ElasticIsotropic
+      name="rockSolid"
+      defaultDensity="2700"
+      defaultYoungModulus="1e9"
+      defaultPoissonRatio="0.25"/>
+
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      compressibility="0.0"
+      viscosibility="0.0"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      grainBulkModulus="1.0e27"
+      defaultReferencePorosity="0.1"/>
+
+    <ConstantPermeability
+      name="rockPermeability"
+      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
+
+    <PorousElasticIsotropic
+      name="rock"
+      solidModelName="rockSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPermeability"/>
+  </Constitutive>
+
+  <Geometry>
+    <Box
+      name="source"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 10.01, 10.01, 10.01 }"/>
+
+    <Box
+      name="sink"
+      xMin="{  89.00,  89.00,  89.00 }"
+      xMax="{ 100.01, 100.01, 100.01 }"/>
+  </Geometry>
+
+  <FieldSpecifications>
+
+    <FieldSpecification
+      name="x-roller"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
+
+    <FieldSpecification
+      name="y-roller"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="z-roller"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg }"/>
+
+    <SourceFlux
+      name="sourceTerm"
+      objectPath="ElementRegions/region"
+      scale="-100"
+      functionName="injectionSchedule"
+      setNames="{ source }"/>
+
+    <SourceFlux
+      name="sinkTerm"
+      objectPath="ElementRegions/region"
+      scale="100"
+      functionName="injectionSchedule"
+      setNames="{ sink }"/>
+
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="injectionSchedule"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 10.0 }"
+      values="{ 0.0, 1.0 }"
+      interpolation="linear"/>
+  </Functions>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="cube_poro"/>
+  </Outputs>
+</Problem>

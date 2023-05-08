@@ -95,9 +95,13 @@ def format_xml_level(output: TextIO,
 
             # Format attributes
             for ka in akeys:
+                # Avoid formatting object paths (adds spaces in object sublists which break parsing)
+                if node.tag == "FieldSpecification" and ka == "objectPath":
+                    continue
                 # Avoid formatting mathpresso expressions
-                if not (node.tag in ["SymbolicFunction", "CompositeFunction"] and ka == "expression"):
-                    attribute_dict[ka] = format_attribute(attribute_indent, ka, attribute_dict[ka])
+                if node.tag in ["SymbolicFunction", "CompositeFunction"] and ka == "expression":
+                    continue
+                attribute_dict[ka] = format_attribute(attribute_indent, ka, attribute_dict[ka])
 
             for ii in range(0, len(akeys)):
                 k = akeys[ii]
