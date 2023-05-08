@@ -17,6 +17,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/ModifiedCamClay.hpp"
 #include "constitutive/solid/InvariantDecompositions.hpp"
+#include "constitutive/solid/SolidUtilities.hpp"
 #include "dataRepository/xmlWrapper.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
@@ -140,7 +141,6 @@ void testModifiedCamClayDriver()
       real64 stressLocal[6] = {0};
       real64 stiffnessLocal[6][6] = {{0}};
       cmw.smallStrainUpdate( k, 0, data.strainIncrement, stressLocal, stiffnessLocal );
-      //    std::cout<< stressLocal[0] <<std::endl;
     } );
     cm.saveConvergedState();
   }
@@ -150,7 +150,7 @@ void testModifiedCamClayDriver()
   getStress( cmw, stress );
 
   real64 invariantP, invariantQ;
-  real64 deviator[6];
+  real64 deviator[6]{};
 
   twoInvariant::stressDecomposition( stress,
                                      invariantP,
@@ -162,9 +162,9 @@ void testModifiedCamClayDriver()
   // we now use a finite-difference check of tangent stiffness to confirm
   // the analytical form is working properly.
 
-  cmw.checkSmallStrainStiffness( 0, 0, data.strainIncrement, true );
+  SolidUtilities::checkSmallStrainStiffness( cmw, 0, 0, data.strainIncrement, true );
 
-  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, data.strainIncrement ) );
+  EXPECT_TRUE( SolidUtilities::checkSmallStrainStiffness( cmw, 0, 0, data.strainIncrement ) );
 }
 
 

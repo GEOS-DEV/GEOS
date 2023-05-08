@@ -1492,7 +1492,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--amgSeparateComponents => AMG apply separate component filter for multi-variable problems-->
 		<xsd:attribute name="amgSeparateComponents" type="integer" default="0" />
 		<!--amgSmootherType => AMG smoother type. Available options are: ``default|jacobi|l1jacobi|fgs|bgs|sgs|l1sgs|chebyshev|ilu0|ilut|ic0|ict``-->
-		<xsd:attribute name="amgSmootherType" type="geos_LinearSolverParameters_AMG_SmootherType" default="fgs" />
+		<xsd:attribute name="amgSmootherType" type="geos_LinearSolverParameters_AMG_SmootherType" default="l1sgs" />
 		<!--amgThreshold => AMG strength-of-connection threshold-->
 		<xsd:attribute name="amgThreshold" type="real64" default="0" />
 		<!--directCheckResidual => Whether to check the linear system solution residual-->
