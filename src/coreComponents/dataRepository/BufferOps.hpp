@@ -602,7 +602,7 @@ PackSize( VARPACK && ... pack )
 template< bool DO_PACKING, typename T, typename T_INDICES >
 typename std::enable_if< !is_host_packable_by_index< T > &&
                          !is_map_host_packable_by_index< T >, localIndex >::type
-Pack( buffer_unit_type * & GEOS_UNUSED_PARAM( buffer ), T const & GEOS_UNUSED_PARAM( var ), T_INDICES const & GEOSX_UNUSED_PARAM( indices ) )
+Pack( buffer_unit_type * & GEOS_UNUSED_PARAM( buffer ), T const & GEOS_UNUSED_PARAM( var ), T_INDICES const & GEOS_UNUSED_PARAM( indices ) )
 {
   GEOS_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") but type is not packable by index." );
   return 0;
