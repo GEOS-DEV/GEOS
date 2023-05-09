@@ -1467,26 +1467,32 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="LinearSolverParametersType">
-		<!--amgAggresiveCoarseningLevels => AMG number levels for aggressive coarsening 
-Available options are: TODO-->
-		<xsd:attribute name="amgAggresiveCoarseningLevels" type="integer" default="0" />
+		<!--amgAggressiveCoarseningLevels => AMG number of levels for aggressive coarsening-->
+		<xsd:attribute name="amgAggressiveCoarseningLevels" type="integer" default="0" />
+		<!--amgAggressiveCoarseningPaths => AMG number of paths for aggressive coarsening-->
+		<xsd:attribute name="amgAggressiveCoarseningPaths" type="integer" default="1" />
+		<!--amgAggressiveInterpType => AMG aggressive interpolation algorithm. Available options are: ``default|extendedIStage2|standardStage2|extendedStage2|multipass|modifiedExtended|modifiedExtendedI|modifiedExtendedE|modifiedMultipass``-->
+		<xsd:attribute name="amgAggressiveInterpType" type="geos_LinearSolverParameters_AMG_AggInterpType" default="multipass" />
 		<!--amgCoarseSolver => AMG coarsest level solver/smoother type. Available options are: ``default|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|direct|bgs``-->
 		<xsd:attribute name="amgCoarseSolver" type="geos_LinearSolverParameters_AMG_CoarseType" default="direct" />
-		<!--amgCoarseningType => AMG coarsening algorithm
-Available options are: TODO-->
-		<xsd:attribute name="amgCoarseningType" type="string" default="HMIS" />
-		<!--amgInterpolationType => AMG interpolation algorithm
-Available options are: TODO-->
-		<xsd:attribute name="amgInterpolationType" type="integer" default="6" />
+		<!--amgCoarseningType => AMG coarsening algorithm. Available options are: ``default|CLJP|RugeStueben|Falgout|PMIS|HMIS``-->
+		<xsd:attribute name="amgCoarseningType" type="geos_LinearSolverParameters_AMG_CoarseningType" default="HMIS" />
+		<!--amgInterpolationMaxNonZeros => AMG interpolation maximum number of nonzeros per row-->
+		<xsd:attribute name="amgInterpolationMaxNonZeros" type="integer" default="4" />
+		<!--amgInterpolationType => AMG interpolation algorithm. Available options are: ``default|modifiedClassical|direct|multipass|extendedI|standard|extended|directBAMG|modifiedExtended|modifiedExtendedI|modifiedExtendedE``-->
+		<xsd:attribute name="amgInterpolationType" type="geos_LinearSolverParameters_AMG_InterpType" default="extendedI" />
 		<!--amgNullSpaceType => AMG near null space approximation. Available options are:``constantModes|rigidBodyModes``-->
 		<xsd:attribute name="amgNullSpaceType" type="geos_LinearSolverParameters_AMG_NullSpaceType" default="constantModes" />
-		<!--amgNumFunctions => AMG number of functions
-Available options are: TODO-->
+		<!--amgNumFunctions => AMG number of functions-->
 		<xsd:attribute name="amgNumFunctions" type="integer" default="1" />
 		<!--amgNumSweeps => AMG smoother sweeps-->
-		<xsd:attribute name="amgNumSweeps" type="integer" default="2" />
+		<xsd:attribute name="amgNumSweeps" type="integer" default="1" />
+		<!--amgRelaxWeight => AMG relaxation factor for the smoother-->
+		<xsd:attribute name="amgRelaxWeight" type="real64" default="1" />
+		<!--amgSeparateComponents => AMG apply separate component filter for multi-variable problems-->
+		<xsd:attribute name="amgSeparateComponents" type="integer" default="0" />
 		<!--amgSmootherType => AMG smoother type. Available options are: ``default|jacobi|l1jacobi|fgs|bgs|sgs|l1sgs|chebyshev|ilu0|ilut|ic0|ict``-->
-		<xsd:attribute name="amgSmootherType" type="geos_LinearSolverParameters_AMG_SmootherType" default="fgs" />
+		<xsd:attribute name="amgSmootherType" type="geos_LinearSolverParameters_AMG_SmootherType" default="l1sgs" />
 		<!--amgThreshold => AMG strength-of-connection threshold-->
 		<xsd:attribute name="amgThreshold" type="real64" default="0" />
 		<!--directCheckResidual => Whether to check the linear system solution residual-->
@@ -1529,9 +1535,24 @@ the relative residual norm satisfies:
 		<!--stopIfError => Whether to stop the simulation if the linear solver reports an error-->
 		<xsd:attribute name="stopIfError" type="integer" default="1" />
 	</xsd:complexType>
+	<xsd:simpleType name="geos_LinearSolverParameters_AMG_AggInterpType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|default|extendedIStage2|standardStage2|extendedStage2|multipass|modifiedExtended|modifiedExtendedI|modifiedExtendedE|modifiedMultipass" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="geos_LinearSolverParameters_AMG_CoarseType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|default|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|direct|bgs" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_LinearSolverParameters_AMG_CoarseningType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|default|CLJP|RugeStueben|Falgout|PMIS|HMIS" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_LinearSolverParameters_AMG_InterpType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|default|modifiedClassical|direct|multipass|extendedI|standard|extended|directBAMG|modifiedExtended|modifiedExtendedI|modifiedExtendedE" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geos_LinearSolverParameters_AMG_NullSpaceType">
