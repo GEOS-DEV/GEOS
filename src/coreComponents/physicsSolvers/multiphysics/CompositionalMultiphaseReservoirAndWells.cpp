@@ -145,6 +145,14 @@ initializePreSubGroups()
                            this->getName(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
                            Base::reservoirSolver()->getName(), Base::wellSolver()->getName() ),
                  InputError );
+
+  bool const allowNegativePressureFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::allowNegativePressureString() );;
+  bool const allowNegativePressureWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::allowNegativePressureString() );
+  GEOS_THROW_IF( allowNegativePressureFlow != allowNegativePressureWell,
+                 GEOS_FMT( "CompositionalMultiphaseReservoir '{}': the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
+                           this->getName(), CompositionalMultiphaseBase::viewKeyStruct::allowNegativePressureString(),
+                           Base::reservoirSolver()->getName(), Base::wellSolver()->getName() ),
+                 InputError );
 }
 
 template< typename COMPOSITIONAL_RESERVOIR_SOLVER >

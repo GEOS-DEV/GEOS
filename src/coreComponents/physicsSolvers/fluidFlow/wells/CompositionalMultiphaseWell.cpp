@@ -64,6 +64,7 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   m_maxRelativePresChange( 0.2 ),
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 ),
+  m_allowNegativePressure( 0 ),
   m_targetPhaseIndex( -1 )
 {
   this->registerWrapper( viewKeyStruct::useMassFlagString(), &m_useMass ).
@@ -88,6 +89,12 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
     setDescription( "Flag indicating whether local (cell-wise) chopping of negative compositions is allowed" );
+
+  this->registerWrapper( viewKeyStruct::allowNegativePressureString(), &m_allowNegativePressure ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag indicating whether negative pressure values are allowed" );
 }
 
 void CompositionalMultiphaseWell::postProcessInput()
@@ -877,6 +884,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
                 numComp,
                 numPhase,
                 perforationData.getNumPerforationsGlobal(),
+                m_allowNegativePressure,
                 wellControls,
                 0.0, // initialization done at t = 0
                 resCompFlowAccessors.get( fields::flow::pressure{} ),
@@ -1255,6 +1263,7 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition const & domain
         compositionalMultiphaseWellKernels::
           SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
+                                                     m_allowNegativePressure,
                                                      scalingFactor,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,

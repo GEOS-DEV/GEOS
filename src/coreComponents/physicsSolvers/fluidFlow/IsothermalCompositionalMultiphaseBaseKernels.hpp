@@ -1230,6 +1230,7 @@ public:
   /**
    * @brief Create a new kernel instance
    * @param[in] allowCompDensChopping flag to allow the component density chopping
+   * @param[in] allowNegativePressure flag to allow negative pressure
    * @param[in] scalingFactor the scaling factor
    * @param[in] rankOffset the rank offset
    * @param[in] numComp the number of components
@@ -1240,6 +1241,7 @@ public:
    * @param[in] compDens the component density vector
    */
   SolutionCheckKernel( integer const allowCompDensChopping,
+                       integer const allowNegativePressure,
                        real64 const scalingFactor,
                        globalIndex const rankOffset,
                        integer const numComp,
@@ -1256,6 +1258,7 @@ public:
             pressure,
             compDens ),
     m_allowCompDensChopping( allowCompDensChopping ),
+    m_allowNegativePressure( allowNegativePressure ),
     m_scalingFactor( scalingFactor )
   {}
 
@@ -1279,10 +1282,13 @@ public:
                              StackVariables & stack,
                              FUNC && kernelOp = NoOpFunc{} ) const
   {
-    real64 const newPres = m_pressure[ei] + m_scalingFactor * m_localSolution[stack.localRow];
-    if( newPres < 0 )
+    if( !m_allowNegativePressure )
     {
-      stack.localMinVal = 0;
+      real64 const newPres = m_pressure[ei] + m_scalingFactor * m_localSolution[stack.localRow];
+      if( newPres < 0 )
+      {
+        stack.localMinVal = 0;
+      }
     }
 
     // if component density chopping is not allowed, the time step fails if a component density is negative
@@ -1321,6 +1327,9 @@ protected:
   /// flag to allow the component density chopping
   integer const m_allowCompDensChopping;
 
+  /// flag to allow negative pressure
+  integer const m_allowNegativePressure;
+
   /// scaling factor
   real64 const m_scalingFactor;
 
@@ -1337,6 +1346,7 @@ public:
    * @brief Create a new kernel and launch
    * @tparam POLICY the policy used in the RAJA kernel
    * @param[in] allowCompDensChopping flag to allow the component density chopping
+   * @param[in] allowNegativePressure flag to allow negative pressure
    * @param[in] scalingFactor the scaling factor
    * @param[in] rankOffset the rank offset
    * @param[in] numComp the number of components
@@ -1347,6 +1357,7 @@ public:
   template< typename POLICY >
   static integer
   createAndLaunch( integer const allowCompDensChopping,
+                   integer const allowNegativePressure,
                    real64 const scalingFactor,
                    globalIndex const rankOffset,
                    integer const numComp,
@@ -1358,7 +1369,7 @@ public:
       subRegion.getField< fields::flow::pressure >();
     arrayView2d< real64 const, compflow::USD_COMP > const compDens =
       subRegion.getField< fields::flow::globalCompDensity >();
-    SolutionCheckKernel kernel( allowCompDensChopping, scalingFactor, rankOffset,
+    SolutionCheckKernel kernel( allowCompDensChopping, allowNegativePressure, scalingFactor, rankOffset,
                                 numComp, dofKey, subRegion, localSolution, pressure, compDens );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );
   }
