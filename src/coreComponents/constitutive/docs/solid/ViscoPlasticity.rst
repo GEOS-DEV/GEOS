@@ -7,9 +7,6 @@ Vico-Plastic Models
 The classical `Perzyna-type viscoplasticity models <https://www.sciencedirect.com/science/article/abs/pii/S0065215608700097>`__ are not suitable for nonsmooth multisurface rate-dependent plasticity models because of the unclearly defined nested viscoplastic loading surfaces. An alternative formulation, the `Duvaut-Lions viscoplastic theory <https://onlinelibrary.wiley.com/doi/abs/10.1002/nme.1620261003>`__, precludes these difficulties by not using the concept of nested viscoplastic loading surfaces. The viscoplastic constitutive equation that relates the stress :math:`\boldsymbol{\sigma}` and the viscoplastic strain rate :math:`\dot{\boldsymbol{\epsilon}^{vp}}` is given by:
 
 .. math::
-   \boldsymbol{\epsilon} = \boldsymbol{\epsilon}^e + \boldsymbol{\epsilon}^p.
-
-.. math::
    \boldsymbol{\sigma} - \bar{\boldsymbol{\sigma}} = \frac{1}{t_*}\tensor{c}:\dot{\boldsymbol{\epsilon}^{vp}}
 
 Here, :math:`\bar{\boldsymbol{\sigma}}` represents the inviscid stress, which is the rate-independent elasto-plastic stress part that can be obtained by using elasto-plastic solvers such as Drucker-Prager, CamClay, etc. :math:`\tensor{c}` is the tangent stiffness tensor and :math:`t_*` is the relaxation time parameter, which is measured in units of time. The viscoplastic strain rate :math:`\dot{\boldsymbol{\epsilon}}^{vp}` can be approximated using the following finite difference:
@@ -25,7 +22,7 @@ Here, :math:`\Delta t` is the time increment, :math:`\Delta \boldsymbol{\epsilon
 With some arrangements, we can obtain the following formula to update the stress tensor of the Duvaut-Lions elasto-viscoplastic material:
 
 .. math::
-   \boldsymbol{\sigma} = r_t * \boldsymbol{\sigma}^{trial} + (1-r_t) * \bar{\boldsymbol{\sigma}}
+   \boldsymbol{\sigma} = r_t \boldsymbol{\sigma}^{trial} + (1-r_t) \bar{\boldsymbol{\sigma}}
 
 Here, the time ratio :math:`r_t` is calculated from the relaxation time parameter :math:`t_*` and the time increment :math:`\Delta t` as:
 
@@ -40,7 +37,7 @@ The trial stress tensor is computed using the strain increment, assuming elastic
 The tangent stiffness tensor is updated using the following equivalent approximation:
 
 .. math::
-   \tensor{c}^{t+\Delta t} = r_t * \tensor{c}^e + (1-r_t) * \tensor{c}^{t}
+   \tensor{c}^{t+\Delta t} = r_t \tensor{c}^e + (1-r_t) \tensor{c}^{t}
 
 Here, :math:`\tensor{c}^e` is the elastic stiffness tensor.
 
