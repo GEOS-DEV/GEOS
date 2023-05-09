@@ -135,6 +135,7 @@ public:
    * @tparam KEY_TYPE The type of the key used to lookup the subregion.
    * @param key The key to the subregion.
    * @return A reference to the subregion
+   * @throw std::domain_error if the the requested sub-region doesn't exist.
    */
   template< typename SUBREGIONTYPE=ElementSubRegionBase, typename KEY_TYPE=void >
   SUBREGIONTYPE const & getSubRegion( KEY_TYPE const & key ) const

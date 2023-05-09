@@ -16,15 +16,15 @@
  * @file StringUtilities.hpp
  */
 
-#ifndef GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_
-#define GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_
+#ifndef GEOS_CODINGUTILITIES_STRINGUTILITIES_HPP_
+#define GEOS_CODINGUTILITIES_STRINGUTILITIES_HPP_
+
+#include "common/DataTypes.hpp"
 
 #include <iomanip>
 #include <sstream>
 
-#include "common/DataTypes.hpp"
-
-namespace geosx
+namespace geos
 {
 namespace stringutilities
 {
@@ -96,11 +96,67 @@ string concat( S const & delim, T const & v, Ts const & ... vs )
   return oss.str();
 }
 
-/// Subdivide string by delimiters
-template< typename RETURN_TYPE = string_array >
-RETURN_TYPE tokenize( string const & str,
-                      string const & delimiters,
-                      bool const treatConsecutiveDelimAsOne = true );
+/**
+ * @brief Subdivide the string in substrings by the specified delimiters.
+ * @tparam CONTAINER The templated class of the results container (std::vector by default).
+ * @param str The string to subdivide.
+ * @param delimiters String that contains the list of possible delimiters.
+ * @param treatConsecutiveDelimAsOne If enabled, consecutive delimiters will be treated as one.
+ *                                   If not enabled, consecutive delimiters will result in empty entries.
+ * @param preTrimStr If enabled, delimiters at the borders of the string will be ignored.
+ *                   If not enabled, those delimiters will result in in empty entries.
+ * @return The container of the divided substrings.
+ */
+template< template< class ... > class CONTAINER = std::vector >
+CONTAINER< string > tokenize( string const & str,
+                              string const & delimiters,
+                              bool const treatConsecutiveDelimAsOne = true,
+                              bool const preTrimStr = false )
+{
+  CONTAINER< string > tokens;
+  string::size_type tokenBegin, tokenEnd, strEnd;
+
+  if( preTrimStr )
+  {
+    tokenBegin = str.find_first_not_of( delimiters );
+    strEnd = str.find_last_not_of( delimiters ) + 1;
+  }
+  else
+  {
+    tokenBegin = 0;
+    strEnd = str.size();
+  }
+
+  while( ( ( tokenEnd = str.find_first_of( delimiters, tokenBegin ) ) < strEnd ) && tokenBegin < strEnd )
+  {
+    tokens.emplace_back( str.substr( tokenBegin, tokenEnd - tokenBegin ) );
+    tokenBegin = !treatConsecutiveDelimAsOne ? tokenEnd + 1 : str.find_first_not_of( delimiters, tokenEnd );
+  }
+
+  if( tokenBegin < strEnd )
+  {
+    tokens.emplace_back( str.substr( tokenBegin, strEnd-tokenBegin ));
+  }
+  else if( !preTrimStr && str.find_first_of( delimiters, strEnd - 1 ) != string::npos )
+  {
+    tokens.emplace_back( "" );
+  }
+
+  return tokens;
+}
+
+/**
+ * @brief Subdivide the string in substrings by whitespaces separators (see std::isspace()).
+ *        Do not create any empty substrings.
+ * @tparam CONTAINER The templated class of the results container (std::vector by default).
+ * @param str The string to subdivide.
+ * @return CONTAINER< string > The list of the subdivided substrings (std::vector< string > for instance).
+ */
+template< template< class ... > class CONTAINER = std::vector >
+CONTAINER< string > tokenizeBySpaces( string const & str )
+{
+  return tokenize< CONTAINER >( str, " \f\n\r\t\v", true, true );
+}
 
 /**
  * @brief Trim the string
@@ -140,7 +196,37 @@ array1d< T > fromStringToArray( string const & str )
   return v;
 }
 
-} // namespace stringutilities
-} // namespace geosx
+/**
+ * @brief Take a numerical value and convert/scale it to a string with a metric
+ *  prefix. i.e. Kilo, Mega, Giga, Tera, Peta, Exa
+ *
+ * @tparam T Type of the value to be converted
+ * @param value The value to be converted
+ * @return String containging the scaled value.
+ */
+template< typename T >
+string toMetricPrefixString( T const & value );
 
-#endif /* GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_ */
+/**
+ * @brief Compute the length of a constant string at compile-time.
+ */
+// TODO c++17: this function is to remove in favor of std::string_view
+constexpr size_t cstrlen( char const * const str )
+{
+  if( str )
+  {
+    char const * ptr = str;
+    for(; *ptr != '\0'; ++ptr )
+    {}
+    return ptr - str;
+  }
+  else
+  {
+    return 0;
+  }
+}
+
+} // namespace stringutilities
+} // namespace geos
+
+#endif /* GEOS_CODINGUTILITIES_STRINGUTILITIES_HPP_ */

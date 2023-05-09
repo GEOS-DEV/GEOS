@@ -18,7 +18,6 @@
       trajectory="{ { 0.0, 0.0, 0.0 },
                     { 0.0, 0.0, 0.1 } }"
       autoSpaceRadialElems="{ 0, 0, 0 }"
-      useCartesianOuterBoundary="3"
       cellBlockNames="{ cb }"
       />
   </Mesh>

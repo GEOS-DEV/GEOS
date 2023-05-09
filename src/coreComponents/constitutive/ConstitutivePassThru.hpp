@@ -28,6 +28,7 @@
 #include "solid/DruckerPragerExtended.hpp"
 #include "solid/ModifiedCamClay.hpp"
 #include "solid/DelftEgg.hpp"
+#include "solid/DuvautLionsSolid.hpp"
 #include "solid/ElasticIsotropic.hpp"
 #include "solid/ElasticIsotropicPressureDependent.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
@@ -95,6 +96,48 @@ struct ConstitutivePassThru< SolidBase >
 };
 
 /**
+ * @struct ConstitutivePassThruTriaxialDriver
+ */
+template< typename BASETYPE >
+struct ConstitutivePassThruTriaxialDriver;
+
+/**
+ * Specialization for models that derive from SolidBase.
+ * NOTE: this is only a temporary dispatch to reduce the compilation time.
+ */
+template<>
+struct ConstitutivePassThruTriaxialDriver< SolidBase >
+{
+
+  // NOTE: The switch order here can be fragile if a model derives from another
+  //       model, as the dynamic_cast will also cast to a base version.
+  //       Models should be ordered such that children come before parents.
+  //       For example, DruckerPrager before ElasticIsotropic, DamageVolDev before
+  //       Damage, etc.
+
+  template< typename LAMBDA >
+  static
+  void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< DamageSpectral< ElasticIsotropic >,
+                                 DamageVolDev< ElasticIsotropic >,
+                                 Damage< ElasticIsotropic >,
+                                 DuvautLionsSolid< DruckerPrager >,
+                                 DuvautLionsSolid< DruckerPragerExtended >,
+                                 DuvautLionsSolid< ModifiedCamClay >,
+                                 DruckerPragerExtended,
+                                 ModifiedCamClay,
+                                 DelftEgg,
+                                 DruckerPrager,
+                                 ElasticIsotropic,
+                                 ElasticTransverseIsotropic,
+                                 ElasticIsotropicPressureDependent,
+                                 ElasticOrthotropic >::execute( constitutiveRelation,
+                                                                std::forward< LAMBDA >( lambda ) );
+  }
+};
+
+/**
  * Specialization for the NullModel.
  */
 template<>
@@ -133,6 +176,7 @@ struct ConstitutivePassThru< DamageBase >
                                                                         std::forward< LAMBDA >( lambda ) );
   }
 };
+
 
 
 /**

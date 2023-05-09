@@ -37,25 +37,27 @@ using namespace geosx::testing;
 using namespace geosx::dataRepository;
 
 char const * xmlInput =
-  "<Problem>"
-  "  <Mesh>"
-  "    <InternalMesh name=\"mesh\""
-  "                  elementTypes=\"{C3D8}\""
-  "                  xCoords=\"{0, 1, 2, 3, 4}\""
-  "                  yCoords=\"{0, 1}\""
-  "                  zCoords=\"{0, 1}\""
-  "                  nx=\"{4, 4, 4, 4}\""
-  "                  ny=\"{4}\""
-  "                  nz=\"{5}\""
-  "                  cellBlockNames=\"{block1, block2, block3, block4}\"/>"
-  "  </Mesh>"
-  "  <ElementRegions>"
-  "    <CellElementRegion name=\"region1\" cellBlocks=\"{block1}\" materialList=\"{}\" />"
-  "    <CellElementRegion name=\"region2\" cellBlocks=\"{block2}\" materialList=\"{}\" />"
-  "    <CellElementRegion name=\"region3\" cellBlocks=\"{block3}\" materialList=\"{}\" />"
-  "    <CellElementRegion name=\"region4\" cellBlocks=\"{block4}\" materialList=\"{}\" />"
-  "  </ElementRegions>"
-  "</Problem>";
+  R"xml(
+  <Problem>
+    <Mesh>
+      <InternalMesh name="mesh"
+                    elementTypes="{C3D8}"
+                    xCoords="{0, 1, 2, 3, 4}"
+                    yCoords="{0, 1}"
+                    zCoords="{0, 1}"
+                    nx="{4, 4, 4, 4}"
+                    ny="{4}"
+                    nz="{5}"
+                    cellBlockNames="{block1, block2, block3, block4}"/>
+    </Mesh>
+    <ElementRegions>
+      <CellElementRegion name="region1" cellBlocks="{block1}" materialList="{}" />
+      <CellElementRegion name="region2" cellBlocks="{block2}" materialList="{}" />
+      <CellElementRegion name="region3" cellBlocks="{block3}" materialList="{}" />
+      <CellElementRegion name="region4" cellBlocks="{block4}" materialList="{}" />
+    </ElementRegions>
+  </Problem>
+  )xml";
 
 /**
  * @brief Base class for all DofManager test fixtures.

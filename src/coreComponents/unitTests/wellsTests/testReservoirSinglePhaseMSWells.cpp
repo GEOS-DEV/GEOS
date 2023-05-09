@@ -38,118 +38,120 @@ using namespace geosx::testing;
 CommandLineOptions g_commandLineOptions;
 
 char const * xmlInput =
-  "<Problem>\n"
-  "  <Solvers gravityVector=\"{ 0.0, 0.0, -9.81 }\">\n"
-  "    <SinglePhaseReservoir name=\"reservoirSystem\"\n"
-  "               flowSolverName=\"singlePhaseFlow\"\n"
-  "               wellSolverName=\"singlePhaseWell\"\n"
-  "               logLevel=\"1\"\n"
-  "               targetRegions=\"{Region1,wellRegion1,wellRegion2}\">\n"
-  "      <NonlinearSolverParameters newtonMaxIter=\"40\"/>\n"
-  "      <LinearSolverParameters solverType=\"direct\"\n"
-  "                              logLevel=\"2\"/>\n"
-  "    </SinglePhaseReservoir>\n"
-  "    <SinglePhaseFVM name=\"singlePhaseFlow\"\n"
-  "                             logLevel=\"1\"\n"
-  "                             discretization=\"singlePhaseTPFA\"\n"
-  "                             targetRegions=\"{Region1}\">\n"
-  "    </SinglePhaseFVM>\n"
-  "    <SinglePhaseWell name=\"singlePhaseWell\"\n"
-  "                     logLevel=\"1\"\n"
-  "                     targetRegions=\"{wellRegion1,wellRegion2}\">\n"
-  "        <WellControls name=\"wellControls1\"\n"
-  "                      type=\"producer\"\n"
-  "                      referenceElevation=\"2\"\n"
-  "                      control=\"BHP\"\n"
-  "                      targetBHP=\"5e5\"\n"
-  "                      targetTotalRate=\"1e-3\"/>\n"
-  "        <WellControls name=\"wellControls2\"\n"
-  "                      type=\"injector\"\n"
-  "                      referenceElevation=\"2\"\n"
-  "                      control=\"totalVolRate\" \n"
-  "                      targetBHP=\"2e7\"\n"
-  "                      targetTotalRate=\"1e-4\"/>\n"
-  "    </SinglePhaseWell>\n"
-  "  </Solvers>\n"
-  "  <Mesh>\n"
-  "    <InternalMesh name=\"mesh1\"\n"
-  "                  elementTypes=\"{C3D8}\" \n"
-  "                  xCoords=\"{0, 5}\"\n"
-  "                  yCoords=\"{0, 1}\"\n"
-  "                  zCoords=\"{0, 1}\"\n"
-  "                  nx=\"{3}\"\n"
-  "                  ny=\"{1}\"\n"
-  "                  nz=\"{1}\"\n"
-  "                  cellBlockNames=\"{cb1}\"/>\n"
-  "    <InternalWell name=\"well_producer1\"\n"
-  "                  wellRegionName=\"wellRegion1\"\n"
-  "                  wellControlsName=\"wellControls1\"\n"
-  "                  meshName=\"mesh1\"\n"
-  "                  polylineNodeCoords=\"{ {4.5, 0,  2  },\n"
-  "                                         {4.5, 0,  0.5} }\"\n"
-  "                  polylineSegmentConn=\"{ {0, 1} }\"\n"
-  "                  radius=\"0.1\"\n"
-  "                  numElementsPerSegment=\"1\">\n"
-  "        <Perforation name=\"producer1_perf1\"\n"
-  "                     distanceFromHead=\"1.45\"/> \n"
-  "    </InternalWell> \n"
-  "    <InternalWell name=\"well_injector1\"\n"
-  "                  wellRegionName=\"wellRegion2\"\n"
-  "                  wellControlsName=\"wellControls2\"\n"
-  "                  meshName=\"mesh1\"\n"
-  "                  polylineNodeCoords=\"{ {0.5, 0, 2  },\n"
-  "                                         {0.5, 0, 0.5} }\"\n"
-  "                  polylineSegmentConn=\"{ {0, 1} }\"\n"
-  "                  radius=\"0.1\"\n"
-  "                  numElementsPerSegment=\"1\">\n"
-  "        <Perforation name=\"injector1_perf1\"\n"
-  "                     distanceFromHead=\"1.45\"/> \n"
-  "    </InternalWell>\n"
-  "  </Mesh>\n"
-  "  <NumericalMethods>\n"
-  "    <FiniteVolume>\n"
-  "      <TwoPointFluxApproximation name=\"singlePhaseTPFA\"/>\n"
-  "    </FiniteVolume>\n"
-  "  </NumericalMethods>\n"
-  "  <ElementRegions>\n"
-  "    <CellElementRegion name=\"Region1\"\n"
-  "                       cellBlocks=\"{cb1}\"\n"
-  "                       materialList=\"{water, rock}\"/>\n"
-  "    <WellElementRegion name=\"wellRegion1\"\n"
-  "                       materialList=\"{water}\"/> \n"
-  "    <WellElementRegion name=\"wellRegion2\"\n"
-  "                       materialList=\"{water}\"/> \n"
-  "  </ElementRegions>\n"
-  "  <Constitutive>\n"
-  "    <CompressibleSinglePhaseFluid name=\"water\"\n"
-  "                                  defaultDensity=\"1000\"\n"
-  "                                  defaultViscosity=\"0.001\"\n"
-  "                                  referencePressure=\"0.0\"\n"
-  "                                  referenceDensity=\"1000\"\n"
-  "                                  compressibility=\"5e-10\"\n"
-  "                                  referenceViscosity=\"0.001\"\n"
-  "                                  viscosibility=\"0.0\"/>\n"
-  "    <CompressibleSolidConstantPermeability name=\"rock\"\n"
-  "        solidModelName=\"nullSolid\"\n"
-  "        porosityModelName=\"rockPorosity\"\n"
-  "        permeabilityModelName=\"rockPerm\"/>\n"
-  "   <NullModel name=\"nullSolid\"/> \n"
-  "   <PressurePorosity name=\"rockPorosity\"\n"
-  "                     defaultReferencePorosity=\"0.05\"\n"
-  "                     referencePressure = \"0.0\"\n"
-  "                     compressibility=\"1.0e-9\"/>\n"
-  "  <ConstantPermeability name=\"rockPerm\"\n"
-  "                        permeabilityComponents=\"{2.0e-16, 2.0e-16, 2.0e-16}\"/> \n"
-  "  </Constitutive>\n"
-  "  <FieldSpecifications>\n"
-  "    <FieldSpecification name=\"initialPressure\"\n"
-  "                        initialCondition=\"1\"\n"
-  "                        setNames=\"{all}\"\n"
-  "                        objectPath=\"ElementRegions/Region1/cb1\"\n"
-  "                        fieldName=\"pressure\"\n"
-  "                        scale=\"5e6\"/>\n"
-  "  </FieldSpecifications>\n"
-  "</Problem>";
+  R"xml(
+  <Problem>
+    <Solvers gravityVector="{ 0.0, 0.0, -9.81 }">
+      <SinglePhaseReservoir name="reservoirSystem"
+                 flowSolverName="singlePhaseFlow"
+                 wellSolverName="singlePhaseWell"
+                 logLevel="1"
+                 targetRegions="{Region1,wellRegion1,wellRegion2}">
+        <NonlinearSolverParameters newtonMaxIter="40"/>
+        <LinearSolverParameters solverType="direct"
+                                logLevel="2"/>
+      </SinglePhaseReservoir>
+      <SinglePhaseFVM name="singlePhaseFlow"
+                               logLevel="1"
+                               discretization="singlePhaseTPFA"
+                               targetRegions="{Region1}">
+      </SinglePhaseFVM>
+      <SinglePhaseWell name="singlePhaseWell"
+                       logLevel="1"
+                       targetRegions="{wellRegion1,wellRegion2}">
+          <WellControls name="wellControls1"
+                        type="producer"
+                        referenceElevation="2"
+                        control="BHP"
+                        targetBHP="5e5"
+                        targetTotalRate="1e-3"/>
+          <WellControls name="wellControls2"
+                        type="injector"
+                        referenceElevation="2"
+                        control="totalVolRate"
+                        targetBHP="2e7"
+                        targetTotalRate="1e-4"/>
+      </SinglePhaseWell>
+    </Solvers>
+    <Mesh>
+      <InternalMesh name="mesh1"
+                    elementTypes="{C3D8}"
+                    xCoords="{0, 5}"
+                    yCoords="{0, 1}"
+                    zCoords="{0, 1}"
+                    nx="{3}"
+                    ny="{1}"
+                    nz="{1}"
+                    cellBlockNames="{cb1}"/>
+      <InternalWell name="well_producer1"
+                    wellRegionName="wellRegion1"
+                    wellControlsName="wellControls1"
+                    meshName="mesh1"
+                    polylineNodeCoords="{ {4.5, 0,  2  },
+                                           {4.5, 0,  0.5} }"
+                    polylineSegmentConn="{ {0, 1} }"
+                    radius="0.1"
+                    numElementsPerSegment="1">
+          <Perforation name="producer1_perf1"
+                       distanceFromHead="1.45"/>
+      </InternalWell>
+      <InternalWell name="well_injector1"
+                    wellRegionName="wellRegion2"
+                    wellControlsName="wellControls2"
+                    meshName="mesh1"
+                    polylineNodeCoords="{ {0.5, 0, 2  },
+                                           {0.5, 0, 0.5} }"
+                    polylineSegmentConn="{ {0, 1} }"
+                    radius="0.1"
+                    numElementsPerSegment="1">
+          <Perforation name="injector1_perf1"
+                       distanceFromHead="1.45"/>
+      </InternalWell>
+    </Mesh>
+    <NumericalMethods>
+      <FiniteVolume>
+        <TwoPointFluxApproximation name="singlePhaseTPFA"/>
+      </FiniteVolume>
+    </NumericalMethods>
+    <ElementRegions>
+      <CellElementRegion name="Region1"
+                         cellBlocks="{cb1}"
+                         materialList="{water, rock}"/>
+      <WellElementRegion name="wellRegion1"
+                         materialList="{water}"/>
+      <WellElementRegion name="wellRegion2"
+                         materialList="{water}"/>
+    </ElementRegions>
+    <Constitutive>
+      <CompressibleSinglePhaseFluid name="water"
+                                    defaultDensity="1000"
+                                    defaultViscosity="0.001"
+                                    referencePressure="0.0"
+                                    referenceDensity="1000"
+                                    compressibility="5e-10"
+                                    referenceViscosity="0.001"
+                                    viscosibility="0.0"/>
+      <CompressibleSolidConstantPermeability name="rock"
+          solidModelName="nullSolid"
+          porosityModelName="rockPorosity"
+          permeabilityModelName="rockPerm"/>
+     <NullModel name="nullSolid"/>
+     <PressurePorosity name="rockPorosity"
+                       defaultReferencePorosity="0.05"
+                       referencePressure = "0.0"
+                       compressibility="1.0e-9"/>
+    <ConstantPermeability name="rockPerm"
+                          permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>
+    </Constitutive>
+    <FieldSpecifications>
+      <FieldSpecification name="initialPressure"
+                          initialCondition="1"
+                          setNames="{all}"
+                          objectPath="ElementRegions/Region1/cb1"
+                          fieldName="pressure"
+                          scale="5e6"/>
+    </FieldSpecifications>
+  </Problem>
+  )xml";
 
 template< typename LAMBDA >
 void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & solver,

@@ -267,6 +267,11 @@ void CompositionalMultiphaseHybridFVM::setupDofs( DomainPartition const & GEOSX_
                           viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Face );
 
+  // for the volume balance equation, disable global coupling
+  // this equation is purely local (not coupled to neighbors or other physics)
+  dofManager.disableGlobalCouplingForEquation( viewKeyStruct::elemDofFieldString(),
+                                               m_numComponents );
+
   // setup the connectivity of face fields
   dofManager.addField( viewKeyStruct::faceDofFieldString(),
                        FieldLocation::Face,

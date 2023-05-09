@@ -338,6 +338,7 @@ void DofManager::addField( string const & fieldName,
     field.name = fieldName;
     field.location = location;
     field.numComponents = components;
+    field.globallyCoupledComponents = CompMask( components, true ); // everything globally coupled
     field.key = m_name + '_' + fieldName + "_dofIndex";
     field.docstring = fieldName + " DoF indices";
     // advanced processing
@@ -364,6 +365,23 @@ void DofManager::addField( string const & fieldName,
     support.push_back( { meshBody.getName(), mesh.getName(), std::move( regionNames ) } );
   }
   addField( fieldName, location, components, support );
+}
+
+void DofManager::disableGlobalCouplingForEquation( string const & fieldName,
+                                                   integer const c )
+{
+  FieldDescription & field = m_fields[getFieldIndex( fieldName )];
+  field.globallyCoupledComponents.unset( c ); // this equation will not interact with neighbors
+}
+
+void DofManager::disableGlobalCouplingForEquations( string const & fieldName,
+                                                    arrayView1d< integer const > const components )
+{
+  FieldDescription & field = m_fields[getFieldIndex( fieldName )];
+  for( integer c = 0; c < components.size(); ++c )
+  {
+    field.globallyCoupledComponents.unset( c ); // this equation will not interact with neighbors
+  }
 }
 
 namespace
@@ -565,7 +583,7 @@ struct ConnLocPatternBuilder
 {
   static void build( MeshLevel const & mesh,
                      string const & key,
-                     localIndex const numComp,
+                     DofManager::CompMask const & mask,
                      std::set< string > const & regions,
                      localIndex const rowOffset,
                      SparsityPattern< globalIndex > & connLocPattern )
@@ -590,7 +608,7 @@ struct ConnLocPatternBuilder
       globalIndex const dofOffset = helper::value( dofIndexArray, locIdx );
       if( dofOffset >= 0 )
       {
-        for( localIndex c = 0; c < numComp; ++c )
+        for( integer const c : mask )
         {
           connLocPattern.insertNonZero( rowOffset + connectorCount, dofOffset + c );
         }
@@ -613,7 +631,7 @@ struct ConnLocPatternBuilder< FieldLocation::Elem, FieldLocation::Edge, SUBREGIO
 {
   static void build( MeshLevel const & mesh,
                      string const & key,
-                     localIndex const numComp,
+                     DofManager::CompMask const & mask,
                      std::set< string > const & regions,
                      localIndex const rowOffset,
                      SparsityPattern< globalIndex > & connLocPattern )
@@ -644,7 +662,7 @@ struct ConnLocPatternBuilder< FieldLocation::Elem, FieldLocation::Edge, SUBREGIO
       globalIndex const dofOffset = dofIndex[elemIdx[0]][elemIdx[1]][elemIdx[2]];
       if( dofOffset >= 0 )
       {
-        for( localIndex c = 0; c < numComp; ++c )
+        for( integer const c : mask )
         {
           connLocPattern.insertNonZero( rowOffset + edgeConnectorIndex[edgeIdx], dofOffset + c );
         }
@@ -657,6 +675,7 @@ template< FieldLocation LOC, FieldLocation CONN >
 void makeConnLocPattern( MeshLevel const & mesh,
                          string const & key,
                          localIndex const numComp,
+                         DofManager::CompMask const & mask,
                          globalIndex const numGlobalDof,
                          std::set< string > const & regions,
                          SparsityPattern< globalIndex > & connLocPattern )
@@ -680,12 +699,12 @@ void makeConnLocPattern( MeshLevel const & mesh,
                          std::min( LvArray::integerConversion< globalIndex >( numEntriesPerRow ), numGlobalDof ) );
 
   // 3. Populate the local CL pattern
-  ConnLocPatternBuilder< LOC, CONN >::build( mesh, key, numComp, regions, 0, connLocPattern );
+  ConnLocPatternBuilder< LOC, CONN >::build( mesh, key, mask, regions, 0, connLocPattern );
 
   // TPFA+fracture special case
   if( LOC == Loc::Elem && CONN == Loc::Face )
   {
-    ConnLocPatternBuilder< Loc::Elem, Loc::Edge, FaceElementSubRegion >::build( mesh, key, numComp, regions, numConnectors, connLocPattern );
+    ConnLocPatternBuilder< Loc::Elem, Loc::Edge, FaceElementSubRegion >::build( mesh, key, mask, regions, numConnectors, connLocPattern );
   }
 }
 
@@ -698,6 +717,7 @@ void DofManager::setSparsityPatternFromStencil( SparsityPatternView< globalIndex
   CouplingDescription const & coupling = m_coupling.at( {fieldIndex, fieldIndex} );
   localIndex const numComp = field.numComponents;
   globalIndex const rankDofOffset = rankOffset();
+  CompMask const & globallyCoupledComps = field.globallyCoupledComponents;
 
   forMeshSupport( field.support, *m_domain, [&]( MeshBody const &, MeshLevel const & mesh, auto const & regions )
   {
@@ -750,7 +770,7 @@ void DofManager::setSparsityPatternFromStencil( SparsityPatternView< globalIndex
           localIndex const localDofNumber = rowDofIndices[i] - rankDofOffset;
           if( localDofNumber >= 0 && localDofNumber < pattern.numRows() )
           {
-            for( localIndex c = 0; c < numComp; ++c )
+            for( integer const c : globallyCoupledComps ) // add a non-zero for globally coupled components only
             {
               pattern.insertNonZeros( localDofNumber + c, colDofIndices.begin(), colDofIndices.end() );
             }
@@ -814,12 +834,19 @@ void DofManager::setSparsityPatternOneBlock( SparsityPatternView< globalIndex > 
       makeConnLocPattern< LOC, CONN >( mesh,
                                        rowField.key,
                                        rowField.numComponents,
+                                       rowField.globallyCoupledComponents, // select only globally coupled components
                                        rowField.numGlobalDof,
                                        regions,
                                        connLocRow );
     } );
 
-    if( colFieldIndex == rowFieldIndex )
+    // we create a temporary mask including all components
+    // if the colFieldIndex is equal to the rowFieldIndex and all components are in the mask,
+    // we don't need to recomponent the connLocPattern
+    CompMask const allComponentsMask( colField.numComponents, true );
+    bool const areAllComponentsCoupled = colField.globallyCoupledComponents.begin() == allComponentsMask.begin();
+
+    if( colFieldIndex == rowFieldIndex && areAllComponentsCoupled )
     {
       connLocCol = connLocRow; // TODO avoid copying
     }
@@ -831,9 +858,15 @@ void DofManager::setSparsityPatternOneBlock( SparsityPatternView< globalIndex > 
         FieldLocation constexpr LOC = decltype(locType)::value;
         FieldLocation constexpr CONN = decltype(connType)::value;
 
+        // note that below we activate all components using allComponentsMask and not colField.globallyCoupledComponents
+        // for the following reasons:
+        // - we want the **equation** in LOC to be decoupled from its neighbors (think volume balance constraint)
+        // - however, we want the corresponding **dof** to always be coupled (think last component density)
+
         makeConnLocPattern< LOC, CONN >( mesh,
                                          colField.key,
                                          colField.numComponents,
+                                         allComponentsMask, // select all components
                                          colField.numGlobalDof,
                                          regions,
                                          connLocCol );
@@ -841,7 +874,7 @@ void DofManager::setSparsityPatternOneBlock( SparsityPatternView< globalIndex > 
     }
     GEOSX_ASSERT_EQ( connLocRow.numRows(), connLocCol.numRows() );
 
-    // Perform assembly/multiply patterns
+    // First, we perform assembly/multiply patterns (at this step, locally coupled equations are excluded by construction)
     globalIndex const globalDofOffset = rankOffset();
     forAll< serialPolicy >( connLocRow.numRows(), [&]( localIndex const irow )
     {
@@ -856,6 +889,39 @@ void DofManager::setSparsityPatternOneBlock( SparsityPatternView< globalIndex > 
         }
       }
     } );
+
+    // Finally, we add the diagonal terms of the locally coupled equations to the sparsity pattern
+    // Note: this is only needed if some components in the row field are not globally coupled,
+    // because the diagonal terms of the locally coupled components have not been added at the previous step
+    if( rowFieldIndex == colFieldIndex && !areAllComponentsCoupled )
+    {
+      LocationSwitch( rowField.location, [&]( auto const loc )
+      {
+        FieldLocation constexpr LOC = decltype(loc)::value;
+        using ArrayHelper = ArrayHelper< globalIndex const, LOC >;
+
+        typename ArrayHelper::Accessor dofIndexArray = ArrayHelper::get( mesh, rowField.key );
+
+        CompMask locallyCoupledComponents = rowField.globallyCoupledComponents;
+        locallyCoupledComponents.invert();
+
+        array1d< globalIndex > colDofIndices( rowField.numComponents );
+        globalIndex const rankDofOffset = rankOffset();
+        forMeshLocation< LOC, false, serialPolicy >( mesh, regions, [&]( auto const locIdx )
+        {
+          globalIndex const dofNumber = ArrayHelper::value( dofIndexArray, locIdx );
+          for( localIndex c = 0; c < rowField.numComponents; ++c )
+          {
+            colDofIndices[c] = dofNumber + c;
+          }
+          // add a non-zero for locally coupled components since diagonal terms for globally coupled components have been added already
+          for( integer const c : locallyCoupledComponents )
+          {
+            pattern.insertNonZeros( dofNumber - rankDofOffset + c, colDofIndices.begin(), colDofIndices.end() );
+          }
+        } );
+      } );
+    }
   } );
 }
 
@@ -869,6 +935,7 @@ void DofManager::countRowLengthsFromStencil( arrayView1d< localIndex > const & r
 
   localIndex const numComp = field.numComponents;
   globalIndex const rankDofOffset = rankOffset();
+  CompMask const & globallyCoupledComps = field.globallyCoupledComponents;
 
   forMeshSupport( field.support, *m_domain, [&]( MeshBody const &, MeshLevel const & mesh, auto const & regions )
   {
@@ -895,7 +962,7 @@ void DofManager::countRowLengthsFromStencil( arrayView1d< localIndex > const & r
           localIndex const localDofNumber = dofNumberAccessor[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] - rankDofOffset;
           if( localDofNumber >= 0 && localDofNumber < rowLengths.size() )
           {
-            for( localIndex c = 0; c < numComp; ++c )
+            for( integer const c : globallyCoupledComps ) // add a non-zero for globally coupled components only
             {
               RAJA::atomicAdd( parallelHostAtomic{}, &rowLengths[localDofNumber + c], ( stencilSize - 1 ) * numComp );
             }
@@ -959,12 +1026,19 @@ void DofManager::countRowLengthsOneBlock( arrayView1d< localIndex > const & rowL
       makeConnLocPattern< LOC, CONN >( mesh,
                                        rowField.key,
                                        rowField.numComponents,
+                                       rowField.globallyCoupledComponents, // select only globally coupled components
                                        rowField.numGlobalDof,
                                        regions,
                                        connLocRow );
     } );
 
-    if( colFieldIndex == rowFieldIndex )
+    // we create a temporary mask including all components
+    // if the colFieldIndex is equal to the rowFieldIndex and all components are in the mask,
+    // we don't need to recomponent the connLocPattern
+    CompMask const allComponentsMask( colField.numComponents, true );
+    bool const areAllComponentsCoupled = colField.globallyCoupledComponents.begin() == allComponentsMask.begin();
+
+    if( colFieldIndex == rowFieldIndex && areAllComponentsCoupled )
     {
       connLocCol = connLocRow;
     }
@@ -976,9 +1050,15 @@ void DofManager::countRowLengthsOneBlock( arrayView1d< localIndex > const & rowL
         FieldLocation constexpr LOC = decltype(locType)::value;
         FieldLocation constexpr CONN = decltype(connType)::value;
 
+        // note that below we activate all components using allComponentsMask and not colField.globallyCoupledComponents
+        // for the following reasons:
+        // - we want the **equation** in LOC to be decoupled from its neighbors (think volume balance constraint)
+        // - however, we want the corresponding dof to always be coupled (think last component density)
+
         makeConnLocPattern< LOC, CONN >( mesh,
                                          colField.key,
                                          colField.numComponents,
+                                         allComponentsMask, // select all components
                                          colField.numGlobalDof,
                                          regions,
                                          connLocCol );
@@ -1001,6 +1081,37 @@ void DofManager::countRowLengthsOneBlock( arrayView1d< localIndex > const & rowL
         }
       }
     } );
+
+    // Finally, we add the diagonal terms of the locally coupled equations to the sparsity pattern
+    // Note: this is only needed if some components in the row field are not globally coupled,
+    // because the diagonal terms of the locally coupled components have not been added at the previous step
+    if( rowFieldIndex == colFieldIndex && rowField.globallyCoupledComponents.begin() != allComponentsMask.begin() )
+    {
+      LocationSwitch( rowField.location, [&]( auto const loc )
+      {
+        FieldLocation constexpr LOC = decltype(loc)::value;
+        using ArrayHelper = ArrayHelper< globalIndex const, LOC >;
+
+        typename ArrayHelper::Accessor dofIndexArray = ArrayHelper::get( mesh, rowField.key );
+
+        CompMask locallyCoupledComponents = rowField.globallyCoupledComponents;
+        locallyCoupledComponents.invert();
+
+        forMeshLocation< LOC, false, serialPolicy >( mesh, regions, [&]( auto const locIdx )
+        {
+          globalIndex const dofNumber = ArrayHelper::value( dofIndexArray, locIdx );
+          localIndex const localDofNumber = dofNumber - rankDofOffset;
+          if( localDofNumber >= 0 && localDofNumber < rowLengths.size() )
+          {
+            // add a non-zero for locally coupled components since diagonal terms for globally coupled components have been added already
+            for( integer const c : locallyCoupledComponents )
+            {
+              RAJA::atomicAdd( parallelHostAtomic{}, &rowLengths[localDofNumber + c], rowField.numComponents );
+            }
+          }
+        } );
+      } );
+    }
   } );
 }
 

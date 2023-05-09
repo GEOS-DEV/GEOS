@@ -9,6 +9,7 @@ CompositionalMultiphaseFVM                  node                 :ref:`XML_Compo
 CompositionalMultiphaseHybridFVM            node                 :ref:`XML_CompositionalMultiphaseHybridFVM`            
 CompositionalMultiphaseReservoir            node                 :ref:`XML_CompositionalMultiphaseReservoir`            
 CompositionalMultiphaseWell                 node                 :ref:`XML_CompositionalMultiphaseWell`                 
+ElasticFirstOrderSEM                        node                 :ref:`XML_ElasticFirstOrderSEM`                        
 ElasticSEM                                  node                 :ref:`XML_ElasticSEM`                                  
 EmbeddedSurfaceGenerator                    node                 :ref:`XML_EmbeddedSurfaceGenerator`                    
 FlowProppantTransport                       node                 :ref:`XML_FlowProppantTransport`                       
