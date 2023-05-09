@@ -104,19 +104,22 @@ public:
   GEOS_HOST_DEVICE
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
+                                             real64 const & timeIncrement,
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( &stress )[6] ) const override;
 
   GEOS_HOST_DEVICE
-  virtual void smallStrainUpdate( localIndex const k,
-                                  localIndex const q,
-                                  real64 const ( &strainIncrement )[6],
-                                  real64 ( &stress )[6],
-                                  real64 ( &stiffness )[6][6] ) const override;
+  void smallStrainUpdate( localIndex const k,
+                          localIndex const q,
+                          real64 const & timeIncrement,
+                          real64 const ( &strainIncrement )[6],
+                          real64 ( &stress )[6],
+                          real64 ( &stiffness )[6][6] ) const;
 
   GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const;
@@ -142,6 +145,11 @@ public:
   {
     return m_shearModulus[k];
   }
+
+  GEOS_HOST_DEVICE
+  virtual void viscousStateUpdate( localIndex const k,
+                                   localIndex const q,
+                                   real64 beta ) const override;
 
   // TODO: confirm hyper stress/strain measures before activatiing
 
@@ -274,9 +282,11 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                             localIndex const q,
+                                                            real64 const & timeIncrement,
                                                             real64 const ( &strainIncrement )[6],
                                                             real64 ( & stress )[6] ) const
 {
+  GEOS_UNUSED_VAR( timeIncrement );
   smallStrainNoStateUpdate_StressOnly( k, q, strainIncrement, stress ); // stress  = incrementalStress
   LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q] );            // stress += m_oldStress
   saveStress( k, q, stress );                                           // m_newStress = stress
@@ -287,11 +297,12 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                  localIndex const q,
+                                                 real64 const & timeIncrement,
                                                  real64 const ( &strainIncrement )[6],
                                                  real64 ( & stress )[6],
                                                  real64 ( & stiffness )[6][6] ) const
 {
-  smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
+  smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
   getElasticStiffness( k, q, stiffness );
 }
 
@@ -300,13 +311,25 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                  localIndex const q,
+                                                 real64 const & timeIncrement,
                                                  real64 const ( &strainIncrement )[6],
                                                  real64 ( & stress )[6],
                                                  DiscretizationOps & stiffness ) const
 {
-  smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
+  smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
   stiffness.m_bulkModulus = m_bulkModulus[k];
   stiffness.m_shearModulus = m_shearModulus[k];
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void ElasticIsotropicUpdates::viscousStateUpdate( localIndex const k,
+                                                  localIndex const q,
+                                                  real64 beta ) const
+{
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( beta );
 }
 
 

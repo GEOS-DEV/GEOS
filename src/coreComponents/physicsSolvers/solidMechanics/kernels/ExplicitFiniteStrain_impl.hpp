@@ -118,9 +118,10 @@ void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadrat
   HughesWinget( Rot, Dadt, Ldt );
 
   real64 stress[ 6 ]{};
+  real64 const timeIncrement = 0.0;
   constitutive::SolidUtilities::
     hypoUpdate_StressOnly( m_constitutiveUpdate,
-                           k, q, Dadt, Rot, stress );
+                           k, q, timeIncrement, Dadt, Rot, stress );
 
   real64 P[ 3 ][ 3 ]{};
   LvArray::tensorOps::Rij_eq_symAikBjk< 3 >( P, stress, fInv );
