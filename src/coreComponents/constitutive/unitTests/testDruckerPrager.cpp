@@ -18,7 +18,7 @@
 #include "constitutive/solid/DruckerPrager.hpp"
 #include "constitutive/solid/DruckerPragerExtended.hpp"
 #include "constitutive/solid/InvariantDecompositions.hpp"
-
+#include "constitutive/solid/SolidUtilities.hpp"
 #include "dataRepository/xmlWrapper.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
@@ -142,7 +142,7 @@ void testDruckerPragerDriver()
   // we now use a finite-difference check of tangent stiffness to confirm
   // the analytical form is working properly.
 
-  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, data.strainIncrement ) );
+  EXPECT_TRUE( SolidUtilities::checkSmallStrainStiffness( cmw, 0, 0, data.strainIncrement ) );
 }
 
 
@@ -264,7 +264,7 @@ void testDruckerPragerExtendedDriver()
   // we now use a finite-difference check of tangent stiffness to confirm
   // the analytical form is working properly.
 
-  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, data.strainIncrement ) );
+  EXPECT_TRUE( SolidUtilities::checkSmallStrainStiffness( cmw, 0, 0, data.strainIncrement ) );
 }
 
 #ifdef USE_CUDA
