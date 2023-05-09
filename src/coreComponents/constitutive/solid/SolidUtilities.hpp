@@ -40,6 +40,7 @@ struct SolidUtilities
    * @param solid the solid kernel wrapper
    * @param k the element number
    * @param q the quadrature index
+   * @param timeIncrement the time increment
    * @param strainIncrement strain increment (on top of which a FD perturbation will be added)
    * @param print flag to decide if debug output is printed or not
    */
@@ -49,6 +50,7 @@ struct SolidUtilities
   checkSmallStrainStiffness( SOLID_TYPE const & solid,
                              localIndex k,
                              localIndex q,
+                             real64 const & timeIncrement,
                              real64 const ( &strainIncrement )[6],
                              bool print = false )
   {
@@ -56,8 +58,8 @@ struct SolidUtilities
     real64 stiffnessFD[6][6]{};   // finite difference approximation
     real64 stress[6]{};           // original stress
 
-    solid.smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
-    SolidUtilities::computeSmallStrainFiniteDifferenceStiffness( solid, k, q, strainIncrement, stiffnessFD );
+    solid.smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
+    SolidUtilities::computeSmallStrainFiniteDifferenceStiffness( solid, k, q, timeIncrement, strainIncrement, stiffnessFD );
 
     // compute relative error between two versions
 
@@ -106,6 +108,7 @@ struct SolidUtilities
    * @param solid the solid kernel wrapper
    * @param k the element number
    * @param q the quadrature index
+   * @param timeIncrement the time increment
    * @param strainIncrement strain increment (on top of which a FD perturbation will be added)
    * @param stiffnessFD finite different stiffness approximation
    */
@@ -115,6 +118,7 @@ struct SolidUtilities
   computeSmallStrainFiniteDifferenceStiffness( SOLID_TYPE const & solid,
                                                localIndex k,
                                                localIndex q,
+                                               real64 const & timeIncrement,
                                                real64 const ( &strainIncrement )[6],
                                                real64 ( & stiffnessFD )[6][6] )
   {
@@ -132,7 +136,7 @@ struct SolidUtilities
 
     real64 eps = 1e-4*norm; // finite difference perturbation
 
-    solid.smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+    solid.smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
 
     for( localIndex i=0; i<6; ++i )
     {
@@ -143,7 +147,7 @@ struct SolidUtilities
         strainIncrementFD[i-1] -= eps;
       }
 
-      solid.smallStrainUpdate( k, q, strainIncrementFD, stressFD, stiffnessFD );
+      solid.smallStrainUpdate( k, q, timeIncrement, strainIncrementFD, stressFD, stiffnessFD );
 
       for( localIndex j=0; j<6; ++j )
       {
@@ -174,6 +178,7 @@ struct SolidUtilities
    * @param solid the solid kernel wrapper
    * @param[in] k The element index.
    * @param[in] q The quadrature point index.
+   * @param[in] timeIncrement The time increment
    * @param[in] Ddt The incremental deformation tensor (rate of deformation tensor * dt)
    * @param[in] Rot The incremental rotation tensor
    * @param[out] stress New stress value (Cauchy stress)
@@ -185,12 +190,13 @@ struct SolidUtilities
   hypoUpdate( SOLID_TYPE const & solid,
               localIndex const k,
               localIndex const q,
+              real64 const & timeIncrement,
               real64 const ( &Ddt )[6],
               real64 const ( &Rot )[3][3],
               real64 ( & stress )[6],
               real64 ( & stiffness )[6][6] )
   {
-    solid.smallStrainUpdate( k, q, Ddt, stress, stiffness );
+    solid.smallStrainUpdate( k, q, timeIncrement, Ddt, stress, stiffness );
 
     real64 temp[6]{};
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, stress );
@@ -204,6 +210,7 @@ struct SolidUtilities
  * @param solid the solid kernel wrapper
  * @param[in] k The element index.
  * @param[in] q The quadrature point index.
+ * @param[in] timeIncrement The time increment
  * @param[in] Ddt The incremental deformation tensor (rate of deformation tensor * dt)
  * @param[in] Rot The incremental rotation tensor
  * @param[out] stress New stress value (Cauchy stress)
@@ -214,11 +221,12 @@ struct SolidUtilities
   hypoUpdate_StressOnly( SOLID_TYPE const & solid,
                          localIndex const k,
                          localIndex const q,
+                         real64 const & timeIncrement,
                          real64 const ( &Ddt )[6],
                          real64 const ( &Rot )[3][3],
                          real64 ( & stress )[6] )
   {
-    solid.smallStrainUpdate_StressOnly( k, q, Ddt, stress );
+    solid.smallStrainUpdate_StressOnly( k, q, timeIncrement, Ddt, stress );
 
     real64 temp[6]{};
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, stress );
