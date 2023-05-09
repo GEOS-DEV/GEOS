@@ -74,26 +74,26 @@ public:
   int getColor() override;
 
   void repartitionMasterParticles( ParticleSubRegion & subRegion,
-                                   MPI_iCommData & icomm );
+                                   MPI_iCommData & commData );
 
   void getGhostParticlesFromNeighboringPartitions( DomainPartition & domain,
-                                                   MPI_iCommData & icomm,
+                                                   MPI_iCommData & commData,
                                                    const real64 & boundaryRadius );
 
-  void sendCoordinateListToNeighbors( arrayView1d< R1Tensor > const & particleCoordinatesSendingToNeighbors,           // Single list of coordinates sent to all neighbors
-                                      MPI_iCommData & icomm,                                                                      // Solver's MPI communicator
-                                     std::vector<array1d<R1Tensor>>& particleCoordinatesReceivedFromNeighbors       // List of lists of coordinates received from each neighbor.
+  void sendCoordinateListToNeighbors( arrayView1d< R1Tensor > const & particleCoordinatesSendingToNeighbors,         // Single list of coordinates sent to all neighbors
+                                      MPI_iCommData & commData,                                                      // Solver's MPI communicator
+                                      std::vector<array1d<R1Tensor>>& particleCoordinatesReceivedFromNeighbors       // List of lists of coordinates received from each neighbor.
   );
 
   template <typename indexType>
   void sendListOfIndicesToNeighbors( std::vector< array1d< indexType > > & listSendingToEachNeighbor,
-                                     MPI_iCommData & icomm,
+                                     MPI_iCommData & commData,
                                      std::vector< array1d< indexType > > & listReceivedFromEachNeighbor );
 
   void sendParticlesToNeighbor( ParticleSubRegionBase & subRegion,
                                 std::vector<int> const & newParticleStartingIndices,
                                 std::vector<int> const & numberOfIncomingParticles,
-                                MPI_iCommData & icomm,
+                                MPI_iCommData & commData,
                                 std::vector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor );
 
 
