@@ -68,7 +68,7 @@ stages:
     - mkdir ${SYSTEM}/integratedTestsDebugFiles
     - cp -rL build/integratedTests/TestLogs ${SYSTEM}/
     - grep -r -l --include=*.data "Error" build/integratedTests/ | xargs cp -t ${SYSTEM}/integratedTestsDebugFiles || true
-    - grep -r -l --include=*.err --exclude-dir="TestLogs*" "error" build/integratedTests/ | xargs cp -t ${SYSTEM}/integratedTestsDebugFiles || true
+    - grep -r -l --include=*.err "error" build/integratedTests/ | xargs cp -t ${SYSTEM}/integratedTestsDebugFiles || true
     - echo "~~~~~~~~~~ END - integrated tests ~~~~~~~~~~~~~"
 
     # CLEANUP + PRINT SUCCESS/FAILURES
