@@ -216,7 +216,7 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
       }
       else
       {
-        GEOS_LOG_LEVEL_RANK_0( 3, "No communication setup is needed since it is a shallow copy of the base discretization.");
+        GEOS_LOG_LEVEL_RANK_0( 3, "No communication setup is needed since it is a shallow copy of the base discretization." );
       }
     } );
   } );
