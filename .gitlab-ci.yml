@@ -58,9 +58,12 @@ stages:
 
     # INTEGRATED TEST
     - echo "~~~~~~~~~~ START - integrated tests ~~~~~~~~~~~"
-    - ./build/geosxats.sh -a veryclean
+    - cd build
+    - make ats_clean
+    - make ats_environment
     - integrated_code=0
-    - ${INTEGRATED_ALLOC_COMMAND} ./build/geosxats.sh --failIfTestsFail 2>&1 | tee ${SYSTEM}/${SYSTEM}_integrated_test.log || integrated_code=$?
+    - ${INTEGRATED_ALLOC_COMMAND} ./integratedTests/geos_ats.sh --failIfTestsFail 2>&1 | tee ../${SYSTEM}/${SYSTEM}_integrated_test.log || integrated_code=$?
+    - cd ..
     - mv ${SYSTEM}/${SYSTEM}_integrated_test.log ${SYSTEM}/${SYSTEM}_integrated_test_$([ $integrated_code == 0 ] && echo "SUCCESS" || echo "FAILURE").log
     - mkdir ${SYSTEM}/integratedTestsDebugFiles
     - cp -rL build/integratedTests/TestLogs ${SYSTEM}/
@@ -70,7 +73,9 @@ stages:
 
     # CLEANUP + PRINT SUCCESS/FAILURES
     - echo "~~~~~~~~~~ START - cleanup ~~~~~~~~~~~"
-    - ./build/geosxats.sh -a veryclean
+    - cd build
+    - make ats_clean
+    - cd ..
     - rm -rf build
     - if [[ $config_code -ne 0 ]]; then echo "Configuration failed"; else echo "Configuration succeeded"; fi
     - if [[ $build_code -ne 0 ]]; then echo "Build failed"; else echo "Build succeeded"; fi
