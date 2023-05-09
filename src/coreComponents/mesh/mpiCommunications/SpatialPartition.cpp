@@ -328,7 +328,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
   }
 
   void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion,
-                                                     MPI_iCommData & icomm )
+                                                     MPI_iCommData & commData )
   {
 
     /*
@@ -386,7 +386,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
     std::vector< array1d< R1Tensor > > particleCoordinatesReceivedFromNeighbors(nn);
 
     sendCoordinateListToNeighbors( outOfDomainParticleCoordinates.toView(),     // input: Single list of coordinates sent to all neighbors
-                                   icomm,                                       // input: Solver MPI communicator
+                                   commData,                                    // input: Solver MPI communicator
                                    particleCoordinatesReceivedFromNeighbors );  // output: List of lists of coordinates received from each neighbor.
                                   
 
@@ -422,7 +422,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
     std::vector< array1d< localIndex > > particleListIndicesRequestedFromNeighbors(nn);
 
     sendListOfIndicesToNeighbors< localIndex >( particleListIndicesRequestingFromNeighbors,
-                                                icomm,
+                                                commData,
                                                 particleListIndicesRequestedFromNeighbors );
 
 
@@ -494,7 +494,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
     sendParticlesToNeighbor( subRegion,
                              newParticleStartingIndices,
                              numberOfIncomingParticles,
-                             icomm,
+                             commData,
                              particleLocalIndicesRequestedFromNeighbors );
 
 
@@ -528,7 +528,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
 
 
   void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartition & domain,
-                                                                     MPI_iCommData & icomm,
+                                                                     MPI_iCommData & commData,
                                                                      const real64 & boundaryRadius )
   {
 
@@ -589,7 +589,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
       std::vector< array1d< R1Tensor > > particleCoordinatesReceivedFromNeighbors(nn);
 
       sendCoordinateListToNeighbors( inDomainMasterParticleCoordinates.toView(),        // input: Single list of coordinates sent to all neighbors
-                                     icomm,                                    // input: Solver MPI communicator
+                                     commData,                                    // input: Solver MPI communicator
                                      particleCoordinatesReceivedFromNeighbors  // output: List of lists of coordinates received from each neighbor.
                                     );
       
@@ -608,7 +608,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
         }
       }
       sendListOfIndicesToNeighbors< globalIndex >( particleGlobalIndicesSendingToNeighbors,
-                                                   icomm,
+                                                   commData,
                                                    particleGlobalIndicesReceivedFromNeighbors );
       
 
@@ -655,7 +655,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
       std::vector< array1d< globalIndex > > particleGlobalIndicesRequestedFromNeighbors(nn);
 
       sendListOfIndicesToNeighbors< globalIndex >( particleGlobalIndicesRequestingFromNeighbors,
-                                                   icomm,
+                                                   commData,
                                                    particleGlobalIndicesRequestedFromNeighbors );
 
 
@@ -710,7 +710,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
         sendParticlesToNeighbor( subRegion,
                                  newParticleStartingIndices,
                                  numberOfIncomingParticles,
-                                 icomm,
+                                 commData,
                                  particleLocalIndicesRequestedFromNeighbors );
       }
 
@@ -733,8 +733,8 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
 
 
   void SpatialPartition::sendCoordinateListToNeighbors( arrayView1d< R1Tensor > const & particleCoordinatesSendingToNeighbors,             // Single list of coordinates sent to all neighbors
-                                                        MPI_iCommData & icomm,                                                                        // Solver's MPI communicator
-                                                       std::vector< array1d< R1Tensor > >& particleCoordinatesReceivedFromNeighbors       // List of lists of coordinates received from each neighbor.
+                                                        MPI_iCommData & commData,                                                          // Solver's MPI communicator
+                                                        std::vector< array1d< R1Tensor > >& particleCoordinatesReceivedFromNeighbors       // List of lists of coordinates received from each neighbor.
   )
   {
     // Number of neighboring partitions
@@ -750,7 +750,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
     buffer_unit_type* sendBufferPtr = sendBuffer.data();                                  // get a pointer to the buffer
     sizeOfPacked += bufferOps::Pack< true >( sendBufferPtr,
                                              particleCoordinatesSendingToNeighbors );     // pack the coordinate list into the buffer
-    GEOS_ERROR_IF_NE( sizeToBePacked, sizeOfPacked );                                    // make sure the packer is self-consistent
+    GEOS_ERROR_IF_NE( sizeToBePacked, sizeOfPacked );                                     // make sure the packer is self-consistent
 
     // Declare the receive buffers
     array1d<unsigned int> sizeOfReceived(nn);
@@ -759,21 +759,26 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
     // send the coordinate list to each neighbor.  Using an asynchronous send,
     // the mpi request will be different for each send, but the buffer is the same
     {
-      array1d<MPI_Request> sendRequest(nn);
-      array1d<MPI_Status>  sendStatus(nn);
-      array1d<MPI_Request> receiveRequest(nn);
-      array1d<MPI_Status>  receiveStatus(nn);
+      array1d< MPI_Request > sendRequest(nn);
+      array1d< MPI_Status >  sendStatus(nn);
+      array1d< MPI_Request > receiveRequest(nn);
+      array1d< MPI_Status >  receiveStatus(nn);
 
       // Send/receive the size of the packed buffer
       for(size_t n=0; n<nn; n++ )
       {
+        // Initialize to null
+        sendRequest[n] = MPI_REQUEST_NULL;
+        receiveRequest[n] = MPI_REQUEST_NULL;
+        
+        // Perform comms
         m_neighbors[n].mpiISendReceive( &sizeOfPacked,
                                         1,
                                         sendRequest[n],
                                         &(sizeOfReceived[n]),
                                         1,
                                         receiveRequest[n],
-                                        icomm.commID(),
+                                        commData.commID(),
                                         MPI_COMM_GEOSX );
       }
       MPI_Waitall(nn, sendRequest.data(), sendStatus.data());
@@ -782,13 +787,18 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
 
     // Send/receive the buffer containing the list of coordinates
     {
-      array1d<MPI_Request>   sendRequest(nn);
-      array1d<MPI_Status>    sendStatus(nn);
-      array1d<MPI_Request>   receiveRequest(nn);
-      array1d<MPI_Status>    receiveStatus(nn);
+      array1d< MPI_Request > sendRequest(nn);
+      array1d< MPI_Status >  sendStatus(nn);
+      array1d< MPI_Request > receiveRequest(nn);
+      array1d< MPI_Status >  receiveStatus(nn);
 
       for(size_t n=0; n<nn; n++ )
       {
+        // Initialize to null
+        sendRequest[n] = MPI_REQUEST_NULL;
+        receiveRequest[n] = MPI_REQUEST_NULL;
+        
+        // Perform comms
         receiveBuffer[n].resize(sizeOfReceived[n]);
         m_neighbors[n].mpiISendReceive( sendBuffer.data(), // TODO: This can't be sendBufferPtr, why not? I guess cuz sendBufferPtr gets incremented (moved) during packing.
                                         sizeOfPacked,
@@ -796,7 +806,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
                                         receiveBuffer[n].data(),
                                         sizeOfReceived[n],
                                         receiveRequest[n],
-                                        icomm.commID(),
+                                        commData.commID(),
                                         MPI_COMM_GEOSX );
       }
       MPI_Waitall(nn, sendRequest.data(), sendStatus.data());
@@ -814,7 +824,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
 
   template <typename indexType>
   void SpatialPartition::sendListOfIndicesToNeighbors( std::vector< array1d< indexType > > & listSendingToEachNeighbor,
-                                                       MPI_iCommData & icomm,
+                                                       MPI_iCommData & commData,
                                                        std::vector< array1d< indexType > > & listReceivedFromEachNeighbor )
   {
     // Number of neighboring partitions
@@ -843,21 +853,26 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
 
     // send the list of local indices to each neighbor using an asynchronous send
     {
-      array1d<MPI_Request>   sendRequest(nn);
-      array1d<MPI_Status>    sendStatus(nn);
-      array1d<MPI_Request>   receiveRequest(nn);
-      array1d<MPI_Status>    receiveStatus(nn);
+      array1d< MPI_Request > sendRequest(nn);
+      array1d< MPI_Status >  sendStatus(nn);
+      array1d< MPI_Request > receiveRequest(nn);
+      array1d< MPI_Status >  receiveStatus(nn);
 
       // Send/receive the size of the packed buffer
       for(size_t n=0; n<nn; n++ )
       {
+        // Initialize to null
+        sendRequest[n] = MPI_REQUEST_NULL;
+        receiveRequest[n] = MPI_REQUEST_NULL;
+        
+        // Perform comms
         m_neighbors[n].mpiISendReceive( &(sizeOfPacked[n]),
                                         1,
                                         sendRequest[n],
                                         &(sizeOfReceived[n]),
                                         1,
                                         receiveRequest[n],
-                                        icomm.commID(),
+                                        commData.commID(),
                                         MPI_COMM_GEOSX );
       }
       MPI_Waitall(nn, sendRequest.data(), sendStatus.data());
@@ -866,13 +881,18 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
 
     // Send/receive the buffer containing the list of local indices
     {
-      array1d<MPI_Request>   sendRequest(nn);
-      array1d<MPI_Status>    sendStatus(nn);
-      array1d<MPI_Request>   receiveRequest(nn);
-      array1d<MPI_Status>    receiveStatus(nn);
+      array1d< MPI_Request > sendRequest(nn);
+      array1d< MPI_Status >  sendStatus(nn);
+      array1d< MPI_Request > receiveRequest(nn);
+      array1d< MPI_Status >  receiveStatus(nn);
 
       for(size_t n=0; n<nn; n++ )
       {
+        // Initialize to null
+        sendRequest[n] = MPI_REQUEST_NULL;
+        receiveRequest[n] = MPI_REQUEST_NULL;
+        
+        // Perform comms
         receiveBuffer[n].resize(sizeOfReceived[n]);
         m_neighbors[n].mpiISendReceive( sendBuffer[n].data(), // TODO: This can't be sendBufferPtr, why not? I guess cuz sendBufferPtr gets incremented (moved) during packing.
                                         sizeOfPacked[n],
@@ -880,7 +900,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
                                         receiveBuffer[n].data(),
                                         sizeOfReceived[n],
                                         receiveRequest[n],
-                                        icomm.commID(),
+                                        commData.commID(),
                                         MPI_COMM_GEOSX );
       }
       MPI_Waitall(nn, sendRequest.data(), sendStatus.data());
@@ -899,7 +919,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
   void SpatialPartition::sendParticlesToNeighbor( ParticleSubRegionBase & subRegion,
                                                   std::vector<int> const & newParticleStartingIndices,
                                                   std::vector<int> const & numberOfIncomingParticles,
-                                                  MPI_iCommData & icomm,
+                                                  MPI_iCommData & commData,
                                                   std::vector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor )
   {
     unsigned int nn = m_neighbors.size();
@@ -922,20 +942,25 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
 
     // send/receive the size of the packed particle data to each neighbor using an asynchronous send
     {
-      array1d<MPI_Request>   sendRequest(nn);
-      array1d<MPI_Status>    sendStatus(nn);
-      array1d<MPI_Request>   receiveRequest(nn);
-      array1d<MPI_Status>    receiveStatus(nn);
+      array1d< MPI_Request > sendRequest(nn);
+      array1d< MPI_Status >  sendStatus(nn);
+      array1d< MPI_Request > receiveRequest(nn);
+      array1d< MPI_Status >  receiveStatus(nn);
 
       for(size_t n=0; n<nn; n++ )
       {
+        // Initialize to null
+        sendRequest[n] = MPI_REQUEST_NULL;
+        receiveRequest[n] = MPI_REQUEST_NULL;
+        
+        // Perform comms
         m_neighbors[n].mpiISendReceive( &(sizeOfPacked[n]),
                                         1,
                                         sendRequest[n],
                                         &(sizeOfReceived[n]),
                                         1,
                                         receiveRequest[n],
-                                        icomm.commID(),
+                                        commData.commID(),
                                         MPI_COMM_GEOSX );
       }
       MPI_Waitall( nn, sendRequest.data(), sendStatus.data() );
@@ -944,13 +969,18 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
 
     // Send/receive the buffer containing the list of local indices
     {
-      array1d<MPI_Request>   sendRequest(nn);
-      array1d<MPI_Status>    sendStatus(nn);
-      array1d<MPI_Request>   receiveRequest(nn);
-      array1d<MPI_Status>    receiveStatus(nn);
+      array1d< MPI_Request > sendRequest(nn);
+      array1d< MPI_Status >  sendStatus(nn);
+      array1d< MPI_Request > receiveRequest(nn);
+      array1d< MPI_Status >  receiveStatus(nn);
 
       for(size_t n=0; n<nn; n++ )
       {
+        // Initialize to null
+        sendRequest[n] = MPI_REQUEST_NULL;
+        receiveRequest[n] = MPI_REQUEST_NULL;
+        
+        // Perform comms
         receiveBuffer[n].resize(sizeOfReceived[n]);
         m_neighbors[n].mpiISendReceive( sendBuffer[n].data(),
                                         sizeOfPacked[n],
@@ -958,7 +988,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
                                         receiveBuffer[n].data(),
                                         sizeOfReceived[n],
                                         receiveRequest[n],
-                                        icomm.commID(),
+                                        commData.commID(),
                                         MPI_COMM_GEOSX );
       }
       MPI_Waitall(nn, sendRequest.data(), sendStatus.data());

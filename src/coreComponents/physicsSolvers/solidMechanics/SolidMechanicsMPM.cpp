@@ -846,7 +846,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   #define USE_PHYSICS_LOOP
 
   //#######################################################################################
-  solverProfiling( "Get spatial partition, get node and particle managers" );
+  solverProfiling( "Get spatial partition, get node and particle managers. Resize m_iComm." );
   //#######################################################################################
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
   
@@ -861,6 +861,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   ParticleManager & particleManager = particles.getBaseDiscretization().getParticleManager();
   MeshLevel & mesh = grid.getBaseDiscretization();
   NodeManager & nodeManager = mesh.getNodeManager();
+
+  m_iComm.resize( domain.getNeighbors().size() );
 
 
   //#######################################################################################
@@ -1171,7 +1173,6 @@ void SolidMechanicsMPM::syncGridFields( std::vector< std::string > const & field
   FieldIdentifiers fieldsToBeSynced;
   fieldsToBeSynced.addFields( FieldLocation::Node, fieldNames );
   std::vector< NeighborCommunicator > & neighbors = domain.getNeighbors();
-  m_iComm.resize( neighbors.size() );
 
   // (2) Swap send and receive indices so we can sum from ghost to master
   for( size_t n=0; n<neighbors.size(); n++ )
