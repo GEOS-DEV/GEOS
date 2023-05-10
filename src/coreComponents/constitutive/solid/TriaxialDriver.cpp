@@ -165,6 +165,7 @@ void TriaxialDriver::runStrainControlTest( SOLID_TYPE & solid, arrayView2d< real
   forAll< parallelDevicePolicy<> >( 1, [=]  GEOS_HOST_DEVICE ( integer const ei )
   {
     real64 stress[6] = {};
+    real64 timeIncrement = 0;
     real64 strainIncrement[6] = {};
     real64 stiffness[6][6] = {{}};
 
@@ -174,7 +175,9 @@ void TriaxialDriver::runStrainControlTest( SOLID_TYPE & solid, arrayView2d< real
       strainIncrement[1] = table( n, EPS1 )-table( n-1, EPS1 );
       strainIncrement[2] = table( n, EPS2 )-table( n-1, EPS2 );
 
-      updates.smallStrainUpdate( ei, 0, strainIncrement, stress, stiffness );
+      timeIncrement = table( n, TIME )-table( n-1, TIME );
+
+      updates.smallStrainUpdate( ei, 0, timeIncrement, strainIncrement, stress, stiffness );
       updates.saveConvergedState ( ei, 0 );
 
       table( n, SIG0 ) = stress[0];
@@ -199,6 +202,7 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
   forAll< parallelDevicePolicy<> >( 1, [=]  GEOS_HOST_DEVICE ( integer const ei )
   {
     real64 stress[6] = {};
+    real64 timeIncrement = 0;
     real64 strainIncrement[6] = {};
     real64 deltaStrainIncrement = 0;
     real64 stiffness[6][6] = {{}};
@@ -216,13 +220,15 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
       strainIncrement[1] = 0;
       strainIncrement[2] = 0;
 
+      timeIncrement = table( n, TIME )-table( n-1, TIME );
+
       real64 norm, normZero = 1e30;
       integer k = 0;
       integer cuts = 0;
 
       for(; k < maxIter; ++k )
       {
-        updates.smallStrainUpdate( ei, 0, strainIncrement, stress, stiffness );
+        updates.smallStrainUpdate( ei, 0, timeIncrement, strainIncrement, stress, stiffness );
 
         norm = scale*fabs( stress[1]-table( n, SIG1 ) );
 
@@ -280,6 +286,7 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
   forAll< parallelDevicePolicy<> >( 1, [=]  GEOS_HOST_DEVICE ( integer const ei )
   {
     real64 stress[6] = {};
+    real64 timeIncrement = 0;
     real64 strainIncrement[6] = {};
     real64 deltaStrainIncrement[6] = {};
     real64 stiffness[6][6] = {{}};
@@ -301,13 +308,15 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
       strainIncrement[1] = 0;
       strainIncrement[2] = 0;
 
+      timeIncrement = table( n, TIME )-table( n-1, TIME );
+
       real64 norm, normZero = 1e30, det;
       integer k = 0;
       integer cuts = 0;
 
       for(; k < maxIter; ++k )
       {
-        updates.smallStrainUpdate( ei, 0, strainIncrement, stress, stiffness );
+        updates.smallStrainUpdate( ei, 0, timeIncrement, strainIncrement, stress, stiffness );
 
         resid[0] = scale * (stress[0]-table( n, SIG0 ));
         resid[1] = scale * (stress[1]-table( n, SIG1 ));
@@ -430,7 +439,7 @@ bool TriaxialDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
   // base type to a known model type.  the lambda here then executes the
   // appropriate test driver. note that these calls will move data to device if available.
 
-  ConstitutivePassThru< SolidBase >::execute( baseSolid, [&]( auto & selectedSolid )
+  ConstitutivePassThruTriaxialDriver< SolidBase >::execute( baseSolid, [&]( auto & selectedSolid )
   {
     using SOLID_TYPE = TYPEOFREF( selectedSolid );
 
