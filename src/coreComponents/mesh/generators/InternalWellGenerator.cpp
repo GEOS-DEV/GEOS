@@ -26,6 +26,7 @@
 #include "mesh/WellElementSubRegion.hpp"
 #include "mesh/PerforationData.hpp"
 #include "mesh/Perforation.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
 namespace geos
 {
@@ -422,10 +423,15 @@ void InternalWellGenerator::connectPerforationsToWellElements()
     real64 const wellLength = m_nodeDistFromHead[m_elemToNodesMap[iwelemBottom][NodeLocation::BOTTOM]];
 
     GEOS_THROW_IF( m_perfDistFromHead[iperf] > wellLength,
-                   perf.getDataContext() << ": Distance from well perforation to head is larger than well polyline length\n \n" <<
-                   "Here is how the \"distanceFromHead\" keyword is used in the definition of the perforation location: \n" <<
-                   "We start from the well head (top of the well) and we measure the linear distance along the well polyline as we go down the well.\n" <<
-                   "When we reach the distanceFromHead specified by the user, we place a perforation on the well at this location of the polyline, and connect it to the reservoir element that contains this perforation",
+                   GEOS_FMT( "{}: Distance from well perforation to head ({} = {}) is larger than well"
+                             " polyline length ({})\n \n You should check the following values:"
+                             "\n   1 - {}\n   2 - the {} of the used WellControls named {}\n   3 - {}, Z values",
+                             perf.getWrapperDataContext( Perforation::viewKeyStruct::distanceFromHeadString() ),
+                             Perforation::viewKeyStruct::distanceFromHeadString(),
+                             m_perfDistFromHead[iperf], wellLength,
+                             perf.getWrapperDataContext( Perforation::viewKeyStruct::distanceFromHeadString() ),
+                             WellControls::viewKeyStruct::refElevString(), m_wellControlsName,
+                             getWrapperDataContext( viewKeyStruct::polylineNodeCoordsString() ) ),
                    InputError );
 
     // start binary search
