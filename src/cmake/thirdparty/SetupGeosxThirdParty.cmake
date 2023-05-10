@@ -710,6 +710,12 @@ if(DEFINED FMT_DIR)
 
     message( " ----> fmt_VERSION = ${fmt_VERSION}")
 
+    get_target_property(includeDirs fmt::fmt INTERFACE_INCLUDE_DIRECTORIES)
+
+    set_property(TARGET fmt::fmt
+                 APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+                 ${includeDirs})
+
     set(ENABLE_FMT ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} fmt::fmt)
 else()
