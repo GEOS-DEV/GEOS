@@ -13,7 +13,6 @@
  */
 
 // Source includes
-#include <regex>
 #include "Group.hpp"
 #include "ConduitRestart.hpp"
 #include "codingUtilities/StringUtilities.hpp"
