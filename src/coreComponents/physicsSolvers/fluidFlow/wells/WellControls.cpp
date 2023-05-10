@@ -325,13 +325,13 @@ void WellControls::postProcessInput()
 
   // 7) Make sure that the flag disabling crossflow is not used for producers
   GEOS_THROW_IF( isProducer() && m_isCrossflowEnabled == 0,
-                 getWrapperDataContext( viewKeyStruct::enableCrossflowString() ) << 
+                 getWrapperDataContext( viewKeyStruct::enableCrossflowString() ) <<
                  ": This option cannot be set to '0' for producers",
                  InputError );
 
   // 8) Make sure that the initial pressure coefficient is positive
   GEOS_THROW_IF( m_initialPressureCoefficient < 0,
-                 getWrapperDataContext( viewKeyStruct::initialPressureCoefficientString() ) << 
+                 getWrapperDataContext( viewKeyStruct::initialPressureCoefficientString() ) <<
                  ": This tuning coefficient is negative",
                  InputError );
 

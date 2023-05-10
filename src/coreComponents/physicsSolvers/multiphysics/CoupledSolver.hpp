@@ -81,7 +81,7 @@ public:
       solver = this->getParent().template getGroupPointer< SolverType >( m_names[idx()] );
       GEOS_THROW_IF( solver == nullptr,
                      GEOS_FMT( "{}: Could not find solver '{}' of type {}",
-                               getDataContext(), 
+                               getDataContext(),
                                m_names[idx()], LvArray::system::demangleType< SolverType >() ),
                      InputError );
     } );
