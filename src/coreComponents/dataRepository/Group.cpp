@@ -257,14 +257,16 @@ Group * Group::createChild( string const & childKey, string const & childName )
 
 void Group::printDataHierarchy( integer const indent )
 {
+  GEOS_LOG( string( indent, '\t' ) << getName() << " : " << LvArray::system::demangleType( *this ) );
   for( auto & view : wrappers() )
   {
-    GEOS_LOG( string( indent, '\t' ) << view.second->getName() << ", " << LvArray::system::demangleType( view.second ) );
+    GEOS_LOG( string( indent, '\t' ) << "-> " << view.second->getName() << " : "
+                                     << LvArray::system::demangleType( *view.second ) );
   }
+  GEOS_LOG( string( indent, '\t' ) );
 
   for( auto & group : m_subGroups )
   {
-    GEOS_LOG( string( indent, '\t' ) << group.first << ':' );
     group.second->printDataHierarchy( indent + 1 );
   }
 }
