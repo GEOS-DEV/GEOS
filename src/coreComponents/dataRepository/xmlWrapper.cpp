@@ -349,14 +349,18 @@ xmlAttributePos xmlNodePos::getAttributeLine( string const & attName ) const
     if( tagEnd != string::npos )
     {
       std::smatch m;
-      // we search for a string which is the attribute name followed by an '=', eventually separated by spaces
-      if( std::regex_search( buffer->cbegin() + offset, buffer->cbegin() + tagEnd,
-                             m, std::regex( attName + "\\s*=" ) ) )
+      try
       {
-        attOffset = m.position() + offset;
-        attLine = line + std::count( buffer->cbegin() + offset, buffer->cbegin() + attOffset, '\n' );
-        attOffsetInLine = attOffset - buffer->rfind( '\n', attOffset );
-      }
+        // we search for a string which is the attribute name followed by an '=', eventually separated by spaces
+        if( std::regex_search( buffer->cbegin() + offset, buffer->cbegin() + tagEnd,
+                               m, std::regex( attName + "\\s*=" ) ) )
+        {
+          attOffset = m.position() + offset;
+          attLine = line + std::count( buffer->cbegin() + offset, buffer->cbegin() + attOffset, '\n' );
+          attOffsetInLine = attOffset - buffer->rfind( '\n', attOffset );
+        }
+      } catch( std::regex_error const & e )
+      { }
     }
   }
 
