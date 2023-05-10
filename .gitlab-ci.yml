@@ -62,13 +62,12 @@ stages:
     - make ats_clean
     - make ats_environment
     - integrated_code=0
+    # For Slurm jobs, gets salloc allocation before running tests with srun
+    - ${ALLOC_COMMAND}
     - ${INTEGRATED_ALLOC_COMMAND} ./integratedTests/geos_ats.sh --failIfTestsFail 2>&1 | tee ../${SYSTEM}/${SYSTEM}_integrated_test.log || integrated_code=$?
     - cd ..
     - mv ${SYSTEM}/${SYSTEM}_integrated_test.log ${SYSTEM}/${SYSTEM}_integrated_test_$([ $integrated_code == 0 ] && echo "SUCCESS" || echo "FAILURE").log
-    - mkdir ${SYSTEM}/integratedTestsDebugFiles
-    - cp -rL build/integratedTests/TestLogs ${SYSTEM}/
-    - grep -r -l --include=*.data "Error" build/integratedTests/ | xargs cp -t ${SYSTEM}/integratedTestsDebugFiles || true
-    - grep -r -l --include=*.err "error" build/integratedTests/ | xargs cp -t ${SYSTEM}/integratedTestsDebugFiles || true
+    - cp -rL build/integratedTests/TestResults ${SYSTEM}/
     - echo "~~~~~~~~~~ END - integrated tests ~~~~~~~~~~~~~"
 
     # CLEANUP + PRINT SUCCESS/FAILURES
