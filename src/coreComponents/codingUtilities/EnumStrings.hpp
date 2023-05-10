@@ -24,9 +24,10 @@
 #ifndef GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP
 #define GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP
 
-#include "StringUtilities.hpp"
+#include "codingUtilities/StringUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
+#include "common/Format.hpp"
 
 #include <iostream>
 #include <type_traits>
@@ -180,5 +181,29 @@ struct TypeRegex< ENUM, std::enable_if_t< internal::HasEnumStrings< ENUM > > >
 };
 
 } // namespace geos
+
+// Formatter specialization for enums
+template< typename Enum >
+struct GEOS_FMT_NS::formatter< Enum, std::enable_if_t< std::is_enum< Enum >::value && geos::internal::HasEnumStrings< Enum >, char > >
+  : GEOS_FMT_NS::formatter< std::string >
+{
+  template< typename FormatContext >
+  auto format( Enum e, FormatContext & ctx ) const
+  {
+    return formatter< std::string >::format( toString( e ), ctx );
+  }
+};
+
+// Formatter specialization for enums
+template< typename Enum >
+struct GEOS_FMT_NS::formatter< Enum, std::enable_if_t< std::is_enum< Enum >::value && !geos::internal::HasEnumStrings< Enum >, char > >
+  : GEOS_FMT_NS::formatter< std::underlying_type_t< Enum > >
+{
+  template< typename FormatContext >
+  auto format( Enum e, FormatContext & ctx ) const
+  {
+    return GEOS_FMT_NS::formatter< std::underlying_type_t< Enum > >::format( toUnderlying( e ), ctx );
+  }
+};
 
 #endif //GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP
