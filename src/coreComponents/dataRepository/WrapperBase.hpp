@@ -305,8 +305,6 @@ public:
    * @brief Unpack the entire wrapped object from a buffer.
    * @param[in,out] buffer the binary buffer pointer, advanced upon completion
    * @param[in] withMetadata whether to expect string metadata with the underlying data
-   * @param[in] onDevice    whether to use device-based packing functions
-   *                         (buffer must be either pinned or a device pointer)
    * @param[out] events      a collection of events to poll for completion of async
    *                         packing kernels ( device packing is incomplete until all
    *                         events are finalized )
