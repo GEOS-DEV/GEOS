@@ -78,6 +78,16 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Count for output pressure at receivers" );
 
+  registerWrapper( viewKeyStruct::dtWaveFieldString(), &m_dtWaveField ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Time step for saving waveField/gradient" );
+
+  registerWrapper( viewKeyStruct::indexWaveFieldString(), &m_indexWaveField ).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Count for saving waveField/gradient" );
+
   registerWrapper( viewKeyStruct::forwardString(), &m_forward ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
@@ -256,6 +266,16 @@ void WaveSolverBase::postProcessInput()
   {
     m_nsamplesSeismoTrace = 0;
   }
+
+  if( m_dtWaveField > 0 )
+  {
+    m_nsamplesWaveField = int( maxTime / m_dtWaveField) + 1;
+  }
+  else
+  {
+    m_nsamplesWaveField = 0;
+  }
+
   localIndex const nsamples = int( (maxTime-minTime) /dt) + 1;
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );

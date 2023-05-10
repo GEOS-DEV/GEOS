@@ -89,7 +89,9 @@ public:
     static constexpr char const * rickerOrderString() { return "rickerOrder"; }
     static constexpr char const * outputSeismoTraceString() { return "outputSeismoTrace"; }
     static constexpr char const * dtSeismoTraceString() { return "dtSeismoTrace"; }
+    static constexpr char const * dtWaveFieldString() { return "dtWaveField"; }
     static constexpr char const * indexSeismoTraceString() { return "indexSeismoTrace"; }
+    static constexpr char const * indexWaveFieldString() { return "indexWaveField"; }
     static constexpr char const * forwardString() { return "forward"; }
     static constexpr char const * saveFieldsString() { return "saveFields"; }
     static constexpr char const * shotIndexString() { return "shotIndex"; }
@@ -204,11 +206,20 @@ protected:
   /// Time step for seismoTrace output
   real64 m_dtSeismoTrace;
 
+  /// Time step for waveField/gradient save
+  real64 m_dtWaveField;
+
   /// Cycle number for output SeismoTrace
   localIndex m_indexSeismoTrace;
 
+  /// Cycle number for gradient POD
+  localIndex m_indexWaveField;
+
   /// Amount of seismoTrace that will be recorded for each receiver
   localIndex m_nsamplesSeismoTrace;
+
+  /// Amount of waveField that will be recorded
+  localIndex m_nsamplesWaveField;
 
   /// Flag to indicate if DAS type of data will be modeled
   integer m_useDAS;
