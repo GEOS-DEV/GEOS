@@ -121,21 +121,23 @@ void WrapperBase::processInputException( std::exception const & ex,
 {
   xmlWrapper::xmlAttribute const & attribute = targetNode.attribute( getName().c_str() );
   string const inputStr = string( attribute.value() );
-  xmlWrapper::xmlAttributePos const attPos = nodePos.getAttributeLine( inputStr );
+  xmlWrapper::xmlAttributePos const attPos = nodePos.getAttributeLine( getName() );
   std::ostringstream oss;
+  string const exStr = ex.what();
 
   oss << "***** XML parsing error at node ";
   if( nodePos.isFound() )
   {
-    oss << "named " << targetNode.attribute( "name" ).value() << ", attribute " << attribute.name()
-        << '(' << splitPath( attPos.isFound() ? attPos.filePath : nodePos.filePath ).second
+    oss << "named " << m_parent->getName() << ", attribute " << getName()
+        << " (" << splitPath( attPos.isFound() ? attPos.filePath : nodePos.filePath ).second
         << ", l." << ( attPos.isFound() ? attPos.line : nodePos.line ) << ").";
   }
   else
   {
-    oss << targetNode.path() << " (name=" << targetNode.attribute( "name" ).value() << ")/" << attribute.name();
+    oss << targetNode.path() << " (name=" << targetNode.attribute( "name" ).value() << ")/" << getName();
   }
-  oss << "\n***** Input value: '" << inputStr << "'\n" << ex.what();
+  oss << "\n***** Input value: '" << inputStr << '\''; 
+  oss << ( exStr[0]=='\n' ? exStr : "'\n" + exStr );
 
   throw InputError( oss.str() );
 }
