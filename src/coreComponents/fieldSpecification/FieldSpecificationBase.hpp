@@ -614,7 +614,18 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
   }
   else
   {
-    FunctionBase const & function = functionManager.getGroup< FunctionBase >( m_functionName );
+    FunctionBase const & function = [&]() -> FunctionBase const &
+    {
+      try
+      {
+        return functionManager.getGroup< FunctionBase >( m_functionName );
+      }
+      catch( std::exception const & e )
+      {
+        throw InputError( e, GEOS_FMT( "Error while reading {}:\n",
+                                       getWrapperDataContext( viewKeyStruct::functionNameString() ) ) );
+      }
+    }();
 
     if( function.isFunctionOfTime()==2 )
     {
