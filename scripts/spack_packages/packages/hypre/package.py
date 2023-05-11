@@ -81,20 +81,26 @@ class Hypre(AutotoolsPackage, CudaPackage, ROCmPackage):
     variant("gptune", default=False, description="Add the GPTune hookup code")
     variant("umpire", default=False, description="Enable Umpire support")
 
+    # GEOSX EDIT START
+    # Unused patches
+
     # Patch to add gptune hookup codes
-    patch("ij_gptune.patch", when="+gptune@2.19.0")
+    # patch("ij_gptune.patch", when="+gptune@2.19.0")
 
     # Patch to add ppc64le in config.guess
-    patch("ibm-ppc64le.patch", when="@:2.11.1")
+    # patch("ibm-ppc64le.patch", when="@:2.11.1")
 
     # Patch to build shared libraries on Darwin
-    patch("darwin-shared-libs-for-hypre-2.13.0.patch", when="+shared@2.13.0 platform=darwin")
-    patch("darwin-shared-libs-for-hypre-2.14.0.patch", when="+shared@2.14.0 platform=darwin")
-    patch("superlu-dist-link-2.15.0.patch", when="+superlu-dist @2.15:2.16.0")
-    patch("superlu-dist-link-2.14.0.patch", when="+superlu-dist @:2.14.0")
-    patch("hypre21800-compat.patch", when="@2.18.0")
+    # patch("darwin-shared-libs-for-hypre-2.13.0.patch", when="+shared@2.13.0 platform=darwin")
+    # patch("darwin-shared-libs-for-hypre-2.14.0.patch", when="+shared@2.14.0 platform=darwin")
+    # patch("superlu-dist-link-2.15.0.patch", when="+superlu-dist @2.15:2.16.0")
+    # patch("superlu-dist-link-2.14.0.patch", when="+superlu-dist @:2.14.0")
+    # patch("hypre21800-compat.patch", when="@2.18.0")
+
     # Patch to get config flags right
-    patch("detect-compiler.patch", when="@2.15.0:2.20.0")
+    # patch("detect-compiler.patch", when="@2.15.0:2.20.0")
+
+    # GEOSX EDIT SEND
 
     depends_on("mpi", when="+mpi")
     depends_on("blas")

@@ -71,10 +71,14 @@ class SuperluDist(CMakePackage, CudaPackage, ROCmPackage):
     # See https://github.com/xiaoyeli/superlu_dist/issues/87
     conflicts("^cuda@11.5.0:", when="@7.1.0:7.1 +cuda")
 
-    patch("xl-611.patch", when="@:6.1.1 %xl")
-    patch("xl-611.patch", when="@:6.1.1 %xl_r")
-    patch("superlu-cray-ftn-case.patch", when="@7.1.1 %cce")
-    patch("CMAKE_INSTALL_LIBDIR.patch", when="@7.0.0:7.2.0")
+    # GEOSX_EDIT_START
+    # Unused patches
+
+    # patch("xl-611.patch", when="@:6.1.1 %xl")
+    # patch("xl-611.patch", when="@:6.1.1 %xl_r")
+    # patch("superlu-cray-ftn-case.patch", when="@7.1.1 %cce")
+    # patch("CMAKE_INSTALL_LIBDIR.patch", when="@7.0.0:7.2.0")
+    # GEOSX_EDIT_END
 
     def cmake_args(self):
         spec = self.spec

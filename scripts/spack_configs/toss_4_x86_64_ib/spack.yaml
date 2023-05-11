@@ -1,0 +1,156 @@
+#------------------------------------------------------------------------------------------------------------
+# SPDX-License-Identifier: LGPL-2.1-only
+#
+# Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+# Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+# Copyright (c) 2018-2020 TotalEnergies
+# Copyright (c) 2019-     GEOSX Contributors
+# All rights reserved
+#
+# See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+#------------------------------------------------------------------------------------------------------------
+
+# geosx@develop%clang@10.0.1
+
+spack:
+  config:
+    install_tree:
+      root: $spack/..
+      projections:
+        all: '{compiler.name}-{compiler.version}/{name}-{version}-{hash}'
+    misc_cache: $spack/../misc_cache
+    test_stage: $spack/../test_stage
+    build_stage::
+    - $spack/../build_stage
+
+  # Regular TPLs do not need views
+  view: false
+
+  compilers::
+  - compiler:
+      spec: clang@14.0.6
+      paths:
+        cc: /usr/tce/packages/clang/clang-14.0.6-magic/bin/clang
+        cxx: /usr/tce/packages/clang/clang-14.0.6-magic/bin/clang++
+        f77: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/gfortran
+        fc: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/gfortran
+      operating_system: rhel8
+      target: x86_64
+      modules: []
+      environment: {}
+      extra_rpaths: []
+  - compiler:
+      spec: gcc@12.1.1
+      paths:
+        cc: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/gcc
+        cxx: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/g++
+        f77: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/gfortran
+        fc: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/gfortran
+      flags: {}
+      operating_system: rhel8
+      target: x86_64
+      modules: []
+      environment: {}
+      extra_rpaths: []
+
+  packages:
+    all:
+      target: [ivybridge]
+      compiler: [gcc, clang]
+      providers:
+        mpi: [mvapich2]
+        blas: [intel-oneapi-mkl]
+        lapack: [intel-oneapi-mkl]
+
+   # Lock down which MPI we are using
+    mvapich2:
+      buildable: False
+      externals:
+        - spec: mvapich2@2.3%gcc@12.1.1
+          prefix: /usr/tce/packages/mvapich2/mvapich2-2.3.6-gcc-12.1.1-magic
+        - spec: mvapich2@2.3%clang@14.0.6
+          prefix:  /usr/tce/packages/mvapich2/mvapich2-2.3.6-clang-14.0.6-magic
+
+    intel-oneapi-mkl:
+      externals:
+        - spec: "intel-oneapi-mkl@2023.0.0"
+          prefix: /opt/intel/oneapi
+      buildable: False
+
+    # System level packages to not build
+    papi:
+      buildable: False
+      externals:
+        - spec: papi@6.0.0.1
+          prefix: /usr/tce/packages/papi/papi-6.0.0.1/
+    cmake:
+      version: [3.26.3]
+      buildable: false
+      externals:
+      - spec: cmake@3.26.3
+        prefix: /usr/tce/packages/cmake/cmake-3.26.3
+    readline:
+      externals:
+      - spec: readline@7.0
+        prefix: /collab/usr/gapps/python/build/spack-toss3.3/opt/spack/linux-rhel7-x86_64/gcc-4.9.3/readline-7.0-e5jqqjmcjknidgwvi353pd6umpixzxr2
+      buildable: false
+    zlib:
+      buildable: False
+      externals:
+        - spec: zlib@1.2.7
+          prefix: /usr
+    m4:
+      buildable: False
+      externals:
+        - spec: m4@1.4.18
+          prefix: /usr
+    perl:
+      buildable: false
+      externals:
+      - spec: perl@5.26.3
+        prefix: /usr
+    pkg-config:
+      buildable: false
+      externals:
+      - spec: pkg-config@1.8.0
+        prefix: /usr
+    diffutils:
+      buildable: False
+      externals:
+        - spec: diffutils@3.3
+          prefix: /usr/bin
+    python:
+      buildable: False
+      externals:
+      - spec: python@3.10.8
+        prefix: /usr/tce/packages/python/python-3.10.8/
+    py-sphinx:
+      buildable: False
+      externals:
+      - spec: py-sphinx@1.6.3
+        prefix: /collab/usr/gapps/python/build/spack-toss3.2/opt/spack/linux-rhel7-x86_64/gcc-4.9.3/python-2.7.14-7rci3jkmuht2uiwp433afigveuf4ocnu/
+    autoconf:
+      buildable: False
+      externals:
+        - spec: autoconf@2.69
+          prefix: /usr
+    automake:
+      buildable: False
+      externals:
+        - spec: automake@1.16.1
+          prefix: /usr
+    libtool:
+      buildable: False
+      externals:
+        - spec: libtool@2.4.6
+          prefix: /usr
+    bison:
+      buildable: False
+      externals:
+        - spec: bison@3.0.4
+          prefix: /usr
+    flex:
+      buildable: False
+      externals:
+        - spec: flex@2.6.1
+          prefix: /usr
