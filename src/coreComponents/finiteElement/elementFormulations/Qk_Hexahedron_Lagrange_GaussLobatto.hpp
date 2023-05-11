@@ -923,7 +923,7 @@ computeBMatrix( int const qa,
 }
 
 /**
- * @brief computes the matrix B in the case of quasi-stiffness (e.g. for pseudo-acoustic case), defined as J^{-T}A J^{-1}/det(J), where J is the Jacobian matrix, and A is a zero matrix except on A(3,3) = 1.
+ * @brief computes the matrix B in the case of quasi-stiffness (e.g. for pseudo-acoustic case), defined as J^{-T}A_z J^{-1}/det(J), where J is the Jacobian matrix, and A_z is a zero matrix except on A_z(3,3) = 1.
  *   at the given Gauss-Lobatto point.
  * @param qa The 1d quadrature point index in xi0 direction (0,1)
  * @param qb The 1d quadrature point index in xi1 direction (0,1)
@@ -937,7 +937,7 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computePseudoBMatrix( int const qa,
+ComputeBzMatrix( int const qa,
                 int const qb,
                 int const qc,
                 real64 const (&X)[numNodes][3],
@@ -949,15 +949,239 @@ computePseudoBMatrix( int const qa,
 
   real64 Jinv[3][3] = tensorOps::invert<3>(J);
 
-  // compute J^T.J/det(J), using Voigt notation for B
-  B[0] = (Jinv[0][0]*Jinv[0][0])*detJ;
-  B[1] = (Jinv[1][1]*Jinv[1][1])*detJ;
-  B[2] = (Jinv[2][2]*Jinv[2][2])*detJ;
-  B[3] = (Jinv[1][2]*Jinv[2][2])*detJ;
-  B[4] = (Jinv[0][2]*Jinv[2][2])*detJ;
-  B[5] = (Jinv[0][2]*Jinv[2][1])*detJ;
-
+  // compute det(J)*J^{-1}Az*J^{-T}, using Voigt notation for B
+  B[0] = detJ*(Jinv[0][2]*Jinv[0][2]);
+  B[1] = detJ*(Jinv[1][2]*Jinv[1][2]);
+  B[2] = detJ*(Jinv[2][2]*Jinv[2][2]);
+  B[3] = detJ*(Jinv[1][2]*Jinv[2][2]);
+  B[4] = detJ*(Jinv[0][2]*Jinv[2][2]);
+  B[5] = detJ*(Jinv[0][2]*Jinv[1][2]);
 }
+
+/**
+ * @brief computes the matrix B in the case of quasi-stiffness (e.g. for pseudo-acoustic case), defined as J^{-T}A_{xy} J^{-1}/det(J), where J is the Jacobian matrix, and A_{xy} is a zero matrix except on A_{xy}(1,1) = 1 and A_{xy}(2,2)=1.
+ *   at the given Gauss-Lobatto point.
+ * @param qa The 1d quadrature point index in xi0 direction (0,1)
+ * @param qb The 1d quadrature point index in xi1 direction (0,1)
+ * @param qc The 1d quadrature point index in xi2 direction (0,1)
+ * @param X Array containing the coordinates of the support points.
+ * @param J Array to store the Jacobian
+ * @param B Array to store the matrix B, in Voigt notation
+ */
+template< typename GL_BASIS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+ComputeBxyMatrix( int const qa,
+                int const qb,
+                int const qc,
+                real64 const (&X)[numNodes][3],
+                real64 (& J)[3][3],
+                real64 (& B)[6] )
+{
+  jacobianTransformation( qa, qb, qc, X, J );
+  real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
+
+  real64 Jinv[3][3] = tensorOps::invert<3>(J);
+
+  // compute det(J)*J^{-1}Axy*J^{-T}, using Voigt notation for B
+  B[0] = detJ*(Jinv[0][0]*Jinv[0][0] + Jinv[0][1]*Jinv[0][1]);
+  B[1] = detJ*(Jinv[1][1]*Jinv[1][1] + Jinv[1][0]*Jinv[1][0]);
+  B[2] = detJ*(Jinv[2][0]*Jinv[2][0] + Jinv[2][1]*Jinv[2][1]);
+  B[3] = detJ*(Jinv[1][0]*Jinv[2][0] + Jinv[1][1]*Jinv[2][1]);
+  B[4] = detJ*(Jinv[0][0]*Jinv[2][0] + Jinv[0][1]*Jinv[2][1]);
+  B[5] = detJ*(Jinv[0][0]*Jinv[1][0] + Jinv[0][1]*Jinv[1][1]);
+}
+
+
+// same as computeStiffnessTerm BUT use Bxy matrix instead of B.
+// The rest is litterally a copy/paste...
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeStiffnessxyTerm( int q,
+                      real64 const (&X)[numNodes][3],
+                      FUNC && func )
+{
+  real64 B[6] = {0};
+  real64 J[3][3] = {{0}};
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  computeBxyMatrix( qa, qb, qc, X, J, B ); // The only change!
+  // diagonal terms
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( j, qb, qc ),
+            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[0]*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qa ) ) );
+    }
+  }
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc ),
+            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[1]*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ) );
+    }
+  }
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, qb, i ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j ),
+            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[2]*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qc ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ) );
+    }
+  }
+  // off-diagonal terms
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      int ii = GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc );
+      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j );
+      real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[3]*
+                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
+                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) );
+      func( ii, jj, val );
+      func( jj, ii, val );
+    }
+  }
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      int ii = GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc );
+      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j );
+      real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[4]*
+                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) );
+      func( ii, jj, val );
+      func( jj, ii, val );
+    }
+  }
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      int ii = GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc );
+      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc );
+      real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[5]*
+                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) );
+      func( ii, jj, val );
+      func( jj, ii, val );
+    }
+  }
+}
+
+
+// same as computeStiffnessTerm BUT use Bz matrix instead of B.
+// The rest is litterally a copy/paste...
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeStiffnesszTerm( int q,
+                      real64 const (&X)[numNodes][3],
+                      FUNC && func )
+{
+  real64 B[6] = {0};
+  real64 J[3][3] = {{0}};
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  computeBzMatrix( qa, qb, qc, X, J, B ); // The only change!
+  // diagonal terms
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( j, qb, qc ),
+            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[0]*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qa ) ) );
+    }
+  }
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc ),
+            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[1]*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ) );
+    }
+  }
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, qb, i ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j ),
+            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[2]*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qc ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ) );
+    }
+  }
+  // off-diagonal terms
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      int ii = GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc );
+      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j );
+      real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[3]*
+                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
+                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) );
+      func( ii, jj, val );
+      func( jj, ii, val );
+    }
+  }
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      int ii = GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc );
+      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j );
+      real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[4]*
+                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) );
+      func( ii, jj, val );
+      func( jj, ii, val );
+    }
+  }
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      int ii = GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc );
+      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc );
+      real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[5]*
+                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) );
+      func( ii, jj, val );
+      func( jj, ii, val );
+    }
+  }
+}
+
 
 template< typename GL_BASIS >
 template< typename FUNC >
