@@ -72,7 +72,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                fields::PressureDoubleDerivative,
                                fields::ForcingRHS,
                                fields::MassVector,
-                               fields::DampingVector,
+                               fields::NodeToDampingIdx,
                                fields::StiffnessVector,
                                fields::FreeSurfaceNodeIndicator >( this->getName() );
 
@@ -125,8 +125,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
 
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const
-  X = nodeManager.referencePosition().toViewConst();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X64 = nodeManager.referencePosition().toViewConst();
 
   arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
   arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
@@ -136,16 +135,16 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
   arrayView2d< real64 > const sourceConstants = m_sourceConstants.toView();
   arrayView1d< localIndex > const sourceIsAccessible = m_sourceIsAccessible.toView();
-  sourceNodeIds.setValues< EXEC_POLICY >( -1 );
-  sourceConstants.setValues< EXEC_POLICY >( -1 );
+  sourceNodeIds.setValues< parallelHostPolicy >( -1 );
+  sourceConstants.setValues< parallelHostPolicy >( -1 );
   sourceIsAccessible.zero();
 
   arrayView2d< real64 const > const receiverCoordinates = m_receiverCoordinates.toViewConst();
   arrayView2d< localIndex > const receiverNodeIds = m_receiverNodeIds.toView();
   arrayView2d< real64 > const receiverConstants = m_receiverConstants.toView();
   arrayView1d< localIndex > const receiverIsLocal = m_receiverIsLocal.toView();
-  receiverNodeIds.setValues< EXEC_POLICY >( -1 );
-  receiverConstants.setValues< EXEC_POLICY >( -1 );
+  receiverNodeIds.setValues< parallelHostPolicy >( -1 );
+  receiverConstants.setValues< parallelHostPolicy >( -1 );
   receiverIsLocal.zero();
 
   real32 const timeSourceFrequency = this->m_timeSourceFrequency;
@@ -185,11 +184,11 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
 
       acousticWaveEquationSEMKernels::
         PrecomputeSourceAndReceiverKernel::
-        launch< EXEC_POLICY, FE_TYPE >
+        launch< parallelHostPolicy, FE_TYPE >
         ( elementSubRegion.size(),
         numNodesPerElem,
         numFacesPerElem,
-        X,
+        X64,
         elemGhostRank,
         elemsToNodes,
         elemsToFaces,
@@ -220,14 +219,14 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNum
   arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
 
   GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
-  forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
+  forAll< parallelDevicePolicy< 32 > >( sourceConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsAccessible[isrc] == 1 )
     {
       for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
       {
         real32 const localIncrement = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
-        RAJA::atomicAdd< ATOMIC_POLICY >( &rhs[sourceNodeIds[isrc][inode]], localIncrement );
+        RAJA::atomicAdd< AtomicPolicy< parallelDevicePolicy< 32 > > >( &rhs[sourceNodeIds[isrc][inode]], localIncrement );
       }
     }
   } );
@@ -258,7 +257,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
     arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X64 = nodeManager.referencePosition().toViewConst();
 
     /// get face to node map
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
@@ -266,9 +265,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     // mass matrix to be computed in this function
     arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVector >();
     mass.zero();
-    /// damping matrix to be computed for each dof in the boundary of the mesh
-    arrayView1d< real32 > const damping = nodeManager.getField< fields::DampingVector >();
-    damping.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
     arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
@@ -289,26 +285,58 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
+
+        /// damping matrix to be computed for each dof in the boundary of the mesh
+        std::set< int > dampingNodesSet;
+        arrayView1d< localIndex > const nodeToDampingIdx = nodeManager.getField< fields::NodeToDampingIdx >();
+
+
+        /// get array of indicators: 1 if face is on the free surface; 0 otherwise
         using FE_TYPE = TYPEOFREF( finiteElement );
+        constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
+
+        for( int f = 0; f < faceManager.size(); f++ )
+        {
+          // face on the domain boundary and not on free surface
+          if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
+          {
+            for( localIndex q = 0; q < numNodesPerFace; ++q )
+            {
+              dampingNodesSet.insert( facesToNodes[f][q] );
+            }
+          }
+        }
+        m_dampingVector.resize( dampingNodesSet.size() );
+        m_dampingNodes.resize( dampingNodesSet.size() );
+        m_dampingVector.zero();
+
+        int i = 0;
+        for( int k : dampingNodesSet )
+        {
+          m_dampingNodes[i] = k;
+          nodeToDampingIdx[k] = i;
+          i++;
+        }
 
         acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
-        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                               X,
-                                                               elemsToNodes,
-                                                               velocity,
-                                                               mass );
+        kernelM.template launch< parallelHostPolicy, AtomicPolicy< parallelHostPolicy > >( elementSubRegion.size(),
+                                                                                           X64,
+                                                                                           elemsToNodes,
+                                                                                           velocity,
+                                                                                           mass );
 
         acousticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
-        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
-                                                               X,
-                                                               facesToElements,
-                                                               facesToNodes,
-                                                               facesDomainBoundaryIndicator,
-                                                               freeSurfaceFaceIndicator,
-                                                               velocity,
-                                                               damping );
+        kernelD.template launch< parallelHostPolicy, AtomicPolicy< parallelHostPolicy > >( faceManager.size(),
+                                                                                           X64,
+                                                                                           facesToElements,
+                                                                                           facesToNodes,
+                                                                                           facesDomainBoundaryIndicator,
+                                                                                           freeSurfaceFaceIndicator,
+                                                                                           velocity,
+                                                                                           nodeToDampingIdx,
+                                                                                           m_dampingVector );
       } );
     } );
   } );
@@ -420,7 +448,7 @@ void AcousticWaveEquationSEM::initializePML()
     NodeManager & nodeManager = mesh.getNodeManager();
     /// WARNING: the array below is one of the PML auxiliary variables
     arrayView1d< real32 > const indicatorPML = nodeManager.getField< fields::AuxiliaryVar4PML >();
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+    arrayView2d< real32 const, nodes::REFERENCE_POSITION_USD > const X32 = nodeManager.referencePosition32().toViewConst();
     indicatorPML.zero();
 
     real32 xInteriorMin[3]{};
@@ -450,7 +478,7 @@ void AcousticWaveEquationSEM::initializePML()
         subRegion.getReference< CellElementSubRegion::NodeMapType >( CellElementSubRegion::viewKeyStruct::nodeListString() );
       traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
 
-      forAll< EXEC_POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const l )
+      forAll< parallelHostPolicy >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const l )
       {
         localIndex const k = targetSet[ l ];
         localIndex const numNodesPerElem = elemToNodesViewConst[k].size();
@@ -477,22 +505,22 @@ void AcousticWaveEquationSEM::initializePML()
     RAJA::ReduceMax< parallelDeviceReduce, real32 > yMaxInterior( -LvArray::NumericLimits< real32 >::max );
     RAJA::ReduceMax< parallelDeviceReduce, real32 > zMaxInterior( -LvArray::NumericLimits< real32 >::max );
 
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+    forAll< parallelHostPolicy >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      xMinGlobal.min( X[a][0] );
-      yMinGlobal.min( X[a][1] );
-      zMinGlobal.min( X[a][2] );
-      xMaxGlobal.max( X[a][0] );
-      yMaxGlobal.max( X[a][1] );
-      zMaxGlobal.max( X[a][2] );
+      xMinGlobal.min( X32[a][0] );
+      yMinGlobal.min( X32[a][1] );
+      zMinGlobal.min( X32[a][2] );
+      xMaxGlobal.max( X32[a][0] );
+      yMaxGlobal.max( X32[a][1] );
+      zMaxGlobal.max( X32[a][2] );
       if( !isZero( indicatorPML[a] - 1.0 ))
       {
-        xMinInterior.min( X[a][0] );
-        yMinInterior.min( X[a][1] );
-        zMinInterior.min( X[a][2] );
-        xMaxInterior.max( X[a][0] );
-        yMaxInterior.max( X[a][1] );
-        zMaxInterior.max( X[a][2] );
+        xMinInterior.min( X32[a][0] );
+        yMinInterior.min( X32[a][1] );
+        zMinInterior.min( X32[a][2] );
+        xMaxInterior.max( X32[a][0] );
+        yMaxInterior.max( X32[a][1] );
+        zMaxInterior.max( X32[a][2] );
       }
     } );
 
@@ -561,9 +589,9 @@ void AcousticWaveEquationSEM::initializePML()
 
         acousticWaveEquationSEMKernels::
           waveSpeedPMLKernel< FE_TYPE > kernel( finiteElement );
-        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
+        kernel.template launch< parallelHostPolicy, AtomicPolicy< parallelHostPolicy > >
           ( targetSet,
-          X,
+          X32,
           elemToNodesViewConst,
           vel,
           xMin,
@@ -654,7 +682,7 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
     arrayView2d< real32 > const grad_n = nodeManager.getField< fields::AuxiliaryVar2PML >();
     arrayView1d< real32 > const divV_n = nodeManager.getField< fields::AuxiliaryVar3PML >();
     arrayView1d< real32 const > const u_n = nodeManager.getField< fields::AuxiliaryVar4PML >();
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+    arrayView2d< real32 const, nodes::REFERENCE_POSITION_USD > const X32 = nodeManager.referencePosition32().toViewConst();
 
     /// Select the subregions concerned by the PML (specified in the xml by the Field Specification)
     /// 'targetSet' contains the indices of the elements in a given subregion
@@ -709,9 +737,9 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
         /// apply the PML kernel
         acousticWaveEquationSEMKernels::
           PMLKernel< FE_TYPE > kernel( finiteElement );
-        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
+        kernel.template launch< parallelHostPolicy, AtomicPolicy< parallelHostPolicy > >
           ( targetSet,
-          X,
+          X32,
           elemToNodesViewConst,
           vel,
           p_n,
@@ -760,7 +788,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
       {
         m_lifo->pushWait();
       }
-      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const nodeIdx )
+      forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const nodeIdx )
       {
         p_dt2[nodeIdx] = (p_np1[nodeIdx] - 2*p_n[nodeIdx] + p_nm1[nodeIdx])/(dt*dt);
       } );
@@ -799,7 +827,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
     }
 
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+    forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       p_nm1[a] = p_n[a];
       p_n[a]   = p_np1[a];
@@ -873,7 +901,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         constexpr localIndex numNodesPerElem = 8;
         arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
         GEOS_MARK_SCOPE ( updatePartialGradient );
-        forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const eltIdx )
+        forAll< parallelDevicePolicy< 32 > >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const eltIdx )
         {
           if( elemGhostRank[eltIdx]<0 )
           {
@@ -887,7 +915,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
       } );
     }
 
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+    forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       p_nm1[a] = p_n[a];
       p_n[a]   = p_np1[a];
@@ -913,8 +941,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVector >();
-    arrayView1d< real32 const > const damping = nodeManager.getField< fields::DampingVector >();
+    arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVector >();
 
     arrayView1d< real32 > const p_nm1 = nodeManager.getField< fields::Pressure_nm1 >();
     arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_n >();
@@ -929,7 +956,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
 
     finiteElement::
-      regionBasedKernelApplication< EXEC_POLICY,
+      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                     constitutive::NullModel,
                                     CellElementSubRegion >( mesh,
                                                             regionNames,
@@ -949,17 +976,46 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     if( !usePML )
     {
       GEOS_MARK_SCOPE ( updateP );
-      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+      arrayView1d< real32 > dampingVector( m_dampingVector );
+      arrayView1d< localIndex > dampingNodes( m_dampingNodes );
+      // p_n+1 = 2 * p_n * m - (m - 0.5*dt*damping) * p_n-1 + dt2*(rhs-stiffness))/(m + 0.5*dt*damping)
+      // 1) p_n+1 = mass
+      // 2) if damp : p_n+1 += -0.5*dt*damping
+      // 3) p_n+1 = (p_n+1*p_nm1 + 2*m*p_n + dt2*(rhs-stiffness))/mass
+      // 4) if damp : p_n+1 *= mass/(mass + 0.5*dt*damping);
+
+      forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
         if( freeSurfaceNodeIndicator[a] != 1 )
         {
-          p_np1[a] = p_n[a];
-          p_np1[a] *= 2.0*mass[a];
-          p_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
-          p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
-          p_np1[a] /= mass[a]+0.5*dt*damping[a];
+          p_np1[a] = mass[a];
         }
       } );
+
+      forAll< parallelDevicePolicy< 32 > >( dampingVector.size(), [=] GEOS_HOST_DEVICE ( localIndex const b )
+      {
+        int a = dampingNodes[b];
+        p_np1[a] += -0.5*dt*dampingVector[b];
+      } );
+
+      forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+      {
+        if( freeSurfaceNodeIndicator[a] != 1 )
+        {
+          p_np1[a] *= -p_nm1[a];
+          p_np1[a] += p_n[a]*2.0*mass[a];
+          p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
+          p_np1[a] /= mass[a];
+        }
+      } );
+
+      forAll< parallelDevicePolicy< 32 > >( dampingVector.size(), [=] GEOS_HOST_DEVICE ( localIndex const b )
+      {
+        int a = dampingNodes[b];
+        p_np1[a] *= mass[a];
+        p_np1[a] /= (mass[a]+0.5*dt*dampingVector[b]);
+      } );
+
     }
     else
     {
@@ -968,7 +1024,8 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       arrayView2d< real32 > const grad_n = nodeManager.getField< fields::AuxiliaryVar2PML >();
       arrayView1d< real32 > const divV_n = nodeManager.getField< fields::AuxiliaryVar3PML >();
       arrayView1d< real32 > const u_n = nodeManager.getField< fields::AuxiliaryVar4PML >();
-      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X64 = nodeManager.referencePosition().toViewConst();
+      arrayView2d< real32 const, nodes::REFERENCE_POSITION_USD > const X32 = nodeManager.referencePosition32().toViewConst();
 
       real32 const xMin[ 3 ] = {param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
       real32 const xMax[ 3 ] = {param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
@@ -983,7 +1040,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       applyPML( time_n, domain );
 
       GEOS_MARK_SCOPE ( updatePWithPML );
-      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+      forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
         if( freeSurfaceNodeIndicator[a] != 1 )
         {
@@ -992,7 +1049,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
           for( integer i=0; i<3; ++i )
           {
-            xLocal[i] = X[a][i];
+            xLocal[i] = X32[a][i];
           }
 
           acousticWaveEquationSEMKernels::PMLKernelHelper::computeDampingProfilePML(
@@ -1047,11 +1104,8 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
     }
     /// prepare next step
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-    {
-      stiffnessVector[a] = 0.0;
-      rhs[a] = 0.0;
-    } );
+    stiffnessVector.zero();
+    rhs.zero();
 
     if( usePML )
     {
