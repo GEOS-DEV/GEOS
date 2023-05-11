@@ -803,19 +803,26 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    // Stiffness TODO:
-    m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
+    // Pseudo Stiffness xy 
+    m_finiteElementSpace.template computeStiffnessxyTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
-      real32 const localIncrement = val*m_p_n[m_elemsToNodes[k][j]];
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
+      real32 const localIncrement_p = val*(-1-2*m_epsilon[k])*m_p_n[m_elemsToNodes[k][j]];
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
+
+      real32 const localIncrement_q = val*((-2*m_delta[k]-m_f[k])*m_p_n[m_elemsToNodes[k][j]] +(1-m_f[k])*m_q_n[m_elemsToNodes[k][j]];
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
     } );
 
-    // Pseudo-Stiffness TODO:
+    // Pseudo-Stiffness z
     
-    m_finiteElementSpace.template computePseudoStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
+    m_finiteElementSpace.template computePseudoStiffnessyTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
-      real32 const localIncrement = val*m_epsilon[k]*m_p_n[m_elemsToNodes[k][j]];
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
+      real32 const localIncrement_p = val*((m_f[k]-1)*m_p_n[m_elemsToNodes[k][j]] - m_f[k]*m_q_n[m_elemsToNodes[k][j]]);
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
+
+      real32 const localIncrement_q = -val*m_q_n[m_elemsToNodes[k][j]];
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
+
     } );
 
   }
