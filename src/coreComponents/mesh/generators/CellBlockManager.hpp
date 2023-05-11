@@ -153,8 +153,6 @@ public:
 
   Group & getFaceBlocks() override;
 
-  Group & getLineBlocks();
-
   LineBlockABC const & getLineBlock( string name ) const override;
 
   /**
