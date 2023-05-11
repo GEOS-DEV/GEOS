@@ -61,8 +61,8 @@ stages:
     - cd build
     - make ats_clean
     - make ats_environment
-    - integrated_code=0
     # Hard code integrated test failure status until optional fail flag fixed
+    - integrated_code=1
     - ${INTEGRATED_ALLOC_COMMAND} ./integratedTests/geos_ats.sh --failIfTestsFail 2>&1 | tee ../${SYSTEM}/${SYSTEM}_integrated_test.log || integrated_code=1
     #- ${INTEGRATED_ALLOC_COMMAND} ./integratedTests/geos_ats.sh --failIfTestsFail 2>&1 | tee ../${SYSTEM}/${SYSTEM}_integrated_test.log || integrated_code=$?
     - cd ..
