@@ -27,7 +27,7 @@
 #include <gtest/gtest.h>
 #include <conduit.hpp>
 
-namespace geosx
+namespace geos
 {
 namespace testing
 {
@@ -142,4 +142,4 @@ protected:
 };
 
 } // namespace testing
-} // namespace geosx
+} // namespace geos

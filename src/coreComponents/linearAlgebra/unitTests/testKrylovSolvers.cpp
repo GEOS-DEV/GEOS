@@ -24,14 +24,14 @@
 
 #include <gtest/gtest.h>
 
-using namespace geosx;
+using namespace geos;
 
 LinearSolverParameters params_CG()
 {
   LinearSolverParameters parameters;
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 500;
-  parameters.solverType = geosx::LinearSolverParameters::SolverType::cg;
+  parameters.solverType = geos::LinearSolverParameters::SolverType::cg;
   parameters.isSymmetric = true;
   return parameters;
 }
@@ -41,7 +41,7 @@ LinearSolverParameters params_BiCGSTAB()
   LinearSolverParameters parameters;
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 500;
-  parameters.solverType = geosx::LinearSolverParameters::SolverType::bicgstab;
+  parameters.solverType = geos::LinearSolverParameters::SolverType::bicgstab;
   return parameters;
 }
 
@@ -50,7 +50,7 @@ LinearSolverParameters params_GMRES()
   LinearSolverParameters parameters;
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 500;
-  parameters.solverType = geosx::LinearSolverParameters::SolverType::gmres;
+  parameters.solverType = geos::LinearSolverParameters::SolverType::gmres;
   return parameters;
 }
 
@@ -123,7 +123,7 @@ protected:
   {
     // Compute matrix and preconditioner
     globalIndex constexpr n = 100;
-    geosx::testing::compute2DLaplaceOperator( MPI_COMM_GEOSX, n, this->matrix );
+    geos::testing::compute2DLaplaceOperator( MPI_COMM_GEOSX, n, this->matrix );
     this->precond.setup( this->matrix );
 
     // Set up vectors
@@ -196,7 +196,7 @@ protected:
   void SetUp() override
   {
     globalIndex constexpr n = 100;
-    geosx::testing::compute2DLaplaceOperator( MPI_COMM_GEOSX, n, laplace2D );
+    geos::testing::compute2DLaplaceOperator( MPI_COMM_GEOSX, n, laplace2D );
 
     // We are going to assembly the following dummy system
     // [L 0] [x_true] = [b_0]
@@ -263,6 +263,6 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, KrylovSolverBlockTest, PetscInterface, );
 
 int main( int argc, char * * argv )
 {
-  geosx::testing::LinearAlgebraTestScope scope( argc, argv );
+  geos::testing::LinearAlgebraTestScope scope( argc, argv );
   return RUN_ALL_TESTS();
 }

@@ -42,9 +42,9 @@
   <Geometry>
     <Cylinder
       name="fracPlane"
-      point1="{ 0.0, 0.0, -0.1 }"
-      point2="{ 0.0, 0.0, 0.1 }"
-      radius="11"/>
+      firstFaceCenter="{ 0.0, 0.0, -0.1 }"
+      secondFaceCenter="{ 0.0, 0.0, 0.1 }"
+      outerRadius="11"/>
 
     <Box
       name="core"

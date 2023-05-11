@@ -28,7 +28,7 @@
 
 #include <random>
 
-using namespace geosx;
+using namespace geos;
 
 char const * multivariableTableFileContent =
   "4 34\n"
@@ -107,7 +107,7 @@ void checkDirectionalDerivative( real64 const (&input)[4],
   perturbedInput[direction] += dInput;
   perturbedVal = kernelWrapper.compute( perturbedInput, perturbedDerivatives );
 
-  geosx::testing::checkRelativeError( derivatives[direction], (perturbedVal-val)/dInput, relTol, geosx::testing::DEFAULT_ABS_TOL );
+  geos::testing::checkRelativeError( derivatives[direction], (perturbedVal-val)/dInput, relTol, geos::testing::DEFAULT_ABS_TOL );
 }
 
 TEST( FunctionTests, 1DTable )
@@ -651,7 +651,7 @@ void testMutivariableFunction( MultivariableTableFunction & function,
                                                                       function.getHypercubeData()
                                                                       );
   // Test values evaluation first
-  forAll< parallelDevicePolicy< > >( numElems, [=] GEOSX_HOST_DEVICE
+  forAll< parallelDevicePolicy< > >( numElems, [=] GEOS_HOST_DEVICE
                                        ( localIndex const elemIndex )
   {
     kernel.compute( &inputs[elemIndex * NUM_DIMS], &evaluatedValuesView[elemIndex * NUM_OPS] );
@@ -663,7 +663,7 @@ void testMutivariableFunction( MultivariableTableFunction & function,
   } );
 
   // And now - both values and derivatives
-  forAll< parallelDevicePolicy< > >( numElems, [=] GEOSX_HOST_DEVICE
+  forAll< parallelDevicePolicy< > >( numElems, [=] GEOS_HOST_DEVICE
                                        ( localIndex const elemIndex )
   {
     // use local 2D array for the kernel
@@ -742,14 +742,14 @@ TEST( FunctionTests, 1DMultivariableTable )
 }
 
 real64 operator1 ( real64 const x, real64 const y ) { return 2 * x + 3 * y * y; }
-real64 dOperator1_dx ( real64 const x, real64 const y ) { GEOSX_UNUSED_VAR( x, y ); return 2; }
-real64 dOperator1_dy ( real64 const x, real64 const y ) { GEOSX_UNUSED_VAR( x ); return 6 * y; }
+real64 dOperator1_dx ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( x, y ); return 2; }
+real64 dOperator1_dy ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( x ); return 6 * y; }
 real64 operator2 ( real64 const x, real64 const y ) { return 2 * x * x + 3 / (y + 1); }
-real64 dOperator2_dx ( real64 const x, real64 const y ) { GEOSX_UNUSED_VAR( y ); return 4 * x; }
-real64 dOperator2_dy ( real64 const x, real64 const y ) { GEOSX_UNUSED_VAR( x ); return -3 / ((y + 1) * (y + 1)); }
-real64 operator3 ( real64 const x, real64 const y ) { GEOSX_UNUSED_VAR( y ); return 2 * x + 3; }
-real64 dOperator3_dx ( real64 const x, real64 const y ) { GEOSX_UNUSED_VAR( x, y ); return 2; }
-real64 dOperator3_dy ( real64 const x, real64 const y ) { GEOSX_UNUSED_VAR( x, y ); return 0; }
+real64 dOperator2_dx ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( y ); return 4 * x; }
+real64 dOperator2_dy ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( x ); return -3 / ((y + 1) * (y + 1)); }
+real64 operator3 ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( y ); return 2 * x + 3; }
+real64 dOperator3_dx ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( x, y ); return 2; }
+real64 dOperator3_dy ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( x, y ); return 0; }
 
 TEST( FunctionTests, 2DMultivariableTable )
 {
@@ -904,11 +904,11 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::GeosxState state( geosx::basicSetup( argc, argv ) );
+  geos::GeosxState state( geos::basicSetup( argc, argv ) );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::basicCleanup();
+  geos::basicCleanup();
 
   return result;
 }

@@ -16,12 +16,12 @@
  * @file ImplicitSmallStrainQuasiStatic_impl.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINQUASISTATIC_IMPL_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINQUASISTATIC_IMPL_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINQUASISTATIC_IMPL_HPP_
+#define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINQUASISTATIC_IMPL_HPP_
 
 #include "ImplicitSmallStrainQuasiStatic.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace solidMechanicsLagrangianFEMKernels
@@ -66,8 +66,8 @@ ImplicitSmallStrainQuasiStatic( NodeManager const & nodeManager,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 setup( localIndex const k,
        StackVariables & stack ) const
@@ -105,8 +105,8 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 template< typename STRESS_MODIFIER >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel( localIndex const k,
                                                                                                           localIndex const q,
                                                                                                           StackVariables & stack,
@@ -117,13 +117,14 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
                                                                            stack.feStack, dNdX );
 
   real64 strainInc[6] = {0};
+  real64 timeIncrement = 0.0;
   real64 stress[6] = {0};
 
   typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
 
   FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 
-  m_constitutiveUpdate.smallStrainUpdate( k, q, strainInc, stress, stiffness );
+  m_constitutiveUpdate.smallStrainUpdate( k, q, timeIncrement, strainInc, stress, stiffness );
 
   stressModifier( stress );
   for( localIndex i=0; i<6; ++i )
@@ -156,12 +157,12 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::complete( localIndex const k,
                                                                                                StackVariables & stack ) const
 {
-  GEOSX_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( k );
   real64 maxForce = 0;
 
   // TODO: Does this work if BTDB is non-symmetric?
@@ -205,6 +206,6 @@ ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::ke
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif // GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINQUASISTATIC_IMPL_HPP_
+#endif // GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINQUASISTATIC_IMPL_HPP_

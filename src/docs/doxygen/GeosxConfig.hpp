@@ -5,8 +5,8 @@
  * Contains a CMake-generated list of macros that define a particular build configuration.
  */
 
-#ifndef GEOSX_COMMON_CONFIG_HPP
-#define GEOSX_COMMON_CONFIG_HPP
+#ifndef GEOS_COMMON_CONFIG_HPP
+#define GEOS_COMMON_CONFIG_HPP
 
 /// Enables floating point exceptions
 #define GEOSX_USE_FPE
@@ -125,7 +125,7 @@
 /// Version information for ParMetis
 #define PARAMETIS_VERSION 4.0.3
 
-/// Version information for scotch 
+/// Version information for scotch
 #define scotch_VERSION 6.0.9
 
 /// Version information for superlu_dist
@@ -147,5 +147,4 @@
 /* #undef CUDAToolkit_VERSION */
 
 
-#endif  /* GEOSX_CONFIG_HPP */
-
+#endif  /* GEOS_CONFIG_HPP */

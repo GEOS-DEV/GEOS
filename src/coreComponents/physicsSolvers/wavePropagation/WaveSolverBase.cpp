@@ -27,7 +27,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -209,9 +209,9 @@ void WaveSolverBase::postProcessInput()
   {
     counter++;
   } );
-  GEOSX_THROW_IF( counter > 1,
-                  "One single PML field specification is allowed",
-                  InputError );
+  GEOS_THROW_IF( counter > 1,
+                 "One single PML field specification is allowed",
+                 InputError );
 
   m_usePML = counter;
 
@@ -222,26 +222,26 @@ void WaveSolverBase::postProcessInput()
 
   if( m_useDAS )
   {
-    GEOSX_LOG_LEVEL_RANK_0( 1, "Modeling linear DAS data is activated" );
+    GEOS_LOG_LEVEL_RANK_0( 1, "Modeling linear DAS data is activated" );
 
-    GEOSX_ERROR_IF( m_linearDASGeometry.size( 1 ) != 3,
-                    "Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
+    GEOS_ERROR_IF( m_linearDASGeometry.size( 1 ) != 3,
+                   "Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
 
-    GEOSX_ERROR_IF( m_linearDASGeometry.size( 0 ) != m_receiverCoordinates.size( 0 ),
-                    "Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
+    GEOS_ERROR_IF( m_linearDASGeometry.size( 0 ) != m_receiverCoordinates.size( 0 ),
+                   "Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
 
     /// initialize DAS geometry
     initializeDAS();
 
   }
 
-  GEOSX_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
-                  "Invalid number of physical coordinates for the sources",
-                  InputError );
+  GEOS_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
+                 "Invalid number of physical coordinates for the sources",
+                 InputError );
 
-  GEOSX_THROW_IF( m_receiverCoordinates.size( 1 ) != 3,
-                  "Invalid number of physical coordinates for the receivers",
-                  InputError );
+  GEOS_THROW_IF( m_receiverCoordinates.size( 1 ) != 3,
+                 "Invalid number of physical coordinates for the receivers",
+                 InputError );
 
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
@@ -256,7 +256,7 @@ void WaveSolverBase::postProcessInput()
     }
   }
 
-  GEOSX_THROW_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
+  GEOS_THROW_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
 
   if( m_dtSeismoTrace > 0 )
   {
@@ -347,9 +347,9 @@ localIndex WaveSolverBase::getNumNodesPerElem()
 
   FiniteElementDiscretization const * const
   feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
-  GEOSX_THROW_IF( feDiscretization == nullptr,
-                  getName() << ": FE discretization not found: " << m_discretizationName,
-                  InputError );
+  GEOS_THROW_IF( feDiscretization == nullptr,
+                 getName() << ": FE discretization not found: " << m_discretizationName,
+                 InputError );
 
   localIndex numNodesPerElem = 0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
@@ -380,4 +380,4 @@ localIndex WaveSolverBase::getNumNodesPerElem()
 
 }
 
-} /* namespace geosx */
+} /* namespace geos */

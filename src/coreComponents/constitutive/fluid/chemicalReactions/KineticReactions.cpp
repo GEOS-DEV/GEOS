@@ -19,7 +19,7 @@
 #include "constitutive/fluid/chemicalReactions/KineticReactions.hpp"
 #include "functions/FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace stringutilities;
@@ -125,7 +125,7 @@ void KineticReactions::KernelWrapper::computeReactionRates( real64 const & tempe
 
 } // namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos
 
 /*
    for( localIndex ir = 0; ir < NReaction; ++ir )
