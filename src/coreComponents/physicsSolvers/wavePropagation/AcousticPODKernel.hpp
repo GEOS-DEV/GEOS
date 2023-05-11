@@ -47,63 +47,63 @@ struct PrecomputeStiffnessPOD
   template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE >
   static void
   launch( localIndex const size,
-	  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
-	  arrayView2d <real32> const stiffnessPOD,
-	  arrayView2d <real64 const > const phi,
-	  arrayView1d <localIndex const> const nodesGhostRank,
-	  arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes)
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< real32 > const stiffnessPOD,
+          arrayView2d< real64 const > const phi,
+          arrayView1d< localIndex const > const nodesGhostRank,
+          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes )
   {
-    array1d< real64 > phim1d(phi.size(0));
-    array1d< real64 > phin1d(phi.size(0));
-    arrayView1d <real64> const phim = phim1d.toView();
-    arrayView1d <real64> const phin = phin1d.toView();
+    array1d< real64 > phim1d( phi.size( 0 ));
+    array1d< real64 > phin1d( phi.size( 0 ));
+    arrayView1d< real64 > const phim = phim1d.toView();
+    arrayView1d< real64 > const phin = phin1d.toView();
 
     std::cout<<"Stiffness"<<std::endl;
-    for( localIndex m=0; m<phi.size(1); ++m )
+    for( localIndex m=0; m<phi.size( 1 ); ++m )
     {
-      for( localIndex i=0; i<phi.size(0); ++i )
+      for( localIndex i=0; i<phi.size( 0 ); ++i )
       {
-	phim[i]=phi[i][m];
+        phim[i]=phi[i][m];
       }
       for( localIndex n=0; n<m+1; ++n )
       {
-	for( localIndex i=0; i<phi.size(0); ++i )
-	{
-	  phin[i]=phi[i][n];
-	}
+        for( localIndex i=0; i<phi.size( 0 ); ++i )
+        {
+          phin[i]=phi[i][n];
+        }
 
-	std::cout<<"("<<m<<","<<n<<")"<<std::endl;
+        std::cout<<"("<<m<<","<<n<<")"<<std::endl;
 
-	forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-	{
-	  constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-	  constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+        forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+            {
+              constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+              constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
-	  real64 xLocal[ numNodesPerElem ][ 3 ];
-	  for( localIndex a = 0; a < numNodesPerElem; ++a )
-	  {
-	    for( localIndex i = 0; i < 3; ++i )
-	    {
-	      xLocal[a][i] = X( elemsToNodes( k, a ), i );
-	    }
-	  }
+              real64 xLocal[ numNodesPerElem ][ 3 ];
+              for( localIndex a = 0; a < numNodesPerElem; ++a )
+              {
+                for( localIndex i = 0; i < 3; ++i )
+                {
+                  xLocal[a][i] = X( elemsToNodes( k, a ), i );
+                }
+              }
 
-	  for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
-	  {
-	    FE_TYPE::computeStiffnessTerm( q, xLocal, [&] ( int i, int j, real64 val )
-	    {
-	      if(nodesGhostRank[elemsToNodes[k][i]] < 0)
-	      {
-		real32 const localIncrement = phim[elemsToNodes[k][i]]*val*phin[elemsToNodes[k][j]];
-		RAJA::atomicAdd< ATOMIC_POLICY >( &stiffnessPOD[m][n], localIncrement );
-		if(m!=n)
-		{
-		  RAJA::atomicAdd< ATOMIC_POLICY >( &stiffnessPOD[n][m], localIncrement );
-		}
-	      }
-	    } );
-	  }
-	} );
+              for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+              {
+                FE_TYPE::computeStiffnessTerm( q, xLocal, [&] ( int i, int j, real64 val )
+            {
+              if( nodesGhostRank[elemsToNodes[k][i]] < 0 )
+              {
+                real32 const localIncrement = phim[elemsToNodes[k][i]]*val*phin[elemsToNodes[k][j]];
+                RAJA::atomicAdd< ATOMIC_POLICY >( &stiffnessPOD[m][n], localIncrement );
+                if( m!=n )
+                {
+                  RAJA::atomicAdd< ATOMIC_POLICY >( &stiffnessPOD[n][m], localIncrement );
+                }
+              }
+            } );
+              }
+            } );
       }
     }
   }
@@ -151,7 +151,7 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView1d< localIndex > const sourceIsAccessible,
           arrayView2d< localIndex > const sourceNodeIds,
           arrayView2d< real64 > const sourceConstants,
-	  arrayView2d< real64 const > const phi,
+          arrayView2d< real64 const > const phi,
           arrayView2d< real64 const > const receiverCoordinates,
           arrayView1d< localIndex > const receiverIsLocal,
           arrayView2d< localIndex > const receiverNodeIds,
@@ -162,118 +162,118 @@ struct PrecomputeSourceAndReceiverKernel
           localIndex const rickerOrder )
   {
 
-    array1d< real32 > phi1d(phi.size(0));
-    arrayView1d <real32> const phim = phi1d.toView();
-    localIndex sizePhi = phi.size(1);
+    array1d< real32 > phi1d( phi.size( 0 ));
+    arrayView1d< real32 > const phim = phi1d.toView();
+    localIndex sizePhi = phi.size( 1 );
 
-    for( localIndex m=0; m<phi.size(1); ++m )
+    for( localIndex m=0; m<phi.size( 1 ); ++m )
     {
-      for( localIndex i=0; i<phi.size(0); ++i )
+      for( localIndex i=0; i<phi.size( 0 ); ++i )
       {
-    	phim[i]=phi[i][m];
+        phim[i]=phi[i][m];
       }
 
       forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-      {
-	real64 const center[3] = { elemCenter[k][0],
-	                           elemCenter[k][1],
-				   elemCenter[k][2] };
+          {
+            real64 const center[3] = { elemCenter[k][0],
+                                       elemCenter[k][1],
+                                       elemCenter[k][2] };
 
-	// Step 1: locate the sources, and precompute the source term
+            // Step 1: locate the sources, and precompute the source term
 
-	/// loop over all the source that haven't been found yet
-	for( localIndex isrc = 0; isrc < sourceCoordinates.size( 0 ); ++isrc )
-	{
-	  if( sourceIsAccessible[isrc] == 0 )
-	  {
-	    real64 const coords[3] = { sourceCoordinates[isrc][0],
-                                       sourceCoordinates[isrc][1],
-				       sourceCoordinates[isrc][2] };
+            /// loop over all the source that haven't been found yet
+            for( localIndex isrc = 0; isrc < sourceCoordinates.size( 0 ); ++isrc )
+            {
+              if( sourceIsAccessible[isrc] == 0 )
+              {
+                real64 const coords[3] = { sourceCoordinates[isrc][0],
+                                           sourceCoordinates[isrc][1],
+                                           sourceCoordinates[isrc][2] };
 
-	    bool const sourceFound =
-	      WaveSolverUtils::locateSourceElement( numFacesPerElem,
-						    center,
-						    faceNormal,
-						    faceCenter,
-						    elemsToFaces[k],
-						    coords );
-	    if( sourceFound )
-	    {
-	      real64 coordsOnRefElem[3]{};
+                bool const sourceFound =
+                  WaveSolverUtils::locateSourceElement( numFacesPerElem,
+                                                        center,
+                                                        faceNormal,
+                                                        faceCenter,
+                                                        elemsToFaces[k],
+                                                        coords );
+                if( sourceFound )
+                {
+                  real64 coordsOnRefElem[3]{};
 
 
-	      WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-										elemsToNodes[k],
-										X,
-										coordsOnRefElem );
-	      if(m == sizePhi-1)
-	      {
-		sourceIsAccessible[isrc] = 1;
-	      }
-	      real64 Ntest[FE_TYPE::numNodes];
-	      FE_TYPE::calcN( coordsOnRefElem, Ntest );
-	      for( localIndex a = 0; a < numNodesPerElem; ++a )
-	      {
-		sourceNodeIds[isrc][a] = elemsToNodes[k][a];
-		sourceConstants[isrc][m] += phim[sourceNodeIds[isrc][a]] * Ntest[a];
-	      }
+                  WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+                                                                                    elemsToNodes[k],
+                                                                                    X,
+                                                                                    coordsOnRefElem );
+                  if( m == sizePhi-1 )
+                  {
+                    sourceIsAccessible[isrc] = 1;
+                  }
+                  real64 Ntest[FE_TYPE::numNodes];
+                  FE_TYPE::calcN( coordsOnRefElem, Ntest );
+                  for( localIndex a = 0; a < numNodesPerElem; ++a )
+                  {
+                    sourceNodeIds[isrc][a] = elemsToNodes[k][a];
+                    sourceConstants[isrc][m] += phim[sourceNodeIds[isrc][a]] * Ntest[a];
+                  }
 
-	      for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
-	      {
-		real64 const time = cycle*dt;
-		sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder );
-	      }
-	    }
-	  }
-	} // end loop over all sources
-      } );
+                  for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
+                  {
+                    real64 const time = cycle*dt;
+                    sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder );
+                  }
+                }
+              }
+            } // end loop over all sources
+          } );
 
       forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-      {
-	real64 const center[3] = { elemCenter[k][0],
-	                           elemCenter[k][1],
-				   elemCenter[k][2] };
-	// Step 2: locate the receivers, and precompute the receiver term
+          {
+            real64 const center[3] = { elemCenter[k][0],
+                                       elemCenter[k][1],
+                                       elemCenter[k][2] };
+            // Step 2: locate the receivers, and precompute the receiver term
 
-	/// loop over all the receivers that haven't been found yet
-	for( localIndex ircv = 0; ircv < receiverCoordinates.size( 0 ); ++ircv )
-        {
-	  if( receiverIsLocal[ircv] == 0 )
-	  {
-	    real64 const coords[3] = { receiverCoordinates[ircv][0],
-	                               receiverCoordinates[ircv][1],
-				       receiverCoordinates[ircv][2] };
-
-	    real64 coordsOnRefElem[3]{};
-	    bool const receiverFound =
-	      WaveSolverUtils::locateSourceElement( numFacesPerElem,
-						    center,
-						    faceNormal,
-						    faceCenter,
-						    elemsToFaces[k],
-						    coords );
-
-	    if( receiverFound && elemGhostRank[k] < 0 )
-	    {
-	      WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-										elemsToNodes[k],
-										X,
-										coordsOnRefElem );
-
-	      receiverIsLocal[ircv] = 1;
-
-	      real64 Ntest[FE_TYPE::numNodes];
-	      FE_TYPE::calcN( coordsOnRefElem, Ntest );
-
-	      for( localIndex a = 0; a < numNodesPerElem; ++a )
+            /// loop over all the receivers that haven't been found yet
+            for( localIndex ircv = 0; ircv < receiverCoordinates.size( 0 ); ++ircv )
+            {
+              if( receiverIsLocal[ircv] == 0 )
               {
-		receiverNodeIds[ircv][a] = elemsToNodes[k][a];
-		receiverConstants[ircv][a] = Ntest[a];
-	      }
-	    }
-	  } // end loop over receivers
-	}
-      } );
+                real64 const coords[3] = { receiverCoordinates[ircv][0],
+                                           receiverCoordinates[ircv][1],
+                                           receiverCoordinates[ircv][2] };
+
+                real64 coordsOnRefElem[3]{};
+                bool const receiverFound =
+                  WaveSolverUtils::locateSourceElement( numFacesPerElem,
+                                                        center,
+                                                        faceNormal,
+                                                        faceCenter,
+                                                        elemsToFaces[k],
+                                                        coords );
+
+                if( receiverFound && elemGhostRank[k] < 0 )
+                {
+                  WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+                                                                                    elemsToNodes[k],
+                                                                                    X,
+                                                                                    coordsOnRefElem );
+
+                  receiverIsLocal[ircv] = 1;
+
+                  real64 Ntest[FE_TYPE::numNodes];
+                  FE_TYPE::calcN( coordsOnRefElem, Ntest );
+
+                  for( localIndex a = 0; a < numNodesPerElem; ++a )
+                  {
+                    receiverNodeIds[ircv][a] = elemsToNodes[k][a];
+                    receiverConstants[ircv][a] = Ntest[a];
+                  }
+                }
+              } // end loop over receivers
+            }
+          } );
     } // end loop m pod
   }
 };
@@ -304,61 +304,61 @@ struct MassMatrixKernel
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView1d< real32 const > const velocity,
           arrayView2d< real32 > const massPOD,
-	  arrayView2d< real64 const > const phi,
-	  arrayView1d< localIndex const > const nodesGhostRank)
+          arrayView2d< real64 const > const phi,
+          arrayView1d< localIndex const > const nodesGhostRank )
 
   {
     std::cout<<"Mass"<<std::endl;
-    array1d< real64 > phim1d(phi.size(0));
-    array1d< real64 > phin1d(phi.size(0));
-    arrayView1d <real64> const phim = phim1d.toView();
-    arrayView1d <real64> const phin = phin1d.toView();
+    array1d< real64 > phim1d( phi.size( 0 ));
+    array1d< real64 > phin1d( phi.size( 0 ));
+    arrayView1d< real64 > const phim = phim1d.toView();
+    arrayView1d< real64 > const phin = phin1d.toView();
 
-    for( localIndex m=0; m<phi.size(1); ++m )
+    for( localIndex m=0; m<phi.size( 1 ); ++m )
     {
-      for( localIndex i=0; i<phi.size(0); ++i )
+      for( localIndex i=0; i<phi.size( 0 ); ++i )
       {
-	phim[i]=phi[i][m];
+        phim[i]=phi[i][m];
       }
       for( localIndex n=0; n<m+1; ++n )
       {
-	for( localIndex i=0; i<phi.size(0); ++i )
-	{
-	  phin[i]=phi[i][n];
-	}
+        for( localIndex i=0; i<phi.size( 0 ); ++i )
+        {
+          phin[i]=phi[i][n];
+        }
 
-	std::cout<<"("<<m<<","<<n<<")"<<std::endl;
+        std::cout<<"("<<m<<","<<n<<")"<<std::endl;
 
-	forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-	{
+        forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+            {
 
-	  constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-	  constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+              constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+              constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
-	  real32 const invC2 = 1.0 / ( velocity[k] * velocity[k] );
-	  real64 xLocal[ numNodesPerElem ][ 3 ];
-	  for( localIndex a = 0; a < numNodesPerElem; ++a )
-	  {
-	    for( localIndex i = 0; i < 3; ++i )
-	    {
-	      xLocal[a][i] = X( elemsToNodes( k, a ), i );
-	    }
-	  }
+              real32 const invC2 = 1.0 / ( velocity[k] * velocity[k] );
+              real64 xLocal[ numNodesPerElem ][ 3 ];
+              for( localIndex a = 0; a < numNodesPerElem; ++a )
+              {
+                for( localIndex i = 0; i < 3; ++i )
+                {
+                  xLocal[a][i] = X( elemsToNodes( k, a ), i );
+                }
+              }
 
-	  for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
-	  {
-	    if(nodesGhostRank[elemsToNodes[k][q]] < 0)
-	    {
-	      real32 const val = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
-	      real32 const localIncrement = phim[elemsToNodes[k][q]] * val * phin[elemsToNodes[k][q]];
-	      RAJA::atomicAdd< ATOMIC_POLICY >( &massPOD[m][n], localIncrement );
-	      if(m!=n)
-	      {
-		RAJA::atomicAdd< ATOMIC_POLICY >( &massPOD[n][m], localIncrement );
-	      }
-	    }
-	  }
-	} ); // end loop over element
+              for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
+              {
+                if( nodesGhostRank[elemsToNodes[k][q]] < 0 )
+                {
+                  real32 const val = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
+                  real32 const localIncrement = phim[elemsToNodes[k][q]] * val * phin[elemsToNodes[k][q]];
+                  RAJA::atomicAdd< ATOMIC_POLICY >( &massPOD[m][n], localIncrement );
+                  if( m!=n )
+                  {
+                    RAJA::atomicAdd< ATOMIC_POLICY >( &massPOD[n][m], localIncrement );
+                  }
+                }
+              }
+            } ); // end loop over element
       }
     }
   }
@@ -384,27 +384,27 @@ struct MassMatrixKernel
 
   {
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-
-      real32 const invC2 = 1.0 / ( velocity[k] * velocity[k] );
-      real64 xLocal[ numNodesPerElem ][ 3 ];
-      for( localIndex a = 0; a < numNodesPerElem; ++a )
-      {
-        for( localIndex i = 0; i < 3; ++i )
         {
-          xLocal[a][i] = X( elemsToNodes( k, a ), i );
-        }
-      }
 
-      for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
-      {
-        real32 const localIncrement = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
-        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][q]], localIncrement );
-      }
-    } ); // end loop over element
+          constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+          constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+
+          real32 const invC2 = 1.0 / ( velocity[k] * velocity[k] );
+          real64 xLocal[ numNodesPerElem ][ 3 ];
+          for( localIndex a = 0; a < numNodesPerElem; ++a )
+          {
+            for( localIndex i = 0; i < 3; ++i )
+            {
+              xLocal[a][i] = X( elemsToNodes( k, a ), i );
+            }
+          }
+
+          for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
+          {
+            real32 const localIncrement = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
+            RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][q]], localIncrement );
+          }
+        } ); // end loop over element
   }
 
   /// The finite element space/discretization object for the element type in the subRegion
@@ -444,70 +444,70 @@ struct DampingMatrixKernel
           arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
           arrayView1d< real32 const > const velocity,
           arrayView2d< real32 > const dampingPOD,
-	  arrayView2d< real64 const > const phi,
-	  arrayView1d< localIndex const > const nodesGhostRank)
+          arrayView2d< real64 const > const phi,
+          arrayView1d< localIndex const > const nodesGhostRank )
   {
-    array1d< real64 > phim1d(phi.size(0));
-    array1d< real64 > phin1d(phi.size(0));
-    arrayView1d <real64> const phim = phim1d.toView();
-    arrayView1d <real64> const phin = phin1d.toView();
+    array1d< real64 > phim1d( phi.size( 0 ));
+    array1d< real64 > phin1d( phi.size( 0 ));
+    arrayView1d< real64 > const phim = phim1d.toView();
+    arrayView1d< real64 > const phin = phin1d.toView();
 
     std::cout<<"Damping"<<std::endl;
-    for( localIndex m=0; m<phi.size(1); ++m )
+    for( localIndex m=0; m<phi.size( 1 ); ++m )
     {
-      for( localIndex i=0; i<phi.size(0); ++i )
+      for( localIndex i=0; i<phi.size( 0 ); ++i )
       {
-	phim[i]=phi[i][m];
+        phim[i]=phi[i][m];
       }
       for( localIndex n=0; n<m+1; ++n )
       {
-	for( localIndex i=0; i<phi.size(0); ++i )
-	{
-	  phin[i]=phi[i][n];
-	}
+        for( localIndex i=0; i<phi.size( 0 ); ++i )
+        {
+          phin[i]=phi[i][n];
+        }
 
 
-	std::cout<<"("<<m<<","<<n<<")"<<std::endl;
+        std::cout<<"("<<m<<","<<n<<")"<<std::endl;
 
-	forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const f )
-	{
-	  // face on the domain boundary and not on free surface
-	  if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
-	  {
-	    localIndex k = facesToElems( f, 0 );
-	    if( k < 0 )
-	    {
-	      k = facesToElems( f, 1 );
-	    }
+        forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const f )
+            {
+              // face on the domain boundary and not on free surface
+              if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
+              {
+                localIndex k = facesToElems( f, 0 );
+                if( k < 0 )
+                {
+                  k = facesToElems( f, 1 );
+                }
 
-	    real32 const alpha = 1.0 / velocity[k];
+                real32 const alpha = 1.0 / velocity[k];
 
-	    constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
+                constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
 
-	    real64 xLocal[ numNodesPerFace ][ 3 ];
-	    for( localIndex a = 0; a < numNodesPerFace; ++a )
-	    {
-	      for( localIndex i = 0; i < 3; ++i )
-	      {
-		xLocal[a][i] = X( facesToNodes( k, a ), i );
-	      }
-	    }
+                real64 xLocal[ numNodesPerFace ][ 3 ];
+                for( localIndex a = 0; a < numNodesPerFace; ++a )
+                {
+                  for( localIndex i = 0; i < 3; ++i )
+                  {
+                    xLocal[a][i] = X( facesToNodes( k, a ), i );
+                  }
+                }
 
-	    for( localIndex q = 0; q < numNodesPerFace; ++q )
-	    {
-	      if(nodesGhostRank[facesToNodes[f][q]] < 0)
-	      {
-		real32 const val = alpha * m_finiteElement.computeDampingTerm( q, xLocal );
-		real32 const localIncrement = phim[facesToNodes[f][q]] * val * phin[facesToNodes[f][q]];
-		RAJA::atomicAdd< ATOMIC_POLICY >( &dampingPOD[m][n], localIncrement );
-		if(m!=n)
-		{
-		  RAJA::atomicAdd< ATOMIC_POLICY >( &dampingPOD[n][m], localIncrement );
-		}
-	      }
-	    }
-	  }
-	} ); // end loop over element
+                for( localIndex q = 0; q < numNodesPerFace; ++q )
+                {
+                  if( nodesGhostRank[facesToNodes[f][q]] < 0 )
+                  {
+                    real32 const val = alpha * m_finiteElement.computeDampingTerm( q, xLocal );
+                    real32 const localIncrement = phim[facesToNodes[f][q]] * val * phin[facesToNodes[f][q]];
+                    RAJA::atomicAdd< ATOMIC_POLICY >( &dampingPOD[m][n], localIncrement );
+                    if( m!=n )
+                    {
+                      RAJA::atomicAdd< ATOMIC_POLICY >( &dampingPOD[n][m], localIncrement );
+                    }
+                  }
+                }
+              }
+            } ); // end loop over element
       }
     }
   }
@@ -632,101 +632,101 @@ struct PMLKernel
 
     /// Loop over elements in the subregion, 'l' is the element index within the target set
     forAll< EXEC_POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const l )
-    {
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-
-      /// global element index
-      localIndex const k = targetSet[l];
-
-      /// wave speed at the element
-      real32 const c = velocity[k];
-
-      /// coordinates of the element nodes
-      real64 xLocal[ numNodesPerElem ][ 3 ];
-
-      /// local arrays to store the pressure at all nodes and its gradient at a given node
-      real64 pressure[ numNodesPerElem ];
-      real64 pressureGrad[ 3 ];
-
-      /// local arrays to store the PML vectorial auxiliary variable at all nodes and its gradient at a given node
-      real64 auxV[3][ numNodesPerElem ];
-      real64 auxVGrad[3][3];
-
-      /// local arrays to store the PML scalar auxiliary variable at all nodes and its gradient at a given node
-      real64 auxU[ numNodesPerElem ];
-      real64 auxUGrad[3];
-
-      /// local array to store the PML damping profile
-      real32 sigma[ 3 ];
-
-      /// copy from global to local arrays
-      for( localIndex i=0; i<numNodesPerElem; ++i )
-      {
-        pressure[i] = p_n[elemToNodesViewConst[k][i]];
-        auxU[i] = u_n[elemToNodesViewConst[k][i]];
-        for( int j=0; j<3; ++j )
         {
-          xLocal[i][j] =  X[elemToNodesViewConst[k][i]][j];
-          auxV[j][i] = v_n[elemToNodesViewConst[k][i]][j];
-        }
-      }
+          constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
-      /// local arrays to store shape functions gradients
-      real64 gradN[ numNodesPerElem ][ 3 ];
-      using GRADIENT_TYPE = TYPEOFREF( gradN );
+          /// global element index
+          localIndex const k = targetSet[l];
 
-      /// loop over the nodes i in the element k
-      /// the nodes are implicitly assumed the same as quadrature points
-      for( localIndex i=0; i<numNodesPerElem; ++i )
-      {
+          /// wave speed at the element
+          real32 const c = velocity[k];
 
-        /// compute the shape functions gradients
-        real32 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, i, xLocal, gradN );
-        GEOSX_UNUSED_VAR ( detJ );
+          /// coordinates of the element nodes
+          real64 xLocal[ numNodesPerElem ][ 3 ];
 
-        /// compute the gradient of the pressure and the PML auxiliary variables at the node
-        m_finiteElement.template gradient< numNodesPerElem, GRADIENT_TYPE >( gradN, pressure, pressureGrad );
-        m_finiteElement.template gradient< numNodesPerElem, GRADIENT_TYPE >( gradN, auxU, auxUGrad );
-        for( int j=0; j<3; ++j )
-        {
-          m_finiteElement.template gradient< numNodesPerElem, GRADIENT_TYPE >( gradN, auxV[j], auxVGrad[j] );
-        }
+          /// local arrays to store the pressure at all nodes and its gradient at a given node
+          real64 pressure[ numNodesPerElem ];
+          real64 pressureGrad[ 3 ];
 
-        /// compute the PML damping profile
-        PMLKernelHelper::computeDampingProfilePML(
-          xLocal[i],
-          xMin,
-          xMax,
-          dMin,
-          dMax,
-          cMin,
-          cMax,
-          r,
-          sigma );
+          /// local arrays to store the PML vectorial auxiliary variable at all nodes and its gradient at a given node
+          real64 auxV[3][ numNodesPerElem ];
+          real64 auxVGrad[3][3];
 
-        /// compute B.pressureGrad - C.auxUGrad where B and C are functions of the damping profile
-        /// WARNING: the division by 'numNodesPerElem' below is needed because the average of
-        /// gradient and divergence at the nodes are sought. It is the number of cells contributing
-        /// to each node that is needed. In this case, it is equal to 'numNodesPerElem'. For high-order
-        /// SEM, this approach won't work and the average needs to be computed differently (maybe using counters).
-        real32 localIncrementArray[3];
-        localIncrementArray[0] = (sigma[0]-sigma[1]-sigma[2])*pressureGrad[0] - (sigma[1]*sigma[2])*auxUGrad[0];
-        localIncrementArray[1] = (sigma[1]-sigma[0]-sigma[2])*pressureGrad[1] - (sigma[0]*sigma[2])*auxUGrad[1];
-        localIncrementArray[2] = (sigma[2]-sigma[0]-sigma[1])*pressureGrad[2] - (sigma[0]*sigma[1])*auxUGrad[2];
-        for( int j=0; j<3; ++j )
-        {
-          RAJA::atomicAdd< ATOMIC_POLICY >( &grad_n[elemToNodesViewConst[k][i]][j], localIncrementArray[j]/numNodesPerElem );
-        }
-        /// compute beta.pressure + gamma.u - c^2 * divV where beta and gamma are functions of the damping profile
-        real32 const beta = sigma[0]*sigma[1]+sigma[0]*sigma[2]+sigma[1]*sigma[2];
-        real32 const gamma = sigma[0]*sigma[1]*sigma[2];
-        real32 const localIncrement = beta*p_n[elemToNodesViewConst[k][i]]
-                                      + gamma*u_n[elemToNodesViewConst[k][i]]
-                                      - c*c*( auxVGrad[0][0] + auxVGrad[1][1] + auxVGrad[2][2] );
+          /// local arrays to store the PML scalar auxiliary variable at all nodes and its gradient at a given node
+          real64 auxU[ numNodesPerElem ];
+          real64 auxUGrad[3];
 
-        RAJA::atomicAdd< ATOMIC_POLICY >( &divV_n[elemToNodesViewConst[k][i]], localIncrement/numNodesPerElem );
-      }
-    } );
+          /// local array to store the PML damping profile
+          real32 sigma[ 3 ];
+
+          /// copy from global to local arrays
+          for( localIndex i=0; i<numNodesPerElem; ++i )
+          {
+            pressure[i] = p_n[elemToNodesViewConst[k][i]];
+            auxU[i] = u_n[elemToNodesViewConst[k][i]];
+            for( int j=0; j<3; ++j )
+            {
+              xLocal[i][j] =  X[elemToNodesViewConst[k][i]][j];
+              auxV[j][i] = v_n[elemToNodesViewConst[k][i]][j];
+            }
+          }
+
+          /// local arrays to store shape functions gradients
+          real64 gradN[ numNodesPerElem ][ 3 ];
+          using GRADIENT_TYPE = TYPEOFREF( gradN );
+
+          /// loop over the nodes i in the element k
+          /// the nodes are implicitly assumed the same as quadrature points
+          for( localIndex i=0; i<numNodesPerElem; ++i )
+          {
+
+            /// compute the shape functions gradients
+            real32 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, i, xLocal, gradN );
+            GEOSX_UNUSED_VAR ( detJ );
+
+            /// compute the gradient of the pressure and the PML auxiliary variables at the node
+            m_finiteElement.template gradient< numNodesPerElem, GRADIENT_TYPE >( gradN, pressure, pressureGrad );
+            m_finiteElement.template gradient< numNodesPerElem, GRADIENT_TYPE >( gradN, auxU, auxUGrad );
+            for( int j=0; j<3; ++j )
+            {
+              m_finiteElement.template gradient< numNodesPerElem, GRADIENT_TYPE >( gradN, auxV[j], auxVGrad[j] );
+            }
+
+            /// compute the PML damping profile
+            PMLKernelHelper::computeDampingProfilePML(
+              xLocal[i],
+              xMin,
+              xMax,
+              dMin,
+              dMax,
+              cMin,
+              cMax,
+              r,
+              sigma );
+
+            /// compute B.pressureGrad - C.auxUGrad where B and C are functions of the damping profile
+            /// WARNING: the division by 'numNodesPerElem' below is needed because the average of
+            /// gradient and divergence at the nodes are sought. It is the number of cells contributing
+            /// to each node that is needed. In this case, it is equal to 'numNodesPerElem'. For high-order
+            /// SEM, this approach won't work and the average needs to be computed differently (maybe using counters).
+            real32 localIncrementArray[3];
+            localIncrementArray[0] = (sigma[0]-sigma[1]-sigma[2])*pressureGrad[0] - (sigma[1]*sigma[2])*auxUGrad[0];
+            localIncrementArray[1] = (sigma[1]-sigma[0]-sigma[2])*pressureGrad[1] - (sigma[0]*sigma[2])*auxUGrad[1];
+            localIncrementArray[2] = (sigma[2]-sigma[0]-sigma[1])*pressureGrad[2] - (sigma[0]*sigma[1])*auxUGrad[2];
+            for( int j=0; j<3; ++j )
+            {
+              RAJA::atomicAdd< ATOMIC_POLICY >( &grad_n[elemToNodesViewConst[k][i]][j], localIncrementArray[j]/numNodesPerElem );
+            }
+            /// compute beta.pressure + gamma.u - c^2 * divV where beta and gamma are functions of the damping profile
+            real32 const beta = sigma[0]*sigma[1]+sigma[0]*sigma[2]+sigma[1]*sigma[2];
+            real32 const gamma = sigma[0]*sigma[1]*sigma[2];
+            real32 const localIncrement = beta*p_n[elemToNodesViewConst[k][i]]
+                                          + gamma*u_n[elemToNodesViewConst[k][i]]
+                                          - c*c*( auxVGrad[0][0] + auxVGrad[1][1] + auxVGrad[2][2] );
+
+            RAJA::atomicAdd< ATOMIC_POLICY >( &divV_n[elemToNodesViewConst[k][i]], localIncrement/numNodesPerElem );
+          }
+        } );
   }
 
   /// The finite element space/discretization object for the element type in the subRegion
@@ -786,73 +786,73 @@ struct waveSpeedPMLKernel
 
     /// Loop over elements in the subregion, 'l' is the element index within the target set
     forAll< EXEC_POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const l )
-    {
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-
-      /// global element index
-      localIndex const k = targetSet[l];
-
-      /// wave speed at the element
-      real32 const c = velocity[k];
-
-      /// coordinates of the element center
-      real64 xLocal[ 3 ] = {0.0, 0.0, 0.0};
-
-      /// compute the coordinates of the element center
-      for( int j=0; j<3; ++j )
-      {
-        for( localIndex i=0; i<numNodesPerElem; ++i )
         {
-          xLocal[j] +=  X[elemToNodesViewConst[k][i]][j];
-        }
-        xLocal[j] /= numNodesPerElem;
-      }
+          constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
-      /// check the location of the cell and increment wave speed
-      /// and counters accordingly
-      if( xLocal[0] < xMin[0]
-          && xLocal[1] >= xMin[1] && xLocal[1] <= xMax[1]
-          && xLocal[2] >= xMin[2] && xLocal[2] <= xMax[2] )
-      {
-        subRegionAvgWaveSpeedLeft += c;
-        subRegionAvgWaveSpeedCounterLeft += 1;
-      }
-      else if( xLocal[0] > xMax[0]
-               && xLocal[1] >= xMin[1] && xLocal[1] <= xMax[1]
-               && xLocal[2] >= xMin[2] && xLocal[2] <= xMax[2] )
-      {
-        subRegionAvgWaveSpeedRight += c;
-        subRegionAvgWaveSpeedCounterRight += 1;
-      }
-      if( xLocal[1] < xMin[1]
-          && xLocal[0] >= xMin[0] && xLocal[0] <= xMax[0]
-          && xLocal[2] >= xMin[2] && xLocal[2] <= xMax[2] )
-      {
-        subRegionAvgWaveSpeedFront += c;
-        subRegionAvgWaveSpeedCounterFront += 1;
-      }
-      else if( xLocal[1] > xMax[1]
-               && xLocal[0] >= xMin[0] && xLocal[0] <= xMax[0]
-               && xLocal[2] >= xMin[2] && xLocal[2] <= xMax[2] )
-      {
-        subRegionAvgWaveSpeedBack += c;
-        subRegionAvgWaveSpeedCounterBack += 1;
-      }
-      if( xLocal[2] < xMin[2]
-          && xLocal[0] >= xMin[0] && xLocal[0] <= xMax[0]
-          && xLocal[1] >= xMin[1] && xLocal[1] <= xMax[1] )
-      {
-        subRegionAvgWaveSpeedTop += c;
-        subRegionAvgWaveSpeedCounterTop += 1;
-      }
-      else if( xLocal[2] > xMax[2]
-               && xLocal[0] >= xMin[0] && xLocal[0] <= xMax[0]
-               && xLocal[1] >= xMin[1] && xLocal[1] <= xMax[1] )
-      {
-        subRegionAvgWaveSpeedBottom += c;
-        subRegionAvgWaveSpeedCounterBottom += 1;
-      }
-    } );
+          /// global element index
+          localIndex const k = targetSet[l];
+
+          /// wave speed at the element
+          real32 const c = velocity[k];
+
+          /// coordinates of the element center
+          real64 xLocal[ 3 ] = {0.0, 0.0, 0.0};
+
+          /// compute the coordinates of the element center
+          for( int j=0; j<3; ++j )
+          {
+            for( localIndex i=0; i<numNodesPerElem; ++i )
+            {
+              xLocal[j] +=  X[elemToNodesViewConst[k][i]][j];
+            }
+            xLocal[j] /= numNodesPerElem;
+          }
+
+          /// check the location of the cell and increment wave speed
+          /// and counters accordingly
+          if( xLocal[0] < xMin[0]
+              && xLocal[1] >= xMin[1] && xLocal[1] <= xMax[1]
+              && xLocal[2] >= xMin[2] && xLocal[2] <= xMax[2] )
+          {
+            subRegionAvgWaveSpeedLeft += c;
+            subRegionAvgWaveSpeedCounterLeft += 1;
+          }
+          else if( xLocal[0] > xMax[0]
+                   && xLocal[1] >= xMin[1] && xLocal[1] <= xMax[1]
+                   && xLocal[2] >= xMin[2] && xLocal[2] <= xMax[2] )
+          {
+            subRegionAvgWaveSpeedRight += c;
+            subRegionAvgWaveSpeedCounterRight += 1;
+          }
+          if( xLocal[1] < xMin[1]
+              && xLocal[0] >= xMin[0] && xLocal[0] <= xMax[0]
+              && xLocal[2] >= xMin[2] && xLocal[2] <= xMax[2] )
+          {
+            subRegionAvgWaveSpeedFront += c;
+            subRegionAvgWaveSpeedCounterFront += 1;
+          }
+          else if( xLocal[1] > xMax[1]
+                   && xLocal[0] >= xMin[0] && xLocal[0] <= xMax[0]
+                   && xLocal[2] >= xMin[2] && xLocal[2] <= xMax[2] )
+          {
+            subRegionAvgWaveSpeedBack += c;
+            subRegionAvgWaveSpeedCounterBack += 1;
+          }
+          if( xLocal[2] < xMin[2]
+              && xLocal[0] >= xMin[0] && xLocal[0] <= xMax[0]
+              && xLocal[1] >= xMin[1] && xLocal[1] <= xMax[1] )
+          {
+            subRegionAvgWaveSpeedTop += c;
+            subRegionAvgWaveSpeedCounterTop += 1;
+          }
+          else if( xLocal[2] > xMax[2]
+                   && xLocal[0] >= xMin[0] && xLocal[0] <= xMax[0]
+                   && xLocal[1] >= xMin[1] && xLocal[1] <= xMax[1] )
+          {
+            subRegionAvgWaveSpeedBottom += c;
+            subRegionAvgWaveSpeedCounterBottom += 1;
+          }
+        } );
 
     /// transfer local results to global variables
     cMin[0]+=subRegionAvgWaveSpeedLeft.get();

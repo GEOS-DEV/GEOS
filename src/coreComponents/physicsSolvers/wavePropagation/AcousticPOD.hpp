@@ -35,7 +35,7 @@ public:
   using ATOMIC_POLICY = parallelDeviceAtomic;
 
   AcousticPOD( const std::string & name,
-                           Group * const parent );
+               Group * const parent );
 
   virtual ~AcousticPOD() override;
 
@@ -86,7 +86,7 @@ public:
                                        real64 const dt,
                                        arrayView1d< real32 const > const var_np1,
                                        arrayView1d< real32 const > const var_n,
-				       arrayView2d< real64 const > const phi,
+                                       arrayView2d< real64 const > const phi,
                                        arrayView2d< real32 > varAtReceivers );
 
 

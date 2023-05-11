@@ -125,7 +125,7 @@
 /// Version information for ParMetis
 #define PARAMETIS_VERSION 4.0.3
 
-/// Version information for scotch
+/// Version information for scotch 
 #define scotch_VERSION 6.0.9
 
 /// Version information for superlu_dist
@@ -148,3 +148,4 @@
 
 
 #endif  /* GEOS_CONFIG_HPP */
+

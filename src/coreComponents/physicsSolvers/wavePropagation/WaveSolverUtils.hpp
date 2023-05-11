@@ -129,18 +129,18 @@ struct WaveSolverUtils
   }
 
   static void computeSeismoTracePOD( real64 const time_n,
-				     real64 const dt,
-				     real64 const timeSeismo,
-				     localIndex iSeismo,
-				     arrayView2d< localIndex const > const receiverNodeIds,
-				     arrayView2d< real64 const > const receiverConstants,
-				     arrayView1d< localIndex const > const receiverIsLocal,
-				     localIndex const nsamplesSeismoTrace,
-				     localIndex const outputSeismoTrace,
-				     arrayView1d< real32 const > const var_np1,
-				     arrayView1d< real32 const > const var_n,
-				     arrayView2d< real64 const > const phi,
-				     arrayView2d< real32 > varAtReceivers )
+                                     real64 const dt,
+                                     real64 const timeSeismo,
+                                     localIndex iSeismo,
+                                     arrayView2d< localIndex const > const receiverNodeIds,
+                                     arrayView2d< real64 const > const receiverConstants,
+                                     arrayView1d< localIndex const > const receiverIsLocal,
+                                     localIndex const nsamplesSeismoTrace,
+                                     localIndex const outputSeismoTrace,
+                                     arrayView1d< real32 const > const var_np1,
+                                     arrayView1d< real32 const > const var_n,
+                                     arrayView2d< real64 const > const phi,
+                                     arrayView2d< real32 > varAtReceivers )
   {
     real64 const time_np1 = time_n + dt;
 
@@ -149,28 +149,28 @@ struct WaveSolverUtils
 
     if( nsamplesSeismoTrace > 0 )
     {
-      for( localIndex m=0; m<phi.size(0); ++m)
+      for( localIndex m=0; m<phi.size( 0 ); ++m )
       {
-	for( localIndex ircv=0; ircv<receiverConstants.size( 0 ); ++ircv )
-	{
-	  if( receiverIsLocal[ircv] == 1 )
-	  {
-	    if(m == 0)
-	    {
-	      varAtReceivers[iSeismo][ircv] = 0.0;
-	    }
-	    real32 vtmp_np1 = 0.0;
-	    real32 vtmp_n = 0.0;
+        for( localIndex ircv=0; ircv<receiverConstants.size( 0 ); ++ircv )
+        {
+          if( receiverIsLocal[ircv] == 1 )
+          {
+            if( m == 0 )
+            {
+              varAtReceivers[iSeismo][ircv] = 0.0;
+            }
+            real32 vtmp_np1 = 0.0;
+            real32 vtmp_n = 0.0;
 
-	    for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
-	    {
-	      vtmp_np1 += var_np1[m] * phi[receiverNodeIds[ircv][inode]][m] * receiverConstants[ircv][inode];
-	      vtmp_n += var_n[m] * phi[receiverNodeIds[ircv][inode]][m] * receiverConstants[ircv][inode];
-	    }
-	    // linear interpolation between the pressure value at time_n and time_(n+1)
-	    varAtReceivers[iSeismo][ircv] += a1*vtmp_n + a2*vtmp_np1;
-	  }
-	}
+            for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
+            {
+              vtmp_np1 += var_np1[m] * phi[receiverNodeIds[ircv][inode]][m] * receiverConstants[ircv][inode];
+              vtmp_n += var_n[m] * phi[receiverNodeIds[ircv][inode]][m] * receiverConstants[ircv][inode];
+            }
+            // linear interpolation between the pressure value at time_n and time_(n+1)
+            varAtReceivers[iSeismo][ircv] += a1*vtmp_n + a2*vtmp_np1;
+          }
+        }
       }
     }
 
