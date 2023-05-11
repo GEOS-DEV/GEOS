@@ -160,6 +160,20 @@ public:
    */
   void setPerfElemIndex( arrayView1d< globalIndex const > perfElemId ) { m_perfElemId = perfElemId; }
 
+  /**
+   * @brief Set the well controls name
+   * @param wellControlsName The well controls name
+   */
+  void setWellControlsName( string const & wellControlsName ) { m_wellControlsName = wellControlsName; }
+  string const & getWellControlsName( ) const override final { return m_wellControlsName; }
+
+  /**
+   * @brief Set the well genrator name
+   * @param wellGeneratorName The well genrator name
+   */
+  void setWellGeneratorName( string const & wellGeneratorName ) { m_wellGeneratorName = wellGeneratorName; }
+  string const & getWellGeneratorName( ) const override final { return m_wellGeneratorName; }
+
   ///@}
 
   /// @endcond
@@ -233,6 +247,13 @@ private:
 
   /// List of perforation names
   string_array m_perforationList;
+
+  /// Well controls name
+  string m_wellControlsName;
+
+  /// Well genrator name
+  string m_wellGeneratorName;
+
 };
 }
 #endif

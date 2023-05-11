@@ -80,10 +80,10 @@ public:
   /**
    * @brief Generate the mesh object the input mesh object.
    * @param parent The parent group of the CellBlockManager.
-   * @param[in, out] partitionDescriptor Handler to describe the partition
+   * @param[in] Number of domaoins in each dimesion (X,Y,Z)
    * @return The generated CellBlockManagerABC
    */
-  CellBlockManagerABC & generateMesh( Group & parent, PartitionDescriptor & partitionDescriptor );
+  CellBlockManagerABC & generateMesh( Group & parent, array1d< int > const & partition );
 
   /**
    * @brief Describe which kind of block must be considered.
@@ -129,14 +129,19 @@ public:
    */
   std::map< string, string > const & getSurfacicFieldsMapping() const { return m_surfacicFields; }
 
+  /**
+   * @brief Get the associatied SpatialPartition generated.
+   * @return The generated SpatialPartition
+   */
+  SpatialPartition const & getSpatialPartition() const { return m_spatialPartition; }
 private:
   /**
    * @brief Fill the cellBlockManager object .
    * @param[in] cellBlockManager to fill with the mesh informations
-   * @param[in, out] partitionDescriptor Handler to describe the partition
+   * @param[in] Number of domaoins in each dimesion (X,Y,Z)
    * @return The global length scale
    */
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, PartitionDescriptor & partitionDescriptor ) = 0;
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const  & partition ) = 0;
 
   void attachWellInfo( CellBlockManager & cellBlockManager );
 
@@ -146,6 +151,9 @@ protected:
 
   /// Mapping from surfacic field source to GEOSX field.
   std::map< string, string > m_surfacicFields;
+
+  /// SpatialPartition associated with the mesh
+  SpatialPartition m_spatialPartition;
 };
 }
 

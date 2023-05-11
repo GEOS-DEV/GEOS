@@ -153,6 +153,8 @@ public:
 
   Group & getFaceBlocks() override;
 
+  Group & getLineBlocks();
+
   LineBlockABC const & getLineBlock( string name ) const override;
 
   /**
@@ -195,15 +197,6 @@ public:
 
 private:
 
-  /**
-   * @brief Returns a group containing the well blocks as @p LineBlockABC instances.
-   * @return Mutable reference to the well blocks group.
-   *
-   * @note It should probably be better not to expose a non-const accessor here.
-   */
-  Group & getLineBlocks();
-
-
   struct viewKeyStruct
   {
     /// Cell blocks key
@@ -218,6 +211,14 @@ private:
     static constexpr char const * lineBlocks()
     { return "lineBlocks"; }
   };
+
+  /**
+   * @brief Returns a group containing the well blocks as @p LineBlockABC instances.
+   * @return Mutable reference to the well blocks group.
+   *
+   * @note It should probably be better not to expose a non-const accessor here.
+   */
+  Group & getLineBlocks();
 
   /**
    * @brief Get cell block at index @p blockIndex.

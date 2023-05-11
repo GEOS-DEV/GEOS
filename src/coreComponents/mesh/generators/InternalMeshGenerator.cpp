@@ -539,11 +539,10 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
   }
 }
 
-void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager,  PartitionDescriptor & partitionDescriptor )
+void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager,  array1d< int > const & partition )
 {
   GEOS_MARK_FUNCTION;
-  partitionDescriptor.setHasMetisNeighborList( false );
-  SpatialPartition partition = partitionDescriptor.getSpatialPartition( );
+  m_spatialPartition.setPartitions( partition[0], partition[1], partition[2] );
   // Partition based on even spacing to get load balance
   // Partition geometrical boundaries will be corrected in the end.
   {
@@ -555,7 +554,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     m_max[1] = m_vertices[1].back();
     m_max[2] = m_vertices[2].back();
 
-    partition.setSizes( m_min, m_max );
+    m_spatialPartition.setSizes( m_min, m_max );
   }
 
   // Make sure that the node manager fields are initialized
@@ -617,7 +616,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     //    lastElemIndexInPartition[i] = -2;
     for( int k = 0; k < m_numElemsTotal[i]; ++k )
     {
-      if( partition.isCoordInPartition( elemCenterCoords[i][k], i ) )
+      if( m_spatialPartition.isCoordInPartition( elemCenterCoords[i][k], i ) )
       {
         firstElemIndexInPartition[i] = k;
         break;
@@ -628,7 +627,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     {
       for( int k = firstElemIndexInPartition[i]; k < m_numElemsTotal[i]; ++k )
       {
-        if( partition.isCoordInPartition( elemCenterCoords[i][k], i ) )
+        if( m_spatialPartition.isCoordInPartition( elemCenterCoords[i][k], i ) )
         {
           lastElemIndexInPartition[i] = k;
         }
@@ -722,7 +721,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
   {
     numNodesInDir[i] = lastElemIndexInPartition[i] - firstElemIndexInPartition[i] + 2;
   }
-  reduceNumNodesForPeriodicBoundary( partition, numNodesInDir );
+  reduceNumNodesForPeriodicBoundary( m_spatialPartition, numNodesInDir );
   numNodes = numNodesInDir[0] * numNodesInDir[1] * numNodesInDir[2];
 
   cellBlockManager.setNumNodes( numNodes );
@@ -749,7 +748,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
           getNodePosition( globalIJK, m_trianglePattern, X[localNodeIndex] );
 
           // Alter global node map for radial mesh
-          setNodeGlobalIndicesOnPeriodicBoundary( partition, globalIJK );
+          setNodeGlobalIndicesOnPeriodicBoundary( m_spatialPartition, globalIJK );
 
           nodeLocalToGlobal[localNodeIndex] = nodeGlobalIndex( globalIJK );
 
@@ -813,7 +812,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     // Reset the number of nodes in each dimension in case of periodic BCs so the element firstNodeIndex
     //  calculation is correct? Not actually needed in parallel since we still have ghost nodes in that case and
     //  the count has not been altered due to periodicity.
-    if( std::any_of( partition.m_Periodic.begin(), partition.m_Periodic.end(), []( int & dimPeriodic ) { return dimPeriodic == 1; } ) )
+    if( std::any_of( m_spatialPartition.m_Periodic.begin(), m_spatialPartition.m_Periodic.end(), []( int & dimPeriodic ) { return dimPeriodic == 1; } ) )
     {
       for( int i = 0; i < m_dim; ++i )
       {
@@ -961,7 +960,6 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
   cellBlockManager.buildMaps();
 
-  partitionDescriptor.setSpatialPartition( partition );
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: total number of nodes = {}", getName(),
                              ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) ) );
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: total number of elems = {}", getName(),

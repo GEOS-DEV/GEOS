@@ -172,8 +172,9 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
   {
 
     // get the global well geometry from the well generator
-    LineBlockABC const & lineBlock = cellBlockManager.getLineBlock( wellRegion.getWellGeneratorName() );
-
+    LineBlockABC const & lineBlock = cellBlockManager.getLineBlock( wellRegion.getName() );
+    wellRegion.setWellGeneratorName( lineBlock.getWellGeneratorName() );
+    wellRegion.setWellControlsName( lineBlock.getWellControlsName() );
     // generate the local data (well elements, nodes, perforations) on this well
     // note: each MPI rank knows the global info on the entire well (constructed earlier in InternalWellGenerator)
     // so we only need node and element offsets to construct the local-to-global maps in each wellElemSubRegion

@@ -205,22 +205,6 @@ void InternalWellGenerator::generateWellGeometry( )
 
 }
 
-// void InternalWellGenerator::generateMesh( DomainPartition & domain )
-// {
-//   generateWellGeometry( );
-
-//   // get the element (sub) region to populate and save the well generator and constraints names
-//   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
-
-//   ElementRegionManager & elemManager = meshLevel.getElemManager();
-//   WellElementRegion &
-//   wellRegion = elemManager.getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() ).
-//                  getGroup< WellElementRegion >( this->m_wellRegionName );
-
-//   wellRegion.setWellGeneratorName( this->getName() );
-//   wellRegion.setWellControlsName( m_wellControlsName );
-// }
-
 void InternalWellGenerator::constructPolylineNodeToSegmentMap()
 {
   m_polyNodeToSegmentMap.resize( m_polyNodeCoords.size( 0 ) );

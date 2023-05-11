@@ -49,11 +49,11 @@ MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::getCatalog
   return catalog;
 }
 
-CellBlockManagerABC & MeshGeneratorBase::generateMesh( Group & parent, PartitionDescriptor & partitionDescriptor )
+CellBlockManagerABC & MeshGeneratorBase::generateMesh( Group & parent, array1d< int > const  & partition )
 {
   CellBlockManager & cellBlockManager = parent.registerGroup< CellBlockManager >( keys::cellManager );
 
-  fillCellBlockManager( cellBlockManager, partitionDescriptor );
+  fillCellBlockManager( cellBlockManager, partition );
 
   this->attachWellInfo( cellBlockManager );
 
@@ -63,7 +63,8 @@ CellBlockManagerABC & MeshGeneratorBase::generateMesh( Group & parent, Partition
 void MeshGeneratorBase::attachWellInfo( CellBlockManager & cellBlockManager )
 {
   forSubGroups< InternalWellGenerator >( [&]( InternalWellGenerator & wellGen ) {
-    LineBlock & lb = cellBlockManager.registerLineBlock( wellGen.getName() );
+    wellGen.generateWellGeometry( );
+    LineBlock & lb = cellBlockManager.registerLineBlock( wellGen.getWellRegionName() );
     lb.setNumElements( wellGen.numElements() );
     lb.setElemCoords( wellGen.getElemCoords() );
     lb.setNextElemIndex( wellGen.getNextElemIndex() );
@@ -77,6 +78,9 @@ void MeshGeneratorBase::attachWellInfo( CellBlockManager & cellBlockManager )
     lb.setPerfCoords( wellGen.getPerfCoords() );
     lb.setPerfTransmissibility( wellGen.getPerfTransmissibility() );
     lb.setPerfElemIndex( wellGen.getPerfElemIndex() );
+    lb.setWellControlsName( wellGen.getWellControlsName() );
+    lb.setWellGeneratorName( wellGen.getName() );
+
   } );
 }
 }

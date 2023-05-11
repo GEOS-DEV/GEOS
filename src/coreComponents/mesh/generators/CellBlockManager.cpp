@@ -688,14 +688,14 @@ Group & CellBlockManager::getFaceBlocks()
   return this->getGroup( viewKeyStruct::faceBlocks() );
 }
 
-Group & CellBlockManager::getLineBlocks()
+Group & CellBlockManager::getLineBlocks() 
 {
   return this->getGroup( viewKeyStruct::lineBlocks() );
 }
 
 LineBlockABC const & CellBlockManager::getLineBlock( string name ) const
 {
-  return this->getGroup< LineBlockABC >( name );
+  return this->getGroup( viewKeyStruct::lineBlocks() ).getGroup< LineBlockABC >( name );
 }
 
 localIndex CellBlockManager::numNodes() const
