@@ -1,9 +1,8 @@
 import logging
-import textwrap
 
 from checks.generate_fractures import Options, Result
 
-from . import cli_parsing, GENERATE_FRACTURES
+from . import vtk_output_parsing, GENERATE_FRACTURES
 
 __POLICY = "policy"
 __FIELD_POLICY = "field"
@@ -12,56 +11,50 @@ __POLICIES = (__FIELD_POLICY, )
 __FIELD_NAME = "name"
 __FIELD_VALUES = "values"
 
-__OUTPUT_FILE = "output"
 __SPLIT_ON_DOMAIN_BOUNDARY = "split_on_domain_boundary"
-__GENERATE_FIELD_DATA = "generate_field_data"
 
-__ALL_KEYWORDS = {
-    __POLICY, __FIELD_NAME, __FIELD_VALUES, __FIELD_POLICY, __OUTPUT_FILE, __SPLIT_ON_DOMAIN_BOUNDARY,
-    __GENERATE_FIELD_DATA
-}
+__FRACTURE_PREFIX = "fracture"
 
 
-def get_help():    # TODO use a formatter module.
-    msg = f"""\
-    Splits the mesh to generate the faults and fractures. [EXPERIMENTAL]
-    
-    {__GENERATE_FIELD_DATA} [bool]: Whether we should generate the vtk field data that currently defines the fracture in GEOSX.
-    {" " * len(__GENERATE_FIELD_DATA)}         Currently default to true.
-    {__OUTPUT_FILE} [string]: The vtk output destination.
-    {__POLICY} [string]: The criterion to define the surfaces that will be changed into fracture zones.
-    {" " * len(__POLICY)}           Possible values are "{",".join(__POLICIES)}".
-    {__SPLIT_ON_DOMAIN_BOUNDARY} [string]: Split policy if the fracture touches the boundary of the mesh. Defaults to true.
-    
-    If the "{__FIELD_POLICY}" {__POLICY} is selected:
-        {__FIELD_NAME} [string]: which field will be considered to define the fractures.
-        {__FIELD_VALUES} [list of integers]: which changes of the field will be considered as a fracture.
-    """
-    return textwrap.dedent(msg)
+def fill_subparser(subparsers) -> None:
+    p = subparsers.add_parser(GENERATE_FRACTURES,
+                              help="Splits the mesh to generate the faults and fractures. [EXPERIMENTAL]")
+    p.add_argument('--' + __POLICY,
+                   type=str,
+                   metavar=", ".join(__POLICIES),
+                   required=True,
+                   help=f"[string]: The criterion to define the surfaces that will be changed into fracture zones. Possible values are \"{', '.join(__POLICIES)}\"")
+    p.add_argument('--' + __SPLIT_ON_DOMAIN_BOUNDARY,
+                   type=bool,
+                   metavar="True",
+                   default=True,
+                   help=f"[bool]: Split policy if the fracture touches the boundary of the mesh. Defaults to true.")
+    p.add_argument('--' + __FIELD_NAME,
+                   type=str,
+                   help=f"[string]: If the \"{__FIELD_POLICY}\" {__POLICY} is selected, defines which field will be considered to define the fractures.")
+    p.add_argument('--' + __FIELD_VALUES,
+                   type=str,
+                   help=f"[list of comma separated integers]: If the \"{__FIELD_POLICY}\" {__POLICY} is selected, which changes of the field will be considered as a fracture.")
+    vtk_output_parsing.fill_vtk_output_subparser(p)
+    vtk_output_parsing.fill_vtk_output_subparser(p, prefix=__FRACTURE_PREFIX)
 
 
-def parse_cli_options(options_str: str) -> Options:
-    """
-    From the parsed cli options, return the converted options for collocated nodes check.
-    :param options_str: Parsed cli options.
-    :return: Options instance.
-    """
-    options = cli_parsing.parse_cli_option(options_str)
-    cli_parsing.validate_cli_options(GENERATE_FRACTURES, __ALL_KEYWORDS, options)
-    policy = options[__POLICY]
-    split_on_domain_boundary = options.get(__SPLIT_ON_DOMAIN_BOUNDARY, True)
+def convert(parsed_options) -> Options:
+    policy = parsed_options[__POLICY]
+    split_on_domain_boundary = parsed_options[__SPLIT_ON_DOMAIN_BOUNDARY]
     assert policy in __POLICIES
     if policy == __FIELD_POLICY:
-        field = options[__FIELD_NAME]
-        field_values = tuple(map(int, options[__FIELD_VALUES].split(',')))
-    # Do better!
-    output = options.get(__OUTPUT_FILE, "")
+        field = parsed_options[__FIELD_NAME]
+        field_values = tuple(map(int, parsed_options[__FIELD_VALUES].split(",")))
+    vtk_output = vtk_output_parsing.convert(parsed_options)
+    vtk_fracture_output = vtk_output_parsing.convert(parsed_options, prefix=__FRACTURE_PREFIX)
     return Options(policy=policy,
                    field=field,
                    field_values=field_values,
-                   output=output,
+                   vtk_output=vtk_output,
+                   vtk_fracture_output=vtk_fracture_output,
                    split_on_domain_boundary=split_on_domain_boundary)
 
 
 def display_results(options: Options, result: Result):
-    logging.info("Hell world!")
+    pass

@@ -316,6 +316,13 @@ Element: DruckerPrager
 .. include:: ../../coreComponents/schema/docs/DruckerPrager.rst
 
 
+.. _XML_ElasticFirstOrderSEM:
+
+Element: ElasticFirstOrderSEM
+=============================
+.. include:: ../../coreComponents/schema/docs/ElasticFirstOrderSEM.rst
+
+
 .. _XML_ElasticIsotropic:
 
 Element: ElasticIsotropic
@@ -1149,6 +1156,27 @@ Element: VanGenuchtenCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure.rst
 
 
+.. _XML_ViscoDruckerPrager:
+
+Element: ViscoDruckerPrager
+===========================
+.. include:: ../../coreComponents/schema/docs/ViscoDruckerPrager.rst
+
+
+.. _XML_ViscoExtendedDruckerPrager:
+
+Element: ViscoExtendedDruckerPrager
+===================================
+.. include:: ../../coreComponents/schema/docs/ViscoExtendedDruckerPrager.rst
+
+
+.. _XML_ViscoModifiedCamClay:
+
+Element: ViscoModifiedCamClay
+=============================
+.. include:: ../../coreComponents/schema/docs/ViscoModifiedCamClay.rst
+
+
 .. _XML_WellControls:
 
 Element: WellControls
@@ -1501,6 +1529,13 @@ Datastructure: Dirichlet
 Datastructure: DruckerPrager
 ============================
 .. include:: ../../coreComponents/schema/docs/DruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_ElasticFirstOrderSEM:
+
+Datastructure: ElasticFirstOrderSEM
+===================================
+.. include:: ../../coreComponents/schema/docs/ElasticFirstOrderSEM_other.rst
 
 
 .. _DATASTRUCTURE_ElasticIsotropic:
@@ -2355,6 +2390,27 @@ Datastructure: VanGenuchtenBakerRelativePermeability
 Datastructure: VanGenuchtenCapillaryPressure
 ============================================
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure_other.rst
+
+
+.. _DATASTRUCTURE_ViscoDruckerPrager:
+
+Datastructure: ViscoDruckerPrager
+=================================
+.. include:: ../../coreComponents/schema/docs/ViscoDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_ViscoExtendedDruckerPrager:
+
+Datastructure: ViscoExtendedDruckerPrager
+=========================================
+.. include:: ../../coreComponents/schema/docs/ViscoExtendedDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_ViscoModifiedCamClay:
+
+Datastructure: ViscoModifiedCamClay
+===================================
+.. include:: ../../coreComponents/schema/docs/ViscoModifiedCamClay_other.rst
 
 
 .. _DATASTRUCTURE_WellControls:
