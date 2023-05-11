@@ -304,7 +304,8 @@ struct MassMatrixKernel
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView1d< real32 const > const velocity,
           arrayView2d< real32 > const massPOD,
-	  arrayView2d< real64 const > const phi)
+	  arrayView2d< real64 const > const phi,
+	  arrayView1d< localIndex const > const nodesGhostRank)
 
   {
     std::cout<<"Mass"<<std::endl;
@@ -346,12 +347,15 @@ struct MassMatrixKernel
 
 	  for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
 	  {
-	    real32 const val = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
-	    real32 const localIncrement = phim[elemsToNodes[k][q]] * val * phin[elemsToNodes[k][q]];
-	    RAJA::atomicAdd< ATOMIC_POLICY >( &massPOD[m][n], localIncrement );
-	    if(m!=n)
+	    if(nodesGhostRank[elemsToNodes[k][q]] < 0)
 	    {
-	      RAJA::atomicAdd< ATOMIC_POLICY >( &massPOD[n][m], localIncrement );
+	      real32 const val = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
+	      real32 const localIncrement = phim[elemsToNodes[k][q]] * val * phin[elemsToNodes[k][q]];
+	      RAJA::atomicAdd< ATOMIC_POLICY >( &massPOD[m][n], localIncrement );
+	      if(m!=n)
+	      {
+		RAJA::atomicAdd< ATOMIC_POLICY >( &massPOD[n][m], localIncrement );
+	      }
 	    }
 	  }
 	} ); // end loop over element

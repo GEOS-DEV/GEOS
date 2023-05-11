@@ -105,10 +105,16 @@ public:
   {
 
     static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }
-    static constexpr char const * computeStiffnessPODString() { return "computePODmatrix"; }
-    static constexpr char const * stiffnessPODString() { return "stiffnessPOD"; }
-    static constexpr char const * massPODString() { return "massPOD"; }
-    static constexpr char const * dampingPODString() { return "dampingPOD"; }
+    static constexpr char const * computePODmatrixString() { return "computePODmatrix"; }
+    static constexpr char const * computeStiffnessPODString() { return "computeStiffnessPOD"; }
+    static constexpr char const * invPODIsIdentityString() { return "invPODIsIdentity"; }
+    static constexpr char const * stiffnessPOD_fString() { return "stiffnessPOD_f"; }
+    static constexpr char const * massPOD_fString() { return "massPOD_f"; }
+    static constexpr char const * dampingPOD_fString() { return "dampingPOD_f"; }
+    static constexpr char const * stiffnessPOD_bString() { return "stiffnessPOD_b"; }
+    static constexpr char const * massPOD_bString() { return "massPOD_b"; }
+    static constexpr char const * dampingPOD_bString() { return "dampingPOD_b"; }
+    static constexpr char const * invAPODString() { return "invAPOD"; }
     static constexpr char const * sourceConstantsPODString() { return "sourceConstantsPOD"; }
     static constexpr char const * a_np1String() { return "a_np1"; }
     static constexpr char const * a_nString() { return "a_n"; }
@@ -164,17 +170,35 @@ private:
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_pressureNp1AtReceivers;
 
-  /// Whether or not to compute the mass/damping/stiffness POD matrices
+  /// Whether or not to compute the POD matrices
   int m_computePODmatrix;
 
-  ///Stiffness Matrix in the POD basis
-  array2d< real32 > m_stiffnessPOD;
+  /// Whether or not to compute the stiffness POD matrix
+  int m_computeStiffnessPOD;
 
-  ///Mass Matrix in the POD basis
-  array2d< real32 > m_massPOD;
+  ///Stiffness Matrix in the POD basis forward
+  array2d< real32 > m_stiffnessPOD_f;
 
-  ///Damping Matrix in the POD basis
-  array2d< real32 > m_dampingPOD;
+  ///Mass Matrix in the POD basis forward
+  array2d< real32 > m_massPOD_f;
+
+  ///Damping Matrix in the POD basis forward
+  array2d< real32 > m_dampingPOD_f;
+
+  ///Stiffness Matrix in the POD basis backward
+  array2d< real32 > m_stiffnessPOD_b;
+
+  ///Mass Matrix in the POD basis backward
+  array2d< real32 > m_massPOD_b;
+
+  ///Damping Matrix in the POD basis backward
+  array2d< real32 > m_dampingPOD_b;
+
+  ///Flag whether or not to compute the massPOD. It also determine which discretization formulation is used for the computation of the a_n
+  int m_invPODIsIdentity;
+
+  ///Inverse scalar product POD Matrix
+  array2d< real32 > m_invAPOD;
 
   // Coefficient of the solution in the POD basis at time n+1
   array1d< real32 > m_a_np1;
