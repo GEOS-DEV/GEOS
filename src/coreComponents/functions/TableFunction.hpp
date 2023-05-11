@@ -332,7 +332,7 @@ private:
   KernelWrapper m_kernelWrapper;
 
 };
-
+/// @cond DO_NOT_DOCUMENT
 template< typename IN_ARRAY >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
@@ -613,6 +613,8 @@ TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input, OUT_ARRA
   GEOS_ERROR( "Rounding interpolation with derivatives not implemented" );
   return 0.0;
 }
+
+/// @endcond
 
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( TableFunction::InterpolationType,
