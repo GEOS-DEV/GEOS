@@ -19,9 +19,8 @@
         maxAllowedResidualNorm="1e25"
         lineSearchAction="None"/>
       <LinearSolverParameters
-        directParallel="0"
-        solverType="gmres"
-        preconditionerType="amg"/>
+        directParallel="1"
+        solverType="direct"/>
     </SinglePhaseFVM>
 
      <EmbeddedSurfaceGenerator
@@ -40,9 +39,9 @@
        xCoords="{ 0, 60, 86.875, 146.875 }"
        yCoords="{ 0, 75 }"
        zCoords="{ 0, 0.625, 60, 84, 144 }"
-       nx="{ 40, 80, 40 }"
-       ny="{ 20 }"
-       nz="{ 1, 40, 40, 40 }"
+       nx="{ 10, 24, 60 }"
+       ny="{ 75 }"
+       nz="{ 1, 60, 26, 60 }"
        cellBlockNames="{ cb }"/>
    </Mesh>
    

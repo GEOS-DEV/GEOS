@@ -1,20 +1,24 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <NumericalMethods>
-    <FiniteVolume>
-      <TwoPointFluxApproximation
-        name="singlePhaseTPFA"/>
-    </FiniteVolume>
-  </NumericalMethods>
 
-  <ElementRegions>
+  <Included>
+  <File
+  name = "./egsCollab_thermalFlow_base.xml"/>
+  </Included>
+
+   <ElementRegions>
     <CellElementRegion
       name="matrix"
       cellBlocks="{ cb }"
       materialList="{ water, rock, thermalCond }"/>
-  </ElementRegions>
 
+    <!-- <SurfaceElementRegion
+      name="fracture"
+      subRegionType="embeddedElement"
+      materialList="{ water, fractureContact, fractureFilling, thermalCond }"
+      defaultAperture="1e-3"/>   -->
+  </ElementRegions>
   <Events
      maxTime="7.884e10">
      <PeriodicEvent
@@ -35,105 +39,58 @@
        target="/Outputs/vtkOutput"/>
    </Events>
 
-  <Geometry>
-    <Box
-    name="bottomBoundary"
-    xMin="{ -0.01, -0.01, -0.01 }"
-    xMax="{ 200, 200, 0.75 }"/>
-    <Box
-    name="topBoundary"
-    xMin="{ -0.01, -0.01, 143.3 }"
-    xMax="{ 200, 200, 144 }"/>
-    <Cylinder
-    name="Drift"
-    firstFaceCenter="{ 73.425, -0.1, 72 }"
-    secondFaceCenter="{ 73.425, 75, 72 }"
-    outerRadius="4"/>
-  </Geometry>
+  <Functions>
+    <TableFunction
+      name="temperatureField"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ bc_data/xlin.geos, bc_data/ylin.geos, bc_data/zlin.geos }"
+      voxelFile="bc_data/temp.geos"
+      interpolation="linear"/>
 
-  <Constitutive>
-     <ThermalCompressibleSinglePhaseFluid
-       name="water"
-       defaultDensity="1000"
-       defaultViscosity="0.001"
-       referencePressure="1.0e5"
-       referenceTemperature="273.0"
-       compressibility="0.0"
-       thermalExpansionCoeff="0.0"
-       viscosibility="0.0"
-       volumetricHeatCapacity="4.0e3"
-       referenceInternalEnergy="0.99"/>
+    <TableFunction
+      name="pressureField"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ bc_data/xlin.geos, bc_data/ylin.geos, bc_data/zlin.geos }"
+      voxelFile="bc_data/pressure.geos"
+      interpolation="linear"/>
 
-     <SinglePhaseConstantThermalConductivity
-       name="thermalCond"
-       thermalConductivityComponents="{ 3.81, 3.81, 3.81 }"/>  
-
-     <CompressibleSolidParallelPlatesPermeability
-       name="fractureFilling"
-       solidModelName="nullSolid"
-       porosityModelName="fracturePorosity"
-       permeabilityModelName="fracturePerm"
-       solidInternalEnergyModelName="rockInternalEnergy"/>
-
-     <CompressibleSolidConstantPermeability
-       name="rock"
-       solidModelName="nullSolid"
-       porosityModelName="rockPorosity"
-       permeabilityModelName="rockPerm"
-       solidInternalEnergyModelName="rockInternalEnergy"/>
-
-     <SolidInternalEnergy
-       name="rockInternalEnergy"
-       volumetricHeatCapacity="2.3345e6"
-       referenceTemperature="0"
-       referenceInternalEnergy="0"/>  
-
-     <NullModel
-       name="nullSolid"/>
-
-     <PressurePorosity
-       name="rockPorosity"
-       defaultReferencePorosity="0.01"
-       referencePressure="0.0"
-       compressibility="0.0"/>
-
-     <ConstantPermeability
-       name="rockPerm"
-       permeabilityComponents="{ 1.0e-20, 1.0e-20, 1.0e-20 }"/>
-
-     <PressurePorosity
-       name="fracturePorosity"
-       defaultReferencePorosity="1.00"
-       referencePressure="0.0"
-       compressibility="7.2e-16"/>
-
-     <ParallelPlatesPermeability
-       name="fracturePerm"/>
-   </Constitutive>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 1.0e-6, 1.0e-4 }"/>        
+  </Functions>
 
   <FieldSpecifications>
-
     <FieldSpecification
-       name="Porosity"
+       name="matrixPorosity"
        initialCondition="1"
        setNames="{ all }"
        objectPath="ElementRegions/matrix"
        fieldName="rockPorosity_referencePorosity"
        scale="0.01"/>
 
+    <!-- <FieldSpecification
+       name="fracPorosity"
+       initialCondition="1"
+       setNames="{ all }"
+       objectPath="ElementRegions/fracture"
+       fieldName="fracturePorosity_referencePorosity"
+       scale="1.0"/>    -->
+
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/matrix"
+      objectPath="ElementRegions"
       fieldName="pressure"
-      scale="2e6"/>
+      functionName="pressureField"
+      scale="1"/>
 
     <FieldSpecification
       name="initialTemperature"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/matrix"
+      objectPath="ElementRegions"
       fieldName="temperature"
       functionName="temperatureField"
       scale="1"/>
@@ -143,45 +100,35 @@
       objectPath="faceManager"
       fieldName="pressure"
       scale="2e6"
-      setNames="{ zpos }"/>
-    
+      setNames="{ zpos }"
+      logLevel="0"/>
+
     <FieldSpecification
       name="topTemperature"
       objectPath="faceManager"
       fieldName="temperature"
       scale="296.0153"
-      setNames="{ zpos }"/>
+      setNames="{ zpos }"
+      logLevel="0"/>   
 
     <FieldSpecification
       name="botTemperature"
       objectPath="ElementRegions/matrix"
       fieldName="temperature"
       scale="303.012"
-      setNames="{ bottomBoundary }"/>
+      setNames="{ bottomBoundary }"/> 
       
     <FieldSpecification
       name="DriftTemperature"
       objectPath="ElementRegions/matrix"
       fieldName="temperature"
       scale="291.65"
-      setNames="{ Drift }"/>   
+      setNames="{ Drift }"/>    
   </FieldSpecifications>
-
-  <Functions>
-    <TableFunction
-      name="temperatureField"
-      inputVarNames="{ elementCenter }"
-      coordinateFiles="{ bc_data/xlin.geos, bc_data/ylin.geos, bc_data/zlin.geos }"
-      voxelFile="bc_data/temp.geos"
-      interpolation="linear"/>
-  </Functions>
 
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="thermalFlowFrac_collab"/>
-
-    <Restart
-      name="restartOutput"/>
+      plotFileRoot="thermalFlowFrac_collab_initialCond"/>
   </Outputs>
 </Problem>
