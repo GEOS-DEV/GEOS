@@ -33,7 +33,7 @@ template < localIndex size_1d, localIndex batch_size >
 struct SharedMem
 {
   GEOSX_HOST_DEVICE
-  SharedMem( LaunchContext & ctx )
+  SharedMem( RAJA::LaunchContext & ctx )
   {
     // Element primary field gradients at quadrature points
     GEOSX_STATIC_SHARED real64 s_values[batch_size][size_1d][size_1d][size_1d];
@@ -63,7 +63,7 @@ template < localIndex size_1d, localIndex dim, localIndex batch_size >
 struct Shared1DMem
 {
   GEOSX_HOST_DEVICE
-  Shared1DMem( LaunchContext & ctx )
+  Shared1DMem( RAJA::LaunchContext & ctx )
   {
     // Element primary field gradients at quadrature points
     GEOSX_STATIC_SHARED real64 s_values[batch_size][size_1d][size_1d][size_1d][dim];
@@ -93,7 +93,7 @@ template < localIndex size_1d, localIndex dim, localIndex batch_size >
 struct Shared2DMem
 {
   GEOSX_HOST_DEVICE
-  Shared2DMem( LaunchContext & ctx )
+  Shared2DMem( RAJA::LaunchContext & ctx )
   {
     // Element primary field gradients at quadrature points
     GEOSX_STATIC_SHARED real64 s_values[batch_size][size_1d][size_1d][size_1d][dim][dim];

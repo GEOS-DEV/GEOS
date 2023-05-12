@@ -48,7 +48,7 @@ void computeGradGradLocalDiagonal( StackVariables & stack,
                                    real64 (& diag)[num_dofs_1d][num_dofs_1d][num_dofs_1d] )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   constexpr localIndex Dim = 3;
 

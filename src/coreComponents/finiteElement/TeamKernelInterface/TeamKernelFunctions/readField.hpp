@@ -45,7 +45,7 @@ void readField( StackVariables & stack,
                 real64 (& local_field)[stride_x][stride_y][stride_z] )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (localIndex ind_x)
   {
@@ -71,7 +71,7 @@ void readField( StackVariables & stack,
                 real64 (& local_field)[stride_x][stride_y][stride_z][dim] )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (localIndex ind_x)
   {

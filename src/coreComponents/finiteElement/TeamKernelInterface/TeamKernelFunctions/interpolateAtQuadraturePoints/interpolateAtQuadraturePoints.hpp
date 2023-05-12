@@ -60,7 +60,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
                                     real64 (& q_values)[num_quads_1d][num_quads_1d][num_quads_1d] )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
   SharedTensor< num_quads_1d, num_dofs_1d, num_dofs_1d > Bu( stack.shared_mem[0] );
@@ -168,7 +168,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
                                     real64 (& q_values)[num_quads_1d][num_quads_1d][num_quads_1d][num_comp] )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
   SharedTensor< num_quads_1d, num_dofs_1d, num_dofs_1d, num_comp > Bu( stack.shared_mem[0] );
@@ -310,7 +310,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
                                     tensor::StaticDTensor< num_quads_1d, num_quads_1d, num_quads_1d > & q_values )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
   tensor::StaticDTensor< num_quads_1d, num_dofs_1d, num_dofs_1d > Bu;
@@ -411,7 +411,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
                                     tensor::StaticDTensor< num_quads_1d, num_quads_1d, num_quads_1d, num_comp > & q_values )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   for (localIndex c = 0; c < num_comp; c++)
   {
@@ -548,7 +548,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
                                     tensor::Static2dThreadDTensor< num_quads_1d, num_quads_1d, num_quads_1d > & q_values )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   SharedTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > u( stack.shared_mem[3] );
   for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
@@ -670,7 +670,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
                                     tensor::Static2dThreadDTensor< num_quads_1d, num_quads_1d, num_quads_1d, num_comp > & q_values )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   SharedTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d, num_comp > u( stack.shared_mem[3] );
   for (localIndex c = 0; c < num_comp; c++)
@@ -817,7 +817,7 @@ void interpolateAtQuadraturePoints(
   tensor::Static3dThreadDTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > const & dofs,
   tensor::Static3dThreadDTensor< num_quads_1d, num_quads_1d, num_quads_1d > & q_values )
 {
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   // Load in registers values for (quad_x, quad_y, quad_z)
   // FIXME: not interesting for low order and if basis already in stack mem
@@ -889,7 +889,7 @@ void interpolateAtQuadraturePoints(
   tensor::Static3dThreadDTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d, num_comp > const & dofs,
   tensor::Static3dThreadDTensor< num_quads_1d, num_quads_1d, num_quads_1d, num_comp > & q_values )
 {
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   // Load in registers values for (quad_x, quad_y, quad_z)
   // FIXME: not interesting for low order and if basis already in stack mem

@@ -46,7 +46,7 @@ struct KernelContext : public KernelConfig
   static constexpr localIndex num_quads_1d = 2; // TODO
 
   GEOSX_HOST_DEVICE
-  KernelContext( LaunchContext & ctx )
+  KernelContext( RAJA::LaunchContext & ctx )
     : KernelConfig( ctx ), element_index( -1 )
   { }
 };
@@ -73,9 +73,12 @@ void forallElements( localIndex const numElems, Lambda && element_kernel )
   // localIndex const num_blocks = 64 * num_SM; //( numElems + batch_size - 1 ) / batch_size;
   localIndex const num_blocks = num_batches;
 
-  launch< team_launch_policy >
-  ( GEOSX_RAJA_DEVICE, Grid( Teams( num_blocks ), Threads( num_threads_x, num_threads_y, num_threads_z ) ),
-  [=] GEOSX_HOST_DEVICE ( LaunchContext ctx )
+  RAJA::launch< team_launch_policy >
+  ( GEOSX_RAJA_DEVICE,
+    RAJA::LaunchParams(
+      RAJA::Teams( num_blocks ),
+      RAJA::Threads( num_threads_x, num_threads_y, num_threads_z ) ),
+  [=] GEOSX_HOST_DEVICE ( RAJA::LaunchContext ctx )
   {
     using RAJA::RangeSegment;
     KernelContext< KernelConfig > stack( ctx );

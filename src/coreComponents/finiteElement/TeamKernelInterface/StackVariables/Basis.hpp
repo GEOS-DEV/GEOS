@@ -52,7 +52,7 @@ struct StackBasis
   { }
 
   GEOSX_HOST_DEVICE
-  StackBasis( LaunchContext & ctx )
+  StackBasis( RAJA::LaunchContext & ctx )
   {
     // basis: computation of the shape functions at quadrature points
     real64 const w = 0.57735026919; // 1.0/sqrt( 3 )

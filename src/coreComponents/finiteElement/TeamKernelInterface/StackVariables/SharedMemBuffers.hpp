@@ -36,7 +36,7 @@ struct SharedMemBuffers
   real64 (* shared_mem_buffers)[buffer_size];
 
   GEOSX_HOST_DEVICE
-  SharedMemBuffers( LaunchContext & ctx )
+  SharedMemBuffers( RAJA::LaunchContext & ctx )
   {
     GEOSX_STATIC_SHARED real64 shared_buffers[batch_size][num_buffers][buffer_size];
 

@@ -39,7 +39,7 @@ struct StackQuadratureWeights< 2 >
   // real64 weights[num_quads_1d];
 
   GEOSX_HOST_DEVICE
-  StackQuadratureWeights( LaunchContext & ctx )
+  StackQuadratureWeights( RAJA::LaunchContext & ctx )
   {
     // Initialize quadrature weights
     // TODO generalize/use threads
@@ -60,7 +60,7 @@ struct SharedQuadratureWeights
   real64 ( * weights )[num_quads_1d];
 
   GEOSX_HOST_DEVICE
-  SharedQuadratureWeights( LaunchContext & ctx )
+  SharedQuadratureWeights( RAJA::LaunchContext & ctx )
   {
     // Initialize quadrature weights
     GEOSX_STATIC_SHARED real64 s_weights[num_quads_1d];

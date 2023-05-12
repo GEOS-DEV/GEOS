@@ -49,7 +49,7 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
                                             real64 (& q_values)[num_quads_1d][num_quads_1d][num_quads_1d][3] )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
   SharedTensor< num_quads_1d, num_dofs_1d, num_dofs_1d >
@@ -183,7 +183,7 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
                                             real64 (& q_values)[num_quads_1d][num_quads_1d][num_quads_1d][num_comp][3] )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
   SharedTensor< num_quads_1d, num_dofs_1d, num_dofs_1d, num_comp >
@@ -558,7 +558,7 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
                                             tensor::Static2dThreadDTensor< num_quads_1d, num_quads_1d, num_quads_1d, 3 > & q_values )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   SharedTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > u( stack.shared_mem[3] );
   for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
@@ -706,7 +706,7 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
                                             tensor::Static2dThreadDTensor< num_quads_1d, num_quads_1d, num_quads_1d, num_comp, 3 > & q_values )
 {
   using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   SharedTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > u( stack.shared_mem[3] );
   for (localIndex comp = 0; comp < num_comp; comp++)
@@ -855,7 +855,7 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
                                             tensor::Static3dThreadDTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d > const & dofs,
                                             tensor::Static3dThreadDTensor< num_quads_1d, num_quads_1d, num_quads_1d, 3 > & q_values )
 {
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   // Load in registers values for (quad_x, quad_y, quad_z)
   // FIXME: not interesting for low order and if basis already in stack mem
@@ -940,7 +940,7 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
                                             tensor::Static3dThreadDTensor< num_dofs_1d, num_dofs_1d, num_dofs_1d, num_comp > const & dofs,
                                             tensor::Static3dThreadDTensor< num_quads_1d, num_quads_1d, num_quads_1d, num_comp, 3 > & q_values )
 {
-  LaunchContext & ctx = stack.ctx;
+  RAJA::LaunchContext & ctx = stack.ctx;
 
   // Load in registers values for (quad_x, quad_y, quad_z)
   // FIXME: not interesting for low order and if basis already in stack mem
