@@ -20,13 +20,9 @@
 #include "InternalWellGenerator.hpp"
 
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "mesh/DomainPartition.hpp"
-#include "mesh/MeshBody.hpp"
-#include "mesh/WellElementRegion.hpp"
-#include "mesh/WellElementSubRegion.hpp"
-#include "mesh/PerforationData.hpp"
 #include "mesh/Perforation.hpp"
 #include "mesh/generators/LineBlockABC.hpp"
+#include "LvArray/src/genericTensorOps.hpp"
 
 namespace geos
 {

@@ -21,7 +21,6 @@
 #include "mesh/generators/VTKFaceBlockUtilities.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
-#include "mesh/MeshBody.hpp"
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
 #include "common/MpiWrapper.hpp"

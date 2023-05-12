@@ -17,14 +17,6 @@
  */
 
 #include "InternalMeshGenerator.hpp"
-
-#include "common/DataTypes.hpp"
-#include "common/TimingMacros.hpp"
-#include "mesh/DomainPartition.hpp"
-#include "mesh/MeshBody.hpp"
-#include "mesh/mpiCommunications/PartitionBase.hpp"
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
-#include "mesh/MeshBody.hpp"
 #include "CellBlockManager.hpp"
 
 #include "common/DataTypes.hpp"
