@@ -187,7 +187,7 @@ struct WaveSolverUtils
             // Note: this "manual" output to file is temporary
             //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
             // TODO: remove saveSeismo and replace with TimeHistory
-            std::ofstream f( GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ), std::ios::app );
+            std::ofstream f( GEOS_FMT( "seismoTraceReceiver{:03}.txt", ircv ), std::ios::app );
             for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
             {
               f << iSample << " " << varAtReceivers[iSample][ircv] << std::endl;

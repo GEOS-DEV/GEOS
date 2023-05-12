@@ -28,7 +28,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 //#include "common/MpiWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -131,7 +131,7 @@ localIndex AcousticPOD::getNumNodesPerElem()
 
   FiniteElementDiscretization const * const
   feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
-  GEOSX_THROW_IF( feDiscretization == nullptr,
+  GEOS_THROW_IF( feDiscretization == nullptr,
                   getName() << ": FE discretization not found: " << m_discretizationName,
                   InputError );
 
@@ -303,7 +303,7 @@ void AcousticPOD::postProcessInput()
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             CellElementSubRegion & elementSubRegion )
       {
-        GEOSX_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
+        GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
                         "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
                         InputError );
 
@@ -508,7 +508,7 @@ void AcousticPOD::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                         CellElementSubRegion & elementSubRegion )
   {
-    GEOSX_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
+    GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
                     "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
                     InputError );
 
@@ -575,8 +575,8 @@ void AcousticPOD::addSourceToRightHandSide( integer const & cycleNumber, arrayVi
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
   arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
 
-  GEOSX_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
-  forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const isrc )
+  GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
+  forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
     {
       for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
       {
@@ -656,7 +656,7 @@ void AcousticPOD::applyFreeSurfaceBC( real64 time, DomainPartition & domain )
     }
     else
     {
-      GEOSX_ERROR( "This option is not supported yet" );
+      GEOS_ERROR( "This option is not supported yet" );
     }
   } );
 }
@@ -674,7 +674,7 @@ real64 AcousticPOD::explicitStepForward( real64 const & time_n,
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
                                         MeshLevel &,
-                                        arrayView1d< string const > const & GEOSX_UNUSED_PARAM ( regionNames ) )
+                                        arrayView1d< string const > const & GEOS_UNUSED_PARAM ( regionNames ) )
   {
     arrayView1d< real32 > const a_nm1 = m_a_nm1.toView();
     arrayView1d< real32 > const a_n = m_a_n.toView();
@@ -684,14 +684,14 @@ real64 AcousticPOD::explicitStepForward( real64 const & time_n,
 
       arrayView2d< real32 > const a_dt2 =  m_a_dt2.toView();
 
-      forAll< EXEC_POLICY >( a_n.size(), [=] GEOSX_HOST_DEVICE ( localIndex const m )
+      forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
         {
           a_dt2[m_indexWaveField][m] = (a_np1[m] - 2*a_n[m] + a_nm1[m])/(dt*dt);
         } );
       m_indexWaveField += 1;
     }
 
-    forAll< EXEC_POLICY >( a_n.size(), [=] GEOSX_HOST_DEVICE ( localIndex const m )
+    forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
       {
         a_nm1[m] = a_n[m];
         a_n[m]   = a_np1[m];
@@ -745,8 +745,8 @@ real64 AcousticPOD::explicitStepBackward( real64 const & time_n,
           {
             phim[i]=phi[i][m];
           }
-          GEOSX_MARK_SCOPE ( updatePartialGradient );
-          forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const eltIdx )
+          GEOS_MARK_SCOPE ( updatePartialGradient );
+          forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const eltIdx )
             {
               for( localIndex i = 0; i < numNodesPerElem; ++i )
               {
@@ -759,7 +759,7 @@ real64 AcousticPOD::explicitStepBackward( real64 const & time_n,
       m_indexWaveField -= 1;
     }
 
-    forAll< EXEC_POLICY >( a_n.size(), [=] GEOSX_HOST_DEVICE ( localIndex const m )
+    forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
       {
         a_nm1[m] = a_n[m];
         a_n[m]   = a_np1[m];
@@ -774,9 +774,9 @@ real64 AcousticPOD::explicitStepInternal( real64 const &,
                                           integer cycleNumber,
                                           DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
-  GEOSX_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
+  GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
@@ -795,7 +795,7 @@ real64 AcousticPOD::explicitStepInternal( real64 const &,
     /// calculate your time integrators
     real64 const dt2 = dt*dt;
 
-    GEOSX_MARK_SCOPE ( updateP );
+    GEOS_MARK_SCOPE ( updateP );
 
     if( m_forward )
     {
@@ -803,7 +803,7 @@ real64 AcousticPOD::explicitStepInternal( real64 const &,
       arrayView2d< real32 const > const damping = m_dampingPOD_f.toViewConst();
       if( m_invPODIsIdentity )
       {
-        forAll< EXEC_POLICY >( a_n.size(), [=] GEOSX_HOST_DEVICE ( localIndex const m )
+        forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
           {
             a_np1[m] = dt2 * rhs[m];
             a_np1[m] += 2*a_n[m];
@@ -832,7 +832,7 @@ real64 AcousticPOD::explicitStepInternal( real64 const &,
           }
           rhs[m] = 0.0;
         }
-        forAll< EXEC_POLICY >( a_n.size(), [=] GEOSX_HOST_DEVICE ( localIndex const m )
+        forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
           {
             a_np1[m] = 0.0;
             for( localIndex n = 0; n < a_n.size(); ++n )
@@ -848,7 +848,7 @@ real64 AcousticPOD::explicitStepInternal( real64 const &,
       arrayView2d< real32 const > const damping = m_dampingPOD_b.toViewConst();
       if( m_invPODIsIdentity )
       {
-        forAll< EXEC_POLICY >( a_n.size(), [=] GEOSX_HOST_DEVICE ( localIndex const m )
+        forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
           {
             a_np1[m] = dt2 * rhs[m];
             a_np1[m] += 2*a_n[m];
@@ -877,7 +877,7 @@ real64 AcousticPOD::explicitStepInternal( real64 const &,
           }
           rhs[m] = 0.0;
         }
-        forAll< EXEC_POLICY >( a_n.size(), [=] GEOSX_HOST_DEVICE ( localIndex const m )
+        forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
           {
             a_np1[m] = 0.0;
             for( localIndex n = 0; n < a_n.size(); ++n )
@@ -902,7 +902,7 @@ real64 AcousticPOD::explicitStepInternal( real64 const &,
 
 void AcousticPOD::initializePML()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   registerWrapper< parametersPML >( viewKeyStruct::parametersPMLString() ).
     setInputFlag( InputFlags::FALSE ).
@@ -972,7 +972,7 @@ void AcousticPOD::initializePML()
         subRegion.getReference< CellElementSubRegion::NodeMapType >( CellElementSubRegion::viewKeyStruct::nodeListString() );
       traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
 
-      forAll< EXEC_POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const l )
+      forAll< EXEC_POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const l )
         {
           localIndex const k = targetSet[ l ];
           localIndex const numNodesPerElem = elemToNodesViewConst[k].size();
@@ -999,7 +999,7 @@ void AcousticPOD::initializePML()
     RAJA::ReduceMax< parallelDeviceReduce, real32 > yMaxInterior( -LvArray::NumericLimits< real32 >::max );
     RAJA::ReduceMax< parallelDeviceReduce, real32 > zMaxInterior( -LvArray::NumericLimits< real32 >::max );
 
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
         xMinGlobal.min( X[a][0] );
         yMinGlobal.min( X[a][1] );
@@ -1139,7 +1139,7 @@ void AcousticPOD::initializePML()
     /// so it can be used by the PML application
     indicatorPML.zero();
 
-    GEOSX_LOG_LEVEL_RANK_0( 1,
+    GEOS_LOG_LEVEL_RANK_0( 1,
                             "PML parameters are: \n"
                             << "\t inner boundaries xMin = "<<param.xMinPML<<"\n"
                             << "\t inner boundaries xMax = "<<param.xMaxPML<<"\n"
@@ -1156,7 +1156,7 @@ void AcousticPOD::initializePML()
 
 void AcousticPOD::applyPML( real64 const time, DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   parametersPML const & param = getReference< parametersPML >( viewKeyStruct::parametersPMLString() );
@@ -1311,4 +1311,4 @@ void AcousticPOD::computeAllSeismoTraces( real64 const time_n,
 
 REGISTER_CATALOG_ENTRY( SolverBase, AcousticPOD, string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

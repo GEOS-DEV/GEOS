@@ -17,14 +17,14 @@
  * @file AcousticPOD.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICPOD_HPP_
-#define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICPOD_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICPOD_HPP_
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICPOD_HPP_
 
 #include "mesh/MeshFields.hpp"
 #include "WaveSolverUtils.hpp"
 #include "WaveSolverBaseFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class AcousticPOD : public WaveSolverBase
@@ -124,7 +124,7 @@ public:
 
 
   /** internal function to the class to compute explicitStep either for backward or forward.
-   * (requires not to be private because it is called from GEOSX_HOST_DEVICE method)
+   * (requires not to be private because it is called from GEOS_HOST_DEVICE method)
    * @param time_n time at the beginning of the step
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
@@ -355,6 +355,6 @@ DECLARE_FIELD( AuxiliaryVar4PML,
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICPOD_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICPOD_HPP_ */
