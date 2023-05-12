@@ -290,8 +290,24 @@ DECLARE_FIELD( Epsilon,
                WRITE_AND_READ,
                "Epsilon thomsen anisotropy parameter" );
 
-DECLARE_FIELD( StiffnessVector,
-               "stiffnessVector",
+DECLARE_FIELD( F,
+               "f",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "f quantity in VTI/TTI Fletcher's equations" );
+
+DECLARE_FIELD( StiffnessVector_p,
+               "stiffnessVector_p",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Stiffness vector contains R_h*Pressure_n." );
+
+DECLARE_FIELD( StiffnessVector_q,
+               "stiffnessVector_q",
                array1d< real32 >,
                0,
                NOPLOT,

@@ -1081,7 +1081,7 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
           p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
           p_np1[a] /= mass[a]+0.5*dt*damping[a];
 
-          q_np1[a] = p_n[a];
+          q_np1[a] = q_n[a];
           q_np1[a] *= 2.0*mass[a];
           q_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
           q_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);

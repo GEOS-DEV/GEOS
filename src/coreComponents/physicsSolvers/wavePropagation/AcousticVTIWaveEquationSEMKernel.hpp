@@ -740,7 +740,9 @@ public:
     m_q_n( nodeManager.getField< fields::Pressureq_n >() ),
     m_epsilon( elementSubRegion.template getField< fields::Epsilon >() ),
     m_delta( elementSubRegion.template getField< fields::Delta >() ),
-    m_stiffnessVector( nodeManager.getField< fields::StiffnessVector >() ),
+    m_f( elementSubRegion.template getField< fields::F >() ),
+    m_stiffnessVector_p( nodeManager.getField< fields::StiffnessVector_p >() ),
+    m_stiffnessVector_q( nodeManager.getField< fields::StiffnessVector_q >() ),
     m_dt( dt )
   {
     GEOSX_UNUSED_VAR( edgeManager );
@@ -822,7 +824,6 @@ public:
 
       real32 const localIncrement_q = -val*m_q_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
-
     } );
 
   }
@@ -837,8 +838,11 @@ protected:
   /// The array containing the nodal auxiliary variable array.
   arrayView1d< real32 const > const m_q_n;
 
-  /// The array containing the product of the stiffness matrix and the nodal pressure.
-  arrayView1d< real32 > const m_stiffnessVector;
+  /// The array containing the product of the stiffness matrix and the nodal pressure for the equation in p.
+  arrayView1d< real32 > const m_stiffnessVector_p;
+
+  /// The array containing the product of the stiffness matrix and the nodal pressure for the equation in q.
+  arrayView1d< real32 > const m_stiffnessVector_q;
 
     /// The array containing the epsilon Thomsen parameter.
   arrayView1d< real32 const > const m_epsilon;
