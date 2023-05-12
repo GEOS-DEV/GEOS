@@ -710,6 +710,12 @@ if(DEFINED FMT_DIR)
 
     message( " ----> fmt_VERSION = ${fmt_VERSION}")
 
+    get_target_property(includeDirs fmt::fmt INTERFACE_INCLUDE_DIRECTORIES)
+
+    set_property(TARGET fmt::fmt
+                 APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+                 ${includeDirs})
+
     set(ENABLE_FMT ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} fmt::fmt)
 else()
@@ -750,7 +756,7 @@ endif()
 # Python
 ################################
 if(ENABLE_PYGEOSX)
-    find_package(Python3 REQUIRED
+    find_package(Python3 3.7.0...3.11.2 REQUIRED
                  COMPONENTS Development NumPy)
 
     message( " ----> $Python3_VERSION = ${Python3_VERSION}")
@@ -769,6 +775,9 @@ if(ENABLE_PYGEOSX)
     set(thirdPartyLibs ${thirdPartyLibs} Python3::Python Python3::NumPy)
 else()
     message(STATUS "Not building pygeosx.")
+    find_package(Python3 3.7.0...3.11.2
+                 OPTIONAL_COMPONENTS Development NumPy)
+    message(STATUS "Python3_EXECUTABLE=${Python3_EXECUTABLE}")
 endif()
 
 ################################
