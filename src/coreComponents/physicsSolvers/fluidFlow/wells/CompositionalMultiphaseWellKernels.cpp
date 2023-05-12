@@ -1273,18 +1273,6 @@ AccumulationKernel::
       }
     }
   }
-  std::stringstream os;
-  for( integer i = 0; i < NC; ++i )
-  {
-    os << "****LOC: i " << i << " " << localAccum[i] << " JAC:";
-    for( integer j = 0; j < NC+1; ++j )
-    {
-      os << " " << localAccumJacobian[i][j];
-    }
-    os << "\n";
-  }
-  os << "-------------------------------------------------------------------------\n";
-  // std::cout << os.str() << std::endl;
 }
 
 template< integer NC >
