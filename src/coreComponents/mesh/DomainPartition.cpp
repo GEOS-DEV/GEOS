@@ -82,7 +82,7 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
   PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
 
-  const std::set<int> metisNeighborList = partition.getMetisNeighborList();
+  const std::set< int > metisNeighborList = partition.getMetisNeighborList();
   if( metisNeighborList.empty() )
   {
 

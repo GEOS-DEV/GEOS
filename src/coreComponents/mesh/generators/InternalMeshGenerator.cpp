@@ -539,7 +539,7 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
   }
 }
 
-void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager,  array1d< int > const & partition )
+void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition )
 {
   GEOS_MARK_FUNCTION;
   m_spatialPartition.setPartitions( partition[0], partition[1], partition[2] );

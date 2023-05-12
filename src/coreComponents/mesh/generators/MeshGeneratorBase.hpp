@@ -141,7 +141,7 @@ private:
    * @param[in] partition The number of domains in each dimesion (X,Y,Z)
    * @return The global length scale
    */
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const  & partition ) = 0;
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition ) = 0;
 
   void attachWellInfo( CellBlockManager & cellBlockManager );
 

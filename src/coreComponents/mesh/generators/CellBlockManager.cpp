@@ -688,7 +688,7 @@ Group & CellBlockManager::getFaceBlocks()
   return this->getGroup( viewKeyStruct::faceBlocks() );
 }
 
-Group & CellBlockManager::getLineBlocks() 
+Group & CellBlockManager::getLineBlocks()
 {
   return this->getGroup( viewKeyStruct::lineBlocks() );
 }
