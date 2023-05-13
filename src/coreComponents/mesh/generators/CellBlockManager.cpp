@@ -929,9 +929,10 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
   localIndex offset = maxVertexGlobalID;
   for( localIndex iter_edge = 0; iter_edge < numLocalEdges; iter_edge++ )
   {
-    localIndex newEdgeNodes = 0;
     localIndex v1 = edgeToNodesMapSource[ iter_edge ][ 0 ];
     localIndex v2 = edgeToNodesMapSource[ iter_edge ][ 1 ];
+    globalIndex gv1 = nodeLocalToGlobalSource.toView()[v1];
+    globalIndex gv2 = nodeLocalToGlobalSource.toView()[v2];
     for( int q=0; q<numNodesPerEdge; q++ )
     {
       localIndex nodeID;
@@ -941,9 +942,10 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
         // this is an internal edge node: create it
         nodeID = localNodeID;
         nodeIDs[ nodeKey ] = nodeID;
-        nodeLocalToGlobalNew[ nodeID ] = offset + edgeLocalToGlobal[ iter_edge ] * numInternalNodesPerEdge + newEdgeNodes;
+        std::array< globalIndex, 6 > referenceOrientation = createNodeKey( gv1, gv2, q, order );
+        int gq = referenceOrientation[4] - 1;
+        nodeLocalToGlobalNew[ nodeID ] = offset + edgeLocalToGlobal[ iter_edge ] * numInternalNodesPerEdge + gq;
         localNodeID++;
-        newEdgeNodes++;
       }
       else
       {
