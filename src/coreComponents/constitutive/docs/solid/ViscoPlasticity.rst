@@ -42,14 +42,3 @@ The tangent stiffness tensor is updated using the following equivalent approxima
 Here, :math:`\tensor{c}^e` is the elastic stiffness tensor.
 
 The name of the viscoplastic solver is formed by adding the prefix `Visco` to the name of the elasto-plastic solver used to compute the inviscid stress :math:`\overline{\boldsymbol{\sigma}}`. For example, the solver `Visco Drucker-Prager` corresponds to cases where the inviscid stress is computed by the `Drucker-Prager` solver. It is interesting to note that equivalent viscoelastic solutions can also be obtained using the Duvault-Lions algorithm by updating the inviscid stress with an elastic solver.
-
-
-
-
-
-
-
-
-
-
-
