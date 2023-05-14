@@ -113,6 +113,12 @@ void setupMPI( int argc, char * argv[] )
   }
 
   MPI_COMM_GEOSX = MpiWrapper::commDup( MPI_COMM_WORLD );
+
+  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
+  {
+    // Can't use logging macros prior to logger init
+    std::cout << "Num ranks: " << MpiWrapper::commSize( MPI_COMM_GEOSX ) << std::endl;
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
