@@ -116,12 +116,12 @@ string buildMultipleInputXML( string_array const & inputFileList,
  */
 template< typename T >
 std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >
-stringToInputVariable( T & target, string const & value )
+stringToInputVariable( T & target, string const & value, string const & name )
 {
   std::istringstream ss( value );
   ss >> target;
   GEOS_THROW_IF( ss.fail() || !ss.eof(),
-                 "Error detected while parsing string: \"" << value << "\"",
+                 "Error detected for " << name << " while parsing string: \"" << value << "\"",
                  InputError );
 }
 
@@ -132,7 +132,7 @@ stringToInputVariable( T & target, string const & value )
  */
 template< typename T, int SIZE >
 void
-stringToInputVariable( Tensor< T, SIZE > & target, string const & value );
+stringToInputVariable( Tensor< T, SIZE > & target, string const & value, string const & name );
 
 /**
  * @brief Parse a string and fill an Array with the value(s) in the string.
@@ -145,9 +145,17 @@ stringToInputVariable( Tensor< T, SIZE > & target, string const & value );
  */
 template< typename T, int NDIM, typename PERMUTATION >
 std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >
-stringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string const & value )
+stringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string const & value, string const & name )
 {
-  LvArray::input::stringToArray( array, value );
+  try
+  {
+    LvArray::input::stringToArray( array, value );
+  }
+  catch( const std::invalid_argument & e )
+  {
+    GEOS_THROW( "Error " << e.what() << " detected for " << name << " while parsing string: \"" << value << "\"",
+                InputError );
+  }
 }
 
 ///@}
@@ -157,7 +165,7 @@ namespace internal
 
 /// Defines a static constexpr bool canParseVariable that is true iff the template parameter T
 /// is a valid argument to StringToInputVariable.
-IS_VALID_EXPRESSION( canParseVariable, T, stringToInputVariable( std::declval< T & >(), string() ) );
+IS_VALID_EXPRESSION( canParseVariable, T, stringToInputVariable( std::declval< T & >(), string(), string() ) );
 
 /**
  * @brief Set @p lhs equal to @p rhs.
@@ -224,7 +232,7 @@ readAttributeAsType( T & rval,
   if( !xmlatt.empty() )
   {
     // parse the string/attribute into a value
-    stringToInputVariable( rval, xmlatt.value() );
+    stringToInputVariable( rval, xmlatt.value(), name );
     return true;
   }
   else
@@ -258,7 +266,7 @@ readAttributeAsType( T & rval,
   if( success )
   {
     // parse the string/attribute into a value
-    stringToInputVariable( rval, xmlatt.value() );
+    stringToInputVariable( rval, xmlatt.value(), name );
   }
   return success;
 }

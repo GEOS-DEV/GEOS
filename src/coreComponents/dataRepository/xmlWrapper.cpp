@@ -30,12 +30,12 @@ namespace xmlWrapper
 {
 
 template< typename T, int SIZE >
-void stringToInputVariable( Tensor< T, SIZE > & target, string const & inputValue )
+void stringToInputVariable( Tensor< T, SIZE > & target, string const & inputValue, string const & name )
 {
   std::istringstream ss( inputValue );
   auto const errorMsg = [&]( auto const & msg )
   {
-    return GEOS_FMT( "{} for Tensor<{}> at position {} in input: {}", msg, SIZE, ss.tellg(), inputValue );
+    return GEOS_FMT( "{} for Tensor<{}> at position {} in {} input: {}", msg, SIZE, ss.tellg(), name, inputValue );
   };
 
   // Read the head
@@ -67,9 +67,9 @@ void stringToInputVariable( Tensor< T, SIZE > & target, string const & inputValu
   GEOS_THROW_IF( ss.peek() != std::char_traits< char >::eof(), errorMsg( "Unparsed characters" ), InputError );
 }
 
-template void stringToInputVariable( Tensor< real32, 3 > & target, string const & inputValue );
-template void stringToInputVariable( Tensor< real64, 3 > & target, string const & inputValue );
-template void stringToInputVariable( Tensor< real64, 6 > & target, string const & inputValue );
+template void stringToInputVariable( Tensor< real32, 3 > & target, string const & inputValue, string const & name );
+template void stringToInputVariable( Tensor< real64, 3 > & target, string const & inputValue, string const & name );
+template void stringToInputVariable( Tensor< real64, 6 > & target, string const & inputValue, string const & name );
 
 void addIncludedXML( xmlNode & targetNode, int const level )
 {
