@@ -51,7 +51,6 @@ public:
    */
   static string catalogName() { return "InternalMesh"; }
 
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition ) override;
 
   void importFieldOnArray( Block block,
                            string const & blockName,
@@ -263,6 +262,8 @@ private:
   real64 m_skewCenter[3] = { 0, 0, 0 };
 
 
+
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition ) override;
 
   /**
    * @brief Convert ndim node spatialized index to node global index.

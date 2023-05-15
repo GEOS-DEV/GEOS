@@ -80,7 +80,7 @@ public:
   /**
    * @brief Generate the mesh object the input mesh object.
    * @param parent The parent group of the CellBlockManager.
-   * @param[in] Number of domaoins in each dimesion (X,Y,Z)
+   * @param[in] partition Number of domaoins in each dimesion (X,Y,Z)
    * @return The generated CellBlockManagerABC
    */
   CellBlockManagerABC & generateMesh( Group & parent, array1d< int > const & partition );
@@ -139,7 +139,6 @@ private:
    * @brief Fill the cellBlockManager object .
    * @param[in] cellBlockManager to fill with the mesh informations
    * @param[in] partition The number of domains in each dimesion (X,Y,Z)
-   * @return The global length scale
    */
   virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition ) = 0;
 
