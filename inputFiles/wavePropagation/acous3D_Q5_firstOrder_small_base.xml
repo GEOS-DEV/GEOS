@@ -74,7 +74,7 @@
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solverApplications"
-      forceDt="0.0005"
+      forceDt="0.001"
       target="/Solvers/acousticFirstOrderSolver"/>
 
     <!-- two events to output pressure in an hdf5 file -->
