@@ -73,6 +73,13 @@ void SinglePhaseFVM< BASE >::initializePreSubGroups()
   {
     GEOS_ERROR( "A discretization deriving from FluxApproximationBase must be selected with SinglePhaseFVM" );
   }
+
+  if( m_isThermal )
+  {
+    // For thermal simulations 2 pdes are considered so we let AMG know.
+    LinearSolverParameters & linParams = m_linearSolverParameters.get();
+    linParams.amg.numFunctions = 2;
+  }
 }
 
 template< typename BASE >
@@ -612,7 +619,7 @@ char const faceBcLogMessage[] =
   "\nNote that if this number is equal to zero, the boundary condition will not be applied on this face set.";
 
 char const incompleteBCLogmessage[] = "SinglePhaseFVM {}: at time {}, one or more Face boundary conditions are not complete. "
-                                      "Both pressure and tempeature must be specified, one is missing.";
+                                      "Both pressure and temperature must be specified, one is missing.";
 
 }
 

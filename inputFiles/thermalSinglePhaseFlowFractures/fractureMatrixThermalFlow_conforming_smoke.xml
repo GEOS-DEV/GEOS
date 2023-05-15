@@ -3,18 +3,18 @@
 <Problem>
   <Included>
     <File name="./fractureMatrixThermalFlow_conforming_base.xml" />
-    <File name="./fractureMatrixThermalFlow_conforming_bc_1.xml"/>
+    <File name="./fractureMatrixThermalFlow_conforming_bc.xml"/>
   </Included>
 
   <Mesh>
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1 }"
-      yCoords="{ 0, 1 }"
+      xCoords="{ 0, 20 }"
+      yCoords="{ 0, 20 }"
       zCoords="{ 0, 1 }"
-      nx="{ 2 }"
-      ny="{ 1 }"
+      nx="{ 10 }"
+      ny="{ 11 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
@@ -22,8 +22,8 @@
   <Geometry>
     <Box
       name="fracture"
-      xMin="{ 0.49, 0.1, -0.01 }"
-      xMax="{ 0.51, 0.9, 1.01 }"/>
+      xMin="{ 9.98, -0.01, -0.01 }"
+      xMax="{ 10.02, 20.01, 1.01 }"/>
 
     <Box
       name="source"
@@ -37,7 +37,7 @@
   </Geometry>
 
   <Events
-    maxTime="2e5">
+    maxTime="1e6">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
@@ -48,7 +48,7 @@
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="1e4"
+      forceDt="1e5"
       target="/Solvers/SinglePhaseFlow"/>
 
     <PeriodicEvent
@@ -57,7 +57,7 @@
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="5e4"
+      timeFrequency="1e6"
       target="/Outputs/restartOutput"/>
   </Events>
 </Problem>

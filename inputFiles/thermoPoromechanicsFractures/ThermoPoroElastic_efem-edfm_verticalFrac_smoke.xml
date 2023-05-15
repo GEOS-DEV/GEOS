@@ -27,52 +27,26 @@
       widthVector="{ 0, 0, 1 }"
       dimensions="{ 25, 4 }"/>
   </Geometry>
-
   
   <Events
-    maxTime="100">
+    maxTime="1e6">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGenerator"/>
 
     <PeriodicEvent
-      name="pressureHistoryCollection"
-      endTime="1000.0"
-      forceDt="100.0"
-      target="/Tasks/pressureCollection"/>
-
-    <PeriodicEvent
-      name="pressureTimeHistoryOutput"
-      endTime="1000.0"
-      forceDt="100.0"
-      target="/Outputs/pressureHistoryOutput"/>
-
-   <PeriodicEvent
-      name="temperatureHistoryCollection"
-      endTime="1000.0"
-      forceDt="100.0"
-      target="/Tasks/temperatureCollection"/>
-
-    <PeriodicEvent
-      name="temperatureTimeHistoryOutput"
-      endTime="1000.0"
-      forceDt="100.0"
-      target="/Outputs/temperatureHistoryOutput"/>  
-
-    <PeriodicEvent
       name="outputs"
-      timeFrequency="10.0"
+      cycleFrequency="1"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplication0"
-      endTime="100.0"
-      forceDt="10.0"
+      forceDt="1e5"
       target="/Solvers/poroSolver"/>
  
     <PeriodicEvent
       name="restarts"
-      timeFrequency="100"
+      timeFrequency="1e6"
       target="/Outputs/restartOutput"/>
 </Events>
 

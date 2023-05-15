@@ -3,18 +3,18 @@
 <Problem>
   <Included>
     <File name="./fractureMatrixThermalFlow_edfm_base.xml" />
-    <File name="./fractureMatrixThermalFlow_bc_11.xml" />
+    <File name="./fractureMatrixThermalFlow_bc.xml" />
   </Included>
 
   <Mesh>
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1 }"
-      yCoords="{ 0, 1 }"
+      xCoords="{ 0, 20 }"
+      yCoords="{ 0, 20 }"
       zCoords="{ 0, 1 }"
-      nx="{ 5 }"
-      ny="{ 5 }"
+      nx="{ 11 }"
+      ny="{ 10 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
@@ -30,17 +30,17 @@
       xMin="{ -0.01, 0.79, -0.01 }"
       xMax="{ 1.01, 1.01, 1.01 }"/>
 
-    <BoundedPlane
+     <BoundedPlane
       name="FracturePlane"
       normal="{ 1, 0, 0 }"
-      origin="{ 0.5, 0.5, 0.5 }"
+      origin="{ 10.0, 10.0, 0.5 }"
       lengthVector="{ 0, 1, 0 }"
       widthVector="{ 0, 0, 1 }"
-      dimensions="{ 0.8, 1 }"/>
+      dimensions="{ 25, 4 }"/>
   </Geometry>
 
   <Events
-    maxTime="2e5"
+    maxTime="1e6"
     logLevel="3">
     <SoloEvent
       name="preFracture"
@@ -48,7 +48,7 @@
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="1e4"
+      forceDt="1e5"
       target="/Solvers/SinglePhaseFlow"/>
 
     <PeriodicEvent
@@ -57,18 +57,7 @@
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="5e4"
+      timeFrequency="1e6"
       target="/Outputs/sidreRestart"/>
   </Events>
-
-  <Outputs>
-    <VTK
-      name="vtkOutput"
-      plotFileRoot="fracMatThermalFlow_edfm_vertical"
-      plotLevel="2"
-      format="binary"/>
-
-    <Restart
-      name="sidreRestart"/>
-  </Outputs>
 </Problem>

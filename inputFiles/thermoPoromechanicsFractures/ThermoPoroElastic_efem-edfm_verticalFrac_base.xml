@@ -8,7 +8,7 @@
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="PoroElastic_efem-edfm_verticalFrac"
+      plotFileRoot="ThermoPoroElastic_efem-edfm_verticalFrac"
       plotLevel="2"
       format="binary"/>
     <TimeHistory

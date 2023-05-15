@@ -43,14 +43,13 @@
        name="solverApplications3"
        forceDt="5.e7"
        beginTime="1.1e7"
-       endTime=""
+       endTime="1e9"
        target="/Solvers/singleFlow"/>
 
     <PeriodicEvent
        name="solverApplications4"
        forceDt="1e2"
-       beginTime=""
-       endTime=""
+       beginTime="1e9"
        target="/Solvers/singleFlow"/>
 
      <PeriodicEvent

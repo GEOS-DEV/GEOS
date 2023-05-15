@@ -12,8 +12,8 @@
       xCoords="{ 0, 20 }"
       yCoords="{ 0, 20 }"
       zCoords="{ 0, 1 }"
-      nx="{ 2 }"
-      ny="{ 3 }"
+      nx="{ 10 }"
+      ny="{ 11 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
@@ -26,7 +26,7 @@
   </Geometry>
 
   <Events
-    maxTime="100">
+    maxTime="1.0e6">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGenerator"/>
@@ -36,43 +36,18 @@
     target="/Outputs/vtkOutput"/>  
 
     <PeriodicEvent
-      name="pressureHistoryCollection"
-      endTime="1000.0"
-      forceDt="100.0"
-      target="/Tasks/pressureCollection"/>
-
-    <PeriodicEvent
-      name="pressureTimeHistoryOutput"
-      endTime="1000.0"
-      forceDt="100.0"
-      target="/Outputs/pressureHistoryOutput"/>
-
-   <PeriodicEvent
-      name="temperatureHistoryCollection"
-      endTime="1000.0"
-      forceDt="100.0"
-      target="/Tasks/temperatureCollection"/>
-
-    <PeriodicEvent
-      name="temperatureTimeHistoryOutput"
-      endTime="1000.0"
-      forceDt="100.0"
-      target="/Outputs/temperatureHistoryOutput"/>  
-
-    <PeriodicEvent
       name="outputs"
-      timeFrequency="10.0"
+      cycleFrequency="1"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplication0"
-      endTime="100.0"
-      forceDt="10.0"
+      forceDt="1.0e5"
       target="/Solvers/poroSolver"/>
  
     <PeriodicEvent
       name="restarts"
-      timeFrequency="100"
+      timeFrequency="1.0e6"
       target="/Outputs/restartOutput"/>
 </Events>
 
