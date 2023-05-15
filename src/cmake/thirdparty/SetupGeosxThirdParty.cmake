@@ -755,8 +755,16 @@ endif()
 ################################
 # Python
 ################################
+message(" CMAKE_VERSION ${CMAKE_VERSION} ")
+if( ${CMAKE_VERSION} VERSION_LESS "3.19" )
+    set( PYTHON_AND_VERSION Python3 )
+    set( PYTHON_OPTIONAL_COMPONENTS)
+else()
+    set( PYTHON_AND_VERSION Python3 3.7.0...3.11.2 )
+    set( PYTHON_OPTIONAL_COMPONENTS OPTIONAL_COMPONENTS Development NumPy)
+endif()
 if(ENABLE_PYGEOSX)
-    find_package(Python3 3.7.0...3.11.2 REQUIRED
+    find_package(${PYTHON_AND_VERSION} REQUIRED
                  COMPONENTS Development NumPy)
 
     message( " ----> $Python3_VERSION = ${Python3_VERSION}")
@@ -775,8 +783,7 @@ if(ENABLE_PYGEOSX)
     set(thirdPartyLibs ${thirdPartyLibs} Python3::Python Python3::NumPy)
 else()
     message(STATUS "Not building pygeosx.")
-    find_package(Python3 3.7.0...3.11.2
-                 OPTIONAL_COMPONENTS Development NumPy)
+    find_package(${PYTHON_AND_VERSION} ${PYTHON_OPTIONAL_COMPONENTS})
     message(STATUS "Python3_EXECUTABLE=${Python3_EXECUTABLE}")
 endif()
 
