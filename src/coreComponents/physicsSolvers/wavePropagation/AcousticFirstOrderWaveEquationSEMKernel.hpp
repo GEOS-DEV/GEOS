@@ -446,9 +446,9 @@ struct PressureComputation
    * @param[in] size_node the number of nodes in the subRegion
    * @param[in] X coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
-   * @param[out] velocity_x velocity array in the x direction (only used here)
-   * @param[out] velocity_y velocity array in the y direction (only used here)
-   * @param[out] velocity_z velocity array in the z direction (only used here)
+   * @param[in] velocity_x velocity array in the x direction (only used here)
+   * @param[in] velocity_y velocity array in the y direction (only used here)
+   * @param[in] velocity_z velocity array in the z direction (only used here)
    * @param[in] mass the mass matrix
    * @param[in] damping the damping matrix
    * @param[in] sourceConstants constant part of the source terms

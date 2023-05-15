@@ -406,14 +406,14 @@ public:
 
   /**
    * @brief Provide an immutable arrayView of the reference position. This table will contain all the node coordinates in 64 bits floating
-   *point.
+   * point.
    * @return an immutable arrayView of the reference position.
    */
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > referencePosition() const
   { return m_referencePosition; }
   /**
    * @brief Provide an immutable arrayView of the reference position. This table will contain all the node coordinates in 32 bits floating
-   *point.
+   * point.
    * @return an immutable arrayView of the reference position.
    */
   arrayView2d< real32 const, nodes::REFERENCE_POSITION_USD > referencePosition32() const
