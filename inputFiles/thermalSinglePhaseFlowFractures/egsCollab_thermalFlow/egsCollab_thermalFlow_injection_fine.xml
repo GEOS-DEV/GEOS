@@ -19,8 +19,9 @@
         maxAllowedResidualNorm="1e25"
         lineSearchAction="None"/>
       <LinearSolverParameters
-        directParallel="1"
-        solverType="direct"/>
+        solverType="gmres"
+        preconditionerType="amg"
+        amgNumFunctions="2"/>
     </SinglePhaseFVM>
 
      <EmbeddedSurfaceGenerator
@@ -36,12 +37,12 @@
     <InternalMesh
        name="mesh1"
        elementTypes="{ C3D8 }"
-       xCoords="{ 0, 60, 86.875, 146.875 }"
+       xCoords="{ 0, 60, 148.375 }"
        yCoords="{ 0, 75 }"
-       zCoords="{ 0, 0.625, 60, 84, 144 }"
-       nx="{ 10, 24, 60 }"
+       zCoords="{ 0, 0.625, 100,  143.375 }"
+       nx="{ 20, 84 }"
        ny="{ 75 }"
-       nz="{ 1, 60, 26, 60 }"
+       nz="{ 1, 100, 20 }"
        cellBlockNames="{ cb }"/>
    </Mesh>
    

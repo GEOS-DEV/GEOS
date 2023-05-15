@@ -19,9 +19,9 @@
         newtonMaxIter="100"
         maxAllowedResidualNorm="1e25"/>
       <LinearSolverParameters
-        directParallel="0"
         solverType="gmres"
-        preconditionerType="amg"/>
+        preconditionerType="amg"
+        amgNumFunctions="2"/>
     </SinglePhaseFVM>
   </Solvers>
 

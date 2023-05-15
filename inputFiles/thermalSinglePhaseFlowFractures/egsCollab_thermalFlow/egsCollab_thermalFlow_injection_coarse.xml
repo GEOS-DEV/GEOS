@@ -15,14 +15,14 @@
       isThermal="1"
       targetRegions="{ matrix, fracture }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-4"
-        newtonMaxIter="25"
+        newtonTol="1.0e-2"
+        newtonMaxIter="10"
         maxAllowedResidualNorm="1e25"
         lineSearchAction="None"/>
       <LinearSolverParameters
-        directParallel="1"
         solverType="gmres"
-        preconditionerType="amg"/>
+        preconditionerType="amg"
+        amgNumFunctions="2"/>
     </SinglePhaseFVM>
 
      <EmbeddedSurfaceGenerator
