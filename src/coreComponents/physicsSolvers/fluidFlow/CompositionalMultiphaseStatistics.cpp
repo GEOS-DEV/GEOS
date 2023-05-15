@@ -178,12 +178,12 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
 
     // regionStatistics.totalPoreVolume = 0.0;
     // regionStatistics.totalUncompactedPoreVolume = 0.0;
-    regionStatistics.getWrapper< array1d< real64 > >( RegionStatistics::viewKeyStruct::phasePoreVolumeString()).reference().setValues< serialPolicy >( 0.0 );
+    regionStatistics.getReference< array1d< real64 > >( RegionStatistics::viewKeyStruct::phasePoreVolumeString()).setValues< serialPolicy >( 0.0 );
 
-    regionStatistics.getWrapper< array1d< real64 > >( RegionStatistics::viewKeyStruct::phaseMassString()).reference().setValues< serialPolicy >( 0.0 );
-    regionStatistics.getWrapper< array1d< real64 > >( RegionStatistics::viewKeyStruct::trappedPhaseMassString()).reference().setValues< serialPolicy >( 0.0 );
-    regionStatistics.getWrapper< array1d< real64 > >( RegionStatistics::viewKeyStruct::immobilePhaseMassString()).reference().setValues< serialPolicy >( 0.0 );
-    regionStatistics.getWrapper< array2d< real64 > >( RegionStatistics::viewKeyStruct::dissolvedComponentMassString()).reference().setValues< serialPolicy >( 0.0 );
+    regionStatistics.getReference< array1d< real64 > >( RegionStatistics::viewKeyStruct::phaseMassString()).setValues< serialPolicy >( 0.0 );
+    regionStatistics.getReference< array1d< real64 > >( RegionStatistics::viewKeyStruct::trappedPhaseMassString()).setValues< serialPolicy >( 0.0 );
+    regionStatistics.getReference< array1d< real64 > >( RegionStatistics::viewKeyStruct::immobilePhaseMassString()).setValues< serialPolicy >( 0.0 );
+    regionStatistics.getReference< array2d< real64 > >( RegionStatistics::viewKeyStruct::dissolvedComponentMassString()).setValues< serialPolicy >( 0.0 );
   }
 
   // Step 2: increment the average/min/max quantities for all the subRegions
@@ -302,14 +302,14 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     // regionStatistics.totalUncompactedPoreVolume += subRegionTotalUncompactedPoreVol;
     for( integer ip = 0; ip < numPhases; ++ip )
     {
-      regionStatistics.getWrapper< array1d< real64 > >( RegionStatistics::viewKeyStruct::phasePoreVolumeString()).reference()[ip] += subRegionPhaseDynamicPoreVol[ip];
-      regionStatistics.getWrapper< array1d< real64 > >( RegionStatistics::viewKeyStruct::phaseMassString()).reference()[ip] += subRegionPhaseMass[ip];
-      regionStatistics.getWrapper< array1d< real64 > >( RegionStatistics::viewKeyStruct::trappedPhaseMassString()).reference()[ip] += subRegionTrappedPhaseMass[ip];
-      regionStatistics.getWrapper< array1d< real64 > >( RegionStatistics::viewKeyStruct::immobilePhaseMassString()).reference()[ip] += subRegionImmobilePhaseMass[ip];
+      regionStatistics.getReference< array1d< real64 > >( RegionStatistics::viewKeyStruct::phasePoreVolumeString())[ip] += subRegionPhaseDynamicPoreVol[ip];
+      regionStatistics.getReference< array1d< real64 > >( RegionStatistics::viewKeyStruct::phaseMassString())[ip] += subRegionPhaseMass[ip];
+      regionStatistics.getReference< array1d< real64 > >( RegionStatistics::viewKeyStruct::trappedPhaseMassString())[ip] += subRegionTrappedPhaseMass[ip];
+      regionStatistics.getReference< array1d< real64 > >( RegionStatistics::viewKeyStruct::immobilePhaseMassString())[ip] += subRegionImmobilePhaseMass[ip];
 
       for( integer ic = 0; ic < numComps; ++ic )
       {
-        regionStatistics.getWrapper< array2d< real64 > >( RegionStatistics::viewKeyStruct::dissolvedComponentMassString()).reference()[ip][ic] += subRegionDissolvedComponentMass[ip][ic];
+        regionStatistics.getReference< array2d< real64 > >( RegionStatistics::viewKeyStruct::dissolvedComponentMassString())[ip][ic] += subRegionDissolvedComponentMass[ip][ic];
       }
     }
 
