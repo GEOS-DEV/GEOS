@@ -26,55 +26,55 @@ TEST( testXmlWrapper, array3d_errors )
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
     array3d< int > array;
-    xmlWrapper::stringToInputVariable( array, input );
+    xmlWrapper::stringToInputVariable( array, input, "" );
   }
   // This should fail the num('{')==num('}') test
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } ";
     array3d< int > array;
-    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input ), std::invalid_argument );
+    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input, "" ), std::invalid_argument );
   }
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17}  , { {18,19,20},{21,22,23} } }";
     array3d< int > array;
-    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input ), std::invalid_argument );
+    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input, "" ), std::invalid_argument );
   }
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14,{15,16,17} } , { {18,19,20},{21,22,23} } }";
     array3d< int > array;
-    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input ), std::invalid_argument );
+    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input, "" ), std::invalid_argument );
   }
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8,{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
     array3d< int > array;
-    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input ), std::invalid_argument );
+    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input, "" ), std::invalid_argument );
   }
   {
     input = " { { 0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
     array3d< int > array;
-    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input ), std::invalid_argument );
+    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input, "" ), std::invalid_argument );
   }
   {
     input = "  { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } ";
     array3d< int > array;
-    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input ), std::invalid_argument );
+    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input, "" ), std::invalid_argument );
   }
 
   {
     input = " { { {,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
     array3d< int > array;
-    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input ), std::invalid_argument );
+    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input, "" ), std::invalid_argument );
   }
 
   {
     input = " { { {},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
     array3d< int > array;
-    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input ), std::invalid_argument );
+    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input, "" ), std::invalid_argument );
   }
   {
     input = " { { {0,1,2}}{ } }";
     array3d< int > array;
-    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input ), std::invalid_argument );
+    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input, "" ), std::invalid_argument );
   }
 
 
@@ -118,7 +118,7 @@ TEST( testXmlWrapper, array3d )
   input += " }";
 
   array3d< int > array;
-  xmlWrapper::stringToInputVariable( array, input );
+  xmlWrapper::stringToInputVariable( array, input, "" );
 
   ASSERT_EQ( array.size( 0 ), numI );
   ASSERT_EQ( array.size( 1 ), numJ );
@@ -140,7 +140,7 @@ template< typename T, int N >
 void testTensorWellFormed( string const & input, Tensor< T, N > const expected )
 {
   Tensor< T, N > output;
-  xmlWrapper::stringToInputVariable( output, input );
+  xmlWrapper::stringToInputVariable( output, input, "" );
   EXPECT_EQ( output, expected );
 }
 
@@ -148,7 +148,7 @@ template< typename T, int N >
 void testTensorIllFormed( string const & input )
 {
   Tensor< T, N > output;
-  EXPECT_THROW( xmlWrapper::stringToInputVariable( output, input ), InputError );
+  EXPECT_THROW( xmlWrapper::stringToInputVariable( output, input, "" ), InputError );
 }
 
 TEST( testXmlWrapper, TensorWellFormed )
@@ -194,7 +194,7 @@ public:
   void parseString()
   {
     SCOPED_TRACE( "Parsing string: " + attributeString );
-    xmlWrapper::stringToInputVariable< T >( parsedValue, attributeString );
+    xmlWrapper::stringToInputVariable< T >( parsedValue, attributeString, "" );
     compareValues();
   }
 
