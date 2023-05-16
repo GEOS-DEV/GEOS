@@ -3248,6 +3248,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CarmanKozenyPermeabilityType">
+		<!--anisotropy => Anisotropy factors for three permeability components.-->
+		<xsd:attribute name="anisotropy" type="R1Tensor" default="{1,1,1}" />
 		<!--particleDiameter => Diameter of the spherical particles.-->
 		<xsd:attribute name="particleDiameter" type="real64" use="required" />
 		<!--sphericity => Sphericity of the particles.-->
