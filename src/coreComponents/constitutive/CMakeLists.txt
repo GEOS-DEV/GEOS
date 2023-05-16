@@ -21,6 +21,8 @@ set( constitutive_headers
      contact/CoulombContact.hpp
      contact/ContactSelector.hpp
      contact/FrictionlessContact.hpp
+     fluid/RachfordRice.hpp
+     fluid/CubicEOSPhaseModel.hpp     
      fluid/BlackOilFluidBase.hpp	
      fluid/BlackOilFluid.hpp
      fluid/chemicalReactions/EquilibriumReactions.hpp
@@ -154,6 +156,7 @@ set( constitutive_sources
      contact/ContactBase.cpp
      contact/CoulombContact.cpp
      contact/FrictionlessContact.cpp
+     fluid/RachfordRice.cpp     
      fluid/chemicalReactions/EquilibriumReactions.cpp
      fluid/chemicalReactions/KineticReactions.cpp
      fluid/chemicalReactions/ReactionsBase.cpp
