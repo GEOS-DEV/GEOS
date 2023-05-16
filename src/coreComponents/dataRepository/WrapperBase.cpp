@@ -136,7 +136,7 @@ void WrapperBase::processInputException( std::exception const & ex,
   {
     oss << targetNode.path() << " (name=" << targetNode.attribute( "name" ).value() << ")/" << getName();
   }
-  oss << "\n***** Input value: '" << inputStr << '\''; 
+  oss << "\n***** Input value: '" << inputStr << '\'';
   oss << ( exStr[0]=='\n' ? exStr : "'\n" + exStr );
 
   throw InputError( oss.str() );

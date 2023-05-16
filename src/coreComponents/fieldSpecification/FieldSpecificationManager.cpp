@@ -84,6 +84,14 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       isTargetSetCreated[setNames[i]] = 0;
     }
 
+    // We have to make sure that the meshLevel is in the target of the boundary conditions
+    // This is important for multi-level simulations, such as high-order wave propagation
+    MeshObjectPath const & objectPath = fs.getMeshObjectPaths();
+    if( !objectPath.containsMeshLevel( mesh ) )
+    {
+      return;
+    }
+
     // Step 2: apply the boundary condition
 
     fs.apply< dataRepository::Group >( mesh,
@@ -175,7 +183,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     // ideally we would just stop the simulation, but the SurfaceGenerator relies on this behavior
     for( auto const & mapEntry : isTargetSetEmpty )
     {
-      GEOS_LOG_RANK_0_IF( mapEntry.second == 1, // target set is empty
+      GEOS_LOG_RANK_0_IF( ( mapEntry.second == 1 ), // target set is empty
                           GEOS_FMT( "\nWarning!\n{0}: this FieldSpecification targets (an) empty set(s)"
                                     "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{1}` in `{2}`. \n",
                                     fs.getDataContext(), mapEntry.first, fs.getObjectPath() ) );

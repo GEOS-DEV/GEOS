@@ -107,7 +107,7 @@ public:
   Group & getGroup() const;
 
   /**
-   * @return the group path.
+   * @return the group path with the file & line of the first parent for which this information exists.
    */
   virtual string toString() const;
 

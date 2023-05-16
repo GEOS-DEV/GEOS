@@ -1326,6 +1326,12 @@ public:
   }
 
   /**
+   * @return true if this group has a parent.
+   */
+  bool hasParent() const
+  { return m_parent != nullptr; }
+
+  /**
    * @brief Get the group's index within its parent group
    * @return integral index of current group within its parent
    */

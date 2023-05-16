@@ -96,6 +96,7 @@ set( constitutive_headers
      solid/ProppantSolid.hpp
      solid/CoupledSolidBase.hpp
      solid/CoupledSolid.hpp
+     solid/DuvautLionsSolid.hpp
      solid/Damage.hpp
      solid/DamageSpectral.hpp
      solid/DamageSpectralUtilities.hpp
@@ -112,6 +113,7 @@ set( constitutive_headers
      solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
      solid/SolidBase.hpp
+     solid/SolidUtilities.hpp
      solid/SolidInternalEnergy.hpp
      solid/SolidModelDiscretizationOps.hpp
      solid/SolidModelDiscretizationOpsFullyAnisotroipic.hpp
@@ -215,6 +217,7 @@ set( constitutive_sources
      solid/CompressibleSolid.cpp
      solid/CoupledSolidBase.cpp
      solid/ProppantSolid.cpp
+     solid/DuvautLionsSolid.cpp
      solid/Damage.cpp
      solid/DamageSpectral.cpp
      solid/DamageVolDev.cpp

@@ -312,5 +312,19 @@ void MeshObjectPath::printPermutations() const
   std::cout<<std::endl<<std::endl;
 }
 
+bool MeshObjectPath::containsMeshLevel( MeshLevel const & meshLevel ) const
+{
+  bool isMeshLevelInObjectPath = false;
+  string const bodyName = meshLevel.getParent().getParent().getName();
+  string const levelName = meshLevel.getName();
+
+  auto bodyIter = m_pathPermutations.find( bodyName );
+  if( bodyIter != m_pathPermutations.end() )
+  {
+    auto const levelIter = bodyIter->second.find( levelName );
+    isMeshLevelInObjectPath = ( levelIter != bodyIter->second.end() );
+  }
+  return isMeshLevelInObjectPath;
+}
 
 } /* namespace geos */
