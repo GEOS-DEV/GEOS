@@ -82,8 +82,14 @@ WrapperContext::WrapperContext( WrapperBase & wrapper ):
 
 string WrapperContext::toString() const
 {
-  // if possible, we show the DataFileContext of the parent.
-  return m_group.getDataContext().toString() + ", attribute " + m_objectName;
+  if( m_group.getDataContext().isDataFileContext() )
+  {
+    return m_group.getDataContext().toString() + ", attribute " + m_objectName;
+  }
+  else
+  {
+    return m_group.getDataContext().toString() + "/" + m_objectName;
+  }
 }
 
 
