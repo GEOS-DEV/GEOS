@@ -89,15 +89,17 @@ public:
   using SolidBaseUpdates::saveConvergedState;
 
   GEOS_HOST_DEVICE
-  virtual void smallStrainUpdate( localIndex const k,
-                                  localIndex const q,
-                                  real64 const ( &strainIncrement )[6],
-                                  real64 ( &stress )[6],
-                                  real64 ( &stiffness )[6][6] ) const override;
+  void smallStrainUpdate( localIndex const k,
+                          localIndex const q,
+                          real64 const &  timeIncrement,
+                          real64 const ( &strainIncrement )[6],
+                          real64 ( &stress )[6],
+                          real64 ( &stiffness )[6][6] ) const;
 
   GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const;
@@ -112,6 +114,10 @@ public:
                                  localIndex const q,
                                  real64 ( &elasticStrain )[6] ) const override final;
 
+  GEOS_HOST_DEVICE
+  virtual void viscousStateUpdate( localIndex const k,
+                                   localIndex const q,
+                                   real64 beta ) const override;
 
 protected:
 
@@ -220,13 +226,14 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex const k,
                                                                   localIndex const q,
+                                                                  real64 const & timeIncrement,
                                                                   real64 const ( &strainIncrement )[6],
                                                                   real64 ( & stress )[6],
                                                                   real64 ( & stiffness )[6][6] ) const
 {
   //smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
   // Rename variables for easier implementation
-
+  GEOS_UNUSED_VAR( timeIncrement );
   real64 const mu     = m_shearModulus[k];
   real64 const p0     = m_refPressure;
   real64 const eps_v0 = m_refStrainVol;
@@ -302,13 +309,14 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex const k,
                                                                   localIndex const q,
+                                                                  real64 const & timeIncrement,
                                                                   real64 const ( &strainIncrement )[6],
                                                                   real64 ( & stress )[6],
                                                                   DiscretizationOps & stiffness ) const
 {
   //smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
   // Rename variables for easier implementation
-
+  GEOS_UNUSED_VAR( timeIncrement );
   real64 const mu     = m_shearModulus[k];
   real64 const p0     = m_refPressure;
   real64 const eps_v0 = m_refStrainVol;
@@ -384,6 +392,16 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   stiffness.m_shearModulus = m_shearModulus[k];
 }
 
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void ElasticIsotropicPressureDependentUpdates::viscousStateUpdate( localIndex const k,
+                                                                   localIndex const q,
+                                                                   real64 beta ) const
+{
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( beta );
+}
 
 
 /**
@@ -530,7 +548,7 @@ public:
    * @return An @p UPDATE_KERNEL object.
    */
   template< typename UPDATE_KERNEL, typename ... PARAMS >
-  UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
+  UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams ) const
   {
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
                           m_refPressure,

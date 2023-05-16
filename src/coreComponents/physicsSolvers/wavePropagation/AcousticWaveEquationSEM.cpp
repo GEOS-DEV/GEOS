@@ -39,36 +39,6 @@ AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
                   parent )
 {
 
-  registerWrapper( viewKeyStruct::sourceNodeIdsString(), &m_sourceNodeIds ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Indices of the nodes (in the right order) for each source point" );
-
-  registerWrapper( viewKeyStruct::sourceConstantsString(), &m_sourceConstants ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Constant part of the source for the nodes listed in m_sourceNodeIds" );
-
-  registerWrapper( viewKeyStruct::sourceIsAccessibleString(), &m_sourceIsAccessible ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Flag that indicates whether the source is accessible to this MPI rank" );
-
-  registerWrapper( viewKeyStruct::receiverNodeIdsString(), &m_receiverNodeIds ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Indices of the nodes (in the right order) for each receiver point" );
-
-  registerWrapper( viewKeyStruct::receiverConstantsString(), &m_receiverConstants ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Constant part of the receiver for the nodes listed in m_receiverNodeIds" );
-
-  registerWrapper( viewKeyStruct::receiverIsLocalString(), &m_receiverIsLocal ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Flag that indicates whether the receiver is local to this MPI rank" );
-
   registerWrapper( viewKeyStruct::pressureNp1AtReceiversString(), &m_pressureNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
@@ -81,63 +51,9 @@ AcousticWaveEquationSEM::~AcousticWaveEquationSEM()
   // TODO Auto-generated destructor stub
 }
 
-localIndex AcousticWaveEquationSEM::getNumNodesPerElem()
-{
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
-
-  FiniteElementDiscretization const * const
-  feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
-  GEOS_THROW_IF( feDiscretization == nullptr,
-                 getWrapperDataContext( viewKeyStruct::discretizationString() ) << ": FE discretization " << m_discretizationName << " not found.",
-                 InputError );
-
-  localIndex numNodesPerElem = 0;
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(),
-                                  [&]( string const &,
-                                       MeshLevel const & mesh,
-                                       arrayView1d< string const > const & regionNames )
-  {
-    ElementRegionManager const & elemManager = mesh.getElemManager();
-    elemManager.forElementRegions( regionNames,
-                                   [&] ( localIndex const,
-                                         ElementRegionBase const & elemRegion )
-    {
-      elemRegion.forElementSubRegions( [&]( ElementSubRegionBase const & elementSubRegion )
-      {
-        finiteElement::FiniteElementBase const &
-        fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-        localIndex const numSupportPoints = fe.getNumSupportPoints();
-        if( numSupportPoints > numNodesPerElem )
-        {
-          numNodesPerElem = numSupportPoints;
-        }
-      } );
-    } );
-
-
-  } );
-  return numNodesPerElem;
-}
-
 void AcousticWaveEquationSEM::initializePreSubGroups()
 {
   WaveSolverBase::initializePreSubGroups();
-
-  localIndex numNodesPerElem = getNumNodesPerElem();
-
-  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
-  m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
-  m_sourceConstants.resize( numSourcesGlobal, numNodesPerElem );
-
-  localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
-  m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
-
 }
 
 
@@ -196,51 +112,10 @@ void AcousticWaveEquationSEM::postProcessInput()
 {
 
   WaveSolverBase::postProcessInput();
-  GEOS_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
-                 getWrapperDataContext( viewKeyStruct::sourceCoordinatesString() ) <<
-                 "Invalid number of physical coordinates for the sources",
-                 InputError );
-
-  GEOS_THROW_IF( m_receiverCoordinates.size( 1 ) != 3,
-                 getWrapperDataContext( viewKeyStruct::receiverCoordinatesString() ) <<
-                 "Invalid number of physical coordinates for the receivers",
-                 InputError );
-
-  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
-  real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
-  real64 dt = 0;
-  for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
-  {
-    EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/" + this->getName() )
-    {
-      dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
-    }
-  }
-
-  GEOS_THROW_IF( dt < epsilonLoc*maxTime,
-                 getDataContext() << ": Value for dt (" << dt <<
-                 ") is smaller than local threshold (" << epsilonLoc << ").",
-                 std::runtime_error );
-
-  if( m_dtSeismoTrace > 0 )
-  {
-    m_nsamplesSeismoTrace = int( maxTime / m_dtSeismoTrace) + 1;
-  }
-  else
-  {
-    m_nsamplesSeismoTrace = 0;
-  }
-  localIndex const nsamples = int(maxTime/dt) + 1;
-
-  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
-  m_sourceIsAccessible.resize( numSourcesGlobal );
 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  m_receiverIsLocal.resize( numReceiversGlobal );
 
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
-  m_sourceValue.resize( nsamples, numSourcesGlobal );
 
 }
 
@@ -858,6 +733,7 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
   } );
 
 }
+
 /**
  * Checks if a directory exists.
  *
@@ -889,7 +765,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
     arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_n >();
     arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
 
-    if( computeGradient )
+    if( computeGradient && cycleNumber >= 0 )
     {
 
       arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
@@ -968,7 +844,11 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
     arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_n >();
     arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
 
-    if( computeGradient )
+    EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+    real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
+    int const maxCycle = int(round( maxTime/dt ));
+
+    if( computeGradient && cycleNumber < maxCycle )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -1005,14 +885,17 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
         constexpr localIndex numNodesPerElem = 8;
-
+        arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
         GEOS_MARK_SCOPE ( updatePartialGradient );
         forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const eltIdx )
         {
-          for( localIndex i = 0; i < numNodesPerElem; ++i )
+          if( elemGhostRank[eltIdx]<0 )
           {
-            localIndex nodeIdx = elemsToNodes[eltIdx][i];
-            grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/8.0 * (p_dt2[nodeIdx] * p_n[nodeIdx]);
+            for( localIndex i = 0; i < numNodesPerElem; ++i )
+            {
+              localIndex nodeIdx = elemsToNodes[eltIdx][i];
+              grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/8.0 * (p_dt2[nodeIdx] * p_n[nodeIdx]);
+            }
           }
         } );
       } );
@@ -1068,7 +951,11 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                                             "",
                                                             kernelFactory );
 
-    addSourceToRightHandSide( cycleNumber, rhs );
+    EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+    real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
+    integer const cycleForSource = int(round( -minTime/dt + cycleNumber ));
+    //std::cout<<"cycle GEOSX = "<<cycleForSource<<std::endl;
+    addSourceToRightHandSide( cycleForSource, rhs );
 
     /// calculate your time integrators
     real64 const dt2 = dt*dt;
@@ -1167,11 +1054,12 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                   domain.getNeighbors(),
                                   true );
 
-    // compute the seismic traces since last step.
+    /// compute the seismic traces since last step.
     arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
-
-    computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
-
+    if( time_n >= 0 )
+    {
+      computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
+    }
     /// prepare next step
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {

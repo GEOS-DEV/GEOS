@@ -26,12 +26,14 @@
 namespace geos
 {
 
-class SinglePhasePoromechanics : public CoupledSolver< SinglePhaseBase,
-                                                       SolidMechanicsLagrangianFEM >
+// Note that in the current implementation, the order of the templates in CoupledSolver< ... > matters a lot
+// Changing the order of these templates can break a lot of things (labels in MGR for instance) and must be done carefully
+class SinglePhasePoromechanics : public CoupledSolver< SolidMechanicsLagrangianFEM,
+                                                       SinglePhaseBase >
 {
 public:
 
-  using Base = CoupledSolver< SinglePhaseBase, SolidMechanicsLagrangianFEM >;
+  using Base = CoupledSolver< SolidMechanicsLagrangianFEM, SinglePhaseBase >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -40,8 +42,8 @@ public:
 
   enum class SolverType : integer
   {
-    Flow = 0,
-    SolidMechanics = 1
+    SolidMechanics = 0,
+    Flow = 1
   };
 
   /// String used to form the solverName used to register solvers in CoupledSolver
