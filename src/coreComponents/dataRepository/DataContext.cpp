@@ -18,7 +18,6 @@
 
 #include "Group.hpp"
 #include "WrapperBase.hpp"
-#include "../mainInterface/ProblemManager.hpp"
 
 namespace geos
 {
@@ -48,8 +47,32 @@ GroupContext::GroupContext( Group & group ):
 
 string GroupContext::toString() const
 {
-  // it would be possible to insert the DataFileContext::toString() of parent objects when it exists, but is it relevant ?
-  return m_group.getPath();
+  string path;
+  bool foundNearestLine = false;
+  for( Group const * parentGroup = &m_group; parentGroup->hasParent(); parentGroup = &parentGroup->getParent() )
+  {
+    if( !foundNearestLine && parentGroup->getDataContext().isDataFileContext() )
+    {
+      DataFileContext const & parentContext =
+        dynamic_cast< DataFileContext const & >( parentGroup->getDataContext() );
+      if( parentContext.getLine() != xmlWrapper::xmlDocument::npos )
+      {
+        path.insert( 0, '/' + parentGroup->getName() + '(' +
+                     splitPath( parentContext.getFilePath() ).second +
+                     ",l." + std::to_string( parentContext.getLine() ) + ')' );
+        foundNearestLine=true;
+      }
+      else
+      {
+        path.insert( 0, '/' + parentGroup->getName() );
+      }
+    }
+    else
+    {
+      path.insert( 0, '/' + parentGroup->getName() );
+    }
+  }
+  return path;
 }
 
 
@@ -60,15 +83,7 @@ WrapperContext::WrapperContext( WrapperBase & wrapper ):
 string WrapperContext::toString() const
 {
   // if possible, we show the DataFileContext of the parent.
-  if( m_group.getDataContext().isDataFileContext() )
-  {
-    return m_group.getDataContext().toString() + ", attribute " + m_objectName;
-  }
-  else
-  {
-    // it would be possible to insert the DataFileContext::toString() of parent objects when it exists, but is it relevant ?
-    return m_group.getPath() + "/" + m_objectName;
-  }
+  return m_group.getDataContext().toString() + ", attribute " + m_objectName;
 }
 
 
