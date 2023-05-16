@@ -259,27 +259,41 @@ void InternalWellboreGenerator::postProcessInput()
   }
 
 
-  GEOS_LOG_RANK_0( "radial elements: "<<m_nElems[0] );
-  GEOS_LOG_RANK_0( "Radial Coordinates: "<<m_radialCoords );
+  GEOS_LOG_RANK_0( "Radial elements: "<<m_nElems[0] );
+  GEOS_LOG_RANK_0( "Radial coordinates: "<<m_radialCoords );
 
 
-  if( m_cartesianOuterBoundary < 1000000 )
+  // if the cartesian outer boundary has been specified by the user
+  bool const isCartesianOuterBoundarySpecified = m_cartesianOuterBoundary < 1000000;
+  if( isCartesianOuterBoundarySpecified )
   {
+    // step 1: check the input is valid
     GEOS_ERROR_IF( m_cartesianOuterBoundary < 0,
-                   getWrapperDataContext( viewKeyStruct::cartesianOuterBoundaryString() ) <<
-                   " must be > 0" );
+                   GEOS_FMT( "{} must be strictly larger than 0",
+                             viewKeyStruct::cartesianOuterBoundaryString() ) );
+
+    GEOS_ERROR_IF( m_cartesianOuterBoundary >= m_vertices[0].size()-1,
+                   GEOS_FMT( "{} must be strictly smaller than the number of radial blocks (equal to {} here)",
+                             viewKeyStruct::cartesianOuterBoundaryString(), m_vertices[0].size()-1 ) );
+
+    // step 2: check that the cartesian inner radius is valid
+    bool const isCartesianMappingInnerRadiusSpecified = m_cartesianMappingInnerRadius < 1e98;
     real64 const innerLimit = m_vertices[0][m_cartesianOuterBoundary];
-    real64 const outerLimit = m_vertices[0].size();
-    GEOS_ERROR_IF( m_cartesianMappingInnerRadius > outerLimit && m_cartesianMappingInnerRadius < 1e98,
-                   getWrapperDataContext( viewKeyStruct::cartesianMappingInnerRadiusString() ) <<
-                   " must be inside the outer radius of the mesh" );
+    real64 const outerLimit = m_vertices[0][m_vertices[0].size()-1];
+    GEOS_ERROR_IF( isCartesianMappingInnerRadiusSpecified &&
+                   m_cartesianMappingInnerRadius > outerLimit,
+                   GEOS_FMT( "{} must be inside the outer radius of the mesh",
+                             viewKeyStruct::cartesianMappingInnerRadiusString() ) );
 
-    GEOS_ERROR_IF_LT_MSG( m_cartesianMappingInnerRadius, innerLimit,
-                          getWrapperDataContext( viewKeyStruct::cartesianMappingInnerRadiusString() ) <<
-                          " must be outside the radius of the inner boundary of the region specified by " <<
-                          getWrapperDataContext( viewKeyStruct::cartesianOuterBoundaryString() ) );
+    GEOS_ERROR_IF( m_cartesianMappingInnerRadius < innerLimit,
+                   GEOS_FMT( "{} must be outside the radius (equal to {}) of the inner boundary "
+                             "of the region specified by {}",
+                             viewKeyStruct::cartesianMappingInnerRadiusString(), innerLimit,
+                             viewKeyStruct::cartesianOuterBoundaryString() ) );
 
-    if( m_cartesianMappingInnerRadius > 1e98 )
+    // step 3: if cartesianMappingInnerRadius has not been specified,
+    // the inner radius is the input from cartesianMappingInnerRadius
+    if( !isCartesianMappingInnerRadiusSpecified )
     {
       m_cartesianMappingInnerRadius = innerLimit;
     }
@@ -353,11 +367,11 @@ void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, n
   // Map to radial mesh
   for( localIndex a = 0; a < numNodes; ++a )
   {
-    real64 meshTheta = X[a][1] * M_PI / 180.0;
-    int meshAxis = static_cast< int >( round( meshTheta * 2.0 / M_PI ) );
-    real64 meshPhi = fabs( meshTheta - meshAxis * M_PI / 2.0 );
-    real64 meshRout = m_max[0] / cos( meshPhi );
-    real64 meshRact;
+    real64 const meshTheta = X[a][1] * M_PI / 180.0;
+    int const meshAxis = static_cast< int >( round( meshTheta * 2.0 / M_PI ) );
+    real64 const meshPhi = fabs( meshTheta - meshAxis * M_PI / 2.0 );
+    real64 const meshRout = m_max[0] / cos( meshPhi );
+    real64 meshRact = 0.0;
 
     if( X[a][0] > m_cartesianMappingInnerRadius )
     {
@@ -424,10 +438,10 @@ void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, n
       real64 const & zCoord = X( localNodeIndex, 2 );
 
       // Compute cylindrical coordinates of a reference centered vertical wellbore
-      real64 rCoord = sqrt( xCoord * xCoord + yCoord * yCoord );
+      real64 const rCoord = sqrt( xCoord * xCoord + yCoord * yCoord );
 
       {
-        real64 tCoord;
+        real64 tCoord = 0.0;
 
         if( rCoord < m_coordinatePrecision )
         {
@@ -445,25 +459,25 @@ void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, n
         tCoord *= 180.0 / M_PI;
 
         // Radial distance of the outer square boundary of a reference centered vertical wellbore
-        real64 meshTheta = tCoord * M_PI / 180.0;
-        int meshAxis = static_cast< int >( round( meshTheta * 2.0 / M_PI ) );
-        real64 meshPhi = fabs( meshTheta - meshAxis * M_PI / 2.0 );
-        real64 meshRout = m_cartesianOuterBoundary < m_vertices[0].size() ? m_max[0] / cos( meshPhi ) : m_max[0];
+        real64 const meshTheta = tCoord * M_PI / 180.0;
+        int const meshAxis = static_cast< int >( round( meshTheta * 2.0 / M_PI ) );
+        real64 const meshPhi = fabs( meshTheta - meshAxis * M_PI / 2.0 );
+        real64 const meshRout = m_cartesianOuterBoundary < m_vertices[0].size() ? m_max[0] / cos( meshPhi ) : m_max[0];
 
         // Wellbore trajectory
-        real64 xTopCenter = m_trajectory[0][0];
-        real64 yTopCenter = m_trajectory[0][1];
-        real64 zTop = m_min[2];
+        real64 const xTopCenter = m_trajectory[0][0];
+        real64 const yTopCenter = m_trajectory[0][1];
+        real64 const zTop = m_min[2];
 
-        real64 xBottomCenter = m_trajectory[1][0];
-        real64 yBottomCenter = m_trajectory[1][1];
-        real64 zBottom = m_max[2];
+        real64 const xBottomCenter = m_trajectory[1][0];
+        real64 const yBottomCenter = m_trajectory[1][1];
+        real64 const zBottom = m_max[2];
 
-        real64 dx = xBottomCenter - xTopCenter;
-        real64 dy = yBottomCenter - yTopCenter;
-        real64 dz = zBottom - zTop;
-        real64 dr = sqrt( dx*dx + dy*dy );
-        real64 dl = sqrt( dr*dr + dz*dz );
+        real64 const dx = xBottomCenter - xTopCenter;
+        real64 const dy = yBottomCenter - yTopCenter;
+        real64 const dz = zBottom - zTop;
+        real64 const dr = sqrt( dx*dx + dy*dy );
+        real64 const dl = sqrt( dr*dr + dz*dz );
 
         // Azimuth of the wellbore from x-axis
         real64 theta0;
@@ -483,14 +497,14 @@ void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, n
 
         // The horizontal section of an inclined wellbore is an ellipse
         // The principle directions of this ellipse are defined by dTheta = 0, and PI/2
-        real64 dTheta = meshTheta - theta0;
-        real64 tanDTheta = tan( dTheta );
+        real64 const dTheta = meshTheta - theta0;
+        real64 const tanDTheta = tan( dTheta );
 
         // Transform radial coordinate regarding the elliptical shape of the wellbore section in the horizontal plane
         // This transformation ensures that the outer square boundary is unchanged
         // TODO create a function in ComputationalGeometry class for this pure geometrical transformation
-        real64 transformCoeff = sqrt ( ( 1.0 + tanDTheta * tanDTheta )/( dz*dz/dl/dl + tanDTheta * tanDTheta ) );
-        real64 rCoordTransform = rCoord * ( ( meshRout - rCoord ) / ( meshRout - m_min[0] ) * ( transformCoeff - 1.0 ) + 1.0 );
+        real64 const transformCoeff = sqrt ( ( 1.0 + tanDTheta * tanDTheta )/( dz*dz/dl/dl + tanDTheta * tanDTheta ) );
+        real64 const rCoordTransform = rCoord * ( ( meshRout - rCoord ) / ( meshRout - m_min[0] ) * ( transformCoeff - 1.0 ) + 1.0 );
 
         // Compute transformed cartesian coordinates
         xCoord = rCoordTransform * cos( meshTheta );
@@ -498,9 +512,9 @@ void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, n
 
         // Moving the coordinate in the horizontal plane with respect to the center of the wellbore section
         // This transformation ensures that the ourter square boundary is unchanged
-        real64 zRatio = ( zCoord - zTop ) / ( zBottom -zTop );
-        real64 xCenter = xTopCenter + (xBottomCenter - xTopCenter) * zRatio;
-        real64 yCenter = yTopCenter + (yBottomCenter - yTopCenter) * zRatio;
+        real64 const zRatio = ( zCoord - zTop ) / ( zBottom -zTop );
+        real64 const xCenter = xTopCenter + (xBottomCenter - xTopCenter) * zRatio;
+        real64 const yCenter = yTopCenter + (yBottomCenter - yTopCenter) * zRatio;
 
         xCoord += xCenter * ( meshRout - rCoord ) / ( meshRout - m_min[0] * transformCoeff );
         yCoord += yCenter * ( meshRout - rCoord ) / ( meshRout - m_min[0] * transformCoeff );

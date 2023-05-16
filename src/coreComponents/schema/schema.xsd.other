@@ -567,15 +567,13 @@
 		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 		<!--pressureNp1AtReceivers => Pressure value at each receiver for each timestep-->
 		<xsd:attribute name="pressureNp1AtReceivers" type="real32_array2d" />
-		<!--receiverConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
-		<xsd:attribute name="receiverConstants" type="real64_array2d" />
 		<!--receiverIsLocal => Flag that indicates whether the receiver is local to this MPI rank-->
 		<xsd:attribute name="receiverIsLocal" type="integer_array" />
 		<!--receiverNodeIds => Indices of the nodes (in the right order) for each receiver point-->
 		<xsd:attribute name="receiverNodeIds" type="integer_array2d" />
-		<!--sourceConstants => Constant part of the source for the nodes listed in m_sourceNodeIds-->
+		<!--sourceConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
 		<xsd:attribute name="sourceConstants" type="real64_array2d" />
-		<!--sourceIsAccessible => Flag that indicates whether the source is accessible to this MPI rank-->
+		<!--sourceIsAccessible => Flag that indicates whether the source is local to this MPI rank-->
 		<xsd:attribute name="sourceIsAccessible" type="integer_array" />
 		<!--sourceNodeIds => Indices of the nodes (in the right order) for each source point-->
 		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
@@ -1157,6 +1155,9 @@
 			<xsd:element name="ThermalCompressibleSinglePhaseFluid" type="ThermalCompressibleSinglePhaseFluidType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
+			<xsd:element name="ViscoDruckerPrager" type="ViscoDruckerPragerType" />
+			<xsd:element name="ViscoExtendedDruckerPrager" type="ViscoExtendedDruckerPragerType" />
+			<xsd:element name="ViscoModifiedCamClay" type="ViscoModifiedCamClayType" />
 			<xsd:element name="WillisRichardsPermeability" type="WillisRichardsPermeabilityType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -2295,6 +2296,84 @@
 		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--volFracScale => Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions.-->
 		<xsd:attribute name="volFracScale" type="real64" />
+	</xsd:complexType>
+	<xsd:complexType name="ViscoDruckerPragerType">
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="bulkModulus" type="real64_array" />
+		<!--cohesion => New cohesion state-->
+		<xsd:attribute name="cohesion" type="real64_array2d" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--dilation => Plastic potential slope-->
+		<xsd:attribute name="dilation" type="real64_array" />
+		<!--friction => Yield surface slope-->
+		<xsd:attribute name="friction" type="real64_array" />
+		<!--hardening => Hardening rate-->
+		<xsd:attribute name="hardening" type="real64_array" />
+		<!--oldCohesion => Old cohesion state-->
+		<xsd:attribute name="oldCohesion" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--shearModulus => Elastic Shear Modulus Field-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+	</xsd:complexType>
+	<xsd:complexType name="ViscoExtendedDruckerPragerType">
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="bulkModulus" type="real64_array" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--dilationRatio => Plastic potential slope ratio-->
+		<xsd:attribute name="dilationRatio" type="real64_array" />
+		<!--hardening => Hardening parameter-->
+		<xsd:attribute name="hardening" type="real64_array" />
+		<!--initialFriction => Initial yield surface slope-->
+		<xsd:attribute name="initialFriction" type="real64_array" />
+		<!--oldStateVariable => Old equivalent plastic shear strain-->
+		<xsd:attribute name="oldStateVariable" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--pressureIntercept => Pressure point at cone vertex-->
+		<xsd:attribute name="pressureIntercept" type="real64_array" />
+		<!--residualFriction => Residual yield surface slope-->
+		<xsd:attribute name="residualFriction" type="real64_array" />
+		<!--shearModulus => Elastic Shear Modulus Field-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stateVariable => New equivalent plastic shear strain-->
+		<xsd:attribute name="stateVariable" type="real64_array2d" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+	</xsd:complexType>
+	<xsd:complexType name="ViscoModifiedCamClayType">
+		<!--cslSlope => Slope of the critical state line-->
+		<xsd:attribute name="cslSlope" type="real64_array" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--oldPreConsolidationPressure => Old preconsolidation pressure-->
+		<xsd:attribute name="oldPreConsolidationPressure" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--preConsolidationPressure => New preconsolidation pressure-->
+		<xsd:attribute name="preConsolidationPressure" type="real64_array2d" />
+		<!--recompressionIndex => Recompression Index Field-->
+		<xsd:attribute name="recompressionIndex" type="real64_array" />
+		<!--refPressure => Reference Pressure Field-->
+		<xsd:attribute name="refPressure" type="real64" />
+		<!--refStrainVol => Reference Volumetric Strain-->
+		<xsd:attribute name="refStrainVol" type="real64" />
+		<!--shearModulus => Elastic Shear Modulus-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--virginCompressionIndex => Virgin compression index-->
+		<xsd:attribute name="virginCompressionIndex" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="WillisRichardsPermeabilityType">
 		<!--dPerm_dDispJump => Derivative of rock permeability with respect to displacement jump-->
