@@ -341,7 +341,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
     if( m_fixedStressUpdateThermoPoromechanicsFlag )
     {
       m_maxForce = finiteElement::
-                     regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                     regionBasedKernelApplication< parallelDevicePolicy< >,
                                                    CONSTITUTIVE_BASE,
                                                    CellElementSubRegion >( mesh,
                                                                            regionNames,
@@ -352,7 +352,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
     else
     {
       m_maxForce = finiteElement::
-                     regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                     regionBasedKernelApplication< parallelDevicePolicy< >,
                                                    CONSTITUTIVE_BASE,
                                                    CellElementSubRegion >( mesh,
                                                                            regionNames,
@@ -361,7 +361,6 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                                                            kernelWrapper );
     }
   } );
-
 
   applyContactConstraint( dofManager, domain, localMatrix, localRhs );
 }

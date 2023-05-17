@@ -128,6 +128,7 @@ private:
 
 template< int USD1 >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void PhillipsBrineDensityUpdate::compute( real64 const & pressure,
                                           real64 const & temperature,
                                           arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -175,6 +176,7 @@ void PhillipsBrineDensityUpdate::compute( real64 const & pressure,
 
 template< int USD1, int USD2, int USD3 >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void PhillipsBrineDensityUpdate::compute( real64 const & pressure,
                                           real64 const & temperature,
                                           arraySlice1d< real64 const, USD1 > const & phaseComposition,

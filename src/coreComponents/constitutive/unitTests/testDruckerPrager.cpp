@@ -147,7 +147,7 @@ void testDruckerPragerDriver()
 }
 
 
-#ifdef USE_CUDA
+#ifdef GEOS_USE_DEVICE
 TEST( DruckerPragerTests, testDruckerPragerHost )
 {
   testDruckerPragerDriver< geos::parallelDevicePolicy< > >();
@@ -269,7 +269,7 @@ void testDruckerPragerExtendedDriver()
   EXPECT_TRUE( SolidUtilities::checkSmallStrainStiffness( cmw, 0, 0, timeIncrement, data.strainIncrement ) );
 }
 
-#ifdef USE_CUDA
+#ifdef GEOS_USE_DEVICE
 TEST( DruckerPragerTests, testDruckerPragerExtendedDevice )
 {
   testDruckerPragerExtendedDriver< geos::parallelDevicePolicy< > >();

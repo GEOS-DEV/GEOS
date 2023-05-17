@@ -117,7 +117,7 @@ public:
 
 
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const override final
   {
@@ -181,7 +181,7 @@ private:
 
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
                                                       localIndex const q,
                                                       real64 const & timeIncrement,
@@ -229,7 +229,7 @@ void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
   // else, plasticity (trial stress point lies outside yield surface)
   // the return mapping can in general be written as a newton iteration.
 
-  real64 solution[3]{}, residual[3]{}, delta[3]{};
+  real64 solution[3] = {}, residual[3] = {}, delta[3] = {};
   real64 jacobian[3][3] = {{}}, jacobianInv[3][3] = {{}};
 
   solution[0] = trialP; // initial guess for newP
@@ -353,7 +353,7 @@ void DruckerPragerExtendedUpdates::smallStrainUpdate_ElasticOnly( localIndex con
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
                                                       localIndex const q,
                                                       real64 const & timeIncrement,
