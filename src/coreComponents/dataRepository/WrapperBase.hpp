@@ -180,7 +180,8 @@ public:
   /**
    * @brief Initialize the wrapper from the input xml node.
    * @param targetNode the xml node to initialize from.
-   * @return True iff the wrapper initialized itself from the file.
+   * @param nodePos the target node position, typically obtained with xmlDocument::getNodePosition().
+   * @return True if the wrapper initialized itself from the file.
    */
   virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode,
                                  xmlWrapper::xmlNodePos const & nodePos ) = 0;
@@ -422,7 +423,7 @@ public:
   { return *m_dataContext; }
 
   /**
-   * @brief Return the group that contains this Wrapper.
+   * @return the group that contains this Wrapper.
    */
   Group & getParent()
   { return *m_parent; }
@@ -643,6 +644,7 @@ protected:
    * @brief Helper method to process an exception that has been thrown during xml parsing.
    * @param ex The caught exception.
    * @param targetNode The node from which this Group is interpreted.
+   * @param nodePos the target node position.
    */
   void processInputException( std::exception const & ex, xmlWrapper::xmlNode const & targetNode,
                               xmlWrapper::xmlNodePos const & nodePos ) const;
