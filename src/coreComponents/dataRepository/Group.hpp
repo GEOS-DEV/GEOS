@@ -747,6 +747,7 @@ public:
   /**
    * @brief Recursively read values using ProcessInputFile() from the input
    *        file and put them into the wrapped values for this group.
+   * @param[in] xmlDocument the XML document that contains the targetNode
    * @param[in] targetNode the XML node that to extract input values from.
    */
   void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
