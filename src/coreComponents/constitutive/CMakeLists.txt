@@ -11,9 +11,9 @@ set( constitutive_headers
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/CapillaryPressureBase.hpp
      capillaryPressure/CapillaryPressureFields.hpp
-     capillaryPressure/JFunctionCapillaryPressure.hpp          
+     capillaryPressure/JFunctionCapillaryPressure.hpp
      capillaryPressure/TableCapillaryPressure.hpp
-     capillaryPressure/TableCapillaryPressureHelpers.hpp          
+     capillaryPressure/TableCapillaryPressureHelpers.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      capillaryPressure/capillaryPressureSelector.hpp
      capillaryPressure/layouts.hpp
@@ -21,13 +21,13 @@ set( constitutive_headers
      contact/CoulombContact.hpp
      contact/ContactSelector.hpp
      contact/FrictionlessContact.hpp
-     fluid/BlackOilFluidBase.hpp	
+     fluid/BlackOilFluidBase.hpp
      fluid/BlackOilFluid.hpp
      fluid/chemicalReactions/EquilibriumReactions.hpp
      fluid/chemicalReactions/KineticReactions.hpp
      fluid/chemicalReactions/ReactionsBase.hpp
      fluid/CompressibleSinglePhaseFluid.hpp
-     fluid/CO2BrineFluid.hpp          
+     fluid/CO2BrineFluid.hpp
      fluid/DeadOilFluid.hpp
      fluid/MultiFluidBase.hpp
      fluid/MultiFluidUtils.hpp
@@ -43,15 +43,15 @@ set( constitutive_headers
      fluid/PVTFunctions/CO2Solubility.hpp
      fluid/PVTFunctions/FenghourCO2Viscosity.hpp
      fluid/PVTFunctions/FlashModelBase.hpp
-     fluid/PVTFunctions/PVTFunctionBase.hpp 
-     fluid/PVTFunctions/NoOpPVTFunction.hpp    
+     fluid/PVTFunctions/PVTFunctionBase.hpp
+     fluid/PVTFunctions/NoOpPVTFunction.hpp
      fluid/PVTFunctions/PVTFunctionHelpers.hpp
      fluid/PVTFunctions/SpanWagnerCO2Density.hpp
      fluid/PVTFunctions/BrineEnthalpy.hpp
      fluid/PVTFunctions/CO2Enthalpy.hpp
      fluid/PVTFunctions/CO2EOSSolver.hpp
      fluid/PVTFunctions/PureWaterProperties.hpp
-     fluid/PVTFunctions/WaterDensity.hpp     
+     fluid/PVTFunctions/WaterDensity.hpp
      fluid/ParticleFluid.hpp
      fluid/ParticleFluidBase.hpp
      fluid/ProppantSlurryFluid.hpp
@@ -76,19 +76,19 @@ set( constitutive_headers
      permeability/ParallelPlatesPermeability.hpp
      permeability/PermeabilityBase.hpp
      permeability/PermeabilityFields.hpp
-     permeability/ProppantPermeability.hpp     
+     permeability/ProppantPermeability.hpp
      permeability/SlipDependentPermeability.hpp
-     permeability/WillisRichardsPermeability.hpp  
+     permeability/WillisRichardsPermeability.hpp
      relativePermeability/RelpermDriver.hpp
      relativePermeability/RelpermDriverRunTest.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
-     relativePermeability/RelativePermeabilityBase.hpp 
+     relativePermeability/RelativePermeabilityBase.hpp
      relativePermeability/RelativePermeabilityFields.hpp
      relativePermeability/RelativePermeabilityInterpolators.hpp
      relativePermeability/TableRelativePermeability.hpp
      relativePermeability/TableRelativePermeabilityHelpers.hpp
-     relativePermeability/TableRelativePermeabilityHysteresis.hpp     
+     relativePermeability/TableRelativePermeabilityHysteresis.hpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
      relativePermeability/layouts.hpp
      relativePermeability/RelativePermeabilitySelector.hpp
@@ -96,6 +96,7 @@ set( constitutive_headers
      solid/ProppantSolid.hpp
      solid/CoupledSolidBase.hpp
      solid/CoupledSolid.hpp
+     solid/DuvautLionsSolid.hpp
      solid/Damage.hpp
      solid/DamageSpectral.hpp
      solid/DamageSpectralUtilities.hpp
@@ -113,6 +114,7 @@ set( constitutive_headers
      solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
      solid/SolidBase.hpp
+     solid/SolidUtilities.hpp
      solid/SolidInternalEnergy.hpp
      solid/SolidModelDiscretizationOps.hpp
      solid/SolidModelDiscretizationOpsFullyAnisotroipic.hpp
@@ -147,9 +149,9 @@ set( constitutive_sources
      NullModel.cpp
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
      capillaryPressure/CapillaryPressureBase.cpp
-     capillaryPressure/JFunctionCapillaryPressure.cpp               
+     capillaryPressure/JFunctionCapillaryPressure.cpp
      capillaryPressure/TableCapillaryPressure.cpp
-     capillaryPressure/TableCapillaryPressureHelpers.cpp     
+     capillaryPressure/TableCapillaryPressureHelpers.cpp
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
      contact/ContactBase.cpp
      contact/CoulombContact.cpp
@@ -158,7 +160,7 @@ set( constitutive_sources
      fluid/chemicalReactions/KineticReactions.cpp
      fluid/chemicalReactions/ReactionsBase.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
-     fluid/CO2BrineFluid.cpp     
+     fluid/CO2BrineFluid.cpp
      fluid/BlackOilFluidBase.cpp
      fluid/BlackOilFluid.cpp
      fluid/DeadOilFluid.cpp
@@ -183,8 +185,8 @@ set( constitutive_sources
      fluid/PVTFunctions/CO2Enthalpy.cpp
      fluid/PVTFunctions/CO2EOSSolver.cpp
      fluid/PVTFunctions/PureWaterProperties.cpp
-     fluid/PVTFunctions/WaterDensity.cpp     		
-     fluid/ParticleFluid.cpp              
+     fluid/PVTFunctions/WaterDensity.cpp
+     fluid/ParticleFluid.cpp
      fluid/ParticleFluidBase.cpp
      fluid/ProppantSlurryFluid.cpp
      fluid/ReactiveBrineFluid.cpp
@@ -198,14 +200,14 @@ set( constitutive_sources
      permeability/ExponentialDecayPermeability.cpp
      permeability/ParallelPlatesPermeability.cpp
      permeability/PermeabilityBase.cpp
-     permeability/ProppantPermeability.cpp     
+     permeability/ProppantPermeability.cpp
      permeability/SlipDependentPermeability.cpp
      permeability/WillisRichardsPermeability.cpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
      relativePermeability/RelativePermeabilityBase.cpp
      relativePermeability/TableRelativePermeability.cpp
-     relativePermeability/TableRelativePermeabilityHelpers.cpp     
+     relativePermeability/TableRelativePermeabilityHelpers.cpp
      relativePermeability/TableRelativePermeabilityHysteresis.cpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
      relativePermeability/RelpermDriver.cpp
@@ -217,6 +219,7 @@ set( constitutive_sources
      solid/CompressibleSolid.cpp
      solid/CoupledSolidBase.cpp
      solid/ProppantSolid.cpp
+     solid/DuvautLionsSolid.cpp
      solid/Damage.cpp
      solid/DamageSpectral.cpp
      solid/DamageVolDev.cpp
@@ -238,14 +241,14 @@ set( constitutive_sources
      solid/porosity/PorosityBase.cpp
      solid/porosity/PressurePorosity.cpp
      solid/porosity/ProppantPorosity.cpp
-     thermalConductivity/MultiPhaseConstantThermalConductivity.cpp     
+     thermalConductivity/MultiPhaseConstantThermalConductivity.cpp
      thermalConductivity/MultiPhaseThermalConductivityBase.cpp
-     thermalConductivity/MultiPhaseVolumeWeightedThermalConductivity.cpp    
-     thermalConductivity/SinglePhaseConstantThermalConductivity.cpp     
+     thermalConductivity/MultiPhaseVolumeWeightedThermalConductivity.cpp
+     thermalConductivity/SinglePhaseConstantThermalConductivity.cpp
      thermalConductivity/SinglePhaseThermalConductivityBase.cpp
    )
 
-set( dependencyList events dataRepository functions denseLinearAlgebra )
+set( dependencyList ${parallelDeps} events dataRepository functions denseLinearAlgebra )
 
 if( ENABLE_PVTPackage )
     set( constitutive_headers
@@ -257,14 +260,10 @@ if( ENABLE_PVTPackage )
          ${constitutive_sources}
          fluid/CompositionalMultiphaseFluid.cpp
          )
-       
+
     add_subdirectory( PVTPackage )
 
     set( dependencyList ${dependencyList} PVTPackage )
-endif()
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
 endif()
 
 blt_add_library( NAME       constitutive
@@ -273,10 +272,12 @@ blt_add_library( NAME       constitutive
                  DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
                )
-               
+
 target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
-add_subdirectory( unitTests )
+if( GEOSX_ENABLE_TESTS )
+  add_subdirectory( unitTests )
+endif( )
 
-geosx_add_code_checks( PREFIX constitutive 
+geosx_add_code_checks( PREFIX constitutive
                        EXCLUDES PVTPackage )

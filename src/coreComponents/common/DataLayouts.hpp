@@ -46,7 +46,7 @@ static constexpr int getUSD = LvArray::typeManipulation::getStrideOneDimension( 
 namespace nodes
 {
 
-#if defined( GEOSX_USE_CUDA )
+#if defined( GEOS_USE_DEVICE )
 
 /// Node reference position permutation when using cuda.
 using REFERENCE_POSITION_PERM = RAJA::PERM_JI;
@@ -149,7 +149,7 @@ static constexpr int ACCELERATION_USD = LvArray::typeManipulation::getStrideOneD
 namespace cells
 {
 
-#if defined( GEOSX_USE_CUDA )
+#if defined( GEOS_USE_DEVICE )
 
 /// Cell node map permutation when using cuda.
 using NODE_MAP_PERMUTATION = RAJA::PERM_JI;
@@ -169,7 +169,7 @@ static constexpr int NODE_MAP_USD = LvArray::typeManipulation::getStrideOneDimen
 namespace solid
 {
 
-#if defined( GEOSX_USE_CUDA )
+#if defined( GEOS_USE_DEVICE )
 
 /// Constitutive model stress permutation when using cuda.
 using STRESS_PERMUTATION = RAJA::PERM_KJI;
@@ -198,7 +198,7 @@ static constexpr int STIFFNESS_USD = LvArray::typeManipulation::getStrideOneDime
 namespace compflow
 {
 
-#if defined(GEOSX_USE_CUDA)
+#if defined( GEOS_USE_DEVICE )
 
 /// Component global density/fraction array layout
 using LAYOUT_COMP = RAJA::PERM_JI;
