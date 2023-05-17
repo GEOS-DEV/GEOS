@@ -37,7 +37,8 @@ EventManager::EventManager( string const & name,
   m_time(),
   m_dt(),
   m_cycle(),
-  m_currentSubEvent()
+  m_currentSubEvent(),
+  m_timeOutputFormat( TimeOutputFormat::seconds )
 {
   setInputFlags( InputFlags::REQUIRED );
 
@@ -75,6 +76,10 @@ EventManager::EventManager( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Index of the current subevent." );
 
+  registerWrapper( viewKeyStruct::timeOutputFormat(), &m_timeOutputFormat ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Format of the time in the GEOS log." );
 }
 
 
@@ -163,7 +168,7 @@ bool EventManager::run( DomainPartition & domain )
 #endif
     }
 
-    GEOS_LOG_RANK_0( "Time: " << m_time << "s, dt:" << m_dt << "s, Cycle: " << m_cycle );
+    outputTime();
 
     // Execute
     for(; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent )
@@ -216,6 +221,33 @@ bool EventManager::run( DomainPartition & domain )
   } );
 
   return false;
+}
+
+void EventManager::outputTime() const
+{
+  if( m_timeOutputFormat==TimeOutputFormat::human )
+  { 
+    constexpr integer minute = 60;
+    constexpr integer hour   = 60 * minute;
+    constexpr integer day    = 24 * hour;
+    constexpr integer year   = 365 * day;    
+    
+    integer const yearsOut   = std::floor( m_time / year );
+    integer const daysOut    = std::floor( (m_time - yearsOut * year) / day );
+    integer const hoursOut   = std::floor( (m_time - yearsOut * year - daysOut * day) / hour );
+    integer const minutesOut = std::floor( (m_time - yearsOut * year - daysOut * day - hoursOut * hour) / minute );
+    integer const secondsOut = m_time - yearsOut * year - daysOut * day - hoursOut * hour - minutesOut * minute;
+
+    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {} years, {} days, {} hrs, {} minutes, {} secs, dt: {}s, Cycle: {}", yearsOut, daysOut, hoursOut, minutesOut, secondsOut, m_dt, m_cycle ) );
+  }
+  else if( m_timeOutputFormat == TimeOutputFormat::seconds )
+  {
+    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:4.2e}s, dt: {}s, Cycle: {}", m_time, m_dt, m_cycle ) );
+  }
+  else
+  {
+    GEOS_ERROR( "Unknown time output format requested." );
+  }
 }
 
 } /* namespace geos */

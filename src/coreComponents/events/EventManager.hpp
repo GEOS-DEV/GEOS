@@ -95,6 +95,9 @@ public:
     static constexpr char const * cycleString() { return "cycle"; }
     static constexpr char const * currentSubEventString() { return "currentSubEvent"; }
 
+    static constexpr char const * timeOutputFormat() { return "timeOutputFormat"; }
+
+
     dataRepository::ViewKey time = { "time" };
     dataRepository::ViewKey dt = { "dt" };
     dataRepository::ViewKey cycle = { "cycle" };
@@ -112,7 +115,15 @@ public:
   /// @copydoc dataRepository::Group::getCatalog()
   static CatalogInterface::CatalogType & getCatalog();
 
+  enum class TimeOutputFormat : integer
+  {
+    seconds,
+    human
+  };
+
 private:
+
+  void outputTime() const;
 
   /// Min time for a simulation
   real64 m_minTime;
@@ -134,8 +145,14 @@ private:
 
   /// Current subevent index
   integer m_currentSubEvent;
+
+  /// time output type
+  TimeOutputFormat m_timeOutputFormat;
 };
 
+ENUM_STRINGS( EventManager::TimeOutputFormat,
+              "seconds",
+              "human");
 
 } /* namespace geos */
 
