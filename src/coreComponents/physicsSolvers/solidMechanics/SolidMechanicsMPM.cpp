@@ -626,9 +626,9 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   m_ijkMap.resize( m_nEl[0] + 1, m_nEl[1] + 1, m_nEl[2] + 1 );
   for( int g=0 ; g<numNodes ; g++ )
   {
-    int i = std::round( ( gridPosition[g][0] - m_xLocalMin[0] ) / m_hEl[0] ) ;
-    int j = std::round( ( gridPosition[g][1] - m_xLocalMin[1] ) / m_hEl[1] ) ;
-    int k = std::round( ( gridPosition[g][2] - m_xLocalMin[2] ) / m_hEl[2] ) ;
+    int i = std::round( ( gridPosition[g][0] - m_xLocalMin[0] ) / m_hEl[0] );
+    int j = std::round( ( gridPosition[g][1] - m_xLocalMin[1] ) / m_hEl[1] );
+    int k = std::round( ( gridPosition[g][2] - m_xLocalMin[2] ) / m_hEl[2] );
     m_ijkMap[i][j][k] = g;
   }
 
@@ -1569,8 +1569,8 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int const & separable,
                                                           arraySlice1d< real64 const > const GEOS_UNUSED_PARAM( vB ),
                                                           arraySlice1d< real64 const> const qA,
                                                           arraySlice1d< real64 const > const qB,
-                                                          arraySlice1d< real64 const > const nA,
-                                                          arraySlice1d< real64 const > const nB,
+                                                          arraySlice1d< real64 const > const (nA),
+                                                          arraySlice1d< real64 const > const (nB),
                                                           arraySlice1d< real64 const > const xA, // Position of field A
                                                           arraySlice1d< real64 const > const xB, // Position of field B
                                                           arraySlice1d< real64 > const fA,
@@ -1580,29 +1580,47 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int const & separable,
   real64 mAB = mA + mB;
 
   // Outward normal of field A with respect to field B.
+  real64 nAB[3];
 
   // Use the surface normal for whichever field has more mass.
-  // This should be good for corners against flat surfaces.
+  // if( mA > mB )
+  // {
+  //   nAB[0] = nA[0];
+  //   nAB[1] = nA[1];
+  //   nAB[2] = nA[2];
+  // }
+  // else
+  // {
+  //   nAB[0] = -nB[0];
+  //   nAB[1] = -nB[1];
+  //   nAB[2] = -nB[2];
+  // }
 
-  // nAB = mA > mB ? nA : -nB;
-  real64 nAB[3];
-  if( mA > mB )
+  // Mass-weighted average of the field normals
+  for( int i=0; i<3; i++ )
   {
-    nAB[0] = nA[0];
-    nAB[1] = nA[1];
-    nAB[2] = nA[2];
+    nAB[i] = nA[i] * mA - nB[i] * mB;
   }
-  else
+
+  // Vector pointing from CoM of A field to CoM of B field, stretched by grid spacing
+  // for( int i=0; i<3; i++ )
+  // {
+  //   nAB[i] = (xB[i] - xA[i]) / m_hEl[i];
+  // }
+
+  // Normalize the effective surface normal
+  if( m_planeStrain == 1 )
   {
-    nAB[0] = -nB[0];
-    nAB[1] = -nB[1];
-    nAB[2] = -nB[2];
+    nAB[2] = 0.0;
   }
   real64 norm = sqrt(nAB[0] * nAB[0] + nAB[1] * nAB[1] + nAB[2] * nAB[2]);
   nAB[0] /= norm;
   nAB[1] /= norm;
   nAB[2] /= norm;
 
+
+
+  // Calculate the contact gap between the fields
   real64 gap0;
   if(m_planeStrain == 1)
   {
@@ -1612,7 +1630,6 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int const & separable,
   {
     gap0 = (m_hEl[0]*m_hEl[1]*m_hEl[2]) / sqrt( m_hEl[2]*m_hEl[2]*nAB[2]*nAB[2]*( m_hEl[1]*m_hEl[1]*nAB[0]*nAB[0] + m_hEl[0]*m_hEl[0]*nAB[1]*nAB[1] ) + m_hEl[0]*m_hEl[0]*m_hEl[1]*m_hEl[1]*( nAB[0]*nAB[0] + nAB[1]*nAB[1] ) );
   } 
-  
   real64 gap = (xB[0] - xA[0]) * nAB[0] + (xB[1] - xA[1]) * nAB[1] + (xB[2] - xA[2]) * nAB[2] - gap0; // TODO: A fudge factor of 0.67 on gap0 makes diagonal surfaces (wrt grid) close better I think, but I like this more
 
   // Total momentum for the contact pair.
@@ -2418,7 +2435,7 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( ParticleManager & part
   {
     // Get particle fields
     arrayView2d< real64 const > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
-    // arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
+    arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
 
     // Get nodes this particle maps to
     arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
@@ -2429,27 +2446,6 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( ParticleManager & part
     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // Parallelize with atomics/reduction
     {
       localIndex const p = activeParticleIndices[pp];
-      
-      // int gMin = gridDamageGradient.size(0)+1;
-      // int gMax = 0;
-      // for(localIndex & g: nodeIDs)
-      // {
-      //   if( g > gMax )
-      //   {
-      //     gMax = g;
-      //   }
-      //   if( g < gMin )
-      //   {
-      //     gMin = g;
-      //   }
-      // }
-      // if( gMax >= gridDamageGradient.size(0) || gMin < 0 )
-      // {
-      //   GEOS_LOG_RANK( "Offending particle: " << particleID[p] );
-      //   GEOS_LOG_RANK( "Number of nodes: " << gridDamageGradient.size(0) );
-      //   GEOS_LOG_RANK( "gMax: " << gMax );
-      //   GEOS_LOG_RANK( "gMin: " << gMin );
-      // }
 
       // Map to grid
       for( localIndex const & g: mappedNodes[pp] )
@@ -2883,7 +2879,7 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
   arrayView3d< real64 > const & gridAcceleration = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::accelerationString() );
   arrayView3d< real64 > const & gridContactForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::forceContactString() );
   arrayView3d< real64 > const & gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::surfaceNormalString() );
-  arrayView3d< real64 const > const & gridMaterialPosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::materialPositionString() );
+  arrayView3d< real64 > const & gridMaterialPosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::materialPositionString() );
   
   // Compute grid surface normals
   computeGridSurfaceNormals( particleManager, nodeManager );
@@ -2897,7 +2893,8 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
   // Normalize grid surface normals
   normalizeGridSurfaceNormals( gridMass, gridSurfaceNormal );
 
-  // TODO: Enforce symmetry on grid mass and material position?
+  // Apply symmetry boundary conditions to material position
+  enforceGridVectorFieldSymmetryBC( gridMaterialPosition, gridPosition, nodeManager.sets() );
 
   // Compute contact forces
   computeContactForces( dt,
@@ -3593,10 +3590,10 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
   {
     if( subRegion.getParticleType() == ParticleType::CPDI )
     {
-      real64 const lCrit = m_planeStrain ? 0.49999 * fmin( m_hEl[0], m_hEl[1] ) : 0.49999 * fmin( m_hEl[0], fmin( m_hEl[1], m_hEl[2] ) );
+      real64 const lCrit = m_planeStrain == 1 ? 0.49999 * fmin( m_hEl[0], m_hEl[1] ) : 0.49999 * fmin( m_hEl[0], fmin( m_hEl[1], m_hEl[2] ) );
       arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
       int const planeStrain = m_planeStrain;
-      forAll< serialPolicy >( this->size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
+      forAll< serialPolicy >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
       {
         arraySlice1d< real64 > const r1 = particleRVectors[p][0];
         arraySlice1d< real64 > const r2 = particleRVectors[p][1];
@@ -3761,7 +3758,7 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
               {
                 real64 zWeight = k*zRel + (1-k)*(1.0-zRel);
                 real64 dzWeight = k/hEl[2] - (1-k)/hEl[2];
-                mappedNodes[pp][node] = ijkMap[centerIJK[0]+i][centerIJK[1]+j][centerIJK[2]+k] ;
+                mappedNodes[pp][node] = ijkMap[centerIJK[0]+i][centerIJK[1]+j][centerIJK[2]+k];
                 shapeFunctionValues[pp][node] = xWeight * yWeight * zWeight;
                 shapeFunctionGradientValues[pp][node][0] = dxWeight * yWeight * zWeight;
                 shapeFunctionGradientValues[pp][node][1] = xWeight * dyWeight * zWeight;
