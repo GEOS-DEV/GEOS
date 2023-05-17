@@ -14,7 +14,7 @@
       isThermal="1"
       targetRegions="{ matrix, fracture }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-4"
+        newtonTol="1.0e-2"
         newtonMaxIter="25"
         maxAllowedResidualNorm="1e25"
         lineSearchAction="None"/>

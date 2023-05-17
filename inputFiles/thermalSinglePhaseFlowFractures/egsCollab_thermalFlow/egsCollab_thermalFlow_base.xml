@@ -30,6 +30,21 @@
     lengthVector="{ -0.4902994003, 0.0000000000, 0.8715540706 }"
     widthVector="{ 0.7951226658, -0.4095126032, 0.4473023297 }"
     dimensions="{ 100, 80 }"/>
+    <Cylinder
+    name="TU_injector"
+    firstFaceCenter="{ 140.0, -0.1, 5 }"
+    secondFaceCenter="{ 140.0, 75.1, 5 }"
+    outerRadius="2"/>
+    <Cylinder
+    name="TC_producer"
+    firstFaceCenter="{ 90.0, -0.1, 40 }"
+    secondFaceCenter="{ 90.0, 75.1, 40 }"
+    outerRadius="2"/>
+    <Cylinder
+    name="TN_producer"
+    firstFaceCenter="{ 100.0, -0.1, 50 }"
+    secondFaceCenter="{ 100.0, 75.1, 50 }"
+    outerRadius="2"/>
   </Geometry>
 
  <Constitutive>
@@ -37,9 +52,9 @@
        name="water"
        defaultDensity="1000"
        defaultViscosity="0.001"
-       referencePressure="1.0e5"
+       referencePressure="1.0e6"
        referenceTemperature="273.0"
-       compressibility="0.0"
+       compressibility="1.0e-10"
        thermalExpansionCoeff="0.0"
        viscosibility="0.0"
        volumetricHeatCapacity="4.0e3"

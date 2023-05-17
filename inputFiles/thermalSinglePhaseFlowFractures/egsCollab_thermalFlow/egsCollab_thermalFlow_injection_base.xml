@@ -20,7 +20,7 @@
   </ElementRegions>
 
   <Events
-     maxTime="1e9">
+     maxTime="1.00172800e9">
      <SoloEvent
      name="preFracture"
      target="/Solvers/SurfaceGenerator"/>
@@ -48,9 +48,17 @@
 
     <PeriodicEvent
        name="solverApplications4"
-       forceDt="1e2"
-       beginTime="1e9"
+       forceDt="1"
+       beginTime="1.0000000000e9"
+       endTime="1.000000001e9"
        target="/Solvers/singleFlow"/>
+
+    <PeriodicEvent
+       name="solverApplications5"
+       beginTime="1.000000001e9"
+       endTime="1.00172800e9"
+       maxEventDt="8"
+       target="/Solvers/singleFlow"/>   
 
      <PeriodicEvent
        name="outputs"
@@ -122,12 +130,65 @@
       fieldName="temperature"
       scale="291.65"
       setNames="{ Drift }"/>   
-      
-    <!-- <SourceFlux
-      name="sourceTerm"
-      objectPath="ElementRegions/fracture/"
-      scale="-0.00001"
-      setNames="{ source }"/> -->
+    <!-- Injection -->
+    <SourceFlux                                                                                                                                                                          
+      name="TU_massFlux"                                                                                                                                                                  
+      component="0"                                                                                                                                                                      
+      setNames="{ TU_injector }"                                                                                                                                                                
+      objectPath="ElementRegions/fracture"                                                                                                                                              
+      functionName="injectionSchedule_massFlux"                                                                                                                                                      
+      scale="-1.0"/>
+
+    <!-- <FieldSpecification                                                                                                                                                                          
+      name="TU_pressure"                                                                                                                                                                  
+      component="0"                                                                                                                                                                      
+      setNames="{ TU_injector }"                                                                                                                                                                
+      objectPath="ElementRegions/fracture"  
+      fieldName="pressure"
+      beginTime="1.0e9"
+      scale="4e6"/>   -->
+
+    <FieldSpecification                                                                                                                                                                  
+      name="TU_temperature"                                                                                                                                                       
+      objectPath="ElementRegions/fracture"                                                                                                                                              
+      fieldName="temperature"                                                                                                                                                            
+      functionName="injectionSchedule_temperature"
+      beginTime="1.0e9"                                                                                                                                              
+      scale="1"                                                                                                                                                                          
+      setNames="{ TU_injector }"/>
+
+    <!-- Production --> 
+    <SourceFlux                                                                                                                                                                          
+      name="TN_massFlux"                                                                                                                                                                  
+      component="0"                                                                                                                                                                      
+      setNames="{ TN_producer }"                                                                                                                                                                
+      objectPath="ElementRegions/fracture"                                                                                                                                              
+      functionName="TN_massFlux"                                                                                                                                                      
+      scale="1.0"/>
+
+    <!-- <FieldSpecification                                                                                                                                                                          
+      name="TN_pressure"                                                                                                                                                                  
+      setNames="{ TN_producer }"                                                                                                                                                                
+      objectPath="ElementRegions/fracture"  
+      fieldName="pressure"
+      beginTime="1.0e9"
+      scale="1.0e6"/>   -->
+
+    <SourceFlux                                                                                                                                                                          
+      name="TC_massFlux"                                                                                                                                                                  
+      component="0"                                                                                                                                                                      
+      setNames="{ TC_producer }"                                                                                                                                                                
+      objectPath="ElementRegions/fracture"                                                                                                                                              
+      functionName="TC_massFlux"                                                                                                                                                      
+      scale="1.0"/>
+
+    <!-- <FieldSpecification                                                                                                                                                                          
+      name="TC_pressure"                                                                                                                                                                  
+      setNames="{ TC_producer }"                                                                                                                                                                
+      objectPath="ElementRegions/fracture"  
+      fieldName="pressure"
+      beginTime="1.0e9"
+      scale="1.0e6"/>       -->
   </FieldSpecifications>
 
   <Functions>
@@ -143,7 +204,35 @@
       inputVarNames="{ elementCenter }"
       coordinateFiles="{ bc_data/xlin.geos, bc_data/ylin.geos, bc_data/zlin.geos }"
       voxelFile="bc_data/pressure.geos"
-      interpolation="linear"/>  
+      interpolation="linear"/> 
+
+    <TableFunction
+      name="injectionSchedule_massFlux"
+      inputVarNames="{ time }"
+      coordinateFiles="{ injectionSchedule_time.csv }"
+      voxelFile="TU_flowRate.csv"
+      interpolation="linear"/> 
+
+    <TableFunction
+      name="injectionSchedule_temperature"
+      inputVarNames="{ time }"
+      coordinateFiles="{ injectionSchedule_time.csv }"
+      voxelFile="TU_temperature.csv"
+      interpolation="linear"/>
+
+    <TableFunction
+      name="TN_massFlux"
+      inputVarNames="{ time }"
+      coordinateFiles="{ productionSchedule_time.csv }"
+      voxelFile="TN_flowRate.csv"
+      interpolation="linear"/>
+
+    <TableFunction
+      name="TC_massFlux"
+      inputVarNames="{ time }"
+      coordinateFiles="{ productionSchedule_time.csv }"
+      voxelFile="TC_flowRate.csv"
+      interpolation="linear"/>   
   </Functions>
 
   <Outputs>
