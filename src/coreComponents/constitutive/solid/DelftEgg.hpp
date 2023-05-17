@@ -119,21 +119,23 @@ public:
 
 
   GEOS_HOST_DEVICE
-  virtual void smallStrainUpdate( localIndex const k,
-                                  localIndex const q,
-                                  real64 const ( &strainIncrement )[6],
-                                  real64 ( &stress )[6],
-                                  real64 ( &stiffness )[6][6] ) const override final;
+  void smallStrainUpdate( localIndex const k,
+                          localIndex const q,
+                          real64 const & timeIncrement,
+                          real64 const ( &strainIncrement )[6],
+                          real64 ( &stress )[6],
+                          real64 ( &stiffness )[6][6] ) const;
 
   GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const final;
 
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const override final
   {
@@ -165,7 +167,7 @@ private:
 
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void DelftEggUpdates::evaluateYield( real64 const p,
                                      real64 const q,
                                      real64 const pc,
@@ -207,16 +209,16 @@ void DelftEggUpdates::evaluateYield( real64 const p,
 
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void DelftEggUpdates::smallStrainUpdate( localIndex const k,
                                          localIndex const q,
+                                         real64 const & timeIncrement,
                                          real64 const ( &strainIncrement )[6],
                                          real64 ( & stress )[6],
                                          real64 ( & stiffness )[6][6] ) const
 {
 
   // Rename variables for easier implementation
-
   real64 const oldPc  = m_oldPreConsolidationPressure[k][q];   //pre-consolidation pressure
   real64 const mu     = m_shearModulus[k];
   real64 const bulkModulus     = m_bulkModulus[k];
@@ -230,7 +232,7 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
 
   // elastic predictor (assume strainIncrement is all elastic)
 
-  ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+  ElasticIsotropicUpdates::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
 
   if( m_disableInelasticity )
   {
@@ -264,7 +266,7 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
 
   eps_s_trial = trialQ/3.0/mu;
 
-  real64 solution[3]{}, residual[3]{}, delta[3]{};
+  real64 solution[3] = {}, residual[3] = {}, delta[3] = {};
   real64 jacobian[3][3] = {{}}, jacobianInv[3][3] = {{}};
 
   solution[0] = eps_v_trial; // initial guess for elastic volumetric strain
@@ -435,14 +437,15 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
 
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void DelftEggUpdates::smallStrainUpdate( localIndex const k,
                                          localIndex const q,
+                                         real64 const & timeIncrement,
                                          real64 const ( &strainIncrement )[6],
                                          real64 ( & stress )[6],
                                          DiscretizationOps & stiffness ) const
 {
-  smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );
+  smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
 }
 
 

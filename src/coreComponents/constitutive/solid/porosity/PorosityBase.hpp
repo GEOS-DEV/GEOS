@@ -69,7 +69,7 @@ public:
    * @param[in] dPorosity_dPressure porosity derivative w.r.t pressure to be saved to m_dPorosity_dPressure[k][q]
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   void savePorosity( localIndex const k,
                      localIndex const q,
                      real64 const & porosity,
@@ -104,7 +104,7 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   real64 getPorosity( localIndex const k,
                       localIndex const q ) const
   {
@@ -113,7 +113,7 @@ public:
 
 
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   real64 getPorosity_n( localIndex const k,
                         localIndex const q ) const
   {
@@ -121,7 +121,7 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   real64 getInitialPorosity( localIndex const k,
                              localIndex const q ) const
   {

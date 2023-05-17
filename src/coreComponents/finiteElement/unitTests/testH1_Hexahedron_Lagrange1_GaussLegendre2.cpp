@@ -171,7 +171,7 @@ void testKernelDriver()
 }
 
 
-#ifdef USE_CUDA
+#ifdef GEOS_USE_DEVICE
 TEST( FiniteElementShapeFunctions, testKernelCuda )
 {
   testKernelDriver< geos::parallelDevicePolicy< 32 > >();

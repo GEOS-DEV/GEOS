@@ -45,7 +45,7 @@ def getDataFromXML(xmlFilePathPrefix):
 	return [ri, Ti, drainedBulkModulusRock, defaultShearModulus, defaultThermalExpansionCoefficient, defaultReferencePorosity, grainBulkModulus, fluidCompressibility, fluidViscosity, fluidThermalExpansionCoefficient, permeability, thermalConductivity, volumetricHeatCapacity]
 
 def analyticalResults(t):
-	xmlFilePathPrefix = "../../../../../../../inputFiles/wellbore/THM_wellbore"
+	xmlFilePathPrefix = "../../../../../../../inputFiles/wellbore/ThermoPoroElasticWellbore"
 
 	xmlData = getDataFromXML(xmlFilePathPrefix)
 

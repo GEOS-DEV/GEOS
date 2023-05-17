@@ -36,7 +36,7 @@ namespace solidMechanicsEFEMKernelsHelper
 
 template< int NUM_NODES >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void computeHeavisideFunction( integer (& heaviside)[NUM_NODES],
                                real64 (& X)[NUM_NODES][3],
                                arraySlice1d< real64 const > const normalVector,
@@ -59,7 +59,7 @@ template< int I_SIZE,
           int J_SIZE,
           int NUM_NODES >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void assembleStrainOperator( real64 ( & strainMatrix )[I_SIZE][J_SIZE],
                              real64 ( & dNdX )[NUM_NODES][3] )
 {
@@ -84,7 +84,7 @@ void assembleStrainOperator( real64 ( & strainMatrix )[I_SIZE][J_SIZE],
 
 template< int NUM_NODES >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void assembleCompatibilityOperator( real64 ( & compMatrix )[3][6],
                                     arraySlice1d< real64 const > const & nVec,
                                     arraySlice1d< real64 const > const & tVec1,
@@ -124,7 +124,7 @@ void assembleCompatibilityOperator( real64 ( & compMatrix )[3][6],
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void assembleEquilibriumOperator( real64 ( & eqMatrix )[3][6],
                                   arraySlice1d< real64 const > const nVec,
                                   arraySlice1d< real64 const > const tVec1,

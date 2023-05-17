@@ -556,7 +556,8 @@ private:
 };
 
 GEOS_HOST_DEVICE
-inline void
+inline
+void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   computeDrainageRelPerm( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
                           real64 const & phaseVolFraction,
@@ -569,7 +570,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-inline void
+inline
+void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   computeTrappedCriticalPhaseVolFraction( real64 const & Scrd,
                                           real64 const & Shy,
@@ -586,7 +588,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-inline void
+inline
+void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   computeImbibitionWettingRelPerm( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
                                    TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
@@ -672,7 +675,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-inline void
+inline
+void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   computeImbibitionNonWettingRelPerm( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
                                       TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
@@ -750,7 +754,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-inline void
+inline
+void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   computeTwoPhase( integer const ipWetting,
                    integer const ipNonWetting,
@@ -838,7 +843,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-inline void
+inline
+void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   computeThreePhase( integer const ipWetting,
                      integer const ipInter,
@@ -962,7 +968,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-inline void
+inline
+void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMaxHistoricalVolFraction,
@@ -1028,7 +1035,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-inline void
+inline
+void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   update( localIndex const k,
           localIndex const q,

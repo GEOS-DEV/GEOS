@@ -248,7 +248,7 @@ protected:
                        localIndex const numLocalColumns,
                        MPI_Comm const & comm )
   {
-    localMatrix.move( LvArray::MemorySpace::host, false );
+    localMatrix.move( hostMemorySpace, false );
 
     localIndex maxEntriesPerRow = 0;
     for( localIndex i = 0; i < localMatrix.numRows(); ++i )

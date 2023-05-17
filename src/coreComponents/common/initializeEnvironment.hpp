@@ -21,7 +21,10 @@
 
 // TPL includes
 #ifdef GEOSX_USE_CALIPER
+
+#ifdef GEOSX_USE_ADIAK
 #include <adiak.hpp>
+#endif
 
 //Forward declaration of cali::ConfigManager.
 namespace cali
@@ -166,7 +169,7 @@ void setupCaliper( cali::ConfigManager & caliperManager,
 template< typename T >
 void pushStatsIntoAdiak( string const & name, T const value )
 {
-#if defined( GEOSX_USE_CALIPER ) && !defined(__APPLE__)
+#if defined( GEOSX_USE_CALIPER ) && defined( GEOSX_USE_ADIAK ) && !defined(__APPLE__)
   // Apple clang doesn't like adiak.
   T const total = MpiWrapper::sum( value );
   adiak::value( name + " sum", total );

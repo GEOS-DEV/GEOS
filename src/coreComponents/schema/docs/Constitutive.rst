@@ -69,6 +69,9 @@ TableRelativePermeabilityHysteresis           node         :ref:`XML_TableRelati
 ThermalCompressibleSinglePhaseFluid           node         :ref:`XML_ThermalCompressibleSinglePhaseFluid`           
 VanGenuchtenBakerRelativePermeability         node         :ref:`XML_VanGenuchtenBakerRelativePermeability`         
 VanGenuchtenCapillaryPressure                 node         :ref:`XML_VanGenuchtenCapillaryPressure`                 
+ViscoDruckerPrager                            node         :ref:`XML_ViscoDruckerPrager`                            
+ViscoExtendedDruckerPrager                    node         :ref:`XML_ViscoExtendedDruckerPrager`                    
+ViscoModifiedCamClay                          node         :ref:`XML_ViscoModifiedCamClay`                          
 WillisRichardsPermeability                    node         :ref:`XML_WillisRichardsPermeability`                    
 ============================================= ==== ======= ======================================================== 
 

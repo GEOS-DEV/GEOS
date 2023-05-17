@@ -13,5 +13,4 @@ set(MPI_HOME /usr/tce/packages/mvapich2/mvapich2-2.3.6-gcc-12.1.1-magic CACHE PA
 
 set(ENABLE_TRILINOS OFF CACHE BOOL "" FORCE)
 
-
 include(${CMAKE_CURRENT_LIST_DIR}/quartz-base.cmake)
