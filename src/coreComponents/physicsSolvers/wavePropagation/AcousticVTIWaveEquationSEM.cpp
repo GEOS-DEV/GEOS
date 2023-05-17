@@ -1202,7 +1202,7 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     arrayView1d< real32 > const stiffnessVector_q = nodeManager.getField< fields::StiffnessVector_q >();
     arrayView1d< real32 > const rhs = nodeManager.getField< fields::ForcingRHS >();
 
-    bool const usePML = m_usePML;
+//    bool const usePML = m_usePML;
 
     auto kernelFactory = acousticVTIWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
 
@@ -1220,8 +1220,8 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     /// calculate your time integrators
     real64 const dt2 = dt*dt;
 
-    if( !usePML )
-    {
+//    if( !usePML )
+  //  {
       GEOS_MARK_SCOPE ( updateP );
       forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
@@ -1230,12 +1230,12 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
           p_np1[a] = 2.0*mass[a]*p_n[a]/dt2;
           p_np1[a] -= mass[a]*p_nm1[a]/dt2;
           p_np1[a] += stiffnessVector_p[a];
-          p_np1[a] += rhs_p[a];
+          p_np1[a] += rhs[a];
 
           q_np1[a] = 2.0*mass[a]*q_n[a]/dt2;
           q_np1[a] -= mass[a]*q_nm1[a]/dt2;
           q_np1[a] += stiffnessVector_q[a];
-          q_np1[a] += rhs_q[a];
+          q_np1[a] += rhs[a];
 
           if(lateralSurfaceNodeIndicator[a] != 1 && bottomSurfaceNodeIndicator[a] != 1)
           {
@@ -1259,87 +1259,24 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
             
             real32 aux_p_np1 = p_np1[a];
             p_np1[a] = det_pq*(coef_qq*p_np1[a] - coef_pq*q_np1[a]);
-            q_np1[a] = det_pq*(coef_pp*q_np1[a] - coef_qp*p_np1[a]);
+            q_np1[a] = det_pq*(coef_pp*q_np1[a] - coef_qp*aux_p_np1);
           }
         }
       } );
-    }
-    else
-    {
-      parametersPML const & param = getReference< parametersPML >( viewKeyStruct::parametersPMLString() );
-      arrayView2d< real32 > const v_n = nodeManager.getField< fields::AuxiliaryVar1PML >();
-      arrayView2d< real32 > const grad_n = nodeManager.getField< fields::AuxiliaryVar2PML >();
-      arrayView1d< real32 > const divV_n = nodeManager.getField< fields::AuxiliaryVar3PML >();
-      arrayView1d< real32 > const u_n = nodeManager.getField< fields::AuxiliaryVar4PML >();
-      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
-
-      real32 const xMin[ 3 ] = {param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
-      real32 const xMax[ 3 ] = {param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
-      real32 const dMin[ 3 ] = {param.thicknessMinXYZPML[0], param.thicknessMinXYZPML[1], param.thicknessMinXYZPML[2]};
-      real32 const dMax[ 3 ] = {param.thicknessMaxXYZPML[0], param.thicknessMaxXYZPML[1], param.thicknessMaxXYZPML[2]};
-      real32 const cMin[ 3 ] = {param.waveSpeedMinXYZPML[0], param.waveSpeedMinXYZPML[1], param.waveSpeedMinXYZPML[2]};
-      real32 const cMax[ 3 ] = {param.waveSpeedMaxXYZPML[0], param.waveSpeedMaxXYZPML[1], param.waveSpeedMaxXYZPML[2]};
-      real32 const r = param.reflectivityPML;
-
-      /// apply the main function to update some of the PML auxiliary variables
-      /// Compute (divV) and (B.pressureGrad - C.auxUGrad) vectors for the PML region
-      applyPML( time_n, domain );
-
-      GEOS_MARK_SCOPE ( updatePWithPML );
-      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-      {
-        if( freeSurfaceNodeIndicator[a] != 1 )
-        {
-          real32 sigma[3];
-          real64 xLocal[ 3 ];
-
-          for( integer i=0; i<3; ++i )
-          {
-            xLocal[i] = X[a][i];
-          }
-
-          acousticVTIWaveEquationSEMKernels::PMLKernelHelper::computeDampingProfilePML(
-            xLocal,
-            xMin,
-            xMax,
-            dMin,
-            dMax,
-            cMin,
-            cMax,
-            r,
-            sigma );
-
-          real32 const alpha = sigma[0] + sigma[1] + sigma[2];
-//TODO:
-          p_np1[a] = alpha*dt2; //dummy
-/*          p_np1[a] = dt2*( (rhs[a] - stiffnessVector[a])/mass[a] - divV_n[a])
-                     - (1 - 0.5*alpha*dt)*p_nm1[a]
-                     + 2*p_n[a];
-
-          p_np1[a] = p_np1[a] / (1 + 0.5*alpha*dt);
-
-          for( integer i=0; i<3; ++i )
-          {
-            v_n[a][i] = (1 - dt*sigma[i])*v_n[a][i] - dt*grad_n[a][i];
-          }
-          u_n[a] += dt*p_n[a];
-          */
-        }
-      } );
-    }
+//    }
 
     /// synchronize pressure fields
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addFields( FieldLocation::Node, { fields::Pressure_p_np1::key() } );
     fieldsToBeSync.addFields( FieldLocation::Node, { fields::Pressure_q_np1::key() } );
 
-    if( usePML )
+/*    if( usePML )
     {
       fieldsToBeSync.addFields( FieldLocation::Node, {
           fields::AuxiliaryVar1PML::key(),
           fields::AuxiliaryVar4PML::key() } );
     }
-
+*/
     CommunicationTools & syncFields = CommunicationTools::getInstance();
     syncFields.synchronizeFields( fieldsToBeSync,
                                   mesh,
@@ -1355,18 +1292,19 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       //TODO:
-//      stiffnessVector[a] = 0.0;
+      stiffnessVector_p[a] = 0.0;
+      stiffnessVector_q[a] = 0.0;
       rhs[a] = 0.0;
     } );
 
-    if( usePML )
+/*    if( usePML )
     {
       arrayView2d< real32 > const grad_n = nodeManager.getField< fields::AuxiliaryVar2PML >();
       arrayView1d< real32 > const divV_n = nodeManager.getField< fields::AuxiliaryVar3PML >();
       grad_n.zero();
       divV_n.zero();
     }
-
+*/
   } );
 
   return dt;
