@@ -3,7 +3,7 @@
 # export MODULEPATH=/workrd/SCR/NUM/geosx_num/module_files:$MODULEPATH
 # module load cmake/3.21.4 gcc/8.4.1 cuda/11.0.3 ompi/4.1.2 openblas/0.3.18 python4geosx/p3/gcc8.4.1-ompi4.1.2
 #
-set(CONFIG_NAME "pangea3-gcc8.4.1-ompi-4.1.2" CACHE PATH "") 
+set(CONFIG_NAME "pangea3-gcc8.4.1-ompi-4.1.2" CACHE PATH "")
 
 # Set up the tpls
 if (NOT DEFINED GEOSX_TPL_DIR)
@@ -107,6 +107,6 @@ set(PETSC_OMP_DIR ${GEOSX_TPL_ROOT_DIR}/omp-links-for-petsc CACHE STRING "")
 set(ENABLE_PETSC OFF CACHE BOOL "")
 
 set(ENABLE_HYPRE ON CACHE BOOL "")
-set(ENABLE_HYPRE_CUDA ON CACHE BOOL "")
+set(ENABLE_HYPRE_DEVICE "CUDA" CACHE BOOL "")
 
 include( ${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake )

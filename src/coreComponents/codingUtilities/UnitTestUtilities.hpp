@@ -204,8 +204,8 @@ void compareLocalMatrices( CRSMatrixView< T const, COL_INDEX const > const & mat
   ASSERT_EQ( matrix1.numRows(), matrix2.numRows() );
   ASSERT_EQ( matrix1.numColumns(), matrix2.numColumns() );
 
-  matrix1.move( LvArray::MemorySpace::host, false );
-  matrix2.move( LvArray::MemorySpace::host, false );
+  matrix1.move( hostMemorySpace, false );
+  matrix2.move( hostMemorySpace, false );
 
   // check the accuracy across local rows
   for( localIndex i = 0; i < matrix1.numRows(); ++i )

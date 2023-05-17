@@ -334,13 +334,13 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
   jacobian.zero();
 
   assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
-  residual.move( LvArray::MemorySpace::host, false );
+  residual.move( hostMemorySpace, false );
 
   // copy the analytical residual
   array1d< real64 > residualOrig( residual );
 
   // create the numerical jacobian
-  jacobian.move( LvArray::MemorySpace::host );
+  jacobian.move( hostMemorySpace );
   CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
   jacobianFD.zero();
 
@@ -363,11 +363,11 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
 
       arrayView1d< real64 > const & pres =
         subRegion.getField< fields::flow::pressure >();
-      pres.move( LvArray::MemorySpace::host, false );
+      pres.move( hostMemorySpace, false );
 
       arrayView2d< real64, compflow::USD_COMP > const & compFrac =
         subRegion.getField< fields::flow::globalCompFraction >();
-      compFrac.move( LvArray::MemorySpace::host, false );
+      compFrac.move( hostMemorySpace, false );
 
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
       {
@@ -380,11 +380,11 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
         {
           solver.resetStateToBeginningOfStep( domain );
 
-          pres.move( LvArray::MemorySpace::host, true );
+          pres.move( hostMemorySpace, true );
           real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
           pres[ei] += dP;
-#if defined(GEOSX_USE_CUDA)
-          pres.move( LvArray::MemorySpace::cuda, false );
+#if defined(GEOS_USE_CUDA)
+          pres.move( parallelDeviceMemorySpace, false );
 #endif
 
           solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
@@ -416,10 +416,10 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
         {
           solver.resetStateToBeginningOfStep( domain );
 
-          compFrac.move( LvArray::MemorySpace::host, true );
+          compFrac.move( hostMemorySpace, true );
           compFrac[ei][jc] += perturbParameter;
-#if defined(GEOSX_USE_CUDA)
-          compFrac.move( LvArray::MemorySpace::cuda, false );
+#if defined(GEOS_USE_CUDA)
+          compFrac.move( parallelDeviceMemorySpace, false );
 #endif
 
 

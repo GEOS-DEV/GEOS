@@ -176,16 +176,22 @@
 	</xsd:complexType>
 	<xsd:complexType name="BenchmarksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="crusher" type="crusherType" maxOccurs="1" />
 			<xsd:element name="lassen" type="lassenType" maxOccurs="1" />
 			<xsd:element name="quartz" type="quartzType" maxOccurs="1" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="lassenType">
+	<xsd:complexType name="crusherType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Run" type="RunType" maxOccurs="1" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="RunType" />
+	<xsd:complexType name="lassenType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Run" type="RunType" maxOccurs="1" />
+		</xsd:choice>
+	</xsd:complexType>
 	<xsd:complexType name="quartzType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Run" type="RunType" maxOccurs="1" />

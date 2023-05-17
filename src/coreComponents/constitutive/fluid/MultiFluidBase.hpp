@@ -217,6 +217,7 @@ public:
      * @return number of elements
      */
     GEOS_HOST_DEVICE
+    GEOS_FORCE_INLINE
     localIndex numElems() const { return m_phaseFraction.value.size( 0 ); }
 
     /**
@@ -224,6 +225,7 @@ public:
      * @return number of gauss points per element
      */
     GEOS_HOST_DEVICE
+    GEOS_FORCE_INLINE
     localIndex numGauss() const { return m_phaseFraction.value.size( 1 ); }
 
     /**
@@ -231,6 +233,7 @@ public:
      * @return number of components
      */
     GEOS_HOST_DEVICE
+    GEOS_FORCE_INLINE
     integer numComponents() const { return LvArray::integerConversion< integer >( m_componentMolarWeight.size() ); }
 
     /**
@@ -238,6 +241,7 @@ public:
      * @return number of phases
      */
     GEOS_HOST_DEVICE
+    GEOS_FORCE_INLINE
     integer numPhases() const { return LvArray::integerConversion< integer >( m_phaseFraction.value.size( 2 ) ); }
 
     GEOS_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_PHASE > phaseFraction() const
@@ -625,6 +629,7 @@ protected:
 
 template< integer maxNumComp, typename OUT_ARRAY >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void
 MultiFluidBase::KernelWrapper::
   convertToMoleFractions( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const composition,
@@ -639,6 +644,7 @@ MultiFluidBase::KernelWrapper::
 
 template< integer maxNumComp, typename OUT_ARRAY >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void
 MultiFluidBase::KernelWrapper::
   convertToMoleFractions( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const composition,
@@ -671,6 +677,7 @@ MultiFluidBase::KernelWrapper::
 
 template< integer maxNumComp, integer maxNumPhase >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void
 MultiFluidBase::KernelWrapper::
   convertToMassFractions( real64 const (&phaseMolecularWeight)[maxNumPhase],
@@ -712,6 +719,7 @@ MultiFluidBase::KernelWrapper::
 
 template< integer maxNumComp, integer maxNumPhase >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void
 MultiFluidBase::KernelWrapper::
   convertToMassFractions( real64 const (&dCompMoleFrac_dCompMassFrac)[maxNumComp][maxNumComp],
@@ -742,6 +750,7 @@ MultiFluidBase::KernelWrapper::
 
 template< integer maxNumDof, integer maxNumPhase >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void
 MultiFluidBase::KernelWrapper::
   convertToPhaseMassFractions( real64 const (&phaseMolecularWeight)[maxNumPhase],
@@ -795,6 +804,7 @@ MultiFluidBase::KernelWrapper::
 
 template< integer maxNumDof, integer maxNumPhase >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void
 MultiFluidBase::KernelWrapper::
   convertToPhaseCompMassFractions( real64 const (&phaseMolecularWeight)[maxNumPhase],
@@ -842,6 +852,7 @@ MultiFluidBase::KernelWrapper::
 
 template< integer maxNumComp >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void
 MultiFluidBase::KernelWrapper::
   computeDerivativesWrtMassFractions( real64 const (&dCompMoleFrac_dCompMassFrac)[maxNumComp][maxNumComp],
@@ -875,7 +886,8 @@ MultiFluidBase::KernelWrapper::
 
 template< integer maxNumComp, integer maxNumPhase >
 GEOS_HOST_DEVICE
-inline void
+GEOS_FORCE_INLINE
+void
 MultiFluidBase::KernelWrapper::
   computeInternalEnergy( real64 const & pressure,
                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseFrac,
@@ -958,16 +970,13 @@ MultiFluidBase::KernelWrapper::
   integer const numComp = numComponents();
 
   StackArray< real64, 3, maxNumDof, LAYOUT_FLUID_DC > dTotalDens( 1, 1, numComp+2 );
-  MultiFluidVarSlice< real64, 0, USD_FLUID - 2, USD_FLUID_DC - 2 >
-  totalDensAndDeriv { totalDens, dTotalDens[0][0] };
+  MultiFluidVarSlice< real64, 0, USD_FLUID - 2, USD_FLUID_DC - 2 > totalDensAndDeriv { totalDens, dTotalDens[0][0] };
 
   StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseFrac( 1, 1, numPhase, numComp+2 );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
-  phaseFracAndDeriv { phaseFrac, dPhaseFrac[0][0] };
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseFracAndDeriv { phaseFrac, dPhaseFrac[0][0] };
 
   StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseDens( 1, 1, numPhase, numComp+2 );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
-  phaseDensAndDeriv { phaseDens, dPhaseDens[0][0] };
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseDensAndDeriv { phaseDens, dPhaseDens[0][0] };
 
   computeTotalDensity( phaseFracAndDeriv,
                        phaseDensAndDeriv,
@@ -975,7 +984,8 @@ MultiFluidBase::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-inline void
+GEOS_FORCE_INLINE
+void
 MultiFluidBase::KernelWrapper::
   computeTotalDensity( PhaseProp::SliceType const phaseFraction,
                        PhaseProp::SliceType const phaseDensity,
@@ -1020,7 +1030,6 @@ MultiFluidBase::KernelWrapper::
     totalDensity.derivs[Deriv::dC+ic] *= minusDens2;
   }
 }
-
 
 } //namespace constitutive
 

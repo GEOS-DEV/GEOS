@@ -202,7 +202,7 @@ private:
   array1d< integer > m_lastElemIndexForBlock[3];
 
   /// Array of number of elements per direction
-  int m_numElemsTotal[3];
+  globalIndex m_numElemsTotal[3];
 
   /// String array listing the element type present
   array1d< string > m_elementType;

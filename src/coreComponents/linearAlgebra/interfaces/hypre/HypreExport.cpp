@@ -80,7 +80,7 @@ void exportArray( HYPRE_MemoryLocation const location,
 {
   if( location == HYPRE_MEMORY_HOST )
   {
-    dst.move( LvArray::MemorySpace::host, true );
+    dst.move( hostMemorySpace, true );
     std::transform( src, src + dst.size(), dst.begin(),
                     []( T const v ) { return static_cast< U >( v ); } );
   }
@@ -100,7 +100,7 @@ void exportArray( HYPRE_MemoryLocation const location,
 {
   if( location == HYPRE_MEMORY_HOST )
   {
-    src.move( LvArray::MemorySpace::host, false );
+    src.move( hostMemorySpace, false );
     std::transform( src.begin(), src.end(), dst,
                     []( T const v ) { return static_cast< U >( v ); } );
   }
@@ -202,7 +202,7 @@ void HypreExport::importVector( arrayView1d< real64 const > const & values,
     if( MpiWrapper::commRank( vec.comm() ) == m_targetRank )
     {
       GEOS_LAI_ASSERT_EQ( values.size(), vec.globalSize() );
-      values.move( LvArray::MemorySpace::host, false );
+      values.move( hostMemorySpace, false );
 
       // HACK: create a hypre vector that points to local data; we have to use const_cast,
       //       but this is ok because we don't modify the values, only scatter the vector.

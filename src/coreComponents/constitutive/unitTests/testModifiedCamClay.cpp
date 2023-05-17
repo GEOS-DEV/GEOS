@@ -169,7 +169,7 @@ void testModifiedCamClayDriver()
 }
 
 
-#ifdef USE_CUDA
+#ifdef GEOS_USE_DEVICE
 TEST( ModifiedCamClayTests, testModifiedCamClayDevice )
 {
   testModifiedCamClayDriver< geos::parallelDevicePolicy< > >();

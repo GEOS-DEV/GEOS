@@ -16,7 +16,7 @@
  * @file SolidMechanicsLagrangianFEM.cpp
  */
 
-#define GEOSX_DISPATCH_VEM
+#define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
 
 #include "SolidMechanicsLagrangianFEM.hpp"
 #include "kernels/ImplicitSmallStrainNewmark.hpp"
@@ -270,7 +270,7 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
   {
     auto kernelFactory = solidMechanicsLagrangianFEMKernels::ExplicitSmallStrainFactory( dt, elementListName );
     rval = finiteElement::
-             regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+             regionBasedKernelApplication< parallelDevicePolicy<   >,
                                            constitutive::SolidBase,
                                            CellElementSubRegion >( mesh,
                                                                    targetRegions,
@@ -282,7 +282,7 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
   {
     auto kernelFactory = solidMechanicsLagrangianFEMKernels::ExplicitFiniteStrainFactory( dt, elementListName );
     rval = finiteElement::
-             regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+             regionBasedKernelApplication< parallelDevicePolicy<   >,
                                            constitutive::SolidBase,
                                            CellElementSubRegion >( mesh,
                                                                    targetRegions,
@@ -384,6 +384,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
             localIndex const numSupportPoints =
               finiteElement.template numSupportPoints< FE_TYPE >( feStack );
 
+//#if ! defined( CALC_FEM_SHAPE_IN_KERNEL ) // we don't calculate detJ in this case
             for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
             {
               FE_TYPE::calcN( q, feStack, N );
@@ -393,6 +394,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
                 mass[elemsToNodes[k][a]] += rho[k][q] * detJ[k][q] * N[a];
               }
             }
+//#endif
 
             bool isAttachedToGhostNode = false;
             for( localIndex a=0; a<elementSubRegion.numNodesPerElement(); ++a )
@@ -616,6 +618,8 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
     CommunicationTools::getInstance().asyncSendRecv( domain.getNeighbors(), m_iComm, true, packEvents );
 
+    waitAllDeviceEvents( packEvents );
+
     explicitKernelDispatch( mesh,
                             regionNames,
                             this->getDiscretizationName(),
@@ -663,14 +667,14 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
                                          string const fieldName )
     {
       bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                         parallelDevicePolicy< 32 > >( targetSet,
-                                                                       time,
-                                                                       targetGroup,
-                                                                       fieldName,
-                                                                       dofKey,
-                                                                       dofManager.rankOffset(),
-                                                                       localMatrix,
-                                                                       localRhs );
+                                         parallelDevicePolicy<  > >( targetSet,
+                                                                     time,
+                                                                     targetGroup,
+                                                                     fieldName,
+                                                                     dofKey,
+                                                                     dofManager.rankOffset(),
+                                                                     localMatrix,
+                                                                     localRhs );
     } );
   } );
 }
@@ -788,7 +792,7 @@ SolidMechanicsLagrangianFEM::
       real64 const newmarkGamma = this->getReference< real64 >( solidMechanicsViewKeys.newmarkGamma );
       real64 const newmarkBeta = this->getReference< real64 >( solidMechanicsViewKeys.newmarkBeta );
 
-      forAll< parallelDevicePolicy< 32 > >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const a )
+      forAll< parallelDevicePolicy<  > >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
         for( int i=0; i<3; ++i )
         {
@@ -801,7 +805,7 @@ SolidMechanicsLagrangianFEM::
     }
     else if( this->m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
     {
-      forAll< parallelDevicePolicy< 32 > >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const a )
+      forAll< parallelDevicePolicy<  > >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
         for( int i=0; i<3; ++i )
         {
@@ -998,7 +1002,6 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
                                                                                     dt );
     }
   }
-
 }
 
 void
@@ -1030,14 +1033,14 @@ SolidMechanicsLagrangianFEM::
     {
       // TODO: fix use of dummy name
       bc.applyBoundaryConditionToSystem< FieldSpecificationAdd,
-                                         parallelDevicePolicy< 32 > >( targetSet,
-                                                                       time_n + dt,
-                                                                       targetGroup,
-                                                                       solidMechanics::totalDisplacement::key(),
-                                                                       dofKey,
-                                                                       dofManager.rankOffset(),
-                                                                       localMatrix,
-                                                                       localRhs );
+                                         parallelDevicePolicy<  > >( targetSet,
+                                                                     time_n + dt,
+                                                                     targetGroup,
+                                                                     solidMechanics::totalDisplacement::key(),
+                                                                     dofKey,
+                                                                     dofManager.rankOffset(),
+                                                                     localMatrix,
+                                                                     localRhs );
     } );
 
   } );
@@ -1194,7 +1197,7 @@ void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition &
       nodeManager.getField< solidMechanics::totalDisplacement >();
 
     // TODO need to finish this rewind
-    forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+    forAll< parallelDevicePolicy<  > >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       for( localIndex i = 0; i < 3; ++i )
       {

@@ -23,7 +23,9 @@
 
 #if defined( GEOSX_USE_CALIPER )
 #include <caliper/cali-manager.h>
+#if defined( GEOSX_USE_ADIAK )
 #include <adiak.hpp>
+#endif
 #endif
 
 // System includes
@@ -37,8 +39,12 @@
 #include <omp.h>
 #endif
 
-#if defined( GEOSX_USE_CUDA )
+#if defined( GEOS_USE_CUDA )
 #include <cuda.h>
+#endif
+
+#if defined( GEOS_USE_HIP )
+#include <hip/hip_runtime.h>
 #endif
 
 #include <cfenv>
@@ -138,6 +144,7 @@ void setupCaliper( cali::ConfigManager & caliperManager,
   GEOS_ERROR_IF( caliperManager.error(), "Caliper config error: " << caliperManager.error_msg() );
   caliperManager.start();
 
+#if defined( GEOSX_USE_ADIAK )
 #if defined( GEOSX_USE_MPI )
   adiak::init( &MPI_COMM_GEOSX );
 #else
@@ -198,7 +205,7 @@ void setupCaliper( cali::ConfigManager & caliperManager,
   // CUDA info
   int cudaRuntimeVersion = 0;
   int cudaDriverVersion = 0;
-#if defined( GEOSX_USE_CUDA )
+#if defined( GEOS_USE_CUDA )
   adiak::value( "CUDA", "On" );
   GEOS_ERROR_IF_NE( cudaSuccess, cudaRuntimeGetVersion( &cudaRuntimeVersion ) );
   GEOS_ERROR_IF_NE( cudaSuccess, cudaDriverGetVersion( &cudaDriverVersion ) );
@@ -208,13 +215,26 @@ void setupCaliper( cali::ConfigManager & caliperManager,
   adiak::value( "CUDA runtime version", cudaRuntimeVersion );
   adiak::value( "CUDA driver version", cudaDriverVersion );
 
+  // HIP info
+  int hipRuntimeVersion = 0;
+  int hipDriverVersion = 0;
+#if defined( GESOX_USE_HIP )
+  adiak::value( "HIP", "On" )
+  GEOSX_ERROR_IF_NE( hipSuccess, hipRuntimeGetVersion( &hipRuntimeVersion ) );
+  GEOSX_ERROR_IF_NE( hipSuccess, hipDriverGetVersion( &hipDriverVersion ) );
+#else
+  adiak::value( "HIP", "Off" );
+#endif
+  adiak::value( "HIP runtime version", hipRuntimeVersion );
+  adiak::value( "HIP driver version", hipDriverVersion );
+#endif // defined( GEOSX_USE ADIAK )
 }
 #endif // defined( GEOSX_USE_CALIPER )
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void finalizeCaliper()
 {
-#if defined( GEOSX_USE_CALIPER )
+#if defined( GEOSX_USE_CALIPER )and defined( GEOSX_USE_ADIAK )
   adiak::fini();
 #endif
 }

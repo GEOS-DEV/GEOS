@@ -86,7 +86,7 @@ public:
 
   // Lorentz type degradation functions
 
-  GEOS_FORCE_INLINE
+  inline
   GEOS_HOST_DEVICE
   virtual real64 getDegradationValue( localIndex const k,
                                       localIndex const q ) const override
@@ -101,7 +101,7 @@ public:
   }
 
 
-  GEOS_FORCE_INLINE
+  inline
   GEOS_HOST_DEVICE
   virtual real64 getDegradationDerivative( real64 const d ) const override
   {
@@ -115,7 +115,7 @@ public:
   }
 
 
-  GEOS_FORCE_INLINE
+  inline
   GEOS_HOST_DEVICE
   virtual real64 getDegradationSecondDerivative( real64 const d ) const override
   {
