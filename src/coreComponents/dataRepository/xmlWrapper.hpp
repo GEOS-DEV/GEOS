@@ -78,6 +78,10 @@ struct xmlAttributePos
 
   /**
    * @brief Constructor of this struct.
+   * @param filePath the path of the original xml file containing this attribute
+   * @param line Line where the element is defined. Start at 1.
+   * @param offsetInLine Character offset of this element in the line that contains it (starting from 1)
+   * @param offset Character offset of this element in the file that contains it (starting from 0)
    */
   xmlAttributePos( string const & filePath, size_t line, size_t offsetInLine, size_t offset );
   /**
@@ -98,6 +102,11 @@ struct xmlNodePos : xmlAttributePos
 
   /**
    * @brief Constructor of this struct.
+   * @param document an xml document containing this node, or including a file which includes it
+   * @param filePath the path of the original xml file containing this node
+   * @param line Line where the node is defined. Start at 1.
+   * @param offsetInLine Character offset of this node in the line that contains it (starting from 1)
+   * @param offset Character offset of this node in the file that contains it (starting from 0)
    */
   xmlNodePos( xmlDocument const & document, string const & filePath, size_t line, size_t offsetInLine, size_t offset );
   /**
@@ -105,7 +114,9 @@ struct xmlNodePos : xmlAttributePos
    */
   bool isFound() const;
   /**
-   * @brief Compute the xmlAttributePos of the attributed with the given name.
+   * @brief Compute the xmlAttributePos of an xml attribute
+   * @param attName the name of the attribute to locate
+   * @return an xmlAttributePos object that represents the position of the target node.
    */
   xmlAttributePos getAttributeLine( string const & attName ) const;
 };
@@ -125,26 +136,29 @@ public:
   xmlDocument();
 
   /**
-   * @brief Get the original file buffer loaded during the last load_X() call on this object.
+   * @return the original file buffer loaded during the last load_X() call on this object.
    */
   string const & getOriginalBuffer() const;
   /**
-   * @brief If the specified file at the "filePath" is the loaded document of the instance,
+   * @return If the specified file at the "filePath" is the loaded document of the instance,
    * or one of its includes, returns its original buffer as a string.
    * Returns nullptr if filePath is not a loaded and available document.
+   * @param filePath the path of the file which buffer must be returned.
    */
   string const * getOriginalBuffer( string const & filePath ) const;
   /**
-   * @brief Map containing the original buffers of the document and its includes, indexed by file path.
+   * @return a map containing the original buffers of the document and its includes, indexed by file path.
    */
   map< string, string > const & getOriginalBuffers() const;
   /**
-   * @brief If load_file() has been loaded, returns the path of the source file.
+   * @return If load_file() has been loaded, returns the path of the source file.
    * If another load method has been called, it returns a generated unique value.
    */
   string const & getFilePath() const;
   /**
-   * @brief Compute the position of the given node if the node file information are loaded.
+   * @brief If the node file information are loaded, compute the position of a node.
+   * @param node the node to locate
+   * @return an xmlNodePos object that represents the position of the target node.
    * @throws an InputError if the node position is not found and source file is loaded.
    */
   xmlNodePos getNodePosition( xmlWrapper::xmlNode const & node ) const;
@@ -152,14 +166,22 @@ public:
   /**
    * @brief Load document from zero-terminated string. No encoding conversions are applied.
    * Wrapper of pugi::xml_document::load_buffer() method.
+   * @param contents the string containing the document content
    * @param loadNodeFileInfo Load the node source file info, allowing getNodePosition() to work.
+   * @param options the parsing options
+   * @param encoding the encoding options
+   * @return an xmlResult object representing the parsing resulting status.
    */
   xmlResult load_string( const pugi::char_t * contents, bool loadNodeFileInfo = false,
                          unsigned int options = pugi::parse_default );
 
   /**
    * @brief Load document from file. Wrapper of pugi::xml_document::load_buffer() method.
+   * @param path the path of an xml file to load.
    * @param loadNodeFileInfo Load the node source file info, allowing getNodePosition() to work.
+   * @param options the parsing options
+   * @param encoding the encoding options
+   * @return an xmlResult object representing the parsing resulting status.
    */
   xmlResult load_file( const char * path, bool loadNodeFileInfo = false,
                        unsigned int options = pugi::parse_default,
@@ -168,7 +190,12 @@ public:
   /**
    * @brief Load document from buffer. Copies/converts the buffer, so it may be deleted or changed
    * after the function returns. Wrapper of pugi::xml_document::load_buffer() method.
+   * @param contents the buffer containing the document content
+   * @param size the size of the buffer in bytes
    * @param loadNodeFileInfo Load the node source file info, allowing getNodePosition() to work.
+   * @param options the parsing options
+   * @param encoding the encoding options
+   * @return an xmlResult object representing the parsing resulting status.
    */
   xmlResult load_buffer( const void * contents, size_t size, bool loadNodeFileInfo = false,
                          unsigned int options = pugi::parse_default,
@@ -214,7 +241,7 @@ public:
   void addIncludedXML( xmlNode & targetNode, int level = 0 );
 
   /**
-   * @brief True if loadNodeFileInfo was true during the last load_X call.
+   * @return True if loadNodeFileInfo was true during the last load_X call.
    */
   bool hasNodeFileInfo() const;
 
@@ -262,7 +289,8 @@ string buildMultipleInputXML( string_array const & inputFileList,
                               string const & outputDir = {} );
 
 /**
- * @return if the attribute with the specified name declares metadata relative to the xml
+ * @return true if the attribute with the specified name declares metadata relative to the xml
+ * @param name the name of an attribute
  */
 bool isFileMetadataAttribute( string const & name );
 
