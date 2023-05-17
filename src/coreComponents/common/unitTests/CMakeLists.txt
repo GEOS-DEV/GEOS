@@ -16,14 +16,6 @@ endif()
 set( dependencyList common hdf5 gtest )
 
 list( APPEND gtest_geosx_tests testLifoStorage.cpp )
-if( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
-if ( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt)
-endif()
-
 #
 # Add gtest C++ based tests
 #

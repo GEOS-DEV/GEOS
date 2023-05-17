@@ -33,7 +33,7 @@
  */
 ///@{
 
-#if defined(__CUDACC__)
+#if defined(GEOS_USE_DEVICE)
 #define GEOS_HOST __host__
 #define GEOS_DEVICE __device__
 #define GEOS_HOST_DEVICE __host__ __device__
@@ -50,6 +50,11 @@
 #define GEOS_FORCE_INLINE inline
 /// Compiler directive specifying to unroll the loop.
 #define PRAGMA_UNROLL
+#endif
+
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+/// Macro defined when currently compiling on device (only defined in the device context).
+#define GEOS_DEVICE_COMPILE
 #endif
 
 ///@}

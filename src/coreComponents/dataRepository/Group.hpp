@@ -1324,7 +1324,7 @@ public:
    * @brief Check whether this Group is resized when its parent is resized.
    * @return @p true if Group is resized with parent group, @p false otherwise
    */
-  integer sizedFromParent() const
+  int sizedFromParent() const
   { return m_sizedFromParent; }
 
   /**

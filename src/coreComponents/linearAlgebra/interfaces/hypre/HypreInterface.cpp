@@ -19,14 +19,17 @@
 #include "HypreInterface.hpp"
 
 #include "linearAlgebra/interfaces/direct/SuiteSparse.hpp"
-#include "linearAlgebra/interfaces/direct/SuperLUDist.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreMatrix.hpp"
 #include "linearAlgebra/interfaces/hypre/HyprePreconditioner.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreSolver.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 
+#if defined(GEOSX_USE_SUPERLU_DIST)
+#include "linearAlgebra/interfaces/direct/SuperLUDist.hpp"
+#endif
+
 #include "HYPRE_utilities.h"
-#if defined(GEOSX_USE_HYPRE_CUDA)
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
 #include "_hypre_utilities.h"
 #include "_hypre_utilities.hpp"
 #endif
@@ -37,7 +40,7 @@ namespace geos
 void HypreInterface::initialize()
 {
   HYPRE_Init();
-#if defined(GEOSX_USE_HYPRE_CUDA)
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
   hypre_HandleDefaultExecPolicy( hypre_handle() ) = HYPRE_EXEC_DEVICE;
   hypre_HandleSpgemmUseVendor( hypre_handle() ) = 0;
 #endif
@@ -68,7 +71,12 @@ HypreInterface::createSolver( LinearSolverParameters params )
   {
     if( params.direct.parallel )
     {
+#if defined(GEOSX_USE_SUPERLU_DIST)
       return std::make_unique< SuperLUDist< HypreInterface > >( std::move( params ) );
+#else
+      GEOS_ERROR( "GEOSX is configured without support for SuperLU_dist." );
+      return std::unique_ptr< LinearSolverBase< HypreInterface > >( NULL );
+#endif
     }
     else
     {

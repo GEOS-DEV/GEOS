@@ -497,7 +497,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
   {
     int const neighborRank = neighbors[ i ].neighborRank();
 
-    MpiWrapper::iSend( objectManager.getNeighborData( neighborRank ).nonLocalGhosts().toViewConst(),
+    MpiWrapper::iSend( objectManager.getNeighborData( neighborRank ).nonLocalGhosts().toView(),
                        neighborRank,
                        nonLocalGhostsTag,
                        MPI_COMM_GEOSX,
@@ -790,6 +790,7 @@ void CommunicationTools::asyncSendRecv( std::vector< NeighborCommunicator > & ne
   {
     waitAllDeviceEvents( events );
   }
+
 
   // could swap this to test and make this function call async as well, only launch the sends/recvs for
   // those we've already recv'd sizing for, go back to some usefule compute / launch some other compute, then

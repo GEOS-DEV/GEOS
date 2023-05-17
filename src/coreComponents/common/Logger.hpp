@@ -21,6 +21,7 @@
 
 // Source incldes
 #include "common/GeosxConfig.hpp"
+#include "common/GeosxMacros.hpp"
 #include "common/Format.hpp"
 #include "LvArray/src/Macros.hpp"
 
@@ -69,7 +70,7 @@
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#if defined(__CUDA_ARCH__)
+#if defined(GEOS_DEVICE_COMPILE)
 #define GEOS_LOG_RANK_IF( EXP, msg )
 #else
 #define GEOS_LOG_RANK_IF( EXP, msg ) \
@@ -100,7 +101,7 @@
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#if defined(__CUDA_ARCH__)
+#if defined(GEOS_DEVICE_COMPILE)
 #define GEOS_ERROR_IF( EXP, msg ) LVARRAY_ERROR_IF( EXP, msg )
 #else
 #define GEOS_ERROR_IF( EXP, msg ) LVARRAY_ERROR_IF( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )

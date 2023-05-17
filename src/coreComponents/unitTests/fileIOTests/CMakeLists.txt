@@ -6,24 +6,12 @@ set(geosx_fileio_tests
    testHDFFile.cpp
    )
 
-set( dependencyList gtest hdf5 )
+set( dependencyList ${parallelDeps} gtest hdf5 )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
   set (dependencyList ${dependencyList} geosx_core )
 else()
   set (dependencyList ${dependencyList} ${geosx_core_libs} )
-endif()
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
-endif()
-
-if ( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
 endif()
 
 #

@@ -57,7 +57,7 @@ struct SolidModelDiscretizationOpsOrthotropic : public SolidModelDiscretizationO
                        real64 ( &diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] );
 
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   void scaleParams( real64 const scale )
   {
     m_c11 *= scale;
@@ -91,7 +91,7 @@ struct SolidModelDiscretizationOpsOrthotropic : public SolidModelDiscretizationO
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void SolidModelDiscretizationOpsOrthotropic::
   BTDB( BASIS_GRADIENT const & gradN,
         real64 const & detJxW,
@@ -139,7 +139,7 @@ void SolidModelDiscretizationOpsOrthotropic::
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void SolidModelDiscretizationOpsOrthotropic::
   upperBTDB( BASIS_GRADIENT const & gradN,
              real64 const & detJxW,
@@ -187,7 +187,7 @@ void SolidModelDiscretizationOpsOrthotropic::
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void SolidModelDiscretizationOpsOrthotropic::diagBTDB( BASIS_GRADIENT const & gradN,
                                                        real64 const & detJxW,
                                                        real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS *3] )
@@ -220,7 +220,7 @@ void SolidModelDiscretizationOpsOrthotropic::diagBTDB( BASIS_GRADIENT const & gr
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void SolidModelDiscretizationOpsOrthotropic::diagRowSumBTDB( BASIS_GRADIENT const & gradN,
                                                              real64 const & detJxW,
                                                              real64 ( & diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] )
