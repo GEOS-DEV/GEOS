@@ -212,7 +212,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
 
     // 1. Cell-based contributions to Kuu, Kup, Kpu, Kpp blocks
     finiteElement::
-      regionBasedKernelApplication< parallelDevicePolicy< >,
+      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                     constitutive::PorousSolidBase,
                                     CellElementSubRegion >( mesh,
                                                             regionNames,

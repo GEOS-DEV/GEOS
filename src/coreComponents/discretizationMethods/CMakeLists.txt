@@ -4,7 +4,11 @@
 set( mainInterface_headers
      NumericalMethodsManager.hpp )
 
-set( dependencyList ${parallelDeps} finiteVolume )
+set( dependencyList finiteElement finiteVolume )
+
+if( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
 
 #
 # Specify all sources

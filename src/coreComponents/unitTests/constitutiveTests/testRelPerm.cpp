@@ -985,10 +985,10 @@ TEST_F( RelPermTest, numericalDerivatives_TableRelPermHysteresisTwoPhase )
   // move the historical phase vol fraction back to the CPU since the test is performed on the CPU
   auto & phaseMinHistoricalVolFraction =
     m_model->getReference< array2d< real64, compflow::LAYOUT_PHASE > >( fields::relperm::phaseMinHistoricalVolFraction::key() );
-  phaseMinHistoricalVolFraction.move( hostMemorySpace, false );
+  phaseMinHistoricalVolFraction.move( LvArray::MemorySpace::host, false );
   auto & phaseMaxHistoricalVolFraction =
     m_model->getReference< array2d< real64, compflow::LAYOUT_PHASE > >( fields::relperm::phaseMaxHistoricalVolFraction::key() );
-  phaseMaxHistoricalVolFraction.move( hostMemorySpace, false );
+  phaseMaxHistoricalVolFraction.move( LvArray::MemorySpace::host, false );
 
   while( sat[0] <= endSat )
   {

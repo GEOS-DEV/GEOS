@@ -516,7 +516,6 @@ public:
    * @return the size of the stencil at this connection
    */
   GEOS_HOST_DEVICE
-  inline
   localIndex stencilSize( localIndex const iconn ) const
   { return m_sei[iconn].size(); }
 
@@ -526,7 +525,6 @@ public:
    * @return the number of elements at this connection
    */
   GEOS_HOST_DEVICE
-  inline
   localIndex numPointsInFlux( localIndex const iconn ) const
   { return m_stencilWrapper.numPointsInFlux( iconn ); }
 
@@ -537,7 +535,6 @@ public:
    * @param[in] stack the stack variables
    */
   GEOS_HOST_DEVICE
-  inline
   void setup( localIndex const iconn,
               StackVariables & stack ) const
   {
@@ -562,7 +559,6 @@ public:
    */
   template< typename FUNC = NoOpFunc >
   GEOS_HOST_DEVICE
-  inline
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
                     FUNC && compFluxKernelOp = NoOpFunc{} ) const
@@ -835,7 +831,6 @@ public:
    */
   template< typename FUNC = NoOpFunc >
   GEOS_HOST_DEVICE
-  inline
   void complete( localIndex const iconn,
                  StackVariables & stack,
                  FUNC && assemblyKernelOp = NoOpFunc{} ) const
@@ -890,6 +885,7 @@ public:
           KERNEL_TYPE const & kernelComponent )
   {
     GEOS_MARK_FUNCTION;
+
     forAll< POLICY >( numConnections, [=] GEOS_HOST_DEVICE ( localIndex const iconn )
     {
       typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
@@ -1526,7 +1522,6 @@ struct CFLFluxKernel
 
   template< integer NC, localIndex NUM_ELEMS, localIndex maxStencilSize >
   GEOS_HOST_DEVICE
-  inline
   static void
   compute( integer const numPhases,
            localIndex const stencilSize,
@@ -1578,7 +1573,6 @@ struct CFLKernel
 
   template< integer NP >
   GEOS_HOST_DEVICE
-  inline
   static void
   computePhaseCFL( real64 const & poreVol,
                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac,
@@ -1590,7 +1584,6 @@ struct CFLKernel
 
   template< integer NC >
   GEOS_HOST_DEVICE
-  inline
   static void
   computeCompCFL( real64 const & poreVol,
                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > compDens,
@@ -1653,7 +1646,6 @@ struct AquiferBCKernel
 
   template< integer NC >
   GEOS_HOST_DEVICE
-  inline
   static void
     compute( integer const numPhases,
              integer const ipWater,

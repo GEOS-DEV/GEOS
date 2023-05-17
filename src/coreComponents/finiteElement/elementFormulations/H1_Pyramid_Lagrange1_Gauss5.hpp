@@ -162,7 +162,7 @@ public:
    *   point.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   static void calcN( localIndex const q,
                      StackVariables const & stack,
                      real64 ( &N )[numNodes] );
@@ -192,7 +192,7 @@ public:
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   static real64 calcGradN( localIndex const q,
                            real64 const (&X)[numNodes][3],
                            StackVariables const & stack,
@@ -255,7 +255,7 @@ private:
    */
   template< typename T >
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   constexpr static T linearMap( T const i, T const j )
   {
     return i + 2 * j;
@@ -268,7 +268,7 @@ private:
    * @return parent coordinate in the xi0 direction.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   constexpr static real64 parentCoords0( localIndex const a )
   {
     return -1.0 + 2.0 * ( a & 1 ) + 0.25 * ( a & 4 );
@@ -281,7 +281,7 @@ private:
    * @return parent coordinate in the xi1 direction.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   constexpr static real64 parentCoords1( localIndex const a )
   {
     return -1.0 + ( a & 2 ) + 0.25 * ( a & 4 );
@@ -294,7 +294,7 @@ private:
    * @return parent coordinate in the xi2 direction.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   constexpr static real64 parentCoords2( localIndex const a )
   {
     return -1.0 + 0.5 * ( a & 4 );
@@ -307,7 +307,7 @@ private:
    * @return parent coordinate in the xi0 direction.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   constexpr static real64 quadratureParentCoords0( localIndex const q )
   {
     return parentCoords0( q ) * quadratureCrossSectionCoord;
@@ -320,7 +320,7 @@ private:
    * @return parent coordinate in the xi1 direction.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   constexpr static real64 quadratureParentCoords1( localIndex const q )
   {
     return parentCoords1( q ) * quadratureCrossSectionCoord;
@@ -333,7 +333,7 @@ private:
    * @return parent coordinate in the xi2 direction.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   constexpr static real64 quadratureParentCoords2( localIndex const q )
   {
     return quadratureLongitudinalCoordNeg + 0.5 * ( 1 + parentCoords2( q ) ) * quadratureLongitudinalCoordDelta;
@@ -345,7 +345,7 @@ private:
    * @return The quadrature rule weight.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   constexpr static real64 quadratureWeight( localIndex const q )
   {
     return weight + 0.5 * ( 1 + parentCoords2( q ) ) * weightDelta;
@@ -382,7 +382,7 @@ private:
 /// @cond Doxygen_Suppress
 
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void
 H1_Pyramid_Lagrange1_Gauss5::
   jacobianTransformation( int const q,
@@ -429,7 +429,7 @@ H1_Pyramid_Lagrange1_Gauss5::
 //*************************************************************************************************
 
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void
 H1_Pyramid_Lagrange1_Gauss5::
   applyJacobianTransformationToShapeFunctionsDerivatives( int const q,
@@ -477,7 +477,7 @@ H1_Pyramid_Lagrange1_Gauss5::
 //*************************************************************************************************
 
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void
 H1_Pyramid_Lagrange1_Gauss5::
   calcN( real64 const ( &pointCoord )[3],
@@ -491,7 +491,7 @@ H1_Pyramid_Lagrange1_Gauss5::
 }
 
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void
 H1_Pyramid_Lagrange1_Gauss5::
   calcN( localIndex const q,
@@ -505,7 +505,7 @@ H1_Pyramid_Lagrange1_Gauss5::
 }
 
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void H1_Pyramid_Lagrange1_Gauss5::
   calcN( localIndex const q,
          StackVariables const & GEOS_UNUSED_PARAM( stack ),
@@ -517,7 +517,7 @@ void H1_Pyramid_Lagrange1_Gauss5::
 //*************************************************************************************************
 
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 real64 H1_Pyramid_Lagrange1_Gauss5::calcGradN( localIndex const q,
                                                real64 const (&X)[numNodes][3],
                                                real64 (& gradN)[numNodes][3] )
@@ -534,7 +534,7 @@ real64 H1_Pyramid_Lagrange1_Gauss5::calcGradN( localIndex const q,
 }
 
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 real64 H1_Pyramid_Lagrange1_Gauss5::
   calcGradN( localIndex const q,
              real64 const (&X)[numNodes][3],
@@ -547,7 +547,7 @@ real64 H1_Pyramid_Lagrange1_Gauss5::
 //*************************************************************************************************
 
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 real64
 H1_Pyramid_Lagrange1_Gauss5::
   transformedQuadratureWeight( localIndex const q,

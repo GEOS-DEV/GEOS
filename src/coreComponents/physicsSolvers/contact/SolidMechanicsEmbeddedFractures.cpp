@@ -54,6 +54,7 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
   this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
     setInputFlag( dataRepository::InputFlags::FALSE );
 
+
 }
 
 SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
@@ -322,7 +323,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
 
       real64 maxTraction = finiteElement::
                              regionBasedKernelApplication
-                           < parallelDevicePolicy< >,
+                           < parallelDevicePolicy< 32 >,
                              constitutive::SolidBase,
                              CellElementSubRegion >( mesh,
                                                      regionNames,
@@ -343,7 +344,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
                                                                               gravityVectorData );
       real64 maxTraction = finiteElement::
                              regionBasedKernelApplication
-                           < parallelDevicePolicy< >,
+                           < parallelDevicePolicy< 32 >,
                              constitutive::SolidBase,
                              CellElementSubRegion >( mesh,
                                                      regionNames,
@@ -713,7 +714,7 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
 
     real64 maxTraction = finiteElement::
                            regionBasedKernelApplication
-                         < parallelDevicePolicy< >,
+                         < parallelDevicePolicy< 32 >,
                            constitutive::SolidBase,
                            CellElementSubRegion >( mesh,
                                                    regionNames,

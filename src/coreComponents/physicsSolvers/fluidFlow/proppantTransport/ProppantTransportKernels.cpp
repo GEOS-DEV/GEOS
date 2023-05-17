@@ -31,7 +31,6 @@ namespace proppantTransportKernels
 {
 
 GEOS_HOST_DEVICE
-inline
 void
 AccumulationKernel::
   compute( localIndex const numComps,
@@ -996,7 +995,6 @@ void FluxKernel::
 
 
 GEOS_HOST_DEVICE
-inline
 void
 ProppantPackVolumeKernel::
   computeProppantPackVolume( localIndex const numElems,
@@ -1202,7 +1200,6 @@ void ProppantPackVolumeKernel::
 }
 
 GEOS_HOST_DEVICE
-inline
 void
 ProppantPackVolumeKernel::
   updateProppantPackVolume( localIndex const numElems,

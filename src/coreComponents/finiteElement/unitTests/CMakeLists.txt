@@ -14,7 +14,11 @@ set(testSources
     testQ5_Hexahedron_Lagrange_GaussLobatto.cpp
    )
 
-set( dependencyList gtest finiteElement ${parallelDeps} )
+set( dependencyList gtest finiteElement)
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
 
 if( ENABLE_CUDA_NVTOOLSEXT )
   set( dependencyList ${dependencyList} CUDA::nvToolsExt )

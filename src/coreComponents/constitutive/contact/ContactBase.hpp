@@ -71,6 +71,7 @@ public:
    * @return The hydraulic aperture that is always > 0
    */
   GEOS_HOST_DEVICE
+  inline
   virtual real64 computeHydraulicAperture( real64 const aperture,
                                            real64 & dHydraulicAperture_dAperture ) const;
 
@@ -115,6 +116,7 @@ public:
    * @return the updated traction
    */
   GEOS_HOST_DEVICE
+  inline
   virtual void addPressureToTraction( real64 const & pressure,
                                       arraySlice1d< real64 >const & tractionVector,
                                       real64 & dTraction_dPressure ) const;
@@ -243,7 +245,6 @@ protected:
 };
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
 real64 ContactBaseUpdates::computeHydraulicAperture( real64 const aperture,
                                                      real64 & dHydraulicAperture_dAperture ) const
 {
@@ -251,7 +252,6 @@ real64 ContactBaseUpdates::computeHydraulicAperture( real64 const aperture,
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
 void ContactBaseUpdates::addPressureToTraction( real64 const & pressure,
                                                 arraySlice1d< real64 > const & tractionVector,
                                                 real64 & dTraction_dPressure ) const

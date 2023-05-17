@@ -176,7 +176,7 @@ public:
    *   point.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   static void calcN( localIndex const q,
                      StackVariables const & stack,
                      real64 ( &N )[numNodes] );
@@ -206,7 +206,7 @@ public:
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   static real64 calcGradN( localIndex const q,
                            real64 const (&X)[numNodes][3],
                            StackVariables const & stack,
@@ -261,7 +261,7 @@ private:
 /// @cond Doxygen_Suppress
 
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 real64
 H1_Tetrahedron_Lagrange1_Gauss1::
   determinantJacobianTransformation( real64 const (&X)[numNodes][3] )
@@ -274,7 +274,7 @@ H1_Tetrahedron_Lagrange1_Gauss1::
 //*************************************************************************************************
 
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void
 H1_Tetrahedron_Lagrange1_Gauss1::
   calcN( real64 const (&coords)[3],
@@ -293,7 +293,7 @@ H1_Tetrahedron_Lagrange1_Gauss1::
 
 
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void
 H1_Tetrahedron_Lagrange1_Gauss1::
   calcN( localIndex const q,
@@ -307,7 +307,7 @@ H1_Tetrahedron_Lagrange1_Gauss1::
 }
 
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void H1_Tetrahedron_Lagrange1_Gauss1::
   calcN( localIndex const q,
          StackVariables const & GEOS_UNUSED_PARAM( stack ),
@@ -319,7 +319,7 @@ void H1_Tetrahedron_Lagrange1_Gauss1::
 //*************************************************************************************************
 
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 real64
 H1_Tetrahedron_Lagrange1_Gauss1::
   calcGradN( localIndex const q,
@@ -359,7 +359,7 @@ H1_Tetrahedron_Lagrange1_Gauss1::
 }
 
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 real64 H1_Tetrahedron_Lagrange1_Gauss1::
   calcGradN( localIndex const q,
              real64 const (&X)[numNodes][3],
@@ -372,7 +372,7 @@ real64 H1_Tetrahedron_Lagrange1_Gauss1::
 //*************************************************************************************************
 
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 real64
 H1_Tetrahedron_Lagrange1_Gauss1::
   transformedQuadratureWeight( localIndex const q,

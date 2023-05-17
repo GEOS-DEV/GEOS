@@ -206,6 +206,7 @@ public:
                 KERNEL_TYPE const & kernelComponent )
   {
     GEOS_MARK_FUNCTION;
+
     GEOS_UNUSED_VAR( numElems );
 
     // Define a RAJA reduction variable to get the maximum residual contribution.
@@ -230,7 +231,7 @@ public:
   //END_kernelLauncher
 
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const

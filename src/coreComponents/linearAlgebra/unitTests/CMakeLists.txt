@@ -10,7 +10,11 @@ set( parallel_tests
 
 set( nranks 2 )
 
-set( dependencyList gtest linearAlgebra ${parallelDeps} )
+set( dependencyList gtest linearAlgebra )
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
 
 foreach(test_name ${serial_tests})
   set( exec_name test${test_name} )

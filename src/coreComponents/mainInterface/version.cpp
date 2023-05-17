@@ -56,7 +56,7 @@ string getGpuCompilerIdString()
 {
   std::ostringstream oss;
 
-#if defined( GEOS_USE_CUDA )
+#if defined( GEOSX_USE_CUDA )
   oss<<"  - cuda compiler version: " <<CUDA_VERSION/1000<<"."<<CUDA_VERSION/10%100;
 #endif
   return oss.str();

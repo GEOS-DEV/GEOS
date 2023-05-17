@@ -11,20 +11,18 @@
         autoPartition="On"/>
       <Run
         name="MPI_OMP"
-        autoPartition="On"
-        timeLimit="10"
         nodes="1"
         tasksPerNode="2"
-        scaling="strong"
-        scaleList="{ 1, 2, 4, 8 }"/>
-      <Run
-        name="MPI"
         autoPartition="On"
         timeLimit="10"
+        strongScaling="{ 1, 2, 4, 8 }"/>
+      <Run
+        name="MPI"
         nodes="1"
         tasksPerNode="36"
-        scaling="strong"
-        scaleList="{ 1, 2, 4, 8 }"/>
+        autoPartition="On"
+        timeLimit="10"
+        strongScaling="{ 1, 2, 4, 8 }"/>
     </quartz>
 
     <lassen>
@@ -36,12 +34,11 @@
         timeLimit="10"/>
       <Run
         name="MPI_OMP_CUDA"
-        autoPartition="On"
-        timeLimit="10"
         nodes="1"
         tasksPerNode="4"
-        scaling="strong"
-        scaleList="{ 1, 2, 4, 8 }"/>
+        autoPartition="On"
+        timeLimit="10"
+        strongScaling="{ 1, 2, 4, 8 }"/>
     </lassen>
   </Benchmarks>
 

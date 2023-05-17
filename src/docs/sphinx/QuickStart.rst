@@ -276,7 +276,7 @@ A typical one may look like:
   set(MPIEXEC "/usr/local/bin/mpirun" CACHE PATH "")
 
   # disable CUDA and OpenMP
-  set(ENABLE_CUDA OFF CACHE BOOL "" FORCE)
+  set(CUDA_ENABLED OFF CACHE BOOL "" FORCE)
   set(ENABLE_OPENMP OFF CACHE BOOL "" FORCE)
 
   # enable PVTPackage
@@ -284,7 +284,7 @@ A typical one may look like:
 
   # enable tests
   set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
-
+  
   # define the path to your compiled installation directory
   set(GEOSX_TPL_DIR "/path/to/your/TPL/installation/dir" CACHE PATH "")
   # let GEOS define some third party libraries information for you
@@ -335,9 +335,9 @@ Again, the ``config-build.py`` sets up cmake for you, so the process is very sim
    make -j4
    make install
 
-The host-config file is the place to set all relevant configuration options.
-Note that the path to the previously installed third party libraries is typically specified within this file.
-An alternative is to set the path ``GEOSX_TPL_DIR`` via a cmake command line option, e.g.
+The host-config file is the place to set all relevant configuration options.  
+Note that the path to the previously installed third party libraries is typically specified within this file.  
+An alternative is to set the path ``GEOSX_TPL_DIR`` via a cmake command line option, e.g. 
 
 .. code-block:: sh
 

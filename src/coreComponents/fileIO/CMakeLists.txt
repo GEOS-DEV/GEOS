@@ -5,10 +5,12 @@ set( fileIO_headers
      Outputs/BlueprintOutput.hpp
      Outputs/OutputBase.hpp
      Outputs/OutputManager.hpp
-     Outputs/OutputUtilities.hpp
+     Outputs/OutputUtilities.hpp     
      Outputs/PythonOutput.hpp
      Outputs/RestartOutput.hpp
+     Outputs/SiloOutput.hpp
      Outputs/TimeHistoryOutput.hpp
+     silo/SiloFile.hpp
      timeHistory/HDFFile.hpp
      timeHistory/HistoryCollectionBase.hpp
      timeHistory/BufferedHistoryIO.hpp
@@ -27,26 +29,28 @@ set( fileIO_sources
      Outputs/OutputUtilities.cpp
      Outputs/PythonOutput.cpp
      Outputs/RestartOutput.cpp
+     Outputs/SiloOutput.cpp
      Outputs/TimeHistoryOutput.cpp
+     silo/SiloFile.cpp
      timeHistory/HDFFile.cpp
      timeHistory/HistoryCollectionBase.cpp
      timeHistory/PackCollection.cpp
      timeHistory/HDFHistoryIO.cpp
    )
 
-set( dependencyList ${parallelDeps} mesh constitutive hdf5 )
+set( dependencyList mesh constitutive silo hdf5 )
 if( ENABLE_PYGEOSX )
   list( APPEND fileIO_headers
-        python/PyHistoryCollectionType.hpp
-        python/PyHistoryOutputType.hpp
+        python/PyHistoryCollectionType.hpp 
+        python/PyHistoryOutputType.hpp 
         python/PyVTKOutputType.hpp
 	      )
-  list( APPEND fileIO_sources
-        python/PyHistoryCollection.cpp
-        python/PyHistoryOutput.cpp
+  list( APPEND fileIO_sources 
+        python/PyHistoryCollection.cpp 
+        python/PyHistoryOutput.cpp 
         python/PyVTKOutput.cpp
         )
-  list( APPEND dependencyList Python3::Python pylvarray )
+  list( APPEND dependencyList Python3::Python pylvarray ) 
 endif()
 
 
@@ -56,16 +60,6 @@ if( ENABLE_MPI )
   list( APPEND fileIO_headers coupling/ChomboCoupler.hpp Outputs/ChomboIO.hpp )
   list( APPEND fileIO_sources coupling/ChomboCoupler.cpp Outputs/ChomboIO.cpp )
 endif()
-
-if( ENABLE_SILO )
-  set( dependencyList ${dependencyList} silo )
-  list( APPEND fileIO_headers 
-               silo/SiloFile.hpp 
-               Outputs/SiloOutput.hpp )
-  list( APPEND fileIO_sources 
-               silo/SiloFile.cpp
-               Outputs/SiloOutput.cpp )
-endif( )
 
 if( ENABLE_VTK )
   list( APPEND fileIO_headers
@@ -80,7 +74,14 @@ if( ENABLE_VTK )
         vtk/VTKPolyDataWriterInterface.cpp
         Outputs/VTKOutput.cpp
         )
-    list( APPEND dependencyList VTK::IOLegacy VTK::IOXML )
+  list( APPEND dependencyList
+        VTK::IOLegacy
+        VTK::IOXML
+        )
+endif()
+
+if ( ENABLE_CUDA )
+  list( APPEND dependencyList  cuda )
 endif()
 
 if( ENABLE_CUDA_NVTOOLSEXT )

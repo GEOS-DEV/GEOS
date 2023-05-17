@@ -50,7 +50,7 @@ __geosx_linux_build: &__geosx_linux_build
     -e CMAKE_BUILD_TYPE
     -e GEOSX_DIR=${GEOSX_DIR}
     -e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF}
-    -e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU}
+    -e ENABLE_HYPRE_CUDA=${ENABLE_HYPRE_CUDA:-OFF}
     -e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON}
     ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG}
     ${TRAVIS_BUILD_DIR_MOUNT_POINT}/scripts/travis_build_and_test.sh ${BUILD_AND_TEST_ARGS};
@@ -168,7 +168,7 @@ jobs:
     - CMAKE_BUILD_TYPE=Debug
     - BUILD_AND_TEST_ARGS="--disable-unit-tests --build-exe-only --disable-schema-deployment"
     - ENABLE_HYPRE=ON
-    - ENABLE_HYPRE_DEVICE=CUDA
+    - ENABLE_HYPRE_CUDA=ON
     - ENABLE_TRILINOS=OFF
   - stage: builds
     name: Ubuntu CUDA (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.2.152)
@@ -178,7 +178,7 @@ jobs:
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS="--disable-unit-tests --disable-schema-deployment"
     - ENABLE_HYPRE=ON
-    - ENABLE_HYPRE_DEVICE=CUDA
+    - ENABLE_HYPRE_CUDA=ON
     - ENABLE_TRILINOS=OFF
   - stage: builds
     name: Centos (7.6, gcc 8.3.1, open-mpi 1.10.7, cuda 10.1.243)

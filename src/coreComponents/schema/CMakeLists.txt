@@ -12,7 +12,15 @@ set( schema_headers
 set( schema_sources
      schemaUtilities.cpp )
 
-set( dependencyList ${parallelDeps} dataRepository )
+set( dependencyList dataRepository )
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
+
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
+endif()
 
 blt_add_library( NAME       schema
                  SOURCES    ${schema_sources}

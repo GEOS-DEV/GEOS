@@ -153,7 +153,7 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const override final
   {
@@ -187,7 +187,7 @@ private:
 
 
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void ModifiedCamClayUpdates::evaluateYield( real64 const p,
                                             real64 const q,
                                             real64 const pc,
@@ -217,7 +217,7 @@ void ModifiedCamClayUpdates::evaluateYield( real64 const p,
 
 
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
                                                 localIndex const q,
                                                 real64 const & timeIncrement,
@@ -275,7 +275,7 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
   eps_v_trial = std::log( trialP/p0 ) * Cr * (-1.0) + eps_v0;
   eps_s_trial = trialQ/3.0/mu;
 
-  real64 solution[3] = {}, residual[3] = {}, delta[3] = {};
+  real64 solution[3]{}, residual[3]{}, delta[3]{};
   real64 jacobian[3][3] = {{}}, jacobianInv[3][3] = {{}};
 
   solution[0] = eps_v_trial; // initial guess for elastic volumetric strain
@@ -456,7 +456,7 @@ void ModifiedCamClayUpdates::smallStrainUpdate_ElasticOnly( localIndex const k,
 }
 
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
                                                 localIndex const q,
                                                 real64 const & timeIncrement,

@@ -13,7 +13,11 @@ set( denseLinearAlgebra_sources
      interfaces/blaslapack/BlasLapackLA.cpp
    )
 
-set( dependencyList codingUtilities blas lapack ${parallelDeps} )
+set( dependencyList codingUtilities blas lapack )
+
+if ( ENABLE_CUDA )
+    list( APPEND dependencyList cuda )
+endif()
 
 blt_add_library( NAME       denseLinearAlgebra
                  SOURCES    ${denseLinearAlgebra_sources}
@@ -24,8 +28,6 @@ blt_add_library( NAME       denseLinearAlgebra
 
 target_include_directories( denseLinearAlgebra PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
 
-if(GEOSX_ENABLE_TESTS)
-  add_subdirectory( unitTests )
-endif( )
+add_subdirectory( unitTests )
 
 geosx_add_code_checks( PREFIX denseLinearAlgebra )

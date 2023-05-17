@@ -211,9 +211,7 @@ void EmbeddedSurfaceFluxKernel::
 }
 
 template< localIndex MAX_NUM_CONNECTIONS >
-GEOS_HOST_DEVICE
-void
-EmbeddedSurfaceFluxKernel::
+void EmbeddedSurfaceFluxKernel::
   compute( localIndex const numFluxElems,
            arraySlice1d< localIndex const > const & seri,
            arraySlice1d< localIndex const > const & sesri,

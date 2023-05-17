@@ -154,8 +154,7 @@ private:
 };
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 CompositionalMultiphaseFluid::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
@@ -170,18 +169,10 @@ CompositionalMultiphaseFluid::KernelWrapper::
            real64 & totalDens ) const
 {
   GEOS_UNUSED_VAR( phaseEnthalpy, phaseInternalEnergy );
-#if defined(GEOS_DEVICE_COMPILE)
+#if defined(__CUDA_ARCH__)
   GEOS_ERROR( "This function cannot be used on GPU" );
-  GEOS_UNUSED_VAR( pressure );
-  GEOS_UNUSED_VAR( temperature );
-  GEOS_UNUSED_VAR( composition );
-  GEOS_UNUSED_VAR( phaseFrac );
-  GEOS_UNUSED_VAR( phaseDens );
-  GEOS_UNUSED_VAR( phaseMassDens );
-  GEOS_UNUSED_VAR( phaseVisc );
-  GEOS_UNUSED_VAR( phaseCompFrac );
-  GEOS_UNUSED_VAR( totalDens );
 #else
+
   integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   integer constexpr maxNumPhase = MultiFluidBase::MAX_NUM_PHASES;
   integer const numComp = numComponents();
@@ -190,6 +181,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
   // 1. Convert input mass fractions to mole fractions and keep derivatives
 
   std::vector< double > compMoleFrac( numComp );
+
   if( m_useMass )
   {
     convertToMoleFractions< maxNumComp >( composition,
@@ -204,6 +196,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
   }
 
   // 2. Trigger PVTPackage compute and get back phase split
+
   m_fluid.Update( pressure, temperature, compMoleFrac );
 
   GEOS_WARNING_IF( !m_fluid.hasSucceeded(),
@@ -261,8 +254,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 CompositionalMultiphaseFluid::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
@@ -277,17 +269,8 @@ CompositionalMultiphaseFluid::KernelWrapper::
            FluidProp::SliceType const totalDensity ) const
 {
   GEOS_UNUSED_VAR( phaseEnthalpy, phaseInternalEnergy );
-#if defined(GEOS_DEVICE_COMPILE)
+#if defined(__CUDA_ARCH__)
   GEOS_ERROR( "This function cannot be used on GPU" );
-  GEOS_UNUSED_VAR( pressure );
-  GEOS_UNUSED_VAR( temperature );
-  GEOS_UNUSED_VAR( composition );
-  GEOS_UNUSED_VAR( phaseFraction );
-  GEOS_UNUSED_VAR( phaseDensity );
-  GEOS_UNUSED_VAR( phaseMassDensity );
-  GEOS_UNUSED_VAR( phaseViscosity );
-  GEOS_UNUSED_VAR( phaseCompFraction );
-  GEOS_UNUSED_VAR( totalDensity );
 #else
 
   using Deriv = multifluid::DerivativeOffset;
@@ -412,8 +395,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 CompositionalMultiphaseFluid::KernelWrapper::
   update( localIndex const k,
           localIndex const q,

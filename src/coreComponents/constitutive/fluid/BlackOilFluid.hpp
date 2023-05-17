@@ -365,8 +365,7 @@ private:
 };
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 BlackOilFluid::KernelWrapper::
   compute( real64 pressure,
            real64 temperature,
@@ -435,8 +434,7 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 BlackOilFluid::KernelWrapper::
   compute( real64 pressure,
            real64 temperature,
@@ -518,8 +516,7 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 BlackOilFluid::KernelWrapper::
   computeEquilibrium( real64 const pressure,
                       real64 const composition[NC_BO],
@@ -546,8 +543,7 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 BlackOilFluid::KernelWrapper::
   computeEquilibrium( bool const needDerivs,
                       real64 const pressure,
@@ -695,8 +691,7 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 BlackOilFluid::KernelWrapper::
   computeDensitiesViscosities( real64 const pressure,
                                real64 const composition[NC_BO],
@@ -736,8 +731,7 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 BlackOilFluid::KernelWrapper::
   computeDensitiesViscosities( bool const needDerivs,
                                real64 const pressure,
@@ -919,8 +913,7 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 BlackOilFluid::KernelWrapper::
   computeRs( real64 const presBub,
              real64 & Rs,
@@ -938,8 +931,7 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 BlackOilFluid::KernelWrapper::
   computeSaturatedBoViscosity( real64 const Rs,
                                real64 const dRs_dPres,
@@ -971,8 +963,7 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 BlackOilFluid::KernelWrapper::
   computeUndersaturatedBoViscosity( bool const needDerivs,
                                     real64 const P,
@@ -1018,8 +1009,7 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 BlackOilFluid::KernelWrapper::
   computeUndersaturatedBoViscosity( real64 const Rs,
                                     real64 const pres,
@@ -1072,8 +1062,7 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 BlackOilFluid::KernelWrapper::
   computeMassMoleDensity( bool const needDerivs,
                           bool const useMass,
@@ -1109,8 +1098,7 @@ BlackOilFluid::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 BlackOilFluid::KernelWrapper::
   update( localIndex const k,
           localIndex const q,

@@ -1,10 +1,10 @@
 set( kernelPath "coreComponents/physicsSolvers/multiphysics/poromechanicsKernels" )
 
-set( SinglePhasePoromechanicsPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
-set( SinglePhasePoromechanicsEFEMPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
-set( MultiphasePoromechanicsPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
-set( ThermalMultiphasePoromechanicsPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
-set( ThermalSinglePhasePoromechanicsPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
+set( SinglePhasePoromechanicsPolicy "geos::parallelDevicePolicy<32>" )
+set( SinglePhasePoromechanicsEFEMPolicy "geos::parallelDevicePolicy<32>" )
+set( MultiphasePoromechanicsPolicy "geos::parallelDevicePolicy<32>" )
+set( ThermalMultiphasePoromechanicsPolicy "geos::parallelDevicePolicy<32>" )
+set( ThermalSinglePhasePoromechanicsPolicy "geos::parallelDevicePolicy<32>" )
 
 configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp.in
                 ${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/policies.hpp )
@@ -31,20 +31,15 @@ set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
                            H1_Tetrahedron_Lagrange1_Gauss1
                            H1_Pyramid_Lagrange1_Gauss5
                            H1_Tetrahedron_VEM_Gauss1
+                           H1_Wedge_VEM_Gauss1
+                           H1_Hexahedron_VEM_Gauss1
                            H1_Prism5_VEM_Gauss1
                            H1_Prism6_VEM_Gauss1
                            H1_Prism7_VEM_Gauss1
                            H1_Prism8_VEM_Gauss1
                            H1_Prism9_VEM_Gauss1
-                           H1_Prism10_VEM_Gauss1 )
-
-if ( NOT ${ENABLE_HIP} )
-  list(APPEND finiteElementDispatch
-              H1_Hexahedron_VEM_Gauss1
-              H1_Wedge_VEM_Gauss1
-              H1_Prism11_VEM_Gauss1 )
-endif( )
-
+                           H1_Prism10_VEM_Gauss1
+                           H1_Prism11_VEM_Gauss1 )
 
   foreach( KERNELNAME ${kernelNames} )
     foreach( SUBREGION_TYPE  ${subregionList} )
@@ -75,19 +70,15 @@ set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
                            H1_Tetrahedron_Lagrange1_Gauss1
                            H1_Pyramid_Lagrange1_Gauss5
                            H1_Tetrahedron_VEM_Gauss1
+                           H1_Wedge_VEM_Gauss1
+                           H1_Hexahedron_VEM_Gauss1
                            H1_Prism5_VEM_Gauss1
                            H1_Prism6_VEM_Gauss1
                            H1_Prism7_VEM_Gauss1
                            H1_Prism8_VEM_Gauss1
                            H1_Prism9_VEM_Gauss1
-                           H1_Prism10_VEM_Gauss1 )
-
-if ( NOT ${ENABLE_HIP} )
-  list(APPEND finiteElementDispatch
-              H1_Hexahedron_VEM_Gauss1
-              H1_Wedge_VEM_Gauss1
-              H1_Prism11_VEM_Gauss1 )
-endif( )
+                           H1_Prism10_VEM_Gauss1
+                           H1_Prism11_VEM_Gauss1 )
 
   foreach( KERNELNAME ${kernelNames} )
     foreach( SUBREGION_TYPE  ${subregionList} )

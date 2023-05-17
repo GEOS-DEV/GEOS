@@ -309,7 +309,6 @@ std::underlying_type_t< ENUMERATION > * toUnderlyingPtr( ENUMERATION * const enu
  */
 template< typename VEC1, typename VEC2 >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
 void copy( integer const N,
            VEC1 const & v1,
            VEC2 const & v2,
@@ -334,7 +333,6 @@ void copy( integer const N,
  */
 template< typename MATRIX, typename VEC1, typename VEC2 >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
 void applyChainRule( integer const N,
                      MATRIX const & dy_dx,
                      VEC1 const & df_dy,
@@ -365,7 +363,6 @@ void applyChainRule( integer const N,
  */
 template< typename MATRIX, typename VEC1, typename VEC2 >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
 void applyChainRuleInPlace( integer const N,
                             MATRIX const & dy_dx,
                             VEC1 && df_dxy,

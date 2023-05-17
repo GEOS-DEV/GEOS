@@ -115,7 +115,7 @@ public:
    * @param[out] N The shape function values.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   static void calcN( real64 const (&coords)[3],
                      real64 (& N)[numNodes] )
   {
@@ -131,7 +131,7 @@ public:
    *   point.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   static void calcN( localIndex const q,
                      real64 (& N)[numNodes] )
   {
@@ -153,7 +153,7 @@ public:
    *   point.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   static void calcN( localIndex const q,
                      StackVariables const & stack,
                      real64 ( & N )[numNodes] )
@@ -201,7 +201,7 @@ public:
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   static real64 calcGradN( localIndex const q,
                            real64 const (&X)[numNodes][3],
                            StackVariables const & stack,
@@ -559,7 +559,7 @@ private:
 
 template< typename GL_BASIS >
 template< typename FUNC, typename ... PARAMS >
-GEOS_HOST_DEVICE inline void
+GEOS_HOST_DEVICE GEOS_FORCE_INLINE void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( int const qa,
                                                               int const qb,
                                                               int const qc,
@@ -576,7 +576,7 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( int const qa,
 
 template< typename GL_BASIS >
 template< typename FUNC, typename ... PARAMS >
-GEOS_HOST_DEVICE inline void
+GEOS_HOST_DEVICE GEOS_FORCE_INLINE void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( real64 const (&coords)[3],
                                                               FUNC && func,
                                                               PARAMS &&... params )
@@ -607,7 +607,7 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( real64 const (&coo
 
 template< typename GL_BASIS >
 template< typename FUNC, typename ... PARAMS >
-GEOS_HOST_DEVICE inline void
+GEOS_HOST_DEVICE GEOS_FORCE_INLINE void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop2d( int const qa,
                                                                 int const qb,
                                                                 FUNC && func,
@@ -635,7 +635,7 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop2d( int const qa,
 //*************************************************************************************************
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( localIndex const q,
                                                             real64 const (&X)[numNodes][3],
@@ -658,7 +658,7 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( localIndex const q,
 //*************************************************************************************************
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( real64 const (&coords)[3],
                                                             real64 const (&X)[numNodes][3],
@@ -676,7 +676,7 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( real64 const (&coord
 }
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 real64 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 calcGradN( localIndex const q,
            real64 const (&X)[numNodes][3],
@@ -694,7 +694,7 @@ calcGradN( localIndex const q,
 
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 jacobianTransformation( int const qa,
@@ -731,7 +731,7 @@ jacobianTransformation( int const qa,
 }
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 jacobianTransformation( real64 const (&coords)[3],
@@ -756,7 +756,7 @@ jacobianTransformation( real64 const (&coords)[3],
 
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 jacobianTransformation2d( int const qa,
@@ -782,7 +782,7 @@ jacobianTransformation2d( int const qa,
 
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 computeMassTerm( int q,
@@ -797,7 +797,7 @@ computeMassTerm( int q,
 
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 computeDampingTerm( int q,
@@ -827,7 +827,7 @@ computeDampingTerm( int q,
  */
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 computeBMatrix( int const qa,
@@ -857,7 +857,7 @@ computeBMatrix( int const qa,
 template< typename GL_BASIS >
 template< typename FUNC >
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 computeStiffnessTerm( int q,
@@ -948,7 +948,7 @@ computeStiffnessTerm( int q,
 template< typename GL_BASIS >
 template< typename FUNC >
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 computeFirstOrderStiffnessTerm( int q,
@@ -1184,7 +1184,7 @@ computeFirstOrderStiffnessTermZ( int q,
 //*************************************************************************************************
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 applyTransformationToParentGradients( int const qa,
@@ -1218,7 +1218,7 @@ applyTransformationToParentGradients( int const qa,
 //*************************************************************************************************
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 applyTransformationToParentGradients( real64 const (&coords)[3],
@@ -1238,7 +1238,7 @@ applyTransformationToParentGradients( real64 const (&coords)[3],
 
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 transformedQuadratureWeight( localIndex const q,
@@ -1258,7 +1258,7 @@ transformedQuadratureWeight( localIndex const q,
 
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 symmetricGradient( int const q,
                    real64 const (&invJ)[3][3],
@@ -1295,7 +1295,7 @@ symmetricGradient( int const q,
 
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 plusGradNajAij( int const q,
                 real64 const (&invJ)[3][3],
@@ -1332,7 +1332,7 @@ plusGradNajAij( int const q,
 
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 gradient( int const q,
           real64 const (&invJ)[3][3],

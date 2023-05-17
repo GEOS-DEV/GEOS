@@ -232,10 +232,10 @@ void testKernelDriver()
 
 }
 
-#ifdef GEOS_USE_DEVICE
+#ifdef USE_CUDA
 TEST( FiniteElementShapeFunctions, testKernelCuda )
 {
-  testKernelDriver< geos::parallelDevicePolicy< > >();
+  testKernelDriver< geos::parallelDevicePolicy< 32 > >();
 }
 #endif
 TEST( FiniteElementShapeFunctions, testKernelHost )

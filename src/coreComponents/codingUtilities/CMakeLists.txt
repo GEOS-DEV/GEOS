@@ -18,7 +18,11 @@ set( codingUtilities_sources
      Parsing.cpp
      StringUtilities.cpp )
 
-set( dependencyList ${parallelDeps} common fast_float )
+set( dependencyList common fast_float )
+
+if( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
 
 blt_add_library( NAME       codingUtilities
                  SOURCES    ${codingUtilities_sources}
@@ -34,7 +38,4 @@ target_include_directories( codingUtilities PUBLIC ${CMAKE_SOURCE_DIR}/coreCompo
 
 geosx_add_code_checks(PREFIX codingUtilities )
 
-
-if( GEOSX_ENABLE_TESTS )
-  add_subdirectory(tests)
-endif( )
+add_subdirectory(tests)

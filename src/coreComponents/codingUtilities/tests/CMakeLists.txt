@@ -8,7 +8,11 @@ set( testSources
      testParsing.cpp
      )
 
-set(dependencyList gtest codingUtilities ${parallelDeps} )
+set( dependencyList gtest codingUtilities )
+
+if( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
 
 #
 # Add gtest C++ based tests

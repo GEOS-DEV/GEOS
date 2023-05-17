@@ -130,15 +130,7 @@ public:
       localColDofIndex{ 0 },
       localResidual{ 0.0 },
       localJacobian{ {0.0} }
-    {
-      for( int ii = 0; ii < maxNumRows; ++ii )
-      {
-        for( int jj = 0; jj < maxNumCols; ++jj )
-        {
-          localJacobian[ii][jj] = 0.0;
-        }
-      }
-    }
+    {}
 
     /// The actual number of rows in the element local jacobian matrix (<= maxNumRows).
     localIndex numRows;
@@ -175,7 +167,7 @@ public:
    *       complete() unless we actually need these dof somewhere else in the kernel.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   void setup( localIndex const k,
               StackVariables & stack ) const
   {

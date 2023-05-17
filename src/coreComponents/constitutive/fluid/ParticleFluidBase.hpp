@@ -39,7 +39,6 @@ public:
    * @return number of elements
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   localIndex numElems() const { return m_settlingFactor.size( 0 ); }
 
   /**
@@ -47,7 +46,6 @@ public:
    * @return number of gauss points per element
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   localIndex numGauss() const { return m_settlingFactor.size( 1 ); };
 
 protected:
@@ -93,14 +91,12 @@ protected:
    * @brief Deleted copy assignment operator
    * @return reference to this object
    */
-  GEOS_HOST_DEVICE
   ParticleFluidBaseUpdate & operator=( ParticleFluidBaseUpdate const & ) = delete;
 
   /**
    * @brief Deleted move assignment operator
    * @return reference to this object
    */
-  GEOS_HOST_DEVICE
   ParticleFluidBaseUpdate & operator=( ParticleFluidBaseUpdate && ) = delete;
 
   bool m_isCollisionalSlip;

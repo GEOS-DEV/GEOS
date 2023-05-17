@@ -106,7 +106,7 @@ public:
 
   //Standard quadratic degradation functions
 
-  inline
+  GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   virtual real64 getDegradationValue( localIndex const k,
                                       localIndex const q ) const
@@ -129,7 +129,7 @@ public:
   }
 
 
-  inline
+  GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   virtual real64 getDegradationDerivative( real64 const d ) const
   {
@@ -137,7 +137,7 @@ public:
   }
 
 
-  inline
+  GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   virtual real64 getDegradationSecondDerivative( real64 const d ) const
   {

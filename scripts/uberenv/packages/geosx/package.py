@@ -422,9 +422,7 @@ class Geosx(CMakePackage, CudaPackage):
                 if enable:
                     cfg.write(cmake_cache_entry('{}_DIR'.format(cmake_name), spec[tpl].prefix))
                     if tpl == 'hypre' and '+hypre-cuda' in spec:
-                        cfg.write(cmake_cache_string('ENABLE_HYPRE_DEVICE', "CUDA"))
-                    elif tpl == 'hypre' and '+hypre-hip' in spec:
-                        cfg.write(cmake_cache_string('ENABLE_HYPRE_DEVICE', "HIP"))
+                        cfg.write(cmake_cache_option('ENABLE_HYPRE_CUDA'.format(cmake_name), True))
                 else:
                     cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
 

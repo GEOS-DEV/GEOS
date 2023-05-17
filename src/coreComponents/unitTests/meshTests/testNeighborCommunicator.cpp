@@ -100,7 +100,7 @@ TEST( TestNeighborComms, testMPICommunication_fromPinnedSetOnDevice )
     MPI_Request request;
     if( rnk == 0 )
     {
-      veloc.move( parallelDeviceMemorySpace );
+      veloc.move( LvArray::MemorySpace::cuda );
       auto veloc_view = veloc.toViewConst();
       pack( buf, veloc_view, size );
       MpiWrapper::iSend( buf, byte_size, 1, 0, MPI_COMM_GEOSX, &request );
@@ -114,7 +114,7 @@ TEST( TestNeighborComms, testMPICommunication_fromPinnedSetOnDevice )
       EXPECT_EQ( err, MPI_SUCCESS );
       auto veloc_view = veloc.toView();
       unpack( buf, veloc_view, size );
-      veloc.move( hostMemorySpace );
+      veloc.move( LvArray::MemorySpace::host );
       for( int ii = 0; ii < size; ++ii )
         EXPECT_EQ( veloc[ii], ii );
     }

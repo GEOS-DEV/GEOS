@@ -21,9 +21,7 @@
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "WaveSolverUtils.hpp"
-#if !defined( GEOS_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
-#endif
 
 namespace geos
 {
@@ -34,6 +32,8 @@ namespace acousticWaveEquationSEMKernels
 
 struct PrecomputeSourceAndReceiverKernel
 {
+
+
 
   /**
    * @brief Launches the precomputation of the source and receiver terms
@@ -211,6 +211,7 @@ struct MassMatrixKernel
   {
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
+
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
@@ -322,7 +323,7 @@ struct PMLKernelHelper
    * @param sigma 3-components array to hold the damping profile in each direction
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   static void computeDampingProfilePML( real64 const (&xLocal)[3],
                                         real32 const (&xMin)[3],
                                         real32 const (&xMax)[3],
@@ -419,6 +420,7 @@ struct PMLKernel
           arrayView2d< real32 > const grad_n,
           arrayView1d< real32 > const divV_n )
   {
+
     /// Loop over elements in the subregion, 'l' is the element index within the target set
     forAll< EXEC_POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const l )
     {
@@ -770,7 +772,7 @@ public:
    * Copies the primary variable, and position into the local stack array.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -793,7 +795,7 @@ public:
    *
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const

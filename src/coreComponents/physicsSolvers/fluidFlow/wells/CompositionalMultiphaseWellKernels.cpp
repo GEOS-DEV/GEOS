@@ -31,7 +31,6 @@ namespace compositionalMultiphaseWellKernels
 /******************************** ControlEquationHelper ********************************/
 
 GEOS_HOST_DEVICE
-inline
 void
 ControlEquationHelper::
   switchControl( bool const isProducer,
@@ -111,7 +110,6 @@ ControlEquationHelper::
 
 template< integer NC >
 GEOS_HOST_DEVICE
-inline
 void
 ControlEquationHelper::
   compute( globalIndex const rankOffset,
@@ -292,6 +290,7 @@ FluxKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
+
   using namespace compositionalMultiphaseUtilities;
 
   bool const isProducer = wellControls.isProducer();
@@ -300,6 +299,7 @@ FluxKernel::
   // loop over the well elements to compute the fluxes between elements
   forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
+
     // create local work arrays
     real64 compFracUp[NC]{};
     real64 dCompFrac_dCompDensUp[NC][NC]{};

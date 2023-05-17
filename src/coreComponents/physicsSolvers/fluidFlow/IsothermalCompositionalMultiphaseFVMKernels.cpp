@@ -72,7 +72,6 @@ FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhase
 
 template< integer NC, localIndex NUM_ELEMS, localIndex maxStencilSize >
 GEOS_HOST_DEVICE
-inline
 void
 CFLFluxKernel::
   compute( integer const numPhases,

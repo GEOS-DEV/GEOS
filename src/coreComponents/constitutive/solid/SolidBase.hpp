@@ -311,7 +311,7 @@ public:
    * @param[in] q Quadrature point index.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const
   {

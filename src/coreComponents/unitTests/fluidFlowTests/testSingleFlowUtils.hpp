@@ -260,11 +260,11 @@ void fillCellCenteredNumericalJacobian( SINGLE_PHASE_SOLVER & solver,
         // Step 1: compute numerical derivatives wrt pressure
 
         {
-          pres.move( hostMemorySpace, true ); // to get the correct pres after reset
+          pres.move( LvArray::MemorySpace::host, true ); // to get the correct pres after reset
           real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
           pres[ei] += dP;
-#if defined(GEOS_USE_CUDA)
-          pres.move( parallelDeviceMemorySpace, false );
+#if defined(GEOSX_USE_CUDA)
+          pres.move( LvArray::MemorySpace::cuda, false );
 #endif
 
           solver.updateState( domain );
@@ -286,15 +286,15 @@ void fillCellCenteredNumericalJacobian( SINGLE_PHASE_SOLVER & solver,
         {
           arrayView1d< real64 > const temp =
             subRegion.getField< fields::flow::temperature >();
-          temp.move( hostMemorySpace, false );
+          temp.move( LvArray::MemorySpace::host, false );
 
           solver.resetStateToBeginningOfStep( domain );
 
-          temp.move( hostMemorySpace, true );
+          temp.move( LvArray::MemorySpace::host, true );
           real64 const dT = perturbParameter * ( temp[ei] + perturbParameter );
           temp[ei] += dT;
-#if defined(GEOS_USE_CUDA)
-          temp.move( parallelDeviceMemorySpace, false );
+#if defined(GEOSX_USE_CUDA)
+          temp.move( LvArray::MemorySpace::cuda, false );
 #endif
 
           // here, we make sure that rock internal energy is updated

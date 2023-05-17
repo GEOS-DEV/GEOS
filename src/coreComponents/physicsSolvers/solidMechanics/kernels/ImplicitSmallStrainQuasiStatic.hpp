@@ -85,6 +85,7 @@ public:
   using Base::m_finiteElementSpace;
   using Base::m_meshData;
 
+
   /**
    * @brief Constructor
    * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
@@ -170,7 +171,7 @@ public:
      * @param a Node index for the row.
      * @param b Node index for the col.
      */
-    GEOS_HOST_DEVICE inline constexpr
+    GEOS_HOST_DEVICE GEOS_FORCE_INLINE constexpr
     void operator() ( localIndex const a, localIndex const b )
     {
       GEOS_UNUSED_VAR( a );
@@ -182,7 +183,7 @@ public:
      *   integrating the divergence to produce nodal forces.
      * @param stress The stress array.
      */
-    GEOS_HOST_DEVICE inline constexpr
+    GEOS_HOST_DEVICE GEOS_FORCE_INLINE constexpr
     void operator() ( real64 (& stress)[6] )
     {
       GEOS_UNUSED_VAR( stress );
@@ -210,7 +211,7 @@ public:
    * @copydoc geos::finiteElement::ImplicitKernelBase::complete
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
 
@@ -246,7 +247,7 @@ protected:
    * @return A parameter representative of the stiffness matrix dstress/dstrain
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   real64 computeStabilizationScaling( localIndex const k ) const
   {
     // TODO: generalize this to other constitutive models (currently we assume linear elasticity).

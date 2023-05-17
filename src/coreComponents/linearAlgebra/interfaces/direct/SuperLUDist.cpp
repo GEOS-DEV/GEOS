@@ -34,7 +34,7 @@ namespace geos
 
 // Check matching requirements on index/value types between GEOSX and SuperLU_Dist
 
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CPU
+#if !defined(GEOSX_USE_HYPRE_CUDA)
 static_assert( sizeof( int_t ) == sizeof( globalIndex ),
                "SuperLU_Dist int_t and geos::globalIndex must have the same size" );
 
@@ -184,9 +184,9 @@ void SuperLUDist< LAI >::setup( Matrix const & mat )
 
   typename Matrix::Export matExport;
   matExport.exportCRS( mat, m_data->rowPtr, m_data->colIndices, m_data->values );
-  m_data->rowPtr.move( hostMemorySpace, false );
-  m_data->colIndices.move( hostMemorySpace, false );
-  m_data->values.move( hostMemorySpace, false );
+  m_data->rowPtr.move( LvArray::MemorySpace::host, false );
+  m_data->colIndices.move( LvArray::MemorySpace::host, false );
+  m_data->values.move( LvArray::MemorySpace::host, false );
 
   dCreate_CompRowLoc_Matrix_dist( &m_data->mat,
                                   numGR,
@@ -223,7 +223,7 @@ void SuperLUDist< LAI >::apply( Vector const & src,
   // Export the rhs to a host-based array (this is required when vector is on GPU)
   typename Matrix::Export vecExport;
   vecExport.exportVector( src, m_data->rhs );
-  m_data->rhs.move( hostMemorySpace, true );
+  m_data->rhs.move( LvArray::MemorySpace::host, true );
 
   // Call the linear equation solver to solve the matrix.
   real64 berr = 0.0;

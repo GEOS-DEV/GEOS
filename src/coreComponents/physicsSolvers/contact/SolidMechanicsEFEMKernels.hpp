@@ -167,7 +167,7 @@ public:
    * @copydoc ::geos::finiteElement::ImplicitKernelBase::setup
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -206,7 +206,7 @@ public:
    * @copydoc geos::finiteElement::ImplicitKernelBase::complete
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {

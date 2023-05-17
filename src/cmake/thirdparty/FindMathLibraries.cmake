@@ -1,4 +1,3 @@
-
 if( ENABLE_MKL )
     if ( NOT DEFINED MKL_INCLUDE_DIRS )
         message( FATAL_ERROR "MKL is enabled but MKL_INCLUDE_DIRS is not defined." )
@@ -9,7 +8,7 @@ if( ENABLE_MKL )
     message( STATUS "MKL found" )
 
     set( BLAS_LIBRARIES "${MKL_LIBRARIES}" CACHE STRING "" FORCE )
-    set( LAPACK_LIBRARIES "${MKL_LIBRARIES}" CACHE STRING "" FORCE)
+    set( LAPACK_LIBRARIES "${MKL_LIBRARIES}" CACHE STRING "" FORCE) 
 
 elseif( ENABLE_ESSL )
     if ( NOT DEFINED ESSL_INCLUDE_DIRS )
@@ -20,9 +19,7 @@ elseif( ENABLE_ESSL )
 
     set( BLAS_LIBRARIES "${ESSL_LIBRARIES}" CACHE STRING "" FORCE )
     set( LAPACK_LIBRARIES "${ESSL_LIBRARIES}" CACHE STRING "" FORCE )
-
 endif()
-
 
 if( NOT DEFINED BLAS_LIBRARIES )
     find_package( BLAS REQUIRED )
@@ -60,7 +57,7 @@ message( STATUS "BLAS_LIBRARIES = ${BLAS_LIBRARIES}" )
 #     if ( NOT EXISTS ${lib} )
 #         message( ERROR "LAPACK library '${lib}' does not exist!" )
 #     endif()
-
+    
 #     if ( NOT lib MATCHES "\.a$" )
 #         get_filename_component( dirname ${lib} DIRECTORY )
 #         list( APPEND LAPACK_SHARED_LIBRARY_DIRS ${dirname} )

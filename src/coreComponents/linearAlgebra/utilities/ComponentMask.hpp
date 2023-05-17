@@ -243,7 +243,7 @@ public:
 private:
 
     GEOS_HOST_DEVICE
-    inline
+    GEOS_FORCE_INLINE
     void skipOne()
     {
       m_mask >>= 1;

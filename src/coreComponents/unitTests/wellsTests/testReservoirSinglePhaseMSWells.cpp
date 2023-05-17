@@ -174,13 +174,13 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & so
   jacobian.zero();
 
   assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
-  residual.move( hostMemorySpace, false );
+  residual.move( LvArray::MemorySpace::host, false );
 
   // copy the analytical residual
   array1d< real64 > residualOrig( residual );
 
   // create the numerical jacobian
-  jacobian.move( hostMemorySpace );
+  jacobian.move( LvArray::MemorySpace::host );
   CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
   jacobianFD.zero();
 
@@ -211,7 +211,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & so
           // get the primary variables on reservoir elements
           arrayView1d< real64 > const & pres =
             subRegion.getField< fields::well::pressure >();
-          pres.move( hostMemorySpace, false );
+          pres.move( LvArray::MemorySpace::host, false );
 
           // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei
           for( localIndex ei = 0; ei < subRegion.size(); ++ei )
@@ -221,7 +221,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & so
 
               // here is the perturbation in the pressure of the element
               real64 const dP = perturbParameter * (pres[ei] + perturbParameter);
-              pres.move( hostMemorySpace, true );
+              pres.move( LvArray::MemorySpace::host, true );
               pres[ei] += dP;
 
               // after perturbing, update the pressure-dependent quantities in the reservoir
@@ -276,11 +276,11 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & so
       // get the primary variables on well elements
       arrayView1d< real64 > const & wellElemPressure =
         subRegion.getField< fields::well::pressure >();
-      wellElemPressure.move( hostMemorySpace, false );
+      wellElemPressure.move( LvArray::MemorySpace::host, false );
 
       arrayView1d< real64 > const & connRate =
         subRegion.getField< fields::well::connectionRate >();
-      connRate.move( hostMemorySpace, false );
+      connRate.move( LvArray::MemorySpace::host, false );
 
       // a) compute all the derivatives wrt to the pressure in WELL elem iwelem
       for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
@@ -290,7 +290,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & so
 
           // here is the perturbation in the pressure of the well element
           real64 const dP = perturbParameter * ( wellElemPressure[iwelem] + perturbParameter );
-          wellElemPressure.move( hostMemorySpace, true );
+          wellElemPressure.move( LvArray::MemorySpace::host, true );
           wellElemPressure[iwelem] += dP;
 
           // after perturbing, update the pressure-dependent quantities in the well
@@ -318,7 +318,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & so
 
           // here is the perturbation in the pressure of the well element
           real64 const dRate = perturbParameter * ( connRate[iwelem] + perturbParameter );
-          connRate.move( hostMemorySpace, true );
+          connRate.move( LvArray::MemorySpace::host, true );
           connRate[iwelem] += dRate;
 
           // after perturbing, update the rate-dependent quantities in the well (well controls)

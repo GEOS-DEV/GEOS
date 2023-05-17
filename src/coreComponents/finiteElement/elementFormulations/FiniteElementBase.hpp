@@ -16,7 +16,7 @@
  * @file FiniteElementBase.hpp
  */
 
-#if defined(GEOS_USE_DEVICE)
+#if defined(GEOSX_USE_CUDA)
 #define CALC_FEM_SHAPE_IN_KERNEL
 #endif
 
@@ -64,9 +64,7 @@ public:
     m_viewGradN( source.m_viewGradN ),
     m_viewDetJ( source.m_viewDetJ )
 #endif
-  {
-    GEOS_UNUSED_VAR( source ); // suppress warning when CALC_FEM_SHAPE_IN_KERNEL is defined
-  }
+  {}
 
   /// Default Move constructor
   FiniteElementBase( FiniteElementBase && ) = default;

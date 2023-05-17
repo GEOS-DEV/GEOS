@@ -219,13 +219,13 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
   jacobian.zero();
 
   assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
-  residual.move( hostMemorySpace, false );
+  residual.move( LvArray::MemorySpace::host, false );
 
   // copy the analytical residual
   array1d< real64 > residualOrig( residual );
 
   // create the numerical jacobian
-  jacobian.move( hostMemorySpace );
+  jacobian.move( LvArray::MemorySpace::host );
   CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
   jacobianFD.zero();
 
@@ -254,11 +254,11 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
           // get the primary variables on the reservoir elements
           arrayView1d< real64 > const & pres =
             subRegion.getField< fields::well::pressure >();
-          pres.move( hostMemorySpace, false );
+          pres.move( LvArray::MemorySpace::host, false );
 
           arrayView2d< real64, compflow::USD_COMP > const & compDens =
             subRegion.getField< fields::well::globalCompDensity >();
-          compDens.move( hostMemorySpace, false );
+          compDens.move( LvArray::MemorySpace::host, false );
 
           // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei
           for( localIndex ei = 0; ei < subRegion.size(); ++ei )
@@ -274,7 +274,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
 
               // here is the perturbation in the pressure of the element
               real64 const dP = perturbParameter * (pres[ei] + perturbParameter);
-              pres.move( hostMemorySpace, true );
+              pres.move( LvArray::MemorySpace::host, true );
               pres[ei] += dP;
 
               // after perturbing, update the pressure-dependent quantities in the reservoir
@@ -308,7 +308,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
               solver.resetStateToBeginningOfStep( domain );
 
               real64 const dRho = perturbParameter * totalDensity;
-              compDens.move( hostMemorySpace, true );
+              compDens.move( LvArray::MemorySpace::host, true );
               compDens[ei][jc] += dRho;
 
               flowSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -359,15 +359,15 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
       // get the primary variables on the well elements
       arrayView1d< real64 > const & wellElemPressure =
         subRegion.getField< fields::well::pressure >();
-      wellElemPressure.move( hostMemorySpace, false );
+      wellElemPressure.move( LvArray::MemorySpace::host, false );
 
       arrayView2d< real64, compflow::USD_COMP > const & wellElemCompDens =
         subRegion.getField< fields::well::globalCompDensity >();
-      wellElemCompDens.move( hostMemorySpace, false );
+      wellElemCompDens.move( LvArray::MemorySpace::host, false );
 
       arrayView1d< real64 > const & connRate =
         subRegion.getField< fields::well::mixtureConnectionRate >();
-      connRate.move( hostMemorySpace, false );
+      connRate.move( LvArray::MemorySpace::host, false );
 
       // a) compute all the derivatives wrt to the pressure in WELL elem iwelem
       for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
@@ -383,7 +383,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
 
           // here is the perturbation in the pressure of the well element
           real64 const dP = perturbParameter * ( wellElemPressure[iwelem] + perturbParameter );
-          wellElemPressure.move( hostMemorySpace, true );
+          wellElemPressure.move( LvArray::MemorySpace::host, true );
           wellElemPressure[iwelem] += dP;
 
           // after perturbing, update the pressure-dependent quantities in the well
@@ -405,7 +405,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
           solver.resetStateToBeginningOfStep( domain );
 
           real64 const dRho = perturbParameter * wellElemTotalDensity;
-          wellElemCompDens.move( hostMemorySpace, true );
+          wellElemCompDens.move( LvArray::MemorySpace::host, true );
           wellElemCompDens[iwelem][jc] += dRho;
 
           wellSolver.updateState( domain );
@@ -430,7 +430,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
 
           // here is the perturbation in the rate of the well element
           real64 const dRate = perturbParameter * ( connRate[iwelem] + perturbParameter );
-          connRate.move( hostMemorySpace, true );
+          connRate.move( LvArray::MemorySpace::host, true );
           connRate[iwelem] += dRate;
 
           wellSolver.updateState( domain );

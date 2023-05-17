@@ -39,7 +39,6 @@ public:
    * @return number of elements
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   localIndex numElems() const { return m_density.size( 0 ); }
 
   /**
@@ -47,7 +46,6 @@ public:
    * @return number of gauss points per element
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   localIndex numGauss() const { return m_density.size( 1 ); };
 
   /**
@@ -55,7 +53,6 @@ public:
    * @return number of fluid components
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   localIndex numFluidComponents() const { return m_defaultComponentDensity.size(); }
 
 protected:
@@ -148,14 +145,12 @@ protected:
    * @brief Deleted copy assignment operator
    * @return reference to this object
    */
-  GEOS_HOST_DEVICE
   SlurryFluidBaseUpdate & operator=( SlurryFluidBaseUpdate const & ) = delete;
 
   /**
    * @brief Deleted move assignment operator
    * @return reference to this object
    */
-  GEOS_HOST_DEVICE
   SlurryFluidBaseUpdate & operator=( SlurryFluidBaseUpdate && ) = delete;
 
   arrayView1d< real64 const > m_defaultComponentDensity;

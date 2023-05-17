@@ -73,19 +73,15 @@ setup( localIndex const k,
        StackVariables & stack ) const
 {
   m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
-
-  localIndex const numSupportPoints = m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
-
+  localIndex const numSupportPoints =
+    m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
   stack.numRows =  3 * numSupportPoints;
   stack.numCols = stack.numRows;
-
-  // #pragma unroll
   for( localIndex a = 0; a < numSupportPoints; ++a )
   {
     localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
-    // #pragma unroll
-    for( int i = 0; i < numDofPerTestSupportPoint; ++i )
+    for( int i = 0; i < 3; ++i )
     {
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
       stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
@@ -117,7 +113,8 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
                                                                                                           STRESS_MODIFIER && stressModifier ) const
 {
   real64 dNdX[ numNodesPerElem ][ 3 ];
-  real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, stack.feStack, dNdX );
+  real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
+                                                                           stack.feStack, dNdX );
 
   real64 strainInc[6] = {0};
   real64 timeIncrement = 0.0;
@@ -130,7 +127,6 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
   m_constitutiveUpdate.smallStrainUpdate( k, q, timeIncrement, strainInc, stress, stiffness );
 
   stressModifier( stress );
-  // #pragma unroll
   for( localIndex i=0; i<6; ++i )
   {
     stress[i] *= -detJxW;
@@ -148,15 +144,13 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
                                    gravityForce,
                                    reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
   real64 const stabilizationScaling = computeStabilizationScaling( k );
-  m_finiteElementSpace.template addEvaluatedGradGradStabilizationVector< FE_TYPE, numDofPerTrialSupportPoint >( stack.feStack,
-                                                                                                                stack.uhat_local,
-                                                                                                                reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual),
-                                                                                                                -stabilizationScaling );
-#if !defined( GEOS_USE_HIP )
+  m_finiteElementSpace.template
+  addEvaluatedGradGradStabilizationVector< FE_TYPE,
+                                           numDofPerTrialSupportPoint >( stack.feStack,
+                                                                         stack.uhat_local,
+                                                                         reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual),
+                                                                         -stabilizationScaling );
   stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
-# else
-  stiffness.template BTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian ); // need to use full BTDB compute for hip
-#endif
 }
 
 
@@ -171,19 +165,16 @@ real64 ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYP
   GEOS_UNUSED_VAR( k );
   real64 maxForce = 0;
 
-#if !defined( GEOS_USE_HIP )
   // TODO: Does this work if BTDB is non-symmetric?
   CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
-#endif
-  localIndex const numSupportPoints = m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
-
-  // #pragma unroll
+  localIndex const numSupportPoints =
+    m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
   for( int localNode = 0; localNode < numSupportPoints; ++localNode )
   {
-    // #pragma unroll
     for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
     {
-      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ numDofPerTestSupportPoint * localNode + dim ] - m_dofRankOffset );
+      localIndex const dof =
+        LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ numDofPerTestSupportPoint * localNode + dim ] - m_dofRankOffset );
       if( dof < 0 || dof >= m_matrix.numRows() )
         continue;
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
@@ -205,7 +196,6 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE >
 template< typename POLICY,
           typename KERNEL_TYPE >
-GEOS_FORCE_INLINE
 real64
 ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernelLaunch( localIndex const numElems,
                                                                                             KERNEL_TYPE const & kernelComponent )

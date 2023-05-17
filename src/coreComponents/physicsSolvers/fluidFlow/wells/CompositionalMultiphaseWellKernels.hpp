@@ -83,9 +83,7 @@ struct ControlEquationHelper
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
   GEOS_HOST_DEVICE
-  inline
-  static
-  void
+  static void
   switchControl( bool const isProducer,
                  WellControls::Control const & currentControl,
                  integer const phasePhaseIndex,
@@ -99,7 +97,6 @@ struct ControlEquationHelper
 
   template< integer NC >
   GEOS_HOST_DEVICE
-  inline
   static void
   compute( globalIndex const rankOffset,
            WellControls::Control const currentControl,
@@ -135,7 +132,6 @@ struct FluxKernel
 
   template< integer NC >
   GEOS_HOST_DEVICE
-  inline
   static void
     computeExit( real64 const & dt,
                  real64 const ( &compFlux )[NC],
@@ -148,7 +144,6 @@ struct FluxKernel
 
   template< integer NC >
   GEOS_HOST_DEVICE
-  inline
   static void
     compute( real64 const & dt,
              real64 const ( &compFlux )[NC],
@@ -186,7 +181,6 @@ struct PressureRelationKernel
 
   template< integer NC >
   GEOS_HOST_DEVICE
-  inline
   static void
     compute( real64 const & gravCoef,
              real64 const & gravCoefNext,
@@ -264,7 +258,6 @@ struct PerforationKernel
 
   template< integer NC, integer NP >
   GEOS_HOST_DEVICE
-  inline
   static void
   compute( bool const & disableReservoirToWellFlow,
            real64 const & resPres,
@@ -339,7 +332,6 @@ struct AccumulationKernel
 
   template< integer NC >
   GEOS_HOST_DEVICE
-  inline
   static void
     compute( integer const numPhases,
              real64 const & volume,
@@ -389,7 +381,6 @@ struct VolumeBalanceKernel
 
   template< integer NC >
   GEOS_HOST_DEVICE
-  inline
   static void
     compute( integer const numPhases,
              real64 const & volume,
@@ -539,7 +530,6 @@ public:
    */
   template< typename FUNC = NoOpFunc >
   GEOS_HOST_DEVICE
-  inline
   void compute( localIndex const ei,
                 FUNC && totalMassDensityKernelOp = NoOpFunc{} ) const
   {
@@ -577,7 +567,6 @@ public:
 
       totalMassDensityKernelOp( ip, totalMassDens, dTotalMassDens_dPres, dTotalMassDens_dCompDens );
     }
-
   }
 
 protected:

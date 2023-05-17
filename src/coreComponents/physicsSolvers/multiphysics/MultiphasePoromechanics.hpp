@@ -228,7 +228,7 @@ real64 MultiphasePoromechanics::assemblyLaunch( MeshLevel & mesh,
                                 std::forward< PARAMS >( params )... );
 
   return finiteElement::
-           regionBasedKernelApplication< parallelDevicePolicy< >,
+           regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                          CONSTITUTIVE_BASE,
                                          CellElementSubRegion >( mesh,
                                                                  regionNames,

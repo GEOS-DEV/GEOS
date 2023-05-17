@@ -35,12 +35,12 @@ def getMostCubeLikeRepresentation( n ):
         if n % i != 0:
             continue
 
-        n_over_i = n // i
+        n_over_i = n / i
         for j in range( 1, n_over_i + 1 ):
             if n_over_i % j != 0:
                 continue
-
-            k = n_over_i // j
+            
+            k = n_over_i / j
             surfaceArea = 2 * i * j + 2 * i * k + 2 * j * k
             if surfaceArea < minSurfaceArea:
                 minSurfaceArea = surfaceArea
@@ -51,7 +51,7 @@ def getMostCubeLikeRepresentation( n ):
 
 def parseListFromString( listString ):
     """
-    Given a comma separated string construct a list. The list may optionally be enclosed in {}.
+    Given a comma separated string construct a list. The list may optionally be enclosed in {}. 
 
     Args:
         listString: The string to parse.
@@ -60,7 +60,7 @@ def parseListFromString( listString ):
         A list of strings.
     """
     newList = listString.strip(" {}").split(",")
-    return list(map( lambda x: x.strip(), newList ))
+    return map( lambda x: x.strip(), newList )
 
 
 def createDirectory( dirPath, clean=False ):
@@ -82,14 +82,6 @@ def createDirectory( dirPath, clean=False ):
     os.makedirs( dirPath )
 
 
-def getToolCommand( name ):
-    if name.startswith("rocprof"):
-        return "rocprof -i {} -o {}".format( *name.split(",")[1:] ).split(" ")
-    elif name.startswith("miperf"):
-        return "miperf {} -n geosx-miperf -c "
-    else:
-        return []
-
 class Machine:
     """
     An class that implements an abstract computing system.
@@ -101,7 +93,7 @@ class Machine:
         name: The name of the Machine.
     """
 
-    def __init__( self, name, **kwargs ):
+    def __init__( self, name ):
         """
         Initialize a Machine with the given name.
 
@@ -110,13 +102,8 @@ class Machine:
             name: The name of the Machine.
         """
         self.name = name
-        self.submissions_command_pargs = kwargs.get("submission",[])
-        self.tool_commands = getToolCommand( kwargs.get("tool","") )
 
-    def getToolCommand( self ):
-        return self.tool_commands
-
-    def getSubmissionCommand( self, nodes, tasks, threadsPerTask, timeLimit ):
+    def getSumbissionCommand( self, nodes, tasks, threadsPerTask, timeLimit ):
         """
         Return a list containing the command necessary to launch a job with the given configuration on this machine.
 
@@ -128,7 +115,7 @@ class Machine:
             tasks: The number of tasks in the job.
             threadsPerTask: The threads per task, may be None if not specified.
             timeLimit: The time limit of the job in minutes.
-
+        
         Returns:
             A list containing the submission commands.
         """
@@ -145,7 +132,7 @@ class Machine:
         """
         raise NotImplementedError( "This method must be overridden in the derived class." )
 
-    def hasGPU( self, hipcuda ):
+    def hasCudaGPU( self ):
         """ Return True if this Machine has a CUDA GPU available."""
         return False
 
@@ -153,7 +140,7 @@ class Machine:
 class SlurmMachine( Machine ):
     """ A class that implements a machine that uses Slurm. """
 
-    def getSubmissionCommand( self, nodes, tasks, threadsPerTask, timeLimit ):
+    def getSumbissionCommand( self, nodes, tasks, threadsPerTask, timeLimit ):
         """
         Return a list containing the command necessary to launch a job with the given configuration on this machine.
 
@@ -163,7 +150,7 @@ class SlurmMachine( Machine ):
             tasks: The number of tasks in the job.
             threadsPerTask: The threads per task, may be None if not specified.
             timeLimit: The time limit of the job in minutes, may be None if not specified.
-
+        
         Returns:
             A list containing the submission commands.
         """
@@ -172,15 +159,8 @@ class SlurmMachine( Machine ):
             command += ["-c", threadsPerTask]
         if timeLimit is not None:
             command += ["-t", timeLimit]
-        command.extend( self.submissions_command_pargs )
 
         return command
-
-    def hasGPU( self, hipcuda ):
-        if hipcuda == "hip":
-            return True
-        else:
-            return False
 
     def printProgress( self ):
         """
@@ -195,7 +175,7 @@ class SlurmMachine( Machine ):
 class LallocMachine( Machine ):
     """ A class that implements a machine that uses Lalloc. """
 
-    def getSubmissionCommand( self, nodes, tasks, threadsPerTask, timeLimit ):
+    def getSumbissionCommand( self, nodes, tasks, threadsPerTask, timeLimit ):
         """
         Return a list containing the command necessary to launch a job with the given configuration on this machine.
 
@@ -205,7 +185,7 @@ class LallocMachine( Machine ):
             tasks: The number of tasks in the job.
             threadsPerTask: The threads per task, may be None if not specified.
             timeLimit: The time limit of the job in minutes, may be None if not specified.
-
+        
         Returns:
             A list containing the submission commands.
         """
@@ -215,8 +195,7 @@ class LallocMachine( Machine ):
             command += ["--threadsPerTask", threadsPerTask ]
         if timeLimit is not None:
             command += ["-W", timeLimit]
-        command.extend( self.submissions_command_pargs )
-
+        
         return command
 
     def printProgress( self ):
@@ -227,24 +206,19 @@ class LallocMachine( Machine ):
             self: The Machine to get the status of.
         """
         print( subprocess.check_output( [ "bjobs" ], stderr=subprocess.STDOUT ) )
-
-    def hasGPU( self, hipcuda ):
+    
+    def hasCudaGPU( self ):
         """ Return True."""
-        if hipcuda == "cuda":
-            return True
-        else:
-            return False
+        return True
 
 
-def getMachine( **kwargs ):
+def getMachine():
     """ Return a Machine object corresponding to the current machine. """
     hostName = os.environ[ "HOSTNAME" ]
     if hostName.startswith( "quartz" ):
-        return SlurmMachine( "quartz", **kwargs )
-    elif hostName.startswith( "login2" ):
-        return SlurmMachine( "crusher", **kwargs )
+        return SlurmMachine( "quartz" )
     elif hostName.startswith( "lassen" ):
-        return LallocMachine( "lassen", **kwargs )
+        return LallocMachine( "lassen" )
     else:
         raise EnvironmentError( "Cannot determine the current machine." )
 
@@ -323,20 +297,16 @@ class Benchmark:
         """
         createDirectory( self.outputDir, True )
 
-        submissionCommand = machine.getSubmissionCommand( self.nodes, self.tasks, self.threadsPerTask, self.timeLimit )
-
-        submissionCommand += machine.getToolCommand( )
+        submissionCommand = machine.getSumbissionCommand( self.nodes, self.tasks, self.threadsPerTask, self.timeLimit )
 
         submissionCommand += self.runCommand
 
-        if machine.hasGPU("cuda"):
+        if machine.hasCudaGPU():
             submissionCommand += ["-t", "spot,profile.mpi,profile.cuda"]
-        elif machine.hasGPU("hip"):
-            submissionCommand += ["-t", "spot,profile.mpi,profile.hip"]
         else:
             submissionCommand += ["-t", "spot,profile.mpi"]
-
-        submissionCommand = list(map(str, submissionCommand ))
+        
+        submissionCommand = map( str, submissionCommand )
         with open( self.outputFile, "w" ) as outputFile:
             outputFile.write( "{}\n\n".format( " ".join( submissionCommand ) ) )
             self.process = subprocess.Popen( submissionCommand, cwd=self.outputDir, stdout=outputFile, stderr=subprocess.STDOUT )
@@ -344,7 +314,7 @@ class Benchmark:
         self.status = Status.SUBMITTED
 
         print( "Submitted {}".format( self ) )
-
+    
     def getOutputFile( self ):
         """
         Return the path to the file containing the standard output and error of the Benchmark.
@@ -425,7 +395,7 @@ def printProgress( machine, benchmarks, startTime ):
     for benchmark in benchmarks:
         statusCount[ benchmark.status ] += 1
 
-    for status, count in statusCount.items():
+    for status, count in statusCount.iteritems():
         print( "{}: {}".format( status, count ) )
 
     machine.printProgress()
@@ -471,15 +441,6 @@ def submitAllAndWait( machine, benchmarks, timeLimit ):
                 benchmark.kill()
 
 
-def getIncludedFiles( xmlFilePath ):
-    includedFiles = []
-    tree = ElementTree.parse( xmlFilePath )
-    includeElems = tree.findall( "./Included/File")
-    for elem in includeElems:
-        includedFiles.append( elem.get("name") )
-    return includedFiles
-
-
 def getBenchmarksFromXML( xmlFilePath, machine, outputDir, geosxPath ):
     """
     Return a list of benchmarks created for the current Machine from the given XML file.
@@ -491,29 +452,18 @@ def getBenchmarksFromXML( xmlFilePath, machine, outputDir, geosxPath ):
         geosxPath: The path to the GEOSX executable to run.
     """
     benchmarks = []
-    allIncludes = getIncludedFiles( xmlFilePath )
-    lastLen = 0
-    while( len(allIncludes) > lastLen ):
-        for include in allIncludes:
-            getIncludedFiles( include )
-        lastLen = len(allIncludes)
-    for include in allIncludes:
-        shutil.copy(include,outputDir)
 
     tree = ElementTree.parse( xmlFilePath )
     matchingElements = tree.findall( "./Benchmarks/{}/Run".format( machine.name ) )
-
-    if len(matchingElements) > 0:
-        mesh = tree.find("./Mesh/InternalMesh")
-        if mesh is None:
-            raise Exception( "Scaling runs require a pre-existing internalMesh to modify per scale!" )
 
     for elem in matchingElements:
         name = elem.get( "name" )
         if name is None:
             raise Exception( "Expected the XML element to have an attribute 'name'." )
 
-        nodes = elem.get( "nodes", 1 )
+        nodes = elem.get( "nodes" )
+        if nodes is None:
+            raise Exception( "Expected the XML element to have an attribute 'nodes'." )
         nodes = int( nodes )
 
         tasksPerNode = elem.get( "tasksPerNode" )
@@ -543,34 +493,15 @@ def getBenchmarksFromXML( xmlFilePath, machine, outputDir, geosxPath ):
         else:
             raise Exception( "Option for autoPartition not recognized: {}. Valid options are 'On' and 'Off'.".format( autoPartition ) )
 
-        elementTargetCalc = { "weak" : lambda scale, target : scale * nodes * tasksPerNode * target,
-                              "strong" : lambda scale, target : target }
-        meshSizes = elem.get( "meshSizes" )
-        scales = parseListFromString( elem.get( "scaleList", "{ 1 }" ) )
-        scaling = elem.get( "scaling", "weak" )
-
-        if meshSizes is None:
-            for scale in scales:
+        strongScaling = elem.get( "strongScaling" )
+        if strongScaling is None:
+            benchmarks.append( Benchmark( outputDir, geosxPath, xmlFilePath, name, nodes, nodes * tasksPerNode, threadsPerTask, timeLimit, args, autoPartition ) )
+        else:
+            strongScaling = parseListFromString( strongScaling )
+            for scale in strongScaling:
                 totalNodes = nodes * int( scale )
                 totalTasks = totalNodes * tasksPerNode
                 benchmarks.append( Benchmark( outputDir, geosxPath, xmlFilePath, name, totalNodes, totalTasks, threadsPerTask, timeLimit, args, autoPartition ) )
-        else:
-            meshSizes = parseListFromString( meshSizes )
-            for meshSize in meshSizes:
-                for scale in scales:
-                    scale = int( scale )
-                    meshSize = int( meshSize )
-                    elementTarget = elementTargetCalc[ scaling ]( scale, meshSize )
-                    perDim = int( elementTarget ** ( 1. / 3 ) ) + 1
-                    mesh.set("nx", "{{ {} }}".format( perDim ) )
-                    mesh.set("ny", "{{ {} }}".format( perDim ) )
-                    mesh.set("nz", "{{ {} }}".format( perDim ) )
-                    xmlFilePathTuple = os.path.splitext( os.path.basename( xmlFilePath ) )
-                    newXmlFilePath = os.path.join( outputDir, xmlFilePathTuple[0] + "_{}M_elem.xml".format( elementTarget // 1000000  ) )
-                    tree.write( open( newXmlFilePath, 'wb' ) )
-                    totalNodes = nodes * int( scale )
-                    totalTasks = totalNodes * tasksPerNode
-                    benchmarks.append( Benchmark( outputDir, geosxPath, newXmlFilePath, name, totalNodes, totalTasks, threadsPerTask, timeLimit, args, autoPartition ) )
 
     return benchmarks
 
@@ -605,19 +536,16 @@ def main():
     parser.add_argument( "-t", "--timeLimit", type=int, help="Time limit for the entire script in minutes, the default is {}.". format( timeLimit ), default=timeLimit )
     parser.add_argument( "-o", "--timingCollectionDir", help="Directory to copy the timing files to." )
     parser.add_argument( "-e", "--errorCollectionDir", help="Directory to copy the output from any failed runs to." )
-    parser.add_argument( "--tool", default = "", type=str, help="Profiler other tool to use in job invocation.")
-    args, unknown = parser.parse_known_args()
-
-    print(f"Passing unknown arguments '{unknown}' to be used by the batch submission command.")
+    args = parser.parse_args()
 
     geosxPath = os.path.abspath( args.geosxPath )
     if not os.path.isfile( geosxPath ) or not os.access( geosxPath, os.X_OK):
         raise ValueError( "geosxPath is not an executable!" )
 
     outputDir = os.path.abspath( args.outputDirectory )
-
+    
     timeLimit = args.timeLimit
-
+    
     timingCollectionDir = args.timingCollectionDir
     if timingCollectionDir is not None:
         timingCollectionDir = os.path.abspath( timingCollectionDir )
@@ -626,7 +554,7 @@ def main():
     if errorCollectionDir is not None:
         errorCollectionDir = os.path.abspath( errorCollectionDir )
 
-    machine = getMachine( tool = args.tool, submission = unknown )
+    machine = getMachine()
 
     benchmarks = getBenchmarksFromDirectory( benchmarkDir, machine, outputDir, geosxPath )
 
@@ -657,11 +585,11 @@ def main():
                 outputFile = benchmark.getOutputFile()
                 newLocation = os.path.join( errorCollectionDir, os.path.relpath( outputFile, outputDir ) )
                 shutil.copy2( outputFile, newLocation )
-
+    
     success = True
     for benchmark in benchmarks:
         success = success and benchmark.status == Status.SUCCESS
-
+    
     return not success
 
 

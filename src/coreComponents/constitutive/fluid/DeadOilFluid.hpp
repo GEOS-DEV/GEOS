@@ -177,8 +177,7 @@ private:
 };
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 DeadOilFluid::KernelWrapper::
   computeDensities( real64 const pressure,
                     arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDens ) const
@@ -211,8 +210,7 @@ DeadOilFluid::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 DeadOilFluid::KernelWrapper::
   computeDensities( real64 const pressure,
                     PhaseProp::SliceType const & phaseMassDens ) const
@@ -257,8 +255,7 @@ DeadOilFluid::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 DeadOilFluid::KernelWrapper::
   computeViscosities( real64 const pressure,
                       arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseVisc ) const
@@ -287,8 +284,7 @@ DeadOilFluid::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 DeadOilFluid::KernelWrapper::
   computeViscosities( real64 const pressure,
                       PhaseProp::SliceType const & phaseVisc ) const
@@ -324,8 +320,7 @@ DeadOilFluid::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 DeadOilFluid::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
@@ -375,8 +370,7 @@ DeadOilFluid::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 DeadOilFluid::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
@@ -437,11 +431,11 @@ DeadOilFluid::KernelWrapper::
   computeTotalDensity( phaseFraction,
                        phaseDensity,
                        totalDensity );
+
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+inline void
 DeadOilFluid::KernelWrapper::
   update( localIndex const k,
           localIndex const q,
