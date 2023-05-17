@@ -114,6 +114,7 @@ struct ProppantUpdateKernel
                       arrayView2d< real64 const > const & dFluidVisc_dPres,
                       arrayView3d< real64 const > const & dFluidVisc_dCompConc )
   {
+
     forAll< parallelDevicePolicy<> >( proppantWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       proppantWrapper.update( a,
@@ -133,7 +134,9 @@ struct ProppantUpdateKernel
 struct AccumulationKernel
 {
   GEOS_HOST_DEVICE
-  static void
+  inline
+  static
+  void
   compute( localIndex const NC,
            real64 const proppantConc_n,
            real64 const proppantConcNew,
@@ -407,7 +410,9 @@ struct ProppantPackVolumeKernel
                                   ElementView< arrayView1d< real64 > > const & proppantPackVolFrac );
 
   GEOS_HOST_DEVICE
-  static void
+  inline
+  static
+  void
   computeProppantPackVolume( localIndex const numElems,
                              real64 const dt,
                              real64 const proppantDensity,
@@ -435,7 +440,9 @@ struct ProppantPackVolumeKernel
                              arrayView1d< real64 > const & proppantLiftFlux );
 
   GEOS_HOST_DEVICE
-  static void
+  inline
+  static
+  void
   updateProppantPackVolume( localIndex const numElems,
                             arraySlice1d< localIndex const > const & stencilElementIndices,
                             arraySlice1d< real64 const > const & stencilWeights,

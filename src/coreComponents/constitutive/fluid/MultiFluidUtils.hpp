@@ -74,6 +74,8 @@ struct MultiFluidVarSlice
 template< typename T, int NDIM, int USD, int USD_DC >
 struct MultiFluidVarView
 {
+  MultiFluidVarView() = default;
+
   ArrayView< T, NDIM, USD > value;        ///< View into property values
   ArrayView< T, NDIM + 1, USD_DC > derivs; ///< View into property derivatives w.r.t. pressure, temperature, compositions
 
@@ -82,7 +84,7 @@ struct MultiFluidVarView
   GEOS_HOST_DEVICE
   SliceType operator()( localIndex const k, localIndex const q ) const
   {
-    return SliceType( value[k][q], derivs[k][q] );
+    return { value[k][q], derivs[k][q] };
   }
 };
 
@@ -95,7 +97,7 @@ struct MultiFluidVarView
 template< typename T, int NDIM, typename PERM, typename PERM_DC >
 struct MultiFluidVar
 {
-  Array< real64, NDIM, PERM > value;        ///< Property values
+  Array< real64, NDIM, PERM > value;         ///< Property values
   Array< real64, NDIM + 1, PERM_DC > derivs; ///< Property derivatives w.r.t. pressure, temperature, compositions
 
   using ViewType = MultiFluidVarView< T, NDIM, getUSD< PERM >, getUSD< PERM_DC > >;
