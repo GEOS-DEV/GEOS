@@ -337,18 +337,18 @@ public:
     {
       if( withMetadata )
       {
-          unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices, events, op );
+        unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices, events, op );
       }
       else
       {
-          unpackedSize += wrapperHelpers::UnpackDataByIndexDevice( buffer, referenceAsView(), unpackIndices, events, op );
+        unpackedSize += wrapperHelpers::UnpackDataByIndexDevice( buffer, referenceAsView(), unpackIndices, events, op );
       }
     }
     else
     {
       unpackedSize += wrapperHelpers::UnpackByIndex( buffer, *m_data, unpackIndices );
     }
-    
+
     return unpackedSize;
   }
 

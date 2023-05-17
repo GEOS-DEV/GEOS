@@ -2435,7 +2435,6 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( ParticleManager & part
   {
     // Get particle fields
     arrayView2d< real64 const > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
-    arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
 
     // Get nodes this particle maps to
     arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
