@@ -13,4 +13,4 @@ set(MPI_Fortran_COMPILER /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-rel
 
 include(${CMAKE_CURRENT_LIST_DIR}/lassen-base.cmake)
 
-set(ENABLE_CUDA_NVTOOLSEXT ON CACHE BOOL "")
+set(ENABLE_CUDA_NVTOOLSEXT OFF CACHE BOOL "")
