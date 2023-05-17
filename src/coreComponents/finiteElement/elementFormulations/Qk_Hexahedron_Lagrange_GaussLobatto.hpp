@@ -430,6 +430,72 @@ public:
                         FUNC && func );
 
   /**
+   * @brief computes the matrix B in the case of quasi-stiffness (e.g. for pseudo-acoustic case), defined as J^{-T}A_xy J^{-1}/det(J), where J is the Jacobian matrix, and A_xy is a zero matrix except on A_xy(1,1) = 1 and A_xy(2,2) = 1.
+   * @param qa The 1d quadrature point index in xi0 direction (0,1)
+   * @param qb The 1d quadrature point index in xi1 direction (0,1)
+   * @param qc The 1d quadrature point index in xi2 direction (0,1)
+   * @param X Array containing the coordinates of the support points.
+   * @param J Array to store the Jacobian
+   * @param B Array to store the matrix B, in Voigt notation
+   */
+  GEOS_HOST_DEVICE
+  static void
+    computeBxyMatrix( int const qa,
+                    int const qb,
+                    int const qc,
+                    real64 const (&X)[numNodes][3],
+                    real64 ( &J )[3][3],
+                    real64 ( &B )[6] );
+
+  /**
+   * @brief computes the non-zero contributions of the d.o.f. indexed by q to the
+   *   quasi-stiffness matrix R, i.e., the superposition matrix of first derivatives
+   *   of the shape functions. Warning, the matrix B is obtained by computeBxyMatrix above.
+   * @param q The quadrature point index
+   * @param X Array containing the coordinates of the support points.
+   * @param func Callback function accepting three parameters: i, j and R_ij
+   */
+  template< typename FUNC >
+  GEOS_HOST_DEVICE
+  static void
+  computeStiffnessxyTerm( int q,
+                        real64 const (&X)[numNodes][3],
+                        FUNC && func );
+
+  /**
+   * @brief computes the matrix B in the case of quasi-stiffness (e.g. for pseudo-acoustic case), defined as J^{-T}A_z J^{-1}/det(J), where J is the Jacobian matrix, and A_z is a zero matrix except on A_z(3,3) = 1.
+   * @param qa The 1d quadrature point index in xi0 direction (0,1)
+   * @param qb The 1d quadrature point index in xi1 direction (0,1)
+   * @param qc The 1d quadrature point index in xi2 direction (0,1)
+   * @param X Array containing the coordinates of the support points.
+   * @param J Array to store the Jacobian
+   * @param B Array to store the matrix B, in Voigt notation
+   */
+  GEOS_HOST_DEVICE
+  static void
+    computeBzMatrix( int const qa,
+                    int const qb,
+                    int const qc,
+                    real64 const (&X)[numNodes][3],
+                    real64 ( &J )[3][3],
+                    real64 ( &B )[6] );
+
+  /**
+   * @brief computes the non-zero contributions of the d.o.f. indexed by q to the
+   *   quasi-stiffness matrix R, i.e., the superposition matrix of first derivatives
+   *   of the shape functions. Warning, the matrix B is obtained by computeBzMatrix above.
+   * @param q The quadrature point index
+   * @param X Array containing the coordinates of the support points.
+   * @param func Callback function accepting three parameters: i, j and R_ij
+   */
+  template< typename FUNC >
+  GEOS_HOST_DEVICE
+  static void
+  computeStiffnesszTerm( int q,
+                        real64 const (&X)[numNodes][3],
+                        FUNC && func );
+
+  /**
    * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
    *   x-part of the first order stiffness matrix R, i.e., the matrix composed of the
    *   the product of first derivatives of one shape function i and the shape function j itself.
@@ -937,7 +1003,7 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-ComputeBzMatrix( int const qa,
+computeBzMatrix( int const qa,
                 int const qb,
                 int const qc,
                 real64 const (&X)[numNodes][3],
@@ -947,7 +1013,8 @@ ComputeBzMatrix( int const qa,
   jacobianTransformation( qa, qb, qc, X, J );
   real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
 
-  real64 Jinv[3][3] = tensorOps::invert<3>(J);
+  real64 Jinv[3][3] = {{0}};
+  LvArray::tensorOps::invert< 3 >(Jinv, J);
 
   // compute det(J)*J^{-1}Az*J^{-T}, using Voigt notation for B
   B[0] = detJ*(Jinv[0][2]*Jinv[0][2]);
@@ -973,7 +1040,7 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-ComputeBxyMatrix( int const qa,
+computeBxyMatrix( int const qa,
                 int const qb,
                 int const qc,
                 real64 const (&X)[numNodes][3],
@@ -983,7 +1050,8 @@ ComputeBxyMatrix( int const qa,
   jacobianTransformation( qa, qb, qc, X, J );
   real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
 
-  real64 Jinv[3][3] = tensorOps::invert<3>(J);
+  real64 Jinv[3][3] = {{0}};
+  LvArray::tensorOps::invert< 3 >(Jinv, J);
 
   // compute det(J)*J^{-1}Axy*J^{-T}, using Voigt notation for B
   B[0] = detJ*(Jinv[0][0]*Jinv[0][0] + Jinv[0][1]*Jinv[0][1]);

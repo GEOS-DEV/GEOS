@@ -5,7 +5,7 @@
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2019-     GEOS Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -16,14 +16,14 @@
  * @file AcousticWaveEquationSEMKernel.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEMKERNEL_HPP_
-#define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEMKERNEL_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEMKERNEL_HPP_
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "WaveSolverUtils.hpp"
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /// Namespace to contain the acoustic wave kernels.
@@ -81,7 +81,7 @@ struct PrecomputeSourceAndReceiverKernel
           localIndex const rickerOrder )
   {
 
-    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       real64 const center[3] = { elemCenter[k][0],
                                  elemCenter[k][1],
@@ -209,7 +209,7 @@ struct MassMatrixKernel
           arrayView1d< real32 > const mass )
 
   {
-    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
 
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
@@ -256,8 +256,16 @@ struct DampingMatrixKernel
    * @param[in] facesToNodes map from face to nodes
    * @param[in] facesDomainBoundaryIndicator flag equal to 1 if the face is on the boundary, and to 0 otherwise
    * @param[in] freeSurfaceFaceIndicator flag equal to 1 if the face is on the free surface, and to 0 otherwise
+   * @param[in] lateralSurfaceFaceIndicator flag equal to 1 if the face is on a lateral surface, and to 0 otherwise
+   * @param[in] bottomSurfaceFaceIndicator flag equal to 1 if the face is on the bottom surface, and to 0 otherwise
    * @param[in] velocity cell-wise velocity
-   * @param[out] damping diagonal of the damping matrix
+   * @param[in] epsilon cell-wise Thomsen epsilon parameter
+   * @param[in] delta cell-wise Thomsen delta parameter
+   * @param[in] f cell-wise f parameter in Fletcher's equation
+   * @param[out] damping_p diagonal of the damping matrix for quantities in p in p-equation
+   * @param[out] damping_q diagonal of the damping matrix for quantities in q in q-equation
+   * @param[out] damping_pq diagonal of the damping matrix for quantities in q in p-equation
+   * @param[out] damping_qp diagonal of the damping matrix for quantities in p in q-equation
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
@@ -267,10 +275,18 @@ struct DampingMatrixKernel
           ArrayOfArraysView< localIndex const > const facesToNodes,
           arrayView1d< integer const > const facesDomainBoundaryIndicator,
           arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
+          arrayView1d< localIndex const > const lateralSurfaceFaceIndicator,
+          arrayView1d< localIndex const > const bottomSurfaceFaceIndicator,
           arrayView1d< real32 const > const velocity,
-          arrayView1d< real32 > const damping )
+          arrayView1d< real32 const > const epsilon,
+          arrayView1d< real32 const > const delta,
+          arrayView1d< real32 const > const vti_f,
+          arrayView1d< real32 > const damping_p,
+          arrayView1d< real32 > const damping_q,
+          arrayView1d< real32 > const damping_pq,
+          arrayView1d< real32 > const damping_qp)
   {
-    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const f )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
     {
       // face on the domain boundary and not on free surface
       if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
@@ -281,7 +297,23 @@ struct DampingMatrixKernel
           k = facesToElems( f, 1 );
         }
 
+        // ABC coefficients
         real32 const alpha = 1.0 / velocity[k];
+        // VTI coefficients
+        real32 vti_p_xy= 0, vti_p_z = 0, vti_pq_z = 0;
+        real32 vti_q_xy= 0, vti_q_z = 0, vti_qp_xy= 0;
+        if(lateralSurfaceFaceIndicator[f] == 1)
+        {
+          vti_p_xy  = alpha*(1+2*epsilon[k]);
+          vti_q_xy  = -alpha*(vti_f[k]-1);
+          vti_qp_xy = alpha*(vti_f[k]-2*delta[k]);
+        }
+        if(bottomSurfaceFaceIndicator[f] == 1)
+        {
+          vti_p_z  = -alpha*(vti_f[k]-1);
+          vti_pq_z = alpha*vti_f[k];
+          vti_q_z  = alpha;
+        }
 
         constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
 
@@ -296,8 +328,17 @@ struct DampingMatrixKernel
 
         for( localIndex q = 0; q < numNodesPerFace; ++q )
         {
-          real32 const localIncrement = alpha * m_finiteElement.computeDampingTerm( q, xLocal );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &damping[facesToNodes[f][q]], localIncrement );
+          real32 const localIncrement_p = (vti_p_xy + vti_p_z) * m_finiteElement.computeDampingTerm( q, xLocal );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &damping_p[facesToNodes[f][q]], localIncrement_p );
+
+          real32 const localIncrement_pq = vti_pq_z * m_finiteElement.computeDampingTerm( q, xLocal );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &damping_pq[facesToNodes[f][q]], localIncrement_pq );
+
+          real32 const localIncrement_q = (vti_q_xy + vti_q_z) * m_finiteElement.computeDampingTerm( q, xLocal );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &damping_q[facesToNodes[f][q]], localIncrement_q );
+
+          real32 const localIncrement_qp = vti_qp_xy * m_finiteElement.computeDampingTerm( q, xLocal );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &damping_qp[facesToNodes[f][q]], localIncrement_qp );
         }
       }
     } ); // end loop over element
@@ -322,8 +363,8 @@ struct PMLKernelHelper
    * @param r desired reflectivity of the PML
    * @param sigma 3-components array to hold the damping profile in each direction
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   static void computeDampingProfilePML( real64 const (&xLocal)[3],
                                         real32 const (&xMin)[3],
                                         real32 const (&xMax)[3],
@@ -422,7 +463,7 @@ struct PMLKernel
   {
 
     /// Loop over elements in the subregion, 'l' is the element index within the target set
-    forAll< EXEC_POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const l )
+    forAll< EXEC_POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const l )
     {
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
@@ -473,7 +514,7 @@ struct PMLKernel
 
         /// compute the shape functions gradients
         real32 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, i, xLocal, gradN );
-        GEOSX_UNUSED_VAR ( detJ );
+        GEOS_UNUSED_VAR ( detJ );
 
         /// compute the gradient of the pressure and the PML auxiliary variables at the node
         m_finiteElement.template gradient< numNodesPerElem, GRADIENT_TYPE >( gradN, pressure, pressureGrad );
@@ -576,7 +617,7 @@ struct waveSpeedPMLKernel
     RAJA::ReduceSum< parallelDeviceReduce, int > subRegionAvgWaveSpeedCounterBottom( 0 );
 
     /// Loop over elements in the subregion, 'l' is the element index within the target set
-    forAll< EXEC_POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const l )
+    forAll< EXEC_POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const l )
     {
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
@@ -669,14 +710,14 @@ struct waveSpeedPMLKernel
 /**
  * @brief Implements kernels for solving the acoustic wave equations
  *   explicit central FD method and SEM
- * @copydoc geosx::finiteElement::KernelBase
+ * @copydoc geos::finiteElement::KernelBase
  * @tparam SUBREGION_TYPE The type of subregion that the kernel will act on.
  *
  * ### AcousticVTIWaveEquationSEMKernel Description
  * Implements the KernelBase interface functions required for solving
  * the acoustic wave equations using the
  * "finite element kernel application" functions such as
- * geosx::finiteElement::RegionBasedKernelApplication.
+ * geos::finiteElement::RegionBasedKernelApplication.
  *
  * The number of degrees of freedom per support point for both
  * the test and trial spaces are specified as `1`.
@@ -716,7 +757,7 @@ public:
 //*****************************************************************************
   /**
    * @brief Constructor
-   * @copydoc geosx::finiteElement::KernelBase::KernelBase
+   * @copydoc geos::finiteElement::KernelBase::KernelBase
    * @param nodeManager Reference to the NodeManager object.
    * @param edgeManager Reference to the EdgeManager object.
    * @param faceManager Reference to the FaceManager object.
@@ -736,23 +777,23 @@ public:
           finiteElementSpace,
           inputConstitutiveType ),
     m_X( nodeManager.referencePosition() ),
-    m_p_n( nodeManager.getField< fields::Pressure_n >() ),
-    m_q_n( nodeManager.getField< fields::Pressureq_n >() ),
-    m_epsilon( elementSubRegion.template getField< fields::Epsilon >() ),
-    m_delta( elementSubRegion.template getField< fields::Delta >() ),
-    m_f( elementSubRegion.template getField< fields::F >() ),
+    m_p_n( nodeManager.getField< fields::Pressure_p_n >() ),
+    m_q_n( nodeManager.getField< fields::Pressure_q_n >() ),
     m_stiffnessVector_p( nodeManager.getField< fields::StiffnessVector_p >() ),
     m_stiffnessVector_q( nodeManager.getField< fields::StiffnessVector_q >() ),
+    m_epsilon( elementSubRegion.template getField< fields::Epsilon >() ),
+    m_delta( elementSubRegion.template getField< fields::Delta >() ),
+    m_vti_f( elementSubRegion.template getField< fields::F >() ),
     m_dt( dt )
   {
-    GEOSX_UNUSED_VAR( edgeManager );
-    GEOSX_UNUSED_VAR( faceManager );
-    GEOSX_UNUSED_VAR( targetRegionIndex );
+    GEOS_UNUSED_VAR( edgeManager );
+    GEOS_UNUSED_VAR( faceManager );
+    GEOS_UNUSED_VAR( targetRegionIndex );
   }
 
   //*****************************************************************************
   /**
-   * @copydoc geosx::finiteElement::KernelBase::StackVariables
+   * @copydoc geos::finiteElement::KernelBase::StackVariables
    *
    * ### ExplicitAcousticSEM Description
    * Adds a stack arrays for the nodal force, primary displacement variable, etc.
@@ -760,7 +801,7 @@ public:
   struct StackVariables : Base::StackVariables
   {
 public:
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       xLocal()
     {}
@@ -772,12 +813,12 @@ public:
 
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::setup
+   * @copydoc geos::finiteElement::KernelBase::setup
    *
    * Copies the primary variable, and position into the local stack array.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -793,14 +834,14 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
+   * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
    *
    * ### ExplicitAcousticSEM Description
    * Calculates stiffness vector
    *
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const
@@ -811,15 +852,15 @@ public:
       real32 const localIncrement_p = val*(-1-2*m_epsilon[k])*m_p_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
 
-      real32 const localIncrement_q = val*((-2*m_delta[k]-m_f[k])*m_p_n[m_elemsToNodes[k][j]] +(1-m_f[k])*m_q_n[m_elemsToNodes[k][j]];
+      real32 const localIncrement_q = val*((-2*m_delta[k]-m_vti_f[k])*m_p_n[m_elemsToNodes[k][j]] +(1-m_vti_f[k])*m_q_n[m_elemsToNodes[k][j]]);
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
     } );
 
     // Pseudo-Stiffness z
     
-    m_finiteElementSpace.template computePseudoStiffnessyTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
+    m_finiteElementSpace.template computeStiffnesszTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
-      real32 const localIncrement_p = val*((m_f[k]-1)*m_p_n[m_elemsToNodes[k][j]] - m_f[k]*m_q_n[m_elemsToNodes[k][j]]);
+      real32 const localIncrement_p = val*((m_vti_f[k]-1)*m_p_n[m_elemsToNodes[k][j]] - m_vti_f[k]*m_q_n[m_elemsToNodes[k][j]]);
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
 
       real32 const localIncrement_q = -val*m_q_n[m_elemsToNodes[k][j]];
@@ -844,11 +885,14 @@ protected:
   /// The array containing the product of the stiffness matrix and the nodal pressure for the equation in q.
   arrayView1d< real32 > const m_stiffnessVector_q;
 
-    /// The array containing the epsilon Thomsen parameter.
+  /// The array containing the epsilon Thomsen parameter.
   arrayView1d< real32 const > const m_epsilon;
 
-    /// The array containing the delta Thomsen parameter.
+  /// The array containing the delta Thomsen parameter.
   arrayView1d< real32 const > const m_delta;
+
+  /// The array containing the f parameter.
+  arrayView1d< real32 const > const m_vti_f;
 
   /// The time increment for this time integration step.
   real64 const m_dt;
@@ -865,6 +909,6 @@ using ExplicitAcousticSEMFactory = finiteElement::KernelFactory< ExplicitAcousti
 
 } // namespace acousticVTIWaveEquationSEMKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEMKERNEL_HPP_
+#endif //GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEMKERNEL_HPP_

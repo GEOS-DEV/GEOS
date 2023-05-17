@@ -5,7 +5,7 @@
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2019-     GEOS Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -17,14 +17,14 @@
  * @file AcousticVTIWaveEquationSEM.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_AcousticVTIWaveEquationSEM_HPP_
-#define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_AcousticVTIWaveEquationSEM_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_AcousticVTIWaveEquationSEM_HPP_
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_AcousticVTIWaveEquationSEM_HPP_
 
 #include "WaveSolverBase.hpp"
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class AcousticVTIWaveEquationSEM : public WaveSolverBase
@@ -48,6 +48,8 @@ public:
 
 
   static string catalogName() { return "AcousticSEM_VTI"; }
+
+  bool dirExists( const std::string & dirName );
 
   virtual void initializePreSubGroups() override;
 
@@ -124,7 +126,7 @@ public:
 
 
   /** internal function to the class to compute explicitStep either for backward or forward.
-   * (requires not to be private because it is called from GEOSX_HOST_DEVICE method)
+   * (requires not to be private because it is called from GEOS_HOST_DEVICE method)
    * @param time_n time at the beginning of the step
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
@@ -150,6 +152,13 @@ private:
    * @param mesh mesh of the computational domain
    */
   virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
+
+  /**
+   * @brief Compute the surface Field indicators from the xml
+   * @param time the time to apply the BC TODO: a priori useless...
+   * @param domain the partition domain
+   */
+  virtual void precomputeSurfaceFieldIndicator( real64 const time, DomainPartition & domain );
 
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml
@@ -194,7 +203,7 @@ private:
 namespace fields
 {
 
-DECLARE_FIELD( Pressure_nm1,
+DECLARE_FIELD( Pressure_p_nm1,
                "pressure_nm1",
                array1d< real32 >,
                0,
@@ -202,7 +211,7 @@ DECLARE_FIELD( Pressure_nm1,
                WRITE_AND_READ,
                "Scalar pressure at time n-1." );
 
-DECLARE_FIELD( Pressure_n,
+DECLARE_FIELD( Pressure_p_n,
                "pressure_n",
                array1d< real32 >,
                0,
@@ -210,7 +219,7 @@ DECLARE_FIELD( Pressure_n,
                WRITE_AND_READ,
                "Scalar pressure at time n." );
 
-DECLARE_FIELD( Pressure_np1,
+DECLARE_FIELD( Pressure_p_np1,
                "pressure_np1",
                array1d< real32 >,
                0,
@@ -234,8 +243,8 @@ DECLARE_FIELD( Pressure_q_n,
                WRITE_AND_READ,
                "Scalar auxiliary pressure q at time n." );
 
-DECLARE_FIELD( Pressure_q_n1,
-               "pressure_q_n1",
+DECLARE_FIELD( Pressure_q_np1,
+               "pressure_q_np1",
                array1d< real32 >,
                0,
                LEVEL_0,
@@ -258,13 +267,37 @@ DECLARE_FIELD( MassVector,
                WRITE_AND_READ,
                "Diagonal of the Mass Matrix." );
 
-DECLARE_FIELD( DampingVector,
-               "dampingVector",
+DECLARE_FIELD( DampingVector_p,
+               "dampingVector_p",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Diagonal of the Damping Matrix." );
+               "Diagonal of the Damping Matrix for p terms in p equation." );
+
+DECLARE_FIELD( DampingVector_pq,
+               "dampingVector_pq",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal of the Damping Matrix for q terms in p equation." );
+
+DECLARE_FIELD( DampingVector_q,
+               "dampingVector_q",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal of the Damping Matrix for q terms in q equation." );
+
+DECLARE_FIELD( DampingVector_qp,
+               "dampingVector_qp",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal of the Damping Matrix for p terms in q equation." );
 
 DECLARE_FIELD( MediumVelocity,
                "mediumVelocity",
@@ -330,6 +363,38 @@ DECLARE_FIELD( FreeSurfaceNodeIndicator,
                WRITE_AND_READ,
                "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
 
+DECLARE_FIELD( LateralSurfaceFaceIndicator,
+               "lateralSurfaceFaceIndicator",
+               array1d< localIndex >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Free surface indicator, 1 if a face is on a lateral surface 0 otherwise." );
+
+DECLARE_FIELD( LateralSurfaceNodeIndicator,
+               "lateralSurfaceNodeIndicator",
+               array1d< localIndex >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Lateral surface indicator, 1 if a face is on a lateral surface 0 otherwise." );
+
+DECLARE_FIELD( BottomSurfaceFaceIndicator,
+               "bottomSurfaceFaceIndicator",
+               array1d< localIndex >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Bottom surface indicator, 1 if a face is on the bottom surface 0 otherwise." );
+
+DECLARE_FIELD( BottomSurfaceNodeIndicator,
+               "bottomSurfaceNodeIndicator",
+               array1d< localIndex >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Bottom surface indicator, 1 if a face is on the bottom surface 0 otherwise." );
+
 DECLARE_FIELD( PressureDoubleDerivative,
                "pressureDoubleDerivative",
                array1d< real32 >,
@@ -379,6 +444,6 @@ DECLARE_FIELD( AuxiliaryVar4PML,
                "PML scalar auxiliary variable 4." );
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_AcousticVTIWaveEquationSEM_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_AcousticVTIWaveEquationSEM_HPP_ */
