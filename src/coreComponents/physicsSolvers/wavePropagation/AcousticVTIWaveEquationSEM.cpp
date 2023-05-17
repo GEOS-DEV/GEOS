@@ -1227,19 +1227,40 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       {
         if( freeSurfaceNodeIndicator[a] != 1 )
         {
-          //TODO:
-/*          p_np1[a] = p_n[a];
-          p_np1[a] *= 2.0*mass[a];
-          p_np1[a] -= (mass[a]-0.5*dt*damping_p[a])*p_nm1[a];
-          p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
-          p_np1[a] /= mass[a]+0.5*dt*damping_pq[a]; 
+          p_np1[a] = 2.0*mass[a]*p_n[a]/dt2;
+          p_np1[a] -= mass[a]*p_nm1[a]/dt2;
+          p_np1[a] += stiffnessVector_p[a];
+          p_np1[a] += rhs_p[a];
 
-          q_np1[a] = q_n[a];
-          q_np1[a] *= 2.0*mass[a];
-          q_np1[a] -= (mass[a]-0.5*dt*damping_q[a])*p_nm1[a];
-          q_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
-          q_np1[a] /= mass[a]+0.5*dt*damping_qp[a];
-          */
+          q_np1[a] = 2.0*mass[a]*q_n[a]/dt2;
+          q_np1[a] -= mass[a]*q_nm1[a]/dt2;
+          q_np1[a] += stiffnessVector_q[a];
+          q_np1[a] += rhs_q[a];
+
+          if(lateralSurfaceNodeIndicator[a] != 1 && bottomSurfaceNodeIndicator[a] != 1)
+          {
+            // Interior node, no boundary terms
+            p_np1[a] /= mass[a]/dt2;
+            q_np1[a] /= mass[a]/dt2;
+          }
+          else
+          {
+            // Boundary node
+            // Hand-made Inversion of 2x2 matrix
+            real32 coef_pp = mass[a]/dt2;
+            coef_pp += damping_p[a]/dt/2;
+            real32 coef_pq = damping_pq[a]/dt/2;
+
+            real32 coef_qq = mass[a]/dt2;
+            coef_qq += damping_q[a]/2/dt;
+            real32 coef_qp = damping_qp[a]/dt/2;
+            
+            real32 det_pq = 1/(coef_pp * coef_qq - coef_pq*coef_qp);
+            
+            real32 aux_p_np1 = p_np1[a];
+            p_np1[a] = det_pq*(coef_qq*p_np1[a] - coef_pq*q_np1[a]);
+            q_np1[a] = det_pq*(coef_pp*q_np1[a] - coef_qp*p_np1[a]);
+          }
         }
       } );
     }
