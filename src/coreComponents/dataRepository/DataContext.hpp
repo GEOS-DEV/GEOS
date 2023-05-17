@@ -59,6 +59,9 @@ public:
    */
   virtual string toString() const = 0;
 
+  /**
+   * @brief Get the target object name
+   */
   string getObjectName() const
   { return m_objectName; }
 
@@ -102,7 +105,7 @@ public:
   virtual ~GroupContext() {}
 
   /**
-   * @brief Get the reference to the Group related to this GroupContext.
+   * @return the reference to the Group related to this GroupContext.
    */
   Group & getGroup() const;
 
@@ -133,6 +136,7 @@ public:
 
   /**
    * @brief Construct a new WrapperContext object
+   * @param wrapper the target Wrapper object
    */
   WrapperContext( WrapperBase & wrapper );
 
@@ -155,10 +159,15 @@ public:
 
   /**
    * @brief Construct the file context of a Group from an xml node.
+   * @param group the target Group object
+   * @param nodePos the target object xml node position
+   * @param nodeTagName the xml node tag name.
    */
   DataFileContext( Group & group, xmlWrapper::xmlNodePos const & nodePos, string const & nodeTagName );
   /**
    * @brief Construct the file context of a Group from an xml attribute.
+   * @param wrapper the target Wrapper object
+   * @param attPos the target object xml attribute position
    */
   DataFileContext( WrapperBase & wrapper, xmlWrapper::xmlAttributePos const & attPos );
 
@@ -173,33 +182,32 @@ public:
   virtual string toString() const;
 
   /**
-   * @brief Get the type name in the source file (XML node tag name / attribute name).
+   * @return the type name in the source file (XML node tag name / attribute name).
    */
   string getTypeName() const
   { return m_typeName; }
 
   /**
-   * @brief Get the source file path where the target object has been declared.
+   * @return the source file path where the target object has been declared.
    */
   string getFilePath() const
   { return m_filePath; }
 
   /**
-   * @brief Get the line (starting from 1) where the target object has been declared in the source
-   * file.
+   * @return the line (starting from 1) where the target object has been declared in the source file.
    */
   size_t getLine() const
   { return m_line; }
 
   /**
-   * @brief Get the character offset in the line (starting from 1) where the target object has been declared in the source
-   * file.
+   * @return the character offset in the line (starting from 1) where the target object has been
+   * declared in the source file.
    */
   size_t getOffsetInLine() const
   { return m_offsetInLine; }
 
   /**
-   * @brief Get the character offset (starting from 0) in the source file path where the target object has been
+   * @return the character offset (starting from 0) in the source file path where the target object has been
    * declared.
    */
   size_t getOffset() const
@@ -225,18 +233,25 @@ protected:
 
 } /* namespace geos */
 
+
+
+/// @cond DO_NOT_DOCUMENT
 #ifdef GEOSX_USE_FMT
 #define GEOS_FMT_NS_PREFIX fmt
 #else
 #define GEOS_FMT_NS_PREFIX std
 #endif
+/// @endcond
 
 /// Formatter to be able to directly use a DataContext as a GEOS_FMT() argument.
 template<>
 struct GEOS_FMT_NS_PREFIX::formatter< geos::dataRepository::DataContext >
 {
   /**
-   * @brief Format the specified dataContext to a string.
+   * @brief Format the specified DataContext to a string.
+   * @param dataContext the DataContext object to format
+   * @param ctx formatting state consisting of the formatting arguments and the output iterator
+   * @return iterator to the output buffer
    */
   auto format( geos::dataRepository::DataContext const & dataContext, format_context & ctx )
   {
@@ -245,6 +260,8 @@ struct GEOS_FMT_NS_PREFIX::formatter< geos::dataRepository::DataContext >
 
   /**
    * @brief Method to parse a dataContext from a string. Not implemented!
+   * @param ctx formatting state consisting of the formatting arguments and the output iterator
+   * @return iterator to the output buffer (leaved unchanged)
    */
   constexpr auto parse( format_parse_context & ctx )
   { return ctx.begin(); }
