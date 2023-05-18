@@ -83,24 +83,27 @@ public:
   using ElasticIsotropicUpdates::smallStrainUpdate;
 
   GEOS_HOST_DEVICE
-  virtual void smallStrainUpdate( localIndex const k,
-                                  localIndex const q,
-                                  real64 const ( &strainIncrement )[6],
-                                  real64 ( &stress )[6],
-                                  real64 ( &stiffness )[6][6] ) const override final;
+  void smallStrainUpdate( localIndex const k,
+                          localIndex const q,
+                          real64 const & timeIncrement,
+                          real64 const ( &strainIncrement )[6],
+                          real64 ( &stress )[6],
+                          real64 ( &stiffness )[6][6] ) const;
 
   GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
-                                  DiscretizationOps & stiffness ) const final;
+                                  DiscretizationOps & stiffness ) const;
 
   GEOS_HOST_DEVICE
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
+                                             real64 const & timeIncrement,
                                              real64 const ( &strainIncrement )[6],
-                                             real64 ( &stress )[6] ) const override final;
+                                             real64 ( &stress )[6] ) const override;
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -121,12 +124,13 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void PerfectlyPlasticUpdates::smallStrainUpdate( localIndex const k,
                                                  localIndex const q,
+                                                 real64 const & timeIncrement,
                                                  real64 const ( &strainIncrement )[6],
-                                                 real64 ( & stress )[6],
-                                                 real64 ( & stiffness )[6][6] ) const
+                                                 real64 ( &stress )[6],
+                                                 real64 ( &stiffness )[6][6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
-  ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+  ElasticIsotropicUpdates::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
 
   if( m_disableInelasticity )
   {
@@ -169,11 +173,12 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void PerfectlyPlasticUpdates::smallStrainUpdate( localIndex const k,
                                                  localIndex const q,
+                                                 real64 const & timeIncrement,
                                                  real64 const ( &strainIncrement )[6],
                                                  real64 ( & stress )[6],
                                                  DiscretizationOps & stiffness ) const
 {
-  smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );
+  smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
 }
 
 
@@ -181,11 +186,12 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE // TODO: Is there a way to not have to re-write the constitutive model twice for regular and StressOnly?
 void PerfectlyPlasticUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                             localIndex const q,
+                                                            real64 const & timeIncrement,
                                                             real64 const ( &strainIncrement )[6],
                                                             real64 ( & stress )[6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
-  ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
+  ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
 
   if( m_disableInelasticity )
   {

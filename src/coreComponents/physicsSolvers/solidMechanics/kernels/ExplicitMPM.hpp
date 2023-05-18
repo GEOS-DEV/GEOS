@@ -20,6 +20,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_CONTACT_EXPLICITMPM_HPP_
 #define GEOSX_PHYSICSSOLVERS_CONTACT_EXPLICITMPM_HPP_
 
+#include "constitutive/solid/SolidUtilities.hpp"
 #include "physicsSolvers/solidMechanics/kernels/ExplicitFiniteStrain.hpp"
 #include "physicsSolvers/solidMechanics/MPMSolverFields.hpp"
 
@@ -53,7 +54,7 @@ struct StateUpdateKernel
                       arrayView2d< real64 > const particleStress )
   {
     arrayView3d< real64, solid::STRESS_USD > const oldStress = constitutiveWrapper.m_oldStress;
-    arrayView3d< real64, solid::STRESS_USD > const newStress = constitutiveWrapper.m_newStress;
+    // arrayView3d< real64, solid::STRESS_USD > const newStress = constitutiveWrapper.m_newStress;
     
     // Perform constitutive call
     forAll< POLICY >( indices.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
@@ -88,13 +89,14 @@ struct StateUpdateKernel
       
       // Call stress update
       real64 stress[6] = { 0 };
-      constitutiveWrapper.hypoUpdate2_StressOnly( p,                 // particle local index
-                                                  0,                 // particles have 1 quadrature point
-                                                  dt,                // time step size
-                                                  strainIncrement,   // particle strain increment
-                                                  rotBeginning,      // beginning-of-step rotation matrix
-                                                  rotEnd,            // end-of-step rotation matrix
-                                                  stress );          // final updated stress
+      constitutive::SolidUtilities::hypoUpdate2_StressOnly( constitutiveWrapper,  // the constitutive model
+                                                            p,                    // particle local index
+                                                            0,                    // particles have 1 quadrature point
+                                                            dt,                   // time step size
+                                                            strainIncrement,      // particle strain increment
+                                                            rotBeginning,         // beginning-of-step rotation matrix
+                                                            rotEnd,               // end-of-step rotation matrix
+                                                            stress );             // final updated stress
 
       // Copy the updated stress into particleStress      
       LvArray::tensorOps::copy< 6 >( particleStress[p], stress );
