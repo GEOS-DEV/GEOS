@@ -118,8 +118,17 @@ public:
   enum class TimeOutputFormat : integer
   {
     seconds,
-    human
+    minutes,
+    hours,
+    days,
+    years,
+    full
   };
+
+  static constexpr integer MINUTE = 60;
+  static constexpr integer HOUR   = 60 * MINUTE;
+  static constexpr integer DAY    = 24 * HOUR;
+  static constexpr integer YEAR   = 365 * DAY; 
 
 private:
 
@@ -152,7 +161,11 @@ private:
 
 ENUM_STRINGS( EventManager::TimeOutputFormat,
               "seconds",
-              "human");
+              "minutes",
+              "hours",
+              "days",
+              "years",
+              "full");
 
 } /* namespace geos */
 
