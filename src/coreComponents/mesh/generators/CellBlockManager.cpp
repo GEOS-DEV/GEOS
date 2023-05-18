@@ -894,17 +894,23 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
   // initialize the node local to global map
   // ---------------------------------------
 
+  // The general idea for building nodes local-to-global map for the high-order meshes are:
+  // 1. for all the nodes that already in the base mesh-level, we keep their globalIDs the same
+  // 2. for the new nodes on the edges, we assign their global ID according to the global information from edgeLocalToGlobal map
+  // 3. for the new nodes on the faces, we assign their global ID according to the global information from faceLocalToGlobal map
+  // 4. for the new nodes on the internal of each elements, we assign the global ID for the new nodes 
+  //    according to the global information for the elements from elementLocalToGlobal map.
   arrayView1d< globalIndex > nodeLocalToGlobalNew = m_nodeLocalToGlobal.toView();
 
-  // hash map that contains unique vertices and their indices for shared nodes.
-  // a vertex is identified by 6 integers [i1 i2 i3 i4 a b], as follows
+  // nodeIDs is a hash map that contains unique vertices and their indices for shared nodes:
+  // - A vertex is identified by 6 integers [i1 i2 i3 i4 a b], as follows:
   // - nodes on a vertex v are identified by the vector [v -1 -1 -1 -1 -1]
-  // - edge nodes are given by a linear interpolation between vertices v1 and v2, 'a' steps away from v1.
-  //   We assume that v1 < v2 and identify these nodes with [v1 v2 -1 -1 a -1].
-  // - face nodes are given by a bilinear interpolation between edges v1-v2 and v3-v4 (v1-v4 and v2-v3 are the diagonals), with
-  // interpolation parameters 'a' and 'b'.
-  //   We assume that v1 is the smallest, and that v2 < v3. Then these nodes are identified with [v1 v2 v3 v4 a b]
-  // - cell nodes are encountered only once, and thus do not need to be put in the hash map
+  // - nodes on a edge are given by a linear interpolation between vertices v1 and v2, 'a' steps away from v1
+  //   (we assume that v1 < v2 and identify these nodes with [v1 v2 -1 -1 a -1]).
+  // - nodes on a face are given by a bilinear interpolation between edges v1-v2 and v3-v4 
+  //   (v1-v4 and v2-v3 are the diagonals), with interpolation parameters 'a' and 'b'.
+  //   (we assume that v1 is the smallest, and that v2 < v3) Then these nodes are identified with [v1 v2 v3 v4 a b]
+  // - nodes within the internal of a cell are encountered only once, and thus do not need to be put in the hash map
   std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
 
   // Create new nodes, with local and global IDs
