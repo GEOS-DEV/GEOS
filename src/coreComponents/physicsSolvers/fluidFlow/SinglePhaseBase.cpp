@@ -987,11 +987,13 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & )
   {
+    integer const isThermal = m_isThermal;
+
     fsManager.apply< ElementSubRegionBase,
                      SourceFluxBoundaryCondition >( time_n + dt,
                                                     mesh,
                                                     SourceFluxBoundaryCondition::catalogName(),
-                                                    [&]( SourceFluxBoundaryCondition const & fs,
+                                                    [&,isThermal]( SourceFluxBoundaryCondition const & fs,
                                                          string const & setName,
                                                          SortedArrayView< localIndex const > const & targetSet,
                                                          ElementSubRegionBase & subRegion,
@@ -1041,25 +1043,78 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       // get the normalizer
       real64 const sizeScalingFactor = bcAllSetsSize[bcNameToBcId.at( fs.getName())];
 
-      forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
-                                                           targetSet,
-                                                           rankOffset,
-                                                           ghostRank,
-                                                           dofNumber,
-                                                           rhsContributionArrayView,
-                                                           localRhs] GEOS_HOST_DEVICE ( localIndex const a )
+      if( isThermal )
       {
-        // we need to filter out ghosts here, because targetSet may contain them
-        localIndex const ei = targetSet[a];
-        if( ghostRank[ei] >= 0 )
+        SingleFluidBase const & fluid =
+        getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
+        
+        arrayView2d< real64 const > const enthalpy = fluid.enthalpy();
+        arrayView2d< real64 const > const dEnthalpy_dTemperature = fluid.dEnthalpy_dTemperature();
+        arrayView2d< real64 const > const dEnthalpy_dPressure    = fluid.dEnthalpy_dPressure();
+        forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
+                                                             targetSet,
+                                                             rankOffset,
+                                                             ghostRank,
+                                                             dofNumber,
+                                                             enthalpy,
+                                                             dEnthalpy_dTemperature,
+                                                             dEnthalpy_dPressure,
+                                                             rhsContributionArrayView,
+                                                             localRhs,
+                                                             localMatrix] GEOS_HOST_DEVICE ( localIndex const a )
         {
-          return;
-        }
+          // we need to filter out ghosts here, because targetSet may contain them
+          localIndex const ei = targetSet[a];
+          if( ghostRank[ei] >= 0 )
+          {
+            return;
+          }
 
-        // add the value to the mass balance equation
-        globalIndex const rowIndex = dofNumber[ei] - rankOffset;
-        localRhs[rowIndex] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
-      } );
+          // add the value to the mass balance equation
+          globalIndex const massRowIndex   = dofNumber[ei] - rankOffset;
+          globalIndex const energyRowIndex = massRowIndex + 1;
+          real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
+          localRhs[massRowIndex] += rhsValue; 
+          //add the value to the energey balance equation if the flux is positive (i.e., it's a producer)
+          if( rhsContributionArrayView[a] > 0.0 )
+          {
+            globalIndex const pressureDofIndex    = dofNumber[ei] - rankOffset;
+            globalIndex const temperatureDofIndex = pressureDofIndex + 1;
+            
+            localRhs[energyRowIndex] += enthalpy[ei][0] * rhsValue;
+
+            globalIndex dofIndices[2]{pressureDofIndex, temperatureDofIndex};
+            real64 jacobian[2]{rhsValue * dEnthalpy_dPressure[ei][0], rhsValue * dEnthalpy_dTemperature[ei][0]};
+
+            localMatrix.template addToRow< serialAtomic >( energyRowIndex,
+                                                           dofIndices,
+                                                           jacobian,
+                                                           2 );
+          }
+        } );
+      }
+      else
+      {
+        forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
+                                                             targetSet,
+                                                             rankOffset,
+                                                             ghostRank,
+                                                             dofNumber,
+                                                             rhsContributionArrayView,
+                                                             localRhs] GEOS_HOST_DEVICE ( localIndex const a )
+        {
+          // we need to filter out ghosts here, because targetSet may contain them
+          localIndex const ei = targetSet[a];
+          if( ghostRank[ei] >= 0 )
+          {
+            return;
+          }
+
+          // add the value to the mass balance equation
+          globalIndex const rowIndex = dofNumber[ei] - rankOffset;
+          localRhs[rowIndex] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
+        } );
+      }
     } );
   } );
 }
