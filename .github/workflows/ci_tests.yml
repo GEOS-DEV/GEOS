@@ -94,7 +94,7 @@ jobs:
             CMAKE_BUILD_TYPE: Debug
             BUILD_AND_TEST_ARGS: "--disable-unit-tests --build-exe-only --disable-schema-deployment"
             ENABLE_HYPRE: ON
-            ENABLE_HYPRE_CUDA: ON
+            ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_TRILINOS: OFF
 
           - name: Ubuntu CUDA (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.2.152)
@@ -102,7 +102,7 @@ jobs:
             CMAKE_BUILD_TYPE: Release
             BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
             ENABLE_HYPRE: ON
-            ENABLE_HYPRE_CUDA: ON
+            ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_TRILINOS: OFF
 
           - name: Centos (7.6, gcc 8.3.1, open-mpi 1.10.7, cuda 10.1.243)
@@ -137,7 +137,7 @@ jobs:
         CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
         BUILD_AND_TEST_ARGS: ${{ matrix.BUILD_AND_TEST_ARGS }}
         ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
-        ENABLE_HYPRE_CUDA: ${{ matrix.ENABLE_HYPRE_CUDA }}
+        ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}
         ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       run: ./scripts/ci_build_and_test.sh
 
