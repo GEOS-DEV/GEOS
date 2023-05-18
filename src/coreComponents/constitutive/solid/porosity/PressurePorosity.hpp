@@ -16,12 +16,12 @@
  * @file PressurePorosity.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_POROSITY_PRESSUREPOROSITY_HPP_
-#define GEOSX_CONSTITUTIVE_POROSITY_PRESSUREPOROSITY_HPP_
+#ifndef GEOS_CONSTITUTIVE_POROSITY_PRESSUREPOROSITY_HPP_
+#define GEOS_CONSTITUTIVE_POROSITY_PRESSUREPOROSITY_HPP_
 
 #include "PorosityBase.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -48,7 +48,7 @@ public:
     m_compressibility( compressibility )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computePorosity( real64 const & pressure,
                         real64 const & temperature,
                         real64 & porosity,
@@ -56,7 +56,7 @@ public:
                         real64 & dPorosity_dTemperature,
                         real64 const & referencePorosity ) const
   {
-    GEOSX_UNUSED_VAR( temperature );
+    GEOS_UNUSED_VAR( temperature );
 
     // TODO use full exponential.
 //    porosity            =  referencePorosity * exp( m_compressibility * (pressure - m_referencePressure) );
@@ -66,13 +66,13 @@ public:
     dPorosity_dTemperature = 0.0;
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void updateFromPressureAndTemperature( localIndex const k,
                                                  localIndex const q,
                                                  real64 const & pressure,
-                                                 real64 const & GEOSX_UNUSED_PARAM( pressure_n ),
+                                                 real64 const & GEOS_UNUSED_PARAM( pressure_n ),
                                                  real64 const & temperature,
-                                                 real64 const & GEOSX_UNUSED_PARAM( temperature_n ) ) const override final
+                                                 real64 const & GEOS_UNUSED_PARAM( temperature_n ) ) const override final
   {
     computePorosity( pressure,
                      temperature,
@@ -139,7 +139,7 @@ private:
 
 }/* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 
-#endif //GEOSX_CONSTITUTIVE_POROSITY_PRESSUREPOROSITY_HPP_
+#endif //GEOS_CONSTITUTIVE_POROSITY_PRESSUREPOROSITY_HPP_

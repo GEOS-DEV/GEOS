@@ -16,14 +16,14 @@
  * @file SinglePhaseBase.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/ThermalSinglePhaseBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -368,6 +368,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_

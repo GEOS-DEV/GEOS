@@ -16,8 +16,8 @@
  * @file ThermalMultiphasePoromechanics_impl.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALMULTIPHASEPOROMECHANICS_IMPL_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALMULTIPHASEPOROMECHANICS_IMPL_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALMULTIPHASEPOROMECHANICS_IMPL_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALMULTIPHASEPOROMECHANICS_IMPL_HPP_
 
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
@@ -25,7 +25,7 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace thermalPoromechanicsKernels
@@ -89,8 +89,8 @@ ThermalMultiphasePoromechanics( NodeManager const & nodeManager,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ThermalMultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 setup( localIndex const k,
        StackVariables & stack ) const
@@ -106,8 +106,8 @@ setup( localIndex const k,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ThermalMultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 smallStrainUpdate( localIndex const k,
                    localIndex const q,
@@ -119,11 +119,13 @@ smallStrainUpdate( localIndex const k,
   real64 dPorosity_dPressure = 0.0;
   real64 dPorosity_dTemperature = 0.0;
   real64 dSolidDensity_dPressure = 0.0;
+  real64 timeIncrement = 0.0;
 
   // Step 1: call the constitutive model to update the total stress, the porosity and their derivatives
   m_constitutiveUpdate.smallStrainUpdatePoromechanics( k, q,
                                                        m_pressure_n[k],
                                                        m_pressure[k],
+                                                       timeIncrement,
                                                        stack.temperature,
                                                        stack.deltaTemperatureFromLastStep,
                                                        stack.strainIncrement,
@@ -166,8 +168,8 @@ smallStrainUpdate( localIndex const k,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ThermalMultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 computeBodyForce( localIndex const k,
                   localIndex const q,
@@ -189,7 +191,7 @@ computeBodyForce( localIndex const k,
                           stack, [&]( real64 const & totalMassDensity,
                                       real64 const & mixtureDensity )
   {
-    GEOSX_UNUSED_VAR( mixtureDensity );
+    GEOS_UNUSED_VAR( mixtureDensity );
 
     arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const phaseMassDensity = m_fluidPhaseMassDensity[k][q];
     arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const dPhaseMassDensity = m_dFluidPhaseMassDensity[k][q];
@@ -221,8 +223,8 @@ computeBodyForce( localIndex const k,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ThermalMultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 computeFluidIncrement( localIndex const k,
                        localIndex const q,
@@ -320,8 +322,8 @@ computeFluidIncrement( localIndex const k,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ThermalMultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 computePoreVolumeConstraint( localIndex const k,
                              real64 const & porosity_n,
@@ -345,8 +347,8 @@ computePoreVolumeConstraint( localIndex const k,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ThermalMultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
                               real64 const ( &dNdX )[numNodesPerElem][3],
@@ -389,8 +391,8 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ThermalMultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
                                real64 const & detJxW,
@@ -489,8 +491,8 @@ assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ThermalMultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 quadraturePointKernel( localIndex const k,
                        localIndex const q,
@@ -525,8 +527,8 @@ quadraturePointKernel( localIndex const k,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 ThermalMultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 complete( localIndex const k,
           StackVariables & stack ) const
@@ -627,13 +629,13 @@ real64 ThermalMultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYP
 kernelLaunch( localIndex const numElems,
               KERNEL_TYPE const & kernelComponent )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // Define a RAJA reduction variable to get the maximum residual contribution.
   RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
 
   forAll< POLICY >( numElems,
-                    [=] GEOSX_HOST_DEVICE ( localIndex const k )
+                    [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     typename KERNEL_TYPE::StackVariables stack;
 
@@ -649,6 +651,6 @@ kernelLaunch( localIndex const numElems,
 
 } // namespace thermalporomechanicsKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALMULTIPHASEPOROMECHANICS_IMPL_HPP_
+#endif // GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALMULTIPHASEPOROMECHANICS_IMPL_HPP_

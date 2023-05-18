@@ -24,7 +24,7 @@
 #include <fstream>
 #include <chrono>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -68,11 +68,11 @@ ChomboIO::~ChomboIO()
   m_coupler = nullptr;
 }
 
-bool ChomboIO::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
+bool ChomboIO::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
                         real64 const dt,
                         integer const cycleNumber,
-                        integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                        real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+                        integer const GEOS_UNUSED_PARAM( eventCounter ),
+                        real64 const GEOS_UNUSED_PARAM( eventProgress ),
                         DomainPartition & domain )
 {
   if( cycleNumber < m_beginCycle )
@@ -88,8 +88,9 @@ bool ChomboIO::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
     GEOSX_LOG_LEVEL_RANK_0( 1, "Initializing chombo coupling" );
 
     m_coupler = new ChomboCoupler( MPI_COMM_GEOSX, m_outputPath, m_inputPath, domain.getMeshBody( 0 ).getBaseDiscretization() );
-  }
 
+  }
+  GEOS_LOG_RANK_0( "Executing chombo coupling" );
 
   m_coupler->write( dt );
 
@@ -102,4 +103,4 @@ bool ChomboIO::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
 }
 
 REGISTER_CATALOG_ENTRY( OutputBase, ChomboIO, string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */

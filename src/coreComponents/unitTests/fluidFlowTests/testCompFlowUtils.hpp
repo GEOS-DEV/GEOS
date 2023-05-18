@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_TESTCOMPFLOWUTILS_HPP
-#define GEOSX_TESTCOMPFLOWUTILS_HPP
+#ifndef GEOS_TESTCOMPFLOWUTILS_HPP
+#define GEOS_TESTCOMPFLOWUTILS_HPP
 
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -25,14 +25,14 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace testing
 {
 
-using namespace geosx::constitutive;
-using namespace geosx::constitutive::multifluid;
+using namespace geos::constitutive;
+using namespace geos::constitutive::multifluid;
 
 void checkDerivative( real64 const valueEps,
                       real64 const value,
@@ -170,7 +170,7 @@ void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
                             real64 const eps,
                             CRSMatrixView< real64, globalIndex const > const & jacobian )
 {
-  forAll< parallelDevicePolicy<> >( residual.size(), [=] GEOSX_HOST_DEVICE ( localIndex const row )
+  forAll< parallelDevicePolicy<> >( residual.size(), [=] GEOS_HOST_DEVICE ( localIndex const row )
   {
     real64 const dRdX = ( residual[row] - residualOrig[row] ) / eps;
     if( fabs( dRdX ) > 0.0 )
@@ -186,9 +186,9 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( xmlInput, strlen( xmlInput ) );
   if( !xmlResult )
   {
-    GEOSX_LOG_RANK_0( "XML parsed with errors!" );
-    GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+    GEOS_LOG_RANK_0( "XML parsed with errors!" );
+    GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
+    GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
 
   int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
@@ -672,7 +672,7 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
         solver.resetStateToBeginningOfStep( domain );
 
         real64 totalDensity = 0.0;
-        compDens.move( LvArray::MemorySpace::host, true ); // to get the correct compDens after reset
+        compDens.move( hostMemorySpace, true ); // to get the correct compDens after reset
         for( integer ic = 0; ic < numComp; ++ic )
         {
           totalDensity += compDens[ei][ic];
@@ -681,11 +681,11 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
         // Step 1: compute numerical derivatives wrt pressure
 
         {
-          pres.move( LvArray::MemorySpace::host, true ); // to get the correct pres after reset
+          pres.move( hostMemorySpace, true ); // to get the correct pres after reset
           real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
           pres[ei] += dP;
-#if defined(GEOSX_USE_CUDA)
-          pres.move( LvArray::MemorySpace::cuda, false );
+#if defined(GEOS_USE_CUDA)
+          pres.move( parallelDeviceMemorySpace, false );
 #endif
 
 
@@ -713,11 +713,11 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
         {
           solver.resetStateToBeginningOfStep( domain );
 
-          compDens.move( LvArray::MemorySpace::host, true ); // to get the correct compDens after reset
+          compDens.move( hostMemorySpace, true ); // to get the correct compDens after reset
           real64 const dRho = perturbParameter * totalDensity;
           compDens[ei][jc] += dRho;
-#if defined(GEOSX_USE_CUDA)
-          compDens.move( LvArray::MemorySpace::cuda, false );
+#if defined(GEOS_USE_CUDA)
+          compDens.move( parallelDeviceMemorySpace, false );
 #endif
 
 
@@ -745,15 +745,15 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
         {
           arrayView1d< real64 > const temp =
             subRegion.getField< fields::flow::temperature >();
-          temp.move( LvArray::MemorySpace::host, false );
+          temp.move( hostMemorySpace, false );
 
           solver.resetStateToBeginningOfStep( domain );
 
-          temp.move( LvArray::MemorySpace::host, true );
+          temp.move( hostMemorySpace, true );
           real64 const dT = perturbParameter * ( temp[ei] + perturbParameter );
           temp[ei] += dT;
-#if defined(GEOSX_USE_CUDA)
-          temp.move( LvArray::MemorySpace::cuda, false );
+#if defined(GEOS_USE_CUDA)
+          temp.move( parallelDeviceMemorySpace, false );
 #endif
 
           // here, we make sure that rock internal energy is updated
@@ -779,6 +779,6 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
 
 } // namespace testing
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_TESTCOMPFLOWUTILS_HPP
+#endif //GEOS_TESTCOMPFLOWUTILS_HPP

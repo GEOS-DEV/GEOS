@@ -15,7 +15,7 @@
 #include "version.hpp"
 #include "mainInterface/GeosxVersion.hpp"
 
-namespace geosx
+namespace geos
 {
 
 string getVersion()
@@ -56,7 +56,7 @@ string getGpuCompilerIdString()
 {
   std::ostringstream oss;
 
-#if defined( GEOSX_USE_CUDA )
+#if defined( GEOS_USE_CUDA )
   oss<<"  - cuda compiler version: " <<CUDA_VERSION/1000<<"."<<CUDA_VERSION/10%100;
 #endif
   return oss.str();
@@ -65,16 +65,16 @@ string getGpuCompilerIdString()
 void outputVersionInfo()
 {
 
-  GEOSX_LOG_RANK_0( "GEOSX version: " << getVersion() );
+  GEOS_LOG_RANK_0( "GEOSX version: " << getVersion() );
 
-  GEOSX_LOG_RANK_0( "  - c++ compiler: "<<getCppCompilerIdString() );
+  GEOS_LOG_RANK_0( "  - c++ compiler: "<<getCppCompilerIdString() );
 
   string const gpuCompilerIdString = getGpuCompilerIdString();
-  GEOSX_LOG_RANK_0_IF( !gpuCompilerIdString.empty(), gpuCompilerIdString );
+  GEOS_LOG_RANK_0_IF( !gpuCompilerIdString.empty(), gpuCompilerIdString );
 
 
 #if defined(_OPENMP)
-  GEOSX_LOG_RANK_0( "  - openmp version: "<<_OPENMP );
+  GEOS_LOG_RANK_0( "  - openmp version: "<<_OPENMP );
 #endif
 
 #if defined(GEOSX_USE_MPI)
@@ -82,66 +82,66 @@ void outputVersionInfo()
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
     int len;
     MPI_Get_library_version( version, &len );
-    GEOSX_LOG_RANK_0( "  - MPI version: " << version );
+    GEOS_LOG_RANK_0( "  - MPI version: " << version );
   }
 #endif
 
 #if defined(HDF5_VERSION)
-  GEOSX_LOG_RANK_0( "  - HDF5 version: " << STRINGIZE( HDF5_VERSION ) );
+  GEOS_LOG_RANK_0( "  - HDF5 version: " << STRINGIZE( HDF5_VERSION ) );
 #endif
 
 #if defined(Conduit_VERSION)
-  GEOSX_LOG_RANK_0( "  - Conduit version: " << STRINGIZE( Conduit_VERSION ) );
+  GEOS_LOG_RANK_0( "  - Conduit version: " << STRINGIZE( Conduit_VERSION ) );
 #endif
 
 #if defined(VTK_VERSION)
-  GEOSX_LOG_RANK_0( "  - VTK version: " << STRINGIZE( VTK_VERSION ) );
+  GEOS_LOG_RANK_0( "  - VTK version: " << STRINGIZE( VTK_VERSION ) );
 #endif
 
 #if defined(RAJA_VERSION)
-  GEOSX_LOG_RANK_0( "  - RAJA version: " << STRINGIZE( RAJA_VERSION ) );
+  GEOS_LOG_RANK_0( "  - RAJA version: " << STRINGIZE( RAJA_VERSION ) );
 #endif
 #if defined(umpire_VERSION)
-  GEOSX_LOG_RANK_0( "  - umpire version: " << STRINGIZE( umpire_VERSION ) );
+  GEOS_LOG_RANK_0( "  - umpire version: " << STRINGIZE( umpire_VERSION ) );
 #endif
 #if defined(chai_VERSION)
-  GEOSX_LOG_RANK_0( "  - chai version: " << STRINGIZE( chai_VERSION ) );
+  GEOS_LOG_RANK_0( "  - chai version: " << STRINGIZE( chai_VERSION ) );
 #endif
 
 #if defined(adiak_VERSION)
-  GEOSX_LOG_RANK_0( "  -  adiak version: " << STRINGIZE( adiak_VERSION ) );
+  GEOS_LOG_RANK_0( "  -  adiak version: " << STRINGIZE( adiak_VERSION ) );
 #endif
 
 #if defined(caliper_VERSION)
-  GEOSX_LOG_RANK_0( "  - caliper version: " << STRINGIZE( caliper_VERSION ) );
+  GEOS_LOG_RANK_0( "  - caliper version: " << STRINGIZE( caliper_VERSION ) );
 #endif
 
 #if defined(METIS_VERSION)
-  GEOSX_LOG_RANK_0( "  - METIS version: " << STRINGIZE( METIS_VERSION ) );
+  GEOS_LOG_RANK_0( "  - METIS version: " << STRINGIZE( METIS_VERSION ) );
 #endif
 
 #if defined(PARAMETIS_VERSION)
-  GEOSX_LOG_RANK_0( "  - PARAMETIS version: " << STRINGIZE( PARAMETIS_VERSION ) );
+  GEOS_LOG_RANK_0( "  - PARAMETIS version: " << STRINGIZE( PARAMETIS_VERSION ) );
 #endif
 
 #if defined(scotch_VERSION)
-  GEOSX_LOG_RANK_0( "  - scotch version: " << STRINGIZE( scotch_VERSION ) );
+  GEOS_LOG_RANK_0( "  - scotch version: " << STRINGIZE( scotch_VERSION ) );
 #endif
 
 #if defined(superlu_dist_VERSION)
-  GEOSX_LOG_RANK_0( "  - superlu_dist version: " << STRINGIZE( superlu_dist_VERSION ) );
+  GEOS_LOG_RANK_0( "  - superlu_dist version: " << STRINGIZE( superlu_dist_VERSION ) );
 #endif
 
 #if defined(suitesparse_VERSION)
-  GEOSX_LOG_RANK_0( "  - suitesparse version: " << STRINGIZE( suitesparse_VERSION ) );
+  GEOS_LOG_RANK_0( "  - suitesparse version: " << STRINGIZE( suitesparse_VERSION ) );
 #endif
 
 #if defined(Python3_VERSION)
-  GEOSX_LOG_RANK_0( "  - Python3 version: " << STRINGIZE( Python3_VERSION ) );
+  GEOS_LOG_RANK_0( "  - Python3 version: " << STRINGIZE( Python3_VERSION ) );
 #endif
 
 #if defined(CUDAToolkit_VERSION)
-  GEOSX_LOG_RANK_0( "  - CUDAToolkit version: " << STRINGIZE( CUDAToolkit_VERSION ) );
+  GEOS_LOG_RANK_0( "  - CUDAToolkit version: " << STRINGIZE( CUDAToolkit_VERSION ) );
 #endif
 
 }

@@ -16,9 +16,7 @@
 
 #include "dataRepository/xmlWrapper.hpp"
 
-const char IGNORE_OUTPUT[] = ".*";
-
-using namespace geosx;
+using namespace geos;
 
 TEST( testXmlWrapper, array3d_errors )
 {
@@ -34,49 +32,49 @@ TEST( testXmlWrapper, array3d_errors )
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } ";
     array3d< int > array;
-    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::stringToInputVariable( array, input ), IGNORE_OUTPUT );
+    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input ), std::invalid_argument );
   }
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17}  , { {18,19,20},{21,22,23} } }";
     array3d< int > array;
-    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::stringToInputVariable( array, input ), IGNORE_OUTPUT );
+    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input ), std::invalid_argument );
   }
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14,{15,16,17} } , { {18,19,20},{21,22,23} } }";
     array3d< int > array;
-    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::stringToInputVariable( array, input ), IGNORE_OUTPUT );
+    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input ), std::invalid_argument );
   }
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8,{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
     array3d< int > array;
-    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::stringToInputVariable( array, input ), IGNORE_OUTPUT );
+    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input ), std::invalid_argument );
   }
   {
     input = " { { 0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
     array3d< int > array;
-    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::stringToInputVariable( array, input ), IGNORE_OUTPUT );
+    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input ), std::invalid_argument );
   }
   {
     input = "  { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } ";
     array3d< int > array;
-    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::stringToInputVariable( array, input ), IGNORE_OUTPUT );
+    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input ), std::invalid_argument );
   }
 
   {
     input = " { { {,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
     array3d< int > array;
-    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::stringToInputVariable( array, input ), IGNORE_OUTPUT );
+    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input ), std::invalid_argument );
   }
 
   {
     input = " { { {},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
     array3d< int > array;
-    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::stringToInputVariable( array, input ), IGNORE_OUTPUT );
+    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input ), std::invalid_argument );
   }
   {
     input = " { { {0,1,2}}{ } }";
     array3d< int > array;
-    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::stringToInputVariable( array, input ), IGNORE_OUTPUT );
+    ASSERT_THROW( xmlWrapper::stringToInputVariable( array, input ), std::invalid_argument );
   }
 
 

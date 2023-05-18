@@ -22,11 +22,12 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"
+#include "finiteElement/FiniteElementDispatch.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -45,15 +46,15 @@ PhaseFieldFractureSolver::~PhaseFieldFractureSolver()
 void PhaseFieldFractureSolver::postProcessInput()
 {
   Base::postProcessInput();
-  GEOSX_WARNING_IF( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::FullyImplicit,
-                    "FullyImplicit coupling not implemented for this solver. A sequential coupling approach will be used." );
+  GEOS_WARNING_IF( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::FullyImplicit,
+                   "FullyImplicit coupling not implemented for this solver. A sequential coupling approach will be used." );
   getNonlinearSolverParameters().m_couplingType = NonlinearSolverParameters::CouplingType::Sequential;
 }
 
 void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
 {
 
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   if( solverType ==  static_cast< integer >( SolverType::Damage ) )
   {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -107,4 +108,4 @@ void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & doma
 
 REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldFractureSolver, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

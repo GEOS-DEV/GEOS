@@ -41,7 +41,7 @@
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/ThermalCompositionalMultiphaseFVMKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -66,7 +66,7 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   if( !fvManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )
   {
-    GEOSX_ERROR( "A discretization deriving from FluxApproximationBase must be selected with CompositionalMultiphaseFlow" );
+    GEOS_ERROR( "A discretization deriving from FluxApproximationBase must be selected with CompositionalMultiphaseFlow" );
   }
 
 }
@@ -74,10 +74,17 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
 void CompositionalMultiphaseFVM::setupDofs( DomainPartition const & domain,
                                             DofManager & dofManager ) const
 {
+  // add a field for the cell-centered degrees of freedom
   dofManager.addField( viewKeyStruct::elemDofFieldString(),
                        FieldLocation::Elem,
                        m_numDofPerCell,
                        getMeshTargets() );
+
+  // for the volume balance equation, disable global coupling
+  // this equation is purely local (not coupled to neighbors or other physics)
+  dofManager.disableGlobalCouplingForEquation( viewKeyStruct::elemDofFieldString(),
+                                               m_numComponents );
+
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -92,7 +99,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                     arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
@@ -152,7 +159,7 @@ void CompositionalMultiphaseFVM::assembleStabilizedFluxTerms( real64 const dt,
                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                               arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
@@ -191,13 +198,13 @@ void CompositionalMultiphaseFVM::assembleStabilizedFluxTerms( real64 const dt,
   } );
 }
 
-real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                                          real64 const & GEOSX_UNUSED_PARAM( dt ),
+real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                                          real64 const & GEOS_UNUSED_PARAM( dt ),
                                                           DomainPartition const & domain,
                                                           DofManager const & dofManager,
                                                           arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   integer constexpr numNorm = 2; // mass balance and energy balance
   array1d< real64 > localResidualNorm;
@@ -306,8 +313,8 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOSX_U
 
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
-      std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ",
-                              coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] );
+      std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ",
+                             coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] );
     }
   }
   else
@@ -324,7 +331,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOSX_U
 
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
-      std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
+      std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
     }
   }
   return residualNorm;
@@ -334,7 +341,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition con
                                                              DofManager const & dofManager,
                                                              arrayView1d< real64 const > const & localSolution )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   bool const skipCompFracDamping = m_maxCompFracChange >= 1.0;
   bool const skipPresDamping = m_maxRelativePresChange >= 1.0;
@@ -392,7 +399,7 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition const & do
                                                       arrayView1d< real64 const > const & localSolution,
                                                       real64 const scalingFactor )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   integer localCheck = 1;
@@ -440,7 +447,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
                                                       real64 const scalingFactor,
                                                       DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
   DofManager::CompMask componentMask( m_numDofPerCell, 1, m_numComponents+1 );
@@ -492,7 +499,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
 
 void CompositionalMultiphaseFVM::updatePhaseMobility( ObjectManagerBase & dataGroup ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // note that the phase mobility computed here also includes phase density
   string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
@@ -530,7 +537,7 @@ void CompositionalMultiphaseFVM::applyBoundaryConditions( real64 time_n,
                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                           arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   CompositionalMultiphaseBase::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
   if( !m_keepFlowVariablesConstantDuringInitStep )
   {
@@ -570,7 +577,7 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
       if( bcPresCompStatusMap.count( setName ) > 0 )
       {
         bcConsistent = false;
-        GEOSX_WARNING( GEOSX_FMT( "Conflicting pressure boundary conditions on set {}", setName ) );
+        GEOS_WARNING( GEOS_FMT( "Conflicting pressure boundary conditions on set {}", setName ) );
       }
       bcPresCompStatusMap[setName].setNumComp( m_numComponents );
     } );
@@ -589,7 +596,7 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
       if( bcTempStatusMap.count( setName ) > 0 )
       {
         bcConsistent = false;
-        GEOSX_WARNING( GEOSX_FMT( "Conflicting temperature boundary conditions on set {}", setName ) );
+        GEOS_WARNING( GEOS_FMT( "Conflicting temperature boundary conditions on set {}", setName ) );
       }
       bcTempStatusMap.insert( setName );
 
@@ -597,7 +604,7 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
       if( bcPresCompStatusMap.count( setName ) == 0 )
       {
         bcConsistent = false;
-        GEOSX_WARNING( GEOSX_FMT( "Pressure boundary condition not prescribed on set {}", setName ) );
+        GEOS_WARNING( GEOS_FMT( "Pressure boundary condition not prescribed on set {}", setName ) );
       }
     } );
 
@@ -617,18 +624,18 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
       if( bcPresCompStatusMap.count( setName ) == 0 )
       {
         bcConsistent = false;
-        GEOSX_WARNING( GEOSX_FMT( "Pressure boundary condition not prescribed on set {}", setName ) );
+        GEOS_WARNING( GEOS_FMT( "Pressure boundary condition not prescribed on set {}", setName ) );
       }
       if( bcTempStatusMap.count( setName ) == 0 )
       {
         bcConsistent = false;
-        GEOSX_WARNING( GEOSX_FMT( "Temperature boundary condition not prescribed on set {}. \n"
-                                  "Note that for face boundary conditions, you must provide a temperature", setName ) );
+        GEOS_WARNING( GEOS_FMT( "Temperature boundary condition not prescribed on set {}. \n"
+                                "Note that for face boundary conditions, you must provide a temperature", setName ) );
       }
       if( comp < 0 || comp >= m_numComponents )
       {
         bcConsistent = false;
-        GEOSX_WARNING( GEOSX_FMT( "Invalid component index [{}] in composition boundary condition {}", comp, fs.getName() ) );
+        GEOS_WARNING( GEOS_FMT( "Invalid component index [{}] in composition boundary condition {}", comp, fs.getName() ) );
         return; // can't check next part with invalid component id
       }
 
@@ -636,7 +643,7 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
       if( compMask[comp] )
       {
         bcConsistent = false;
-        GEOSX_WARNING( GEOSX_FMT( "Conflicting composition[{}] boundary conditions on set {}", comp, setName ) );
+        GEOS_WARNING( GEOS_FMT( "Conflicting composition[{}] boundary conditions on set {}", comp, setName ) );
       }
       compMask.set( comp );
     } );
@@ -650,7 +657,7 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
         if( !compMask[ic] )
         {
           bcConsistent = false;
-          GEOSX_WARNING( GEOSX_FMT( "Boundary condition not applied to composition[{}] on set {}", ic, setEntry.first ) );
+          GEOS_WARNING( GEOS_FMT( "Boundary condition not applied to composition[{}] on set {}", ic, setEntry.first ) );
         }
       }
     }
@@ -676,13 +683,13 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
                                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                        arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // Only validate BC at the beginning of Newton loop
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateFaceDirichletBC( domain, time_n + dt );
-    GEOSX_ERROR_IF( !bcConsistent, GEOSX_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getName() ) );
+    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getName() ) );
   }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -785,7 +792,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -821,9 +828,9 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       if( bc.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
-                                     getName(), time+dt, AquiferBoundaryCondition::catalogName(),
-                                     bc.getName(), setName, faceManager.getName(), bc.getScale(), numTargetFaces ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
+                                   getName(), time+dt, AquiferBoundaryCondition::catalogName(),
+                                   bc.getName(), setName, faceManager.getName(), bc.getScale(), numTargetFaces ) );
       }
 
       if( stencil.size() == 0 )
@@ -872,4 +879,4 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
 //START_SPHINX_INCLUDE_01
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseFVM, string const &, Group * const )
 //END_SPHINX_INCLUDE_01
-}// namespace geosx
+}// namespace geos

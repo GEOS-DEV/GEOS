@@ -16,8 +16,8 @@
  * @file PetscInterface.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_PETSCINTERFACE_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_PETSCINTERFACE_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_PETSCINTERFACE_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_PETSCINTERFACE_HPP_
 
 #include "linearAlgebra/interfaces/petsc/PetscVector.hpp"
 #include "linearAlgebra/interfaces/petsc/PetscMatrix.hpp"
@@ -26,7 +26,7 @@
 
 #include <memory>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -77,6 +77,6 @@ struct PetscInterface
   using ParallelVector = PetscVector;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_PETSCINTERFACE_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_INTERFACES_PETSCINTERFACE_HPP_*/

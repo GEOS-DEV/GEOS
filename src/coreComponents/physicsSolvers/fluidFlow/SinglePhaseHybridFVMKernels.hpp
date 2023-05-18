@@ -16,8 +16,8 @@
  * @file SinglePhaseHybridFVMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVMKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVMKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVMKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVMKERNELS_HPP
 
 #include "common/DataTypes.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
@@ -38,7 +38,7 @@
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "physicsSolvers/SolverBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace singlePhaseHybridFVMKernels
 {
@@ -75,7 +75,7 @@ void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
     { lambda( std::integral_constant< T, 12 >() ); return;}
     case 13:
     { lambda( std::integral_constant< T, 13 >() ); return;}
-    default: GEOSX_ERROR( "Unknown numFacesInElem value: " << value );
+    default: GEOS_ERROR( "Unknown numFacesInElem value: " << value );
   }
 }
 
@@ -185,7 +185,7 @@ public:
   struct StackVariables
   {
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables()
       : transMatrix( NUM_FACE, NUM_FACE )
     {}
@@ -211,7 +211,7 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const ei,
               StackVariables & stack ) const
   {
@@ -229,7 +229,7 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeGradient( localIndex const ei,
                         StackVariables & stack ) const
   {
@@ -281,7 +281,8 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   void computeFluxDivergence( localIndex const ei,
                               StackVariables & stack ) const
   {
@@ -348,12 +349,12 @@ public:
    * @param[in] kernelOp the function used to customize the kernel
    */
   template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( localIndex const ei,
                 StackVariables & stack,
                 FUNC && kernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
   {
-    GEOSX_UNUSED_VAR( ei, stack, kernelOp );
+    GEOS_UNUSED_VAR( ei, stack, kernelOp );
 
     real64 const perm[ 3 ] = { m_elemPerm[ei][0][0], m_elemPerm[ei][0][1], m_elemPerm[ei][0][2] };
 
@@ -402,7 +403,8 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   void complete( localIndex const ei,
                  StackVariables & stack ) const
   {
@@ -471,9 +473,9 @@ public:
   launch( localIndex const numElems,
           KERNEL_TYPE const & kernelComponent )
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
-    forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       typename KERNEL_TYPE::StackVariables stack;
 
@@ -671,7 +673,7 @@ public:
     m_density_n( singlePhaseFluidAccessors.get( fields::singlefluid::density_n {} ) )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeMassNormalizer( localIndex const kf,
                               real64 & massNormalizer,
                               real64 & multiplier ) const
@@ -698,7 +700,7 @@ public:
     multiplier *= m_dt / elemCounter / m_defaultViscosity;  // average dt * mobility at the previous converged time step
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const kf,
                             LinfStackVariables & stack ) const override
   {
@@ -713,7 +715,7 @@ public:
     }
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeL2( localIndex const kf,
                           L2StackVariables & stack ) const override
   {
@@ -820,6 +822,6 @@ public:
 
 } // namespace singlePhaseHybridFVMKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVMKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVMKERNELS_HPP

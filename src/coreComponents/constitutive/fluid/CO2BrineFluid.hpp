@@ -16,8 +16,8 @@
  * @file CO2BrineFluid.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_CO2BRINEFLUID_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_CO2BRINEFLUID_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_CO2BRINEFLUID_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_CO2BRINEFLUID_HPP_
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
@@ -37,7 +37,7 @@
 
 #include <memory>
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -70,7 +70,7 @@ public:
   {
 public:
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     virtual void compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -83,7 +83,7 @@ public:
                           arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
                           real64 & totalDensity ) const override;
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     virtual void compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -96,7 +96,7 @@ public:
                           PhaseComp::SliceType const phaseCompFraction,
                           FluidProp::SliceType const totalDensity ) const override;
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     virtual void update( localIndex const k,
                          localIndex const q,
                          real64 const pressure,
@@ -221,8 +221,9 @@ using CO2BrineEzrokhiThermalFluid =
                  PVTProps::CO2Solubility >;
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
-GEOSX_HOST_DEVICE
-inline void
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
 CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
   compute( real64 pressure,
            real64 temperature,
@@ -247,8 +248,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
   if( m_useMass )
   {
     // convert mass fractions to mole fractions
-    convertToMoleFractions< numComp >( composition,
-                                       compMoleFrac );
+    convertToMoleFractions< numComp >( composition, compMoleFrac );
   }
   else
   {
@@ -373,8 +373,9 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
-GEOSX_HOST_DEVICE
-inline void
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
 CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
@@ -550,13 +551,15 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
-GEOSX_HOST_DEVICE inline void
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
 CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
   update( localIndex const k,
           localIndex const q,
           real64 const pressure,
           real64 const temperature,
-          arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition ) const
+          arraySlice1d< geos::real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
   compute( pressure,
            temperature,
@@ -574,6 +577,6 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_CO2BRINEFLUID_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_CO2BRINEFLUID_HPP_

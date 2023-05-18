@@ -16,8 +16,8 @@
  * @file CO2Solubility.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_CO2SOLUBILITY_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_CO2SOLUBILITY_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_PVTFUNCTIONS_CO2SOLUBILITY_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_PVTFUNCTIONS_CO2SOLUBILITY_HPP_
 
 #include "FlashModelBase.hpp"
 
@@ -26,7 +26,7 @@
 #include "constitutive/fluid/MultiFluidUtils.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -59,7 +59,7 @@ public:
   {}
 
   template< int USD1, int USD2, int USD3 >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & compFraction,
@@ -67,7 +67,7 @@ public:
                 arraySlice2d< real64, USD3 > const & phaseCompFraction ) const;
 
   template< int USD1 >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & compFraction,
@@ -141,8 +141,9 @@ private:
 };
 
 template< int USD1, int USD2, int USD3 >
-GEOSX_HOST_DEVICE
-inline void
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
 CO2SolubilityUpdate::compute( real64 const & pressure,
                               real64 const & temperature,
                               arraySlice1d< real64 const, USD1 > const & compFraction,
@@ -212,8 +213,9 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
 }
 
 template< int USD1 >
-GEOSX_HOST_DEVICE
-inline void
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
 CO2SolubilityUpdate::compute( real64 const & pressure,
                               real64 const & temperature,
                               arraySlice1d< real64 const, USD1 > const & compFraction,
@@ -335,6 +337,6 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
 
 } // end namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_CO2SOLUBILITY_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_PVTFUNCTIONS_CO2SOLUBILITY_HPP_

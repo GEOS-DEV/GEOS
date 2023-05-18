@@ -16,12 +16,12 @@
  * @file SlurryFluidBase.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_SLURRYFLUIDBASE_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_SLURRYFLUIDBASE_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_SLURRYFLUIDBASE_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_SLURRYFLUIDBASE_HPP_
 
 #include "constitutive/fluid/SingleFluidBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -38,21 +38,24 @@ public:
    * @brief Get number of elements in this wrapper.
    * @return number of elements
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   localIndex numElems() const { return m_density.size( 0 ); }
 
   /**
    * @brief Get number of gauss points per element.
    * @return number of gauss points per element
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   localIndex numGauss() const { return m_density.size( 1 ); };
 
   /**
    * @brief Get number of fluid components.
    * @return number of fluid components
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   localIndex numFluidComponents() const { return m_defaultComponentDensity.size(); }
 
 protected:
@@ -145,12 +148,14 @@ protected:
    * @brief Deleted copy assignment operator
    * @return reference to this object
    */
+  GEOS_HOST_DEVICE
   SlurryFluidBaseUpdate & operator=( SlurryFluidBaseUpdate const & ) = delete;
 
   /**
    * @brief Deleted move assignment operator
    * @return reference to this object
    */
+  GEOS_HOST_DEVICE
   SlurryFluidBaseUpdate & operator=( SlurryFluidBaseUpdate && ) = delete;
 
   arrayView1d< real64 const > m_defaultComponentDensity;
@@ -196,7 +201,7 @@ private:
    * @param[in] shearRate shear rate for power-law fluid calculation
    * @param[in] isProppantBoundary proppant boundary flag
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure,
@@ -213,7 +218,7 @@ private:
    * @param[in] componentconcentration fluid composition array
    * @param[in] shearRate shear rate for power-law fluid calculation
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void updateFluidProperty( localIndex const k,
                                     localIndex const q,
                                     real64 const pressure,
@@ -227,7 +232,7 @@ private:
    * @param[in] pressure pressure value
    * @param[in] componentconcentration fluid composition array
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void updateComponentDensity( localIndex const k,
                                        localIndex const q,
                                        real64 const pressure,
@@ -349,6 +354,6 @@ private:
 
 } //namespace constitutive
 
-} //namespace geosx
+} //namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_SLURRYFLUIDBASE_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_SLURRYFLUIDBASE_HPP_

@@ -23,7 +23,7 @@
 #include "NodeManager.hpp"
 #include "FaceManager.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -112,7 +112,7 @@ MeshLevel::MeshLevel( string const & name,
   MeshLevel( name, parent )
 {
 
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   localIndex const numBasisSupportPoints = order+1;
 
 
@@ -163,7 +163,7 @@ MeshLevel::MeshLevel( string const & name,
       numInternalFaceNodes += numNonEdgeNodesPerFace;
     else
     {
-      GEOSX_ERROR( "need more support for face geometry" );
+      GEOS_ERROR( "need more support for face geometry" );
     }
   }
 
@@ -201,7 +201,6 @@ MeshLevel::MeshLevel( string const & name,
     {
       allNodes.insert( a );
     }
-
   }
 
 
@@ -233,23 +232,21 @@ MeshLevel::MeshLevel( string const & name,
 
       newSubRegion.resize( sourceSubRegion.size() );
 
-      arrayView2d< localIndex const > const & elemToFaces = sourceSubRegion.faceList();
-
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
       array2d< localIndex, cells::NODE_MAP_PERMUTATION > & elemsToNodesNew = newSubRegion.nodeList();
 
+      array2d< localIndex > const & elemToFaces = sourceSubRegion.faceList();
       array2d< localIndex > & elemToFacesNew = newSubRegion.faceList();
       elemToFacesNew = elemToFaces;
 
-      // Copy a new elemCenter map from the old one
+      arrayView2d< real64 const > elemCenter = sourceSubRegion.getElementCenter();
       array2d< real64 > & elemCenterNew = newSubRegion.getElementCenter();
-      arrayView2d< real64 const > const elemCenterOld = sourceSubRegion.getElementCenter();
-      elemCenterNew = elemCenterOld;
+
       for( localIndex elem = 0; elem < elemsToNodesNew.size( 0 ); ++elem )
       {
         for( localIndex a = 0; a < 3; ++a )
         {
-          elemCenterNew[elem][a] = elemCenterOld[elem][a];
+          elemCenterNew[elem][a] = elemCenter[elem][a];
         }
       }
 
@@ -630,7 +627,7 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
 
 void MeshLevel::generateSets()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NodeManager const & nodeManager = *m_nodeManager;
 
@@ -716,4 +713,4 @@ bool MeshLevel::isShallowCopyOf( MeshLevel const & comparisonLevel ) const
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */

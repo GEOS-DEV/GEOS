@@ -20,7 +20,7 @@
 
 #include "ParticleFluidFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -70,4 +70,4 @@ void ParticleFluidBase::allocateConstitutiveData( Group & parent,
 
 } //namespace constitutive
 
-} //namespace geosx
+} //namespace geos
