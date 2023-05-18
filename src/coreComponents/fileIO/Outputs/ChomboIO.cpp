@@ -90,7 +90,6 @@ bool ChomboIO::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
     m_coupler = new ChomboCoupler( MPI_COMM_GEOSX, m_outputPath, m_inputPath, domain.getMeshBody( 0 ).getBaseDiscretization() );
 
   }
-  GEOS_LOG_RANK_0( "Executing chombo coupling" );
 
   m_coupler->write( dt );
 
