@@ -112,18 +112,19 @@ public:
 
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicUpdates::smallStrainUpdate;
-  using ElasticIsotropicUpdates::smallStrainUpdate2;
+
+  GEOS_HOST_DEVICE
+  void smallStrainUpdate( localIndex const k,
+                          localIndex const q,
+                          real64 const & timeIncrement,
+                          real64 const ( &strainIncrement )[6],
+                          real64 ( &stress )[6],
+                          real64 ( &stiffness )[6][6] ) const;
 
   GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
-                                  real64 const ( &strainIncrement )[6],
-                                  real64 ( &stress )[6],
-                                  real64 ( &stiffness )[6][6] ) const override final;
-
-  GEOS_HOST_DEVICE
-  virtual void smallStrainUpdate( localIndex const k,
-                                  localIndex const q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const;
@@ -131,31 +132,9 @@ public:
   GEOS_HOST_DEVICE
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
+                                             real64 const & timeIncrement,
                                              real64 const ( &strainIncrement )[6],
-                                             real64 ( &stress )[6] ) const override final;
-
-  GEOS_HOST_DEVICE
-  virtual void smallStrainUpdate2( localIndex const k,
-                                   localIndex const q,
-                                   real64 const dt,
-                                   real64 const ( &strainIncrement )[6],
-                                   real64 ( &stress )[6],
-                                   real64 ( &stiffness )[6][6] ) const override final;
-
-  GEOS_HOST_DEVICE
-  virtual void smallStrainUpdate2( localIndex const k,
-                                   localIndex const q,
-                                   real64 const dt,
-                                   real64 const ( &strainIncrement )[6],
-                                   real64 ( &stress )[6],
-                                   DiscretizationOps & stiffness ) const final;
-
-  GEOS_HOST_DEVICE
-  virtual void smallStrainUpdate2_StressOnly( localIndex const k,
-                                              localIndex const q,
-                                              real64 const dt,
-                                              real64 const ( &strainIncrement )[6],
-                                              real64 ( &stress )[6] ) const override final;
+                                             real64 ( &stress )[6] ) const override;
 
   GEOS_HOST_DEVICE
   void smallStrainUpdateHelper( localIndex const k,
@@ -207,54 +186,13 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
                                               localIndex const q,
+                                              real64 const & timeIncrement,
                                               real64 const ( &strainIncrement )[6],
-                                              real64 ( & stress )[6],
-                                              real64 ( & stiffness )[6][6] ) const
-{
-  GEOS_UNUSED_VAR( k );
-  GEOS_UNUSED_VAR( q );
-  GEOS_UNUSED_VAR( strainIncrement );
-  GEOS_UNUSED_VAR( stress );
-  GEOS_UNUSED_VAR( stiffness );
-  GEOS_ERROR( "smallStrainUpdate() not implemented for this model, please use smallStrainUpdate2" );
-}
-
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
-                                              localIndex const q,
-                                              real64 const ( &strainIncrement )[6],
-                                              real64 ( & stress )[6],
-                                              DiscretizationOps & stiffness ) const
-{
-  smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );
-}
-
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
-                                                         localIndex const q,
-                                                         real64 const ( &strainIncrement )[6],
-                                                         real64 ( & stress )[6] ) const
-{
-  GEOS_UNUSED_VAR( k );
-  GEOS_UNUSED_VAR( q );
-  GEOS_UNUSED_VAR( strainIncrement );
-  GEOS_UNUSED_VAR( stress );
-  GEOS_ERROR( "smallStrainUpdate_StressOnly() not implemented for this model, please use smallStrainUpdate2_StressOnly()" );
-}
-
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void CeramicDamageUpdates::smallStrainUpdate2( localIndex const k,
-                                               localIndex const q,
-                                               real64 const dt,
-                                               real64 const ( &strainIncrement )[6],
-                                               real64 ( & stress )[6],
-                                               real64 ( & stiffness )[6][6] ) const
+                                              real64 ( &stress )[6],
+                                              real64 ( &stiffness )[6][6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
-  ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+  ElasticIsotropicUpdates::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
   m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
   if( m_disableInelasticity )
@@ -263,7 +201,7 @@ void CeramicDamageUpdates::smallStrainUpdate2( localIndex const k,
   }
 
   // call the constitutive model
-  CeramicDamageUpdates::smallStrainUpdateHelper( k, q, dt, stress );
+  CeramicDamageUpdates::smallStrainUpdateHelper( k, q, timeIncrement, stress );
 
   // It doesn't make sense to modify stiffness with this model
 
@@ -272,30 +210,28 @@ void CeramicDamageUpdates::smallStrainUpdate2( localIndex const k,
   return;
 }
 
-
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void CeramicDamageUpdates::smallStrainUpdate2( localIndex const k,
-                                               localIndex const q,
-                                               real64 const dt,
-                                               real64 const ( &strainIncrement )[6],
-                                               real64 ( & stress )[6],
-                                               DiscretizationOps & stiffness ) const
+void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
+                                              localIndex const q,
+                                              real64 const & timeIncrement,
+                                              real64 const ( &strainIncrement )[6],
+                                              real64 ( &stress )[6],
+                                              DiscretizationOps & stiffness ) const
 {
-  smallStrainUpdate2( k, q, dt, strainIncrement, stress, stiffness.m_c );
+  smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
 }
 
-
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void CeramicDamageUpdates::smallStrainUpdate2_StressOnly( localIndex const k,
-                                                          localIndex const q,
-                                                          real64 const dt,
-                                                          real64 const ( &strainIncrement )[6],
-                                                          real64 ( & stress )[6] ) const
+void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
+                                                         localIndex const q,
+                                                         real64 const & timeIncrement,
+                                                         real64 const ( &strainIncrement )[6],
+                                                         real64 ( &stress )[6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
-  ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
+  ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
   m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
   if( m_disableInelasticity )
@@ -304,7 +240,7 @@ void CeramicDamageUpdates::smallStrainUpdate2_StressOnly( localIndex const k,
   }
 
   // call the constitutive model
-  CeramicDamageUpdates::smallStrainUpdateHelper( k, q, dt, stress );
+  CeramicDamageUpdates::smallStrainUpdateHelper( k, q, timeIncrement, stress );
 
   // save new stress and return
   saveStress( k, q, stress );
