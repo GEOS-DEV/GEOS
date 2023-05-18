@@ -193,6 +193,7 @@ public:
    * @param[in] ei the element index
    */
   GEOS_HOST_DEVICE
+  inline
   void compute( localIndex const ei ) const
   {
     arraySlice1d< real64 const, compflow::USD_COMP - 1 > const compFrac = m_compFrac[ei];
@@ -380,6 +381,7 @@ public:
    * @return the ghost rank of the element
    */
   GEOS_HOST_DEVICE
+  inline
   integer elemGhostRank( localIndex const ei ) const
   { return m_elemGhostRank( ei ); }
 
@@ -390,6 +392,7 @@ public:
    * @param[in] stack the stack variables
    */
   GEOS_HOST_DEVICE
+  inline
   void setup( localIndex const ei,
               StackVariables & stack ) const
   {
@@ -410,6 +413,7 @@ public:
    * @param[inout] stack the stack variables
    */
   GEOS_HOST_DEVICE
+  inline
   void computeAccumulation( localIndex const ei,
                             StackVariables & stack ) const
   {
@@ -453,6 +457,7 @@ public:
    * @param[inout] stack the stack variables
    */
   GEOS_HOST_DEVICE
+  inline
   void complete( localIndex const GEOS_UNUSED_PARAM( ei ),
                  StackVariables & stack ) const
   {
@@ -853,6 +858,7 @@ public:
    * @param[in] stack the stack variables
    */
   GEOS_HOST_DEVICE
+  inline
   void setup( localIndex const iconn,
               StackVariables & stack ) const
   {
@@ -879,6 +885,7 @@ public:
    * @param[inout] stack the stack variables
    */
   GEOS_HOST_DEVICE
+  inline
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
@@ -1070,6 +1077,7 @@ public:
    * @param[inout] stack the stack variables
    */
   GEOS_HOST_DEVICE
+  inline
   void complete( localIndex const iconn,
                  StackVariables & stack ) const
   {
