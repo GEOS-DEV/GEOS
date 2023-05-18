@@ -22,7 +22,7 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace flowSolverBaseKernels
@@ -59,7 +59,7 @@ struct MinimumPoreVolumeKernel
     forAll< parallelDevicePolicy<> >( size, [porosity,
                                              volume,
                                              minPoreVolume,
-                                             numElemsBelowThreshold] ( localIndex const ei )
+                                             numElemsBelowThreshold] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       real64 const poreVolume = porosity[ei][0] * volume[ei];
       if( poreVolume < poreVolumeThreshold )

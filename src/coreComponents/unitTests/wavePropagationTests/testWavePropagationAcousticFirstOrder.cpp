@@ -27,127 +27,128 @@
 
 #include <gtest/gtest.h>
 
-using namespace geosx;
-using namespace geosx::dataRepository;
-using namespace geosx::testing;
+using namespace geos;
+using namespace geos::dataRepository;
+using namespace geos::testing;
 
 CommandLineOptions g_commandLineOptions;
 
 // This unit test checks the interpolation done to extract seismic traces from a wavefield.
 // It computes a seismogram at a receiver co-located with the source and compares it to the surrounding receivers.
 char const * xmlInput =
-  "<?xml version=\"1.0\" ?>\n"
-  "<Problem>\n"
-  "  <Solvers>\n"
-  "    <AcousticFirstOrderSEM\n"
-  "      name=\"acousticFirstOrderSolver\"\n"
-  "      cflFactor=\"0.25\"\n"
-  "      discretization=\"FE1\"\n"
-  "      targetRegions=\"{ Region }\"\n"
-  "      sourceCoordinates=\"{ { 30, 30, 30 } }\"\n"
-  "      timeSourceFrequency=\"2\"\n"
-  "      receiverCoordinates=\"{ { 0.1, 0.1, 0.1 }, { 0.1, 0.1, 99.9 }, { 0.1, 99.9, 0.1 }, { 0.1, 99.9, 99.9 },\n"
-  "                              { 99.9, 0.1, 0.1 }, { 99.9, 0.1, 99.9 }, { 99.9, 99.9, 0.1 }, { 99.9, 99.9, 99.9 },\n"
-  "                              { 50, 50, 50 } }\"\n"
-  "      outputSeismoTrace=\"0\"\n"
-  "      dtSeismoTrace=\"0.05\"\n"
-  "      rickerOrder=\"1\"/>\n"
-  "  </Solvers>\n"
-  "  <Mesh>\n"
-  "    <InternalMesh\n"
-  "      name=\"mesh\"\n"
-  "      elementTypes=\"{ C3D8 }\"\n"
-  "      xCoords=\"{ 0, 100 }\"\n"
-  "      yCoords=\"{ 0, 100 }\"\n"
-  "      zCoords=\"{ 0, 100 }\"\n"
-  "      nx=\"{ 1 }\"\n"
-  "      ny=\"{ 1 }\"\n"
-  "      nz=\"{ 1 }\"\n"
-  "      cellBlockNames=\"{ cb }\"/>\n"
-  "  </Mesh>\n"
-  "  <Events\n"
-  "    maxTime=\"1\">\n"
-  "    <PeriodicEvent\n"
-  "      name=\"solverApplications\"\n"
-  "      forceDt=\"0.05\"\n"
-  "      targetExactStartStop=\"0\"\n"
-  "      targetExactTimestep=\"0\"\n"
-  "      target=\"/Solvers/acousticFirstOrderSolver\"/>\n"
-  "    <PeriodicEvent\n"
-  "      name=\"waveFieldUxCollection\"\n"
-  "      timeFrequency=\"0.05\"\n"
-  "      targetExactTimestep=\"0\"\n"
-  "      target=\"/Tasks/waveFieldUxCollection\" />\n"
-  "    <PeriodicEvent\n"
-  "      name=\"waveFieldUyCollection\"\n"
-  "      timeFrequency=\"0.05\"\n"
-  "      targetExactTimestep=\"0\"\n"
-  "      target=\"/Tasks/waveFieldUyCollection\" />\n"
-  "    <PeriodicEvent\n"
-  "      name=\"waveFieldUzCollection\"\n"
-  "      timeFrequency=\"0.05\"\n"
-  "      targetExactTimestep=\"0\"\n"
-  "      target=\"/Tasks/waveFieldUzCollection\" />\n"
-  "    <PeriodicEvent\n"
-  "      name=\"waveFieldPressureCollection\"\n"
-  "      timeFrequency=\"0.05\"\n"
-  "      targetExactTimestep=\"0\"\n"
-  "      target=\"/Tasks/waveFieldPressureCollection\" />\n"
-  "  </Events>\n"
-  "  <NumericalMethods>\n"
-  "    <FiniteElements>\n"
-  "      <FiniteElementSpace\n"
-  "        name=\"FE1\"\n"
-  "        order=\"1\"\n"
-  "        formulation=\"SEM\" />\n"
-  "    </FiniteElements>\n"
-  "  </NumericalMethods>\n"
-  "  <ElementRegions>\n"
-  "    <CellElementRegion\n"
-  "      name=\"Region\"\n"
-  "      cellBlocks=\"{ cb }\"\n"
-  "      materialList=\"{ nullModel }\"/>\n"
-  "  </ElementRegions>\n"
-  "  <Constitutive>\n"
-  "    <NullModel\n"
-  "      name=\"nullModel\"/>\n"
-  "  </Constitutive>\n"
-  "  <FieldSpecifications>\n"
-  "    <FieldSpecification\n"
-  "      name=\"cellVelocity\"\n"
-  "      initialCondition=\"1\"\n"
-  "      objectPath=\"ElementRegions/Region/cb\"\n"
-  "      fieldName=\"mediumVelocity\"\n"
-  "      scale=\"1500\"\n"
-  "      setNames=\"{ all }\"/>\n"
-  "    <FieldSpecification\n"
-  "      name=\"cellDensity\"\n"
-  "      initialCondition=\"1\"\n"
-  "      objectPath=\"ElementRegions/Region/cb\"\n"
-  "      fieldName=\"mediumDensity\"\n"
-  "      scale=\"1\"\n"
-  "      setNames=\"{ all }\"/>\n"
-  "  </FieldSpecifications>\n"
-  "  <Tasks>\n"
-  "    <PackCollection\n"
-  "      name=\"waveFieldPressureCollection\"\n"
-  "      objectPath=\"nodeManager\"\n"
-  "      fieldName=\"pressure_np1\"/>\n"
-  "    <PackCollection\n"
-  "      name=\"waveFieldUxCollection\"\n"
-  "      objectPath=\"mesh/FE1/ElementRegions/Region/cb\"\n"
-  "      fieldName=\"velocity_x\"/>\n"
-  "    <PackCollection\n"
-  "      name=\"waveFieldUyCollection\"\n"
-  "      objectPath=\"mesh/FE1/ElementRegions/Region/cb\"\n"
-  "      fieldName=\"velocity_y\"/>\n"
-  "    <PackCollection\n"
-  "      name=\"waveFieldUzCollection\"\n"
-  "      objectPath=\"mesh/FE1/ElementRegions/Region/cb\"\n"
-  "      fieldName=\"velocity_z\"/>\n"
-
-  "  </Tasks>\n"
-  "</Problem>\n";
+  R"xml(
+  <?xml version="1.0" ?>
+  <Problem>
+    <Solvers>
+      <AcousticFirstOrderSEM
+        name="acousticFirstOrderSolver"
+        cflFactor="0.25"
+        discretization="FE1"
+        targetRegions="{ Region }"
+        sourceCoordinates="{ { 30, 30, 30 } }"
+        timeSourceFrequency="2"
+        receiverCoordinates="{ { 0.1, 0.1, 0.1 }, { 0.1, 0.1, 99.9 }, { 0.1, 99.9, 0.1 }, { 0.1, 99.9, 99.9 },
+                                { 99.9, 0.1, 0.1 }, { 99.9, 0.1, 99.9 }, { 99.9, 99.9, 0.1 }, { 99.9, 99.9, 99.9 },
+                                { 50, 50, 50 } }"
+        outputSeismoTrace="0"
+        dtSeismoTrace="0.05"
+        rickerOrder="1"/>
+    </Solvers>
+    <Mesh>
+      <InternalMesh
+        name="mesh"
+        elementTypes="{ C3D8 }"
+        xCoords="{ 0, 100 }"
+        yCoords="{ 0, 100 }"
+        zCoords="{ 0, 100 }"
+        nx="{ 1 }"
+        ny="{ 1 }"
+        nz="{ 1 }"
+        cellBlockNames="{ cb }"/>
+    </Mesh>
+    <Events
+      maxTime="1">
+      <PeriodicEvent
+        name="solverApplications"
+        forceDt="0.05"
+        targetExactStartStop="0"
+        targetExactTimestep="0"
+        target="/Solvers/acousticFirstOrderSolver"/>
+      <PeriodicEvent
+        name="waveFieldUxCollection"
+        timeFrequency="0.05"
+        targetExactTimestep="0"
+        target="/Tasks/waveFieldUxCollection" />
+      <PeriodicEvent
+        name="waveFieldUyCollection"
+        timeFrequency="0.05"
+        targetExactTimestep="0"
+        target="/Tasks/waveFieldUyCollection" />
+      <PeriodicEvent
+        name="waveFieldUzCollection"
+        timeFrequency="0.05"
+        targetExactTimestep="0"
+        target="/Tasks/waveFieldUzCollection" />
+      <PeriodicEvent
+        name="waveFieldPressureCollection"
+        timeFrequency="0.05"
+        targetExactTimestep="0"
+        target="/Tasks/waveFieldPressureCollection" />
+    </Events>
+    <NumericalMethods>
+      <FiniteElements>
+        <FiniteElementSpace
+          name="FE1"
+          order="1"
+          formulation="SEM" />
+      </FiniteElements>
+    </NumericalMethods>
+    <ElementRegions>
+      <CellElementRegion
+        name="Region"
+        cellBlocks="{ cb }"
+        materialList="{ nullModel }"/>
+    </ElementRegions>
+    <Constitutive>
+      <NullModel
+        name="nullModel"/>
+    </Constitutive>
+    <FieldSpecifications>
+      <FieldSpecification
+        name="cellVelocity"
+        initialCondition="1"
+        objectPath="ElementRegions/Region/cb"
+        fieldName="mediumVelocity"
+        scale="1500"
+        setNames="{ all }"/>
+      <FieldSpecification
+        name="cellDensity"
+        initialCondition="1"
+        objectPath="ElementRegions/Region/cb"
+        fieldName="mediumDensity"
+        scale="1"
+        setNames="{ all }"/>
+    </FieldSpecifications>
+    <Tasks>
+      <PackCollection
+        name="waveFieldPressureCollection"
+        objectPath="nodeManager"
+        fieldName="pressure_np1"/>
+      <PackCollection
+        name="waveFieldUxCollection"
+        objectPath="ElementRegions/Region/cb"
+        fieldName="velocity_x"/>
+      <PackCollection
+        name="waveFieldUyCollection"
+        objectPath="ElementRegions/Region/cb"
+        fieldName="velocity_y"/>
+      <PackCollection
+        name="waveFieldUzCollection"
+        objectPath="ElementRegions/Region/cb"
+        fieldName="velocity_z"/>
+    </Tasks>
+  </Problem>
+  )xml";
 
 class AcousticFirstOrderWaveEquationSEMTest : public ::testing::Test
 {
@@ -252,8 +253,8 @@ TEST_F( AcousticFirstOrderWaveEquationSEMTest, SeismoTrace )
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-  g_commandLineOptions = *geosx::basicSetup( argc, argv );
+  g_commandLineOptions = *geos::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
-  geosx::basicCleanup();
+  geos::basicCleanup();
   return result;
 }

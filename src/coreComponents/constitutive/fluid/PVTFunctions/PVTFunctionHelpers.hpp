@@ -18,10 +18,10 @@
 
 #include "common/DataTypes.hpp"
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONHELPERS_HPP
-#define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONHELPERS_HPP
+#ifndef GEOS_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONHELPERS_HPP
+#define GEOS_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONHELPERS_HPP
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -163,12 +163,12 @@ findName( InputRange const & input,
   using std::begin;
   using std::end;
   auto const it = std::find_first_of( begin( input ), end( input ), begin( expected ), end( expected ) );
-  GEOSX_THROW_IF( it == end( input ),
-                  GEOSX_FMT( "Name '{}' not found in `{}`.\nExpected one of: {}.\nInput provided: {}.",
-                             *begin( expected ), attribute,
-                             stringutilities::join( begin( expected ), end( expected ), ", " ),
-                             stringutilities::join( begin( input ), end( input ) ) ),
-                  InputError );
+  GEOS_THROW_IF( it == end( input ),
+                 GEOS_FMT( "Name '{}' not found in `{}`.\nExpected one of: {}.\nInput provided: {}.",
+                           *begin( expected ), attribute,
+                           stringutilities::join( begin( expected ), end( expected ), ", " ),
+                           stringutilities::join( begin( input ), end( input ) ) ),
+                 InputError );
   return static_cast< integer >( std::distance( begin( input ), it ) );
 }
 
@@ -182,9 +182,9 @@ initializePropertyTable( string_array const & inputParameters,
                          PTTableCoordinates & tableCoords )
 
 {
-  GEOSX_THROW_IF( inputParameters.size() < 8,
-                  "Invalid property input!",
-                  InputError );
+  GEOS_THROW_IF( inputParameters.size() < 8,
+                 "Invalid property input!",
+                 InputError );
 
   try
   {
@@ -192,8 +192,8 @@ initializePropertyTable( string_array const & inputParameters,
     real64 const PEnd = stod( inputParameters[3] );
     real64 const dP = stod( inputParameters[4] );
 
-    GEOSX_THROW_IF( PStart >= PEnd, "PStart must be strictly smaller than PEnd",
-                    InputError );
+    GEOS_THROW_IF( PStart >= PEnd, "PStart must be strictly smaller than PEnd",
+                   InputError );
 
     constexpr real64 T_K = 273.15;
 
@@ -201,12 +201,12 @@ initializePropertyTable( string_array const & inputParameters,
     real64 const TEnd = stod( inputParameters[6] )- T_K;
     real64 const dT = stod( inputParameters[7] );
 
-    GEOSX_THROW_IF( TStart < 10, "Temperature must be in Kelvin and must be larger than 283.15 K",
-                    InputError );
-    GEOSX_THROW_IF( TEnd > 350, "Temperature must be in Kelvin and must be smaller than 623.15 K",
-                    InputError );
-    GEOSX_THROW_IF( TStart >= TEnd, "TStart must be strictly smaller than TEnd",
-                    InputError );
+    GEOS_THROW_IF( TStart < 10, "Temperature must be in Kelvin and must be larger than 283.15 K",
+                   InputError );
+    GEOS_THROW_IF( TEnd > 350, "Temperature must be in Kelvin and must be smaller than 623.15 K",
+                   InputError );
+    GEOS_THROW_IF( TStart >= TEnd, "TStart must be strictly smaller than TEnd",
+                   InputError );
 
     for( real64 P = PStart; P <= PEnd; P += dP )
     {
@@ -219,7 +219,7 @@ initializePropertyTable( string_array const & inputParameters,
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_THROW( "Invalid property argument:" + string( e.what() ), InputError );
+    GEOS_THROW( "Invalid property argument:" + string( e.what() ), InputError );
   }
 }
 
@@ -229,7 +229,7 @@ initializePropertyTable( string_array const & inputParameters,
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 
 #endif

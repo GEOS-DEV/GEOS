@@ -38,7 +38,7 @@
 
 
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 using namespace constitutive;
@@ -187,7 +187,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
             if( added )
             {
-              GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
+              GEOS_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
 
               // Add the information to the CellElementSubRegion
               subRegion.addFracturedElement( cellIndex, localNumberOfSurfaceElems );
@@ -266,9 +266,9 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 void EmbeddedSurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 {}
 
-real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                             real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                             const int GEOSX_UNUSED_PARAM( cycleNumber ),
+real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                             real64 const & GEOS_UNUSED_PARAM( dt ),
+                                             const int GEOS_UNUSED_PARAM( cycleNumber ),
                                              DomainPartition & domain )
 {
   real64 rval = 0;
@@ -349,7 +349,7 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
     totalNumberOfSurfaceElements += numberOfSurfaceElemsPerRank[rank];
   }
 
-  GEOSX_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: " << totalNumberOfSurfaceElements );
+  GEOS_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: " << totalNumberOfSurfaceElements );
 
   arrayView1d< globalIndex > const & elemLocalToGlobal = embeddedSurfaceSubRegion.localToGlobalMap();
 
@@ -408,7 +408,7 @@ void EmbeddedSurfaceGenerator::addEmbeddedElementsToSets( ElementRegionManager c
       setGroupCell.forWrappers< SortedArray< localIndex > >( [&]( auto const & wrapper )
       {
         SortedArrayView< const localIndex > const & targetSetCell = wrapper.reference();
-        targetSetCell.move( LvArray::MemorySpace::host );
+        targetSetCell.move( hostMemorySpace );
 
         SortedArray< localIndex > & targetSetEmbSurf =
           setGroupEmbSurf.getWrapper< SortedArray< localIndex > >( wrapper.getName() ).reference();
@@ -425,4 +425,4 @@ REGISTER_CATALOG_ENTRY( SolverBase,
                         EmbeddedSurfaceGenerator,
                         string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

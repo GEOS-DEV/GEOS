@@ -17,13 +17,13 @@
  * @file SolidBase.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_SOLIDBASE_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_SOLIDBASE_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_SOLIDBASE_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_SOLIDBASE_HPP_
 
 #include "constitutive/ConstitutiveBase.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -86,24 +86,6 @@ protected:
   /// Deleted move assignment operator
   SolidBaseUpdates & operator=( SolidBaseUpdates && ) =  delete;
 
-  /**
-   * @brief Helper to save point stress back to m_newStress array
-   *
-   * This is mostly defined for improving code readability.
-   *
-   * @param[in] k Element index.
-   * @param[in] q Quadrature point index.
-   * @param[in] stress Stress to be save to m_newStress[k][q]
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void saveStress( localIndex const k,
-                   localIndex const q,
-                   real64 const ( &stress )[6] ) const
-  {
-    LvArray::tensorOps::copy< 6 >( m_newStress[k][q], stress );
-  }
-
 public:
 
   /// A reference the current material stress at quadrature points.
@@ -119,6 +101,44 @@ public:
   const bool & m_disableInelasticity;
 
   /**
+   * @brief Get bulkModulus
+   * @param[in] k Element index.
+   * @return the bulkModulus of element k
+   */
+  GEOS_HOST_DEVICE
+  virtual real64 getBulkModulus( localIndex const k ) const
+  {
+    GEOS_UNUSED_VAR( k );
+    GEOS_ERROR( "getBulkModulus() not implemented for this model" );
+
+    return 0;
+  }
+
+  /**
+   * @brief Get thermalExpansionCoefficient
+   * @param[in] k Element index.
+   * @return the thermalExpansionCoefficient of element k
+   */
+  GEOS_HOST_DEVICE
+  real64 getThermalExpansionCoefficient( localIndex const k ) const
+  {
+    return m_thermalExpansionCoefficient[k];
+  }
+
+  /**
+   * @brief Get shear modulus
+   * @param[in] k Element index.
+   * @return the shear modulus of element k
+   */
+  GEOS_HOST_DEVICE
+  virtual real64 getShearModulus( localIndex const k ) const
+  {
+    GEOS_UNUSED_VAR( k );
+    GEOS_ERROR( "getShearModulus() not implemented for this model" );
+    return 0;
+  }
+
+  /**
    * @name Update Interfaces: Stress and Stiffness
    *
    * We define a variety of interfaces for constitutive models using different
@@ -131,65 +151,50 @@ public:
   ///@{
 
   /**
-   * @brief Get bulkModulus
-   * @param[in] k Element index.
-   * @return the bulkModulus of element k
-   */
-  GEOSX_HOST_DEVICE
-  virtual real64 getBulkModulus( localIndex const k ) const
-  {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_ERROR( "getBulkModulus() not implemented for this model" );
-
-    return 0;
-  }
-
-  /**
-   * @brief Get thermalExpansionCoefficient
-   * @param[in] k Element index.
-   * @return the thermalExpansionCoefficient of element k
-   */
-  GEOSX_HOST_DEVICE
-  real64 getThermalExpansionCoefficient( localIndex const k ) const
-  {
-    return m_thermalExpansionCoefficient[k];
-  }
-
-  /**
-   * @brief Get shear modulus
-   * @param[in] k Element index.
-   * @return the shear modulus of element k
-   */
-  GEOSX_HOST_DEVICE
-  virtual real64 getShearModulus( localIndex const k ) const
-  {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_ERROR( "getShearModulus() not implemented for this model" );
-    return 0;
-  }
-
-  /**
    * @brief Small strain update.
    *
    * @param[in] k Element index.
    * @param[in] q Quadrature point index.
+   * @param[in] timeIncrement time increment for rate-dependent models.
    * @param[in] strainIncrement Strain increment in Voight notation (linearized strain)
    * @param[out] stress New stress value (Cauchy stress)
    * @param[out] stiffness New tangent stiffness value
    */
-  GEOSX_HOST_DEVICE
-  virtual void smallStrainUpdate( localIndex const k,
-                                  localIndex const q,
-                                  real64 const ( &strainIncrement )[6],
-                                  real64 ( & stress )[6],
-                                  real64 ( & stiffness )[6][6] ) const
+  GEOS_HOST_DEVICE
+  /**
+   * this function is not virtual to avoid a compilation warning with nvcc.
+   */
+  void smallStrainUpdate( localIndex const k,
+                          localIndex const q,
+                          real64 const & timeIncrement,
+                          real64 const ( &strainIncrement )[6],
+                          real64 ( & stress )[6],
+                          real64 ( & stiffness )[6][6] ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( strainIncrement );
-    GEOSX_UNUSED_VAR( stress );
-    GEOSX_UNUSED_VAR( stiffness );
-    GEOSX_ERROR( "smallStrainUpdate() not implemented for this model" );
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( timeIncrement );
+    GEOS_UNUSED_VAR( strainIncrement );
+    GEOS_UNUSED_VAR( stress );
+    GEOS_UNUSED_VAR( stiffness );
+    GEOS_ERROR( "smallStrainUpdate() not implemented for this model" );
+  }
+
+  GEOS_HOST_DEVICE
+  virtual void smallStrainUpdate_ElasticOnly( localIndex const k,
+                                              localIndex const q,
+                                              real64 const & timeIncrement,
+                                              real64 const ( &strainIncrement )[6],
+                                              real64 ( & stress )[6],
+                                              real64 ( & stiffness )[6][6] ) const
+  {
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( timeIncrement );
+    GEOS_UNUSED_VAR( strainIncrement );
+    GEOS_UNUSED_VAR( stress );
+    GEOS_UNUSED_VAR( stiffness );
+    GEOS_ERROR( "smallStrainUpdate_ElasticOnly() not implemented for this model, or the model is already elastic." );
   }
 
   /**
@@ -201,98 +206,19 @@ public:
    * @param[out] stress New stress value (Cauchy stress)
    * @param[out] stiffness New tangent stiffness value
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainNoStateUpdate( localIndex const k,
                                          localIndex const q,
                                          real64 const ( &totalStrain )[6],
                                          real64 ( & stress )[6],
                                          real64 ( & stiffness )[6][6] ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( totalStrain );
-    GEOSX_UNUSED_VAR( stress );
-    GEOSX_UNUSED_VAR( stiffness );
-    GEOSX_ERROR( "smallStrainNoStateUpdate() not implemented for this model" );
-  }
-
-  /**
-   * @brief Hypo update (small strain, large rotation).
-   *
-   * The base class uses a call to the small strain update, followed by
-   * a rotation correction using the Hughes-Winget incrementally objective
-   * algorithm.  One can imagine the material deforming in small strain, but in
-   * a reference frame that rotates to track the body's local rotation.  This
-   * provides a convenient way to extend small strain models to a finite rotation
-   * regime.  From the assumption of small deformations, the Cauchy stress and
-   * Kirchoff stress are approximately equal (det F ~ 1).
-   *
-   * Note that if the derived class has tensorial state variables (beyond the
-   * stress itself) care must be taken to rotate these as well.
-   *
-   * We use a post-rotation of the new stress (as opposed to pre-rotation of the old stress)
-   * as we don't have to unrotate the old stress in the event a rewind is required.
-   * We do not post-rotate the stiffness tensor, which is an approximation, but
-   * should be sufficient for small rotation increments.
-   *
-   * This method does not work for anisotropic properties or yield functions
-   * (without some care) and a co-rotational formulation should be considered instead.
-   *
-   * @param[in] k The element index.
-   * @param[in] q The quadrature point index.
-   * @param[in] Ddt The incremental deformation tensor (rate of deformation tensor * dt)
-   * @param[in] Rot The incremental rotation tensor
-   * @param[out] stress New stress value (Cauchy stress)
-   * @param[out] stiffness New stiffness value
-   */
-  GEOSX_HOST_DEVICE
-  virtual void hypoUpdate( localIndex const k,
-                           localIndex const q,
-                           real64 const ( &Ddt )[6],
-                           real64 const ( &Rot )[3][3],
-                           real64 ( & stress )[6],
-                           real64 ( & stiffness )[6][6] ) const
-  {
-    smallStrainUpdate( k, q, Ddt, stress, stiffness );
-
-    real64 temp[6] = { 0 };
-    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, m_newStress[ k ][ q ] );
-    LvArray::tensorOps::copy< 6 >( stress, temp );
-    saveStress( k, q, stress );
-  }
-
-  /**
-   * @brief Hyper update (large deformation).
-   *
-   * This version provides an interface for fully-general, large-deformation
-   * models.  The input strain measure is the deformation gradient minus the identity.
-   * The output is the Cauchy stress (true stress in the deformed configuration) to be
-   * consistent with the previous interfaces.  The stiffness is similarly the
-   * stiffness in the deformed configuration.
-   *
-   * @note: This interface is currently a placeholder and has not been extensively
-   * tested.
-   *
-   * @param[in] k The element index.
-   * @param[in] q The quadrature point index.
-   * @param[in] FminusI Deformation gradient minus identity (F-I)
-   * @param[out] stress New stress value (Cauchy stress)
-   * @param[out] stiffness New stiffness value
-   */
-  // TODO: confirm stress and strain measures we want to use
-  GEOSX_HOST_DEVICE
-  virtual void hyperUpdate( localIndex const k,
-                            localIndex const q,
-                            real64 const ( &FminusI )[3][3],
-                            real64 ( & stress )[6],
-                            real64 ( & stiffness )[6][6] ) const
-  {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( FminusI );
-    GEOSX_UNUSED_VAR( stress );
-    GEOSX_UNUSED_VAR( stiffness );
-    GEOSX_ERROR( "hyperUpdate() not implemented for this model" );
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( totalStrain );
+    GEOS_UNUSED_VAR( stress );
+    GEOS_UNUSED_VAR( stiffness );
+    GEOS_ERROR( "smallStrainNoStateUpdate() not implemented for this model" );
   }
 
   ///@}
@@ -319,20 +245,23 @@ public:
    *
    * @param[in] k Element index.
    * @param[in] q Quadrature point index.
+   * @param[in] timeIncrement time increment for rate-dependent models.
    * @param[in] strainIncrement Strain increment in Voight notation (linearized strain)
    * @param[out] stress New stress value (Cauchy stress)
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
+                                             real64 const & timeIncrement,
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( & stress )[6] ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( strainIncrement );
-    GEOSX_UNUSED_VAR( stress );
-    GEOSX_ERROR( "smallStrainUpdate_StressOnly() not implemented for this model" );
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( timeIncrement );
+    GEOS_UNUSED_VAR( strainIncrement );
+    GEOS_UNUSED_VAR( stress );
+    GEOS_ERROR( "smallStrainUpdate_StressOnly() not implemented for this model" );
   }
 
 
@@ -344,65 +273,36 @@ public:
    * @param[in] totalStrain total strain in Voight notation (linearized strain)
    * @param[out] stress New stress value (Cauchy stress)
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainNoStateUpdate_StressOnly( localIndex const k,
                                                     localIndex const q,
                                                     real64 const ( &totalStrain )[6],
                                                     real64 ( & stress )[6] ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( totalStrain );
-    GEOSX_UNUSED_VAR( stress );
-    GEOSX_ERROR( "smallStrainNoStateUpdate_StressOnly() not implemented for this model" );
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( totalStrain );
+    GEOS_UNUSED_VAR( stress );
+    GEOS_ERROR( "smallStrainNoStateUpdate_StressOnly() not implemented for this model" );
   }
 
   /**
-   * @brief Hypo update, returning only stress
+   * @brief Helper to save point stress back to m_newStress array
    *
-   * @param[in] k The element index.
-   * @param[in] q The quadrature point index.
-   * @param[in] Ddt The incremental deformation tensor (rate of deformation tensor * dt)
-   * @param[in] Rot The incremental rotation tensor
-   * @param[out] stress New stress value (Cauchy stress)
-   */
-  GEOSX_HOST_DEVICE
-  virtual void hypoUpdate_StressOnly( localIndex const k,
-                                      localIndex const q,
-                                      real64 const ( &Ddt )[6],
-                                      real64 const ( &Rot )[3][3],
-                                      real64 ( & stress )[6] ) const
-  {
-    smallStrainUpdate_StressOnly( k, q, Ddt, stress );
-
-    real64 temp[6] = { 0 };
-    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, m_newStress[ k ][ q ] );
-    LvArray::tensorOps::copy< 6 >( stress, temp );
-    saveStress( k, q, stress );
-  }
-
-  /**
-   * @brief Hyper update, returning only stresses.
+   * This is mostly defined for improving code readability.
    *
-   * @param[in] k The element index.
-   * @param[in] q The quadrature point index.
-   * @param[in] FminusI Deformation gradient minus identity (F-I)
-   * @param[out] stress New stress value (Cauchy stress)
+   * @param[in] k Element index.
+   * @param[in] q Quadrature point index.
+   * @param[in] stress Stress to be save to m_newStress[k][q]
    */
-  GEOSX_HOST_DEVICE
-  virtual void hyperUpdate_StressOnly( localIndex const k,
-                                       localIndex const q,
-                                       real64 const ( &FminusI )[3][3],
-                                       real64 ( & stress )[6] ) const
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  void saveStress( localIndex const k,
+                   localIndex const q,
+                   real64 const ( &stress )[6] ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( FminusI );
-    GEOSX_UNUSED_VAR( stress );
-    GEOSX_ERROR( "hyperUpdate_StressOnly() not implemented for this model" );
+    LvArray::tensorOps::copy< 6 >( m_newStress[k][q], stress );
   }
-
-  ///@}
 
   /**
    * @brief Save converged state data at index (k,q)
@@ -410,8 +310,8 @@ public:
    * @param[in] k Element index.
    * @param[in] q Quadrature point index.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const
   {
@@ -425,15 +325,31 @@ public:
    * @param q the quadrature index
    * @param elasticStrain Current elastic strain
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void getElasticStrain( localIndex const k,
                                  localIndex const q,
                                  real64 ( & elasticStrain )[6] ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( elasticStrain );
-    GEOSX_ERROR( "getElasticStrain() not implemented for this model" );
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( elasticStrain );
+    GEOS_ERROR( "getElasticStrain() not implemented for this model" );
+  }
+
+  /**
+   * @brief Perform a viscous (rate-dependent) state update
+   *
+   * @param beta time-dependent parameter
+   */
+  GEOS_HOST_DEVICE
+  virtual void viscousStateUpdate( localIndex const k,
+                                   localIndex const q,
+                                   real64 beta ) const
+  {
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( beta );
+    GEOS_ERROR( "viscousStateUpdate() not implemented for this model" );
   }
 
   /**
@@ -443,13 +359,13 @@ public:
    * @param q the quadrature index
    * @return Strain energy density
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual real64 getStrainEnergyDensity( localIndex const k,
                                          localIndex const q ) const
   {
     auto const & stress = m_newStress[k][q];
 
-    real64 strain[6];
+    real64 strain[6]{};
     getElasticStrain( k, q, strain );
 
     real64 energy = 0;
@@ -460,7 +376,7 @@ public:
     }
     energy *= 0.5;
 
-    GEOSX_ASSERT_MSG( energy >= 0.0, "negative strain energy density detected" );
+    GEOS_ASSERT_MSG( energy >= 0.0, "negative strain energy density detected" );
 
     return energy;
   }
@@ -480,13 +396,13 @@ public:
    * @param k the element number
    * @param stiffness the stiffness array
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k, localIndex const q, real64 ( & stiffness )[6][6] ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( stiffness );
-    GEOSX_ERROR( "getElasticStiffness() not implemented for this model" );
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( stiffness );
+    GEOS_ERROR( "getElasticStiffness() not implemented for this model" );
   }
 
   /**
@@ -506,17 +422,18 @@ public:
    * @param strainIncrement strain increment (on top of which a FD perturbation will be added)
    * @param stiffnessFD finite different stiffness approximation
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeSmallStrainFiniteDifferenceStiffness( localIndex k,
                                                     localIndex q,
+                                                    real64 const & timeIncrement,
                                                     real64 const ( &strainIncrement )[6],
                                                     real64 ( & stiffnessFD )[6][6] ) const
   {
-    real64 stiffness[6][6];      // coded stiffness
-    real64 stress[6];            // original stress
-    real64 stressFD[6];          // perturbed stress
-    real64 strainIncrementFD[6]; // perturbed strain
-    real64 norm = 0;             // norm for scaling (note: method is fragile w.r.t. scaling)
+    real64 stiffness[6][6]{};      // coded stiffness
+    real64 stress[6]{};            // original stress
+    real64 stressFD[6]{};          // perturbed stress
+    real64 strainIncrementFD[6]{}; // perturbed strain
+    real64 norm = 0;               // norm for scaling (note: method is fragile w.r.t. scaling)
 
     for( localIndex i=0; i<6; ++i )
     {
@@ -526,7 +443,7 @@ public:
 
     real64 eps = 1e-4*norm;     // finite difference perturbation
 
-    smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+    smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
 
     for( localIndex i=0; i<6; ++i )
     {
@@ -537,7 +454,7 @@ public:
         strainIncrementFD[i-1] -= eps;
       }
 
-      smallStrainUpdate( k, q, strainIncrementFD, stressFD, stiffnessFD );
+      smallStrainUpdate( k, q, timeIncrement, strainIncrementFD, stressFD, stiffnessFD );
 
       for( localIndex j=0; j<6; ++j )
       {
@@ -562,18 +479,19 @@ public:
    * @param q the quadrature index
    * @param strainIncrement strain increment (on top of which a FD perturbation will be added)
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   bool checkSmallStrainStiffness( localIndex k,
                                   localIndex q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   bool print = false ) const
   {
-    real64 stiffness[6][6];     // coded stiffness
-    real64 stiffnessFD[6][6];   // finite difference approximation
-    real64 stress[6];           // original stress
+    real64 stiffness[6][6]{};     // coded stiffness
+    real64 stiffnessFD[6][6]{};   // finite difference approximation
+    real64 stress[6]{};           // original stress
 
-    smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
-    computeSmallStrainFiniteDifferenceStiffness( k, q, strainIncrement, stiffnessFD );
+    smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
+    computeSmallStrainFiniteDifferenceStiffness( k, q, timeIncrement, strainIncrement, stiffnessFD );
 
     // compute relative error between two versions
 
@@ -732,10 +650,10 @@ public:
    *@brief Get bulkModulus vector
    *@return the bulkModulus of all elements
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual arrayView1d< real64 const > getBulkModulus( ) const
   {
-    GEOSX_ERROR( "getBulkModulus() not implemented for this model" );
+    GEOS_ERROR( "getBulkModulus() not implemented for this model" );
 
     array1d< real64 > out;
     return out.toViewConst();
@@ -745,10 +663,10 @@ public:
    *@brief Get shearModulus vector
    *@return the shearModulus of all elements
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual arrayView1d< real64 const > getShearModulus( ) const
   {
-    GEOSX_ERROR( "getShearModulus() not implemented for this model" );
+    GEOS_ERROR( "getShearModulus() not implemented for this model" );
 
     array1d< real64 > out;
     return out.toViewConst();
@@ -786,6 +704,6 @@ protected:
 };
 
 } // namespace constitutive
-} // namespace geosx
+} // namespace geos
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_SOLIDBASE_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_SOLIDBASE_HPP_ */

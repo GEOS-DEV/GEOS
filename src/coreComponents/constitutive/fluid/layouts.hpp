@@ -16,8 +16,8 @@
  * @file layouts.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_LAYOUTS_HPP
-#define GEOSX_CONSTITUTIVE_FLUID_LAYOUTS_HPP
+#ifndef GEOS_CONSTITUTIVE_FLUID_LAYOUTS_HPP
+#define GEOS_CONSTITUTIVE_FLUID_LAYOUTS_HPP
 
 #include "common/DataTypes.hpp"
 #include "common/GeosxConfig.hpp"
@@ -25,7 +25,7 @@
 #include "LvArray/src/typeManipulation.hpp"
 #include "RAJA/RAJA.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -43,7 +43,7 @@ struct DerivativeOffset
   static integer constexpr dC = 2;
 };
 
-#if defined( GEOSX_USE_CUDA )
+#if defined( GEOS_USE_DEVICE )
 
 /// Constitutive model phase property array layout
 using LAYOUT_PHASE = RAJA::PERM_JKI;
@@ -96,6 +96,6 @@ static constexpr int USD_FLUID_DC = LvArray::typeManipulation::getStrideOneDimen
 
 } // namespace multifluid
 } // namespace constitutive
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_LAYOUTS_HPP
+#endif //GEOS_CONSTITUTIVE_FLUID_LAYOUTS_HPP

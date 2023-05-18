@@ -15,8 +15,8 @@
 /**
  * @file multiFluidSelector.hpp
  */
-#ifndef GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/fluid/DeadOilFluid.hpp"
@@ -28,7 +28,7 @@
 #include "constitutive/fluid/CompositionalMultiphaseFluid.hpp"
 #endif
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -63,13 +63,13 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
                                CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,
                                CO2BrinePhillipsThermalFluid
-//                               ,CO2BrineEzrokhiThermalFluid   "Uncommenting this will lead to compiler segfault. Need to split compilation
+                               //,CO2BrineEzrokhiThermalFluid   "Uncommenting this will lead to compiler segfault. Need to split compilation
 // units for all the options"
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_

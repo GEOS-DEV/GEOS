@@ -16,8 +16,8 @@
  * @file VTKUtilities.hpp
  */
 
-#ifndef GEOSX_MESH_GENERATORS_VTKUTILITIES_HPP
-#define GEOSX_MESH_GENERATORS_VTKUTILITIES_HPP
+#ifndef GEOS_MESH_GENERATORS_VTKUTILITIES_HPP
+#define GEOS_MESH_GENERATORS_VTKUTILITIES_HPP
 
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
@@ -32,7 +32,7 @@
 #include <numeric>
 #include <unordered_set>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -71,9 +71,11 @@ vtkSmartPointer< vtkMultiProcessController > getController();
 /**
  * @brief Load the VTK file into the VTK data structure
  * @param[in] filePath the Path of the file to load
+ * @param[in] blockName The name of the block to import (will be considered for multi-block files only).
  * @return a vtk mesh
  */
-vtkSmartPointer< vtkDataSet > loadMesh( Path const & filePath );
+vtkSmartPointer< vtkDataSet > loadMesh( Path const & filePath,
+                                        const string & blockName = "" );
 
 /**
  * @brief Compute the rank neighbor candidate list.
@@ -140,6 +142,15 @@ findArraysForImport( vtkDataSet & mesh,
 vtkDataArray * findArrayForImport( vtkDataSet & mesh, string const & sourceName );
 
 /**
+ * @brief Check if the vtk mesh as a cell data field of name @p sourceName
+ * @param[in] mesh an input mesh
+ * @param[in] sourceName a field name
+ * @return The boolean result.
+ * @note No check is performed to see if the type of the vtk array matches any requirement.
+ */
+bool hasArray( vtkDataSet & mesh, string const & sourceName );
+
+/**
  * @brief build cell block name from regionId and cellType
  * @param[in] type The type of element in the region
  * @param[in] regionId The region considered
@@ -167,6 +178,14 @@ void importRegularField( std::vector< vtkIdType > const & cellIds,
                          vtkDataArray * vtkArray,
                          WrapperBase & wrapper );
 
+/**
+ * @brief Imports 1d and 2d arrays from @p vtkArray to @p wrapper, for all the elements/cells of the provided wrapper.
+ * @param vtkArray The source.
+ * @param wrapper The destination.
+ */
+void importRegularField( vtkDataArray * vtkArray,
+                         WrapperBase & wrapper );
+
 
 } // namespace vtk
 
@@ -184,8 +203,8 @@ real64 writeNodes( integer const logLevel,
                    vtkDataSet & mesh,
                    string_array & nodesetNames,
                    CellBlockManager & cellBlockManager,
-                   const geosx::R1Tensor & translate,
-                   const geosx::R1Tensor & scale );
+                   const geos::R1Tensor & translate,
+                   const geos::R1Tensor & scale );
 
 /**
  * @brief Build all the cell blocks.
@@ -196,7 +215,7 @@ real64 writeNodes( integer const logLevel,
  */
 void writeCells( integer const logLevel,
                  vtkDataSet & mesh,
-                 const geosx::vtk::CellMapType & cellMap,
+                 const geos::vtk::CellMapType & cellMap,
                  CellBlockManager & cellBlockManager );
 
 /**
@@ -210,9 +229,9 @@ void writeCells( integer const logLevel,
  */
 void writeSurfaces( integer const logLevel,
                     vtkDataSet & mesh,
-                    const geosx::vtk::CellMapType & cellMap,
+                    const geos::vtk::CellMapType & cellMap,
                     CellBlockManager & cellBlockManager );
 
-} // namespace geosx
+} // namespace geos
 
-#endif /* GEOSX_MESH_GENERATORS_VTKUTILITIES_HPP */
+#endif /* GEOS_MESH_GENERATORS_VTKUTILITIES_HPP */

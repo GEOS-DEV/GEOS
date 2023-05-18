@@ -15,8 +15,8 @@
 /**
  * @file KrylovUtils.hpp
  */
-#ifndef GEOSX_LINEARALGEBRA_SOLVERS_KRYLOVUTILS_HPP_
-#define GEOSX_LINEARALGEBRA_SOLVERS_KRYLOVUTILS_HPP_
+#ifndef GEOS_LINEARALGEBRA_SOLVERS_KRYLOVUTILS_HPP_
+#define GEOS_LINEARALGEBRA_SOLVERS_KRYLOVUTILS_HPP_
 
 #include "codingUtilities/Utilities.hpp"
 
@@ -29,10 +29,10 @@
   {                                         \
     if( m_params.logLevel >= 1 )            \
     {                                       \
-      GEOSX_LOG_RANK_0( "Breakdown in " << methodName() << ": " << #VAR << " = " << VAR ); \
+      GEOS_LOG_RANK_0( "Breakdown in " << methodName() << ": " << #VAR << " = " << VAR ); \
     }                                       \
     m_result.status = LinearSolverResult::Status::Breakdown; \
     break;                                  \
   }                                         \
 
-#endif //GEOSX_LINEARALGEBRA_SOLVERS_KRYLOVUTILS_HPP_
+#endif //GEOS_LINEARALGEBRA_SOLVERS_KRYLOVUTILS_HPP_

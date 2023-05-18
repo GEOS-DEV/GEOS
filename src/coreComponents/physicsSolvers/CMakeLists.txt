@@ -6,7 +6,7 @@ set( physicsSolvers_headers
      NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
      SolverBase.hpp
-     SolverBaseKernels.hpp	
+     SolverBaseKernels.hpp
      SolverStatistics.hpp
      FieldStatisticsBase.hpp
      contact/ContactSolverBase.hpp
@@ -26,7 +26,7 @@ set( physicsSolvers_headers
      fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp
      fluidFlow/ThermalCompositionalMultiphaseFVMKernels.hpp
      fluidFlow/CompositionalMultiphaseHybridFVM.hpp
-     fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp 
+     fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
      fluidFlow/CompositionalMultiphaseUtilities.hpp
      fluidFlow/ReactiveCompositionalMultiphaseOBL.hpp
      fluidFlow/ReactiveCompositionalMultiphaseOBLFields.hpp
@@ -71,7 +71,9 @@ set( physicsSolvers_headers
      multiphysics/HydrofractureSolverKernels.hpp
      multiphysics/MultiphasePoromechanics.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
-     multiphysics/PoromechanicsInitialization.hpp          
+     multiphysics/PoromechanicsInitialization.hpp
+     multiphysics/PoromechanicsFields.hpp
+     multiphysics/PoromechanicsInitialization.hpp
      multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp
      multiphysics/poromechanicsKernels/MultiphasePoromechanics_impl.hpp
      multiphysics/poromechanicsKernels/PoromechanicsBase.hpp
@@ -79,11 +81,11 @@ set( physicsSolvers_headers
      multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp
-     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp     
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp
      multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics.hpp
-     multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics_impl.hpp     
+     multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics_impl.hpp
      multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp
-     multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics_impl.hpp	          
+     multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics_impl.hpp
      multiphysics/SinglePhasePoromechanicsFluxKernels.hpp
      multiphysics/SinglePhasePoromechanics.hpp
      multiphysics/SinglePhasePoromechanicsEmbeddedFractures.hpp
@@ -102,6 +104,8 @@ set( physicsSolvers_headers
      solidMechanics/kernels/ExplicitFiniteStrain_impl.hpp
      solidMechanics/kernels/ExplicitSmallStrain.hpp
      solidMechanics/kernels/ExplicitSmallStrain_impl.hpp
+     solidMechanics/kernels/FixedStressThermoPoromechanics.hpp
+     solidMechanics/kernels/FixedStressThermoPoromechanics_impl.hpp
      solidMechanics/kernels/ImplicitSmallStrainNewmark.hpp
      solidMechanics/kernels/ImplicitSmallStrainNewmark_impl.hpp
      solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp
@@ -120,6 +124,8 @@ set( physicsSolvers_headers
      wavePropagation/AcousticWaveEquationSEMKernel.hpp
      wavePropagation/ElasticWaveEquationSEM.hpp
      wavePropagation/ElasticWaveEquationSEMKernel.hpp
+     wavePropagation/ElasticFirstOrderWaveEquationSEM.hpp
+     wavePropagation/ElasticFirstOrderWaveEquationSEMKernel.hpp
      wavePropagation/AcousticFirstOrderWaveEquationSEM.hpp
      wavePropagation/AcousticFirstOrderWaveEquationSEMKernel.hpp
    )
@@ -183,6 +189,7 @@ set( physicsSolvers_sources
      wavePropagation/WaveSolverBase.cpp
      wavePropagation/AcousticWaveEquationSEM.cpp
      wavePropagation/ElasticWaveEquationSEM.cpp
+     wavePropagation/ElasticFirstOrderWaveEquationSEM.cpp
      wavePropagation/AcousticFirstOrderWaveEquationSEM.cpp
 
    )
@@ -190,7 +197,7 @@ set( physicsSolvers_sources
   include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
   include( multiphysics/poromechanicsKernels/PoromechanicsKernels.cmake)
 
-set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
+set( dependencyList ${parallelDeps} constitutive mesh linearAlgebra discretizationMethods events )
 if( ENABLE_PYGEOSX )
   list( APPEND physicsSolvers_headers
   python/PySolver.hpp
@@ -198,14 +205,6 @@ if( ENABLE_PYGEOSX )
   list( APPEND physicsSolvers_sources
         python/PySolver.cpp )
   list( APPEND dependencyList Python3::Python pylvarray )
-endif()
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
 endif()
 
 blt_add_library( NAME       physicsSolvers

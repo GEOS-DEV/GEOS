@@ -15,14 +15,14 @@
 /**
  * @file InverseNormalOperator.hpp
  */
-#ifndef GEOSX_LINEARALGEBRA_UTILITIES_INVERSENORMALOPERATOR_HPP_
-#define GEOSX_LINEARALGEBRA_UTILITIES_INVERSENORMALOPERATOR_HPP_
+#ifndef GEOS_LINEARALGEBRA_UTILITIES_INVERSENORMALOPERATOR_HPP_
+#define GEOS_LINEARALGEBRA_UTILITIES_INVERSENORMALOPERATOR_HPP_
 
 #include "common/LinearOperator.hpp"
 #include "common/PreconditionerBase.hpp"
 #include "common/traits.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace internal
@@ -190,6 +190,6 @@ private:
   TransposeInverse m_transposeInverse;
 };
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_UTILITIES_INVERSENORMALOPERATOR_HPP_
+#endif //GEOS_LINEARALGEBRA_UTILITIES_INVERSENORMALOPERATOR_HPP_

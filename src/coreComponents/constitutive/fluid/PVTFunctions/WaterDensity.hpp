@@ -16,8 +16,8 @@
  * @file WaterDensity.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_WATERDENSITY_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_WATERDENSITY_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_PVTFUNCTIONS_WATERDENSITY_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_PVTFUNCTIONS_WATERDENSITY_HPP_
 
 #include "PVTFunctionBase.hpp"
 
@@ -25,7 +25,7 @@
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -45,7 +45,7 @@ public:
   {}
 
   template< int USD1 >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -53,7 +53,7 @@ public:
                 bool useMass ) const;
 
   template< int USD1, int USD2, int USD3 >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -109,21 +109,21 @@ private:
 };
 
 template< int USD1 >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void WaterDensityUpdate::compute( real64 const & pressure,
                                   real64 const & temperature,
                                   arraySlice1d< real64 const, USD1 > const & phaseComposition,
                                   real64 & value,
                                   bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( phaseComposition, useMass );
+  GEOS_UNUSED_VAR( phaseComposition, useMass );
 
   real64 const input[2] = { pressure, temperature };
   value = m_waterDensityTable.compute( input );
 }
 
 template< int USD1, int USD2, int USD3 >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void WaterDensityUpdate::compute( real64 const & pressure,
                                   real64 const & temperature,
                                   arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -132,7 +132,7 @@ void WaterDensityUpdate::compute( real64 const & pressure,
                                   arraySlice1d< real64, USD3 > const & dValue,
                                   bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( phaseComposition, dPhaseComposition, useMass );
+  GEOS_UNUSED_VAR( phaseComposition, dPhaseComposition, useMass );
 
   using Deriv = multifluid::DerivativeOffset;
 
@@ -148,6 +148,6 @@ void WaterDensityUpdate::compute( real64 const & pressure,
 
 } // end namespace constitutive
 
-} // end namespace geosx
+} // end namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_WATERDENSITY_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_PVTFUNCTIONS_WATERDENSITY_HPP_

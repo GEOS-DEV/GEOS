@@ -22,7 +22,7 @@
 
 #include <gtest/gtest.h>
 
-using namespace geosx;
+using namespace geos;
 
 /** ---------------------- Helpers ---------------------- **/
 
@@ -39,7 +39,7 @@ void createAndAssemble( localIndex const startSize, VEC & x )
 
   x.create( localSize, MPI_COMM_GEOSX );
   arrayView1d< real64 > const values = x.open();
-  forAll< POLICY >( localSize, [=] GEOSX_HOST_DEVICE ( localIndex const i )
+  forAll< POLICY >( localSize, [=] GEOS_HOST_DEVICE ( localIndex const i )
   {
     globalIndex const row = rankOffset + i;
     values[i] = std::pow( -1.0, row ) * ( 1.0 + row );
@@ -71,8 +71,8 @@ void compareValues( arrayView1d< real64 const > const & x,
                     OP_Y const op_y = ops::identity )
 {
   EXPECT_EQ( x.size(), y.size() );
-  x.move( LvArray::MemorySpace::host, false );
-  y.move( LvArray::MemorySpace::host, false );
+  x.move( hostMemorySpace, false );
+  y.move( hostMemorySpace, false );
   for( localIndex i = 0; i < x.size(); ++i )
   {
     if( exact )
@@ -210,7 +210,7 @@ TYPED_TEST_P( VectorTest, setAllValues )
   x.set( value );
 
   arrayView1d< real64 const > const values = x.values();
-  values.move( LvArray::MemorySpace::host, false );
+  values.move( hostMemorySpace, false );
   for( localIndex i = 0; i < localSize; ++i )
   {
     EXPECT_EQ( values[i], value );
@@ -227,7 +227,7 @@ TYPED_TEST_P( VectorTest, zeroAllValues )
   x.zero();
 
   arrayView1d< real64 const > const values = x.values();
-  values.move( LvArray::MemorySpace::host, false );
+  values.move( hostMemorySpace, false );
   for( localIndex i = 0; i < values.size(); ++i )
   {
     EXPECT_EQ( values[i], 0.0 );
@@ -378,6 +378,6 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, VectorTest, PetscInterface, );
 
 int main( int argc, char * * argv )
 {
-  geosx::testing::LinearAlgebraTestScope scope( argc, argv );
+  geos::testing::LinearAlgebraTestScope scope( argc, argv );
   return RUN_ALL_TESTS();
 }

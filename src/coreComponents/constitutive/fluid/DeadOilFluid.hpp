@@ -16,12 +16,12 @@
  * @file DeadOilFluid.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_DEADOILFLUID_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_DEADOILFLUID_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_DEADOILFLUID_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_DEADOILFLUID_HPP_
 
 #include "constitutive/fluid/BlackOilFluidBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -45,7 +45,7 @@ public:
   {
 public:
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     virtual void compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -58,7 +58,7 @@ public:
                           arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
                           real64 & totalDensity ) const override;
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     virtual void compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -71,7 +71,7 @@ public:
                           PhaseComp::SliceType const phaseCompFraction,
                           FluidProp::SliceType const totalDensity ) const override;
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     virtual void update( localIndex const k,
                          localIndex const q,
                          real64 const pressure,
@@ -123,7 +123,7 @@ private:
      * @param[in] pressure pressure in the cell
      * @param[out] phaseMassDens the phase mass densities in the cell
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     void computeDensities( real64 const pressure,
                            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDens ) const;
 
@@ -132,7 +132,7 @@ private:
      * @param[in] pressure pressure in the cell
      * @param[out] phaseMassDens the phase mass densities in the cell (+ derivatives)
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     void computeDensities( real64 const pressure,
                            PhaseProp::SliceType const & phaseMassDens ) const;
 
@@ -141,7 +141,7 @@ private:
      * @param[in] pressure pressure in the cell
      * @param[out] phaseVisc the phase viscosities in the cell
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     void computeViscosities( real64 const pressure,
                              arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseVisc ) const;
 
@@ -150,7 +150,7 @@ private:
      * @param[in] pressure pressure in the cell
      * @param[out] phaseVisc the phase viscosities in the cell (+ derivatives)
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     void computeViscosities( real64 const pressure,
                              PhaseProp::SliceType const & phaseVisc ) const;
 
@@ -176,8 +176,9 @@ private:
 
 };
 
-GEOSX_HOST_DEVICE
-inline void
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
 DeadOilFluid::KernelWrapper::
   computeDensities( real64 const pressure,
                     arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDens ) const
@@ -209,8 +210,9 @@ DeadOilFluid::KernelWrapper::
   }
 }
 
-GEOSX_HOST_DEVICE
-inline void
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
 DeadOilFluid::KernelWrapper::
   computeDensities( real64 const pressure,
                     PhaseProp::SliceType const & phaseMassDens ) const
@@ -254,8 +256,9 @@ DeadOilFluid::KernelWrapper::
   }
 }
 
-GEOSX_HOST_DEVICE
-inline void
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
 DeadOilFluid::KernelWrapper::
   computeViscosities( real64 const pressure,
                       arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseVisc ) const
@@ -283,8 +286,9 @@ DeadOilFluid::KernelWrapper::
   }
 }
 
-GEOSX_HOST_DEVICE
-inline void
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
 DeadOilFluid::KernelWrapper::
   computeViscosities( real64 const pressure,
                       PhaseProp::SliceType const & phaseVisc ) const
@@ -319,8 +323,9 @@ DeadOilFluid::KernelWrapper::
   }
 }
 
-GEOSX_HOST_DEVICE
-inline void
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
 DeadOilFluid::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
@@ -334,7 +339,7 @@ DeadOilFluid::KernelWrapper::
            arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFraction,
            real64 & totalDensity ) const
 {
-  GEOSX_UNUSED_VAR( temperature, phaseEnthalpy, phaseInternalEnergy );
+  GEOS_UNUSED_VAR( temperature, phaseEnthalpy, phaseInternalEnergy );
 
   integer constexpr maxNumComp = 3;
   integer constexpr maxNumPhase = 3;
@@ -369,8 +374,9 @@ DeadOilFluid::KernelWrapper::
 
 }
 
-GEOSX_HOST_DEVICE
-inline void
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
 DeadOilFluid::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
@@ -384,7 +390,7 @@ DeadOilFluid::KernelWrapper::
            PhaseComp::SliceType const phaseCompFraction,
            FluidProp::SliceType const totalDensity ) const
 {
-  GEOSX_UNUSED_VAR( temperature, phaseEnthalpy, phaseInternalEnergy );
+  GEOS_UNUSED_VAR( temperature, phaseEnthalpy, phaseInternalEnergy );
 
   using Deriv = multifluid::DerivativeOffset;
 
@@ -431,17 +437,17 @@ DeadOilFluid::KernelWrapper::
   computeTotalDensity( phaseFraction,
                        phaseDensity,
                        totalDensity );
-
 }
 
-GEOSX_HOST_DEVICE
-inline void
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
 DeadOilFluid::KernelWrapper::
   update( localIndex const k,
           localIndex const q,
           real64 const pressure,
           real64 const temperature,
-          arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition ) const
+          arraySlice1d< geos::real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
   compute( pressure,
            temperature,
@@ -458,6 +464,6 @@ DeadOilFluid::KernelWrapper::
 
 } //namespace constitutive
 
-} //namespace geosx
+} //namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_DEADOILFLUID_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_DEADOILFLUID_HPP_

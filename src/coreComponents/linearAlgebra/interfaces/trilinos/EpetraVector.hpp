@@ -16,14 +16,14 @@
  * @file EpetraVector.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_EPETRAVECTOR_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_EPETRAVECTOR_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_EPETRAVECTOR_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_EPETRAVECTOR_HPP_
 
 #include "linearAlgebra/interfaces/VectorBase.hpp"
 
 class Epetra_Vector;
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -192,4 +192,4 @@ private:
 
 } // end geosx namespace
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_EPETRAVECTOR_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_INTERFACES_EPETRAVECTOR_HPP_*/
