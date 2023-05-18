@@ -233,31 +233,31 @@ void EventManager::outputTime() const
     integer const minutesOut =  (m_time - yearsOut * YEAR - daysOut * DAY - hoursOut * HOUR) / MINUTE;
     integer const secondsOut =   m_time - yearsOut * YEAR - daysOut * DAY - hoursOut * HOUR - minutesOut * MINUTE;
 
-    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {} years, {} days, {} hrs, {} min, {} s, dt: {}s, Cycle: {}", yearsOut, daysOut, hoursOut, minutesOut, secondsOut, m_dt, m_cycle ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {} years, {} days, {} hrs, {} min, {} s, dt: {} s, Cycle: {}", yearsOut, daysOut, hoursOut, minutesOut, secondsOut, m_dt, m_cycle ) );
   }
   else if( m_timeOutputFormat==TimeOutputFormat::years )
   {
     real64 const yearsOut = m_time / YEAR;
-    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:.2f} years, dt: {}s, Cycle: {}", yearsOut, m_dt, m_cycle ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:.2f} years, dt: {} s, Cycle: {}", yearsOut, m_dt, m_cycle ) );
   }
   else if( m_timeOutputFormat==TimeOutputFormat::days )
   {
     real64 const daysOut = m_time / DAY;
-    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:.2f} days, dt: {}s, Cycle: {}", daysOut, m_dt, m_cycle ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:.2f} days, dt: {} s, Cycle: {}", daysOut, m_dt, m_cycle ) );
   }
   else if( m_timeOutputFormat==TimeOutputFormat::hours )
   {
     real64 const hoursOut = m_time / HOUR;
-    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:.2f} hrs, dt: {}s, Cycle: {}", hoursOut, m_dt, m_cycle ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:.2f} hrs, dt: {} s, Cycle: {}", hoursOut, m_dt, m_cycle ) );
   }
   else if( m_timeOutputFormat==TimeOutputFormat::minutes )
   {
     real64 const minutesOut = m_time / MINUTE;
-    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:.2f} min, dt: {}s, Cycle: {}", minutesOut, m_dt, m_cycle ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:.2f} min, dt: {} s, Cycle: {}", minutesOut, m_dt, m_cycle ) );
   }
   else if( m_timeOutputFormat == TimeOutputFormat::seconds )
   {
-    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:4.2e} s, dt: {}s, Cycle: {}", m_time, m_dt, m_cycle ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:4.2e} s, dt: {} s, Cycle: {}", m_time, m_dt, m_cycle ) );
   }
   else
   {
