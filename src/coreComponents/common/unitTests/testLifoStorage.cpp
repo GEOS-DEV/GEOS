@@ -20,13 +20,13 @@
 
 
 template< typename >
-struct RAJAHelper
+struct LocalRAJAHelper
 {};
 
 using serialPolicy = RAJA::loop_exec;
 
 template<>
-struct RAJAHelper< serialPolicy >
+struct LocalRAJAHelper< serialPolicy >
 {
   using ReducePolicy = RAJA::seq_reduce;
   using AtomicPolicy = RAJA::seq_atomic;
@@ -38,7 +38,7 @@ struct RAJAHelper< serialPolicy >
 using parallelHostPolicy = RAJA::omp_parallel_for_exec;
 
 template<>
-struct RAJAHelper< parallelHostPolicy >
+struct LocalRAJAHelper< parallelHostPolicy >
 {
   using ReducePolicy = RAJA::omp_reduce;
   using AtomicPolicy = RAJA::omp_atomic;
@@ -53,7 +53,7 @@ template< unsigned long THREADS_PER_BLOCK >
 using devicePolicy = RAJA::cuda_exec< THREADS_PER_BLOCK >;
 
 template< unsigned long N >
-struct RAJAHelper< RAJA::cuda_exec< N > >
+struct LocalRAJAHelper< RAJA::cuda_exec< N > >
 {
   using ReducePolicy = RAJA::cuda_reduce;
   using AtomicPolicy = RAJA::cuda_atomic;
@@ -70,7 +70,7 @@ void testLifoStorage( int elemCnt, int numberOfElementsOnDevice, int numberOfEle
 {
 
   array1d< float > array( elemCnt );
-  array.move( RAJAHelper< POLICY >::space );
+  array.move( LocalRAJAHelper< POLICY >::space );
   lifoStorage< float > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
 
   for( int j = 0; j < totalNumberOfBuffers; j++ )
@@ -96,7 +96,7 @@ template< typename POLICY >
 void testLifoStorageAsync( int elemCnt, int numberOfElementsOnDevice, int numberOfElementsOnHost, int totalNumberOfBuffers )
 {
   array1d< float > array( elemCnt );
-  array.move( RAJAHelper< POLICY >::space );
+  array.move( LocalRAJAHelper< POLICY >::space );
   lifoStorage< float > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
 
   for( int j = 0; j < totalNumberOfBuffers; j++ )

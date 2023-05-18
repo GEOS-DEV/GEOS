@@ -69,6 +69,6 @@ target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 geosx_add_code_checks(PREFIX common )
 
-if(GEOSX_ENABLE_TESTS)
+if(ENABLE_TESTS)
   add_subdirectory( unitTests )
 endif()
