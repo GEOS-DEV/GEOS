@@ -68,7 +68,7 @@ class Geosx(CMakePackage, CudaPackage):
             description='Linear algebra interface.',
             values=('trilinos', 'hypre', 'petsc'),
             multi=False)
-    variant('pygeosx', default=False, description='Build the GEOSX python interface.')
+    variant('pygeosx', default=True, description='Build the GEOSX python interface.')
 
     # SPHINX_END_VARIANTS
 
@@ -154,11 +154,20 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # Python
     #
-    depends_on('python+shared +pic', when='+pygeosx')
-    depends_on('py-numpy@1.19:+blas+lapack', when='+pygeosx')
-    depends_on('py-scipy@1.5.2:', when='+pygeosx')
-    depends_on('py-mpi4py@3.0.3:', when='+pygeosx')
-    depends_on('py-pip', when='+pygeosx')
+    # depends_on('python+shared +pic', when='+pygeosx')
+    # depends_on('py-numpy@1.19:+blas+lapack', when='+pygeosx')
+    # depends_on('py-scipy@1.5.2:', when='+pygeosx')
+    # depends_on('py-mpi4py@3.0.3:', when='+pygeosx')
+    # depends_on('py-pip', when='+pygeosx')
+
+    # pygeosx dependencies?
+    depends_on("py-numpy@1.21.0:1.23.4+blas+lapack", type=("build"), when='+pygeosx')
+    depends_on('py-mpi4py', type=('build'), when='+pygeosx')
+    depends_on('py-virtualenv', type=('build'), when='+pygeosx')
+    depends_on('python@3.8:+shared+pic+tkinter+optimizations', type=('build'), when='+pygeosx')
+    depends_on("py-scipy", when='+pygeosx')
+    # depends_on("openblas")
+    depends_on("py-matplotlib", when='+pygeosx')
 
     #
     # Dev tools
@@ -303,7 +312,7 @@ class Geosx(CMakePackage, CudaPackage):
             cfg.write(cmake_cache_entry('MPI_C_COMPILER', spec['mpi'].mpicc))
             cfg.write(cmake_cache_entry('MPI_CXX_COMPILER', spec['mpi'].mpicxx))
 
-            if sys_type in ('linux-rhel7-ppc64le', 'linux-rhel8-ppc64le'):
+            if sys_type in ('linux-rhel7-ppc64le', 'linux-rhel8-ppc64le', 'blueos_3_ppc64le_ib_p9'):
                 cfg.write(cmake_cache_option('ENABLE_WRAP_ALL_TESTS_WITH_MPIEXEC', True))
                 if socket.gethostname().rstrip('1234567890') == "lassen":
                     cfg.write(cmake_cache_entry('MPIEXEC', 'lrun'))
@@ -448,6 +457,7 @@ class Geosx(CMakePackage, CudaPackage):
             cfg.write('#{0}\n\n'.format('-' * 80))
             if '+pygeosx' in spec:
                 cfg.write(cmake_cache_option('ENABLE_PYGEOSX', True))
+                cfg.write(cmake_cache_entry('Python3_ROOT_DIR', os.path.join(spec['python'].prefix)))
                 cfg.write(cmake_cache_entry('Python3_EXECUTABLE', os.path.join(spec['python'].prefix.bin, 'python3')))
             else:
                 cfg.write(cmake_cache_option('ENABLE_PYGEOSX', False))
@@ -483,6 +493,14 @@ class Geosx(CMakePackage, CudaPackage):
 
             cfg.write(cmake_cache_option('ENABLE_MATHPRESSO', False))
             cfg.write(cmake_cache_option('ENABLE_XML_UPDATES', False))
+
+            # ATS
+            # Lassen
+            if sys_type in ('blueos_3_ppc64le_ib_p9'):
+                cfg.write(cmake_cache_string('ATS_ARGUMENTS', '--ats jsrun_omp --ats jsrun_bind=packed'))
+            # Quartz
+            if sys_type in ('toss_4_x86_64_ib'):
+                cfg.write(cmake_cache_string('ATS_ARGUMENTS', '--machine slurm36'))
 
         # Copy host-config out of temporary spack build directory into install
         # directory for geosx and current working directory
