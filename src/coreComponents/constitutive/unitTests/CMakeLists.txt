@@ -11,11 +11,7 @@ set( gtest_geosx_tests
      testPropertyConversions.cpp
    )
 
-set( dependencyList gtest constitutive )
-
-if( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
+set( dependencyList gtest constitutive ${parallelDeps} )
 
 if( ENABLE_CUDA_NVTOOLSEXT )
   set( dependencyList ${dependencyList} CUDA::nvToolsExt )
