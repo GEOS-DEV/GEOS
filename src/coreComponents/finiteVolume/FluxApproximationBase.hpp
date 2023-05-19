@@ -103,8 +103,7 @@ public:
    * @param[in] initFields if true initialize physical fields, like pressure
    */
   virtual void addToFractureStencil( MeshLevel & mesh,
-                                     string const & faceElementRegionName,
-                                     bool const initFields ) const = 0;
+                                     string const & faceElementRegionName ) const = 0;
 
   /**
    * @brief Add a new embedded fracture stencil.

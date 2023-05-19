@@ -245,6 +245,13 @@ public:
   arrayView2d< real64 const > detJ() const
   { return m_detJ; }
 
+  /**
+   * @brief Const accessor to the list of new face elements.
+   *
+   * @return a non mutable view of the sorted array of new face elements.
+   */
+  SortedArrayView< localIndex const > const newFaceElements() const {return m_newFaceElements.toViewConst(); }
+
 private:
 
   /**

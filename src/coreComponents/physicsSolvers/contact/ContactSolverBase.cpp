@@ -74,6 +74,7 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
                                        arrayView1d< string const > const regionNames )
   {
     ElementRegionManager & elemManager = meshLevel.getElemManager();
+
     elemManager.forElementRegions< SurfaceElementRegion >( regionNames,
                                                            [&] ( localIndex const,
                                                                  SurfaceElementRegion & region )

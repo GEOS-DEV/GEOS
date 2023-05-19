@@ -23,6 +23,7 @@
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "physicsSolvers/multiphysics/HydrofractureSolverKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+#include "constitutive/fluid/SingleFluidFields.hpp"
 
 namespace geos
 {
@@ -213,6 +214,10 @@ real64 HydrofractureSolver::fullyCoupledSolverStep( real64 const & time_n,
     }
     else
     {
+
+      /// whenever we fracture we set initial values for the primary unknowns.
+      initializeNewFractureElements( domain );
+
       FieldIdentifiers fieldsToBeSync;
 
       fieldsToBeSync.addElementFields( { flow::pressure::key(),
@@ -775,8 +780,7 @@ real64 HydrofractureSolver::setNextDt( real64 const & currentDt,
   }
   else
   {
-    SolverBase & surfaceGenerator = this->getParent().getGroup< SolverBase >( "SurfaceGen" );
-    nextDt = surfaceGenerator.getTimestepRequest() < 1e99 ? surfaceGenerator.getTimestepRequest() : currentDt;
+    nextDt = m_surfaceGenerator->getTimestepRequest() < 1e99 ? m_surfaceGenerator->getTimestepRequest() : currentDt;
   }
 
   GEOS_LOG_LEVEL_RANK_0( 3, this->getName() << ": nextDt request is "  << nextDt );
@@ -844,6 +848,80 @@ void HydrofractureSolver::setUpDflux_dApertureMatrix( DomainPartition & domain,
           }
         }
       }
+    } );
+  } );
+}
+
+void HydrofractureSolver::initializeNewFractureElements( DomainPartition & domain )
+
+{
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    // NodeManager & nodeManager       = mesh.getNodeManager();
+    // FaceManager const & faceManager = mesh.getFaceManager();
+
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > pressureAccessor =
+      elemManager.constructFieldAccessor< fields::flow::pressure_n >();
+    pressureAccessor.setName( getName() + "/accessors/" + fields::flow::pressure::key() );
+
+    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > densityAccessor =
+      elemManager.constructMaterialFieldAccessor< SingleFluidBase, fields::singlefluid::density_n >( true );
+    pressureAccessor.setName( getName() + "/accessors/" + fields::singlefluid::density_n::key() );
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                              [=]( localIndex const,
+                                                                   FaceElementSubRegion & subRegion )
+    {
+      // List of newFractureElements
+      SortedArrayView< localIndex const > const newFractureElements                  = subRegion.m_newFaceElements.toViewConst();
+
+      // Cells connected to SufaceElements.
+      FixedToManyElementRelation const & surfaceElementsToCells = subRegion.getToCellRelation();
+      arrayView2d< localIndex const > const regionIndex         = surfaceElementsToCells.m_toElementRegion.toViewConst();
+      arrayView2d< localIndex const > const subRegionIndex      = surfaceElementsToCells.m_toElementRegion.toViewConst();
+      arrayView2d< localIndex const > const elementIndex        = surfaceElementsToCells.m_toElementRegion.toViewConst();
+
+      // GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Initializing {} new fracture elements.", MpiWrapper::sum( newFractureElements.size() ) ) );
+
+      // 1. We initialize:
+      //    - the pressure of a new fracture element to the average of the 2 cell elements adjacent to it.
+      //    - the density at timestep n of a newly created fracture element.
+      arrayView1d< real64 > const fracturePressure   = subRegion.getField< fields::flow::pressure >();
+      arrayView1d< real64 > const fracturePressure_n = subRegion.getField< fields::flow::pressure_n >();
+
+      SingleFluidBase & fluid =
+        getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( SinglePhaseBase::viewKeyStruct::fluidNamesString() ) );
+      arrayView2d< real64 > const fractureDensity_n  = fluid.density_n();
+
+      forAll< parallelDevicePolicy<> >( newFractureElements.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+      {
+        localIndex const kfe = newFractureElements[k];
+
+        real64 initialPressure = 0.0;
+        real64 initialDensity  = 0.0;
+        for( int i = 0; i < 2; i++ ) // each face element is connecte to 2 matrix cells.
+        {
+          localIndex const er  = regionIndex[kfe][i];
+          localIndex const esr = subRegionIndex[kfe][i];
+          localIndex const e   = elementIndex[kfe][i];
+
+          initialPressure += pressureAccessor[er][esr][e];
+          initialDensity  += densityAccessor[er][esr][e][0];
+        }
+        initialPressure *= 0.5;
+        initialDensity  *= 0.5; // This is a bit of an approximation coz density can be a nonlinear function of pressure.
+
+        fracturePressure[kfe]     = initialPressure;
+        fracturePressure_n[kfe]   = initialPressure;
+        fractureDensity_n[kfe][0] = initialDensity;
+      } );
+
+      subRegion.m_newFaceElements.clear();
     } );
   } );
 }
