@@ -339,7 +339,7 @@ public:
 
   void computeSphF( ParticleManager & particleManager );
 
-  void directionalOverlapCorrection( real64 dt, ParticleManager & particleManager );
+  // void directionalOverlapCorrection( real64 dt, ParticleManager & particleManager );
 
   int evaluateSeparabilityCriterion( localIndex const & A,
                                      localIndex const & B,
@@ -401,7 +401,7 @@ protected:
   int m_surfaceDetection;
   int m_damageFieldPartitioning;
   int m_contactGapCorrection;  
-  int m_directionalOverlapCorrection;
+  // int m_directionalOverlapCorrection;
   real64 m_frictionCoefficient;
 
   int m_planeStrain;
