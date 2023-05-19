@@ -75,7 +75,7 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
   m_surfaceGeneratorName(),
   m_surfaceGenerator( nullptr ),
   m_maxNumResolves( 10 ),
-  m_isMatrixPoroelastic( 1 )
+  m_isMatrixPoroelastic()
 {
   registerWrapper( viewKeyStruct::surfaceGeneratorNameString(), &m_surfaceGeneratorName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -589,11 +589,10 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::assembleSystem( real64 const t
                                                                              [&]( localIndex const,
                                                                                   SurfaceElementSubRegion & subRegion )
       {
-        flowSolver()->assembleAccumulation( dofManager,
-                                            subRegion,
-                                            localMatrix,
-                                            localRhs );
-
+        flowSolver()->accumulationAssemblyLaunch( dofManager,
+                                                  subRegion,
+                                                  localMatrix,
+                                                  localRhs );
       } );
     } );
   }

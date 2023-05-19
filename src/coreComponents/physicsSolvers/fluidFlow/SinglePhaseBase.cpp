@@ -765,7 +765,7 @@ void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
                                                                            [&]( localIndex const,
                                                                                 auto & subRegion )
     {
-      assembleAccumulation( dofManager, subRegion, localMatrix, localRhs);
+      accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs);
     } );
   } );
 }

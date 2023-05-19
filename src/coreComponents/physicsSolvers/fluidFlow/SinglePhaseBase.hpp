@@ -132,10 +132,10 @@ public:
    *
    */
   template< typename SUBREGION_TYPE >
-  void assembleAccumulation( DofManager const & dofManager,
-                             SUBREGION_TYPE & subRegion,
-                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                             arrayView1d< real64 > const & localRhs );
+  void accumulationAssemblyLaunch( DofManager const & dofManager,
+                                   SUBREGION_TYPE & subRegion,
+                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   arrayView1d< real64 > const & localRhs );
 
   /**
    * @brief assembles the flux terms for all cells
@@ -382,10 +382,10 @@ private:
 };
 
 template< typename SUBREGION_TYPE >
-void SinglePhaseBase::assembleAccumulation( DofManager const & dofManager,
-                              SUBREGION_TYPE & subRegion,
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                              arrayView1d< real64 > const & localRhs )
+void SinglePhaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,
+                                                  SUBREGION_TYPE & subRegion,
+                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  arrayView1d< real64 > const & localRhs )
 {
   geos::constitutive::SingleFluidBase const & fluid =
     getConstitutiveModel< geos::constitutive::SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );

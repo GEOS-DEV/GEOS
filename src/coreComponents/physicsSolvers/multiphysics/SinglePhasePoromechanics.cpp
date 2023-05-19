@@ -95,8 +95,7 @@ void SinglePhasePoromechanics::setupCoupling( DomainPartition const & GEOS_UNUSE
 {
   dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
                           SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
-                          DofManager::Connector::Elem,
-                          getMeshTargets() );
+                          DofManager::Connector::Elem );
 }
 
 void SinglePhasePoromechanics::initializePreSubGroups()
