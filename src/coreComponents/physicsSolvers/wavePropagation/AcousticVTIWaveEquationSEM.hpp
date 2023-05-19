@@ -98,13 +98,6 @@ public:
                                        arrayView1d< real32 const > const var_n,
                                        arrayView2d< real32 > varAtReceivers );
 
-
-  /**
-   * @brief Initialize Perfectly Matched Layer (PML) information
-   */
-  virtual void initializePML() override;
-
-
   /**
    * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
    */
@@ -138,6 +131,18 @@ public:
                                integer const cycleNumber,
                                DomainPartition & domain );
 
+  /**
+   * @brief (Empty but must be defined) Initialize Perfectly Matched Layer (PML) information
+   */
+  virtual void initializePML() override {}
+
+  /**
+   * @brief  (Empty but must be defined) Apply Perfectly Matched Layer (PML) to the regions defined in the geometry box from the xml
+   * @param time the time to apply the BC
+   * @param domain the partition domain
+   */
+  virtual void applyPML( [[maybe_unused]] real64 const time, [[maybe_unused]] DomainPartition & domain ) override {}
+
 protected:
 
   virtual void postProcessInput() override final;
@@ -166,13 +171,6 @@ private:
    * @param domain the partition domain
    */
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) override;
-
-  /**
-   * @brief Apply Perfectly Matched Layer (PML) to the regions defined in the geometry box from the xml
-   * @param time the time to apply the BC
-   * @param domain the partition domain
-   */
-  virtual void applyPML( real64 const time, DomainPartition & domain ) override;
 
   localIndex getNumNodesPerElem();
 
@@ -410,38 +408,6 @@ DECLARE_FIELD( PartialGradient,
                NOPLOT,
                WRITE_AND_READ,
                "Partiel gradient computed during backward propagation" );
-
-DECLARE_FIELD( AuxiliaryVar1PML,
-               "auxiliaryVar1PML",
-               array2d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "PML vectorial auxiliary variable 1." );
-
-DECLARE_FIELD( AuxiliaryVar2PML,
-               "auxiliaryVar2PML",
-               array2d< real32 >,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "PML vectorial auxiliary variable 2." );
-
-DECLARE_FIELD( AuxiliaryVar3PML,
-               "auxiliaryVar3PML",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "PML scalar auxiliary variable 3." );
-
-DECLARE_FIELD( AuxiliaryVar4PML,
-               "auxiliaryVar4PML",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "PML scalar auxiliary variable 4." );
 }
 
 } /* namespace geos */
