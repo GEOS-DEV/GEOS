@@ -24,8 +24,6 @@ set( solidBaseDispatch DamageSpectral<ElasticIsotropic>
                        ModifiedCamClay
                        DelftEgg
                        DruckerPrager
-                       PerfectlyPlastic
-                       CeramicDamage
                        ElasticIsotropic
                        ElasticTransverseIsotropic
                        ElasticIsotropicPressureDependent
