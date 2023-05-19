@@ -2528,17 +2528,17 @@ void SolidMechanicsMPM::updateStress( real64 dt,
     arrayView2d< real64 > const particleStress = subRegion.getField< fields::mpm::particleStress >();
 
     // Call constitutive model
-    ConstitutivePassThru< SolidBase >::execute( solid, [&] ( auto & castedSolid )
+    ConstitutivePassThruMPM< SolidBase >::execute( solid, [&] ( auto & castedSolid )
     {
       using SolidType = TYPEOFREF( castedSolid );
       typename SolidType::KernelWrapper constitutiveModelWrapper = castedSolid.createKernelUpdates();
       solidMechanicsMPMKernels::StateUpdateKernel::launch< serialPolicy >( subRegion.activeParticleIndices(),
-                                                                                     constitutiveModelWrapper,
-                                                                                     dt,
-                                                                                     particleDeformationGradient,
-                                                                                     particleFDot,
-                                                                                     particleVelocityGradient,
-                                                                                     particleStress );
+                                                                           constitutiveModelWrapper,
+                                                                           dt,
+                                                                           particleDeformationGradient,
+                                                                           particleFDot,
+                                                                           particleVelocityGradient,
+                                                                           particleStress );
     } );
   } );
 }
