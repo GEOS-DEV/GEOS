@@ -21,11 +21,9 @@
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/SingleFluidFields.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
-#include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
 #include "constitutive/thermalConductivity/singlePhaseThermalConductivitySelector.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
@@ -767,39 +765,7 @@ void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
                                                                            [&]( localIndex const,
                                                                                 auto & subRegion )
     {
-      SingleFluidBase const & fluid =
-        getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
-      //START_SPHINX_INCLUDE_COUPLEDSOLID
-      CoupledSolidBase const & solid =
-        getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
-      //END_SPHINX_INCLUDE_COUPLEDSOLID
-
-      string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-
-      if( m_isThermal )
-      {
-        thermalSinglePhaseBaseKernels::
-          ElementBasedAssemblyKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                     dofKey,
-                                                     subRegion,
-                                                     fluid,
-                                                     solid,
-                                                     localMatrix,
-                                                     localRhs );
-      }
-      else
-      {
-        singlePhaseBaseKernels::
-          ElementBasedAssemblyKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                     dofKey,
-                                                     subRegion,
-                                                     fluid,
-                                                     solid,
-                                                     localMatrix,
-                                                     localRhs );
-      }
+      assembleAccumulation( dofManager, subRegion, localMatrix, localRhs);
     } );
   } );
 }
