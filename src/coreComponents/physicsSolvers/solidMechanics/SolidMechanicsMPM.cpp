@@ -78,7 +78,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_surfaceDetection( 0 ),
   m_damageFieldPartitioning( 0 ),
   m_contactGapCorrection( 0 ),
-  m_directionalOverlapCorrection( 0 ),
+  // m_directionalOverlapCorrection( 0 ),
   m_frictionCoefficient( 0.0 ),
   m_planeStrain( 0 ),
   m_numDims( 3 ),
@@ -194,10 +194,10 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag for mitigating contact gaps" );
 
-  registerWrapper( "directionalOverlapCorrection", &m_directionalOverlapCorrection ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag for mitigating pile-up of particles at contact interfaces" );
+  // registerWrapper( "directionalOverlapCorrection", &m_directionalOverlapCorrection ).
+  //   setApplyDefaultValue( 0 ).
+  //   setInputFlag( InputFlags::OPTIONAL ).
+  //   setDescription( "Flag for mitigating pile-up of particles at contact interfaces" );
 
   registerWrapper( "frictionCoefficient", &m_frictionCoefficient ).
     setApplyDefaultValue( 0.0 ).
@@ -224,7 +224,7 @@ void SolidMechanicsMPM::postProcessInput()
   SolverBase::postProcessInput();
 
   // Activate neighbor list if necessary
-  if( m_damageFieldPartitioning == 1 || m_surfaceDetection == 1 || m_directionalOverlapCorrection == 1 )
+  if( m_damageFieldPartitioning == 1 || m_surfaceDetection == 1 /*|| m_directionalOverlapCorrection == 1*/ )
   {
     m_needsNeighborList = 1;
   }
@@ -2066,7 +2066,7 @@ void SolidMechanicsMPM::optimizeBinSort( ParticleManager & particleManager )
   // on the partition being the weight factor.
 
   // Start
-  int optimalMultiplier;
+  int optimalMultiplier = 1;
 
   // Identify the largest possible multiplier - we can limit this if it's prohibitive to check larger multipliers in large 3D sims
   real64 xL = m_xLocalMaxNoGhost[0] - m_xLocalMinNoGhost[0] + 2 * m_neighborRadius;
@@ -2174,6 +2174,8 @@ real64 SolidMechanicsMPM::computeKernelField( arraySlice1d< real64 const > const
   for( localIndex p = 0 ; p < Vp.size() ; ++p )
   {
     relativePosition[0] = x[0] - xp[p][0];
+    relativePosition[1] = x[1] - xp[p][1];
+    relativePosition[2] = x[2] - xp[p][2];
     r = sqrt( relativePosition[0] * relativePosition[0] + relativePosition[1] * relativePosition[1] + relativePosition[2] * relativePosition[2] );
     kernelVal = kernel( r );
     k += Vp[p] * kernelVal;
@@ -2932,7 +2934,7 @@ void SolidMechanicsMPM::interpolateFTable( real64 dt, real64 time_n)
 {
   double Fii_new;
   double Fii_dot;
-  int fInterval;
+  int fInterval = 0;
   double timeInterval;
   double timePast;
 
@@ -3354,92 +3356,92 @@ void SolidMechanicsMPM::computeSphF( ParticleManager & particleManager )
   } );
 }
 
-void SolidMechanicsMPM::directionalOverlapCorrection( real64 dt, ParticleManager & particleManager )
-{
-  // Get the SPH version of the deformation gradient
-  computeSphF( particleManager );
+// void SolidMechanicsMPM::directionalOverlapCorrection( real64 dt, ParticleManager & particleManager )
+// {
+//   // Get the SPH version of the deformation gradient
+//   computeSphF( particleManager );
 
-  // If we're at a surface, induce corrective deformation normal to the surface
-  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
-  {
-    arrayView1d< real64 > const particleOverlap = subRegion.getField< fields::mpm::particleOverlap >();
-    particleOverlap.zero();
-    arrayView2d< real64 const > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
-    arrayView3d< real64 > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
-    particleVelocityGradient.zero();
-    arrayView3d< real64 const > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
-    arrayView3d< real64 const > const particleSphF = subRegion.getField< fields::mpm::particleSphF >();
+//   // If we're at a surface, induce corrective deformation normal to the surface
+//   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+//   {
+//     arrayView1d< real64 > const particleOverlap = subRegion.getField< fields::mpm::particleOverlap >();
+//     particleOverlap.zero();
+//     arrayView2d< real64 const > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
+//     arrayView3d< real64 > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
+//     particleVelocityGradient.zero();
+//     arrayView3d< real64 const > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+//     arrayView3d< real64 const > const particleSphF = subRegion.getField< fields::mpm::particleSphF >();
 
-    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
-    {
-      localIndex const p = activeParticleIndices[pp];
-      if( LvArray::tensorOps::l2NormSquared< 3 >( particleDamageGradient[p] ) > 0.0 )
-      {
-        real64 surfaceNormal[3];
-        LvArray::tensorOps::copy< 3 >( surfaceNormal, particleDamageGradient[p] );
-        if( m_planeStrain == 1 )
-        {
-          surfaceNormal[2] = 0.0; // Just in case
-        }
-        LvArray::tensorOps::normalize< 3 >( surfaceNormal );
+//     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+//     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+//     {
+//       localIndex const p = activeParticleIndices[pp];
+//       if( LvArray::tensorOps::l2NormSquared< 3 >( particleDamageGradient[p] ) > 0.0 )
+//       {
+//         real64 surfaceNormal[3];
+//         LvArray::tensorOps::copy< 3 >( surfaceNormal, particleDamageGradient[p] );
+//         if( m_planeStrain == 1 )
+//         {
+//           surfaceNormal[2] = 0.0; // Just in case
+//         }
+//         LvArray::tensorOps::normalize< 3 >( surfaceNormal );
 
-        // Polar decompositions
-        real64 Rp[3][3], Rsph[3][3], Vp[3][3], Vsph[3][3];
-        LvArray::tensorOps::polarDecomposition< 3 >( Rp, particleDeformationGradient[p] );
-        LvArray::tensorOps::polarDecomposition< 3 >( Rsph, particleSphF[p] );
-        LvArray::tensorOps::Rij_eq_AikBjk< 3, 3, 3 >(Vp, particleDeformationGradient[p], Rp );
-        LvArray::tensorOps::Rij_eq_AikBjk< 3, 3, 3 >(Vsph, particleSphF[p], Rsph );
+//         // Polar decompositions
+//         real64 Rp[3][3], Rsph[3][3], Vp[3][3], Vsph[3][3];
+//         LvArray::tensorOps::polarDecomposition< 3 >( Rp, particleDeformationGradient[p] );
+//         LvArray::tensorOps::polarDecomposition< 3 >( Rsph, particleSphF[p] );
+//         LvArray::tensorOps::Rij_eq_AikBjk< 3, 3, 3 >(Vp, particleDeformationGradient[p], Rp );
+//         LvArray::tensorOps::Rij_eq_AikBjk< 3, 3, 3 >(Vsph, particleSphF[p], Rsph );
 
-        // Compute directional stretches
-        real64 stretch[3], normalStretch;
-        real64 stretchSph[3], normalStretchSph;
-        LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >(stretch, Vp, surfaceNormal );
-        normalStretch = LvArray::tensorOps::AiBi< 3 >( stretch, surfaceNormal );
-        LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >(stretchSph, Vsph, surfaceNormal );
-        normalStretchSph = LvArray::tensorOps::AiBi< 3 >( stretchSph, surfaceNormal );
+//         // Compute directional stretches
+//         real64 stretch[3], normalStretch;
+//         real64 stretchSph[3], normalStretchSph;
+//         LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >(stretch, Vp, surfaceNormal );
+//         normalStretch = LvArray::tensorOps::AiBi< 3 >( stretch, surfaceNormal );
+//         LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >(stretchSph, Vsph, surfaceNormal );
+//         normalStretchSph = LvArray::tensorOps::AiBi< 3 >( stretchSph, surfaceNormal );
 
-        // Detect overlap and correct. TODO: Implement a ramp?
-        real64 overlap = normalStretch / normalStretchSph;
-        particleOverlap[p] = overlap;
-        if( overlap > 1.2 && normalStretchSph < 1 )
-        {
-          // Get orthonormal basis to transform V into
-          real64 s1[3], s2[3];
-          computeOrthonormalBasis( surfaceNormal, s1, s2 );
-          real64 Q[3][3], Qtranspose[3][3], targetF[3][3], targetFDot[3][3], FInverse[3][3];
-          for( int i=0; i<3; i++ )
-          {
-            Q[i][0] = surfaceNormal[i];
-            Q[i][1] = s1[i];
-            Q[i][2] = s2[i];
-            Qtranspose[0][i] = surfaceNormal[i];
-            Qtranspose[1][i] = s1[i];
-            Qtranspose[2][i] = s2[i];
-          }
+//         // Detect overlap and correct. TODO: Implement a ramp?
+//         real64 overlap = normalStretch / normalStretchSph;
+//         particleOverlap[p] = overlap;
+//         if( overlap > 1.2 && normalStretchSph < 1 )
+//         {
+//           // Get orthonormal basis to transform V into
+//           real64 s1[3], s2[3];
+//           computeOrthonormalBasis( surfaceNormal, s1, s2 );
+//           real64 Q[3][3], Qtranspose[3][3], targetF[3][3], targetFDot[3][3], FInverse[3][3];
+//           for( int i=0; i<3; i++ )
+//           {
+//             Q[i][0] = surfaceNormal[i];
+//             Q[i][1] = s1[i];
+//             Q[i][2] = s2[i];
+//             Qtranspose[0][i] = surfaceNormal[i];
+//             Qtranspose[1][i] = s1[i];
+//             Qtranspose[2][i] = s2[i];
+//           }
 
-          // Perform transformation, substitute in the directional stretch predicted by Fsph, transform back, re-assemble F
-          real64 VpPrime[3][3], temp[3][3];
-          LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( temp, Qtranspose, Vp );
-          LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( VpPrime, temp, Q );
-          VpPrime[0][0] = normalStretchSph;
-          LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( temp, Q, VpPrime );
-          LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( Vp, temp, Qtranspose );
-          LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( targetF, Vp, Rp );
+//           // Perform transformation, substitute in the directional stretch predicted by Fsph, transform back, re-assemble F
+//           real64 VpPrime[3][3], temp[3][3];
+//           LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( temp, Qtranspose, Vp );
+//           LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( VpPrime, temp, Q );
+//           VpPrime[0][0] = normalStretchSph;
+//           LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( temp, Q, VpPrime );
+//           LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( Vp, temp, Qtranspose );
+//           LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( targetF, Vp, Rp );
 
-          // Deduce the L necessary to achieve the new F
-          LvArray::tensorOps::copy< 3, 3 >( targetFDot, targetF );
-          LvArray::tensorOps::scaledAdd< 3, 3 >( targetFDot, particleDeformationGradient[p], -1.0 );
-          LvArray::tensorOps::scale< 3, 3 >( targetFDot, 1.0 / dt );
-          LvArray::tensorOps::invert< 3 >( FInverse, particleDeformationGradient[p] );
-          LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( particleVelocityGradient[p], targetFDot, FInverse );
-        }
-      }
-    } );
-  } );
+//           // Deduce the L necessary to achieve the new F
+//           LvArray::tensorOps::copy< 3, 3 >( targetFDot, targetF );
+//           LvArray::tensorOps::scaledAdd< 3, 3 >( targetFDot, particleDeformationGradient[p], -1.0 );
+//           LvArray::tensorOps::scale< 3, 3 >( targetFDot, 1.0 / dt );
+//           LvArray::tensorOps::invert< 3 >( FInverse, particleDeformationGradient[p] );
+//           LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( particleVelocityGradient[p], targetFDot, FInverse );
+//         }
+//       }
+//     } );
+//   } );
 
-  // TODO: If we're not at a surface, volumetric overlap correction should be performed after the F update
-}
+//   // TODO: If we're not at a surface, volumetric overlap correction should be performed after the F update
+// }
 
 int SolidMechanicsMPM::evaluateSeparabilityCriterion( localIndex const & A,
                                                       localIndex const & B,

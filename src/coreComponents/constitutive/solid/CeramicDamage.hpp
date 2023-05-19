@@ -345,13 +345,13 @@ real64 CeramicDamageUpdates::getStrength( const real64 damage,     // damage
                                           const real64 mu,         // friction slope
                                           const real64 Yt0 ) const // strength parameter
 {
-  auto ceramicY10 = [&]( const real64 p,   // pressure
-                         const real64 d,   // damage,
-                         const real64 mu,  // friction slope
-                         const real64 Yt0, // strength parameter
+  auto ceramicY10 = [&]( const real64 pLocal,   // pressure
+                         const real64 dLocal,   // damage,
+                         const real64 muLocal,  // friction slope
+                         const real64 Yt0Local, // strength parameter
                          real64 & f )      // OUTPUT: Yield surface
   { 
-    f = (((3.0 + d * (-3.0 + mu)) * m_compressiveStrength + (-3.0 + d * (3.0 + mu)) * Yt0) * (p - (2.0 * (d - 1.0) * m_compressiveStrength * Yt0) / (3.0 * (m_compressiveStrength - Yt0)))) / (m_compressiveStrength + Yt0);
+    f = (((3.0 + dLocal * (-3.0 + muLocal)) * m_compressiveStrength + (-3.0 + dLocal * (3.0 + muLocal)) * Yt0Local) * (pLocal - (2.0 * (dLocal - 1.0) * m_compressiveStrength * Yt0Local) / (3.0 * (m_compressiveStrength - Yt0Local)))) / (m_compressiveStrength + Yt0Local);
   };
 
   // Bounding pressure values
