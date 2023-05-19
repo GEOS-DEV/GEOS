@@ -161,6 +161,8 @@ set_target_properties( geosx PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/l
 set_target_properties( geosx PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
 
 install(TARGETS geosx RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+# Duplicate the installed `geosx` executable and rename it `geos` to let the end users adapt their scripts.
+install( FILES ${CMAKE_INSTALL_PREFIX}/bin/geosx DESTINATION ${CMAKE_INSTALL_PREFIX}/bin RENAME geos )
 
 if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
 
