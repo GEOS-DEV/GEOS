@@ -271,7 +271,7 @@ blt_add_library( NAME       constitutive
 
 target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
-if( ENABLE_TESTS )
+if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
 endif( )
 

@@ -63,6 +63,6 @@ target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreCompon
 geosx_add_code_checks(PREFIX dataRepository )
 
 
-if( ENABLE_TESTS )
+if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
 endif( )
