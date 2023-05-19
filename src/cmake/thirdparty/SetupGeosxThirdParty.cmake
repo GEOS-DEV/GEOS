@@ -763,12 +763,7 @@ if(DEFINED FMT_DIR)
 
     set(ENABLE_FMT ON CACHE BOOL "")
 
-    if(NOT TARGET fmt AND TARGET fmt::fmt)
-        set_target_properties(fmt::fmt PROPERTIES IMPORTED_GLOBAL TRUE)
-        add_library(fmt ALIAS fmt::fmt)
-    endif()
-
-    set(thirdPartyLibs ${thirdPartyLibs} fmt)
+    set(thirdPartyLibs ${thirdPartyLibs} fmt::fmt )
 else()
     message(FATAL_ERROR "GEOSX requires {fmt}, set FMT_DIR to the {fmt} installation directory.")
 endif()
@@ -848,8 +843,8 @@ option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" O
 
 #     find_and_register(NAME FesapiCpp
 #                  INCLUDE_DIRECTORIES ${FESAPI_DIR}/include
-#                  LIBRARY_DIRECTORIES ${FESAPI_DIR}/lib    
-#                  HEADER fesapi/nsDefinitions.h             
+#                  LIBRARY_DIRECTORIES ${FESAPI_DIR}/lib
+#                  HEADER fesapi/nsDefinitions.h
 #                  LIBRARIES FesapiCpp
 #                  DEPENDS hdf5)
 
