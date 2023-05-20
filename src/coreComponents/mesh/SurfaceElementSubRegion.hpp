@@ -159,7 +159,7 @@ public:
    */
   FixedToManyElementRelation & getToCellRelation()
   {
-    return m_surfaceElementsToCells;
+    return m_2dElemToElems;
   }
 
   /**
@@ -167,7 +167,7 @@ public:
    */
   FixedToManyElementRelation const & getToCellRelation() const
   {
-    return m_surfaceElementsToCells;
+    return m_2dElemToElems;
   }
 
   ///@}
@@ -239,7 +239,7 @@ public:
 protected:
 
   /// Map between the surface elements and the cells
-  FixedToManyElementRelation m_surfaceElementsToCells;
+  FixedToManyElementRelation m_2dElemToElems;
 
   /// Unmapped surface elements to nodes map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToNodes;

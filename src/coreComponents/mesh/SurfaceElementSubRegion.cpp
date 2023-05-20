@@ -29,7 +29,7 @@ using namespace dataRepository;
 SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
                                                   dataRepository::Group * const parent ):
   ElementSubRegionBase( name, parent ),
-  m_surfaceElementsToCells(),
+  m_2dElemToElems(),
   m_unmappedGlobalIndicesInToNodes(),
   m_toNodesRelation(),
   m_toEdgesRelation(),
@@ -42,17 +42,17 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
   registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation ).
     setDescription( "Map to the edges attached to each SurfaceElement." );
 
-  registerWrapper( viewKeyStruct::surfaceElementsToCellRegionsString(), &m_surfaceElementsToCells.m_toElementRegion ).
+  registerWrapper( viewKeyStruct::surfaceElementsToCellRegionsString(), &m_2dElemToElems.m_toElementRegion ).
     setApplyDefaultValue( -1 ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "A map of face element local indices to the cell local indices" );
 
-  registerWrapper( viewKeyStruct::surfaceElementsToCellSubRegionsString(), &m_surfaceElementsToCells.m_toElementSubRegion ).
+  registerWrapper( viewKeyStruct::surfaceElementsToCellSubRegionsString(), &m_2dElemToElems.m_toElementSubRegion ).
     setApplyDefaultValue( -1 ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "A map of face element local indices to the cell local indices" );
 
-  registerWrapper( viewKeyStruct::surfaceElementsToCellIndexString(), &m_surfaceElementsToCells.m_toElementIndex ).
+  registerWrapper( viewKeyStruct::surfaceElementsToCellIndexString(), &m_2dElemToElems.m_toElementIndex ).
     setApplyDefaultValue( -1 ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "A map of face element local indices to the cell local indices" );
@@ -79,7 +79,7 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
                                 viewKeyStruct::surfaceElementsToCellIndexString() } );
 
   // TODO there has to be a cleaner way than this.
-  m_surfaceElementsToCells.setElementRegionManager( dynamicCast< ElementRegionManager & >( getParent().getParent().getParent().getParent() ) );
+  m_2dElemToElems.setElementRegionManager( dynamicCast< ElementRegionManager & >( getParent().getParent().getParent().getParent() ) );
 
 }
 

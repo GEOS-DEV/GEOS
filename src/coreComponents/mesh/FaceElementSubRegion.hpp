@@ -210,16 +210,16 @@ public:
   SortedArray< localIndex > m_newFaceElements;
 
   /// map from the edges to the fracture connectors index (edges that are fracture connectors)
-  SortedArray< localIndex > m_recalculateFractureConnectorEdges;
+  SortedArray< localIndex > m_recalculateConnectionsFor2dFaces;
 
   /// A map of edge local indices to the fracture connector local indices.
-  map< localIndex, localIndex > m_edgesToFractureConnectorsEdges;
+  map< localIndex, localIndex > m_edgesTo2dFaces;
 
   /// A map of fracture connector local indices to edge local indices.
-  array1d< localIndex > m_fractureConnectorsEdgesToEdges;
+  array1d< localIndex > m_2dFaceToEdge;
 
   /// A map of fracture connector local indices face element local indices.
-  ArrayOfArrays< localIndex > m_fractureConnectorEdgesToFaceElements;
+  ArrayOfArrays< localIndex > m_2dFaceTo2dElems;
 
   std::map< globalIndex, std::set< globalIndex > > m_duplicatedNodes;
 

@@ -736,9 +736,9 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
 void updateConnectorsToFaceElems( std::set< localIndex > const & newFaceElements,
                                   FaceElementSubRegion & faceElemSubRegion )
 {
-  ArrayOfArrays< localIndex > & connectorToElem = faceElemSubRegion.m_fractureConnectorEdgesToFaceElements;
-  map< localIndex, localIndex > & edgesToConnectorEdges = faceElemSubRegion.m_edgesToFractureConnectorsEdges;
-  array1d< localIndex > & connectorEdgesToEdges = faceElemSubRegion.m_fractureConnectorsEdgesToEdges;
+  ArrayOfArrays< localIndex > & connectorToElem = faceElemSubRegion.m_2dFaceTo2dElems;
+  map< localIndex, localIndex > & edgesToConnectorEdges = faceElemSubRegion.m_edgesTo2dFaces;
+  array1d< localIndex > & connectorEdgesToEdges = faceElemSubRegion.m_2dFaceToEdge;
 
   ArrayOfArraysView< localIndex const > const facesToEdges = faceElemSubRegion.edgeList().toViewConst();
 
@@ -771,7 +771,7 @@ void updateConnectorsToFaceElems( std::set< localIndex > const & newFaceElements
       {
         connectorToElem.resizeArray( connectorIndex, numExistingCells+1 );
         connectorToElem[connectorIndex][ numExistingCells ] = kfe;
-        faceElemSubRegion.m_recalculateFractureConnectorEdges.insert( connectorIndex );
+        faceElemSubRegion.m_recalculateConnectionsFor2dFaces.insert( connectorIndex );
       }
     }
   }

@@ -48,17 +48,17 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setDescription( "Map to the faces attached to each FaceElement." ).
     reference().resize( 0, 2 );
 
-  registerWrapper( viewKeyStruct::edgesTofractureConnectorsEdgesString(), &m_edgesToFractureConnectorsEdges ).
+  registerWrapper( viewKeyStruct::edgesTofractureConnectorsEdgesString(), &m_edgesTo2dFaces ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "A map of edge local indices to the fracture connector local indices." ).
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::fractureConnectorEdgesToEdgesString(), &m_fractureConnectorsEdgesToEdges ).
+  registerWrapper( viewKeyStruct::fractureConnectorEdgesToEdgesString(), &m_2dFaceToEdge ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "A map of fracture connector local indices to edge local indices." ).
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString(), &m_fractureConnectorEdgesToFaceElements ).
+  registerWrapper( viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString(), &m_2dFaceTo2dElems ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "A map of fracture connector local indices face element local indices" ).
     setSizedFromParent( 0 );
@@ -72,7 +72,7 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
 
   excludeWrappersFromPacking( { viewKeyStruct::faceListString() } );
 
-  m_surfaceElementsToCells.resize( 0, 2 );
+  m_2dElemToElems.resize( 0, 2 );
 
   m_numNodesPerElement = 8;
 }
@@ -131,29 +131,28 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
     m_numNodesPerElement = maxSize;
   }
 
-  // The `m_surfaceElementsToCells` mappings involves element, sub regions and regions indices.
+  // The `m_2dElemToElems` mappings involves element, sub regions and regions indices.
   // We store the element indices that are correct.
   // But we only have access to the cell block indices, not the sub regions indices.
   // Temporarily, and also because they share the same dimensions,
   // we store the cell block mapping at the sub region mapping location.
-  // It will later be transformed into a sub regions mapping.
-  // Last, we fill the regions mapping with dummy -1 values that should all be replaced eventually.
+  // It will later be transformed into a sub regions mapping.  // Last, we fill the regions mapping with dummy -1 values that should all be replaced eventually.
   auto const elem2dToElems = faceBlock.get2dElemToElems();
-  m_surfaceElementsToCells.m_toElementIndex = elem2dToElems.toCellIndex;
-  m_surfaceElementsToCells.m_toElementSubRegion = elem2dToElems.toBlockIndex;
-  m_surfaceElementsToCells.m_toElementRegion.setValues< serialPolicy >( -1 );
+  m_2dElemToElems.m_toElementIndex = elem2dToElems.toCellIndex;
+  m_2dElemToElems.m_toElementSubRegion = elem2dToElems.toBlockIndex;
+  m_2dElemToElems.m_toElementRegion.setValues< serialPolicy >( -1 );
 
   m_toFacesRelation.base() = faceBlock.get2dElemToFaces();
 
-  m_fractureConnectorsEdgesToEdges = faceBlock.get2dFaceToEdge();
-  m_fractureConnectorEdgesToFaceElements = faceBlock.get2dFaceTo2dElems();
+  m_2dFaceToEdge = faceBlock.get2dFaceToEdge();
+  m_2dFaceTo2dElems = faceBlock.get2dFaceTo2dElems();
 
   m_localToGlobalMap = faceBlock.localToGlobalMap();
   this->constructGlobalToLocalMap();
 
   for( int i = 0; i < faceBlock.num2dFaces(); ++i )
   {
-    m_recalculateFractureConnectorEdges.insert( i );
+    m_recalculateConnectionsFor2dFaces.insert( i );
   }
 
   for( localIndex i = 0; i < faceBlock.num2dElements(); ++i )
@@ -289,9 +288,9 @@ localIndex FaceElementSubRegion::packUpDownMapsImpl( buffer_unit_type * & buffer
 
   packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::surfaceElementsToCellRegionsString() ) );
   packedSize += bufferOps::Pack< DO_PACKING >( buffer,
-                                               this->m_surfaceElementsToCells,
+                                               this->m_2dElemToElems,
                                                packList,
-                                               m_surfaceElementsToCells.getElementRegionManager() );
+                                               m_2dElemToElems.getElementRegionManager() );
 
   return packedSize;
 }
@@ -346,9 +345,9 @@ localIndex FaceElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & bu
   GEOS_ERROR_IF_NE( elementListString, viewKeyStruct::surfaceElementsToCellRegionsString() );
 
   unPackedSize += bufferOps::Unpack( buffer,
-                                     m_surfaceElementsToCells,
+                                     m_2dElemToElems,
                                      packList.toViewConst(),
-                                     m_surfaceElementsToCells.getElementRegionManager(),
+                                     m_2dElemToElems.getElementRegionManager(),
                                      overwriteUpMaps );
 
   return unPackedSize;

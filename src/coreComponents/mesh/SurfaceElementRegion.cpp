@@ -176,22 +176,22 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   for( auto const & edge : connectedEdges )
   {
     // check to see if the edgesToFractureConnectors already have an entry
-    if( subRegion.m_edgesToFractureConnectorsEdges.count( edge )==0 )
+    if( subRegion.m_edgesTo2dFaces.count( edge )==0 )
     {
       // if not, then fill increase the size of the fractureConnectors to face elements map and
       // fill the fractureConnectorsToEdges map with the current edge....and the inverse map too.
-      subRegion.m_fractureConnectorEdgesToFaceElements.appendArray( 0 );
-      subRegion.m_fractureConnectorsEdgesToEdges.emplace_back( edge );
-      subRegion.m_edgesToFractureConnectorsEdges[edge] = subRegion.m_fractureConnectorsEdgesToEdges.size()-1;
+      subRegion.m_2dFaceTo2dElems.appendArray( 0 );
+      subRegion.m_2dFaceToEdge.emplace_back( edge );
+      subRegion.m_edgesTo2dFaces[edge] = subRegion.m_2dFaceToEdge.size()-1;
     }
     // now fill the fractureConnectorsToFaceElements map. This is analogous to the edge to face map
-    localIndex const connectorIndex = subRegion.m_edgesToFractureConnectorsEdges[edge];
-    localIndex const numCells = subRegion.m_fractureConnectorEdgesToFaceElements.sizeOfArray( connectorIndex ) + 1;
-    subRegion.m_fractureConnectorEdgesToFaceElements.resizeArray( connectorIndex, numCells );
-    subRegion.m_fractureConnectorEdgesToFaceElements[connectorIndex][ numCells-1 ] = kfe;
+    localIndex const connectorIndex = subRegion.m_edgesTo2dFaces[edge];
+    localIndex const numCells = subRegion.m_2dFaceTo2dElems.sizeOfArray( connectorIndex ) + 1;
+    subRegion.m_2dFaceTo2dElems.resizeArray( connectorIndex, numCells );
+    subRegion.m_2dFaceTo2dElems[connectorIndex][ numCells-1 ] = kfe;
 
     // And fill the list of connectors that will need stencil modifications
-    subRegion.m_recalculateFractureConnectorEdges.insert( connectorIndex );
+    subRegion.m_recalculateConnectionsFor2dFaces.insert( connectorIndex );
   }
 
   subRegion.calculateSingleElementGeometricQuantities( kfe, faceManager->faceArea() );
