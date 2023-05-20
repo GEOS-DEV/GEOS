@@ -553,11 +553,11 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
 
   nodeAdjacencySet.insert( seedNodeList.begin(), seedNodeList.end() );
 
-  for( integer d=0; d<depth; ++d )
+  for( integer d = 0; d < depth; ++d )
   {
-    for( localIndex const nodeIndex : nodeAdjacencySet )
+    for( localIndex const nodeIndex: nodeAdjacencySet )
     {
-      for( localIndex b=0; b<nodeToElementRegionList.sizeOfArray( nodeIndex ); ++b )
+      for( localIndex b = 0; b < nodeToElementRegionList.sizeOfArray( nodeIndex ); ++b )
       {
         localIndex const regionIndex = nodeToElementRegionList[nodeIndex][b];
         localIndex const subRegionIndex = nodeToElementSubRegionList[nodeIndex][b];
@@ -566,7 +566,7 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
       }
     }
 
-    for( typename dataRepository::indexType kReg=0; kReg<elemManager.numRegions(); ++kReg )
+    for( typename dataRepository::indexType kReg = 0; kReg < elemManager.numRegions(); ++kReg )
     {
       ElementRegionBase const & elemRegion = elemManager.getRegion( kReg );
 
@@ -576,26 +576,48 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
       {
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = subRegion.nodeList();
         arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
-        for( auto const elementIndex : elementAdjacencySet[kReg][kSubReg] )
+        for( auto const elementIndex: elementAdjacencySet[kReg][kSubReg] )
         {
-          for( localIndex a=0; a<elemsToNodes.size( 1 ); ++a )
+          for( localIndex a = 0; a < elemsToNodes.size( 1 ); ++a )
           {
             nodeAdjacencySet.insert( elemsToNodes[elementIndex][a] );
           }
 
-          for( localIndex a=0; a<elemsToFaces.size( 1 ); ++a )
+          for( localIndex a = 0; a < elemsToFaces.size( 1 ); ++a )
           {
             faceAdjacencySet.insert( elemsToFaces[elementIndex][a] );
 
             localIndex const faceIndex = elemsToFaces[elementIndex][a];
             localIndex const numEdges = faceToEdges.sizeOfArray( faceIndex );
-            for( localIndex b=0; b<numEdges; ++b )
+            for( localIndex b = 0; b < numEdges; ++b )
             {
-              edgeAdjacencySet.insert( faceToEdges( faceIndex, b ));
+              edgeAdjacencySet.insert( faceToEdges( faceIndex, b ) );
             }
-
           }
-
+        }
+      } );
+      elemRegion.forElementSubRegionsIndex< FaceElementSubRegion >( [&]( localIndex const kSubReg,
+                                                                         FaceElementSubRegion const & subRegion )
+      {
+        auto const & elems2dToNodes = subRegion.nodeList();  // TODO What about edges and faces?
+        arrayView2d< localIndex const > const elems2dToFaces = subRegion.faceList();
+        auto const & elem2dToEdges = subRegion.edgeList();
+        for( auto const elementIndex: elementAdjacencySet[kReg][kSubReg] )
+        {
+          for( auto const & ni: elems2dToNodes[elementIndex] )
+          {
+            nodeAdjacencySet.insert( ni );
+          }
+          for( auto const & ei: elem2dToEdges[elementIndex] )
+          {
+            edgeAdjacencySet.insert( ei );
+          }
+          for( auto const & fi: elems2dToFaces[elementIndex] )
+          {
+            if( fi < 0 )
+            { continue; }
+            faceAdjacencySet.insert( fi );
+          }
         }
       } );
     }

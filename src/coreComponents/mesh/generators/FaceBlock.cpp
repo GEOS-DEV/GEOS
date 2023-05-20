@@ -97,4 +97,14 @@ void FaceBlock::set2dElemToElems( ToCellRelation< array2d< localIndex > > && _2d
   m_2dElemToElems = _2dElemToElems;
 }
 
+std::map< globalIndex, std::set< globalIndex > > FaceBlock::getDuplicatedNodes() const
+{
+  return m_duplicatedNodes;
+}
+
+void FaceBlock::setDuplicatedNodes( std::map< globalIndex, std::set< globalIndex > > && duplicatedNodes )
+{
+  m_duplicatedNodes = duplicatedNodes;
+}
+
 }

@@ -50,11 +50,25 @@ public:
 
   static CommunicationTools & getInstance();
 
-  void assignGlobalIndices( ObjectManagerBase & object,
-                            NodeManager const & compositionObject,
+  /**
+   * @brief Assign the global indices to the objects managed by @p manager.
+   * @param manager The manager of the objects that will receive the global indices.
+   * @param compositionManager The manager of the objects on which the objects of @p manager are defined. (Mainly a node manager.)
+   * @param neighbors The neighbors that may share objects of @p manager.
+   *
+   * @note The global indices will not continuously span the [min global index, max global index] range.
+   * There will be holes in the enumeration.
+   * The global indices are meant to be used as label to identify objects across ranks.
+   * They are not meant to iterate.
+   *
+   * @example For example, faces hold by @p manager (@p FaceManager) are defined on nodes managed by @p compositionManager (@p NodeManager).
+   * And two faces sharing the same nodes will be considered identical and should therefore share the same global index.
+   */
+  void assignGlobalIndices( ObjectManagerBase & manager,
+                            NodeManager const & compositionManager,
                             std::vector< NeighborCommunicator > & neighbors );
 
-  static void assignNewGlobalIndices( ObjectManagerBase & object,
+  static void assignNewGlobalIndices( ObjectManagerBase & manager,
                                       std::set< localIndex > const & indexList );
 
   static void assignNewGlobalIndices( ElementRegionManager & elementManager,
@@ -68,7 +82,8 @@ public:
   { return CommID( m_freeCommIDs ); }
 
   void findMatchedPartitionBoundaryObjects( ObjectManagerBase & group,
-                                            std::vector< NeighborCommunicator > & allNeighbors );
+                                            std::vector< NeighborCommunicator > & allNeighbors,
+                                            std::map< globalIndex, std::set< globalIndex > > const & m = {});
 
   void synchronizeFields( FieldIdentifiers const & fieldsToBeSync,
                           MeshLevel & mesh,

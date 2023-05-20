@@ -164,6 +164,17 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
       neighbor.addNeighborGroupToMesh( meshLevel );
     }
 
+    std::map< globalIndex, std::set< globalIndex > > duplicatedNodes;
+    meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >(
+      [&]( FaceElementSubRegion const & subRegion )
+      {
+        for( auto const & pair: subRegion.m_duplicatedNodes )
+        {
+          duplicatedNodes[pair.first].insert( pair.second.cbegin(), pair.second.cend() );
+        }
+      }
+    );
+
     NodeManager & nodeManager = meshLevel.getNodeManager();
     FaceManager & faceManager = meshLevel.getFaceManager();
     EdgeManager & edgeManager = meshLevel.getEdgeManager();
@@ -181,8 +192,12 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
     CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
                                                                            m_neighbors );
 
-    CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
+    CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( edgeManager,
                                                                            m_neighbors );
+
+    CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
+                                                                           m_neighbors,
+                                                                           duplicatedNodes );
 
     CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
 

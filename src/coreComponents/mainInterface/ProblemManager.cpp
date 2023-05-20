@@ -724,14 +724,6 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   FaceManager & faceManager = meshLevel.getFaceManager();
   ElementRegionManager & elemManager = meshLevel.getElemManager();
 
-//  GeometricObjectManager & geometricObjects = this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
-
-//  MeshUtilities::generateNodesets( geometricObjects, nodeManager );
-
-
-//  nodeManager.constructGlobalToLocalMap();
-
-
   if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
   {
     elemManager.generateMesh( cellBlockManager );
@@ -755,8 +747,8 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
     // Node and edge managers rely on the boundary information provided by the face manager.
     // This is why `faceManager.setDomainBoundaryObjects` is called first.
     faceManager.setDomainBoundaryObjects();
-    nodeManager.setDomainBoundaryObjects( faceManager );
-    edgeManager.setDomainBoundaryObjects( faceManager );
+    edgeManager.setDomainBoundaryObjects( faceManager, elemManager );
+    nodeManager.setDomainBoundaryObjects( faceManager, edgeManager, elemManager );
   }
   meshLevel.generateSets();
 

@@ -110,12 +110,30 @@ void NodeManager::buildGeometricSets( GeometricObjectManager const & geometries 
   } );
 }
 
-void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
+void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager,
+                                            EdgeManager const & edgeManager,
+                                            ElementRegionManager const & elemRegionManager )
 {
   arrayView1d< integer const > const isFaceOnDomainBoundary = faceManager.getDomainBoundaryIndicator();
+  arrayView1d< integer const > const isEdgeOnDomainBoundary = edgeManager.getDomainBoundaryIndicator();
   arrayView1d< integer > const isNodeOnDomainBoundary = getDomainBoundaryIndicator();
   isNodeOnDomainBoundary.zero();
 
+  // Here, we need to take into account the fact that the fractures elements
+  // share the same nodes as the matrix.
+  // So nodes can be considered as boundary objects while the face built on top of it may no.
+
+  // We'll proceed as follows.
+  //
+  // Faces which are tagged as boundary faces will have their support nodes on the boundary as well.
+  // (But keep in mind that some nodes may sit astride two faces with different statuses.)
+  // Face nodes which are not on the boundary may however be tagged "boundary"
+  // if they connect to a 2d element which is itself on the boundary (because those 2d elements share those nodes).
+  //
+  // To solve this issue, we loop over all the fracture 2d elements.
+  // If they have only one neighboring matrix element,
+  // this means that the fracture 2d element is on the boundary.
+  // As such, we tag the support nodes of the unique neighboring face as boundary nodes.
   ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
 
   forAll< parallelHostPolicy >( faceManager.size(), [=]( localIndex const faceIndex )
@@ -128,6 +146,45 @@ void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
       }
     }
   } );
+
+  auto const & edgeToNodes = edgeManager.nodeList().toViewConst();
+
+  forAll< parallelHostPolicy >( edgeManager.size(), [=]( localIndex const edgeIndex )
+  {
+    if( isEdgeOnDomainBoundary[edgeIndex] == 1 )
+    {
+      for( localIndex const nodeIndex : edgeToNodes[edgeIndex] )
+      {
+        isNodeOnDomainBoundary[nodeIndex] = 1;
+      }
+    }
+  } );
+
+  auto const f = [&]( localIndex er,
+                      SurfaceElementRegion const & region )
+  {
+    if( region.subRegionType() != SurfaceElementRegion::SurfaceSubRegionType::faceElement )
+    {
+      return;
+    }
+
+    FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
+    auto const & elem2dToFaces = subRegion.faceList();
+    for( int ei = 0; ei < elem2dToFaces.size( 0 ); ++ei )
+    {
+      int const & face0 = elem2dToFaces( ei, 0 );
+      int const & face1 = elem2dToFaces( ei, 1 );
+      if( face0 < 0 or face1 < 0 )
+      {
+        int const & face = face0 < 0 ? face1 : face0;
+        for( localIndex const nodeIndex: faceToNodes[face] )
+        {
+          isNodeOnDomainBoundary[nodeIndex] = 1;
+        }
+      }
+    }
+  };
+  elemRegionManager.forElementRegionsComplete< SurfaceElementRegion >( f );
 }
 
 void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
@@ -149,6 +206,34 @@ void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
   meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( blockToSubRegion.toViewConst(),
                                                                          toCellBlock,
                                                                          m_toElements );
+
+  // TODO connect nodes to 2d elements!
+  auto const connect2dElements = [&]( localIndex er,
+                                      SurfaceElementRegion const & region )
+  {
+    if( region.subRegionType() != SurfaceElementRegion::SurfaceSubRegionType::faceElement )
+    {
+      return;
+    }
+
+    FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
+    int const esr = 0;  // Since there's only on unique subregion, the index is always 0.
+    auto const & elem2dToNodes = subRegion.nodeList();
+    for( int ei = 0; ei < elem2dToNodes.size(); ++ei )
+    {
+      for( auto const ni: elem2dToNodes[ei] )
+      {
+        if( ni < 0 )
+        { continue; }
+        m_toElements.m_toElementRegion.emplaceBack( ni, er );
+        m_toElements.m_toElementSubRegion.emplaceBack( ni, esr );
+        m_toElements.m_toElementIndex.emplaceBack( ni, ei );
+      }
+    }
+  };
+  // Connecting all the 3d elements (information is already in the m_toElements mappings) and all the 2d elements.
+  elemRegionManager.forElementRegionsComplete< SurfaceElementRegion >( connect2dElements );
+  // TODO do the same for the EdgeManager
 }
 
 void NodeManager::setupRelatedObjectsInRelations( EdgeManager const & edgeManager,

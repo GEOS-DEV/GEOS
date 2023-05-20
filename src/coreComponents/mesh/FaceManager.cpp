@@ -153,6 +153,11 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
       for( int j = 0; j < elem2dToFaces.size( 1 ); ++j )
       {
         int const & face = elem2dToFaces( ei, j );
+        if( face < 0 )  // A face can equal -1 if the 2d element is at the boundary.
+        { continue; }
+        GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementRegion( face, 0 ), -1, err );
+        GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementSubRegion( face, 0 ), -1, err );
+        GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementIndex( face, 0 ), -1, err );
         GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementRegion( face, 1 ), -1, err );
         GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementSubRegion( face, 1 ), -1, err );
         GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementIndex( face, 1 ), -1, err );

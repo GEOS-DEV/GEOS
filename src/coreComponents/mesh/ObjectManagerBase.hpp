@@ -902,7 +902,7 @@ public:
   /**
    * @brief Get the domain boundary indicator
    * @return The information in an array of integers, mainly treated as booleans
-   *         (1 meaning the "index" is on the boundary).
+   *         (1 meaning the "index" is on the boundary, 2 means something about MPI boundaries).
    */
   array1d< integer > & getDomainBoundaryIndicator()
   {
@@ -934,7 +934,10 @@ protected:
   /// Array that holds if an object is external.
   array1d< integer > m_isExternal;
 
-  /// Domain boundary indicator: 1 means the "index" is on the boundary.
+  /**
+   * @brief Domain boundary indicator.
+   * @details 1 means the "index" is on the boundary. 2 that there's somthing going on with MPI partioning.
+   */
   array1d< integer > m_domainBoundaryIndicator;
 
   /**
@@ -969,13 +972,11 @@ void ObjectManagerBase::fixUpDownMaps( TYPE_RELATION & relation,
 
   bool allValuesMapped = true;
   unordered_map< globalIndex, localIndex > const & globalToLocal = relation.relatedObjectGlobalToLocal();
-  for( map< localIndex, array1d< globalIndex > >::iterator iter = unmappedIndices.begin();
-       iter != unmappedIndices.end();
-       ++iter )
+  for( auto & unmappedIndex: unmappedIndices )
   {
-    localIndex const li = iter->first;
-    array1d< globalIndex > const & globalIndices = iter->second;
-    for( localIndex a=0; a<globalIndices.size(); ++a )
+    localIndex const li = unmappedIndex.first;
+    array1d< globalIndex > const & globalIndices = unmappedIndex.second;
+    for( localIndex a = 0; a < globalIndices.size(); ++a )
     {
       if( globalIndices[a] != unmappedLocalIndexValue )
       {
@@ -988,7 +989,7 @@ void ObjectManagerBase::fixUpDownMaps( TYPE_RELATION & relation,
           allValuesMapped = false;
         }
       }
-      GEOS_ERROR_IF( relation[li][a]==unmappedLocalIndexValue, "Index not set" );
+      GEOS_ERROR_IF( relation[li][a] == unmappedLocalIndexValue, "Index not set" );
     }
   }
   GEOS_ERROR_IF( !allValuesMapped, "some values of unmappedIndices were not used" );

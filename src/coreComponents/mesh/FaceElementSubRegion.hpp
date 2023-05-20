@@ -221,6 +221,8 @@ public:
   /// A map of fracture connector local indices face element local indices.
   ArrayOfArrays< localIndex > m_fractureConnectorEdgesToFaceElements;
 
+  std::map< globalIndex, std::set< globalIndex > > m_duplicatedNodes;
+
   /**
    * @brief @return The array of shape function derivatives.
    */

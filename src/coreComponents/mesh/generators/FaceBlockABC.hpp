@@ -148,6 +148,14 @@ public:
    * 2d face and 2d element numberings are both local to the @p FaceBlockABC.
    */
   virtual ArrayOfArrays< localIndex > get2dFaceTo2dElems() const = 0;
+
+  /**
+ * @brief Get local to global map.
+ * @return The mapping relationship as an array.
+ */
+  virtual array1d< globalIndex > localToGlobalMap() const = 0;
+
+  virtual std::map< globalIndex, std::set< globalIndex > > getDuplicatedNodes() const = 0;
 };
 
 }

@@ -148,6 +148,9 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
   m_fractureConnectorsEdgesToEdges = faceBlock.get2dFaceToEdge();
   m_fractureConnectorEdgesToFaceElements = faceBlock.get2dFaceTo2dElems();
 
+  m_localToGlobalMap = faceBlock.localToGlobalMap();
+  this->constructGlobalToLocalMap();
+
   for( int i = 0; i < faceBlock.num2dFaces(); ++i )
   {
     m_recalculateFractureConnectorEdges.insert( i );
@@ -157,6 +160,8 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
   {
     m_newFaceElements.insert( i );
   }
+
+  m_duplicatedNodes = faceBlock.getDuplicatedNodes();
 
   // TODO We still need to be able to import fields on the FaceElementSubRegion.
 }
@@ -200,6 +205,54 @@ localIndex FaceElementSubRegion::packUpDownMaps( buffer_unit_type * & buffer,
   return packUpDownMapsImpl< true >( buffer, packList );
 }
 
+
+template< class T >
+ArrayOfArrays< T > myConvert( array2d< T > const & input )
+{
+  ArrayOfArrays< T > result;
+  auto const n = input.size( 0 );
+  GEOS_ERROR_IF_NE_MSG( input.size( 1 ), 2, "Wrong size budy" );
+  array1d< localIndex > sizes( n );
+  for( auto i = 0; i < n; ++i )
+  {
+    sizes[i] = input( i, 1 ) == -1 ? 1 : 2;
+  }
+  result.template resizeFromCapacities< serialPolicy >( n, sizes.data() );
+  for( auto i = 0; i < n; ++i )
+  {
+    result.emplaceBack(i, input( i, 0 ));
+    if( input( i, 1 ) != -1 )
+    { result.emplaceBack( i, input( i, 1 ) ); }
+  }
+  return result;
+}
+
+
+template< class T >
+array2d< T > myConvert( ArrayOfArrays< T > const & input )
+{
+  auto const n = input.size();
+  std::vector< int > sizes;
+  sizes.reserve( n );
+  for( int i = 0; i < n; ++i )
+  {
+    sizes.push_back( input.sizeOfArray( i ) );
+  }
+  int const m = *std::max_element( sizes.cbegin(), sizes.cend() );
+  array2d< T > result( n, m );
+  result.template setValues< serialPolicy >( -1 );
+  for( int i = 0; i < n; ++i )
+  {
+    for( int j = 0; j < input.sizeOfArray( i ); ++j )
+    {
+      result( i, j ) = input( i, j );
+    }
+  }
+
+  return result;
+}
+
+
 template< bool DO_PACKING >
 localIndex FaceElementSubRegion::packUpDownMapsImpl( buffer_unit_type * & buffer,
                                                      arrayView1d< localIndex const > const & packList ) const
@@ -210,7 +263,6 @@ localIndex FaceElementSubRegion::packUpDownMapsImpl( buffer_unit_type * & buffer
   arrayView1d< globalIndex const > const faceLocalToGlobal = m_toFacesRelation.relatedObjectLocalToGlobal();
 
   localIndex packedSize = bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::nodeListString() ) );
-
   packedSize += bufferOps::Pack< DO_PACKING >( buffer,
                                                m_toNodesRelation.base().toViewConst(),
                                                m_unmappedGlobalIndicesInToNodes,
@@ -226,9 +278,10 @@ localIndex FaceElementSubRegion::packUpDownMapsImpl( buffer_unit_type * & buffer
                                                localToGlobal,
                                                edgeLocalToGlobal );
 
+  ArrayOfArrays< localIndex > faces = myConvert( m_toFacesRelation.base() );
   packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::faceListString() ) );
   packedSize += bufferOps::Pack< DO_PACKING >( buffer,
-                                               m_toFacesRelation.base().toViewConst(),
+                                               faces.toViewConst(),
                                                m_unmappedGlobalIndicesInToFaces,
                                                packList,
                                                localToGlobal,
@@ -279,12 +332,14 @@ localIndex FaceElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & bu
   unPackedSize += bufferOps::Unpack( buffer, faceListString );
   GEOS_ERROR_IF_NE( faceListString, viewKeyStruct::faceListString() );
 
+  ArrayOfArrays< localIndex > faces( myConvert( m_toFacesRelation.base() ) );
   unPackedSize += bufferOps::Unpack( buffer,
-                                     m_toFacesRelation.base(),
+                                     faces,
                                      packList,
                                      m_unmappedGlobalIndicesInToFaces,
                                      this->globalToLocalMap(),
                                      m_toFacesRelation.relatedObjectGlobalToLocal() );
+  m_toFacesRelation.base() = myConvert( faces );
 
   string elementListString;
   unPackedSize += bufferOps::Unpack( buffer, elementListString );

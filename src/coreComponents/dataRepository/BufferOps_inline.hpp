@@ -899,11 +899,11 @@ localIndex Pack( buffer_unit_type * & buffer,
     {
       if( var[a] != unmappedLocalIndexValue )
       {
-        buffer_GI[ a ] = localToGlobalMap[var[a]];
+        buffer_GI[a] = localToGlobalMap[var[a]];
       }
       else
       {
-        buffer_GI[ a ] = unmappedGlobalIndices[a];
+        buffer_GI[a] = unmappedGlobalIndices[a];
       }
     }
 

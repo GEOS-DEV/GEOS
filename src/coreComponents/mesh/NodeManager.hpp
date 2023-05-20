@@ -151,7 +151,9 @@ public:
    * @param[in] faceIndex The computation is based on the face-on-domain-boundary indicator.
    * @see ObjectManagerBase::getDomainBoundaryIndicator()
    */
-  void setDomainBoundaryObjects( FaceManager const & faceIndex );
+  void setDomainBoundaryObjects( FaceManager const & faceIndex,
+                                 EdgeManager const & edgeManager,
+                                 ElementRegionManager const & elemRegionManager);
 
   /**
    * @brief Copies the nodes positions and the nodes to (edges|faces|elements) mappings from @p cellBlockManager.

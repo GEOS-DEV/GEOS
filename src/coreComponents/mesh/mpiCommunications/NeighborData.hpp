@@ -68,6 +68,12 @@ public:
   arrayView1d< localIndex const > matchedPartitionBoundary() const
   { return m_matchedPartitionBoundary; }
 
+  array1d< localIndex > & secondLevelMatches()
+  { return m_secondLevelMatches; }
+
+  arrayView1d< localIndex const > secondLevelMatches() const
+  { return m_secondLevelMatches; }
+
   /**
    * @brief @return An array containing the indices of the objects to send to the neighbor.
    */
@@ -112,6 +118,8 @@ public:
 private:
   /// Array containing the indices of the objects on the bomain boundary with the neighbor.
   array1d< localIndex > m_matchedPartitionBoundary;
+
+  array1d< localIndex > m_secondLevelMatches;
 
   /// Array containing the indices of the objects to send to the neighbor.
   array1d< localIndex > m_ghostsToSend;

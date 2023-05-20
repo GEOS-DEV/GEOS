@@ -178,6 +178,25 @@ private:
 };
 
 
+std::map< globalIndex, std::set< globalIndex > > buildDuplicatedNodesMap( DuplicatedNodes const & dn )
+{
+  std::map< globalIndex, std::set< globalIndex > > result;
+
+  for( std::size_t i = 0; i < dn.size(); ++i )
+  {
+    std::set< vtkIdType > const nodes{ dn[i].cbegin(), dn[i].cend() };
+    for( vtkIdType const & n: nodes )
+    {
+      std::set< vtkIdType > tmp( nodes );
+      tmp.erase( n );
+      result[n] = tmp;
+    }
+  }
+
+  return result;
+}
+
+
 /**
  * @brief Some hash function for pairs of integers.
  */
@@ -553,6 +572,46 @@ ArrayOfArrays< localIndex > computeElem2dToNodes( vtkIdType num2dElements,
 }
 
 
+template< class T >
+ArrayOfArrays< T > myConvert( array2d< T > const & input )
+{
+  ArrayOfArrays< T > result;
+  auto const n = input.size( 0 );
+  array1d< localIndex > sizes( n );
+  for( auto i = 0; i < n; ++i )
+  {
+    sizes[i] = input( i, 1 ) == -1 ? 1 : 2;
+  }
+  result.template resizeFromCapacities< serialPolicy >( n, sizes.data() );
+  for( auto i = 0; i < n; ++i )
+  {
+    result( i, 0 ) = input( i, 0 );
+    if( input( i, 1 ) != -1 )
+    { result( i, 1 ) = input( i, 1 ); }
+  }
+  return result;
+}
+
+
+array1d< globalIndex > computeLocalToGlobal( vtkSmartPointer< vtkDataSet > faceMesh,
+                                             vtkSmartPointer< vtkDataSet > mesh )
+{
+  array1d< globalIndex > l2g( faceMesh->GetNumberOfCells() );
+
+  vtkIdType const numLocalCells = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() )->GetNumberOfTuples();
+  vtkIdType const numGlobalCells = MpiWrapper::sum( numLocalCells );  // This will be used as an offset.
+
+  vtkIdTypeArray const * globalIds = vtkIdTypeArray::FastDownCast( faceMesh->GetPointData()->GetGlobalIds() );
+
+  for( auto i = 0; i < l2g.size(); ++i )
+  {
+    l2g[i] = globalIds->GetValue( i ) + numGlobalCells;
+  }
+
+  return l2g;
+}
+
+
 void importFractureNetwork( string const & faceBlockName,
                             vtkSmartPointer< vtkDataSet > faceMesh,
                             vtkSmartPointer< vtkDataSet > mesh,
@@ -584,14 +643,27 @@ void importFractureNetwork( string const & faceBlockName,
 
   // Mappings are now computed. Just create the face block by value.
   FaceBlock & faceBlock = cellBlockManager.registerFaceBlock( faceBlockName );
+
   faceBlock.setNum2dElements( num2dElements );
   faceBlock.setNum2dFaces( num2dFaces );
   faceBlock.set2dElemToNodes( std::move( elem2dToNodes ) );
   faceBlock.set2dElemToEdges( std::move( elem2DToEdges ) );
   faceBlock.set2dFaceToEdge( std::move( face2dToEdge ) );
   faceBlock.set2dFaceTo2dElems( std::move( face2dToElems2d ) );
+
+//  faceBlock.set2dElemToFaces( myConvert( elem2dTo3d.elem2dToFaces ) );
+//  ToCellRelation< ArrayOfArrays< localIndex>> tmp(
+//    myConvert( elem2dTo3d.elem2dToElem3d.toBlockIndex ),
+//    myConvert( elem2dTo3d.elem2dToElem3d.toCellIndex )
+//  );
+//  faceBlock.set2dElemToElems( std::move( tmp ) );
+
   faceBlock.set2dElemToFaces( std::move( elem2dTo3d.elem2dToFaces ) );
   faceBlock.set2dElemToElems( std::move( elem2dTo3d.elem2dToElem3d ) );
+
+  faceBlock.setLocalToGlobalMap( computeLocalToGlobal( faceMesh, mesh ) );
+
+  faceBlock.setDuplicatedNodes( buildDuplicatedNodesMap( duplicatedNodes ) );
 }
 
 } // end of namespace

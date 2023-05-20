@@ -103,6 +103,16 @@ public:
    */
   void set2dElemToElems( ToCellRelation< array2d< localIndex > > && _2dElemToElems );
 
+  void setLocalToGlobalMap( array1d< globalIndex > && l2g )
+  { m_localToGlobalMap = l2g; }
+
+  array1d< globalIndex > localToGlobalMap() const override
+  { return m_localToGlobalMap; }
+
+  std::map< globalIndex, std::set< globalIndex > > getDuplicatedNodes() const override;
+
+  void setDuplicatedNodes( std::map< globalIndex, std::set< globalIndex > > && duplicatedNodes );
+
 private:
 
   localIndex m_num2dElements;
@@ -114,6 +124,10 @@ private:
   ArrayOfArrays< localIndex > m_2dFaceTo2dElems;
   array1d< localIndex > m_2dFaceToEdge;
   ToCellRelation< array2d< localIndex > > m_2dElemToElems;
+
+  array1d< globalIndex > m_localToGlobalMap;
+
+  std::map< globalIndex, std::set< globalIndex > > m_duplicatedNodes;
 };
 
 
