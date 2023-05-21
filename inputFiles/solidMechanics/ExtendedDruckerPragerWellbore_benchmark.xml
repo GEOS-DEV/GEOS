@@ -25,38 +25,36 @@
   
   <!--Solver application-->
   <Events
-    maxTime="1.02">
+    maxTime="1.05">
     <PeriodicEvent
       name="solverApplications"
+      forceDt="0.5"
+      beginTime="0"
+      endTime="0.5"
+      targetExactTimestep="1"
+      target="/Solvers/mechanicsSolver"/>
+
+    <PeriodicEvent
+      name="solverApplications2"
       forceDt="0.02"
+      beginTime="0.5"
+      endTime="1.02"
       targetExactTimestep="1"
       target="/Solvers/mechanicsSolver"/>
 
     <PeriodicEvent
       name="stressHistoryCollection_rock"
-      beginTime="0"
-      endTime="1.02"
-      forceDt="0.02"
       target="/Tasks/stressCollection_rock"/>
     <PeriodicEvent
       name="stressTimeHistoryOutput_rock"
-      beginTime="0"
-      endTime="1.02"
-      forceDt="0.02"
       target="/Outputs/stressHistoryOutput_rock"/>
 
     <!-- SPHINX_DisplacementPeriodicEvent -->
     <PeriodicEvent
       name="displacementHistoryCollection"
-      beginTime="0"
-      endTime="1.02"
-      forceDt="0.02"
       target="/Tasks/displacementCollection"/>
     <PeriodicEvent
       name="displacementTimeHistoryOutput"
-      beginTime="0"
-      endTime="1.02"
-      forceDt="0.02"
       target="/Outputs/displacementHistoryOutput"/>
     <!-- SPHINX_DisplacementPeriodicEventEnd -->
 
