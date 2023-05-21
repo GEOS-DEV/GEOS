@@ -898,7 +898,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
   // 1. for all the nodes that already in the base mesh-level, we keep their globalIDs the same
   // 2. for the new nodes on the edges, we assign their global ID according to the global information from edgeLocalToGlobal map
   // 3. for the new nodes on the faces, we assign their global ID according to the global information from faceLocalToGlobal map
-  // 4. for the new nodes on the internal of each elements, we assign the global ID for the new nodes 
+  // 4. for the new nodes on the internal of each elements, we assign the global ID for the new nodes
   //    according to the global information for the elements from elementLocalToGlobal map.
   arrayView1d< globalIndex > nodeLocalToGlobalNew = m_nodeLocalToGlobal.toView();
 
@@ -907,7 +907,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
   // - nodes on a vertex v are identified by the vector [v -1 -1 -1 -1 -1]
   // - nodes on a edge are given by a linear interpolation between vertices v1 and v2, 'a' steps away from v1
   //   (we assume that v1 < v2 and identify these nodes with [v1 v2 -1 -1 a -1]).
-  // - nodes on a face are given by a bilinear interpolation between edges v1-v2 and v3-v4 
+  // - nodes on a face are given by a bilinear interpolation between edges v1-v2 and v3-v4
   //   (v1-v4 and v2-v3 are the diagonals), with interpolation parameters 'a' and 'b'.
   //   (we assume that v1 is the smallest, and that v2 < v3) Then these nodes are identified with [v1 v2 v3 v4 a b]
   // - nodes within the internal of a cell are encountered only once, and thus do not need to be put in the hash map
