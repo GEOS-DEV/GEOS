@@ -753,8 +753,8 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
     GEOS_ERROR_IF_NE( sizeToBePacked, sizeOfPacked );                                     // make sure the packer is self-consistent
 
     // Declare the receive buffers
-    array1d<unsigned int> sizeOfReceived(nn);
-    array1d< buffer_type > receiveBuffer(nn);
+    std::vector< unsigned int > sizeOfReceived(nn);
+    std::vector< buffer_type > receiveBuffer(nn);
 
     // send the coordinate list to each neighbor.  Using an asynchronous send,
     // the mpi request will be different for each send, but the buffer is the same
@@ -848,8 +848,8 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
     }
 
     // Declare the receive buffers
-    array1d< unsigned int > sizeOfReceived(nn); // TODO: decide if these number-of-neighbor-sized arrays should be array1d, std::vector or std::array
-    array1d< buffer_type > receiveBuffer(nn);
+    std::vector< unsigned int > sizeOfReceived(nn); // TODO: decide if these number-of-neighbor-sized arrays should be array1d, std::vector or std::array
+    std::vector< buffer_type > receiveBuffer(nn);
 
     // send the list of local indices to each neighbor using an asynchronous send
     {
@@ -937,8 +937,8 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
     }
 
     // Declare the receive buffers
-    array1d< unsigned int > sizeOfReceived(nn); // TODO: decide if these number-of-neighbor-sized arrays should be array1d, std::vector or std::array
-    array1d< buffer_type > receiveBuffer(nn);
+    std::vector< unsigned int > sizeOfReceived(nn); // TODO: decide if these number-of-neighbor-sized arrays should be array1d, std::vector or std::array
+    std::vector< buffer_type > receiveBuffer(nn);
 
     // send/receive the size of the packed particle data to each neighbor using an asynchronous send
     {
