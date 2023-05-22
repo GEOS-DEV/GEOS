@@ -134,15 +134,6 @@ public:
    * @return The generated SpatialPartition
    */
   SpatialPartition const & getSpatialPartition() const { return m_spatialPartition; }
-private:
-  /**
-   * @brief Fill the cellBlockManager object .
-   * @param[in] cellBlockManager to fill with the mesh informations
-   * @param[in] partition The number of domains in each dimesion (X,Y,Z)
-   */
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition ) = 0;
-
-  void attachWellInfo( CellBlockManager & cellBlockManager );
 
 protected:
   /// Mapping from volumic field source to GEOSX field.
@@ -153,6 +144,17 @@ protected:
 
   /// SpatialPartition associated with the mesh
   SpatialPartition m_spatialPartition;
+
+private:
+  /**
+   * @brief Fill the cellBlockManager object .
+   * @param[in] cellBlockManager to fill with the mesh informations
+   * @param[in] partition The number of domains in each dimesion (X,Y,Z)
+   */
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition ) = 0;
+
+  void attachWellInfo( CellBlockManager & cellBlockManager );
+
 };
 }
 
