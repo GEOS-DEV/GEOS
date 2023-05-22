@@ -20,44 +20,37 @@
   </ElementRegions>
 
   <Events
-     maxTime="1.00172800e9">
+     maxTime="1.57852800e9">
      <SoloEvent
      name="preFracture"
      target="/Solvers/SurfaceGenerator"/>
 
     <PeriodicEvent
        name="solverApplications1"
-      beginTime="0.0"
+       beginTime="0.0"
        endTime="1e6"
        forceDt="1e6"
        target="/Solvers/singleFlow"/>
 
     <PeriodicEvent
        name="solverApplications2"
-       forceDt="1.e7"
        beginTime="1e6"
-       endTime="1.1e7"
+       endTime="1.5768e9"
+       maxEventDt="1.5e7"
        target="/Solvers/singleFlow"/>
-        
+
     <PeriodicEvent
        name="solverApplications3"
-       forceDt="5.e7"
-       beginTime="1.1e7"
-       endTime="1e9"
+       forceDt="1"
+       beginTime="1.5768e9"
+       endTime="1.576800001e9"
        target="/Solvers/singleFlow"/>
 
     <PeriodicEvent
        name="solverApplications4"
-       forceDt="1"
-       beginTime="1.0000000000e9"
-       endTime="1.000000001e9"
-       target="/Solvers/singleFlow"/>
-
-    <PeriodicEvent
-       name="solverApplications5"
-       beginTime="1.000000001e9"
-       endTime="1.00172800e9"
-       maxEventDt="8"
+       beginTime="1.576800001e9"
+       endTime="1.57852800e9"
+       maxEventDt="2"
        target="/Solvers/singleFlow"/>   
 
      <PeriodicEvent
@@ -139,21 +132,12 @@
       functionName="injectionSchedule_massFlux"                                                                                                                                                      
       scale="-1.0"/>
 
-    <!-- <FieldSpecification                                                                                                                                                                          
-      name="TU_pressure"                                                                                                                                                                  
-      component="0"                                                                                                                                                                      
-      setNames="{ TU_injector }"                                                                                                                                                                
-      objectPath="ElementRegions/fracture"  
-      fieldName="pressure"
-      beginTime="1.0e9"
-      scale="4e6"/>   -->
-
     <FieldSpecification                                                                                                                                                                  
       name="TU_temperature"                                                                                                                                                       
       objectPath="ElementRegions/fracture"                                                                                                                                              
       fieldName="temperature"                                                                                                                                                            
       functionName="injectionSchedule_temperature"
-      beginTime="1.0e9"                                                                                                                                              
+      beginTime="1.5768e9"
       scale="1"                                                                                                                                                                          
       setNames="{ TU_injector }"/>
 
@@ -166,14 +150,6 @@
       functionName="TN_massFlux"                                                                                                                                                      
       scale="1.0"/>
 
-    <!-- <FieldSpecification                                                                                                                                                                          
-      name="TN_pressure"                                                                                                                                                                  
-      setNames="{ TN_producer }"                                                                                                                                                                
-      objectPath="ElementRegions/fracture"  
-      fieldName="pressure"
-      beginTime="1.0e9"
-      scale="1.0e6"/>   -->
-
     <SourceFlux                                                                                                                                                                          
       name="TC_massFlux"                                                                                                                                                                  
       component="0"                                                                                                                                                                      
@@ -181,14 +157,6 @@
       objectPath="ElementRegions/fracture"                                                                                                                                              
       functionName="TC_massFlux"                                                                                                                                                      
       scale="1.0"/>
-
-    <!-- <FieldSpecification                                                                                                                                                                          
-      name="TC_pressure"                                                                                                                                                                  
-      setNames="{ TC_producer }"                                                                                                                                                                
-      objectPath="ElementRegions/fracture"  
-      fieldName="pressure"
-      beginTime="1.0e9"
-      scale="1.0e6"/>       -->
   </FieldSpecifications>
 
   <Functions>

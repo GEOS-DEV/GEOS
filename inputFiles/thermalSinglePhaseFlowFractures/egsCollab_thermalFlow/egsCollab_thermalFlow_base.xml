@@ -20,9 +20,9 @@
     xMax="{ 200, 200, 0.75 }"/>
     <Cylinder
     name="Drift"
-    firstFaceCenter="{ 80.0, -0.1, 65 }"
-    secondFaceCenter="{ 80.0, 75.1, 65 }"
-    outerRadius="6"/>
+    firstFaceCenter="{ 80.0, -0.1, 61 }"
+    secondFaceCenter="{ 80.0, 75.1, 61 }"
+    outerRadius="2"/>
     <BoundedPlane
     name="FracturePlane"
     normal="{ 0.3569123763, 0.9123044601, 0.2007837838 }"
@@ -32,19 +32,19 @@
     dimensions="{ 100, 80 }"/>
     <Cylinder
     name="TU_injector"
-    firstFaceCenter="{ 140.0, -0.1, 5 }"
-    secondFaceCenter="{ 140.0, 75.1, 5 }"
-    outerRadius="2"/>
+    firstFaceCenter="{ 107.45351957440417, -0.1, 58.464408823253335 }"
+    secondFaceCenter="{ 107.45351957440417, 75.1, 58.464408823253335 }"
+    outerRadius="1"/>
     <Cylinder
     name="TC_producer"
-    firstFaceCenter="{ 90.0, -0.1, 40 }"
-    secondFaceCenter="{ 90.0, 75.1, 40 }"
-    outerRadius="2"/>
+    firstFaceCenter="{ 104.77410040804922, -0.1, 50.01857494034373 }"
+    secondFaceCenter="{ 104.77410040804922, 75.1, 50.01857494034373 }"
+    outerRadius="1"/>
     <Cylinder
     name="TN_producer"
-    firstFaceCenter="{ 100.0, -0.1, 50 }"
-    secondFaceCenter="{ 100.0, 75.1, 50 }"
-    outerRadius="2"/>
+    firstFaceCenter="{ 97.2945516765, -0.1, 54.0841179035 }"
+    secondFaceCenter="{ 97.2945516765, 75.1, 54.0841179035 }"
+    outerRadius="1"/>
   </Geometry>
 
  <Constitutive>
@@ -53,11 +53,11 @@
        defaultDensity="1000"
        defaultViscosity="0.001"
        referencePressure="1.0e6"
-       referenceTemperature="273.0"
+       referenceTemperature="0.0"
        compressibility="1.0e-10"
        thermalExpansionCoeff="0.0"
        viscosibility="0.0"
-       volumetricHeatCapacity="4.0e3"
+       volumetricHeatCapacity="4.2e6"
        referenceInternalEnergy="0.99"/>
 
      <SinglePhaseConstantThermalConductivity
