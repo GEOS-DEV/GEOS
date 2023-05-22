@@ -1006,7 +1006,6 @@ struct AquiferBCKernel
 
     forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
     {
-
       // working variables
       real64 localFlux = 0.0;
       real64 localFluxJacobian = 0.0;

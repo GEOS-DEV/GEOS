@@ -145,7 +145,7 @@ TEST( FixedSizeDequeTest, emplace_and_pop_front )
   }
 }
 
-#ifdef GEOSX_USE_CUDA
+#ifdef GEOS_USE_CUDA
 TEST( FixedSizeDequeTest, emplace_and_pop_front_cuda )
 {
   int maxArray = 10;

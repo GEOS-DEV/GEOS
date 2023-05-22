@@ -250,7 +250,7 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsDFM( MeshLevel & m
 
   SurfaceElementStencil & fractureStencil = getStencil< SurfaceElementStencil >( mesh, viewKeyStruct::fractureStencilString() );
   fractureStencil.setMeanPermCoefficient( m_meanPermCoefficient );
-  fractureStencil.move( LvArray::MemorySpace::host );
+  fractureStencil.move( hostMemorySpace );
 
   SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( faceElementRegionName );
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
@@ -773,7 +773,7 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsEDFM( MeshLevel & me
   ElementRegionManager & elemManager = mesh.getElemManager();
 
   EmbeddedSurfaceToCellStencil & edfmStencil = getStencil< EmbeddedSurfaceToCellStencil >( mesh, viewKeyStruct::edfmStencilString() );
-  edfmStencil.move( LvArray::MemorySpace::host );
+  edfmStencil.move( hostMemorySpace );
 
   SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( embeddedSurfaceRegionName );
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
@@ -848,7 +848,7 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsEDFM( MeshLevel & 
 
   // Get the stencil
   SurfaceElementStencil & fractureStencil = getStencil< SurfaceElementStencil >( mesh, viewKeyStruct::fractureStencilString() );
-  fractureStencil.move( LvArray::MemorySpace::host );
+  fractureStencil.move( hostMemorySpace );
 
   SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( embeddedSurfaceRegionName );
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
@@ -940,10 +940,10 @@ void TwoPointFluxApproximation::addEmbeddedFracturesToStencils( MeshLevel & mesh
   if( m_useProjectionEmbeddedFractureMethod )
   {
     EmbeddedSurfaceToCellStencil & edfmStencil = getStencil< EmbeddedSurfaceToCellStencil >( mesh, viewKeyStruct::edfmStencilString() );
-    edfmStencil.move( LvArray::MemorySpace::host );
+    edfmStencil.move( hostMemorySpace );
 
     CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString() );
-    cellStencil.move( LvArray::MemorySpace::host );
+    cellStencil.move( hostMemorySpace );
 
     ProjectionEDFMHelper pedfmHelper( mesh, cellStencil, edfmStencil, embeddedSurfaceRegionName );
     pedfmHelper.addNonNeighboringConnections();
