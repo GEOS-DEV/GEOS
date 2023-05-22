@@ -51,7 +51,7 @@ public:
 
   /**
    * @brief Generate the mesh using the VTK library.
-   * @param[in] cellBlockManager the CellBlockManager to be written
+   * @param[inout] cellBlockManager the CellBlockManager that will receive the meshing information
    * @param[in] partition the number of domain in each direction (x,y,z) for InternalMesh only, not used here
    * @details This method leverages the VTK library to load the meshes.
    * The supported formats are the official VTK ones dedicated to
