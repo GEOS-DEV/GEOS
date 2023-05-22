@@ -1280,13 +1280,35 @@ stress - traction is applied to the faces as specified by the inner product of i
 	</xsd:complexType>
 	<xsd:complexType name="MeshType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="InternalMesh" type="InternalMeshType" />
-			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
-			<xsd:element name="VTKMesh" type="VTKMeshType" />
+			<xsd:element name="InternalMesh" type="InternalMeshType">
+				<xsd:unique name="InternalMeshInternalWellUniqueName">
+					<xsd:selector xpath="InternalWell" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
+			<xsd:element name="InternalWellbore" type="InternalWellboreType">
+				<xsd:unique name="InternalWellboreInternalWellUniqueName">
+					<xsd:selector xpath="InternalWell" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
+			<xsd:element name="VTKMesh" type="VTKMeshType">
+				<xsd:unique name="VTKMeshInternalWellUniqueName">
+					<xsd:selector xpath="InternalWell" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="InternalMeshType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="InternalWell" type="InternalWellType">
+				<xsd:unique name="InternalWellPerforationUniqueName">
+					<xsd:selector xpath="Perforation" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
+		</xsd:choice>
 		<!--cellBlockNames => Names of each mesh block-->
 		<xsd:attribute name="cellBlockNames" type="string_array" use="required" />
 		<!--elementTypes => Element types of each mesh block-->
@@ -1316,8 +1338,50 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="InternalWellType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Perforation" type="PerforationType" />
+		</xsd:choice>
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--meshName => Name of the reservoir mesh associated with this well-->
+		<xsd:attribute name="meshName" type="string" use="required" />
+		<!--minElementLength => Minimum length of a well element, computed as (segment length / number of elements per segment ) [m]-->
+		<xsd:attribute name="minElementLength" type="real64" default="0.001" />
+		<!--minSegmentLength => Minimum length of a well segment [m]-->
+		<xsd:attribute name="minSegmentLength" type="real64" default="0.01" />
+		<!--numElementsPerSegment => Number of well elements per polyline segment-->
+		<xsd:attribute name="numElementsPerSegment" type="integer" use="required" />
+		<!--polylineNodeCoords => Physical coordinates of the well polyline nodes-->
+		<xsd:attribute name="polylineNodeCoords" type="real64_array2d" use="required" />
+		<!--polylineSegmentConn => Connectivity of the polyline segments-->
+		<xsd:attribute name="polylineSegmentConn" type="globalIndex_array2d" use="required" />
+		<!--radius => Radius of the well [m]-->
+		<xsd:attribute name="radius" type="real64" use="required" />
+		<!--wellControlsName => Name of the set of constraints associated with this well-->
+		<xsd:attribute name="wellControlsName" type="string" use="required" />
+		<!--wellRegionName => Name of the well element region-->
+		<xsd:attribute name="wellRegionName" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PerforationType">
+		<!--distanceFromHead => Linear distance from well head to the perforation-->
+		<xsd:attribute name="distanceFromHead" type="real64" use="required" />
+		<!--transmissibility => Perforation transmissibility-->
+		<xsd:attribute name="transmissibility" type="real64" default="-1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="InternalWellboreType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="InternalWell" type="InternalWellType">
+				<xsd:unique name="InternalWellPerforationUniqueName">
+					<xsd:selector xpath="Perforation" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
+		</xsd:choice>
 		<!--autoSpaceRadialElems => Automatically set number and spacing of elements in the radial direction. This overrides the values of nr!Value in each block indicates factor to scale the radial increment.Larger numbers indicate larger radial elements.-->
 		<xsd:attribute name="autoSpaceRadialElems" type="real64_array" default="{-1}" />
 		<!--cartesianMappingInnerRadius => If using a Cartesian aligned outer boundary, this is inner radius at which to start the mapping.-->
@@ -1360,7 +1424,14 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="VTKMeshType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="InternalWell" type="InternalWellType">
+				<xsd:unique name="InternalWellPerforationUniqueName">
+					<xsd:selector xpath="Perforation" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
+		</xsd:choice>
 		<!--faceBlocks => For multi-block files, names of the face mesh block.-->
 		<xsd:attribute name="faceBlocks" type="string_array" default="{}" />
 		<!--fieldNamesInGEOSX => Names of the volumic fields in GEOSX to import into-->

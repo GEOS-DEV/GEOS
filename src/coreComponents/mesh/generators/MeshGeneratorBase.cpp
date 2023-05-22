@@ -13,7 +13,7 @@
  */
 
 #include "MeshGeneratorBase.hpp"
-#include "InternalWellGenerator.hpp"
+#include "MeshGeneratorBase.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
 
@@ -30,14 +30,14 @@ MeshGeneratorBase::MeshGeneratorBase( string const & name, Group * const parent 
 Group * MeshGeneratorBase::createChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0( "Adding Mesh attribute: " << childKey << ", " << childName );
-  std::unique_ptr< InternalWellGenerator > wellGen = InternalWellGenerator::CatalogInterface::factory( childKey, childName, this );
-  return &this->registerGroup< InternalWellGenerator >( childName, std::move( wellGen ) );
+  std::unique_ptr< WellGeneratorBase > wellGen = WellGeneratorBase::CatalogInterface::factory( childKey, childName, this );
+  return &this->registerGroup< WellGeneratorBase >( childName, std::move( wellGen ) );
 }
 
 void MeshGeneratorBase::expandObjectCatalogs()
 {
-  // During schema generation, register one of each type derived from MeshGeneratorBase here
-  for( auto & catalogIter: InternalWellGenerator::getCatalog())
+  // During schema generation, register one of each type derived from WellGeneratorBase here
+  for( auto & catalogIter: WellGeneratorBase::getCatalog())
   {
     createChild( catalogIter.first, catalogIter.first );
   }
@@ -62,7 +62,7 @@ CellBlockManagerABC & MeshGeneratorBase::generateMesh( Group & parent, array1d< 
 
 void MeshGeneratorBase::attachWellInfo( CellBlockManager & cellBlockManager )
 {
-  forSubGroups< InternalWellGenerator >( [&]( InternalWellGenerator & wellGen ) {
+  forSubGroups< WellGeneratorBase >( [&]( WellGeneratorBase & wellGen ) {
     wellGen.generateWellGeometry( );
     LineBlock & lb = cellBlockManager.registerLineBlock( wellGen.getWellRegionName() );
     lb.setNumElements( wellGen.numElements() );

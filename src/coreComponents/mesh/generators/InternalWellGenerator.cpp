@@ -29,7 +29,7 @@ namespace geos
 using namespace dataRepository;
 
 InternalWellGenerator::InternalWellGenerator( string const & name, Group * const parent ):
-  Group( name, parent ),
+  WellGeneratorBase( name, parent ),
   m_numElemsPerSegment( 0 ),
   m_minSegmentLength( 1e-2 ),
   m_minElemLength( 1e-3 ),
@@ -40,7 +40,6 @@ InternalWellGenerator::InternalWellGenerator( string const & name, Group * const
   m_numElems( 0 ),
   m_numNodesPerElem( 2 ),
   m_numNodes( 0 ),
-  m_numPerforations( 0 ),
   m_nDims( 3 ),
   m_polylineHeadNodeId( -1 )
 {
@@ -94,11 +93,6 @@ InternalWellGenerator::InternalWellGenerator( string const & name, Group * const
     setDescription( "Name of the reservoir mesh associated with this well" );
 }
 
-InternalWellGenerator::~InternalWellGenerator()
-{
-  // TODO Auto-generated destructor stub
-}
-
 void InternalWellGenerator::postProcessInput()
 {
   GEOS_THROW_IF( m_polyNodeCoords.size( 1 ) != m_nDims,
@@ -132,29 +126,6 @@ void InternalWellGenerator::postProcessInput()
   // TODO: add more checks here
   // TODO: check that the connectivity of the well is valid
   // TODO: check that with no branching we can go from top to bottom and touch all the elements
-}
-
-Group * InternalWellGenerator::createChild( string const & childKey, string const & childName )
-{
-  if( childKey == viewKeyStruct::perforationString() )
-  {
-    ++m_numPerforations;
-
-    // keep track of the perforations that have been added
-    m_perforationList.emplace_back( childName );
-
-    return &registerGroup< Perforation >( childName );
-  }
-  else
-  {
-    GEOS_THROW( "Unrecognized node: " << childKey, InputError );
-  }
-  return nullptr;
-}
-
-void InternalWellGenerator::expandObjectCatalogs()
-{
-  createChild( viewKeyStruct::perforationString(), viewKeyStruct::perforationString() );
 }
 
 void InternalWellGenerator::generateWellGeometry( )
@@ -616,11 +587,5 @@ void InternalWellGenerator::debugWellGeometry() const
 
 }
 
-InternalWellGenerator::CatalogInterface::CatalogType & InternalWellGenerator::getCatalog()
-{
-  static InternalWellGenerator::CatalogInterface::CatalogType catalog;
-  return catalog;
-}
-
-REGISTER_CATALOG_ENTRY( InternalWellGenerator, InternalWellGenerator, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( WellGeneratorBase, InternalWellGenerator, string const &, Group * const )
 }
