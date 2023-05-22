@@ -993,11 +993,11 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                      SourceFluxBoundaryCondition >( time_n + dt,
                                                     mesh,
                                                     SourceFluxBoundaryCondition::catalogName(),
-                                                    [&,isThermal]( SourceFluxBoundaryCondition const & fs,
-                                                         string const & setName,
-                                                         SortedArrayView< localIndex const > const & targetSet,
-                                                         ElementSubRegionBase & subRegion,
-                                                         string const & )
+                                                    [&, isThermal]( SourceFluxBoundaryCondition const & fs,
+                                                                    string const & setName,
+                                                                    SortedArrayView< localIndex const > const & targetSet,
+                                                                    ElementSubRegionBase & subRegion,
+                                                                    string const & )
     {
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
@@ -1005,6 +1005,17 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
         GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
                                    getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(),
                                    fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+
+        if( isThermal )
+        {
+          char const msg[] = "SinglePhaseBase {} with isThermal = 1. At time {}s, "
+                             "the <{}> source flux boundary condition '{}' will be applied with the following behavior"
+                             "\n - negative value (injection): the mass balance equation is modified to considered the additional source term"
+                             "\n - positive value (production): both the mass balance and the energy balance equations are modified to considered the additional source term. " \
+                             "\n For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.";
+          GEOS_LOG_RANK_0( GEOS_FMT( msg,
+                                     getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(), fs.getName() ) );
+        }
       }
 
       if( targetSet.size() == 0 )
@@ -1046,8 +1057,8 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       if( isThermal )
       {
         SingleFluidBase const & fluid =
-        getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
-        
+          getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
+
         arrayView2d< real64 const > const enthalpy = fluid.enthalpy();
         arrayView2d< real64 const > const dEnthalpy_dTemperature = fluid.dEnthalpy_dTemperature();
         arrayView2d< real64 const > const dEnthalpy_dPressure    = fluid.dEnthalpy_dPressure();
@@ -1074,13 +1085,13 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
           globalIndex const massRowIndex   = dofNumber[ei] - rankOffset;
           globalIndex const energyRowIndex = massRowIndex + 1;
           real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
-          localRhs[massRowIndex] += rhsValue; 
+          localRhs[massRowIndex] += rhsValue;
           //add the value to the energey balance equation if the flux is positive (i.e., it's a producer)
           if( rhsContributionArrayView[a] > 0.0 )
           {
             globalIndex const pressureDofIndex    = dofNumber[ei] - rankOffset;
             globalIndex const temperatureDofIndex = pressureDofIndex + 1;
-            
+
             localRhs[energyRowIndex] += enthalpy[ei][0] * rhsValue;
 
             globalIndex dofIndices[2]{pressureDofIndex, temperatureDofIndex};
