@@ -86,12 +86,12 @@ void ParticleManager::setMaxGlobalIndex()
 Group * ParticleManager::createChild( string const & childKey, string const & childName )
 {
   GEOS_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
-                  "KeyName ("<<childKey<<") not found in ObjectManager::Catalog" );
+                 "KeyName ("<<childKey<<") not found in ObjectManager::Catalog" );
   GEOS_LOG_RANK_0( "Adding Object " << childKey << " named " << childName << " from ObjectManager::Catalog." );
 
   Group & particleRegions = this->getGroup( ParticleManager::groupKeyStruct::particleRegionsGroup() );
   return &particleRegions.registerGroup( childName,
-                                        CatalogInterface::factory( childKey, childName, &particleRegions ) );
+                                         CatalogInterface::factory( childKey, childName, &particleRegions ) );
 
 }
 
@@ -213,7 +213,7 @@ int ParticleManager::Unpack( buffer_unit_type const * & buffer,
 
 template< typename T >
 int ParticleManager::unpackPrivate( buffer_unit_type const * & buffer,
-                                         T & packList )
+                                    T & packList )
 {
   int unpackedSize = 0;
 
@@ -259,14 +259,14 @@ int ParticleManager::PackGlobalMapsSize( ParticleViewAccessor< arrayView1d< loca
 }
 
 int ParticleManager::PackGlobalMaps( buffer_unit_type * & buffer,
-                                          ParticleViewAccessor< arrayView1d< localIndex > > const & packList ) const
+                                     ParticleViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   return PackGlobalMapsPrivate< true >( buffer, packList );
 }
 template< bool DOPACK >
 int
 ParticleManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
-                                             ParticleViewAccessor< arrayView1d< localIndex > > const & packList ) const
+                                        ParticleViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   int packedSize = 0;
 
@@ -301,7 +301,7 @@ ParticleManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
 
 int
 ParticleManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
-                                        ParticleViewAccessor< ReferenceWrapper< localIndex_array > > & packList )
+                                   ParticleViewAccessor< ReferenceWrapper< localIndex_array > > & packList )
 {
   int unpackedSize = 0;
 

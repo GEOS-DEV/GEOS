@@ -122,12 +122,12 @@ public:
   }
 
   /// Declare assignment operators
-  GEOS_HOST_DEVICE Tensor<T, SIZE_TPARAM> & operator=( const double& rhs );
-  GEOS_HOST_DEVICE Tensor<T, SIZE_TPARAM> & operator+=( const double& rhs );
-  GEOS_HOST_DEVICE Tensor<T, SIZE_TPARAM> & operator+=( const Tensor<T, SIZE_TPARAM>& rhs );
+  GEOS_HOST_DEVICE Tensor< T, SIZE_TPARAM > & operator=( const double & rhs );
+  GEOS_HOST_DEVICE Tensor< T, SIZE_TPARAM > & operator+=( const double & rhs );
+  GEOS_HOST_DEVICE Tensor< T, SIZE_TPARAM > & operator+=( const Tensor< T, SIZE_TPARAM > & rhs );
 
   /// Define dot product. TODO: Check compatibility of lhs and rhs.
-  friend double GEOS_HOST_DEVICE operator*(const Tensor<T, SIZE_TPARAM>& lhs, const Tensor<T, SIZE_TPARAM>& rhs)
+  friend double GEOS_HOST_DEVICE operator*( const Tensor< T, SIZE_TPARAM > & lhs, const Tensor< T, SIZE_TPARAM > & rhs )
   {
     double result = 0;
     for( int i = 0; i < SIZE_TPARAM; ++i )
@@ -171,8 +171,8 @@ private:
  */
 template< typename T, int SIZE_TPARAM >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE Tensor<T, SIZE_TPARAM> &
-Tensor<T, SIZE_TPARAM>::operator=( const double& rhs )
+GEOS_FORCE_INLINE Tensor< T, SIZE_TPARAM > &
+Tensor< T, SIZE_TPARAM >::operator=( const double & rhs )
 {
   for( int i = 0; i < SIZE_TPARAM; ++i )
   {
@@ -188,8 +188,8 @@ Tensor<T, SIZE_TPARAM>::operator=( const double& rhs )
  */
 template< typename T, int SIZE_TPARAM >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE Tensor<T, SIZE_TPARAM> &
-Tensor<T, SIZE_TPARAM>::operator+=( const double& rhs )
+GEOS_FORCE_INLINE Tensor< T, SIZE_TPARAM > &
+Tensor< T, SIZE_TPARAM >::operator+=( const double & rhs )
 {
   for( int i = 0; i < SIZE_TPARAM; ++i )
   {
@@ -205,8 +205,8 @@ Tensor<T, SIZE_TPARAM>::operator+=( const double& rhs )
  */
 template< typename T, int SIZE_TPARAM >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE Tensor<T, SIZE_TPARAM> &
-Tensor<T, SIZE_TPARAM>::operator+=( const Tensor<T, SIZE_TPARAM>& rhs )
+GEOS_FORCE_INLINE Tensor< T, SIZE_TPARAM > &
+Tensor< T, SIZE_TPARAM >::operator+=( const Tensor< T, SIZE_TPARAM > & rhs )
 {
   for( int i = 0; i < SIZE_TPARAM; ++i )
   {

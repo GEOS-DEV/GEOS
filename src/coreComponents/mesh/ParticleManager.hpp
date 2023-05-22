@@ -51,7 +51,7 @@ public:
     static constexpr auto particleRegionsGroup() { return "particleRegionsGroup"; }
   };
 
-   /**
+  /**
    * @brief The ParticleViewAccessor at the ParticleManager level is an array of array of VIEWTYPE.
    * @tparam VIEWTYPE data type
    */
@@ -399,7 +399,7 @@ public:
   void forParticleRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA lambda )
   {
     forParticleRegions< REGIONTYPE, REGIONTYPES... >( targetRegions, [&] ( localIndex const targetIndex,
-                                                                          auto & particleRegion )
+                                                                           auto & particleRegion )
     {
       lambda( targetIndex, particleRegion.getIndexInParent(), particleRegion );
     } );
@@ -417,7 +417,7 @@ public:
   void forParticleRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA lambda ) const
   {
     forParticleRegions< REGIONTYPE, REGIONTYPES... >( targetRegions, [&] ( localIndex const targetIndex,
-                                                                          auto const & particleRegion )
+                                                                           auto const & particleRegion )
     {
       lambda( targetIndex, particleRegion.getIndexInParent(), particleRegion );
     } );
@@ -523,11 +523,11 @@ public:
   void forParticleSubRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
   {
     forParticleSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegions,
-                                                                      [lambda = std::forward< LAMBDA >( lambda )]( localIndex const targetIndex,
-                                                                                                                   localIndex const,
-                                                                                                                   localIndex const,
-                                                                                                                   ParticleRegionBase &,
-                                                                                                                   auto & subRegion )
+                                                                       [lambda = std::forward< LAMBDA >( lambda )]( localIndex const targetIndex,
+                                                                                                                    localIndex const,
+                                                                                                                    localIndex const,
+                                                                                                                    ParticleRegionBase &,
+                                                                                                                    auto & subRegion )
     {
       lambda( targetIndex, subRegion );
     } );
@@ -545,11 +545,11 @@ public:
   void forParticleSubRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda ) const
   {
     forParticleSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegions,
-                                                                      [lambda = std::forward< LAMBDA >( lambda )]( localIndex const targetIndex,
-                                                                                                                   localIndex const,
-                                                                                                                   localIndex const,
-                                                                                                                   ParticleRegionBase const &,
-                                                                                                                   auto const & subRegion )
+                                                                       [lambda = std::forward< LAMBDA >( lambda )]( localIndex const targetIndex,
+                                                                                                                    localIndex const,
+                                                                                                                    localIndex const,
+                                                                                                                    ParticleRegionBase const &,
+                                                                                                                    auto const & subRegion )
     {
       lambda( targetIndex, subRegion );
     } );
@@ -1197,7 +1197,7 @@ ParticleManager::constructReferenceAccessor( string const & viewName, string con
 template< typename VIEWTYPE, typename LHS >
 ParticleManager::MaterialViewAccessor< LHS >
 ParticleManager::constructFullMaterialViewAccessor( string const & viewName,
-                                     constitutive::ConstitutiveManager const & cm ) const
+                                                    constitutive::ConstitutiveManager const & cm ) const
 {
   MaterialViewAccessor< LHS > accessor;
   accessor.resize( numRegions() );
@@ -1234,7 +1234,7 @@ ParticleManager::constructFullMaterialViewAccessor( string const & viewName,
 template< typename VIEWTYPE, typename LHS >
 ParticleManager::MaterialViewAccessor< LHS >
 ParticleManager::constructFullMaterialViewAccessor( string const & viewName,
-                                     constitutive::ConstitutiveManager const & cm )
+                                                    constitutive::ConstitutiveManager const & cm )
 {
   MaterialViewAccessor< LHS > accessor;
   accessor.resize( numRegions() );
@@ -1271,9 +1271,9 @@ ParticleManager::constructFullMaterialViewAccessor( string const & viewName,
 template< typename VIEWTYPE, typename LHS >
 ParticleManager::ParticleViewAccessor< LHS >
 ParticleManager::constructMaterialViewAccessor( string const & viewName,
-                                                     arrayView1d< string const > const & regionNames,
-                                                     string const & materialKeyName,
-                                                     bool const allowMissingViews ) const
+                                                arrayView1d< string const > const & regionNames,
+                                                string const & materialKeyName,
+                                                bool const allowMissingViews ) const
 {
   ParticleViewAccessor< LHS > accessor;
 
@@ -1296,10 +1296,10 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
       ParticleRegionBase const & region = getRegion( er );
 
       region.forParticleSubRegionsIndex( [&]( localIndex const esr,
-                                             ParticleSubRegionBase const & subRegion )
+                                              ParticleSubRegionBase const & subRegion )
       {
-        string const & materialName = subRegion.getReference<string>( materialKeyName );
-        dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel(materialName);
+        string const & materialName = subRegion.getReference< string >( materialKeyName );
+        dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel( materialName );
 
         dataRepository::Wrapper< VIEWTYPE > const * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
         if( wrapper )
@@ -1319,9 +1319,9 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
 template< typename VIEWTYPE, typename LHS >
 ParticleManager::ParticleViewAccessor< LHS >
 ParticleManager::constructMaterialViewAccessor( string const & viewName,
-                                                     arrayView1d< string const > const & regionNames,
-                                                     string const & materialKeyName,
-                                                     bool const allowMissingViews )
+                                                arrayView1d< string const > const & regionNames,
+                                                string const & materialKeyName,
+                                                bool const allowMissingViews )
 {
   ParticleViewAccessor< LHS > accessor;
 
@@ -1345,8 +1345,8 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
 
       region.forParticleSubRegionsIndex( [&]( localIndex const esr, ParticleSubRegionBase & subRegion )
       {
-        string const & materialName = subRegion.getReference<string>( materialKeyName );
-        dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel(materialName);
+        string const & materialName = subRegion.getReference< string >( materialKeyName );
+        dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel( materialName );
 
         dataRepository::Wrapper< VIEWTYPE > * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
         if( wrapper )
@@ -1388,9 +1388,9 @@ ParticleManager::constructMaterialFieldAccessor( bool const allowMissingViews ) 
 template< typename T, int NDIM, typename PERM >
 ParticleManager::ParticleViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
 ParticleManager::constructMaterialArrayViewAccessor( string const & viewName,
-                                      arrayView1d< string const > const & regionNames,
-                                      string const & materialKeyName,
-                                      bool const allowMissingViews ) const
+                                                     arrayView1d< string const > const & regionNames,
+                                                     string const & materialKeyName,
+                                                     bool const allowMissingViews ) const
 {
   return constructMaterialViewAccessor< Array< T, NDIM, PERM >, ArrayView< T const, NDIM, getUSD< PERM > > >( viewName,
                                                                                                               regionNames,
@@ -1416,7 +1416,7 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName ) const
     ParticleRegionBase const & region = getRegion( er );
 
     region.forParticleSubRegionsIndex( [&]( localIndex const esr,
-                                           ParticleSubRegionBase const & subRegion )
+                                            ParticleSubRegionBase const & subRegion )
     {
       dataRepository::Group const & constitutiveGroup = subRegion.getConstitutiveModels();
 
@@ -1424,7 +1424,8 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName ) const
       constitutiveGroup.forSubGroups< MATERIALTYPE >( [&]( MATERIALTYPE const & constitutiveRelation )
       {
         materialName = constitutiveRelation.getName();
-        if ( constitutiveRelation.template hasWrapper( viewName ) ) //NOTE (matteo): I have added this check to allow for the view to be missing. I am not sure this is the default behaviour we want though.
+        if( constitutiveRelation.template hasWrapper( viewName ) )  //NOTE (matteo): I have added this check to allow for the view to be
+                                                                    // missing. I am not sure this is the default behaviour we want though.
         {
           accessor[er][esr] = constitutiveRelation.template getReference< VIEWTYPE >( viewName );
         }

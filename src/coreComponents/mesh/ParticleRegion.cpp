@@ -56,20 +56,21 @@ void ParticleRegion::generateMesh( Group & particleBlocks )
   }
 }
 
-// TODO This should be changed to call a ParticleSubRegion::getParticleCoordinates (and/or getParticleCorners) on each subregion such that we can access those functions directly if needed
+// TODO This should be changed to call a ParticleSubRegion::getParticleCoordinates (and/or getParticleCorners) on each subregion such that
+// we can access those functions directly if needed
 array2d< real64 > ParticleRegion::getParticleCorners() const
 {
   int const size = 8 * ( this->size() ); // number of particle corners in this region
-  array2d< real64 > coords(size, 3);
+  array2d< real64 > coords( size, 3 );
   int index = 0;
-  int const signs[8][3] = { { 1,  1,  1}, // These have to be in the order VTK wants
-                            { 1,  1, -1},
-                            { 1, -1,  1},
-                            { 1, -1, -1},
-                            {-1,  1,  1},
-                            {-1,  1, -1},
-                            {-1, -1,  1},
-                            {-1, -1, -1} };
+  int const signs[8][3] = { { 1, 1, 1},   // These have to be in the order VTK wants
+    { 1, 1, -1},
+    { 1, -1, 1},
+    { 1, -1, -1},
+    {-1, 1, 1},
+    {-1, 1, -1},
+    {-1, -1, 1},
+    {-1, -1, -1} };
   this->forParticleSubRegions( [&]( auto & subRegion )
   {
     arrayView2d< real64 const > const particleCenter = subRegion.getParticleCenter();
@@ -77,32 +78,32 @@ array2d< real64 > ParticleRegion::getParticleCorners() const
     {
       arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
       forAll< serialPolicy >( subRegion.size(), [=, &coords, &index] GEOS_HOST ( localIndex const p )
-      {
-        real64 a = 0.5 * pow( particleVolume[p], 1.0/3.0 ); // cube half-side-length
-        for( int corner=0; corner<8; corner++ )
         {
-          for( int i=0; i<3; i++ )
+          real64 a = 0.5 * pow( particleVolume[p], 1.0/3.0 ); // cube half-side-length
+          for( int corner=0; corner<8; corner++ )
           {
-            coords[index][i] = particleCenter[p][i] + signs[corner][i] * a;
+            for( int i=0; i<3; i++ )
+            {
+              coords[index][i] = particleCenter[p][i] + signs[corner][i] * a;
+            }
+            index++;
           }
-          index++;
-        }
-      } );
+        } );
     }
     else
     {
-      arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors(); 
+      arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
       forAll< serialPolicy >( subRegion.size(), [=, &coords, &index] GEOS_HOST ( localIndex const p )
-      {
-        for( int corner=0; corner<8; corner++ )
         {
-          for( int i=0; i<3; i++ )
+          for( int corner=0; corner<8; corner++ )
           {
-            coords[index][i] = particleCenter[p][i] + signs[corner][0] * particleRVectors[p][0][i] + signs[corner][1] * particleRVectors[p][1][i] + signs[corner][2] * particleRVectors[p][2][i];
+            for( int i=0; i<3; i++ )
+            {
+              coords[index][i] = particleCenter[p][i] + signs[corner][0] * particleRVectors[p][0][i] + signs[corner][1] * particleRVectors[p][1][i] + signs[corner][2] * particleRVectors[p][2][i];
+            }
+            index++;
           }
-          index++;
-        }
-      } );
+        } );
     }
   } );
   return coords;

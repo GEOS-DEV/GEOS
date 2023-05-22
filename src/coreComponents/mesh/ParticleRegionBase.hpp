@@ -300,7 +300,7 @@ public:
     static constexpr char const * particleSubRegions() { return "particleSubRegions"; }
   };
 
-  private:
+private:
 
   ParticleRegionBase & operator=( const ParticleRegionBase & rhs );
 

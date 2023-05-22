@@ -572,7 +572,7 @@ void ProblemManager::generateMesh()
     if( meshBody.hasParticles() )
     {
       ParticleBlockManagerABC & particleBlockManager = meshBody.getGroup< ParticleBlockManagerABC >( keys::particleManager );
-      
+
       this->generateMeshLevel( baseMesh,
                                particleBlockManager,
                                junk.toViewConst() );
@@ -580,7 +580,7 @@ void ProblemManager::generateMesh()
     else
     {
       CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
-      
+
       this->generateMeshLevel( baseMesh,
                                cellBlockManager,
                                nullptr,
@@ -1001,12 +1001,12 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
       {
         constitutiveManager.hangConstitutiveRelation( materialName, &particleSubRegion, numQuadraturePoints );
         GEOS_LOG_RANK_0( GEOS_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
-                                     meshBodyName,
-                                     meshLevelName,
-                                     regionName,
-                                     subRegionName,
-                                     materialName,
-                                     numQuadraturePoints ) );
+                                   meshBodyName,
+                                   meshLevelName,
+                                   regionName,
+                                   subRegionName,
+                                   materialName,
+                                   numQuadraturePoints ) );
       }
     }
 //    if( meshLevel.isShallowCopy() )

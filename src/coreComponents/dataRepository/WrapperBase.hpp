@@ -153,7 +153,7 @@ public:
    * @brief Calls T::erase(indicesToErase)
    * @param[in] indicesToErase indices to erase
    */
-  virtual void erase( std::set< localIndex> const & indicesToErase ) = 0;
+  virtual void erase( std::set< localIndex > const & indicesToErase ) = 0;
 
   /**
    * @brief Calls T::move(space, touch)
@@ -341,7 +341,7 @@ public:
                                     bool withMetadata,
                                     bool onDevice,
                                     parallelDeviceEvents & events,
-                                    MPI_Op op=MPI_REPLACE) = 0;
+                                    MPI_Op op=MPI_REPLACE ) = 0;
 
   ///@}
 

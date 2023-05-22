@@ -91,7 +91,7 @@ public:
                              integer const recursive,
                              bool onDevice,
                              parallelDeviceEvents & events,
-                             MPI_Op op=MPI_REPLACE) override;
+                             MPI_Op op=MPI_REPLACE ) override;
 
   /**
    * @brief Packs the elements of each set that actually are in @p packList.

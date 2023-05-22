@@ -191,7 +191,7 @@ public:
   void initialize( NodeManager & nodeManager,
                    ParticleManager & particleManager,
                    SpatialPartition & partition );
-  
+
   void resizeGrid( SpatialPartition & partition,
                    NodeManager & nodeManager,
                    real64 const dt );
@@ -237,7 +237,7 @@ public:
                                          real64 const & mB,
                                          arraySlice1d< real64 const > const vA,
                                          arraySlice1d< real64 const > const GEOS_UNUSED_PARAM( vB ),
-                                         arraySlice1d< real64 const> const qA,
+                                         arraySlice1d< real64 const > const qA,
                                          arraySlice1d< real64 const > const qB,
                                          arraySlice1d< real64 const > const nA,
                                          arraySlice1d< real64 const > const nB,
@@ -246,9 +246,9 @@ public:
                                          arraySlice1d< real64 > const fA,
                                          arraySlice1d< real64 > const fB );
 
-  void computeOrthonormalBasis( const real64* e1,  // input "normal" unit vector.
-                                real64* e2,        // output "tangential" unit vector.
-                                real64* e3 );      // output "tangential" unit vector.
+  void computeOrthonormalBasis( const real64 * e1,  // input "normal" unit vector.
+                                real64 * e2,        // output "tangential" unit vector.
+                                real64 * e3 );      // output "tangential" unit vector.
 
   void setGridFieldLabels( NodeManager & nodeManager );
 
@@ -265,7 +265,7 @@ public:
   void kernelGradient( arraySlice1d< real64 const > const x,  // query point
                        std::vector< real64 > & xp,            // particle location
                        real64 const & r,                      // distance from particle to query point
-                       real64* result );
+                       real64 * result );
 
   real64 computeKernelField( arraySlice1d< real64 const > const x,    // query point
                              arrayView2d< real64 const > const xp,    // List of neighbor particle locations.
@@ -277,7 +277,7 @@ public:
                                    std::vector< real64 > & Vp,                 // List of neighbor particle volumes.
                                    std::vector< real64 > & fp,                 // scalar field values (e.g. damage) at neighbor particles
                                    arraySlice1d< real64 > const result );
-  
+
   void computeKernelVectorGradient( arraySlice1d< real64 const > const x,       // query point
                                     std::vector< std::vector< real64 > > & xp,  // List of neighbor particle locations.
                                     std::vector< real64 > & Vp,                 // List of neighbor particle volumes.
@@ -326,7 +326,7 @@ public:
   void gridToParticle( real64 dt,
                        ParticleManager & particleManager,
                        NodeManager & nodeManager );
-  
+
   void updateSolverDependencies( ParticleManager & particleManager );
 
   real64 getStableTimeStep( ParticleManager & particleManager );
@@ -364,9 +364,13 @@ protected:
 
   virtual void setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const override;
 
-  std::vector< array2d< localIndex > > m_mappedNodes; // mappedNodes[subregion index][particle index][node index]. dims = {# of subregions, # of particles, # of nodes a particle on the subregion maps to}
-  std::vector< array2d< real64 > > m_shapeFunctionValues; // mappedNodes[subregion][particle][nodal shape function value]. dims = {# of subregions, # of particles, # of nodes a particle on the subregion maps to}
-  std::vector< array3d< real64 > > m_shapeFunctionGradientValues; // mappedNodes[subregion][particle][nodal shape function gradient value][direction]. dims = {# of subregions, # of particles, # of nodes a particle on the subregion maps to, 3}
+  std::vector< array2d< localIndex > > m_mappedNodes; // mappedNodes[subregion index][particle index][node index]. dims = {# of subregions,
+                                                      // # of particles, # of nodes a particle on the subregion maps to}
+  std::vector< array2d< real64 > > m_shapeFunctionValues; // mappedNodes[subregion][particle][nodal shape function value]. dims = {# of
+                                                          // subregions, # of particles, # of nodes a particle on the subregion maps to}
+  std::vector< array3d< real64 > > m_shapeFunctionGradientValues; // mappedNodes[subregion][particle][nodal shape function gradient
+                                                                  // value][direction]. dims = {# of subregions, # of particles, # of nodes
+                                                                  // a particle on the subregion maps to, 3}
 
   int m_solverProfiling;
   std::vector< real64 > m_profilingTimes;
@@ -400,7 +404,7 @@ protected:
   int m_treatFullyDamagedAsSingleField;
   int m_surfaceDetection;
   int m_damageFieldPartitioning;
-  int m_contactGapCorrection;  
+  int m_contactGapCorrection;
   // int m_directionalOverlapCorrection;
   real64 m_frictionCoefficient;
 
@@ -425,26 +429,26 @@ private:
     localIndex regionIndex;
     localIndex subRegionIndex;
     localIndex binIndex;
-      
-    bool operator==(BinKey const & other) const
+
+    bool operator==( BinKey const & other ) const
     {
       return (regionIndex == other.regionIndex && subRegionIndex == other.subRegionIndex && binIndex == other.binIndex);
     }
   };
-  
+
   struct BinKeyHash
   {
-    std::size_t operator()(BinKey const & k) const
+    std::size_t operator()( BinKey const & k ) const
     {
       using std::size_t;
       using std::hash;
-      
+
       // Compute individual hash values for first,
       // second and third and combine them using XOR
       // and bit shifting:
-      return ((std::hash<localIndex>()(k.regionIndex)
-            ^ (std::hash<localIndex>()(k.subRegionIndex) << 1)) >> 1)
-            ^ (std::hash<localIndex>()(k.binIndex) << 1);
+      return ((std::hash< localIndex >()( k.regionIndex )
+               ^ (std::hash< localIndex >()( k.subRegionIndex ) << 1)) >> 1)
+             ^ (std::hash< localIndex >()( k.binIndex ) << 1);
     }
   };
 

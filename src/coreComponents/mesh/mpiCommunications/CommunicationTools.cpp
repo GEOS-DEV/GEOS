@@ -830,7 +830,7 @@ bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
                                       MPI_iCommData & icomm,
                                       bool onDevice,
                                       parallelDeviceEvents & events,
-                                      MPI_Op op)
+                                      MPI_Op op )
 {
   GEOS_MARK_FUNCTION;
 
@@ -872,7 +872,7 @@ void CommunicationTools::finalizeUnpack( MeshLevel & mesh,
                                          MPI_iCommData & icomm,
                                          bool onDevice,
                                          parallelDeviceEvents & events,
-                                         MPI_Op op)
+                                         MPI_Op op )
 {
   GEOS_MARK_FUNCTION;
 

@@ -211,14 +211,14 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
                           ArrayView< T, NDIM, USD > const & var,
                           T_INDICES const & indices,
                           parallelDeviceEvents & events,
-                          MPI_Op op)
+                          MPI_Op op )
 {
   localIndex numIndices = indices.size();
   localIndex sliceSize = var.size() / var.size( 0 );
   localIndex unpackSize = numIndices * sliceSize * sizeof( T );
   T const * devBuffer = reinterpret_cast< T const * >( buffer );
   parallelDeviceStream stream;
-  if(op == MPI_SUM)
+  if( op == MPI_SUM )
   {
     events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
     {
@@ -230,7 +230,7 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
       } );
     } ) );
   }
-  else if(op == MPI_REPLACE)
+  else if( op == MPI_REPLACE )
   {
     events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
     {
@@ -242,7 +242,7 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
       } );
     } ) );
   }
-  else if(op == MPI_MAX)
+  else if( op == MPI_MAX )
   {
     events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
     {
@@ -260,7 +260,7 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
       } );
 
       // Roll back threadBuffer
-      for(int i=0; i<count; i++)
+      for( int i=0; i<count; i++ )
       {
         --threadBuffer;
       }
@@ -278,7 +278,7 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
   }
   else
   {
-    GEOS_ERROR("Unsupported MPI operator! MPI_SUM, MPI_REPLACE and MPI_MAX are supported.");
+    GEOS_ERROR( "Unsupported MPI operator! MPI_SUM, MPI_REPLACE and MPI_MAX are supported." );
   }
 
   buffer += unpackSize;
@@ -291,7 +291,7 @@ UnpackByIndexDevice ( buffer_unit_type const * & buffer,
                       ArrayView< T, NDIM, USD > const & var,
                       T_INDICES const & indices,
                       parallelDeviceEvents & events,
-                      MPI_Op op)
+                      MPI_Op op )
 {
   size_t typeSize = sizeof( T );
   localIndex strides[NDIM];
@@ -335,7 +335,7 @@ UnpackByIndexDevice ( buffer_unit_type const * & buffer,
     ArrayView< TYPE, NDIM, USD > const & var, \
     arrayView1d< const localIndex > const & indices, \
     parallelDeviceEvents & events, \
-    MPI_Op op); \
+    MPI_Op op ); \
     \
   template localIndex PackDataDevice< true, TYPE, NDIM, USD > \
     ( buffer_unit_type * &buffer, \
@@ -364,7 +364,7 @@ UnpackByIndexDevice ( buffer_unit_type const * & buffer,
     ArrayView< TYPE, NDIM, USD > const & var, \
     arrayView1d< const localIndex > const & indices, \
     parallelDeviceEvents & events, \
-    MPI_Op op)
+    MPI_Op op )
 
 #define DECLARE_PACK_UNPACK_UP_TO_2D( TYPE ) \
   DECLARE_PACK_UNPACK( TYPE, 1, 0 ); \
