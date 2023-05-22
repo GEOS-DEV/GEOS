@@ -83,9 +83,9 @@ void fastInsert( OrderedVariableToManyParticleRelation & relation,
 
 void insertMany( OrderedVariableToManyParticleRelation & relation,
                  localIndex const firstIndex,
-                 std::vector<localIndex> const & erArray,
-                 std::vector<localIndex> const & esrArray,
-                 std::vector<localIndex> const & eiArray )
+                 std::vector< localIndex > const & erArray,
+                 std::vector< localIndex > const & esrArray,
+                 std::vector< localIndex > const & eiArray )
 {
   relation.m_numParticles[firstIndex] += erArray.size();
   relation.m_toParticleRegion.appendToArray( firstIndex, erArray.begin(), erArray.end() );

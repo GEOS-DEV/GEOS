@@ -315,7 +315,7 @@ localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
                                       integer const recursive,
                                       bool onDevice,
                                       parallelDeviceEvents & events,
-                                      MPI_Op op)
+                                      MPI_Op op )
 {
   localIndex unpackedSize = 0;
   string groupName;

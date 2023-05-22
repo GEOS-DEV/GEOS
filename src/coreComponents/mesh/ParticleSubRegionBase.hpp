@@ -96,7 +96,7 @@ public:
   arrayView1d< globalIndex > getParticleID()
   { return m_particleID; }
 
-    /**
+  /**
    * @brief Get the contact group of each particle in this subregion.
    * @return an arrayView1d of const particle contact groups
    */

@@ -47,22 +47,22 @@ public:
   void setSizes( real64 const ( &min )[ 3 ],
                  real64 const ( &max )[ 3 ] ) override;
 
-  real64* getLocalMin()
+  real64 * getLocalMin()
   {
     return m_min;
   }
 
-  real64* getLocalMax()
+  real64 * getLocalMax()
   {
     return m_max;
   }
 
-  real64* getGlobalMin()
+  real64 * getGlobalMin()
   {
     return m_gridMin;
   }
 
-  real64* getGlobalMax()
+  real64 * getGlobalMax()
   {
     return m_gridMax;
   }
@@ -80,19 +80,25 @@ public:
                                                    MPI_iCommData & commData,
                                                    const real64 & boundaryRadius );
 
-  void sendCoordinateListToNeighbors( arrayView1d< R1Tensor > const & particleCoordinatesSendingToNeighbors,         // Single list of coordinates sent to all neighbors
-                                      MPI_iCommData & commData,                                                      // Solver's MPI communicator
-                                      std::vector<array1d<R1Tensor>>& particleCoordinatesReceivedFromNeighbors       // List of lists of coordinates received from each neighbor.
-  );
+  void sendCoordinateListToNeighbors( arrayView1d< R1Tensor > const & particleCoordinatesSendingToNeighbors,         // Single list of
+                                                                                                                     // coordinates sent to
+                                                                                                                     // all neighbors
+                                      MPI_iCommData & commData,                                                      // Solver's MPI
+                                                                                                                     // communicator
+                                      std::vector< array1d< R1Tensor > > & particleCoordinatesReceivedFromNeighbors       // List of lists
+                                                                                                                          // of coordinates
+                                                                                                                          // received from
+                                                                                                                          // each neighbor.
+                                      );
 
-  template <typename indexType>
+  template< typename indexType >
   void sendListOfIndicesToNeighbors( std::vector< array1d< indexType > > & listSendingToEachNeighbor,
                                      MPI_iCommData & commData,
                                      std::vector< array1d< indexType > > & listReceivedFromEachNeighbor );
 
   void sendParticlesToNeighbor( ParticleSubRegionBase & subRegion,
-                                std::vector<int> const & newParticleStartingIndices,
-                                std::vector<int> const & numberOfIncomingParticles,
+                                std::vector< int > const & newParticleStartingIndices,
+                                std::vector< int > const & numberOfIncomingParticles,
                                 MPI_iCommData & commData,
                                 std::vector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor );
 

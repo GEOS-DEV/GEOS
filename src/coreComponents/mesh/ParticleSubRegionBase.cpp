@@ -82,13 +82,13 @@ unsigned int ParticleSubRegionBase::particlePack( buffer_type & buffer,
   unsigned int packedSize = 0;
 
   // Pack particle fields
-  if(!doPack) // doPack == false, so we're just getting the size
+  if( !doPack ) // doPack == false, so we're just getting the size
   {
     packedSize += this->packSize( localIndices, 0, false, events );
   }
   else // doPack == true, perform the pack
   {
-    buffer_unit_type* bufferPtr = buffer.data();
+    buffer_unit_type * bufferPtr = buffer.data();
     packedSize += this->pack( bufferPtr, localIndices, 0, false, events );
   }
 
@@ -101,12 +101,12 @@ void ParticleSubRegionBase::particleUnpack( buffer_type & buffer,
 {
   // Declarations
   parallelDeviceEvents events; // I have no idea what this thing is
-  const buffer_unit_type* receiveBufferPtr = buffer.data(); // needed for const cast
+  const buffer_unit_type * receiveBufferPtr = buffer.data(); // needed for const cast
 
   // Get the indices we're overwriting during unpack.
   // Before unpacking, those indices should contain junk/default data created when subRegion.resize() was called.
-  array1d< localIndex > indices(numberOfIncomingParticles);
-  for(int i=0; i<numberOfIncomingParticles; i++)
+  array1d< localIndex > indices( numberOfIncomingParticles );
+  for( int i=0; i<numberOfIncomingParticles; i++ )
   {
     indices[i] = startingIndex + i;
   }
@@ -117,16 +117,16 @@ void ParticleSubRegionBase::particleUnpack( buffer_type & buffer,
 
 void ParticleSubRegionBase::erase( std::set< localIndex > const & indicesToErase )
 {
-  if(indicesToErase.size() > 0)
+  if( indicesToErase.size() > 0 )
   {
     // The new subregion size
     int newSize = (this->size()) - indicesToErase.size();
 
     // Call ObjectManagerBase::eraseObject
-    this->eraseObject(indicesToErase);
+    this->eraseObject( indicesToErase );
 
     // Decrease the size of this subregion
-    this->resize(newSize);
+    this->resize( newSize );
 
     // Reconstruct the list of non-ghost indices
     this->setActiveParticleIndices();
@@ -138,23 +138,25 @@ void ParticleSubRegionBase::setActiveParticleIndices()
   m_activeParticleIndices.move( LvArray::MemorySpace::host ); // TODO: Is this needed?
   m_activeParticleIndices.clear();
   arrayView1d< int const > const particleRank = m_particleRank.toViewConst();
-  forAll< serialPolicy >( this->size(), [&, particleRank] GEOS_HOST ( localIndex const p ) // This must be on host since we're dealing with a sorted array. Parallelize with atomics?
-  {
-    if( particleRank[p] == MpiWrapper::commRank( MPI_COMM_GEOSX ) )
+  forAll< serialPolicy >( this->size(), [&, particleRank] GEOS_HOST ( localIndex const p ) // This must be on host since we're dealing with
+                                                                                           // a sorted array. Parallelize with atomics?
     {
-      m_activeParticleIndices.insert( p );
-    }
-  } );
+      if( particleRank[p] == MpiWrapper::commRank( MPI_COMM_GEOSX ) )
+      {
+        m_activeParticleIndices.insert( p );
+      }
+    } );
 }
 
 void ParticleSubRegionBase::updateMaps()
 {
   arrayView1d< globalIndex > const localToGlobalMap = m_localToGlobalMap;
   arrayView1d< globalIndex const > const particleID = m_particleID;
-  forAll< serialPolicy >( this->size(), [=] GEOS_HOST ( localIndex const p ) // TODO: must be on host because constructGlobalToLocalMap has to be on host?
-  {
-    localToGlobalMap[p] = particleID[p];
-  } );
+  forAll< serialPolicy >( this->size(), [=] GEOS_HOST ( localIndex const p ) // TODO: must be on host because constructGlobalToLocalMap has
+                                                                             // to be on host?
+    {
+      localToGlobalMap[p] = particleID[p];
+    } );
   this->constructGlobalToLocalMap();
 }
 

@@ -1010,7 +1010,7 @@ void VTKPolyDataWriterInterface::writeCellElementRegions( real64 const time,
 
 void VTKPolyDataWriterInterface::writeParticleRegions( real64 const time,
                                                        ParticleManager const & particleManager,
-                                                       string const & path) const
+                                                       string const & path ) const
 {
   particleManager.forParticleRegions< ParticleRegion >( [&]( ParticleRegion const & region )
   {

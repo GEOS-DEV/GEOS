@@ -601,7 +601,7 @@ void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsT
                                                 int const commID,
                                                 bool onDevice,
                                                 parallelDeviceEvents & events,
-                                                MPI_Op op)
+                                                MPI_Op op )
 {
   GEOS_MARK_FUNCTION;
 

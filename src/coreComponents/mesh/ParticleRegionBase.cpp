@@ -40,7 +40,7 @@ ParticleRegionBase::ParticleRegionBase( string const & name, Group * const paren
 
   registerWrapper( viewKeyStruct::meshBodyString(), &m_meshBody ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue("").
+    setApplyDefaultValue( "" ).
     setDescription( "Mesh body that contains this region" );
 
 }
@@ -51,22 +51,22 @@ ParticleRegionBase::~ParticleRegionBase()
 
 
 string ParticleRegionBase::verifyMeshBodyName( Group const & meshBodies,
-                                              string const & meshBodyBlockName )
+                                               string const & meshBodyBlockName )
 {
   string meshBodyName = meshBodyBlockName;
   localIndex const numberOfMeshBodies = meshBodies.numSubGroups();
 
   if( numberOfMeshBodies == 1 )
   {
-    string const & onlyMeshBodyName = meshBodies.getGroup(0).getName();
+    string const & onlyMeshBodyName = meshBodies.getGroup( 0 ).getName();
 
     if( meshBodyName=="" )
     {
       meshBodyName = onlyMeshBodyName;
     }
     GEOS_ERROR_IF_NE_MSG( onlyMeshBodyName,
-                           meshBodyName,
-                           "MeshBody specified does not match MeshBody in hierarchy.");
+                          meshBodyName,
+                          "MeshBody specified does not match MeshBody in hierarchy." );
   }
   else
   {
@@ -77,11 +77,11 @@ string ParticleRegionBase::verifyMeshBodyName( Group const & meshBodies,
       {
         meshBodyFound = true;
       }
-    });
-    GEOS_ERROR_IF( !meshBodyFound, "MeshBody was not found");
+    } );
+    GEOS_ERROR_IF( !meshBodyFound, "MeshBody was not found" );
   }
 
-return meshBodyName;
+  return meshBodyName;
 }
 
 
