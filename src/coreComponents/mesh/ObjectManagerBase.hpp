@@ -426,7 +426,7 @@ public:
 
   /**
    * @brief Erase object from this object manager
-   * @param erasedIndex The local index of the object to be erased.
+   * @param indicesToErase The local indices of the object to be erased.
    */
   void eraseObject( std::set< localIndex > const & indicesToErase );
 

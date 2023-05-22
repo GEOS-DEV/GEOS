@@ -177,6 +177,7 @@ public:
 
   /**
    * @brief Set whether meshbody has particles
+   * @param hasParticles Boolean indicating whether the meshbody has particles
    */
   void setHasParticles( bool hasParticles );
 

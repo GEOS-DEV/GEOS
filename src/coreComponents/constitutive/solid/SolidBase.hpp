@@ -643,15 +643,6 @@ public:
     return m_density;
   }
 
-  /**
-   * @brief Full accessor for density.
-   * @return Accessor
-   */
-  array2d< real64 > & getDensityFull()
-  {
-    return m_density;
-  }
-
   ///@}
   //
 

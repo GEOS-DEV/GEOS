@@ -226,6 +226,12 @@ public:
     return this->getGroup( groupKeyStruct::particleRegionsGroup() ).getGroup< T >( key );
   }
 
+  /**
+   * @brief Determines if a ParticleRegion with the input name exists.
+   * @tparam T The type of ParticleRegion. May be a specific derived type of ParticleRegionBase.
+   * @param name The name/key of the ParticleRegion
+   * @return true if the region exists, false if not.
+   */
   template< typename T=ParticleRegionBase >
   bool hasRegion( string const & name ) const
   {
@@ -840,7 +846,7 @@ public:
    * @tparam VIEWTYPE data type
    * @param viewName view name of the data
    * @param regionNames list of region names
-   * @param materialNames list of corresponding material names
+   * @param materialKeyName key of the wrapper that holds the material name on the subRegion.
    * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
    * list
    * @return ParticleViewAccessor that contains VIEWTYPE data
@@ -858,7 +864,7 @@ public:
    * @tparam VIEWTYPE data type
    * @param viewName view name of the data
    * @param regionNames list of region names
-   * @param materialNames list of corresponding material names
+   * @param materialKeyName key of the wrapper that holds the material name on the subRegion.
    * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
    * list
    * @return ParticleViewAccessor that contains VIEWTYPE data
@@ -877,7 +883,7 @@ public:
    * @tparam PERM layout permutation sequence type
    * @param viewName view name of the data
    * @param regionNames list of region names
-   * @param materialNames list of corresponding material names
+   * @param materialKeyName key of the wrapper that holds the material name on the subRegion.
    * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material list
    * @return MaterialViewAccessor that contains the data views
    */
@@ -1007,6 +1013,9 @@ public:
   int UnpackGlobalMaps( buffer_unit_type const * & buffer,
                         ParticleViewAccessor< ReferenceWrapper< localIndex_array > > & packList );
 
+  /**
+   * @brief Updates the globalToLocal and localToGlobal maps
+   */
   void updateMaps();
 
 
