@@ -196,7 +196,9 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
     // The face should be connected to at least one element.
     if( facesToElements( faceIndex, 0 ) < 0 && facesToElements( faceIndex, 1 ) < 0 )
     {
-      GEOS_ERROR( getDataContext() << ": Face " << faceIndex << " is not connected to an element." );
+      GEOS_ERROR( getDataContext() << ": Face " << faceIndex << " is not connected to an element." <<
+                  "The cellBlocks of the CellElementRegions might not have referenced this face." <<
+                  " Be sure to include every primitive of every part of the mesh in the cellBlocks." );
     }
 
     // Take the first defined face-to-(elt/region/sub region) to sorting direction.
