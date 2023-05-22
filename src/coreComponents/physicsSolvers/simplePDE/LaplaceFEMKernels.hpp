@@ -156,7 +156,7 @@ public:
    * stack storage.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -187,7 +187,7 @@ public:
    * @copydoc geos::finiteElement::ImplicitKernelBase::quadraturePointKernel
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const
@@ -212,7 +212,7 @@ public:
    * global matrix/vector.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {

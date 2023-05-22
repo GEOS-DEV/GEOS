@@ -100,17 +100,13 @@ public:
   using UPDATE_BASE::smallStrainUpdate;
   using UPDATE_BASE::smallStrainNoStateUpdate_StressOnly;
   using UPDATE_BASE::smallStrainUpdate_StressOnly;
-  using UPDATE_BASE::hypoUpdate;
-  using UPDATE_BASE::hypoUpdate_StressOnly;
-  using UPDATE_BASE::hyperUpdate;
-  using UPDATE_BASE::hyperUpdate_StressOnly;
   using UPDATE_BASE::saveConvergedState;
 
   using UPDATE_BASE::m_disableInelasticity;
 
   //Standard quadratic degradation functions
 
-  GEOS_FORCE_INLINE
+  inline
   GEOS_HOST_DEVICE
   virtual real64 getDegradationValue( localIndex const k,
                                       localIndex const q ) const
@@ -133,7 +129,7 @@ public:
   }
 
 
-  GEOS_FORCE_INLINE
+  inline
   GEOS_HOST_DEVICE
   virtual real64 getDegradationDerivative( real64 const d ) const
   {
@@ -141,7 +137,7 @@ public:
   }
 
 
-  GEOS_FORCE_INLINE
+  inline
   GEOS_HOST_DEVICE
   virtual real64 getDegradationSecondDerivative( real64 const d ) const
   {
@@ -153,11 +149,12 @@ public:
   GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( & stress )[6],
                                   DiscretizationOps & stiffness ) const override
   {
-    UPDATE_BASE::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+    UPDATE_BASE::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
 
     if( m_disableInelasticity )
     {

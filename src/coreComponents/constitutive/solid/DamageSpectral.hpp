@@ -86,7 +86,7 @@ public:
 
   // Lorentz type degradation functions
 
-  GEOS_FORCE_INLINE
+  inline
   GEOS_HOST_DEVICE
   virtual real64 getDegradationValue( localIndex const k,
                                       localIndex const q ) const override
@@ -101,7 +101,7 @@ public:
   }
 
 
-  GEOS_FORCE_INLINE
+  inline
   GEOS_HOST_DEVICE
   virtual real64 getDegradationDerivative( real64 const d ) const override
   {
@@ -115,7 +115,7 @@ public:
   }
 
 
-  GEOS_FORCE_INLINE
+  inline
   GEOS_HOST_DEVICE
   virtual real64 getDegradationSecondDerivative( real64 const d ) const override
   {
@@ -130,15 +130,16 @@ public:
 
 
   GEOS_HOST_DEVICE
-  virtual void smallStrainUpdate( localIndex const k,
-                                  localIndex const q,
-                                  real64 const ( &strainIncrement )[6],
-                                  real64 ( & stress )[6],
-                                  real64 ( & stiffness )[6][6] ) const override final
+  void smallStrainUpdate( localIndex const k,
+                          localIndex const q,
+                          real64 const & timeIncrement,
+                          real64 const ( &strainIncrement )[6],
+                          real64 ( & stress )[6],
+                          real64 ( & stiffness )[6][6] ) const
   {
     // perform elastic update for "undamaged" stress
 
-    UPDATE_BASE::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );  // elastic trial update
+    UPDATE_BASE::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );  // elastic trial update
 
     if( m_disableInelasticity )
     {
@@ -252,11 +253,12 @@ public:
   GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( & stress )[6],
                                   DiscretizationOps & stiffness ) const final
   {
-    smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );
+    smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
   }
 
 

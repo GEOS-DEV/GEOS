@@ -219,14 +219,14 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNum
   arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
 
   GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
-  forAll< parallelDevicePolicy< 32 > >( sourceConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
+  forAll< parallelDevicePolicy< > >( sourceConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsAccessible[isrc] == 1 )
     {
       for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
       {
         real32 const localIncrement = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
-        RAJA::atomicAdd< AtomicPolicy< parallelDevicePolicy< 32 > > >( &rhs[sourceNodeIds[isrc][inode]], localIncrement );
+        RAJA::atomicAdd< AtomicPolicy< parallelDevicePolicy< > > >( &rhs[sourceNodeIds[isrc][inode]], localIncrement );
       }
     }
   } );
@@ -788,7 +788,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
       {
         m_lifo->pushWait();
       }
-      forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const nodeIdx )
+      forAll< parallelDevicePolicy< > >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const nodeIdx )
       {
         p_dt2[nodeIdx] = (p_np1[nodeIdx] - 2*p_n[nodeIdx] + p_nm1[nodeIdx])/(dt*dt);
       } );
@@ -827,7 +827,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
     }
 
-    forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+    forAll< parallelDevicePolicy< > >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       p_nm1[a] = p_n[a];
       p_n[a]   = p_np1[a];
@@ -901,7 +901,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         constexpr localIndex numNodesPerElem = 8;
         arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
         GEOS_MARK_SCOPE ( updatePartialGradient );
-        forAll< parallelDevicePolicy< 32 > >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const eltIdx )
+        forAll< parallelDevicePolicy< > >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const eltIdx )
         {
           if( elemGhostRank[eltIdx]<0 )
           {
@@ -915,7 +915,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
       } );
     }
 
-    forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+    forAll< parallelDevicePolicy< > >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       p_nm1[a] = p_n[a];
       p_n[a]   = p_np1[a];
@@ -956,7 +956,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
 
     finiteElement::
-      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+      regionBasedKernelApplication< parallelDevicePolicy< >,
                                     constitutive::NullModel,
                                     CellElementSubRegion >( mesh,
                                                             regionNames,
@@ -984,7 +984,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       // 3) p_n+1 = (p_n+1*p_nm1 + 2*m*p_n + dt2*(rhs-stiffness))/mass
       // 4) if damp : p_n+1 *= mass/(mass + 0.5*dt*damping);
 
-      forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+      forAll< parallelDevicePolicy< > >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
         if( freeSurfaceNodeIndicator[a] != 1 )
         {
@@ -992,13 +992,13 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
         }
       } );
 
-      forAll< parallelDevicePolicy< 32 > >( dampingVector.size(), [=] GEOS_HOST_DEVICE ( localIndex const b )
+      forAll< parallelDevicePolicy< > >( dampingVector.size(), [=] GEOS_HOST_DEVICE ( localIndex const b )
       {
         int a = dampingNodes[b];
         p_np1[a] += -0.5*dt*dampingVector[b];
       } );
 
-      forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+      forAll< parallelDevicePolicy< > >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
         if( freeSurfaceNodeIndicator[a] != 1 )
         {
@@ -1009,7 +1009,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
         }
       } );
 
-      forAll< parallelDevicePolicy< 32 > >( dampingVector.size(), [=] GEOS_HOST_DEVICE ( localIndex const b )
+      forAll< parallelDevicePolicy< > >( dampingVector.size(), [=] GEOS_HOST_DEVICE ( localIndex const b )
       {
         int a = dampingNodes[b];
         p_np1[a] *= mass[a];
@@ -1040,7 +1040,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       applyPML( time_n, domain );
 
       GEOS_MARK_SCOPE ( updatePWithPML );
-      forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+      forAll< parallelDevicePolicy< > >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
         if( freeSurfaceNodeIndicator[a] != 1 )
         {

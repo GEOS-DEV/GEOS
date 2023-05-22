@@ -211,7 +211,9 @@ void EmbeddedSurfaceFluxKernel::
 }
 
 template< localIndex MAX_NUM_CONNECTIONS >
-void EmbeddedSurfaceFluxKernel::
+GEOS_HOST_DEVICE
+void
+EmbeddedSurfaceFluxKernel::
   compute( localIndex const numFluxElems,
            arraySlice1d< localIndex const > const & seri,
            arraySlice1d< localIndex const > const & sesri,
@@ -529,7 +531,9 @@ void FaceElementFluxKernel::
       stackArray2d< real64, maxNumFluxElems * maxStencilSize > dFlux_dAper( numFluxElems, stencilSize );
 
       // compute transmissibility
-      real64 transmissibility[maxNumConnections][2], dTrans_dPres[maxNumConnections][2], dTrans_dDispJump[maxNumConnections][2][3];
+      real64 transmissibility[maxNumConnections][2]{};
+      real64 dTrans_dPres[maxNumConnections][2]{};
+      real64 dTrans_dDispJump[maxNumConnections][2][3]{};
       GEOS_UNUSED_VAR( dPerm_dPres, dPerm_dDispJump );
       stencilWrapper.computeWeights( iconn,
                                      permeability,

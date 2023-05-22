@@ -207,6 +207,25 @@ array1d< T > fromStringToArray( string const & str )
 template< typename T >
 string toMetricPrefixString( T const & value );
 
+/**
+ * @brief Compute the length of a constant string at compile-time.
+ */
+// TODO c++17: this function is to remove in favor of std::string_view
+constexpr size_t cstrlen( char const * const str )
+{
+  if( str )
+  {
+    char const * ptr = str;
+    for(; *ptr != '\0'; ++ptr )
+    {}
+    return ptr - str;
+  }
+  else
+  {
+    return 0;
+  }
+}
+
 } // namespace stringutilities
 } // namespace geos
 
