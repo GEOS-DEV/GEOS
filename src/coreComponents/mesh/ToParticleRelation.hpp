@@ -177,7 +177,6 @@ void insertMany( OrderedVariableToManyParticleRelation & relation,
  * @brief Reserve a set number of entities for a particle to relate to
  * @param relation The relationship mapping to insert a single particle relation for
  *                 a single object into.
- * @param firstIndex The object index to insert a particle relation from.
  * @param numToReserve Number of entities to reserve
  */
 void reserveNeighbors( OrderedVariableToManyParticleRelation & relation,

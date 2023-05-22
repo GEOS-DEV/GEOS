@@ -72,13 +72,14 @@ public:
 
   /**
    * @brief Get whether particle has r-vectors.
+   * @return bool indicating whether particle has r-vectors.
    */
   bool hasRVectors() const
   { return m_hasRVectors; }
 
   /**
    * @brief Set whether particle has r-vectors.
-   * @param[in] Boolean indicating whether particle has r-vectors.
+   * @param[in] hasRVectors bool indicating whether particle has r-vectors.
    */
   void setHasRVectors( bool hasRVectors )
   { m_hasRVectors = hasRVectors; }
@@ -150,6 +151,7 @@ public:
 
   /**
    * @brief Set the center of each particle in this subregion.
+   * @param particleCenter the list of coordinates to be used as particle centers
    */
   void setParticleCenter( array2d< real64 > particleCenter )
   { m_particleCenter = particleCenter; }
@@ -327,23 +329,50 @@ public:
     static constexpr auto constitutiveModelsString() { return "ConstitutiveModels"; }
   };
 
+  /**
+   * @brief Packs the data of particles on this subregion
+   * @param buffer The buffer to pack into
+   * @param localIndices the local indices of the particles to pack
+   * @param doPack whether to actually pack (1) or simply check the size of the packed contents (0)
+   * @return the size of the packed contents
+   */
   unsigned int particlePack( buffer_type & buffer,
                              arrayView1d< localIndex > const & localIndices,
                              bool doPack ) const;
 
+  /**
+   * @brief Unpacks the data of particles on this subregion
+   * @param buffer The buffer to unpack from
+   * @param startingIndex The local index where unpacking should begin
+   * @param numberOfIncomingParticles the number of incoming particles
+   */
   void particleUnpack( buffer_type & buffer,
                        int const & startingIndex,
                        int const & numberOfIncomingParticles );
 
+  /**
+   * @brief Erases particle field data at the provided local indices
+   * @param indicesToErase the local particle indices whose data should be erased
+   */
   void erase( std::set< localIndex > const & indicesToErase );
 
+  /**
+   * @brief Identifies the local indices of non-ghost particles
+   */
   void setActiveParticleIndices();
 
+  /**
+   * @brief Returns the local indices of all non-ghost particles
+   * @return the local indices of all non-ghost particles
+   */
   SortedArrayView< localIndex const > const activeParticleIndices()
   {
     return m_activeParticleIndices.toView();
   }
 
+  /**
+   * @brief Updates the globalToLocal and localToGlobal maps
+   */
   void updateMaps();
 
 private:

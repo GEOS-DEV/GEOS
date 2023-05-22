@@ -51,25 +51,56 @@ public:
 
   /**
    * @brief Get the type of particle in this subregion.
-   * @return a string specifying the type of particle in this subregion
-   *
+   * @return an enum specifying the type of particle in this subregion
    */
   virtual ParticleType getParticleType() const = 0;
 
+  /**
+   * @brief Get the list of particle global IDs in this subregion.
+   * @return the list of particle global IDs in this subregion.
+   */
   virtual array1d< globalIndex > getParticleID() const = 0;
 
+  /**
+   * @brief Get the list of particle group numbers (for contact) in this subregion.
+   * @return the list of particle group numbers (for contact) in this subregion.
+   */
   virtual array1d< int > getParticleGroup() const = 0;
 
+  /**
+   * @brief Get the list of particle damage values in this subregion.
+   * @return the list of particle damage values in this subregion.
+   */
   virtual array1d< real64 > getParticleDamage() const = 0;
 
+  /**
+   * @brief Get the list of particle center locations in this subregion.
+   * @return the list of particle center locations in this subregion.
+   */
   virtual array2d< real64 > getParticleCenter() const = 0;
 
+  /**
+   * @brief Get the list of particle velocities in this subregion.
+   * @return the list of particle velocities in this subregion.
+   */
   virtual array2d< real64 > getParticleVelocity() const = 0;
 
+  /**
+   * @brief Get the list of particle volumes in this subregion.
+   * @return the list of particle volumes in this subregion.
+   */
   virtual array1d< real64 > getParticleVolume() const = 0;
 
+  /**
+   * @brief Get the list of particle r-vectors in this subregion.
+   * @return the list of particle r-vectors in this subregion.
+   */
   virtual array3d< real64 > getParticleRVectors() const = 0;
 
+  /**
+   * @brief Query whether this subregion has particles of a type that have r-vectors that depend on the deformation gradient
+   * @return a bool indicating whether particles on this subregion have r-vectors that depend on the deformation gradient
+   */
   virtual bool hasRVectors() const = 0;
 
   /**
