@@ -127,7 +127,7 @@ string Group::getPath() const
 {
   // In the Conduit node heirarchy everything begins with 'Problem', we should change it so that
   // the ProblemManager actually uses the root Conduit Node but that will require a full rebaseline.
-  string const noProblem = getConduitNode().path().substr( std::strlen( dataRepository::keys::ProblemManager ) - 1 );
+  string const noProblem = getConduitNode().path().substr( stringutilities::cstrlen( dataRepository::keys::ProblemManager ) );
   return noProblem.empty() ? "/" : noProblem;
 }
 
@@ -265,6 +265,32 @@ string Group::dumpInputOptions() const
   }
 
   return rval;
+}
+
+string Group::dumpSubGroupsNames() const
+{
+  if( numSubGroups() == 0 )
+  {
+    return getName() + " has no children.";
+  }
+  else
+  {
+    return "The children of " + getName() + " are: " +
+           "{ " + stringutilities::join( getSubGroupsNames(), ", " ) + " }";
+  }
+}
+
+string Group::dumpWrappersNames() const
+{
+  if( numWrappers() == 0 )
+  {
+    return getName() + " has no wrappers.";
+  }
+  else
+  {
+    return "The wrappers of " + getName() + " are: " +
+           "{ " + stringutilities::join( getWrappersNames(), ", " ) + " }";
+  }
 }
 
 void Group::deregisterGroup( string const & name )
@@ -549,7 +575,7 @@ void Group::loadFromConduit()
     return;
   }
 
-  m_size = m_conduitNode.child( "__size__" ).value();
+  m_size = m_conduitNode.fetch_existing( "__size__" ).value();
   localIndex const groupSize = m_size;
 
   forWrappers( [&]( WrapperBase & wrapper )
@@ -610,8 +636,10 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
         break;
       }
     }
-    GEOS_ERROR_IF( !foundTarget,
-                   "Could not find the specified path from the starting group." );
+    GEOS_THROW_IF( !foundTarget,
+                   "Could not find the specified path start.\n"<<
+                   "Specified path is " << path,
+                   std::domain_error );
   }
 
   string::size_type currentPosition;
@@ -649,6 +677,22 @@ localIndex Group::getSubGroupIndex( keyType const & key ) const
 PyTypeObject * Group::getPythonType() const
 { return geos::python::getPyGroupType(); }
 #endif
+
+std::vector< string > Group::getSubGroupsNames() const
+{
+  std::vector< string > childrenNames;
+  childrenNames.reserve( numSubGroups() );
+  forSubGroups( [&]( Group const & subGroup ){ childrenNames.push_back( subGroup.getName() ); } );
+  return childrenNames;
+}
+
+std::vector< string > Group::getWrappersNames() const
+{
+  std::vector< string > wrappersNames;
+  wrappersNames.reserve( numWrappers() );
+  forWrappers( [&]( WrapperBase const & wrapper ){ wrappersNames.push_back( wrapper.getName() ); } );
+  return wrappersNames;
+}
 
 } /* end namespace dataRepository */
 } /* end namespace geos  */

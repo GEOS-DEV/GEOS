@@ -28,7 +28,7 @@
 #include "common/TimingMacros.hpp"
 #include "common/LifoStorageCommon.hpp"
 #include "common/LifoStorageHost.hpp"
-#ifdef GEOSX_USE_CUDA
+#ifdef GEOS_USE_CUDA
 #include "common/LifoStorageCuda.hpp"
 #endif
 
@@ -66,7 +66,7 @@ public:
     LIFO_LOG_RANK( " LIFO : buffer size "<< bufferSize << "MB" );
     if( numberOfBuffersToStoreOnDevice < 0 )
     {
-#ifdef GEOSX_USE_CUDA
+#ifdef GEOS_USE_CUDA
       numberOfBuffersToStoreOnDevice = LifoStorageCuda< T, INDEX_TYPE >::computeNumberOfBufferOnDevice( -numberOfBuffersToStoreOnDevice, m_bufferSize, m_maxNumberOfBuffers );
 #else
       numberOfBuffersToStoreOnDevice = 0;
@@ -79,7 +79,7 @@ public:
     }
     LIFO_LOG_RANK( " LIFO : allocating "<< numberOfBuffersToStoreOnHost <<" buffers on host" );
     LIFO_LOG_RANK( " LIFO : allocating "<< numberOfBuffersToStoreOnDevice <<" buffers on device" );
-#ifdef GEOSX_USE_CUDA
+#ifdef GEOS_USE_CUDA
     if( numberOfBuffersToStoreOnDevice > 0 )
     {
       m_lifo = std::make_unique< LifoStorageCuda< T, INDEX_TYPE > >( name, elemCnt, numberOfBuffersToStoreOnDevice, numberOfBuffersToStoreOnHost, maxNumberOfBuffers );

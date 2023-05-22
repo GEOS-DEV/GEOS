@@ -441,7 +441,7 @@ public:
                    MPI_Status * MPI_PARAM( request ) );
 
   template< typename T >
-  static int iSend( arrayView1d< T const > const & buf,
+  static int iSend( arrayView1d< T > const & buf,
                     int MPI_PARAM( dest ),
                     int tag,
                     MPI_Comm MPI_PARAM( comm ),
@@ -912,7 +912,7 @@ int MpiWrapper::recv( array1d< T > & buf,
 }
 
 template< typename T >
-int MpiWrapper::iSend( arrayView1d< T const > const & buf,
+int MpiWrapper::iSend( arrayView1d< T > const & buf,
                        int MPI_PARAM( dest ),
                        int tag,
                        MPI_Comm MPI_PARAM( comm ),
@@ -921,7 +921,7 @@ int MpiWrapper::iSend( arrayView1d< T const > const & buf,
 #ifdef GEOSX_USE_MPI
   GEOS_ERROR_IF( (*request)!=MPI_REQUEST_NULL,
                  "Attempting to use an MPI_Request that is still in use." );
-  return MPI_Isend( reinterpret_cast< char const * >( buf.data() ),
+  return MPI_Isend( reinterpret_cast< void const * >( buf.data() ),
                     buf.size() * sizeof( T ),
                     MPI_CHAR,
                     dest,
