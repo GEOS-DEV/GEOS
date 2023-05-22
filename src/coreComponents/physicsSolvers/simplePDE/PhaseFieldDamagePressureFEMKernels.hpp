@@ -196,6 +196,46 @@ public:
   }
 
   /**
+   * @copydoc ::geosx::finiteElement::KernelBase::kernelLaunch
+   *
+   * @detail it uses the kernelLaunch interface of KernelBase but it only launches the kernel
+   * on the set of fractured elements within the subregion.
+   *
+   */
+  //START_kernelLauncher
+  template< typename POLICY,
+            typename KERNEL_TYPE >
+  static
+  real64
+  kernelLaunch( localIndex const numElems,
+                KERNEL_TYPE const & kernelComponent )
+  {
+    GEOSX_MARK_FUNCTION;
+
+    GEOSX_UNUSED_VAR( numElems );
+
+    // Define a RAJA reduction variable to get the maximum residual contribution.
+    RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
+    //EXEMPLE OF KERNEL LAUNCH ON SUBDOMAIN - ANDRE
+    forAll< POLICY >( kernelComponent.m_fracturedElems.size(),
+                      [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    {
+      localIndex k = kernelComponent.m_fracturedElems[i];
+      typename KERNEL_TYPE::StackVariables stack;
+
+      kernelComponent.setup( k, stack );
+      for( integer q=0; q<numQuadraturePointsPerElem; ++q )
+      {
+        kernelComponent.quadraturePointKernel( k, q, stack );
+      }
+      maxResidual.max( kernelComponent.complete( k, stack ) );
+    } );
+
+    return maxResidual.get();
+  }
+  //END_kernelLauncher  
+
+  /**
    * @copydoc geosx::finiteElement::ImplicitKernelBase::quadraturePointJacobianContribution
    */
   GEOSX_HOST_DEVICE

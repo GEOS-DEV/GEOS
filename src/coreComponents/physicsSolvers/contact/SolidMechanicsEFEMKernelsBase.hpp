@@ -211,7 +211,7 @@ public:
 
     // Define a RAJA reduction variable to get the maximum residual contribution.
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
-
+    //EXEMPLE OF KERNEL LAUNCH ON SUBDOMAIN - ANDRE
     forAll< POLICY >( kernelComponent.m_fracturedElems.size(),
                       [=] GEOSX_HOST_DEVICE ( localIndex const i )
     {

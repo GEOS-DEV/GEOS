@@ -722,7 +722,7 @@ void MultiResolutionFlowHFSolver::cutDamagedElements( MeshLevel & base,
   CellElementSubRegion const & subRegion = elementRegion.getSubRegion< CellElementSubRegion >( 0 );
 
   //ghosts
-  arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+  arrayView1d< integer const > const baseGhostRank = subRegion.ghostRank();
   
   //FaceManager const & baseFaceManager = base.getFaceManager();
   //array2d< localIndex > const & elemToFaceList = subRegion.faceList();
@@ -730,14 +730,14 @@ void MultiResolutionFlowHFSolver::cutDamagedElements( MeshLevel & base,
   //auto faceNormals = baseFaceManager.faceNormal();
   // Get domain
   MeshManager & meshManager = this->getGroupByPath< MeshManager >( "/Problem/Mesh");
-  integer Nx = meshManager.getGroup<InternalMeshGenerator>(0).getNx();
+  //integer Nx = meshManager.getGroup<InternalMeshGenerator>(0).getNx();
   integer Ny = meshManager.getGroup<InternalMeshGenerator>(0).getNy();
   integer Nz = meshManager.getGroup<InternalMeshGenerator>(0).getNz();
-  integer nx = meshManager.getGroup<InternalMeshGenerator>(1).getNx();
+  //integer nx = meshManager.getGroup<InternalMeshGenerator>(1).getNx();
   integer ny = meshManager.getGroup<InternalMeshGenerator>(1).getNy();
   integer nz = meshManager.getGroup<InternalMeshGenerator>(1).getNz();
 
-  localIndex rx=nx/Nx;
+  //localIndex rx=nx/Nx;
   localIndex ry=ny/Ny;
   localIndex rz=nz/Nz;
   SortedArrayView< localIndex const > const fracturedElements = subRegion.fracturedElementsList();
@@ -750,35 +750,52 @@ void MultiResolutionFlowHFSolver::cutDamagedElements( MeshLevel & base,
   for(auto && elem:baseFrontCopy)
   {
     //PARALLEL: split the work to the right rank
-    localIndex triplet[3];
+    //localIndex triplet[3];
     integer fracCount = 0;
     GEOSX_LOG_LEVEL( 3, "Entering coarseMap\n" );
-    coarseToFineStructuredElemMap(subRegion.localToGlobalMap()[elem],Nx,Ny,Nz,rx,ry,rz,triplet);
-    GEOSX_LOG_LEVEL( 3, "Base elem index: " << elem << " triplet: ( "<<triplet[0]<<", "<<triplet[1]<<", "<<triplet[2]<<" )\n" );
-    for(int i=0; i<rx; i++){
-      for(int j=0; j<ry; j++){
-        for(int k=0; k<rz; k++){
-          globalIndex fineElem = (triplet[0] + i)*ry*Ny*rz*Nz + (triplet[1] + j)*rz*Nz + (triplet[2] + k);
-          if(fineElem > 0){
-              GEOSX_LOG_LEVEL( 3, "fineElem: " << fineElem << " from base elem: "<<elem<<"\n" );
-          }
-          //get averageDamage in fineElem
-          real64 averageDamage;
-          //I dont think we need to cut the ghosts
-          if(ghostRank[elem]>=0){
-             averageDamage = 0.0;
-          }
-          else{
-             averageDamage = utilGetElemAverageDamage(fineElem, patch);
-          }
-          if (averageDamage > 0.9)
-          {
-            fracCount++;  
-          }
+    ////////version with new maps
+
+    //loop over all fines in m_baseToPatchElementRelation[K]
+    if(baseGhostRank[elem]<0)
+    {
+      for(auto fineElemGlobal:m_baseToPatchElementRelation[subRegion.localToGlobalMap()[elem]])
+      { 
+        //get averageDamage in fineElem
+        real64 averageDamage = utilGetElemAverageDamage(fineElemGlobal, patch);
+        if (averageDamage > 0.9)
+        {
+          fracCount++;  
         }        
       }
     }
-
+    ///////////
+    //////////other version
+    // coarseToFineStructuredElemMap(subRegion.localToGlobalMap()[elem],Nx,Ny,Nz,rx,ry,rz,triplet);
+    // GEOSX_LOG_LEVEL( 3, "Base elem index: " << elem << " triplet: ( "<<triplet[0]<<", "<<triplet[1]<<", "<<triplet[2]<<" )\n" );
+    // for(int i=0; i<rx; i++){
+    //   for(int j=0; j<ry; j++){
+    //     for(int k=0; k<rz; k++){
+    //       globalIndex fineElem = (triplet[0] + i)*ry*Ny*rz*Nz + (triplet[1] + j)*rz*Nz + (triplet[2] + k);
+    //       if(fineElem > 0){
+    //           GEOSX_LOG_LEVEL( 3, "fineElem: " << fineElem << " from base elem: "<<elem<<"\n" );
+    //       }
+    //       //get averageDamage in fineElem
+    //       real64 averageDamage;
+    //       //I dont think we need to cut the ghosts
+    //       if(ghostRank[elem]>=0){
+    //          averageDamage = 0.0;
+    //       }
+    //       else{
+    //          averageDamage = utilGetElemAverageDamage(fineElem, patch);
+    //       }
+    //       if (averageDamage > 0.9)
+    //       {
+    //         fracCount++;  
+    //       }
+    //     }        
+    //   }
+    // }
+    //////////
     if (fracCount >= ry*rz || fracturedElements.contains(elem))
     {
       efemGenerator.insertToCut(elem);
@@ -843,6 +860,7 @@ void MultiResolutionFlowHFSolver::writeBasePressuresToPatch(MeshLevel & base,
   MpiWrapper::allGather( LvArray::integerConversion< int >( toSend.size(0)*toSend.size(1) ), dataSizes, MPI_COMM_GEOSX );
 
   int const totalDataSize = std::accumulate( dataSizes.begin(), dataSizes.end(), 0 );
+  GEOSX_LOG_LEVEL_RANK_0( 1, "totalDataSize = "<<totalDataSize<<"\n");
   //array1d<T> allData( totalDataSize );
   array2d<real64> allData( totalDataSize/4, 4 );
   std::vector< int > mpiDisplacements( MpiWrapper::commSize(), 0 );
@@ -896,9 +914,6 @@ void MultiResolutionFlowHFSolver::writeBasePressuresToPatch(MeshLevel & base,
         }
       }
 
-      if(k==1){
-        std::cout<<"P_f copied from base: "<<allData[minIndex][3]<<std::endl;
-      }
       patchFracturePressure[0][0][k] = allData[minIndex][3];
     } //TODO: needs to find closest fracture cell from base
   } );
@@ -989,15 +1004,15 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
     patchDamageSolver.setInitialCrackNodes( m_nodeFixDamage );
 
     //now perform the subproblem run with no BCs on displacements, just to set the damage inital condition;
-    if( iter == 0 )
-    {
-      //TODO: eventually, we will need to update the patch domain
-      real64 dtUseless = patchSolver.solverStep( time_n,
-                                                 dtReturn,
-                                                 cycleNumber,
-                                                 domain );
-      GEOSX_UNUSED_VAR( dtUseless );
-    }
+    // if( iter == 0 )
+    // {
+    //   //TODO: eventually, we will need to update the patch domain
+    //   real64 dtUseless = patchSolver.solverStep( time_n,
+    //                                              dtReturn,
+    //                                              cycleNumber,
+    //                                              domain );
+    //   GEOSX_UNUSED_VAR( dtUseless );
+    // }
 
     //test for convergence of MR scheme, based on changes to the fracture topology
     int added = m_addedFractureElements;
@@ -1010,10 +1025,13 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
       break;  
     }
 
-    dtReturnTemporary = baseSolver.nonlinearImplicitStep( time_n,
-                                                          dtReturn,
-                                                          cycleNumber,
-                                                          domain );                                              
+    //if MR iteration = 0 or add = true
+    if(iter==0 || added!=0){
+      dtReturnTemporary = baseSolver.nonlinearImplicitStep( time_n,
+                                                            dtReturn,
+                                                            cycleNumber,
+                                                            domain );  
+    }                                            
 
     if( dtReturnTemporary < dtReturn )
     {
@@ -1036,7 +1054,7 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
     //TODO: m_nodeFixDisp and m_fixedDispList dont need to be members, they can be initialized at every time step, this is actually safer
     //since the size of the boundary can change
     //THIS IS LIKELY TRANSFERING PRESSURE_N
-    patchSolver.implicitStepComplete( time_n, dt, domain );
+    //patchSolver.implicitStepComplete( time_n, dt, domain );
     baseSolver.implicitStepComplete( time_n, dt, domain );
     patchSolidSolver.setInternalBoundaryConditions( m_nodeFixDisp, m_fixedDispList );
     writeBasePressuresToPatch(base, patch);
@@ -1059,7 +1077,7 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
     if( time_n > 0 )
     {
       //efemGenerator.propagationStep( domain, m_baseTip, m_patchTip, m_baseTipElementIndex );
-      cutDamagedElements( base, patch );  
+      //cutDamagedElements( base, patch );  
       baseSolver.setupSystem( domain,
                               baseSolver.getDofManager(),
                               baseSolver.getLocalMatrix(),
