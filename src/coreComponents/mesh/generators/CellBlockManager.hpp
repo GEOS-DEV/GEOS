@@ -241,7 +241,6 @@ private:
   /**
    * @brief Trigger the face to nodes, edges and elements mappings.
    */
-
   void buildFaceMaps();
 
   template< typename BASEMAP, typename FUNC >
