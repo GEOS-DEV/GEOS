@@ -323,7 +323,11 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   /// @copydoc WrapperBase::unpackByIndex
   virtual
-  localIndex unpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice, parallelDeviceEvents & events,
+  localIndex unpackByIndex( buffer_unit_type const * & buffer,
+                            arrayView1d< localIndex const > const & unpackIndices,
+                            bool withMetadata,
+                            bool onDevice,
+                            parallelDeviceEvents & events,
                             MPI_Op op ) override final
   {
     localIndex unpackedSize = 0;

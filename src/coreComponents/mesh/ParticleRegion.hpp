@@ -95,6 +95,7 @@ public:
 
   /**
    * @brief Get the list of particleBlock names.
+   * @return A string array of particle block names
    */
   string_array getParticleBlockNames()
   {
@@ -105,6 +106,10 @@ public:
 
   ///@}
 
+  /**
+   * @brief Calculate and return the locations of all particle corners
+   * @return The list of particle corner coordinates
+   */
   array2d< real64 > getParticleCorners() const;
 
   /**

@@ -84,42 +84,63 @@ public:
   array1d< globalIndex > getParticleID() const override
   { return m_particleID; }
 
+  /**
+   * @brief Get the type of particle in this subregion.
+   */
   void setParticleID( array1d< globalIndex > const particleID )
   { m_particleID = particleID; }
 
   array2d< real64 > getParticleCenter() const override
   { return m_particleCenter; }
 
+  /**
+   * @brief Set the list of particle center locations in this subregion.
+   */
   void setParticleCenter( array2d< real64 > const particleCenter )
   { m_particleCenter = particleCenter; }
 
   array2d< real64 > getParticleVelocity() const override
   { return m_particleVelocity; }
 
+  /**
+   * @brief Set the list of particle velocities in this subregion.
+   */
   void setParticleVelocity( array2d< real64 > const particleVelocity )
   { m_particleVelocity = particleVelocity; }
 
   array1d< int > getParticleGroup() const override
   { return m_particleGroup; }
 
+  /**
+   * @brief Set the list of particle group numbers (for contact) in this subregion.
+   */
   void setParticleGroup( array1d< int > const particleGroup )
   { m_particleGroup = particleGroup; }
 
   array1d< real64 > getParticleDamage() const override
   { return m_particleDamage; }
 
+  /**
+   * @brief Set the list of particle damage values in this subregion.
+   */
   void setParticleDamage( array1d< real64 > const particleDamage )
   { m_particleDamage = particleDamage; }
 
   array1d< real64 > getParticleVolume() const override
   { return m_particleVolume; }
 
+  /**
+   * @brief Set the list of particle volumes in this subregion.
+   */
   void setParticleVolume( array1d< real64 > const particleVolume )
   { m_particleVolume = particleVolume; }
 
   array3d< real64 > getParticleRVectors() const override
   { return m_particleRVectors; }
 
+  /**
+   * @brief Set the list of particle r-vectors in this subregion.
+   */
   void setParticleRVectors( array3d< real64 > const particleRVectors )
   { m_particleRVectors = particleRVectors; }
 
