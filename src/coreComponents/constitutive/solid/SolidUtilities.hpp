@@ -220,7 +220,7 @@ struct SolidUtilities
    *
    * Note that if the derived class has tensorial state variables (beyond the
    * stress itself) care must be taken to rotate these as well.
-   * 
+   *
    * This method should work as-is for anisotropic properties and yield functions.
    *
    * @param solid the solid kernel wrapper
@@ -240,7 +240,7 @@ struct SolidUtilities
                localIndex const k,
                localIndex const q,
                real64 const timeIncrement,
-               real64 ( &Ddt )[6],
+               real64 ( & Ddt )[6],
                real64 const ( &RotBeginning )[3][3],
                real64 const ( &RotEnd )[3][3],
                real64 ( & stress )[6],
@@ -250,16 +250,16 @@ struct SolidUtilities
     Ddt[3] *= 0.5;
     Ddt[4] *= 0.5;
     Ddt[5] *= 0.5;
-    
+
     // Rotate m_oldStress and Ddt from beginning-of-step configuration to reference configuration.
     real64 temp[6] = { 0 };
-    real64 RotBeginningTranpose[3][3] = { {0} };    
+    real64 RotBeginningTranpose[3][3] = { {0} };
     LvArray::tensorOps::transpose< 3, 3 >( RotBeginningTranpose, RotBeginning ); // We require the transpose since we're un-rotating
-    LvArray::tensorOps::copy< 6 >( temp, solid.m_oldStress[ k ][ q ]  );
+    LvArray::tensorOps::copy< 6 >( temp, solid.m_oldStress[ k ][ q ] );
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( solid.m_oldStress[ k ][ q ], RotBeginningTranpose, temp );
-    LvArray::tensorOps::copy< 6 >( temp, Ddt  );
+    LvArray::tensorOps::copy< 6 >( temp, Ddt );
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( Ddt, RotBeginningTranpose, temp );
-    
+
     // Convert strain increment to Voigt notation by re-introducing factors of 2 on shear terms
     Ddt[3] *= 2;
     Ddt[4] *= 2;
@@ -324,7 +324,7 @@ struct SolidUtilities
                           localIndex const k,
                           localIndex const q,
                           real64 const timeIncrement,
-                          real64 ( &Ddt )[6],
+                          real64 ( & Ddt )[6],
                           real64 const ( &RotBeginning )[3][3],
                           real64 const ( &RotEnd )[3][3],
                           real64 ( & stress )[6] )
@@ -333,16 +333,16 @@ struct SolidUtilities
     Ddt[3] *= 0.5;
     Ddt[4] *= 0.5;
     Ddt[5] *= 0.5;
-    
+
     // Rotate m_oldStress and Ddt from beginning-of-step configuration to reference configuration.
     real64 temp[6] = { 0 };
-    real64 RotBeginningTranpose[3][3] = { {0} };    
+    real64 RotBeginningTranpose[3][3] = { {0} };
     LvArray::tensorOps::transpose< 3, 3 >( RotBeginningTranpose, RotBeginning ); // We require the transpose since we're un-rotating
-    LvArray::tensorOps::copy< 6 >( temp, solid.m_oldStress[ k ][ q ]  );
+    LvArray::tensorOps::copy< 6 >( temp, solid.m_oldStress[ k ][ q ] );
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( solid.m_oldStress[ k ][ q ], RotBeginningTranpose, temp );
-    LvArray::tensorOps::copy< 6 >( temp, Ddt  );
+    LvArray::tensorOps::copy< 6 >( temp, Ddt );
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( Ddt, RotBeginningTranpose, temp );
-    
+
     // Convert strain increment to Voigt notation by re-introducing factors of 2 on shear terms
     Ddt[3] *= 2;
     Ddt[4] *= 2;

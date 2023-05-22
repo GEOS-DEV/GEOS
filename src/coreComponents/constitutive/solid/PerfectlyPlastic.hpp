@@ -126,8 +126,8 @@ void PerfectlyPlasticUpdates::smallStrainUpdate( localIndex const k,
                                                  localIndex const q,
                                                  real64 const & timeIncrement,
                                                  real64 const ( &strainIncrement )[6],
-                                                 real64 ( &stress )[6],
-                                                 real64 ( &stiffness )[6][6] ) const
+                                                 real64 ( & stress )[6],
+                                                 real64 ( & stiffness )[6][6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
   ElasticIsotropicUpdates::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
@@ -153,7 +153,7 @@ void PerfectlyPlasticUpdates::smallStrainUpdate( localIndex const k,
     return;
   }
 
-  // else, plasticity  
+  // else, plasticity
   // re-construct stress = P*eye + sqrt(2/3)*Q*nhat
   twoInvariant::stressRecomposition( trialP,
                                      m_yieldStress[k],
@@ -214,7 +214,7 @@ void PerfectlyPlasticUpdates::smallStrainUpdate_StressOnly( localIndex const k,
     return;
   }
 
-  // else, plasticity  
+  // else, plasticity
   // re-construct stress = P*eye + sqrt(2/3)*Q*nhat
   twoInvariant::stressRecomposition( trialP,
                                      m_yieldStress[k],

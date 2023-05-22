@@ -217,7 +217,7 @@ private:
 
   void writeParticleRegions( real64 const time,
                              ParticleManager const & particleManager,
-                             string const & path) const;
+                             string const & path ) const;
 
   /**
    * @brief Writes the files containing the well representation

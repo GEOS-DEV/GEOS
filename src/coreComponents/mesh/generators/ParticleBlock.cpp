@@ -28,9 +28,7 @@ using namespace dataRepository;
 ParticleBlock::ParticleBlock( string const & name, Group * const parent ):
   ParticleBlockABC( name, parent ),
   m_externalPropertyNames()
-{
-
-}
+{}
 
 ParticleBlock::~ParticleBlock()
 {}

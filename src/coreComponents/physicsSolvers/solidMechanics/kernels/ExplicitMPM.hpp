@@ -32,7 +32,7 @@ namespace solidMechanicsMPMKernels
 
 // A helper function to calculate polar decomposition. TODO: Previously this was an LvArray method, hopefully it will be again someday.
 GEOS_HOST_DEVICE
-void polarDecomposition( real64 (&R)[3][3],
+void polarDecomposition( real64 (& R)[3][3],
                          real64 const (&matrix)[3][3] )
 {
   // Initialize
@@ -61,9 +61,9 @@ void polarDecomposition( real64 (&R)[3][3],
     LvArray::tensorOps::copy< 3, 3 >( copyR, R );
     LvArray::tensorOps::Rij_eq_AikBjk< 3, 3, 3 >( RRTMinusI, R, copyR );
     LvArray::tensorOps::addIdentity< 3 >( RRTMinusI, -1.0 );
-    for( std::ptrdiff_t i = 0 ; i < 3 ; i++ )
+    for( std::ptrdiff_t i = 0; i < 3; i++ )
     {
-      for( std::ptrdiff_t j = 0 ; j < 3 ; j++ )
+      for( std::ptrdiff_t j = 0; j < 3; j++ )
       {
         errorSquared += RRTMinusI[i][j] * RRTMinusI[i][j];
       }
@@ -71,7 +71,7 @@ void polarDecomposition( real64 (&R)[3][3],
   }
   if( iter == 100 )
   {
-    GEOS_LOG_RANK("Polar decomposition did not converge in 100 iterations!");
+    GEOS_LOG_RANK( "Polar decomposition did not converge in 100 iterations!" );
   }
 }
 
@@ -102,18 +102,19 @@ struct StateUpdateKernel
   {
     arrayView3d< real64, solid::STRESS_USD > const oldStress = constitutiveWrapper.m_oldStress;
     // arrayView3d< real64, solid::STRESS_USD > const newStress = constitutiveWrapper.m_newStress;
-    
+
     // Perform constitutive call
     forAll< POLICY >( indices.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       // Particle index
       localIndex const p = indices[k];
 
-      // Copy the beginning-of-step particle stress into the constitutive model's m_oldStress - this fixes the MPI sync issue on Lassen for some reason
+      // Copy the beginning-of-step particle stress into the constitutive model's m_oldStress - this fixes the MPI sync issue on Lassen for
+      // some reason
       #if defined(GEOSX_USE_CUDA)
-      LvArray::tensorOps::copy< 6 >( oldStress[p][0] , particleStress[p] );
+      LvArray::tensorOps::copy< 6 >( oldStress[p][0], particleStress[p] );
       #endif
-      
+
       // Determine the strain increment in Voigt notation
       real64 strainIncrement[6];
       strainIncrement[0] = velocityGradient[p][0][0] * dt;
@@ -135,7 +136,7 @@ struct StateUpdateKernel
       real64 rotEnd[3][3] = { {0} };
       polarDecomposition( rotBeginning, fOld );
       polarDecomposition( rotEnd, fNew );
-      
+
       // Call stress update
       real64 stress[6] = { 0 };
       constitutive::SolidUtilities::hypoUpdate2_StressOnly( constitutiveWrapper,  // the constitutive model
@@ -147,7 +148,7 @@ struct StateUpdateKernel
                                                             rotEnd,               // end-of-step rotation matrix
                                                             stress );             // final updated stress
 
-      // Copy the updated stress into particleStress      
+      // Copy the updated stress into particleStress
       LvArray::tensorOps::copy< 6 >( particleStress[p], stress );
 
       // Copy m_newStress into m_oldStress

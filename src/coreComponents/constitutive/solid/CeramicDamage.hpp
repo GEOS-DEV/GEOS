@@ -15,7 +15,7 @@
 /**
  * @file CeramicDamage.hpp
  * @brief Simple damage model for modeling material failure in brittle materials.
- * 
+ *
  * This damage model is intended for use with damage-field partitioning (DFG) within the
  * MPM solver, but can also be used without DFG by any solver. It is only appropriate for
  * schemes implementing explicit time integration. The model is really a hybrid plasticity/
@@ -188,8 +188,8 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
                                               localIndex const q,
                                               real64 const & timeIncrement,
                                               real64 const ( &strainIncrement )[6],
-                                              real64 ( &stress )[6],
-                                              real64 ( &stiffness )[6][6] ) const
+                                              real64 ( & stress )[6],
+                                              real64 ( & stiffness )[6][6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
   ElasticIsotropicUpdates::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
@@ -216,7 +216,7 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
                                               localIndex const q,
                                               real64 const & timeIncrement,
                                               real64 const ( &strainIncrement )[6],
-                                              real64 ( &stress )[6],
+                                              real64 ( & stress )[6],
                                               DiscretizationOps & stiffness ) const
 {
   smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
@@ -228,7 +228,7 @@ void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                          localIndex const q,
                                                          real64 const & timeIncrement,
                                                          real64 const ( &strainIncrement )[6],
-                                                         real64 ( &stress )[6] ) const
+                                                         real64 ( & stress )[6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
   ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
@@ -256,7 +256,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
 {
   // get failure time
   real64 tFail = m_lengthScale[k] / m_crackSpeed;
-  
+
   // get trial pressure
   real64 trialPressure = -m_bulkModulus[k] * log( m_jacobian[k][q] );
   real64 pressure = trialPressure;
@@ -276,7 +276,8 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   // Enforce vertex solution
   if( trialPressure < 0 )
   {
-    pressure = trialPressure * ( 1.0 - m_damage[k][q] ); // Tensile cutoff pressure (negative value in tension), scaled by damage. Goes to 0 as damage -> 1.
+    pressure = trialPressure * ( 1.0 - m_damage[k][q] ); // Tensile cutoff pressure (negative value in tension), scaled by damage. Goes to 0
+                                                         // as damage -> 1.
   }
   if( pressure < pmin ) // TODO: pressure or trial pressure?
   {
@@ -303,15 +304,15 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
                                        meanStress,
                                        vonMises,
                                        deviator );
-    
+
     real64 brittleDuctileTransitionPressure = m_maximumStrength / mu;
     real64 J2 = vonMises * vonMises / 3.0;
-    real64 J3 = vonMises * vonMises * vonMises * 
-              ( deviator[0] * deviator[1] * deviator[2] + 
-                2.0 * deviator[3] * deviator[4] * deviator[5] - 
-                deviator[0] * deviator[3] * deviator[3] -
-                deviator[1] * deviator[4] * deviator[4] -
-                deviator[2] * deviator[5] * deviator[5] );
+    real64 J3 = vonMises * vonMises * vonMises *
+                ( deviator[0] * deviator[1] * deviator[2] +
+                  2.0 * deviator[3] * deviator[4] * deviator[5] -
+                  deviator[0] * deviator[3] * deviator[3] -
+                  deviator[1] * deviator[4] * deviator[4] -
+                  deviator[2] * deviator[5] * deviator[5] );
 
     // Find the strength
     real64 strength = CeramicDamageUpdates::getStrength( m_damage[k][q], pressure, J2, J3, mu, Yt0 );
@@ -350,24 +351,26 @@ real64 CeramicDamageUpdates::getStrength( const real64 damage,     // damage
                          const real64 muLocal,  // friction slope
                          const real64 Yt0Local, // strength parameter
                          real64 & f )      // OUTPUT: Yield surface
-  { 
-    f = (((3.0 + dLocal * (-3.0 + muLocal)) * m_compressiveStrength + (-3.0 + dLocal * (3.0 + muLocal)) * Yt0Local) * (pLocal - (2.0 * (dLocal - 1.0) * m_compressiveStrength * Yt0Local) / (3.0 * (m_compressiveStrength - Yt0Local)))) / (m_compressiveStrength + Yt0Local);
+  {
+    f =
+      (((3.0 + dLocal * (-3.0 + muLocal)) * m_compressiveStrength + (-3.0 + dLocal * (3.0 + muLocal)) * Yt0Local) *
+       (pLocal - (2.0 * (dLocal - 1.0) * m_compressiveStrength * Yt0Local) / (3.0 * (m_compressiveStrength - Yt0Local)))) / (m_compressiveStrength + Yt0Local);
   };
 
   // Bounding pressure values
   real64 p1 = m_compressiveStrength / 3.0;
-  real64 p2 = m_maximumStrength / mu ;
+  real64 p2 = m_maximumStrength / mu;
 
   // Get the scaling associated with p1
   real64 dfdp1 = ((3.0 + damage * (-3.0 + mu)) * m_compressiveStrength + (-3.0 + damage * (3.0 + mu)) * Yt0) / (m_compressiveStrength + Yt0);
   real64 gamma1 = 1.0;
   if( J2 > 1e-32 )
   {
-    real64 psi = fmin(2.0, fmax(0.5, 1.0 / (1.0 + dfdp1 / 3.0)));
-    real64 theta = (1.0 / 3.0) * asin(fmin(1.0, fmax(-1.0, -0.5 * J3 * pow(3.0 / J2, 1.5))));
-    real64 cosPi6plusTheta = cos(0.5235987755982989 + theta);
+    real64 psi = fmin( 2.0, fmax( 0.5, 1.0 / (1.0 + dfdp1 / 3.0)));
+    real64 theta = (1.0 / 3.0) * asin( fmin( 1.0, fmax( -1.0, -0.5 * J3 * pow( 3.0 / J2, 1.5 ))));
+    real64 cosPi6plusTheta = cos( 0.5235987755982989 + theta );
     real64 num = (2.0 * psi - 1.0) * (2.0 * psi - 1.0) + 4.0 * (1.0 - psi * psi) * cosPi6plusTheta * cosPi6plusTheta;
-    real64 denom = 2.0 * (1.0 - psi * psi) * cosPi6plusTheta + (2.0 * psi - 1.0) * sqrt(fmax(0.0, -4.0 * psi + 5.0 * psi * psi + 4.0 * (1.0 - psi * psi) * cosPi6plusTheta * cosPi6plusTheta));
+    real64 denom = 2.0 * (1.0 - psi * psi) * cosPi6plusTheta + (2.0 * psi - 1.0) * sqrt( fmax( 0.0, -4.0 * psi + 5.0 * psi * psi + 4.0 * (1.0 - psi * psi) * cosPi6plusTheta * cosPi6plusTheta ));
     if( denom > 1.0e-12 )
     {
       gamma1 = (1 - damage) * num / denom + damage;
@@ -459,7 +462,7 @@ public:
 
     /// string/key for element/particle length scale
     static constexpr char const * lengthScaleString() { return "lengthScale"; }
-    
+
     /// string/key for tensile strength
     static constexpr char const * tensileStrengthString() { return "tensileStrength"; }
 
