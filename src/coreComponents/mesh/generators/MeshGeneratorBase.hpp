@@ -137,7 +137,7 @@ public:
 private:
   /**
    * @brief Fill the cellBlockManager object .
-   * @param[in] cellBlockManager to fill with the mesh informations
+   * @param[inout] cellBlockManager the CellBlockManager that will receive the meshing information
    * @param[in] partition The number of domains in each dimesion (X,Y,Z)
    */
   virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition ) = 0;
