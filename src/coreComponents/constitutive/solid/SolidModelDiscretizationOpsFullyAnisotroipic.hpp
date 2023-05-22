@@ -59,7 +59,7 @@ struct SolidModelDiscretizationOpsFullyAnisotroipic : public SolidModelDiscretiz
                        real64 ( &diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] );
 
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   void scaleParams( real64 const scale )
   {
     LvArray::tensorOps::scale< 6, 6 >( m_c, scale );
@@ -73,7 +73,7 @@ struct SolidModelDiscretizationOpsFullyAnisotroipic : public SolidModelDiscretiz
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void SolidModelDiscretizationOpsFullyAnisotroipic::BTDB( BASIS_GRADIENT const & gradN,
                                                          real64 const & detJxW,
                                                          real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
@@ -132,7 +132,7 @@ void SolidModelDiscretizationOpsFullyAnisotroipic::BTDB( BASIS_GRADIENT const & 
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void SolidModelDiscretizationOpsFullyAnisotroipic::upperBTDB( BASIS_GRADIENT const & gradN,
                                                               real64 const & detJxW,
                                                               real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
@@ -191,7 +191,7 @@ void SolidModelDiscretizationOpsFullyAnisotroipic::upperBTDB( BASIS_GRADIENT con
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void SolidModelDiscretizationOpsFullyAnisotroipic::diagBTDB( BASIS_GRADIENT const & gradN,
                                                              real64 const & detJxW,
                                                              real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS *3] )
@@ -221,7 +221,7 @@ void SolidModelDiscretizationOpsFullyAnisotroipic::diagBTDB( BASIS_GRADIENT cons
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void SolidModelDiscretizationOpsFullyAnisotroipic::diagRowSumBTDB( BASIS_GRADIENT const & gradN,
                                                                    real64 const & detJxW,
                                                                    real64 ( & diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] )
