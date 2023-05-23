@@ -46,6 +46,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         submodules: false
+        token: ${{ secrets.GITHUB_TOKEN }}
     - name: Check that submodules are up to date
       run: "scripts/test_submodule_updated.sh"
 
@@ -57,6 +58,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         submodules: false
+        token: ${{ secrets.GITHUB_TOKEN }}
     - name: Check style
       env:
         DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
@@ -72,6 +74,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         submodules: false
+        token: ${{ secrets.GITHUB_TOKEN }}
     - name: Check documentation
       env:
         DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
@@ -128,6 +131,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         submodules: false
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Print environment
       run: printenv
@@ -187,6 +191,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         submodules: false
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Print environment
       run: printenv
