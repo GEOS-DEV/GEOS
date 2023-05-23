@@ -23,7 +23,7 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE2"
-        order="3"
+        order="5"
         formulation="SEM"/>
     </FiniteElements>
   </NumericalMethods>
@@ -88,7 +88,7 @@
     <!-- two events to output pressure in an hdf5 file -->
     <PeriodicEvent
       name="timeHistoryCollection"
-      timeFrequency="0.001"
+      timeFrequency="0.0005"
       target="/Tasks/pressureCollection"/>
 
     <PeriodicEvent
@@ -112,7 +112,6 @@
   </Tasks>
 
   <Outputs>
-
     <!-- output the pressure values to a file named pressure_history.hdf5  -->
     <TimeHistory
       name="timeHistoryOutput"

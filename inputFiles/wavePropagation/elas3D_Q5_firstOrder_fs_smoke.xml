@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./acous3D_Q3_small_base.xml"/>
+    <File name="./elas3D_Q5_firstOrder_small_base.xml"/>
   </Included>
 
   <!-- hexahedral mesh generated internally by GEOSX -->
@@ -13,9 +13,9 @@
       xCoords="{ 0, 101 }"
       yCoords="{ 0, 101 }"
       zCoords="{ 0, 101 }"
-      nx="{ 3 }"
-      ny="{ 3 }"
-      nz="{ 3 }"
+      nx="{ 2 }"
+      ny="{ 2 }"
+      nz="{ 2 }"
       cellBlockNames="{ cb }"/>
   </Mesh>
 
@@ -30,7 +30,7 @@
   <FieldSpecifications>
     <FieldSpecification
       name="zposFreeSurface"
-      objectPath="mesh/FE2/faceManager"
+      objectPath="mesh/FE1/faceManager"
       fieldName="FreeSurface"
       setNames="{ zpos }"/>
   </FieldSpecifications>

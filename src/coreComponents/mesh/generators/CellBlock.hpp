@@ -203,6 +203,11 @@ public:
    */
   void resize( dataRepository::indexType const numElements ) override final;
 
+  /**
+   * @brief Resize the cell block to hold @p numnodes
+   * @param numNodes The new number of nodes.
+   */
+  void resizeNumNodes ( dataRepository::indexType const numNodes );
   ///@}
 
   /**
