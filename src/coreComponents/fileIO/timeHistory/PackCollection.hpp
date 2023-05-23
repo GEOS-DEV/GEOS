@@ -74,11 +74,13 @@ private:
     static constexpr char const * fieldNameString() { return "fieldName"; }
     static constexpr char const * setNamesString() { return "setNames"; }
     static constexpr char const * onlyOnSetChangeString() { return "onlyOnSetChange"; }
+    static constexpr char const * disableCoordCollectionString() { return "disableCoordCollection"; }
 
     dataRepository::ViewKey objectPath = { "objectPath" };
     dataRepository::ViewKey fieldName = { "fieldName" };
     dataRepository::ViewKey setNames = { "setNames" };
     dataRepository::ViewKey onlyOnSetChange = { "onlyOnSetChange" };
+    dataRepository::ViewKey disableCoordCollection = { "disableCoordCollection" };
   } viewKeys;
   /// @endcond
 
