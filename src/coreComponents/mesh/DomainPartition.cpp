@@ -156,7 +156,8 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
 
   forMeshBodies( [&]( MeshBody & meshBody )
   {
-    if( !meshBody.hasParticles() )
+    if( !meshBody.hasParticles() ) // Currently, particle-based mesh bodies do not construct their
+                                   // own domain decomposition. MPM borrows that of the grid.
     {
       MeshLevel & meshLevel = meshBody.getBaseDiscretization();
 

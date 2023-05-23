@@ -569,7 +569,7 @@ void ProblemManager::generateMesh()
     MeshLevel & baseMesh = meshBody.getBaseDiscretization();
     array1d< string > junk;
 
-    if( meshBody.hasParticles() )
+    if( meshBody.hasParticles() ) // mesh bodies with particles load their data into particle blocks, not cell blocks
     {
       ParticleBlockManagerABC & particleBlockManager = meshBody.getGroup< ParticleBlockManagerABC >( keys::particleManager );
 
@@ -598,7 +598,8 @@ void ProblemManager::generateMesh()
     MeshBody & meshBody = domain.getMeshBody( meshBodyName );
 
     if( discretizationPair.first.second!=nullptr && !meshBody.hasParticles() ) // this check shouldn't be required
-    {
+    {                                                                          // particle mesh bodies don't have a finite element
+                                                                               // discretization
       FiniteElementDiscretization const * const
       feDiscretization = dynamic_cast< FiniteElementDiscretization const * >( discretizationPair.first.second );
 
@@ -990,7 +991,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
     MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
     MeshLevel & meshLevel = meshBody.getMeshLevel( meshLevelName );
 
-    if( meshBody.hasParticles() )
+    if( meshBody.hasParticles() ) // branch due to difference in particle vs cell regions
     {
       ParticleManager & particleManager = meshLevel.getParticleManager();
       ParticleRegionBase & particleRegion = particleManager.getRegion( regionName );
