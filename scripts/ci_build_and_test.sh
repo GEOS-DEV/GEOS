@@ -15,12 +15,9 @@ GEOSX_TPL_DIR=$(docker run --rm ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} /bin/bash 
 # ... so we can install GEOSX alongside. This is assumed for bundling the binaries, so consider modifying with care.
 GEOSX_DIR=${GEOSX_TPL_DIR}/../GEOSX-INSTALL
 # We need to get the build directory, which is different between Travis and Azure Pipelines.
-# BUILD_DIR=${TRAVIS_BUILD_DIR:-$BUILD_SOURCESDIRECTORY}
 BUILD_DIR=${TRAVIS_BUILD_DIR:-$GITHUB_WORKSPACE}
 # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
 # Since this information is repeated twice, we use a variable.
-# /home/runner/work/GEOSX/GEOSX/src/coreComponents/LvArray
-# BUILD_DIR_MOUNT_POINT=/home/runner/work/GEOSX/GEOSX
 BUILD_DIR_MOUNT_POINT=/tmp/GEOSX
 
 
