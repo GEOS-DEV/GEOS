@@ -2,7 +2,7 @@
 
 
 ####################################################
-Elasto-Plastic Near-Well Deformation
+Extended Drucker-Prager Model for Wellbore Problems
 ####################################################
 
 
@@ -203,15 +203,7 @@ Inspecting results
 
 In the above example, we requested silo-format output files. We can therefore import these into VisIt and use python scripts to visualize the outcome. Below figure shows the comparisons between the numerical predictions (marks) and the corresponding analytical solutions (solid curves) with respect to the distributions of normal stress components, stress path, the supporting wellbore pressure and wellbore size. It is clear that the GEOS predictions are in excellent agreement with the analytical results. 
 
-
-.. _problemVerificationEDPWellboreFig:
-.. figure:: Verification.png
-   :align: center
-   :width: 1000
-   :figclass: align-center
-
-   Comparing GEOS results with analytical solutions
-
+.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/edpWellbore/edpWellbore_plot.py
 
 For the same wellbore problem, using different constitutive models (plastic vs. elastic), obviously, distinct differences in rock deformation and distribution of resultant stresses is also observed and highlighted.  
 
