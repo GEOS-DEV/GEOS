@@ -24,7 +24,7 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        order="1"
+        order="3"
         formulation="SEM"/>
     </FiniteElements>
   </NumericalMethods>
@@ -46,7 +46,7 @@
    <FieldSpecification
      name="cellLambda"
      initialCondition="1"
-     objectPath="ElementRegions/Region/cb"
+     objectPath="mesh/FE1/ElementRegions/Region/cb"
      fieldName="lambda"
      scale="0"
      setNames="{ all }"/>
@@ -54,7 +54,7 @@
    <FieldSpecification
      name="cellMu"
      initialCondition="1"
-     objectPath="ElementRegions/Region/cb"
+     objectPath="mesh/FE1/ElementRegions/Region/cb"
      fieldName="mu"
      scale="0"
      setNames="{ all }"/>
@@ -63,7 +63,7 @@
     <FieldSpecification
       name="cellVelocityVp"
       initialCondition="1"
-      objectPath="ElementRegions/Region/cb"
+      objectPath="mesh/FE1/ElementRegions/Region/cb"
       fieldName="mediumVelocityVp"
       scale="1500"
       setNames="{ all }"/>
@@ -71,7 +71,7 @@
     <FieldSpecification
       name="cellVelocityVs"
       initialCondition="1"
-      objectPath="ElementRegions/Region/cb"
+      objectPath="mesh/FE1/ElementRegions/Region/cb"
       fieldName="mediumVelocityVs"
       scale="1060"
       setNames="{ all }"/>
@@ -79,7 +79,7 @@
     <FieldSpecification
       name="cellDensity"
       initialCondition="1"
-      objectPath="ElementRegions/Region/cb"
+      objectPath="mesh/FE1/ElementRegions/Region/cb"
       fieldName="mediumDensity"
       scale="1"
       setNames="{ all }"/>
