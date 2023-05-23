@@ -85,7 +85,8 @@ public:
   { return m_particleID; }
 
   /**
-   * @brief Get the type of particle in this subregion.
+   * @brief Sets the global IDs of particles in this subregion.
+   * @param particleID The input list of global IDs
    */
   void setParticleID( array1d< globalIndex > const particleID )
   { m_particleID = particleID; }
@@ -95,6 +96,7 @@ public:
 
   /**
    * @brief Set the list of particle center locations in this subregion.
+   * @param particleCenter The input list of particle center coordinates
    */
   void setParticleCenter( array2d< real64 > const particleCenter )
   { m_particleCenter = particleCenter; }
@@ -104,6 +106,7 @@ public:
 
   /**
    * @brief Set the list of particle velocities in this subregion.
+   * @param particleVelocity The input list of velocities
    */
   void setParticleVelocity( array2d< real64 > const particleVelocity )
   { m_particleVelocity = particleVelocity; }
@@ -113,15 +116,17 @@ public:
 
   /**
    * @brief Set the list of particle group numbers (for contact) in this subregion.
+   * @param particleGroup The input list of contact group numbers.
    */
   void setParticleGroup( array1d< int > const particleGroup )
-  { m_particleGroup = particleGroup; }
+  { m_particleGroup = particleGroup; } // TODO: Rename to particleContactGroup
 
   array1d< real64 > getParticleDamage() const override
   { return m_particleDamage; }
 
   /**
    * @brief Set the list of particle damage values in this subregion.
+   * @param particleDamage The input list of damage values
    */
   void setParticleDamage( array1d< real64 > const particleDamage )
   { m_particleDamage = particleDamage; }
@@ -131,6 +136,7 @@ public:
 
   /**
    * @brief Set the list of particle volumes in this subregion.
+   * @param particleVolume The input list of volumes
    */
   void setParticleVolume( array1d< real64 > const particleVolume )
   { m_particleVolume = particleVolume; }
@@ -140,6 +146,7 @@ public:
 
   /**
    * @brief Set the list of particle r-vectors in this subregion.
+   * @param particleRVectors The input list of r-vectors
    */
   void setParticleRVectors( array3d< real64 > const particleRVectors )
   { m_particleRVectors = particleRVectors; }
