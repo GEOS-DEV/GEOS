@@ -178,17 +178,14 @@ void verifyGroupDataFileContextRecursive( xmlDocument const & document, Group co
 /**
  * @brief Returns the element that exists in setB but not in setA.
  */
-std::set< string > getDifference( std::set< string > & setA,
-                                  std::set< string > & setB )
+std::set< string > getDifference( std::set< string > const & setA,
+                                  std::set< string > const & setB )
 {
-  std::vector< string > result( setA.size() + setB.size() );
-
-  auto it = std::set_difference( setA.begin(), setA.end(),
-                                 setB.begin(), setB.end(),
-                                 result.begin() );
-  result.resize( it - result.begin() );
-
-  return std::set< string >( result.begin(), result.end() );
+  std::set< string > result;
+  std::set_difference( setA.cbegin(), setA.cend(),
+                       setB.cbegin(), setB.cend(),
+                       std::inserter( result, result.begin() ) );
+  return result;
 }
 
 // Tests
@@ -219,15 +216,15 @@ TEST( testXML, testXMLFileLines )
   std::set< string > verifiedElements;
   verifyGroupDataFileContextRecursive( xmlDocument, problemManager, verifiedElements );
 
-  std::set< string > notFound = getDifference( expectedElements, verifiedElements );
+  std::set< string > const notFound = getDifference( expectedElements, verifiedElements );
   EXPECT_TRUE( notFound.empty() ) << "Info : There should not exist xml element that were not in "
-                                     "the Group hierarchy.\nNot in Group hierarchy : {"
+                                     "the Group hierarchy.\nElements not found in Group hierarchy : {"
                                   << stringutilities::join( notFound, "," ) << "}";
 
-  std::set< string > notExpected = getDifference( verifiedElements, expectedElements );
+  std::set< string > const notExpected = getDifference( verifiedElements, expectedElements );
   EXPECT_TRUE( notExpected.empty() ) << "Info : There should not exist an object in the Group "
                                         "hierarchy that contains a DataFileContext but which were not "
-                                        "declared in the Xml.\nNot in XML hierarchy : {"
+                                        "declared in the Xml.\nElements not found in XML hierarchy : {"
                                      << stringutilities::join( notExpected, "," ) << "}";
 }
 

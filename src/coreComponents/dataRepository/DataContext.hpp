@@ -23,6 +23,8 @@
 #include "common/Logger.hpp"
 #include "xmlWrapper.hpp"
 #include "common/Format.hpp"
+#include "Group.hpp"
+#include "WrapperBase.hpp"
 
 namespace geos
 {
@@ -30,12 +32,9 @@ namespace geos
 namespace dataRepository
 {
 
-class Group;
-class WrapperBase;
-
 /// DataContext is an abstract class storing contextual information on an object:
-/// - its line position in a file, if applicable, implementation in DataFileContext,
-/// - its location in the data hierarchy, implementation in GroupContext and WrapperContext.
+/// - Either its line position in a file (if applicable, implementation in DataFileContext),
+/// - or its location in the data hierarchy (implementation in GroupContext and WrapperContext).
 /// Typically, the target object contains an unique_ptr< DataContext > instance of this class.
 class DataContext
 {
@@ -235,17 +234,9 @@ protected:
 
 
 
-/// @cond DO_NOT_DOCUMENT
-#ifdef GEOSX_USE_FMT
-#define GEOS_FMT_NS_PREFIX fmt
-#else
-#define GEOS_FMT_NS_PREFIX std
-#endif
-/// @endcond
-
 /// Formatter to be able to directly use a DataContext as a GEOS_FMT() argument.
 template<>
-struct GEOS_FMT_NS_PREFIX::formatter< geos::dataRepository::DataContext >
+struct GEOS_FMT_NS::formatter< geos::dataRepository::DataContext >
 {
   /**
    * @brief Format the specified DataContext to a string.
