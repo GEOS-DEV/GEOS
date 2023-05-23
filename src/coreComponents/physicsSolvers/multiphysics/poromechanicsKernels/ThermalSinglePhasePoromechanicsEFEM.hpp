@@ -24,15 +24,15 @@
 namespace geos
 {
 
-namespace thermalSinglePhasePoromechanicsEmbeddedFracturesKernels
+namespace thermoPoromechanicsEFEMKernels
 {
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class ThermalSinglePhasePoromechanicsEFEM :
   public poromechanicsEFEMKernels::SinglePhasePoromechanicsEFEM< SUBREGION_TYPE,
-                                                                CONSTITUTIVE_TYPE,
-                                                                FE_TYPE >
+                                                                 CONSTITUTIVE_TYPE,
+                                                                 FE_TYPE >
 {
 public:
   /// Alias for the base class;
@@ -58,21 +58,21 @@ public:
 
 
   ThermalSinglePhasePoromechanicsEFEM( NodeManager const & nodeManager,
-                                EdgeManager const & edgeManager,
-                                FaceManager const & faceManager,
-                                localIndex const targetRegionIndex,
-                                SUBREGION_TYPE const & elementSubRegion,
-                                FE_TYPE const & finiteElementSpace,
-                                CONSTITUTIVE_TYPE & inputConstitutiveType,
-                                EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion,
-                                arrayView1d< globalIndex const > const dispDofNumber,
-                                arrayView1d< globalIndex const > const jumpDofNumber,
-                                string const inputFlowDofKey,
-                                globalIndex const rankOffset,
-                                CRSMatrixView< real64, globalIndex const > const inputMatrix,
-                                arrayView1d< real64 > const inputRhs,
-                                real64 const (&inputGravityVector)[3],
-                                string const fluidModelKey );
+                                       EdgeManager const & edgeManager,
+                                       FaceManager const & faceManager,
+                                       localIndex const targetRegionIndex,
+                                       SUBREGION_TYPE const & elementSubRegion,
+                                       FE_TYPE const & finiteElementSpace,
+                                       CONSTITUTIVE_TYPE & inputConstitutiveType,
+                                       EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion,
+                                       arrayView1d< globalIndex const > const dispDofNumber,
+                                       arrayView1d< globalIndex const > const jumpDofNumber,
+                                       string const inputFlowDofKey,
+                                       globalIndex const rankOffset,
+                                       CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                                       arrayView1d< real64 > const inputRhs,
+                                       real64 const (&inputGravityVector)[3],
+                                       string const fluidModelKey );
 
   //*****************************************************************************
   /**
@@ -96,7 +96,7 @@ public:
     /// Constructor.
     GEOS_HOST_DEVICE
     StackVariables():
-      Base::StackVariables(),
+      Base::StackVariables()
     {}
   };
   //*****************************************************************************
@@ -108,6 +108,10 @@ public:
   kernelLaunch( localIndex const numElems,
                 KERNEL_TYPE const & kernelComponent );
   //END_kernelLauncher
+
+  GEOS_HOST_DEVICE
+  void setup( localIndex const k,
+              StackVariables & stack ) const;
 
   GEOS_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
@@ -127,17 +131,17 @@ private:
 
 
 using ThermalSinglePhasePoromechanicsEFEMKernelFactory = finiteElement::KernelFactory< ThermalSinglePhasePoromechanicsEFEM,
-                                                               EmbeddedSurfaceSubRegion const &,
-                                                               arrayView1d< globalIndex const > const,
-                                                               arrayView1d< globalIndex const > const,
-                                                               string const,
-                                                               globalIndex const,
-                                                               CRSMatrixView< real64, globalIndex const > const,
-                                                               arrayView1d< real64 > const,
-                                                               real64 const (&)[3],
-                                                               string const >;
+                                                                                       EmbeddedSurfaceSubRegion const &,
+                                                                                       arrayView1d< globalIndex const > const,
+                                                                                       arrayView1d< globalIndex const > const,
+                                                                                       string const,
+                                                                                       globalIndex const,
+                                                                                       CRSMatrixView< real64, globalIndex const > const,
+                                                                                       arrayView1d< real64 > const,
+                                                                                       real64 const (&)[3],
+                                                                                       string const >;
 
-} // namespace thermalPoromechanicsEFEMKernels
+} // namespace thermoPoromechanicsEFEMKernels
 
 } /* namespace geos */
 

@@ -24,6 +24,7 @@
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
@@ -412,37 +413,34 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
 
-  {   
+  {
     if( m_isThermal )
     {
       solidMechanicsSolver()->getMaxForce() =
         assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
                         thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory,
-                        poromechanicsEFEMKernels::SinglePhaseKernelFactory >( mesh,
-                                                                              dofManager,
-                                                                              regionNames,
-                                                                              SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
-                                                                              localMatrix,
-                                                                              localRhs,
-                                                                              flowDofKey,
-                                                                              FlowSolverBase::viewKeyStruct::fluidNamesString() );
+                        thermoPoromechanicsEFEMKernels::ThermalSinglePhasePoromechanicsEFEMKernelFactory >( mesh,
+                                                                                                            dofManager,
+                                                                                                            regionNames,
+                                                                                                            SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
+                                                                                                            localMatrix,
+                                                                                                            localRhs );
     }
     else
     {
       solidMechanicsSolver()->getMaxForce() =
-        assemblyLaunch< constitutive::PorousSolidBase,
+        assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >,
                         poromechanicsKernels::SinglePhasePoromechanicsKernelFactory,
                         poromechanicsEFEMKernels::SinglePhaseKernelFactory >( mesh,
                                                                               dofManager,
                                                                               regionNames,
                                                                               SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
                                                                               localMatrix,
-                                                                              localRhs,
-                                                                              flowDofKey,
-                                                                              FlowSolverBase::viewKeyStruct::fluidNamesString() );
+                                                                              localRhs );
     }
 
     // 3. Assemble poroelastic fluxes and all derivatives
+    string const jumpDofKey = dofManager.getKey( fields::contact::dispJump::key() );
     flowSolver()->assemblePoroelasticFluxTerms( time_n, dt,
                                                 domain,
                                                 dofManager,

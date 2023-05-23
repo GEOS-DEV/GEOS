@@ -19,18 +19,12 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICSEFEM_IMPL_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICSEFEM_IMPL_HPP_
 
-#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "physicsSolvers/contact/ContactFields.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM.hpp"
-#include "physicsSolvers/contact/SolidMechanicsEFEMKernelsHelper.hpp"
 
 namespace geos
 {
 
-namespace thermalSinglePhasePoromechanicsEmbeddedFracturesKernels
+namespace thermoPoromechanicsEFEMKernels
 {
 
 template< typename SUBREGION_TYPE,
@@ -154,7 +148,7 @@ complete( localIndex const k,
 }
 
 
-} // namespace thermalSinglePhasePoromechanicsEmbeddedFracturesKernels
+} // namespace thermoPoromechanicsEFEMKernels
 
 } /* namespace geos */
 
