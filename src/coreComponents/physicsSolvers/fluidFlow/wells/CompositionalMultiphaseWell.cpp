@@ -189,6 +189,10 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< fields::well::phaseVolumeFraction_n >( getName() ).
         reference().resizeDimension< 1 >( m_numPhases );
 
+      subRegion.registerField< fields::well::pressureScalingFactor >( getName() );
+      subRegion.registerField< fields::well::temperatureScalingFactor >( getName() );
+      subRegion.registerField< fields::well::globalCompDensityScalingFactor >( getName() );
+
       PerforationData & perforationData = *subRegion.getPerforationData();
       perforationData.registerField< fields::well::compPerforationRate >( getName() ).
         reference().resizeDimension< 1 >( m_numComponents );
