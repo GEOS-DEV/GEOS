@@ -50,15 +50,15 @@ def compute_param_b(frictionAngle):
     sin_frictionAngle = np.sin(frictionAngle)
     return 6.0*sin_frictionAngle/(3.0-sin_frictionAngle)
 
-def EDP():
+def EDP(a0_a_ratio):
     sh = 11.25e6 #Pa
     sv = 15e6    #Pa
     nu = 0.25
     
     a0 = 0.1 # initial wellbore radius
-    a = a0/1.075 # this ratio correspond to well pressure of 1MPa
+    a = a0/a0_a_ratio
     xi_well = 1.0 - a0/a # the auxiliary variable xi at the wellbore, xi = (a-a0)/a = 1-1/(a/a0)
-    nPoints = 10000
+    nPoints = 1000
     
     G = 0.3e9 #Pa
     initialFrictionAngle = 15.27 # deg
@@ -108,6 +108,11 @@ def EDP():
         sz_p.append(sz_i)        
         epsV_p.append(epsV_i)
 
+	# Wellbore surface stress
+    pw = sr_i
+    p = (sr_i + s0_i + sz_i)/3.0
+    q = np.sqrt(0.5) * np.sqrt( (sr_i-s0_i)**2.0 + (sr_i-sz_i)**2.0 + (s0_i-sz_i)**2.0 )
+
     # Compute the normalized radial coordinate r/a
     r_p = epwAnal.compute_radialCoordinate(xi, epsV_p)
     
@@ -115,6 +120,11 @@ def EDP():
     r_ep_boundary = r_p[0]
     
     r_e,sr_e,s0_e,sz_e = epwAnal.solution_elastic(sh,sv,r_ep_boundary,sr_ep_boundary)
-    
-    return r_p,sr_p,s0_p,sz_p,r_e,sr_e,s0_e,sz_e
+    p_e = (sr_e + s0_e + sz_e)/3.0
+    q_e = np.sqrt(0.5) * np.sqrt( (sr_e-s0_e)**2.0 + (sr_e-sz_e)**2.0 + (s0_e-sz_e)**2.0 )
+
+    if (r_ep_boundary<=1.0):
+        p = p_e[0]
+        q = q_e[0]
+    return r_p,sr_p,s0_p,sz_p,r_e,sr_e,s0_e,sz_e,pw,p,q
 
