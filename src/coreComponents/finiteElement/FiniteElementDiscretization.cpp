@@ -16,9 +16,10 @@
  * @file FiniteElementSpace.cpp
  */
 
+// TODO make this not dependent on this header...need better key implementation
 #include "FiniteElementDiscretization.hpp"
 
-// TODO make this not dependent on this header...need better key implementation
+#include "common/GeosxMacros.hpp"
 
 namespace geos
 {
@@ -99,7 +100,12 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
       {
         if( m_useVem == 1 )
         {
+#if !defined( GEOS_USE_HIP )
           return std::make_unique< H1_Wedge_VEM_Gauss1 >();
+#else
+          GEOS_ERROR( "Cannot compile this on Crusher." );
+          return nullptr;
+#endif
         }
         else
         {
@@ -110,11 +116,21 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
       {
         if( m_useVem == 1 )
         {
+#if !defined( GEOS_USE_HIP )
           return std::make_unique< H1_Hexahedron_VEM_Gauss1 >();
+#else
+          GEOS_ERROR( "Cannot compile this on Crusher." );
+          return nullptr;
+#endif
         }
         else if( m_formulation == "SEM" )
         {
+#if !defined( GEOS_USE_HIP )
           return std::make_unique< Q1_Hexahedron_Lagrange_GaussLobatto >();
+#else
+          GEOS_ERROR( "Cannot compile this on Crusher." );
+          return nullptr;
+#endif
         }
         else
         {
@@ -146,10 +162,12 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
       {
         return std::make_unique< H1_Prism10_VEM_Gauss1 >();
       }
+#if !defined( GEOS_USE_HIP )
       case ElementType::Prism11:
       {
         return std::make_unique< H1_Prism11_VEM_Gauss1 >();
       }
+#endif
       default:
       {
         GEOS_ERROR( getDataContext() << ": Element type " << parentElementShape << " does not have an associated element formulation." );
@@ -162,11 +180,15 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
   {
     switch( parentElementShape )
     {
+#if !defined( GEOS_USE_HIP )
       case ElementType::Hexahedron:
         GEOS_ERROR_IF( m_formulation != "SEM",
                        getDataContext() << ": Element type Hexahedron with order 2 available" <<
                        " only when using the Spectral Element Method" );
         return std::make_unique< Q2_Hexahedron_Lagrange_GaussLobatto >();
+#else
+      GEOS_ERROR( "Cannot compile this on Crusher." );
+#endif
       default:
       {
         GEOS_ERROR( getDataContext() << ": Element type " << parentElementShape << " does not" <<
@@ -180,11 +202,15 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
   {
     switch( parentElementShape )
     {
+#if !defined( GEOS_USE_HIP )
       case ElementType::Hexahedron:
         GEOS_ERROR_IF( m_formulation != "SEM",
                        getDataContext() << ": Element type Hexahedron with order 3 available" <<
                        " only when using the Spectral Element Method" );
         return std::make_unique< Q3_Hexahedron_Lagrange_GaussLobatto >();
+#else
+      GEOS_ERROR( "Cannot compile this on Crusher." );
+#endif
       default:
       {
         GEOS_ERROR( getDataContext() << ": Element type " << parentElementShape << " does not" <<
@@ -198,11 +224,15 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
   {
     switch( parentElementShape )
     {
+#if !defined( GEOS_USE_HIP )
       case ElementType::Hexahedron:
         GEOS_ERROR_IF( m_formulation != "SEM",
                        getDataContext() << ": Element type Hexahedron with order 4 available only" <<
                        " when using the Spectral Element Method" );
         return std::make_unique< Q4_Hexahedron_Lagrange_GaussLobatto >();
+#else
+      GEOS_ERROR( "Cannot compile this on Crusher." );
+#endif
       default:
       {
         GEOS_ERROR( getDataContext() << ": Element type " << parentElementShape << " does not have" <<
@@ -216,11 +246,15 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
   {
     switch( parentElementShape )
     {
+#if !defined( GEOS_USE_HIP )
       case ElementType::Hexahedron:
         GEOS_ERROR_IF( m_formulation != "SEM",
                        getDataContext() << ": Element type Hexahedron with order 5 available only" <<
                        " when using the Spectral Element Method" );
         return std::make_unique< Q5_Hexahedron_Lagrange_GaussLobatto >();
+#else
+      GEOS_ERROR( "Cannot compile this on Crusher." );
+#endif
       default:
       {
         GEOS_ERROR( getDataContext() << ": Element type " << parentElementShape << " does not have" <<
