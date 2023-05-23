@@ -374,10 +374,10 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
       }
       if( particleRank[pp]==this->m_rank && !inPartition )
       {
-        outOfDomainParticleCoordinates.emplace_back( p_x );  // Store the coordinate of the out-of-domain particle
-        outOfDomainParticleLocalIndices.push_back( pp );     // Store the local index "pp" for the current coordinate.
-        particleRank[pp] = -1;                               // Temporarily set particleRank of out-of-domain particle to -1 until it is
-                                                             // requested by someone.
+        outOfDomainParticleCoordinates.emplace_back( p_x ); // Store the coordinate of the out-of-domain particle
+        outOfDomainParticleLocalIndices.push_back( pp );   // Store the local index "pp" for the current coordinate.
+        particleRank[pp] = -1;                             // Temporarily set particleRank of out-of-domain particle to -1 until it is
+                                                           // requested by someone.
       }
     } );
 
