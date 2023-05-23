@@ -109,7 +109,8 @@ void MeshManager::importFields( DomainPartition & domain )
     {
       return;
     }
-    else if( domain.getMeshBody( generator.getName() ).hasParticles() )
+    else if( domain.getMeshBody( generator.getName() ).hasParticles() ) // field import is not currently compatible with particle mesh
+                                                                        // bodies
     {
       return;
     }
