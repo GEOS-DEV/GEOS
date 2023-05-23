@@ -43,7 +43,7 @@ public:
    * @param parent pointer to the parent group in the data hierarchy.
    */
   WellGeneratorBase( const string & name,
-                         Group * const parent );
+                     Group * const parent );
 
   /**
    * @brief Get the catalog name.
@@ -139,7 +139,7 @@ public:
    * @brief Get the global indices mapping an element to the previous ones.
    * @return list providing the global indices of the previous elements for each element
    */
-  virtual arrayView1d< arrayView1d< globalIndex const > const > getPrevElemIndices() const  = 0;
+  virtual arrayView1d< arrayView1d< globalIndex const > const > getPrevElemIndices() const = 0;
 
   /**
    * @brief Get the global indices of the well nodes nodes connected to each element.
@@ -204,7 +204,7 @@ public:
    * @returns The number of physical dimensions
    */
   virtual int getPhysicalDimensionsNumber() const = 0;
-  
+
   /**
    * Getter for the associated well region name
    * @return  the associated well region name
