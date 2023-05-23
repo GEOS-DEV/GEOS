@@ -106,6 +106,13 @@ public:
    */
   void setNumNodes( localIndex numNodes ); // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
 
+  void generateHighOrderMaps( localIndex const order,
+                              globalIndex const maxVertexGlobalID,
+                              globalIndex const maxEdgeGlobalID,
+                              globalIndex const maxFaceGlobalID,
+                              arrayView1d< globalIndex const > const edgeLocalToGlobal,
+                              arrayView1d< globalIndex const > const faceLocalToGlobal ) override;
+
   localIndex numNodes() const override;
 
   localIndex numEdges() const override;
