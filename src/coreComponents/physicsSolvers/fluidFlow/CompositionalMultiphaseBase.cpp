@@ -528,7 +528,7 @@ void CompositionalMultiphaseBase::updatePhaseVolumeFraction( ObjectManagerBase &
 
   maxDS = MpiWrapper::max( maxDS );
   if( maxDS > 0 )
-    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max DS = "<< maxDS );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max DS = "<< maxDS << " in subregion " << dataGroup.getName() );
 }
 
 void CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
