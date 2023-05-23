@@ -1190,7 +1190,7 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
 }
 
 real64
-CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition const & domain,
+CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition & domain,
                                                        DofManager const & dofManager,
                                                        arrayView1d< real64 const > const & localSolution )
 {
@@ -1210,15 +1210,15 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition const & d
 
   real64 scalingFactor = 1.0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel const & mesh,
+                                                                MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames,
                                                                         [&]( localIndex const,
-                                                                             ElementSubRegionBase const & subRegion )
+                                                                             ElementSubRegionBase & subRegion )
     {
       // check that pressure and component densities are non-negative
-      real64 const subRegionScalingFactor =
+      auto const subRegionData =
         compositionalMultiphaseWellKernels::
           ScalingForSystemSolutionKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
@@ -1229,7 +1229,7 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition const & d
                                                      subRegion,
                                                      localSolution );
 
-      scalingFactor = std::min( subRegionScalingFactor, scalingFactor );
+      scalingFactor = std::min( subRegionData.localMinVal, scalingFactor );
     } );
 
   } );
@@ -1238,7 +1238,7 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition const & d
 }
 
 bool
-CompositionalMultiphaseWell::checkSystemSolution( DomainPartition const & domain,
+CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
                                                   DofManager const & dofManager,
                                                   arrayView1d< real64 const > const & localSolution,
                                                   real64 const scalingFactor )
@@ -1248,17 +1248,18 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition const & domain
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
   integer localCheck = 1;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel const & mesh,
+                                                                MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames,
                                                                         [&]( localIndex const,
-                                                                             WellElementSubRegion const & subRegion )
+                                                                             WellElementSubRegion & subRegion )
     {
       integer const subRegionSolutionCheck =
         compositionalMultiphaseWellKernels::
           SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
+                                                     m_localChop,
                                                      scalingFactor,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,

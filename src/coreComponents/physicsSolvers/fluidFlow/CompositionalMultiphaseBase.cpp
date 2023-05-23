@@ -235,6 +235,10 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< initialTemperature >( getName() );
       subRegion.registerField< bcTemperature >( getName() ); // needed for the application of boundary conditions
 
+      subRegion.registerField< pressureScalingFactor >( getName() );
+      subRegion.registerField< temperatureScalingFactor >( getName() );
+      subRegion.registerField< globalCompDensityScalingFactor >( getName() );
+
       // The resizing of the arrays needs to happen here, before the call to initializePreSubGroups,
       // to make sure that the dimensions are properly set before the timeHistoryOutput starts its initialization.
 
@@ -508,24 +512,23 @@ void CompositionalMultiphaseBase::updatePhaseVolumeFraction( ObjectManagerBase &
   string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, fluidName );
 
-  if( m_isThermal )
-  {
-    thermalCompositionalMultiphaseBaseKernels::
-      PhaseVolumeFractionKernelFactory::
-      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                 m_numPhases,
-                                                 dataGroup,
-                                                 fluid );
-  }
-  else
-  {
-    isothermalCompositionalMultiphaseBaseKernels::
-      PhaseVolumeFractionKernelFactory::
-      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                 m_numPhases,
-                                                 dataGroup,
-                                                 fluid );
-  }
+  real64 maxDS = m_isThermal ?
+                 thermalCompositionalMultiphaseBaseKernels::
+                   PhaseVolumeFractionKernelFactory::
+                   createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                              m_numPhases,
+                                                              dataGroup,
+                                                              fluid )
+:    isothermalCompositionalMultiphaseBaseKernels::
+                   PhaseVolumeFractionKernelFactory::
+                   createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                              m_numPhases,
+                                                              dataGroup,
+                                                              fluid );
+
+  maxDS = MpiWrapper::max( maxDS );
+  if( maxDS > 0 )
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max DS = "<< maxDS );
 }
 
 void CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGroup ) const

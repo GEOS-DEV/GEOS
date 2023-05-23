@@ -40,6 +40,7 @@ SolverBase::SolverBase( string const & name,
   m_dofManager( name ),
   m_linearSolverParameters( groupKeyStruct::linearSolverParametersString(), this ),
   m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this ),
+  m_localChop( 0 ),
   m_solverStatistics( groupKeyStruct::solverStatisticsString(), this ),
   m_systemSetupTimestamp( 0 )
 {
@@ -86,6 +87,12 @@ SolverBase::SolverBase( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Initial time-step value required by the solver to the event manager." );
+
+  registerWrapper( viewKeyStruct::localChopString(), &m_localChop ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Flag indicating whether local chopping is used" );
 
   registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
@@ -937,6 +944,11 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     // Compute the scaling factor for the Newton update
     scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
 
+    if( getLogLevel() >= 1 && !m_localChop )
+    {
+      GEOS_LOG_RANK_0( getName() + ": Solution scaling factor = " << scaleFactor );
+    }
+
     if( !checkSystemSolution( domain, m_dofManager, m_solution.values(), scaleFactor ) )
     {
       // TODO try chopping (similar to line search)
@@ -1157,7 +1169,7 @@ void SolverBase::solveLinearSystem( DofManager const & dofManager,
   }
 }
 
-bool SolverBase::checkSystemSolution( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
+bool SolverBase::checkSystemSolution( DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                       DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                                       arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
                                       real64 const GEOS_UNUSED_PARAM( scalingFactor ) )
@@ -1165,7 +1177,7 @@ bool SolverBase::checkSystemSolution( DomainPartition const & GEOS_UNUSED_PARAM(
   return true;
 }
 
-real64 SolverBase::scalingForSystemSolution( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
+real64 SolverBase::scalingForSystemSolution( DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                              DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                                              arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ) )
 {

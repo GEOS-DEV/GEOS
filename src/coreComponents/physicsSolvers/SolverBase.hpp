@@ -438,7 +438,7 @@ public:
    *
    */
   virtual bool
-  checkSystemSolution( DomainPartition const & domain,
+  checkSystemSolution( DomainPartition & domain,
                        DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor );
@@ -451,7 +451,7 @@ public:
    * @return The factor that should be used to scale the solution vector values when they are being applied.
    */
   virtual real64
-  scalingForSystemSolution( DomainPartition const & domain,
+  scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution );
 
@@ -571,6 +571,7 @@ public:
     static constexpr char const * discretizationString() { return "discretization"; }
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
     static constexpr char const * meshTargetsString() { return "meshTargets"; }
+    static constexpr char const * localChopString() { return "localChop"; }
 
   };
 
@@ -783,6 +784,9 @@ protected:
 
   /// Nonlinear solver parameters
   NonlinearSolverParameters m_nonlinearSolverParameters;
+
+  /// Flag for local chop
+  integer m_localChop = 0;
 
   /// Solver statistics
   SolverStatistics m_solverStatistics;
