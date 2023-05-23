@@ -435,7 +435,7 @@ public:
                    MPI_Status * MPI_PARAM( request ) );
 
   template< typename T >
-  static int iSend( arrayView1d< T const > const & buf,
+  static int iSend( arrayView1d< T > const & buf,
                     int MPI_PARAM( dest ),
                     int tag,
                     MPI_Comm MPI_PARAM( comm ),
@@ -906,7 +906,7 @@ int MpiWrapper::recv( array1d< T > & buf,
 }
 
 template< typename T >
-int MpiWrapper::iSend( arrayView1d< T const > const & buf,
+int MpiWrapper::iSend( arrayView1d< T > const & buf,
                        int MPI_PARAM( dest ),
                        int tag,
                        MPI_Comm MPI_PARAM( comm ),

@@ -131,6 +131,11 @@ void CellBlock::setElementType( ElementType elementType )
   m_elementsToFaces.resize( this->numElements(), m_numFacesPerElement );
 }
 
+void CellBlock::resizeNumNodes ( dataRepository::indexType const numNodes )
+{
+  m_elementsToNodes.resize( this->numElements(), numNodes );
+}
+
 void CellBlock::resize( dataRepository::indexType const numElements )
 {
   Group::resize( numElements );

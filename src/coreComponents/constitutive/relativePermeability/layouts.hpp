@@ -31,7 +31,7 @@ namespace constitutive
 namespace relperm
 {
 
-#if defined( GEOSX_USE_CUDA )
+#if defined( GEOS_USE_DEVICE )
 
 /// Constitutive model phase relative permeability array layout
 using LAYOUT_RELPERM = RAJA::PERM_JKI;
