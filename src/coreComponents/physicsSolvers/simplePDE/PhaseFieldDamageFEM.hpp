@@ -188,6 +188,7 @@ private:
   integer m_damageViscosityFlag;
   real64 m_damageViscosityCoeff;
   array1d< localIndex > m_initialCrack;
+  //SortedArrayView< localIndex const > const & m_subdomainElems;
 
   PhaseFieldDamageFEM();
 };

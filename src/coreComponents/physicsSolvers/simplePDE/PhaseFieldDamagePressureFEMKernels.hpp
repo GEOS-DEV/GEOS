@@ -124,7 +124,6 @@ public:
     //this should compile
     m_pressureMatrix( elementSubRegion.template getReference< array1d< real64 > >( "hardCodedPMatrixName" ) ),
     m_pressureFracture( elementSubRegion.template getReference< array1d< real64 > >( "hardCodedPFractureName" ) )
-
   {}
 
   //***************************************************************************
@@ -203,37 +202,38 @@ public:
    *
    */
   //START_kernelLauncher
-  template< typename POLICY,
-            typename KERNEL_TYPE >
-  static
-  real64
-  kernelLaunch( localIndex const numElems,
-                KERNEL_TYPE const & kernelComponent )
-  {
-    GEOSX_MARK_FUNCTION;
+  // template< typename POLICY,
+  //           typename KERNEL_TYPE >
+  // static
+  // real64
+  // kernelLaunch( localIndex const numElems,
+  //               KERNEL_TYPE const & kernelComponent )
+  // {
+  //   GEOSX_MARK_FUNCTION;
 
-    GEOSX_UNUSED_VAR( numElems );
+  //   GEOSX_UNUSED_VAR( numElems );
 
-    // Define a RAJA reduction variable to get the maximum residual contribution.
-    RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
-    //EXEMPLE OF KERNEL LAUNCH ON SUBDOMAIN - ANDRE
-    forAll< POLICY >( kernelComponent.m_fracturedElems.size(),
-                      [=] GEOSX_HOST_DEVICE ( localIndex const i )
-    {
-      localIndex k = kernelComponent.m_fracturedElems[i];
-      typename KERNEL_TYPE::StackVariables stack;
+  //   // Define a RAJA reduction variable to get the maximum residual contribution.
+  //   RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
+  //   //EXEMPLE OF KERNEL LAUNCH ON SUBDOMAIN - ANDRE
+  //   //make a m_subdomainElems variable
+  //   forAll< POLICY >( kernelComponent.m_subdomainElems.size(),
+  //                     [=] GEOSX_HOST_DEVICE ( localIndex const i )
+  //   {
+  //     localIndex k = kernelComponent.m_subdomainElems[i];
+  //     typename KERNEL_TYPE::StackVariables stack;
 
-      kernelComponent.setup( k, stack );
-      for( integer q=0; q<numQuadraturePointsPerElem; ++q )
-      {
-        kernelComponent.quadraturePointKernel( k, q, stack );
-      }
-      maxResidual.max( kernelComponent.complete( k, stack ) );
-    } );
+  //     kernelComponent.setup( k, stack );
+  //     for( integer q=0; q<numQuadraturePointsPerElem; ++q )
+  //     {
+  //       kernelComponent.quadraturePointKernel( k, q, stack );
+  //     }
+  //     maxResidual.max( kernelComponent.complete( k, stack ) );
+  //   } );
 
-    return maxResidual.get();
-  }
-  //END_kernelLauncher  
+  //   return maxResidual.get();
+  // }
+  // //END_kernelLauncher  
 
   /**
    * @copydoc geosx::finiteElement::ImplicitKernelBase::quadraturePointJacobianContribution
@@ -463,6 +463,8 @@ protected:
 
   arrayView1d< real64 const > const m_pressureMatrix;
   arrayView1d< real64 const > const m_pressureFracture;
+  //SortedArrayView< localIndex const > const m_subdomainElems;
+
 };
 
 using PhaseFieldDamagePressureKernelFactory = finiteElement::KernelFactory< PhaseFieldDamagePressureKernel,

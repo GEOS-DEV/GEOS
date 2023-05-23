@@ -304,7 +304,7 @@ void MultiResolutionFlowHFSolver::registerDataOnMesh( dataRepository::Group & me
     //register fake pressures for testing purposes
       elementSubRegion.template registerWrapper< array1d< localIndex > >( "frontIndicator" ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
-        setDescription( "indicator of the crack front elements" );
+        setDescription( "indicator of the crack front elements" );  
     });
 
 
@@ -322,6 +322,9 @@ void MultiResolutionFlowHFSolver::registerDataOnMesh( dataRepository::Group & me
       elementSubRegion.template registerWrapper< array1d< localIndex > >( "fineToCoarseMap" ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setDescription( "mapping elem indices from fine to coarse" );
+      elementSubRegion.template registerWrapper< array1d< localIndex > >( "subdomainIndicator" ).
+        setPlotLevel( PlotLevel::LEVEL_1 ).
+        setDescription( "indicator of the subdomain elements" );      
     });
 
     const MeshLevel & base  = meshBodies.getGroup<MeshBody>(0).getBaseDiscretization();
@@ -708,6 +711,93 @@ void MultiResolutionFlowHFSolver::initializeCrackFront( MeshLevel & base )
 
 }                                                   
 
+void MultiResolutionFlowHFSolver::buildSubdomainSet( MeshLevel & base, 
+                                                     MeshLevel & patch )
+{
+  m_baseCrackFrontBuffer.clear();
+  ElementRegionManager & patchElemManager = patch.getElemManager();
+  ElementRegionManager & baseElemManager = base.getElemManager();
+
+  // Hard-coded region and subRegion
+  ElementRegionBase const & baseMatrixElementRegion = baseElemManager.getRegion( 0 );
+  CellElementSubRegion const & patchSubRegion = patchElemManager.getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
+  CellElementSubRegion const & baseMatrixSubRegion = baseMatrixElementRegion.getSubRegion< CellElementSubRegion >( 0 );
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< localIndex > > const subdomainIndicator =
+  patchElemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( "subdomainIndicator" );
+
+  //allgather fracture cell centers and pressure values - be careful with ghosts
+  //get cell centers of all base elements
+  arrayView2d< const real64 > allBaseElemCenters = baseMatrixSubRegion.getElementCenter();
+  //filter only crackFront centers
+  array2d< real64 > allFrontElemCenters(m_baseCrackFront.size(), 3);
+  localIndex ii = 0;
+  for(auto frontElem:m_baseCrackFront)
+  {
+    allFrontElemCenters( ii, 0 ) = allBaseElemCenters[frontElem][0];
+    allFrontElemCenters( ii, 1 ) = allBaseElemCenters[frontElem][1];
+    allFrontElemCenters( ii, 2 ) = allBaseElemCenters[frontElem][2];
+    ii++;
+  }
+
+  // Exchange the sizes of the data across all ranks.
+  array1d< int > dataSizes( MpiWrapper::commSize() );
+  MpiWrapper::allGather( LvArray::integerConversion< int >( allFrontElemCenters.size(0)*allFrontElemCenters.size(1) ), 
+                         dataSizes, 
+                         MPI_COMM_GEOSX );
+
+  int const totalDataSize = std::accumulate( dataSizes.begin(), dataSizes.end(), 0 );
+  GEOSX_LOG_LEVEL_RANK_0( 1, "totalDataSize = "<<totalDataSize<<"\n");
+  //array1d<T> allData( totalDataSize );
+  array2d<real64> allData( totalDataSize/3, 3 );
+  std::vector< int > mpiDisplacements( MpiWrapper::commSize(), 0 );
+  std::partial_sum( dataSizes.begin(), dataSizes.end() - 1, mpiDisplacements.begin() + 1 );
+  MpiWrapper::allgatherv( allFrontElemCenters.data(), 
+                          allFrontElemCenters.size(0)*allFrontElemCenters.size(1), 
+                          allData.data(),
+                          dataSizes.data(), 
+                          mpiDisplacements.data(), 
+                          MPI_COMM_GEOSX );                         
+  arrayView2d< const real64 > patchElemCenters = patchElemManager.getRegion(0).getSubRegion< CellElementSubRegion >(0).getElementCenter();
+  arrayView1d< integer const > const & patchGhostRank = patchSubRegion.ghostRank();
+  GEOSX_LOG_LEVEL_RANK_0( 1, "BEFORE PATCH SUBREGION LOOP\n");
+  forAll< serialPolicy >( patchSubRegion.size(), [&] ( localIndex const k )
+  {
+    //convert patch element index to base - first convert patch to global index
+    //this probably needs to be done at ghosts or require a sync operation at the end
+    if(patchGhostRank[k]<0){
+      //zero subdomain indicator field
+      subdomainIndicator[0][0][k] = 0;
+
+      R1Tensor patchElemCenter;
+      patchElemCenter[0] = patchElemCenters[k][0];
+      patchElemCenter[1] = patchElemCenters[k][1];
+      patchElemCenter[2] = patchElemCenters[k][2];
+      real64 thresholdDist = 1.0;
+      real64 minDist = 1.0e20;
+      for(localIndex j=0; j<allData.size(0); j++)
+      {
+        R1Tensor currFrontElemCenter;
+        currFrontElemCenter[0] = allData[j][0];
+        currFrontElemCenter[1] = allData[j][1];
+        currFrontElemCenter[2] = allData[j][2];
+        
+        R1Tensor centerCopy = LVARRAY_TENSOROPS_INIT_LOCAL_3( patchElemCenter );
+        LvArray::tensorOps::subtract< 3 >( centerCopy, currFrontElemCenter );
+        real64 dist = LvArray::tensorOps::l2Norm< 3 >( centerCopy );
+        if(dist < minDist){
+          minDist = dist;
+        }
+      }
+      if(minDist < thresholdDist ){
+        subdomainIndicator[0][0][k] = 1;
+        m_baseCrackFrontBuffer.insert(k);
+      }
+
+    } 
+  } );   
+}                                                  
+
 void MultiResolutionFlowHFSolver::cutDamagedElements( MeshLevel & base,
                                                       MeshLevel const & patch )
 {
@@ -724,10 +814,6 @@ void MultiResolutionFlowHFSolver::cutDamagedElements( MeshLevel & base,
   //ghosts
   arrayView1d< integer const > const baseGhostRank = subRegion.ghostRank();
   
-  //FaceManager const & baseFaceManager = base.getFaceManager();
-  //array2d< localIndex > const & elemToFaceList = subRegion.faceList();
-  //auto faceToElemList = baseFaceManager.elementList();
-  //auto faceNormals = baseFaceManager.faceNormal();
   // Get domain
   MeshManager & meshManager = this->getGroupByPath< MeshManager >( "/Problem/Mesh");
   //integer Nx = meshManager.getGroup<InternalMeshGenerator>(0).getNx();
@@ -750,7 +836,6 @@ void MultiResolutionFlowHFSolver::cutDamagedElements( MeshLevel & base,
   for(auto && elem:baseFrontCopy)
   {
     //PARALLEL: split the work to the right rank
-    //localIndex triplet[3];
     integer fracCount = 0;
     GEOSX_LOG_LEVEL( 3, "Entering coarseMap\n" );
     ////////version with new maps
@@ -768,34 +853,6 @@ void MultiResolutionFlowHFSolver::cutDamagedElements( MeshLevel & base,
         }        
       }
     }
-    ///////////
-    //////////other version
-    // coarseToFineStructuredElemMap(subRegion.localToGlobalMap()[elem],Nx,Ny,Nz,rx,ry,rz,triplet);
-    // GEOSX_LOG_LEVEL( 3, "Base elem index: " << elem << " triplet: ( "<<triplet[0]<<", "<<triplet[1]<<", "<<triplet[2]<<" )\n" );
-    // for(int i=0; i<rx; i++){
-    //   for(int j=0; j<ry; j++){
-    //     for(int k=0; k<rz; k++){
-    //       globalIndex fineElem = (triplet[0] + i)*ry*Ny*rz*Nz + (triplet[1] + j)*rz*Nz + (triplet[2] + k);
-    //       if(fineElem > 0){
-    //           GEOSX_LOG_LEVEL( 3, "fineElem: " << fineElem << " from base elem: "<<elem<<"\n" );
-    //       }
-    //       //get averageDamage in fineElem
-    //       real64 averageDamage;
-    //       //I dont think we need to cut the ghosts
-    //       if(ghostRank[elem]>=0){
-    //          averageDamage = 0.0;
-    //       }
-    //       else{
-    //          averageDamage = utilGetElemAverageDamage(fineElem, patch);
-    //       }
-    //       if (averageDamage > 0.9)
-    //       {
-    //         fracCount++;  
-    //       }
-    //     }        
-    //   }
-    // }
-    //////////
     if (fracCount >= ry*rz || fracturedElements.contains(elem))
     {
       efemGenerator.insertToCut(elem);
@@ -811,8 +868,8 @@ void MultiResolutionFlowHFSolver::cutDamagedElements( MeshLevel & base,
 
 }      
 
-void MultiResolutionFlowHFSolver::writeBasePressuresToPatch(MeshLevel & base,
-                                                            MeshLevel & patch)
+void MultiResolutionFlowHFSolver::writeBasePressuresToPatch( MeshLevel & base,
+                                                             MeshLevel & patch )
 {
   using namespace fields::flow;
 
@@ -1078,6 +1135,7 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
     {
       //efemGenerator.propagationStep( domain, m_baseTip, m_patchTip, m_baseTipElementIndex );
       //cutDamagedElements( base, patch );  
+      buildSubdomainSet( base, patch );
       baseSolver.setupSystem( domain,
                               baseSolver.getDofManager(),
                               baseSolver.getLocalMatrix(),

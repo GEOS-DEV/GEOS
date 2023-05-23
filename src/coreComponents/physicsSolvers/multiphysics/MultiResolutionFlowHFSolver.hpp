@@ -95,7 +95,10 @@ public:
   void initializeCrackFront( MeshLevel & base);                                        
 
   void cutDamagedElements( MeshLevel & base,
-                           MeshLevel const & patch );   
+                           MeshLevel const & patch );  
+
+  void buildSubdomainSet( MeshLevel & base, 
+                          MeshLevel & patch );                          
 
   void writeBasePressuresToPatch(MeshLevel & base,
                                  MeshLevel & patch);                                                                                                                                                                  
@@ -170,6 +173,9 @@ private:
 
   //set of base elements in the crack front
   SortedArray<localIndex> m_baseCrackFront;
+
+  //set of base elements around the crack front
+  SortedArray<localIndex> m_baseCrackFrontBuffer;  
 
   //indicator of insertion of new fracture elements
   bool m_addedFractureElements;
