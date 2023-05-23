@@ -505,6 +505,13 @@ Element: InternalMesh
 .. include:: ../../coreComponents/schema/docs/InternalMesh.rst
 
 
+.. _XML_InternalWell:
+
+Element: InternalWell
+=====================
+.. include:: ../../coreComponents/schema/docs/InternalWell.rst
+
+
 .. _XML_InternalWellbore:
 
 Element: InternalWellbore
@@ -671,6 +678,13 @@ Element: Parameters
 Element: ParticleFluid
 ======================
 .. include:: ../../coreComponents/schema/docs/ParticleFluid.rst
+
+
+.. _XML_Perforation:
+
+Element: Perforation
+====================
+.. include:: ../../coreComponents/schema/docs/Perforation.rst
 
 
 .. _XML_PeriodicEvent:
