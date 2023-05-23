@@ -17,7 +17,6 @@
  */
 
 #include "RestartOutput.hpp"
-#include "fileIO/silo/SiloFile.hpp"
 
 namespace geos
 {
