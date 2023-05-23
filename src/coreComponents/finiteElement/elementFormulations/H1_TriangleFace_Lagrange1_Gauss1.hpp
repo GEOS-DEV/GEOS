@@ -137,7 +137,7 @@ public:
    *   point.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static void calcN( localIndex const q,
                      StackVariables const & stack,
                      real64 ( &N )[numNodes] );
@@ -164,7 +164,7 @@ public:
    */
   template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, bool UPPER >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static void addGradGradStabilization( StackVariables const & stack,
                                         real64 ( &matrix )
                                         [maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT]
@@ -184,7 +184,7 @@ private:
 
 template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, bool UPPER >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void H1_TriangleFace_Lagrange1_Gauss1::
   addGradGradStabilization( StackVariables const & stack,
                             real64 ( & matrix )
@@ -198,7 +198,7 @@ void H1_TriangleFace_Lagrange1_Gauss1::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void
 H1_TriangleFace_Lagrange1_Gauss1::
   calcN( real64 const (&coords)[2],
@@ -213,7 +213,7 @@ H1_TriangleFace_Lagrange1_Gauss1::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void
 H1_TriangleFace_Lagrange1_Gauss1::
   calcN( localIndex const q,
@@ -228,7 +228,7 @@ H1_TriangleFace_Lagrange1_Gauss1::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void H1_TriangleFace_Lagrange1_Gauss1::
   calcN( localIndex const q,
          StackVariables const & GEOS_UNUSED_PARAM( stack ),
@@ -240,7 +240,7 @@ void H1_TriangleFace_Lagrange1_Gauss1::
 //*************************************************************************************************
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 real64
 H1_TriangleFace_Lagrange1_Gauss1::
   transformedQuadratureWeight( localIndex const q,
