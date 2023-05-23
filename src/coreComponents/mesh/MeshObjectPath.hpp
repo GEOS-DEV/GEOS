@@ -332,7 +332,7 @@ void MeshObjectPath::forObjectsInPath( dataRepository::Group const & meshBodies,
   for( auto const & meshBodyPair : m_pathPermutations )
   {
     MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyPair.first );
-    for( std::pair< string const, std::map< string, std::vector< string > > > const & meshLevelPair : meshBodyPair.second )
+    for( auto const & meshLevelPair : meshBodyPair.second )
     {
       MeshLevel & meshLevel = meshBody.getMeshLevel( meshLevelPair.first );
       forObjectsInPath< OBJECT_TYPE, FUNC >( meshLevelPair, meshLevel, std::forward< FUNC >( func ));
