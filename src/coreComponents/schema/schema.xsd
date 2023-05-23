@@ -2928,6 +2928,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PackCollectionType">
+		<!--disableCoordCollection => Whether or not to create coordinate meta-collectors if collected objects are mesh objects.-->
+		<xsd:attribute name="disableCoordCollection" type="integer" default="0" />
 		<!--fieldName => The name of the (packable) field associated with the specified object to retrieve data from-->
 		<xsd:attribute name="fieldName" type="string" use="required" />
 		<!--objectPath => The name of the object from which to retrieve field values.-->
