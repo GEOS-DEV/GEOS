@@ -79,7 +79,7 @@ bool ChomboIO::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
   {
     return false;
   }
-  GEOS_LOG_RANK_0( "Executing chombo coupling." );
+  GEOS_LOG_RANK_0( "Executing chombo coupling" );
 
   if( m_coupler == nullptr )
   {
