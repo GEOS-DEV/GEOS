@@ -24,6 +24,15 @@
 
 namespace geos
 {
+
+#if defined(GEOS_USE_HIP) // still need int32 hypre for the current hip-capable build
+/// Typedef to allow us to specify required parmetis integer type.
+using pmet_idx_t = int32_t;
+#else
+/// Typedef to allow us to specify required parmetis integer type.
+using pmet_idx_t = int64_t;
+#endif
+
 namespace parmetis
 {
 
@@ -38,9 +47,9 @@ namespace parmetis
  * @note elemDist must be a comm-wide exclusive scan of elemToNodes.size();
  *       the user may compute it once and reuse in a subsequent call to partition().
  */
-ArrayOfArrays< int64_t, int64_t >
-meshToDual( ArrayOfArraysView< int64_t const, int64_t > const & elemToNodes,
-            arrayView1d< int64_t const > const & elemDist,
+ArrayOfArrays< pmet_idx_t, pmet_idx_t >
+meshToDual( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & elemToNodes,
+            arrayView1d< pmet_idx_t const > const & elemDist,
             MPI_Comm comm,
             int const minCommonNodes );
 
@@ -53,10 +62,10 @@ meshToDual( ArrayOfArraysView< int64_t const, int64_t > const & elemToNodes,
  * @param numRefinements number of partition refinement iterations
  * @return an array of target partitions for each element in local mesh
  */
-array1d< int64_t >
-partition( ArrayOfArraysView< int64_t const, int64_t > const & graph,
-           arrayView1d< int64_t const > const & vertDist,
-           int64_t const numParts,
+array1d< pmet_idx_t >
+partition( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & graph,
+           arrayView1d< pmet_idx_t const > const & vertDist,
+           pmet_idx_t const numParts,
            MPI_Comm comm,
            int const numRefinements );
 
