@@ -412,70 +412,35 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
 
-  {
-    NodeManager const & nodeManager = mesh.getNodeManager();
-    ElementRegionManager const & elemManager = mesh.getElemManager();
-    SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( m_fracturesSolver->getFractureRegionName() );
-    EmbeddedSurfaceSubRegion const & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
-
-    string const dofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
-    string const jumpDofKey = dofManager.getKey( fields::contact::dispJump::key() );
-
-    arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
-    arrayView1d< globalIndex const > const & jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
-
-    string const flowDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
-
-    real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
-
-    // 1. Cell-based contributions of standard poroelasticity
+  {   
     if( m_isThermal )
     {
-      assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
-                      thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory >( mesh,
-                                                                                                   dofManager,
-                                                                                                   regionNames,
-                                                                                                   SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
-                                                                                                   localMatrix,
-                                                                                                   localRhs,
-                                                                                                   flowDofKey,
-                                                                                                   FlowSolverBase::viewKeyStruct::fluidNamesString() );
+      solidMechanicsSolver()->getMaxForce() =
+        assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
+                        thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory,
+                        poromechanicsEFEMKernels::SinglePhaseKernelFactory >( mesh,
+                                                                              dofManager,
+                                                                              regionNames,
+                                                                              SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
+                                                                              localMatrix,
+                                                                              localRhs,
+                                                                              flowDofKey,
+                                                                              FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
     else
     {
-      assemblyLaunch< constitutive::PorousSolidBase,
-                      poromechanicsKernels::SinglePhasePoromechanicsKernelFactory >( mesh,
-                                                                                     dofManager,
-                                                                                     regionNames,
-                                                                                     SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
-                                                                                     localMatrix,
-                                                                                     localRhs,
-                                                                                     flowDofKey,
-                                                                                     FlowSolverBase::viewKeyStruct::fluidNamesString() );
+      solidMechanicsSolver()->getMaxForce() =
+        assemblyLaunch< constitutive::PorousSolidBase,
+                        poromechanicsKernels::SinglePhasePoromechanicsKernelFactory,
+                        poromechanicsEFEMKernels::SinglePhaseKernelFactory >( mesh,
+                                                                              dofManager,
+                                                                              regionNames,
+                                                                              SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
+                                                                              localMatrix,
+                                                                              localRhs,
+                                                                              flowDofKey,
+                                                                              FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
-
-    // 2.  Add EFEM poroelastic contribution
-    poromechanicsEFEMKernels::SinglePhaseKernelFactory EFEMkernelFactory( subRegion,
-                                                                          dispDofNumber,
-                                                                          jumpDofNumber,
-                                                                          flowDofKey,
-                                                                          dofManager.rankOffset(),
-                                                                          localMatrix,
-                                                                          localRhs,
-                                                                          gravityVectorData,
-                                                                          FlowSolverBase::viewKeyStruct::fluidNamesString() );
-
-    real64 maxTraction =
-      finiteElement::
-        regionBasedKernelApplication< parallelDevicePolicy< >,
-                                      constitutive::PorousSolidBase,
-                                      CellElementSubRegion >( mesh,
-                                                              regionNames,
-                                                              solidMechanicsSolver()->getDiscretizationName(),
-                                                              viewKeyStruct::porousMaterialNamesString(),
-                                                              EFEMkernelFactory );
-
-    GEOS_UNUSED_VAR( maxTraction );
 
     // 3. Assemble poroelastic fluxes and all derivatives
     flowSolver()->assemblePoroelasticFluxTerms( time_n, dt,

@@ -136,14 +136,13 @@ private:
 
   template< typename CONSTITUTIVE_BASE,
             typename KERNEL_WRAPPER,
-            typename ... PARAMS >
+            typename EFEM_KERNEL_WRAPPER >
   real64 assemblyLaunch( MeshLevel & mesh,
                          DofManager const & dofManager,
                          arrayView1d< string const > const & regionNames,
                          string const & materialNamesString,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                         arrayView1d< real64 > const & localRhs,
-                         PARAMS && ... params );
+                         arrayView1d< real64 > const & localRhs );
 
   string m_fracturesSolverName;
 
@@ -154,22 +153,29 @@ private:
 
 template< typename CONSTITUTIVE_BASE,
           typename KERNEL_WRAPPER,
-          typename ... PARAMS >
+          typename EFEM_KERNEL_WRAPPER >
 real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & mesh,
                                                                   DofManager const & dofManager,
                                                                   arrayView1d< string const > const & regionNames,
                                                                   string const & materialNamesString,
                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                  arrayView1d< real64 > const & localRhs,
-                                                                  PARAMS && ... params )
+                                                                  arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
   NodeManager const & nodeManager = mesh.getNodeManager();
 
-  string const dofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
-  arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+  SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( m_fracturesSolver->getFractureRegionName() );
+  EmbeddedSurfaceSubRegion const & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
+  string const dofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
+  string const jumpDofKey = dofManager.getKey( fields::contact::dispJump::key() );  
+  arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+  arrayView1d< globalIndex const > const & jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
+
+  string const flowDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
+  
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
   KERNEL_WRAPPER kernelWrapper( dispDofNumber,
@@ -177,16 +183,40 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
                                 localMatrix,
                                 localRhs,
                                 gravityVectorData,
-                                std::forward< PARAMS >( params )... );
+                                flowDofKey,
+                                FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
-  return finiteElement::
-           regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                         CONSTITUTIVE_BASE,
-                                         CellElementSubRegion >( mesh,
-                                                                 regionNames,
-                                                                 m_fracturesSolver->getSolidSolver()->getDiscretizationName(),
-                                                                 materialNamesString,
-                                                                 kernelWrapper );
+  real64 const maxForce =
+    finiteElement::
+      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                    CONSTITUTIVE_BASE,
+                                    CellElementSubRegion >( mesh,
+                                                            regionNames,
+                                                            m_fracturesSolver->getSolidSolver()->getDiscretizationName(),
+                                                            materialNamesString,
+                                                            kernelWrapper );
+
+  EFEM_KERNEL_WRAPPER EFEMkernelWrapper( subRegion,
+                                         dispDofNumber,
+                                         jumpDofNumber,
+                                         flowDofKey,
+                                         dofManager.rankOffset(),
+                                         localMatrix,
+                                         localRhs,
+                                         gravityVectorData,
+                                         FlowSolverBase::viewKeyStruct::fluidNamesString() );
+
+  finiteElement::
+    regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                  CONSTITUTIVE_BASE,
+                                  CellElementSubRegion >( mesh,
+                                                          regionNames,
+                                                          m_fracturesSolver->getSolidSolver()->getDiscretizationName(),
+                                                          materialNamesString,
+                                                          EFEMkernelWrapper );
+
+  return maxForce;
+
 }
 
 } /* namespace geos */

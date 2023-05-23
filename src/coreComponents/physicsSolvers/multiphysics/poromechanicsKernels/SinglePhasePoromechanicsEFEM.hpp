@@ -27,22 +27,6 @@ namespace geos
 
 namespace poromechanicsEFEMKernels
 {
-
-/**
- * @brief Implements kernels for solving quasi-static single-phase poromechanics.
- * @copydoc geos::finiteElement::ImplicitKernelBase
- * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
- *                            @p SUBREGION_TYPE.
- * @tparam UNUSED An unused parameter since we are assuming that the test and
- *                trial space have the same number of support points.
- *
- * ### SinglePhasePoromechanics Description
- * Implements the KernelBase interface functions required for solving the
- * quasi-static single-phase poromechanics problem using one of the
- * "finite element kernel application" functions such as
- * geos::finiteElement::RegionBasedKernelApplication.
- *
- */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
