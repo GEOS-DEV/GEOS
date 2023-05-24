@@ -75,7 +75,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
   GEOS_MARK_FUNCTION;
 
   MeshBody & meshBody = domain.getMeshBody( this->getName() );
-  GEOS_LOG_RANK( "Generating mesh for " + meshBody.getName() );
+  //GEOS_LOG_RANK( "Generating mesh for " + meshBody.getName() );
   MeshLevel & meshLevel0 = meshBody.getBaseDiscretization();
   ParticleManager & particleManager = meshLevel0.getParticleManager();
 
@@ -91,8 +91,8 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     particleBlock.setParticleType( EnumStrings< ParticleType >::fromString( m_particleType[aa++] ) );
   }
 
-  GEOS_LOG_RANK_0( "MPM particle file path: " << m_particleFilePath );
-  GEOS_LOG_RANK_0( "MPM header file path: " << m_headerFilePath );
+  //GEOS_LOG_RANK_0( "MPM particle file path: " << m_particleFilePath );
+  //GEOS_LOG_RANK_0( "MPM header file path: " << m_headerFilePath );
 
   int numMaterials, numParticleTypes;
   map< std::string, std::vector< std::vector< double > > > particleData;
@@ -114,8 +114,8 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
   iss1 >> numMaterials >> numParticleTypes;
   particleTypes.resize( numParticleTypes );
 
-  GEOS_LOG_RANK_0( "Number of particle materials: " << numMaterials );
-  GEOS_LOG_RANK_0( "Number of particle types: " << numParticleTypes );
+  //GEOS_LOG_RANK_0( "Number of particle materials: " << numMaterials );
+  //GEOS_LOG_RANK_0( "Number of particle types: " << numParticleTypes );
 
   // Read in the material key
   for( int i=0; i<numMaterials; i++ )
@@ -126,7 +126,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     int value; // Material ID
     iss2 >> key >> value;
     materialMap[key] = value;
-    GEOS_LOG_RANK_0( "Material name/ID: " + key + "/" << value );
+    //GEOS_LOG_RANK_0( "Material name/ID: " + key + "/" << value );
   }
 
   // Read in the particle type key
@@ -314,17 +314,17 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     }
     numParticles += size;
     particleRegion.resize( size );
-    GEOS_LOG_RANK( "Particle region " << particleRegion.getName() << " contains " << size << " particles on this rank." );
+    //GEOS_LOG_RANK( "Particle region " << particleRegion.getName() << " contains " << size << " particles on this rank." );
   } );
 
   particleManager.resize( numParticles ); // All this does is change m_size for the particleManager, gives a convenient way to get the total
                                           // number of particles
-  GEOS_LOG_RANK( "Total number of particles on this rank: " << particleManager.size() );
+  //GEOS_LOG_RANK( "Total number of particles on this rank: " << particleManager.size() );
 }
 
 void ParticleMeshGenerator::postProcessInput()
 {
-  GEOS_LOG_RANK_0( "Someone called ParticleMeshGenerator::postProcessInput!" );
+  //GEOS_LOG_RANK_0( "Someone called ParticleMeshGenerator::postProcessInput!" );
 }
 
 void ParticleMeshGenerator::importFieldOnArray( Block block,
