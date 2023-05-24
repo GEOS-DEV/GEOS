@@ -18,7 +18,7 @@
 
 #include "ProppantTransportKernels.hpp"
 
-#include "constitutive/fluid/ParticleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/ParticleFluidBase.hpp"
 
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
