@@ -140,7 +140,7 @@ private:
 
   /**
    * @brief ouput time information to the log
-   * 
+   *
    */
   void outputTime() const;
 
