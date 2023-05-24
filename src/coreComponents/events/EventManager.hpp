@@ -137,7 +137,11 @@ public:
 
 private:
 
-  /// output timestamp to the screen
+
+  /**
+   * @brief ouput time information to the log
+   * 
+   */
   void outputTime() const;
 
   /// Min time for a simulation
