@@ -205,7 +205,7 @@ public:
                              real64 const averageDistance ) const
   {
     localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
-    m_connectivityIndex[embSurfIndex] = m_fractureSurfaceArea[embSurfIndex] / averageDistance;
+    m_connectivityIndex[embSurfIndex] = 2. * m_fractureSurfaceArea[embSurfIndex] / averageDistance;
   }
 
 private:

@@ -123,8 +123,9 @@ public:
   /**
    * @brief Copies the edges to (nodes|faces) mappings from @p cellBlockManager.
    * @param[in] cellBlockManager Provides the mappings.
+   * @param[in] baseMeshLevel flag that indicates if we are operating on the base mesh level or on another mesh level
    */
-  void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager );
+  void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager, bool baseMeshLevel );
 
   /**
    * @brief Link the current manager to other managers.

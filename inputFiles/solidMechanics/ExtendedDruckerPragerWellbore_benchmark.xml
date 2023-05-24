@@ -30,7 +30,7 @@
     maxTime="1.0">
     <PeriodicEvent
       name="solverApplications"
-      timeFrequency="0.02"
+      forceDt="0.02"
       target="/Solvers/mechanicsSolver"/>
 
     <PeriodicEvent

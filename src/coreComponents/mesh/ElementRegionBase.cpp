@@ -15,8 +15,6 @@
 #include "ElementRegionBase.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
-#include "constitutive/solid/SolidBase.hpp"
 
 
 namespace geos

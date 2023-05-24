@@ -17,7 +17,7 @@
 
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "mesh/MeshManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"

@@ -591,7 +591,11 @@ void ProblemManager::generateMesh()
     }
   } );
 
-  // setup the MeshLevel assocaited with the discretizations
+  Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
+  integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
+  domain.setupBaseLevelMeshGlobalInfo();
+
+  // setup the MeshLevel associated with the discretizations
   for( auto const & discretizationPair: discretizations )
   {
     string const & meshBodyName = discretizationPair.first.first;
@@ -615,8 +619,7 @@ void ProblemManager::generateMesh()
         if( order > 1 )
         {
           MeshLevel & mesh = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
-                                                       discretizationName,
-                                                       order );
+                                                       discretizationName, order );
 
           this->generateMeshLevel( mesh,
                                    cellBlockManager,
@@ -644,10 +647,6 @@ void ProblemManager::generateMesh()
     }
   }
 
-
-
-  Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
-  integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
   domain.setupCommunications( useNonblockingMPI );
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
@@ -775,53 +774,44 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   FaceManager & faceManager = meshLevel.getFaceManager();
   ElementRegionManager & elemManager = meshLevel.getElemManager();
 
-//  GeometricObjectManager & geometricObjects = this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
+  bool isbaseMeshLevel =  meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString();
 
-//  MeshUtilities::generateNodesets( geometricObjects, nodeManager );
-
-
-//  nodeManager.constructGlobalToLocalMap();
-
-
-  if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
-  {
-    elemManager.generateMesh( cellBlockManager );
-    nodeManager.setGeometricalRelations( cellBlockManager, elemManager );
-    edgeManager.setGeometricalRelations( cellBlockManager );
-    faceManager.setGeometricalRelations( cellBlockManager,
-                                         elemManager,
-                                         nodeManager );
-    nodeManager.constructGlobalToLocalMap( cellBlockManager );
-    // Edge, face and element region managers rely on the sets provided by the node manager.
-    // This is why `nodeManager.buildSets` is called first.
-    nodeManager.buildSets( cellBlockManager, this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager ) );
-    edgeManager.buildSets( nodeManager );
-    faceManager.buildSets( nodeManager );
-    elemManager.buildSets( nodeManager );
-    // The edge manager do not hold any information related to the regions nor the elements.
-    // This is why the element region manager is not provided.
-    nodeManager.setupRelatedObjectsInRelations( edgeManager, faceManager, elemManager );
-    edgeManager.setupRelatedObjectsInRelations( nodeManager, faceManager );
-    faceManager.setupRelatedObjectsInRelations( nodeManager, edgeManager, elemManager );
-    // Node and edge managers rely on the boundary information provided by the face manager.
-    // This is why `faceManager.setDomainBoundaryObjects` is called first.
-    faceManager.setDomainBoundaryObjects();
-    nodeManager.setDomainBoundaryObjects( faceManager );
-    edgeManager.setDomainBoundaryObjects( faceManager );
-  }
+  elemManager.generateMesh( cellBlockManager );
+  nodeManager.setGeometricalRelations( cellBlockManager, elemManager, isbaseMeshLevel );
+  edgeManager.setGeometricalRelations( cellBlockManager, isbaseMeshLevel );
+  faceManager.setGeometricalRelations( cellBlockManager,
+                                       elemManager,
+                                       nodeManager, isbaseMeshLevel );
+  nodeManager.constructGlobalToLocalMap( cellBlockManager );
+  // Edge, face and element region managers rely on the sets provided by the node manager.
+  // This is why `nodeManager.buildSets` is called first.
+  nodeManager.buildSets( cellBlockManager, this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager ) );
+  edgeManager.buildSets( nodeManager );
+  faceManager.buildSets( nodeManager );
+  elemManager.buildSets( nodeManager );
+  // The edge manager do not hold any information related to the regions nor the elements.
+  // This is why the element region manager is not provided.
+  nodeManager.setupRelatedObjectsInRelations( edgeManager, faceManager, elemManager );
+  edgeManager.setupRelatedObjectsInRelations( nodeManager, faceManager );
+  faceManager.setupRelatedObjectsInRelations( nodeManager, edgeManager, elemManager );
+  // Node and edge managers rely on the boundary information provided by the face manager.
+  // This is why `faceManager.setDomainBoundaryObjects` is called first.
+  faceManager.setDomainBoundaryObjects();
+  nodeManager.setDomainBoundaryObjects( faceManager );
+  edgeManager.setDomainBoundaryObjects( faceManager );
   meshLevel.generateSets();
 
 
-  if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
+  elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
   {
-    elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
+    subRegion.setupRelatedObjectsInRelations( meshLevel );
+    if( isbaseMeshLevel )
     {
-      subRegion.setupRelatedObjectsInRelations( meshLevel );
       subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
-      subRegion.setMaxGlobalIndex();
-    } );
-    elemManager.setMaxGlobalIndex();
-  }
+    }
+    subRegion.setMaxGlobalIndex();
+  } );
+  elemManager.setMaxGlobalIndex();
 }
 
 void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,

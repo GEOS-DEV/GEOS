@@ -21,9 +21,9 @@
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
-#include "constitutive/fluid/SingleFluidFields.hpp"
-#include "constitutive/fluid/singleFluidSelector.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidSelector.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
