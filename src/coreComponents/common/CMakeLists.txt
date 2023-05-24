@@ -35,7 +35,7 @@ set( common_sources
      initializeEnvironment.cpp
    )
 
-set( dependencyList ${parallelDeps} lvarray pugixml RAJA chai conduit::conduit fmt )
+set( dependencyList ${parallelDeps} lvarray pugixml RAJA chai conduit::conduit fmt::fmt )
 
 if ( ENABLE_MKL )
   set( dependencyList ${dependencyList} mkl )
