@@ -64,6 +64,10 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_prescribedBoundaryFTable( 0 ),
   m_fTableInterpType( 0 ),
   m_fTable(),
+  m_domainF(),
+  m_domainL(),
+  m_boxAverageHistory( 0 ),
+  m_reactionHistory( 0 ),
   m_needsNeighborList( 0 ),
   m_neighborRadius( -1.0 ),
   m_binSizeMultiplier( 1 ),
@@ -105,6 +109,16 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper( "prescribedBcTable", &m_prescribedBcTable ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag for whether to have time-dependent boundary condition types" );
+
+  registerWrapper( "boxAverageHistory", &m_boxAverageHistory ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag for whether to output box average history" );
+
+  registerWrapper( "reactionHistory", &m_reactionHistory ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag for whether to output face reaction history" );
 
   registerWrapper( "boundaryConditionTypes", &m_boundaryConditionTypes ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -676,7 +690,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   }
 
   // Initialize reaction force history file and write its header
-  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
+  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 && m_reactionHistory == 1 )
   {
     std::ofstream file;
     file.open( "reactionHistory.csv", std::ios::out | std::ios::app );
@@ -783,18 +797,22 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   {
     subRegion.setActiveParticleIndices(); // Needed for computeAndWriteBoxAverage().
   } );
-  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
+  if( m_boxAverageHistory == 1 )
   {
-    std::ofstream file;
-    file.open( "boxAverageHistory.csv", std::ios::out | std::ios::app );
-    if( file.fail() )
+    if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
     {
-      throw std::ios_base::failure( std::strerror( errno ) );
+      std::ofstream file;
+      file.open( "boxAverageHistory.csv", std::ios::out | std::ios::app );
+      if( file.fail() )
+      {
+        throw std::ios_base::failure( std::strerror( errno ) );
+      }
+      file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
+      file << "Time, Sxx, Syy, Szz, Sxy, Syz, Sxz, Density, Damage" << std::endl;
     }
-    file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
-    file << "Time, Sxx, Syy, Szz, Sxy, Syz, Sxz, Density, Damage" << std::endl;
+    MpiWrapper::barrier( MPI_COMM_GEOSX ); // wait for the header to be written
+    computeAndWriteBoxAverage( 0.0, 0.0, particleManager );
   }
-  computeAndWriteBoxAverage( 0.0, 0.0, particleManager );
 
   // Resize grid arrays according to number of velocity fields
   int maxLocalGroupNumber = 0; // Maximum contact group number on this partition.
@@ -1102,9 +1120,12 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
 
   //#######################################################################################
-  solverProfiling( "Compute and write box averages" );
+  solverProfilingIf( "Compute and write box averages", m_boxAverageHistory == 1 );
   //#######################################################################################
-  computeAndWriteBoxAverage( time_n, dt, particleManager );
+  if( m_boxAverageHistory == 1 )
+  {
+    computeAndWriteBoxAverage( time_n, dt, particleManager );
+  }
 
 
   //#######################################################################################
@@ -1423,7 +1444,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   height = m_domainExtent[2] * (1.0 + m_domainL[2] * dt);
 
   // Write global reactions to file
-  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
+  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 && m_reactionHistory == 1 )
   {
     std::ofstream file;
     // can't enable exception now because of gcc bug that raises ios_base::failure with useless message

@@ -2884,6 +2884,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 * Outflow
 * Symmetry-->
 		<xsd:attribute name="boundaryConditionTypes" type="integer_array" default="{0}" />
+		<!--boxAverageHistory => Flag for whether to output box average history-->
+		<xsd:attribute name="boxAverageHistory" type="integer" default="0" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--contactGapCorrection => Flag for mitigating contact gaps-->
@@ -2912,6 +2914,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="prescribedBcTable" type="integer" default="0" />
 		<!--prescribedBoundaryFTable => Flag for whether to have time-dependent boundary conditions described by a global background grid F-->
 		<xsd:attribute name="prescribedBoundaryFTable" type="integer" default="0" />
+		<!--reactionHistory => Flag for whether to output face reaction history-->
+		<xsd:attribute name="reactionHistory" type="integer" default="0" />
 		<!--separabilityMinDamage => Damage threshold for field separability-->
 		<xsd:attribute name="separabilityMinDamage" type="real64" default="0.5" />
 		<!--solverProfiling => Flag for timing subroutines in the solver-->
