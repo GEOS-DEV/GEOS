@@ -955,14 +955,14 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   if( m_needsNeighborList == 1 )
   {
-    if( cycleNumber == 0 )
-    {
-      optimizeBinSort( particleManager );
-    }
-    else
-    {
+    // if( cycleNumber == 0 )
+    // {
+    //   optimizeBinSort( particleManager );
+    // }
+    // else
+    // {
       (void) computeNeighborList( particleManager );
-    }
+    // }
   }
 
 
