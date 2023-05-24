@@ -169,7 +169,6 @@ public:
    * @param contents the string containing the document content
    * @param loadNodeFileInfo Load the node source file info, allowing getNodePosition() to work.
    * @param options the parsing options
-   * @param encoding the encoding options
    * @return an xmlResult object representing the parsing resulting status.
    */
   xmlResult load_string( const pugi::char_t * contents, bool loadNodeFileInfo = false,
