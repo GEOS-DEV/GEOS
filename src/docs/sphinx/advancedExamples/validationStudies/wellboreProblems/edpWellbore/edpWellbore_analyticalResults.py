@@ -3,7 +3,7 @@ sys.path.append('../')
 import numpy as np
 import elastoPlasticWellboreAnalyticalSolutions as epwAnal
 
-#Note: this solution is developed by Chen and Abousleiman 2017 for the case with zero cohesion
+#Note: this solution is developed by Chen and Abousleiman (2017) for the case with zero cohesion
 
 def elastic_plastic_boundary_EDP(sh,sv,q_ep_boundary):
     # See eq. 25 of Chen and Abousleiman 2013
@@ -50,20 +50,11 @@ def compute_param_b(frictionAngle):
     sin_frictionAngle = np.sin(frictionAngle)
     return 6.0*sin_frictionAngle/(3.0-sin_frictionAngle)
 
-def EDP(a0_a_ratio):
-    sh = 11.25e6 #Pa
-    sv = 15e6    #Pa
-    nu = 0.25
-    
-    a0 = 0.1 # initial wellbore radius
+def EDP(a0_a_ratio, sh, sv, nu, a0, G, initialFrictionAngle, finalFrictionAngle, param_m):
     a = a0/a0_a_ratio
     xi_well = 1.0 - a0/a # the auxiliary variable xi at the wellbore, xi = (a-a0)/a = 1-1/(a/a0)
     nPoints = 1000
     
-    G = 0.3e9 #Pa
-    initialFrictionAngle = 15.27 # deg
-    finalFrictionAngle = 23.05   # deg
-    param_m = 0.01 # Extended Drucker-Prager hardening parameter, this is noted by c in the ref. Chen and Abousleiman 2017
 
     initialFrictionAngle *= np.pi/180.0 # converted to rad
     finalFrictionAngle *= np.pi/180.0 # converted to rad

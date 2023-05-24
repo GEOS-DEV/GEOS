@@ -3,15 +3,82 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import h5py
-from numpy import genfromtxt
+from xml.etree import ElementTree
 import edpWellbore_analyticalResults as edpAnal
 import elastoPlasticWellboreAnalyticalSolutions as epwAnal
+
+def extractDataFromXMLList(paramList):
+	# Extract data from a list in XML such as "{ 1, 2, 3}"
+	return paramList.replace('{', '').replace('}', '').strip().split(',')
+
+def getDataFromXML(xmlFilePathPrefix):
+	# Get wellbore inner radius
+	xmlFilePath = xmlFilePathPrefix + "_benchmark.xml"
+	tree = ElementTree.parse(xmlFilePath)
+
+	meshParam = tree.find('Mesh/InternalWellbore')
+	radii = extractDataFromXMLList( meshParam.get("radius") )
+	a0 = float(radii[0])
+
+	# Get the temperature change on the inner surface of the wellbore
+	xmlFilePath = xmlFilePathPrefix + "_base.xml"
+	tree = ElementTree.parse(xmlFilePath)
+
+	fsParams = tree.findall('FieldSpecifications/FieldSpecification')
+	for fsParam in fsParams:
+		if fsParam.get('name') == 'stressXX':
+			sh = float( fsParam.get('scale') )
+		if fsParam.get('name') == 'stressZZ':
+			sv = float( fsParam.get('scale') )
+
+	pw = float( extractDataFromXMLList(tree.find('Functions/TableFunction').get('values') )[1])
+
+	defaultBulkModulus = float( tree.find('Constitutive/ExtendedDruckerPrager').get('defaultBulkModulus') )
+	defaultShearModulus = float( tree.find('Constitutive/ExtendedDruckerPrager').get('defaultShearModulus') )
+	defaultCohesion = float( tree.find('Constitutive/ExtendedDruckerPrager').get('defaultCohesion') )
+	defaultInitialFrictionAngle = float( tree.find('Constitutive/ExtendedDruckerPrager').get('defaultInitialFrictionAngle') )
+	defaultResidualFrictionAngle = float( tree.find('Constitutive/ExtendedDruckerPrager').get('defaultResidualFrictionAngle') )
+	defaultDilationRatio = float( tree.find('Constitutive/ExtendedDruckerPrager').get('defaultDilationRatio') )
+	defaultHardening = float( tree.find('Constitutive/ExtendedDruckerPrager').get('defaultHardening') )
+
+	return [a0, sh, sv, pw, defaultBulkModulus, defaultShearModulus, defaultCohesion, defaultInitialFrictionAngle, defaultResidualFrictionAngle, defaultDilationRatio, defaultHardening]
 
 def stressRotation(stress, phi_x):
     rotx = np.array([[np.cos(phi_x), np.sin(phi_x), 0.], [-np.sin(phi_x), np.cos(phi_x), 0.], [0., 0., 1.]])
     return np.dot(np.dot(np.transpose(rotx), stress), rotx)
 
 def main():
+	xmlFilePathPrefix = "../../../../../../../inputFiles/solidMechanics/ExtendedDruckerPragerWellbore"
+	xmlData = getDataFromXML(xmlFilePathPrefix)
+
+	# Initial wellbore radius	
+	a0 = xmlData[0] 
+
+	# Initial stresses
+	sh = -xmlData[1] #negative sign because of positive sign convention for compression stress in the analytical solution
+	sv = -xmlData[2] #negative sign because of positive sign convention for compression stress in the analytical solution
+
+	# Boundary condition on the wellbore surface
+	pw = -xmlData[3] #negative sign because of positive sign convention for compression stress in the analytical solution 
+	# Equivalent displacement condition for the analytical solution
+	a0_a_ratio = 1.075 # This ratio corresponds to pw, extracted from the relationship between pw and a0/a (see bottom-right figure) 
+
+	# Elastic moduli
+	K = xmlData[4]
+	G = xmlData[5]
+	nu = (3.0*K-2.0*G) / (6.0*K+2.0*G)    
+	
+	# Elasto-plastic parameters
+	cohesion = xmlData[6]
+	initialFrictionAngle = xmlData[7] # deg
+	finalFrictionAngle = xmlData[8]   # deg
+	dilationRatio = xmlData[9]
+	param_m = xmlData[10] # Extended Drucker-Prager hardening parameter, this is noted by c in the ref. Chen and Abousleiman (2017)
+
+	# Note that the solution developed by Chen and Abousleiman (2017) is for an associated elasto-plastic model (i.e. dilationRatio = 1) with zero cohesion
+	assert dilationRatio == 1.0, "The associated model is considered by the reference solutions, please set the dilation ratio to 1.0" 
+	assert cohesion == 0.0, "Zero cohesion is considered by the reference solutions, please set the cohesion to 0.0" 
+
 	# Get stress, time and element center from GEOSX results
 	stress_field_name = 'rock_stress'
 	hf_stress = h5py.File('stressHistory_rock.hdf5', 'r')
@@ -23,12 +90,10 @@ def main():
 	hf_disp = h5py.File("displacementHistory.hdf5", 'r')
 	displacement = np.array( hf_disp.get('totalDisplacement') )
 	node_position = np.array( hf_disp.get('totalDisplacement ReferencePosition') )
-	
-	a0 = node_position[0, 0, 0]
 	da = displacement[:, 0, 0]
 	a = a0 + da
 	
-	# Compute total stress
+	# Compute total stress, the stress of each element is the average value of its eight Gauss points
 	stress_xx = ( sum(stress[26,:,6*i+0] for i in range(8)) )/8.0
 	stress_yy = ( sum(stress[26,:,6*i+1] for i in range(8)) )/8.0
 	stress_zz = ( sum(stress[26,:,6*i+2] for i in range(8)) )/8.0
@@ -73,11 +138,8 @@ def main():
         stress_xy_wellboresurface**2.0 + stress_xz_wellboresurface**2.0 + stress_yz_wellboresurface**2.0 )
 
 	# Analytical results 
-
-	# At pw = 2 (MPa)
-	a0_a_ratio = 1.075 # This ratio corresponds to pw = 2 (MPa)
 	r_ep_analytic,srr_ep_analytic,stt_ep_analytic,szz_ep_analytic,r_elas_analytic,srr_elas_analytic,stt_elas_analytic,szz_elas_analytic,\
-    pw_analytic,p_wellsurface_analytic,q_wellsurface_analytic = edpAnal.EDP(a0_a_ratio)
+    pw_analytic,p_wellsurface_analytic,q_wellsurface_analytic = edpAnal.EDP(a0_a_ratio, sh, sv, nu, a0, G, initialFrictionAngle, finalFrictionAngle, param_m)
 		
 	# Compute pressure at wellbore surface
 	list_a0_a_ratio = np.arange(1.005,1.1,0.001)
@@ -86,19 +148,13 @@ def main():
 	list_q_wellsurface_analytic = []
 	
 	for a0_a_ratio_val in list_a0_a_ratio:
-		tmp = edpAnal.EDP(a0_a_ratio_val)
+		tmp = edpAnal.EDP(a0_a_ratio_val, sh, sv, nu, a0, G, initialFrictionAngle, finalFrictionAngle, param_m)
 		pw_analytic = tmp[8]
 		p_wellsurface_analytic = tmp[9]
 		q_wellsurface_analytic = tmp[10]
 		list_pw_analytic.append(pw_analytic)
 		list_p_wellsurface_analytic.append(p_wellsurface_analytic)
 		list_q_wellsurface_analytic.append(q_wellsurface_analytic)
-
-	# The case of elastic material for comparision
-	sv = 15e6
-	sh = 11.25e6
-	pw = 2e6
-	r_elas_assumed,srr_elas_assumed,stt_elas_assumed,szz_elas_assumed = epwAnal.solution_elastic(sh,sv,1.0,pw)
 
 	# Plots	
 	plt.figure(figsize=(15,10))
@@ -128,6 +184,8 @@ def main():
 	plt.legend()
 
 	# Plot GEOS results for elasto-plastic material versus analytical results for elastic material
+	r_elas_assumed,srr_elas_assumed,stt_elas_assumed,szz_elas_assumed = epwAnal.solution_elastic(sh,sv,1.0,pw)
+
 	plt.subplot(2,2,2)
 	plt.plot( rCoord/rCoord[0],-stress_rr,'r+',label=r'$\sigma_{rr}$: GEOS')
 	plt.plot(r_elas_assumed,srr_elas_assumed, 'r', label=r'$\sigma_{rr}$: Analytic Elastic')
@@ -146,10 +204,7 @@ def main():
 	plt.xscale('log', subs=range(2,10))
 	plt.legend()
 
-
-	# Plot p-q plan
-	initialFrictionAngle = 15.27 # deg
-	finalFrictionAngle = 23.05   # deg
+	# Plot the stress path on the p-q plan when the well surface pressure decrease from the in-situ condition
 	initialFrictionAngle *= np.pi/180.0 # converted to rad
 	finalFrictionAngle *= np.pi/180.0 # converted to rad
 	param_b_i = edpAnal.compute_param_b(initialFrictionAngle)
@@ -170,8 +225,9 @@ def main():
 	plt.ylim(0,10e6)
 	plt.legend()
 
-	# Plot a0/a versus pw
+	# Plot the wellbore deformation a0/a versus wellbore surface pressure pw
 	pw = stress_xx_wellboresurface
+
 	plt.subplot(2,2,4)
 	plt.plot(a0/a, -pw,'ko',label='GEOS')
 	plt.plot(list_a0_a_ratio,list_pw_analytic,'b',label='Analytic')
@@ -180,7 +236,7 @@ def main():
 	plt.xlim(1.0,1.1)
 	plt.ylim(0,12e6)
 	plt.legend()
-
+	
 	plt.show()
 
 if __name__ == "__main__":
