@@ -384,6 +384,7 @@ protected:
   array2d< real64 > m_bcTable;
 
   int m_prescribedBoundaryFTable;
+  Path m_fTablePath;
   int m_fTableInterpType;
   array2d< real64 > m_fTable;
   array1d< real64 > m_domainF;
