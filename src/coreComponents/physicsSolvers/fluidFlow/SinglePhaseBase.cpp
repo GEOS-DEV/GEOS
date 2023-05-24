@@ -767,39 +767,7 @@ void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
                                                                            [&]( localIndex const,
                                                                                 auto & subRegion )
     {
-      SingleFluidBase const & fluid =
-        getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
-      //START_SPHINX_INCLUDE_COUPLEDSOLID
-      CoupledSolidBase const & solid =
-        getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
-      //END_SPHINX_INCLUDE_COUPLEDSOLID
-
-      string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-
-      if( m_isThermal )
-      {
-        thermalSinglePhaseBaseKernels::
-          ElementBasedAssemblyKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                     dofKey,
-                                                     subRegion,
-                                                     fluid,
-                                                     solid,
-                                                     localMatrix,
-                                                     localRhs );
-      }
-      else
-      {
-        singlePhaseBaseKernels::
-          ElementBasedAssemblyKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                     dofKey,
-                                                     subRegion,
-                                                     fluid,
-                                                     solid,
-                                                     localMatrix,
-                                                     localRhs );
-      }
+      accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );
     } );
   } );
 }
