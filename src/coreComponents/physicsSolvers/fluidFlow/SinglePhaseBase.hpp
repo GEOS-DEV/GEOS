@@ -135,7 +135,7 @@ public:
    */
   template< typename SUBREGION_TYPE >
   void accumulationAssemblyLaunch( DofManager const & dofManager,
-                                   SUBREGION_TYPE & subRegion,
+                                   SUBREGION_TYPE const & subRegion,
                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                    arrayView1d< real64 > const & localRhs );
 
@@ -385,7 +385,7 @@ private:
 
 template< typename SUBREGION_TYPE >
 void SinglePhaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,
-                                                  SUBREGION_TYPE & subRegion,
+                                                  SUBREGION_TYPE const & subRegion,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs )
 {
