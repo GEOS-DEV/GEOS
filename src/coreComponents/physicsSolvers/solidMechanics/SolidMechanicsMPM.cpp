@@ -62,6 +62,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_boundaryConditionTypes(),
   m_bcTable(),
   m_prescribedBoundaryFTable( 0 ),
+  m_fTablePath(),
   m_fTableInterpType( 0 ),
   m_fTable(),
   m_domainF(),
@@ -132,6 +133,10 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper( "prescribedBoundaryFTable", &m_prescribedBoundaryFTable ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag for whether to have time-dependent boundary conditions described by a global background grid F" );
+
+  registerWrapper( "fTablePath", &m_fTablePath ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Path to f-table" );
 
   registerWrapper( "fTableInterpType", &m_fTableInterpType ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -554,7 +559,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
     if( rank == 0 ) // Rank 0 process parses the F table file
     {
-      std::ifstream fp( "FTable.dat" );
+      std::ifstream fp( m_fTablePath );
       double FTableEntry = 0;
       while( fp >> FTableEntry )
       {
