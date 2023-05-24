@@ -1303,9 +1303,8 @@ ElementRegionManager::
 
 template< typename VIEWTYPE >
 ElementRegionManager::ElementViewAccessor< ReferenceWrapper< VIEWTYPE > >
-ElementRegionManager::
-constructReferenceAccessor( string const & viewName,
-                            string const & neighborName )
+ElementRegionManager::constructReferenceAccessor( string const & viewName,
+                                                  string const & neighborName )
 {
   ElementViewAccessor< ReferenceWrapper< VIEWTYPE > > viewAccessor;
   viewAccessor.resize( numRegions() );

@@ -302,7 +302,6 @@ array1d< localIndex > computeFace2dToEdge( vtkSmartPointer< vtkDataSet > mesh,
     std::map< vtkIdType, int > edgeCount;
     for( auto const & d: allDuplicatedNodesOfEdge )
     {
-//      for( localIndex const & val: nodeToEdges[d] )  // TODO allDuplicatedNodesOfEdge contains global indices and nodeToEdges uses local indices as input key.
       for( localIndex const & val: n2e[d] )  // TODO allDuplicatedNodesOfEdge contains global indices and nodeToEdges uses local indices as input key.
       {
         edgeCount[val]++;
@@ -414,18 +413,6 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
   vtkIdTypeArray const * globalPtIds = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
   vtkIdTypeArray const * globalCellIds = vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() );
 
-//  ArrayOfArrays< globalIndex > f2n;
-//  f2n.resizeFromCapacities< parallelHostPolicy >( faceToNodes.size(),
-//                                                  faceToNodes.getSizes() ); // f2n points to global node indices
-//  for( auto i = 0; i < faceToNodes.size(); ++i )
-//  {
-//    auto const & src = faceToNodes[i];
-//    for( int j = 0; j < src.size(); ++j )
-//    {
-//      f2n.emplace( i, j, globalPtIds->GetValue( src[j] ) );
-//    }
-//  }
-
   // Let's build the elem2d to elem3d mapping. We need to find the 3d elements!
   // First we compute the mapping from all the boundary nodes to the 3d elements that rely on those nodes.
   std::map< vtkIdType, std::vector< vtkIdType > > nodesToCellsFull;
@@ -436,7 +423,6 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
     for( int j = 0; j < pointIds->GetNumberOfIds(); ++j )
     {
       vtkIdType const pointId = boundaryPoints->GetValue( pointIds->GetId( j ) );
-//      nodesToCellsFull[pointId].emplace_back( cellId );
       nodesToCellsFull[globalPtIds->GetValue( pointId )].emplace_back( globalCellIds->GetValue( cellId ) );
     }
   }
@@ -494,10 +480,6 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
           elem3dToDuplicatedNodes[c].insert( n );
         }
       }
-//      for( vtkIdType const & c: nodesToCells.at( n ) )
-//      {
-//        elem3dToDuplicatedNodes[c].insert( n );
-//      }
     }
     // Last we extract which of those candidate 3d elements are the ones actually neighboring the 2d element.
     for( auto const & e2n: elem3dToDuplicatedNodes )
@@ -514,13 +496,11 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
         {
           localIndex const faceIndex = faces[j];
           auto nodes = faceToNodes[faceIndex];
-//          auto nodes = f2n[faceIndex];
           std::set< vtkIdType > globalNodes;
           for( auto const & n: nodes )
           {
             globalNodes.insert( globalPtIds->GetValue( n ) );
           }
-//          if( std::set< vtkIdType >( nodes.begin(), nodes.end() ) == e2n.second )
           if( globalNodes == e2n.second )
           {
             elem2dToFaces[i][idx] = faceIndex;

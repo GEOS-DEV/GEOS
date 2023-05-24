@@ -113,7 +113,7 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes );
  */
 AllMeshes
 redistributeMesh( vtkDataSet & loadedMesh,
-                  std::map< string, vtkSmartPointer< vtkDataSet > > & namesTofractures,
+                  std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
                   MPI_Comm const comm,
                   PartitionMethod const method,
                   int const partitionRefinement,

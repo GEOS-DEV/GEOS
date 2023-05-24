@@ -641,7 +641,6 @@ redistributeByCellGraph( vtkDataSet & mesh,
       localNumFracCells += fracture->GetNumberOfCells();
     }
   }
-//  vtkIdType const localNumFracCells = additionalFractureCells;
   vtkIdType globalNumFracCells = localNumFracCells;
   MpiWrapper::broadcast( globalNumFracCells, lastRank, comm );
   elemDist[lastRank + 1] += globalNumFracCells;
@@ -695,20 +694,18 @@ redistributeByCellGraph( vtkDataSet & mesh,
   // Then those newly split meshes will be redistributed across the ranks.
 
   // First for the main 3d mesh...
-  vtkSmartPointer< vtkPartitionedDataSet > const
-    splitMesh = splitMeshByPartition( mesh, numRanks, newPartitions.toViewConst() );
+  vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( mesh, numRanks, newPartitions.toViewConst() );
   vtkSmartPointer< vtkUnstructuredGrid > const & finalMesh = vtk::redistribute( *splitMesh, MPI_COMM_GEOSX );
   // ... and then for the fractures.
   std::vector< vtkSmartPointer< vtkDataSet > > finalFractures;
   for( size_t i = 0; i < newFracturePartitions.size(); ++i )
   {
-    vtkSmartPointer< vtkPartitionedDataSet > const
-      splitFracMesh = splitMeshByPartition( *fractures[i], numRanks, newFracturePartitions[i].toViewConst() );
+    vtkSmartPointer< vtkPartitionedDataSet > const splitFracMesh = splitMeshByPartition( *fractures[i], numRanks, newFracturePartitions[i].toViewConst() );
     vtkSmartPointer< vtkUnstructuredGrid > const & finalFracMesh = vtk::redistribute( *splitFracMesh, MPI_COMM_GEOSX );
     finalFractures.emplace_back( finalFracMesh );
   }
 
-  return {finalMesh, finalFractures};
+  return { finalMesh, finalFractures };
 }
 
 /**
@@ -757,7 +754,7 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes )
 
 AllMeshes
 redistributeMesh( vtkDataSet & loadedMesh,
-                  std::map< string, vtkSmartPointer< vtkDataSet > > & namesTofractures,
+                  std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
                   MPI_Comm const comm,
                   PartitionMethod const method,
                   int const partitionRefinement,
@@ -766,7 +763,7 @@ redistributeMesh( vtkDataSet & loadedMesh,
   GEOS_MARK_FUNCTION;
 
   std::vector< vtkSmartPointer< vtkDataSet > > fractures;
-  for( auto & nameToFracture: namesTofractures )
+  for( auto & nameToFracture: namesToFractures )
   {
     fractures.push_back( nameToFracture.second );
   }
@@ -804,7 +801,7 @@ redistributeMesh( vtkDataSet & loadedMesh,
 
   if( MpiWrapper::commRank( comm ) != ( MpiWrapper::commSize( comm ) - 1 ) )
   {
-    for( auto nameToFracture: namesTofractures )
+    for( auto nameToFracture: namesToFractures )
     {
       GEOS_ASSERT_EQ( nameToFracture.second->GetNumberOfCells(), 0 );
     }
@@ -825,7 +822,7 @@ redistributeMesh( vtkDataSet & loadedMesh,
     auto meshes = redistributeByCellGraph( *mesh, fractures, method, comm, partitionRefinement - 1 );
     result.main = std::get< 0 >( meshes );
     auto fracs = std::get< 1 >( meshes ); // TODO terrible code...
-    for (auto const & nf: namesTofractures)
+    for (auto const & nf: namesToFractures)
     {
       result.faceBlocks[nf.first] = fracs.front();
     }

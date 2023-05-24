@@ -132,8 +132,8 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
   // Since the mappings of the current FaceManager instance were only filled based on the {face -> elements} mapping,
   // they do not take into account any connection between the 3d elements and the 2d elements of fracture meshes.
   // The following function adds those connections between the 3d and 2d elements.
-  auto const connect2dElements = [&]( localIndex er,
-                                      SurfaceElementRegion const & region )
+  auto const connect2dElems = [&]( localIndex er,
+                                   SurfaceElementRegion const & region )
   {
     if( region.subRegionType() != SurfaceElementRegion::SurfaceSubRegionType::faceElement )
     {
@@ -168,7 +168,7 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
     }
   };
   // Connecting all the 3d elements (information is already in the m_toElements mappings) and all the 2d elements.
-  elemRegionManager.forElementRegionsComplete< SurfaceElementRegion >( connect2dElements );
+  elemRegionManager.forElementRegionsComplete< SurfaceElementRegion >( connect2dElems );
 
   computeGeometry( nodeManager );
 }
