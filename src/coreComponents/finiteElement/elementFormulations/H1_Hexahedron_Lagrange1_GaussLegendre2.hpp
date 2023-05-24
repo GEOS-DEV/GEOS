@@ -148,7 +148,7 @@ public:
     const int i1 = ( (linearIndex - i0)/numSamplingPointsPerDirection ) % numSamplingPointsPerDirection;
     const int i2 = ( (linearIndex - i0)/numSamplingPointsPerDirection - i1 ) / numSamplingPointsPerDirection;
 
-    constexpr real64 step = 2 / ( numSamplingPointsPerDirection - 1 );
+    constexpr real64 step = 2. / ( numSamplingPointsPerDirection - 1 );
 
     samplingPointCoord[0] = -1 + i0 * step;
     samplingPointCoord[1] = -1 + i1 * step;

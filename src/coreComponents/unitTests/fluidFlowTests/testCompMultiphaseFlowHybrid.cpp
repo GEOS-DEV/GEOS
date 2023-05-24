@@ -12,7 +12,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "constitutive/fluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "mainInterface/initialization.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
