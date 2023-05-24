@@ -26,7 +26,6 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-//#include "common/MpiWrapper.hpp"
 
 namespace geos
 {
@@ -46,7 +45,7 @@ AcousticPOD::AcousticPOD( const std::string & name,
 
   registerWrapper( viewKeyStruct::computePODmatrixString(), &m_computePODmatrix ).
     setInputFlag( InputFlags::FALSE ).
-    setApplyDefaultValue( 1 ).
+    setApplyDefaultValue( 0 ).
     setDescription( "Bool for POD matrices computation" );
 
   registerWrapper( viewKeyStruct::computeStiffnessPODString(), &m_computeStiffnessPOD ).
@@ -249,7 +248,6 @@ void AcousticPOD::postProcessInput()
 
   if( m_computePODmatrix )
   {
-
     DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
     /// Compute Stiffness matrix POD
     forDiscretizationOnMeshTargets( domain.getMeshBodies(),
@@ -270,27 +268,27 @@ void AcousticPOD::postProcessInput()
 
       if( m_forward )
       {
-        m_stiffnessPOD_f.resize( phi.size( 1 ), phi.size( 1 ));
-        m_massPOD_f.resize( phi.size( 1 ), phi.size( 1 ));
-        m_dampingPOD_f.resize( phi.size( 1 ), phi.size( 1 ));
+        m_stiffnessPOD_f.resize( phi.size( 0 ), phi.size( 0 ));
+        m_massPOD_f.resize( phi.size( 0 ), phi.size( 0 ));
+        m_dampingPOD_f.resize( phi.size( 0 ), phi.size( 0 ));
         m_stiffnessPOD_f.zero();
         m_massPOD_f.zero();
         m_dampingPOD_f.zero();
       }
       else
       {
-        m_stiffnessPOD_b.resize( phi.size( 1 ), phi.size( 1 ));
-        m_massPOD_b.resize( phi.size( 1 ), phi.size( 1 ));
-        m_dampingPOD_b.resize( phi.size( 1 ), phi.size( 1 ));
+        m_stiffnessPOD_b.resize( phi.size( 0 ), phi.size( 0 ));
+        m_massPOD_b.resize( phi.size( 0 ), phi.size( 0 ));
+        m_dampingPOD_b.resize( phi.size( 0 ), phi.size( 0 ));
         m_stiffnessPOD_b.zero();
         m_massPOD_b.zero();
         m_dampingPOD_b.zero();
       }
 
-      m_a_np1.resize( phi.size( 1 ));
-      m_a_n.resize( phi.size( 1 ));
-      m_a_nm1.resize( phi.size( 1 ));
-      m_rhsPOD.resize( phi.size( 1 ));
+      m_a_np1.resize( phi.size( 0 ));
+      m_a_n.resize( phi.size( 0 ));
+      m_a_nm1.resize( phi.size( 0 ));
+      m_rhsPOD.resize( phi.size( 0 ));
 
       m_a_n.zero();
       m_a_nm1.zero();
@@ -357,8 +355,10 @@ void AcousticPOD::postProcessInput()
                                                                                                          nodesGhostRank,
                                                                                                          elemsToNodes );
             }
+
           } );
 
+	  dampingPOD.move( MemorySpace::host, true );
           MpiWrapper::allReduce( dampingPOD.data(),
                                  dampingPOD.data(),
                                  dampingPOD.size( 0 )*dampingPOD.size( 1 ),
@@ -367,6 +367,7 @@ void AcousticPOD::postProcessInput()
 
           if( m_invPODIsIdentity == 0 )
           {
+	    massPOD.move( MemorySpace::host, true );
             MpiWrapper::allReduce( massPOD.data(),
                                    massPOD.data(),
                                    massPOD.size( 0 )*massPOD.size( 1 ),
@@ -376,6 +377,7 @@ void AcousticPOD::postProcessInput()
 
           if( m_computeStiffnessPOD )
           {
+	    stiffnessPOD.move( MemorySpace::host, true );
             MpiWrapper::allReduce( stiffnessPOD.data(),
                                    stiffnessPOD.data(),
                                    stiffnessPOD.size( 0 )*stiffnessPOD.size( 1 ),
@@ -429,15 +431,16 @@ void AcousticPOD::postProcessInput()
                                                                                                        nodesGhostRank,
                                                                                                        elemsToNodes );
           } );
-
-          MpiWrapper::allReduce( stiffnessPOD.data(),
-                                 stiffnessPOD.data(),
-                                 stiffnessPOD.size( 0 )*stiffnessPOD.size( 1 ),
+	  dampingPOD.move( MemorySpace::host, true );
+          MpiWrapper::allReduce( dampingPOD.data(),
+                                 dampingPOD.data(),
+                                 dampingPOD.size( 0 )*dampingPOD.size( 1 ),
                                  MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                                  MPI_COMM_GEOSX );
 
-          if( m_invPODIsIdentity == 0 )
+	  if( m_invPODIsIdentity == 0 )
           {
+            massPOD.move( MemorySpace::host, true );
             MpiWrapper::allReduce( massPOD.data(),
                                    massPOD.data(),
                                    massPOD.size( 0 )*massPOD.size( 1 ),
@@ -445,12 +448,15 @@ void AcousticPOD::postProcessInput()
                                    MPI_COMM_GEOSX );
           }
 
-          MpiWrapper::allReduce( dampingPOD.data(),
-                                 dampingPOD.data(),
-                                 dampingPOD.size( 0 )*dampingPOD.size( 1 ),
-                                 MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                                 MPI_COMM_GEOSX );
-
+	  if( m_computeStiffnessPOD )
+          {
+	    stiffnessPOD.move( MemorySpace::host, true );
+	    MpiWrapper::allReduce( stiffnessPOD.data(),
+				   stiffnessPOD.data(),
+				   stiffnessPOD.size( 0 )*stiffnessPOD.size( 1 ),
+				   MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+				   MPI_COMM_GEOSX );
+	  }
         }
       } );
     } );
@@ -473,10 +479,9 @@ void AcousticPOD::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
-  if( m_computePODmatrix )
-  {
-    m_sourceConstantsPOD.resize( sourceCoordinates.size( 0 ), phi.size( 1 ));
-  }
+
+  m_sourceConstantsPOD.resize( sourceCoordinates.size( 0 ), phi.size( 0 ));
+
   arrayView2d< real64 > const sourceConstantsPOD = m_sourceConstantsPOD.toView();
   arrayView1d< localIndex > const sourceIsAccessible = m_sourceIsAccessible.toView();
   sourceNodeIds.setValues< EXEC_POLICY >( -1 );
@@ -555,12 +560,14 @@ void AcousticPOD::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
     } );
   } );
 
+  sourceConstantsPOD.move( MemorySpace::host, true );
   MpiWrapper::allReduce( sourceConstantsPOD.data(),
                          sourceConstantsPOD.data(),
                          sourceConstantsPOD.size( 0 )*sourceConstantsPOD.size( 1 ),
                          MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                          MPI_COMM_GEOSX );
 
+  sourceValue.move( MemorySpace::host, true );
   MpiWrapper::allReduce( sourceValue.data(),
                          sourceValue.data(),
                          sourceValue.size( 0 )*sourceValue.size( 1 ),
@@ -576,11 +583,13 @@ void AcousticPOD::addSourceToRightHandSide( integer const & cycleNumber, arrayVi
   arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
 
   GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
+
   forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
     {
       for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
       {
         real32 const localIncrement = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
+	//printf("localInc = %f",localIncrement);
         RAJA::atomicAdd< ATOMIC_POLICY >( &rhs[inode], localIncrement );
       }
     } );
@@ -601,7 +610,10 @@ void AcousticPOD::initializePostInitialConditionsPreSubGroups()
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    precomputeSourceAndReceiverTerm( mesh, regionNames );
+    if( m_computePODmatrix )
+    {
+      precomputeSourceAndReceiverTerm( mesh, regionNames );
+    }
   } );
 
   real64 const time = 0.0;
@@ -736,14 +748,14 @@ real64 AcousticPOD::explicitStepBackward( real64 const & time_n,
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
         constexpr localIndex numNodesPerElem = 8;
 
-        array1d< real32 > phi1d( phi.size( 0 ));
+        array1d< real32 > phi1d( phi.size( 1 ));
         arrayView1d< real32 > const phim = phi1d.toView();
 
-        for( localIndex m=0; m<phi.size( 1 ); ++m )
+        for( localIndex m=0; m<phi.size( 0 ); ++m )
         {
-          for( localIndex i=0; i<phi.size( 0 ); ++i )
+          for( localIndex i=0; i<phi.size( 1 ); ++i )
           {
-            phim[i]=phi[i][m];
+            phim[i]=phi[m][i];
           }
           GEOS_MARK_SCOPE ( updatePartialGradient );
           forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const eltIdx )
@@ -821,25 +833,27 @@ real64 AcousticPOD::explicitStepInternal( real64 const &,
         arrayView2d< real32 const > const mass = m_massPOD_f.toViewConst();
         arrayView2d< real32 const > const invA = m_invAPOD.toViewConst();
         array1d< real32 > b( a_n.size());
+	arrayView1d< real32 > bV = b.toView();
 
-        for( localIndex m = 0; m < a_n.size(); ++m )
+        forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
         {
-          b[m] = dt2 * rhs[m];
+          bV[m] = dt2 * rhs[m];
           for( localIndex n = 0; n < a_n.size(); ++n )
           {
-            b[m] += (2 * mass[m][n] - dt2 * stiffness[m][n]) * a_n[n];
-            b[m] -= (mass[m][n] - dt * 0.5 * damping[m][n]) * a_nm1[n];
+            bV[m] += (2 * mass[m][n] - dt2 * stiffness[m][n]) * a_n[n];
+            bV[m] -= (mass[m][n] - dt * 0.5 * damping[m][n]) * a_nm1[n];
           }
           rhs[m] = 0.0;
-        }
-        forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
+        } );
+
+	forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
+        {
+	  a_np1[m] = 0.0;
+	  for( localIndex n = 0; n < a_n.size(); ++n )
           {
-            a_np1[m] = 0.0;
-            for( localIndex n = 0; n < a_n.size(); ++n )
-            {
-              a_np1[m] += invA[m][n] * b[n];
-            }
-          } );
+	    a_np1[m] += invA[m][n] * bV[n];
+	  }
+	} );
       }
     }
     else

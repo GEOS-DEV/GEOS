@@ -5,7 +5,7 @@
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2019-     GEOS Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -53,57 +53,54 @@ struct PrecomputeStiffnessPOD
           arrayView1d< localIndex const > const nodesGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes )
   {
-    array1d< real64 > phim1d( phi.size( 0 ));
-    array1d< real64 > phin1d( phi.size( 0 ));
-    arrayView1d< real64 > const phim = phim1d.toView();
-    arrayView1d< real64 > const phin = phin1d.toView();
-
     std::cout<<"Stiffness"<<std::endl;
-    for( localIndex m=0; m<phi.size( 1 ); ++m )
+    array1d< real64 > phim;
+    array1d< real64 > phin;
+    phim.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
+    phin.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
+    arrayView1d< real64 > phimV	= phim.toView();
+    arrayView1d< real64 > phinV	= phin.toView();
+
+    for( localIndex m=0; m<phi.size( 0 ); ++m )
     {
-      for( localIndex i=0; i<phi.size( 0 ); ++i )
-      {
-        phim[i]=phi[i][m];
-      }
+      LvArray::memcpy(phim.toSlice(), phi[m].toSliceConst());
+
       for( localIndex n=0; n<m+1; ++n )
       {
-        for( localIndex i=0; i<phi.size( 0 ); ++i )
-        {
-          phin[i]=phi[i][n];
-        }
-
+        LvArray::memcpy(phin.toSlice(), phi[n].toSliceConst());
+	
         std::cout<<"("<<m<<","<<n<<")"<<std::endl;
 
         forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
-            {
-              constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-              constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+        {
+	  constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+	  constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+	  
+	  real64 xLocal[ numNodesPerElem ][ 3 ];
+	  for( localIndex a = 0; a < numNodesPerElem; ++a )
+	  {
+	    for( localIndex i = 0; i < 3; ++i )
+	    {
+	      xLocal[a][i] = X( elemsToNodes( k, a ), i );
+	    }
+	  }
 
-              real64 xLocal[ numNodesPerElem ][ 3 ];
-              for( localIndex a = 0; a < numNodesPerElem; ++a )
-              {
-                for( localIndex i = 0; i < 3; ++i )
-                {
-                  xLocal[a][i] = X( elemsToNodes( k, a ), i );
-                }
-              }
-
-              for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
-              {
-                FE_TYPE::computeStiffnessTerm( q, xLocal, [&] ( int i, int j, real64 val )
-            {
-              if( nodesGhostRank[elemsToNodes[k][i]] < 0 )
-              {
-                real32 const localIncrement = phim[elemsToNodes[k][i]]*val*phin[elemsToNodes[k][j]];
-                RAJA::atomicAdd< ATOMIC_POLICY >( &stiffnessPOD[m][n], localIncrement );
-                if( m!=n )
+	  for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+	  {
+	    FE_TYPE::computeStiffnessTerm( q, xLocal, [&] ( int i, int j, real64 val )
+	    {
+	      if( nodesGhostRank[elemsToNodes[k][i]] < 0 )
+	      {
+		real32 const localIncrement = phimV[elemsToNodes[k][i]]*val*phinV[elemsToNodes[k][j]];
+		RAJA::atomicAdd< ATOMIC_POLICY >( &stiffnessPOD[m][n], localIncrement );
+		if( m!=n )
                 {
                   RAJA::atomicAdd< ATOMIC_POLICY >( &stiffnessPOD[n][m], localIncrement );
                 }
-              }
-            } );
-              }
-            } );
+	      }
+	    } );
+	  }
+	} );
       }
     }
   }
@@ -162,16 +159,13 @@ struct PrecomputeSourceAndReceiverKernel
           localIndex const rickerOrder )
   {
 
-    array1d< real32 > phi1d( phi.size( 0 ));
-    arrayView1d< real32 > const phim = phi1d.toView();
-    localIndex sizePhi = phi.size( 1 );
-
-    for( localIndex m=0; m<phi.size( 1 ); ++m )
+    array1d< real64 > phim;
+    localIndex sizePhi = phi.size( 0 );
+    phim.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
+    arrayView1d< real64 > phimV = phim.toView();
+    for( localIndex m=0; m<phi.size( 0 ); ++m )
     {
-      for( localIndex i=0; i<phi.size( 0 ); ++i )
-      {
-        phim[i]=phi[i][m];
-      }
+      LvArray::memcpy(phim.toSlice(), phi[m].toSliceConst());
 
       forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
           {
@@ -197,7 +191,7 @@ struct PrecomputeSourceAndReceiverKernel
                                                         faceCenter,
                                                         elemsToFaces[k],
                                                         coords );
-                if( sourceFound )
+                if( sourceFound and elemGhostRank[k]<0)
                 {
                   real64 coordsOnRefElem[3]{};
 
@@ -215,7 +209,7 @@ struct PrecomputeSourceAndReceiverKernel
                   for( localIndex a = 0; a < numNodesPerElem; ++a )
                   {
                     sourceNodeIds[isrc][a] = elemsToNodes[k][a];
-                    sourceConstants[isrc][m] += phim[sourceNodeIds[isrc][a]] * Ntest[a];
+                    sourceConstants[isrc][m] += phimV[sourceNodeIds[isrc][a]] * Ntest[a];
                   }
 
                   for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
@@ -309,29 +303,26 @@ struct MassMatrixKernel
 
   {
     std::cout<<"Mass"<<std::endl;
-    array1d< real64 > phim1d( phi.size( 0 ));
-    array1d< real64 > phin1d( phi.size( 0 ));
-    arrayView1d< real64 > const phim = phim1d.toView();
-    arrayView1d< real64 > const phin = phin1d.toView();
-
-    for( localIndex m=0; m<phi.size( 1 ); ++m )
+    array1d< real64 > phim;
+    array1d< real64 > phin;
+    phim.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
+    phin.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
+    arrayView1d< real64 > phimV = phim.toView();
+    arrayView1d< real64 > phinV	= phin.toView();
+    
+    for( localIndex m=0; m<phi.size( 0 ); ++m )
     {
-      for( localIndex i=0; i<phi.size( 0 ); ++i )
-      {
-        phim[i]=phi[i][m];
-      }
+      LvArray::memcpy(phim.toSlice(), phi[m].toSliceConst());
+
       for( localIndex n=0; n<m+1; ++n )
       {
-        for( localIndex i=0; i<phi.size( 0 ); ++i )
-        {
-          phin[i]=phi[i][n];
-        }
-
+        LvArray::memcpy(phin.toSlice(), phi[n].toSliceConst());
+	
         std::cout<<"("<<m<<","<<n<<")"<<std::endl;
 
         forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
             {
-
+       		    
               constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
               constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
@@ -350,7 +341,7 @@ struct MassMatrixKernel
                 if( nodesGhostRank[elemsToNodes[k][q]] < 0 )
                 {
                   real32 const val = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
-                  real32 const localIncrement = phim[elemsToNodes[k][q]] * val * phin[elemsToNodes[k][q]];
+                  real32 const localIncrement = phimV[elemsToNodes[k][q]] * val * phinV[elemsToNodes[k][q]];
                   RAJA::atomicAdd< ATOMIC_POLICY >( &massPOD[m][n], localIncrement );
                   if( m!=n )
                   {
@@ -447,67 +438,63 @@ struct DampingMatrixKernel
           arrayView2d< real64 const > const phi,
           arrayView1d< localIndex const > const nodesGhostRank )
   {
-    array1d< real64 > phim1d( phi.size( 0 ));
-    array1d< real64 > phin1d( phi.size( 0 ));
-    arrayView1d< real64 > const phim = phim1d.toView();
-    arrayView1d< real64 > const phin = phin1d.toView();
-
     std::cout<<"Damping"<<std::endl;
-    for( localIndex m=0; m<phi.size( 1 ); ++m )
+    array1d< real64 > phim;
+    array1d< real64 > phin;
+    phim.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
+    phin.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
+    arrayView1d< real64 > phimV	= phim.toView();
+    arrayView1d< real64 > phinV	= phin.toView();
+    
+    for( localIndex m=0; m<phi.size( 0 ); ++m )
     {
-      for( localIndex i=0; i<phi.size( 0 ); ++i )
-      {
-        phim[i]=phi[i][m];
-      }
+      LvArray::memcpy(phim.toSlice(), phi[m].toSliceConst());
+      
       for( localIndex n=0; n<m+1; ++n )
       {
-        for( localIndex i=0; i<phi.size( 0 ); ++i )
-        {
-          phin[i]=phi[i][n];
-        }
-
+        LvArray::memcpy(phin.toSlice(), phi[n].toSliceConst());
 
         std::cout<<"("<<m<<","<<n<<")"<<std::endl;
 
         forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
-            {
-              // face on the domain boundary and not on free surface
-              if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
+        {
+	  // face on the domain boundary and not on free surface
+	  if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
+	    {
+	      localIndex k = facesToElems( f, 0 );
+	      if( k < 0 )
               {
-                localIndex k = facesToElems( f, 0 );
-                if( k < 0 )
+		k = facesToElems( f, 1 );
+	      }
+	      
+	      real32 const alpha = 1.0 / velocity[k];
+	      
+	      constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
+	      
+	      real64 xLocal[ numNodesPerFace ][ 3 ];
+	      for( localIndex a = 0; a < numNodesPerFace; ++a )
+              {
+		for( localIndex i = 0; i < 3; ++i )
                 {
-                  k = facesToElems( f, 1 );
-                }
-
-                real32 const alpha = 1.0 / velocity[k];
-
-                constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
-
-                real64 xLocal[ numNodesPerFace ][ 3 ];
-                for( localIndex a = 0; a < numNodesPerFace; ++a )
+		  xLocal[a][i] = X( facesToNodes( k, a ), i );
+		}
+	      }
+	      
+	      for( localIndex q = 0; q < numNodesPerFace; ++q )
+              {
+		if( nodesGhostRank[facesToNodes[f][q]] < 0 )
                 {
-                  for( localIndex i = 0; i < 3; ++i )
+		  real32 const val = alpha * m_finiteElement.computeDampingTerm( q, xLocal );
+		  real32 const localIncrement = phimV[facesToNodes[f][q]] * val * phinV[facesToNodes[f][q]];
+		  RAJA::atomicAdd< ATOMIC_POLICY >( &dampingPOD[m][n], localIncrement );
+		  if( m!=n )
                   {
-                    xLocal[a][i] = X( facesToNodes( k, a ), i );
-                  }
-                }
-
-                for( localIndex q = 0; q < numNodesPerFace; ++q )
-                {
-                  if( nodesGhostRank[facesToNodes[f][q]] < 0 )
-                  {
-                    real32 const val = alpha * m_finiteElement.computeDampingTerm( q, xLocal );
-                    real32 const localIncrement = phim[facesToNodes[f][q]] * val * phin[facesToNodes[f][q]];
-                    RAJA::atomicAdd< ATOMIC_POLICY >( &dampingPOD[m][n], localIncrement );
-                    if( m!=n )
-                    {
-                      RAJA::atomicAdd< ATOMIC_POLICY >( &dampingPOD[n][m], localIncrement );
-                    }
-                  }
-                }
-              }
-            } ); // end loop over element
+		    RAJA::atomicAdd< ATOMIC_POLICY >( &dampingPOD[n][m], localIncrement );
+		  }
+		}
+	      }
+	    }
+	} ); // end loop over element
       }
     }
   }
