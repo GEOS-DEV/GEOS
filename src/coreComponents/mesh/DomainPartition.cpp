@@ -185,6 +185,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
 
       CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
                                                                              m_neighbors );
+    }
   } );
 }
 
@@ -195,31 +196,35 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
   {
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
     {
-      if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
+      if( !meshBody.hasParticles() ) // Currently, particle-based mesh bodies do not construct their
+                                     // own domain decomposition. MPM borrows that of the grid.
       {
-        NodeManager & nodeManager = meshLevel.getNodeManager();
-        FaceManager & faceManager = meshLevel.getFaceManager();
-
-        CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
-        faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
-        faceManager.computeGeometry( nodeManager );
-      }
-      else if( !meshLevel.isShallowCopyOf( meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )
-      {
-        for( NeighborCommunicator const & neighbor : m_neighbors )
+        if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
         {
-          neighbor.addNeighborGroupToMesh( meshLevel );
-        }
-        NodeManager & nodeManager = meshLevel.getNodeManager();
-        FaceManager & faceManager = meshLevel.getFaceManager();
+          NodeManager & nodeManager = meshLevel.getNodeManager();
+          FaceManager & faceManager = meshLevel.getFaceManager();
 
-        CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager, m_neighbors );
-        CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager, m_neighbors );
-        CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
-    }
-      else
-      {
-        GEOS_LOG_LEVEL_RANK_0( 3, "No communication setup is needed since it is a shallow copy of the base discretization." );
+          CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
+          faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
+          faceManager.computeGeometry( nodeManager );
+        }
+        else if( !meshLevel.isShallowCopyOf( meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )
+        {
+          for( NeighborCommunicator const & neighbor : m_neighbors )
+          {
+            neighbor.addNeighborGroupToMesh( meshLevel );
+          }
+          NodeManager & nodeManager = meshLevel.getNodeManager();
+          FaceManager & faceManager = meshLevel.getFaceManager();
+
+          CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager, m_neighbors );
+          CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager, m_neighbors );
+          CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
+        }
+        else
+        {
+          GEOS_LOG_LEVEL_RANK_0( 3, "No communication setup is needed since it is a shallow copy of the base discretization." );
+        }
       }
     } );
   } );
