@@ -115,6 +115,7 @@ public:
   /// @copydoc dataRepository::Group::getCatalog()
   static CatalogInterface::CatalogType & getCatalog();
 
+  /// enum class defining the format of the time output in the log
   enum class TimeOutputFormat : integer
   {
     seconds,
@@ -125,13 +126,18 @@ public:
     full
   };
 
+  /// seconds in a minute
   static constexpr integer MINUTE = 60;
+  /// seconds in a hour
   static constexpr integer HOUR   = 60 * MINUTE;
+  /// seconds in a day
   static constexpr integer DAY    = 24 * HOUR;
-  static constexpr integer YEAR   = 365 * DAY; 
+  /// seconds in a year
+  static constexpr integer YEAR   = 365 * DAY;
 
 private:
 
+  /// output timestamp to the screen
   void outputTime() const;
 
   /// Min time for a simulation
@@ -159,13 +165,14 @@ private:
   TimeOutputFormat m_timeOutputFormat;
 };
 
+/// valid strings fort the time output enum.
 ENUM_STRINGS( EventManager::TimeOutputFormat,
               "seconds",
               "minutes",
               "hours",
               "days",
               "years",
-              "full");
+              "full" );
 
 } /* namespace geos */
 

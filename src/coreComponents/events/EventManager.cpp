@@ -226,7 +226,7 @@ bool EventManager::run( DomainPartition & domain )
 void EventManager::outputTime() const
 {
   if( m_timeOutputFormat==TimeOutputFormat::full )
-  {    
+  {
     integer const yearsOut   =   m_time / YEAR;
     integer const daysOut    =  (m_time - yearsOut * YEAR) / DAY;
     integer const hoursOut   =  (m_time - yearsOut * YEAR - daysOut * DAY) / HOUR;
