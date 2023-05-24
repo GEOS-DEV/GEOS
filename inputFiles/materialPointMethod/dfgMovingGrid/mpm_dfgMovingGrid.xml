@@ -76,7 +76,8 @@ needsNeighborList="1"
 useDamageAsSurfaceFlag="1"
 
 boundaryConditionTypes="{ 1, 0, 2, 2, 1, 1 }"    
-/>
+
+      fTablePath="FTable.dat"/>
   </Solvers>
 
   <Constitutive>
