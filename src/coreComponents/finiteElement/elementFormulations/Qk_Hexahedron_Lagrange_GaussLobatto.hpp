@@ -462,6 +462,22 @@ public:
                         real64 const (&X)[numNodes][3],
                         FUNC && func );
 
+
+  /**
+   * @brief computes the non-zero contributions TODO:
+   * @param TODO:
+   * @param func Callback function accepting three parameters: i, j and R_ij
+   */  
+  template< typename FUNC >
+  GEOS_HOST_DEVICE
+  static void
+  computeGradPhiBGradPhi( int qa,
+                          int qb,
+                          int qc,
+                          real64 const (&B)[6],
+                          FUNC && func );
+
+
   /**
    * @brief computes the matrix B in the case of quasi-stiffness (e.g. for pseudo-acoustic case), defined as J^{-T}A_z J^{-1}/det(J), where J is the Jacobian matrix, and A_z is a zero matrix except on A_z(3,3) = 1.
    * @param qa The 1d quadrature point index in xi0 direction (0,1)
@@ -473,7 +489,7 @@ public:
    */
   GEOS_HOST_DEVICE
   static void
-    computeBzMatrix( int const qa,
+  computeBzMatrix( int const qa,
                     int const qb,
                     int const qc,
                     real64 const (&X)[numNodes][3],
@@ -1063,23 +1079,19 @@ computeBxyMatrix( int const qa,
 }
 
 
-// same as computeStiffnessTerm BUT use Bxy matrix instead of B.
-// The rest is litterally a copy/paste...
+// Compute Grad(Phi) B Grad(Phi) coefficient
 template< typename GL_BASIS >
 template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeStiffnessxyTerm( int q,
-                      real64 const (&X)[numNodes][3],
-                      FUNC && func )
+computeGradPhiBGradPhi( int qa,
+                        int qb,
+                        int qc,
+                        real64 const (&B)[6],
+                        FUNC && func )
 {
-  real64 B[6] = {0};
-  real64 J[3][3] = {{0}};
-  int qa, qb, qc;
-  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
-  computeBxyMatrix( qa, qb, qc, X, J, B ); // The only change!
   // diagonal terms
   for( int i=0; i<num1dNodes; i++ )
   {
@@ -1155,6 +1167,25 @@ computeStiffnessxyTerm( int q,
     }
   }
 }
+// same as computeStiffnessTerm BUT use Bxy matrix instead of B.
+// The rest is litterally a copy/paste...
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeStiffnessxyTerm( int q,
+                      real64 const (&X)[numNodes][3],
+                      FUNC && func )
+{
+  real64 B[6] = {0};
+  real64 J[3][3] = {{0}};
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  computeBxyMatrix( qa, qb, qc, X, J, B ); // The only change!
+  computeGradPhiBGradPhi(qa,qb,qc, B, func );
+}
 
 
 // same as computeStiffnessTerm BUT use Bz matrix instead of B.
@@ -1174,80 +1205,7 @@ computeStiffnesszTerm( int q,
   int qa, qb, qc;
   GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
   computeBzMatrix( qa, qb, qc, X, J, B ); // The only change!
-  // diagonal terms
-  for( int i=0; i<num1dNodes; i++ )
-  {
-    for( int j=0; j<num1dNodes; j++ )
-    {
-      func( GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
-            GL_BASIS::TensorProduct3D::linearIndex( j, qb, qc ),
-            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[0]*
-            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
-            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qa ) ) );
-    }
-  }
-  for( int i=0; i<num1dNodes; i++ )
-  {
-    for( int j=0; j<num1dNodes; j++ )
-    {
-      func( GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc ),
-            GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc ),
-            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[1]*
-            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
-            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ) );
-    }
-  }
-  for( int i=0; i<num1dNodes; i++ )
-  {
-    for( int j=0; j<num1dNodes; j++ )
-    {
-      func( GL_BASIS::TensorProduct3D::linearIndex( qa, qb, i ),
-            GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j ),
-            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[2]*
-            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qc ) )*
-            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ) );
-    }
-  }
-  // off-diagonal terms
-  for( int i=0; i<num1dNodes; i++ )
-  {
-    for( int j=0; j<num1dNodes; j++ )
-    {
-      int ii = GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc );
-      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j );
-      real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[3]*
-                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
-                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) );
-      func( ii, jj, val );
-      func( jj, ii, val );
-    }
-  }
-  for( int i=0; i<num1dNodes; i++ )
-  {
-    for( int j=0; j<num1dNodes; j++ )
-    {
-      int ii = GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc );
-      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j );
-      real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[4]*
-                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
-                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) );
-      func( ii, jj, val );
-      func( jj, ii, val );
-    }
-  }
-  for( int i=0; i<num1dNodes; i++ )
-  {
-    for( int j=0; j<num1dNodes; j++ )
-    {
-      int ii = GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc );
-      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc );
-      real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[5]*
-                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
-                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) );
-      func( ii, jj, val );
-      func( jj, ii, val );
-    }
-  }
+  computeGradPhiBGradPhi(qa,qb,qc, B, func );
 }
 
 
