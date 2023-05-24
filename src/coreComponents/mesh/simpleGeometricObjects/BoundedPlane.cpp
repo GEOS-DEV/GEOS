@@ -19,33 +19,18 @@
 #include "BoundedPlane.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geos
+namespace geosx
 {
 using namespace dataRepository;
 
 BoundedPlane::BoundedPlane( const string & name, Group * const parent ):
-  SimpleGeometricObjectBase( name, parent ),
+  BoundedPlanarObject( name, parent ),
   m_origin{ 0.0, 0.0, 0.0 },
-  m_normal{ 0.0, 0.0, 1.0 },
-  m_lengthVector{ 0.0, 0.0, 0.0 },
-  m_widthVector{ 0.0, 0.0, 0.0 },
   m_tolerance()
 {
   registerWrapper( viewKeyStruct::originString(), &m_origin ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Origin point (x,y,z) of the plane (basically, any point on the plane)" );
-
-  registerWrapper( viewKeyStruct::normalString(), &m_normal ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Normal (n_x,n_y,n_z) to the plane (will be normalized automatically)" );
-
-  registerWrapper( viewKeyStruct::mLengthVectorString(), &m_lengthVector ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Tangent vector defining the orthonormal basis along with the normal." );
-
-  registerWrapper( viewKeyStruct::mWidthVectorString(), &m_widthVector ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Tangent vector defining the orthonormal basis along with the normal." );
 
   registerWrapper( viewKeyStruct::dimensionsString(), &m_dimensions ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -59,6 +44,28 @@ BoundedPlane::BoundedPlane( const string & name, Group * const parent ):
 
 
   m_points.resize( 4, 3 );
+}
+
+//constructor given two points, used for 2.5D problems
+BoundedPlane::BoundedPlane( const real64 oldX, const real64 oldY,
+                            const real64 newX, const real64 newY,
+                            const string & name, Group * const parent ):
+  BoundedPlanarObject( name, parent ),
+  m_origin{ 0.0, 0.0, 0.0 },
+  m_tolerance( 1e-5 )
+{
+  m_origin = { (oldX + newX)/2.0, (oldY + newY)/2.0, 0.0};
+  m_normal = { -(newY-oldY), newX-oldX, 0.0 };
+  m_lengthVector = { newX-oldX, newY-oldY, 0.0 };
+  m_widthVector = { 0.0, 0.0, 1.0 };
+  real64 norm = std::sqrt( pow( newX-oldX, 2 )+pow( newY-oldY, 2 ));
+  m_dimensions.resize( 2 );
+  m_dimensions[0] = norm+1e-4; //small tolerance to ensure that both ends are contained in the plane - TODO: try to use m_tolerance
+  m_dimensions[1] = 5; //TODO: this is arbitrary, it only needs to be larger than the z thickness in the 2.5D model
+
+  m_points.resize( 4, 3 );
+  //parent->registerGroup< BoundedPlane >( name, std::move( this ) );
+  this->postProcessInput();
 }
 
 BoundedPlane::~BoundedPlane()
@@ -77,11 +84,11 @@ void BoundedPlane::postProcessInput()
   real64 vector[ 3 ];
   LvArray::tensorOps::crossProduct( vector, m_lengthVector, m_widthVector );
 
-  GEOS_ERROR_IF( std::fabs( std::fabs( LvArray::tensorOps::AiBi< 3 >( m_normal, vector )) - 1 ) > 1e-15
-                 || std::fabs( LvArray::tensorOps::AiBi< 3 >( m_widthVector, m_lengthVector )) > 1e-15,
-                 "Error: the 3 vectors provided in the BoundedPlane do not form an orthonormal basis!" );
+  GEOSX_ERROR_IF( std::fabs( std::fabs( LvArray::tensorOps::AiBi< 3 >( m_normal, vector )) - 1 ) > 1e-15
+                  || std::fabs( LvArray::tensorOps::AiBi< 3 >( m_widthVector, m_lengthVector )) > 1e-15,
+                  "Error: the 3 vectors provided in the BoundedPlane do not form an orthonormal basis!" );
 
-  GEOS_ERROR_IF( m_dimensions.size() != 2, "Error: Need to provide both length and width!" );
+  GEOSX_ERROR_IF( m_dimensions.size() != 2, "Error: Need to provide both length and width!" );
 
   findRectangleLimits();
 }
@@ -113,10 +120,10 @@ void BoundedPlane::findRectangleLimits()
 
   if( getLogLevel() > 1 )
   {
-    GEOS_LOG_RANK_0( "Point A: " << m_points[0] );
-    GEOS_LOG_RANK_0( "Point B: " << m_points[1] );
-    GEOS_LOG_RANK_0( "Point C: " << m_points[2] );
-    GEOS_LOG_RANK_0( "Point D: " << m_points[3] );
+    GEOSX_LOG_RANK_0( "Point A: " << m_points[0] );
+    GEOSX_LOG_RANK_0( "Point B: " << m_points[1] );
+    GEOSX_LOG_RANK_0( "Point C: " << m_points[2] );
+    GEOSX_LOG_RANK_0( "Point D: " << m_points[3] );
   }
 }
 
@@ -163,4 +170,4 @@ bool BoundedPlane::isCoordInObject( real64 const ( &coord ) [3] ) const
 
 REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, BoundedPlane, string const &, Group * const )
 
-} /* namespace geos */
+} /* namespace geosx */
