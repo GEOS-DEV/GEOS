@@ -389,6 +389,9 @@ protected:
   array1d< real64 > m_domainF;
   array1d< real64 > m_domainL;
 
+  int m_boxAverageHistory;
+  int m_reactionHistory;
+
   int m_needsNeighborList;
   real64 m_neighborRadius;
   int m_binSizeMultiplier;
