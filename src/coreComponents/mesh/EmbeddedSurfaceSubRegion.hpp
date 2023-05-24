@@ -25,6 +25,7 @@
 #include "EdgeManager.hpp"
 #include "EmbeddedSurfaceNodeManager.hpp"
 #include "CellElementSubRegion.hpp"
+//Do we really need this include BoundedPlane?
 #include "simpleGeometricObjects/BoundedPlane.hpp"
 
 namespace geos
@@ -142,7 +143,7 @@ public:
                               EmbeddedSurfaceNodeManager & embSurfNodeManager,
                               EdgeManager const & edgeManager,
                               FixedOneToManyRelation const & cellToEdges,
-                              BoundedPlane const * fracture );
+                              BoundedPlanarObject const * fracture );
 
   /**
    * @brief inherit ghost rank from cell elements.

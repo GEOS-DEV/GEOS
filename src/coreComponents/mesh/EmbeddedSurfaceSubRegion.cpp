@@ -113,18 +113,18 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface( localIndex const cellIndex
                                                       EmbeddedSurfaceNodeManager & embSurfNodeManager,
                                                       EdgeManager const & edgeManager,
                                                       FixedOneToManyRelation const & cellToEdges,
-                                                      BoundedPlane const * fracture )
+                                                      BoundedPlanarObject const * fracture )
 {
-  /* The goal is to add an embeddedSurfaceElem if it is contained within the BoundedPlane
+  /* The goal is to add an embeddedSurfaceElem if it is contained within the BoundedPlanarObject
    *
-   * A. Identify whether the cell falls within the bounded plane or not
+   * A. Identify whether the cell falls within the bounded planar object or not
    *
    * we loop over each edge:
    *
-   *   1. check if it is cut by the plane using the Dot product between the distance of each node
+   *   1. check if it is cut by the planar object using the Dot product between the distance of each node
    *   from the origin and the normal vector.
-   *   2. If an edge is cut by the plane we look for the intersection between a line and a plane.
-   *   3. Once we have the intersection we check if it falls inside the bounded plane.
+   *   2. If an edge is cut by the planar object we look for the intersection between a line and a plane.
+   *   3. Once we have the intersection we check if it falls inside the bounded planar object.
    *
    * Only elements for which all intersection points fall within the fracture plane limits will be added.
    * If the fracture does not cut through the entire element we will just chop it (it's a discretization error).
