@@ -12,7 +12,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "constitutive/fluid/ParticleFluid.hpp"
+#include "constitutive/fluid/singlefluid/ParticleFluid.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 #include "constitutive/capillaryPressure/JFunctionCapillaryPressure.hpp"
 
