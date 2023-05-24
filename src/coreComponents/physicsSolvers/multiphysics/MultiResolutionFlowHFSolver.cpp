@@ -1136,6 +1136,8 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
       //efemGenerator.propagationStep( domain, m_baseTip, m_patchTip, m_baseTipElementIndex );
       //cutDamagedElements( base, patch );  
       buildSubdomainSet( base, patch );
+      patchDamageSolver.setSubdomainElements( m_subdomainElems );
+      patchSolidSolver.setSubdomainElements( m_subdomainElems );
       baseSolver.setupSystem( domain,
                               baseSolver.getDofManager(),
                               baseSolver.getLocalMatrix(),

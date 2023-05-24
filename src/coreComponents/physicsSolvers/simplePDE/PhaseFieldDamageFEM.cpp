@@ -128,6 +128,11 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
       solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
       GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
 
+      forAll< serialPolicy >( subRegion.size(), [&] ( localIndex const k ) 
+      {
+        m_subdomainElems.insert(k);
+      });
+
     } );
   } );
 }
@@ -275,7 +280,8 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const time_n,
                                                            localMatrix,
                                                            localRhs,
                                                            m_damageName,
-                                                           m_localDissipationOption=="Linear" ? 1 : 2 );
+                                                           m_localDissipationOption=="Linear" ? 1 : 2,
+                                                           m_subdomainElems );
 
       finiteElement::
         regionBasedKernelApplication< parallelDevicePolicy<>,
@@ -611,6 +617,12 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
     } );
 
   } );
+}
+
+void setSubdomainElements( SortedArrayView< localIndex const > const & subdomainElems; )
+{
+  m_subdomainElems.clear();
+  m_subdomainElems = subdomainElems;
 }
 
 

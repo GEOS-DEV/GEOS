@@ -103,7 +103,8 @@ public:
                                   CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                   arrayView1d< real64 > const inputRhs,
                                   string const damageName,
-                                  int const localDissipationOption ):
+                                  int const localDissipationOption,
+                                  SortedArrayView< localIndex const > const & subdomainElems ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -123,7 +124,8 @@ public:
     //m_pressureFracture( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::fracturePressure >() )
     //this should compile
     m_pressureMatrix( elementSubRegion.template getReference< array1d< real64 > >( "hardCodedPMatrixName" ) ),
-    m_pressureFracture( elementSubRegion.template getReference< array1d< real64 > >( "hardCodedPFractureName" ) )
+    m_pressureFracture( elementSubRegion.template getReference< array1d< real64 > >( "hardCodedPFractureName" ) ),
+    m_subdomainElems( subdomainElems )
   {}
 
   //***************************************************************************
@@ -202,36 +204,36 @@ public:
    *
    */
   //START_kernelLauncher
-  // template< typename POLICY,
-  //           typename KERNEL_TYPE >
-  // static
-  // real64
-  // kernelLaunch( localIndex const numElems,
-  //               KERNEL_TYPE const & kernelComponent )
-  // {
-  //   GEOSX_MARK_FUNCTION;
+  template< typename POLICY,
+            typename KERNEL_TYPE >
+  static
+  real64
+  kernelLaunch( localIndex const numElems,
+                KERNEL_TYPE const & kernelComponent )
+  {
+    GEOSX_MARK_FUNCTION;
 
-  //   GEOSX_UNUSED_VAR( numElems );
+    GEOSX_UNUSED_VAR( numElems );
 
-  //   // Define a RAJA reduction variable to get the maximum residual contribution.
-  //   RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
-  //   //EXEMPLE OF KERNEL LAUNCH ON SUBDOMAIN - ANDRE
-  //   //make a m_subdomainElems variable
-  //   forAll< POLICY >( kernelComponent.m_subdomainElems.size(),
-  //                     [=] GEOSX_HOST_DEVICE ( localIndex const i )
-  //   {
-  //     localIndex k = kernelComponent.m_subdomainElems[i];
-  //     typename KERNEL_TYPE::StackVariables stack;
+    // Define a RAJA reduction variable to get the maximum residual contribution.
+    RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
+    //EXEMPLE OF KERNEL LAUNCH ON SUBDOMAIN - ANDRE
+    //make a m_subdomainElems variable
+    forAll< POLICY >( kernelComponent.m_subdomainElems.size(),
+                      [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    {
+      localIndex k = kernelComponent.m_subdomainElems[i];
+      typename KERNEL_TYPE::StackVariables stack;
 
-  //     kernelComponent.setup( k, stack );
-  //     for( integer q=0; q<numQuadraturePointsPerElem; ++q )
-  //     {
-  //       kernelComponent.quadraturePointKernel( k, q, stack );
-  //     }
-  //     maxResidual.max( kernelComponent.complete( k, stack ) );
-  //   } );
+      kernelComponent.setup( k, stack );
+      for( integer q=0; q<numQuadraturePointsPerElem; ++q )
+      {
+        kernelComponent.quadraturePointKernel( k, q, stack );
+      }
+      maxResidual.max( kernelComponent.complete( k, stack ) );
+    } );
 
-  //   return maxResidual.get();
+    return maxResidual.get();
   // }
   // //END_kernelLauncher  
 
@@ -463,7 +465,7 @@ protected:
 
   arrayView1d< real64 const > const m_pressureMatrix;
   arrayView1d< real64 const > const m_pressureFracture;
-  //SortedArrayView< localIndex const > const m_subdomainElems;
+  SortedArrayView< localIndex const > const & m_subdomainElems;
 
 };
 
@@ -473,7 +475,8 @@ using PhaseFieldDamagePressureKernelFactory = finiteElement::KernelFactory< Phas
                                                                             CRSMatrixView< real64, globalIndex const > const,
                                                                             arrayView1d< real64 > const,
                                                                             string const,
-                                                                            int >;
+                                                                            int,
+                                                                            SortedArrayView< localIndex const > const & >;
 
 } // namespace geosx
 
