@@ -178,18 +178,27 @@ private:
 };
 
 
-std::map< globalIndex, std::set< globalIndex > > buildDuplicatedNodesMap( DuplicatedNodes const & dn )
+/**
+ * @brief Organize the duplicated nodes information as an LvArray ArrayOfArrys.
+ * @param dn The duplicated nodes informations.
+ * @return An iterable of arrays. Each array containing the global indices of the nodes which are duplicated of each others.
+ */
+ArrayOfArrays< globalIndex > buildDuplicatedNodesMap( DuplicatedNodes const & dn )
 {
-  std::map< globalIndex, std::set< globalIndex > > result;
+  ArrayOfArrays< globalIndex > result;
+
+  std::vector< int > sizes( dn.size() );
+  for( std::size_t i = 0; i < dn.size(); ++i )
+  {
+    sizes[i] = dn[i].size();
+  }
+  result.resizeFromCapacities< serialPolicy >( sizes.size(), sizes.data() );
 
   for( std::size_t i = 0; i < dn.size(); ++i )
   {
-    std::set< vtkIdType > const nodes{ dn[i].cbegin(), dn[i].cend() };
-    for( vtkIdType const & n: nodes )
+    for( globalIndex const & g: dn[i] )
     {
-      std::set< vtkIdType > tmp( nodes );
-      tmp.erase( n );
-      result[n] = tmp;
+      result.emplaceBack( i, g );
     }
   }
 

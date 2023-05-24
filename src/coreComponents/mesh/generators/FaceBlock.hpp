@@ -109,9 +109,9 @@ public:
   array1d< globalIndex > localToGlobalMap() const override
   { return m_localToGlobalMap; }
 
-  std::map< globalIndex, std::set< globalIndex > > getDuplicatedNodes() const override;
+  ArrayOfArrays< globalIndex > getDuplicatedNodes() const override;
 
-  void setDuplicatedNodes( std::map< globalIndex, std::set< globalIndex > > && duplicatedNodes );
+  void setDuplicatedNodes( ArrayOfArrays< globalIndex > && duplicatedNodes );
 
 private:
 
@@ -127,7 +127,7 @@ private:
 
   array1d< globalIndex > m_localToGlobalMap;
 
-  std::map< globalIndex, std::set< globalIndex > > m_duplicatedNodes;
+  ArrayOfArrays< globalIndex > m_duplicatedNodes;
 };
 
 

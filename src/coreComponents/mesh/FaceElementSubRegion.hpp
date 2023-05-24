@@ -226,7 +226,11 @@ public:
   /// A map of fracture connector local indices face element local indices.
   ArrayOfArrays< localIndex > m_2dFaceTo2dElems;
 
-  std::map< globalIndex, std::set< globalIndex > > m_duplicatedNodes;
+  /**
+   * @brief An iterable of the duplicated nodes.
+   * Each array/bucket containing all the global indices of the nodes which are duplicated of each others.
+   */
+  ArrayOfArrays< globalIndex > m_duplicatedNodes;
 
   /**
    * @brief @return The array of shape function derivatives.

@@ -155,7 +155,7 @@ public:
  */
   virtual array1d< globalIndex > localToGlobalMap() const = 0;
 
-  virtual std::map< globalIndex, std::set< globalIndex > > getDuplicatedNodes() const = 0;
+  virtual ArrayOfArrays< globalIndex > getDuplicatedNodes() const = 0;
 };
 
 }

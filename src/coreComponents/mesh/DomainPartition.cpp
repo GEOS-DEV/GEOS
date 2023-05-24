@@ -168,9 +168,15 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
     meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >(
       [&]( FaceElementSubRegion const & subRegion )
       {
-        for( auto const & pair: subRegion.m_duplicatedNodes )
+        for( int i = 0; i < subRegion.m_duplicatedNodes.size(); ++i )
         {
-          duplicatedNodes[pair.first].insert( pair.second.cbegin(), pair.second.cend() );
+          auto const & nodes = subRegion.m_duplicatedNodes[i];
+          for( globalIndex const & n: nodes )
+          {
+            std::set< globalIndex > tmp( nodes.begin(), nodes.end() );
+            tmp.erase( n );
+            duplicatedNodes[n].insert( tmp.cbegin(), tmp.cend() );
+          }
         }
       }
     );
