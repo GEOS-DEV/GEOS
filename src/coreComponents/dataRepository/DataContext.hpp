@@ -59,7 +59,7 @@ public:
   virtual string toString() const = 0;
 
   /**
-   * @brief Get the target object name
+   * @return Get the target object name
    */
   string getObjectName() const
   { return m_objectName; }
