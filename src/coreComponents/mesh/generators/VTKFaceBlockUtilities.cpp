@@ -572,27 +572,6 @@ ArrayOfArrays< localIndex > computeElem2dToNodes( vtkIdType num2dElements,
 }
 
 
-template< class T >
-ArrayOfArrays< T > myConvert( array2d< T > const & input )
-{
-  ArrayOfArrays< T > result;
-  auto const n = input.size( 0 );
-  array1d< localIndex > sizes( n );
-  for( auto i = 0; i < n; ++i )
-  {
-    sizes[i] = input( i, 1 ) == -1 ? 1 : 2;
-  }
-  result.template resizeFromCapacities< serialPolicy >( n, sizes.data() );
-  for( auto i = 0; i < n; ++i )
-  {
-    result( i, 0 ) = input( i, 0 );
-    if( input( i, 1 ) != -1 )
-    { result( i, 1 ) = input( i, 1 ); }
-  }
-  return result;
-}
-
-
 array1d< globalIndex > computeLocalToGlobal( vtkSmartPointer< vtkDataSet > faceMesh,
                                              vtkSmartPointer< vtkDataSet > mesh )
 {
@@ -650,13 +629,6 @@ void importFractureNetwork( string const & faceBlockName,
   faceBlock.set2dElemToEdges( std::move( elem2DToEdges ) );
   faceBlock.set2dFaceToEdge( std::move( face2dToEdge ) );
   faceBlock.set2dFaceTo2dElems( std::move( face2dToElems2d ) );
-
-//  faceBlock.set2dElemToFaces( myConvert( elem2dTo3d.elem2dToFaces ) );
-//  ToCellRelation< ArrayOfArrays< localIndex>> tmp(
-//    myConvert( elem2dTo3d.elem2dToElem3d.toBlockIndex ),
-//    myConvert( elem2dTo3d.elem2dToElem3d.toCellIndex )
-//  );
-//  faceBlock.set2dElemToElems( std::move( tmp ) );
 
   faceBlock.set2dElemToFaces( std::move( elem2dTo3d.elem2dToFaces ) );
   faceBlock.set2dElemToElems( std::move( elem2dTo3d.elem2dToElem3d ) );

@@ -288,7 +288,7 @@ localIndex FaceElementSubRegion::packUpDownMapsImpl( buffer_unit_type * & buffer
 
   packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::surfaceElementsToCellRegionsString() ) );
   packedSize += bufferOps::Pack< DO_PACKING >( buffer,
-                                               this->m_2dElemToElems,
+                                               m_2dElemToElems,
                                                packList,
                                                m_2dElemToElems.getElementRegionManager() );
 
@@ -366,6 +366,321 @@ void FaceElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
   ObjectManagerBase::fixUpDownMaps( m_toFacesRelation,
                                     m_unmappedGlobalIndicesInToFaces,
                                     clearIfUnmapped );
+}
+
+void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager,
+                           EdgeManager const & edgeManager,
+                           FaceManager const & faceManager,
+                           ElementRegionManager const & elemManager )
+{
+  if( MpiWrapper::commSize() == 1 )
+  {
+    return; // TODO I want a good reference for serial runs.
+  }
+  // Here I can fix the other mappings which are not properly defined...
+  localIndex const num2dElems = this->size();
+
+  std::map< globalIndex, globalIndex > const referenceDuplicatedNodes{
+    { 5,   5 },
+    { 132, 5 },
+    { 11,  11 },
+    { 138, 11 },
+    { 17,  17 },
+    { 144, 17 },
+    { 23,  23 },
+    { 150, 23 },
+    { 29,  29 },
+    { 156, 29 },
+    { 35,  35 },
+    { 162, 35 },
+    { 204, 35 },
+    { 41,  41 },
+    { 210, 41 },
+    { 47,  47 },
+    { 216, 47 },
+    { 53,  53 },
+    { 222, 53 },
+    { 59,  59 },
+    { 228, 59 },
+    { 65,  65 },
+    { 234, 65 },
+    { 71,  71 },
+    { 168, 71 },
+    { 77,  77 },
+    { 174, 77 },
+    { 83,  83 },
+    { 180, 83 },
+    { 89,  89 },
+    { 186, 89 },
+    { 95,  95 },
+    { 192, 95 },
+    { 101, 101 },
+    { 198, 101 },
+    { 240, 101 },
+    { 107, 107 },
+    { 246, 107 },
+    { 113, 113 },
+    { 252, 113 },
+    { 119, 119 },
+    { 258, 119 },
+    { 125, 125 },
+    { 264, 125 },
+    { 131, 131 },
+    { 270, 131 },
+    { 163, 163 },
+    { 205, 163 },
+    { 164, 164 },
+    { 206, 164 },
+    { 165, 165 },
+    { 207, 165 },
+    { 166, 166 },
+    { 208, 166 },
+    { 167, 167 },
+    { 209, 167 },
+    { 199, 199 },
+    { 241, 199 },
+    { 200, 200 },
+    { 242, 200 },
+    { 201, 201 },
+    { 243, 201 },
+    { 202, 202 },
+    { 244, 202 },
+    { 203, 203 },
+    { 245, 203 }
+  };
+
+  // The concept of 2d face is deeply local to the `FaceElementSubRegion`.
+  // Therefore, it's not exchanged during the ghosting process.
+  // Furthermore, all the information is there to reconstruct the mappings related to the 2d faces.
+
+  // To recreate the mappings, the first step is to associate a `2f face index` based on the global indices.
+  // But let's be precise: some the global indices of the edges are different while the
+  // Then we can resize all the mappings related to the `2d faces`.
+  ArrayOfArraysView< localIndex const > const elem2dToEdges = m_toEdgesRelation.base().toViewConst();
+  std::set< localIndex > edges;  // Will include twin edges.
+  for( int i = 0; i < elem2dToEdges.size(); ++i )
+  {
+    for( localIndex const & j: elem2dToEdges[i] )
+    {
+      edges.insert( j );
+    }
+  }
+
+  auto const & edgeToNodes = edgeManager.nodeList();
+  std::map< std::pair< globalIndex, globalIndex >, localIndex > edgesIds;
+//  std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > edgesIds;
+  for( localIndex const & edge: edges )
+  {
+    auto const nodes = edgeToNodes[edge];
+    GEOS_ASSERT_EQ( nodes.size(), 2 );
+    std::pair< globalIndex, globalIndex > const pg{ nodeManager.localToGlobalMap()[ nodes[0] ], nodeManager.localToGlobalMap()[ nodes[1] ] };
+//    edgesIds[pg] = edge;
+    edgesIds[pg] = edge;
+  }
+
+  std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > uniqueEdgeIds;
+  for( auto const & p: edgesIds )
+  {
+    std::pair< globalIndex, globalIndex > const & nodes = p.first;
+    localIndex const & edge = p.second;
+    std::pair< globalIndex, globalIndex > const edgeHash = std::minmax( referenceDuplicatedNodes.at( nodes.first ), referenceDuplicatedNodes.at( nodes.second ) );
+    uniqueEdgeIds[edgeHash].insert( edge );
+  }
+
+  std::map< localIndex, localIndex > duplicatedEdges;
+
+  std::size_t const num2dFaces = uniqueEdgeIds.size();
+  arrayView1d< integer const > edgeGhostRanks = edgeManager.ghostRank().toViewConst();
+  m_2dFaceToEdge.clear();
+  m_2dFaceToEdge.reserve( num2dFaces );
+  auto cmp = [=]( int e,
+                  int f ) -> bool
+  {
+    int const re = edgeGhostRanks[e] < 0 ? 0 : 1;
+    int const rf = edgeGhostRanks[f] < 0 ? 0 : 1;
+    return std::tie( re, e ) < std::tie( rf, f );
+  };
+  std::map<localIndex, localIndex> rejectedEdges;  // Mapping from the removed edge to its replacement.
+  for( auto const & p: uniqueEdgeIds )
+  {
+    std::set< localIndex > const & input = p.second;
+    localIndex const e = *std::min_element( input.cbegin(), input.cend(), cmp );
+    std::set< localIndex > rejectedEdgeIds( input );
+    rejectedEdgeIds.erase( e );
+    m_2dFaceToEdge.emplace_back( e );
+    for( localIndex const & re: rejectedEdgeIds )
+    {
+      rejectedEdges[re] = e;
+    }
+  }
+
+  // map< localIndex, localIndex >  m_edgesTo2dFaces
+  // Simple map inversion
+  m_edgesTo2dFaces.clear();
+  for( std::size_t i = 0; i < num2dFaces; ++i )
+  {
+    m_edgesTo2dFaces[m_2dFaceToEdge[i]] = i;
+  }
+
+  m_newFaceElements.clear();
+  m_newFaceElements.reserve( num2dElems );
+  for( localIndex i = 0; i < num2dElems; ++i )
+  {
+    m_newFaceElements.insert( i );
+  }
+  m_recalculateConnectionsFor2dFaces.clear();
+  m_recalculateConnectionsFor2dFaces.reserve( num2dFaces );  // TODO variable...
+  for( std::size_t i = 0; i < num2dFaces; ++i )
+  {
+    m_recalculateConnectionsFor2dFaces.insert( i );
+  }
+
+//  ArrayOfArrays< localIndex > tmp;
+  std::vector< std::vector< localIndex > > tmp( num2dFaces );
+  for( auto i = 0; i < num2dElems; ++i )
+  {
+    for( auto const & e: elem2dToEdges[i] )
+    {
+      auto const fIt = m_edgesTo2dFaces.find( e );
+      if( fIt != m_edgesTo2dFaces.cend() )
+      {
+        localIndex const & f = fIt->second;
+        tmp[f].push_back( i );
+      }
+      else
+      {
+        tmp[m_edgesTo2dFaces.at( rejectedEdges.at( e ) )].push_back( i );
+      }
+    }
+  }
+  {
+    std::vector< localIndex > sizes;
+    sizes.reserve( tmp.size() );
+    for( std::vector< localIndex > const & t: tmp )
+    {
+      sizes.push_back( t.size() );
+    }
+    for( auto i = 0; i < m_2dFaceTo2dElems.size(); ++i )
+    {
+      m_2dFaceTo2dElems.clearArray( i );
+    }
+    m_2dFaceTo2dElems.resizeFromCapacities< serialPolicy >( sizes.size(), sizes.data() );
+
+    for( std::size_t i = 0; i < tmp.size(); ++i )
+    {
+      for( std::size_t j = 0; j < tmp[i].size(); ++j )
+      {
+        m_2dFaceTo2dElems.emplaceBack(i, tmp[i][j]);
+      }
+    }
+  }
+
+  // When a fracture element has only one neighbor, let's try to find the other one.
+  // Reconnecting the elements from the side of the fracture.
+  struct ElemPath
+  {
+    localIndex er;
+    localIndex esr;
+    localIndex ei;
+    localIndex face;
+    std::set< globalIndex > nodes;
+
+    bool operator<( ElemPath const & other ) const
+    {
+      return std::tie( er, esr, ei, face, nodes ) < std::tie( other.er, other.esr, other.ei, other.face, other.nodes );
+    }
+  };
+
+  std::map< std::set< globalIndex >, std::set< ElemPath > > faceNodesToElems;  // TODO so bad: only consider some candidate elements.
+  auto const ff = [&]( localIndex const er,
+                       localIndex const esr,
+                       ElementRegionBase const & region,
+                       CellElementSubRegion const & subRegion )
+  {
+    auto const & elemToFaces = subRegion.faceList().base();
+    auto const & faceToNodes = faceManager.nodeList();
+    for( localIndex ei = 0; ei < elemToFaces.size( 0 ); ++ei )
+    {
+      for( auto const & face: elemToFaces[ei] )
+      {
+        std::set< globalIndex > nodesOfFace;
+        for( localIndex const & n: faceToNodes[face] )
+        {
+          auto const it = referenceDuplicatedNodes.find( nodeManager.localToGlobalMap()[n] );
+          if( it != referenceDuplicatedNodes.cend() )
+          {
+            nodesOfFace.insert( it->second );
+          }
+        }
+        ElemPath const path = ElemPath{ er, esr, ei, face, nodesOfFace };
+        faceNodesToElems[nodesOfFace].insert( path );
+      }
+    }
+  };
+  elemManager.forElementSubRegionsComplete< CellElementSubRegion >( ff );
+
+  for( int e2d = 0; e2d < num2dElems; ++e2d )
+  {
+    localIndex const e0 = m_2dElemToElems.m_toElementIndex[e2d][0];
+    localIndex const e1 = m_2dElemToElems.m_toElementIndex[e2d][1];
+    if( e0 > -1 and e1 > -1 )  // We only consider elements with lost
+    { continue; }
+
+    std::set< globalIndex > nodes;
+    for( localIndex const & n: m_toNodesRelation[e2d] )
+    {
+      nodes.insert( referenceDuplicatedNodes.at( nodeManager.localToGlobalMap()[n] ) );
+    }
+
+    auto const match = faceNodesToElems.find( nodes );
+    if( match != faceNodesToElems.cend() )
+    {
+      std::set< ElemPath > const & paths = match->second;
+
+      GEOS_LOG( "Found a match for " << e2d );
+      if( e0 == -1 )
+      {
+        for( ElemPath const & path: paths )
+        {
+          if( path.ei != e1 )
+          {
+            GEOS_LOG( "Found a correction for " << e2d );
+            m_2dElemToElems.m_toElementRegion[e2d][0] = path.er;
+            m_2dElemToElems.m_toElementSubRegion[e2d][0] = path.esr;
+            m_2dElemToElems.m_toElementIndex[e2d][0] = path.ei;
+            m_toFacesRelation[e2d][0] = path.face;
+            for( globalIndex const & gn: path.nodes )
+            {
+              m_toNodesRelation.emplaceBack( e2d, nodeManager.globalToLocalMap().at( gn ) );
+            }
+          }
+        }
+      }
+      if( e1 == -1 )
+      {
+        for( ElemPath const & path: paths )
+        {
+          if( path.ei != e0 )
+          {
+            GEOS_LOG( "Found a correction for " << e2d );
+            m_2dElemToElems.m_toElementRegion[e2d][1] = path.er;
+            m_2dElemToElems.m_toElementSubRegion[e2d][1] = path.esr;
+            m_2dElemToElems.m_toElementIndex[e2d][1] = path.ei;
+            m_toFacesRelation[e2d][1] = path.face;
+            for( globalIndex const & gn: path.nodes )
+            {
+              m_toNodesRelation.emplaceBack( e2d, nodeManager.globalToLocalMap().at( gn ) );
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // TODO what about m_toNodesRelation?
+//  m_toNodesRelation;
+
+  int a = 1;
 
 }
 

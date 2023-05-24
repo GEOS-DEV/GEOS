@@ -745,6 +745,10 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
     subRegion.fixUpDownMaps( false );
     verifyGhostingConsistency( subRegion, neighbors );
   } );
+  elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+  {
+    subRegion.fixSecondaryMappings( nodeManager, edgeManager, faceManager, elemManager );
+  } );
 
   removeUnusedNeighbors( nodeManager, edgeManager, faceManager, elemManager, neighbors );
 

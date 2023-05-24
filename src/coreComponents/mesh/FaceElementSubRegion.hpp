@@ -111,6 +111,11 @@ public:
 
   virtual void fixUpDownMaps( bool const clearIfUnmapped ) override;
 
+  void fixSecondaryMappings( NodeManager const & nodeManager,
+                             EdgeManager const & edgeManager,
+                             FaceManager const & faceManager,
+                             ElementRegionManager const & elemManager );
+
   ///@}
 
   /**
