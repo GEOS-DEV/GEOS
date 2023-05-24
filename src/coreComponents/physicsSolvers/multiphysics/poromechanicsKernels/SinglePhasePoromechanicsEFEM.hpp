@@ -217,7 +217,7 @@ public:
   GEOS_HOST_DEVICE
   void setup( localIndex const k,
               StackVariables & stack ) const;
-  
+
   template< typename FUNC = poromechanicsEFEMKernels::NoOpFunc >
   GEOS_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,

@@ -1008,11 +1008,11 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                      SourceFluxBoundaryCondition >( time_n + dt,
                                                     mesh,
                                                     SourceFluxBoundaryCondition::catalogName(),
-                                                    [&,isThermal]( SourceFluxBoundaryCondition const & fs,
-                                                         string const & setName,
-                                                         SortedArrayView< localIndex const > const & targetSet,
-                                                         ElementSubRegionBase & subRegion,
-                                                         string const & )
+                                                    [&, isThermal]( SourceFluxBoundaryCondition const & fs,
+                                                                    string const & setName,
+                                                                    SortedArrayView< localIndex const > const & targetSet,
+                                                                    ElementSubRegionBase & subRegion,
+                                                                    string const & )
     {
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
@@ -1061,8 +1061,8 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       if( isThermal )
       {
         SingleFluidBase const & fluid =
-        getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
-        
+          getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
+
         arrayView2d< real64 const > const enthalpy = fluid.enthalpy();
         arrayView2d< real64 const > const dEnthalpy_dTemperature = fluid.dEnthalpy_dTemperature();
         arrayView2d< real64 const > const dEnthalpy_dPressure    = fluid.dEnthalpy_dPressure();
@@ -1089,13 +1089,13 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
           globalIndex const massRowIndex   = dofNumber[ei] - rankOffset;
           globalIndex const energyRowIndex = massRowIndex + 1;
           real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
-          localRhs[massRowIndex] += rhsValue; 
+          localRhs[massRowIndex] += rhsValue;
           //add the value to the energey balance equation if the flux is positive (i.e., it's a producer)
           if( rhsContributionArrayView[a] > 0.0 )
           {
             globalIndex const pressureDofIndex    = dofNumber[ei] - rankOffset;
             globalIndex const temperatureDofIndex = pressureDofIndex + 1;
-            
+
             localRhs[energyRowIndex] += enthalpy[ei][0] * rhsValue;
 
             globalIndex dofIndices[2]{pressureDofIndex, temperatureDofIndex};

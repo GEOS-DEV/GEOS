@@ -106,20 +106,20 @@ public:
     GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-      dFluidMassIncrement_dTemperature( 0.0 ),
+            dFluidMassIncrement_dTemperature( 0.0 ),
       energyIncrement( 0.0 ),
       dEnergyIncrement_dJump( 0.0 ),
       dEnergyIncrement_dPressure( 0.0 ),
       dEnergyIncrement_dTemperature( 0.0 ),
       localKwTm{ 0.0 }
     {}
-    
+
     /// Derivative of fluid mass accumulation wrt temperature
     real64 dFluidMassIncrement_dTemperature{};
     /// Energy accumulation
     real64 energyIncrement{};
     /// Derivative of energy accumulation wrt normal jump
-    real64 dEnergyIncrement_dJump{};    
+    real64 dEnergyIncrement_dJump{};
     /// Derivative of energy accumulation wrt pressure
     real64 dEnergyIncrement_dPressure{};
     /// Derivative of energy accumulation wrt temperature

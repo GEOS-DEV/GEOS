@@ -170,12 +170,12 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
   EmbeddedSurfaceSubRegion const & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
   string const dofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
-  string const jumpDofKey = dofManager.getKey( fields::contact::dispJump::key() );  
+  string const jumpDofKey = dofManager.getKey( fields::contact::dispJump::key() );
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
   arrayView1d< globalIndex const > const & jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
 
   string const flowDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
-  
+
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
   KERNEL_WRAPPER kernelWrapper( dispDofNumber,
