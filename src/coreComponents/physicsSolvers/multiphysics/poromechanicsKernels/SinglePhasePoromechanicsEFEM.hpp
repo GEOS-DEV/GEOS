@@ -27,6 +27,21 @@ namespace geos
 
 namespace poromechanicsEFEMKernels
 {
+
+/**
+ * @brief Internal struct to provide no-op defaults used in the inclusion
+ *   of lambda functions into kernel component functions.
+ * @struct NoOpFunc
+ */
+struct NoOpFunc
+{
+  template< typename ... Ts >
+  GEOS_HOST_DEVICE
+  constexpr void
+  operator()( Ts && ... ) const {}
+};
+
+
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
@@ -202,11 +217,13 @@ public:
   GEOS_HOST_DEVICE
   void setup( localIndex const k,
               StackVariables & stack ) const;
-
+  
+  template< typename FUNC = poromechanicsEFEMKernels::NoOpFunc >
   GEOS_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
-                              StackVariables & stack ) const;
+                              StackVariables & stack,
+                              FUNC && kernelOp = poromechanicsEFEMKernels::NoOpFunc{} ) const;
 
   /**
    * @copydoc geos::finiteElement::ImplicitKernelBase::complete

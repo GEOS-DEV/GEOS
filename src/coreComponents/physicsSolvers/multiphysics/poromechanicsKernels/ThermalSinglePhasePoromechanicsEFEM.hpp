@@ -40,12 +40,9 @@ public:
                                                                        CONSTITUTIVE_TYPE,
                                                                        FE_TYPE >;
 
-  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
-  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
-  /// will be the actual number of nodes per element.
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
-  /// Compile time value for the number of gotquadrature points per element.
   static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_dofNumber;
@@ -55,6 +52,18 @@ public:
   using Base::m_elemsToNodes;
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
+  using Base::m_fracturePresDofNumber;
+  using Base::m_matrixPresDofNumber;
+  using Base::m_wDofNumber;
+  using Base::m_fluidDensity;
+  using Base::m_fluidDensity_n;
+  using Base::m_dFluidDensity_dPressure;
+  using Base::m_porosity_n;
+  using Base::m_surfaceArea;
+  using Base::m_elementVolume;
+  using Base::m_deltaVolume;
+  using Base::m_cellsToEmbeddedSurfaces;
+
 
 
   ThermalSinglePhasePoromechanicsEFEM( NodeManager const & nodeManager,
@@ -96,10 +105,30 @@ public:
     /// Constructor.
     GEOS_HOST_DEVICE
     StackVariables():
-      Base::StackVariables()
+      Base::StackVariables(),
+      dFluidMassIncrement_dTemperature( 0.0 ),
+      energyIncrement( 0.0 ),
+      dEnergyIncrement_dJump( 0.0 ),
+      dEnergyIncrement_dPressure( 0.0 ),
+      dEnergyIncrement_dTemperature( 0.0 ),
+      localKwTm{ 0.0 }
     {}
+    
+    /// Derivative of fluid mass accumulation wrt temperature
+    real64 dFluidMassIncrement_dTemperature{};
+    /// Energy accumulation
+    real64 energyIncrement{};
+    /// Derivative of energy accumulation wrt normal jump
+    real64 dEnergyIncrement_dJump{};    
+    /// Derivative of energy accumulation wrt pressure
+    real64 dEnergyIncrement_dPressure{};
+    /// Derivative of energy accumulation wrt temperature
+    real64 dEnergyIncrement_dTemperature{};
+    /// C-array storage for the element local KwTm matrix.
+    real64 localKwTm[numWdofs]{};
   };
   //*****************************************************************************
+
 
   //START_kernelLauncher
   template< typename POLICY,
@@ -108,6 +137,7 @@ public:
   kernelLaunch( localIndex const numElems,
                 KERNEL_TYPE const & kernelComponent );
   //END_kernelLauncher
+
 
   GEOS_HOST_DEVICE
   void setup( localIndex const k,
@@ -127,6 +157,21 @@ public:
 
 private:
 
+  /// Views on fluid density derivative wrt temperature
+  arrayView2d< real64 const > const m_dFluidDensity_dTemperature;
+
+  /// Views on fluid internal energy
+  arrayView2d< real64 const > const m_fluidInternalEnergy_n;
+  arrayView2d< real64 const > const m_fluidInternalEnergy;
+  arrayView2d< real64 const > const m_dFluidInternalEnergy_dPressure;
+  arrayView2d< real64 const > const m_dFluidInternalEnergy_dTemperature;
+
+  /// Views on temperature
+  arrayView1d< real64 const > const m_temperature_n;
+  arrayView1d< real64 const > const m_temperature;
+
+  /// The rank-global fluid pressure array.
+  arrayView1d< real64 const > const m_matrixTemperature;
 };
 
 

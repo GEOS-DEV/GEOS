@@ -62,7 +62,19 @@ ThermalSinglePhasePoromechanicsEFEM( NodeManager const & nodeManager,
         inputMatrix,
         inputRhs,
         inputGravityVector,
-        fluidModelKey )
+        fluidModelKey ),
+  m_dFluidDensity_dTemperature( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >(
+                                                                                                                        fluidModelKey ) ).dDensity_dTemperature() ),
+  m_fluidInternalEnergy_n( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).internalEnergy_n() ),
+  m_fluidInternalEnergy( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).internalEnergy() ),
+  m_dFluidInternalEnergy_dPressure( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >(
+                                                                                                                            fluidModelKey ) ).dInternalEnergy_dPressure() ),
+  m_dFluidInternalEnergy_dTemperature( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >(
+                                                                                                                               fluidModelKey ) ).dInternalEnergy_dTemperature() ),
+  m_temperature_n( embeddedSurfSubRegion.template getField< fields::flow::temperature_n >() ),
+  m_temperature( embeddedSurfSubRegion.template getField< fields::flow::temperature >() ),
+  m_matrixTemperature( elementSubRegion.template getField< fields::flow::temperature >() )
+
 {}
 
 
@@ -77,28 +89,7 @@ ThermalSinglePhasePoromechanicsEFEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
 kernelLaunch( localIndex const numElems,
               KERNEL_TYPE const & kernelComponent )
 {
-  GEOS_MARK_FUNCTION;
-
-  GEOS_UNUSED_VAR( numElems );
-
-  // Define a RAJA reduction variable to get the maximum residual contribution.
-  RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
-
-  forAll< POLICY >( kernelComponent.m_fracturedElems.size(),
-                    [=] GEOS_HOST_DEVICE ( localIndex const i )
-  {
-    localIndex k = kernelComponent.m_fracturedElems[i];
-    typename KERNEL_TYPE::StackVariables stack;
-
-    kernelComponent.setup( k, stack );
-    for( integer q=0; q<numQuadraturePointsPerElem; ++q )
-    {
-      kernelComponent.quadraturePointKernel( k, q, stack );
-    }
-    maxResidual.max( kernelComponent.complete( k, stack ) );
-  } );
-
-  return maxResidual.get();
+  return Base::template kernelLaunch< POLICY >( numElems, kernelComponent );
 }
 //END_kernelLauncher
 
@@ -112,7 +103,7 @@ void ThermalSinglePhasePoromechanicsEFEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_
 setup( localIndex const k,
        StackVariables & stack ) const
 {
-  Base::setup(k, stack);
+  Base::setup( k, stack );
 }
 
 template< typename SUBREGION_TYPE,
@@ -126,9 +117,23 @@ quadraturePointKernel( localIndex const k,
                        StackVariables & stack ) const
 {
 
-  Base::quadraturePointKernel(k, q, stack);
+  Base::quadraturePointKernel( k, q, stack, [&] ( real64 const (&eqMatrix)[3][6],
+                                                  real64 const detJ )
+  {
+    real64 KwTm_gauss[3]{};
+    real64 const thermalExpansionCoefficient = 1.0; /// TODO: should not be hardcoded.
 
-  // assemble KwTmLocal
+    // assemble KwTmLocal
+    LvArray::tensorOps::fill< 3 >( KwTm_gauss, 0 );
+    for( int i=0; i < 3; ++i )
+    {
+      KwTm_gauss[0] += eqMatrix[0][i];
+      KwTm_gauss[1] += eqMatrix[1][i];
+      KwTm_gauss[2] += eqMatrix[2][i];
+    }
+    LvArray::tensorOps::scaledAdd< 3 >( stack.localKwTm, KwTm_gauss, detJ*thermalExpansionCoefficient );
+  } );
+
 }
 
 template< typename SUBREGION_TYPE,
@@ -142,7 +147,76 @@ complete( localIndex const k,
 {
   real64 const maxForce = Base::complete( k, stack );
 
-  // add thermal derivatives
+
+  // add pore pressure contribution
+  real64 localJumpResidual_tempContribution[3]{};
+  LvArray::tensorOps::scaledAdd< 3 >( localJumpResidual_tempContribution, stack.localKwTm, m_matrixTemperature[ k ] );
+
+  globalIndex const matrixTemperatureColIndex = m_matrixPresDofNumber[k] + 1;
+  for( localIndex i=0; i < 3; ++i )
+  {
+    localIndex const dof = LvArray::integerConversion< localIndex >( stack.jumpEqnRowIndices[ i ] );
+
+    if( dof < 0 || dof >= m_matrix.numRows() )
+      continue;
+
+    RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], localJumpResidual_tempContribution[i] );
+
+    m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+                                                                            &matrixTemperatureColIndex,
+                                                                            &stack.localKwTm[i],
+                                                                            1 );
+  }
+
+  localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
+  // Energy balance accumulation
+  real64 const volume        =  m_elementVolume( embSurfIndex ) + m_deltaVolume( embSurfIndex );
+  real64 const volume_n      =  m_elementVolume( embSurfIndex );
+  real64 const fluidEnergy   =  m_fluidDensity( embSurfIndex, 0 ) * m_fluidInternalEnergy( embSurfIndex, 0 ) * volume;
+  real64 const fluidEnergy_n =  m_fluidDensity_n( embSurfIndex, 0 ) * m_fluidInternalEnergy_n( embSurfIndex, 0 ) * volume_n;
+
+  stack.dFluidMassIncrement_dTemperature =  m_dFluidDensity_dTemperature( embSurfIndex, 0 ) * volume;
+
+  stack.energyIncrement = fluidEnergy - fluidEnergy_n;
+  stack.dEnergyIncrement_dJump        = m_fluidDensity( embSurfIndex, 0 ) * m_fluidInternalEnergy( embSurfIndex, 0 ) * m_surfaceArea[ embSurfIndex ];
+  stack.dEnergyIncrement_dPressure    = m_dFluidDensity_dPressure( embSurfIndex, 0 ) * m_fluidInternalEnergy( embSurfIndex, 0 ) * volume;
+  stack.dEnergyIncrement_dTemperature = ( m_dFluidDensity_dTemperature( embSurfIndex, 0 ) * m_fluidInternalEnergy( embSurfIndex, 0 ) +
+                                          m_fluidDensity( embSurfIndex, 0 ) * m_dFluidInternalEnergy_dTemperature( embSurfIndex, 0 )  ) * volume;
+
+  globalIndex const fracturePressureDof        = m_fracturePresDofNumber[ embSurfIndex ];
+  globalIndex const fractureTemperatureDof     = m_fracturePresDofNumber[ embSurfIndex ] + 1;
+  localIndex const massBalanceEquationIndex   = fracturePressureDof - m_dofRankOffset;
+  localIndex const energyBalanceEquationIndex = massBalanceEquationIndex + 1;
+
+  if( massBalanceEquationIndex >= 0 && massBalanceEquationIndex < m_matrix.numRows() )
+  {
+
+    m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( massBalanceEquationIndex,
+                                                                            &fractureTemperatureDof,
+                                                                            &stack.dFluidMassIncrement_dTemperature,
+                                                                            1 );
+  }
+
+  if( energyBalanceEquationIndex >= 0 && energyBalanceEquationIndex < m_matrix.numRows() )
+  {
+
+    m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( energyBalanceEquationIndex,
+                                                                            &stack.jumpColIndices[0],
+                                                                            &stack.dEnergyIncrement_dJump,
+                                                                            1 );
+
+    m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( energyBalanceEquationIndex,
+                                                                            &fracturePressureDof,
+                                                                            &stack.dEnergyIncrement_dPressure,
+                                                                            1 );
+
+    m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( energyBalanceEquationIndex,
+                                                                            &fractureTemperatureDof,
+                                                                            &stack.dEnergyIncrement_dTemperature,
+                                                                            1 );
+
+    RAJA::atomicAdd< serialAtomic >( &m_rhs[ energyBalanceEquationIndex ], stack.energyIncrement );
+  }
 
   return maxForce;
 }
