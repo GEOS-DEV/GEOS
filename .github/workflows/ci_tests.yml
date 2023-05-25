@@ -83,68 +83,68 @@ jobs:
       run: ./scripts/ci_build_and_test.sh
 
 
-  # linux-builds:
-  #   name: ${{ matrix.name }}
-  #   runs-on: ubuntu-latest
-  #   needs: [check_pull_request_is_not_a_draft]
-  #   strategy:
+  linux-builds:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    needs: [check_pull_request_is_not_a_draft]
+    strategy:
 
-  #     # In-progress jobs will not be cancelled if there is a failure
-  #     fail-fast : false
-  #     matrix:
-  #       include:
-  #         - name: Ubuntu CUDA debug (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.2.152)
-  #           DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.2.152
-  #           CMAKE_BUILD_TYPE: Debug
-  #           BUILD_AND_TEST_ARGS: "--disable-unit-tests --build-exe-only --disable-schema-deployment"
-  #           ENABLE_HYPRE: ON
-  #           ENABLE_HYPRE_DEVICE: CUDA
-  #           ENABLE_TRILINOS: OFF
+      # In-progress jobs will not be cancelled if there is a failure
+      fail-fast : false
+      matrix:
+        include:
+          - name: Ubuntu CUDA debug (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.2.152)
+            DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.2.152
+            CMAKE_BUILD_TYPE: Debug
+            BUILD_AND_TEST_ARGS: "--disable-unit-tests --build-exe-only --disable-schema-deployment"
+            ENABLE_HYPRE: ON
+            ENABLE_HYPRE_DEVICE: CUDA
+            ENABLE_TRILINOS: OFF
 
-  #         - name: Ubuntu CUDA (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.2.152)
-  #           DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.2.152
-  #           CMAKE_BUILD_TYPE: Release
-  #           BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
-  #           ENABLE_HYPRE: ON
-  #           ENABLE_HYPRE_DEVICE: CUDA
-  #           ENABLE_TRILINOS: OFF
+          - name: Ubuntu CUDA (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.2.152)
+            DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.2.152
+            CMAKE_BUILD_TYPE: Release
+            BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
+            ENABLE_HYPRE: ON
+            ENABLE_HYPRE_DEVICE: CUDA
+            ENABLE_TRILINOS: OFF
 
-  #         - name: Centos (7.6, gcc 8.3.1, open-mpi 1.10.7, cuda 10.1.243)
-  #           DOCKER_REPOSITORY: geosx/centos7.6.1810-gcc8.3.1-cuda10.1.243
-  #           CMAKE_BUILD_TYPE: Release
-  #           BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
+          - name: Centos (7.6, gcc 8.3.1, open-mpi 1.10.7, cuda 10.1.243)
+            DOCKER_REPOSITORY: geosx/centos7.6.1810-gcc8.3.1-cuda10.1.243
+            CMAKE_BUILD_TYPE: Release
+            BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
 
-  #         - name: Ubuntu (20.04, gcc 9.3.0, open-mpi 4.0.3)
-  #           DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
-  #           CMAKE_BUILD_TYPE: Release
+          - name: Ubuntu (20.04, gcc 9.3.0, open-mpi 4.0.3)
+            DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
+            CMAKE_BUILD_TYPE: Release
 
-  #         - name: Ubuntu debug (20.04, gcc 10.3.0, open-mpi 4.0.3)
-  #           DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
-  #           CMAKE_BUILD_TYPE: Debug
+          - name: Ubuntu debug (20.04, gcc 10.3.0, open-mpi 4.0.3)
+            DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
+            CMAKE_BUILD_TYPE: Debug
 
-  #         - name: Ubuntu (20.04, gcc 10.3.0, open-mpi 4.0.3)
-  #           DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
-  #           CMAKE_BUILD_TYPE: Release
+          - name: Ubuntu (20.04, gcc 10.3.0, open-mpi 4.0.3)
+            DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
+            CMAKE_BUILD_TYPE: Release
 
-  #   steps:
-  #   - name: Checkout Repository
-  #     uses: actions/checkout@v3
-  #     with:
-  #       submodules: false
-  #       token: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+      with:
+        submodules: false
+        token: ${{ secrets.GITHUB_TOKEN }}
 
-  #   - name: Print environment
-  #     run: printenv
+    - name: Print environment
+      run: printenv
 
-  #   - name: Run build and test script
-  #     env:
-  #       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
-  #       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
-  #       BUILD_AND_TEST_ARGS: ${{ matrix.BUILD_AND_TEST_ARGS }}
-  #       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
-  #       ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}
-  #       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
-  #     run: ./scripts/ci_build_and_test.sh
+    - name: Run build and test script
+      env:
+        DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
+        CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
+        BUILD_AND_TEST_ARGS: ${{ matrix.BUILD_AND_TEST_ARGS }}
+        ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
+        ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}
+        ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
+      run: ./scripts/ci_build_and_test.sh
 
   # Requires security key
   auto-deploy-builds:
@@ -157,34 +157,34 @@ jobs:
       fail-fast : false
       matrix:
         include:
-          # - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 10.2.89p2)
-          #   DOCKER_REPOSITORY: geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda10.2.89p2
-          #   CMAKE_BUILD_TYPE: Release
-          #   BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
-          #   HOST_CONFIG: host-configs/TOTAL/pecan-GPU.cmake
-          #   GCP_BUCKET: geosx/Pecan-GPU
+          - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 10.2.89p2)
+            DOCKER_REPOSITORY: geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda10.2.89p2
+            CMAKE_BUILD_TYPE: Release
+            BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
+            HOST_CONFIG: host-configs/TOTAL/pecan-GPU.cmake
+            GCP_BUCKET: geosx/Pecan-GPU
           - name: Pecan CPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5)
             DOCKER_REPOSITORY: geosx/pecan-cpu-gcc8.2.0-openmpi4.0.1-mkl2019.5
             CMAKE_BUILD_TYPE: Release
             HOST_CONFIG: host-configs/TOTAL/pecan-CPU.cmake
             GCP_BUCKET: geosx/Pecan-CPU
-          # - name: Pangea 2 (centos 7.6, gcc 8.3.0, open-mpi 2.1.5, mkl 2019.3)
-          #   DOCKER_REPOSITORY: geosx/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
-          #   CMAKE_BUILD_TYPE: Release
-          #   GCP_BUCKET: geosx/Pangea2
-          #   ENABLE_HYPRE: ON
-          #   ENABLE_TRILINOS: OFF
-          # - name: Sherlock CPU (centos 7.9.2009, gcc 10.1.0, open-mpi 4.1.2, openblas 0.3.10)
-          #   DOCKER_REPOSITORY: geosx/sherlock-gcc10.1.0-openmpi4.1.2-openblas0.3.10-zlib1.2.11
-          #   CMAKE_BUILD_TYPE: Release
-          #   HOST_CONFIG: host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10.cmake
-          #   GCP_BUCKET: geosx/Sherlock-CPU
-          #   ENABLE_HYPRE: ON
-          #   ENABLE_TRILINOS: OFF
-          # - name: Ubuntu (22.04, gcc 11.2.0, open-mpi 4.1.2)
-          #   DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
-          #   CMAKE_BUILD_TYPE: Release
-          #   GCP_BUCKET: geosx/ubuntu22.04-gcc11
+          - name: Pangea 2 (centos 7.6, gcc 8.3.0, open-mpi 2.1.5, mkl 2019.3)
+            DOCKER_REPOSITORY: geosx/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
+            CMAKE_BUILD_TYPE: Release
+            GCP_BUCKET: geosx/Pangea2
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+          - name: Sherlock CPU (centos 7.9.2009, gcc 10.1.0, open-mpi 4.1.2, openblas 0.3.10)
+            DOCKER_REPOSITORY: geosx/sherlock-gcc10.1.0-openmpi4.1.2-openblas0.3.10-zlib1.2.11
+            CMAKE_BUILD_TYPE: Release
+            HOST_CONFIG: host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10.cmake
+            GCP_BUCKET: geosx/Sherlock-CPU
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+          - name: Ubuntu (22.04, gcc 11.2.0, open-mpi 4.1.2)
+            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
+            CMAKE_BUILD_TYPE: Release
+            GCP_BUCKET: geosx/ubuntu22.04-gcc11
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3
@@ -221,36 +221,6 @@ jobs:
         GEOSX_BUNDLE=${TMP_DIR}/${GEOSX_EXPORT_DIR}.tar.gz
         tar czf ${GEOSX_BUNDLE} --directory=${TMP_DIR} ${GEOSX_EXPORT_DIR}
         CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOSX_BUNDLE} gs://${GCP_BUCKET}/
-    # This is to authenticate with gcloud
-    # - id: 'auth'
-    #   uses: 'google-github-actions/auth@v1'
-    #   with:
-    #     credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
-
-    # This sets up gcloud
-    # - name: 'Set up Cloud SDK'
-    #   uses: 'google-github-actions/setup-gcloud@v1'
-    # - name: 'Use gcloud CLI'
-    #   run: 'gcloud info'
-
-  # check_gcloud_is_working:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - name: Checkout Repository
-  #     uses: actions/checkout@v3
-  #     with:
-  #       submodules: false
-  #       token: ${{ secrets.GITHUB_TOKEN }}
-  #   - id: 'auth'
-  #     uses: 'google-github-actions/auth@v1'
-  #     with:
-  #       credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
-  #   - name: 'Set up Cloud SDK'
-  #     uses: 'google-github-actions/setup-gcloud@v1'
-  #     with:
-  #       version: '>= 363.0.0'
-  #   - name: 'Use gcloud CLI'
-  #     run: 'gcloud info'
 
   dump_contexts_to_log:
     runs-on: ubuntu-latest
