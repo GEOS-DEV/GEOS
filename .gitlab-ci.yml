@@ -94,6 +94,7 @@ stages:
     paths:
       - quartz/
       - lassen/
+      - tioga/
   # Allow job to always fail, so nightly-job in next stage will run
   allow_failure: true
 
