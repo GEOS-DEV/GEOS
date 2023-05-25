@@ -69,7 +69,7 @@
   /// Parsed hypre version information
   #define HYPRE_VERSION_MAJOR 2
   /// Parsed hypre version information
-  #define HYPRE_VERSION_MINOR 27
+  #define HYPRE_VERSION_MINOR 28
   /// Parsed hypre version information
   #define HYPRE_VERSION_PATCH 0
 #endif
@@ -126,16 +126,16 @@
 #define GEOSX_BLOCK_SIZE 64
 
 /// Version information for HDF5
-#define HDF5_VERSION 1.12.2
+#define HDF5_VERSION 1.14.1
 
 /// Version information for Conduit
-#define Conduit_VERSION 0.8.6
+#define Conduit_VERSION 0.8.7
 
 /// Version information for RAJA
-#define RAJA_VERSION 2022.3.0
+#define RAJA_VERSION 2022.10.5
 
 /// Version information for umpire
-#define umpire_VERSION 2022.3.0
+#define umpire_VERSION 2022.10.0
 
 /// Version information for chai
 /* #undef chai_VERSION */
@@ -165,7 +165,7 @@
 /* #undef VTK_VERSION */
 
 /// Version information for fmt
-#define fmt_VERSION 8.0.1
+#define fmt_VERSION 10.0.0
 
 /// Version information for python
 #define Python3_VERSION 3.9.12
