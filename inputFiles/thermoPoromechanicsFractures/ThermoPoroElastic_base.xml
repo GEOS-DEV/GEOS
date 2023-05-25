@@ -33,13 +33,13 @@
 
     <SinglePhaseConstantThermalConductivity
       name="thermalCond"
-      thermalConductivityComponents="{ 1, 1, 1 }"/>  
+      thermalConductivityComponents="{ 1, 1, 1 }"/>
 
     <SolidInternalEnergy
       name="rockInternalEnergy"
       volumetricHeatCapacity="1.672e5"
       referenceTemperature="0.0"
-      referenceInternalEnergy="0.0"/>  
+      referenceInternalEnergy="0.0"/>
 
     <BiotPorosity
       name="rockPorosity"
@@ -68,7 +68,7 @@
     <FrictionlessContact
       name="fractureContact"
       penaltyStiffness="4.0e9"
-      apertureTableName="apertureTable"/>    
+      apertureTableName="apertureTable"/>
   </Constitutive>
 
   <Functions>
@@ -87,12 +87,11 @@
     <PackCollection
       name="apertureCollection"
       objectPath="ElementRegions/Fracture/FractureSubRegion"
-      fieldName="hydraulicAperture"/> 
+      fieldName="hydraulicAperture"/>
 
     <PackCollection
       name="temperatureCollection"
       objectPath="ElementRegions/RockMatrix/cb1"
-      fieldName="temperature"/>  
+      fieldName="temperature"/>
   </Tasks>
-  
 </Problem>

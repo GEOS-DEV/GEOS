@@ -1,14 +1,14 @@
 <?xml version="1.0" ?>
 
 <Problem>
-
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"/>
     </FiniteVolume>
+
     <FiniteElements>
-    <FiniteElementSpace
+      <FiniteElementSpace
         name="FE1"
         order="1"/>
     </FiniteElements>
@@ -29,7 +29,7 @@
 
     <SinglePhaseConstantThermalConductivity
       name="thermalCond"
-      thermalConductivityComponents="{ 1, 1, 1 }"/>  
+      thermalConductivityComponents="{ 1, 1, 1 }"/>
 
     <CompressibleSolidParallelPlatesPermeability
       name="fractureFilling"
@@ -49,7 +49,7 @@
       name="rockInternalEnergy"
       volumetricHeatCapacity="1.672e5"
       referenceTemperature="0.0"
-      referenceInternalEnergy="0.0"/>  
+      referenceInternalEnergy="0.0"/>
 
     <NullModel
       name="nullSolid"/>

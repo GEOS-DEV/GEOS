@@ -2,8 +2,11 @@
 
 <Problem>
   <Included>
-    <File name="./fractureMatrixThermalFlow_edfm_base.xml" />
-    <File name="./fractureMatrixThermalFlow_bc.xml" />
+    <File
+      name="./fractureMatrixThermalFlow_edfm_base.xml"/>
+
+    <File
+      name="./fractureMatrixThermalFlow_bc.xml"/>
   </Included>
 
   <Mesh>
@@ -30,7 +33,7 @@
       xMin="{ -0.01, 0.79, -0.01 }"
       xMax="{ 1.01, 1.01, 1.01 }"/>
 
-     <BoundedPlane
+    <BoundedPlane
       name="FracturePlane"
       normal="{ 1, 0, 0 }"
       origin="{ 10.0, 10.0, 0.5 }"

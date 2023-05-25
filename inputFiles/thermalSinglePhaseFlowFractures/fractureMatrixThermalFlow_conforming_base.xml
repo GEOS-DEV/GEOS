@@ -1,9 +1,9 @@
 <?xml version="1.0" ?>
 
 <Problem>
-
   <Included>
-    <File name="fractureMatrixThermalFlow_base.xml"/>
+    <File
+      name="fractureMatrixThermalFlow_base.xml"/>
   </Included>
 
   <Solvers

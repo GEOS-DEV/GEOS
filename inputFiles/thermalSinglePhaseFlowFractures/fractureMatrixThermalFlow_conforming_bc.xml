@@ -13,7 +13,7 @@
     <FieldSpecification
       name="separableFace"
       initialCondition="1"
-      setNames="{ fracture }" 
+      setNames="{ fracture }"
       objectPath="faceManager"
       fieldName="isFaceSeparable"
       scale="1"/>
@@ -48,7 +48,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/RockMatrix"
       fieldName="temperature"
-      scale="0.0"/>  
+      scale="0.0"/>
 
     <FieldSpecification
       name="sourceTermPressure"
@@ -62,20 +62,20 @@
       objectPath="ElementRegions/Fracture"
       fieldName="temperature"
       scale="300"
-      setNames="{ all }"/>  
+      setNames="{ all }"/>
 
     <FieldSpecification
-    name="facePressure"
-    objectPath="faceManager"
-    fieldName="pressure"
-    scale="0.0"
-    setNames="{ xpos, xneg }"/>
+      name="facePressure"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="0.0"
+      setNames="{ xpos, xneg }"/>
 
     <FieldSpecification
-    name="faceTemperature"
-    objectPath="faceManager"
-    fieldName="temperature"
-    scale="0.0"
-    setNames="{ xpos, xneg }"/> 
+      name="faceTemperature"
+      objectPath="faceManager"
+      fieldName="temperature"
+      scale="0.0"
+      setNames="{ xpos, xneg }"/>
   </FieldSpecifications>
 </Problem>

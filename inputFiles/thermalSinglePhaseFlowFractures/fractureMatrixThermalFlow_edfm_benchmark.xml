@@ -2,8 +2,11 @@
 
 <Problem>
   <Included>
-    <File name="./fractureMatrixThermalFlow_edfm_base.xml" />
-    <File name="./fractureMatrixThermalFlow_bc.xml" />
+    <File
+      name="./fractureMatrixThermalFlow_edfm_base.xml"/>
+
+    <File
+      name="./fractureMatrixThermalFlow_bc.xml"/>
   </Included>
 
   <Mesh>
@@ -45,5 +48,4 @@
       name="outputs"
       target="/Outputs/vtkOutput"/>
   </Events>
-
 </Problem>

@@ -2,8 +2,11 @@
 
 <Problem>
   <Included>
-    <File name="./fractureMatrixThermalFlow_conforming_base.xml" />
-    <File name="./fractureMatrixThermalFlow_conforming_bc.xml"/>
+    <File
+      name="./fractureMatrixThermalFlow_conforming_base.xml"/>
+
+    <File
+      name="./fractureMatrixThermalFlow_conforming_bc.xml"/>
   </Included>
 
   <Mesh>
@@ -34,7 +37,7 @@
 
     <PeriodicEvent
       name="preFracOutputs"
-      target="/Outputs/vtkOutput"/>  
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplications"

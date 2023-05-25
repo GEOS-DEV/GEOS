@@ -2,9 +2,10 @@
 
 <Problem>
   <Included>
-    <File name="./ThermoPoroElastic_efem-edfm_verticalFrac_base.xml" />
+    <File
+      name="./ThermoPoroElastic_efem-edfm_verticalFrac_base.xml"/>
   </Included>
-  
+
   <Mesh>
     <InternalMesh
       name="mesh1"
@@ -27,7 +28,7 @@
       widthVector="{ 0, 0, 1 }"
       dimensions="{ 25, 4 }"/>
   </Geometry>
-  
+
   <Events
     maxTime="1e6">
     <SoloEvent
@@ -43,11 +44,10 @@
       name="solverApplication0"
       forceDt="1e5"
       target="/Solvers/poroSolver"/>
- 
+
     <PeriodicEvent
       name="restarts"
       timeFrequency="1e6"
       target="/Outputs/restartOutput"/>
-</Events>
-
+  </Events>
 </Problem>

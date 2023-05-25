@@ -2,7 +2,8 @@
 
 <Problem>
   <Included>
-  <File name="fractureMatrixThermalFlow_base.xml"/>
+    <File
+      name="fractureMatrixThermalFlow_base.xml"/>
   </Included>
 
   <Solvers
@@ -34,7 +35,7 @@
     <CellElementRegion
       name="RockMatrix"
       cellBlocks="{ cb1 }"
-      materialList="{ water, rock, thermalCond}"/>
+      materialList="{ water, rock, thermalCond }"/>
 
     <SurfaceElementRegion
       name="Fracture"
@@ -42,7 +43,7 @@
       materialList="{ water, fractureFilling, thermalCond }"
       subRegionType="embeddedElement"/>
   </ElementRegions>
-  
+
   <Outputs>
     <VTK
       name="vtkOutput"
