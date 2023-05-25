@@ -222,6 +222,11 @@ jobs:
   check_gcloud_is_working:
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+      with:
+        submodules: false
+        token: ${{ secrets.GITHUB_TOKEN }}
     - id: 'auth'
       uses: 'google-github-actions/auth@v1'
       with:
