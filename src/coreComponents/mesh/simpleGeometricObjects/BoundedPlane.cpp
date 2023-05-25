@@ -19,7 +19,7 @@
 #include "BoundedPlane.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -84,11 +84,11 @@ void BoundedPlane::postProcessInput()
   real64 vector[ 3 ];
   LvArray::tensorOps::crossProduct( vector, m_lengthVector, m_widthVector );
 
-  GEOSX_ERROR_IF( std::fabs( std::fabs( LvArray::tensorOps::AiBi< 3 >( m_normal, vector )) - 1 ) > 1e-15
+  GEOS_ERROR_IF( std::fabs( std::fabs( LvArray::tensorOps::AiBi< 3 >( m_normal, vector )) - 1 ) > 1e-15
                   || std::fabs( LvArray::tensorOps::AiBi< 3 >( m_widthVector, m_lengthVector )) > 1e-15,
                   "Error: the 3 vectors provided in the BoundedPlane do not form an orthonormal basis!" );
 
-  GEOSX_ERROR_IF( m_dimensions.size() != 2, "Error: Need to provide both length and width!" );
+  GEOS_ERROR_IF( m_dimensions.size() != 2, "Error: Need to provide both length and width!" );
 
   findRectangleLimits();
 }
@@ -120,10 +120,10 @@ void BoundedPlane::findRectangleLimits()
 
   if( getLogLevel() > 1 )
   {
-    GEOSX_LOG_RANK_0( "Point A: " << m_points[0] );
-    GEOSX_LOG_RANK_0( "Point B: " << m_points[1] );
-    GEOSX_LOG_RANK_0( "Point C: " << m_points[2] );
-    GEOSX_LOG_RANK_0( "Point D: " << m_points[3] );
+    GEOS_LOG_RANK_0( "Point A: " << m_points[0] );
+    GEOS_LOG_RANK_0( "Point B: " << m_points[1] );
+    GEOS_LOG_RANK_0( "Point C: " << m_points[2] );
+    GEOS_LOG_RANK_0( "Point D: " << m_points[3] );
   }
 }
 

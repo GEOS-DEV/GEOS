@@ -22,7 +22,7 @@
 #include "SimpleGeometricObjectBase.hpp"
 #include "BoundedPlanarObject.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**

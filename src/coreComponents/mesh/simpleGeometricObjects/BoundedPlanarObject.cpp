@@ -19,7 +19,7 @@
 #include "BoundedPlanarObject.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 

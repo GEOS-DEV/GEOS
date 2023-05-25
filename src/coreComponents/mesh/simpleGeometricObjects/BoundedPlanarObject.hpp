@@ -21,7 +21,7 @@
 
 #include "SimpleGeometricObjectBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
