@@ -238,21 +238,23 @@ void PeriodicEvent::cleanup( real64 const time_n,
 void PeriodicEvent::validate() const
 {
   ExecutableGroup * target = getEventTarget();
-  if( target != nullptr )
+  if( target == nullptr )
   {
-    GEOS_THROW_IF( m_timeFrequency > 0 &&
-                   target->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize,
-                   GEOS_FMT(
-                     "`{}`: This event targets an object that automatically selects the time step size. Therefore, `{}` cannot be used here. However, forcing a constant time step size can still be achived with `{}`.",
-                     getName(), viewKeyStruct::timeFrequencyString(), EventBase::viewKeyStruct::forceDtString() ),
-                   InputError );
-    GEOS_THROW_IF( m_cycleFrequency != 1 &&
-                   target->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize,
-                   GEOS_FMT(
-                     "`{}`: This event targets an object that automatically selects the time step size. Therefore, `{}` cannot be used here. However, forcing a constant time step size can still be achived with `{}`.",
-                     getName(), viewKeyStruct::cycleFrequencyString(), EventBase::viewKeyStruct::forceDtString() ),
-                   InputError );
+    return;
   }
+
+  GEOS_THROW_IF( m_timeFrequency > 0 &&
+                 target->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize,
+                 GEOS_FMT(
+                   "`{}`: This event targets an object that automatically selects the time step size. Therefore, `{}` cannot be used here. However, forcing a constant time step size can still be achived with `{}`.",
+                   getName(), viewKeyStruct::timeFrequencyString(), EventBase::viewKeyStruct::forceDtString() ),
+                 InputError );
+  GEOS_THROW_IF( m_cycleFrequency != 1 &&
+                 target->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize,
+                 GEOS_FMT(
+                   "`{}`: This event targets an object that automatically selects the time step size. Therefore, `{}` cannot be used here. However, forcing a constant time step size can still be achived with `{}`.",
+                   getName(), viewKeyStruct::cycleFrequencyString(), EventBase::viewKeyStruct::forceDtString() ),
+                 InputError );
 }
 
 REGISTER_CATALOG_ENTRY( EventBase, PeriodicEvent, string const &, Group * const )
