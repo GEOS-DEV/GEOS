@@ -412,6 +412,21 @@ public:
   bool hasGroup( string const & name ) const
   { return dynamicCast< T const * >( m_subGroups[ name ] ) != nullptr; }
 
+  /**
+   * @brief Check whether a sub-group exists by type.
+   * @tparam T The type of sub-group to search for
+   * @return @p true if sub-group of type T exists, @p false otherwise
+   */
+  template< typename T >
+  bool hasSubGroupOfType( ) const
+  {
+    bool hasSubGroup = false;
+    // since forSubGroups only applies the lambda to groups matching the type,
+    //   any calls to the lambda indicates that we have a subgroup of the correct type.
+    forSubGroups< T >( [&]( T const & ){ hasSubGroup = true; } );
+    return hasSubGroup;
+  }
+
   ///@}
 
   /**
