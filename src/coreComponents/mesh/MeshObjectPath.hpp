@@ -177,6 +177,12 @@ private:
   template< typename OBJECT_TYPE,
             typename FUNC >
   void forObjectsInPath( std::pair< string const, std::map< string, std::vector< string > > > const & levelPair,
+                         MeshLevel & meshLevel,
+                         FUNC && func ) const;
+
+  template< typename OBJECT_TYPE,
+            typename FUNC >
+  void forObjectsInPath( std::pair< string const, std::map< string, std::vector< string > > > const & levelPair,
                          MeshLevel const & meshLevel,
                          FUNC && func ) const;
 
@@ -267,20 +273,32 @@ bool MeshObjectPath::checkObjectTypeConsistency() const
 template< typename OBJECT_TYPE,
           typename FUNC >
 void MeshObjectPath::forObjectsInPath( std::pair< string const, std::map< string, std::vector< string > > > const & levelPair,
+                                       MeshLevel & meshLevel,
+                                       FUNC && func ) const
+{
+  forObjectsInPath< OBJECT_TYPE >( levelPair, const_cast< MeshLevel const & >( meshLevel ), [&]( OBJECT_TYPE const & object )
+  {
+    func( const_cast< OBJECT_TYPE & >(object) );
+  } );
+}
+
+template< typename OBJECT_TYPE,
+          typename FUNC >
+void MeshObjectPath::forObjectsInPath( std::pair< string const, std::map< string, std::vector< string > > > const & levelPair,
                                        MeshLevel const & meshLevel,
                                        FUNC && func ) const
 {
   if( m_objectType == ObjectTypes::nodes )
   {
-    func( const_cast< OBJECT_TYPE & >(dynamic_cast< OBJECT_TYPE const & >(meshLevel.getNodeManager() ) ) );
+    func( dynamic_cast< OBJECT_TYPE const & >(meshLevel.getNodeManager() ) );
   }
   else if( m_objectType == ObjectTypes::edges )
   {
-    func( const_cast< OBJECT_TYPE & >(dynamic_cast< OBJECT_TYPE const & >(meshLevel.getEdgeManager()) ) );
+    func( dynamic_cast< OBJECT_TYPE const & >(meshLevel.getEdgeManager()) );
   }
   else if( m_objectType == ObjectTypes::faces )
   {
-    func( const_cast< OBJECT_TYPE & >(dynamic_cast< OBJECT_TYPE const & >(meshLevel.getFaceManager()) ) );
+    func( dynamic_cast< OBJECT_TYPE const & >(meshLevel.getFaceManager()) );
   }
   else if( m_objectType == ObjectTypes::elems )
   {
@@ -290,7 +308,7 @@ void MeshObjectPath::forObjectsInPath( std::pair< string const, std::map< string
       ElementRegionBase const & elemRegion = elemRegionMan.getRegion( elemRegionPair.first );
       if( std::is_base_of< ElementRegionBase, OBJECT_TYPE >::value )
       {
-        func( const_cast< OBJECT_TYPE & >(dynamic_cast< OBJECT_TYPE const & >(elemRegion) ) );
+        func( dynamic_cast< OBJECT_TYPE const & >(elemRegion) );
       }
       else
       {
@@ -300,7 +318,7 @@ void MeshObjectPath::forObjectsInPath( std::pair< string const, std::map< string
           if( std::is_base_of< ElementSubRegionBase, OBJECT_TYPE >::value ||
               std::is_same< dataRepository::Group, OBJECT_TYPE >::value )
           {
-            func( const_cast< OBJECT_TYPE & >(dynamic_cast< OBJECT_TYPE const & >(subRegion) ) );
+            func( dynamic_cast< OBJECT_TYPE const & >(subRegion) );
           }
           else
           {
