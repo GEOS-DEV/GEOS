@@ -441,7 +441,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
 
     // 3. Assemble poroelastic fluxes and all derivatives
     string const jumpDofKey = dofManager.getKey( fields::contact::dispJump::key() );
-    flowSolver()->assemblePoroelasticFluxTerms( time_n, dt,
+    flowSolver()->assembleEDFMFluxTerms( time_n, dt,
                                                 domain,
                                                 dofManager,
                                                 localMatrix,

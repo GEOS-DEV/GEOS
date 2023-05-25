@@ -152,7 +152,7 @@ public:
    * @param jumpDofKey dofKey of the displacement jump
    */
   virtual void
-  assemblePoroelasticFluxTerms( real64 const time_n,
+  assembleEDFMFluxTerms( real64 const time_n,
                                 real64 const dt,
                                 DomainPartition const & domain,
                                 DofManager const & dofManager,

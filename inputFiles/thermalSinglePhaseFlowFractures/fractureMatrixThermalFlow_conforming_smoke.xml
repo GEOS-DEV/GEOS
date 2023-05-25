@@ -24,16 +24,6 @@
       name="fracture"
       xMin="{ 9.98, -0.01, -0.01 }"
       xMax="{ 10.02, 20.01, 1.01 }"/>
-
-    <Box
-      name="source"
-      xMin="{ -0.01, -0.01, -0.01 }"
-      xMax="{ 1.1, 0.21, 1.01 }"/>
-
-    <Box
-      name="sink"
-      xMin="{ -0.01, 0.79, -0.01 }"
-      xMax="{ 1.01, 1.01, 1.01 }"/> 
   </Geometry>
 
   <Events

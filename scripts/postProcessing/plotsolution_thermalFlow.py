@@ -5,12 +5,14 @@ import h5py
 import xml.etree.ElementTree as ElementTree
 from mpmath import *
 import math
+import argparse
+import os
 
 
-def main():
+def main(directory):
     # File paths
-    hdf5FilePathTemperature = "/usr/WS2/cusini1/geosx/geosx_dev/GEOSX/build-quartz-gcc@12-debug/Output/temperature_history.hdf5"
-
+    filename = "temperature_history.hdf5"
+    hdf5FilePathTemperature = os.path.join( directory, filename )    
     
     # Read simulation output from HDF5 file
     hf = h5py.File(hdf5FilePathTemperature, 'r')
@@ -24,15 +26,18 @@ def main():
     temperature = hf.get('temperature')
     temperature = np.array(temperature)
     print(ycord_elm)
+    
+    filename = "pressure_history.hdf5"
+    hdf5FilePathPressure = os.path.join( directory, filename ) 
 
-    hf = h5py.File("/usr/WS2/cusini1/geosx/geosx_dev/GEOSX/build-quartz-gcc@12-debug/Output/pressure_history.hdf5", 'r')
+    hf = h5py.File(hdf5FilePathPressure, 'r')
     pressure = np.array( hf.get('pressure') )
     
     t_index = [0, 1, 2, 9]
     tstar = [0, 100, 200, 900]     
     numFiles=len(tstar)
     # Extract Curve
-    midY = 11.0  
+    midY = 10
     xlist = []
     pplist = []
     temperaturelist = []
@@ -42,8 +47,10 @@ def main():
         ttemp = []
         for i in range(0,len(zcord_elm)):
             if abs(ycord_elm[i] - midY) < 0.01:
+               print(i)
+               print(xcord_elm[i], pressure[tt,i]/1.0e6, temperature[tt,i])
                xtemp.append(xcord_elm[i])
-               ptemp.append(pressure[tt,i]/1.0e5)
+               ptemp.append(pressure[tt,i]/1.0e6)
                ttemp.append(temperature[tt,i])
 
         xlist.append(xtemp)
@@ -55,7 +62,7 @@ def main():
     temperaturelist = np.array(temperaturelist)
 
 
-    #Visulization
+    #Visualization
     N1 = 1
     fsize = 32
     msize = 10
@@ -99,4 +106,13 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Plot solution of fractureMatrixThermalFlow")
+    parser.add_argument("-d", "--workingDir", type=str, help="Directory containing the solution")
+
+    args, unknown_args = parser.parse_known_args()
+    if unknown_args:
+        print("unknown arguments %s" % unknown_args)
+    
+    directory = args.directory
+
+    main( directory )

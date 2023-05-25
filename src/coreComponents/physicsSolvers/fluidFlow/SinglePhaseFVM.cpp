@@ -417,7 +417,7 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
 
 
 template< typename BASE >
-void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),
+void SinglePhaseFVM< BASE >::assembleEDFMFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),
                                                            real64 const dt,
                                                            DomainPartition const & domain,
                                                            DofManager const & dofManager,
