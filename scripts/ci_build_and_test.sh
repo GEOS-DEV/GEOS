@@ -4,7 +4,6 @@ env
 git submodule update --init --recursive src/cmake/blt
 git submodule update --init --recursive src/coreComponents/LvArray
 git submodule update --init --recursive src/coreComponents/constitutive/PVTPackage
-git submodule update --init src/coreComponents/mesh/PAMELA
 git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
 # The linux build relies on two environment variables DOCKER_REPOSITORY and GEOSX_TPL_TAG to define the TPL version.
 # And another CMAKE_BUILD_TYPE to define the build type we want for GEOSX.
