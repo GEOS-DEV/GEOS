@@ -18,7 +18,7 @@
 
 #include "CompositionalMultiphaseStatistics.hpp"
 
-#include "constitutive/fluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
