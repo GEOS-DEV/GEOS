@@ -43,7 +43,7 @@ public:
    * @param parent pointer to the parent group in the data hierarchy.
    */
   BoundedPlanarObject( const string & name,
-                Group * const parent );
+                       Group * const parent );
 
   /**
    * @brief Default destructor.
@@ -65,7 +65,7 @@ public:
 
   ///@}
 
-    /**
+  /**
    * @brief Check if the input coordinates are in the object.
    * @param[in] coord the coordinates to test
    * @return true if the coordinates are in the object, false otherwise

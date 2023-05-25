@@ -26,7 +26,7 @@ using namespace dataRepository;
 Circle::Circle( const string & name, Group * const parent ):
   BoundedPlanarObject( name, parent ),
   m_center{ 0.0, 0.0, 0.0 },
-  m_radius(1.0),
+  m_radius( 1.0 ),
   m_tolerance()
 {
   registerWrapper( viewKeyStruct::centerString(), &m_center ).

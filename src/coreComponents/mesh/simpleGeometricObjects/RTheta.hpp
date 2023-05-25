@@ -44,7 +44,7 @@ public:
    * @param parent pointer to the parent group in the data hierarchy.
    */
   RTheta( const string & name,
-                Group * const parent );
+          Group * const parent );
 
   /**
    * @brief Default destructor.
@@ -89,7 +89,7 @@ public:
    * @param coefficients define all the coefficients of the radius function.
    * @return void
    */
-  void setRThetaFunction(array1d<real64> & coefficients)
+  void setRThetaFunction( array1d< real64 > & coefficients )
   {
     m_radius.m_coefficients = coefficients;
   }
@@ -100,30 +100,32 @@ public:
    * @param value the new value for that entry
    * @return void
    */
-  void setRThetaFunction(integer const entry, real64 const value)
+  void setRThetaFunction( integer const entry, real64 const value )
   {
-    if(m_radius.m_coefficients.size() < entry+1){
+    if( m_radius.m_coefficients.size() < entry+1 )
+    {
       std::cout<<"ERROR - COEFF VECTOR NOT LARGE ENOUGH\n";
       return;
-      //GEOSX_ERROR("Vector of coefficients in the RTheta object is not large enough. Requested change to entry "<<entry<<" array size: "<<m_radius.m_coefficients.size()<<"\n");
+      //GEOSX_ERROR("Vector of coefficients in the RTheta object is not large enough. Requested change to entry "<<entry<<" array size:
+      // "<<m_radius.m_coefficients.size()<<"\n");
     }
     m_radius.m_coefficients[entry] = value;
   }
 
-  real64 getRadius(real64 angle) const
+  real64 getRadius( real64 angle ) const
   {
-    return m_radius.getRadius(angle);
+    return m_radius.getRadius( angle );
   }
 
 
 
   class VariableRadius
-  {  
-    public: 
+  {
+public:
 
     VariableRadius()
     {
-      m_coefficients.resize(6);
+      m_coefficients.resize( 6 );
       m_coefficients[0] = 1.0;
       m_coefficients[1] = 0.0;
       m_coefficients[2] = 0.15;
@@ -131,27 +133,27 @@ public:
       m_coefficients[4] = 0.0;
       m_coefficients[5] = 0.0;
     }
-  
-    real64 getRadius(real64 angle) const
+
+    real64 getRadius( real64 angle ) const
     {
       real64 radius = 0;
       integer count = 0;
-      for(auto coeff:m_coefficients)
+      for( auto coeff:m_coefficients )
       {
-        radius = radius + coeff*cos(count*angle);
+        radius = radius + coeff*cos( count*angle );
         count++;
       }
       return radius;
     }
 
-    void updateCoefficients(integer index, real64 value)
+    void updateCoefficients( integer index, real64 value )
     {
       m_coefficients[index]=value;
     }
 
-    array1d<real64> m_coefficients;
-  
-  };  
+    array1d< real64 > m_coefficients;
+
+  };
 
 
 protected:

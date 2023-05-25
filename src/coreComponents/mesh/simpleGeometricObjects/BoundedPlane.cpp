@@ -85,8 +85,8 @@ void BoundedPlane::postProcessInput()
   LvArray::tensorOps::crossProduct( vector, m_lengthVector, m_widthVector );
 
   GEOS_ERROR_IF( std::fabs( std::fabs( LvArray::tensorOps::AiBi< 3 >( m_normal, vector )) - 1 ) > 1e-15
-                  || std::fabs( LvArray::tensorOps::AiBi< 3 >( m_widthVector, m_lengthVector )) > 1e-15,
-                  "Error: the 3 vectors provided in the BoundedPlane do not form an orthonormal basis!" );
+                 || std::fabs( LvArray::tensorOps::AiBi< 3 >( m_widthVector, m_lengthVector )) > 1e-15,
+                 "Error: the 3 vectors provided in the BoundedPlane do not form an orthonormal basis!" );
 
   GEOS_ERROR_IF( m_dimensions.size() != 2, "Error: Need to provide both length and width!" );
 

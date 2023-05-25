@@ -39,7 +39,7 @@ BoundedPlanarObject::BoundedPlanarObject( const string & name, Group * const par
 
   registerWrapper( viewKeyStruct::mWidthVectorString(), &m_widthVector ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Tangent vector defining the orthonormal basis along with the normal." );  
+    setDescription( "Tangent vector defining the orthonormal basis along with the normal." );
 }
 
 BoundedPlanarObject::~BoundedPlanarObject()

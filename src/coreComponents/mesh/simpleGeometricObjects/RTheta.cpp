@@ -69,12 +69,12 @@ bool RTheta::isCoordInObject( real64 const ( &coord ) [3] ) const
   }
 
   // 2. Get angle with the plane's length vector
-  real64 dummyNorm = sqrt(LvArray::tensorOps::l2NormSquared< 3 >( dummy ));
+  real64 dummyNorm = sqrt( LvArray::tensorOps::l2NormSquared< 3 >( dummy ));
   real64 cosTheta = LvArray::tensorOps::AiBi< 3 >( dummy, getLengthVector() )/(dummyNorm + 1e-15); //assume lengthVector is unitary
-  real64 theta = acos(cosTheta);
+  real64 theta = acos( cosTheta );
 
   // 2. Check if it is inside the RTheta
-  if( LvArray::tensorOps::l2NormSquared< 3 >( dummy ) > getRadius(theta)*getRadius(theta) )
+  if( LvArray::tensorOps::l2NormSquared< 3 >( dummy ) > getRadius( theta )*getRadius( theta ) )
   {
     isInside = false;
   }
