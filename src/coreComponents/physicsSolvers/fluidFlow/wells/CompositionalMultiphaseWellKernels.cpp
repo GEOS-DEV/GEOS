@@ -1520,7 +1520,7 @@ PresTempCompFracInitializationKernel::
           arrayView1d< real64 > const & wellElemTemp,
           arrayView2d< real64, compflow::USD_COMP > const & wellElemCompFrac )
 {
-  integer constexpr MAX_NUM_COMP = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
+  integer constexpr MAX_NUM_COMP = constitutive::MultiFluidBase::maxNumComponents;
 
   real64 const targetBHP = wellControls.getTargetBHP( currentTime );
   real64 const refWellElemGravCoef = wellControls.getReferenceGravityCoef();

@@ -46,13 +46,13 @@ ConstantPermeability::deliverClone( string const & name,
 void ConstantPermeability::allocateConstitutiveData( dataRepository::Group & parent,
                                                      localIndex const numConstitutivePointsPerParentIndex )
 {
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  integer const numQuadraturePoints = LvArray::math::min( PermeabilityBase::maxNumQuadraturePoints, numConstitutivePointsPerParentIndex );
 
-  integer const numQuad = 1; // NOTE: enforcing 1 quadrature point
+  PermeabilityBase::allocateConstitutiveData( parent, numQuadraturePoints );
 
   for( localIndex ei = 0; ei < parent.size(); ++ei )
   {
-    for( localIndex q = 0; q < numQuad; ++q )
+    for( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
       m_permeability[ei][q][0] =  m_permeabilityComponents[0];
       m_permeability[ei][q][1] =  m_permeabilityComponents[1];

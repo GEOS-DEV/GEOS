@@ -142,11 +142,11 @@ computeBodyForce( localIndex const k,
 {
   GEOS_UNUSED_VAR( dPorosity_dTemperature );
 
-  real64 const mixtureDensity = ( 1.0 - porosity ) * m_solidDensity( k, q ) + porosity * m_fluidDensity( k, q );
-  real64 const dMixtureDens_dVolStrainIncrement = dPorosity_dVolStrain * ( -m_solidDensity( k, q ) + m_fluidDensity( k, q ) );
-  real64 const dMixtureDens_dPressure = dPorosity_dPressure * ( -m_solidDensity( k, q ) + m_fluidDensity( k, q ) )
+  real64 const mixtureDensity = ( 1.0 - porosity ) * m_solidDensity( k, q ) + porosity * m_fluidDensity( k, 0 );
+  real64 const dMixtureDens_dVolStrainIncrement = dPorosity_dVolStrain * ( -m_solidDensity( k, q ) + m_fluidDensity( k, 0 ) );
+  real64 const dMixtureDens_dPressure = dPorosity_dPressure * ( -m_solidDensity( k, q ) + m_fluidDensity( k, 0 ) )
                                         + ( 1.0 - porosity ) * dSolidDensity_dPressure
-                                        + porosity * m_dFluidDensity_dPressure( k, q );
+                                        + porosity * m_dFluidDensity_dPressure( k, 0 );
 
   LvArray::tensorOps::scaledCopy< 3 >( stack.bodyForce, m_gravityVector, mixtureDensity );
   LvArray::tensorOps::scaledCopy< 3 >( stack.dBodyForce_dVolStrainIncrement, m_gravityVector, dMixtureDens_dVolStrainIncrement );
@@ -168,11 +168,11 @@ computeFluidIncrement( localIndex const k,
                        real64 const & dPorosity_dTemperature,
                        StackVariables & stack ) const
 {
-  GEOS_UNUSED_VAR( dPorosity_dTemperature );
+  GEOS_UNUSED_VAR( dPorosity_dTemperature, q );
 
-  stack.fluidMassIncrement = porosity * m_fluidDensity( k, q ) - porosity_n * m_fluidDensity_n( k, q );
-  stack.dFluidMassIncrement_dVolStrainIncrement = dPorosity_dVolStrain * m_fluidDensity( k, q );
-  stack.dFluidMassIncrement_dPressure = dPorosity_dPressure * m_fluidDensity( k, q ) + porosity * m_dFluidDensity_dPressure( k, q );
+  stack.fluidMassIncrement = porosity * m_fluidDensity( k, 0 ) - porosity_n * m_fluidDensity_n( k, 0 );
+  stack.dFluidMassIncrement_dVolStrainIncrement = dPorosity_dVolStrain * m_fluidDensity( k, 0 );
+  stack.dFluidMassIncrement_dPressure = dPorosity_dPressure * m_fluidDensity( k, 0 ) + porosity * m_dFluidDensity_dPressure( k, 0 );
 }
 
 template< typename SUBREGION_TYPE,

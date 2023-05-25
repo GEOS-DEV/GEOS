@@ -75,27 +75,28 @@ void SingleFluidBase::saveConvergedState() const
 void SingleFluidBase::allocateConstitutiveData( Group & parent,
                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  integer const numQuadraturePoints = LvArray::math::min( maxNumQuadraturePoints, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numQuadraturePoints );
 
   resize( parent.size() );
 
-  m_density.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dDensity_dPressure.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dDensity_dTemperature.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_density_n.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_density.resize( parent.size(), numQuadraturePoints );
+  m_dDensity_dPressure.resize( parent.size(), numQuadraturePoints );
+  m_dDensity_dTemperature.resize( parent.size(), numQuadraturePoints );
+  m_density_n.resize( parent.size(), numQuadraturePoints );
 
-  m_viscosity.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dViscosity_dPressure.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dViscosity_dTemperature.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_viscosity.resize( parent.size(), numQuadraturePoints );
+  m_dViscosity_dPressure.resize( parent.size(), numQuadraturePoints );
+  m_dViscosity_dTemperature.resize( parent.size(), numQuadraturePoints );
 
-  m_internalEnergy.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_internalEnergy_n.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dInternalEnergy_dPressure.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dInternalEnergy_dTemperature.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_internalEnergy.resize( parent.size(), numQuadraturePoints );
+  m_internalEnergy_n.resize( parent.size(), numQuadraturePoints );
+  m_dInternalEnergy_dPressure.resize( parent.size(), numQuadraturePoints );
+  m_dInternalEnergy_dTemperature.resize( parent.size(), numQuadraturePoints );
 
-  m_enthalpy.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dEnthalpy_dPressure.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dEnthalpy_dTemperature.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_enthalpy.resize( parent.size(), numQuadraturePoints );
+  m_dEnthalpy_dPressure.resize( parent.size(), numQuadraturePoints );
+  m_dEnthalpy_dTemperature.resize( parent.size(), numQuadraturePoints );
 }
 //END_SPHINX_INCLUDE_00
 

@@ -87,6 +87,11 @@ class SinglePhaseThermalConductivityBase : public ConstitutiveBase
 public:
 
   /**
+   * @brief Maximum number of quadrature points
+   */
+  static constexpr integer maxNumQuadraturePoints = 1;
+
+  /**
    * @brief Constructor for the abstract base class
    * @param[in] name the name of the class
    * @param[in] parent pointer to the parent Group

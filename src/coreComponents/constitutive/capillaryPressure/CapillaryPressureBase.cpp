@@ -55,12 +55,12 @@ void CapillaryPressureBase::postProcessInput()
   GEOS_THROW_IF_LT_MSG( numPhases, 2,
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                         InputError );
-  GEOS_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
+  GEOS_THROW_IF_GT_MSG( numPhases, maxNumPhases,
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                         InputError );
 
   m_phaseTypes.resize( numPhases );
-  m_phaseOrder.resizeDefault( MAX_NUM_PHASES, -1 );
+  m_phaseOrder.resizeDefault( maxNumPhases, -1 );
 
   auto const toPhaseType = [&]( string const & lookup )
   {
@@ -104,8 +104,9 @@ void CapillaryPressureBase::setLabels()
 void CapillaryPressureBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                       localIndex const numConstitutivePointsPerParentIndex )
 {
-  resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  integer const numQuadraturePoints = LvArray::math::min( maxNumQuadraturePoints, numConstitutivePointsPerParentIndex );
+  resizeFields( parent.size(), numQuadraturePoints );
+  ConstitutiveBase::allocateConstitutiveData( parent, numQuadraturePoints );
 }
 
 } // namespace constitutive

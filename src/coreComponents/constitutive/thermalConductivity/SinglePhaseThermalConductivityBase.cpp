@@ -44,10 +44,10 @@ void SinglePhaseThermalConductivityBase::postProcessInput()
 void SinglePhaseThermalConductivityBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                                    localIndex const numConstitutivePointsPerParentIndex )
 {
-  // NOTE: enforcing 1 quadrature point
-  m_effectiveConductivity.resize( 0, 1, 3 );
+  integer const numQuadraturePoints = LvArray::math::min( maxNumQuadraturePoints, numConstitutivePointsPerParentIndex );
+  m_effectiveConductivity.resize( 0, numQuadraturePoints, 3 );
 
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numQuadraturePoints );
 }
 
 } // namespace constitutive

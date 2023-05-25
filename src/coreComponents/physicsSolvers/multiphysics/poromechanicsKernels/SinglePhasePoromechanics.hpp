@@ -300,7 +300,7 @@ public:
                 localIndex const q ) const
   {
     m_bulkDensity[ei][q] =
-      ( 1 - m_porosity[ei][q] ) * m_rockDensity[ei][q] + m_porosity[ei][q] * m_fluidDensity[ei][q];
+      ( 1 - m_porosity[ei][q] ) * m_rockDensity[ei][q] + m_porosity[ei][q] * m_fluidDensity[ei][0];
   }
 
   /**

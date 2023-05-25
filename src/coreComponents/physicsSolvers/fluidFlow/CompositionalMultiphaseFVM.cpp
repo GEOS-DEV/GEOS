@@ -548,7 +548,7 @@ void CompositionalMultiphaseFVM::applyBoundaryConditions( real64 time_n,
 bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & domain,
                                                           real64 const time ) const
 {
-  constexpr integer MAX_NC = MultiFluidBase::MAX_NUM_COMPONENTS;
+  constexpr integer MAX_NC = MultiFluidBase::maxNumComponents;
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   bool bcConsistent = true;

@@ -57,10 +57,10 @@ void ConstitutiveManager::expandObjectCatalogs()
 }
 
 
-void
+integer
 ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelationInstanceName,
                                                dataRepository::Group * const parent,
-                                               localIndex const numConstitutivePointsPerParentIndex ) const
+                                               localIndex const regionNumQuadraturePointsPerParentIndex ) const
 {
   dataRepository::Group * constitutiveGroup = parent->getGroupPointer( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
   if( constitutiveGroup == nullptr )
@@ -82,7 +82,8 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
   std::unique_ptr< ConstitutiveBase > material = constitutiveRelation.deliverClone( constitutiveRelationInstanceName, parent );
 
   material->allocateConstitutiveData( *parent,
-                                      numConstitutivePointsPerParentIndex );
+                                      regionNumQuadraturePointsPerParentIndex );
+  integer const numConstitutivePointsPerParentIndex = material->numQuadraturePoints();
 
   ConstitutiveBase &
   materialGroup = constitutiveGroup->registerGroup< ConstitutiveBase >( constitutiveRelationInstanceName, std::move( material ) );
@@ -105,14 +106,14 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
     std::unique_ptr< ConstitutiveBase > constitutiveModel = subRelation.deliverClone( subRelationName, parent );
 
     constitutiveModel->allocateConstitutiveData( *parent,
-                                                 numConstitutivePointsPerParentIndex );
-
+                                                 regionNumQuadraturePointsPerParentIndex );
 
     ConstitutiveBase &
     group = constitutiveGroup->registerGroup< ConstitutiveBase >( subRelationName, std::move( constitutiveModel ) );
     group.setSizedFromParent( 1 );
     group.resize( constitutiveGroup->size() );
   }
+  return numConstitutivePointsPerParentIndex;
 }
 
 } /* namespace constitutive */

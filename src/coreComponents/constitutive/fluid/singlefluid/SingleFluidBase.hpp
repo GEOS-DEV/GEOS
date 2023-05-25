@@ -200,6 +200,11 @@ class SingleFluidBase : public ConstitutiveBase
 public:
 
   /**
+   * @brief Maximum number of quadrature points
+   */
+  static constexpr integer maxNumQuadraturePoints = 1;
+
+  /**
    * @brief Constructor.
    * @param name name of the group
    * @param parent pointer to parent group

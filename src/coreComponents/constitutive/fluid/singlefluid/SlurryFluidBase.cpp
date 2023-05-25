@@ -106,29 +106,30 @@ localIndex SlurryFluidBase::numFluidComponents() const
 void SlurryFluidBase::allocateConstitutiveData( Group & parent,
                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
-  SingleFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  integer const numQuadraturePoints = LvArray::math::min( SlurryFluidBase::maxNumQuadraturePoints, numConstitutivePointsPerParentIndex );
+  SingleFluidBase::allocateConstitutiveData( parent, numQuadraturePoints );
 
   this->resize( parent.size() );
 
-  localIndex const NC = numFluidComponents();
+  localIndex const numComps = numFluidComponents();
 
-  m_dDensity_dProppantConc.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dDensity_dCompConc.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
+  m_dDensity_dProppantConc.resize( parent.size(), numQuadraturePoints );
+  m_dDensity_dCompConc.resize( parent.size(), numQuadraturePoints, numComps );
 
-  m_componentDensity.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
-  m_dCompDens_dPres.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
-  m_dCompDens_dCompConc.resize( parent.size(), numConstitutivePointsPerParentIndex, NC, NC );
+  m_componentDensity.resize( parent.size(), numQuadraturePoints, numComps );
+  m_dCompDens_dPres.resize( parent.size(), numQuadraturePoints, numComps );
+  m_dCompDens_dCompConc.resize( parent.size(), numQuadraturePoints, numComps, numComps );
 
-  m_fluidDensity.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dFluidDens_dPres.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dFluidDens_dCompConc.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
+  m_fluidDensity.resize( parent.size(), numQuadraturePoints );
+  m_dFluidDens_dPres.resize( parent.size(), numQuadraturePoints );
+  m_dFluidDens_dCompConc.resize( parent.size(), numQuadraturePoints, numComps );
 
-  m_fluidViscosity.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dFluidVisc_dPres.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dFluidVisc_dCompConc.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
+  m_fluidViscosity.resize( parent.size(), numQuadraturePoints );
+  m_dFluidVisc_dPres.resize( parent.size(), numQuadraturePoints );
+  m_dFluidVisc_dCompConc.resize( parent.size(), numQuadraturePoints, numComps );
 
-  m_dViscosity_dProppantConc.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dViscosity_dCompConc.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
+  m_dViscosity_dProppantConc.resize( parent.size(), numQuadraturePoints );
+  m_dViscosity_dCompConc.resize( parent.size(), numQuadraturePoints, numComps );
 
 }
 

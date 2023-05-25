@@ -21,7 +21,7 @@
 
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/capillaryPressure/layouts.hpp"
+#include "constitutive/capillaryPressure/Layouts.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geos
@@ -85,7 +85,10 @@ class CapillaryPressureBase : public ConstitutiveBase
 {
 public:
 
-  static constexpr integer MAX_NUM_PHASES = 3;
+  /// max number of phases allow in the capillary pressure models
+  static constexpr integer maxNumPhases = 3;
+  /// max number of quadrature points allowed in the capillary pressure models
+  static constexpr integer maxNumQuadraturePoints = 1;
 
   struct PhaseType
   {

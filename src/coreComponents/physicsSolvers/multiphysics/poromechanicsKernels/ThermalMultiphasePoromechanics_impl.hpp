@@ -193,8 +193,8 @@ computeBodyForce( localIndex const k,
   {
     GEOS_UNUSED_VAR( mixtureDensity );
 
-    arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const phaseMassDensity = m_fluidPhaseMassDensity[k][q];
-    arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const dPhaseMassDensity = m_dFluidPhaseMassDensity[k][q];
+    arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const phaseMassDensity = m_fluidPhaseMassDensity[k][0];
+    arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const dPhaseMassDensity = m_dFluidPhaseMassDensity[k][0];
     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const phaseVolFrac = m_fluidPhaseVolFrac[k];
     arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dFluidPhaseVolFrac[k];
 
@@ -266,13 +266,13 @@ computeFluidIncrement( localIndex const k,
     real64 dPhaseInternalEnergy_dC[maxNumComponents]{};
 
     // construct the slices
-    arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const phaseInternalEnergy_n = m_fluidPhaseInternalEnergy_n[k][q];
-    arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const phaseInternalEnergy = m_fluidPhaseInternalEnergy[k][q];
-    arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const dPhaseInternalEnergy = m_dFluidPhaseInternalEnergy[k][q];
-    arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const phaseDensity = m_fluidPhaseDensity[k][q];
-    arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const dPhaseDensity = m_dFluidPhaseDensity[k][q];
-    arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_COMP - 2 > const phaseCompFrac = m_fluidPhaseCompFrac[k][q];
-    arraySlice3d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC -2 > const dPhaseCompFrac = m_dFluidPhaseCompFrac[k][q];
+    arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const phaseInternalEnergy_n = m_fluidPhaseInternalEnergy_n[k][0];
+    arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const phaseInternalEnergy = m_fluidPhaseInternalEnergy[k][0];
+    arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const dPhaseInternalEnergy = m_dFluidPhaseInternalEnergy[k][0];
+    arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const phaseDensity = m_fluidPhaseDensity[k][0];
+    arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const dPhaseDensity = m_dFluidPhaseDensity[k][0];
+    arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_COMP - 2 > const phaseCompFrac = m_fluidPhaseCompFrac[k][0];
+    arraySlice3d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC -2 > const dPhaseCompFrac = m_dFluidPhaseCompFrac[k][0];
     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const phaseVolFrac = m_fluidPhaseVolFrac[k];
     arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dFluidPhaseVolFrac[k];
     arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const dGlobalCompFrac_dGlobalCompDensity = m_dGlobalCompFraction_dGlobalCompDensity[k];

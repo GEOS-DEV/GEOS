@@ -182,8 +182,8 @@ CompositionalMultiphaseFluid::KernelWrapper::
   GEOS_UNUSED_VAR( phaseCompFrac );
   GEOS_UNUSED_VAR( totalDens );
 #else
-  integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
-  integer constexpr maxNumPhase = MultiFluidBase::MAX_NUM_PHASES;
+  integer constexpr maxNumComp = MultiFluidBase::maxNumComponents;
+  integer constexpr maxNumPhase = MultiFluidBase::maxNumPhases;
   integer const numComp = numComponents();
   integer const numPhase = numPhases();
 
@@ -292,8 +292,8 @@ CompositionalMultiphaseFluid::KernelWrapper::
 
   using Deriv = multifluid::DerivativeOffset;
 
-  integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
-  integer constexpr maxNumPhase = MultiFluidBase::MAX_NUM_PHASES;
+  integer constexpr maxNumComp = MultiFluidBase::maxNumComponents;
+  integer constexpr maxNumPhase = MultiFluidBase::maxNumPhases;
   integer const numComp = numComponents();
   integer const numPhase = numPhases();
 

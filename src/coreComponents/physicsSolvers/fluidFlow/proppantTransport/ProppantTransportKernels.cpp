@@ -104,7 +104,7 @@ AccumulationKernel::
   {
     if( elemGhostRank[ei] < 0 )
     {
-      localIndex constexpr MAX_NC = constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
+      localIndex constexpr MAX_NC = constitutive::ParticleFluidBase::maxNumComponents;
       stackArray1d< globalIndex, MAX_NC > localAccumDOF( nDofs );
       stackArray1d< real64, MAX_NC > localAccum( nDofs );
       stackArray2d< real64, MAX_NC * MAX_NC > localAccumJacobian( nDofs, nDofs );
@@ -198,7 +198,7 @@ FluxKernel::
 
   constexpr real64 TINY = 1e-10;
 
-  constexpr localIndex MAX_NUM_COMPONENTS = constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
+  constexpr localIndex MAX_NUM_COMPONENTS = constitutive::ParticleFluidBase::maxNumComponents;
 
   localIndex const numComps = numDofPerCell - 1;
 
@@ -777,8 +777,8 @@ void FluxKernel::
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
-  constexpr localIndex DOF1 = maxNumFluxElems * constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
-  constexpr localIndex DOF2 = maxStencilSize * constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
+  constexpr localIndex DOF1 = maxNumFluxElems * constitutive::ParticleFluidBase::maxNumComponents;
+  constexpr localIndex DOF2 = maxStencilSize * constitutive::ParticleFluidBase::maxNumComponents;
 
   forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
   {

@@ -57,9 +57,10 @@ CarmanKozenyPermeability::deliverClone( string const & name,
 void CarmanKozenyPermeability::allocateConstitutiveData( dataRepository::Group & parent,
                                                          localIndex const numConstitutivePointsPerParentIndex )
 {
-  // NOTE: enforcing 1 quadrature point
-  m_dPerm_dPorosity.resize( 0, 1, 3 );
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  integer const numQuadraturePoints = LvArray::math::min( PermeabilityBase::maxNumQuadraturePoints, numConstitutivePointsPerParentIndex );
+
+  m_dPerm_dPorosity.resize( 0, numQuadraturePoints, 3 );
+  PermeabilityBase::allocateConstitutiveData( parent, numQuadraturePoints );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CarmanKozenyPermeability, string const &, Group * const )

@@ -71,10 +71,11 @@ void ProppantPermeability::postProcessInput()
 void ProppantPermeability::allocateConstitutiveData( dataRepository::Group & parent,
                                                      localIndex const numConstitutivePointsPerParentIndex )
 {
-  // NOTE: enforcing 1 quadrature point
-  m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
-  m_permeabilityMultiplier.resize( 0, 1, 3 );
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  integer const numQuadraturePoints = LvArray::math::min( PermeabilityBase::maxNumQuadraturePoints, numConstitutivePointsPerParentIndex );
+
+  m_dPerm_dDispJump.resize( 0, numQuadraturePoints, 3, 3 );
+  m_permeabilityMultiplier.resize( 0, numQuadraturePoints, 3 );
+  PermeabilityBase::allocateConstitutiveData( parent, numQuadraturePoints );
 }
 
 

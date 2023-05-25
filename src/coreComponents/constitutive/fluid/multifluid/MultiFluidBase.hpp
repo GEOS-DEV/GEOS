@@ -46,14 +46,20 @@ public:
    *
    * @note This puts an upper bound on memory use, allowing to optimize code better
    */
-  static constexpr integer MAX_NUM_COMPONENTS = 16;
+  static constexpr integer maxNumComponents = 16;
 
   /**
    * @brief Maximum supported number of fluid phases
    *
    * @note This puts an upper bound on memory use, allowing to optimize code better
    */
-  static constexpr integer MAX_NUM_PHASES = 4;
+  static constexpr integer maxNumPhases = 4;
+
+  /**
+   * @brief Maximum number of quadrature points
+   */
+  static constexpr integer maxNumQuadraturePoints = 1;
+
 
   /**
    * @return number of fluid components (species) in the model

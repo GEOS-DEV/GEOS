@@ -66,7 +66,8 @@ ProppantSlurryFluid::~ProppantSlurryFluid() = default;
 void ProppantSlurryFluid::allocateConstitutiveData( dataRepository::Group & parent,
                                                     localIndex const numConstitutivePointsPerParentIndex )
 {
-  SlurryFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  integer const numQuadraturePoints = LvArray::math::min( SlurryFluidBase::maxNumQuadraturePoints, numConstitutivePointsPerParentIndex );
+  SlurryFluidBase::allocateConstitutiveData( parent, numQuadraturePoints );
 
   m_density.setValues< serialPolicy >( m_referenceDensity );
   m_viscosity.setValues< serialPolicy >( m_referenceViscosity );

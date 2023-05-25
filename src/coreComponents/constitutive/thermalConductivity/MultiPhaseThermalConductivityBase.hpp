@@ -101,7 +101,13 @@ class MultiPhaseThermalConductivityBase : public ConstitutiveBase
 public:
 
   /// Max number of phases allowed in the class
-  static constexpr integer MAX_NUM_PHASES = 3;
+  static constexpr integer maxNumPhases = 3;
+
+  /**
+   * @brief Maximum number of quadrature points
+   */
+  static constexpr integer maxNumQuadraturePoints = 1;
+
 
   /**
    * @brief Constructor for the abstract base class

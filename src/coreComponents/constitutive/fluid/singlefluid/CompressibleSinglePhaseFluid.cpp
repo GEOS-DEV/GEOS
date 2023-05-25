@@ -83,7 +83,8 @@ CompressibleSinglePhaseFluid::~CompressibleSinglePhaseFluid() = default;
 void CompressibleSinglePhaseFluid::allocateConstitutiveData( dataRepository::Group & parent,
                                                              localIndex const numConstitutivePointsPerParentIndex )
 {
-  SingleFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  integer const numQuadraturePoints = LvArray::math::min( SingleFluidBase::maxNumQuadraturePoints, numConstitutivePointsPerParentIndex );
+  SingleFluidBase::allocateConstitutiveData( parent, numQuadraturePoints );
 
   getField< fields::singlefluid::density >().setApplyDefaultValue( m_defaultDensity );
   getField< fields::singlefluid::viscosity >().setApplyDefaultValue( m_defaultViscosity );

@@ -170,8 +170,8 @@ computeBodyForce( localIndex const k,
                           stack );
 
   real64 const dMixtureDens_dTemperature =
-    dPorosity_dTemperature * ( -m_solidDensity( k, q ) + m_fluidDensity( k, q ) )
-    + porosity * m_dFluidDensity_dTemperature( k, q );
+    dPorosity_dTemperature * ( -m_solidDensity( k, q ) + m_fluidDensity( k, 0 ) )
+    + porosity * m_dFluidDensity_dTemperature( k, 0 );
 
   LvArray::tensorOps::scaledCopy< 3 >( stack.dBodyForce_dTemperature, m_gravityVector, dMixtureDens_dTemperature );
 }
@@ -201,19 +201,19 @@ computeFluidIncrement( localIndex const k,
                                stack );
 
   // Step 2: compute derivative of fluid mass increment wrt temperature
-  stack.dFluidMassIncrement_dTemperature = dPorosity_dTemperature * m_fluidDensity( k, q ) + porosity * m_dFluidDensity_dTemperature( k, q );
+  stack.dFluidMassIncrement_dTemperature = dPorosity_dTemperature * m_fluidDensity( k, 0 ) + porosity * m_dFluidDensity_dTemperature( k, 0 );
 
   // Step 3: compute fluid energy increment and its derivatives wrt vol strain, pressure, and temperature
-  real64 const fluidMass = porosity * m_fluidDensity( k, q );
-  real64 const fluidEnergy = fluidMass * m_fluidInternalEnergy( k, q );
-  real64 const fluidEnergy_n = porosity_n * m_fluidDensity_n( k, q ) * m_fluidInternalEnergy_n( k, q );
+  real64 const fluidMass = porosity * m_fluidDensity( k, 0 );
+  real64 const fluidEnergy = fluidMass * m_fluidInternalEnergy( k, 0 );
+  real64 const fluidEnergy_n = porosity_n * m_fluidDensity_n( k, 0 )  * m_fluidInternalEnergy_n( k, 0 );
   stack.energyIncrement = fluidEnergy - fluidEnergy_n;
 
-  stack.dEnergyIncrement_dVolStrainIncrement = stack.dFluidMassIncrement_dVolStrainIncrement * m_fluidInternalEnergy( k, q );
-  stack.dEnergyIncrement_dPressure = stack.dFluidMassIncrement_dPressure * m_fluidInternalEnergy( k, q )
-                                     + fluidMass * m_dFluidInternalEnergy_dPressure( k, q );
-  stack.dEnergyIncrement_dTemperature = stack.dFluidMassIncrement_dTemperature * m_fluidInternalEnergy( k, q )
-                                        + fluidMass * m_dFluidInternalEnergy_dTemperature( k, q );
+  stack.dEnergyIncrement_dVolStrainIncrement = stack.dFluidMassIncrement_dVolStrainIncrement * m_fluidInternalEnergy( k, 0 );
+  stack.dEnergyIncrement_dPressure = stack.dFluidMassIncrement_dPressure * m_fluidInternalEnergy( k, 0 )
+                                     + fluidMass * m_dFluidInternalEnergy_dPressure( k, 0 );
+  stack.dEnergyIncrement_dTemperature = stack.dFluidMassIncrement_dTemperature * m_fluidInternalEnergy( k, 0 )
+                                        + fluidMass * m_dFluidInternalEnergy_dTemperature( k, 0 );
 
 
   // Step 4: assemble the solid part of the accumulation term

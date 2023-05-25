@@ -1705,14 +1705,14 @@ struct HydrostaticPressureKernel
                               arraySlice1d< real64 > const & newPhaseMassDens )
   {
     // fluid properties at this elevation
-    StackArray< real64, 2, constitutive::MultiFluidBase::MAX_NUM_COMPONENTS, compflow::LAYOUT_COMP > compFrac( 1, numComps );
-    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseFrac( 1, 1, numPhases );
-    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseDens( 1, 1, numPhases );
-    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseMassDens( 1, 1, numPhases );
-    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseVisc( 1, 1, numPhases );
-    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseEnthalpy( 1, 1, numPhases );
-    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseInternalEnergy( 1, 1, numPhases );
-    StackArray< real64, 4, constitutive::MultiFluidBase::MAX_NUM_PHASES *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS,
+    StackArray< real64, 2, constitutive::MultiFluidBase::maxNumComponents, compflow::LAYOUT_COMP > compFrac( 1, numComps );
+    StackArray< real64, 3, constitutive::MultiFluidBase::maxNumPhases, multifluid::LAYOUT_PHASE > phaseFrac( 1, 1, numPhases );
+    StackArray< real64, 3, constitutive::MultiFluidBase::maxNumPhases, multifluid::LAYOUT_PHASE > phaseDens( 1, 1, numPhases );
+    StackArray< real64, 3, constitutive::MultiFluidBase::maxNumPhases, multifluid::LAYOUT_PHASE > phaseMassDens( 1, 1, numPhases );
+    StackArray< real64, 3, constitutive::MultiFluidBase::maxNumPhases, multifluid::LAYOUT_PHASE > phaseVisc( 1, 1, numPhases );
+    StackArray< real64, 3, constitutive::MultiFluidBase::maxNumPhases, multifluid::LAYOUT_PHASE > phaseEnthalpy( 1, 1, numPhases );
+    StackArray< real64, 3, constitutive::MultiFluidBase::maxNumPhases, multifluid::LAYOUT_PHASE > phaseInternalEnergy( 1, 1, numPhases );
+    StackArray< real64, 4, constitutive::MultiFluidBase::maxNumPhases *constitutive::MultiFluidBase::maxNumComponents,
                 multifluid::LAYOUT_PHASE_COMP > phaseCompFrac( 1, 1, numPhases, numComps );
     real64 totalDens = 0.0;
 

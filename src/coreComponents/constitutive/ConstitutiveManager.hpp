@@ -52,7 +52,7 @@ public:
   /// This function is used to expand any catalogs in the data structure
   virtual void expandObjectCatalogs() override;
 
-  void
+  integer
   hangConstitutiveRelation( string const & constitutiveRelationInstanceName,
                             dataRepository::Group * const parent,
                             localIndex const numConstitutivePointsPerParentIndex ) const;

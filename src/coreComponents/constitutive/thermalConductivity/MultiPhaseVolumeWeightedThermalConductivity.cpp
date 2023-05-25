@@ -16,10 +16,9 @@
  * @file MultiPhaseVolumeWeightedThermalConductivity.cpp
  */
 
-#include "MultiPhaseVolumeWeightedThermalConductivity.hpp"
-
-#include "ThermalConductivityFields.hpp"
-#include "MultiPhaseThermalConductivityFields.hpp"
+#include "constitutive/thermalConductivity/MultiPhaseVolumeWeightedThermalConductivity.hpp"
+#include "constitutive/thermalConductivity/MultiPhaseThermalConductivityFields.hpp"
+#include "constitutive/thermalConductivity/ThermalConductivityFields.hpp"
 
 namespace geos
 {
@@ -55,14 +54,15 @@ MultiPhaseVolumeWeightedThermalConductivity::deliverClone( string const & name,
 void MultiPhaseVolumeWeightedThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent,
                                                                             localIndex const numConstitutivePointsPerParentIndex )
 {
-  // NOTE: enforcing 1 quadrature point
-  m_rockThermalConductivity.resize( 0, 1, 3 );
+  integer const numQuadraturePoints = LvArray::math::min( MultiPhaseThermalConductivityBase::maxNumQuadraturePoints, numConstitutivePointsPerParentIndex );
 
-  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  m_rockThermalConductivity.resize( 0, numQuadraturePoints, 3 );
+
+  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numQuadraturePoints );
 
   for( localIndex ei = 0; ei < parent.size(); ++ei )
   {
-    for( localIndex q = 0; q < 1; ++q )
+    for( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
       m_rockThermalConductivity[ei][q][0] = m_rockThermalConductivityComponents[0];
       m_rockThermalConductivity[ei][q][1] = m_rockThermalConductivityComponents[1];

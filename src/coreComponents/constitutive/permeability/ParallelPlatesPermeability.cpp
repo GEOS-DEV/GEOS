@@ -45,10 +45,11 @@ ParallelPlatesPermeability::deliverClone( string const & name,
 void ParallelPlatesPermeability::allocateConstitutiveData( dataRepository::Group & parent,
                                                            localIndex const numConstitutivePointsPerParentIndex )
 {
-  // NOTE: enforcing 1 quadrature point
-  m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
+  integer const numQuadraturePoints = LvArray::math::min( PermeabilityBase::maxNumQuadraturePoints, numConstitutivePointsPerParentIndex );
 
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  m_dPerm_dDispJump.resize( 0, numQuadraturePoints, 3, 3 );
+
+  PermeabilityBase::allocateConstitutiveData( parent, numQuadraturePoints );
 }
 
 

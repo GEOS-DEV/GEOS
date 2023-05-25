@@ -54,11 +54,12 @@ ExponentialDecayPermeability::deliverClone( string const & name,
 void ExponentialDecayPermeability::allocateConstitutiveData( dataRepository::Group & parent,
                                                              localIndex const numConstitutivePointsPerParentIndex )
 {
-// NOTE: enforcing 1 quadrature point
-  m_dPerm_dTraction.resize( 0, 1, 3, 3 );
-  m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
+  integer const numQuadraturePoints = LvArray::math::min( PermeabilityBase::maxNumQuadraturePoints, numConstitutivePointsPerParentIndex );
 
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  m_dPerm_dTraction.resize( 0, numQuadraturePoints, 3, 3 );
+  m_dPerm_dDispJump.resize( 0, numQuadraturePoints, 3, 3 );
+
+  PermeabilityBase::allocateConstitutiveData( parent, numQuadraturePoints );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ExponentialDecayPermeability, string const &, Group * const )

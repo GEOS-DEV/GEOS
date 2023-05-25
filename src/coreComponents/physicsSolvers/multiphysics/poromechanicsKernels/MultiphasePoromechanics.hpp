@@ -394,7 +394,7 @@ public:
     m_bulkDensity[ei][q] = 0.0;
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {
-      m_bulkDensity[ei][q] += m_fluidPhaseVolFrac[ei][ip] * m_fluidPhaseDensity[ei][q][ip];
+      m_bulkDensity[ei][q] += m_fluidPhaseVolFrac[ei][ip] * m_fluidPhaseDensity[ei][0][ip];
     }
     m_bulkDensity[ei][q] *= m_porosity[ei][q];
     m_bulkDensity[ei][q] += ( 1 - m_porosity[ei][q] ) * m_rockDensity[ei][q];

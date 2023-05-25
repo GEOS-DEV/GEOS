@@ -62,10 +62,11 @@ void ParticleFluidBase::postProcessInput()
 void ParticleFluidBase::allocateConstitutiveData( Group & parent,
                                                   localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  integer const numQuadraturePoints = LvArray::math::min( ParticleFluidBase::maxNumQuadraturePoints, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numQuadraturePoints );
 
   this->resize( parent.size() );
-  m_dSettlingFactor_dComponentConcentration.resize( parent.size(), MAX_NUM_COMPONENTS );
+  m_dSettlingFactor_dComponentConcentration.resize( parent.size(), maxNumComponents );
 }
 
 } //namespace constitutive

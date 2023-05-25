@@ -53,7 +53,7 @@ struct FluidUpdateKernel
     forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       localIndex const NC = fluidWrapper.numFluidComponents();
-      stackArray1d< real64, constitutive::SlurryFluidBase::MAX_NUM_COMPONENTS > compConc( NC );
+      stackArray1d< real64, constitutive::SlurryFluidBase::maxNumComponents > compConc( NC );
 
       for( localIndex c = 0; c < NC; ++c )
       {
@@ -83,7 +83,7 @@ struct ComponentDensityUpdateKernel
     forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       localIndex const NC = fluidWrapper.numFluidComponents();
-      stackArray1d< real64, constitutive::SlurryFluidBase::MAX_NUM_COMPONENTS > compConc( NC );
+      stackArray1d< real64, constitutive::SlurryFluidBase::maxNumComponents > compConc( NC );
 
       for( localIndex c = 0; c < NC; ++c )
       {

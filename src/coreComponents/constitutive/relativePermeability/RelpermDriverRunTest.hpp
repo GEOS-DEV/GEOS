@@ -17,7 +17,7 @@
 
 #include "constitutive/relativePermeability/RelpermDriver.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
-#include "layouts.hpp"
+#include "constitutive/relativePermeability/Layouts.hpp"
 
 
 namespace geos

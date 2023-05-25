@@ -66,7 +66,8 @@ ThermalCompressibleSinglePhaseFluid::~ThermalCompressibleSinglePhaseFluid() = de
 void ThermalCompressibleSinglePhaseFluid::allocateConstitutiveData( dataRepository::Group & parent,
                                                                     localIndex const numConstitutivePointsPerParentIndex )
 {
-  CompressibleSinglePhaseFluid::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  integer const numQuadraturePoints = LvArray::math::min( SingleFluidBase::maxNumQuadraturePoints, numConstitutivePointsPerParentIndex );
+  CompressibleSinglePhaseFluid::allocateConstitutiveData( parent, numQuadraturePoints );
 
   m_internalEnergy.setValues< serialPolicy >( m_referenceInternalEnergy );
 }

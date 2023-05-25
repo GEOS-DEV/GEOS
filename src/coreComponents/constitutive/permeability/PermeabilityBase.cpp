@@ -61,11 +61,12 @@ void PermeabilityBase::scaleHorizontalPermeability( arrayView1d< real64 const > 
 void PermeabilityBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
-  // NOTE: enforcing 1 quadrature point
-  m_permeability.resize( 0, 1, 3 );
-  m_dPerm_dPressure.resize( 0, 1, 3 );
+  integer const numQuadraturePoints = LvArray::math::min( maxNumQuadraturePoints, numConstitutivePointsPerParentIndex );
 
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  m_permeability.resize( 0, numQuadraturePoints, 3 );
+  m_dPerm_dPressure.resize( 0, numQuadraturePoints, 3 );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numQuadraturePoints );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PermeabilityBase, string const &, Group * const )

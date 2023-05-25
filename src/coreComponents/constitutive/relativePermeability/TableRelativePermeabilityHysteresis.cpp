@@ -246,13 +246,13 @@ void TableRelativePermeabilityHysteresis::initializePreSubGroups()
 {
   RelativePermeabilityBase::initializePreSubGroups();
 
-  m_drainagePhaseMinVolFraction.resize( MAX_NUM_PHASES );
+  m_drainagePhaseMinVolFraction.resize( maxNumPhases );
   m_imbibitionPhaseMinVolFraction.resize( 2 ); // we don't save the value of the intermediate phase, for which we neglect hysteresis
 
-  m_drainagePhaseMaxVolFraction.resize( MAX_NUM_PHASES );
+  m_drainagePhaseMaxVolFraction.resize( maxNumPhases );
   m_imbibitionPhaseMaxVolFraction.resize( 2 );
 
-  m_drainagePhaseRelPermEndPoint.resize( MAX_NUM_PHASES );
+  m_drainagePhaseRelPermEndPoint.resize( maxNumPhases );
   m_imbibitionPhaseRelPermEndPoint.resize( 2 ); // we don't save the value of the intermediate phase, for which we neglect hysteresis
 
   // Step 1: validate drainage relative permeabilities

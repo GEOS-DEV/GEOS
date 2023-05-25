@@ -556,7 +556,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
     return;
   }
 
-  integer constexpr maxNumComp = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
+  integer constexpr maxNumComp = constitutive::MultiFluidBase::maxNumComponents;
   integer const numComp = m_numComponents;
   integer const numPhase = m_numPhases;
   localIndex const iwelemRef = subRegion.getTopWellElementIndex();

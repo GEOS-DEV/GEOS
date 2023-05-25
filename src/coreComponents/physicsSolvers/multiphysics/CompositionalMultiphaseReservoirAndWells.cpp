@@ -178,7 +178,7 @@ addCouplingSparsityPattern( DomainPartition const & domain,
     integer const resNDOF = Base::wellSolver()->numDofPerResElement();
     integer const wellNDOF = Base::wellSolver()->numDofPerWellElement();
 
-    integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
+    integer constexpr maxNumComp = MultiFluidBase::maxNumComponents;
     integer constexpr maxNumDof  = maxNumComp + 1;
 
     string const wellDofKey = dofManager.getKey( Base::wellSolver()->wellElementDofName() );
@@ -287,7 +287,7 @@ assembleCouplingTerms( real64 const time_n,
 
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    integer constexpr MAX_NUM_COMP = MultiFluidBase::MAX_NUM_COMPONENTS;
+    integer constexpr MAX_NUM_COMP = MultiFluidBase::maxNumComponents;
     integer constexpr MAX_NUM_DOF = MAX_NUM_COMP + 1;
 
     integer const numComps = Base::wellSolver()->numFluidComponents();

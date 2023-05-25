@@ -15,8 +15,8 @@ set( constitutive_headers
      capillaryPressure/TableCapillaryPressure.hpp
      capillaryPressure/TableCapillaryPressureHelpers.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
-     capillaryPressure/capillaryPressureSelector.hpp
-     capillaryPressure/layouts.hpp
+     capillaryPressure/CapillaryPressureSelector.hpp
+     capillaryPressure/Layouts.hpp
      contact/ContactBase.hpp
      contact/CoulombContact.hpp
      contact/ContactSelector.hpp
@@ -90,7 +90,7 @@ set( constitutive_headers
      relativePermeability/TableRelativePermeabilityHelpers.hpp
      relativePermeability/TableRelativePermeabilityHysteresis.hpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
-     relativePermeability/layouts.hpp
+     relativePermeability/Layouts.hpp
      relativePermeability/RelativePermeabilitySelector.hpp
      solid/CompressibleSolid.hpp
      solid/ProppantSolid.hpp

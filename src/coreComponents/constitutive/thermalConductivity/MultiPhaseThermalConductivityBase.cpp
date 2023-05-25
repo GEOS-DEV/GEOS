@@ -16,9 +16,9 @@
  * @file MultiPhaseThermalConductivityBase.cpp
  */
 
-#include "MultiPhaseThermalConductivityBase.hpp"
-#include "ThermalConductivityFields.hpp"
-#include "MultiPhaseThermalConductivityFields.hpp"
+#include "constitutive/thermalConductivity/MultiPhaseThermalConductivityBase.hpp"
+#include "constitutive/thermalConductivity/MultiPhaseThermalConductivityFields.hpp"
+#include "constitutive/thermalConductivity/ThermalConductivityFields.hpp"
 
 namespace geos
 {
@@ -47,7 +47,7 @@ void MultiPhaseThermalConductivityBase::postProcessInput()
   GEOS_THROW_IF_LT_MSG( numPhases, 2,
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                         InputError );
-  GEOS_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
+  GEOS_THROW_IF_GT_MSG( numPhases, maxNumPhases,
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                         InputError );
 
@@ -58,12 +58,13 @@ void MultiPhaseThermalConductivityBase::postProcessInput()
 void MultiPhaseThermalConductivityBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                                   localIndex const numConstitutivePointsPerParentIndex )
 {
-  // NOTE: enforcing 1 quadrature point
-  integer const numPhases = numFluidPhases();
-  m_effectiveConductivity.resize( 0, 1, 3 );
-  m_dEffectiveConductivity_dPhaseVolFrac.resize( 0, 1, 3, numPhases );
+  integer const numQuadraturePoints = LvArray::math::min( maxNumQuadraturePoints, numConstitutivePointsPerParentIndex );
 
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  integer const numPhases = numFluidPhases();
+  m_effectiveConductivity.resize( 0, numQuadraturePoints, 3 );
+  m_dEffectiveConductivity_dPhaseVolFrac.resize( 0, numQuadraturePoints, 3, numPhases );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numQuadraturePoints );
 }
 
 } // namespace constitutive

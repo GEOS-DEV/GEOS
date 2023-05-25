@@ -255,7 +255,16 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  static constexpr localIndex MAX_NUM_COMPONENTS = 3;
+  /**
+   * @brief Maximum number of components
+   */
+  static constexpr localIndex maxNumComponents = 3;
+
+  /**
+   * @brief Maximum number of quadrature points
+   */
+  static constexpr integer maxNumQuadraturePoints = 1;
+
 
   localIndex numFluidComponents() const;
 

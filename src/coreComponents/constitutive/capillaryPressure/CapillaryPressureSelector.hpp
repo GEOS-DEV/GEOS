@@ -13,7 +13,7 @@
  */
 
 /**
- * @file capillaryPressureSelector.hpp
+ * @file CapillaryPressureSelector.hpp
  */
 
 #ifndef GEOS_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSURESELECTOR_HPP

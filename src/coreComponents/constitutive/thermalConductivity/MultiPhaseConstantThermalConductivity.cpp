@@ -45,12 +45,12 @@ MultiPhaseConstantThermalConductivity::deliverClone( string const & name,
 void MultiPhaseConstantThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent,
                                                                       localIndex const numConstitutivePointsPerParentIndex )
 {
-  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  integer const numQuadraturePoints = LvArray::math::min( MultiPhaseThermalConductivityBase::maxNumQuadraturePoints, numConstitutivePointsPerParentIndex );
+  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numQuadraturePoints );
 
   for( localIndex ei = 0; ei < parent.size(); ++ei )
   {
-    // NOTE: enforcing 1 quadrature point
-    for( localIndex q = 0; q < 1; ++q )
+    for( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
       m_effectiveConductivity[ei][q][0] = m_thermalConductivityComponents[0];
       m_effectiveConductivity[ei][q][1] = m_thermalConductivityComponents[1];

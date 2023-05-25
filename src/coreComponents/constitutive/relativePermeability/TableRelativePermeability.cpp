@@ -127,7 +127,7 @@ void TableRelativePermeability::initializePreSubGroups()
   RelativePermeabilityBase::initializePreSubGroups();
 
   integer const numPhases = m_phaseNames.size();
-  m_phaseMinVolumeFraction.resize( MAX_NUM_PHASES );
+  m_phaseMinVolumeFraction.resize( maxNumPhases );
 
   string const fullName = getFullName();
   real64 phaseMinVolFrac = 0.0;

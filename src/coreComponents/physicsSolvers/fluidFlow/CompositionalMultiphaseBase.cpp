@@ -22,7 +22,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
-#include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureSelector.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
@@ -1412,7 +1412,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
 bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
                                                        real64 const time ) const
 {
-  constexpr integer MAX_NC = MultiFluidBase::MAX_NUM_COMPONENTS;
+  constexpr integer MAX_NC = MultiFluidBase::maxNumComponents;
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   bool bcConsistent = true;

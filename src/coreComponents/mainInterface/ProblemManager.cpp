@@ -881,7 +881,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
   for( auto const & regionQuadrature : regionQuadratures )
   {
     std::tuple< string, string, string, string > const key = regionQuadrature.first;
-    localIndex const numQuadraturePoints = regionQuadrature.second;
+    localIndex const regionNumQuadraturePoints = regionQuadrature.second;
     string const meshBodyName = std::get< 0 >( key );
     string const meshLevelName = std::get< 1 >( key );
     string const regionName = std::get< 2 >( key );
@@ -890,12 +890,9 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
     GEOS_LOG_RANK_0( "regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = "<<
                      meshBodyName<<", "<<meshLevelName<<", "<<regionName<<", "<<subRegionName );
 
-
-
     MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
     MeshLevel & meshLevel = meshBody.getMeshLevel( meshLevelName );
 
-//    if( meshLevel.isShallowCopy() )
     {
       ElementRegionManager & elemRegionManager = meshLevel.getElemManager();
       ElementRegionBase & elemRegion = elemRegionManager.getRegion( regionName );
@@ -904,51 +901,18 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
       string_array const & materialList = elemRegion.getMaterialList();
       for( auto & materialName : materialList )
       {
-        constitutiveManager.hangConstitutiveRelation( materialName, &elemSubRegion, numQuadraturePoints );
-        GEOS_LOG_RANK_0( GEOS_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
+        integer const constitutiveNumQuadraturePoints =
+          constitutiveManager.hangConstitutiveRelation( materialName, &elemSubRegion, regionNumQuadraturePoints );
+        GEOS_LOG_RANK_0( GEOS_FMT( "{}/{}/{}/{}/{} allocated {} quadrature point(s)",
                                    meshBodyName,
                                    meshLevelName,
                                    regionName,
                                    subRegionName,
                                    materialName,
-                                   numQuadraturePoints ) );
+                                   constitutiveNumQuadraturePoints ) );
       }
     }
   }
-
-  // check that every mesh element entity got a discretization
-//  for( localIndex a = 0; a < meshBodies.getSubGroups().size(); ++a )
-//  {
-//    MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
-//    meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
-//    {
-//      ElementRegionManager & elemManager = meshLevel.getElemManager();
-//
-//      elemManager.forElementSubRegionsComplete( [&]( localIndex const,
-//                                                     localIndex const,
-//                                                     ElementRegionBase & elemRegion,
-//                                                     ElementSubRegionBase & elemSubRegion )
-//      {
-//        string const & regionName = elemRegion.getName();
-//        string const & subRegionName = elemSubRegion.getName();
-//
-//        std::cout<<"looking for: meshBodyName, meshLevelName, regionName, subRegionName = "<<
-//            meshBody.getName()<<", "<<meshLevel.getName()<<", "<<regionName<<", "<<subRegionName<<std::endl;
-//
-//
-//        TYPEOFREF( regionQuadratures ) ::const_iterator rqIter = regionQuadratures.find( std::make_tuple( meshBody.getName(),
-//                                                                                                        meshLevel.getName(),
-//                                                                                                        regionName,
-//                                                                                                        subRegionName ) );
-//        GEOS_ERROR_IF( rqIter == regionQuadratures.end(),
-//                        GEOS_FMT( "{}/{}/{}/{} does not have a discretization associated with it.",
-//                                   meshBody.getName(),
-//                                   meshLevel.getName(),
-//                                   regionName,
-//                                   subRegionName ) );
-//      } );
-//    } );
-//  }
 }
 
 bool ProblemManager::runSimulation()

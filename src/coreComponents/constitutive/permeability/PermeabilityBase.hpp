@@ -104,6 +104,11 @@ class PermeabilityBase : public ConstitutiveBase
 {
 public:
 
+  /**
+   * @brief Maximum number of quadrature points
+   */
+  static constexpr integer maxNumQuadraturePoints = 1;
+
   PermeabilityBase( string const & name, Group * const parent );
 
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,

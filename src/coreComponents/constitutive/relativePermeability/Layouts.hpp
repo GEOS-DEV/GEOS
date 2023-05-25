@@ -13,7 +13,7 @@
  */
 
 /**
- * @file layouts.hpp
+ * @file Layouts.hpp
  */
 
 #ifndef GEOS_CONSTITUTIVE_RELATIVEPERMEABILITY_LAYOUTS_HPP

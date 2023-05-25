@@ -1032,13 +1032,13 @@ public:
     // This is needed to get the phase mass density and the phase comp fraction at the face
     // Because we approximate the face mobility using the total element mobility
 
-    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > facePhaseFrac( 1, 1, m_numPhases );
-    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > facePhaseDens( 1, 1, m_numPhases );
-    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > facePhaseMassDens( 1, 1, m_numPhases );
-    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > facePhaseVisc( 1, 1, m_numPhases );
-    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > facePhaseEnthalpy( 1, 1, m_numPhases );
-    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > facePhaseInternalEnergy( 1, 1, m_numPhases );
-    StackArray< real64, 4, constitutive::MultiFluidBase::MAX_NUM_PHASES *NUM_COMP,
+    StackArray< real64, 3, constitutive::MultiFluidBase::maxNumPhases, multifluid::LAYOUT_PHASE > facePhaseFrac( 1, 1, m_numPhases );
+    StackArray< real64, 3, constitutive::MultiFluidBase::maxNumPhases, multifluid::LAYOUT_PHASE > facePhaseDens( 1, 1, m_numPhases );
+    StackArray< real64, 3, constitutive::MultiFluidBase::maxNumPhases, multifluid::LAYOUT_PHASE > facePhaseMassDens( 1, 1, m_numPhases );
+    StackArray< real64, 3, constitutive::MultiFluidBase::maxNumPhases, multifluid::LAYOUT_PHASE > facePhaseVisc( 1, 1, m_numPhases );
+    StackArray< real64, 3, constitutive::MultiFluidBase::maxNumPhases, multifluid::LAYOUT_PHASE > facePhaseEnthalpy( 1, 1, m_numPhases );
+    StackArray< real64, 3, constitutive::MultiFluidBase::maxNumPhases, multifluid::LAYOUT_PHASE > facePhaseInternalEnergy( 1, 1, m_numPhases );
+    StackArray< real64, 4, constitutive::MultiFluidBase::maxNumPhases *NUM_COMP,
                 multifluid::LAYOUT_PHASE_COMP > facePhaseCompFrac( 1, 1, m_numPhases, NUM_COMP );
     real64 faceTotalDens = 0.0;
 

@@ -145,8 +145,10 @@ void MultiFluidBase::setLabels()
 void MultiFluidBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-  resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
+  integer const numQuadraturePoints = LvArray::math::min( maxNumQuadraturePoints, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numQuadraturePoints );
+
+  resizeFields( parent.size(), numQuadraturePoints );
 }
 
 void MultiFluidBase::postProcessInput()
@@ -159,13 +161,13 @@ void MultiFluidBase::postProcessInput()
   GEOS_THROW_IF_LT_MSG( numComp, 1,
                         GEOS_FMT( "{}: invalid number of components", getFullName() ),
                         InputError );
-  GEOS_THROW_IF_GT_MSG( numComp, MAX_NUM_COMPONENTS,
+  GEOS_THROW_IF_GT_MSG( numComp, maxNumComponents,
                         GEOS_FMT( "{}: invalid number of components", getFullName() ),
                         InputError );
   GEOS_THROW_IF_LT_MSG( numPhase, 1,
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                         InputError );
-  GEOS_THROW_IF_GT_MSG( numPhase, MAX_NUM_PHASES,
+  GEOS_THROW_IF_GT_MSG( numPhase, maxNumPhases,
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                         InputError );
   GEOS_THROW_IF_NE_MSG( m_componentMolarWeight.size(), numComp,
