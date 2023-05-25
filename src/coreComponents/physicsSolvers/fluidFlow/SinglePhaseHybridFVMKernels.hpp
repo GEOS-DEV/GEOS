@@ -20,8 +20,8 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVMKERNELS_HPP
 
 #include "common/DataTypes.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
-#include "constitutive/fluid/SingleFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/solid/porosity/PorosityBase.hpp"
 #include "constitutive/solid/porosity/PorosityFields.hpp"
