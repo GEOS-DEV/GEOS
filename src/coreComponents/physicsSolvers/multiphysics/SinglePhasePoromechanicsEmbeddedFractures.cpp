@@ -436,7 +436,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
     solidMechanicsSolver()->getMaxForce() =
       finiteElement::
         regionBasedKernelApplication< parallelDevicePolicy< >,
-                                      constitutive::PorousSolidBase,
+                                      constitutive::PorousSolid< ElasticIsotropic >,
                                       CellElementSubRegion >( mesh,
                                                               regionNames,
                                                               solidMechanicsSolver()->getDiscretizationName(),
@@ -457,7 +457,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
     real64 maxTraction =
       finiteElement::
         regionBasedKernelApplication< parallelDevicePolicy< >,
-                                      constitutive::PorousSolidBase,
+                                      constitutive::PorousSolid< ElasticIsotropic >,
                                       CellElementSubRegion >( mesh,
                                                               regionNames,
                                                               solidMechanicsSolver()->getDiscretizationName(),
