@@ -74,11 +74,12 @@ void DomainPartition::initializationOrder( string_array & order )
   }
 }
 
-void DomainPartition::setupCommunications( bool use_nonblocking )
+void DomainPartition::setupBaseLevelMeshGlobalInfo()
 {
   GEOS_MARK_FUNCTION;
 
 #if defined(GEOSX_USE_MPI)
+
   if( m_metisNeighborList.empty() )
   {
     PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
@@ -156,19 +157,17 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
 
   forMeshBodies( [&]( MeshBody & meshBody )
   {
-
     MeshLevel & meshLevel = meshBody.getBaseDiscretization();
-
-    for( NeighborCommunicator const & neighbor : m_neighbors )
-    {
-      neighbor.addNeighborGroupToMesh( meshLevel );
-    }
 
     NodeManager & nodeManager = meshLevel.getNodeManager();
     FaceManager & faceManager = meshLevel.getFaceManager();
     EdgeManager & edgeManager = meshLevel.getEdgeManager();
 
     nodeManager.setMaxGlobalIndex();
+    for( NeighborCommunicator const & neighbor : m_neighbors )
+    {
+      neighbor.addNeighborGroupToMesh( meshLevel );
+    }
 
     CommunicationTools::getInstance().assignGlobalIndices( faceManager,
                                                            nodeManager,
@@ -183,14 +182,43 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
 
     CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
                                                                            m_neighbors );
+  } );
+}
 
-    CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
 
-    faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
-    faceManager.computeGeometry( nodeManager );
+void DomainPartition::setupCommunications( bool use_nonblocking )
+{
+  forMeshBodies( [&]( MeshBody & meshBody )
+  {
+    meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+    {
+      if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
+      {
+        NodeManager & nodeManager = meshLevel.getNodeManager();
+        FaceManager & faceManager = meshLevel.getFaceManager();
 
-//    meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
-//    {} );
+        CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
+        faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
+        faceManager.computeGeometry( nodeManager );
+      }
+      else if( !meshLevel.isShallowCopyOf( meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )
+      {
+        for( NeighborCommunicator const & neighbor : m_neighbors )
+        {
+          neighbor.addNeighborGroupToMesh( meshLevel );
+        }
+        NodeManager & nodeManager = meshLevel.getNodeManager();
+        FaceManager & faceManager = meshLevel.getFaceManager();
+
+        CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager, m_neighbors );
+        CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager, m_neighbors );
+        CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
+      }
+      else
+      {
+        GEOS_LOG_LEVEL_RANK_0( 3, "No communication setup is needed since it is a shallow copy of the base discretization." );
+      }
+    } );
   } );
 }
 
