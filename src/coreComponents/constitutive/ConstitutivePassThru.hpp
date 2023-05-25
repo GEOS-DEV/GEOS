@@ -65,6 +65,22 @@ template< typename BASETYPE >
 struct ConstitutivePassThru;
 
 /**
+ * Specialization for models that derive from ElasticIsotropic.
+ */
+template<>
+struct ConstitutivePassThru< ElasticIsotropic >
+{
+  template< typename LAMBDA >
+  static
+  void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< ElasticIsotropic >::execute( constitutiveRelation,
+                                                              std::forward< LAMBDA >( lambda ) );
+  }
+};
+
+
+/**
  * Specialization for models that derive from SolidBase.
  */
 template<>
