@@ -111,6 +111,19 @@ stages:
   extends: [.build_script]
 
 ####
+# tioga template
+.build_on_tioga:
+  stage: build
+  variables:
+    ALLOC_COMMAND: "salloc -N1 -ppdebug"
+    INTEGRATED_ALLOC_COMMAND: "salloc -N 1 -n 64 -ppdebug"
+    SYSTEM: "tioga"
+  tags:
+    - shell
+    - tioga
+  extends: [.build_script]
+
+####
 # lassen template
 .build_on_lassen:
   stage: build
@@ -129,6 +142,13 @@ quartz_clang_14_build:
   variables:
     HOST_CONFIG: "quartz-clang@14.cmake"
   extends: [.build_on_quartz]
+
+####
+# tioga job
+tioga_clang_14_build:
+  variables:
+    HOST_CONFIG: "tioga-cce@15.0.0.cmake"
+  extends: [.build_on_tioga]
 
 ####
 # lassen job
