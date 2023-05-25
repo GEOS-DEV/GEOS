@@ -16,71 +16,71 @@ env:
   GEOSX_TPL_TAG: 220-932
 
 jobs:
-  # check_pull_request_is_not_a_draft:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - name: Check that the PR is not a draft (cancel rest of jobs otherwise)
-  #     run: |
-  #       echo "Is PR a draft?"
-  #       echo ${{ toJSON(github.event.pull_request.draft) }}
-  #       if [[ ${{ toJSON(github.event.pull_request.draft) }} == true ]]; then "false" ; else "true"; fi
+  check_pull_request_is_not_a_draft:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check that the PR is not a draft (cancel rest of jobs otherwise)
+      run: |
+        echo "Is PR a draft?"
+        echo ${{ toJSON(github.event.pull_request.draft) }}
+        if [[ ${{ toJSON(github.event.pull_request.draft) }} == true ]]; then "false" ; else "true"; fi
 
-  # check-pull-request-is-assigned:
-  #   needs: [check_pull_request_is_not_a_draft]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - name: Check that the PR is assigned
-  #     run: |
-  #       id=$(curl -H "Accept: application/vnd.github+json" \
-  #          https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }} \
-  #          | jq '.assignee.id')
-  #       echo "Is PR Assigned? (Check for Assignee ID)"
-  #       echo $id
-  #       if [[ $id != null ]]; then "true" ; else "false"; fi
+  check-pull-request-is-assigned:
+    needs: [check_pull_request_is_not_a_draft]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check that the PR is assigned
+      run: |
+        id=$(curl -H "Accept: application/vnd.github+json" \
+           https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }} \
+           | jq '.assignee.id')
+        echo "Is PR Assigned? (Check for Assignee ID)"
+        echo $id
+        if [[ $id != null ]]; then "true" ; else "false"; fi
 
-  # check-submodules:
-  #   needs: [check_pull_request_is_not_a_draft]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - name: Checkout Repository
-  #     uses: actions/checkout@v3
-  #     with:
-  #       submodules: false
-  #       token: ${{ secrets.GITHUB_TOKEN }}
-  #   - name: Check that submodules are up to date
-  #     run: "scripts/test_submodule_updated.sh"
+  check-submodules:
+    needs: [check_pull_request_is_not_a_draft]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+      with:
+        submodules: false
+        token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Check that submodules are up to date
+      run: "scripts/test_submodule_updated.sh"
 
-  # code-style:
-  #   needs: [check_pull_request_is_not_a_draft]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - name: Checkout Repository
-  #     uses: actions/checkout@v3
-  #     with:
-  #       submodules: false
-  #       token: ${{ secrets.GITHUB_TOKEN }}
-  #   - name: Check style
-  #     env:
-  #       DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
-  #       CMAKE_BUILD_TYPE: Release
-  #       BUILD_AND_TEST_ARGS: --test-code-style
-  #     run: ./scripts/ci_build_and_test.sh
+  code-style:
+    needs: [check_pull_request_is_not_a_draft]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+      with:
+        submodules: false
+        token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Check style
+      env:
+        DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
+        CMAKE_BUILD_TYPE: Release
+        BUILD_AND_TEST_ARGS: --test-code-style
+      run: ./scripts/ci_build_and_test.sh
 
-  # documentation:
-  #   needs: [check_pull_request_is_not_a_draft]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - name: Checkout Repository
-  #     uses: actions/checkout@v3
-  #     with:
-  #       submodules: false
-  #       token: ${{ secrets.GITHUB_TOKEN }}
-  #   - name: Check documentation
-  #     env:
-  #       DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
-  #       CMAKE_BUILD_TYPE: Release
-  #       BUILD_AND_TEST_ARGS: --test-documentation
-  #     run: ./scripts/ci_build_and_test.sh
+  documentation:
+    needs: [check_pull_request_is_not_a_draft]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+      with:
+        submodules: false
+        token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Check documentation
+      env:
+        DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
+        CMAKE_BUILD_TYPE: Release
+        BUILD_AND_TEST_ARGS: --test-documentation
+      run: ./scripts/ci_build_and_test.sh
 
 
   # linux-builds:
