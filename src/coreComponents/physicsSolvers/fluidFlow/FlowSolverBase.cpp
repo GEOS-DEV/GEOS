@@ -252,7 +252,7 @@ void FlowSolverBase::initializePreSubGroups()
 
 void FlowSolverBase::validatePoreVolumes( DomainPartition const & domain ) const
 {
-  real64 minPoreVolume = 0.0;
+  real64 minPoreVolume = LvArray::NumericLimits< real64 >::max;
   globalIndex numElemsBelowThreshold = 0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
