@@ -59,12 +59,26 @@ HYPRE_Int SuperLUDistSolve( HYPRE_Solver solver,
                             HYPRE_ParVector x )
 {
   GEOS_UNUSED_VAR( A );
+#if defined(GEOSX_USE_SUPERLU_DIST)
   return hypre_SLUDistSolve( solver, b, x );
+#else
+  GEOS_UNUSED_VAR( solver );
+  GEOS_UNUSED_VAR( b );
+  GEOS_UNUSED_VAR( x );
+  GEOS_ERROR( "GEOSX is configured without support for SuperLU_dist." );
+  return -1;
+#endif
 }
 
 HYPRE_Int SuperLUDistDestroy( HYPRE_Solver solver )
 {
+#if defined(GEOSX_USE_SUPERLU_DIST)
   return hypre_SLUDistDestroy( solver );
+#else
+  GEOS_UNUSED_VAR( solver );
+  GEOS_ERROR( "GEOSX is configured without support for SuperLU_dist." );
+  return -1;
+#endif
 }
 
 /**
