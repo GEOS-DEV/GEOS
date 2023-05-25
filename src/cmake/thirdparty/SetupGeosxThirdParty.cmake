@@ -763,12 +763,7 @@ if(DEFINED FMT_DIR)
 
     set(ENABLE_FMT ON CACHE BOOL "")
 
-    if(NOT TARGET fmt AND TARGET fmt::fmt)
-        set_target_properties(fmt::fmt PROPERTIES IMPORTED_GLOBAL TRUE)
-        add_library(fmt ALIAS fmt::fmt)
-    endif()
-
-    set(thirdPartyLibs ${thirdPartyLibs} fmt)
+    set(thirdPartyLibs ${thirdPartyLibs} fmt::fmt )
 else()
     message(FATAL_ERROR "GEOSX requires {fmt}, set FMT_DIR to the {fmt} installation directory.")
 endif()
@@ -806,8 +801,16 @@ endif()
 ################################
 # Python
 ################################
+message(" CMAKE_VERSION ${CMAKE_VERSION} ")
+if( ${CMAKE_VERSION} VERSION_LESS "3.19" )
+    set( PYTHON_AND_VERSION Python3 )
+    set( PYTHON_OPTIONAL_COMPONENTS)
+else()
+    set( PYTHON_AND_VERSION Python3 3.7.0...3.11.2 )
+    set( PYTHON_OPTIONAL_COMPONENTS OPTIONAL_COMPONENTS Development NumPy)
+endif()
 if(ENABLE_PYGEOSX)
-    find_package(Python3 3.7.0...3.11.2 REQUIRED
+    find_package(${PYTHON_AND_VERSION} REQUIRED
                  COMPONENTS Development NumPy)
 
     message( " ----> $Python3_VERSION = ${Python3_VERSION}")
@@ -826,8 +829,7 @@ if(ENABLE_PYGEOSX)
     set(thirdPartyLibs ${thirdPartyLibs} Python3::Python Python3::NumPy)
 else()
     message(STATUS "Not building pygeosx.")
-    find_package(Python3 3.7.0...3.11.2
-                 OPTIONAL_COMPONENTS Development NumPy)
+    find_package(${PYTHON_AND_VERSION} ${PYTHON_OPTIONAL_COMPONENTS})
     message(STATUS "Python3_EXECUTABLE=${Python3_EXECUTABLE}")
 endif()
 
@@ -848,8 +850,8 @@ option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" O
 
 #     find_and_register(NAME FesapiCpp
 #                  INCLUDE_DIRECTORIES ${FESAPI_DIR}/include
-#                  LIBRARY_DIRECTORIES ${FESAPI_DIR}/lib    
-#                  HEADER fesapi/nsDefinitions.h             
+#                  LIBRARY_DIRECTORIES ${FESAPI_DIR}/lib
+#                  HEADER fesapi/nsDefinitions.h
 #                  LIBRARIES FesapiCpp
 #                  DEPENDS hdf5)
 
