@@ -337,11 +337,11 @@ computeCompressibilityFactor( integer const numComps,
       if( roots[i] > bMixtureCoefficient )
       {
         // choose the root according to Gibbs' free energy minimization
-        if( zMin < roots[i] )
+        if( zMin > roots[i] )
         {
           zMin = roots[i];
         }
-        if( zMax > roots[i] )
+        if( zMax < roots[i] )
         {
           zMax = roots[i];
         }
