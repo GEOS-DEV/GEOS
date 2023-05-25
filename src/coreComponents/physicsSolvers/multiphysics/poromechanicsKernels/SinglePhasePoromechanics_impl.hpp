@@ -19,7 +19,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICS_IMPL_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICS_IMPL_HPP_
 
-#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "finiteElement/BilinearFormUtilities.hpp"
 #include "finiteElement/LinearFormUtilities.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
