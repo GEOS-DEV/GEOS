@@ -135,7 +135,7 @@ public:
                                   DiscretizationOps & stiffness ) const final;
 
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const override final
   {
@@ -167,7 +167,7 @@ private:
 
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void DelftEggUpdates::evaluateYield( real64 const p,
                                      real64 const q,
                                      real64 const pc,
@@ -209,7 +209,7 @@ void DelftEggUpdates::evaluateYield( real64 const p,
 
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void DelftEggUpdates::smallStrainUpdate( localIndex const k,
                                          localIndex const q,
                                          real64 const & timeIncrement,
@@ -266,7 +266,7 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
 
   eps_s_trial = trialQ/3.0/mu;
 
-  real64 solution[3]{}, residual[3]{}, delta[3]{};
+  real64 solution[3] = {}, residual[3] = {}, delta[3] = {};
   real64 jacobian[3][3] = {{}}, jacobianInv[3][3] = {{}};
 
   solution[0] = eps_v_trial; // initial guess for elastic volumetric strain
@@ -437,7 +437,7 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
 
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void DelftEggUpdates::smallStrainUpdate( localIndex const k,
                                          localIndex const q,
                                          real64 const & timeIncrement,
