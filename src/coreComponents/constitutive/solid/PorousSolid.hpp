@@ -20,7 +20,6 @@
 #ifndef GEOS_CONSTITUTIVE_SOLID_POROUSSOLID_HPP_
 #define GEOS_CONSTITUTIVE_SOLID_POROUSSOLID_HPP_
 
-#include "constitutive/fluid/layouts.hpp"
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/solid/porosity/BiotPorosity.hpp"
 #include "constitutive/solid/SolidBase.hpp"
@@ -172,6 +171,7 @@ public:
    * @param stiffness the stiffness array
    */
   GEOS_HOST_DEVICE
+  inline
   void getElasticStiffness( localIndex const k, localIndex const q, real64 ( & stiffness )[6][6] ) const
   {
     m_solidUpdate.getElasticStiffness( k, q, stiffness );
@@ -185,6 +185,7 @@ private:
 
 
   GEOS_HOST_DEVICE
+  inline
   void updateBiotCoefficient( localIndex const k ) const
   {
     // This call is not general like this.
@@ -229,6 +230,7 @@ private:
   }
 
   GEOS_HOST_DEVICE
+  inline
   void computeTotalStress( localIndex const k,
                            localIndex const q,
                            real64 const & pressure,

@@ -21,7 +21,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
@@ -39,7 +39,7 @@ namespace singlePhaseBaseKernels
 struct MobilityKernel
 {
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static void
   compute( real64 const & dens,
            real64 const & dDens_dPres,
@@ -53,7 +53,7 @@ struct MobilityKernel
   }
 
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static void
   compute( real64 const & dens,
            real64 const & visc,

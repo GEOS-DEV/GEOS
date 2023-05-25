@@ -16,7 +16,7 @@
 // Source includes
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "common/DataTypes.hpp"
-#include "constitutive/fluid/CubicEOSPhaseModel.hpp"
+#include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
