@@ -60,6 +60,9 @@ public:
 
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
+  template< typename OBJECTTYPE = SimpleGeometricObjectBase, typename ... OBJECTTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forGeometricObject( LOOKUP_CONTAINER const & targetObjects, LAMBDA && lambda )
+
   virtual void expandObjectCatalogs() override;
 
 private:
