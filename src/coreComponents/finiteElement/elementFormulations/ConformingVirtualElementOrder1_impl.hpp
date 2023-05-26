@@ -31,7 +31,7 @@ void ConformingVirtualElementOrder1< MCN, MFN >::
 computeProjectors( localIndex const & cellIndex,
                    InputNodeCoords const & nodesCoords,
                    InputCellToNodeMap< SUBREGION_TYPE > const & cellToNodeMap,
-                   InputCellToFaceMap const & elementToFaceMap,
+                   InputCellToFaceMap< SUBREGION_TYPE > const & elementToFaceMap,
                    InputFaceToNodeMap const & faceToNodeMap,
                    InputFaceToEdgeMap const & faceToEdgeMap,
                    InputEdgeToNodeMap const & edgeToNodeMap,

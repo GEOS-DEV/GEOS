@@ -163,12 +163,20 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   }
 
   // Add the cell region/subregion/index to the faceElementToCells map
-  FixedToManyElementRelation & faceElementsToCells = subRegion.getToCellRelation();
-  for( localIndex ke=0; ke<2; ++ke )
+  OrderedVariableToManyElementRelation & faceElementsToCells = subRegion.getToCellRelation();
+
+  for( localIndex ke = 0; ke < 2; ++ke )
   {
-    faceElementsToCells.m_toElementRegion[kfe][ke] = faceToElementRegion[faceIndices[ke]][ke];
-    faceElementsToCells.m_toElementSubRegion[kfe][ke] = faceToElementSubRegion[faceIndices[ke]][ke];
-    faceElementsToCells.m_toElementIndex[kfe][ke] = faceToElementIndex[faceIndices[ke]][ke];
+    localIndex const & er = faceToElementRegion[faceIndices[ke]][ke];
+    localIndex const & esr = faceToElementSubRegion[faceIndices[ke]][ke];
+    localIndex const & ei = faceToElementIndex[faceIndices[ke]][ke];
+
+    if( er != -1 && esr != -1 && ei != -1 )
+    {
+      faceElementsToCells.m_toElementRegion.emplaceBack( kfe, er );
+      faceElementsToCells.m_toElementSubRegion.emplaceBack( kfe, esr );
+      faceElementsToCells.m_toElementIndex.emplaceBack( kfe, ei );
+    }
   }
 
   // Fill the connectivity between FaceElement entries. This is essentially a copy of the
@@ -203,7 +211,7 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   {
     SortedArrayView< localIndex const > const & faceSet = faceManager->sets().getReference< SortedArray< localIndex > >( setIter.first );
     SortedArray< localIndex > & faceElementSet = subRegion.sets().registerWrapper< SortedArray< localIndex > >( setIter.first ).reference();
-    for( localIndex a=0; a<faceMap.size( 0 ); ++a )
+    for( localIndex a = 0; a < faceMap.size(); ++a )
     {
       if( faceSet.count( faceMap[a][0] ) )
       {

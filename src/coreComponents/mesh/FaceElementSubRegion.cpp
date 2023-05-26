@@ -138,9 +138,18 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
   // we store the cell block mapping at the sub region mapping location.
   // It will later be transformed into a sub regions mapping.  // Last, we fill the regions mapping with dummy -1 values that should all be replaced eventually.
   auto const elem2dToElems = faceBlock.get2dElemToElems();
-  m_2dElemToElems.m_toElementIndex = elem2dToElems.toCellIndex;
-  m_2dElemToElems.m_toElementSubRegion = elem2dToElems.toBlockIndex;
-  m_2dElemToElems.m_toElementRegion.setValues< serialPolicy >( -1 );
+  m_2dFaceTo2dElems.resize( num2dElements, 2 );
+  for( int i = 0; i < num2dElements; ++i )
+  {
+    for( localIndex const & j: elem2dToElems.toCellIndex[i] )
+    {
+      m_2dElemToElems.m_toElementIndex.emplaceBack( i, j );
+    }
+    for( localIndex const & j: elem2dToElems.toBlockIndex[i] )
+    {
+      m_2dElemToElems.m_toElementSubRegion.emplaceBack( i, j );
+    }
+  }
 
   m_toFacesRelation.base() = faceBlock.get2dElemToFaces();
 
@@ -277,10 +286,9 @@ localIndex FaceElementSubRegion::packUpDownMapsImpl( buffer_unit_type * & buffer
                                                localToGlobal,
                                                edgeLocalToGlobal );
 
-  ArrayOfArrays< localIndex > faces = myConvert( m_toFacesRelation.base() );
   packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::faceListString() ) );
   packedSize += bufferOps::Pack< DO_PACKING >( buffer,
-                                               faces.toViewConst(),
+                                               m_toFacesRelation.toViewConst(),
                                                m_unmappedGlobalIndicesInToFaces,
                                                packList,
                                                localToGlobal,
@@ -331,14 +339,12 @@ localIndex FaceElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & bu
   unPackedSize += bufferOps::Unpack( buffer, faceListString );
   GEOS_ERROR_IF_NE( faceListString, viewKeyStruct::faceListString() );
 
-  ArrayOfArrays< localIndex > faces( myConvert( m_toFacesRelation.base() ) );
   unPackedSize += bufferOps::Unpack( buffer,
-                                     faces,
+                                     m_toFacesRelation,
                                      packList,
                                      m_unmappedGlobalIndicesInToFaces,
                                      this->globalToLocalMap(),
                                      m_toFacesRelation.relatedObjectGlobalToLocal() );
-  m_toFacesRelation.base() = myConvert( faces );
 
   string elementListString;
   unPackedSize += bufferOps::Unpack( buffer, elementListString );
@@ -583,11 +589,10 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
     localIndex esr;
     localIndex ei;
     localIndex face;
-    std::set< globalIndex > nodes;
 
     bool operator<( ElemPath const & other ) const
     {
-      return std::tie( er, esr, ei, face, nodes ) < std::tie( other.er, other.esr, other.ei, other.face, other.nodes );
+      return std::tie( er, esr, ei, face ) < std::tie( other.er, other.esr, other.ei, other.face );
     }
   };
 
@@ -612,7 +617,7 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
             nodesOfFace.insert( it->second );
           }
         }
-        ElemPath const path = ElemPath{ er, esr, ei, face, nodesOfFace };
+        ElemPath const path = ElemPath{ er, esr, ei, face };
         faceNodesToElems[nodesOfFace].insert( path );
       }
     }
@@ -621,9 +626,7 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
 
   for( int e2d = 0; e2d < num2dElems; ++e2d )
   {
-    localIndex const e0 = m_2dElemToElems.m_toElementIndex[e2d][0];
-    localIndex const e1 = m_2dElemToElems.m_toElementIndex[e2d][1];
-    if( e0 > -1 and e1 > -1 )  // We only consider elements with lost
+    if( m_2dElemToElems.m_toElementIndex.sizeOfArray( e2d ) >= 2 )
     { continue; }
 
     std::set< globalIndex > nodes;
@@ -635,53 +638,24 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
     auto const match = faceNodesToElems.find( nodes );
     if( match != faceNodesToElems.cend() )
     {
-      std::set< ElemPath > const & paths = match->second;
-
-      GEOS_LOG( "Found a match for " << e2d );
-      if( e0 == -1 )
+      GEOS_LOG_RANK( "Found a match for " << e2d );
+      for( ElemPath const & path: match->second )
       {
-        for( ElemPath const & path: paths )
+        if(  m_2dElemToElems.m_toElementIndex.sizeOfArray( e2d ) == 0 || m_2dElemToElems.m_toElementIndex[e2d][0] != path.ei )
         {
-          if( path.ei != e1 )
+          GEOS_LOG_RANK( "Found a correction for " << e2d );
+          m_2dElemToElems.m_toElementRegion.emplaceBack( e2d, path.er );
+          m_2dElemToElems.m_toElementSubRegion.emplaceBack( e2d, path.esr );
+          m_2dElemToElems.m_toElementIndex.emplaceBack( e2d, path.ei );
+          m_toFacesRelation.emplaceBack( e2d, path.face );
+          for( globalIndex const & gn: nodes )
           {
-            GEOS_LOG( "Found a correction for " << e2d );
-            m_2dElemToElems.m_toElementRegion[e2d][0] = path.er;
-            m_2dElemToElems.m_toElementSubRegion[e2d][0] = path.esr;
-            m_2dElemToElems.m_toElementIndex[e2d][0] = path.ei;
-            m_toFacesRelation[e2d][0] = path.face;
-            for( globalIndex const & gn: path.nodes )
-            {
-              m_toNodesRelation.emplaceBack( e2d, nodeManager.globalToLocalMap().at( gn ) );
-            }
-          }
-        }
-      }
-      if( e1 == -1 )
-      {
-        for( ElemPath const & path: paths )
-        {
-          if( path.ei != e0 )
-          {
-            GEOS_LOG( "Found a correction for " << e2d );
-            m_2dElemToElems.m_toElementRegion[e2d][1] = path.er;
-            m_2dElemToElems.m_toElementSubRegion[e2d][1] = path.esr;
-            m_2dElemToElems.m_toElementIndex[e2d][1] = path.ei;
-            m_toFacesRelation[e2d][1] = path.face;
-            for( globalIndex const & gn: path.nodes )
-            {
-              m_toNodesRelation.emplaceBack( e2d, nodeManager.globalToLocalMap().at( gn ) );
-            }
+            m_toNodesRelation.emplaceBack( e2d, nodeManager.globalToLocalMap().at( gn ) );
           }
         }
       }
     }
   }
-
-  // TODO what about m_toNodesRelation?
-//  m_toNodesRelation;
-
-  int a = 1;
-
 }
 
 void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const & faceManager,

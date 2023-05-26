@@ -566,17 +566,17 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
       }
     }
 
-    for( typename dataRepository::indexType kReg = 0; kReg < elemManager.numRegions(); ++kReg )
+    for( typename dataRepository::indexType er = 0; er < elemManager.numRegions(); ++er )
     {
-      ElementRegionBase const & elemRegion = elemManager.getRegion( kReg );
+      ElementRegionBase const & elemRegion = elemManager.getRegion( er );
 
       elemRegion.forElementSubRegionsIndex< CellElementSubRegion,
-                                            WellElementSubRegion >( [&]( localIndex const kSubReg,
+                                            WellElementSubRegion >( [&]( localIndex const esr,
                                                                          auto const & subRegion )
       {
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = subRegion.nodeList();
         arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
-        for( auto const elementIndex: elementAdjacencySet[kReg][kSubReg] )
+        for( auto const elementIndex: elementAdjacencySet[er][esr] )
         {
           for( localIndex a = 0; a < elemsToNodes.size( 1 ); ++a )
           {
@@ -596,23 +596,23 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
           }
         }
       } );
-      elemRegion.forElementSubRegionsIndex< FaceElementSubRegion >( [&]( localIndex const kSubReg,
+      elemRegion.forElementSubRegionsIndex< FaceElementSubRegion >( [&]( localIndex const esr,
                                                                          FaceElementSubRegion const & subRegion )
       {
-        auto const & elems2dToNodes = subRegion.nodeList();  // TODO What about edges and faces?
-        arrayView2d< localIndex const > const elems2dToFaces = subRegion.faceList();
-        auto const & elem2dToEdges = subRegion.edgeList();
-        for( auto const elementIndex: elementAdjacencySet[kReg][kSubReg] )
+        ArrayOfArraysView< localIndex const > const elems2dToNodes = subRegion.nodeList().toViewConst();  // TODO What about edges and faces?
+        ArrayOfArraysView< localIndex const > const elems2dToFaces = subRegion.faceList().toViewConst();
+        ArrayOfArraysView< localIndex const > const elem2dToEdges = subRegion.edgeList().toViewConst();
+        for( auto const ei: elementAdjacencySet[er][esr] )
         {
-          for( auto const & ni: elems2dToNodes[elementIndex] )
+          for( auto const & ni: elems2dToNodes[ei] )
           {
             nodeAdjacencySet.insert( ni );
           }
-          for( auto const & ei: elem2dToEdges[elementIndex] )
+          for( auto const & edi: elem2dToEdges[ei] )
           {
-            edgeAdjacencySet.insert( ei );
+            edgeAdjacencySet.insert( edi );
           }
-          for( auto const & fi: elems2dToFaces[elementIndex] )
+          for( auto const & fi: elems2dToFaces[ei] )
           {
             if( fi < 0 )
             { continue; }

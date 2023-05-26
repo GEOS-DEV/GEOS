@@ -47,9 +47,9 @@ public:
 
   ArrayOfArrays< localIndex > get2dElemToEdges() const override;
 
-  array2d< localIndex > get2dElemToFaces() const override;
+  ArrayOfArrays< localIndex > get2dElemToFaces() const override;
 
-  ToCellRelation< array2d< localIndex > > get2dElemToElems() const override;
+  ToCellRelation< ArrayOfArrays< localIndex > > get2dElemToElems() const override;
 
   array1d< localIndex > get2dFaceToEdge() const override;
 
@@ -83,7 +83,7 @@ public:
    * @brief Defines the 2d elements to faces mapping.
    * @param _2dElemToFaces The input mapping.
    */
-  void set2dElemToFaces( array2d< localIndex > && _2dElemToFaces );
+  void set2dElemToFaces( ArrayOfArrays< localIndex > && _2dElemToFaces );
 
   /**
    * @brief Defines the 2d faces to elements mapping.
@@ -101,7 +101,7 @@ public:
    * @brief Defines the 2d elements to 3d elements mapping.
    * @param _2dElemToElems The input mapping.
    */
-  void set2dElemToElems( ToCellRelation< array2d< localIndex > > && _2dElemToElems );
+  void set2dElemToElems( ToCellRelation< ArrayOfArrays< localIndex > > && _2dElemToElems );
 
   void setLocalToGlobalMap( array1d< globalIndex > && l2g )
   { m_localToGlobalMap = l2g; }
@@ -120,10 +120,11 @@ private:
 
   ArrayOfArrays< localIndex > m_2dElemToNodes;
   ArrayOfArrays< localIndex > m_2dElemToEdges;
-  array2d< localIndex > m_2dElemToFaces;
+  ArrayOfArrays< localIndex > m_2dElemToFaces;
+  ToCellRelation< ArrayOfArrays< localIndex > > m_2dElemToElems;
+
   ArrayOfArrays< localIndex > m_2dFaceTo2dElems;
   array1d< localIndex > m_2dFaceToEdge;
-  ToCellRelation< array2d< localIndex > > m_2dElemToElems;
 
   array1d< globalIndex > m_localToGlobalMap;
 

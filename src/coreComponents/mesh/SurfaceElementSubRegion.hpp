@@ -157,7 +157,7 @@ public:
    * @brief Get the surface element to cells map.
    * @return The surface element to cells map
    */
-  FixedToManyElementRelation & getToCellRelation()
+  OrderedVariableToManyElementRelation & getToCellRelation()
   {
     return m_2dElemToElems;
   }
@@ -165,7 +165,7 @@ public:
   /**
    * @copydoc getToCellRelation()
    */
-  FixedToManyElementRelation const & getToCellRelation() const
+  OrderedVariableToManyElementRelation const & getToCellRelation() const
   {
     return m_2dElemToElems;
   }
@@ -239,7 +239,7 @@ public:
 protected:
 
   /// Map between the surface elements and the cells
-  FixedToManyElementRelation m_2dElemToElems;
+  OrderedVariableToManyElementRelation m_2dElemToElems;
 
   /// Unmapped surface elements to nodes map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToNodes;

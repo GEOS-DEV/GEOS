@@ -43,17 +43,14 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
     setDescription( "Map to the edges attached to each SurfaceElement." );
 
   registerWrapper( viewKeyStruct::surfaceElementsToCellRegionsString(), &m_2dElemToElems.m_toElementRegion ).
-    setApplyDefaultValue( -1 ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "A map of face element local indices to the cell local indices" );
 
   registerWrapper( viewKeyStruct::surfaceElementsToCellSubRegionsString(), &m_2dElemToElems.m_toElementSubRegion ).
-    setApplyDefaultValue( -1 ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "A map of face element local indices to the cell local indices" );
 
   registerWrapper( viewKeyStruct::surfaceElementsToCellIndexString(), &m_2dElemToElems.m_toElementIndex ).
-    setApplyDefaultValue( -1 ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "A map of face element local indices to the cell local indices" );
 

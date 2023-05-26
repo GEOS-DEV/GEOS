@@ -161,17 +161,17 @@ void EdgeManager::setDomainBoundaryObjects( FaceManager const & faceManager,
     }
 
     FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
-    auto const & elem2dToFaces = subRegion.faceList();
-    for( int ei = 0; ei < elem2dToFaces.size( 0 ); ++ei )
+    ArrayOfArraysView< localIndex const > const & elem2dToFaces = subRegion.faceList().toViewConst();
+    for( int ei = 0; ei < elem2dToFaces.size(); ++ei )
     {
-      int const & face0 = elem2dToFaces( ei, 0 );
-      int const & face1 = elem2dToFaces( ei, 1 );
-      if( face0 < 0 or face1 < 0 )
+      if( elem2dToFaces.sizeOfArray( ei ) == 2 )
+      { continue; }
+
+      for( localIndex const & face: elem2dToFaces[ei] )
       {
-        int const & face = face0 < 0 ? face1 : face0;
-        for( localIndex const edgeIndex: faceToEdges[face] )
+        for( localIndex const & edge: faceToEdges[face] )
         {
-          isEdgeOnDomainBoundary[edgeIndex] = 1;
+          isEdgeOnDomainBoundary[edge] = 1;
         }
       }
     }

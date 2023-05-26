@@ -376,11 +376,11 @@ ArrayOfArrays< localIndex > computeElem2dToEdges( vtkIdType num2dElements,
  */
 struct Elem2dTo3dInfo
 {
-  ToCellRelation< array2d< localIndex > > elem2dToElem3d;
-  array2d< localIndex > elem2dToFaces;
+  ToCellRelation< ArrayOfArrays< localIndex > > elem2dToElem3d;
+  ArrayOfArrays< localIndex > elem2dToFaces;
 
-  Elem2dTo3dInfo( ToCellRelation< array2d< localIndex > > && elem2dToElem3d_,
-                  array2d< localIndex > && elem2dToFaces_ )
+  Elem2dTo3dInfo( ToCellRelation< ArrayOfArrays< localIndex > > && elem2dToElem3d_,
+                  ArrayOfArrays< localIndex > && elem2dToFaces_ )
     : elem2dToElem3d( elem2dToElem3d_ ),
     elem2dToFaces( elem2dToFaces_ )
   { }
@@ -459,10 +459,11 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
   }
 
   vtkIdType const num2dElements = faceMesh->GetNumberOfCells();
-  array2d< localIndex > elem2dToElem3d( num2dElements, 2 );
-  elem2dToElem3d.setValues< serialPolicy >( -1 );
-  array2d< localIndex > elem2dToCellBlock( elem2dToElem3d );
-  array2d< localIndex > elem2dToFaces( elem2dToElem3d );
+
+  ArrayOfArrays< localIndex > elem2dToElem3d( num2dElements, 2 );
+  ArrayOfArrays< localIndex > elem2dToCellBlock( num2dElements, 2 );
+  ArrayOfArrays< localIndex > elem2dToFaces( num2dElements, 2 );
+
   // Now we loop on all the 2d elements.
   for( int i = 0; i < num2dElements; ++i )
   {
@@ -497,8 +498,7 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
       if( e2n.second.size() == elem2dNumPoints )
       {
         // Now we know that the element 3d has a face that touches the element 2d. Let's find which one.
-        localIndex const idx = elem2dToElem3d[i][0] == -1 ? 0 : 1;
-        elem2dToElem3d[i][idx] = elemToFaces.getElementIndexInCellBlock( e2n.first );
+        elem2dToElem3d.emplaceBack( i, elemToFaces.getElementIndexInCellBlock( e2n.first ) );
         // Computing the elem2dToFaces mapping.
         auto faces = elemToFaces[e2n.first];
         for( int j = 0; j < faces.size( 0 ); ++j )
@@ -512,8 +512,8 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
           }
           if( globalNodes == e2n.second )
           {
-            elem2dToFaces[i][idx] = faceIndex;
-            elem2dToCellBlock[i][idx] = elemToFaces.getCellBlockIndex( e2n.first );
+            elem2dToFaces.emplaceBack( i, faceIndex );
+            elem2dToCellBlock.emplaceBack( i, elemToFaces.getCellBlockIndex( e2n.first ) );
             break;
           }
         }
@@ -521,7 +521,7 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
     }
   }
 
-  auto cellRelation = ToCellRelation< array2d< localIndex > >( std::move( elem2dToCellBlock ), std::move( elem2dToElem3d ) );
+  auto cellRelation = ToCellRelation< ArrayOfArrays< localIndex > >( std::move( elem2dToCellBlock ), std::move( elem2dToElem3d ) );
   return Elem2dTo3dInfo( std::move( cellRelation ), std::move( elem2dToFaces ) );
 }
 
@@ -535,10 +535,10 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
  */
 ArrayOfArrays< localIndex > computeElem2dToNodes( vtkIdType num2dElements,
                                                   ArrayOfArraysView< localIndex const > faceToNodes,
-                                                  arrayView2d< localIndex const > elem2dToFaces )
+                                                  ArrayOfArraysView< localIndex const > elem2dToFaces )
 {
   ArrayOfArrays< localIndex > elem2dToNodes( LvArray::integerConversion< localIndex >( num2dElements ) );
-  for( localIndex elem2dIndex = 0; elem2dIndex < elem2dToFaces.size( 0 ); ++elem2dIndex )
+  for( localIndex elem2dIndex = 0; elem2dIndex < elem2dToFaces.size(); ++elem2dIndex )
   {
     for( localIndex const & faceIndex: elem2dToFaces[elem2dIndex] )
     {

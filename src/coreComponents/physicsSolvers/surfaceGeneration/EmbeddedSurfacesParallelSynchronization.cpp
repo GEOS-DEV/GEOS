@@ -149,7 +149,7 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
       [&]( localIndex const er, localIndex const esr, ElementRegionBase &, EmbeddedSurfaceSubRegion & subRegion )
     {
 
-      FixedToManyElementRelation const & surfaceElementsToCells = subRegion.getToCellRelation();
+      OrderedVariableToManyElementRelation const & surfaceElementsToCells = subRegion.getToCellRelation();
 
       for( localIndex const & k : newObjects.newElements.at( {er, esr} ) )
       {

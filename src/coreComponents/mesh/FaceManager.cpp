@@ -147,20 +147,19 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
     // The fracture subregion knows the faces it's connected to.
     // And since a 2d element is connected to a given face, and since a face can only have 2 neighbors,
     // then the second neighbor of the face is bound to be undefined (i.e. -1).
-    auto const & elem2dToFaces = subRegion.faceList();
-    for( int ei = 0; ei < elem2dToFaces.size( 0 ); ++ei )
+    ArrayOfArraysView< localIndex const > const & elem2dToFaces = subRegion.faceList().toViewConst();
+    for( int ei = 0; ei < elem2dToFaces.size(); ++ei )
     {
-      for( int j = 0; j < elem2dToFaces.size( 1 ); ++j )
+      for( int const & face: elem2dToFaces[ei] )
       {
-        int const & face = elem2dToFaces( ei, j );
-        if( face < 0 )  // A face can equal -1 if the 2d element is at the boundary.
-        { continue; }
         GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementRegion( face, 0 ), -1, err );
         GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementSubRegion( face, 0 ), -1, err );
         GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementIndex( face, 0 ), -1, err );
+
         GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementRegion( face, 1 ), -1, err );
         GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementSubRegion( face, 1 ), -1, err );
         GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementIndex( face, 1 ), -1, err );
+
         m_toElements.m_toElementRegion( face, 1 ) = er;
         m_toElements.m_toElementSubRegion( face, 1 ) = esr;
         m_toElements.m_toElementIndex( face, 1 ) = ei;

@@ -38,7 +38,7 @@ class FaceElementSubRegion : public SurfaceElementSubRegion
 public:
 
   /// Face element to faces map type
-  using FaceMapType = InterObjectRelation< array2d< localIndex > >;
+  using FaceMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
 
   /**
    * @name Static factory catalog functions

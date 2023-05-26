@@ -103,7 +103,7 @@ public:
    * For the same given 2d element, the 3d face at index 0 (or 1) in the @p get2dElemToFaces mapping
    * will be part of the boundary of the 3d element at the same index 0 (or 1) in the @p get2dElemToElems mapping.
    */
-  virtual array2d< localIndex > get2dElemToFaces() const = 0;
+  virtual ArrayOfArrays< localIndex > get2dElemToFaces() const = 0;
 
   /**
    * @brief Get the 3d elements that are aside each 2d element (geometrical surfaces in 3d) of the @p FaceBlockABC.
@@ -118,7 +118,7 @@ public:
    * For the same given 2d element, the 3d face at index 0 (or 1) in the @p get2dElemToFaces mapping
    * will be part of the boundary of the 3d element at the same index 0 (or 1) in the @p get2dElemToElems mapping.
    */
-  virtual ToCellRelation< array2d< localIndex > > get2dElemToElems() const = 0;
+  virtual ToCellRelation< ArrayOfArrays< localIndex > > get2dElemToElems() const = 0;
 
   /**
    * @brief Get @e one 3d edge equivalent for each 2d faces (geometrical edges in 3d).

@@ -267,7 +267,7 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
     arrayView1d< real64 > const deltaVolume = subRegion.getField< flow::deltaVolume >();
     arrayView1d< real64 const > const area = subRegion.getElementArea();
-    arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
+    ArrayOfArraysView< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
     arrayView1d< real64 const > const &
@@ -617,10 +617,13 @@ HydrofractureSolver::
     {
       arrayView1d< real64 const > const & fluidPressure = subRegion.getField< flow::pressure >();
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
-      arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+      ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
 
       forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
+        if( elemsToFaces.sizeOfArray( kfe ) != 2 )
+        { return; }
+
         constexpr int kfSign[2] = { -1, 1 };
 
         real64 Nbar[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceNormal[elemsToFaces[kfe][0]] );
@@ -723,7 +726,7 @@ HydrofractureSolver::
       arrayView1d< real64 const > const aperture = subRegion.getElementAperture();
       arrayView1d< real64 const > const area = subRegion.getElementArea();
 
-      arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
+      ArrayOfArraysView< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
       ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
       arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
