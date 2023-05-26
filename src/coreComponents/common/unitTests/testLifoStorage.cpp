@@ -18,15 +18,20 @@
                                                                        STRINGIZE( L ) " = " << ( L ) << "\n" << STRINGIZE( R ) " = " << ( R ) );
 #endif
 
+namespace geos
+{
+
+namespace local
+{
 
 template< typename >
-struct LocalRAJAHelper
+struct RAJAHelper
 {};
 
 using serialPolicy = RAJA::loop_exec;
 
 template<>
-struct LocalRAJAHelper< serialPolicy >
+struct RAJAHelper< serialPolicy >
 {
   using ReducePolicy = RAJA::seq_reduce;
   using AtomicPolicy = RAJA::seq_atomic;
@@ -38,7 +43,7 @@ struct LocalRAJAHelper< serialPolicy >
 using parallelHostPolicy = RAJA::omp_parallel_for_exec;
 
 template<>
-struct LocalRAJAHelper< parallelHostPolicy >
+struct RAJAHelper< parallelHostPolicy >
 {
   using ReducePolicy = RAJA::omp_reduce;
   using AtomicPolicy = RAJA::omp_atomic;
@@ -53,7 +58,7 @@ template< unsigned long THREADS_PER_BLOCK >
 using devicePolicy = RAJA::cuda_exec< THREADS_PER_BLOCK >;
 
 template< unsigned long N >
-struct LocalRAJAHelper< RAJA::cuda_exec< N > >
+struct RAJAHelper< RAJA::cuda_exec< N > >
 {
   using ReducePolicy = RAJA::cuda_reduce;
   using AtomicPolicy = RAJA::cuda_atomic;
@@ -62,15 +67,14 @@ struct LocalRAJAHelper< RAJA::cuda_exec< N > >
 
 #endif
 
-using namespace geos;
-
+}
 
 template< typename POLICY >
 void testLifoStorage( int elemCnt, int numberOfElementsOnDevice, int numberOfElementsOnHost, int totalNumberOfBuffers )
 {
 
   array1d< float > array( elemCnt );
-  array.move( LocalRAJAHelper< POLICY >::space );
+  array.move( local::RAJAHelper< POLICY >::space );
   lifoStorage< float > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
 
   for( int j = 0; j < totalNumberOfBuffers; j++ )
@@ -96,7 +100,7 @@ template< typename POLICY >
 void testLifoStorageAsync( int elemCnt, int numberOfElementsOnDevice, int numberOfElementsOnHost, int totalNumberOfBuffers )
 {
   array1d< float > array( elemCnt );
-  array.move( LocalRAJAHelper< POLICY >::space );
+  array.move( local::RAJAHelper< POLICY >::space );
   lifoStorage< float > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
 
   for( int j = 0; j < totalNumberOfBuffers; j++ )
@@ -123,36 +127,38 @@ void testLifoStorageAsync( int elemCnt, int numberOfElementsOnDevice, int number
 
 TEST( LifoStorageTest, LifoStorageBufferOnHost )
 {
-  testLifoStorage< serialPolicy >( 10, 2, 3, 10 );
+  testLifoStorage< local::serialPolicy >( 10, 2, 3, 10 );
 }
 
 TEST( LifoStorageTest, LifoStorageBufferOnHostNoDeviceBuffer )
 {
-  testLifoStorage< serialPolicy >( 10, 0, 3, 10 );
+  testLifoStorage< local::serialPolicy >( 10, 0, 3, 10 );
 }
 
 TEST( LifoStorageTest, LifoStorageAsyncBufferOnHost )
 {
-  testLifoStorageAsync< serialPolicy >( 10, 2, 3, 10 );
+  testLifoStorageAsync< local::serialPolicy >( 10, 2, 3, 10 );
 }
 
 
 #ifdef GEOS_USE_CUDA
 TEST( LifoStorageTest, LifoStorageBufferOnCUDA )
 {
-  testLifoStorage< parallelDevicePolicy< > >( 10, 2, 3, 10 );
+  testLifoStorage< local::devicePolicy< 32 > >( 10, 2, 3, 10 );
 }
 
 TEST( LifoStorageTest, LifoStorageBufferOnCUDANoDeviceBuffer )
 {
-  testLifoStorage< parallelDevicePolicy< > >( 10, 0, 3, 10 );
+  testLifoStorage< local::devicePolicy< 32 > >( 10, 0, 3, 10 );
 }
 
 TEST( LifoStorageTest, LifoStorageAsyncBufferOnCUDA )
 {
-  testLifoStorageAsync< parallelDevicePolicy< > >( 10, 2, 3, 10 );
+  testLifoStorageAsync< local::devicePolicy< 32 > >( 10, 2, 3, 10 );
 }
 #endif
+
+}
 
 int main( int ac, char * av[] )
 {
