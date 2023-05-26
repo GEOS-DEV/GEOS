@@ -629,7 +629,7 @@ redistributeByCellGraph( vtkDataSet & mesh,
     MpiWrapper::allGather( numElems, elemCounts, comm );
     std::partial_sum( elemCounts.begin(), elemCounts.end(), elemDist.begin() + 1 );
   }
-  int64_t const offset = elemDist.back();
+  pmet_idx_t const offset = elemDist.back();
 
   vtkIdType localNumFracCells = 0;
   if( isLastMpiRank ) // Let's add artificially the fracture to the last rank (for numbering reasons).
@@ -676,12 +676,12 @@ redistributeByCellGraph( vtkDataSet & mesh,
   }();
 
   // Extract the partition information related to the fracture mesh.
-  std::vector< array1d< int64_t > > newFracturePartitions;
+  std::vector< array1d< pmet_idx_t > > newFracturePartitions;
   vtkIdType fracOffset = mesh.GetNumberOfCells();
   for( auto const & fracture: fractures )
   {
     localIndex const numFracCells = fracture->GetNumberOfCells();
-    array1d< int64_t > tmp( numFracCells );
+    array1d< pmet_idx_t > tmp( numFracCells );
     std::copy( newPartitions.begin() + fracOffset, newPartitions.begin() + fracOffset + numFracCells, tmp.begin() );
     newFracturePartitions.push_back( tmp );
     fracOffset += numFracCells;
