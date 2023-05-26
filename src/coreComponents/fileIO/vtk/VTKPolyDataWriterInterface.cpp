@@ -235,11 +235,11 @@ static vtkSmartPointer< vtkPoints >
 getVtkPoints( ParticleRegion const & particleRegion ) // TODO: Loop over the subregions owned by this region and operate on them directly
 {
   // Particles are plotted as polyhedron with the geometry determined by the particle
-  // type.  CPDI particles are parallelepiped (8 corners and 6 faces).  
+  // type.  CPDI particles are parallelepiped (8 corners and 6 faces).
   // TODO: add support for CPTI (tet) and single point (cube or sphere) geometries
 
   localIndex const numCornersPerParticle = 8; // Each CPDI particle has 8 corners. TODO: add support for other particle types.
-  localIndex const numCorners = numCornersPerParticle * particleRegion.size(); 
+  localIndex const numCorners = numCornersPerParticle * particleRegion.size();
   auto points = vtkSmartPointer< vtkPoints >::New();
   points->SetNumberOfPoints( numCorners );
   array2d< real64 > const coord = particleRegion.getParticleCorners();

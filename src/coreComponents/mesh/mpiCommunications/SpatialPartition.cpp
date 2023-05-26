@@ -738,15 +738,15 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
   } );
 }
 
-  /**
-   * @brief Send coordinates to neighbors as part of repartition.
-   * @param[in] particleCoordinatesSendingToNeighbors Single list of coordinates sent to all neighbors
-   * @param[in] commData Solver's MPI communicator
-   * @param[in] particleCoordinatesReceivedFromNeighbors List of lists of coordinates received from each neighbor
-   */
-void SpatialPartition::sendCoordinateListToNeighbors( arrayView1d< R1Tensor > const & particleCoordinatesSendingToNeighbors,               
-                                                      MPI_iCommData & commData,                                                            
-                                                      std::vector< array1d< R1Tensor > > & particleCoordinatesReceivedFromNeighbors        
+/**
+ * @brief Send coordinates to neighbors as part of repartition.
+ * @param[in] particleCoordinatesSendingToNeighbors Single list of coordinates sent to all neighbors
+ * @param[in] commData Solver's MPI communicator
+ * @param[in] particleCoordinatesReceivedFromNeighbors List of lists of coordinates received from each neighbor
+ */
+void SpatialPartition::sendCoordinateListToNeighbors( arrayView1d< R1Tensor > const & particleCoordinatesSendingToNeighbors,
+                                                      MPI_iCommData & commData,
+                                                      std::vector< array1d< R1Tensor > > & particleCoordinatesReceivedFromNeighbors
                                                       )
 {
   // Number of neighboring partitions

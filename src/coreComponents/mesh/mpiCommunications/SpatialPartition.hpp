@@ -86,7 +86,7 @@ public:
    * @param[in] commData Solver's MPI communicator
    * @param[in] particleCoordinatesReceivedFromNeighbors List of lists of coordinates received from each neighbor
    */
-  void sendCoordinateListToNeighbors( arrayView1d< R1Tensor > const & particleCoordinatesSendingToNeighbors, 
+  void sendCoordinateListToNeighbors( arrayView1d< R1Tensor > const & particleCoordinatesSendingToNeighbors,
                                       MPI_iCommData & commData,
                                       std::vector< array1d< R1Tensor > > & particleCoordinatesReceivedFromNeighbors
                                       );
