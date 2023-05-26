@@ -128,6 +128,12 @@ protected:
    */
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const;
 
+  /**
+   * @brief Helper function to compute/report the elements with small pore volumes
+   * @param[in] domain the domain partition
+   */
+  virtual void validatePoreVolumes( DomainPartition const & domain ) const;
+
   virtual void precomputeData( MeshLevel & mesh,
                                arrayView1d< string const > const & regionNames );
 
