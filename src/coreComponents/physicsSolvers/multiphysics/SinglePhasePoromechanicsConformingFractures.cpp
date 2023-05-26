@@ -220,6 +220,12 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
                                                             SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
                                                             kernelFactory );
 
+    mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          FaceElementSubRegion const & subRegion )
+    {
+      poromechanicsSolver()->flowSolver()->accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );
+    } );
+
     /// 2.a assemble Kut
     contactSolver()->assembleForceResidualDerivativeWrtTraction( mesh, regionNames, dofManager, localMatrix, localRhs );
     /// 2.b assemble Ktu, Ktt blocks.
