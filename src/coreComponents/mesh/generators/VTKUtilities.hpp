@@ -112,7 +112,7 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes );
  * @return the vtk grid redistributed
  */
 AllMeshes
-redistributeMesh( vtkDataSet & loadedMesh,
+redistributeMesh( vtkSmartPointer< vtkDataSet > loadedMesh,
                   std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
                   MPI_Comm const comm,
                   PartitionMethod const method,
