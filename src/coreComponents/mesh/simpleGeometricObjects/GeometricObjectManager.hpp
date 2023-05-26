@@ -72,7 +72,7 @@ public:
   template< typename OBJECTTYPE = SimpleGeometricObjectBase, typename ... OBJECTTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
   void forGeometricObject( LOOKUP_CONTAINER const & targetObjects, LAMBDA && lambda )
   {
-  this->forSubGroups< OBJECTTYPE, OBJECTTYPES... >( targetObjects, std::forward< LAMBDA >( lambda ) );
+    this->forSubGroups< OBJECTTYPE, OBJECTTYPES... >( targetObjects, std::forward< LAMBDA >( lambda ) );
   }
 
   virtual void expandObjectCatalogs() override;
