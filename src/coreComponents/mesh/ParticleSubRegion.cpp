@@ -52,9 +52,12 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock 
   m_particleType = particleBlock.getParticleType();
   m_particleID = particleBlock.getParticleID();
   m_particleGroup = particleBlock.getParticleGroup();
+  m_particleSurfaceFlag = particleBlock.getParticleSurfaceFlag();
   m_particleDamage = particleBlock.getParticleDamage();
+  m_particleStrengthScale = particleBlock.getParticleStrengthScale();
   m_particleCenter = particleBlock.getParticleCenter();
   m_particleVelocity = particleBlock.getParticleVelocity();
+  m_particleMaterialDirection = particleBlock.getParticleMaterialDirection();
   m_particleVolume = particleBlock.getParticleVolume();
   m_particleRVectors = particleBlock.getParticleRVectors();
   m_hasRVectors = particleBlock.hasRVectors();

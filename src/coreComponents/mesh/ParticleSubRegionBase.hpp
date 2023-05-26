@@ -111,6 +111,19 @@ public:
   { return m_particleGroup; }
 
   /**
+   * @brief Get the contact group of each particle in this subregion.
+   * @return an arrayView1d of const particle surface flags
+   */
+  arrayView1d< int const > getParticleSurfaceFlag() const
+  { return m_particleSurfaceFlag; }
+
+  /**
+   * @copydoc getParticleSurfaceFlag() const
+   */
+  arrayView1d< int > getParticleSurfaceFlag()
+  { return m_particleSurfaceFlag; }
+
+  /**
    * @brief Get the damage of each particle in this subregion.
    * @return an arrayView1d of const particle damage
    */
@@ -118,10 +131,25 @@ public:
   { return m_particleDamage; }
 
   /**
-   * @copydoc getParticleGroup() const
+   * @copydoc getParticleDamage() const
    */
   arrayView1d< real64 > getParticleDamage()
   { return m_particleDamage; }
+
+
+  /**
+   * @brief Get the damage of each particle in this subregion.
+   * @return an arrayView1d of const particle strength scale
+   */
+  arrayView1d< real64 const > getParticleStrengthScale() const
+  { return m_particleStrengthScale; }
+
+  /**
+   * @copydoc getParticleStrengthScale() const
+   */
+  arrayView1d< real64 > getParticleStrengthScale()
+  { return m_particleStrengthScale; }
+
 
   /**
    * @brief Get the ghost rank of each particle in this subregion.
@@ -168,6 +196,19 @@ public:
    */
   arrayView2d< real64 > getParticleVelocity()
   { return m_particleVelocity; }
+
+  /**
+   * @brief Get the velocity of each particle in this subregion.
+   * @return an arrayView1d of const particle material direction
+   */
+  arrayView2d< real64 const > getParticleMaterialDirection() const
+  { return m_particleMaterialDirection; }
+
+  /**
+   * @copydoc getParticleMaterialDirection() const
+   */
+  arrayView2d< real64 > getParticleMaterialDirection()
+  { return m_particleMaterialDirection; }
 
   /**
    * @brief Get the current volume of each particle in this subregion.
@@ -300,8 +341,14 @@ public:
     /// @return String key for the member level field for the particle contact group.
     static constexpr char const * particleGroupString() { return "particleGroup"; }
 
+    /// @return String key for the member level field for the particle surface flag.
+    static constexpr char const * particleSurfaceFlagString() { return "particleSurfaceFlag"; }
+
     /// @return String key for the member level field for the particle damage.
     static constexpr char const * particleDamageString() { return "particleDamage"; }
+
+    /// @return String key for the member level field for the particle strength scale.
+    static constexpr char const * particleStrengthScaleString() { return "particleStrengthScale"; }
 
     /// @return String key for the member level field for the particle ghost rank.
     static constexpr char const * particleRankString() { return "particleRank"; }
@@ -311,6 +358,9 @@ public:
 
     /// @return String key for the member level field for the particle velocity.
     static constexpr char const * particleVelocityString() { return "particleVelocity"; }
+
+    /// @return String key for the member level field for the particle material direction.
+    static constexpr char const * particleMaterialDirectionString() { return "particleMaterialDirection"; }
 
     /// @return String key for the member level field for the current particle volume.
     static constexpr char const * particleVolumeString() { return "particleVolume"; }
@@ -395,14 +445,23 @@ protected:
   /// Member level field for the particle contact group.
   array1d< int > m_particleGroup;
 
+  /// Member level field for the particle surface flag.
+  array1d< int > m_particleSurfaceFlag;
+
   /// Member level field for the particle damage.
   array1d< real64 > m_particleDamage;
+
+  /// Member level field for the particle strength scale.
+  array1d< real64 > m_particleStrengthScale;
 
   /// Member level field for the particle center.
   array2d< real64 > m_particleCenter;
 
   /// Member level field for the particle velocity.
   array2d< real64 > m_particleVelocity;
+
+  /// Member level field for the particle material direction.
+  array2d< real64 > m_particleMaterialDirection;
 
   /// Member level field for the current particle volume.
   array1d< real64 > m_particleVolume;
