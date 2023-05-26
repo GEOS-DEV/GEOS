@@ -1,69 +1,6 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers
-    gravityVector="{ 0.0, 0.0, 0.0 }">
-    <SinglePhasePoromechanicsEmbeddedFractures
-      name="poroSolver"
-      targetRegions="{ Domain, Fracture }"
-      initialDt="1e-3"
-      fracturesSolverName="fractureMechSolver"
-      flowSolverName="flowSolver"
-      solidSolverName="matrixMechSolver"
-      logLevel="1">
-      <NonlinearSolverParameters
-        maxTimeStepCuts="1"
-        newtonMaxIter= "50"
-        newtonTol="1e-6"/>
-      <!-- <LinearSolverParameters
-        directParallel="1"/> -->
-      <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1e-8"
-        preconditionerType="jacobi"/>        
-    </SinglePhasePoromechanicsEmbeddedFractures>
-
-    <SolidMechanicsEmbeddedFractures
-      name="fractureMechSolver"
-      targetRegions="{ Domain, Fracture }"
-      solidSolverName="matrixMechSolver"
-      fractureRegionName="Fracture"
-      contactRelationName="fractureContact"/>
-
-    <SolidMechanicsLagrangianSSLE
-      name="matrixMechSolver"
-      timeIntegrationOption="QuasiStatic"
-      discretization="FE1"
-      targetRegions="{ Domain }"/>
-
-    <SinglePhaseFVM
-      name="flowSolver"
-      discretization="singlePhaseTPFA"
-      targetRegions="{ Domain, Fracture }"/>
-
-    <EmbeddedSurfaceGenerator
-      name="SurfaceGenerator"
-      discretization="FE1"
-      targetRegions="{ Domain, Fracture }"
-      targetObjects="{FracturePlane}"
-      fractureRegion="Fracture"
-      logLevel="2"
-      mpiCommOrder="1"/>
-  </Solvers>
-
-  <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 15 }"
-      yCoords="{ 0, 10 }"
-      zCoords="{ -5, 5 }"
-      nx="{ 45 }"
-      ny="{ 31 }"
-      nz="{ 31 }"
-      cellBlockNames="{ cb1 }"/>
-  </Mesh>
-
   <Geometry>
     <Box
       name="source"
@@ -77,28 +14,6 @@
       widthVector="{ 0, 0, 1 }"
       radius="4.0"/>
   </Geometry>
-
-  <Events
-    maxTime="2.0">
-    <SoloEvent
-      name="preFracture"
-      target="/Solvers/SurfaceGenerator"/>
-
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="0.1"
-      target="/Solvers/poroSolver"/>
-
-    <PeriodicEvent
-      name="outputs"
-      cycleFrequency="1"
-      target="/Outputs/vtkOutput"/>
-
-    <!-- <PeriodicEvent
-      name="restarts"
-      timeFrequency="10"
-      target="/Outputs/restartOutput"/> -->
-  </Events>
 
   <NumericalMethods>
     <FiniteElements>
@@ -137,7 +52,7 @@
     <ElasticIsotropic
       name="rock"
       defaultDensity="1000"
-      defaultYoungModulus="16"
+      defaultYoungModulus="16e9"
       defaultPoissonRatio="0.18"/>
 
     <ConstantPermeability
@@ -147,15 +62,15 @@
     <CompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
-      defaultViscosity="1.0e-12"
-      referencePressure="0e6"
-      compressibility="0.0e0"
-      referenceViscosity="1e-12"
+      defaultViscosity="1.0e-3"
+      referencePressure="0.0e6"
+      compressibility="1.0e-10"
+      referenceViscosity="1e-3"
       viscosibility="0.0"/>
 
     <BiotPorosity
       name="rockPorosity"
-      grainBulkModulus="41.667"
+      grainBulkModulus="1e27"
       defaultReferencePorosity="0.0"/>
 
     <CompressibleSolidParallelPlatesPermeability
@@ -199,13 +114,13 @@
       objectPath="ElementRegions/Domain/cb1"
       fieldName="pressure"/>
 
-    <FieldSpecification
+    <!-- <FieldSpecification
       name="initialPressureFracture"
-      initialCondition="1"
+      initialCondition="0"
       setNames="{ all }"
       objectPath="ElementRegions/Fracture"
       fieldName="pressure"
-      scale="0.0e5"/>
+      scale="1.0e5"/> -->
 
     <FieldSpecification
       name="xnegconstraint"
@@ -269,7 +184,7 @@
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="PoroElastic_embedded"
+      plotFileRoot="PoroElastic_efem-edfm_penny"
       plotLevel="2"
       format="binary"/>
 
