@@ -159,21 +159,21 @@ std::vector< T > collectUniqueValues( std::vector< T > const & data )
  * @param[in] mesh a vtk grid
  * @return @p true if i@p mesh is structured; @p false otehrwise
  */
-bool isMeshStructured( vtkDataSet & mesh )
+bool isMeshStructured( vtkSmartPointer< vtkDataSet > mesh )
 {
-  if( mesh.IsA( "vtkStructuredPoints" ) )
+  if( mesh->IsA( "vtkStructuredPoints" ) )
   {
     return true;
   }
-  else if( mesh.IsA( "vtkStructuredGrid" ) )
+  else if( mesh->IsA( "vtkStructuredGrid" ) )
   {
     return true;
   }
-  else if( mesh.IsA( "vtkRectilinearGrid" ) )
+  else if( mesh->IsA( "vtkRectilinearGrid" ) )
   {
     return true;
   }
-  else if( mesh.IsA( "vtkImageData" ) )
+  else if( mesh->IsA( "vtkImageData" ) )
   {
     return true;
   }
@@ -208,21 +208,21 @@ generateGlobalIDs( vtkSmartPointer< vtkDataSet > mesh )
  * @param[in] mesh a vtk grid
  * @return an array of cells
  */
-vtkSmartPointer< vtkCellArray > getCellArray( vtkDataSet & mesh )
+vtkSmartPointer< vtkCellArray > getCellArray( vtkSmartPointer< vtkDataSet > mesh )
 {
   vtkSmartPointer< vtkCellArray > cells = vtkSmartPointer< vtkCellArray >::New();
-  if( mesh.IsA( "vtkUnstructuredGrid" ) )
+  if( mesh->IsA( "vtkUnstructuredGrid" ) )
   {
-    cells = vtkUnstructuredGrid::SafeDownCast( &mesh )->GetCells();
+    cells = vtkUnstructuredGrid::SafeDownCast( mesh )->GetCells();
   }
   else if( isMeshStructured( mesh ) )
   {
     // All cells are either hexahedra or voxels
-    vtkIdType const numCells = mesh.GetNumberOfCells();
+    vtkIdType const numCells = mesh->GetNumberOfCells();
     cells->AllocateExact( numCells, 8 * numCells );
     for( vtkIdType c = 0; c < numCells; ++c )
     {
-      cells->InsertNextCell( mesh.GetCell( c ));
+      cells->InsertNextCell( mesh->GetCell( c ));
     }
   }
   else
@@ -244,16 +244,15 @@ vtkSmartPointer< vtkCellArray > getCellArray( vtkDataSet & mesh )
   */
 template< typename INDEX_TYPE, typename POLICY >
 ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
-buildElemToNodesImpl( vtkDataSet & mesh,
-                      vtkSmartPointer< vtkCellArray > const & cells,
-                      std::vector< vtkSmartPointer< vtkDataSet > > & fractures )
+buildElemToNodesImpl( AllMeshes & input,
+                      vtkSmartPointer< vtkCellArray > const & cells )
 {
-  localIndex const num3dCells = LvArray::integerConversion< localIndex >( mesh.GetNumberOfCells() );
+  localIndex const num3dCells = LvArray::integerConversion< localIndex >( input.main->GetNumberOfCells() );
 
   localIndex num2dCells = 0;
-  for( auto const & fracture: fractures)
+  for( auto const & fracture: input.faceBlocks )
   {
-    num2dCells += fracture->GetNumberOfCells();
+    num2dCells += fracture.second->GetNumberOfCells();
   }
   localIndex const numCells = num3dCells + num2dCells;
   array1d< INDEX_TYPE > nodeCounts( numCells );
@@ -265,8 +264,9 @@ buildElemToNodesImpl( vtkDataSet & mesh,
   } );
 
   localIndex offset = num3dCells;
-  for( auto const & fracture: fractures )
+  for( auto & nf: input.faceBlocks )
   {
+    vtkSmartPointer< vtkDataSet > fracture = nf.second;
     // Check that fracture is not empty.
     if( fracture->GetNumberOfCells() == 0 )
     { continue; }
@@ -297,7 +297,7 @@ buildElemToNodesImpl( vtkDataSet & mesh,
   ArrayOfArrays< INDEX_TYPE, INDEX_TYPE > elemToNodes;
   elemToNodes.template resizeFromCapacities< parallelHostPolicy >( numCells, nodeCounts.data() );
 
-  vtkIdTypeArray const & globalPointId = *vtkIdTypeArray::FastDownCast( mesh.GetPointData()->GetGlobalIds() );
+  vtkIdTypeArray const & globalPointId = *vtkIdTypeArray::FastDownCast( input.main->GetPointData()->GetGlobalIds() );
 
   // GetCellAtId() is conditionally thread-safe, use POLICY argument
   forAll< POLICY >( num3dCells, [&cells, &globalPointId, elemToNodes = elemToNodes.toView()] ( localIndex const cellIdx )
@@ -313,8 +313,10 @@ buildElemToNodesImpl( vtkDataSet & mesh,
   } );
 
   offset = num3dCells;  // Restarting the loop from the beginning.
-  for( auto const & fracture: fractures )
+  for( auto const & nf: input.faceBlocks )
   {
+    vtkSmartPointer< vtkDataSet > fracture = nf.second;
+
     if( fracture->GetNumberOfCells() == 0 )
     { continue; }  // Maybe check on num2dCells?
 
@@ -355,16 +357,15 @@ buildElemToNodesImpl( vtkDataSet & mesh,
  */
 template< typename INDEX_TYPE >
 ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
-buildElemToNodes( vtkDataSet & mesh,
-                  std::vector< vtkSmartPointer< vtkDataSet > > & fractures )
+buildElemToNodes( AllMeshes & input )
 {
-  vtkSmartPointer< vtkCellArray > const & cells = vtk::getCellArray( mesh );
+  vtkSmartPointer< vtkCellArray > const & cells = vtk::getCellArray( input.main );
   // According to VTK docs, IsStorageShareable() indicates whether pointers extracted via
   // vtkCellArray::GetCellAtId() are pointers into internal storage rather than temp buffer
   // and thus results can be used in a thread-safe way.
   return cells->IsStorageShareable()
-       ? buildElemToNodesImpl< INDEX_TYPE, parallelHostPolicy >( mesh, cells, fractures )
-       : buildElemToNodesImpl< INDEX_TYPE, serialPolicy >( mesh, cells, fractures );
+         ? buildElemToNodesImpl< INDEX_TYPE, parallelHostPolicy >( input, cells )
+         : buildElemToNodesImpl< INDEX_TYPE, serialPolicy >( input, cells );
 }
 
 /**
@@ -381,7 +382,7 @@ buildElemToNodes( vtkDataSet & mesh,
  */
 template< typename PART_INDEX >
 vtkSmartPointer< vtkPartitionedDataSet >
-splitMeshByPartition( vtkDataSet & mesh,
+splitMeshByPartition( vtkSmartPointer< vtkDataSet > mesh,
                       PART_INDEX const numParts,
                       arrayView1d< PART_INDEX const > const & part )
 {
@@ -404,7 +405,7 @@ splitMeshByPartition( vtkDataSet & mesh,
   result->SetNumberOfPartitions( LvArray::integerConversion< unsigned int >( numParts ) );
 
   vtkNew< vtkExtractCells > extractor;
-  extractor->SetInputDataObject( &mesh );
+  extractor->SetInputDataObject( mesh );
 
   for( localIndex p = 0; p < numParts; ++p )
   {
@@ -600,19 +601,14 @@ AllMeshes loadAllMeshes( Path const & filePath,
  * @param[in] numRefinements the number of refinements for PTScotch
  * @return the vtk grid redistributed
  */
-std::tuple<
-  vtkSmartPointer< vtkDataSet >, // main
-  std::vector< vtkSmartPointer< vtkDataSet > > // fractures
->
-redistributeByCellGraph( vtkDataSet & mesh,
-                         std::vector< vtkSmartPointer< vtkDataSet > > & fractures,
-                         PartitionMethod const method,
-                         MPI_Comm const comm,
-                         int const numRefinements )
+AllMeshes redistributeByCellGraph( AllMeshes & input,
+                                   PartitionMethod const method,
+                                   MPI_Comm const comm,
+                                   int const numRefinements )
 {
   GEOS_MARK_FUNCTION;
 
-  pmet_idx_t const numElems = mesh.GetNumberOfCells();
+  pmet_idx_t const numElems = input.main->GetNumberOfCells();
   pmet_idx_t const numRanks = MpiWrapper::commSize( comm );
   int const rank = MpiWrapper::commRank( comm );
   int const lastRank = numRanks - 1;
@@ -635,9 +631,9 @@ redistributeByCellGraph( vtkDataSet & mesh,
   if( isLastMpiRank ) // Let's add artificially the fracture to the last rank (for numbering reasons).
   {
     // Adding one fracture element
-    for( auto fracture: fractures )
+    for( auto fracture: input.faceBlocks )
     {
-      localNumFracCells += fracture->GetNumberOfCells();
+      localNumFracCells += fracture.second->GetNumberOfCells();
     }
   }
   vtkIdType globalNumFracCells = localNumFracCells;
@@ -647,7 +643,7 @@ redistributeByCellGraph( vtkDataSet & mesh,
   // Use pmet_idx_t here to match ParMETIS' pmet_idx_t
   // The `elemToNodes` mapping binds element indices, local to the rank.
   // to the global indices of their support nodes.
-  ArrayOfArrays< pmet_idx_t, pmet_idx_t > const elemToNodes = buildElemToNodes< pmet_idx_t >( mesh, fractures );
+  ArrayOfArrays< pmet_idx_t, pmet_idx_t > const elemToNodes = buildElemToNodes< pmet_idx_t >( input );
   ArrayOfArrays< pmet_idx_t, pmet_idx_t > const graph = parmetis::meshToDual( elemToNodes.toViewConst(), elemDist, comm, 3 );
 
   // `newParts` will contain the target rank (i.e. partition) for each of the elements of the current rank.
@@ -676,14 +672,16 @@ redistributeByCellGraph( vtkDataSet & mesh,
   }();
 
   // Extract the partition information related to the fracture mesh.
-  std::vector< array1d< pmet_idx_t > > newFracturePartitions;
-  vtkIdType fracOffset = mesh.GetNumberOfCells();
-  for( auto const & fracture: fractures )
+  std::map< string , array1d< pmet_idx_t > > newFracturePartitions;
+  vtkIdType fracOffset = input.main->GetNumberOfCells();
+  for( auto const & nf: input.faceBlocks )
   {
+    vtkSmartPointer< vtkDataSet > fracture = nf.second;
+
     localIndex const numFracCells = fracture->GetNumberOfCells();
     array1d< pmet_idx_t > tmp( numFracCells );
     std::copy( newPartitions.begin() + fracOffset, newPartitions.begin() + fracOffset + numFracCells, tmp.begin() );
-    newFracturePartitions.push_back( tmp );
+    newFracturePartitions[nf.first] = tmp;
     fracOffset += numFracCells;
   }
   // Now do the same for the 3d mesh, simply by trimming the fracture information.
@@ -693,18 +691,21 @@ redistributeByCellGraph( vtkDataSet & mesh,
   // Then those newly split meshes will be redistributed across the ranks.
 
   // First for the main 3d mesh...
-  vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( mesh, numRanks, newPartitions.toViewConst() );
-  vtkSmartPointer< vtkUnstructuredGrid > const & finalMesh = vtk::redistribute( *splitMesh, MPI_COMM_GEOSX );
+  vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( input.main, numRanks, newPartitions.toViewConst() );
+  vtkSmartPointer< vtkUnstructuredGrid > finalMesh = vtk::redistribute( *splitMesh, MPI_COMM_GEOSX );
   // ... and then for the fractures.
-  std::vector< vtkSmartPointer< vtkDataSet > > finalFractures;
-  for( size_t i = 0; i < newFracturePartitions.size(); ++i )
+  std::map< string, vtkSmartPointer< vtkDataSet > > finalFractures;
+  for( auto const & nf: input.faceBlocks )
   {
-    vtkSmartPointer< vtkPartitionedDataSet > const splitFracMesh = splitMeshByPartition( *fractures[i], numRanks, newFracturePartitions[i].toViewConst() );
-    vtkSmartPointer< vtkUnstructuredGrid > const & finalFracMesh = vtk::redistribute( *splitFracMesh, MPI_COMM_GEOSX );
-    finalFractures.emplace_back( finalFracMesh );
+    string const fractureName = nf.first;
+    vtkSmartPointer< vtkDataSet > fracture = nf.second;
+
+    vtkSmartPointer< vtkPartitionedDataSet > const splitFracMesh = splitMeshByPartition( fracture, numRanks, newFracturePartitions[fractureName].toViewConst() );
+    vtkSmartPointer< vtkUnstructuredGrid > const finalFracMesh = vtk::redistribute( *splitFracMesh, MPI_COMM_GEOSX );
+    finalFractures[fractureName] = finalFracMesh;
   }
 
-  return { finalMesh, finalFractures };
+  return AllMeshes( finalMesh, finalFractures );
 }
 
 /**
@@ -840,18 +841,8 @@ redistributeMesh( vtkSmartPointer< vtkDataSet > loadedMesh,
   // Redistribute the mesh again using higher-quality graph partitioner
   if( partitionRefinement > 0 )
   {
-    auto meshes = redistributeByCellGraph( *mesh, fractures, method, comm, partitionRefinement - 1 );
-    result.main = std::get< 0 >( meshes );
-    auto fracs = std::get< 1 >( meshes ); // TODO terrible code...
-    std::vector< string > fractureNames;
-    for( auto const & nf: namesToFractures )
-    {
-      fractureNames.push_back( nf.first );
-    }
-    for( std::size_t i = 0; i < fractureNames.size(); ++i )  // This should be a zip; or something better...
-    {
-      result.faceBlocks[fractureNames.at( i )] = fracs.at( i );
-    }
+    AllMeshes input( mesh, namesToFractures );
+    result = redistributeByCellGraph( input, method, comm, partitionRefinement - 1 );
   }
   else
   {
