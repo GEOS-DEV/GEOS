@@ -166,18 +166,6 @@ struct WaveSolverUtils
             }
             // linear interpolation between the pressure value at time_n and time_(n+1)
             varAtReceivers[iSeismo][ircv] = a1*vtmp_n + a2*vtmp_np1;
-            if( iSeismo == nsamplesSeismoTrace - 1 )
-            {
-              if( outputSeismoTrace == 1 )
-              {
-                std::ofstream f( GEOS_FMT( "seismoTraceReceiver{:03}.txt", ircv ), std::ios::app );
-                for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
-                {
-                  f << iSample << " " << varAtReceivers[iSample][ircv] << std::endl;
-                }
-                f.close();
-              }
-            }
           }
         }
       } );
@@ -185,30 +173,31 @@ struct WaveSolverUtils
 
     // TODO DEBUG: the following output is only temporary until our wave propagation kernels are finalized.
     // Output will then only be done via the previous code.
-    // if( iSeismo == nsamplesSeismoTrace - 1 )
-    // {
-    //   forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
-    //   {
-    //     if( outputSeismoTrace == 1 )
-    //     {
-    //       if( receiverIsLocal[ircv] == 1 )
-    //       {
-    //         // Note: this "manual" output to file is temporary
-    //         //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
-    //         // TODO: remove saveSeismo and replace with TimeHistory
-    //         std::ofstream f( GEOS_FMT( "seismoTraceReceiver{:03}.txt", ircv ), std::ios::app );
-    //         for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
-    //         {
-    //           f << iSample << " " << varAtReceivers[iSample][ircv] << std::endl;
-    //         }
-    //         f.close();
-    //       }
-    //     }
-    //   } );
-    // }
-
+    if( iSeismo == nsamplesSeismoTrace - 1 )
+    {
+      if( outputSeismoTrace == 1 )
+      {
+        forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
+        {  
+          if( receiverIsLocal[ircv] == 1 )
+          {
+            // Note: this "manual" output to file is temporary
+            //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
+            // TODO: remove saveSeismo and replace with TimeHistory
+            if (receiverRegion[ircv] == regionIndex)
+            {
+              std::ofstream f( GEOS_FMT( "seismoTraceReceiver{:03}.txt", ircv ), std::ios::app );
+              for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
+              {
+                f << iSample << " " << varAtReceivers[iSample][ircv] << std::endl;
+              }
+              f.close();
+            }
+          }
+        } );
+      }
+    }
   }
-
 
   /**
    * @brief Check if the source point is inside an element or not
