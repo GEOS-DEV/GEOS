@@ -36,10 +36,10 @@ template< typename VIEWTYPE >
 using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
 
-struct FluxUtilities
-{
+using Deriv = constitutive::multifluid::DerivativeOffset;
 
-  using Deriv = constitutive::multifluid::DerivativeOffset;
+struct PPUPhaseFlux
+{
 
   /**
    * @brief Form the PhasePotentialUpwind from pressure gradient and gravitational head
@@ -72,29 +72,30 @@ struct FluxUtilities
   template< integer numComp, integer numFluxSupportPoints >
   GEOS_HOST_DEVICE
   static void
-  computePPUPhaseFlux( integer const numPhase,
-                       integer const ip,
-                       integer const hasCapPressure,
-                       localIndex const ( &seri )[numFluxSupportPoints],
-                       localIndex const ( &sesri )[numFluxSupportPoints],
-                       localIndex const ( &sei )[numFluxSupportPoints],
-                       real64 const ( &trans )[2],
-                       real64 const ( &dTrans_dPres )[2],
-                       ElementViewConst< arrayView1d< real64 const > > const & pres,
-                       ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                       ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
-                       ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
-                       ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
-                       ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
-                       ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseMassDens,
-                       ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
-                       ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
-                       ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
-                       localIndex & k_up,
-                       real64 & potGrad,
-                       real64 ( &phaseFlux ),
-                       real64 ( & dPhaseFlux_dP )[numFluxSupportPoints],
-                       real64 ( & dPhaseFlux_dC )[numFluxSupportPoints][numComp] )
+  compute( integer const numPhase,
+           integer const ip,
+           integer const hasCapPressure,
+           real64 const GEOS_UNUSED_PARAM( epsC1PPU ),
+           localIndex const ( &seri )[numFluxSupportPoints],
+           localIndex const ( &sesri )[numFluxSupportPoints],
+           localIndex const ( &sei )[numFluxSupportPoints],
+           real64 const ( &trans )[2],
+           real64 const ( &dTrans_dPres )[2],
+           ElementViewConst< arrayView1d< real64 const > > const & pres,
+           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
+           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
+           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
+           ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
+           ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseMassDens,
+           ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
+           ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
+           ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
+           localIndex & k_up,
+           real64 & potGrad,
+           real64 ( &phaseFlux ),
+           real64 ( & dPhaseFlux_dP )[numFluxSupportPoints],
+           real64 ( & dPhaseFlux_dC )[numFluxSupportPoints][numComp] )
   {
     // create local work arrays
     real64 densMean = 0.0;
@@ -236,6 +237,10 @@ struct FluxUtilities
       dPhaseFlux_dC[k_up][jc] += dPhaseMobSub[Deriv::dC+jc] * potGrad;
     }
   }
+};
+
+struct C1PPUPhaseFlux
+{
 
   /**
    * @brief Form the PhasePotentialUpwind from pressure gradient and gravitational head
@@ -268,30 +273,30 @@ struct FluxUtilities
   template< integer numComp, integer numFluxSupportPoints >
   GEOS_HOST_DEVICE
   static void
-  computeC1PPUPhaseFlux( integer const numPhase,
-                         integer const ip,
-                         integer const hasCapPressure,
-                         real64 const epsC1PPU,
-                         localIndex const ( &seri )[numFluxSupportPoints],
-                         localIndex const ( &sesri )[numFluxSupportPoints],
-                         localIndex const ( &sei )[numFluxSupportPoints],
-                         real64 const ( &trans )[2],
-                         real64 const ( &dTrans_dPres )[2],
-                         ElementViewConst< arrayView1d< real64 const > > const & pres,
-                         ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                         ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
-                         ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
-                         ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
-                         ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
-                         ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseMassDens,
-                         ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
-                         ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
-                         ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
-                         localIndex & k_up,
-                         real64 & potGrad,
-                         real64 ( &phaseFlux ),
-                         real64 ( & dPhaseFlux_dP )[numFluxSupportPoints],
-                         real64 ( & dPhaseFlux_dC )[numFluxSupportPoints][numComp] )
+  compute( integer const numPhase,
+           integer const ip,
+           integer const hasCapPressure,
+           real64 const epsC1PPU,
+           localIndex const ( &seri )[numFluxSupportPoints],
+           localIndex const ( &sesri )[numFluxSupportPoints],
+           localIndex const ( &sei )[numFluxSupportPoints],
+           real64 const ( &trans )[2],
+           real64 const ( &dTrans_dPres )[2],
+           ElementViewConst< arrayView1d< real64 const > > const & pres,
+           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
+           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
+           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
+           ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
+           ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseMassDens,
+           ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
+           ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
+           ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
+           localIndex & k_up,
+           real64 & potGrad,
+           real64 ( &phaseFlux ),
+           real64 ( & dPhaseFlux_dP )[numFluxSupportPoints],
+           real64 ( & dPhaseFlux_dC )[numFluxSupportPoints][numComp] )
   {
     // create local work arrays
     real64 densMean = 0.0;
@@ -479,6 +484,10 @@ struct FluxUtilities
 
   }
 
+};
+
+struct PhaseComponentFlux
+{
   /**
    * @brief Compute the component flux for a given phase
    * @tparam numComp number of components
@@ -501,20 +510,20 @@ struct FluxUtilities
   template< localIndex numComp, localIndex numFluxSupportPoints >
   GEOS_HOST_DEVICE
   static void
-  computePhaseComponentFlux( localIndex const ip,
-                             localIndex const k_up,
-                             localIndex const ( &seri )[numFluxSupportPoints],
-                             localIndex const ( &sesri )[numFluxSupportPoints],
-                             localIndex const ( &sei )[numFluxSupportPoints],
-                             ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
-                             ElementViewConst< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
-                             ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
-                             real64 const & phaseFlux,
-                             real64 const ( &dPhaseFlux_dP )[numFluxSupportPoints],
-                             real64 const ( &dPhaseFlux_dC )[numFluxSupportPoints][numComp],
-                             real64 ( & compFlux )[numComp],
-                             real64 ( & dCompFlux_dP )[numFluxSupportPoints][numComp],
-                             real64 ( & dCompFlux_dC )[numFluxSupportPoints][numComp][numComp] )
+  compute( localIndex const ip,
+           localIndex const k_up,
+           localIndex const ( &seri )[numFluxSupportPoints],
+           localIndex const ( &sesri )[numFluxSupportPoints],
+           localIndex const ( &sei )[numFluxSupportPoints],
+           ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
+           ElementViewConst< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
+           ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
+           real64 const & phaseFlux,
+           real64 const ( &dPhaseFlux_dP )[numFluxSupportPoints],
+           real64 const ( &dPhaseFlux_dC )[numFluxSupportPoints][numComp],
+           real64 ( & compFlux )[numComp],
+           real64 ( & dCompFlux_dP )[numFluxSupportPoints][numComp],
+           real64 ( & dCompFlux_dC )[numFluxSupportPoints][numComp][numComp] )
   {
     localIndex const er_up = seri[k_up];
     localIndex const esr_up = sesri[k_up];
@@ -559,7 +568,6 @@ struct FluxUtilities
       }
     }
   }
-
 };
 
 } // namespace isothermalCompositionalMultiPhaseFVMKernelUtilities

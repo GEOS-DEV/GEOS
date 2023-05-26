@@ -394,7 +394,7 @@ protected:
  * @tparam STENCILWRAPPER the type of the stencil wrapper
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
+template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER, typename PHASE_FLUX_COMPUTE = isothermalCompositionalMultiphaseFVMKernelUtilities::PPUPhaseFlux >
 class FaceBasedAssemblyKernel : public FaceBasedAssemblyKernelBase
 {
 public:
@@ -438,7 +438,6 @@ public:
   FaceBasedAssemblyKernel( integer const numPhases,
                            globalIndex const rankOffset,
                            integer const hasCapPressure,
-                           UpwindingScheme const upwindingScheme,
                            real64 const epsC1PPU,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
@@ -464,7 +463,6 @@ public:
     m_seri( stencilWrapper.getElementRegionIndices() ),
     m_sesri( stencilWrapper.getElementSubRegionIndices() ),
     m_sei( stencilWrapper.getElementIndices() ),
-    m_upwindingScheme( upwindingScheme ),
     m_epsC1PPU( epsC1PPU )
   {}
 
@@ -615,61 +613,29 @@ public:
 
           localIndex k_up = -1;
 
-          // C1PPU
-          // see https://doi.org/10.1016/j.advwatres.2017.07.028
-          if( m_upwindingScheme == UpwindingScheme::C1PPU && m_epsC1PPU > 0 )
-          {
-            isothermalCompositionalMultiphaseFVMKernelUtilities::
-              FluxUtilities::
-              computeC1PPUPhaseFlux< numComp, numFluxSupportPoints >
-              ( m_numPhases,
-              ip,
-              m_hasCapPressure,
-              m_epsC1PPU,
-              seri, sesri, sei,
-              trans,
-              dTrans_dPres,
-              m_pres,
-              m_gravCoef,
-              m_phaseMob, m_dPhaseMob,
-              m_dPhaseVolFrac,
-              m_dCompFrac_dCompDens,
-              m_phaseMassDens, m_dPhaseMassDens,
-              m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
-              k_up,
-              potGrad,
-              phaseFlux,
-              dPhaseFlux_dP,
-              dPhaseFlux_dC );
-          }
-          else
-          {
-            isothermalCompositionalMultiphaseFVMKernelUtilities::
-              FluxUtilities::
-              computePPUPhaseFlux< numComp, numFluxSupportPoints >
-              ( m_numPhases,
-              ip,
-              m_hasCapPressure,
-              seri, sesri, sei,
-              trans,
-              dTrans_dPres,
-              m_pres,
-              m_gravCoef,
-              m_phaseMob, m_dPhaseMob,
-              m_dPhaseVolFrac,
-              m_dCompFrac_dCompDens,
-              m_phaseMassDens, m_dPhaseMassDens,
-              m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
-              k_up,
-              potGrad,
-              phaseFlux,
-              dPhaseFlux_dP,
-              dPhaseFlux_dC );
-          }
+          PHASE_FLUX_COMPUTE::template compute< numComp, numFluxSupportPoints >
+            ( m_numPhases,
+            ip,
+            m_hasCapPressure,
+            m_epsC1PPU,
+            seri, sesri, sei,
+            trans,
+            dTrans_dPres,
+            m_pres,
+            m_gravCoef,
+            m_phaseMob, m_dPhaseMob,
+            m_dPhaseVolFrac,
+            m_dCompFrac_dCompDens,
+            m_phaseMassDens, m_dPhaseMassDens,
+            m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
+            k_up,
+            potGrad,
+            phaseFlux,
+            dPhaseFlux_dP,
+            dPhaseFlux_dC );
 
           isothermalCompositionalMultiphaseFVMKernelUtilities::
-            FluxUtilities::
-            computePhaseComponentFlux< numComp, numFluxSupportPoints >
+            PhaseComponentFlux::compute< numComp, numFluxSupportPoints >
             ( ip,
             k_up,
             seri, sesri, sei,
@@ -680,9 +646,9 @@ public:
 
           // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
           // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
-            compFluxKernelOp( ip, k, seri, sesri, sei, connectionIndex,
-                              k_up, seri[k_up], sesri[k_up], sei[k_up], potGrad,
-                              phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
+          compFluxKernelOp( ip, k, seri, sesri, sei, connectionIndex,
+                            k_up, seri[k_up], sesri[k_up], sei[k_up], potGrad,
+                            phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
 
         } // loop over phases
 
@@ -800,9 +766,6 @@ protected:
   typename STENCILWRAPPER::IndexContainerViewConstType const m_sesri;
   typename STENCILWRAPPER::IndexContainerViewConstType const m_sei;
 
-  /// Upwinding scheme
-  UpwindingScheme m_upwindingScheme;
-
   /// Tolerance for C1-PPU smoothing
   real64 const m_epsC1PPU;
 };
@@ -854,16 +817,32 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
-      typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-      typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-      typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-      typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+      if( upwindingParams.upwindingScheme == UpwindingScheme::C1PPU && upwindingParams.epsC1PPU > 0 )
+      {
+        using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER, isothermalCompositionalMultiphaseFVMKernelUtilities::C1PPUPhaseFlux >;
+        typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
+        typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+        typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+        typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
-      kernelType kernel( numPhases, rankOffset, hasCapPressure, upwindingParams.upwindingScheme, upwindingParams.epsC1PPU, stencilWrapper, dofNumberAccessor,
-                         compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
-                         dt, localMatrix, localRhs );
-      kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+        kernelType kernel( numPhases, rankOffset, hasCapPressure, upwindingParams.epsC1PPU, stencilWrapper, dofNumberAccessor,
+                           compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
+                           dt, localMatrix, localRhs );
+        kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+      }
+      else
+      {
+        using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+        typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
+        typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+        typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+        typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+
+        kernelType kernel( numPhases, rankOffset, hasCapPressure, upwindingParams.epsC1PPU, stencilWrapper, dofNumberAccessor,
+                           compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
+                           dt, localMatrix, localRhs );
+        kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+      }
     } );
   }
 };
@@ -962,8 +941,7 @@ public:
     : Base( numPhases,
             rankOffset,
             hasCapPressure,
-            UpwindingScheme::PPU,  // no
-            0.0,                   // C1-PPU
+            0.0,                   // no C1-PPU
             stencilWrapper,
             dofNumberAccessor,
             compFlowAccessors,
