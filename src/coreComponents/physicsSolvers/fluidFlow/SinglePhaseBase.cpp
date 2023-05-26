@@ -416,6 +416,10 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       initTemp.setValues< parallelDevicePolicy<> >( temp );
     } );
   } );
+
+  // report to the user if some pore volumes are very small
+  // note: this function is here because: 1) porosity has been initialized and 2) NTG has been applied
+  validatePoreVolumes( domain );
 }
 
 void SinglePhaseBase::computeHydrostaticEquilibrium()
@@ -609,7 +613,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
       arrayView1d< real64 > const & deltaPres = subRegion.template getField< fields::flow::deltaPressure >();
 
       singlePhaseBaseKernels::StatisticsKernel::
-        saveDeltaPressure< parallelDevicePolicy<> >( subRegion.size(), pres, initPres, deltaPres );
+        saveDeltaPressure( subRegion.size(), pres, initPres, deltaPres );
       saveConvergedState( subRegion );
 
       arrayView1d< real64 > const & dVol = subRegion.template getField< fields::flow::deltaVolume >();
