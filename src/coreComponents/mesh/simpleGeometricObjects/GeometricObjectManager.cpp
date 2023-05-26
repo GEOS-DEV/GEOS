@@ -57,20 +57,6 @@ Group * GeometricObjectManager::createChild( string const & childKey, string con
   return &this->registerGroup< SimpleGeometricObjectBase >( childName, std::move( geometriObject ) );
 }
 
-/**
-   * @brief This function is used to launch a unction over the target geometric objects with region type =
-   * SimpleGeometricObjectBase.
-   * @tparam LOOKUP_CONTAINER type of container of names or indices
-   * @tparam LAMBDA type of the user-provided function
-   * @param targetObjects target geometric objects names or indices
-   * @param lambda kernel function
-   */
-template< typename OBJECTTYPE = SimpleGeometricObjectBase, typename ... OBJECTTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
-void forGeometricObject( LOOKUP_CONTAINER const & targetObjects, LAMBDA && lambda )
-{
-  this->forSubGroups< OBJECTTYPE, OBJECTTYPES... >( targetObjects, std::forward< LAMBDA >( lambda ) );
-}
-
 void GeometricObjectManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from SimpleGeometricObjectBase here

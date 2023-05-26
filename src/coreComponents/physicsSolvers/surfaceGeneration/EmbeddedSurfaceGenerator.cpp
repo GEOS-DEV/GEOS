@@ -129,11 +129,11 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
   localIndex localNumberOfSurfaceElems         = 0;
 
-  NewObjectLists newObjects;
+  NewObjectLists newObjects;  
 
   // Loop over all the fracture planes
-  geometricObjManager.forSubGroups< PlanarGeometricObject >( [&]( PlanarGeometricObject & fracture )
-  //geometricObjManager.forSubGroups< PlanarGeometricObject >( m_targetObjects, [&]( PlanarGeometricObject & fracture )
+  geometricObjManager.forGeometricObject< PlanarGeometricObject > ( m_targetObjects, [&]( localIndex const,  
+                                                                                          PlanarGeometricObject & fracture )
   {
     /* 1. Find out if an element is cut by the fracture or not.
      * Loop over all the elements and for each one of them loop over the nodes and compute the
@@ -205,7 +205,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
         }
       } );// end loop over cells
     } );// end loop over subregions
-  } );// end loop over thick planes
+  } );// end loop over planes
 
   // Launch kernel to compute connectivity index of each fractured element.
   elemManager.forElementSubRegionsComplete< CellElementSubRegion >(
