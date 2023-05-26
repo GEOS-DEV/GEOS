@@ -114,7 +114,7 @@ public:
   array2d< real64 > getParticleMaterialDirection() const override
   { return m_particleMaterialDirection; }
 
-  void setParticleMaterialDirection(array2d< real64 > const particleMaterialDirection)
+  void setParticleMaterialDirection( array2d< real64 > const particleMaterialDirection )
   { m_particleMaterialDirection = particleMaterialDirection; }
 
   array1d< int > getParticleGroup() const override
@@ -130,7 +130,7 @@ public:
   array1d< int > getParticleSurfaceFlag() const override
   { return m_particleSurfaceFlag; }
 
-  void setParticleSurfaceFlag(array1d< int > const particleSurfaceFlag)
+  void setParticleSurfaceFlag( array1d< int > const particleSurfaceFlag )
   { m_particleSurfaceFlag = particleSurfaceFlag; }
 
   array1d< real64 > getParticleDamage() const override
@@ -146,7 +146,7 @@ public:
   array1d< real64 > getParticleStrengthScale() const override
   { return m_particleStrengthScale; }
 
-  void setParticleStrengthScale(array1d< real64 > const particleStrengthScale)
+  void setParticleStrengthScale( array1d< real64 > const particleStrengthScale )
   { m_particleStrengthScale = particleStrengthScale; }
 
   array1d< real64 > getParticleVolume() const override

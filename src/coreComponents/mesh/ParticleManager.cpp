@@ -326,7 +326,7 @@ ParticleManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
       unpackedSize += bufferOps::Unpack( buffer, subRegionName );
 
       // CAUTION:
-      // This implementation of the particle manager has not been used in 
+      // This implementation of the particle manager has not been used in
       // application requiring global maps, so this implementation is not fully tested,
       // it was copied from legacy code and should be verified, in particular if
       // used where particle data may contain ghosted particles.
