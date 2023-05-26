@@ -68,10 +68,22 @@ public:
   virtual array1d< int > getParticleGroup() const = 0;
 
   /**
+   * @brief Get the list of particle surface flag values in this subregion.
+   * @return the list of particle surface flag values in this subregion.
+   */
+  virtual array1d< int > getParticleSurfaceFlag() const = 0;
+
+  /**
    * @brief Get the list of particle damage values in this subregion.
    * @return the list of particle damage values in this subregion.
    */
   virtual array1d< real64 > getParticleDamage() const = 0;
+
+  /**
+   * @brief Get the list of particle strength scale values in this subregion.
+   * @return the list of particle strength scale values in this subregion.
+   */
+  virtual array1d< real64 > getParticleStrengthScale() const = 0;
 
   /**
    * @brief Get the list of particle center locations in this subregion.
@@ -84,6 +96,12 @@ public:
    * @return the list of particle velocities in this subregion.
    */
   virtual array2d< real64 > getParticleVelocity() const = 0;
+
+  /**
+   * @brief Get the list of particle material directions in this subregion.
+   * @return the list of particle material directions in this subregion.
+   */
+  virtual array2d< real64 > getParticleMaterialDirection() const = 0;
 
   /**
    * @brief Get the list of particle volumes in this subregion.

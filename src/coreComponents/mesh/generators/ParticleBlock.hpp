@@ -111,6 +111,12 @@ public:
   void setParticleVelocity( array2d< real64 > const particleVelocity )
   { m_particleVelocity = particleVelocity; }
 
+  array2d< real64 > getParticleMaterialDirection() const override
+  { return m_particleMaterialDirection; }
+
+  void setParticleMaterialDirection(array2d< real64 > const particleMaterialDirection)
+  { m_particleMaterialDirection = particleMaterialDirection; }
+
   array1d< int > getParticleGroup() const override
   { return m_particleGroup; }
 
@@ -121,6 +127,12 @@ public:
   void setParticleGroup( array1d< int > const particleGroup )
   { m_particleGroup = particleGroup; } // TODO: Rename to particleContactGroup
 
+  array1d< int > getParticleSurfaceFlag() const override
+  { return m_particleSurfaceFlag; }
+
+  void setParticleSurfaceFlag(array1d< int > const particleSurfaceFlag)
+  { m_particleSurfaceFlag = particleSurfaceFlag; }
+
   array1d< real64 > getParticleDamage() const override
   { return m_particleDamage; }
 
@@ -130,6 +142,12 @@ public:
    */
   void setParticleDamage( array1d< real64 > const particleDamage )
   { m_particleDamage = particleDamage; }
+
+  array1d< real64 > getParticleStrengthScale() const override
+  { return m_particleStrengthScale; }
+
+  void setParticleStrengthScale(array1d< real64 > const particleStrengthScale)
+  { m_particleStrengthScale = particleStrengthScale; }
 
   array1d< real64 > getParticleVolume() const override
   { return m_particleVolume; }
@@ -199,14 +217,23 @@ private:
   /// Member level field for the particle contact group.
   array1d< int > m_particleGroup;
 
+  /// Member level field for the particle surface flag.
+  array1d< int > m_particleSurfaceFlag;
+
   /// Member level field for the particle damage.
   array1d< real64 > m_particleDamage;
+
+  /// Member level field for the particle strength scale.
+  array1d< real64 > m_particleStrengthScale;
 
   /// Member level field for the particle center.
   array2d< real64 > m_particleCenter;
 
   /// Member level field for the particle velocity.
   array2d< real64 > m_particleVelocity;
+
+  /// Member level field for the particle material direction.
+  array2d< real64 > m_particleMaterialDirection;
 
   /// Member level field for the particle volume.
   array1d< real64 > m_particleVolume;

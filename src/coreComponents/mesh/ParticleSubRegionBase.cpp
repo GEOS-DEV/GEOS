@@ -32,9 +32,12 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   m_particleRank(),
   m_particleID(),
   m_particleGroup(),
+  m_particleSurfaceFlag(),
   m_particleDamage(),
+  m_particleStrengthScale(),
   m_particleCenter(),
   m_particleVelocity(),
+  m_particleMaterialDirection(),
   m_particleVolume(),
   m_particleType(),
   m_particleRVectors()
@@ -51,7 +54,13 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   registerWrapper( viewKeyStruct::particleGroupString(), &m_particleGroup ).
     setPlotLevel( PlotLevel::LEVEL_1 );
 
+  registerWrapper( viewKeyStruct::particleSurfaceFlagString(), &m_particleSurfaceFlag ).
+    setPlotLevel( PlotLevel::LEVEL_1 );
+
   registerWrapper( viewKeyStruct::particleDamageString(), &m_particleDamage ).
+    setPlotLevel( PlotLevel::LEVEL_1 );
+
+  registerWrapper( viewKeyStruct::particleStrengthScaleString(), &m_particleStrengthScale ).
     setPlotLevel( PlotLevel::LEVEL_1 );
 
   registerWrapper( viewKeyStruct::particleCenterString(), &m_particleCenter ).
@@ -59,6 +68,10 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
     reference().resizeDimension< 1 >( 3 );
 
   registerWrapper( viewKeyStruct::particleVelocityString(), &m_particleVelocity ).
+    setPlotLevel( PlotLevel::LEVEL_1 ).
+    reference().resizeDimension< 1 >( 3 );
+
+  registerWrapper( viewKeyStruct::particleMaterialDirectionString(), &m_particleMaterialDirection ).
     setPlotLevel( PlotLevel::LEVEL_1 ).
     reference().resizeDimension< 1 >( 3 );
 
