@@ -281,6 +281,7 @@ struct DampingMatrixKernel
           arrayView1d< real32 const > const epsilon,
           arrayView1d< real32 const > const delta,
           arrayView1d< real32 const > const vti_f,
+          arrayView1d< real32 > const damping, //debug
           arrayView1d< real32 > const damping_p,
           arrayView1d< real32 > const damping_q,
           arrayView1d< real32 > const damping_pq,
@@ -328,6 +329,10 @@ struct DampingMatrixKernel
 
         for( localIndex q = 0; q < numNodesPerFace; ++q )
         {
+          //Debug
+          real32 const localIncrement = alpha*m_finiteElement.computeDampingTerm( q, xLocal );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &damping[facesToNodes[f][q]], localIncrement );
+
           real32 const localIncrement_p = (vti_p_xy + vti_p_z) * m_finiteElement.computeDampingTerm( q, xLocal );
           RAJA::atomicAdd< ATOMIC_POLICY >( &damping_p[facesToNodes[f][q]], localIncrement_p );
 
@@ -425,6 +430,7 @@ public:
     m_q_n( nodeManager.getField< fields::Pressure_q_n >() ),
     m_stiffnessVector_p( nodeManager.getField< fields::StiffnessVector_p >() ),
     m_stiffnessVector_q( nodeManager.getField< fields::StiffnessVector_q >() ),
+    m_stiffnessVector( nodeManager.getField< fields::StiffnessVector >() ), // Debug
     m_epsilon( elementSubRegion.template getField< fields::Epsilon >() ),
     m_delta( elementSubRegion.template getField< fields::Delta >() ),
     m_vti_f( elementSubRegion.template getField< fields::F >() ),
@@ -495,8 +501,12 @@ public:
     {
       real32 const localIncrement_p = val*(-1-2*m_epsilon[k])*m_p_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
-      real32 const localIncrement_q = val*((-2*m_delta[k]-m_vti_f[k])*m_p_n[m_elemsToNodes[k][j]] +(1-m_vti_f[k])*m_q_n[m_elemsToNodes[k][j]]);
+      real32 const localIncrement_q = val*((-2*m_delta[k]-m_vti_f[k])*m_p_n[m_elemsToNodes[k][j]] +(m_vti_f[k]-1)*m_q_n[m_elemsToNodes[k][j]]);
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
+
+      //DEbug
+      real32 const localIncrement = val*m_p_n[m_elemsToNodes[k][j]];
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
     } );
 
     // Pseudo-Stiffness z
@@ -508,6 +518,10 @@ public:
 
       real32 const localIncrement_q = -val*m_q_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
+
+      //DEbug
+      real32 const localIncrement = val*m_p_n[m_elemsToNodes[k][j]];
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
     } );
   }
 
@@ -526,6 +540,9 @@ protected:
 
   /// The array containing the product of the stiffness matrix and the nodal pressure for the equation in q.
   arrayView1d< real32 > const m_stiffnessVector_q;
+
+  /// DEBUG
+  arrayView1d< real32 > const m_stiffnessVector;
 
   /// The array containing the epsilon Thomsen parameter.
   arrayView1d< real32 const > const m_epsilon;

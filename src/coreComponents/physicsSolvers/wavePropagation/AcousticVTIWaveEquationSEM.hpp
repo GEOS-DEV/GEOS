@@ -192,7 +192,7 @@ private:
   /// Flag that indicates whether the receiver is local or not to the MPI rank
   array1d< localIndex > m_receiverIsLocal;
 
-  /// Pressure_np1 at the receiver location for each time step for each receiver
+  /// Pressure_p_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_pressureNp1AtReceivers;
 
 };
@@ -408,6 +408,25 @@ DECLARE_FIELD( PartialGradient,
                NOPLOT,
                WRITE_AND_READ,
                "Partiel gradient computed during backward propagation" );
+
+//Debug
+
+
+DECLARE_FIELD( StiffnessVector,
+               "stiffnessVector",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Stiffness vector contains R_h*Pressure_n." );
+               
+DECLARE_FIELD( DampingVector,
+               "dampingVector",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal of the Damping Matrix." );
 }
 
 } /* namespace geos */
