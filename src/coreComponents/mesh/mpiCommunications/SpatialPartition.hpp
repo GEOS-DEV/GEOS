@@ -80,15 +80,15 @@ public:
                                                    MPI_iCommData & commData,
                                                    const real64 & boundaryRadius );
 
-  void sendCoordinateListToNeighbors( arrayView1d< R1Tensor > const & particleCoordinatesSendingToNeighbors,         // Single list of
-                                                                                                                     // coordinates sent to
-                                                                                                                     // all neighbors
-                                      MPI_iCommData & commData,                                                      // Solver's MPI
-                                                                                                                     // communicator
-                                      std::vector< array1d< R1Tensor > > & particleCoordinatesReceivedFromNeighbors       // List of lists
-                                                                                                                          // of coordinates
-                                                                                                                          // received from
-                                                                                                                          // each neighbor.
+  /**
+   * @brief Send coordinates to neighbors as part of repartition.
+   * @param[in] particleCoordinatesSendingToNeighbors Single list of coordinates sent to all neighbors
+   * @param[in] commData Solver's MPI communicator
+   * @param[in] particleCoordinatesReceivedFromNeighbors List of lists of coordinates received from each neighbor
+   */
+  void sendCoordinateListToNeighbors( arrayView1d< R1Tensor > const & particleCoordinatesSendingToNeighbors, 
+                                      MPI_iCommData & commData,
+                                      std::vector< array1d< R1Tensor > > & particleCoordinatesReceivedFromNeighbors
                                       );
 
   template< typename indexType >

@@ -2898,6 +2898,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fTableInterpType => The type of F table interpolation. Options are 0 (linear), 1 (cosine), 2 (quintic polynomial).-->
 		<xsd:attribute name="fTableInterpType" type="integer" default="0" />
+		<!--fTablePath => Path to f-table-->
+		<xsd:attribute name="fTablePath" type="path" default="" />
 		<!--frictionCoefficient => Coefficient of friction, currently assumed to be the same everywhere-->
 		<xsd:attribute name="frictionCoefficient" type="real64" default="0" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->

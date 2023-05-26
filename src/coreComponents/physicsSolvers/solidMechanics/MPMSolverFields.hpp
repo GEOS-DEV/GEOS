@@ -104,15 +104,6 @@ DECLARE_FIELD( particleDensity,
                WRITE_AND_READ,
                "An array that holds particle densities." );
 
-// This lives on particle subregions directly for now
-// DECLARE_FIELD( particleDamage,
-//                "particleDamage",
-//                array1d< real64 >,
-//                0,
-//                LEVEL_1,
-//                WRITE_AND_READ,
-//                "An array that holds particle damage values." );
-
 DECLARE_FIELD( particleDamageGradient,
                "particleDamageGradient",
                array2d< real64 >,
