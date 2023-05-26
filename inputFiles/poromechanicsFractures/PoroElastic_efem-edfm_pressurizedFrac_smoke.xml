@@ -59,7 +59,7 @@
   </Mesh>
 
   <Geometry>
-    <BoundedPlane
+    <Rectangle
       name="FracturePlane"
       normal="{ 1, 0, 0 }"
       origin="{ 1.5, 1.5, 1.5 }"

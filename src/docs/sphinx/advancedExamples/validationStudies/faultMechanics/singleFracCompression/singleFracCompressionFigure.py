@@ -64,7 +64,7 @@ def getCompressiveStressFromXML(xmlFilePath):
 def getFractureGeometryFromXML(xmlFilePath):
     tree = ElementTree.parse(xmlFilePath)
 
-    boundedPlane = tree.find('Geometry/BoundedPlane')
+    boundedPlane = tree.find('Geometry/Rectangle')
     dimensions = boundedPlane.get("dimensions")
     dimensions = [float(i) for i in dimensions[1:-1].split(",")]
     length = dimensions[0] / 2

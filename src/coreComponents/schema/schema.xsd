@@ -219,8 +219,8 @@
 				</xsd:unique>
 			</xsd:element>
 			<xsd:element name="Geometry" type="GeometryType" maxOccurs="1">
-				<xsd:unique name="GeometryBoundedPlaneUniqueName">
-					<xsd:selector xpath="BoundedPlane" />
+				<xsd:unique name="GeometryRectangleUniqueName">
+					<xsd:selector xpath="Rectangle" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="GeometryBoxUniqueName">
@@ -1228,13 +1228,13 @@ stress - traction is applied to the faces as specified by the inner product of i
 	</xsd:simpleType>
 	<xsd:complexType name="GeometryType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="BoundedPlane" type="BoundedPlaneType" />
+			<xsd:element name="Rectangle" type="RectangleType" />
 			<xsd:element name="Box" type="BoxType" />
 			<xsd:element name="Cylinder" type="CylinderType" />
 			<xsd:element name="ThickPlane" type="ThickPlaneType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="BoundedPlaneType">
+	<xsd:complexType name="RectangleType">
 		<!--dimensions => Length and width of the bounded plane-->
 		<xsd:attribute name="dimensions" type="real64_array" use="required" />
 		<!--lengthVector => Tangent vector defining the orthonormal basis along with the normal.-->

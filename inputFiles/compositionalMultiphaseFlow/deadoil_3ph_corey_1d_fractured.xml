@@ -52,7 +52,7 @@
       xMin="{ 8.99, -0.01, -0.01 }"
       xMax="{ 10.01, 1.01, 1.01 }"/>
 
-    <BoundedPlane
+    <Rectangle
       name="FracturePlane"
       normal="{ 0, 1, 0 }"
       origin="{ 5.5, 0.5, 0.5 }"

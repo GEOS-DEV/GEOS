@@ -33,7 +33,7 @@
 #include "mesh/utilities/CIcomputationKernel.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
-#include "mesh/simpleGeometricObjects/BoundedPlane.hpp"
+#include "mesh/simpleGeometricObjects/Rectangle.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 
@@ -70,6 +70,10 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
   registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( "FractureRegion" );
+
+  registerWrapper( viewKeyStruct::targetObjectsNameString(), &m_targetObjects ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setApplyDefaultValue( "{}" );
 
   // this->getWrapper< string >( viewKeyStruct::discretizationString() ).
   // setInputFlag( InputFlags::FALSE );
@@ -128,7 +132,8 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   NewObjectLists newObjects;
 
   // Loop over all the fracture planes
-  geometricObjManager.forSubGroups< BoundedPlanarObject >( [&]( BoundedPlanarObject & fracture )
+  geometricObjManager.forSubGroups< PlanarGeometricObject >( [&]( PlanarGeometricObject & fracture )
+  //geometricObjManager.forSubGroups< PlanarGeometricObject >( m_targetObjects, [&]( PlanarGeometricObject & fracture )
   {
     /* 1. Find out if an element is cut by the fracture or not.
      * Loop over all the elements and for each one of them loop over the nodes and compute the
