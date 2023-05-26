@@ -114,11 +114,15 @@ void FaceManager::setDomainBoundaryObjects()
 
 void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
                                            ElementRegionManager const & elemRegionManager,
-                                           NodeManager const & nodeManager )
+                                           NodeManager const & nodeManager,
+										   bool baseMeshLevel )
 {
   GEOS_MARK_FUNCTION;
 
-  resize( cellBlockManager.numFaces() );
+  if( baseMeshLevel )
+  {
+    resize( cellBlockManager.numFaces() );
+  }
 
   m_toNodesRelation.base() = cellBlockManager.getFaceToNodes();
   m_toEdgesRelation.base() = cellBlockManager.getFaceToEdges();
@@ -169,7 +173,10 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
   // Connecting all the 3d elements (information is already in the m_toElements mappings) and all the 2d elements.
   elemRegionManager.forElementRegionsComplete< SurfaceElementRegion >( connect2dElems );
 
-  computeGeometry( nodeManager );
+	if( baseMeshLevel )
+	{
+		computeGeometry( nodeManager );
+	}
 }
 
 void FaceManager::setupRelatedObjectsInRelations( NodeManager const & nodeManager,
@@ -319,7 +326,6 @@ void FaceManager::sortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
     }
 
     std::sort( thetaOrder, thetaOrder + numFaceNodes );
-
     // Reorder nodes on face
     for( localIndex n = 0; n < numFaceNodes; ++n )
     {

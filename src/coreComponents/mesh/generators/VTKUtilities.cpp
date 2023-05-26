@@ -612,8 +612,8 @@ redistributeByCellGraph( vtkDataSet & mesh,
 {
   GEOS_MARK_FUNCTION;
 
-  int64_t const numElems = mesh.GetNumberOfCells();
-  int64_t const numRanks = MpiWrapper::commSize( comm );
+  pmet_idx_t const numElems = mesh.GetNumberOfCells();
+  pmet_idx_t const numRanks = MpiWrapper::commSize( comm );
   int const rank = MpiWrapper::commRank( comm );
   int const lastRank = numRanks - 1;
   bool const isLastMpiRank = rank == lastRank;
@@ -623,9 +623,9 @@ redistributeByCellGraph( vtkDataSet & mesh,
   // Thus, the number of elements of each rank can be deduced by subtracting
   // the values between two consecutive ranks. To be able to do this even for the last rank,
   // a last additional value is appended, and the size of the array is then the comm size plus 1.
-  array1d< int64_t > const elemDist( numRanks + 1 );
+  array1d< pmet_idx_t > const elemDist( numRanks + 1 );
   {
-    array1d< int64_t > elemCounts;
+    array1d< pmet_idx_t > elemCounts;
     MpiWrapper::allGather( numElems, elemCounts, comm );
     std::partial_sum( elemCounts.begin(), elemCounts.end(), elemDist.begin() + 1 );
   }
@@ -644,14 +644,14 @@ redistributeByCellGraph( vtkDataSet & mesh,
   MpiWrapper::broadcast( globalNumFracCells, lastRank, comm );
   elemDist[lastRank + 1] += globalNumFracCells;
 
-  // Use int64_t here to match ParMETIS' idx_t
+  // Use pmet_idx_t here to match ParMETIS' pmet_idx_t
   // The `elemToNodes` mapping binds element indices, local to the rank.
   // to the global indices of their support nodes.
-  ArrayOfArrays< int64_t, int64_t > const elemToNodes = buildElemToNodes< int64_t >( mesh, fractures );
-  ArrayOfArrays< int64_t, int64_t > const graph = parmetis::meshToDual( elemToNodes.toViewConst(), elemDist, comm, 3 );
+  ArrayOfArrays< pmet_idx_t, pmet_idx_t > const elemToNodes = buildElemToNodes< pmet_idx_t >( mesh, fractures );
+  ArrayOfArrays< pmet_idx_t, pmet_idx_t > const graph = parmetis::meshToDual( elemToNodes.toViewConst(), elemDist, comm, 3 );
 
   // `newParts` will contain the target rank (i.e. partition) for each of the elements of the current rank.
-  array1d< int64_t > newPartitions = [&]()
+  array1d< pmet_idx_t > newPartitions = [&]()
   {
     switch( method )
     {
