@@ -132,8 +132,9 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   NewObjectLists newObjects;
 
   // Loop over all the fracture planes
-  geometricObjManager.forSubGroups< PlanarGeometricObject >( [&]( PlanarGeometricObject & fracture )
   //geometricObjManager.forSubGroups< PlanarGeometricObject >( m_targetObjects, [&]( PlanarGeometricObject & fracture )
+  //geometricObjManager.forSubGroups< PlanarGeometricObject >( [&]( PlanarGeometricObject & fracture )
+  geometricObjManager.forGeometricObject< PlanarGeometricObject >( m_targetObjects, [&]( PlanarGeometricObject & fracture )
   {
     /* 1. Find out if an element is cut by the fracture or not.
      * Loop over all the elements and for each one of them loop over the nodes and compute the
