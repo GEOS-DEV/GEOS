@@ -325,9 +325,12 @@ ParticleManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
       string subRegionName;
       unpackedSize += bufferOps::Unpack( buffer, subRegionName );
 
-      /// THIS IS WRONG
+      // CAUTION:
+      // This implementation of the particle manager has not been used in 
+      // application requiring global maps, so this implementation is not fully tested,
+      // it was copied from legacy code and should be verified, in particular if
+      // used where particle data may contain ghosted particles.
       localIndex_array & particleList = packList[kReg][esr].get();
-
       unpackedSize += subRegion.unpackGlobalMaps( buffer, particleList, 0 );
     } );
   }

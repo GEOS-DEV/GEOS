@@ -234,7 +234,12 @@ getVtkPoints( NodeManager const & nodeManager,
 static vtkSmartPointer< vtkPoints >
 getVtkPoints( ParticleRegion const & particleRegion ) // TODO: Loop over the subregions owned by this region and operate on them directly
 {
-  localIndex const numCorners = 8 * particleRegion.size(); // Each particle has 8 corners, for now
+  // Particles are plotted as polyhedron with the geometry determined by the particle
+  // type.  CPDI particles are parallelepiped (8 corners and 6 faces).  
+  // TODO: add support for CPTI (tet) and single point (cube or sphere) geometries
+
+  localIndex const numCornersPerParticle = 8; // Each CPDI particle has 8 corners. TODO: add support for other particle types.
+  localIndex const numCorners = numCornersPerParticle * particleRegion.size(); 
   auto points = vtkSmartPointer< vtkPoints >::New();
   points->SetNumberOfPoints( numCorners );
   array2d< real64 > const coord = particleRegion.getParticleCorners();
@@ -531,15 +536,15 @@ getVtkCells( CellElementRegion const & region,
   return { std::move( cellTypes ), cellsArray, std::move( relevantNodes ) };
 }
 
+using ParticleData = std::pair< std::vector< int >, vtkSmartPointer< vtkCellArray > >;
 /**
  * @brief Gets the cell connectivities as a VTK object for the ParticleRegion @p region
  * @param[in] region the ParticleRegion to be written
- * @return a struct consisting of:
+ * @return a standard pair consisting of:
  *         - a list of types for each cell,
  *         - a VTK object containing the connectivity information
- *         - a list of relevant node indices in order in which they must be stored
  */
-std::pair< std::vector< int >, vtkSmartPointer< vtkCellArray > >
+static ParticleData
 getVtkCells( ParticleRegion const & region )
 {
   vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
