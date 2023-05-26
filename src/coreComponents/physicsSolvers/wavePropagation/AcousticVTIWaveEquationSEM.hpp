@@ -218,6 +218,30 @@ DECLARE_FIELD( Pressure_np1,
                WRITE_AND_READ,
                "Scalar pressure at time n+1." );
 
+DECLARE_FIELD( Pressure_q_nm1,
+               "pressure_q_nm1",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Scalar auxiliary pressure q at time n-1." );
+
+DECLARE_FIELD( Pressure_q_n,
+               "pressure_q_n",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Scalar auxiliary pressure q at time n." );
+
+DECLARE_FIELD( Pressure_q_n1,
+               "pressure_q_n1",
+               array1d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Scalar auxiliary pressure q at time n+1." );
+
 DECLARE_FIELD( ForcingRHS,
                "rhs",
                array1d< real32 >,

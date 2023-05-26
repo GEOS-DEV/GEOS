@@ -158,8 +158,6 @@ void AcousticVTIWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                fields::MassVector,
                                fields::DampingVector,
                                fields::StiffnessVector,
-                               fields::Delta,
-                               fields::Epsilon,
                                fields::FreeSurfaceNodeIndicator >( this->getName() );
 
     /// register  PML auxiliary variables only when a PML is specified in the xml
@@ -181,6 +179,8 @@ void AcousticVTIWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
+      subRegion.registerField< fields::Delta >( this->getName() );
+      subRegion.registerField< fields::Epsilon >( this->getName() );
       subRegion.registerField< fields::MediumVelocity >( this->getName() );
       subRegion.registerField< fields::PartialGradient >( this->getName() );
     } );
@@ -1080,6 +1080,12 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
           p_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
           p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
           p_np1[a] /= mass[a]+0.5*dt*damping[a];
+
+          q_np1[a] = p_n[a];
+          q_np1[a] *= 2.0*mass[a];
+          q_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
+          q_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
+          q_np1[a] /= mass[a]+0.5*dt*damping[a];
         }
       } );
     }

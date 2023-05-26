@@ -737,6 +737,9 @@ public:
           inputConstitutiveType ),
     m_X( nodeManager.referencePosition() ),
     m_p_n( nodeManager.getField< fields::Pressure_n >() ),
+    m_q_n( nodeManager.getField< fields::Pressureq_n >() ),
+    m_epsilon( elementSubRegion.template getField< fields::Epsilon >() ),
+    m_delta( elementSubRegion.template getField< fields::Delta >() ),
     m_stiffnessVector( nodeManager.getField< fields::StiffnessVector >() ),
     m_dt( dt )
   {
@@ -800,11 +803,21 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
+    // Stiffness TODO:
     m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
       real32 const localIncrement = val*m_p_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
     } );
+
+    // Pseudo-Stiffness TODO:
+    
+    m_finiteElementSpace.template computePseudoStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
+    {
+      real32 const localIncrement = val*m_epsilon[k]*m_p_n[m_elemsToNodes[k][j]];
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
+    } );
+
   }
 
 protected:
@@ -814,8 +827,17 @@ protected:
   /// The array containing the nodal pressure array.
   arrayView1d< real32 const > const m_p_n;
 
+  /// The array containing the nodal auxiliary variable array.
+  arrayView1d< real32 const > const m_q_n;
+
   /// The array containing the product of the stiffness matrix and the nodal pressure.
   arrayView1d< real32 > const m_stiffnessVector;
+
+    /// The array containing the epsilon Thomsen parameter.
+  arrayView1d< real32 const > const m_epsilon;
+
+    /// The array containing the delta Thomsen parameter.
+  arrayView1d< real32 const > const m_delta;
 
   /// The time increment for this time integration step.
   real64 const m_dt;
