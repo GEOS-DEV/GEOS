@@ -172,9 +172,8 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
             tmp.erase( n );
             duplicatedNodes[n].insert( tmp.cbegin(), tmp.cend() );
           }
-       }
-	 }
-    );
+        }
+	    } );
 
     NodeManager & nodeManager = meshLevel.getNodeManager();
     FaceManager & faceManager = meshLevel.getFaceManager();
