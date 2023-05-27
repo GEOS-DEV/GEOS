@@ -142,6 +142,8 @@ public:
     static constexpr char const * fractureConnectorEdgesToEdgesString() { return "fractureConnectorsToEdges"; }
     /// @return String key to the map of fracture connector local indices face element local indices.
     static constexpr char const * fractureConnectorsEdgesToFaceElementsIndexString() { return "fractureConnectorsToElementIndex"; }
+    /// @return String key to duplicated nodes.
+    static constexpr char const * duplicatedNodesString() { return "duplicatedNodes"; }
 
 #if GEOSX_USE_SEPARATION_COEFFICIENT
     /// Separation coefficient string.
@@ -277,6 +279,8 @@ private:
 
   /// Element-to-face relation
   FaceMapType m_toFacesRelation;
+
+  std::vector< ArrayOfArrays< globalIndex > > m_otherDuplicatedNodes;
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   /// Separation coefficient

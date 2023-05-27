@@ -300,6 +300,9 @@ localIndex FaceElementSubRegion::packUpDownMapsImpl( buffer_unit_type * & buffer
                                                packList,
                                                m_2dElemToElems.getElementRegionManager() );
 
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::duplicatedNodesString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, m_duplicatedNodes );
+
   return packedSize;
 }
 
@@ -356,6 +359,12 @@ localIndex FaceElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & bu
                                      m_2dElemToElems.getElementRegionManager(),
                                      overwriteUpMaps );
 
+  string duplicatedNodesString;
+  unPackedSize += bufferOps::Unpack( buffer, duplicatedNodesString );
+  GEOS_ERROR_IF_NE( duplicatedNodesString, viewKeyStruct::duplicatedNodesString() );
+  m_otherDuplicatedNodes.push_back( ArrayOfArrays< globalIndex >{} );
+  unPackedSize += bufferOps::Unpack( buffer, m_otherDuplicatedNodes.back() );
+
   return unPackedSize;
 }
 
@@ -375,85 +384,35 @@ void FaceElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
 }
 
 void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager,
-                           EdgeManager const & edgeManager,
-                           FaceManager const & faceManager,
-                           ElementRegionManager const & elemManager )
+                                                 EdgeManager const & edgeManager,
+                                                 FaceManager const & faceManager,
+                                                 ElementRegionManager const & elemManager )
 {
-  if( MpiWrapper::commSize() == 1 )
-  {
-    return; // TODO I want a good reference for serial runs.
-  }
   // Here I can fix the other mappings which are not properly defined...
   localIndex const num2dElems = this->size();
 
-  std::map< globalIndex, globalIndex > const referenceDuplicatedNodes{
-    { 5,   5 },
-    { 132, 5 },
-    { 11,  11 },
-    { 138, 11 },
-    { 17,  17 },
-    { 144, 17 },
-    { 23,  23 },
-    { 150, 23 },
-    { 29,  29 },
-    { 156, 29 },
-    { 35,  35 },
-    { 162, 35 },
-    { 204, 35 },
-    { 41,  41 },
-    { 210, 41 },
-    { 47,  47 },
-    { 216, 47 },
-    { 53,  53 },
-    { 222, 53 },
-    { 59,  59 },
-    { 228, 59 },
-    { 65,  65 },
-    { 234, 65 },
-    { 71,  71 },
-    { 168, 71 },
-    { 77,  77 },
-    { 174, 77 },
-    { 83,  83 },
-    { 180, 83 },
-    { 89,  89 },
-    { 186, 89 },
-    { 95,  95 },
-    { 192, 95 },
-    { 101, 101 },
-    { 198, 101 },
-    { 240, 101 },
-    { 107, 107 },
-    { 246, 107 },
-    { 113, 113 },
-    { 252, 113 },
-    { 119, 119 },
-    { 258, 119 },
-    { 125, 125 },
-    { 264, 125 },
-    { 131, 131 },
-    { 270, 131 },
-    { 163, 163 },
-    { 205, 163 },
-    { 164, 164 },
-    { 206, 164 },
-    { 165, 165 },
-    { 207, 165 },
-    { 166, 166 },
-    { 208, 166 },
-    { 167, 167 },
-    { 209, 167 },
-    { 199, 199 },
-    { 241, 199 },
-    { 200, 200 },
-    { 242, 200 },
-    { 201, 201 },
-    { 243, 201 },
-    { 202, 202 },
-    { 244, 202 },
-    { 203, 203 },
-    { 245, 203 }
-  };
+  std::map< globalIndex, globalIndex > referenceDuplicatedNodes;
+  {
+    std::set< std::set< globalIndex > > mergedDuplicatedNodes;
+    m_otherDuplicatedNodes.push_back( m_duplicatedNodes );
+    for( ArrayOfArrays< globalIndex > const & dns: m_otherDuplicatedNodes )
+    {
+      for( int i = 0; i < dns.size(); ++i )
+      {
+        std::set< globalIndex > tmp( dns[i].begin(), dns[i].end() );
+        mergedDuplicatedNodes.insert( tmp );
+      }
+    }
+
+    for( std::set< globalIndex > const & duplicatedNodes: mergedDuplicatedNodes )
+    {
+      globalIndex const & ref = *std::min_element( duplicatedNodes.cbegin(), duplicatedNodes.cend() );
+      for( globalIndex const & n: duplicatedNodes )
+      {
+        referenceDuplicatedNodes[n] = ref;
+      }
+    }
+  }
 
   // The concept of 2d face is deeply local to the `FaceElementSubRegion`.
   // Therefore, it's not exchanged during the ghosting process.
@@ -474,13 +433,11 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
 
   auto const & edgeToNodes = edgeManager.nodeList();
   std::map< std::pair< globalIndex, globalIndex >, localIndex > edgesIds;
-//  std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > edgesIds;
   for( localIndex const & edge: edges )
   {
     auto const nodes = edgeToNodes[edge];
     GEOS_ASSERT_EQ( nodes.size(), 2 );
     std::pair< globalIndex, globalIndex > const pg{ nodeManager.localToGlobalMap()[ nodes[0] ], nodeManager.localToGlobalMap()[ nodes[1] ] };
-//    edgesIds[pg] = edge;
     edgesIds[pg] = edge;
   }
 
