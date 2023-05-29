@@ -48,7 +48,7 @@ def stressRotation(stress, phi_x):
     return np.dot(np.dot(np.transpose(rotx), stress), rotx)
 
 def main():
-	xmlFilePathPrefix = "/data/PLI/sytuan/GEOSX/GEOSX/inputFiles/solidMechanics/ExtendedDruckerPragerWellbore"
+	xmlFilePathPrefix = "../../../../../../../inputFiles/solidMechanics/ExtendedDruckerPragerWellbore"
 	xmlData = getDataFromXML(xmlFilePathPrefix)
 
 	# Initial wellbore radius	
@@ -143,7 +143,7 @@ def main():
     pw_analytic,p_wellsurface_analytic,q_wellsurface_analytic = edpAnal.EDP(a0_a_ratio, sh, sv, nu, a0, G, initialFrictionAngle, finalFrictionAngle, param_m)
 		
 	# Compute pressure at wellbore surface
-	list_a0_a_ratio = np.arange(1.001,1.1,0.001)
+	list_a0_a_ratio = np.arange(1.0,1.1,0.001)
 	list_pw_analytic = []
 	list_p_wellsurface_analytic = []
 	list_q_wellsurface_analytic = []
