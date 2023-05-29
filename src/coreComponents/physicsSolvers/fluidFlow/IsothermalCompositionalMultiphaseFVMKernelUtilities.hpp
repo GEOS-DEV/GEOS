@@ -35,12 +35,137 @@ namespace isothermalCompositionalMultiphaseFVMKernelUtilities
 template< typename VIEWTYPE >
 using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-
 using Deriv = constitutive::multifluid::DerivativeOffset;
+
+struct PotGrad
+{
+  template< localIndex numComp, localIndex numFluxSupportPoints >
+  GEOS_HOST_DEVICE
+  static void
+  compute ( localIndex const numPhase, localIndex const ip, localIndex const hasCapPressure,
+            localIndex const ( &seri )[numFluxSupportPoints],
+            localIndex const ( &sesri )[numFluxSupportPoints],
+            localIndex const ( &sei )[numFluxSupportPoints],
+            real64 const ( &trans )[numFluxSupportPoints],
+            real64 const ( &dTrans_dPres )[numFluxSupportPoints],
+            ElementViewConst< arrayView1d< real64 const > > const & pres,
+            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
+            ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
+            ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseMassDens,
+            ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
+            ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
+            ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
+            real64 & potGrad,
+            real64 ( &dPresGrad_dP )[numFluxSupportPoints],
+            real64 ( &dPresGrad_dC )[numFluxSupportPoints][numComp],
+            real64 ( &dGravHead_dP )[numFluxSupportPoints],
+            real64 ( &dGravHead_dC )[numFluxSupportPoints][numComp] )
+  {
+    // create local work arrays
+    real64 densMean = 0.0;
+    real64 dDensMean_dP[numFluxSupportPoints]{};
+    real64 dDensMean_dC[numFluxSupportPoints][numComp]{};
+
+    real64 presGrad = 0.0;
+    real64 gravHead = 0.0;
+    real64 dCapPressure_dC[numComp]{};
+
+    real64 dProp_dC[numComp]{};
+
+    // calculate quantities on primary connected cells
+    for( integer i = 0; i < numFluxSupportPoints; ++i )
+    {
+      localIndex const er  = seri[i];
+      localIndex const esr = sesri[i];
+      localIndex const ei  = sei[i];
+
+      // density
+      real64 const density  = phaseMassDens[er][esr][ei][0][ip];
+      real64 const dDens_dP = dPhaseMassDens[er][esr][ei][0][ip][Deriv::dP];
+
+      applyChainRule( numComp,
+                      dCompFrac_dCompDens[er][esr][ei],
+                      dPhaseMassDens[er][esr][ei][0][ip],
+                      dProp_dC,
+                      Deriv::dC );
+
+      // average density and derivatives
+      densMean += 0.5 * density;
+      dDensMean_dP[i] = 0.5 * dDens_dP;
+      for( integer jc = 0; jc < numComp; ++jc )
+      {
+        dDensMean_dC[i][jc] = 0.5 * dProp_dC[jc];
+      }
+    }
+
+    /// compute the TPFA potential difference
+    for( integer i = 0; i < numFluxSupportPoints; i++ )
+    {
+      localIndex const er  = seri[i];
+      localIndex const esr = sesri[i];
+      localIndex const ei  = sei[i];
+
+      // capillary pressure
+      real64 capPressure     = 0.0;
+      real64 dCapPressure_dP = 0.0;
+
+      for( integer ic = 0; ic < numComp; ++ic )
+      {
+        dCapPressure_dC[ic] = 0.0;
+      }
+
+      if( hasCapPressure )
+      {
+        capPressure = phaseCapPressure[er][esr][ei][0][ip];
+
+        for( integer jp = 0; jp < numPhase; ++jp )
+        {
+          real64 const dCapPressure_dS = dPhaseCapPressure_dPhaseVolFrac[er][esr][ei][0][ip][jp];
+          dCapPressure_dP += dCapPressure_dS * dPhaseVolFrac[er][esr][ei][jp][Deriv::dP];
+
+          for( integer jc = 0; jc < numComp; ++jc )
+          {
+            dCapPressure_dC[jc] += dCapPressure_dS * dPhaseVolFrac[er][esr][ei][jp][Deriv::dC+jc];
+          }
+        }
+      }
+
+      presGrad += trans[i] * (pres[er][esr][ei] - capPressure);
+      dPresGrad_dP[i] += trans[i] * (1 - dCapPressure_dP)
+                         + dTrans_dPres[i] * (pres[er][esr][ei] - capPressure);
+      for( integer jc = 0; jc < numComp; ++jc )
+      {
+        dPresGrad_dC[i][jc] += -trans[i] * dCapPressure_dC[jc];
+      }
+
+      real64 const gravD     = trans[i] * gravCoef[er][esr][ei];
+      real64 const dGravD_dP = dTrans_dPres[i] * gravCoef[er][esr][ei];
+
+      // the density used in the potential difference is always a mass density
+      // unlike the density used in the phase mobility, which is a mass density
+      // if useMass == 1 and a molar density otherwise
+      gravHead += densMean * gravD;
+
+      // need to add contributions from both cells the mean density depends on
+      for( integer j = 0; j < numFluxSupportPoints; ++j )
+      {
+        dGravHead_dP[j] += dDensMean_dP[j] * gravD + dGravD_dP * densMean;
+        for( integer jc = 0; jc < numComp; ++jc )
+        {
+          dGravHead_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
+        }
+      }
+    }
+
+    // compute phase potential gradient
+    potGrad = presGrad - gravHead;
+  }
+
+};
 
 struct PPUPhaseFlux
 {
-
   /**
    * @brief Form the PhasePotentialUpwind from pressure gradient and gravitational head
    * @tparam numComp number of components
@@ -97,111 +222,16 @@ struct PPUPhaseFlux
            real64 ( & dPhaseFlux_dP )[numFluxSupportPoints],
            real64 ( & dPhaseFlux_dC )[numFluxSupportPoints][numComp] )
   {
-    // create local work arrays
-    real64 densMean = 0.0;
-    real64 dDensMean_dP[numFluxSupportPoints]{};
-    real64 dDensMean_dC[numFluxSupportPoints][numComp]{};
-
-    real64 presGrad = 0.0;
-    real64 dPresGrad_dP[numFluxSupportPoints]{};
-    real64 dPresGrad_dC[numFluxSupportPoints][numComp]{};
-
-    real64 gravHead = 0.0;
-    real64 dGravHead_dP[numFluxSupportPoints]{};
-    real64 dGravHead_dC[numFluxSupportPoints][numComp]{};
-
-    real64 dCapPressure_dC[numComp]{};
-
-    real64 dProp_dC[numComp]{};
-
-    // calculate quantities on primary connected cells
-    for( integer i = 0; i < numFluxSupportPoints; ++i )
-    {
-      localIndex const er  = seri[i];
-      localIndex const esr = sesri[i];
-      localIndex const ei  = sei[i];
-
-      // density
-      real64 const density  = phaseMassDens[er][esr][ei][0][ip];
-      real64 const dDens_dP = dPhaseMassDens[er][esr][ei][0][ip][Deriv::dP];
-
-      applyChainRule( numComp,
-                      dCompFrac_dCompDens[er][esr][ei],
-                      dPhaseMassDens[er][esr][ei][0][ip],
-                      dProp_dC,
-                      Deriv::dC );
-
-      // average density and derivatives
-      densMean += 0.5 * density;
-      dDensMean_dP[i] = 0.5 * dDens_dP;
-      for( integer jc = 0; jc < numComp; ++jc )
-      {
-        dDensMean_dC[i][jc] = 0.5 * dProp_dC[jc];
-      }
-    }
-
-    /// compute the TPFA potential difference
-    for( integer i = 0; i < numFluxSupportPoints; i++ )
-    {
-      localIndex const er  = seri[i];
-      localIndex const esr = sesri[i];
-      localIndex const ei  = sei[i];
-
-      // capillary pressure
-      real64 capPressure     = 0.0;
-      real64 dCapPressure_dP = 0.0;
-
-      for( integer ic = 0; ic < numComp; ++ic )
-      {
-        dCapPressure_dC[ic] = 0.0;
-      }
-
-      if( hasCapPressure )
-      {
-        capPressure = phaseCapPressure[er][esr][ei][0][ip];
-
-        for( integer jp = 0; jp < numPhase; ++jp )
-        {
-          real64 const dCapPressure_dS = dPhaseCapPressure_dPhaseVolFrac[er][esr][ei][0][ip][jp];
-          dCapPressure_dP += dCapPressure_dS * dPhaseVolFrac[er][esr][ei][jp][Deriv::dP];
-
-          for( integer jc = 0; jc < numComp; ++jc )
-          {
-            dCapPressure_dC[jc] += dCapPressure_dS * dPhaseVolFrac[er][esr][ei][jp][Deriv::dC+jc];
-          }
-        }
-      }
-
-      presGrad += trans[i] * (pres[er][esr][ei] - capPressure);
-      dPresGrad_dP[i] += trans[i] * (1 - dCapPressure_dP)
-                         + dTrans_dPres[i] * (pres[er][esr][ei] - capPressure);
-      for( integer jc = 0; jc < numComp; ++jc )
-      {
-        dPresGrad_dC[i][jc] += -trans[i] * dCapPressure_dC[jc];
-      }
-
-      real64 const gravD     = trans[i] * gravCoef[er][esr][ei];
-      real64 const dGravD_dP = dTrans_dPres[i] * gravCoef[er][esr][ei];
-
-      // the density used in the potential difference is always a mass density
-      // unlike the density used in the phase mobility, which is a mass density
-      // if useMass == 1 and a molar density otherwise
-      gravHead += densMean * gravD;
-
-      // need to add contributions from both cells the mean density depends on
-      for( integer j = 0; j < numFluxSupportPoints; ++j )
-      {
-        dGravHead_dP[j] += dDensMean_dP[j] * gravD + dGravD_dP * densMean;
-        for( integer jc = 0; jc < numComp; ++jc )
-        {
-          dGravHead_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
-        }
-      }
-    }
+    real64 dPresGrad_dP[numFluxSupportPoints];
+    real64 dPresGrad_dC[numFluxSupportPoints][numComp];
+    real64 dGravHead_dP[numFluxSupportPoints];
+    real64 dGravHead_dC[numFluxSupportPoints][numComp];
+    PotGrad::compute< numComp, numFluxSupportPoints >( numPhase, ip, hasCapPressure, seri, sesri, sei, trans, dTrans_dPres, pres,
+                                                       gravCoef, dPhaseVolFrac, dCompFrac_dCompDens, phaseMassDens, dPhaseMassDens,
+                                                       phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac, potGrad, dPresGrad_dP,
+                                                       dPresGrad_dC, dGravHead_dP, dGravHead_dC );
 
     // *** upwinding ***
-    // compute phase potential gradient
-    potGrad = presGrad - gravHead;
 
     // choose upstream cell
     k_up = (potGrad >= 0) ? 0 : 1;
@@ -241,7 +271,6 @@ struct PPUPhaseFlux
 
 struct C1PPUPhaseFlux
 {
-
   /**
    * @brief Form the PhasePotentialUpwind from pressure gradient and gravitational head
    * @tparam numComp number of components
@@ -298,114 +327,18 @@ struct C1PPUPhaseFlux
            real64 ( & dPhaseFlux_dP )[numFluxSupportPoints],
            real64 ( & dPhaseFlux_dC )[numFluxSupportPoints][numComp] )
   {
-    // create local work arrays
-    real64 densMean = 0.0;
-    real64 dDensMean_dP[numFluxSupportPoints]{};
-    real64 dDensMean_dC[numFluxSupportPoints][numComp]{};
-
-    real64 presGrad = 0.0;
-    real64 dPresGrad_dP[numFluxSupportPoints]{};
-    real64 dPresGrad_dC[numFluxSupportPoints][numComp]{};
-
-    real64 gravHead = 0.0;
-    real64 dGravHead_dP[numFluxSupportPoints]{};
-    real64 dGravHead_dC[numFluxSupportPoints][numComp]{};
-
-    real64 dCapPressure_dC[numComp]{};
-
-    real64 dProp_dC[numComp]{};
-
-    // calculate quantities on primary connected cells
-    for( integer i = 0; i < numFluxSupportPoints; ++i )
-    {
-      localIndex const er  = seri[i];
-      localIndex const esr = sesri[i];
-      localIndex const ei  = sei[i];
-
-      // density
-      real64 const density  = phaseMassDens[er][esr][ei][0][ip];
-      real64 const dDens_dP = dPhaseMassDens[er][esr][ei][0][ip][Deriv::dP];
-
-      applyChainRule( numComp,
-                      dCompFrac_dCompDens[er][esr][ei],
-                      dPhaseMassDens[er][esr][ei][0][ip],
-                      dProp_dC,
-                      Deriv::dC );
-
-      // average density and derivatives
-      densMean += 0.5 * density;
-      dDensMean_dP[i] = 0.5 * dDens_dP;
-      for( integer jc = 0; jc < numComp; ++jc )
-      {
-        dDensMean_dC[i][jc] = 0.5 * dProp_dC[jc];
-      }
-    }
-
-    /// compute the TPFA potential difference
-    for( integer i = 0; i < numFluxSupportPoints; i++ )
-    {
-      localIndex const er  = seri[i];
-      localIndex const esr = sesri[i];
-      localIndex const ei  = sei[i];
-
-      // capillary pressure
-      real64 capPressure     = 0.0;
-      real64 dCapPressure_dP = 0.0;
-
-      for( integer ic = 0; ic < numComp; ++ic )
-      {
-        dCapPressure_dC[ic] = 0.0;
-      }
-
-      if( hasCapPressure )
-      {
-        capPressure = phaseCapPressure[er][esr][ei][0][ip];
-
-        for( integer jp = 0; jp < numPhase; ++jp )
-        {
-          real64 const dCapPressure_dS = dPhaseCapPressure_dPhaseVolFrac[er][esr][ei][0][ip][jp];
-          dCapPressure_dP += dCapPressure_dS * dPhaseVolFrac[er][esr][ei][jp][Deriv::dP];
-
-          for( integer jc = 0; jc < numComp; ++jc )
-          {
-            dCapPressure_dC[jc] += dCapPressure_dS * dPhaseVolFrac[er][esr][ei][jp][Deriv::dC+jc];
-          }
-        }
-      }
-
-      presGrad += trans[i] * (pres[er][esr][ei] - capPressure);
-      dPresGrad_dP[i] += trans[i] * (1 - dCapPressure_dP)
-                         + dTrans_dPres[i] * (pres[er][esr][ei] - capPressure);
-      for( integer jc = 0; jc < numComp; ++jc )
-      {
-        dPresGrad_dC[i][jc] += -trans[i] * dCapPressure_dC[jc];
-      }
-
-      real64 const gravD     = trans[i] * gravCoef[er][esr][ei];
-      real64 const dGravD_dP = dTrans_dPres[i] * gravCoef[er][esr][ei];
-
-      // the density used in the potential difference is always a mass density
-      // unlike the density used in the phase mobility, which is a mass density
-      // if useMass == 1 and a molar density otherwise
-      gravHead += densMean * gravD;
-
-      // need to add contributions from both cells the mean density depends on
-      for( integer j = 0; j < numFluxSupportPoints; ++j )
-      {
-        dGravHead_dP[j] += dDensMean_dP[j] * gravD + dGravD_dP * densMean;
-        for( integer jc = 0; jc < numComp; ++jc )
-        {
-          dGravHead_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
-        }
-      }
-    }
-
-    // compute phase potential gradient
-    potGrad = presGrad - gravHead;
-
-    // phase flux and derivatives
+    real64 dPresGrad_dP[numFluxSupportPoints];
+    real64 dPresGrad_dC[numFluxSupportPoints][numComp];
+    real64 dGravHead_dP[numFluxSupportPoints];
+    real64 dGravHead_dC[numFluxSupportPoints][numComp];
+    PotGrad::compute< numComp, numFluxSupportPoints >( numPhase, ip, hasCapPressure, seri, sesri, sei, trans, dTrans_dPres, pres,
+                                                       gravCoef, dPhaseVolFrac, dCompFrac_dCompDens, phaseMassDens, dPhaseMassDens,
+                                                       phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac, potGrad, dPresGrad_dP,
+                                                       dPresGrad_dC, dGravHead_dP, dGravHead_dC );
 
     // *** upwinding ***
+
+    // phase flux and derivatives
 
     // assuming TPFA in the code below
 
@@ -483,7 +416,6 @@ struct C1PPUPhaseFlux
     k_up = (phaseFlux >= 0) ? 0 : 1;
 
   }
-
 };
 
 struct PhaseComponentFlux
