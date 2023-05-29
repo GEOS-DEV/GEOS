@@ -33,6 +33,7 @@ contained within two xml files that are located at:
 
   inputFiles/solidMechanics/ExtendedDruckerPragerWellbore_benchmark.xml
 
+The Python scripts for post-processing GEOS results, analytical restuls and validation plots are also provided in this example.
 
 ------------------------------------------------------------------
 Description of the case
@@ -135,7 +136,7 @@ The next step is to specify fields, including:
   - The boundary conditions (the reduction of wellbore pressure and constraints of the outer boundaries have to be set)
 
 In this example, we need to specify isotropic horizontal stress (:math:`\sigma_h` = -11.25 MPa) and vertical stress (:math:`\sigma_v` = -15.0 MPa). 
-To reach equilibrium, a compressive traction :math:`P_w` = -11.25 MPa is instantaneously applied at the wellbore wall ``rneg`` at time :math:`t` = 0 s, which will then be gradually reduced to a lower absolute value (-2.0 MPa) to let wellbore contract.
+To reach equilibrium, a compressive traction :math:`p_w` = -11.25 MPa is instantaneously applied at the wellbore wall ``rneg`` at time :math:`t` = 0 s, which will then be gradually reduced to a lower absolute value (-2.0 MPa) to let wellbore contract.
 The boundaries at ``tneg`` and ``tpos`` are subjected to roller constraints. The plane strain condition is ensured by fixing the vertical displacement at ``zneg`` and ``zpos`` The far-field boundary is fixed in horizontal displacement.  
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
@@ -183,7 +184,7 @@ The parameters used in the simulation are summarized in the following table.
 +------------------+-------------------------+------------------+---------------+
 | :math:`\phi_r`   | Residual Friction Angle | [degree]         | 23.05         |
 +------------------+-------------------------+------------------+---------------+
-| :math:`m`      | Hardening Rate          | [-]              | 0.01          |
+| :math:`m`        | Hardening Rate          | [-]              | 0.01          |
 +------------------+-------------------------+------------------+---------------+
 | :math:`\sigma_h` | Horizontal Stress       | [MPa]            | -11.25        |
 +------------------+-------------------------+------------------+---------------+
@@ -201,6 +202,14 @@ Inspecting results
 In the above example, we requested hdf5 output files. We can therefore use python scripts to visualize the outcome. Below figure shows the comparisons between the numerical predictions (marks) and the corresponding analytical solutions (solid curves) with respect to the distributions of principal stress components, stress path on the wellbore surface, the supporting wellbore pressure and wellbore size. It is clear that the GEOS predictions are in excellent agreement with the analytical results. On the top-right figure, we added also a comparison between GEOS results for elasto-plastic material and the anlytical solutions of an elastic material. Note that the elastic solutions are differed from the elasto-plastic results even in the elastic zone (r/a>2).
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/edpWellbore/edpWellbore_plot.py
+
+.. _edpWellboreVerificationFig:
+.. figure:: edpWellboreVerification.png
+   :align: center
+   :width: 1000
+   :figclass: align-center
+
+   Validation of GEOS results.
 
 For the same wellbore problem, using different constitutive models (plastic vs. elastic), obviously, distinct differences in rock deformation and distribution of resultant stresses is also observed and highlighted.  
 

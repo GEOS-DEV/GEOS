@@ -48,7 +48,7 @@ def stressRotation(stress, phi_x):
     return np.dot(np.dot(np.transpose(rotx), stress), rotx)
 
 def main():
-	xmlFilePathPrefix = "../../../../../../../inputFiles/solidMechanics/ExtendedDruckerPragerWellbore"
+	xmlFilePathPrefix = "/data/PLI/sytuan/GEOSX/GEOSX/inputFiles/solidMechanics/ExtendedDruckerPragerWellbore"
 	xmlData = getDataFromXML(xmlFilePathPrefix)
 
 	# Initial wellbore radius	
@@ -94,12 +94,13 @@ def main():
 	a = a0 + da
 	
 	# Compute total stress, the stress of each element is the average value of its eight Gauss points
-	stress_xx = ( sum(stress[26,:,6*i+0] for i in range(8)) )/8.0
-	stress_yy = ( sum(stress[26,:,6*i+1] for i in range(8)) )/8.0
-	stress_zz = ( sum(stress[26,:,6*i+2] for i in range(8)) )/8.0
-	stress_yz = ( sum(stress[26,:,6*i+3] for i in range(8)) )/8.0
-	stress_xz = ( sum(stress[26,:,6*i+4] for i in range(8)) )/8.0
-	stress_xy = ( sum(stress[26,:,6*i+5] for i in range(8)) )/8.0
+	nTimeSteps = 30
+	stress_xx = ( sum(stress[nTimeSteps,:,6*i+0] for i in range(8)) )/8.0
+	stress_yy = ( sum(stress[nTimeSteps,:,6*i+1] for i in range(8)) )/8.0
+	stress_zz = ( sum(stress[nTimeSteps,:,6*i+2] for i in range(8)) )/8.0
+	stress_yz = ( sum(stress[nTimeSteps,:,6*i+3] for i in range(8)) )/8.0
+	stress_xz = ( sum(stress[nTimeSteps,:,6*i+4] for i in range(8)) )/8.0
+	stress_xy = ( sum(stress[nTimeSteps,:,6*i+5] for i in range(8)) )/8.0
 	
 	# Coordinate of elemnt center
 	nElements = center.shape[1]
@@ -142,7 +143,7 @@ def main():
     pw_analytic,p_wellsurface_analytic,q_wellsurface_analytic = edpAnal.EDP(a0_a_ratio, sh, sv, nu, a0, G, initialFrictionAngle, finalFrictionAngle, param_m)
 		
 	# Compute pressure at wellbore surface
-	list_a0_a_ratio = np.arange(1.005,1.1,0.001)
+	list_a0_a_ratio = np.arange(1.001,1.1,0.001)
 	list_pw_analytic = []
 	list_p_wellsurface_analytic = []
 	list_q_wellsurface_analytic = []
@@ -237,8 +238,8 @@ def main():
 	plt.ylim(0,12e6)
 	plt.legend()
 	
-	plt.show()
-
+	plt.savefig('edpWellboreVerification.png')
+	
 if __name__ == "__main__":
 	main()
 	

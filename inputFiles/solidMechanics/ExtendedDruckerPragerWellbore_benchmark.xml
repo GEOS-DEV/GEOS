@@ -28,7 +28,7 @@
     maxTime="1.05">
     <PeriodicEvent
       name="solverApplications"
-      forceDt="0.5"
+      forceDt="0.1"
       beginTime="0"
       endTime="0.5"
       targetExactTimestep="1"
