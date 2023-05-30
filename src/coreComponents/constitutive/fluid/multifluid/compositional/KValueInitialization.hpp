@@ -73,7 +73,7 @@ public:
   {
     return exp( -4844.168051 / temperature + 12.93022442 ) * 1.0e5 / pressure;
   }
-  
+
 };
 
 } // namespace constitutive
