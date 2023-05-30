@@ -25,7 +25,7 @@
 #include "mesh/CellElementSubRegion.hpp"
 
 
-using namespace geosx;
+using namespace geos;
 
 constexpr double maxCoordInX = 1.0;
 constexpr double maxCoordInY = 2.0;
@@ -78,7 +78,7 @@ protected:
 
   static void SetUpTestCase()
   {
-    string const inputStream = GEOSX_FMT(
+    string const inputStream = GEOS_FMT(
       "<Problem>"
       "  <Mesh>"
       "    <InternalMesh"
@@ -190,7 +190,7 @@ TEST_F( MeshGenerationTest, elementCentersAndVolumes )
 TEST_F( MeshGenerationTest, elemToNodeMap )
 {
   arrayView2d< localIndex const, cells::NODE_MAP_USD > const & nodeMap = m_subRegion->nodeList();
-  GEOSX_ERROR_IF_NE( nodeMap.size( 1 ), 8 );
+  GEOS_ERROR_IF_NE( nodeMap.size( 1 ), 8 );
 
   localIndex elemID = 0;
   for( localIndex i = 0; i < numElemsInX; ++i )
@@ -281,7 +281,7 @@ TEST_F( MeshGenerationTest, faceNodeMaps )
   arrayView2d< localIndex const > const & faceToElementMap = m_faceManager->elementList().toViewConst();
   ArrayOfSetsView< localIndex const > const & nodeToFaceMap = m_nodeManager->faceList().toViewConst();
 
-  GEOSX_ERROR_IF_NE( elementToFaceMap.size( 1 ), 6 );
+  GEOS_ERROR_IF_NE( elementToFaceMap.size( 1 ), 6 );
 
   array1d< localIndex > faceNodesFromElem( 4 );
   array1d< localIndex > faceNodesFromFace( 4 );
@@ -335,7 +335,7 @@ TEST_F( MeshGenerationTest, faceElementMaps )
   arrayView2d< localIndex const > const & elementToFaceMap = m_subRegion->faceList();
   arrayView2d< localIndex const > const & faceToElementMap = m_faceManager->elementList();
 
-  GEOSX_ERROR_IF_NE( elementToFaceMap.size( 1 ), 6 );
+  GEOS_ERROR_IF_NE( elementToFaceMap.size( 1 ), 6 );
 
   localIndex const elemIDOffset[6] = { -elem_dJ, -1, -elem_dI, elem_dI, elem_dJ, 1 };
 
@@ -415,7 +415,7 @@ TEST_F( MeshGenerationTest, edgeNodeMaps )
   ArrayOfSetsView< localIndex const > const & nodeToEdgeMap = m_nodeManager->edgeList().toViewConst();
   arrayView2d< localIndex const > const & edgeToNodeMap = m_edgeManager->nodeList();
 
-  GEOSX_ERROR_IF_NE( edgeToNodeMap.size( 1 ), 2 );
+  GEOS_ERROR_IF_NE( edgeToNodeMap.size( 1 ), 2 );
 
   localIndex nodeIndex = 0;
   for( localIndex i = 0; i < numNodesInX; ++i )
@@ -471,7 +471,7 @@ TEST_F( MeshGenerationTest, edgeFaceMaps )
   arrayView2d< localIndex const > const & edgeToNodeMap = m_edgeManager->nodeList();
   ArrayOfSetsView< localIndex const > const & edgeToFaceMap = m_edgeManager->faceList().toViewConst();
 
-  GEOSX_ERROR_IF_NE( elementToFaceMap.size( 1 ), 6 );
+  GEOS_ERROR_IF_NE( elementToFaceMap.size( 1 ), 6 );
 
   localIndex elemID = 0;
   for( localIndex i = 0; i < numElemsInX; ++i )
@@ -518,11 +518,11 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  GeosxState state( geosx::basicSetup( argc, argv ) );
+  GeosxState state( geos::basicSetup( argc, argv ) );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::basicCleanup();
+  geos::basicCleanup();
 
   return result;
 }

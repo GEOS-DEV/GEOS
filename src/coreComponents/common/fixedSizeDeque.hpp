@@ -20,7 +20,7 @@
 
 /// Get the positive value of a module b
 #define POSITIVE_MODULO( a, b ) ( ( ( a ) % ( b ) ) + b ) % ( b )
-namespace geosx
+namespace geos
 {
 template< typename T, typename INDEX_TYPE >
 /// Implement a double ended queue with fixed number of fixed size buffer to be stored
@@ -44,8 +44,8 @@ public:
   fixedSizeDeque( IndexType maxEntries, IndexType valuesPerEntry, LvArray::MemorySpace space, camp::resources::Resource stream ):
     m_stream( stream )
   {
-    GEOSX_ERROR_IF( maxEntries < 0, "Fixed sized queue size must be positive" );
-    GEOSX_ERROR_IF( valuesPerEntry < 0, "Fixed sized queue array size must be positive" );
+    GEOS_ERROR_IF( maxEntries < 0, "Fixed sized queue size must be positive" );
+    GEOS_ERROR_IF( valuesPerEntry < 0, "Fixed sized queue array size must be positive" );
     m_storage.resizeWithoutInitializationOrDestruction( space, maxEntries, valuesPerEntry );
   }
 
@@ -76,56 +76,56 @@ public:
   /// @returns the first array in the queue
   ArraySlice1D front() const
   {
-    GEOSX_ERROR_IF( empty(), "Can't get front from empty queue" );
+    GEOS_ERROR_IF( empty(), "Can't get front from empty queue" );
     return m_storage[ POSITIVE_MODULO( m_begin, m_storage.size( 0 ) ) ];
   }
 
   /// @returns the future first array in the queue after inc_front will be called
   ArraySlice1D next_front() const
   {
-    GEOSX_ERROR_IF( full(), "Can't increase in a full queue" );
+    GEOS_ERROR_IF( full(), "Can't increase in a full queue" );
     return m_storage[ POSITIVE_MODULO( m_begin-1, m_storage.size( 0 ) ) ];
   }
 
   /// @returns the last array of the queue
   ArraySlice1D back() const
   {
-    GEOSX_ERROR_IF( empty(), "Can't get back from empty queue" );
+    GEOS_ERROR_IF( empty(), "Can't get back from empty queue" );
     return m_storage[ POSITIVE_MODULO( m_end, m_storage.size( 0 ) ) ];
   }
 
   /// @returns the future last array of the queue when inc_back will be called
   ArraySlice1D next_back() const
   {
-    GEOSX_ERROR_IF( full(), "Can't increase in a full queue" );
+    GEOS_ERROR_IF( full(), "Can't increase in a full queue" );
     return m_storage[ POSITIVE_MODULO( m_end+1, m_storage.size( 0 ) ) ];
   }
 
   /// Removes first array of the queue
   void pop_front()
   {
-    GEOSX_ERROR_IF( empty(), "Can't pop front from empty queue" );
+    GEOS_ERROR_IF( empty(), "Can't pop front from empty queue" );
     m_begin++;
   }
 
   /// Removes last array of the queue
   void pop_back()
   {
-    GEOSX_ERROR_IF( empty(), "Can't pop back from empty queue" );
+    GEOS_ERROR_IF( empty(), "Can't pop back from empty queue" );
     m_end--;
   }
 
   /// Add one array (uninitialized) at the front of the queue
   void inc_front()
   {
-    GEOSX_ERROR_IF( full(), "Can't increase in a full queue" );
+    GEOS_ERROR_IF( full(), "Can't increase in a full queue" );
     m_begin--;
   }
 
   /// Add one array (uninitialized) at the end of the queue
   void inc_back()
   {
-    GEOSX_ERROR_IF( full(), "Can't increase in a full queue" );
+    GEOS_ERROR_IF( full(), "Can't increase in a full queue" );
     m_end++;
   }
 
@@ -137,7 +137,7 @@ public:
    */
   camp::resources::Event emplace_front( const ArraySlice1D & src )
   {
-    GEOSX_ERROR_IF( full(), "Can't emplace in a full  queue" );
+    GEOS_ERROR_IF( full(), "Can't emplace in a full  queue" );
     camp::resources::Event e = LvArray::memcpy( m_stream, m_storage[ POSITIVE_MODULO( m_begin-1, m_storage.size( 0 ) ) ], src );
     --m_begin;
     return e;
@@ -151,7 +151,7 @@ public:
    */
   camp::resources::Event emplace_back( const ArraySlice1D & src )
   {
-    GEOSX_ERROR_IF( full(), "Can't emplace in a full queue" );
+    GEOS_ERROR_IF( full(), "Can't emplace in a full queue" );
     camp::resources::Event e = LvArray::memcpy( m_stream, m_storage[ POSITIVE_MODULO( m_end+1, m_storage.size( 0 ) ) ], src );
     ++m_end;
     return e;

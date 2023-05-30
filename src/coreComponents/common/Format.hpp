@@ -12,28 +12,28 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_COMMON_FORMAT_HPP_
-#define GEOSX_COMMON_FORMAT_HPP_
+#ifndef GEOS_COMMON_FORMAT_HPP_
+#define GEOS_COMMON_FORMAT_HPP_
 
 #if __cplusplus < 202002L
 #define GEOSX_USE_FMT
 #endif
 
 #ifdef GEOSX_USE_FMT
-// #include <fmt/core.h>
-// #include <fmt/chrono.h>
-//#define GEOSX_FMT_NS ::fmt
+#include <fmt/core.h>
+#include <fmt/chrono.h>
+#include <fmt/ranges.h>
+#define GEOS_FMT_NS fmt
 #else // use C++20's <format>
 #include <format>
-#define GEOSX_FMT_NS ::std
+#define GEOS_FMT_NS std
 #endif
 
 /**
  * @brief Interpolate arguments into a message format string.
  * @param msg the message format string, must be a constant expression
  */
-//#define GEOSX_FMT( msg, ... ) GEOSX_FMT_NS::format( msg, __VA_ARGS__ )
-#define GEOSX_FMT( msg, ... ) ""
+#define GEOS_FMT( msg, ... ) GEOS_FMT_NS::format( msg, __VA_ARGS__ )
 
 /**
  * @brief Interpolate arguments into a message format string and write into an output iterator.
@@ -42,7 +42,6 @@
  * @param msg the message format string, must be a constant expression
  * @note Ensures the output buffer is zero-terminated (std::format_to_n doesn't)
  */
-//#define GEOSX_FMT_TO( iter, size, msg, ... ) *GEOSX_FMT_NS::format_to_n( iter, size - 1, msg, __VA_ARGS__ ).out = '\0'
-#define GEOSX_FMT_TO( iter, size, msg, ... ) ""
+#define GEOS_FMT_TO( iter, size, msg, ... ) *GEOS_FMT_NS::format_to_n( iter, size - 1, msg, __VA_ARGS__ ).out = '\0'
 
-#endif //GEOSX_COMMON_FORMAT_HPP_
+#endif //GEOS_COMMON_FORMAT_HPP_

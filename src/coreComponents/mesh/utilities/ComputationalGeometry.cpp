@@ -18,10 +18,10 @@
 
 #include "ComputationalGeometry.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace computationalGeometry
 {} /* namespace computationalGeometry */
 
-} /* namespace geosx */
+} /* namespace geos */

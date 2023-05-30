@@ -16,15 +16,15 @@
  * @file NodeManager.hpp
  */
 
-#ifndef GEOSX_MESH_NODEMANAGER_HPP_
-#define GEOSX_MESH_NODEMANAGER_HPP_
+#ifndef GEOS_MESH_NODEMANAGER_HPP_
+#define GEOS_MESH_NODEMANAGER_HPP_
 
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "ToElementRelation.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class FaceManager;
@@ -157,9 +157,11 @@ public:
    * @brief Copies the nodes positions and the nodes to (edges|faces|elements) mappings from @p cellBlockManager.
    * @param[in] cellBlockManager Will provide the mappings.
    * @param[in] elemRegionManager element region manager, needed to map blocks to subregion
+   * @param[in] baseMeshLevel flag that indicates if we are operating on the base mesh level or on another mesh level
    */
   void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
-                                ElementRegionManager const & elemRegionManager );
+                                ElementRegionManager const & elemRegionManager,
+                                bool baseMeshLevel );
 
   /**
    * @brief Link the current manager to other managers.
@@ -380,7 +382,7 @@ public:
    * In particular, any mismatch like @a (e.g.) <tt>n -> (e0, e1, ...)</tt> and
    * <tt>n -> (er1, er0, ...)</tt> will probably result in a bug.
    * @warning @p e, @p er or @p esr will equal -1 if undefined.
-   * @see geosx::FaceManager::elementList that shares the same kind of pattern.
+   * @see geos::FaceManager::elementList that shares the same kind of pattern.
    */
   ArrayOfArrays< localIndex > & elementList() { return m_toElements.m_toElementIndex; }
 

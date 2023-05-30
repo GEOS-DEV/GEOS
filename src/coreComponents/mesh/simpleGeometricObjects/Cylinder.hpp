@@ -17,12 +17,12 @@
  *
  */
 
-#ifndef GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_CYLINDER_HPP_
-#define GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_CYLINDER_HPP_
+#ifndef GEOS_MESH_SIMPLEGEOMETRICOBJECTS_CYLINDER_HPP_
+#define GEOS_MESH_SIMPLEGEOMETRICOBJECTS_CYLINDER_HPP_
 
 #include "SimpleGeometricObjectBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -72,9 +72,9 @@ public:
 
   struct viewKeyStruct
   {
-    static constexpr char const * point1String() { return "point1"; }
-    static constexpr char const * point2String() { return "point2"; }
-    static constexpr char const * radiusString() { return "radius"; }
+    static constexpr char const * point1String() { return "firstFaceCenter"; }
+    static constexpr char const * point2String() { return "secondFaceCenter"; }
+    static constexpr char const * radiusString() { return "outerRadius"; }
     static constexpr char const * innerRadiusString() { return "innerRadius"; }
   };
 
@@ -82,17 +82,20 @@ public:
 
 private:
 
-  /// Center point of one (upper or lower) face of the cylinder
+  /// Center point of the first face of the cylinder
   R1Tensor m_point1;
-  /// Center point of the other face of the cylinder
+
+  /// Center point of the second face of the cylinder
   R1Tensor m_point2;
-  /// Radius of the cylinder
+
+  /// Outer radius of the cylinder
   real64 m_radius = 0.0;
-  /// Inner radius of the cylinder
+
+  /// Inner radius of the annulus
   real64 m_innerRadius = 0.0;
 
 };
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_CYLINDER_HPP_
+#endif /* GEOS_MESH_SIMPLEGEOMETRICOBJECTS_CYLINDER_HPP_
         */

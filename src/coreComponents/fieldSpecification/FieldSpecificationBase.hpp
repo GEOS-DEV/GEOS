@@ -16,8 +16,8 @@
  * @file FieldSpecificationBase.hpp
  */
 
-#ifndef GEOSX_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
-#define GEOSX_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
+#ifndef GEOS_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
+#define GEOS_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
 
 #include "common/DataTypes.hpp"
 #include "common/TypeDispatch.hpp"
@@ -32,7 +32,7 @@
 #include "functions/FunctionManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 class Function;
 
@@ -435,7 +435,7 @@ public:
    */
   virtual R1Tensor const & getDirection() const
   {
-    GEOSX_UNUSED_VAR( time );
+    GEOS_UNUSED_VAR( time );
     return m_direction;
   }
 
@@ -605,7 +605,7 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
   if( m_functionName.empty() )
   {
     real64 const value = m_scale;
-    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const a = targetSet[ i ];
       FIELD_OP::SpecifyFieldValue( field, a, component, value );
@@ -618,7 +618,7 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
     if( function.isFunctionOfTime()==2 )
     {
       real64 const value = m_scale * function.evaluate( &time );
-      forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+      forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
       {
         localIndex const a = targetSet[ i ];
         FIELD_OP::SpecifyFieldValue( field, a, component, value );
@@ -630,7 +630,7 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
       function.evaluate( dataGroup, time, targetSet, result );
       arrayView1d< real64 const > const & resultView = result.toViewConst();
       real64 const scale = m_scale;
-      forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+      forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
       {
         localIndex const a = targetSet[ i ];
         FIELD_OP::SpecifyFieldValue( field, a, component, scale * resultView[i] );
@@ -843,7 +843,7 @@ void FieldSpecificationBase::zeroSystemRowsForBoundaryCondition( SortedArrayView
 
 {
   integer const component = ( getComponent() >=0 ) ? getComponent() : 0;
-  forAll< POLICY >( targetSet.size(), [targetSet, dofMap, matrix, component] GEOSX_HOST_DEVICE ( localIndex const i )
+  forAll< POLICY >( targetSet.size(), [targetSet, dofMap, matrix, component] GEOS_HOST_DEVICE ( localIndex const i )
   {
     localIndex const a = targetSet[ i ];
     globalIndex const dof = dofMap[ a ] + component;
@@ -860,4 +860,4 @@ void FieldSpecificationBase::zeroSystemRowsForBoundaryCondition( SortedArrayView
 
 }
 
-#endif //GEOSX_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
+#endif //GEOS_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP

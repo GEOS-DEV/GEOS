@@ -19,7 +19,7 @@
 #include "SinglePhasePoromechanicsEmbeddedFractures.hpp"
 
 #include "constitutive/contact/ContactSelector.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMKernelsHelper.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
@@ -29,7 +29,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -91,7 +91,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::initializePostInitialConditionsP
 void SinglePhasePoromechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
                                                            DofManager & dofManager ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   m_fracturesSolver->setupDofs( domain, dofManager );
   flowSolver()->setupDofs( domain, dofManager );
 
@@ -131,9 +131,9 @@ void SinglePhasePoromechanicsEmbeddedFractures::setupSystem( DomainPartition & d
 {
   // Add missing couplings ( matrix pressure with displacement jump and jump - displacement )
 
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( setSparsity );
+  GEOS_UNUSED_VAR( setSparsity );
 
   dofManager.setDomain( domain );
   setupDofs( domain, dofManager );
@@ -223,8 +223,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPa
         if( ghostRank[k] < 0 )
         {
           localIndex const localRow = LvArray::integerConversion< localIndex >( embeddedElementDofNumber[k] - rankOffset );
-          GEOSX_ASSERT_GE( localRow, 0 );
-          GEOSX_ASSERT_GE( rowLengths.size(), localRow + embeddedSurfaceSubRegion.numOfJumpEnrichments()  );
+          GEOS_ASSERT_GE( localRow, 0 );
+          GEOS_ASSERT_GE( rowLengths.size(), localRow + embeddedSurfaceSubRegion.numOfJumpEnrichments()  );
 
           for( localIndex i=0; i<embeddedSurfaceSubRegion.numOfJumpEnrichments(); ++i )
           {
@@ -232,8 +232,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPa
           }
 
           localIndex const localPressureRow = LvArray::integerConversion< localIndex >( pressureDofNumber[cellElementIndex] - rankOffset );
-          GEOSX_ASSERT_GE( localPressureRow, 0 );
-          GEOSX_ASSERT_GE( rowLengths.size(), localPressureRow + embeddedSurfaceSubRegion.numOfJumpEnrichments() );
+          GEOS_ASSERT_GE( localPressureRow, 0 );
+          GEOS_ASSERT_GE( rowLengths.size(), localPressureRow + embeddedSurfaceSubRegion.numOfJumpEnrichments() );
 
           rowLengths[ localPressureRow ] += embeddedSurfaceSubRegion.numOfJumpEnrichments();
         }
@@ -398,7 +398,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
                                                                 arrayView1d< real64 > const & localRhs )
 {
 
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   //updateState( domain );
 
@@ -435,8 +435,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
 
     solidMechanicsSolver()->getMaxForce() =
       finiteElement::
-        regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                      constitutive::PorousSolidBase,
+        regionBasedKernelApplication< parallelDevicePolicy< >,
+                                      constitutive::PorousSolid< ElasticIsotropic >,
                                       CellElementSubRegion >( mesh,
                                                               regionNames,
                                                               solidMechanicsSolver()->getDiscretizationName(),
@@ -456,15 +456,15 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
 
     real64 maxTraction =
       finiteElement::
-        regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                      constitutive::PorousSolidBase,
+        regionBasedKernelApplication< parallelDevicePolicy< >,
+                                      constitutive::PorousSolid< ElasticIsotropic >,
                                       CellElementSubRegion >( mesh,
                                                               regionNames,
                                                               solidMechanicsSolver()->getDiscretizationName(),
                                                               viewKeyStruct::porousMaterialNamesString(),
                                                               EFEMkernelFactory );
 
-    GEOSX_UNUSED_VAR( maxTraction );
+    GEOS_UNUSED_VAR( maxTraction );
 
     // 3. Assemble poroelastic fluxes and all derivatives
     flowSolver()->assemblePoroelasticFluxTerms( time_n, dt,
@@ -630,4 +630,4 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsEmbeddedFractures, std::string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

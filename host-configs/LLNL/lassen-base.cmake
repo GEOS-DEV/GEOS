@@ -1,12 +1,14 @@
 ###############################################################################
 #
-# Base configuration for LC Quartz builds
+# Base configuration for LC Lassen builds
 # Calling configuration file must define the following CMAKE variables:
 #
 # MPI_HOME
 #
 ###############################################################################
 
+set( GEOSX_BUILD_SHARED_LIBS ON CACHE BOOL "" )
+set( GEOSX_BUILD_OBJ_LIBS OFF CACHE BOOL "" )
 # Fortran
 set(ENABLE_FORTRAN OFF CACHE BOOL "")
 
@@ -43,18 +45,19 @@ set(ESSL_LIBRARIES /usr/tcetmp/packages/essl/essl-6.2.1/lib64/libesslsmpcuda.so
 # TPL
 set(ENABLE_PAPI OFF CACHE BOOL "")
 set(SILO_BUILD_TYPE powerpc64-unknown-linux-gnu CACHE STRING "")
+set(ENABLE_FESAPI OFF CACHE BOOL "" FORCE)
 
 # GEOSX specific options
 set(ENABLE_PVTPackage ON CACHE BOOL "")
 set(ENABLE_PETSC OFF CACHE BOOL "" FORCE )
 
 
-  
-set( ENABLE_HYPRE_CUDA ON CACHE BOOL "" FORCE )
-if( ENABLE_HYPRE_CUDA )
+
+set( ENABLE_HYPRE_DEVICE "CUDA" CACHE STRING "" FORCE )
+if( ${ENABLE_HYPRE_DEVICE} STREQUAL "HIP" OR ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" )
     set(ENABLE_TRILINOS OFF CACHE BOOL "" FORCE )
 else()
-    set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE )    
+    set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE )
     set(GEOSX_LA_INTERFACE "Trilinos" CACHE STRING "" FORCE )
 endif()
 
@@ -65,5 +68,17 @@ set(ENABLE_DOXYGEN OFF CACHE BOOL "" FORCE)
 
 # Other
 set(ENABLE_MATHPRESSO OFF CACHE BOOL "")
+
+# YAPF python formatting
+set(YAPF_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/lassen-gcc-python/python/bin/yapf CACHE PATH "" FORCE)
+
+# PYGEOSX
+set(ENABLE_PYGEOSX ON CACHE BOOL "")
+set(PYTHON_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/lassen-gcc-python/python/bin/python CACHE PATH "")
+set(Python3_ROOT_DIR /usr/gapps/GEOSX/thirdPartyLibs/python/lassen-gcc-python/python CACHE PATH "")
+set(Python3_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/lassen-gcc-python/python/bin/python3 CACHE PATH "")
+
+# ATS
+set(ATS_ARGUMENTS "--ats jsrun_omp --ats jsrun_bind=packed"  CACHE STRING "")
 
 include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)
