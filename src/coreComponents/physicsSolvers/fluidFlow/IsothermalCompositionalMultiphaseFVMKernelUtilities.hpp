@@ -39,10 +39,10 @@ using Deriv = constitutive::multifluid::DerivativeOffset;
 
 struct PotGrad
 {
-  template< localIndex numComp, localIndex numFluxSupportPoints >
+  template< integer numComp, integer numFluxSupportPoints >
   GEOS_HOST_DEVICE
   static void
-  compute ( localIndex const numPhase, localIndex const ip, localIndex const hasCapPressure,
+  compute ( integer const numPhase, integer const ip, integer const hasCapPressure,
             localIndex const ( &seri )[numFluxSupportPoints],
             localIndex const ( &sesri )[numFluxSupportPoints],
             localIndex const ( &sei )[numFluxSupportPoints],
@@ -57,10 +57,10 @@ struct PotGrad
             ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
             ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
             real64 & potGrad,
-            real64 ( &dPresGrad_dP )[numFluxSupportPoints],
-            real64 ( &dPresGrad_dC )[numFluxSupportPoints][numComp],
-            real64 ( &dGravHead_dP )[numFluxSupportPoints],
-            real64 ( &dGravHead_dC )[numFluxSupportPoints][numComp] )
+            real64 ( & dPresGrad_dP )[numFluxSupportPoints],
+            real64 ( & dPresGrad_dC )[numFluxSupportPoints][numComp],
+            real64 ( & dGravHead_dP )[numFluxSupportPoints],
+            real64 ( & dGravHead_dC )[numFluxSupportPoints][numComp] )
   {
     // create local work arrays
     real64 densMean = 0.0;
@@ -160,6 +160,7 @@ struct PotGrad
 
     // compute phase potential gradient
     potGrad = presGrad - gravHead;
+
   }
 
 };
@@ -222,10 +223,10 @@ struct PPUPhaseFlux
            real64 ( & dPhaseFlux_dP )[numFluxSupportPoints],
            real64 ( & dPhaseFlux_dC )[numFluxSupportPoints][numComp] )
   {
-    real64 dPresGrad_dP[numFluxSupportPoints];
-    real64 dPresGrad_dC[numFluxSupportPoints][numComp];
-    real64 dGravHead_dP[numFluxSupportPoints];
-    real64 dGravHead_dC[numFluxSupportPoints][numComp];
+    real64 dPresGrad_dP[numFluxSupportPoints]{};
+    real64 dPresGrad_dC[numFluxSupportPoints][numComp]{};
+    real64 dGravHead_dP[numFluxSupportPoints]{};
+    real64 dGravHead_dC[numFluxSupportPoints][numComp]{};
     PotGrad::compute< numComp, numFluxSupportPoints >( numPhase, ip, hasCapPressure, seri, sesri, sei, trans, dTrans_dPres, pres,
                                                        gravCoef, dPhaseVolFrac, dCompFrac_dCompDens, phaseMassDens, dPhaseMassDens,
                                                        phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac, potGrad, dPresGrad_dP,
