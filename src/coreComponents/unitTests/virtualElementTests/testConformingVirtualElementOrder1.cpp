@@ -214,7 +214,7 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
 
   // Loop over cells on the device.
   forAll< geos::parallelDevicePolicy< > >( numCells, [=] GEOS_HOST_DEVICE
-                                       ( localIndex const cellIndex )
+                                             ( localIndex const cellIndex )
   {
     typename VEM::StackVariables stack;
     VEM virtualElement;

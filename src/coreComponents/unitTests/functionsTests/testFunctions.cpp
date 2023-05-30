@@ -652,7 +652,7 @@ void testMutivariableFunction( MultivariableTableFunction & function,
                                                                       );
   // Test values evaluation first
   forAll< geos::parallelDevicePolicy< > >( numElems, [=] GEOS_HOST_DEVICE
-                                       ( localIndex const elemIndex )
+                                             ( localIndex const elemIndex )
   {
     kernel.compute( &inputs[elemIndex * NUM_DIMS], &evaluatedValuesView[elemIndex * NUM_OPS] );
   } );
@@ -664,7 +664,7 @@ void testMutivariableFunction( MultivariableTableFunction & function,
 
   // And now - both values and derivatives
   forAll< geos::parallelDevicePolicy< > >( numElems, [=] GEOS_HOST_DEVICE
-                                       ( localIndex const elemIndex )
+                                             ( localIndex const elemIndex )
   {
     // use local 2D array for the kernel
     real64 derivatives[NUM_OPS][NUM_DIMS];
