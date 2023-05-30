@@ -1103,6 +1103,10 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
     } );
 
   } );
+
+  // report to the user if some pore volumes are very small
+  // note: this function is here because: 1) porosity has been initialized and 2) NTG has been applied
+  validatePoreVolumes( domain );
 }
 
 void

@@ -429,6 +429,10 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       initTemp.setValues< parallelDevicePolicy<> >( temp );
     } );
   } );
+
+  // report to the user if some pore volumes are very small
+  // note: this function is here because: 1) porosity has been initialized and 2) NTG has been applied
+  validatePoreVolumes( domain );
 }
 
 void SinglePhaseBase::computeHydrostaticEquilibrium()
@@ -622,7 +626,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
       arrayView1d< real64 > const & deltaPres = subRegion.template getField< fields::flow::deltaPressure >();
 
       singlePhaseBaseKernels::StatisticsKernel::
-        saveDeltaPressure< parallelDevicePolicy<> >( subRegion.size(), pres, initPres, deltaPres );
+        saveDeltaPressure( subRegion.size(), pres, initPres, deltaPres );
       saveConvergedState( subRegion );
 
       arrayView1d< real64 > const & dVol = subRegion.template getField< fields::flow::deltaVolume >();
@@ -782,39 +786,7 @@ void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
                                                                            [&]( localIndex const,
                                                                                 auto & subRegion )
     {
-      SingleFluidBase const & fluid =
-        getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
-      //START_SPHINX_INCLUDE_COUPLEDSOLID
-      CoupledSolidBase const & solid =
-        getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
-      //END_SPHINX_INCLUDE_COUPLEDSOLID
-
-      string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-
-      if( m_isThermal )
-      {
-        thermalSinglePhaseBaseKernels::
-          ElementBasedAssemblyKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                     dofKey,
-                                                     subRegion,
-                                                     fluid,
-                                                     solid,
-                                                     localMatrix,
-                                                     localRhs );
-      }
-      else
-      {
-        singlePhaseBaseKernels::
-          ElementBasedAssemblyKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                     dofKey,
-                                                     subRegion,
-                                                     fluid,
-                                                     solid,
-                                                     localMatrix,
-                                                     localRhs );
-      }
+      accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );
     } );
   } );
 }
@@ -1020,6 +992,17 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
         GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
                                    getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(),
                                    fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+
+        if( isThermal )
+        {
+          char const msg[] = "SinglePhaseBase {} with isThermal = 1. At time {}s, "
+                             "the <{}> source flux boundary condition '{}' will be applied with the following behavior"
+                             "\n - negative value (injection): the mass balance equation is modified to considered the additional source term"
+                             "\n - positive value (production): both the mass balance and the energy balance equations are modified to considered the additional source term. " \
+                             "\n For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.";
+          GEOS_LOG_RANK_0( GEOS_FMT( msg,
+                                     getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(), fs.getName() ) );
+        }
       }
 
       if( targetSet.size() == 0 )

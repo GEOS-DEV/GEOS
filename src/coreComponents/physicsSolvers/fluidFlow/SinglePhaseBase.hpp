@@ -125,6 +125,21 @@ public:
                                   arrayView1d< real64 > const & localRhs );
 
   /**
+   * @brief assembles the accumulation terms for all cells of a spcefici subRegion.
+   * @tparam SUBREGION_TYPE the subRegion type
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param subRegion the subRegion
+   * @param localMatrix the system matrix
+   * @param localRhs the system right-hand side vector
+   *
+   */
+  template< typename SUBREGION_TYPE >
+  void accumulationAssemblyLaunch( DofManager const & dofManager,
+                                   SUBREGION_TYPE const & subRegion,
+                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   arrayView1d< real64 > const & localRhs );
+
+  /**
    * @brief assembles the flux terms for all cells
    * @param time_n previous time value
    * @param dt time step
@@ -373,6 +388,47 @@ private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };
+
+template< typename SUBREGION_TYPE >
+void SinglePhaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,
+                                                  SUBREGION_TYPE const & subRegion,
+                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  arrayView1d< real64 > const & localRhs )
+{
+  geos::constitutive::SingleFluidBase const & fluid =
+    getConstitutiveModel< geos::constitutive::SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
+  //START_SPHINX_INCLUDE_COUPLEDSOLID
+  geos::constitutive::CoupledSolidBase const & solid =
+    getConstitutiveModel< geos::constitutive::CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+  //END_SPHINX_INCLUDE_COUPLEDSOLID
+
+  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+
+  if( m_isThermal )
+  {
+    thermalSinglePhaseBaseKernels::
+      ElementBasedAssemblyKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                 dofKey,
+                                                 subRegion,
+                                                 fluid,
+                                                 solid,
+                                                 localMatrix,
+                                                 localRhs );
+  }
+  else
+  {
+    singlePhaseBaseKernels::
+      ElementBasedAssemblyKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                 dofKey,
+                                                 subRegion,
+                                                 fluid,
+                                                 solid,
+                                                 localMatrix,
+                                                 localRhs );
+  }
+}
 
 } /* namespace geos */
 
