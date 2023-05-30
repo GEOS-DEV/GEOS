@@ -98,6 +98,61 @@
       timeFrequency="5e5"
       targetExactTimestep="0"
       target="/Outputs/sidreRestart"/>
+
+    <!-- 1. -->
+    <PeriodicEvent
+      name="saturationHistoryCollection"
+      timeFrequency="1e5"
+      targetExactTimestep="1"
+      target="/Tasks/phaseVolumeFractionCollection" />
+
+    <PeriodicEvent
+      name="saturationHistoryOutput"
+      timeFrequency="1e5"
+      targetExactTimestep="1"
+      target="/Outputs/saturationHistoryOutput" />      
+
+    <!-- 2. -->
+    <PeriodicEvent
+      name="phaseOutfluxHistoryCollection"
+      timeFrequency="1e5"
+      targetExactTimestep="1"
+      target="/Tasks/phaseOutfluxCollection" />
+
+    <PeriodicEvent
+      name="phaseOutfluxHistoryOutput"
+      timeFrequency="1e5"
+      targetExactTimestep="1"
+      target="/Outputs/phaseOutfluxHistoryOutput" />
+
+    <!-- 3. -->
+    <PeriodicEvent
+      name="minPressureStatisticsHistoryCollection"
+      timeFrequency="1e5"
+      targetExactTimestep="1"
+      target="/Tasks/minPressureStatisticsCollection" />
+
+    <PeriodicEvent
+      name="maxPressureStatisticsHistoryCollection"
+      timeFrequency="1e5"
+      targetExactTimestep="1"
+      target="/Tasks/maxPressureStatisticsCollection" />
+
+    <PeriodicEvent
+      name="averagePressureStatisticsHistoryCollection"
+      timeFrequency="1e5"
+      targetExactTimestep="1"
+      target="/Tasks/averagePressureStatisticsCollection" />
+
+    <PeriodicEvent
+      name="regionStatisticsHistoryOutput"
+      timeFrequency="1e5"
+      targetExactTimestep="1"
+      target="/Outputs/regionStatisticsHistoryOutput" />
+
+
+
+
   </Events>
 
   <NumericalMethods>
@@ -272,7 +327,35 @@
       logLevel="1"
       computeCFLNumbers="1"
       computeRegionStatistics="1"/>
-    
+
+    <PackCollection
+      name="phaseVolumeFractionCollection"
+      objectPath="ElementRegions/region/cellBlock"
+      fieldName="phaseVolumeFraction"/>
+
+    <PackCollection
+      name="phaseOutfluxCollection"
+      objectPath="ElementRegions/region/cellBlock"
+      fieldName="phaseOutflux" />
+
+      <!-- objectPath="/Tasks/compflowStatistics/regionStatistics" -->
+    <PackCollection
+      name="minPressureStatisticsCollection"      
+      objectPath="/domain/MeshBodies/mesh1/meshLevels/Level0/ElementRegions/elementRegionsGroup/region/regionStatistics"    
+      disableCoordCollection="1"  
+      fieldName="minPressure" />
+
+    <PackCollection
+      name="maxPressureStatisticsCollection"      
+      objectPath="/domain/MeshBodies/mesh1/meshLevels/Level0/ElementRegions/elementRegionsGroup/region/regionStatistics"    
+      disableCoordCollection="1"  
+      fieldName="maxPressure" />
+
+    <PackCollection
+      name="averagePressureStatisticsCollection"      
+      objectPath="/domain/MeshBodies/mesh1/meshLevels/Level0/ElementRegions/elementRegionsGroup/region/regionStatistics"    
+      disableCoordCollection="1"  
+      fieldName="averagePressure" />
   </Tasks>
   
   <Functions>
@@ -314,6 +397,21 @@
 
     <Restart
       name="sidreRestart"/>
+
+    <TimeHistory
+      name="phaseOutfluxHistoryOutput"
+      sources="{/Tasks/phaseOutfluxCollection}"
+      filename="phaseOutfluxHistory" />
+    
+    <TimeHistory
+      name="saturationHistoryOutput"
+      sources="{/Tasks/phaseVolumeFractionCollection}"
+      filename="saturationHistory" />
+      
+    <TimeHistory
+      name="regionStatisticsHistoryOutput"
+      sources="{/Tasks/maxPressureStatisticsCollection, /Tasks/minPressureStatisticsCollection, /Tasks/averagePressureStatisticsCollection}"
+      filename="regionStatisticsHistory" />
   </Outputs>
 
   <Functions>
