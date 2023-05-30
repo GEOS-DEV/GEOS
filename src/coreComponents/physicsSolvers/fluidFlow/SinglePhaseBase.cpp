@@ -416,6 +416,10 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       initTemp.setValues< parallelDevicePolicy<> >( temp );
     } );
   } );
+
+  // report to the user if some pore volumes are very small
+  // note: this function is here because: 1) porosity has been initialized and 2) NTG has been applied
+  validatePoreVolumes( domain );
 }
 
 void SinglePhaseBase::computeHydrostaticEquilibrium()
@@ -609,7 +613,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
       arrayView1d< real64 > const & deltaPres = subRegion.template getField< fields::flow::deltaPressure >();
 
       singlePhaseBaseKernels::StatisticsKernel::
-        saveDeltaPressure< parallelDevicePolicy<> >( subRegion.size(), pres, initPres, deltaPres );
+        saveDeltaPressure( subRegion.size(), pres, initPres, deltaPres );
       saveConvergedState( subRegion );
 
       arrayView1d< real64 > const & dVol = subRegion.template getField< fields::flow::deltaVolume >();
@@ -767,39 +771,7 @@ void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
                                                                            [&]( localIndex const,
                                                                                 auto & subRegion )
     {
-      SingleFluidBase const & fluid =
-        getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
-      //START_SPHINX_INCLUDE_COUPLEDSOLID
-      CoupledSolidBase const & solid =
-        getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
-      //END_SPHINX_INCLUDE_COUPLEDSOLID
-
-      string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-
-      if( m_isThermal )
-      {
-        thermalSinglePhaseBaseKernels::
-          ElementBasedAssemblyKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                     dofKey,
-                                                     subRegion,
-                                                     fluid,
-                                                     solid,
-                                                     localMatrix,
-                                                     localRhs );
-      }
-      else
-      {
-        singlePhaseBaseKernels::
-          ElementBasedAssemblyKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                     dofKey,
-                                                     subRegion,
-                                                     fluid,
-                                                     solid,
-                                                     localMatrix,
-                                                     localRhs );
-      }
+      accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );
     } );
   } );
 }
