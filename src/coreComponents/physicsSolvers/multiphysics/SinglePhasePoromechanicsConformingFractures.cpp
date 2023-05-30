@@ -19,7 +19,7 @@
 #include "SinglePhasePoromechanicsConformingFractures.hpp"
 
 #include "constitutive/solid/PorousSolid.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
@@ -220,7 +220,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
     }
     else
     {
-      assemblyLaunch< constitutive::PorousSolidBase,
+      assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >,
                       poromechanicsKernels::SinglePhasePoromechanicsKernelFactory >( mesh,
                                                                                      dofManager,
                                                                                      regionNames,

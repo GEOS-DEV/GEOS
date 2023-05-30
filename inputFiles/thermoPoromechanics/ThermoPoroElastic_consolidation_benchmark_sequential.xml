@@ -19,6 +19,7 @@
     <NonlinearSolverParameters
       couplingType="Sequential"
       newtonMaxIter="200"
+      lineSearchAction="None"
       newtonTol="1e-6"
       subcycling="1"/>
     <LinearSolverParameters

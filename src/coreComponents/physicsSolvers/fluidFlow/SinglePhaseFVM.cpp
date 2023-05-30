@@ -19,7 +19,7 @@
 #include "SinglePhaseFVM.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "constitutive/fluid/singleFluidSelector.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidSelector.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
