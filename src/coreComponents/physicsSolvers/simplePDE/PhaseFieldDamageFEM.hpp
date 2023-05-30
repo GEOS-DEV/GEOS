@@ -174,6 +174,11 @@ public:
     m_pressureEffectsFlag = 1;
   }
 
+  void setSubdomainElements( SortedArray< localIndex > const & subdomainElems )
+  {
+    m_subdomainElems = subdomainElems.toView();
+  }
+
 protected:
   virtual void postProcessInput() override final;
 
@@ -188,7 +193,7 @@ private:
   integer m_damageViscosityFlag;
   real64 m_damageViscosityCoeff;
   array1d< localIndex > m_initialCrack;
-  SortedArrayView< localIndex const > const & m_subdomainElems;
+  SortedArrayView< const localIndex > m_subdomainElems;
 
   PhaseFieldDamageFEM();
 };

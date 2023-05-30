@@ -70,6 +70,7 @@ public:
                                                   1,
                                                   1 >;
 
+  static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_dofNumber;
@@ -104,7 +105,7 @@ public:
                                   arrayView1d< real64 > const inputRhs,
                                   string const damageName,
                                   int const localDissipationOption,
-                                  SortedArrayView< localIndex const > const & subdomainElems ):
+                                  SortedArrayView< const localIndex > const subdomainElems ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -213,16 +214,18 @@ public:
   {
     GEOSX_MARK_FUNCTION;
 
-    GEOSX_UNUSED_VAR( numElems );
+    bool subDomainLaunch = !kernelComponent.m_subdomainElems.empty();
+    localIndex loopSize = subDomainLaunch ? kernelComponent.m_subdomainElems.size() : numElems;
 
     // Define a RAJA reduction variable to get the maximum residual contribution.
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
     //EXEMPLE OF KERNEL LAUNCH ON SUBDOMAIN - ANDRE
     //make a m_subdomainElems variable
-    forAll< POLICY >( kernelComponent.m_subdomainElems.size(),
+    forAll< POLICY >( loopSize,
                       [=] GEOSX_HOST_DEVICE ( localIndex const i )
     {
-      localIndex k = kernelComponent.m_subdomainElems[i];
+      localIndex k = subDomainLaunch ? kernelComponent.m_subdomainElems[i]: i;
+
       typename KERNEL_TYPE::StackVariables stack;
 
       kernelComponent.setup( k, stack );
@@ -234,7 +237,7 @@ public:
     } );
 
     return maxResidual.get();
-  // }
+  }
   // //END_kernelLauncher  
 
   /**
@@ -465,7 +468,7 @@ protected:
 
   arrayView1d< real64 const > const m_pressureMatrix;
   arrayView1d< real64 const > const m_pressureFracture;
-  SortedArrayView< localIndex const > const & m_subdomainElems;
+  SortedArrayView< localIndex const > const m_subdomainElems;
 
 };
 
@@ -476,7 +479,7 @@ using PhaseFieldDamagePressureKernelFactory = finiteElement::KernelFactory< Phas
                                                                             arrayView1d< real64 > const,
                                                                             string const,
                                                                             int,
-                                                                            SortedArrayView< localIndex const > const & >;
+                                                                            SortedArrayView< const localIndex > const >;
 
 } // namespace geosx
 

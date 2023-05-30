@@ -57,7 +57,8 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
                                           Group * const parent ):
   SolverBase( name, parent ),
   m_damageName( "Damage" ),
-  m_pressureEffectsFlag( 0 )
+  m_pressureEffectsFlag( 0 ),
+  m_subdomainElems()
 {
 
   registerWrapper< string >( PhaseFieldDamageFEMViewKeys.timeIntegrationOption.key() ).
@@ -127,11 +128,6 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
       string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidModelNamesString() );
       solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
       GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
-
-      forAll< serialPolicy >( subRegion.size(), [&] ( localIndex const k ) 
-      {
-        m_subdomainElems.insert(k);
-      });
 
     } );
   } );
@@ -618,13 +614,6 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
 
   } );
 }
-
-void setSubdomainElements( SortedArrayView< localIndex const > const & subdomainElems; )
-{
-  m_subdomainElems.clear();
-  m_subdomainElems = subdomainElems;
-}
-
 
 REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldDamageFEM, string const &,
                         Group * const )
