@@ -138,7 +138,7 @@ public:
 
 
   /**
-   * @brief Get the damage of each particle in this subregion.
+   * @brief Get the strength scale of each particle in this subregion.
    * @return an arrayView1d of const particle strength scale
    */
   arrayView1d< real64 const > getParticleStrengthScale() const
@@ -198,7 +198,7 @@ public:
   { return m_particleVelocity; }
 
   /**
-   * @brief Get the velocity of each particle in this subregion.
+   * @brief Get the material direction of each particle in this subregion.
    * @return an arrayView1d of const particle material direction
    */
   arrayView2d< real64 const > getParticleMaterialDirection() const

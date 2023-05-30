@@ -247,8 +247,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       particleMaterialDirection[index][1] = particleData[particleType][i][8];
       particleMaterialDirection[index][2] = particleData[particleType][i][9];
 
-      // Material (set above)
-      // particleMaterial[index] = particleData[particleType][i][10]];
+      // Material (set above) is [10]
 
       // Group
       particleGroup[index] = particleData[particleType][i][11];
