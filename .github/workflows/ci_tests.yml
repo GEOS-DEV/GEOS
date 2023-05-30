@@ -8,6 +8,7 @@ on:
       - synchronize
       - ready_for_review
 
+# Cancels in-progress workflows for a PR when updated
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -16,7 +17,10 @@ env:
   GEOSX_TPL_TAG: 220-932
 
 jobs:
+  # Matrix jobs will be cancelled if PR is a draft.
+  # PR status must be "Open" to run CI.
   check_pull_request_is_not_a_draft:
+    # We use the most recent ubuntu distribution available in Github Actions to ensure maximum support of google cloud's sdk.
     runs-on: ubuntu-latest
     steps:
     - name: Check that the PR is not a draft (cancel rest of jobs otherwise)
@@ -25,10 +29,13 @@ jobs:
         echo ${{ toJSON(github.event.pull_request.draft) }}
         if [[ ${{ toJSON(github.event.pull_request.draft) }} == true ]]; then "false" ; else "true"; fi
 
-  check-pull-request-is-assigned:
+  # PR must be assigned to be merged.
+  # This job will fail if this is not the case.
+  check_pull_request_is_assigned:
     needs: [check_pull_request_is_not_a_draft]
     runs-on: ubuntu-latest
     steps:
+    # Assignee ID will be null if PR is not assigned
     - name: Check that the PR is assigned
       run: |
         id=$(curl -H "Accept: application/vnd.github+json" \
@@ -38,10 +45,12 @@ jobs:
         echo $id
         if [[ $id != null ]]; then "true" ; else "false"; fi
 
-  check-submodules:
+  check_submodules:
     needs: [check_pull_request_is_not_a_draft]
     runs-on: ubuntu-latest
     steps:
+    # The integrated test sumbmodule repository contains large data (using git lfs).
+    # To save time (and money) we do not let Github Actions automatically clone all our (lfs) subrepositories and do it by hand.
     - name: Checkout Repository
       uses: actions/checkout@v3
       with:
@@ -50,7 +59,7 @@ jobs:
     - name: Check that submodules are up to date
       run: "scripts/test_submodule_updated.sh"
 
-  code-style:
+  code_style:
     needs: [check_pull_request_is_not_a_draft]
     runs-on: ubuntu-latest
     steps:
@@ -83,7 +92,7 @@ jobs:
       run: ./scripts/ci_build_and_test.sh
 
 
-  linux-builds:
+  linux_builds:
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
     needs: [check_pull_request_is_not_a_draft]
@@ -136,6 +145,7 @@ jobs:
     - name: Print environment
       run: printenv
 
+    # Builds only the geosx executable (timeout when building tests)
     - name: Run build and test script
       env:
         DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
@@ -146,8 +156,8 @@ jobs:
         ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       run: ./scripts/ci_build_and_test.sh
 
-  # Requires security key
-  auto-deploy-builds:
+
+  auto_deploy_builds:
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
     needs: [check_pull_request_is_not_a_draft]
@@ -204,7 +214,7 @@ jobs:
     - name: Print environment
       run: printenv
 
-    - name: Run build and test script
+    - name: Build and test and deploy
       env:
         DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
         CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
@@ -213,6 +223,7 @@ jobs:
         ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
         ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
         GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
+      # Build, test, uploads GEOSX and its TPL to GCP/GCS using gcloud CLI
       run: |
         source ./scripts/ci_build_and_test.sh
         TMP_DIR=/tmp
@@ -221,21 +232,3 @@ jobs:
         GEOSX_BUNDLE=${TMP_DIR}/${GEOSX_EXPORT_DIR}.tar.gz
         tar czf ${GEOSX_BUNDLE} --directory=${TMP_DIR} ${GEOSX_EXPORT_DIR}
         CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOSX_BUNDLE} gs://${GCP_BUCKET}/
-
-  dump_contexts_to_log:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Dump GitHub context
-        id: github_context_step
-        run: echo '${{ toJSON(github) }}'
-      - name: Dump job context
-        run: echo '${{ toJSON(job) }}'
-      - name: Dump steps context
-        run: echo '${{ toJSON(steps) }}'
-      - name: Dump runner context
-        run: echo '${{ toJSON(runner) }}'
-      - name: Dump strategy context
-        run: echo '${{ toJSON(strategy) }}'
-      - name: Dump matrix context
-        run: echo '${{ toJSON(matrix) }}'
-
