@@ -213,12 +213,18 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
     // 1. Cell-based contributions to Kuu, Kup, Kpu, Kpp blocks
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy< >,
-                                    constitutive::PorousSolidBase,
+                                    constitutive::PorousSolid< ElasticIsotropic >,
                                     CellElementSubRegion >( mesh,
                                                             regionNames,
                                                             contactSolver()->getSolidSolver()->getDiscretizationName(),
                                                             SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
                                                             kernelFactory );
+
+    mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          FaceElementSubRegion const & subRegion )
+    {
+      poromechanicsSolver()->flowSolver()->accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );
+    } );
 
     /// 2.a assemble Kut
     contactSolver()->assembleForceResidualDerivativeWrtTraction( mesh, regionNames, dofManager, localMatrix, localRhs );
