@@ -20,9 +20,9 @@
 #include "SinglePhaseProppantBase.hpp"
 
 #include "constitutive/ConstitutivePassThru.hpp"
-#include "constitutive/fluid/slurryFluidSelector.hpp"
-#include "constitutive/fluid/SingleFluidFields.hpp"
-#include "constitutive/fluid/SlurryFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/SlurryFluidSelector.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/SlurryFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/ProppantSolid.hpp"

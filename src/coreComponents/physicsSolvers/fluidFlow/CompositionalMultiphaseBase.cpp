@@ -24,8 +24,8 @@
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
-#include "constitutive/fluid/MultiFluidFields.hpp"
-#include "constitutive/fluid/multiFluidSelector.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 #include "constitutive/solid/SolidBase.hpp"
@@ -1106,6 +1106,10 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
     } );
 
   } );
+
+  // report to the user if some pore volumes are very small
+  // note: this function is here because: 1) porosity has been initialized and 2) NTG has been applied
+  validatePoreVolumes( domain );
 }
 
 void
