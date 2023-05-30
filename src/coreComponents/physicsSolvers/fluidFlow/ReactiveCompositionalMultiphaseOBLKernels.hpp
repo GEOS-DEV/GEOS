@@ -75,7 +75,7 @@ namespace internal
 template< bool ENABLE_ENERGY, integer NUM_PHASES, typename T, typename LAMBDA >
 void kernelLaunchSelectorCompSwitch( T numComps, LAMBDA && lambda )
 {
-  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: type should be integral" );
+  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorSwitch: type should be integral" );
 
   switch( numComps )
   {

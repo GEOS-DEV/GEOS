@@ -56,7 +56,7 @@ public:
   PhaseVolumeFractionKernel( ObjectManagerBase & subRegion,
                              MultiFluidBase const & fluid )
     : Base( subRegion, fluid )
-  {}
+  { }
 
   /**
    * @brief Compute the phase volume fractions in an element
@@ -73,14 +73,14 @@ public:
     arraySlice2d< real64, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dPhaseVolFrac[ei];
 
     // Call the base compute the compute the phase volume fraction
-    Base::compute( ei, [&] ( localIndex const ip,
-                             real64 const & phaseVolFrac,
-                             real64 const & phaseDensInv,
-                             real64 const & totalDensity )
+    Base::compute( ei, [&]( localIndex const ip,
+                            real64 const & phaseVolFrac,
+                            real64 const & phaseDensInv,
+                            real64 const & totalDensity )
     {
       // when this lambda is called, we are in the phase loop
       // for each phase ip, compute the derivative of phase volume fraction wrt temperature
-      dPhaseVolFrac[ip][Deriv::dT] = (dPhaseFrac[ip][Deriv::dT] - phaseVolFrac * dPhaseDens[ip][Deriv::dT]) * phaseDensInv;
+      dPhaseVolFrac[ip][Deriv::dT] = ( dPhaseFrac[ip][Deriv::dT] - phaseVolFrac * dPhaseDens[ip][Deriv::dT] ) * phaseDensInv;
       dPhaseVolFrac[ip][Deriv::dT] *= totalDensity;
     } );
   }
@@ -109,26 +109,18 @@ public:
                    ObjectManagerBase & subRegion,
                    MultiFluidBase const & fluid )
   {
-    if( numPhase == 2 )
+    isothermalCompositionalMultiphaseBaseKernels::
+      internal::kernelLaunchSelectorSwitch( numComp, [&]( auto NC )
     {
+      integer constexpr NUM_COMP = NC();
       isothermalCompositionalMultiphaseBaseKernels::
-        internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+        internal::kernelLaunchSelectorSwitch( numPhase, [&]( auto NP )
       {
-        integer constexpr NUM_COMP = NC();
-        PhaseVolumeFractionKernel< NUM_COMP, 2 > kernel( subRegion, fluid );
-        PhaseVolumeFractionKernel< NUM_COMP, 2 >::template launch< POLICY >( subRegion.size(), kernel );
+        integer constexpr NUM_PHASE = NP();
+        PhaseVolumeFractionKernel< NUM_COMP, NUM_PHASE > kernel( subRegion, fluid );
+        PhaseVolumeFractionKernel< NUM_COMP, NUM_PHASE >::template launch< POLICY >( subRegion.size(), kernel );
       } );
-    }
-    else if( numPhase == 3 )
-    {
-      isothermalCompositionalMultiphaseBaseKernels::
-        internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
-      {
-        integer constexpr NUM_COMP = NC();
-        PhaseVolumeFractionKernel< NUM_COMP, 3 > kernel( subRegion, fluid );
-        PhaseVolumeFractionKernel< NUM_COMP, 3 >::template launch< POLICY >( subRegion.size(), kernel );
-      } );
-    }
+    } );
   }
 };
 
@@ -198,7 +190,7 @@ public:
     m_rockInternalEnergy_n( solid.getInternalEnergy_n() ),
     m_rockInternalEnergy( solid.getInternalEnergy() ),
     m_dRockInternalEnergy_dTemp( solid.getDinternalEnergy_dTemperature() )
-  {}
+  { }
 
   struct StackVariables : public Base::StackVariables
   {
@@ -207,7 +199,7 @@ public:
     GEOS_HOST_DEVICE
     StackVariables()
       : Base::StackVariables()
-    {}
+    { }
 
     using Base::StackVariables::poreVolume;
     using Base::StackVariables::poreVolume_n;
@@ -276,11 +268,11 @@ public:
   {
     using Deriv = multifluid::DerivativeOffset;
 
-    Base::computeAccumulation( ei, stack, [&] ( integer const ip,
-                                                real64 const & phaseAmount,
-                                                real64 const & phaseAmount_n,
-                                                real64 const & dPhaseAmount_dP,
-                                                real64 const (&dPhaseAmount_dC)[numComp] )
+    Base::computeAccumulation( ei, stack, [&]( integer const ip,
+                                               real64 const & phaseAmount,
+                                               real64 const & phaseAmount_n,
+                                               real64 const & dPhaseAmount_dP,
+                                               real64 const (&dPhaseAmount_dC)[numComp] )
     {
       // We are in the loop over phases, ip provides the current phase index.
       // We have to do two things:
@@ -304,11 +296,11 @@ public:
       // Step 1: assemble the derivatives of the component mass balance equations with respect to temperature
 
       real64 const dPhaseAmount_dT = stack.dPoreVolume_dTemp * phaseVolFrac[ip] * phaseDens[ip]
-                                     + stack.poreVolume * (dPhaseVolFrac[ip][Deriv::dT] * phaseDens[ip] + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dT] );
+                                     + stack.poreVolume * ( dPhaseVolFrac[ip][Deriv::dT] * phaseDens[ip] + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dT] );
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        stack.localJacobian[ic][numDof-1] += dPhaseAmount_dT * phaseCompFrac[ip][ic]
-                                             + phaseAmount * dPhaseCompFrac[ip][ic][Deriv::dT];
+        stack.localJacobian[ic][numDof - 1] += dPhaseAmount_dT * phaseCompFrac[ip][ic]
+                                               + phaseAmount * dPhaseCompFrac[ip][ic][Deriv::dT];
       }
 
       // Step 2: assemble the phase-dependent part of the accumulation term of the energy equation
@@ -321,27 +313,27 @@ public:
                                      + phaseAmount * dPhaseInternalEnergy[ip][Deriv::dT];
 
       // local accumulation
-      stack.localResidual[numEqn-1] += phaseEnergy - phaseEnergy_n;
+      stack.localResidual[numEqn - 1] += phaseEnergy - phaseEnergy_n;
 
       // derivatives w.r.t. pressure and temperature
-      stack.localJacobian[numEqn-1][0]        += dPhaseEnergy_dP;
-      stack.localJacobian[numEqn-1][numDof-1] += dPhaseEnergy_dT;
+      stack.localJacobian[numEqn - 1][0] += dPhaseEnergy_dP;
+      stack.localJacobian[numEqn - 1][numDof - 1] += dPhaseEnergy_dT;
 
       // derivatives w.r.t. component densities
       applyChainRule( numComp, dCompFrac_dCompDens, dPhaseInternalEnergy[ip], dPhaseInternalEnergy_dC, Deriv::dC );
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        stack.localJacobian[numEqn-1][jc + 1] += phaseInternalEnergy[ip] * dPhaseAmount_dC[jc]
-                                                 + dPhaseInternalEnergy_dC[jc] * phaseAmount;
+        stack.localJacobian[numEqn - 1][jc + 1] += phaseInternalEnergy[ip] * dPhaseAmount_dC[jc]
+                                                   + dPhaseInternalEnergy_dC[jc] * phaseAmount;
       }
     } );
 
     // Step 3: assemble the solid part of the accumulation term
 
     // local accumulation and derivatives w.r.t. pressure and temperature
-    stack.localResidual[numEqn-1] += stack.solidEnergy - stack.solidEnergy_n;
-    stack.localJacobian[numEqn-1][0] += stack.dSolidEnergy_dPres;
-    stack.localJacobian[numEqn-1][numDof-1] += stack.dSolidEnergy_dTemp;
+    stack.localResidual[numEqn - 1] += stack.solidEnergy - stack.solidEnergy_n;
+    stack.localJacobian[numEqn - 1][0] += stack.dSolidEnergy_dPres;
+    stack.localJacobian[numEqn - 1][numDof - 1] += stack.dSolidEnergy_dTemp;
 
   }
 
@@ -357,7 +349,7 @@ public:
   {
     using Deriv = multifluid::DerivativeOffset;
 
-    Base::computeVolumeBalance( ei, stack, [&] ( real64 const & oneMinusPhaseVolFraction )
+    Base::computeVolumeBalance( ei, stack, [&]( real64 const & oneMinusPhaseVolFraction )
     {
       GEOS_UNUSED_VAR( oneMinusPhaseVolFraction );
 
@@ -365,7 +357,7 @@ public:
 
       for( integer ip = 0; ip < m_numPhases; ++ip )
       {
-        stack.localJacobian[numEqn-2][numDof-1] -= dPhaseVolFrac[ip][Deriv::dT];
+        stack.localJacobian[numEqn - 2][numDof - 1] -= dPhaseVolFrac[ip][Deriv::dT];
       }
     } );
   }
@@ -378,10 +370,10 @@ public:
     Base::complete( ei, stack );
 
     // Step 2: assemble the energy equation
-    m_localRhs[stack.localRow + numEqn-1] += stack.localResidual[numEqn-1];
-    m_localMatrix.template addToRow< serialAtomic >( stack.localRow + numEqn-1,
+    m_localRhs[stack.localRow + numEqn - 1] += stack.localResidual[numEqn - 1];
+    m_localMatrix.template addToRow< serialAtomic >( stack.localRow + numEqn - 1,
                                                      stack.dofIndices,
-                                                     stack.localJacobian[numEqn-1],
+                                                     stack.localJacobian[numEqn - 1],
                                                      numDof );
   }
 
@@ -435,10 +427,10 @@ public:
                    arrayView1d< real64 > const & localRhs )
   {
     isothermalCompositionalMultiphaseBaseKernels::
-      internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
+      internal::kernelLaunchSelectorSwitch( numComps, [&]( auto NC )
     {
       localIndex constexpr NUM_COMP = NC();
-      localIndex constexpr NUM_DOF = NC()+2;
+      localIndex constexpr NUM_DOF = NC() + 2;
       ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
       kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
       ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template
@@ -556,7 +548,7 @@ public:
             compDens ),
     m_maxRelativeTempChange( maxRelativeTempChange ),
     m_temperature( temperature )
-  {}
+  { }
 
   /**
    * @brief Compute the local value of the scaling factor
@@ -569,7 +561,7 @@ public:
   {
     real64 constexpr eps = isothermalCompositionalMultiphaseBaseKernels::minDensForDivision;
 
-    Base::computeScalingFactor( ei, stack, [&] ()
+    Base::computeScalingFactor( ei, stack, [&]()
     {
       // compute the change in temperature
       real64 const temp = m_temperature[ei];
@@ -690,7 +682,7 @@ public:
             pressure,
             compDens ),
     m_temperature( temperature )
-  {}
+  { }
 
   /**
    * @brief Compute the local value of the solution check
@@ -701,7 +693,7 @@ public:
   void computeSolutionCheck( localIndex const ei,
                              StackVariables & stack ) const
   {
-    Base::computeSolutionCheck( ei, stack, [&] ()
+    Base::computeSolutionCheck( ei, stack, [&]()
     {
       // compute the change in temperature
       real64 const newTemp = m_temperature[ei] + m_scalingFactor * m_localSolution[stack.localRow + m_numComp + 1];
@@ -801,7 +793,7 @@ public:
     m_phaseDens_n( fluid.phaseDensity_n() ),
     m_phaseInternalEnergy_n( fluid.phaseInternalEnergy_n() ),
     m_solidInternalEnergy_n( solidInternalEnergy.getInternalEnergy_n() )
-  {}
+  { }
 
   GEOS_HOST_DEVICE
   void computeMassEnergyNormalizers( localIndex const ei,
@@ -874,7 +866,7 @@ public:
     // step 2: volume residual
 
     real64 const valVol = m_localResidual[stack.localRow + m_numComponents] * m_totalDens_n[ei][0]; // we need a mass here, hence the
-                                                                                                    // multiplication
+    // multiplication
     stack.localValue[0] += valVol * valVol;
     stack.localNormalizer[0] += massNormalizer;
 

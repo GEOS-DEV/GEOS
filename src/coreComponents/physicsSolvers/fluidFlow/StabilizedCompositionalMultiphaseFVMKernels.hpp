@@ -39,8 +39,8 @@ using namespace constitutive;
  * @tparam STENCILWRAPPER the type of the stencil wrapper
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
-class FaceBasedAssemblyKernel : public isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >
+template< integer NUM_PHASE, integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
+class FaceBasedAssemblyKernel : public isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_PHASE, NUM_COMP, NUM_DOF, STENCILWRAPPER >
 {
 public:
 
@@ -74,7 +74,6 @@ public:
     StencilMaterialAccessors< RelativePermeabilityBase, fields::relperm::phaseRelPerm_n >;
 
   using AbstractBase::m_dt;
-  using AbstractBase::m_numPhases;
   using AbstractBase::m_hasCapPressure;
   using AbstractBase::m_rankOffset;
   using AbstractBase::m_ghostRank;
@@ -88,7 +87,8 @@ public:
   using AbstractBase::m_dPhaseCapPressure_dPhaseVolFrac;
   using AbstractBase::m_pres;
 
-  using Base = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+  using Base = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_PHASE, NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+  using Base::numPhase;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -103,7 +103,6 @@ public:
 
   /**
    * @brief Constructor for the kernel interface
-   * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] hasCapPressure flag specifying whether capillary pressure is used or not
    * @param[in] stencilWrapper reference to the stencil wrapper
@@ -119,8 +118,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  FaceBasedAssemblyKernel( integer const numPhases,
-                           globalIndex const rankOffset,
+  FaceBasedAssemblyKernel( globalIndex const rankOffset,
                            integer const hasCapPressure,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
@@ -134,8 +132,7 @@ public:
                            real64 const & dt,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs )
-    : Base( numPhases,
-            rankOffset,
+    : Base( rankOffset,
             hasCapPressure,
             0.0,                  // no C1-PPU
             stencilWrapper,
@@ -153,16 +150,17 @@ public:
     m_phaseRelPerm_n( relPermAccessors.get( fields::relperm::phaseRelPerm_n {} ) ),
     m_macroElementIndex( stabCompFlowAccessors.get( fields::flow::macroElementIndex {} ) ),
     m_elementStabConstant( stabCompFlowAccessors.get( fields::flow::elementStabConstant {} ) )
-  {}
+  { }
 
   struct StackVariables : public Base::StackVariables
   {
 public:
 
     GEOS_HOST_DEVICE
-    StackVariables( localIndex const size, localIndex numElems )
+    StackVariables( localIndex const size,
+                    localIndex numElems )
       : Base::StackVariables( size, numElems )
-    {}
+    { }
 
     using Base::StackVariables::stencilSize;
     using Base::StackVariables::numConnectedElems;
@@ -195,20 +193,20 @@ public:
     //  1) compFlux and its derivatives,
     //
     // We use the lambda below (called **inside** the phase loop of the base computeFlux) to compute stabilization terms
-    Base::computeFlux( iconn, stack, [&] ( integer const ip,
-                                           localIndex const (&k)[2],
-                                           localIndex const (&seri)[2],
-                                           localIndex const (&sesri)[2],
-                                           localIndex const (&sei)[2],
-                                           localIndex const connectionIndex,
-                                           localIndex const k_up,
-                                           localIndex const er_up,
-                                           localIndex const esr_up,
-                                           localIndex const ei_up,
-                                           real64 const & potGrad,
-                                           real64 const & phaseFlux,
-                                           real64 const (&dPhaseFlux_dP)[2],
-                                           real64 const (&dPhaseFlux_dC)[2][numComp] )
+    Base::computeFlux( iconn, stack, [&]( integer const ip,
+                                          localIndex const (&k)[2],
+                                          localIndex const (&seri)[2],
+                                          localIndex const (&sesri)[2],
+                                          localIndex const (&sei)[2],
+                                          localIndex const connectionIndex,
+                                          localIndex const k_up,
+                                          localIndex const er_up,
+                                          localIndex const esr_up,
+                                          localIndex const ei_up,
+                                          real64 const & potGrad,
+                                          real64 const & phaseFlux,
+                                          real64 const (&dPhaseFlux_dP)[2],
+                                          real64 const (&dPhaseFlux_dC)[2][numComp] )
     {
       GEOS_UNUSED_VAR( k_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, er_up, esr_up, ei_up );
 
@@ -227,23 +225,23 @@ public:
       // Step 1: compute the pressure jump at the interface
       for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
       {
-        localIndex const er  = seri[ke];
+        localIndex const er = seri[ke];
         localIndex const esr = sesri[ke];
-        localIndex const ei  = sei[ke];
+        localIndex const ei = sei[ke];
 
         stencilMacroElements[ke] = m_macroElementIndex[er][esr][ei];
 
         // use the jump in *delta* pressure in the stabilization term
         dPresGradStab +=
-          m_elementStabConstant[er][esr][ei] * stabTrans[ke] * (m_pres[er][esr][ei] - m_pres_n[er][esr][ei]);
+          m_elementStabConstant[er][esr][ei] * stabTrans[ke] * ( m_pres[er][esr][ei] - m_pres_n[er][esr][ei] );
       }
 
       // Step 2: compute the stabilization flux
-      integer const k_up_stab = (dPresGradStab >= 0) ? 0 : 1;
+      integer const k_up_stab = ( dPresGradStab >= 0 ) ? 0 : 1;
 
-      localIndex const er_up_stab  = seri[k_up_stab];
+      localIndex const er_up_stab = seri[k_up_stab];
       localIndex const esr_up_stab = sesri[k_up_stab];
-      localIndex const ei_up_stab  = sei[k_up_stab];
+      localIndex const ei_up_stab = sei[k_up_stab];
 
       bool const areInSameMacroElement = stencilMacroElements[0] == stencilMacroElements[1];
       bool const isStabilizationActive = stencilMacroElements[0] >= 0 && stencilMacroElements[1] >= 0;
@@ -271,13 +269,13 @@ public:
         integer const eqIndex0 = k[0] * numEqn + ic;
         integer const eqIndex1 = k[1] * numEqn + ic;
 
-        stack.localFlux[eqIndex0] +=  stabFlux[ic];
+        stack.localFlux[eqIndex0] += stabFlux[ic];
         stack.localFlux[eqIndex1] += -stabFlux[ic];
 
         for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
         {
           localIndex const localDofIndexPres = k[ke] * numDof;
-          stack.localFluxJacobian[eqIndex0][localDofIndexPres] +=  dStabFlux_dP[ke][ic];
+          stack.localFluxJacobian[eqIndex0][localDofIndexPres] += dStabFlux_dP[ke][ic];
           stack.localFluxJacobian[eqIndex1][localDofIndexPres] += -dStabFlux_dP[ke][ic];
         }
       }
@@ -338,29 +336,35 @@ public:
                    arrayView1d< real64 > const & localRhs )
   {
     isothermalCompositionalMultiphaseBaseKernels::
-      internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
+      internal::kernelLaunchSelectorSwitch( numPhases, [&]( auto NP )
     {
-      integer constexpr NUM_COMP = NC();
-      integer constexpr NUM_DOF = NC()+1;
+      integer constexpr NUM_PHASE = NP();
 
-      ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
-        elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
-      dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
+      isothermalCompositionalMultiphaseBaseKernels::
+        internal::kernelLaunchSelectorSwitch( numComps, [&]( auto NC )
+      {
+        integer constexpr NUM_COMP = NC();
+        integer constexpr NUM_DOF = NC() + 1;
 
-      using KERNEL_TYPE = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
-      typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::StabCompFlowAccessors stabCompFlowAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::StabMultiFluidAccessors stabMultiFluidAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::RelPermAccessors relPermAccessors( elemManager, solverName );
+        ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
+          elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
+        dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
-                          compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors, stabMultiFluidAccessors,
-                          capPressureAccessors, permeabilityAccessors, relPermAccessors,
-                          dt, localMatrix, localRhs );
-      KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
+        using KERNEL_TYPE = FaceBasedAssemblyKernel< NUM_PHASE, NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+        typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
+        typename KERNEL_TYPE::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+        typename KERNEL_TYPE::StabCompFlowAccessors stabCompFlowAccessors( elemManager, solverName );
+        typename KERNEL_TYPE::StabMultiFluidAccessors stabMultiFluidAccessors( elemManager, solverName );
+        typename KERNEL_TYPE::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+        typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+        typename KERNEL_TYPE::RelPermAccessors relPermAccessors( elemManager, solverName );
+
+        KERNEL_TYPE kernel( rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
+                            compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors, stabMultiFluidAccessors,
+                            capPressureAccessors, permeabilityAccessors, relPermAccessors,
+                            dt, localMatrix, localRhs );
+        KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
+      } );
     } );
   }
 };
