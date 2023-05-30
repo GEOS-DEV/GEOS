@@ -556,6 +556,9 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     if( rank == 0 ) // Rank 0 process parses the F table file
     {
       std::ifstream fp( m_fTablePath );
+      // Throw error if FTable can't be read
+      GEOS_ERROR_IF( fp.fail(), "MPMSolver Failed to read FTable.dat" );
+     
       double FTableEntry = 0;
       while( fp >> FTableEntry )
       {
