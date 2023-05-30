@@ -651,7 +651,7 @@ void testMutivariableFunction( MultivariableTableFunction & function,
                                                                       function.getHypercubeData()
                                                                       );
   // Test values evaluation first
-  forAll< parallelDevicePolicy< > >( numElems, [=] GEOS_HOST_DEVICE
+  forAll< geos::parallelDevicePolicy< > >( numElems, [=] GEOS_HOST_DEVICE
                                        ( localIndex const elemIndex )
   {
     kernel.compute( &inputs[elemIndex * NUM_DIMS], &evaluatedValuesView[elemIndex * NUM_OPS] );
@@ -663,7 +663,7 @@ void testMutivariableFunction( MultivariableTableFunction & function,
   } );
 
   // And now - both values and derivatives
-  forAll< parallelDevicePolicy< > >( numElems, [=] GEOS_HOST_DEVICE
+  forAll< geos::parallelDevicePolicy< > >( numElems, [=] GEOS_HOST_DEVICE
                                        ( localIndex const elemIndex )
   {
     // use local 2D array for the kernel
