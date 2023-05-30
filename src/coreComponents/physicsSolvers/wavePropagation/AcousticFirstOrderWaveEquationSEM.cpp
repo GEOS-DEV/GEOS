@@ -75,7 +75,7 @@ AcousticFirstOrderWaveEquationSEM::AcousticFirstOrderWaveEquationSEM( const std:
     setSizedFromParent( 0 ).
     setDescription( "Region containing the sources" );
 
-   registerWrapper( viewKeyStruct::receiverRegionString(), &m_receiverRegion ).
+  registerWrapper( viewKeyStruct::receiverRegionString(), &m_receiverRegion ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Region containing the receivers" );

@@ -448,7 +448,7 @@ struct PressureComputation
    * @tparam EXEC_POLICY the execution policy
    * @tparam ATOMIC_POLICY the atomic policy
    * @param[in] size the number of cells in the subRegion
-   * @param[in] regionIndex Index of the subregion 
+   * @param[in] regionIndex Index of the subregion
    * @param[in] size_node the number of nodes in the subRegion
    * @param[in] X coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
@@ -560,7 +560,7 @@ struct PressureComputation
       {
         if( sourceIsAccessible[isrc] == 1 )
         {
-          if( sourceElem[isrc]==k && sourceRegion[isrc] == regionIndex)
+          if( sourceElem[isrc]==k && sourceRegion[isrc] == regionIndex )
           {
             for( localIndex i = 0; i < numNodesPerElem; ++i )
             {

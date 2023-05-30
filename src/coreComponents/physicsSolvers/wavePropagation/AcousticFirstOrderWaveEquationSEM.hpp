@@ -198,7 +198,7 @@ private:
   /// Array containing the elements which contain the region which the source belongs
   array1d< localIndex > m_sourceRegion;
 
-   /// Array containing the elements which contain the region which the receiver belongs
+  /// Array containing the elements which contain the region which the receiver belongs
   array1d< localIndex > m_receiverRegion;
 
   /// Array containing the elements which contain a receiver

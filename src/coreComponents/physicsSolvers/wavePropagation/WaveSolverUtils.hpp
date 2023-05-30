@@ -154,7 +154,7 @@ struct WaveSolverUtils
       {
         if( receiverIsLocal[ircv] == 1 )
         {
-          if(receiverRegion[ircv] == regionIndex)
+          if( receiverRegion[ircv] == regionIndex )
           {
             varAtReceivers[iSeismo][ircv] = 0.0;
             real32 vtmp_np1 = 0.0;
@@ -178,13 +178,13 @@ struct WaveSolverUtils
       if( outputSeismoTrace == 1 )
       {
         forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
-        {  
+        {
           if( receiverIsLocal[ircv] == 1 )
           {
             // Note: this "manual" output to file is temporary
             //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
             // TODO: remove saveSeismo and replace with TimeHistory
-            if (receiverRegion[ircv] == regionIndex)
+            if( receiverRegion[ircv] == regionIndex )
             {
               std::ofstream f( GEOS_FMT( "seismoTraceReceiver{:03}.txt", ircv ), std::ios::app );
               for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
