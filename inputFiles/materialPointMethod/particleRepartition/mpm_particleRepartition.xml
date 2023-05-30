@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <!-- 
-srun -p pdebug -n 1 /usr/workspace/povolny1/codes/GEOS/build-quartz-gcc@12-release/bin/geosx -i mpm_particleRepartition.xml
-srun -n 4 /usr/workspace/povolny1/codes/GEOS/build-quartz-gcc@12-release/bin/geosx -i mpm_particleRepartition.xml
+srun -p pdebug -n 1 /usr/workspace/homel1/GEOS/build-quartz-gcc@12-release/bin/geosx -i mpm_particleRepartition.xml
+srun -n 4 /usr/workspace/homel1/GEOS/build-quartz-gcc@12-release/bin/geosx -i mpm_particleRepartition.xml
 -->
 <Problem>
 
@@ -67,7 +67,8 @@ planeStrain="0"
 useDamageAsSurfaceFlag="0"
 
 boundaryConditionTypes="{ 0, 0, 0, 0, 0, 0 }"    
-/>
+
+      />
   </Solvers>
 
   <Constitutive>

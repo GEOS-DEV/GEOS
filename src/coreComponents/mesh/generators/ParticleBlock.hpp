@@ -114,6 +114,10 @@ public:
   array2d< real64 > getParticleMaterialDirection() const override
   { return m_particleMaterialDirection; }
 
+  /**
+   * @brief Set the list of material directions in this subregion.
+   * @param particleVelocity The input list of directions
+   */
   void setParticleMaterialDirection( array2d< real64 > const particleMaterialDirection )
   { m_particleMaterialDirection = particleMaterialDirection; }
 
@@ -146,6 +150,10 @@ public:
   array1d< real64 > getParticleStrengthScale() const override
   { return m_particleStrengthScale; }
 
+  /**
+   * @brief Set the list of particle strength scale values in this subregion.
+   * @param particleDamage The input list of strength scale values
+   */
   void setParticleStrengthScale( array1d< real64 > const particleStrengthScale )
   { m_particleStrengthScale = particleStrengthScale; }
 
