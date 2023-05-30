@@ -38,8 +38,8 @@ void PackCollection::initializePostSubGroups( )
     DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
     m_collectionCount = collectAll() ? 1 : m_setNames.size();
     // determine whether we're collecting from a mesh object manager
-    Group const * const targetObject = this->getTargetObject( domain, m_objectPath );
-    ObjectManagerBase const * const objectManagerTarget = dynamic_cast< ObjectManagerBase const * >( targetObject );
+    m_targetObject = this->getTargetObject( domain, m_objectPath );
+    ObjectManagerBase const * const objectManagerTarget = dynamic_cast< ObjectManagerBase const * >( m_targetObject );
     m_targetIsMeshObject = objectManagerTarget != nullptr;
     // update sets after we know whether to filter ghost indices ( m_targetIsMeshObject )
     updateSetsIndices( domain );
@@ -58,8 +58,7 @@ void PackCollection::initializePostSubGroups( )
 
 HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, localIndex collectionIdx ) const
 {
-  Group const * targetObject = this->getTargetObject( domain, m_objectPath );
-  WrapperBase const & targetField = targetObject->getWrapperBase( m_fieldName );
+  WrapperBase const & targetField = m_targetObject->getWrapperBase( m_fieldName );
 
   if( collectAll() )
   {
@@ -119,8 +118,7 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
     return omb;
   };
 
-  Group const * targetGrp = this->getTargetObject( domain, m_objectPath );
-  WrapperBase const & targetField = targetGrp->getWrapperBase( m_fieldName );
+  WrapperBase const & targetField = m_targetObject->getWrapperBase( m_fieldName );
   GEOS_ERROR_IF( !targetField.isPackable( false ), "The object targeted for collection must be packable!" );
 
   // If no set or "all" is specified we retrieve the entire field.
@@ -131,7 +129,7 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   // This is questionable but lets me define `setNames` as `const` variable.
   // Note that the third operator will be evaluated iff `collectAll` is `false` (C++ paragraph 6.5.15).
   // So the `asOMB` function will not be called inappropriately and kill the simulation.
-  std::vector< string > const setNames = collectAll ? std::vector< string >{} : getExistingWrapperNames( m_setNames.toViewConst(), asOMB( targetGrp ) );
+  std::vector< string > const setNames = collectAll ? std::vector< string >{} : getExistingWrapperNames( m_setNames.toViewConst(), asOMB( m_targetObject ) );
 
   std::size_t const numSets = collectAll ? 1 : setNames.size();
   m_setsIndices.resize( numSets );
@@ -146,15 +144,15 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   {
     // Here we only have one "all" set.
     array1d< localIndex > & setIndices = m_setsIndices.front();
-    setIndices.resize( targetGrp->size() );
-    for( localIndex i = 0; i < targetGrp->size(); ++i )
+    setIndices.resize( m_targetObject->size() );
+    for( localIndex i = 0; i < m_targetObject->size(); ++i )
     {
       setIndices[i] = i;
     }
   }
   else
   {
-    ObjectManagerBase const * targetOMB = asOMB( targetGrp );
+    ObjectManagerBase const * targetOMB = asOMB( m_targetObject );
     for( std::size_t setIdx = 0; setIdx < numSets; ++setIdx )
     {
       string const & setName = setNames[setIdx];
@@ -176,7 +174,7 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   // filter out the ghost indices immediately when we update the index sets
   if( m_targetIsMeshObject )
   {
-    arrayView1d< integer const > const ghostRank = asOMB( targetGrp )->ghostRank();
+    arrayView1d< integer const > const ghostRank = asOMB( m_targetObject )->ghostRank();
     for( std::size_t setIdx = 0; setIdx < numSets; ++setIdx )
     {
       array1d< localIndex > & setIndices = m_setsIndices[ setIdx ];
@@ -264,8 +262,7 @@ void PackCollection::collect( DomainPartition const & domain,
 {
   GEOS_MARK_FUNCTION;
   GEOS_ERROR_IF( collectionIdx < 0 || collectionIdx >= numCollectors(), "Attempting to collection from an invalid collection index!" );
-  Group const * targetObject = this->getTargetObject( domain, m_objectPath );
-  WrapperBase const & targetField = targetObject->getWrapperBase( m_fieldName );
+  WrapperBase const & targetField = m_targetObject->getWrapperBase( m_fieldName );
   // If we have any indices to collect, and we're either collecting every time or we're only collecting
   // when the set changes and the set has changed.
   parallelDeviceEvents events;

@@ -115,6 +115,8 @@ private:
   std::vector< array1d< localIndex > > m_setsIndices;
   /// The dataRepository name/path to get history data from, relative paths are assumed to be relative to mesh body 0, mesh level 0
   string m_objectPath;
+  /// @brief The dataRepository object to get history data from
+  Group const * m_targetObject;
   /// The (packable) field associated with the specified object to get data from
   string m_fieldName;
   /// The names of the sets to collect history info from
