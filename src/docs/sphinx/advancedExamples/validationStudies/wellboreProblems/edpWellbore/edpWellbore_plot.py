@@ -162,16 +162,16 @@ def main():
 
 	# Plot GEOS results versus analytical results for elasto-plastic material
 	plt.subplot(2,2,1)
-	plt.plot( rCoord/rCoord[0],-stress_rr,'r+',label=r'$\sigma_{rr}$: GEOS')
-	plt.plot(r_ep_analytic,srr_ep_analytic, 'r', label=r'$\sigma_{rr}$: Analytic Plastic')
+	plt.plot( rCoord/rCoord[0],-stress_rr,'r+',label=r'$\sigma_{rr}$: GEOS Plasticity')
+	plt.plot(r_ep_analytic,srr_ep_analytic, 'r', label=r'$\sigma_{rr}$: Analytical Plasticity')
 	plt.plot(r_elas_analytic,srr_elas_analytic, 'r')
 
-	plt.plot( rCoord/rCoord[0],-stress_tt,'b+',label=r'$\sigma_{\theta\theta}$: GEOS')
-	plt.plot(r_ep_analytic,stt_ep_analytic, 'b', label=r'$\sigma_{\theta\theta}$: Analytic Plastic')
+	plt.plot( rCoord/rCoord[0],-stress_tt,'b+',label=r'$\sigma_{\theta\theta}$: GEOS Plasticity')
+	plt.plot(r_ep_analytic,stt_ep_analytic, 'b', label=r'$\sigma_{\theta\theta}$: Analytical Plasticity')
 	plt.plot(r_elas_analytic,stt_elas_analytic, 'b')
 
-	plt.plot( rCoord/rCoord[0],-stress_zz,'g+',label=r'$\sigma_{zz}$: GEOS')
-	plt.plot(r_ep_analytic,szz_ep_analytic, 'g', label=r'$\sigma_{zz}$: Analytic Plastic')
+	plt.plot( rCoord/rCoord[0],-stress_zz,'g+',label=r'$\sigma_{zz}$: GEOS Plasticity')
+	plt.plot(r_ep_analytic,szz_ep_analytic, 'g', label=r'$\sigma_{zz}$: Analytical Plasticity')
 	plt.plot(r_elas_analytic,szz_elas_analytic, 'g')
 
 	plt.plot([r_ep_analytic[0],r_ep_analytic[0]],[0.0,20e6],'k--', label='Elastic-Plastic boundary')
@@ -188,14 +188,14 @@ def main():
 	r_elas_assumed,srr_elas_assumed,stt_elas_assumed,szz_elas_assumed = epwAnal.solution_elastic(sh,sv,1.0,pw)
 
 	plt.subplot(2,2,2)
-	plt.plot( rCoord/rCoord[0],-stress_rr,'r+',label=r'$\sigma_{rr}$: GEOS')
-	plt.plot(r_elas_assumed,srr_elas_assumed, 'r', label=r'$\sigma_{rr}$: Analytic Elastic')
+	plt.plot( rCoord/rCoord[0],-stress_rr,'r+',label=r'$\sigma_{rr}$: GEOS Plasticity')
+	plt.plot(r_elas_assumed,srr_elas_assumed, 'r', label=r'$\sigma_{rr}$: Analytical Elasticity')
 
-	plt.plot( rCoord/rCoord[0],-stress_tt,'b+',label=r'$\sigma_{\theta\theta}$: GEOS')
-	plt.plot(r_elas_assumed,stt_elas_assumed, 'b', label=r'$\sigma_{\theta\theta}$: Analytic Elastic')
+	plt.plot( rCoord/rCoord[0],-stress_tt,'b+',label=r'$\sigma_{\theta\theta}$: GEOS Plasticity')
+	plt.plot(r_elas_assumed,stt_elas_assumed, 'b', label=r'$\sigma_{\theta\theta}$: Analytical Elasticity')
 
-	plt.plot( rCoord/rCoord[0],-stress_zz,'g+',label=r'$\sigma_{zz}$: GEOS')
-	plt.plot(r_elas_assumed,szz_elas_assumed, 'g', label=r'$\sigma_{zz}$: Analytic Elastic')
+	plt.plot( rCoord/rCoord[0],-stress_zz,'g+',label=r'$\sigma_{zz}$: GEOS Plasticity')
+	plt.plot(r_elas_assumed,szz_elas_assumed, 'g', label=r'$\sigma_{zz}$: Analytical Elasticity')
 	
 	plt.ylabel('Stresses [Pa]')
 	plt.xlabel(r'Normalized radial coordinate, $r/a$')
@@ -216,7 +216,7 @@ def main():
 
 	plt.subplot(2,2,3)
 	plt.plot(-p,q,'ko',label='GEOS')
-	plt.plot(list_p_wellsurface_analytic,list_q_wellsurface_analytic,'b',label='Analytic')
+	plt.plot(list_p_wellsurface_analytic,list_q_wellsurface_analytic,'b',label='Analytical')
 	plt.plot(p_yieldSurface,q_yieldSurface_i,'g--',label='Initial yield surface')
 	plt.plot(p_yieldSurface,q_yieldSurface_f,'r--',label='Final yield surface')
 
@@ -231,7 +231,7 @@ def main():
 
 	plt.subplot(2,2,4)
 	plt.plot(a0/a, -pw,'ko',label='GEOS')
-	plt.plot(list_a0_a_ratio,list_pw_analytic,'b',label='Analytic')
+	plt.plot(list_a0_a_ratio,list_pw_analytic,'b',label='Analytical')
 	plt.xlabel('a0/a')
 	plt.ylabel('pw (Pa)')
 	plt.xlim(1.0,1.1)
