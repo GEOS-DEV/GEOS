@@ -785,9 +785,6 @@ protected:
   /// Nonlinear solver parameters
   NonlinearSolverParameters m_nonlinearSolverParameters;
 
-  /// Flag for local chop
-  integer m_localChop = 0;
-
   /// Solver statistics
   SolverStatistics m_solverStatistics;
 

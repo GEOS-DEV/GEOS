@@ -40,7 +40,6 @@ SolverBase::SolverBase( string const & name,
   m_dofManager( name ),
   m_linearSolverParameters( groupKeyStruct::linearSolverParametersString(), this ),
   m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this ),
-  m_localChop( 0 ),
   m_solverStatistics( groupKeyStruct::solverStatisticsString(), this ),
   m_systemSetupTimestamp( 0 )
 {
@@ -87,12 +86,6 @@ SolverBase::SolverBase( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Initial time-step value required by the solver to the event manager." );
-
-  registerWrapper( viewKeyStruct::localChopString(), &m_localChop ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Flag indicating whether local chopping is used" );
 
   registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
@@ -944,7 +937,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     // Compute the scaling factor for the Newton update
     scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
 
-    if( getLogLevel() >= 1 && !m_localChop )
+    if( getLogLevel() >= 1 && m_nonlinearSolverParameters.scalingType() == NonlinearSolverParameters::ScalingType::Global )
     {
       GEOS_LOG_RANK_0( getName() + ": Solution scaling factor = " << scaleFactor );
     }

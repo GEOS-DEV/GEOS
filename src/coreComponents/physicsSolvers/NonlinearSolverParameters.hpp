@@ -96,6 +96,8 @@ public:
     static constexpr char const * couplingTypeString()                   { return "couplingType"; }
     static constexpr char const * sequentialConvergenceCriterionString() { return "sequentialConvergenceCriterion"; }
     static constexpr char const * subcyclingOptionString()               { return "subcycling"; }
+
+    static constexpr char const * scalingTypeString()               { return "scalingType"; }
   } viewKeys;
 
   /**
@@ -133,6 +135,15 @@ public:
   {
     ResidualNorm, ///< convergence achieved when the residual drops below a given norm
     NumberOfNonlinearIterations ///< convergence achieved when the subproblems convergence is achieved in less than minNewtonIteration
+  };
+
+  /**
+   * @brief Solution scaling type
+   */
+  enum class ScalingType : integer
+  {
+    Global, ///< Scale the Newton update with a unique scaling factor
+    Local    ///< Scale the Newton update locally (modifies the Newton direction)
   };
 
   /**
@@ -199,6 +210,15 @@ public:
   SequentialConvergenceCriterion sequentialConvergenceCriterion() const
   {
     return m_sequentialConvergenceCriterion;
+  }
+
+  /**
+   * @brief Getter for the scaling type
+   * @return the coupling type
+   */
+  ScalingType scalingType() const
+  {
+    return m_scalingType;
   }
 
   /// Flag to apply a line search.
@@ -272,6 +292,9 @@ public:
 
   /// Flag to specify whether subcycling is allowed or not in sequential schemes
   integer m_subcyclingOption;
+
+  /// Flag for local chop
+  ScalingType m_scalingType;
 };
 
 ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction,
@@ -290,6 +313,10 @@ ENUM_STRINGS( NonlinearSolverParameters::CouplingType,
 ENUM_STRINGS( NonlinearSolverParameters::SequentialConvergenceCriterion,
               "ResidualNorm",
               "NumberOfNonlinearIterations" );
+
+ENUM_STRINGS( NonlinearSolverParameters::ScalingType,
+              "Global",
+              "Local" );
 
 } /* namespace geos */
 

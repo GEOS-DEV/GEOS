@@ -109,7 +109,7 @@ public:
                    ObjectManagerBase & subRegion,
                    MultiFluidBase const & fluid )
   {
-    real64 maxDS = 0.0;
+    real64 maxDeltaPhaseVolFrac = 0.0;
     if( numPhase == 2 )
     {
       isothermalCompositionalMultiphaseBaseKernels::
@@ -117,7 +117,7 @@ public:
       {
         integer constexpr NUM_COMP = NC();
         PhaseVolumeFractionKernel< NUM_COMP, 2 > kernel( subRegion, fluid );
-        maxDS = PhaseVolumeFractionKernel< NUM_COMP, 2 >::template launch< POLICY >( subRegion.size(), kernel );
+        maxDeltaPhaseVolFrac = PhaseVolumeFractionKernel< NUM_COMP, 2 >::template launch< POLICY >( subRegion.size(), kernel );
       } );
     }
     else if( numPhase == 3 )
@@ -127,10 +127,10 @@ public:
       {
         integer constexpr NUM_COMP = NC();
         PhaseVolumeFractionKernel< NUM_COMP, 3 > kernel( subRegion, fluid );
-        maxDS = PhaseVolumeFractionKernel< NUM_COMP, 3 >::template launch< POLICY >( subRegion.size(), kernel );
+        maxDeltaPhaseVolFrac = PhaseVolumeFractionKernel< NUM_COMP, 3 >::template launch< POLICY >( subRegion.size(), kernel );
       } );
     }
-    return maxDS;
+    return maxDeltaPhaseVolFrac;
   }
 };
 
@@ -581,10 +581,16 @@ public:
     {
       // compute the change in temperature
       real64 const temp = m_temperature[ei];
+      real64 const absTempChange = LvArray::math::abs( m_localSolution[stack.localRow + m_numComp + 1] );
+      if( stack.localMaxDeltaTemp < absTempChange )
+      {
+        stack.localMaxDeltaTemp = absTempChange;
+      }
+
       m_temperatureScalingFactor[ei] = 1.0;
+
       if( temp > eps )
       {
-        real64 const absTempChange = LvArray::math::abs( m_localSolution[stack.localRow + m_numComp + 1] );
         real64 const relativeTempChange = absTempChange / temp;
         if( relativeTempChange > m_maxRelativeTempChange )
         {

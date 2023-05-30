@@ -356,8 +356,8 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   real64 scalingFactor = 1.0;
-  real64 maxDP = 0.0, maxDCompDens = 0.0, maxDT = 0.0;
-  real64 minPresScalFac = 1.0, minCompDensScalFac = 1.0, minTempScalFac = 1.0;
+  real64 maxDeltaPres = 0.0, maxDeltaCompDens = 0.0, maxDeltaTemp = 0.0;
+  real64 minPresScalingFactor = 1.0, minCompDensScalingFactor = 1.0, minTempScalingFactor = 1.0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -389,39 +389,39 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
                                                      subRegion,
                                                      localSolution );
 
-      if( !m_localChop )
+      if( m_nonlinearSolverParameters.scalingType() == NonlinearSolverParameters::ScalingType::Global )
         scalingFactor = std::min( scalingFactor, subRegionData.localMinVal );
-      maxDP = std::max( maxDP, subRegionData.localMaxDP );
-      maxDCompDens = std::max( maxDCompDens, subRegionData.localMaxDCompDens );
-      maxDT = std::max( maxDT, subRegionData.localMaxDT );
-      minPresScalFac = std::min( minPresScalFac, subRegionData.localMinPresScalFac );
-      minCompDensScalFac = std::min( minCompDensScalFac, subRegionData.localMinCompDensScalFac );
-      minTempScalFac = std::min( minTempScalFac, subRegionData.localMinTempScalFac );
+      maxDeltaPres  = std::max( maxDeltaPres, subRegionData.localMaxDeltaPres );
+      maxDeltaCompDens = std::max( maxDeltaCompDens, subRegionData.localMaxDeltaCompDens );
+      maxDeltaTemp = std::max( maxDeltaTemp, subRegionData.localMaxDeltaTemp );
+      minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.localMinPresScalFac );
+      minCompDensScalingFactor = std::min( minCompDensScalingFactor, subRegionData.localMinCompDensScalFac );
+      minTempScalingFactor = std::min( minTempScalingFactor, subRegionData.localMinTempScalFac );
     } );
   } );
 
   scalingFactor = MpiWrapper::min( scalingFactor );
-  maxDP = MpiWrapper::max( maxDP );
-  maxDCompDens = MpiWrapper::max( maxDCompDens );
-  maxDT = MpiWrapper::max( maxDT );
-  minPresScalFac = MpiWrapper::min( minPresScalFac );
-  minCompDensScalFac = MpiWrapper::min( minCompDensScalFac );
-  minTempScalFac = MpiWrapper::min( minTempScalFac );
+  maxDeltaPres  = MpiWrapper::max( maxDeltaPres );
+  maxDeltaCompDens = MpiWrapper::max( maxDeltaCompDens );
+  maxDeltaTemp = MpiWrapper::max( maxDeltaTemp );
+  minPresScalingFactor = MpiWrapper::min( minPresScalingFactor );
+  minCompDensScalingFactor = MpiWrapper::min( minCompDensScalingFactor );
+  minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
 
   if( m_isThermal )
   {
-    GEOS_LOG_LEVEL_RANK_0( 1, getName() + ": Max dP = " << maxDP << ", Max dCompDens = " << maxDCompDens << ", Max dT = " << maxDT << " (before scaling)" );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() + ": Max deltaPres  = " << maxDeltaPres  << ", Max deltaCompDens = " << maxDeltaCompDens << ", Max deltaTemp = " << maxDeltaTemp << " (before scaling)" );
   }
   else
   {
-    GEOS_LOG_LEVEL_RANK_0( 1, getName() + ": Max dP = " << maxDP << ", Max dCompDens = " << maxDCompDens << " (before scaling)" );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() + ": Max deltaPres  = " << maxDeltaPres  << ", Max deltaCompDens = " << maxDeltaCompDens << " (before scaling)" );
   }
-  if( m_localChop )
+  if( m_nonlinearSolverParameters.scalingType() == NonlinearSolverParameters::ScalingType::Local )
   {
-    GEOS_LOG_LEVEL_RANK_0( 1, getName() + ": Min pressure scaling factor = " << minPresScalFac );
-    GEOS_LOG_LEVEL_RANK_0( 1, getName() + ": Min comp dens scaling factor = " << minCompDensScalFac );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() + ": Min pressure scaling factor = " << minPresScalingFactor );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() + ": Min comp dens scaling factor = " << minCompDensScalingFactor );
     if( m_isThermal )
-      GEOS_LOG_LEVEL_RANK_0( 1, getName() + ": Min temperature scaling factor = " << minTempScalFac );
+      GEOS_LOG_LEVEL_RANK_0( 1, getName() + ": Min temperature scaling factor = " << minTempScalingFactor );
   }
 
   return LvArray::math::max( scalingFactor, m_minScalingFactor );
@@ -452,7 +452,7 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
   ? thermalCompositionalMultiphaseBaseKernels::
           SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
-                                                     m_localChop,
+                                                     m_nonlinearSolverParameters.scalingType() == NonlinearSolverParameters::ScalingType::Local,
                                                      scalingFactor,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
@@ -462,7 +462,7 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
   : isothermalCompositionalMultiphaseBaseKernels::
           SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
-                                                     m_localChop,
+                                                     m_nonlinearSolverParameters.scalingType() == NonlinearSolverParameters::ScalingType::Local,
                                                      scalingFactor,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
@@ -487,7 +487,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
   DofManager::CompMask componentMask( m_numDofPerCell, 1, m_numComponents+1 );
 
-  if( m_localChop > 0 )
+  if( m_nonlinearSolverParameters.scalingType() == NonlinearSolverParameters::ScalingType::Local )
   {
     dofManager.addVectorToField( localSolution,
                                  viewKeyStruct::elemDofFieldString(),
@@ -504,7 +504,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
                                  pressureMask );
   }
 
-  if( m_localChop > 0 )
+  if( m_nonlinearSolverParameters.scalingType() == NonlinearSolverParameters::ScalingType::Local )
   {
     dofManager.addVectorToField( localSolution,
                                  viewKeyStruct::elemDofFieldString(),
@@ -524,7 +524,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
   if( m_isThermal )
   {
     DofManager::CompMask temperatureMask( m_numDofPerCell, m_numComponents+1, m_numComponents+2 );
-    if( m_localChop > 0 )
+    if( m_nonlinearSolverParameters.scalingType() == NonlinearSolverParameters::ScalingType::Local )
     {
       dofManager.addVectorToField( localSolution,
                                    viewKeyStruct::elemDofFieldString(),
