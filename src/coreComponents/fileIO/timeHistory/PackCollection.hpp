@@ -44,7 +44,7 @@ public:
   virtual void initializePostSubGroups() override;
 
   /// @copydoc geos::HistoryCollection::getMetaData
-  virtual HistoryMetadata getMetaData( DomainPartition const & domain, localIndex collectionIdx ) const override;
+  virtual HistoryMetadata getMetaData( DomainPartition const & GEOS_UNUSED_PARAM( domain ), localIndex collectionIdx ) const override;
 
   /// @copydoc geos::HistoryCollection::getTargetName
   virtual const string & getTargetName() const override
@@ -61,7 +61,7 @@ public:
    * @deprecated Refactoring the packing functions to allow direct usage of set indices
    *             from SortedArrayView instead of only ArrayViews will remove this duplication.
    */
-  virtual void updateSetsIndices( DomainPartition const & domain ) override final;
+  virtual void updateSetsIndices( DomainPartition const & GEOS_UNUSED_PARAM( domain ) ) override final;
 
   virtual localIndex numMetaDataCollectors() const override final;
 
@@ -93,7 +93,7 @@ private:
   }
 
   /// @copydoc geos::HistoryCollection::collect
-  void collect( DomainPartition const & domain,
+  void collect( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                 localIndex const collectionIdx,
                 buffer_unit_type * & buffer ) override;
 

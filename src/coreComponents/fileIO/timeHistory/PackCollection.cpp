@@ -56,7 +56,7 @@ void PackCollection::initializePostSubGroups( )
   }
 }
 
-HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, localIndex collectionIdx ) const
+HistoryMetadata PackCollection::getMetaData( DomainPartition const & GEOS_UNUSED_PARAM( domain ), localIndex collectionIdx ) const
 {
   WrapperBase const & targetField = m_targetObject->getWrapperBase( m_fieldName );
 
@@ -107,7 +107,7 @@ std::vector< string > getExistingWrapperNames( arrayView1d< string const > setNa
 
 // if we add a check for the setsizes changing we can use that data to determine whether the metadata collector
 //  should only collect on size changes, otherwise not collect anything
-void PackCollection::updateSetsIndices( DomainPartition const & domain )
+void PackCollection::updateSetsIndices( DomainPartition const & GEOS_UNUSED_PARAM( domain ) )
 {
   // In the current function, depending on the context, the target can be considered as a `Group` or as an `ObjectManagerBase`.
   // This convenience lambda function is a shortcut to get lighter syntax while not changing the whole function.
@@ -256,7 +256,7 @@ void PackCollection::buildMetaDataCollectors()
   }
 }
 
-void PackCollection::collect( DomainPartition const & domain,
+void PackCollection::collect( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                               localIndex const collectionIdx,
                               buffer_unit_type * & buffer )
 {
