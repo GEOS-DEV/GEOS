@@ -68,7 +68,6 @@ void RAJA_INLINE parallelHostSync() { }
 #endif
 
 #if defined( GEOS_USE_CUDA )
-
 auto const parallelDeviceMemorySpace = LvArray::MemorySpace::cuda;
 
 template< unsigned long BLOCK_SIZE = GEOSX_BLOCK_SIZE >

@@ -15,7 +15,6 @@ include(${CMAKE_CURRENT_LIST_DIR}/lassen-base.cmake)
 
 set(ENABLE_CUDA_NVTOOLSEXT ON CACHE BOOL "")
 
-
 set(ENABLE_ESSL ON CACHE BOOL "" FORCE )
 set(ESSL_INCLUDE_DIRS /usr/tcetmp/packages/essl/essl-6.3.0.2/include CACHE STRING "" FORCE )
 set(ESSL_LIBRARIES /usr/tcetmp/packages/essl/essl-6.3.0.2/lib64/libesslsmpcuda.so
