@@ -1,12 +1,5 @@
 name: GEOS CI 
-on:
-  pull_request:
-    types:
-      - opened
-      - edited
-      - reopened
-      - synchronize
-      - ready_for_review
+on: pull_request
 
 # Cancels in-progress workflows for a PR when updated
 concurrency:
