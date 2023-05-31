@@ -416,7 +416,12 @@ CommunicationTools::
         std::set_intersection( dup.cbegin(), dup.cend(), candidates.cbegin(), candidates.cend(), std::back_inserter( intersection ) );
         if( !intersection.empty() )
         {
-          secondLevelMatches.emplace_back( objectManager.globalToLocalMap( gi ) );
+          auto const & mp = objectManager.globalToLocalMap();
+          auto it = mp.find( gi );
+          if( it != mp.cend() )
+          {
+            secondLevelMatches.emplace_back( it->second );
+          }
         }
       }
       GEOS_LOG( "After the second level." );

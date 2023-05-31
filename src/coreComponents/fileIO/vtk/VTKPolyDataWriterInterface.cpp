@@ -275,22 +275,25 @@ getSurface( FaceElementSubRegion const & subRegion,
   std::unordered_map< localIndex, localIndex > geosx2VTKIndexing;
   geosx2VTKIndexing.reserve( subRegion.size() * subRegion.numNodesPerElement() );
   localIndex nodeIndexInVTK = 0;
-  std::vector< vtkIdType > connectivity( subRegion.numNodesPerElement() );
+  // FaceElementSubRegion being heterogeneous, the size of the connectivity vector may vary for each element.
+  // In order not to allocate every a new vector time, we combine the usage of `clear` and `push_back`.
+  std::vector< vtkIdType > connectivity;
 
   for( localIndex ei = 0; ei < subRegion.size(); ei++ )
   {
     std::vector< int > const vtkOrdering = getVtkConnectivity( subRegion.getElementType( ei ) );
     auto const & elem = nodeListPerElement[ei];
+    connectivity.clear();
     for( size_t i = 0; i < vtkOrdering.size(); ++i )
     {
       auto const & VTKIndexPos = geosx2VTKIndexing.find( elem[vtkOrdering[i]] );
       if( VTKIndexPos == geosx2VTKIndexing.end() )
       {
-        connectivity[i] = geosx2VTKIndexing[elem[vtkOrdering[i]]] = nodeIndexInVTK++;
+        connectivity.push_back( geosx2VTKIndexing[elem[vtkOrdering[i]]] = nodeIndexInVTK++ );
       }
       else
       {
-        connectivity[i] = VTKIndexPos->second;
+        connectivity.push_back( VTKIndexPos->second );
       }
     }
     cellsArray->InsertNextCell( vtkOrdering.size(), connectivity.data() );

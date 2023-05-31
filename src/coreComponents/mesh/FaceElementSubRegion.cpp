@@ -91,20 +91,21 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
   // which emphasizes the need of a refactoring.
   // In the meantime, we try to fill the face block into the sub region and hope for the best...
   {
-    auto const f = []( integer allSizes ) -> ElementType
+    auto const hack = []( integer allSizes ) -> ElementType
     {
-      if( allSizes == 6 )
+      GEOS_LOG_RANK( "All sizes : " << allSizes );
+      switch( allSizes )
       {
-        return ElementType::Wedge;
-      }
-      else if( allSizes == 8 )
-      {
-        return ElementType::Hexahedron;
-      }
-      else
-      {
-        GEOS_ERROR( "Unsupported type of elements during the face element sub region creation." );
-        return {};
+        case 3:
+        case 6:
+          return ElementType::Wedge;
+        case 4:
+        case 8:
+        case 0:
+          return ElementType::Hexahedron;
+        default:
+          GEOS_ERROR( "Unsupported type of elements during the face element sub region creation." );
+          return {};
       }
     };
 
@@ -127,7 +128,7 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
 
     auto const it = std::max_element( s.cbegin(), s.cend() );
     integer const maxSize = *it;
-    m_elementType = f( maxSize );
+    m_elementType = hack( maxSize );
     m_numNodesPerElement = maxSize;
   }
 

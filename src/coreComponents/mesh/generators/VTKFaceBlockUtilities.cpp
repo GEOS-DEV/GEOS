@@ -129,26 +129,22 @@ public:
     constexpr char key[] = "duplicated_nodes";
 
     vtkIdTypeArray const * duplicatedNodes = vtkIdTypeArray::FastDownCast( faceMesh->GetPointData()->GetArray( key ) );
-    GEOS_ERROR_IF( duplicatedNodes == nullptr, "Could not find valid field \"" << key << "\" for fracture \"" << faceBlockName << "\"." );
-
-    vtkIdType const numTuples = duplicatedNodes->GetNumberOfTuples();
-    int const numComponents = duplicatedNodes->GetNumberOfComponents();
-    m_duplicatedNodes.resize( numTuples );
-    for( vtkIdType i = 0; i < numTuples; ++i )
     {
-      m_duplicatedNodes[i].reserve( numComponents );
+      // Depending on the parallel split, the vtk face mesh may be empty on a rank.
+      // In that case, vtk will not provide any field for the emtpy mesh.
+      // Therefore, not finding the duplicated nodes field on a rank cannot be interpreted as a globally missing field.
+      // Converting the address into an integer and exchanging it through the MPI ranks let us find out
+      // if the field is globally missing or not.
+      std::uintptr_t const address = MpiWrapper::max( reinterpret_cast<std::uintptr_t>(duplicatedNodes) );
+      if( address == 0 )
+      {
+        GEOS_ERROR_IF( duplicatedNodes == nullptr, "Could not find valid field \"" << key << "\" for fracture \"" << faceBlockName << "\"." );
+      }
     }
 
-    for( vtkIdType i = 0; i < numTuples; ++i )
+    if( duplicatedNodes )
     {
-      for( int j = 0; j < numComponents; ++j )
-      {
-        vtkIdType const tmp = duplicatedNodes->GetTypedComponent( i, j );
-        if( tmp > -1 )
-        {
-          m_duplicatedNodes[i].emplace_back( tmp );
-        }
-      }
+      init( duplicatedNodes );
     }
   }
 
@@ -173,6 +169,34 @@ public:
   }
 
 private:
+
+  /**
+   * @brief Populate the mapping.
+   * @param duplicatedNodes The pointer to the vtk data array. Guaranteed not to be null.
+   */
+  void init( vtkIdTypeArray const * duplicatedNodes )
+  {
+    vtkIdType const numTuples = duplicatedNodes->GetNumberOfTuples();
+    int const numComponents = duplicatedNodes->GetNumberOfComponents();
+    m_duplicatedNodes.resize( numTuples );
+    for( vtkIdType i = 0; i < numTuples; ++i )
+    {
+      m_duplicatedNodes[i].reserve( numComponents );
+    }
+
+    for( vtkIdType i = 0; i < numTuples; ++i )
+    {
+      for( int j = 0; j < numComponents; ++j )
+      {
+        vtkIdType const tmp = duplicatedNodes->GetTypedComponent( i, j );
+        if( tmp > -1 )
+        {
+          m_duplicatedNodes[i].emplace_back( tmp );
+        }
+      }
+    }
+  }
+
   /// For each node of the face block, lists all the duplicated nodes in the main 3d mesh.
   std::vector< std::vector< vtkIdType > > m_duplicatedNodes;
 };
