@@ -42,12 +42,13 @@ jobs:
     needs: [check_pull_request_is_not_a_draft]
     runs-on: ubuntu-22.04
     steps:
-    # The integrated test sumbmodule repository contains large data (using git lfs).
+    # The integrated test submodule repository contains large data (using git lfs).
     # To save time (and money) we do not let Github Actions automatically clone all our (lfs) subrepositories and do it by hand.
     - name: Checkout Repository
       uses: actions/checkout@v3
       with:
-        submodules: true
+        # Let script update submodules; Github Actions submodule history causes error
+        submodules: false
         lfs: false
     - name: Check that submodules are up to date
       run: "scripts/test_submodule_updated.sh"

@@ -9,10 +9,10 @@ git lfs uninstall &> /dev/null
 
 # Pull submodule to get .git files.
 #git submodule update --init integratedTests
-git submodule update --init --recursive src/cmake/blt
-git submodule update --init --recursive src/coreComponents/LvArray
-git submodule update --init --recursive src/coreComponents/constitutive/PVTPackage
-git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
+git submodule update --init src/cmake/blt
+git submodule update --init src/coreComponents/LvArray
+git submodule update --init src/coreComponents/constitutive/PVTPackage
+git submodule update --init src/coreComponents/fileIO/coupling/hdf5_interface
 
 
 # Initialize PR submodule hashes
