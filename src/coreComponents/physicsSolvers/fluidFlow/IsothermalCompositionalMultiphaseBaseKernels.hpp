@@ -1004,6 +1004,7 @@ public:
    */
   struct StackVariables
   {
+    GEOS_HOST_DEVICE
     StackVariables()
     { }
 
