@@ -64,25 +64,21 @@ void testDispatchSimple( types::TypeList< Ts... > const list )
 {
   bool const result = types::dispatchCombinations( list, []( auto tupleOfTypes )
   {
-    using FirstType  = camp::first< decltype(tupleOfTypes) >;
-    using SecondType = camp::second< decltype(tupleOfTypes) >;
-    std::cout << "test_dispatch_simple:  dispatched with " << typeid(FirstType).name() << ", " << typeid(SecondType).name() << std::endl;
+    EXPECT_TRUE( ( std::is_same< camp::first< decltype(tupleOfTypes) >, float >::value ) ) << "Dispatch matched the wrong type";
+    EXPECT_TRUE( ( std::is_same< camp::second< decltype(tupleOfTypes) >, int >::value ) ) << "Dispatch matched the wrong type";
   }, 0.0f, 0 );
   EXPECT_TRUE( result ) << "Dispatch failed to match the type";
 }
 
-template< typename ... Ts >
+template< typename TRUE_TYPES_LIST, typename ... Ts >
 void testDispatchVirtual( types::TypeList< Ts... > const list,
                           typeDispatchTest::FEMBase & fem,
                           typeDispatchTest::ConstitutiveBase & constitutiveModel )
 {
-  bool const result = types::dispatchCombinations( list, [&]( auto tupleOfTypes )
+  bool const result = types::dispatchCombinations( list, []( auto tupleOfTypes )
   {
-    using FemType   = camp::first< decltype(tupleOfTypes) >;
-    using ModelType = camp::second< decltype(tupleOfTypes) >;
-    FemType & femCasted = static_cast< FemType & >(fem);
-    ModelType & modelCasted = static_cast< ModelType & >(constitutiveModel);
-    std::cout << "test_dispatch_virtual: dispatched with fem.num_nodes: " << femCasted.num_nodes << ", model.m_a = " << modelCasted.m_a << std::endl;
+    EXPECT_TRUE( ( std::is_same< camp::first< decltype(tupleOfTypes) >, camp::first< TRUE_TYPES_LIST > >::value ) ) << "Dispatch matched the wrong type";
+    EXPECT_TRUE( ( std::is_same< camp::second< decltype(tupleOfTypes) >, camp::second< TRUE_TYPES_LIST > >::value ) ) << "Dispatch matched the wrong type";
   }, fem, constitutiveModel );
   EXPECT_TRUE( result ) << "Dispatch failed to match the type";
 }
@@ -103,10 +99,10 @@ TEST( testDispatchVirtual, DispatchVirtualTypes )
   using Types = types::TypeList< types::TypeList< QuadP1, Model1 >,
                                  types::TypeList< TriangleP1, Model2 > >;
 
-  std::unique_ptr< FEMBase >         fem    = std::make_unique< QuadP1 >();
-  std::unique_ptr< ConstitutiveBase > model = std::make_unique< Model1 >();
+  std::unique_ptr< FEMBase >         fem    = std::make_unique< TriangleP1 >();
+  std::unique_ptr< ConstitutiveBase > model = std::make_unique< Model2 >();
 
-  testDispatchVirtual( Types{}, *fem, *model );
+  testDispatchVirtual< types::TypeList< QuadP1, Model1 > >( Types{}, *fem, *model );
 }
 
 int main( int ac, char * av[] )
