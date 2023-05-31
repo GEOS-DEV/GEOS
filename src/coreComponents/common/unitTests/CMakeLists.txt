@@ -5,14 +5,17 @@
 set(gtest_geosx_tests
     testDataTypes.cpp
     testTypeDispatch.cpp
+    testFixedSizeDeque.cpp
    )
+
+if ( ENABLE_CALIPER )
+  list( APPEND gtest_geosx_tests
+        testCaliperSmoke.cpp )
+endif()
 
 set( dependencyList common hdf5 gtest )
 
-if( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
+list( APPEND gtest_geosx_tests testLifoStorage.cpp )
 #
 # Add gtest C++ based tests
 #

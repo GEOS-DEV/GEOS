@@ -12,8 +12,6 @@ set( linearAlgebra_headers
      interfaces/InterfaceTypes.hpp
      interfaces/MatrixBase.hpp
      interfaces/VectorBase.hpp
-     interfaces/dense/BlasLapackFunctions.h
-     interfaces/dense/BlasLapackLA.hpp
      solvers/BicgstabSolver.hpp
      solvers/BlockPreconditioner.hpp
      solvers/CgSolver.hpp
@@ -45,7 +43,6 @@ set( linearAlgebra_headers
 #
 set( linearAlgebra_sources
      DofManager.cpp
-     interfaces/dense/BlasLapackLA.cpp
      solvers/BicgstabSolver.cpp
      solvers/BlockPreconditioner.cpp
      solvers/CgSolver.cpp
@@ -54,18 +51,17 @@ set( linearAlgebra_sources
      solvers/SeparateComponentPreconditioner.cpp
    )
 
-set( dependencyList mesh blas lapack )
+set( dependencyList ${parallelDeps} mesh denseLinearAlgebra )
 
+list( APPEND linearAlgebra_headers interfaces/direct/SuiteSparse.hpp )
+list( APPEND linearAlgebra_sources interfaces/direct/SuiteSparse.cpp )
+list( APPEND dependencyList suitesparse )
 
-list( APPEND linearAlgebra_headers
-      interfaces/direct/SuiteSparse.hpp
-      interfaces/direct/SuperLUDist.hpp )
-
-list( APPEND linearAlgebra_sources
-      interfaces/direct/SuiteSparse.cpp
-      interfaces/direct/SuperLUDist.cpp )
-
-list( APPEND dependencyList suitesparse superlu_dist )
+if( ENABLE_SUPERLU_DIST )
+      list( APPEND linearAlgebra_headers interfaces/direct/SuperLUDist.hpp )
+      list( APPEND linearAlgebra_sources interfaces/direct/SuperLUDist.cpp )
+      list( APPEND dependencyList superlu_dist )
+endif( )
 
 if( ENABLE_TRILINOS )
 
@@ -100,7 +96,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HypreMatrix.hpp
           interfaces/hypre/HyprePreconditioner.hpp
           interfaces/hypre/HypreSolver.hpp
-          interfaces/hypre/HypreUtils.hpp 
+          interfaces/hypre/HypreUtils.hpp
           interfaces/hypre/HypreVector.hpp
           interfaces/hypre/mgrStrategies/CompositionalMultiphaseFVM.hpp
           interfaces/hypre/mgrStrategies/CompositionalMultiphaseHybridFVM.hpp
@@ -108,16 +104,16 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirHybridFVM.hpp
           interfaces/hypre/mgrStrategies/HybridSinglePhasePoromechanics.hpp
           interfaces/hypre/mgrStrategies/Hydrofracture.hpp
-          interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp      
+          interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp
           interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp
-          interfaces/hypre/mgrStrategies/MultiphasePoromechanicsReservoirFVM.hpp	  
-          interfaces/hypre/mgrStrategies/SinglePhaseHybridFVM.hpp
-          interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp
-          interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsReservoirFVM.hpp	  
+          interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsEmbeddedFractures.hpp
+          interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp
+          interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseFVM.hpp
+          interfaces/hypre/mgrStrategies/ThermalMultiphasePoromechanics.hpp
+          interfaces/hypre/mgrStrategies/ThermalSinglePhasePoromechanics.hpp
         )
-
     list( APPEND linearAlgebra_sources
           interfaces/hypre/HypreExport.cpp
           interfaces/hypre/HypreInterface.cpp
@@ -159,14 +155,6 @@ if( ENABLE_PETSC )
 
 endif()
 
-if ( ENABLE_CUDA )
-    list( APPEND dependencyList cuda )
-endif()
-
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
-endif()
-
 blt_add_library( NAME       linearAlgebra
                  SOURCES    ${linearAlgebra_sources}
                  HEADERS    ${linearAlgebra_headers}
@@ -176,6 +164,9 @@ blt_add_library( NAME       linearAlgebra
 
 target_include_directories( linearAlgebra PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
 
-add_subdirectory( unitTests )
+
+if( GEOSX_ENABLE_TESTS )
+  add_subdirectory( unitTests )
+endif( )
 
 geosx_add_code_checks( PREFIX linearAlgebra )

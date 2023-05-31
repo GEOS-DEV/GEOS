@@ -16,13 +16,13 @@
  * @file ImplicitSmallStrainQuasiStatic.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINQUASISTATIC_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINQUASISTATIC_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINQUASISTATIC_HPP_
+#define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINQUASISTATIC_HPP_
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace solidMechanicsLagrangianFEMKernels
@@ -30,7 +30,7 @@ namespace solidMechanicsLagrangianFEMKernels
 
 /**
  * @brief Implements kernels for solving quasi-static equilibrium.
- * @copydoc geosx::finiteElement::ImplicitKernelBase
+ * @copydoc geos::finiteElement::ImplicitKernelBase
  * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
  *                            @p SUBREGION_TYPE.
  * @tparam UNUSED An unused parameter since we are assuming that the test and
@@ -40,7 +40,7 @@ namespace solidMechanicsLagrangianFEMKernels
  * Implements the KernelBase interface functions required for solving the
  * quasi-static equilibrium equations using one of the
  * "finite element kernel application" functions such as
- * geosx::finiteElement::RegionBasedKernelApplication.
+ * geos::finiteElement::RegionBasedKernelApplication.
  *
  * In this implementation, the template parameter @p NUM_NODES_PER_ELEM is used
  * in place of both @p NUM_TEST_SUPPORT_POINTS_PER_ELEM and
@@ -83,11 +83,11 @@ public:
   using Base::m_elemsToNodes;
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
-
+  using Base::m_meshData;
 
   /**
    * @brief Constructor
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param inputGravityVector The gravity vector.
    */
   ImplicitSmallStrainQuasiStatic( NodeManager const & nodeManager,
@@ -106,7 +106,7 @@ public:
   //*****************************************************************************
   /**
    * @class StackVariables
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::StackVariables
+   * @copydoc geos::finiteElement::ImplicitKernelBase::StackVariables
    *
    * Adds a stack array for the displacement, incremental displacement, and the
    * constitutive stiffness.
@@ -116,7 +116,7 @@ public:
 public:
 
     /// Constructor.
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
                                        xLocal(),
@@ -146,13 +146,13 @@ public:
 
   /**
    * @brief Copy global values from primary field to a local stack array.
-   * @copydoc ::geosx::finiteElement::ImplicitKernelBase::setup
+   * @copydoc ::geos::finiteElement::ImplicitKernelBase::setup
    *
    * For the QuasiStatic implementation, global values from the displacement,
    * incremental displacement, and degree of freedom numbers are placed into
    * element local stack storage.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const k,
               StackVariables & stack ) const;
 
@@ -170,11 +170,11 @@ public:
      * @param a Node index for the row.
      * @param b Node index for the col.
      */
-    GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
+    GEOS_HOST_DEVICE inline constexpr
     void operator() ( localIndex const a, localIndex const b )
     {
-      GEOSX_UNUSED_VAR( a );
-      GEOSX_UNUSED_VAR( b );
+      GEOS_UNUSED_VAR( a );
+      GEOS_UNUSED_VAR( b );
     }
 
     /**
@@ -182,15 +182,15 @@ public:
      *   integrating the divergence to produce nodal forces.
      * @param stress The stress array.
      */
-    GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
+    GEOS_HOST_DEVICE inline constexpr
     void operator() ( real64 (& stress)[6] )
     {
-      GEOSX_UNUSED_VAR( stress );
+      GEOS_UNUSED_VAR( stress );
     }
   };
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
+   * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
    * @tparam STRESS_MODIFIER Type of optional functor to allow for the
    * modification of stress prior to integration.
    * @param stressModifier An optional functor to allow for the modification
@@ -200,21 +200,22 @@ public:
    * stack variable is filled by the constitutive model.
    */
   template< typename STRESS_MODIFIER = NoOpFunctors >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack,
                               STRESS_MODIFIER && stressModifier = NoOpFunctors{} ) const;
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
+   * @copydoc geos::finiteElement::ImplicitKernelBase::complete
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::kernelLaunch
+   * @copydoc geos::finiteElement::KernelBase::kernelLaunch
    */
   template< typename POLICY,
             typename KERNEL_TYPE >
@@ -238,6 +239,19 @@ protected:
   /// The rank global density
   arrayView2d< real64 const > const m_density;
 
+  /**
+   * @brief Get a parameter representative of the stiffness, used as physical scaling for the
+   * stabilization matrix.
+   * @param[in] k Element index.
+   * @return A parameter representative of the stiffness matrix dstress/dstrain
+   */
+  GEOS_HOST_DEVICE
+  inline
+  real64 computeStabilizationScaling( localIndex const k ) const
+  {
+    // TODO: generalize this to other constitutive models (currently we assume linear elasticity).
+    return 2.0 * m_constitutiveUpdate.getShearModulus( k );
+  }
 };
 
 /// The factory used to construct a QuasiStatic kernel.
@@ -250,8 +264,8 @@ using QuasiStaticFactory = finiteElement::KernelFactory< ImplicitSmallStrainQuas
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
-} // namespace geosx
+} // namespace geos
 
 #include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
-#endif // GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINQUASISTATIC_HPP_
+#endif // GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINQUASISTATIC_HPP_

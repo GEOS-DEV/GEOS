@@ -20,7 +20,9 @@ set( common_headers
      TypeDispatch.hpp
      initializeEnvironment.hpp
    )
-
+if ( ENABLE_CUDA )
+  list( APPEND common_headers lifoStorage.hpp )
+endif()
 #
 # Specify all sources
 #
@@ -33,26 +35,26 @@ set( common_sources
      initializeEnvironment.cpp
    )
 
-set( dependencyList lvarray pugixml RAJA chai conduit::conduit fmt::fmt )
+set( dependencyList ${parallelDeps} lvarray pugixml RAJA chai conduit::conduit fmt::fmt )
 
 if ( ENABLE_MKL )
   set( dependencyList ${dependencyList} mkl )
 endif()
 
-if( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
-endif( )
-
-if( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif( )
-
-if( ENABLE_MPI )
-  set( dependencyList ${dependencyList} mpi )
+if( ENABLE_CALIPER )
+  set( dependencyList ${dependencyList} caliper )
 endif()
 
 if( ENABLE_CALIPER )
-  set( dependencyList ${dependencyList} caliper adiak )
+  set( dependencyList ${dependencyList} caliper )
+
+  if (TARGET adiak::adiak)
+    set( dependencyList ${dependencyList} adiak::adiak )
+  endif()
+
+  if (TARGET adiak)
+    set( dependencyList ${dependencyList} adiak )
+  endif()
 endif()
 
 blt_add_library( NAME       common
@@ -67,4 +69,6 @@ target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 geosx_add_code_checks(PREFIX common )
 
-add_subdirectory( unitTests )
+if(GEOSX_ENABLE_TESTS)
+  add_subdirectory( unitTests )
+endif()

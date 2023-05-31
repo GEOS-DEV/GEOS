@@ -16,14 +16,14 @@
  * @file H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp
  */
 
-#ifndef GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1QUADRILATERALFACELAGRANGE1GAUSSLEGENDRE2
-#define GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1QUADRILATERALFACELAGRANGE1GAUSSLEGENDRE2
+#ifndef GEOS_FINITEELEMENT_ELEMENTFORMULATIONS_H1QUADRILATERALFACELAGRANGE1GAUSSLEGENDRE2_HPP_
+#define GEOS_FINITEELEMENT_ELEMENTFORMULATIONS_H1QUADRILATERALFACELAGRANGE1GAUSSLEGENDRE2_HPP_
 
 #include "FiniteElementBase.hpp"
 #include "LagrangeBasis1.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace finiteElement
 {
@@ -61,11 +61,10 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 4;
 
-
   virtual ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2() override
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual localIndex getNumQuadraturePoints() const override
   {
     return numQuadraturePoints;
@@ -76,20 +75,20 @@ public:
    * @param stack Stack variables as filled by @ref setupStack.
    * @return The number of quadrature points.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static localIndex getNumQuadraturePoints( StackVariables const & stack )
   {
-    GEOSX_UNUSED_VAR( stack );
+    GEOS_UNUSED_VAR( stack );
     return numQuadraturePoints;
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual localIndex getNumSupportPoints() const override
   {
     return numNodes;
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual localIndex getMaxSupportPoints() const override
   {
     return maxSupportPoints;
@@ -100,47 +99,19 @@ public:
    * @param stack Object that holds stack variables.
    * @return The number of support points.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static localIndex getNumSupportPoints( StackVariables const & stack )
   {
-    GEOSX_UNUSED_VAR( stack );
+    GEOS_UNUSED_VAR( stack );
     return numNodes;
   }
-
-  /**
-   * @brief Method to fill a MeshData object.
-   * @param nodeManager The node manager.
-   * @param edgeManager The edge manager.
-   * @param faceManager The face manager.
-   * @param cellSubRegion The cell sub-region for which the element has to be initialized.
-   * @param meshData MeshData struct to be filled.
-   */
-  template< typename SUBREGION_TYPE >
-  static void fillMeshData( NodeManager const & nodeManager,
-                            EdgeManager const & edgeManager,
-                            FaceManager const & faceManager,
-                            SUBREGION_TYPE const & cellSubRegion,
-                            MeshData< SUBREGION_TYPE > & meshData );
-
-  /**
-   * @brief Empty setup method.
-   * @param cellIndex The index of the cell with respect to the cell sub region.
-   * @param meshData MeshData struct filled by @ref fillMeshData.
-   * @param stack Object that holds stack variables.
-   */
-  template< typename SUBREGION_TYPE >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void setupStack( localIndex const & cellIndex,
-                          MeshData< SUBREGION_TYPE > const & meshData,
-                          StackVariables & stack );
 
   /**
    * @brief Calculate shape functions values at a single point.
    * @param[in] coords The parent coordinates at which to evaluate the shape function value
    * @param[out] N The shape function values.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void calcN( real64 const (&coords)[2],
                      real64 ( &N )[numNodes] );
 
@@ -151,7 +122,7 @@ public:
    * @param N An array to pass back the shape function values for each support
    *
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void calcN( localIndex const q,
                      real64 ( &N )[numNodes] );
 
@@ -163,8 +134,8 @@ public:
    * @param N An array to pass back the shape function values for each support
    *   point.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   static void calcN( localIndex const q,
                      StackVariables const & stack,
                      real64 ( &N )[numNodes] );
@@ -176,22 +147,27 @@ public:
    * @return The product of the quadrature rule weight and the determinate of
    *   the parent/physical transformation matrix.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static real64 transformedQuadratureWeight( localIndex const q,
                                              real64 const (&X)[numNodes][3] );
 
   /**
    * @brief Empty method, here for compatibility with methods that require a stabilization of the
    * grad-grad bilinear form.
-   * @tparam MATRIXTYPE The type of @p matrix.
+   * @tparam NUMDOFSPERTRIALSUPPORTPOINT Number of degrees of freedom for each support point.
+   * @tparam UPPER If true only the upper triangular part of @p matrix is modified.
    * @param stack Stack variables as filled by @ref setupStack.
    * @param matrix The matrix that needs to be stabilized.
+   * @param scaleFactor Optional scaling of the stabilization matrix.
    */
-  template< typename MATRIXTYPE >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, bool UPPER >
+  GEOS_HOST_DEVICE
+  inline
   static void addGradGradStabilization( StackVariables const & stack,
-                                        MATRIXTYPE & matrix );
+                                        real64 ( &matrix )
+                                        [maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT]
+                                        [maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT],
+                                        real64 const & scaleFactor );
 
 private:
   /// The area of the element in the parent configuration.
@@ -213,8 +189,8 @@ private:
    * @return The linear index of the support/quadrature point (0-3)
    */
   template< typename T >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   constexpr static T linearMap( T const i, T const j )
   {
     return i + 2 * j;
@@ -226,8 +202,8 @@ private:
    * @param a The linear index of support point
    * @return parent coordinate in the r direction.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   constexpr static real64 parentCoords0( localIndex const a )
   {
     return -1.0 + 2.0 * (a & 1);
@@ -239,8 +215,8 @@ private:
    * @param a The linear index of support point
    * @return parent coordinate in the r direction.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   constexpr static real64 parentCoords1( localIndex const a )
   {
     return -1.0 + ( a & 2 );
@@ -250,36 +226,23 @@ private:
 
 /// @cond Doxygen_Suppress
 
-template< typename SUBREGION_TYPE >
-GEOSX_FORCE_INLINE
+template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, bool UPPER >
+GEOS_HOST_DEVICE
+inline
 void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
-  fillMeshData( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
-                EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
-                FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
-                SUBREGION_TYPE const & GEOSX_UNUSED_PARAM( cellSubRegion ),
-                MeshData< SUBREGION_TYPE > & GEOSX_UNUSED_PARAM( meshData ) )
-{}
+  addGradGradStabilization( StackVariables const & stack,
+                            real64 ( & matrix )
+                            [maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT]
+                            [maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT],
+                            real64 const & scaleFactor )
+{
+  GEOS_UNUSED_VAR( stack );
+  GEOS_UNUSED_VAR( matrix );
+  GEOS_UNUSED_VAR( scaleFactor );
+}
 
-template< typename SUBREGION_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
-  setupStack( localIndex const & GEOSX_UNUSED_PARAM( cellIndex ),
-              MeshData< SUBREGION_TYPE > const & GEOSX_UNUSED_PARAM( meshData ),
-              StackVariables & GEOSX_UNUSED_PARAM( stack ) )
-{}
-
-template< typename MATRIXTYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
-  addGradGradStabilization( StackVariables const & GEOSX_UNUSED_PARAM( stack ),
-                            MATRIXTYPE & GEOSX_UNUSED_PARAM( matrix ) )
-{}
-
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 void
 H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
   calcN( real64 const (&coords)[2],
@@ -292,8 +255,8 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
            ( 1 + quadratureFactor*coords[1]*parentCoords1( a ) );
   }
 }
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 void
 H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
   calcN( localIndex const q,
@@ -307,11 +270,11 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
   }
 }
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
   calcN( localIndex const q,
-         StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+         StackVariables const & GEOS_UNUSED_PARAM( stack ),
          real64 ( & N )[numNodes] )
 {
   return calcN( q, N );
@@ -319,8 +282,8 @@ void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
 
 //*************************************************************************************************
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 real64
 H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
   transformedQuadratureWeight( localIndex const q,
@@ -367,4 +330,4 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
 
 }
 }
-#endif //GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1QUADRILATERALFACELAGRANGE1GAUSSLEGENDRE2
+#endif //GEOS_FINITEELEMENT_ELEMENTFORMULATIONS_H1QUADRILATERALFACELAGRANGE1GAUSSLEGENDRE2_HPP_

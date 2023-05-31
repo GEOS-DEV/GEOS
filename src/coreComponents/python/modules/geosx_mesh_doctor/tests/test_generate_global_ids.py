@@ -1,13 +1,11 @@
 from vtkmodules.vtkCommonCore import (
-    vtkPoints,
-)
+    vtkPoints, )
 from vtkmodules.vtkCommonDataModel import (
     VTK_VERTEX,
     vtkCellArray,
     vtkUnstructuredGrid,
     vtkVertex,
 )
-
 
 from checks.generate_global_ids import __build_global_ids
 
@@ -26,7 +24,7 @@ def test_generate_global_ids():
     mesh.SetPoints(points)
     mesh.SetCells([VTK_VERTEX], vertices)
 
-    __build_global_ids(mesh)
+    __build_global_ids(mesh, True, True)
 
     global_cell_ids = mesh.GetCellData().GetGlobalIds()
     global_point_ids = mesh.GetPointData().GetGlobalIds()

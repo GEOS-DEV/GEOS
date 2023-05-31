@@ -21,8 +21,9 @@
 #include "common/Stopwatch.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/solvers/KrylovUtils.hpp"
+#include "denseLinearAlgebra/common/layouts.hpp"
 
-namespace geosx
+namespace geos
 {
 
 template< typename VECTOR >
@@ -33,7 +34,7 @@ GmresSolver< VECTOR >::GmresSolver( LinearSolverParameters params,
   m_kspace( m_params.krylov.maxRestart + 1 ),
   m_kspaceInitialized( false )
 {
-  GEOSX_ERROR_IF_LE_MSG( m_params.krylov.maxRestart, 0, "GMRES: max number of iterations until restart must be positive." );
+  GEOS_ERROR_IF_LE_MSG( m_params.krylov.maxRestart, 0, "GMRES: max number of iterations until restart must be positive." );
 }
 
 namespace
@@ -216,4 +217,4 @@ template class GmresSolver< PetscInterface::ParallelVector >;
 template class GmresSolver< BlockVectorView< PetscInterface::ParallelVector > >;
 #endif
 
-} // namespace geosx
+} // namespace geos

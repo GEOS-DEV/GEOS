@@ -33,7 +33,7 @@ if read_the_docs_build:
     # Make sure directory exists
     cwd = os.getcwd()
 
-    build_path = os.path.join(cwd, "_build")
+    build_path = os.path.join(cwd, "../_readthedocs")
     if not os.path.isdir(build_path):
         os.mkdir(build_path)
 
@@ -53,11 +53,10 @@ if read_the_docs_build:
                   "coreComponents/dataRepository",
                   "coreComponents/fileIO",
                   "coreComponents/linearAlgebra",
-                  "coreComponents/LvArray/src",
                   "coreComponents/mesh",
                   "coreComponents/managers",
                   "coreComponents/finiteElement/kernelInterface",
-                  "coreComponents/mesh/ExtrinsicMeshData.hpp",
+                  "coreComponents/mesh/MeshFields.hpp",
                   "coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp",
                   "coreComponents/physicsSolvers/solidMechanics",
                   "coreComponents/finiteVolume"]

@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MESH_CELLBLOCK_HPP_
-#define GEOSX_MESH_CELLBLOCK_HPP_
+#ifndef GEOS_MESH_CELLBLOCK_HPP_
+#define GEOS_MESH_CELLBLOCK_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
@@ -21,7 +21,7 @@
 #include "mesh/generators/CellBlockABC.hpp"
 #include "mesh/ElementType.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -79,6 +79,13 @@ public:
 
   localIndex numElements() const override
   { return size(); }
+
+  /**
+   * @brief Get the maximum number of nodes comprising a face.
+   * @return maximum number of nodes comprising a face.
+   */
+  localIndex maxNodesPerFace() const
+  { return m_maxNodesPerFace; }
 
   /**
    * @brief Puts the nodes of face @p faceNum of element @p cellIndex inside vector @p nodesInFaces.
@@ -184,11 +191,23 @@ public:
   { return m_localToGlobalMap; }
 
   /**
+   * @brief Get local to global map, const view version.
+   * @return The mapping relationship as a array.
+   */
+  arrayView1d< globalIndex const > localToGlobalMapConstView() const
+  { return m_localToGlobalMap.toViewConst(); }
+
+  /**
    * @brief Resize the cell block to hold @p numElements
    * @param numElements The new number of elements.
    */
   void resize( dataRepository::indexType const numElements ) override final;
 
+  /**
+   * @brief Resize the cell block to hold @p numnodes
+   * @param numNodes The new number of nodes.
+   */
+  void resizeNumNodes ( dataRepository::indexType const numNodes );
   ///@}
 
   /**
@@ -200,14 +219,17 @@ public:
 
 private:
 
-  /// Number of nodes per element in this subregion.
-  localIndex m_numNodesPerElement;
+  /// Number of nodes per element in this block.
+  localIndex m_numNodesPerElement = -1;
 
-  /// Number of edges per element in this subregion.
-  localIndex m_numEdgesPerElement;
+  /// Number of edges per element in this block.
+  localIndex m_numEdgesPerElement = -1;
 
-  /// Number of faces per element in this subregion.
-  localIndex m_numFacesPerElement;
+  /// Number of faces per element in this block.
+  localIndex m_numFacesPerElement = -1;
+
+  /// Maximum number of face nodes in this block.
+  localIndex m_maxNodesPerFace = -1;
 
   /// Element-to-node relation
   array2d< localIndex, cells::NODE_MAP_PERMUTATION > m_elementsToNodes;
@@ -224,7 +246,7 @@ private:
   /// Name of the properties registered from an external mesh
   string_array m_externalPropertyNames;
 
-  /// Type of element in this subregion.
+  /// Type of element in this block.
   ElementType m_elementType;
 
   std::list< dataRepository::WrapperBase * > getExternalProperties() override
@@ -240,4 +262,4 @@ private:
 
 }
 
-#endif /* GEOSX_MESH_CELLBLOCK_HPP_ */
+#endif /* GEOS_MESH_CELLBLOCK_HPP_ */

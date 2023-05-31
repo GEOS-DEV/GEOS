@@ -32,30 +32,32 @@
 
 #include <memory>
 
-using namespace geosx;
-using namespace geosx::testing;
-using namespace geosx::dataRepository;
+using namespace geos;
+using namespace geos::testing;
+using namespace geos::dataRepository;
 
 char const * xmlInput =
-  "<Problem>"
-  "  <Mesh>"
-  "    <InternalMesh name=\"mesh\""
-  "                  elementTypes=\"{C3D8}\""
-  "                  xCoords=\"{0, 1, 2, 3, 4}\""
-  "                  yCoords=\"{0, 1}\""
-  "                  zCoords=\"{0, 1}\""
-  "                  nx=\"{4, 4, 4, 4}\""
-  "                  ny=\"{4}\""
-  "                  nz=\"{5}\""
-  "                  cellBlockNames=\"{block1, block2, block3, block4}\"/>"
-  "  </Mesh>"
-  "  <ElementRegions>"
-  "    <CellElementRegion name=\"region1\" cellBlocks=\"{block1}\" materialList=\"{}\" />"
-  "    <CellElementRegion name=\"region2\" cellBlocks=\"{block2}\" materialList=\"{}\" />"
-  "    <CellElementRegion name=\"region3\" cellBlocks=\"{block3}\" materialList=\"{}\" />"
-  "    <CellElementRegion name=\"region4\" cellBlocks=\"{block4}\" materialList=\"{}\" />"
-  "  </ElementRegions>"
-  "</Problem>";
+  R"xml(
+  <Problem>
+    <Mesh>
+      <InternalMesh name="mesh"
+                    elementTypes="{C3D8}"
+                    xCoords="{0, 1, 2, 3, 4}"
+                    yCoords="{0, 1}"
+                    zCoords="{0, 1}"
+                    nx="{4, 4, 4, 4}"
+                    ny="{4}"
+                    nz="{5}"
+                    cellBlockNames="{block1, block2, block3, block4}"/>
+    </Mesh>
+    <ElementRegions>
+      <CellElementRegion name="region1" cellBlocks="{block1}" materialList="{}" />
+      <CellElementRegion name="region2" cellBlocks="{block2}" materialList="{}" />
+      <CellElementRegion name="region3" cellBlocks="{block3}" materialList="{}" />
+      <CellElementRegion name="region4" cellBlocks="{block4}" materialList="{}" />
+    </ElementRegions>
+  </Problem>
+  )xml";
 
 /**
  * @brief Base class for all DofManager test fixtures.
@@ -72,7 +74,7 @@ protected:
     domain( state.getProblemManager().getDomainPartition() ),
     dofManager( "test" )
   {
-    geosx::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
+    geos::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
     dofManager.setDomain( domain );
   }
 
@@ -91,16 +93,16 @@ protected:
 template< FieldLocation LOC >
 void collectLocalDofNumbers( DomainPartition const & domain,
                              string const & dofIndexKey,
-                             std::vector< DofManager::Regions > const & support,
+                             std::vector< DofManager::FieldSupport > const & support,
                              array1d< globalIndex > & dofNumbers )
 {
-  for( DofManager::Regions const & regions : support )
+  for( DofManager::FieldSupport const & regions : support )
   {
     MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
     MeshLevel const & meshLevel = meshBody.getMeshLevel( regions.meshLevelName );
 
     ObjectManagerBase const & manager = meshLevel.getGroup< ObjectManagerBase >
-                                          ( geosx::testing::internal::testMeshHelper< LOC >::managerKey() );
+                                          ( geos::testing::internal::testMeshHelper< LOC >::managerKey() );
     arrayView1d< globalIndex const > dofIndex = manager.getReference< array1d< globalIndex > >( dofIndexKey );
 
     forLocalObjects< LOC >( meshLevel, regions.regionNames, [&]( localIndex const idx )
@@ -122,10 +124,10 @@ void collectLocalDofNumbers( DomainPartition const & domain,
 template<>
 void collectLocalDofNumbers< FieldLocation::Elem >( DomainPartition const & domain,
                                                     string const & dofIndexKey,
-                                                    std::vector< DofManager::Regions > const & support,
+                                                    std::vector< DofManager::FieldSupport > const & support,
                                                     array1d< globalIndex > & dofNumbers )
 {
-  for( DofManager::Regions const & regions : support )
+  for( DofManager::FieldSupport const & regions : support )
   {
     MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
     MeshLevel const & meshLevel = meshBody.getMeshLevel( regions.meshLevelName );
@@ -204,7 +206,7 @@ protected:
     string name;
     FieldLocation location;
     integer components;
-    std::vector< DofManager::Regions > regions{};
+    std::vector< DofManager::FieldSupport > regions{};
   };
 
   void test( std::vector< FieldDesc > const & fields );
@@ -252,7 +254,7 @@ void DofManagerIndicesTest::test( std::vector< FieldDesc > const & fields )
       }
       default:
       {
-        GEOSX_ERROR( "Unsupported" );
+        GEOS_ERROR( "Unsupported" );
       }
     }
     std::sort( dofNumbers.begin(), dofNumbers.end() );
@@ -469,7 +471,7 @@ protected:
 
   using PatternFunc = void ( * )( DomainPartition const & mesh,
                                   string const & dofIndexKey,
-                                  std::vector< DofManager::Regions > const & regions,
+                                  std::vector< DofManager::FieldSupport > const & regions,
                                   globalIndex const rankOffset,
                                   localIndex const numComp,
                                   CRSMatrix< real64 > & sparsity );
@@ -477,7 +479,7 @@ protected:
   using CoupledPatternFunc = void ( * )( DomainPartition const & mesh,
                                          string const & dofIndexKey1,
                                          string const & dofIndexKey2,
-                                         std::vector< DofManager::Regions > const & regions,
+                                         std::vector< DofManager::FieldSupport > const & regions,
                                          globalIndex const rankOffset,
                                          localIndex const numComp1,
                                          localIndex const numComp2,
@@ -490,7 +492,7 @@ protected:
     DofManager::Connector connectivity;
     localIndex components;
     PatternFunc makePattern;
-    std::vector< DofManager::Regions > regions = {};
+    std::vector< DofManager::FieldSupport > regions = {};
   };
 
   struct CouplingDesc
@@ -498,7 +500,7 @@ protected:
     DofManager::Connector connectivity;
     CoupledPatternFunc makeCouplingPattern;
     bool symmetric = true;
-    std::vector< DofManager::Regions > regions = {};
+    std::vector< DofManager::FieldSupport > regions = {};
   };
 
   void addFields( std::vector< FieldDesc > fields,
@@ -506,7 +508,7 @@ protected:
   {
     for( FieldDesc const & f : fields )
     {
-      std::vector< DofManager::Regions > const regions = getRegions( domain, f.regions );
+      std::vector< DofManager::FieldSupport > const regions = getRegions( domain, f.regions );
       dofManager.addField( f.name, f.location, f.components, regions );
       dofManager.addCoupling( f.name, f.name, f.connectivity );
     }
@@ -514,7 +516,7 @@ protected:
     {
       std::pair< string, string > const & fieldNames = entry.first;
       CouplingDesc const & c = entry.second;
-      std::vector< DofManager::Regions > const regions = getRegions( domain, c.regions );
+      std::vector< DofManager::FieldSupport > const regions = getRegions( domain, c.regions );
       dofManager.addCoupling( fieldNames.first, fieldNames.second, c.connectivity, regions, c.symmetric );
     }
     dofManager.reorderByRank();
@@ -552,7 +554,7 @@ void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
   localIndex numCompTotal = 0;
   for( FieldDesc const & f : fields )
   {
-    std::vector< DofManager::Regions > const regions = getRegions( domain, f.regions );
+    std::vector< DofManager::FieldSupport > const regions = getRegions( domain, f.regions );
     localIndex numLocalObj = 0;
     switch( f.location )
     {
@@ -572,7 +574,7 @@ void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
       }
       break;
       default:
-        GEOSX_ERROR( "Unsupported" );
+        GEOS_ERROR( "Unsupported" );
     }
     numLocalDof += numLocalObj * f.components;
     numCompTotal += f.components;
@@ -596,7 +598,7 @@ void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
 
   for( FieldDesc const & f : fields )
   {
-    GEOSX_LOG_RANK( "rankOffset = "<<dofManager.rankOffset() );
+    GEOS_LOG_RANK( "rankOffset = "<<dofManager.rankOffset() );
     f.makePattern( domain,
                    dofManager.getKey( f.name ),
                    getRegions( domain, f.regions ),
@@ -1073,19 +1075,19 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, DofManagerRestrictorTest, PetscInterface,
 
 TEST( DofManagerRegions, aggregateInitialization )
 {
-  // The DofManager::Regions and DofManager::SubComponent are sometimes constructed by using aggregate initialization.
+  // The DofManager::FieldSupport and DofManager::SubComponent are sometimes constructed by using aggregate initialization.
   // The danger is that this feature implicitly depends on the order of the parameters of the `struct`.
   // Any reordering of those parameters would result in a bug.
   // This test aims at protecting against any change in this implicit convention.
   // C++20's new feature "designated initializers" would probably make this test useless.
 
   {
-    DofManager::Regions regions0;
+    DofManager::FieldSupport regions0;
     regions0.meshBodyName = "meshBodyName";
     regions0.meshLevelName = "meshLevelName";
     regions0.regionNames = { "regionName0", "regionName1" };
 
-    DofManager::Regions const regions1{ regions0.meshBodyName, regions0.meshLevelName, regions0.regionNames };
+    DofManager::FieldSupport const regions1{ regions0.meshBodyName, regions0.meshLevelName, regions0.regionNames };
 
     ASSERT_EQ( regions0.meshBodyName, regions1.meshBodyName );
     ASSERT_EQ( regions0.meshLevelName, regions1.meshLevelName );
@@ -1106,6 +1108,6 @@ TEST( DofManagerRegions, aggregateInitialization )
 
 int main( int argc, char * * argv )
 {
-  geosx::testing::LinearAlgebraTestScope scope( argc, argv );
+  geos::testing::LinearAlgebraTestScope scope( argc, argv );
   return RUN_ALL_TESTS();
 }

@@ -16,24 +16,25 @@
  * @file ProppantTransportKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORTKERNELS_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORTKERNELS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORTKERNELS_HPP_
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORTKERNELS_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
-#include "constitutive/fluid/ParticleFluidBase.hpp"
-#include "constitutive/fluid/ParticleFluidExtrinsicData.hpp"
-#include "constitutive/fluid/SlurryFluidBase.hpp"
-#include "constitutive/fluid/SlurryFluidExtrinsicData.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/ParticleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/ParticleFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/SlurryFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SlurryFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
-#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityFields.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportFields.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
+#include "physicsSolvers/SolverBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace proppantTransportKernels
@@ -49,7 +50,7 @@ struct FluidUpdateKernel
                       arrayView1d< real64 const > const & pres,
                       arrayView2d< real64 const > const & componentConcentration )
   {
-    forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       localIndex const NC = fluidWrapper.numFluidComponents();
       stackArray1d< real64, constitutive::SlurryFluidBase::MAX_NUM_COMPONENTS > compConc( NC );
@@ -79,7 +80,7 @@ struct ComponentDensityUpdateKernel
                       arrayView1d< real64 const > const & pres,
                       arrayView2d< real64 const > const & componentConcentration )
   {
-    forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       localIndex const NC = fluidWrapper.numFluidComponents();
       stackArray1d< real64, constitutive::SlurryFluidBase::MAX_NUM_COMPONENTS > compConc( NC );
@@ -113,7 +114,8 @@ struct ProppantUpdateKernel
                       arrayView2d< real64 const > const & dFluidVisc_dPres,
                       arrayView3d< real64 const > const & dFluidVisc_dCompConc )
   {
-    forAll< parallelDevicePolicy<> >( proppantWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+
+    forAll< parallelDevicePolicy<> >( proppantWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       proppantWrapper.update( a,
                               proppantConc[a],
@@ -131,14 +133,16 @@ struct ProppantUpdateKernel
 
 struct AccumulationKernel
 {
-  GEOSX_HOST_DEVICE
-  static void
+  GEOS_HOST_DEVICE
+  inline
+  static
+  void
   compute( localIndex const NC,
            real64 const proppantConc_n,
            real64 const proppantConcNew,
            arraySlice1d< real64 const > const & componentDens_n,
            arraySlice1d< real64 const > const & componentDensNew,
-           arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM( dCompDens_dPres ),
+           arraySlice1d< real64 const > const & GEOS_UNUSED_PARAM( dCompDens_dPres ),
            arraySlice2d< real64 const > const & dCompDens_dCompConc,
            real64 const volume,
            real64 const packPoreVolume,
@@ -173,53 +177,53 @@ struct AccumulationKernel
 struct FluxKernel
 {
   using FlowAccessors =
-    StencilAccessors< extrinsicMeshData::ghostRank,
-                      extrinsicMeshData::elementAperture,
-                      extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::gravityCoefficient,
-                      extrinsicMeshData::proppant::proppantConcentration,
-                      extrinsicMeshData::proppant::isProppantMobile >;
+    StencilAccessors< fields::ghostRank,
+                      fields::elementAperture,
+                      fields::flow::pressure,
+                      fields::flow::gravityCoefficient,
+                      fields::proppant::proppantConcentration,
+                      fields::proppant::isProppantMobile >;
 
   using CellBasedFluxFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::gravityCoefficient,
-                      extrinsicMeshData::elementAperture >;
+    StencilAccessors< fields::flow::pressure,
+                      fields::flow::gravityCoefficient,
+                      fields::elementAperture >;
 
   using ParticleFluidAccessors =
     StencilMaterialAccessors< ParticleFluidBase,
-                              extrinsicMeshData::particlefluid::settlingFactor,
-                              extrinsicMeshData::particlefluid::dSettlingFactor_dPressure,
-                              extrinsicMeshData::particlefluid::dSettlingFactor_dProppantConcentration,
-                              extrinsicMeshData::particlefluid::dSettlingFactor_dComponentConcentration,
-                              extrinsicMeshData::particlefluid::collisionFactor,
-                              extrinsicMeshData::particlefluid::dCollisionFactor_dProppantConcentration >;
+                              fields::particlefluid::settlingFactor,
+                              fields::particlefluid::dSettlingFactor_dPressure,
+                              fields::particlefluid::dSettlingFactor_dProppantConcentration,
+                              fields::particlefluid::dSettlingFactor_dComponentConcentration,
+                              fields::particlefluid::collisionFactor,
+                              fields::particlefluid::dCollisionFactor_dProppantConcentration >;
 
   using SlurryFluidAccessors =
     StencilMaterialAccessors< SlurryFluidBase,
-                              extrinsicMeshData::singlefluid::density,
-                              extrinsicMeshData::singlefluid::dDensity_dPressure,
-                              extrinsicMeshData::slurryfluid::dDensity_dProppantConcentration,
-                              extrinsicMeshData::slurryfluid::dDensity_dComponentConcentration,
-                              extrinsicMeshData::singlefluid::viscosity,
-                              extrinsicMeshData::singlefluid::dViscosity_dPressure,
-                              extrinsicMeshData::slurryfluid::dViscosity_dProppantConcentration,
-                              extrinsicMeshData::slurryfluid::dViscosity_dComponentConcentration,
-                              extrinsicMeshData::slurryfluid::componentDensity,
-                              extrinsicMeshData::slurryfluid::dComponentDensity_dPressure,
-                              extrinsicMeshData::slurryfluid::dComponentDensity_dComponentConcentration,
-                              extrinsicMeshData::slurryfluid::fluidDensity,
-                              extrinsicMeshData::slurryfluid::dFluidDensity_dPressure,
-                              extrinsicMeshData::slurryfluid::dFluidDensity_dComponentConcentration >;
+                              fields::singlefluid::density,
+                              fields::singlefluid::dDensity_dPressure,
+                              fields::slurryfluid::dDensity_dProppantConcentration,
+                              fields::slurryfluid::dDensity_dComponentConcentration,
+                              fields::singlefluid::viscosity,
+                              fields::singlefluid::dViscosity_dPressure,
+                              fields::slurryfluid::dViscosity_dProppantConcentration,
+                              fields::slurryfluid::dViscosity_dComponentConcentration,
+                              fields::slurryfluid::componentDensity,
+                              fields::slurryfluid::dComponentDensity_dPressure,
+                              fields::slurryfluid::dComponentDensity_dComponentConcentration,
+                              fields::slurryfluid::fluidDensity,
+                              fields::slurryfluid::dFluidDensity_dPressure,
+                              fields::slurryfluid::dFluidDensity_dComponentConcentration >;
 
   using CellBasedFluxSlurryFluidAccessors =
     StencilMaterialAccessors< SlurryFluidBase,
-                              extrinsicMeshData::singlefluid::density,
-                              extrinsicMeshData::singlefluid::viscosity >;
+                              fields::singlefluid::density,
+                              fields::singlefluid::viscosity >;
 
   using PermeabilityAccessors =
     StencilMaterialAccessors< PermeabilityBase,
-                              extrinsicMeshData::permeability::permeability,
-                              extrinsicMeshData::permeability::permeabilityMultiplier >;
+                              fields::permeability::permeability,
+                              fields::permeability::permeabilityMultiplier >;
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
@@ -292,7 +296,7 @@ struct FluxKernel
    * element pairing instead of a proper junction.
    */
   template< localIndex MAX_NUM_FLUX_ELEMS >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   computeJunction( localIndex const numElems,
                    localIndex const numDofPerCell,
@@ -330,7 +334,7 @@ struct FluxKernel
 
 
   template< localIndex MAX_NUM_FLUX_ELEMS >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   computeCellBasedFlux( localIndex const numElems,
                         arraySlice1d< localIndex const > const & stencilElementIndices,
@@ -349,21 +353,21 @@ struct ProppantPackVolumeKernel
 {
 
   using FlowAccessors =
-    StencilAccessors< extrinsicMeshData::ghostRank,
-                      extrinsicMeshData::elementAperture,
-                      extrinsicMeshData::elementVolume,
-                      extrinsicMeshData::proppant::cellBasedFlux,
-                      extrinsicMeshData::proppant::isProppantMobile,
-                      extrinsicMeshData::proppant::isProppantBoundary >;
+    StencilAccessors< fields::ghostRank,
+                      fields::elementAperture,
+                      fields::elementVolume,
+                      fields::proppant::cellBasedFlux,
+                      fields::proppant::isProppantMobile,
+                      fields::proppant::isProppantBoundary >;
 
   using ParticleFluidAccessors =
-    StencilMaterialAccessors< ParticleFluidBase, extrinsicMeshData::particlefluid::settlingFactor >;
+    StencilMaterialAccessors< ParticleFluidBase, fields::particlefluid::settlingFactor >;
 
   using SlurryFluidAccessors =
     StencilMaterialAccessors< SlurryFluidBase,
-                              extrinsicMeshData::singlefluid::density,
-                              extrinsicMeshData::slurryfluid::fluidDensity,
-                              extrinsicMeshData::slurryfluid::fluidViscosity >;
+                              fields::singlefluid::density,
+                              fields::slurryfluid::fluidDensity,
+                              fields::slurryfluid::fluidViscosity >;
 
 
   template< typename VIEWTYPE >
@@ -405,8 +409,10 @@ struct ProppantPackVolumeKernel
                                   ElementView< arrayView1d< real64 > > const & conc,
                                   ElementView< arrayView1d< real64 > > const & proppantPackVolFrac );
 
-  GEOSX_HOST_DEVICE
-  static void
+  GEOS_HOST_DEVICE
+  inline
+  static
+  void
   computeProppantPackVolume( localIndex const numElems,
                              real64 const dt,
                              real64 const proppantDensity,
@@ -433,8 +439,10 @@ struct ProppantPackVolumeKernel
                              arrayView1d< real64 > const & proppantExcessPackVolume,
                              arrayView1d< real64 > const & proppantLiftFlux );
 
-  GEOSX_HOST_DEVICE
-  static void
+  GEOS_HOST_DEVICE
+  inline
+  static
+  void
   updateProppantPackVolume( localIndex const numElems,
                             arraySlice1d< localIndex const > const & stencilElementIndices,
                             arraySlice1d< real64 const > const & stencilWeights,
@@ -447,8 +455,123 @@ struct ProppantPackVolumeKernel
                             arrayView1d< real64 > const & proppantPackVolFrac );
 };
 
+/******************************** ResidualNormKernel ********************************/
+
+/**
+ * @class ResidualNormKernel
+ */
+class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 1 >
+{
+public:
+
+  using Base = solverBaseKernels::ResidualNormKernelBase< 1 >;
+  using Base::minNormalizer;
+  using Base::m_rankOffset;
+  using Base::m_localResidual;
+  using Base::m_dofNumber;
+
+  ResidualNormKernel( globalIndex const rankOffset,
+                      arrayView1d< real64 const > const & localResidual,
+                      arrayView1d< globalIndex const > const & dofNumber,
+                      arrayView1d< localIndex const > const & ghostRank,
+                      integer const numComp,
+                      ElementSubRegionBase const & subRegion )
+    : Base( rankOffset,
+            localResidual,
+            dofNumber,
+            ghostRank ),
+    m_numComp( numComp ),
+    m_volume( subRegion.getElementVolume() )
+  {}
+
+  GEOS_HOST_DEVICE
+  virtual void computeLinf( localIndex const ei,
+                            LinfStackVariables & stack ) const override
+  {
+    real64 const normalizer = LvArray::math::max( minNormalizer, m_volume[ei] );
+    for( integer idof = 0; idof < m_numComp; ++idof )
+    {
+      real64 const valMass = LvArray::math::abs( m_localResidual[stack.localRow + idof] ) / normalizer;
+      if( valMass > stack.localValue[0] )
+      {
+        stack.localValue[0] = valMass;
+      }
+    }
+  }
+
+  GEOS_HOST_DEVICE
+  virtual void computeL2( localIndex const ei,
+                          L2StackVariables & stack ) const override
+  {
+    real64 const normalizer = LvArray::math::max( minNormalizer, m_volume[ei] );
+    for( integer idof = 0; idof < m_numComp; ++idof )
+    {
+      stack.localValue[0] += m_localResidual[stack.localRow + idof] * m_localResidual[stack.localRow + idof];
+      stack.localNormalizer[0] += normalizer;
+    }
+  }
+
+
+protected:
+
+  /// Number of fluid components
+  integer const m_numComp;
+
+  /// View on the element volume
+  arrayView1d< real64 const > const m_volume;
+};
+
+/**
+ * @class ResidualNormKernelFactory
+ */
+class ResidualNormKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] normType the type of norm used (Linf or L2)
+   * @param[in] numComp the number of components
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] dofKey the string key to retrieve the degress of freedom numbers
+   * @param[in] localResidual the residual vector on my MPI rank
+   * @param[in] subRegion the element subregion
+   * @param[out] residualNorm the residual norm on the subRegion
+   * @param[out] residualNormalizer the residual normalizer on the subRegion
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch( solverBaseKernels::NormType const normType,
+                   integer const numComp,
+                   globalIndex const rankOffset,
+                   string const dofKey,
+                   arrayView1d< real64 const > const & localResidual,
+                   ElementSubRegionBase const & subRegion,
+                   real64 (& residualNorm)[1],
+                   real64 (& residualNormalizer)[1] )
+  {
+    arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+    arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank,
+                               numComp, subRegion );
+    if( normType == solverBaseKernels::NormType::Linf )
+    {
+      ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
+    }
+    else // L2 norm
+    {
+      ResidualNormKernel::launchL2< POLICY >( subRegion.size(), kernel, residualNorm, residualNormalizer );
+    }
+  }
+
+};
+
+
+
 } // namespace proppantTransportKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORTKERNELS_HPP_
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORTKERNELS_HPP_

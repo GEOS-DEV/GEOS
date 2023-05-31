@@ -27,12 +27,12 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "physicsSolvers/fluidFlow/ReactiveCompositionalMultiphaseOBLExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/ReactiveCompositionalMultiphaseOBLFields.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/ReactiveCompositionalMultiphaseOBLKernels.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -67,8 +67,7 @@ ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const st
   m_numComponents( 0 ),
   m_maxCompFracChange( 1.0 ),
   m_minScalingFactor( 0.01 ),
-  m_allowOBLChopping( 1 ),
-  m_systemSetupDone( false )
+  m_allowOBLChopping( 1 )
 {
   this->registerWrapper( viewKeyStruct::numComponentsString(), &m_numComponents ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -115,7 +114,7 @@ ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const st
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of fluid phases" );
 
-  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
+  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::reactiveCompositionalMultiphaseOBL;
 }
 
 void ReactiveCompositionalMultiphaseOBL::initializePreSubGroups()
@@ -127,7 +126,7 @@ void ReactiveCompositionalMultiphaseOBL::initializePreSubGroups()
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   if( !fvManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )
   {
-    GEOSX_ERROR( "A discretization deriving from FluxApproximationBase must be selected with ReactiveCompositionalMultiphaseOBL" );
+    GEOS_ERROR( "A discretization deriving from FluxApproximationBase must be selected with ReactiveCompositionalMultiphaseOBL" );
   }
 
 }
@@ -151,8 +150,8 @@ void ReactiveCompositionalMultiphaseOBL::implicitStepComplete( real64 const & ti
                                                                real64 const & dt,
                                                                DomainPartition & domain )
 {
-  GEOSX_UNUSED_VAR( time );
-  GEOSX_UNUSED_VAR( dt );
+  GEOS_UNUSED_VAR( time );
+  GEOS_UNUSED_VAR( dt );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -165,9 +164,9 @@ void ReactiveCompositionalMultiphaseOBL::implicitStepComplete( real64 const & ti
       // for output purposes (visualization, etc) we update the last component fraction
       integer const numComp = m_numComponents;
       arrayView2d< real64, compflow::USD_COMP > const compFrac =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
+        subRegion.getField< fields::flow::globalCompFraction >();
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         compFrac[ei][numComp-1] = 1.0;
         for( integer ic = 0; ic < numComp - 1; ++ic )
@@ -189,12 +188,12 @@ void ReactiveCompositionalMultiphaseOBL::postProcessInput()
   // need to override to skip the check for fluidModel, which is enabled in FlowSolverBase
   SolverBase::postProcessInput();
 
-  GEOSX_THROW_IF_GT_MSG( m_maxCompFracChange, 1.0,
-                         GEOSX_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be greater than 1.0", m_maxCompFracChange ),
-                         InputError );
-  GEOSX_THROW_IF_LT_MSG( m_maxCompFracChange, 0.0,
-                         GEOSX_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be lesser than 0.0", m_maxCompFracChange ),
-                         InputError );
+  GEOS_THROW_IF_GT_MSG( m_maxCompFracChange, 1.0,
+                        GEOS_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be greater than 1.0", m_maxCompFracChange ),
+                        InputError );
+  GEOS_THROW_IF_LT_MSG( m_maxCompFracChange, 0.0,
+                        GEOS_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be lesser than 0.0", m_maxCompFracChange ),
+                        InputError );
 
   m_OBLOperatorsTable = makeOBLOperatorsTable( m_OBLOperatorsTableFile, FunctionManager::getInstance());
 
@@ -204,19 +203,19 @@ void ReactiveCompositionalMultiphaseOBL::postProcessInput()
 
   m_numOBLOperators = COMPUTE_NUM_OPS( m_numPhases, m_numComponents, m_enableEnergyBalance );
 
-  GEOSX_THROW_IF_NE_MSG( m_numDofPerCell, m_OBLOperatorsTable->numDims(),
-                         GEOSX_FMT( "The number of degrees of freedom per element used in solver - {} - and in operator table - {} - should match", m_numDofPerCell, m_OBLOperatorsTable->numDims()),
-                         InputError );
+  GEOS_THROW_IF_NE_MSG( m_numDofPerCell, m_OBLOperatorsTable->numDims(),
+                        GEOS_FMT( "The number of degrees of freedom per element used in solver - {} - and in operator table - {} - should match", m_numDofPerCell, m_OBLOperatorsTable->numDims()),
+                        InputError );
 
-  GEOSX_THROW_IF_NE_MSG( m_numOBLOperators, m_OBLOperatorsTable->numOps(),
-                         GEOSX_FMT( "The number of operators per element used in solver - {} - and in operator table - {} - should match", m_numOBLOperators, m_OBLOperatorsTable->numOps()),
-                         InputError );
+  GEOS_THROW_IF_NE_MSG( m_numOBLOperators, m_OBLOperatorsTable->numOps(),
+                        GEOS_FMT( "The number of operators per element used in solver - {} - and in operator table - {} - should match", m_numOBLOperators, m_OBLOperatorsTable->numOps()),
+                        InputError );
 
 }
 
 void ReactiveCompositionalMultiphaseOBL::registerDataOnMesh( Group & meshBodies )
 {
-  using namespace extrinsicMeshData::flow;
+  using namespace fields::flow;
   // 1. Call base class method
   FlowSolverBase::registerDataOnMesh( meshBodies );
 
@@ -231,71 +230,73 @@ void ReactiveCompositionalMultiphaseOBL::registerDataOnMesh( Group & meshBodies 
     {
       string const solverName = getName();
 
-      subRegion.registerExtrinsicData< pressure >( solverName );
-      subRegion.registerExtrinsicData< initialPressure >( solverName );
-      subRegion.registerExtrinsicData< pressure_n >( solverName );
-      subRegion.registerExtrinsicData< bcPressure >( solverName );
+      subRegion.registerField< pressure >( solverName );
+      subRegion.registerField< initialPressure >( solverName );
+      subRegion.registerField< pressure_n >( solverName );
+      subRegion.registerField< bcPressure >( solverName );
 
-      subRegion.registerExtrinsicData< temperature >( solverName );
-      subRegion.registerExtrinsicData< bcTemperature >( solverName );
+      subRegion.registerField< temperature >( solverName );
+      subRegion.registerField< bcTemperature >( solverName );
 
-      subRegion.registerExtrinsicData< OBLOperatorValues >( solverName ).
+      subRegion.registerField< OBLOperatorValues >( solverName ).
         reference().resizeDimension< 1 >( m_numOBLOperators );
-      subRegion.registerExtrinsicData< OBLOperatorValues_n >( solverName ).
+      subRegion.registerField< OBLOperatorValues_n >( solverName ).
         reference().resizeDimension< 1 >( m_numOBLOperators );
-      subRegion.registerExtrinsicData< OBLOperatorDerivatives >( solverName ).
+      subRegion.registerField< OBLOperatorDerivatives >( solverName ).
         reference().resizeDimension< 1, 2 >( m_numOBLOperators, m_numDofPerCell );
 
       // we need to register this fiels in any case (if energy balance is enabled or not)
       // to be able to pass the view to OBLOperatorsKernel
-      subRegion.registerExtrinsicData< temperature_n >( solverName );
+      subRegion.registerField< temperature_n >( solverName );
 
       // The resizing of the arrays needs to happen here, before the call to initializePreSubGroups,
       // to make sure that the dimensions are properly set before the timeHistoryOutput starts its initialization.
-      subRegion.registerExtrinsicData< globalCompFraction >( solverName ).
+      subRegion.registerField< globalCompFraction >( solverName ).
         setDimLabels( 1, m_componentNames ).
         reference().resizeDimension< 1 >( m_numComponents );
 
-      subRegion.registerExtrinsicData< bcGlobalCompFraction >( solverName ).
+      subRegion.registerField< bcGlobalCompFraction >( solverName ).
         reference().resizeDimension< 1 >( m_numComponents );
 
       // we need to register this fiels in any case (if there is a single component or not)
       // to be able to pass the view to OBLOperatorsKernel
-      subRegion.registerExtrinsicData< globalCompFraction_n >( solverName ).
+      subRegion.registerField< globalCompFraction_n >( solverName ).
         reference().resizeDimension< 1 >( m_numComponents );
       // in principle, referencePorosity could be used directly from solid model,
       // but was duplicated to remove dependency on solid
-      subRegion.registerExtrinsicData< referencePorosity >( solverName );
+      subRegion.registerField< referencePorosity >( solverName );
 
       // referencePoreVolume and referenceRockVolume are introduced for the sake of performance:
       // this way the multiplication of constant arrays (e.g., referencePorosity and volume) every Newton step is avoided
-      subRegion.registerExtrinsicData< referencePoreVolume >( solverName );
-      subRegion.registerExtrinsicData< referenceRockVolume >( solverName );
+      subRegion.registerField< referencePoreVolume >( solverName );
+      subRegion.registerField< referenceRockVolume >( solverName );
 
       // thermal rock properties (again, register in any case)
       // it is not possible to use specificHeatCapacity from solid model here, because specificHeatCapacity includes several quantities,
       // which are split in OBL framework: constant rock volume and,
       // hidden inside operator - therefore variable - rock compressibility and rock energy
-      subRegion.registerExtrinsicData< rockVolumetricHeatCapacity >( solverName );
-      subRegion.registerExtrinsicData< rockThermalConductivity >( solverName );
-      subRegion.registerExtrinsicData< rockKineticRateFactor >( solverName );
+      subRegion.registerField< rockVolumetricHeatCapacity >( solverName );
+      subRegion.registerField< rockThermalConductivity >( solverName );
+      subRegion.registerField< rockKineticRateFactor >( solverName );
 
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();
     {
-      faceManager.registerExtrinsicData< facePressure >( getName() );
+      faceManager.registerField< facePressure >( getName() );
     }
 
   } );
 }
 
-real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( DomainPartition const & domain,
+real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time ),
+                                                                  real64 const & GEOS_UNUSED_PARAM( dt ),
+                                                                  DomainPartition const & domain,
                                                                   DofManager const & dofManager,
                                                                   arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
-  GEOSX_UNUSED_VAR( localRhs );
+  GEOS_MARK_FUNCTION;
+  GEOS_UNUSED_VAR( localRhs );
 
   real64 localResidualNorm = 0.0;
 
@@ -313,13 +314,13 @@ real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( DomainPartitio
 
       arrayView1d< globalIndex const > dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-      arrayView1d< real64 const > const & refPoreVolume = subRegion.getExtrinsicData< extrinsicMeshData::flow::referencePoreVolume >();
+      arrayView1d< real64 const > const & refPoreVolume = subRegion.getField< fields::flow::referencePoreVolume >();
 
       real64 subRegionResidualNorm = 0.0;
 
       if( m_useDARTSL2Norm )
       {
-        arrayView2d< real64 const, compflow::USD_OBL_VAL > const OBLVals = subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues >();
+        arrayView2d< real64 const, compflow::USD_OBL_VAL > const OBLVals = subRegion.getField< fields::flow::OBLOperatorValues >();
 
         ResidualDARTSL2NormKernel::launch< parallelDevicePolicy<> >( localRhs,
                                                                      rankOffset,
@@ -336,7 +337,7 @@ real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( DomainPartitio
       }
       else
       {
-        arrayView2d< real64 const, compflow::USD_OBL_VAL > const OBLVals_n = subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues_n >();
+        arrayView2d< real64 const, compflow::USD_OBL_VAL > const OBLVals_n = subRegion.getField< fields::flow::OBLOperatorValues_n >();
 
         ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
                                                               rankOffset,
@@ -353,7 +354,7 @@ real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( DomainPartitio
 
   real64 const residual = m_useDARTSL2Norm ? MpiWrapper::max( localResidualNorm ) : std::sqrt( MpiWrapper::sum( localResidualNorm ) );
 
-  GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( Rflow ) = ( {:4.2e} ) ;", residual ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( Rflow ) = ( {:4.2e} ) ;", residual ) );
 
   return residual;
 }
@@ -363,7 +364,7 @@ real64 ReactiveCompositionalMultiphaseOBL::scalingForSystemSolution( DomainParti
                                                                      DofManager const & dofManager,
                                                                      arrayView1d< real64 const > const & localSolution )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // check if we want to rescale the Newton update
   if( m_maxCompFracChange >= 1.0 )
@@ -394,7 +395,7 @@ real64 ReactiveCompositionalMultiphaseOBL::scalingForSystemSolution( DomainParti
 
       RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
 
-      forAll< parallelDevicePolicy<> >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         if( elemGhostRank[ei] < 0 )
         {
@@ -437,7 +438,7 @@ bool ReactiveCompositionalMultiphaseOBL::checkSystemSolution( DomainPartition co
                                                               arrayView1d< real64 const > const & localSolution,
                                                               real64 const scalingFactor )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   localIndex localCheck = 1;
@@ -454,11 +455,11 @@ bool ReactiveCompositionalMultiphaseOBL::checkSystemSolution( DomainPartition co
       arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
       arrayView1d< real64 const > const & pres =
-        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+        subRegion.getReference< array1d< real64 > >( fields::flow::pressure::key() );
       arrayView2d< real64 const, compflow::USD_COMP > const & compFrac =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
+        subRegion.getField< fields::flow::globalCompFraction >();
       arrayView1d< real64 const > const & temp =
-        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::temperature::key() );
+        subRegion.getReference< array1d< real64 > >( fields::flow::temperature::key() );
 
       localIndex const subRegionSolutionCheck =
         SolutionCheckKernel::launch< parallelDevicePolicy<> >( localSolution,
@@ -485,13 +486,13 @@ void ReactiveCompositionalMultiphaseOBL::applySystemSolution( DofManager const &
                                                               real64 const scalingFactor,
                                                               DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
-                               extrinsicMeshData::flow::pressure::key(),
+                               fields::flow::pressure::key(),
                                scalingFactor,
                                pressureMask );
 
@@ -501,7 +502,7 @@ void ReactiveCompositionalMultiphaseOBL::applySystemSolution( DofManager const &
 
     dofManager.addVectorToField( localSolution,
                                  viewKeyStruct::elemDofFieldString(),
-                                 extrinsicMeshData::flow::globalCompFraction::key(),
+                                 fields::flow::globalCompFraction::key(),
                                  scalingFactor,
                                  compFracMask );
   }
@@ -511,7 +512,7 @@ void ReactiveCompositionalMultiphaseOBL::applySystemSolution( DofManager const &
     DofManager::CompMask temperatureMask( m_numDofPerCell, m_numDofPerCell - 1, m_numDofPerCell );
     dofManager.addVectorToField( localSolution,
                                  viewKeyStruct::elemDofFieldString(),
-                                 extrinsicMeshData::flow::temperature::key(),
+                                 fields::flow::temperature::key(),
                                  scalingFactor,
                                  temperatureMask );
   }
@@ -526,14 +527,14 @@ void ReactiveCompositionalMultiphaseOBL::applySystemSolution( DofManager const &
                                                                arrayView1d< string const > const & regionNames )
   {
     FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addElementFields( {  extrinsicMeshData::flow::pressure::key() }, regionNames );
+    fieldsToBeSync.addElementFields( {  fields::flow::pressure::key() }, regionNames );
     if( m_numComponents > 1 )
     {
-      fieldsToBeSync.addElementFields( {  extrinsicMeshData::flow::globalCompFraction::key() }, regionNames );
+      fieldsToBeSync.addElementFields( {  fields::flow::globalCompFraction::key() }, regionNames );
     }
     if( m_enableEnergyBalance )
     {
-      fieldsToBeSync.addElementFields( {  extrinsicMeshData::flow::temperature::key() }, regionNames );
+      fieldsToBeSync.addElementFields( {  fields::flow::temperature::key() }, regionNames );
     }
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
   } );
@@ -541,7 +542,7 @@ void ReactiveCompositionalMultiphaseOBL::applySystemSolution( DofManager const &
 
 void ReactiveCompositionalMultiphaseOBL::initializePostInitialConditionsPreSubGroups()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FlowSolverBase::initializePostInitialConditionsPreSubGroups();
 
@@ -554,8 +555,8 @@ void ReactiveCompositionalMultiphaseOBL::initializePostInitialConditionsPreSubGr
   {
 
     FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key() }, regionNames );
-    fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::globalCompFraction::key() }, regionNames );
+    fieldsToBeSync.addElementFields( { fields::flow::pressure::key() }, regionNames );
+    fieldsToBeSync.addElementFields( { fields::flow::globalCompFraction::key() }, regionNames );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
 
@@ -568,11 +569,11 @@ void ReactiveCompositionalMultiphaseOBL::initializePostInitialConditionsPreSubGr
       arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const volume =  subRegion.getElementVolume();
       arrayView1d< real64 const > const refPorosity =  solid.getReferencePorosity();
-      arrayView1d< real64 > const referenceRockVolume =  subRegion.getExtrinsicData< extrinsicMeshData::flow::referenceRockVolume >();
-      arrayView1d< real64 > const referencePoreVolume =  subRegion.getExtrinsicData< extrinsicMeshData::flow::referencePoreVolume >();
-      arrayView1d< real64 > const referencePorosity =  subRegion.getExtrinsicData< extrinsicMeshData::flow::referencePorosity >();
+      arrayView1d< real64 > const referenceRockVolume =  subRegion.getField< fields::flow::referenceRockVolume >();
+      arrayView1d< real64 > const referencePoreVolume =  subRegion.getField< fields::flow::referencePoreVolume >();
+      arrayView1d< real64 > const referencePorosity =  subRegion.getField< fields::flow::referencePorosity >();
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         if( elemGhostRank[ei] >= 0 )
         {
@@ -588,37 +589,9 @@ void ReactiveCompositionalMultiphaseOBL::initializePostInitialConditionsPreSubGr
   } );
 }
 
-
-real64 ReactiveCompositionalMultiphaseOBL::solverStep( real64 const & time_n,
-                                                       real64 const & dt,
-                                                       integer const cycleNumber,
-                                                       DomainPartition & domain )
-{
-  GEOSX_MARK_FUNCTION;
-
-  // Only build the sparsity pattern once
-  // TODO: this should be triggered by a topology change indicator
-  if( !m_systemSetupDone )
-  {
-    setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
-    m_systemSetupDone = true;
-  }
-
-  implicitStepSetup( time_n, dt, domain );
-
-  // currently the only method is implicit time integration
-  real64 const dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
-
-  // final step for completion of timestep. typically secondary variable updates and cleanup.
-  implicitStepComplete( time_n, dt_return, domain );
-
-  return dt_return;
-}
-
-
 void
-ReactiveCompositionalMultiphaseOBL::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                                       real64 const & GEOSX_UNUSED_PARAM( dt ),
+ReactiveCompositionalMultiphaseOBL::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                                       real64 const & GEOS_UNUSED_PARAM( dt ),
                                                        DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -631,27 +604,27 @@ ReactiveCompositionalMultiphaseOBL::implicitStepSetup( real64 const & GEOSX_UNUS
                                                      ElementSubRegionBase & subRegion )
     {
       arrayView1d< real64 > const & pres_n =
-        subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure_n >();
+        subRegion.template getField< fields::flow::pressure_n >();
       arrayView1d< real64 const > const & pres =
-        subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >();
+        subRegion.template getField< fields::flow::pressure >();
       pres_n.setValues< parallelDevicePolicy<> >( pres );
 
       // for single component problems (e.g., geothermal), global component fraction is not a primary variable
       if( m_numComponents > 1 )
       {
         arrayView2d< real64, compflow::USD_COMP > const & compFrac_n =
-          subRegion.template getExtrinsicData< extrinsicMeshData::flow::globalCompFraction_n >();
+          subRegion.template getField< fields::flow::globalCompFraction_n >();
         arrayView2d< real64 const, compflow::USD_COMP > const & compFrac =
-          subRegion.template getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
+          subRegion.template getField< fields::flow::globalCompFraction >();
         compFrac_n.setValues< parallelDevicePolicy<> >( compFrac );
       }
 
       if( m_enableEnergyBalance )
       {
         arrayView1d< real64 > const & temp_n =
-          subRegion.template getExtrinsicData< extrinsicMeshData::flow::temperature_n >();
+          subRegion.template getField< fields::flow::temperature_n >();
         arrayView1d< real64 const > const & temp =
-          subRegion.template getExtrinsicData< extrinsicMeshData::flow::temperature >();
+          subRegion.template getField< fields::flow::temperature >();
         temp_n.setValues< parallelDevicePolicy<> >( temp );
       }
 
@@ -659,9 +632,9 @@ ReactiveCompositionalMultiphaseOBL::implicitStepSetup( real64 const & GEOSX_UNUS
       updateOBLOperators( subRegion );
 
       arrayView2d< real64 const, compflow::USD_OBL_VAL > const OBLOperatorValues =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues >();
+        subRegion.getField< fields::flow::OBLOperatorValues >();
       arrayView2d< real64, compflow::USD_OBL_VAL > const OBLOperatorValues_n =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues_n >();
+        subRegion.getField< fields::flow::OBLOperatorValues_n >();
       OBLOperatorValues_n.setValues< parallelDevicePolicy<> >( OBLOperatorValues );
 
     } );
@@ -669,14 +642,14 @@ ReactiveCompositionalMultiphaseOBL::implicitStepSetup( real64 const & GEOSX_UNUS
   } );
 }
 
-void ReactiveCompositionalMultiphaseOBL::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void ReactiveCompositionalMultiphaseOBL::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
                                                          real64 const dt,
                                                          DomainPartition & domain,
                                                          DofManager const & dofManager,
                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                          arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   assembleAccumulationTerms( dt,
                              domain,
@@ -699,7 +672,7 @@ void ReactiveCompositionalMultiphaseOBL::assembleAccumulationTerms( real64 const
                                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                     arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -733,7 +706,7 @@ void ReactiveCompositionalMultiphaseOBL::assembleFluxTerms( real64 const dt,
                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                             arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
@@ -774,7 +747,7 @@ void ReactiveCompositionalMultiphaseOBL::applyBoundaryConditions( real64 const t
                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                   arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // apply pressure boundary conditions.
   applyDirichletBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
@@ -800,7 +773,7 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                             arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -840,21 +813,22 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & )
   {
-    fsManager.apply< ElementSubRegionBase >( time + dt,
-                                             mesh,
-                                             FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
-                                             [&]( FieldSpecificationBase const & fs,
-                                                  string const & setName,
-                                                  SortedArrayView< localIndex const > const & targetSet,
-                                                  ElementSubRegionBase & subRegion,
-                                                  string const & )
+    fsManager.apply< ElementSubRegionBase,
+                     SourceFluxBoundaryCondition >( time + dt,
+                                                    mesh,
+                                                    SourceFluxBoundaryCondition::catalogName(),
+                                                    [&]( SourceFluxBoundaryCondition const & fs,
+                                                         string const & setName,
+                                                         SortedArrayView< localIndex const > const & targetSet,
+                                                         ElementSubRegionBase & subRegion,
+                                                         string const & )
     {
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
-                                     getName(), time+dt, SourceFluxBoundaryCondition::catalogName(),
-                                     fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
+                                   getName(), time+dt, SourceFluxBoundaryCondition::catalogName(),
+                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
 
       if( targetSet.size() == 0 )
@@ -883,7 +857,7 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
                                                            localMatrix,
                                                            dofArray.toView(),
                                                            rhsContributionArrayView,
-                                                           [] GEOSX_HOST_DEVICE ( localIndex const )
+                                                           [] GEOS_HOST_DEVICE ( localIndex const )
       {
         return 0.0;
       } );
@@ -901,7 +875,7 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
                                                            fluidComponentId,
                                                            dofNumber,
                                                            rhsContributionArrayView,
-                                                           localRhs] GEOSX_HOST_DEVICE ( localIndex const a )
+                                                           localRhs] GEOS_HOST_DEVICE ( localIndex const a )
       {
         // we need to filter out ghosts here, because targetSet may contain them
         localIndex const ei = targetSet[a];
@@ -940,7 +914,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
     // 1. Check pressure Dirichlet BCs
     fsManager.apply< ElementSubRegionBase >( time,
                                              mesh,
-                                             extrinsicMeshData::flow::pressure::key(),
+                                             fields::flow::pressure::key(),
                                              [&]( FieldSpecificationBase const &,
                                                   string const & setName,
                                                   SortedArrayView< localIndex const > const &,
@@ -955,7 +929,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
       if( subRegionSetMap.count( setName ) > 0 )
       {
         bcConsistent = false;
-        GEOSX_WARNING( GEOSX_FMT( "Conflicting pressure boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
+        GEOS_WARNING( GEOS_FMT( "Conflicting pressure boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
       }
       subRegionSetMap[setName].setNumComp( numCompWithEnergy );
     } );
@@ -963,7 +937,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
     // 2. Check composition BC (global component fraction)
     fsManager.apply< ElementSubRegionBase >( time,
                                              mesh,
-                                             extrinsicMeshData::flow::globalCompFraction::key(),
+                                             fields::flow::globalCompFraction::key(),
                                              [&] ( FieldSpecificationBase const & fs,
                                                    string const & setName,
                                                    SortedArrayView< localIndex const > const &,
@@ -979,12 +953,12 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
       if( subRegionSetMap.count( setName ) == 0 )
       {
         bcConsistent = false;
-        GEOSX_WARNING( GEOSX_FMT( "Pressure boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
+        GEOS_WARNING( GEOS_FMT( "Pressure boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
       }
       if( comp < 0 || comp >= numComp )
       {
         bcConsistent = false;
-        GEOSX_WARNING( GEOSX_FMT( "Invalid component index [{}] in composition boundary condition {}", comp, fs.getName() ) );
+        GEOS_WARNING( GEOS_FMT( "Invalid component index [{}] in composition boundary condition {}", comp, fs.getName() ) );
         return; // can't check next part with invalid component id
       }
 
@@ -992,7 +966,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
       if( compMask[comp] )
       {
         bcConsistent = false;
-        GEOSX_WARNING( GEOSX_FMT( "Conflicting composition[{}] boundary conditions on set {}/{}/{}", comp, regionName, subRegionName, setName ) );
+        GEOS_WARNING( GEOS_FMT( "Conflicting composition[{}] boundary conditions on set {}/{}/{}", comp, regionName, subRegionName, setName ) );
       }
       compMask.set( comp );
     } );
@@ -1002,7 +976,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
       // 3. Check temperature Dirichlet BCs
       fsManager.apply< ElementSubRegionBase >( time,
                                                mesh,
-                                               extrinsicMeshData::flow::temperature::key(),
+                                               fields::flow::temperature::key(),
                                                [&]( FieldSpecificationBase const &,
                                                     string const & setName,
                                                     SortedArrayView< localIndex const > const &,
@@ -1017,7 +991,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
         if( subRegionSetMap.count( setName ) == 0 )
         {
           bcConsistent = false;
-          GEOSX_WARNING( GEOSX_FMT( "Pressure boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
+          GEOS_WARNING( GEOS_FMT( "Pressure boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
         }
 
         ComponentMask< MAX_NC > & compMask = subRegionSetMap[setName];
@@ -1025,7 +999,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
         if( compMask[numComp] )
         {
           bcConsistent = false;
-          GEOSX_WARNING( GEOSX_FMT( "Conflicting temperature boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
+          GEOS_WARNING( GEOS_FMT( "Conflicting temperature boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
         }
         compMask.set( numComp );
       } );
@@ -1044,8 +1018,8 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
             if( !compMask[ic] )
             {
               bcConsistent = false;
-              GEOSX_WARNING( GEOSX_FMT( "Boundary condition not applied to composition[{}] on set {}/{}/{}",
-                                        ic, regionEntry.first, subRegionEntry.first, setEntry.first ) );
+              GEOS_WARNING( GEOS_FMT( "Boundary condition not applied to composition[{}] on set {}/{}/{}",
+                                      ic, regionEntry.first, subRegionEntry.first, setEntry.first ) );
             }
           }
         }
@@ -1062,13 +1036,13 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                            arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // Only validate BC at the beginning of Newton loop
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateDirichletBC( domain, time + dt );
-    GEOSX_ERROR_IF( !bcConsistent, GEOSX_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getName() ) );
+    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getName() ) );
   }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -1081,7 +1055,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
     // 1. Apply pressure Dirichlet BCs, store in a separate field
     fsManager.apply< ElementSubRegionBase >( time + dt,
                                              mesh,
-                                             extrinsicMeshData::flow::pressure::key(),
+                                             fields::flow::pressure::key(),
                                              [&]( FieldSpecificationBase const & fs,
                                                   string const & setName,
                                                   SortedArrayView< localIndex const > const & targetSet,
@@ -1091,21 +1065,21 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
-                                     getName(), time+dt, FieldSpecificationBase::catalogName(),
-                                     fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
+                                   getName(), time+dt, FieldSpecificationBase::catalogName(),
+                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
 
       fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
                                                                              time + dt,
                                                                              subRegion,
-                                                                             extrinsicMeshData::flow::bcPressure::key() );
+                                                                             fields::flow::bcPressure::key() );
     } );
 
     // 2. Apply composition BC (global component fraction), store in a separate field
     fsManager.apply< ElementSubRegionBase >( time + dt,
                                              mesh,
-                                             extrinsicMeshData::flow::globalCompFraction::key(),
+                                             fields::flow::globalCompFraction::key(),
                                              [&] ( FieldSpecificationBase const & fs,
                                                    string const &,
                                                    SortedArrayView< localIndex const > const & targetSet,
@@ -1115,13 +1089,13 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
                                                                              time + dt,
                                                                              subRegion,
-                                                                             extrinsicMeshData::flow::bcGlobalCompFraction::key() );
+                                                                             fields::flow::bcGlobalCompFraction::key() );
     } );
 
     // 3. Apply temperature Dirichlet BCs, store in a separate field
     fsManager.apply< ElementSubRegionBase >( time + dt,
                                              mesh,
-                                             extrinsicMeshData::flow::temperature::key(),
+                                             fields::flow::temperature::key(),
                                              [&]( FieldSpecificationBase const & fs,
                                                   string const & setName,
                                                   SortedArrayView< localIndex const > const & targetSet,
@@ -1131,15 +1105,15 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
-                                     getName(), time+dt, FieldSpecificationBase::catalogName(),
-                                     fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
+                                   getName(), time+dt, FieldSpecificationBase::catalogName(),
+                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
 
       fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
                                                                              time + dt,
                                                                              subRegion,
-                                                                             extrinsicMeshData::flow::bcTemperature::key() );
+                                                                             fields::flow::bcTemperature::key() );
     } );
 
     globalIndex const rankOffset = dofManager.rankOffset();
@@ -1149,20 +1123,20 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
     // 3. Apply to the system
     fsManager.apply< ElementSubRegionBase >( time + dt,
                                              mesh,
-                                             extrinsicMeshData::flow::pressure::key(),
+                                             fields::flow::pressure::key(),
                                              [&] ( FieldSpecificationBase const &,
                                                    string const &,
                                                    SortedArrayView< localIndex const > const & targetSet,
                                                    ElementSubRegionBase & subRegion,
                                                    string const & )
     {
-      arrayView1d< real64 const > const bcPres = subRegion.getExtrinsicData< extrinsicMeshData::flow::bcPressure >();
-      arrayView2d< real64 const, compflow::USD_COMP > const bcCompFrac = subRegion.getExtrinsicData< extrinsicMeshData::flow::bcGlobalCompFraction >();
-      arrayView1d< real64 const > const bcTemp = subRegion.getExtrinsicData< extrinsicMeshData::flow::bcTemperature >();
+      arrayView1d< real64 const > const bcPres = subRegion.getField< fields::flow::bcPressure >();
+      arrayView2d< real64 const, compflow::USD_COMP > const bcCompFrac = subRegion.getField< fields::flow::bcGlobalCompFraction >();
+      arrayView1d< real64 const > const bcTemp = subRegion.getField< fields::flow::bcTemperature >();
 
-      arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-      arrayView2d< real64 const, compflow::USD_COMP > const compFrac = subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
-      arrayView1d< real64 const > const temp = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+      arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+      arrayView2d< real64 const, compflow::USD_COMP > const compFrac = subRegion.getField< fields::flow::globalCompFraction >();
+      arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
 
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
@@ -1170,7 +1144,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       integer const numComp = m_numComponents;
       integer const enableEnergyBalance = m_enableEnergyBalance;
 
-      forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+      forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
         localIndex const ei = targetSet[a];
         if( ghostRank[ei] >= 0 )
@@ -1234,9 +1208,9 @@ void ReactiveCompositionalMultiphaseOBL::chopPrimaryVariables( DomainPartition &
                                                      ElementSubRegionBase & subRegion )
     {
       arrayView2d< real64, compflow::USD_COMP > const compFrac =
-        subRegion.template getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
+        subRegion.template getField< fields::flow::globalCompFraction >();
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         bool isScalingRequired = false;
 
@@ -1285,7 +1259,7 @@ void ReactiveCompositionalMultiphaseOBL::chopPrimaryVariables( DomainPartition &
 
 void ReactiveCompositionalMultiphaseOBL::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -1297,27 +1271,27 @@ void ReactiveCompositionalMultiphaseOBL::resetStateToBeginningOfStep( DomainPart
                                                                                 auto & subRegion )
     {
       arrayView1d< real64 const > const & pres_n =
-        subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure_n >();
+        subRegion.template getField< fields::flow::pressure_n >();
       arrayView1d< real64 > const & pres =
-        subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >();
+        subRegion.template getField< fields::flow::pressure >();
       pres.setValues< parallelDevicePolicy<> >( pres_n );
 
       // for single component problems (e.g., geothermal), global component fraction is not a primary variable
       if( m_numComponents > 1 )
       {
         arrayView2d< real64 const, compflow::USD_COMP > const & compFrac_n =
-          subRegion.template getExtrinsicData< extrinsicMeshData::flow::globalCompFraction_n >();
+          subRegion.template getField< fields::flow::globalCompFraction_n >();
         arrayView2d< real64, compflow::USD_COMP > const & compFrac =
-          subRegion.template getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
+          subRegion.template getField< fields::flow::globalCompFraction >();
         compFrac.setValues< parallelDevicePolicy<> >( compFrac_n );
       }
 
       if( m_enableEnergyBalance )
       {
         arrayView1d< real64 const > const & temp_n =
-          subRegion.template getExtrinsicData< extrinsicMeshData::flow::temperature_n >();
+          subRegion.template getField< fields::flow::temperature_n >();
         arrayView1d< real64 > const & temp =
-          subRegion.template getExtrinsicData< extrinsicMeshData::flow::temperature >();
+          subRegion.template getField< fields::flow::temperature >();
         temp.setValues< parallelDevicePolicy<> >( temp_n );
       }
 
@@ -1330,7 +1304,7 @@ void ReactiveCompositionalMultiphaseOBL::resetStateToBeginningOfStep( DomainPart
 
 void ReactiveCompositionalMultiphaseOBL::updateOBLOperators( ObjectManagerBase & dataGroup ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   OBLOperatorsKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
@@ -1363,4 +1337,4 @@ void ReactiveCompositionalMultiphaseOBL::updateState( DomainPartition & domain )
 //START_SPHINX_INCLUDE_01
 REGISTER_CATALOG_ENTRY( SolverBase, ReactiveCompositionalMultiphaseOBL, string const &, Group * const )
 //END_SPHINX_INCLUDE_01
-}// namespace geosx
+}// namespace geos

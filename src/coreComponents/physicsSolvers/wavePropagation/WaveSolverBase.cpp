@@ -21,12 +21,13 @@
 
 #include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
+
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/PerfectlyMatchedLayer.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -87,11 +88,26 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Set to 1 to save fields during forward and restore them during backward" );
 
-
   registerWrapper( viewKeyStruct::shotIndexString(), &m_shotIndex ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Set the current shot for temporary files" );
+
+  registerWrapper( viewKeyStruct::lifoSizeString(), &m_lifoSize ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Set the capacity of the lifo storage" );
+
+  registerWrapper( viewKeyStruct::lifoOnDeviceString(), &m_lifoOnDevice ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Set the capacity of the lifo device storage" );
+
+  registerWrapper( viewKeyStruct::lifoOnHostString(), &m_lifoOnHost ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Set the capacity of the lifo host storage" );
+
 
   registerWrapper( viewKeyStruct::usePMLString(), &m_usePML ).
     setInputFlag( InputFlags::FALSE ).
@@ -108,6 +124,37 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)" );
 
+  registerWrapper( viewKeyStruct::sourceNodeIdsString(), &m_sourceNodeIds ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Indices of the nodes (in the right order) for each source point" );
+
+  registerWrapper( viewKeyStruct::sourceConstantsString(), &m_sourceConstants ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Constant part of the source for the nodes listed in m_sourceNodeIds" );
+
+  registerWrapper( viewKeyStruct::sourceIsAccessibleString(), &m_sourceIsAccessible ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Flag that indicates whether the source is local to this MPI rank" );
+
+  registerWrapper( viewKeyStruct::receiverNodeIdsString(), &m_receiverNodeIds ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Indices of the nodes (in the right order) for each receiver point" );
+
+  registerWrapper( viewKeyStruct::sourceConstantsString(), &m_sourceConstants ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Constant part of the receiver for the nodes listed in m_receiverNodeIds" );
+
+  registerWrapper( viewKeyStruct::receiverIsLocalString(), &m_receiverIsLocal ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Flag that indicates whether the receiver is local to this MPI rank" );
+
+
 }
 
 WaveSolverBase::~WaveSolverBase()
@@ -117,6 +164,7 @@ WaveSolverBase::~WaveSolverBase()
 
 void WaveSolverBase::reinit()
 {
+  initializePreSubGroups();
   postProcessInput();
   initializePostInitialConditionsPreSubGroups();
 }
@@ -124,6 +172,19 @@ void WaveSolverBase::reinit()
 void WaveSolverBase::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
+
+  localIndex const numNodesPerElem = WaveSolverBase::getNumNodesPerElem();
+
+  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
+  m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
+  m_sourceConstants.resize( numSourcesGlobal, numNodesPerElem );
+  m_sourceIsAccessible.resize( numSourcesGlobal );
+
+  localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
+  m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
+  m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
+  m_receiverIsLocal.resize( numReceiversGlobal );
+
 }
 
 void WaveSolverBase::postProcessInput()
@@ -138,9 +199,9 @@ void WaveSolverBase::postProcessInput()
   {
     counter++;
   } );
-  GEOSX_THROW_IF( counter > 1,
-                  "One single PML field specification is allowed",
-                  InputError );
+  GEOS_THROW_IF( counter > 1,
+                 "One single PML field specification is allowed",
+                 InputError );
 
   m_usePML = counter;
 
@@ -151,17 +212,55 @@ void WaveSolverBase::postProcessInput()
 
   if( m_useDAS )
   {
-    GEOSX_LOG_LEVEL_RANK_0( 1, "Modeling linear DAS data is activated" );
+    GEOS_LOG_LEVEL_RANK_0( 1, "Modeling linear DAS data is activated" );
 
-    GEOSX_ERROR_IF( m_linearDASGeometry.size( 1 ) != 3,
-                    "Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
+    GEOS_ERROR_IF( m_linearDASGeometry.size( 1 ) != 3,
+                   "Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
 
-    GEOSX_ERROR_IF( m_linearDASGeometry.size( 0 ) != m_receiverCoordinates.size( 0 ),
-                    "Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
+    GEOS_ERROR_IF( m_linearDASGeometry.size( 0 ) != m_receiverCoordinates.size( 0 ),
+                   "Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
 
     /// initialize DAS geometry
     initializeDAS();
+
   }
+
+  GEOS_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
+                 "Invalid number of physical coordinates for the sources",
+                 InputError );
+
+  GEOS_THROW_IF( m_receiverCoordinates.size( 1 ) != 3,
+                 "Invalid number of physical coordinates for the receivers",
+                 InputError );
+
+  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+  real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
+  real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
+  real64 dt = 0;
+  for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
+  {
+    EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
+    if( subEvent->getEventName() == "/Solvers/" + this->getName() )
+    {
+      dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
+    }
+  }
+
+  GEOS_THROW_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
+
+  if( m_dtSeismoTrace > 0 )
+  {
+    m_nsamplesSeismoTrace = int( maxTime / m_dtSeismoTrace) + 1;
+  }
+  else
+  {
+    m_nsamplesSeismoTrace = 0;
+  }
+  localIndex const nsamples = int( (maxTime-minTime) /dt) + 1;
+
+  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
+  m_sourceValue.resize( nsamples, numSourcesGlobal );
+
 }
 
 void WaveSolverBase::initializeDAS()
@@ -194,43 +293,6 @@ void WaveSolverBase::initializeDAS()
   }
 }
 
-
-real32 WaveSolverBase::evaluateRicker( real64 const & time_n, real32 const & f0, localIndex order )
-{
-  real32 const o_tpeak = 1.0/f0;
-  real32 pulse = 0.0;
-  if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
-  {
-    return pulse;
-  }
-
-  constexpr real32 pi = M_PI;
-  real32 const lam = (f0*pi)*(f0*pi);
-
-  switch( order )
-  {
-    case 2:
-    {
-      pulse = 2.0*lam*(2.0*lam*(time_n-o_tpeak)*(time_n-o_tpeak)-1.0)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
-    }
-    break;
-    case 1:
-    {
-      pulse = -2.0*lam*(time_n-o_tpeak)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
-    }
-    break;
-    case 0:
-    {
-      pulse = -(time_n-o_tpeak)*exp( -2*lam*(time_n-o_tpeak)*(time_n-o_tpeak) );
-    }
-    break;
-    default:
-      GEOSX_ERROR( "This option is not supported yet, rickerOrder must be 0, 1 or 2" );
-  }
-
-  return pulse;
-}
-
 real64 WaveSolverBase::solverStep( real64 const & time_n,
                                    real64 const & dt,
                                    integer const cycleNumber,
@@ -253,4 +315,49 @@ real64 WaveSolverBase::explicitStep( real64 const & time_n,
     return explicitStepBackward( time_n, dt, cycleNumber, domain, m_saveFields );
   }
 }
-} /* namespace geosx */
+
+localIndex WaveSolverBase::getNumNodesPerElem()
+{
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+
+  FiniteElementDiscretizationManager const &
+  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
+
+  FiniteElementDiscretization const * const
+  feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
+  GEOS_THROW_IF( feDiscretization == nullptr,
+                 getName() << ": FE discretization not found: " << m_discretizationName,
+                 InputError );
+
+  localIndex numNodesPerElem = 0;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                  [&]( string const &,
+                                       MeshLevel const & mesh,
+                                       arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+    elemManager.forElementRegions( regionNames,
+                                   [&] ( localIndex const,
+                                         ElementRegionBase const & elemRegion )
+    {
+      elemRegion.forElementSubRegions( [&]( ElementSubRegionBase const & elementSubRegion )
+      {
+        finiteElement::FiniteElementBase const &
+        fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+        localIndex const numSupportPoints = fe.getNumSupportPoints();
+        if( numSupportPoints > numNodesPerElem )
+        {
+          numNodesPerElem = numSupportPoints;
+        }
+      } );
+    } );
+
+
+  } );
+  return numNodesPerElem;
+
+}
+
+} /* namespace geos */

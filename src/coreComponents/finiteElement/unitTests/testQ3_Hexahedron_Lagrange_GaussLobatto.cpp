@@ -23,9 +23,9 @@
 
 #include <chrono>
 
-#include "finiteElement/elementFormulations/Q3_Hexahedron_Lagrange_GaussLobatto.hpp"
+#include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 
-using namespace geosx;
+using namespace geos;
 using namespace finiteElement;
 
 template< typename POLICY >
@@ -45,7 +45,7 @@ void testKernelDriver()
   arrayView2d< real64 > const & Ntest = NtestArray;
 
   forAll< POLICY >( 1,
-                    [=] GEOSX_HOST_DEVICE ( localIndex const )
+                    [=] GEOS_HOST_DEVICE ( localIndex const )
   {
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
@@ -156,7 +156,7 @@ void testKernelDriver()
   }
 
   forAll< POLICY >( 1,
-                    [=] GEOSX_HOST_DEVICE ( localIndex const )
+                    [=] GEOS_HOST_DEVICE ( localIndex const )
   {
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
@@ -196,10 +196,10 @@ void testKernelDriver()
     }
   } );
 }
-#ifdef USE_CUDA
+#ifdef GEOS_USE_DEVICE
 TEST( FiniteElementShapeFunctions, testKernelCuda )
 {
-  testKernelDriver< geosx::parallelDevicePolicy< 32 > >();
+  testKernelDriver< geos::parallelDevicePolicy< > >();
 }
 #endif
 TEST( FiniteElementShapeFunctions, testKernelHost )
@@ -209,7 +209,7 @@ TEST( FiniteElementShapeFunctions, testKernelHost )
 
 
 
-using namespace geosx;
+using namespace geos;
 //int main( int argc, char * argv[] )
 //{
 //  testing::InitGoogleTest();

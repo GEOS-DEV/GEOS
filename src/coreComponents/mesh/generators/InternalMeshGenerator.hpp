@@ -16,13 +16,13 @@
  * @file InternalMeshGenerator.hpp
  */
 
-#ifndef GEOSX_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP
-#define GEOSX_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP
+#ifndef GEOS_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP
+#define GEOS_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "mesh/generators/MeshGeneratorBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class SpatialPartition;
@@ -52,6 +52,19 @@ public:
 
   virtual void generateMesh( DomainPartition & domain ) override;
 
+  void importFieldOnArray( Block block,
+                           string const & blockName,
+                           string const & meshFieldName,
+                           bool isMaterialField,
+                           dataRepository::WrapperBase & wrapper ) const override
+  {
+    GEOS_UNUSED_VAR( block );
+    GEOS_UNUSED_VAR( blockName );
+    GEOS_UNUSED_VAR( meshFieldName );
+    GEOS_UNUSED_VAR( isMaterialField );
+    GEOS_UNUSED_VAR( wrapper );
+  }
+
   /**
    * @return Whether or not a Cartesian mesh is being generated.
    */
@@ -68,7 +81,7 @@ public:
   virtual void reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
                                                   integer (& numNodes) [3] )
   {
-    GEOSX_UNUSED_VAR( partition, numNodes );
+    GEOS_UNUSED_VAR( partition, numNodes );
   };
 
   /**
@@ -83,7 +96,7 @@ public:
   setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
                                           int (& index)[3] )
   {
-    GEOSX_UNUSED_VAR( partition, index );
+    GEOS_UNUSED_VAR( partition, index );
   }
 
   /**
@@ -98,7 +111,7 @@ public:
                                                      int const ( &firstElemIndexInPartition )[3],
                                                      localIndex ( & nodeOfBox )[8] )
   {
-    GEOSX_UNUSED_VAR( globalIJK, numNodesInDir, firstElemIndexInPartition, nodeOfBox );
+    GEOS_UNUSED_VAR( globalIJK, numNodesInDir, firstElemIndexInPartition, nodeOfBox );
   }
 
   /**
@@ -122,8 +135,8 @@ public:
    */
   virtual void coordinateTransformation( arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X, std::map< string, SortedArray< localIndex > > & nodeSets )
   {
-    GEOSX_UNUSED_VAR( X );
-    GEOSX_UNUSED_VAR( nodeSets );
+    GEOS_UNUSED_VAR( X );
+    GEOS_UNUSED_VAR( nodeSets );
   }
 
 
@@ -189,7 +202,7 @@ private:
   array1d< integer > m_lastElemIndexForBlock[3];
 
   /// Array of number of elements per direction
-  int m_numElemsTotal[3];
+  globalIndex m_numElemsTotal[3];
 
   /// String array listing the element type present
   array1d< string > m_elementType;
@@ -330,7 +343,7 @@ private:
           // Verify that the bias is non-zero and applied to more than one block:
           if( ( !isZero( m_nElemBias[i][block] ) ) && (m_nElems[i][block]>1))
           {
-            GEOSX_ERROR_IF( fabs( m_nElemBias[i][block] ) >= 1, "Mesh bias must between -1 and 1!" );
+            GEOS_ERROR_IF( fabs( m_nElemBias[i][block] ) >= 1, "Mesh bias must between -1 and 1!" );
 
             real64 len = max -  min;
             real64 xmean = len / m_nElems[i][block];
@@ -369,6 +382,6 @@ public:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP */
+#endif /* GEOS_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP */

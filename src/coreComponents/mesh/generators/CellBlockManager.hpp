@@ -16,13 +16,14 @@
  * @file CellBlockManager.hpp
  */
 
-#ifndef GEOSX_MESH_CELLBLOCKMANAGER_H_
-#define GEOSX_MESH_CELLBLOCKMANAGER_H_
+#ifndef GEOS_MESH_CELLBLOCKMANAGER_H_
+#define GEOS_MESH_CELLBLOCKMANAGER_H_
 
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/CellBlock.hpp"
+#include "mesh/generators/FaceBlock.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -105,6 +106,13 @@ public:
    */
   void setNumNodes( localIndex numNodes ); // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
 
+  void generateHighOrderMaps( localIndex const order,
+                              globalIndex const maxVertexGlobalID,
+                              globalIndex const maxEdgeGlobalID,
+                              globalIndex const maxFaceGlobalID,
+                              arrayView1d< globalIndex const > const edgeLocalToGlobal,
+                              arrayView1d< globalIndex const > const faceLocalToGlobal ) override;
+
   localIndex numNodes() const override;
 
   localIndex numEdges() const override;
@@ -152,6 +160,13 @@ public:
    * @return A reference to the new cell block. The CellBlockManager owns this new instance.
    */
   CellBlock & registerCellBlock( string const & name );
+
+  /**
+   * @brief Registers and returns a face block of name @p name.
+   * @param name The name of the created face block.
+   * @return A reference to the new face block. The CellBlockManager owns this new instance.
+   */
+  FaceBlock & registerFaceBlock( string const & name );
 
   /**
    * @brief Launch kernel function over all the sub-regions
@@ -227,4 +242,4 @@ private:
 };
 
 }
-#endif /* GEOSX_MESH_CELLBLOCKMANAGER_H_ */
+#endif /* GEOS_MESH_CELLBLOCKMANAGER_H_ */

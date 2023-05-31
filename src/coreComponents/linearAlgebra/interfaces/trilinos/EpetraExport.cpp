@@ -27,7 +27,7 @@
 #include <Epetra_Vector.h>
 #include <Epetra_Import.h>
 
-namespace geosx
+namespace geos
 {
 
 EpetraExport::EpetraExport() = default;
@@ -54,9 +54,9 @@ void EpetraExport::exportCRS( EpetraMatrix const & mat,
   int const rank = MpiWrapper::commRank( mat.comm() );
   Epetra_CrsMatrix const * localMatrix = &mat.unwrapped();
 
-  rowOffsets.move( LvArray::MemorySpace::host, false );
-  colIndices.move( LvArray::MemorySpace::host, false );
-  values.move( LvArray::MemorySpace::host, false );
+  rowOffsets.move( hostMemorySpace, false );
+  colIndices.move( hostMemorySpace, false );
+  values.move( hostMemorySpace, false );
 
   // import on target rank if needed
   std::unique_ptr< Epetra_CrsMatrix > serialMatrix;
@@ -72,7 +72,7 @@ void EpetraExport::exportCRS( EpetraMatrix const & mat,
     int * ia;
     int * ja;
     real64 * va;
-    GEOSX_LAI_CHECK_ERROR( localMatrix->ExtractCrsDataPointers( ia, ja, va ) );
+    GEOS_LAI_CHECK_ERROR( localMatrix->ExtractCrsDataPointers( ia, ja, va ) );
 
     // contains the global ID of local columns
     globalIndex const * const globalColumns = localMatrix->ColMap().MyGlobalElements64();
@@ -86,7 +86,7 @@ void EpetraExport::exportCRS( EpetraMatrix const & mat,
 void EpetraExport::exportVector( EpetraVector const & vec,
                                  arrayView1d< real64 > const & values ) const
 {
-  values.move( LvArray::MemorySpace::host, false );
+  values.move( hostMemorySpace, false );
   if( m_targetRank >= 0 )
   {
     // Create a local vector that directly wraps the user-provided buffer and gather
@@ -96,7 +96,7 @@ void EpetraExport::exportVector( EpetraVector const & vec,
   else
   {
     arrayView1d< real64 const > const data = vec.values();
-    data.move( LvArray::MemorySpace::host, false );
+    data.move( hostMemorySpace, false );
     std::copy( data.begin(), data.end(), values.data() );
   }
 }
@@ -104,7 +104,7 @@ void EpetraExport::exportVector( EpetraVector const & vec,
 void EpetraExport::importVector( arrayView1d< const real64 > const & values,
                                  EpetraVector & vec ) const
 {
-  values.move( LvArray::MemorySpace::host, false );
+  values.move( hostMemorySpace, false );
   if( m_targetRank >= 0 )
   {
     // HACK: const_cast required in order to create an Epetra vector that wraps user data;
@@ -140,4 +140,4 @@ INST_EPETRA_EXPORT_CRS( long long, long long );
 
 #undef INST_EPETRA_EXPORT_CRS
 
-} // namespace geosx
+} // namespace geos

@@ -23,7 +23,7 @@
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -71,9 +71,15 @@ void FluxApproximationBase::initializePreSubGroups()
       if( !(mesh.isShallowCopy() ) )
       {
         // Group structure: mesh1/finiteVolumeStencils/myTPFA
+        Group * stencilParentGroup = mesh.getGroupPointer( groupKeyStruct::stencilMeshGroupString() );
+        // There can be more than one FluxApproximation object so we check if the the group has
+        // already been registered.
+        if( stencilParentGroup == nullptr )
+        {
+          stencilParentGroup = &(mesh.registerGroup( groupKeyStruct::stencilMeshGroupString() ));
+        }
 
-        Group & stencilParentGroup = mesh.registerGroup( groupKeyStruct::stencilMeshGroupString() );
-        Group & stencilGroup = stencilParentGroup.registerGroup( getName() );
+        Group & stencilGroup = stencilParentGroup->registerGroup( getName() );
 
         registerCellStencil( stencilGroup );
 
@@ -81,9 +87,14 @@ void FluxApproximationBase::initializePreSubGroups()
       }
       else
       {
-        Group & parentMesh = mesh.getShallowParent();
-        Group & parentStencilParentGroup = parentMesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
-        mesh.registerGroup( groupKeyStruct::stencilMeshGroupString(), &parentStencilParentGroup );
+        // There can be more than one FluxApproximation object so we check if the the group has
+        // already been registered.
+        if( !mesh.hasGroup( groupKeyStruct::stencilMeshGroupString() ) )
+        {
+          Group & parentMesh = mesh.getShallowParent();
+          Group & parentStencilParentGroup = parentMesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
+          mesh.registerGroup( groupKeyStruct::stencilMeshGroupString(), &parentStencilParentGroup );
+        }
       }
     } );
   } );
@@ -91,7 +102,7 @@ void FluxApproximationBase::initializePreSubGroups()
 
 void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -174,4 +185,4 @@ void FluxApproximationBase::setCoeffName( string const & name )
 }
 
 
-} //namespace geosx
+} //namespace geos

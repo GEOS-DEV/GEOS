@@ -19,47 +19,56 @@
 #include "FlowSolverBase.hpp"
 
 #include "constitutive/ConstitutivePassThru.hpp"
-#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseKernels.hpp"
+#include "physicsSolvers/NonlinearSolverParameters.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
 using namespace constitutive;
 
 template< typename POROUSWRAPPER_TYPE >
-void execute1( POROUSWRAPPER_TYPE porousWrapper,
-               CellElementSubRegion & subRegion,
-               arrayView1d< real64 const > const & pressure )
+void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE porousWrapper,
+                                                              CellElementSubRegion & subRegion,
+                                                              arrayView1d< real64 const > const & pressure,
+                                                              arrayView1d< real64 const > const & pressure_n,
+                                                              arrayView1d< real64 const > const & temperature,
+                                                              arrayView1d< real64 const > const & temperature_n )
 {
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
     {
-      porousWrapper.updateStateFromPressure( k, q,
-                                             pressure[k] );
+      porousWrapper.updateStateFromPressureAndTemperature( k, q,
+                                                           pressure[k],
+                                                           pressure_n[k],
+                                                           temperature[k],
+                                                           temperature_n[k] );
     }
   } );
 }
 
 template< typename POROUSWRAPPER_TYPE >
-void execute2( POROUSWRAPPER_TYPE porousWrapper,
-               SurfaceElementSubRegion & subRegion,
-               arrayView1d< real64 const > const & pressure,
-               arrayView1d< real64 const > const & oldHydraulicAperture,
-               arrayView1d< real64 const > const & newHydraulicAperture )
+void updatePorosityAndPermeabilityFromPressureAndAperture( POROUSWRAPPER_TYPE porousWrapper,
+                                                           SurfaceElementSubRegion & subRegion,
+                                                           arrayView1d< real64 const > const & pressure,
+                                                           arrayView1d< real64 const > const & oldHydraulicAperture,
+                                                           arrayView1d< real64 const > const & newHydraulicAperture )
 {
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
     {
@@ -75,19 +84,15 @@ FlowSolverBase::FlowSolverBase( string const & name,
                                 Group * const parent ):
   SolverBase( name, parent ),
   m_numDofPerCell( 0 ),
-  m_isThermal( 0 ),
-  m_fluxEstimate()
+  m_isThermal( 0 )
 {
   this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether the problem is thermal or not." );
 
-  this->registerWrapper( viewKeyStruct::inputFluxEstimateString(), &m_fluxEstimate ).
-    setApplyDefaultValue( 1.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Initial estimate of the input flux used only for residual scaling. This should be "
-                    "essentially equivalent to the input flux * dt." );
+  // allow the user to select a norm
+  getNonlinearSolverParameters().getWrapper< solverBaseKernels::NormType >( NonlinearSolverParameters::viewKeysStruct::normTypeString() ).setInputFlag( InputFlags::OPTIONAL );
 }
 
 void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
@@ -105,9 +110,9 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase & subRegion )
     {
-      subRegion.registerExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >( getName() ).
+      subRegion.registerField< fields::flow::gravityCoefficient >( getName() ).
         setApplyDefaultValue( 0.0 );
-      subRegion.registerExtrinsicData< extrinsicMeshData::flow::netToGross >( getName() );
+      subRegion.registerField< fields::flow::netToGross >( getName() );
     } );
 
     elemManager.forElementSubRegionsComplete< SurfaceElementSubRegion >( [&]( localIndex const,
@@ -117,20 +122,23 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
     {
       SurfaceElementRegion & faceRegion = dynamicCast< SurfaceElementRegion & >( region );
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >( getName() );
+      subRegion.registerField< fields::flow::gravityCoefficient >( getName() );
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::flow::aperture0 >( getName() ).
+      subRegion.registerField< fields::flow::aperture0 >( getName() ).
         setDefaultValue( faceRegion.getDefaultAperture() );
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::flow::hydraulicAperture >( getName() ).
+      subRegion.registerField< fields::flow::hydraulicAperture >( getName() ).
+        setDefaultValue( faceRegion.getDefaultAperture() );
+
+      subRegion.registerField< fields::flow::minimumHydraulicAperture >( getName() ).
         setDefaultValue( faceRegion.getDefaultAperture() );
 
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >( getName() ).
+    faceManager.registerField< fields::flow::gravityCoefficient >( getName() ).
       setApplyDefaultValue( 0.0 );
-    faceManager.registerExtrinsicData< extrinsicMeshData::flow::transMultiplier >( getName() );
+    faceManager.registerField< fields::flow::transMultiplier >( getName() );
 
   } );
 
@@ -144,8 +152,23 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
   {
 
     FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
-    fluxApprox.setFieldName( extrinsicMeshData::flow::pressure::key() );
-    fluxApprox.setCoeffName( extrinsicMeshData::permeability::permeability::key() );
+    fluxApprox.setFieldName( fields::flow::pressure::key() );
+    fluxApprox.setCoeffName( fields::permeability::permeability::key() );
+  }
+}
+
+void FlowSolverBase::saveConvergedState( ElementSubRegionBase & subRegion ) const
+{
+  arrayView1d< real64 const > const pres = subRegion.template getField< fields::flow::pressure >();
+  arrayView1d< real64 > const pres_n = subRegion.template getField< fields::flow::pressure_n >();
+  pres_n.setValues< parallelDevicePolicy<> >( pres );
+
+  if( subRegion.hasField< fields::flow::temperature >() &&
+      subRegion.hasField< fields::flow::temperature_n >() )
+  {
+    arrayView1d< real64 const > const temp = subRegion.template getField< fields::flow::temperature >();
+    arrayView1d< real64 > const temp_n = subRegion.template getField< fields::flow::temperature_n >();
+    temp_n.setValues< parallelDevicePolicy<> >( temp );
   }
 }
 
@@ -165,7 +188,7 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
 
   string & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   solidName = getConstitutiveName< CoupledSolidBase >( subRegion );
-  GEOSX_ERROR_IF( solidName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+  GEOS_ERROR_IF( solidName.empty(), GEOS_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
 
   subRegion.registerWrapper< string >( viewKeyStruct::permeabilityNamesString() ).
     setPlotLevel( PlotLevel::NOPLOT ).
@@ -174,7 +197,7 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
 
   string & permName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
   permName = getConstitutiveName< PermeabilityBase >( subRegion );
-  GEOSX_ERROR_IF( permName.empty(), GEOSX_FMT( "Permeability model not found on subregion {}", subRegion.getName() ) );
+  GEOS_ERROR_IF( permName.empty(), GEOS_FMT( "Permeability model not found on subregion {}", subRegion.getName() ) );
 
   if( m_isThermal )
   {
@@ -186,15 +209,15 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
                                          reference();
 
     solidInternalEnergyName = getConstitutiveName< SolidInternalEnergy >( subRegion );
-    GEOSX_THROW_IF( solidInternalEnergyName.empty(),
-                    GEOSX_FMT( "Solid internal energy model not found on subregion {}", subRegion.getName() ),
-                    InputError );
+    GEOS_THROW_IF( solidInternalEnergyName.empty(),
+                   GEOS_FMT( "Solid internal energy model not found on subregion {}", subRegion.getName() ),
+                   InputError );
   }
 }
 
 void FlowSolverBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
-  GEOSX_UNUSED_VAR( subRegion );
+  GEOS_UNUSED_VAR( subRegion );
 }
 
 void FlowSolverBase::initializePreSubGroups()
@@ -227,6 +250,53 @@ void FlowSolverBase::initializePreSubGroups()
   }
 }
 
+void FlowSolverBase::validatePoreVolumes( DomainPartition const & domain ) const
+{
+  real64 minPoreVolume = LvArray::NumericLimits< real64 >::max;
+  globalIndex numElemsBelowThreshold = 0;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          CellElementSubRegion const & subRegion )
+    {
+
+      string const & solidName = subRegion.template getReference< string >( viewKeyStruct::solidNamesString() );
+      CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+
+      arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
+      arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+
+      real64 minPoreVolumeInSubRegion = 0.0;
+      localIndex numElemsBelowThresholdInSubRegion = 0;
+
+      flowSolverBaseKernels::MinimumPoreVolumeKernel::
+        computeMinimumPoreVolume( subRegion.size(),
+                                  porosity,
+                                  volume,
+                                  minPoreVolumeInSubRegion,
+                                  numElemsBelowThresholdInSubRegion );
+
+      if( minPoreVolumeInSubRegion < minPoreVolume )
+      {
+        minPoreVolume = minPoreVolumeInSubRegion;
+      }
+      numElemsBelowThreshold += numElemsBelowThresholdInSubRegion;
+    } );
+  } );
+
+  minPoreVolume = MpiWrapper::min( minPoreVolume );
+  numElemsBelowThreshold = MpiWrapper::sum( numElemsBelowThreshold );
+
+  GEOS_LOG_RANK_0_IF( numElemsBelowThreshold > 0,
+                      GEOS_FMT( "\nWarning! The mesh contains {} elements with a pore volume below {} m^3."
+                                "\nThe minimum pore volume is {} m^3."
+                                "\nOur recommendation is to check the validity of mesh and/or increase the porosity in these elements.\n",
+                                numElemsBelowThreshold, flowSolverBaseKernels::poreVolumeThreshold, minPoreVolume ) );
+}
+
 void FlowSolverBase::initializePostInitialConditionsPreSubGroups()
 {
   SolverBase::initializePostInitialConditionsPreSubGroups();
@@ -253,7 +323,7 @@ void FlowSolverBase::precomputeData( MeshLevel & mesh,
     arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
 
     arrayView1d< real64 > const gravityCoef =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >();
+      subRegion.getField< fields::flow::gravityCoefficient >();
 
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
@@ -265,7 +335,7 @@ void FlowSolverBase::precomputeData( MeshLevel & mesh,
     arrayView2d< real64 const > const faceCenter = faceManager.faceCenter();
 
     arrayView1d< real64 > const gravityCoef =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >();
+      faceManager.getField< fields::flow::gravityCoefficient >();
 
     forAll< parallelHostPolicy >( faceManager.size(), [=] ( localIndex const kf )
     {
@@ -276,9 +346,13 @@ void FlowSolverBase::precomputeData( MeshLevel & mesh,
 
 void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const & pressure = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+  arrayView1d< real64 const > const & pressure = subRegion.getField< fields::flow::pressure >();
+  arrayView1d< real64 const > const & pressure_n = subRegion.getField< fields::flow::pressure_n >();
+
+  arrayView1d< real64 const > const & temperature = subRegion.getField< fields::flow::temperature >();
+  arrayView1d< real64 const > const & temperature_n = subRegion.getField< fields::flow::temperature_n >();
 
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
@@ -287,18 +361,19 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
 
-    execute1( porousWrapper, subRegion, pressure );
+    updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion, pressure, pressure_n, temperature, temperature_n );
+
   } );
 }
 
 void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const & pressure = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+  arrayView1d< real64 const > const & pressure = subRegion.getField< fields::flow::pressure >();
 
-  arrayView1d< real64 const > const newHydraulicAperture = subRegion.getExtrinsicData< extrinsicMeshData::flow::hydraulicAperture >();
-  arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getExtrinsicData< extrinsicMeshData::flow::aperture0 >();
+  arrayView1d< real64 const > const newHydraulicAperture = subRegion.getField< fields::flow::hydraulicAperture >();
+  arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getField< fields::flow::aperture0 >();
 
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.getConstitutiveModel< CoupledSolidBase >( solidName );
@@ -307,7 +382,7 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
 
-    execute2( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
+    updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
 
   } );
 }
@@ -340,7 +415,8 @@ void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & d
 
     arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
 
-    forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    // TODO: move to FlowSolverBaseKernels to make this function "protected"
+    forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const k = targetSet[i];
       targetSetMaxElevation.max( elemCenter[k][2] );
@@ -377,21 +453,23 @@ void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & )
   {
-    fsManager.apply< ElementSubRegionBase >( time + dt,
-                                             mesh,
-                                             FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
-                                             [&]( FieldSpecificationBase const & fs,
-                                                  string const &,
-                                                  SortedArrayView< localIndex const > const & targetSet,
-                                                  ElementSubRegionBase & subRegion,
-                                                  string const & )
+    fsManager.apply< ElementSubRegionBase,
+                     SourceFluxBoundaryCondition >( time + dt,
+                                                    mesh,
+                                                    SourceFluxBoundaryCondition::catalogName(),
+                                                    [&]( SourceFluxBoundaryCondition const & fs,
+                                                         string const &,
+                                                         SortedArrayView< localIndex const > const & targetSet,
+                                                         ElementSubRegionBase & subRegion,
+                                                         string const & )
     {
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
+      // TODO: move to FlowSolverBaseKernels to make this function "protected"
       // loop over all the elements of this target set
       RAJA::ReduceSum< ReducePolicy< parallelDevicePolicy<> >, localIndex > localSetSize( 0 );
       forAll< parallelDevicePolicy<> >( targetSet.size(),
-                                        [targetSet, ghostRank, localSetSize] GEOSX_HOST_DEVICE ( localIndex const k )
+                                        [targetSet, ghostRank, localSetSize] GEOS_HOST_DEVICE ( localIndex const k )
       {
         localIndex const ei = targetSet[k];
         if( ghostRank[ei] < 0 )
@@ -417,7 +495,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
                                                 real64 const & dt,
                                                 DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
@@ -465,17 +543,17 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
 
     AquiferBoundaryCondition::KernelWrapper aquiferBCWrapper = bc.createKernelWrapper();
 
-    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >
-    pressure = elemManager.constructExtrinsicAccessor< extrinsicMeshData::flow::pressure >();
-    pressure.setName( getName() + "/accessors/" + extrinsicMeshData::flow::pressure::key() );
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > pressure =
+      elemManager.constructFieldAccessor< fields::flow::pressure >();
+    pressure.setName( getName() + "/accessors/" + fields::flow::pressure::key() );
 
-    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >
-    pressure_n = elemManager.constructExtrinsicAccessor< extrinsicMeshData::flow::pressure_n >();
-    pressure_n.setName( getName() + "/accessors/" + extrinsicMeshData::flow::pressure_n::key() );
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > pressure_n =
+      elemManager.constructFieldAccessor< fields::flow::pressure_n >();
+    pressure_n.setName( getName() + "/accessors/" + fields::flow::pressure_n::key() );
 
-    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >
-    gravCoef = elemManager.constructExtrinsicAccessor< extrinsicMeshData::flow::gravityCoefficient >();
-    gravCoef.setName( getName() + "/accessors/" + extrinsicMeshData::flow::gravityCoefficient::key() );
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > gravCoef =
+      elemManager.constructFieldAccessor< fields::flow::gravityCoefficient >();
+    gravCoef.setName( getName() + "/accessors/" + fields::flow::gravityCoefficient::key() );
 
     real64 const targetSetSumFluxes =
       fluxKernelsHelper::AquiferBCKernel::sumFluxes( stencil,
@@ -504,13 +582,13 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
 
     if( bc.getLogLevel() >= 1 )
     {
-      GEOSX_LOG_RANK_0( GEOSX_FMT( string( "FlowSolverBase {}: at time {}s, " )
-                                   + string( "the <{}> boundary condition '{}' produces a flux of {} kg (or moles if useMass=0). " ),
-                                   getName(), time+dt, AquiferBoundaryCondition::catalogName(), bc.getName(), dt * globalSumFluxes[aquiferIndex] ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( string( "FlowSolverBase {}: at time {}s, " )
+                                 + string( "the <{}> boundary condition '{}' produces a flux of {} kg (or moles if useMass=0). " ),
+                                 getName(), time+dt, AquiferBoundaryCondition::catalogName(), bc.getName(), dt * globalSumFluxes[aquiferIndex] ) );
     }
     bc.saveConvergedState( dt * globalSumFluxes[aquiferIndex] );
   } );
 }
 
 
-} // namespace geosx
+} // namespace geos

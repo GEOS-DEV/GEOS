@@ -24,7 +24,12 @@
       proppantSolverName="ProppantTransport"
       flowSolverName="SinglePhaseFVM"
       targetRegions="{ Fracture }"
-      logLevel="1"/>
+      logLevel="1">
+      <NonlinearSolverParameters
+        newtonMaxIter="8"
+	lineSearchAction="None"  	  
+        couplingType="Sequential"/>
+    </FlowProppantTransport>
 
     <SinglePhaseProppantFVM
       name="SinglePhaseFVM"
@@ -174,7 +179,6 @@
     <SourceFlux
       name="left1a"
       objectPath="ElementRegions/Fracture"
-      fieldName="pressure"
       scale="-0.42"
       component="0"
       setNames="{ left }"/>

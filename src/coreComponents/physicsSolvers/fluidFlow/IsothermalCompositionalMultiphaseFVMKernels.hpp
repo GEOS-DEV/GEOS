@@ -16,31 +16,33 @@
  * @file IsothermalCompositionalMultiphaseFVMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 
+#include "codingUtilities/Utilities.hpp"
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/capillaryPressure/CapillaryPressureExtrinsicData.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
-#include "constitutive/fluid/MultiFluidBase.hpp"
-#include "constitutive/fluid/MultiFluidExtrinsicData.hpp"
-#include "constitutive/fluid/multiFluidSelector.hpp"
-#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
+#include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
-#include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernelUtilities.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace isothermalCompositionalMultiphaseFVMKernels
@@ -77,17 +79,17 @@ public:
                        MultiFluidBase const & fluid,
                        RelativePermeabilityBase const & relperm )
     : Base(),
-    m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
-    m_dPhaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction >() ),
-    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
+    m_phaseVolFrac( subRegion.getField< fields::flow::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac( subRegion.getField< fields::flow::dPhaseVolumeFraction >() ),
+    m_dCompFrac_dCompDens( subRegion.getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseDens( fluid.phaseDensity() ),
     m_dPhaseDens( fluid.dPhaseDensity() ),
     m_phaseVisc( fluid.phaseViscosity() ),
     m_dPhaseVisc( fluid.dPhaseViscosity() ),
     m_phaseRelPerm( relperm.phaseRelPerm() ),
     m_dPhaseRelPerm_dPhaseVolFrac( relperm.dPhaseRelPerm_dPhaseVolFraction() ),
-    m_phaseMob( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseMobility >() ),
-    m_dPhaseMob( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility >() )
+    m_phaseMob( subRegion.getField< fields::flow::phaseMobility >() ),
+    m_dPhaseMob( subRegion.getField< fields::flow::dPhaseMobility >() )
   {}
 
   /**
@@ -96,10 +98,10 @@ public:
    * @param[in] ei the element index
    * @param[in] phaseMobilityKernelOp the function used to customize the kernel
    */
-  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
-  GEOSX_HOST_DEVICE
+  template< typename FUNC = NoOpFunc >
+  GEOS_HOST_DEVICE
   void compute( localIndex const ei,
-                FUNC && phaseMobilityKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                FUNC && phaseMobilityKernelOp = NoOpFunc{} ) const
   {
     using Deriv = multifluid::DerivativeOffset;
 
@@ -276,29 +278,29 @@ public:
   using DofNumberAccessor = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
 
   using CompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::ghostRank,
-                      extrinsicMeshData::flow::gravityCoefficient,
-                      extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity,
-                      extrinsicMeshData::flow::dPhaseVolumeFraction,
-                      extrinsicMeshData::flow::phaseMobility,
-                      extrinsicMeshData::flow::dPhaseMobility >;
+    StencilAccessors< fields::ghostRank,
+                      fields::flow::gravityCoefficient,
+                      fields::flow::pressure,
+                      fields::flow::dGlobalCompFraction_dGlobalCompDensity,
+                      fields::flow::dPhaseVolumeFraction,
+                      fields::flow::phaseMobility,
+                      fields::flow::dPhaseMobility >;
   using MultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
-                              extrinsicMeshData::multifluid::phaseMassDensity,
-                              extrinsicMeshData::multifluid::dPhaseMassDensity,
-                              extrinsicMeshData::multifluid::phaseCompFraction,
-                              extrinsicMeshData::multifluid::dPhaseCompFraction >;
+                              fields::multifluid::phaseMassDensity,
+                              fields::multifluid::dPhaseMassDensity,
+                              fields::multifluid::phaseCompFraction,
+                              fields::multifluid::dPhaseCompFraction >;
 
   using CapPressureAccessors =
     StencilMaterialAccessors< CapillaryPressureBase,
-                              extrinsicMeshData::cappres::phaseCapPressure,
-                              extrinsicMeshData::cappres::dPhaseCapPressure_dPhaseVolFraction >;
+                              fields::cappres::phaseCapPressure,
+                              fields::cappres::dPhaseCapPressure_dPhaseVolFraction >;
 
   using PermeabilityAccessors =
     StencilMaterialAccessors< PermeabilityBase,
-                              extrinsicMeshData::permeability::permeability,
-                              extrinsicMeshData::permeability::dPerm_dPressure >;
+                              fields::permeability::permeability,
+                              fields::permeability::dPerm_dPressure >;
 
   /**
    * @brief Constructor for the kernel interface
@@ -474,7 +476,7 @@ public:
      * @param[in] size size of the stencil for this connection
      * @param[in] numElems number of elements for this connection
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
       : stencilSize( size ),
       numConnectedElems( numElems ),
@@ -514,7 +516,8 @@ public:
    * @param[in] iconn the connection index
    * @return the size of the stencil at this connection
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   localIndex stencilSize( localIndex const iconn ) const
   { return m_sei[iconn].size(); }
 
@@ -523,7 +526,8 @@ public:
    * @param[in] iconn the connection index
    * @return the number of elements at this connection
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   localIndex numPointsInFlux( localIndex const iconn ) const
   { return m_stencilWrapper.numPointsInFlux( iconn ); }
 
@@ -533,7 +537,8 @@ public:
    * @param[in] iconn the connection index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   void setup( localIndex const iconn,
               StackVariables & stack ) const
   {
@@ -556,14 +561,13 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
    */
-  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
-  GEOSX_HOST_DEVICE
+  template< typename FUNC = NoOpFunc >
+  GEOS_HOST_DEVICE
+  inline
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
-                    FUNC && compFluxKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                    FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
-    using Deriv = multifluid::DerivativeOffset;
-
     // first, compute the transmissibilities at this face
     m_stencilWrapper.computeWeights( iconn,
                                      m_permeability,
@@ -599,197 +603,50 @@ public:
         for( integer ip = 0; ip < m_numPhases; ++ip )
         {
           // create local work arrays
-          real64 densMean = 0.0;
-          real64 dDensMean_dP[numFluxSupportPoints]{};
-          real64 dDensMean_dC[numFluxSupportPoints][numComp]{};
-
+          real64 potGrad = 0.0;
           real64 phaseFlux = 0.0;
           real64 dPhaseFlux_dP[numFluxSupportPoints]{};
           real64 dPhaseFlux_dC[numFluxSupportPoints][numComp]{};
 
-          real64 presGrad = 0.0;
-          real64 dPresGrad_dP[numFluxSupportPoints]{};
-          real64 dPresGrad_dC[numFluxSupportPoints][numComp]{};
+          localIndex k_up = -1;
 
-          real64 gravHead = 0.0;
-          real64 dGravHead_dP[numFluxSupportPoints]{};
-          real64 dGravHead_dC[numFluxSupportPoints][numComp]{};
+          isothermalCompositionalMultiphaseFVMKernelUtilities::
+            FluxUtilities::
+            computePPUPhaseFlux< numComp, numFluxSupportPoints >
+            ( m_numPhases,
+            ip,
+            m_hasCapPressure,
+            seri, sesri, sei,
+            trans,
+            dTrans_dPres,
+            m_pres,
+            m_gravCoef,
+            m_phaseMob, m_dPhaseMob,
+            m_dPhaseVolFrac,
+            m_dCompFrac_dCompDens,
+            m_phaseMassDens, m_dPhaseMassDens,
+            m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
+            k_up,
+            potGrad,
+            phaseFlux,
+            dPhaseFlux_dP,
+            dPhaseFlux_dC );
 
-          real64 dCapPressure_dC[numComp]{};
-
-          // Working array
-          real64 dProp_dC[numComp]{};
-
-          // calculate quantities on primary connected cells
-          for( integer i = 0; i < numFluxSupportPoints; ++i )
-          {
-            localIndex const er  = seri[i];
-            localIndex const esr = sesri[i];
-            localIndex const ei  = sei[i];
-
-            // density
-            real64 const density  = m_phaseMassDens[er][esr][ei][0][ip];
-            real64 const dDens_dP = m_dPhaseMassDens[er][esr][ei][0][ip][Deriv::dP];
-
-            applyChainRule( numComp,
-                            m_dCompFrac_dCompDens[er][esr][ei],
-                            m_dPhaseMassDens[er][esr][ei][0][ip],
-                            dProp_dC,
-                            Deriv::dC );
-
-            // average density and derivatives
-            densMean += 0.5 * density;
-            dDensMean_dP[i] = 0.5 * dDens_dP;
-            for( integer jc = 0; jc < numComp; ++jc )
-            {
-              dDensMean_dC[i][jc] = 0.5 * dProp_dC[jc];
-            }
-          }
-
-          /// compute the TPFA potential difference
-          for( integer i = 0; i < numFluxSupportPoints; i++ )
-          {
-            localIndex const er  = seri[i];
-            localIndex const esr = sesri[i];
-            localIndex const ei  = sei[i];
-
-            // capillary pressure
-            real64 capPressure     = 0.0;
-            real64 dCapPressure_dP = 0.0;
-
-            for( integer ic = 0; ic < numComp; ++ic )
-            {
-              dCapPressure_dC[ic] = 0.0;
-            }
-
-            if( m_hasCapPressure )
-            {
-              capPressure = m_phaseCapPressure[er][esr][ei][0][ip];
-
-              for( integer jp = 0; jp < m_numPhases; ++jp )
-              {
-                real64 const dCapPressure_dS = m_dPhaseCapPressure_dPhaseVolFrac[er][esr][ei][0][ip][jp];
-                dCapPressure_dP += dCapPressure_dS * m_dPhaseVolFrac[er][esr][ei][jp][Deriv::dP];
-
-                for( integer jc = 0; jc < numComp; ++jc )
-                {
-                  dCapPressure_dC[jc] += dCapPressure_dS * m_dPhaseVolFrac[er][esr][ei][jp][Deriv::dC+jc];
-                }
-              }
-            }
-
-            presGrad += trans[i] * (m_pres[er][esr][ei] - capPressure);
-            dPresGrad_dP[i] += trans[i] * (1 - dCapPressure_dP)
-                               + dTrans_dPres[i] * (m_pres[er][esr][ei] - capPressure);
-            for( integer jc = 0; jc < numComp; ++jc )
-            {
-              dPresGrad_dC[i][jc] += -trans[i] * dCapPressure_dC[jc];
-            }
-
-            real64 const gravD     = trans[i] * m_gravCoef[er][esr][ei];
-            real64 const dGravD_dP = dTrans_dPres[i] * m_gravCoef[er][esr][ei];
-
-            // the density used in the potential difference is always a mass density
-            // unlike the density used in the phase mobility, which is a mass density
-            // if useMass == 1 and a molar density otherwise
-            gravHead += densMean * gravD;
-
-            // need to add contributions from both cells the mean density depends on
-            for( integer j = 0; j < numFluxSupportPoints; ++j )
-            {
-              dGravHead_dP[j] += dDensMean_dP[j] * gravD + dGravD_dP * densMean;
-              for( integer jc = 0; jc < numComp; ++jc )
-              {
-                dGravHead_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
-              }
-            }
-          }
-
-          // *** upwinding ***
-          // compute phase potential gradient
-          real64 const potGrad = presGrad - gravHead;
-
-          // choose upstream cell
-          localIndex const k_up = (potGrad >= 0) ? 0 : 1;
-
-          localIndex const er_up  = seri[k_up];
-          localIndex const esr_up = sesri[k_up];
-          localIndex const ei_up  = sei[k_up];
-
-          real64 const mobility = m_phaseMob[er_up][esr_up][ei_up][ip];
-
-          // skip the phase flux if phase not present or immobile upstream
-          if( LvArray::math::abs( mobility ) < 1e-20 ) // TODO better constant
-          {
-            continue;
-          }
-
-          // pressure gradient depends on all points in the stencil
-          for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
-          {
-            dPhaseFlux_dP[ke] += dPresGrad_dP[ke] - dGravHead_dP[ke];
-            dPhaseFlux_dP[ke] *= mobility;
-            for( integer jc = 0; jc < numComp; ++jc )
-            {
-              dPhaseFlux_dC[ke][jc] += dPresGrad_dC[ke][jc] - dGravHead_dC[ke][jc];
-              dPhaseFlux_dC[ke][jc] *= mobility;
-            }
-          }
-          // compute phase flux using upwind mobility.
-          phaseFlux = mobility * potGrad;
-
-          real64 const dMob_dP  = m_dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dP];
-          arraySlice1d< real64 const, compflow::USD_PHASE_DC - 2 > dPhaseMobSub =
-            m_dPhaseMob[er_up][esr_up][ei_up][ip];
-
-          // add contribution from upstream cell mobility derivatives
-          dPhaseFlux_dP[k_up] += dMob_dP * potGrad;
-          for( integer jc = 0; jc < numComp; ++jc )
-          {
-            dPhaseFlux_dC[k_up][jc] += dPhaseMobSub[Deriv::dC+jc] * potGrad;
-          }
-
-          // slice some constitutive arrays to avoid too much indexing in component loop
-          arraySlice1d< real64 const, multifluid::USD_PHASE_COMP-3 > phaseCompFracSub =
-            m_phaseCompFrac[er_up][esr_up][ei_up][0][ip];
-          arraySlice2d< real64 const, multifluid::USD_PHASE_COMP_DC-3 > dPhaseCompFracSub =
-            m_dPhaseCompFrac[er_up][esr_up][ei_up][0][ip];
-
-          // compute component fluxes and derivatives using upstream cell composition
-          for( integer ic = 0; ic < numComp; ++ic )
-          {
-            real64 const ycp = phaseCompFracSub[ic];
-            compFlux[ic] += phaseFlux * ycp;
-
-            // derivatives stemming from phase flux
-            for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
-            {
-              dCompFlux_dP[ke][ic] += dPhaseFlux_dP[ke] * ycp;
-              for( integer jc = 0; jc < numComp; ++jc )
-              {
-                dCompFlux_dC[ke][ic][jc] += dPhaseFlux_dC[ke][jc] * ycp;
-              }
-            }
-
-            // additional derivatives stemming from upstream cell phase composition
-            dCompFlux_dP[k_up][ic] += phaseFlux * dPhaseCompFracSub[ic][Deriv::dP];
-
-            // convert derivatives of comp fraction w.r.t. comp fractions to derivatives w.r.t. comp densities
-            applyChainRule( numComp,
-                            m_dCompFrac_dCompDens[er_up][esr_up][ei_up],
-                            dPhaseCompFracSub[ic],
-                            dProp_dC,
-                            Deriv::dC );
-            for( integer jc = 0; jc < numComp; ++jc )
-            {
-              dCompFlux_dC[k_up][ic][jc] += phaseFlux * dProp_dC[jc];
-            }
-          } // *** end of upwinding
+          isothermalCompositionalMultiphaseFVMKernelUtilities::
+            FluxUtilities::
+            computePhaseComponentFlux< numComp, numFluxSupportPoints >
+            ( ip,
+            k_up,
+            seri, sesri, sei,
+            m_phaseCompFrac, m_dPhaseCompFrac,
+            m_dCompFrac_dCompDens,
+            phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC,
+            compFlux, dCompFlux_dP, dCompFlux_dC );
 
           // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
           // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
           compFluxKernelOp( ip, k, seri, sesri, sei, connectionIndex,
-                            k_up, er_up, esr_up, ei_up, potGrad,
+                            k_up, seri[k_up], sesri[k_up], sei[k_up], potGrad,
                             phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
 
         } // loop over phases
@@ -828,11 +685,12 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
-  GEOSX_HOST_DEVICE
+  template< typename FUNC = NoOpFunc >
+  GEOS_HOST_DEVICE
+  inline
   void complete( localIndex const iconn,
                  StackVariables & stack,
-                 FUNC && assemblyKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                 FUNC && assemblyKernelOp = NoOpFunc{} ) const
   {
     using namespace compositionalMultiphaseUtilities;
 
@@ -852,8 +710,8 @@ public:
       {
         globalIndex const globalRow = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
         localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
-        GEOSX_ASSERT_GE( localRow, 0 );
-        GEOSX_ASSERT_GT( m_localMatrix.numRows(), localRow + numComp );
+        GEOS_ASSERT_GE( localRow, 0 );
+        GEOS_ASSERT_GT( m_localMatrix.numRows(), localRow + numComp );
 
         for( integer ic = 0; ic < numComp; ++ic )
         {
@@ -883,9 +741,8 @@ public:
   launch( localIndex const numConnections,
           KERNEL_TYPE const & kernelComponent )
   {
-    GEOSX_MARK_FUNCTION;
-
-    forAll< POLICY >( numConnections, [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+    GEOS_MARK_FUNCTION;
+    forAll< POLICY >( numConnections, [=] GEOS_HOST_DEVICE ( localIndex const iconn )
     {
       typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
                                                   kernelComponent.numPointsInFlux( iconn ) );
@@ -1072,10 +929,10 @@ public:
             dt,
             localMatrix,
             localRhs ),
-    m_facePres( faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >() ),
-    m_faceTemp( faceManager.getExtrinsicData< extrinsicMeshData::flow::faceTemperature >() ),
-    m_faceCompFrac( faceManager.getExtrinsicData< extrinsicMeshData::flow::faceGlobalCompFraction >() ),
-    m_faceGravCoef( faceManager.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >() ),
+    m_facePres( faceManager.getField< fields::flow::facePressure >() ),
+    m_faceTemp( faceManager.getField< fields::flow::faceTemperature >() ),
+    m_faceCompFrac( faceManager.getField< fields::flow::faceGlobalCompFraction >() ),
+    m_faceGravCoef( faceManager.getField< fields::flow::gravityCoefficient >() ),
     m_fluidWrapper( fluidWrapper )
   {}
 
@@ -1092,9 +949,9 @@ public:
      * @param[in] size size of the stencil for this connection
      * @param[in] numElems number of elements for this connection
      */
-    GEOSX_HOST_DEVICE
-    StackVariables( localIndex const GEOSX_UNUSED_PARAM( size ),
-                    localIndex GEOSX_UNUSED_PARAM( numElems ) )
+    GEOS_HOST_DEVICE
+    StackVariables( localIndex const GEOS_UNUSED_PARAM( size ),
+                    localIndex GEOS_UNUSED_PARAM( numElems ) )
     {}
 
     // Transmissibility
@@ -1127,7 +984,7 @@ public:
    * @param[in] iconn the connection index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const iconn,
               StackVariables & stack ) const
   {
@@ -1148,11 +1005,11 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
    */
-  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
-  GEOSX_HOST_DEVICE
+  template< typename FUNC = NoOpFunc >
+  GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
-                    FUNC && compFluxKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                    FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
     using Deriv = multifluid::DerivativeOffset;
     using Order = BoundaryStencil::Order;
@@ -1350,11 +1207,11 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
-  GEOSX_HOST_DEVICE
+  template< typename FUNC = NoOpFunc >
+  GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack,
-                 FUNC && assemblyKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                 FUNC && assemblyKernelOp = NoOpFunc{} ) const
   {
     using namespace compositionalMultiphaseUtilities;
     using Order = BoundaryStencil::Order;
@@ -1371,8 +1228,8 @@ public:
     {
       globalIndex const globalRow = m_dofNumber[m_seri( iconn, Order::ELEM )][m_sesri( iconn, Order::ELEM )][m_sei( iconn, Order::ELEM )];
       localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
-      GEOSX_ASSERT_GE( localRow, 0 );
-      GEOSX_ASSERT_GT( AbstractBase::m_localMatrix.numRows(), localRow + numComp );
+      GEOS_ASSERT_GE( localRow, 0 );
+      GEOS_ASSERT_GT( AbstractBase::m_localMatrix.numRows(), localRow + numComp );
 
       for( integer ic = 0; ic < numComp; ++ic )
       {
@@ -1497,30 +1354,31 @@ struct CFLFluxKernel
   using ElementView = ElementRegionManager::ElementView< VIEWTYPE >;
 
   using CompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::gravityCoefficient,
-                      extrinsicMeshData::flow::phaseVolumeFraction,
-                      extrinsicMeshData::flow::phaseOutflux,
-                      extrinsicMeshData::flow::componentOutflux >;
+    StencilAccessors< fields::flow::pressure,
+                      fields::flow::gravityCoefficient,
+                      fields::flow::phaseVolumeFraction,
+                      fields::flow::phaseOutflux,
+                      fields::flow::componentOutflux >;
 
   using MultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
-                              extrinsicMeshData::multifluid::phaseViscosity,
-                              extrinsicMeshData::multifluid::phaseDensity,
-                              extrinsicMeshData::multifluid::phaseMassDensity,
-                              extrinsicMeshData::multifluid::phaseCompFraction >;
+                              fields::multifluid::phaseViscosity,
+                              fields::multifluid::phaseDensity,
+                              fields::multifluid::phaseMassDensity,
+                              fields::multifluid::phaseCompFraction >;
 
   using PermeabilityAccessors =
     StencilMaterialAccessors< PermeabilityBase,
-                              extrinsicMeshData::permeability::permeability,
-                              extrinsicMeshData::permeability::dPerm_dPressure >;
+                              fields::permeability::permeability,
+                              fields::permeability::dPerm_dPressure >;
 
 
   using RelPermAccessors =
-    StencilMaterialAccessors< RelativePermeabilityBase, extrinsicMeshData::relperm::phaseRelPerm >;
+    StencilMaterialAccessors< RelativePermeabilityBase, fields::relperm::phaseRelPerm >;
 
   template< integer NC, localIndex NUM_ELEMS, localIndex maxStencilSize >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   static void
   compute( integer const numPhases,
            localIndex const stencilSize,
@@ -1571,7 +1429,8 @@ struct CFLKernel
   static constexpr real64 minComponentFraction = 1e-12;
 
   template< integer NP >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   static void
   computePhaseCFL( real64 const & poreVol,
                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac,
@@ -1582,7 +1441,8 @@ struct CFLKernel
                    real64 & phaseCFLNumber );
 
   template< integer NC >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   static void
   computeCompCFL( real64 const & poreVol,
                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > compDens,
@@ -1628,23 +1488,24 @@ struct AquiferBCKernel
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   using CompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::ghostRank,
-                      extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::pressure_n,
-                      extrinsicMeshData::flow::gravityCoefficient,
-                      extrinsicMeshData::flow::phaseVolumeFraction,
-                      extrinsicMeshData::flow::dPhaseVolumeFraction,
-                      extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >;
+    StencilAccessors< fields::ghostRank,
+                      fields::flow::pressure,
+                      fields::flow::pressure_n,
+                      fields::flow::gravityCoefficient,
+                      fields::flow::phaseVolumeFraction,
+                      fields::flow::dPhaseVolumeFraction,
+                      fields::flow::dGlobalCompFraction_dGlobalCompDensity >;
 
   using MultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
-                              extrinsicMeshData::multifluid::phaseDensity,
-                              extrinsicMeshData::multifluid::dPhaseDensity,
-                              extrinsicMeshData::multifluid::phaseCompFraction,
-                              extrinsicMeshData::multifluid::dPhaseCompFraction >;
+                              fields::multifluid::phaseDensity,
+                              fields::multifluid::dPhaseDensity,
+                              fields::multifluid::phaseCompFraction,
+                              fields::multifluid::dPhaseCompFraction >;
 
   template< integer NC >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   static void
     compute( integer const numPhases,
              integer const ipWater,
@@ -1695,7 +1556,7 @@ struct AquiferBCKernel
 
 } // namespace isothermalCompositionalMultiphaseFVMKernels
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP

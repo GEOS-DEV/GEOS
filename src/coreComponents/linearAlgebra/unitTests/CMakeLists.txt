@@ -1,6 +1,5 @@
 set( serial_tests
      LinearSolverParametersEnums
-     BlasLapack
      ComponentMask )
 
 set( parallel_tests
@@ -11,11 +10,7 @@ set( parallel_tests
 
 set( nranks 2 )
 
-set( dependencyList gtest linearAlgebra )
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
+set( dependencyList gtest linearAlgebra ${parallelDeps} )
 
 foreach(test_name ${serial_tests})
   set( exec_name test${test_name} )

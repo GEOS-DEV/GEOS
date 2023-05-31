@@ -37,6 +37,11 @@ if [[ -z "${GEOSX_DIR}" ]]; then
   exit 1
 fi
 
+GEOSX_INSTALL_SCHEMA=1
+if [[ "$*" == *--disable-schema-deployment* ]]; then
+  GEOSX_INSTALL_SCHEMA=0
+fi  
+
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
 #
 # OpenMPI prevents from running as `root` user by default.
@@ -56,7 +61,9 @@ or_die python3 scripts/config-build.py \
                -bt ${CMAKE_BUILD_TYPE} \
                -bp ${GEOSX_BUILD_DIR} \
                -ip ${GEOSX_DIR} \
-               -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"'
+               --ninja \
+               -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
+               -DGEOSX_INSTALL_SCHEMA=${GEOSX_INSTALL_SCHEMA}
 
 or_die cd ${GEOSX_BUILD_DIR}
 
@@ -75,24 +82,15 @@ fi
 # "Make" target check (builds geosx executable target only if true)
 # Use one process to prevent out-of-memory error
 if [[ "$*" == *--build-exe-only* ]]; then
-  or_die make -j $(nproc) geosx
+  or_die ninja -j $(nproc) geosx
 else
-  or_die make -j $(nproc) geosx
-  make -j $(nproc)
-  or_die make -j 2
-
-  # Verbosity check for installation to prevent hitting Travis log limit
-  if [[ "$*" == *--reduce-install-logs* ]]; then
-    or_die make install
-  else
-    or_die make install
-  fi
+  or_die ninja -j $(nproc)
+  or_die ninja install
 fi
 
 # Unit tests (excluding previously ran checks)
 if [[ "$*" != *--disable-unit-tests* ]]; then
   or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
 fi
-
 
 exit 0

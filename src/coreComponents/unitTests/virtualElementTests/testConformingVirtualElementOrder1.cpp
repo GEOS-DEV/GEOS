@@ -24,16 +24,16 @@
 // TPL includes
 #include "gtest/gtest.h"
 
-using namespace geosx;
+using namespace geos;
 using namespace finiteElement;
-using namespace geosx::testing;
+using namespace geos::testing;
 
 CommandLineOptions g_commandLineOptions;
-constexpr real64 absTol = geosx::testing::DEFAULT_ABS_TOL;
-constexpr real64 relTol = geosx::testing::DEFAULT_REL_TOL*10;
+constexpr real64 absTol = geos::testing::DEFAULT_ABS_TOL;
+constexpr real64 relTol = geos::testing::DEFAULT_REL_TOL*10;
 
 template< typename VEM >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 static void checkIntegralMeanConsistency( FiniteElementBase const & feBase,
                                           typename VEM::StackVariables const & stack,
                                           real64 & sumBasisFunctions )
@@ -51,7 +51,7 @@ static void checkIntegralMeanConsistency( FiniteElementBase const & feBase,
 }
 
 template< typename VEM >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 static void
 checkIntegralMeanDerivativesConsistency( FiniteElementBase const & feBase,
                                          typename VEM::StackVariables const & stack,
@@ -80,7 +80,7 @@ checkIntegralMeanDerivativesConsistency( FiniteElementBase const & feBase,
 }
 
 template< typename VEM >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 static void
 checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
                                                    nodes::REFERENCE_POSITION_USD > const & nodesCoords,
@@ -124,7 +124,9 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
 
   stackArray1d< real64, VEM::numNodes > stabTimeMonomialDofs( numCellPoints );
   real64 stabilizationMatrix[maxSupportPoints][maxSupportPoints]{};
-  feBase.template addGradGradStabilizationMatrix< VEM >( stack, stabilizationMatrix );
+  feBase.template addGradGradStabilizationMatrix< VEM, 1, false >( stack,
+
+                                                                   stabilizationMatrix );
   stabTimeMonomialDofsNorm( 0 ) = 0.0;
   for( localIndex i = 0; i < numCellPoints; ++i )
   {
@@ -154,7 +156,7 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
 }
 
 template< typename VEM >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 static void checkSumOfQuadratureWeights( typename VEM::StackVariables stack,
                                          real64 & sumOfQuadratureWeights )
 {
@@ -211,7 +213,7 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   arrayView2d< real64 > stabTimeMonomialDofsNormView = stabTimeMonomialDofsNorm.toView();
 
   // Loop over cells on the device.
-  forAll< parallelDevicePolicy< > >( numCells, [=] GEOSX_HOST_DEVICE
+  forAll< parallelDevicePolicy< > >( numCells, [=] GEOS_HOST_DEVICE
                                        ( localIndex const cellIndex )
   {
     typename VEM::StackVariables stack;
@@ -281,9 +283,9 @@ TEST( ConformingVirtualElementOrder1, hexahedra )
   xmlWrapper::xmlResult xmlResult = inputFile.load_buffer( inputStream.c_str(), inputStream.size());
   if( !xmlResult )
   {
-    GEOSX_LOG_RANK_0( "XML parsed with errors!" );
-    GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+    GEOS_LOG_RANK_0( "XML parsed with errors!" );
+    GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
+    GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
   xmlWrapper::xmlNode xmlProblemNode = inputFile.child( dataRepository::keys::ProblemManager );
 
@@ -334,9 +336,9 @@ TEST( ConformingVirtualElementOrder1, wedges )
   xmlWrapper::xmlResult xmlResult = inputFile.load_buffer( inputStream.c_str(), inputStream.size());
   if( !xmlResult )
   {
-    GEOSX_LOG_RANK_0( "XML parsed with errors!" );
-    GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+    GEOS_LOG_RANK_0( "XML parsed with errors!" );
+    GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
+    GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
   xmlWrapper::xmlNode xmlProblemNode = inputFile.child( dataRepository::keys::ProblemManager );
 
@@ -364,8 +366,8 @@ TEST( ConformingVirtualElementOrder1, wedges )
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-  g_commandLineOptions = *geosx::basicSetup( argc, argv );
+  g_commandLineOptions = *geos::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
-  geosx::basicCleanup();
+  geos::basicCleanup();
   return result;
 }

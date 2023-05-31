@@ -25,7 +25,7 @@
 #include "LvArray/src/tensorOps.hpp"
 #include "common/MpiWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -79,17 +79,69 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
 
 void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
 {
+  localIndex const num2dElements = faceBlock.num2dElements();
   resize( faceBlock.num2dElements() );
 
   m_toNodesRelation.base() = faceBlock.get2dElemToNodes();
   m_toEdgesRelation.base() = faceBlock.get2dElemToEdges();
 
-  auto elem2dToElems = faceBlock.get2dElemToElems();
+  // `FaceBlockABC` is designed to be heterogeneous.
+  // `FaceElementSubRegion` inherits from `ElementSubRegionBase` which is meant to be homogeneous.
+  // But `FaceElementSubRegion` is sometimes used as an heterogeneous sub region,
+  // which emphasizes the need of a refactoring.
+  // In the meantime, we try to fill the face block into the sub region and hope for the best...
+  {
+    auto const f = []( integer allSizes ) -> ElementType
+    {
+      if( allSizes == 6 )
+      {
+        return ElementType::Wedge;
+      }
+      else if( allSizes == 8 )
+      {
+        return ElementType::Hexahedron;
+      }
+      else
+      {
+        GEOS_ERROR( "Unsupported type of elements during the face element sub region creation." );
+        return {};
+      }
+    };
+
+    // Checking if all the 2d elements are homogeneous.
+    // We rely on the number of nodes for each element to find out.
+    std::vector< integer > sizes( num2dElements );
+    for( int i = 0; i < num2dElements; ++i )
+    {
+      sizes[i] = m_toNodesRelation[i].size();
+    }
+    std::set< integer > const s( sizes.cbegin(), sizes.cend() );
+
+    if( s.size() > 1 )
+    {
+      // If we have found that the input face block contains 2d elements of different types,
+      // we inform the used that the situation may be at risk.
+      // (We're storing the face block in a homogeneous container while it's actually heterogeneous).
+      GEOS_WARNING( "Heterogeneous face element sub region found and stored as homogeneous. Use at your own risk." );
+    }
+
+    auto const it = std::max_element( s.cbegin(), s.cend() );
+    integer const maxSize = *it;
+    m_elementType = f( maxSize );
+    m_numNodesPerElement = maxSize;
+  }
+
+  // The `m_surfaceElementsToCells` mappings involves element, sub regions and regions indices.
+  // We store the element indices that are correct.
+  // But we only have access to the cell block indices, not the sub regions indices.
+  // Temporarily, and also because they share the same dimensions,
+  // we store the cell block mapping at the sub region mapping location.
+  // It will later be transformed into a sub regions mapping.
+  // Last, we fill the regions mapping with dummy -1 values that should all be replaced eventually.
+  auto const elem2dToElems = faceBlock.get2dElemToElems();
   m_surfaceElementsToCells.m_toElementIndex = elem2dToElems.toCellIndex;
   m_surfaceElementsToCells.m_toElementSubRegion = elem2dToElems.toBlockIndex;
-  // TODO We are hard coding the values of the regions here.
-  //      This is work in progress and we'll correct this soon.
-  m_surfaceElementsToCells.m_toElementRegion.setValues< serialPolicy >( 0 );
+  m_surfaceElementsToCells.m_toElementRegion.setValues< serialPolicy >( -1 );
 
   m_toFacesRelation.base() = faceBlock.get2dElemToFaces();
 
@@ -123,7 +175,7 @@ void FaceElementSubRegion::calculateSingleElementGeometricQuantities( localIndex
   m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
 }
 
-void FaceElementSubRegion::calculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+void FaceElementSubRegion::calculateElementGeometricQuantities( NodeManager const & GEOS_UNUSED_PARAM( nodeManager ),
                                                                 FaceManager const & faceManager )
 {
   arrayView1d< real64 const > const & faceArea = faceManager.faceArea();
@@ -196,13 +248,13 @@ localIndex FaceElementSubRegion::packUpDownMapsImpl( buffer_unit_type * & buffer
 localIndex FaceElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                                    localIndex_array & packList,
                                                    bool const overwriteUpMaps,
-                                                   bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
+                                                   bool const GEOS_UNUSED_PARAM( overwriteDownMaps ) )
 {
   localIndex unPackedSize = 0;
 
   string nodeListString;
   unPackedSize += bufferOps::Unpack( buffer, nodeListString );
-  GEOSX_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString() );
+  GEOS_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString() );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toNodesRelation,
@@ -214,7 +266,7 @@ localIndex FaceElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & bu
 
   string edgeListString;
   unPackedSize += bufferOps::Unpack( buffer, edgeListString );
-  GEOSX_ERROR_IF_NE( edgeListString, viewKeyStruct::edgeListString() );
+  GEOS_ERROR_IF_NE( edgeListString, viewKeyStruct::edgeListString() );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toEdgesRelation,
@@ -225,7 +277,7 @@ localIndex FaceElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & bu
 
   string faceListString;
   unPackedSize += bufferOps::Unpack( buffer, faceListString );
-  GEOSX_ERROR_IF_NE( faceListString, viewKeyStruct::faceListString() );
+  GEOS_ERROR_IF_NE( faceListString, viewKeyStruct::faceListString() );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation.base(),
@@ -236,7 +288,7 @@ localIndex FaceElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & bu
 
   string elementListString;
   unPackedSize += bufferOps::Unpack( buffer, elementListString );
-  GEOSX_ERROR_IF_NE( elementListString, viewKeyStruct::surfaceElementsToCellRegionsString() );
+  GEOS_ERROR_IF_NE( elementListString, viewKeyStruct::surfaceElementsToCellRegionsString() );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_surfaceElementsToCells,
@@ -273,4 +325,4 @@ void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const & f
   }
 }
 
-} /* namespace geosx */
+} /* namespace geos */

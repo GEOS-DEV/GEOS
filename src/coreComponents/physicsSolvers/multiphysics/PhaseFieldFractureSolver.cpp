@@ -22,13 +22,12 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"
+#include "finiteElement/FiniteElementDispatch.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
-#include "physicsSolvers/simplePDE/PhaseFieldDamageFEM.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -36,102 +35,7 @@ using namespace constitutive;
 
 PhaseFieldFractureSolver::PhaseFieldFractureSolver( const string & name,
                                                     Group * const parent ):
-  SolverBase( name, parent ),
-  m_solidSolverName(),
-  m_damageSolverName(),
-  m_couplingTypeOption( CouplingTypeOption::FixedStress )
-
-{
-  registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription(
-    "Name of the solid mechanics solver to use in the PhaseFieldFracture solver" );
-
-  registerWrapper( viewKeyStruct::damageSolverNameString(), &m_damageSolverName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription(
-    "Name of the damage mechanics solver to use in the PhaseFieldFracture solver" );
-
-  registerWrapper( viewKeyStruct::couplingTypeOptionString(), &m_couplingTypeOption ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Coupling option. Valid options:\n* " + EnumStrings< CouplingTypeOption >::concat( "\n* " ) );
-
-  registerWrapper( viewKeyStruct::subcyclingOptionString(), &m_subcyclingOption ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "turn on subcycling on each load step" );
-
-}
-
-void PhaseFieldFractureSolver::registerDataOnMesh( Group & meshBodies )
-{
-  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                                    MeshLevel & meshLevel,
-                                                    arrayView1d< string const > const & )
-  {
-    ElementRegionManager & elemManager = meshLevel.getElemManager();
-
-    elemManager.forElementSubRegions< CellElementSubRegion,
-                                      FaceElementSubRegion >( [&] ( auto & elementSubRegion )
-    {
-      elementSubRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::totalMeanStressString() ).
-        setDescription( "Total Mean Stress" );
-      elementSubRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::oldTotalMeanStressString() ).
-        setDescription( "Total Mean Stress" );
-    } );
-  } );
-}
-
-void PhaseFieldFractureSolver::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                                  real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                                  DomainPartition & domain )
-{
-  GEOSX_MARK_FUNCTION;
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
-  {
-
-    ElementRegionManager & elemManager = mesh.getElemManager();
-
-    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const totalMeanStress =
-      elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::totalMeanStressString() );
-
-    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > oldTotalMeanStress =
-      elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::oldTotalMeanStressString() );
-
-    //***** loop over all elements and initialize the derivative arrays *****
-    forAllElemsInMesh( mesh, [ &]( localIndex const er, localIndex const esr, localIndex const k )
-    {
-      oldTotalMeanStress[er][esr][k] = totalMeanStress[er][esr][k];
-    } );
-  } );
-}
-
-void PhaseFieldFractureSolver::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                                     DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
-{}
-
-void PhaseFieldFractureSolver::postProcessInput()
-{
-  if( m_couplingTypeOption == CouplingTypeOption::FixedStress )
-  {
-    // For this coupled solver the minimum number of Newton Iter should be 0 for both flow and solid solver otherwise it
-    // will never converge.
-    SolidMechanicsLagrangianFEM &
-    solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
-    integer & minNewtonIterSolid = solidSolver.getNonlinearSolverParameters().m_minIterNewton;
-
-    PhaseFieldDamageFEM &
-    damageSolver = this->getParent().getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
-    integer & minNewtonIterFluid = damageSolver.getNonlinearSolverParameters().m_minIterNewton;
-
-    minNewtonIterSolid = 0;
-    minNewtonIterFluid = 0;
-  }
-}
-
-void PhaseFieldFractureSolver::initializePostInitialConditionsPreSubGroups()
+  Base( name, parent )
 {}
 
 PhaseFieldFractureSolver::~PhaseFieldFractureSolver()
@@ -139,233 +43,69 @@ PhaseFieldFractureSolver::~PhaseFieldFractureSolver()
   // TODO Auto-generated destructor stub
 }
 
-void PhaseFieldFractureSolver::resetStateToBeginningOfStep( DomainPartition & domain )
+void PhaseFieldFractureSolver::postProcessInput()
 {
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
-  {
-    ElementRegionManager & elemManager = mesh.getElemManager();
-
-    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const totalMeanStress =
-      elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::totalMeanStressString() );
-
-    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > oldTotalMeanStress =
-      elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::oldTotalMeanStressString() );
-
-    //***** loop over all elements and initialize the derivative arrays *****
-    forAllElemsInMesh( mesh, [ &]( localIndex const er,
-                                   localIndex const esr,
-                                   localIndex const k )
-    {
-      totalMeanStress[er][esr][k] = oldTotalMeanStress[er][esr][k];
-    } );
-  } );
+  Base::postProcessInput();
+  GEOS_WARNING_IF( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::FullyImplicit,
+                   "FullyImplicit coupling not implemented for this solver. A sequential coupling approach will be used." );
+  getNonlinearSolverParameters().m_couplingType = NonlinearSolverParameters::CouplingType::Sequential;
 }
 
-real64 PhaseFieldFractureSolver::solverStep( real64 const & time_n,
-                                             real64 const & dt,
-                                             int const cycleNumber,
-                                             DomainPartition & domain )
-{
-  GEOSX_MARK_FUNCTION;
-  real64 dtReturn = dt;
-  if( m_couplingTypeOption == CouplingTypeOption::FixedStress )
-  {
-    dtReturn = splitOperatorStep( time_n, dt, cycleNumber, domain );
-  }
-  else if( m_couplingTypeOption == CouplingTypeOption::TightlyCoupled )
-  {
-    GEOSX_ERROR( "CouplingTypeOption::FullyImplicit not yet implemented" );
-  }
-  return dtReturn;
-}
-
-real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
-                                                    real64 const & dt,
-                                                    integer const cycleNumber,
-                                                    DomainPartition & domain )
-{
-  GEOSX_MARK_FUNCTION;
-  real64 dtReturn = dt;
-  real64 dtReturnTemporary;
-
-  SolidMechanicsLagrangianFEM &
-  solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
-
-  PhaseFieldDamageFEM &
-  damageSolver = this->getParent().getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
-
-  damageSolver.setupSystem( domain,
-                            damageSolver.getDofManager(),
-                            damageSolver.getLocalMatrix(),
-                            damageSolver.getSystemRhs(),
-                            damageSolver.getSystemSolution(),
-                            true );
-
-  solidSolver.setupSystem( domain,
-                           solidSolver.getDofManager(),
-                           solidSolver.getLocalMatrix(),
-                           solidSolver.getSystemRhs(),
-                           solidSolver.getSystemSolution() );
-
-  damageSolver.implicitStepSetup( time_n, dt, domain );
-
-  solidSolver.implicitStepSetup( time_n, dt, domain );
-
-  this->implicitStepSetup( time_n, dt, domain );
-
-  NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
-  integer & iter = solverParams.m_numNewtonIterations;
-  iter = 0;
-  bool isConverged = false;
-  while( iter < solverParams.m_maxIterNewton )
-  {
-    if( iter == 0 )
-    {
-      // reset the states of all slave solvers if any of them has been reset
-      damageSolver.resetStateToBeginningOfStep( domain );
-      solidSolver.resetStateToBeginningOfStep( domain );
-      resetStateToBeginningOfStep( domain );
-    }
-
-    GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", MechanicsSolver: " );
-
-    dtReturnTemporary = solidSolver.nonlinearImplicitStep( time_n,
-                                                           dtReturn,
-                                                           cycleNumber,
-                                                           domain );
-
-    if( dtReturnTemporary < dtReturn )
-    {
-      iter = 0;
-      dtReturn = dtReturnTemporary;
-      continue;
-    }
-
-    if( solidSolver.getNonlinearSolverParameters().m_numNewtonIterations == 0 && iter > 0 )
-    {
-      GEOSX_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter << " iterations! *****\n" );
-      isConverged = true;
-      break;
-    }
-    else if( m_subcyclingOption == 0 && iter > 0 )
-    {
-      GEOSX_LOG_LEVEL_RANK_0( 1, "***** Single Pass solver, no subcycling *****\n" );
-      isConverged = true;
-      break;
-    }
-
-    GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", DamageSolver: " );
-
-    dtReturnTemporary = damageSolver.nonlinearImplicitStep( time_n,
-                                                            dtReturn,
-                                                            cycleNumber,
-                                                            domain );
-
-    mapDamageToQuadrature( domain );
-
-    //std::cout << "Here: " << dtReturnTemporary << std::endl;
-
-    if( dtReturnTemporary < dtReturn )
-    {
-      iter = 0;
-      dtReturn = dtReturnTemporary;
-      continue;
-    }
-
-    if( m_subcyclingOption == 0 )
-    {
-      GEOSX_LOG_LEVEL_RANK_0( 1, "***** Single Pass solver, no subcycling *****\n" );
-      isConverged = true;
-      break;
-    }
-
-    ++iter;
-  }
-
-  GEOSX_ERROR_IF( !isConverged, "PhaseFieldFractureSolver::SplitOperatorStep() did not converge" );
-
-  damageSolver.implicitStepComplete( time_n, dt, domain );
-  solidSolver.implicitStepComplete( time_n, dt, domain );
-  this->implicitStepComplete( time_n, dt, domain );
-
-  return dtReturn;
-}
-
-void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
+void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
 {
 
-  GEOSX_MARK_FUNCTION;
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+  GEOS_MARK_FUNCTION;
+  if( solverType ==  static_cast< integer >( SolverType::Damage ) )
   {
-    NodeManager & nodeManager = mesh.getNodeManager();
-
-    PhaseFieldDamageFEM const &
-    damageSolver = this->getParent().getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
-
-    string const & damageFieldName = damageSolver.getFieldName();
-
-    //should get reference to damage field here.
-    arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( damageFieldName );
-
-    ElementRegionManager & elemManager = mesh.getElemManager();
-
-    // begin region loop
-    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [this, nodalDamage]
-                                                                ( localIndex const,
-                                                                CellElementSubRegion & elementSubRegion )
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                  MeshLevel & mesh,
+                                                                  arrayView1d< string const > const & regionNames )
     {
-      string const & solidModelName = elementSubRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString());
-      constitutive::SolidBase &
-      solidModel = elementSubRegion.getConstitutiveModel< constitutive::SolidBase >( solidModelName );
+      NodeManager & nodeManager = mesh.getNodeManager();
 
-      ConstitutivePassThru< DamageBase >::execute( solidModel, [this, &elementSubRegion, nodalDamage]( auto & damageModel )
+      string const & damageFieldName = damageSolver()->getFieldName();
+
+      string const & discretizationName = damageSolver()->getDiscretizationName();
+
+      //should get reference to damage field here.
+      arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( damageFieldName );
+
+      ElementRegionManager & elemManager = mesh.getElemManager();
+
+      // begin region loop
+      elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [discretizationName, nodalDamage]
+                                                                  ( localIndex const,
+                                                                  CellElementSubRegion & elementSubRegion )
       {
-        using CONSTITUTIVE_TYPE = TYPEOFREF( damageModel );
-        typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel.createKernelUpdates();
+        string const & solidModelName = elementSubRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString());
+        constitutive::SolidBase &
+        solidModel = elementSubRegion.getConstitutiveModel< constitutive::SolidBase >( solidModelName );
 
-        arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_damage;
-        arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemNodes = elementSubRegion.nodeList();
-
-        finiteElement::FiniteElementBase const &
-        fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_discretizationName );
-
-        finiteElement::dispatch3D( fe, [nodalDamage, &elementSubRegion, damageFieldOnMaterial, elemNodes]( auto & finiteElement )
+        ConstitutivePassThru< DamageBase >::execute( solidModel, [&elementSubRegion, discretizationName, nodalDamage]( auto & damageModel )
         {
-          using FE_TYPE = TYPEOFREF( finiteElement );
-          constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
-          constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
+          using CONSTITUTIVE_TYPE = TYPEOFREF( damageModel );
+          typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel.createKernelUpdates();
 
-          forAll< serialPolicy >( elementSubRegion.size(), [nodalDamage, damageFieldOnMaterial, elemNodes] ( localIndex const k )
+          arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_damage;
+          arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodes = elementSubRegion.nodeList();
+
+          finiteElement::FiniteElementBase const &
+          fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( discretizationName );
+
+          finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe, [=, &elementSubRegion] ( auto & finiteElement )
           {
-            for( localIndex q = 0; q < n_q_points; ++q )
-            {
-              real64 N[ numNodesPerElement ];
-              FE_TYPE::calcN( q, N );
+            using FE_TYPE = TYPEOFREF( finiteElement );
 
-              damageFieldOnMaterial( k, q ) = 0;
-              for( localIndex a = 0; a < numNodesPerElement; ++a )
-              {
-                damageFieldOnMaterial( k, q ) += N[a] * nodalDamage[elemNodes( k, a )];
-                //solution is probably not going to work because the solution of the coupled solver
-                //has both damage and displacements. Using the damageResult field from the Damage solver
-                //is probably better
-                //            std::cout<<"q, N, Dnode = "<<q<<", "<<feDiscretization->m_finiteElement->value(a, q)<<",
-                // "<<nodalDamage[elemNodes(k, a)]<<std::endl;
-              }
-              //          std::cout<<"damage("<<k<<","<<q<<") = "<<damageFieldOnMaterial(k,q)<<std::endl;
-            }
+            DamageInterpolationKernel< FE_TYPE > interpolationKernel( elementSubRegion );
+
+            interpolationKernel.interpolateDamage( elemToNodes, nodalDamage, damageFieldOnMaterial );
           } );
         } );
       } );
     } );
-  } );
-
+  }
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldFractureSolver, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

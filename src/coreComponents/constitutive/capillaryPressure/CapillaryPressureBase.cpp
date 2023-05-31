@@ -17,9 +17,9 @@
  */
 
 #include "CapillaryPressureBase.hpp"
-#include "CapillaryPressureExtrinsicData.hpp"
+#include "CapillaryPressureFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -42,8 +42,8 @@ CapillaryPressureBase::CapillaryPressureBase( string const & name,
   registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
     setSizedFromParent( 0 );
 
-  registerExtrinsicData( extrinsicMeshData::cappres::phaseCapPressure{}, &m_phaseCapPressure );
-  registerExtrinsicData( extrinsicMeshData::cappres::dPhaseCapPressure_dPhaseVolFraction{}, &m_dPhaseCapPressure_dPhaseVolFrac );
+  registerField( fields::cappres::phaseCapPressure{}, &m_phaseCapPressure );
+  registerField( fields::cappres::dPhaseCapPressure_dPhaseVolFraction{}, &m_dPhaseCapPressure_dPhaseVolFrac );
 
 }
 
@@ -52,12 +52,12 @@ void CapillaryPressureBase::postProcessInput()
   ConstitutiveBase::postProcessInput();
 
   integer const numPhases = numFluidPhases();
-  GEOSX_THROW_IF_LT_MSG( numPhases, 2,
-                         GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
-                         InputError );
-  GEOSX_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
-                         GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
-                         InputError );
+  GEOS_THROW_IF_LT_MSG( numPhases, 2,
+                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
+                        InputError );
+  GEOS_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
+                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
+                        InputError );
 
   m_phaseTypes.resize( numPhases );
   m_phaseOrder.resizeDefault( MAX_NUM_PHASES, -1 );
@@ -97,7 +97,7 @@ void CapillaryPressureBase::resizeFields( localIndex const size,
 
 void CapillaryPressureBase::setLabels()
 {
-  getExtrinsicData< extrinsicMeshData::cappres::phaseCapPressure >().
+  getField< fields::cappres::phaseCapPressure >().
     setDimLabels( 2, m_phaseNames );
 }
 
@@ -110,4 +110,4 @@ void CapillaryPressureBase::allocateConstitutiveData( dataRepository::Group & pa
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

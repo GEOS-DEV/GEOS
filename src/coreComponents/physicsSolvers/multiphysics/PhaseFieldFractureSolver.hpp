@@ -17,20 +17,30 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PhaseFieldFractureSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PhaseFieldFractureSOLVER_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_PHASEFIELDFRACTURESOLVER_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_PHASEFIELDFRACTURESOLVER_HPP_
 
-#include "codingUtilities/EnumStrings.hpp"
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/simplePDE/PhaseFieldDamageFEM.hpp"
 
-namespace geosx
+namespace geos
 {
 
-class PhaseFieldFractureSolver : public SolverBase
+class PhaseFieldFractureSolver : public CoupledSolver< SolidMechanicsLagrangianFEM, PhaseFieldDamageFEM >
 {
 public:
+
+  using Base = CoupledSolver< SolidMechanicsLagrangianFEM, PhaseFieldDamageFEM >;
+  using Base::m_solvers;
+  using Base::m_dofManager;
+  using Base::m_localMatrix;
+  using Base::m_rhs;
+  using Base::m_solution;
+
   PhaseFieldFractureSolver( const string & name,
                             Group * const parent );
+
   ~PhaseFieldFractureSolver() override;
 
   /**
@@ -42,70 +52,81 @@ public:
     return "PhaseFieldFracture";
   }
 
-  virtual void registerDataOnMesh( Group & MeshBodies ) override final;
+  /// String used to form the solverName used to register solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "PhaseFieldFracture"; }
 
-  virtual void
-  implicitStepSetup( real64 const & time_n,
-                     real64 const & dt,
-                     DomainPartition & domain ) override final;
-
-  virtual void
-  implicitStepComplete( real64 const & time_n,
-                        real64 const & dt,
-                        DomainPartition & domain ) override final;
-
-  virtual void
-  resetStateToBeginningOfStep( DomainPartition & domain ) override;
-
-  virtual real64
-  solverStep( real64 const & time_n,
-              real64 const & dt,
-              int const cycleNumber,
-              DomainPartition & domain ) override;
-
-  real64 splitOperatorStep( real64 const & time_n,
-                            real64 const & dt,
-                            integer const cycleNumber,
-                            DomainPartition & domain );
-
-  void mapDamageToQuadrature( DomainPartition & domain );
-
-  enum class CouplingTypeOption : integer
+  enum class SolverType : integer
   {
-    FixedStress,
-    TightlyCoupled
+    SolidMechanics = 0,
+    Damage = 1
   };
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
-  {
-    constexpr static char const * couplingTypeOptionString() { return "couplingTypeOption"; }
-
-    constexpr static char const * totalMeanStressString() { return "totalMeanStress"; }
-    constexpr static char const * oldTotalMeanStressString() { return "oldTotalMeanStress"; }
-
-    constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
-    constexpr static char const * damageSolverNameString() { return "damageSolverName"; }
-    constexpr static char const * subcyclingOptionString() { return "subcycling"; }
-  };
-
-protected:
   virtual void postProcessInput() override final;
 
-  virtual void initializePostInitialConditionsPreSubGroups() override final;
+  /**
+   * @brief accessor for the pointer to the solid mechanics solver
+   * @return a pointer to the solid mechanics solver
+   */
+  SolidMechanicsLagrangianFEM * solidMechanicsSolver() const
+  {
+    return std::get< toUnderlying( SolverType::SolidMechanics ) >( m_solvers );
+  }
 
-private:
+  /**
+   * @brief accessor for the pointer to the flow solver
+   * @return a pointer to the flow solver
+   */
+  PhaseFieldDamageFEM * damageSolver() const
+  {
+    return std::get< toUnderlying( SolverType::Damage ) >( m_solvers );
+  }
 
-  string m_solidSolverName;
-  string m_damageSolverName;
-  CouplingTypeOption m_couplingTypeOption;
-  integer m_subcyclingOption;
+  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx ) override final;
+
+protected:
+
+  virtual void initializePostInitialConditionsPreSubGroups() override final {}
 
 };
 
-ENUM_STRINGS( PhaseFieldFractureSolver::CouplingTypeOption,
-              "FixedStress",
-              "TightlyCoupled" );
 
-} /* namespace geosx */
+template< typename FE_TYPE >
+struct DamageInterpolationKernel
+{
+  DamageInterpolationKernel( CellElementSubRegion const & subRegion ):
+    m_numElems( subRegion.size() )
+  {}
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PhaseFieldFractureSOLVER_HPP_ */
+  void interpolateDamage( arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodes,
+                          arrayView1d< real64 const > const nodalDamage,
+                          arrayView2d< real64 > damageFieldOnMaterial )
+  {
+    forAll< parallelDevicePolicy<> >( m_numElems, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    {
+      constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
+      constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
+
+      for( localIndex q = 0; q < n_q_points; ++q )
+      {
+        real64 N[ numNodesPerElement ];
+        FE_TYPE::calcN( q, N );
+
+        damageFieldOnMaterial( k, q ) = 0;
+        for( localIndex a = 0; a < numNodesPerElement; ++a )
+        {
+          damageFieldOnMaterial( k, q ) += N[a] * nodalDamage[elemToNodes( k, a )];
+          //solution is probably not going to work because the solution of the coupled solver
+          //has both damage and displacements. Using the damageResult field from the Damage solver
+          //is probably better
+        }
+      }
+
+    } );
+  }
+
+  localIndex m_numElems;
+};
+
+} /* namespace geos */
+
+#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_PHASEFIELDFRACTURESOLVER_HPP_ */

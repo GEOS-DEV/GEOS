@@ -16,12 +16,12 @@
  * @file FlowProppantTransportSolver.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_FLOWPROPPANTTRANSPORTSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_FLOWPROPPANTTRANSPORTSOLVER_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_FLOWPROPPANTTRANSPORTSOLVER_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_FLOWPROPPANTTRANSPORTSOLVER_HPP_
 
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class ProppantTransport;
@@ -80,21 +80,14 @@ public:
     return std::get< toUnderlying( SolverType::Flow ) >( m_solvers );
   }
 
-  /**
-   * @defgroup Solver Interface Functions
-   *
-   * These functions provide the primary interface that is required for derived classes
-   */
-  /**@{*/
-
-  virtual real64 solverStep( real64 const & time_n,
-                             real64 const & dt,
-                             int const cycleNumber,
-                             DomainPartition & domain ) override;
-
   /**@}*/
 
 private:
+
+  real64 sequentiallyCoupledSolverStep( real64 const & time_n,
+                                        real64 const & dt,
+                                        int const cycleNumber,
+                                        DomainPartition & domain ) override final;
 
   /**
    * @brief Utility function to perform the pre-step Update
@@ -118,6 +111,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_FLOWPROPPANTTRANSPORTSOLVER_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_FLOWPROPPANTTRANSPORTSOLVER_HPP_ */

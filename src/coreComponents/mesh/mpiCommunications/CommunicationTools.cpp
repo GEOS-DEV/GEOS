@@ -28,7 +28,7 @@
 
 #include <algorithm>
 
-namespace geosx
+namespace geos
 {
 
 
@@ -43,20 +43,20 @@ CommunicationTools::CommunicationTools()
     m_freeCommIDs.insert( i );
   }
 
-  GEOSX_ERROR_IF( m_instance != nullptr, "Only one CommunicationTools can exist at a time." );
+  GEOS_ERROR_IF( m_instance != nullptr, "Only one CommunicationTools can exist at a time." );
   m_instance = this;
 }
 
 CommunicationTools::~CommunicationTools()
 {
-  GEOSX_ERROR_IF( m_instance != this, "m_instance != this should not be possible." );
+  GEOS_ERROR_IF( m_instance != this, "m_instance != this should not be possible." );
   m_instance = nullptr;
 }
 
 CommunicationTools & CommunicationTools::getInstance()
 {
-  GEOSX_ERROR_IF( m_instance == nullptr,
-                  "CommunicationTools has not been constructed, or is already been destructed." );
+  GEOS_ERROR_IF( m_instance == nullptr,
+                 "CommunicationTools has not been constructed, or is already been destructed." );
   return *m_instance;
 }
 
@@ -65,7 +65,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
                                               NodeManager const & compositionObject,
                                               std::vector< NeighborCommunicator > & neighbors )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   arrayView1d< integer > const & ghostRank = object.ghostRank();
   ghostRank.setValues< serialPolicy >( -2 );
 
@@ -266,6 +266,10 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
     }
   }
 
+  MpiWrapper::waitAll( neighbors.size(), commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
+  MpiWrapper::waitAll( neighbors.size(), commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
+
+
   object.constructGlobalToLocalMap();
 
   object.setMaxGlobalIndex();
@@ -281,9 +285,9 @@ void CommunicationTools::assignNewGlobalIndices( ObjectManagerBase & object,
   localIndex nIndicesAssigned = 0;
   for( localIndex const newLocalIndex : indexList )
   {
-    GEOSX_ERROR_IF( localToGlobal[newLocalIndex] != -1,
-                    "Local object " << newLocalIndex << " should be new but already has a global index "
-                                    << localToGlobal[newLocalIndex] );
+    GEOS_ERROR_IF( localToGlobal[newLocalIndex] != -1,
+                   "Local object " << newLocalIndex << " should be new but already has a global index "
+                                   << localToGlobal[newLocalIndex] );
 
     localToGlobal[newLocalIndex] = object.maxGlobalIndex() + glocalIndexOffset + nIndicesAssigned + 1;
     object.updateGlobalToLocalMap( newLocalIndex );
@@ -318,9 +322,9 @@ CommunicationTools::assignNewGlobalIndices( ElementRegionManager & elementManage
 
     for( localIndex const newLocalIndex : indexList )
     {
-      GEOSX_ERROR_IF( localToGlobal[newLocalIndex] != -1,
-                      "Local object " << newLocalIndex << " should be new but already has a global index "
-                                      << localToGlobal[newLocalIndex] );
+      GEOS_ERROR_IF( localToGlobal[newLocalIndex] != -1,
+                     "Local object " << newLocalIndex << " should be new but already has a global index "
+                                     << localToGlobal[newLocalIndex] );
 
       localToGlobal[newLocalIndex] = elementManager.maxGlobalIndex() + glocalIndexOffset + nIndicesAssigned + 1;
       subRegion.updateGlobalToLocalMap( newLocalIndex );
@@ -337,7 +341,7 @@ CommunicationTools::
   findMatchedPartitionBoundaryObjects( ObjectManagerBase & objectManager,
                                        std::vector< NeighborCommunicator > & allNeighbors )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   arrayView1d< integer > const & domainBoundaryIndicator = objectManager.getDomainBoundaryIndicator();
 
   array1d< globalIndex > const globalPartitionBoundaryObjectsIndices = objectManager.constructGlobalListOfBoundaryObjects();
@@ -431,8 +435,8 @@ void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
       if( ghostRank[ recvIdx ] != neighborRank )
       {
         error = true;
-        GEOSX_LOG_RANK( "Receiving " << recvIdx << " from " << neighborRank <<
-                        " but ghostRank[ " << recvIdx << " ] is " << ghostRank[ recvIdx ] );
+        GEOS_LOG_RANK( "Receiving " << recvIdx << " from " << neighborRank <<
+                       " but ghostRank[ " << recvIdx << " ] is " << ghostRank[ recvIdx ] );
       }
     }
 
@@ -442,8 +446,8 @@ void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
       if( ghostRank[ sendIdx ] != -1 )
       {
         error = true;
-        GEOSX_LOG_RANK( "Sending " << sendIdx << " to " << neighborRank <<
-                        " but ghostRank[ " << sendIdx << " ] is " << ghostRank[ sendIdx ] );
+        GEOS_LOG_RANK( "Sending " << sendIdx << " to " << neighborRank <<
+                       " but ghostRank[ " << sendIdx << " ] is " << ghostRank[ sendIdx ] );
       }
     }
 
@@ -451,12 +455,12 @@ void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
     if( !nonLocalGhosts.empty() )
     {
       error = true;
-      GEOSX_LOG_RANK( "Expected to send 0 non local ghosts to rank " << neighborRank <<
-                      " but sending " << nonLocalGhosts.size() );
+      GEOS_LOG_RANK( "Expected to send 0 non local ghosts to rank " << neighborRank <<
+                     " but sending " << nonLocalGhosts.size() );
     }
   }
 
-  GEOSX_ERROR_IF( error, "Encountered a ghosting inconsistency in " << objectManager.getName() );
+  GEOS_ERROR_IF( error, "Encountered a ghosting inconsistency in " << objectManager.getName() );
 }
 
 /**
@@ -472,7 +476,7 @@ void removeFromCommList( std::vector< localIndex > const & indicesToRemove, arra
   } );
 
   localIndex const nRemoved = commIndices.end() - itr;
-  GEOSX_ERROR_IF_NE( nRemoved, localIndex( indicesToRemove.size() ) );
+  GEOS_ERROR_IF_NE( nRemoved, localIndex( indicesToRemove.size() ) );
   commIndices.resize( commIndices.size() - nRemoved );
 }
 
@@ -486,14 +490,14 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
 {
   int nonLocalGhostsTag = 45;
 
-  std::vector< MPI_Request > nonLocalGhostsRequests( neighbors.size() );
+  std::vector< MPI_Request > nonLocalGhostsRequests( neighbors.size(), MPI_REQUEST_NULL );
 
   /// For each neighbor send them the indices of their ghosts that they mistakenly believe are owned by this rank.
   for( std::size_t i = 0; i < neighbors.size(); ++i )
   {
     int const neighborRank = neighbors[ i ].neighborRank();
 
-    MpiWrapper::iSend( objectManager.getNeighborData( neighborRank ).nonLocalGhosts().toViewConst(),
+    MpiWrapper::iSend( objectManager.getNeighborData( neighborRank ).nonLocalGhosts().toView(),
                        neighborRank,
                        nonLocalGhostsTag,
                        MPI_COMM_GEOSX,
@@ -601,7 +605,9 @@ void removeUnusedNeighbors( NodeManager & nodeManager,
  * @param phases list of phases.
  * @param unorderedComms if true complete the communications of each phase in the order they are received.
  */
-void waitOrderedOrWaitAll( int const n, std::vector< std::function< MPI_Request ( int ) > > const & phases, bool const unorderedComms )
+void waitOrderedOrWaitAll( int const n,
+                           std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases,
+                           bool const unorderedComms )
 {
   if( unorderedComms )
   {
@@ -617,7 +623,7 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
                                       std::vector< NeighborCommunicator > & neighbors,
                                       bool const unorderedComms )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   MPI_iCommData commData( getCommID() );
   commData.resize( neighbors.size() );
 
@@ -650,23 +656,24 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
     return MPI_REQUEST_NULL;
   };
 
-  waitOrderedOrWaitAll( neighbors.size(), { sendGhosts, postRecv, unpackGhosts }, unorderedComms );
+  waitOrderedOrWaitAll( neighbors.size(),
+                        { std::make_tuple( static_cast< MPI_Request * >(nullptr), static_cast< MPI_Status * >(nullptr), sendGhosts ),
+                          std::make_tuple( commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus(), postRecv ),
+                          std::make_tuple( commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus(), unpackGhosts ) },
+                        unorderedComms );
+
+  // There are cases where the multiple waitOrderedOrWaitAll methods here will clash with
+  // each other. This typically occurs at higher processor counts (>256) and large meshes
+  // with ~14M elements. Adding the following waitAll methods ensures that the underlying
+  // async MPI communication will not interfere with subsequent async communication calls.
+  // The underlying problem is that for a given phase of async communication, the same
+  // tag numbers are used. This will at least isolate the async calls from each other.
+  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
+  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
 
   nodeManager.setReceiveLists();
   edgeManager.setReceiveLists();
   faceManager.setReceiveLists();
-
-  // at present removing this barrier allows a nondeterministic mpi error to happen on lassen
-  //   it occurs less than 5% of the time and happens when a process enters the recv phase in
-  //   the sync list exchange while another process still has not unpacked the ghosts received from
-  //   the first process. Depending on the mpi implementation the sync send from the first process
-  //   can be recv'd by the second process instead of the ghost send which has already been sent but
-  //   not necessarily received.
-  // Some restructuring to ensure this can't happen ( can also probably just change the send/recv tagging )
-  //   can eliminate this. But at present runtimes are the same in either case, as time is mostly just
-  //   shifted from the waitall in UnpackAndRebuildSyncLists since the processes are more 'in-sync' when
-  //   hitting that point after introducing this barrier.
-  MpiWrapper::barrier();
 
   auto sendSyncLists = [&] ( int idx )
   {
@@ -687,13 +694,31 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
     return MPI_REQUEST_NULL;
   };
 
-  waitOrderedOrWaitAll( neighbors.size(), { sendSyncLists, postRecv, rebuildSyncLists }, unorderedComms );
+  waitOrderedOrWaitAll( neighbors.size(),
+                        { std::make_tuple( static_cast< MPI_Request * >(nullptr), static_cast< MPI_Status * >(nullptr), sendSyncLists ),
+                          std::make_tuple( commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus(), postRecv ),
+                          std::make_tuple( commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus(), rebuildSyncLists ) },
+                        unorderedComms );
+
+  // See above comments for the reason behind these waitAll commands
+  // RE: isolate multiple async-wait calls
+  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
+  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
 
   fixReceiveLists( nodeManager, neighbors );
   fixReceiveLists( edgeManager, neighbors );
   fixReceiveLists( faceManager, neighbors );
 
-  waitOrderedOrWaitAll( neighbors.size(), { sendSyncLists, postRecv, rebuildSyncLists }, unorderedComms );
+  waitOrderedOrWaitAll( neighbors.size(),
+                        { std::make_tuple( static_cast< MPI_Request * >(nullptr), static_cast< MPI_Status * >(nullptr), sendSyncLists ),
+                          std::make_tuple( commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus(), postRecv ),
+                          std::make_tuple( commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus(), rebuildSyncLists ) },
+                        unorderedComms );
+
+  // See above comments for the reason behind these waitAll commands
+  // RE: isolate multiple async-wait
+  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
+  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
 
   nodeManager.fixUpDownMaps( false );
   verifyGhostingConsistency( nodeManager, neighbors );
@@ -720,7 +745,7 @@ void CommunicationTools::synchronizePackSendRecvSizes( FieldIdentifiers const & 
                                                        MPI_iCommData & icomm,
                                                        bool onDevice )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   icomm.setFieldsToBeSync( fieldsToBeSync );
   icomm.resize( neighbors.size() );
 
@@ -748,7 +773,7 @@ void CommunicationTools::asyncPack( FieldIdentifiers const & fieldsToBeSync,
                                     bool onDevice,
                                     parallelDeviceEvents & events )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   for( NeighborCommunicator & neighbor : neighbors )
   {
     neighbor.packCommBufferForSync( fieldsToBeSync, mesh, icomm.commID(), onDevice, events );
@@ -760,11 +785,12 @@ void CommunicationTools::asyncSendRecv( std::vector< NeighborCommunicator > & ne
                                         bool onDevice,
                                         parallelDeviceEvents & events )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   if( onDevice )
   {
     waitAllDeviceEvents( events );
   }
+
 
   // could swap this to test and make this function call async as well, only launch the sends/recvs for
   // those we've already recv'd sizing for, go back to some usefule compute / launch some other compute, then
@@ -792,7 +818,7 @@ void CommunicationTools::synchronizePackSendRecv( FieldIdentifiers const & field
                                                   MPI_iCommData & icomm,
                                                   bool onDevice )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   parallelDeviceEvents events;
   asyncPack( fieldsToBeSync, mesh, neighbors, icomm, onDevice, events );
   asyncSendRecv( neighbors, icomm, onDevice, events );
@@ -805,7 +831,7 @@ bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
                                       bool onDevice,
                                       parallelDeviceEvents & events )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   int recvCount = 0;
   std::vector< int > neighborIndices;
@@ -846,10 +872,10 @@ void CommunicationTools::finalizeUnpack( MeshLevel & mesh,
                                          bool onDevice,
                                          parallelDeviceEvents & events )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // poll mpi for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
-  GEOSX_ASYNC_WAIT( 6000000000, 10, asyncUnpack( mesh, neighbors, icomm, onDevice, events ) );
+  GEOS_ASYNC_WAIT( 6000000000, 10, asyncUnpack( mesh, neighbors, icomm, onDevice, events ) );
   if( onDevice )
   {
     waitAllDeviceEvents( events );
@@ -870,7 +896,7 @@ void CommunicationTools::synchronizeUnpack( MeshLevel & mesh,
                                             MPI_iCommData & icomm,
                                             bool onDevice )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   parallelDeviceEvents events;
   finalizeUnpack( mesh, neighbors, icomm, onDevice, events );
 }
@@ -887,4 +913,4 @@ void CommunicationTools::synchronizeFields( FieldIdentifiers const & fieldsToBeS
   synchronizeUnpack( mesh, neighbors, icomm, onDevice );
 }
 
-} /* namespace geosx */
+} /* namespace geos */

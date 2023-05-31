@@ -17,9 +17,9 @@
  */
 
 #include "RelativePermeabilityBase.hpp"
-#include "RelativePermeabilityExtrinsicData.hpp"
+#include "RelativePermeabilityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -40,13 +40,12 @@ RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group *
   registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
     setSizedFromParent( 0 );
 
-  registerExtrinsicData( extrinsicMeshData::relperm::phaseRelPerm{}, &m_phaseRelPerm );
-  registerExtrinsicData( extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction{},
-                         &m_dPhaseRelPerm_dPhaseVolFrac );
+  registerField( fields::relperm::phaseRelPerm{}, &m_phaseRelPerm );
+  registerField( fields::relperm::dPhaseRelPerm_dPhaseVolFraction{}, &m_dPhaseRelPerm_dPhaseVolFrac );
 
-  registerExtrinsicData( extrinsicMeshData::relperm::phaseTrappedVolFraction{}, &m_phaseTrappedVolFrac );
+  registerField( fields::relperm::phaseTrappedVolFraction{}, &m_phaseTrappedVolFrac );
 
-  registerExtrinsicData( extrinsicMeshData::relperm::phaseRelPerm_n{}, &m_phaseRelPerm_n );
+  registerField( fields::relperm::phaseRelPerm_n{}, &m_phaseRelPerm_n );
 
 }
 
@@ -55,12 +54,12 @@ void RelativePermeabilityBase::postProcessInput()
   ConstitutiveBase::postProcessInput();
 
   integer const numPhases = numFluidPhases();
-  GEOSX_THROW_IF_LT_MSG( numPhases, 2,
-                         GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
-                         InputError );
-  GEOSX_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
-                         GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
-                         InputError );
+  GEOS_THROW_IF_LT_MSG( numPhases, 2,
+                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
+                        InputError );
+  GEOS_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
+                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
+                        InputError );
 
   m_phaseTypes.resize( numPhases );
   m_phaseOrder.resizeDefault( MAX_NUM_PHASES, -1 );
@@ -103,11 +102,11 @@ void RelativePermeabilityBase::resizeFields( localIndex const size, localIndex c
 
 void RelativePermeabilityBase::setLabels()
 {
-  getExtrinsicData< extrinsicMeshData::relperm::phaseRelPerm >().
+  getField< fields::relperm::phaseRelPerm >().
     setDimLabels( 2, m_phaseNames );
-  getExtrinsicData< extrinsicMeshData::relperm::phaseRelPerm_n >().
+  getField< fields::relperm::phaseRelPerm_n >().
     setDimLabels( 2, m_phaseNames );
-  getExtrinsicData< extrinsicMeshData::relperm::phaseTrappedVolFraction >().
+  getField< fields::relperm::phaseTrappedVolFraction >().
     setDimLabels( 2, m_phaseNames );
 }
 
@@ -123,7 +122,42 @@ void RelativePermeabilityBase::allocateConstitutiveData( dataRepository::Group &
   resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
 }
 
+/// for use in RelpermDriver to browse the drainage curves
+/// by setting the MaxHistoricalNonWettingSat to Snwmin and MinWettingSat to Sw
+std::tuple< integer, integer > RelativePermeabilityBase::wettingAndNonWettingPhaseIndices() const
+{
+  using PT = PhaseType;
+  integer const ipWater = m_phaseOrder[PT::WATER];
+  integer const ipOil = m_phaseOrder[PT::OIL];
+  integer const ipGas = m_phaseOrder[PT::GAS];
+
+  integer ipWetting = -1, ipNonWetting = -1;
+
+  if( ipWater >= 0 && ipOil >= 0 && ipGas >= 0 )
+  {
+    ipWetting = ipWater;
+    ipNonWetting = ipGas;
+  }
+  else if( ipWater < 0 )
+  {
+    ipWetting = ipOil;
+    ipNonWetting = ipGas;
+  }
+  else if( ipOil < 0 )
+  {
+    ipWetting = ipWater;
+    ipNonWetting = ipGas;
+  }
+  else if( ipGas < 0 )
+  {
+    ipWetting = ipWater;
+    ipNonWetting = ipOil;
+  }
+
+  //maybe a bit too pythonic
+  return std::make_tuple( ipWetting, ipNonWetting );
+}
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

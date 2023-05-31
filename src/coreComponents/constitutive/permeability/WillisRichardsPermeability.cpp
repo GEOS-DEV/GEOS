@@ -18,9 +18,9 @@
 
 #include "WillisRichardsPermeability.hpp"
 #include "LvArray/src/tensorOps.hpp"
-#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -44,8 +44,8 @@ WillisRichardsPermeability::WillisRichardsPermeability( string const & name, Gro
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Effective normal stress causes 90% reduction in aperture." );
 
-  registerExtrinsicData( extrinsicMeshData::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
-  registerExtrinsicData( extrinsicMeshData::permeability::dPerm_dTraction{}, &m_dPerm_dTraction );
+  registerField( fields::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
+  registerField( fields::permeability::dPerm_dTraction{}, &m_dPerm_dTraction );
 }
 
 std::unique_ptr< ConstitutiveBase >
@@ -68,4 +68,4 @@ void WillisRichardsPermeability::allocateConstitutiveData( dataRepository::Group
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, WillisRichardsPermeability, string const &, Group * const )
 
 } /* namespace constitutive */
-} /* namespace geosx */
+} /* namespace geos */

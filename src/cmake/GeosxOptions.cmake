@@ -18,9 +18,9 @@ option( BUILD_LOCAL_RAJA "Use the local mirrored RAJA" OFF )
 option( RAJA_ENABLE_TBB "" OFF )
 option( RAJA_ENABLE_OPENMP "" OFF )
 option( RAJA_ENABLE_CUDA "" OFF )
+option( RAJA_ENABLE_HIP "" OFF )
 option( RAJA_ENABLE_TESTS "" OFF )
 
-option( ENABLE_PAMELA "" ON )
 option( ENABLE_PVTPackage "" ON )
 
 option( ENABLE_UNCRUSTIFY "" ON )
@@ -33,6 +33,7 @@ option( ENABLE_METIS "Enables METIS" ON )
 option( ENABLE_PARMETIS "Enables PARMETIS" ON )
 option( ENABLE_SCOTCH "Enables SCOTCH" ON )
 
+option( ENABLE_SILO "Enables SILO output" ON )
 option( ENABLE_VTK "Enables VTK" ON )
 
 option( ENABLE_TOTALVIEW_OUTPUT "Enables Totalview custom view" OFF )
@@ -43,7 +44,15 @@ option( ENABLE_HYPRE "Enables HYPRE" ON )
 option( ENABLE_PETSC "Enables PETSC" OFF )
 option( ENABLE_SUITESPARSE "Enables SUITESPARSE" ON )
 
-option( ENABLE_HYPRE_CUDA "Enables cuda capabilities in Hypre" OFF )
+option( ENABLE_HYPRE_MIXINT "Enables mixed int32/int64 local/global" ON )
+
+set( HYPRE_DEVICE_OPTIONS CPU CUDA HIP )
+if( NOT ENABLE_HYPRE_DEVICE )
+  set( ENABLE_HYPRE_DEVICE CPU )
+endif()
+if(NOT ${ENABLE_HYPRE_DEVICE} IN_LIST HYPRE_DEVICE_OPTIONS )
+    message(FATAL_ERROR "Set ENABLE_HYPRE_DEVICE to CPU, CUDA, or HIP.")
+endif()
 
 #if ( "${CMAKE_HOST_APPLE}" )
 #  option( ENABLE_PETSC "Enables PETSC" OFF )
@@ -61,11 +70,13 @@ if( NOT ( GEOSX_LA_INTERFACE IN_LIST supported_LAI ) )
   message( FATAL_ERROR "GEOSX_LA_INTERFACE must be one of: ${supported_LAI}" )
 endif()
 
-### MPI/OMP/CUDA SETUP ###
+### MPI/OMP/CUDA/HIP SETUP ###
 
 option( ENABLE_MPI "" ON )
 
-option( CUDA_ENABLED "" OFF )
+option( ENABLE_CUDA "" OFF )
+
+option( ENABLE_HIP "" OFF )
 
 if( CMAKE_HOST_APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
   option( ENABLE_OPENMP "Enables OpenMP compiler support" OFF )
@@ -75,9 +86,11 @@ endif()
 
 ### BUILD & BLT SETUP ###
 
-option( GEOSX_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" ON )
+option( GEOSX_INSTALL_SCHEMA "Enables schema generation and installation" ON )
 
-option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " OFF )
+option( GEOSX_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" OFF )
+
+option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " ON )
 
 set( GEOSX_PARALLEL_COMPILE_JOBS "" CACHE STRING "Maximum number of concurrent compilation jobs" )
 if( GEOSX_PARALLEL_COMPILE_JOBS )
@@ -123,38 +136,45 @@ blt_append_custom_compiler_flag( FLAGS_VAR GEOSX_NINJA_FLAGS
                                  CLANG   "-fcolor-diagnostics"
                                )
 
+# clang-13 and gcc complains about unused-but-set variable.
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-Wunused-but-set-variable" CXX_UNUSED_BUT_SET_VAR)
+if (ENABLE_GBENCHMARK)
+    blt_add_target_compile_flags(TO benchmark
+                                FLAGS $<$<AND:$<BOOL:${CXX_UNUSED_BUT_SET_VAR}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-unused-but-set-variable>
+                                )
+endif()
+
 if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/ninja$" )
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GEOSX_NINJA_FLAGS}" )
 endif()
 
 #set(CMAKE_CUDA_STANDARD 14 CACHE STRING "" FORCE)
-#blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_RELEASE 
+#blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_RELEASE
 #                                 DEFAULT "-O3 -DNDEBUG -Xcompiler -DNDEBUG -Xcompiler -O3" )
-#blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_RELWITHDEBINFO 
+#blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_RELWITHDEBINFO
 #                                 DEFAULT "-lineinfo ${CMAKE_CUDA_FLAGS_RELEASE}" )
-#blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_DEBUG 
+#blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_DEBUG
 #                                 DEFAULT "-G -O0 -Xcompiler -O0" )
 
 
 if( CMAKE_HOST_APPLE )
 #    set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE STRING "")
 #    set(GEOSX_LINK_POSTPEND_FLAG "" CACHE STRING "")
-elseif( CUDA_ENABLED )
-    set( GEOSX_LINK_PREPEND_FLAG  "-Xcompiler \\\\\"-Wl,--whole-archive\\\\\""    CACHE STRING "" )
-    set( GEOSX_LINK_POSTPEND_FLAG "-Xcompiler \\\\\"-Wl,--no-whole-archive\\\\\"" CACHE STRING "" )
+# elseif( ENABLE_CUDA )
+#     set( GEOSX_LINK_PREPEND_FLAG  "-Xcompiler \\\\\"-Wl,--whole-archive\\\\\""    CACHE STRING "" )
+#     set( GEOSX_LINK_POSTPEND_FLAG "-Xcompiler \\\\\"-Wl,--no-whole-archive\\\\\"" CACHE STRING "" )
 else()
     set( GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE STRING "" )
     set( GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE STRING "" )
 endif()
 
-if( ENABLE_HYPRE AND ENABLE_HYPRE_CUDA )
-    set( GEOSX_LOCALINDEX_TYPE "int" CACHE STRING "" )
-    set( GEOSX_GLOBALINDEX_TYPE "long long int" CACHE STRING "" )
+set( GEOSX_LOCALINDEX_TYPE "int" CACHE STRING "" )
+if( ENABLE_HYPRE_MIXINT )
+  set( GEOSX_GLOBALINDEX_TYPE "long long int" CACHE STRING "" )
 else()
-    set( GEOSX_LOCALINDEX_TYPE "int" CACHE STRING "" )
-    set( GEOSX_GLOBALINDEX_TYPE "long long int" CACHE STRING "" )
+  set( GEOSX_GLOBALINDEX_TYPE "int" CACHE STRING "" )
 endif()
-
 
 if( GEOSX_LOCALINDEX_TYPE STREQUAL "int" )
     set( GEOSX_LOCALINDEX_TYPE_FLAG "0" CACHE STRING "" FORCE )
@@ -178,6 +198,14 @@ elseif( GEOSX_GLOBALINDEX_TYPE STREQUAL "long long int" )
     set( GEOSX_GLOBALINDEX_TYPE_FLAG "2" CACHE STRING "" FORCE )
 else( TRUE )
     message( FATAL_ERROR "GEOSX_GLOBALINDEX_TYPE_FLAG not set for ${GEOSX_GLOBALINDEX_TYPE}" )
+endif()
+
+set( GEOSX_BLOCK_SIZE 32 )
+if( ENABLE_CUDA )
+  set( GEOSX_BLOCK_SIZE 32 )
+endif()
+if( ENABLE_HIP )
+  set( GEOSX_BLOCK_SIZE 64 )
 endif()
 
 message( "localIndex is an alias for ${GEOSX_LOCALINDEX_TYPE}" )

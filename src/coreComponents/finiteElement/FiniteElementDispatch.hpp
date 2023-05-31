@@ -16,31 +16,185 @@
  * @file FiniteElementDispatch.hpp
  */
 
-#ifndef GEOSX_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_
-#define GEOSX_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_
+#ifndef GEOS_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_
+#define GEOS_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_
 
-
+#include "common/GeosxMacros.hpp"
 #include "elementFormulations/ConformingVirtualElementOrder1.hpp"
 #include "elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp"
 #include "elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp"
-#include "elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp"
 #include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
-#include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
-#include "elementFormulations/Q3_Hexahedron_Lagrange_GaussLobatto.hpp"
+#if !defined( GEOS_USE_HIP )
+#include "elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
+#endif
+#include "elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp"
+#include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
 #include "LvArray/src/system.hpp"
 
+#define FE_1_TYPES \
+  finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2, \
+  finiteElement::H1_Wedge_Lagrange1_Gauss6, \
+  finiteElement::H1_Tetrahedron_Lagrange1_Gauss1, \
+  finiteElement::H1_Pyramid_Lagrange1_Gauss5
+
+#define GL_FE_TYPES \
+  finiteElement::Q1_Hexahedron_Lagrange_GaussLobatto, \
+  finiteElement::Q2_Hexahedron_Lagrange_GaussLobatto, \
+  finiteElement::Q3_Hexahedron_Lagrange_GaussLobatto, \
+  finiteElement::Q4_Hexahedron_Lagrange_GaussLobatto, \
+  finiteElement::Q5_Hexahedron_Lagrange_GaussLobatto
+
+#if defined( GEOSX_DISPATCH_VEM )
+
+#define VEM_1_TYPES \
+  finiteElement::H1_Tetrahedron_VEM_Gauss1, \
+  finiteElement::H1_Prism5_VEM_Gauss1, \
+  finiteElement::H1_Prism6_VEM_Gauss1, \
+  finiteElement::H1_Prism7_VEM_Gauss1, \
+  finiteElement::H1_Prism8_VEM_Gauss1, \
+  finiteElement::H1_Prism9_VEM_Gauss1, \
+  finiteElement::H1_Prism10_VEM_Gauss1
+
+// can only compile these when not using cce+rocm
+#define VEM_2_TYPES \
+  finiteElement::H1_Hexahedron_VEM_Gauss1, \
+  finiteElement::H1_Wedge_VEM_Gauss1, \
+  finiteElement::H1_Prism11_VEM_Gauss1
+
+#if !defined( GEOS_USE_HIP )
+#define VEM_TYPES VEM_1_TYPES, VEM_2_TYPES
+#else
+#define VEM_TYPES VEM_1_TYPES
+#endif
+
+#define BASE_FE_TYPES FE_1_TYPES, VEM_TYPES
+
+#else
+
+#define BASE_FE_TYPES FE_1_TYPES
+
+#endif
+
+#if !defined( GEOS_USE_HIP )
+// can only compile GL_FE_TYPES when not using cce+rocm
+#define ALL_FE_TYPES BASE_FE_TYPES, GL_FE_TYPES
+#else
+#define ALL_FE_TYPES BASE_FE_TYPES
+#endif
 
 
-namespace geosx
+
+#define FE_TYPES_2D \
+  finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2  \
+  finiteElement::H1_TriangleFace_Lagrange1_Gauss1
+
+namespace geos
 {
 namespace finiteElement
 {
 
+/**
+ * @brief Helper structure for dynamic finite element dispatch
+ * @tparam FE_TYPES list of finite element types to handle
+ */
+template< typename ... FE_TYPES >
+struct FiniteElementDispatchHandler {};
+
+/**
+ * @brief Finite elemnt dispatch fall-through in case all casts were unsuccessful: always error
+ */
+template<>
+struct FiniteElementDispatchHandler<>
+{
+  template< typename LAMBDA >
+  static void
+  dispatch3D( FiniteElementBase const & input,
+              LAMBDA && GEOS_UNUSED_PARAM( lambda ) )
+  {
+    GEOS_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<typeid(input).name() );
+    GEOS_UNUSED_VAR( input );
+  }
+
+  template< typename LAMBDA >
+  static void
+  dispatch3D( FiniteElementBase & input,
+              LAMBDA && GEOS_UNUSED_PARAM( lambda ) )
+  {
+    GEOS_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<typeid(input).name() );
+    GEOS_UNUSED_VAR( input );
+  }
+
+  template< typename LAMBDA >
+  static void
+  dispatch2D( FiniteElementBase const & input,
+              LAMBDA && GEOS_UNUSED_PARAM( lambda ) )
+  {
+    GEOS_ERROR( "finiteElement::dispatch2D() is not implemented for input of: "<<LvArray::system::demangleType( &input ) );
+    GEOS_UNUSED_VAR( input );
+  }
+};
+
+/**
+ * @brief Structure for recursive finite element dispatch implementation
+ * @tparam FE_TYPE first finite element type to handle
+ * @tparam FE_TYPES following finite element types to handle
+ */
+template< typename FE_TYPE, typename ... FE_TYPES >
+struct FiniteElementDispatchHandler< FE_TYPE, FE_TYPES... >
+{
+  template< typename LAMBDA >
+  static void
+  dispatch3D( FiniteElementBase const & input,
+              LAMBDA && lambda )
+  {
+    if( auto const * const ptr = dynamic_cast< FE_TYPE const * >(&input) )
+    {
+      lambda( *ptr );
+    }
+    else
+    {
+      FiniteElementDispatchHandler< FE_TYPES... >::dispatch3D( input, lambda );
+    }
+  }
+
+  template< typename LAMBDA >
+  static void
+  dispatch3D( FiniteElementBase & input,
+              LAMBDA && lambda )
+  {
+    if( auto * const ptr = dynamic_cast< FE_TYPE * >(&input) )
+    {
+      lambda( *ptr );
+    }
+    else
+    {
+      FiniteElementDispatchHandler< FE_TYPES... >::dispatch3D( input, lambda );
+    }
+  }
+
+  template< typename LAMBDA >
+  static void
+  dispatch2D( FiniteElementBase const & input,
+              LAMBDA && lambda )
+  {
+    if( auto const * const ptr = dynamic_cast< FE_TYPE const * >(&input) )
+    {
+      lambda( *ptr );
+    }
+    else
+    {
+      FiniteElementDispatchHandler< FE_TYPES... >::dispatch2D( input, lambda );
+    }
+  }
+};
+
+
+
 template< typename LAMBDA >
 void
-dispatch3D( FiniteElementBase const & input,
-            LAMBDA && lambda )
+dispatchlowOrder3D( FiniteElementBase const & input,
+                    LAMBDA && lambda )
 {
   if( auto const * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2 const * >(&input) )
   {
@@ -58,154 +212,16 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr4 );
   }
-  else if( auto const * const ptr5 = dynamic_cast< Q3_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
-  {
-    lambda( *ptr5 );
-  }
-#ifdef GEOSX_DISPATCH_VEM
-  else if( auto const * const ptr6 = dynamic_cast< H1_Tetrahedron_VEM_Gauss1 const * >(&input) ) // VEM on Tetrahedron
-  {
-    lambda( *ptr6 );
-  }
-  else if( auto const * const ptr7 = dynamic_cast< H1_Wedge_VEM_Gauss1 const * >(&input) ) // VEM on Wedge
-  {
-    lambda( *ptr7 );
-  }
-  else if( auto const * const ptr8 = dynamic_cast< H1_Hexahedron_VEM_Gauss1 const * >(&input) ) // VEM on Hexahedron
-  {
-    lambda( *ptr8 );
-  }
-  else if( auto const * const ptr9 = dynamic_cast< H1_Prism5_VEM_Gauss1 const * >(&input) ) // VEM on Prism5
-  {
-    lambda( *ptr9 );
-  }
-  else if( auto const * const ptr10 = dynamic_cast< H1_Prism6_VEM_Gauss1 const * >(&input) ) // VEM on Prism6
-  {
-    lambda( *ptr10 );
-  }
-  else if( auto const * const ptr11 = dynamic_cast< H1_Prism7_VEM_Gauss1 const * >(&input) ) // VEM on Prism7
-  {
-    lambda( *ptr11 );
-  }
-  else if( auto const * const ptr12 = dynamic_cast< H1_Prism8_VEM_Gauss1 const * >(&input) ) // VEM on Prism8
-  {
-    lambda( *ptr12 );
-  }
-  else if( auto const * const ptr13 = dynamic_cast< H1_Prism9_VEM_Gauss1 const * >(&input) ) // VEM on Prism9
-  {
-    lambda( *ptr13 );
-  }
-  else if( auto const * const ptr14 = dynamic_cast< H1_Prism10_VEM_Gauss1 const * >(&input) ) // VEM on Prism10
-  {
-    lambda( *ptr14 );
-  }
-  else if( auto const * const ptr15 = dynamic_cast< H1_Prism11_VEM_Gauss1 const * >(&input) ) // VEM on Prism11
-  {
-    lambda( *ptr15 );
-  }
-#endif
   else
   {
-    GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<typeid(input).name() );
+    GEOS_ERROR( "finiteElement::dispatchlowOrder3D() is not implemented for input of "<<LvArray::system::demangleType( &input ) );
   }
 }
 
+} // namespace finiteElement
 
-template< typename LAMBDA >
-void
-dispatch3D( FiniteElementBase & input,
-            LAMBDA && lambda )
-{
-  if( auto * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2 * >(&input) )
-  {
-    lambda( *ptr1 );
-  }
-  else if( auto * const ptr2 = dynamic_cast< H1_Wedge_Lagrange1_Gauss6 * >(&input) )
-  {
-    lambda( *ptr2 );
-  }
-  else if( auto * const ptr3 = dynamic_cast< H1_Tetrahedron_Lagrange1_Gauss1 * >(&input) )
-  {
-    lambda( *ptr3 );
-  }
-  else if( auto * const ptr4 = dynamic_cast< H1_Pyramid_Lagrange1_Gauss5 * >(&input) )
-  {
-    lambda( *ptr4 );
-  }
-  else if( auto * const ptr5 = dynamic_cast< Q3_Hexahedron_Lagrange_GaussLobatto * >(&input) )
-  {
-    lambda( *ptr5 );
-  }
-#ifdef GEOSX_DISPATCH_VEM
-  else if( auto * const ptr6 = dynamic_cast< H1_Tetrahedron_VEM_Gauss1 * >(&input) ) // VEM on Tetrahedron
-  {
-    lambda( *ptr6 );
-  }
-  else if( auto * const ptr7 = dynamic_cast< H1_Wedge_VEM_Gauss1 * >(&input) ) // VEM on Wedge
-  {
-    lambda( *ptr7 );
-  }
-  else if( auto * const ptr8 = dynamic_cast< H1_Hexahedron_VEM_Gauss1 * >(&input) ) // VEM on Hexahedron
-  {
-    lambda( *ptr8 );
-  }
-  else if( auto * const ptr9 = dynamic_cast< H1_Prism5_VEM_Gauss1 * >(&input) ) // VEM on Prism5
-  {
-    lambda( *ptr9 );
-  }
-  else if( auto * const ptr10 = dynamic_cast< H1_Prism6_VEM_Gauss1 * >(&input) ) // VEM on Prism6
-  {
-    lambda( *ptr10 );
-  }
-  else if( auto * const ptr11 = dynamic_cast< H1_Prism7_VEM_Gauss1 * >(&input) ) // VEM on Prism7
-  {
-    lambda( *ptr11 );
-  }
-  else if( auto * const ptr12 = dynamic_cast< H1_Prism8_VEM_Gauss1 * >(&input) ) // VEM on Prism8
-  {
-    lambda( *ptr12 );
-  }
-  else if( auto * const ptr13 = dynamic_cast< H1_Prism9_VEM_Gauss1 * >(&input) ) // VEM on Prism9
-  {
-    lambda( *ptr13 );
-  }
-  else if( auto * const ptr14 = dynamic_cast< H1_Prism10_VEM_Gauss1 * >(&input) ) // VEM on Prism10
-  {
-    lambda( *ptr14 );
-  }
-  else if( auto * const ptr15 = dynamic_cast< H1_Prism11_VEM_Gauss1 * >(&input) ) // VEM on Prism11
-  {
-    lambda( *ptr15 );
-  }
-#endif
-  else
-  {
-    GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<LvArray::system::demangleType( &input ) );
-  }
-}
-
-template< typename LAMBDA >
-void
-dispatch2D( FiniteElementBase const & input,
-            LAMBDA && lambda )
-{
-  if( auto const * const ptr1 = dynamic_cast< H1_QuadrilateralFace_Lagrange1_GaussLegendre2 const * >(&input) )
-  {
-    lambda( *ptr1 );
-  }
-  else if( auto const * const ptr2 = dynamic_cast< H1_TriangleFace_Lagrange1_Gauss1 const * >(&input) )
-  {
-    lambda( *ptr2 );
-  }
-  else
-  {
-    GEOSX_ERROR( "finiteElement::dispatch2D() is not implemented for input of: "<<LvArray::system::demangleType( &input ) );
-  }
-}
-
-}
-}
+} // namespace geos
 
 
 
-#endif /* GEOSX_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_ */
+#endif /* GEOS_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_ */

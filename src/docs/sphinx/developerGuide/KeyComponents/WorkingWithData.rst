@@ -1,43 +1,43 @@
 .. _WorkingWithData:
 
 #####################################
-Working with data in GEOSX
+Working with data in GEOS
 #####################################
 
-In ``GEOSX``, data is typically registered in the :ref:`dataRepository`.
+In ``GEOS``, data is typically registered in the :ref:`dataRepository`.
 This allows for the writing/reading of data to/from restart and plot files.
 Any object that derives from :ref:`Group` may have data registered on it
 through the methods described in :ref:`Group`.
-Simalarly, accessing data from outside the scope of an object is possible
+Similarly, accessing data from outside the scope of an object is possible
 through one of the various ``Group::get()``.
 Of course, for temporary data that does not need to persist between cycles,
-or across physics packages, you may simply define member or local variabls which
+or across physics packages, you may simply define member or local variable which
 will not be registered with the :ref:`dataRepository`.
 
 Working with data on the Mesh objects
 =====================================
-the mesh objects in ``GEOSX`` such as the ``FaceManager`` or ``NodeManager``,
+The mesh objects in ``GEOS`` such as the ``FaceManager`` or ``NodeManager``,
 are derived from ``ObjectManagerBase``, which in turn derives from :ref:`Group`.
 The important distinction is that ``ObjectManagerBase`` contains various members
 that are useful when defining mesh object managers.
 When considering data that is attached to a mesh object, we group the data into
-two catagories:
+two categories:
 
 * `Intrinsic <https://www.merriam-webster.com/dictionary/intrinsic>`_ data is
-  data that is required to descibe the object.
+  data that is required to describe the object.
   For instance, to define a ``Node``, the ``NodeManager`` contains an array of
-  positions corrosponding to each ``Node`` it contains.
+  positions corresponding to each ``Node`` it contains.
   Thus the ``ReferencePosition`` is ``Intrinsic`` data.
   ``Intrinsic`` data is almost always a member of the mesh object, and is
   registered on the mesh object in the constructor of mesh object itself.
-* `Extrinsic <https://www.merriam-webster.com/dictionary/extrinsic>`_ data is
+* Field data (or `Extrinsic <https://www.merriam-webster.com/dictionary/extrinsic>`_ data) is
   data that is not required to define the object.
-  For instance, a phsyics package
+  For instance, a physics package
   may request that a ``Velocity`` value be stored on the nodes.
-  Appropriatly the data will be registered on the ``NodeManager``.
+  Appropriately the data will be registered on the ``NodeManager``.
   However, this data is not required to define a ``Node``, and is viewed as
-  ``Extrinsic``.
-  ``Extrinsic`` data is never a member of the mesh object, and is typically
+  ``Fields`` or ``Extrinsic``.
+  ``Field`` data is never a member of the mesh object, and is typically
   registered on the mesh object outside of the definition of the mesh object
   (i.e. from a physics solver).
 
@@ -74,26 +74,26 @@ Thus the interface for ``Intrinsic`` data is set by the object that it is a part
 of, and the developer may only access the data through the accesssors from
 outside of the mesh object class scope.
 
-Registering Extrinsic data on a Mesh Object
--------------------------------------------
-To register ``Extrinsic`` data, there are many ways a developer may proceed.
-We will use the example of registering a ``TotalDisplacement`` on the ``NodeManager``
+Registering Field data on a Mesh Object
+---------------------------------------
+To register ``Field`` data, there are many ways a developer may proceed.
+We will use the example of registering a ``totalDisplacement`` on the ``NodeManager``
 from the ``SolidMechanics`` solver.
 The most general approach is to define a string key and call one of the
-`Group::registerWrapper() <../../../doxygen_output/html/classgeosx_1_1data_repository_1_1_group.html#a741c3b5728fc47b33fbaad6c4f124991>`_
-functions from ``SolverBase::RegisterMeshData()``.
+`Group::registerWrapper() <../../../doxygen_output/html/classgeos_1_1data_repository_1_1_group.html#a741c3b5728fc47b33fbaad6c4f124991>`_
+functions from ``SolverBase::registerDataOnMesh()``.
 Then when you want to use the data, you can call ``Group::getReference()``.
 For example this would look something like:
 
 .. code-block:: c++
 
-    void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
+    void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group * const MeshBodies )
     {
       for( auto & mesh : MeshBodies->GetSubGroups() )
       {
         NodeManager & nodes = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 ).getNodeManager();
 
-        nodes.registerWrapper< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::TotalDisplacement ).
+        nodes.registerWrapper< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::totalDisplacement ).
           setPlotLevel( PlotLevel::LEVEL_0 ).
           setRegisteringObjects( this->getName()).
           setDescription( "An array that holds the total displacements on the nodes." ).
@@ -105,23 +105,23 @@ and
 
 .. code-block:: c++
 
-    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodes.getReference<array2d<real64, nodes::TOTAL_DISPLACEMENT_PERM >(keys::TotalDisplacement);
+    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodes.getReference< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::totalDisplacement );
     ... do something with u
 
 This approach is flexible and extendible, but is potentially error prone due to
-its verbosity.
-Therefore we also provide a more controlled/uniform method  by which to register
+its verbosity and lack of information centralization.
+Therefore we also provide a more controlled/uniform method by which to register
 and extract commonly used data on the mesh.
 The ``trait approach`` requires the definition of a ``traits struct`` for each
 data object that will be supported.
-To apply the ``trait appraoch`` to the example use case shown above, there
+To apply the ``trait approach`` to the example use case shown above, there
 should be the following definition somewhere in a header file:
 
 .. code-block:: c++
 
-    namespace extrinsicMeshData
+    namespace fields
     {
-    struct TotalDisplacement
+    struct totalDisplacement
     {
       static constexpr auto key = "totalDisplacement";
       using DataType = real64;
@@ -134,16 +134,17 @@ should be the following definition somewhere in a header file:
     };
     }
 
+Also note that you should use the ``DECLARE_FIELD`` C++ macro that will perform this tedious task for you.
 Then the registration is simplified as follows:
 
 .. code-block:: c++
 
-    void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
+    void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group * const MeshBodies )
     {
       for( auto & mesh : MeshBodies->GetSubGroups() )
       {
         NodeManager & nodes = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 ).getNodeManager();
-        nodes.registerExtrinsicData< extrinsicMeshData::TotalDisplacement >( this->getName() ).resizeDimension< 1 >( 3 );
+        nodes.registerField< fields::totalDisplacement >( this->getName() ).resizeDimension< 1 >( 3 );
       }
     }
 
@@ -151,9 +152,9 @@ And to extract the data, the call would be:
 
 .. code-block:: c++
 
-    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodes.getExtrinsicData< extrinsicMeshData::TotalDisplacement >();
+    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodes.getField< fields::totalDisplacement >();
     ... do something with u
 
 The end result of the ``trait approach`` to this example is that the developer
-has defined a standard specification for ``TotalDisplacement``, which may be
+has defined a standard specification for ``totalDisplacement``, which may be
 used uniformly across the code.

@@ -16,13 +16,13 @@
  * @file SinglePhaseHybridFVM.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_
 
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 
@@ -94,7 +94,9 @@ public:
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  calculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( real64 const & time_n,
+                         real64 const & dt,
+                         DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
@@ -151,6 +153,23 @@ public:
                              real64 const & dt,
                              DomainPartition & domain ) override;
 
+  /**
+   * @brief Function to perform the application of Dirichlet BCs on faces
+   * @param[in] time_n current time
+   * @param[in] dt time step
+   * @param[in] faceSet degree-of-freedom manager associated with the linear system
+   * @param[in] domain the domain
+   * @param[inout] localMatrix the system matrix
+   * @param[inout] localRhs the system right-hand side vector
+   */
+  void
+  applyFaceDirichletBC( real64 const time_n,
+                        real64 const dt,
+                        DofManager const & faceSet,
+                        DomainPartition & domain,
+                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                        arrayView1d< real64 > const & localRhs );
+
   /**@}*/
 
 
@@ -166,9 +185,6 @@ public:
 
 private:
 
-  /// Dof key for the member functions that do not have access to the coupled Dof manager
-  string m_faceDofKey;
-
   /// relative tolerance (redundant with FluxApproximationBase)
   real64 m_areaRelTol;
 
@@ -177,6 +193,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_

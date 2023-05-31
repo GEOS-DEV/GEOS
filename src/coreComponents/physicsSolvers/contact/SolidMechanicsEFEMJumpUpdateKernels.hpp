@@ -17,12 +17,12 @@
  * @file SolidMechanicsEFEMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMJUMPUPDATEKERNELS_HPP_
-#define GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMJUMPUPDATEKERNELS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMJUMPUPDATEKERNELS_HPP_
+#define GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMJUMPUPDATEKERNELS_HPP_
 
 #include "SolidMechanicsEFEMKernelsBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace solidMechanicsEFEMKernels
@@ -30,7 +30,7 @@ namespace solidMechanicsEFEMKernels
 
 /**
  * @brief Implements kernels for solving quasi-static equilibrium.
- * @copydoc geosx::finiteElement::ImplicitKernelBase
+ * @copydoc geos::finiteElement::ImplicitKernelBase
  * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
  *                            @p SUBREGION_TYPE.
  * @tparam UNUSED An unused parameter since we are assuming that the test and
@@ -82,7 +82,7 @@ public:
 
   /**
    * @brief Constructor
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param inputGravityVector The gravity vector.
    */
   EFEMJumpUpdate( NodeManager const & nodeManager,
@@ -128,7 +128,7 @@ public:
   //***************************************************************************
 
   /**
-   * @copydoc ::geosx::finiteElement::KernelBase::kernelLaunch
+   * @copydoc ::geos::finiteElement::KernelBase::kernelLaunch
    *
    */
   //START_kernelLauncher
@@ -145,10 +145,10 @@ public:
 
   /**
    * @brief Copy global values from primary field to a local stack array.
-   * @copydoc ::geosx::finiteElement::ImplicitKernelBase::setup
+   * @copydoc ::geos::finiteElement::ImplicitKernelBase::setup
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -182,14 +182,14 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
+   * @copydoc geos::finiteElement::ImplicitKernelBase::complete
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( k );
     real64 maxForce = 0;
     constexpr int nUdof = numNodesPerElem*3;
 
@@ -238,7 +238,7 @@ using EFEMJumpUpdateFactory = finiteElement::KernelFactory< EFEMJumpUpdate,
 
 } // namespace SolidMechanicsEFEMKernels
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif /* GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMJUMPUPDATEKERNELS_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMJUMPUPDATEKERNELS_HPP_ */

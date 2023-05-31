@@ -16,15 +16,15 @@
  * @file ThermalCompositionalMultiphaseFVMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 
 #include "constitutive/thermalConductivity/MultiPhaseThermalConductivityBase.hpp"
-#include "constitutive/thermalConductivity/ThermalConductivityExtrinsicData.hpp"
-#include "constitutive/thermalConductivity/MultiPhaseThermalConductivityExtrinsicData.hpp"
+#include "constitutive/thermalConductivity/ThermalConductivityFields.hpp"
+#include "constitutive/thermalConductivity/MultiPhaseThermalConductivityFields.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace thermalCompositionalMultiphaseFVMKernels
@@ -71,7 +71,8 @@ public:
    * @brief Compute the phase mobilities in an element
    * @param[in] ei the element index
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   void compute( localIndex const ei ) const
   {
     using Deriv = multifluid::DerivativeOffset;
@@ -209,16 +210,16 @@ public:
   using Base::m_sei;
 
   using ThermalCompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::temperature >;
+    StencilAccessors< fields::flow::temperature >;
 
   using ThermalMultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
-                              extrinsicMeshData::multifluid::phaseEnthalpy,
-                              extrinsicMeshData::multifluid::dPhaseEnthalpy >;
+                              fields::multifluid::phaseEnthalpy,
+                              fields::multifluid::dPhaseEnthalpy >;
 
   using ThermalConductivityAccessors =
     StencilMaterialAccessors< MultiPhaseThermalConductivityBase,
-                              extrinsicMeshData::thermalconductivity::effectiveConductivity >;
+                              fields::thermalconductivity::effectiveConductivity >;
   // for now, we treat thermal conductivity explicitly
 
   /**
@@ -266,17 +267,17 @@ public:
             dt,
             localMatrix,
             localRhs ),
-    m_temp( thermalCompFlowAccessors.get( extrinsicMeshData::flow::temperature {} ) ),
-    m_phaseEnthalpy( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseEnthalpy {} ) ),
-    m_dPhaseEnthalpy( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseEnthalpy {} ) ),
-    m_thermalConductivity( thermalConductivityAccessors.get( extrinsicMeshData::thermalconductivity::effectiveConductivity {} ) )
+    m_temp( thermalCompFlowAccessors.get( fields::flow::temperature {} ) ),
+    m_phaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::phaseEnthalpy {} ) ),
+    m_dPhaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::dPhaseEnthalpy {} ) ),
+    m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) )
   {}
 
   struct StackVariables : public Base::StackVariables
   {
 public:
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
       : Base::StackVariables( size, numElems )
     {}
@@ -301,7 +302,8 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
@@ -561,7 +563,8 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   void complete( localIndex const iconn,
                  StackVariables & stack ) const
   {
@@ -721,16 +724,16 @@ public:
 
 
   using ThermalCompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::temperature >;
+    StencilAccessors< fields::flow::temperature >;
 
   using ThermalMultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
-                              extrinsicMeshData::multifluid::phaseEnthalpy,
-                              extrinsicMeshData::multifluid::dPhaseEnthalpy >;
+                              fields::multifluid::phaseEnthalpy,
+                              fields::multifluid::dPhaseEnthalpy >;
 
   using ThermalConductivityAccessors =
     StencilMaterialAccessors< MultiPhaseThermalConductivityBase,
-                              extrinsicMeshData::thermalconductivity::effectiveConductivity >;
+                              fields::thermalconductivity::effectiveConductivity >;
   // for now, we treat thermal conductivity explicitly
 
   /**
@@ -784,10 +787,10 @@ public:
             dt,
             localMatrix,
             localRhs ),
-    m_temp( thermalCompFlowAccessors.get( extrinsicMeshData::flow::temperature {} ) ),
-    m_phaseEnthalpy( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseEnthalpy {} ) ),
-    m_dPhaseEnthalpy( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseEnthalpy {} ) ),
-    m_thermalConductivity( thermalConductivityAccessors.get( extrinsicMeshData::thermalconductivity::effectiveConductivity {} ) )
+    m_temp( thermalCompFlowAccessors.get( fields::flow::temperature {} ) ),
+    m_phaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::phaseEnthalpy {} ) ),
+    m_dPhaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::dPhaseEnthalpy {} ) ),
+    m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) )
   {}
 
   struct StackVariables : public Base::StackVariables
@@ -799,7 +802,7 @@ public:
      * @param[in] size size of the stencil for this connection
      * @param[in] numElems number of elements for this connection
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
       : Base::StackVariables( size, numElems )
     {}
@@ -833,7 +836,7 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
@@ -999,7 +1002,7 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack ) const
   {
@@ -1112,7 +1115,7 @@ public:
 
 } // namespace thermalCompositionalMultiphaseFVMKernels
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP

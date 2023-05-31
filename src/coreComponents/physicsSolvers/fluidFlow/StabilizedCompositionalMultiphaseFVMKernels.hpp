@@ -16,12 +16,12 @@
  * @file StabilizedCompositionalMultiphaseFVMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_STABILIZEDCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_STABILIZEDCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_STABILIZEDCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_STABILIZEDCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace stabilizedCompositionalMultiphaseFVMKernels
@@ -61,17 +61,17 @@ public:
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
 
   using StabCompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::macroElementIndex,
-                      extrinsicMeshData::flow::elementStabConstant,
-                      extrinsicMeshData::flow::pressure_n >;
+    StencilAccessors< fields::flow::macroElementIndex,
+                      fields::flow::elementStabConstant,
+                      fields::flow::pressure_n >;
 
   using StabMultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
-                              extrinsicMeshData::multifluid::phaseDensity_n,
-                              extrinsicMeshData::multifluid::phaseCompFraction_n >;
+                              fields::multifluid::phaseDensity_n,
+                              fields::multifluid::phaseCompFraction_n >;
 
   using RelPermAccessors =
-    StencilMaterialAccessors< RelativePermeabilityBase, extrinsicMeshData::relperm::phaseRelPerm_n >;
+    StencilMaterialAccessors< RelativePermeabilityBase, fields::relperm::phaseRelPerm_n >;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_numPhases;
@@ -146,19 +146,19 @@ public:
             dt,
             localMatrix,
             localRhs ),
-    m_pres_n( stabCompFlowAccessors.get( extrinsicMeshData::flow::pressure_n {} ) ),
-    m_phaseDens_n( stabMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity_n {} ) ),
-    m_phaseCompFrac_n( stabMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction_n {} ) ),
-    m_phaseRelPerm_n( relPermAccessors.get( extrinsicMeshData::relperm::phaseRelPerm_n {} ) ),
-    m_macroElementIndex( stabCompFlowAccessors.get( extrinsicMeshData::flow::macroElementIndex {} ) ),
-    m_elementStabConstant( stabCompFlowAccessors.get( extrinsicMeshData::flow::elementStabConstant {} ) )
+    m_pres_n( stabCompFlowAccessors.get( fields::flow::pressure_n {} ) ),
+    m_phaseDens_n( stabMultiFluidAccessors.get( fields::multifluid::phaseDensity_n {} ) ),
+    m_phaseCompFrac_n( stabMultiFluidAccessors.get( fields::multifluid::phaseCompFraction_n {} ) ),
+    m_phaseRelPerm_n( relPermAccessors.get( fields::relperm::phaseRelPerm_n {} ) ),
+    m_macroElementIndex( stabCompFlowAccessors.get( fields::flow::macroElementIndex {} ) ),
+    m_elementStabConstant( stabCompFlowAccessors.get( fields::flow::elementStabConstant {} ) )
   {}
 
   struct StackVariables : public Base::StackVariables
   {
 public:
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
       : Base::StackVariables( size, numElems )
     {}
@@ -181,7 +181,7 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
@@ -209,7 +209,7 @@ public:
                                            real64 const (&dPhaseFlux_dP)[2],
                                            real64 const (&dPhaseFlux_dC)[2][numComp] )
     {
-      GEOSX_UNUSED_VAR( k_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, er_up, esr_up, ei_up );
+      GEOS_UNUSED_VAR( k_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, er_up, esr_up, ei_up );
 
       /// stabilization flux and derivatives
       real64 stabFlux[numComp]{};
@@ -366,7 +366,7 @@ public:
 
 } // namespace stabilizedCompositionalMultiphaseFVMKernels
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_STABILIZEDCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_STABILIZEDCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP

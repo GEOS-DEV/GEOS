@@ -17,10 +17,10 @@
  */
 
 #include "SinglePhaseThermalConductivityBase.hpp"
-#include "ThermalConductivityExtrinsicData.hpp"
-#include "SinglePhaseThermalConductivityExtrinsicData.hpp"
+#include "ThermalConductivityFields.hpp"
+#include "SinglePhaseThermalConductivityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -31,7 +31,7 @@ namespace constitutive
 SinglePhaseThermalConductivityBase::SinglePhaseThermalConductivityBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
-  registerExtrinsicData( extrinsicMeshData::thermalconductivity::effectiveConductivity{}, &m_effectiveConductivity );
+  registerField( fields::thermalconductivity::effectiveConductivity{}, &m_effectiveConductivity );
 }
 
 void SinglePhaseThermalConductivityBase::postProcessInput()
@@ -52,4 +52,4 @@ void SinglePhaseThermalConductivityBase::allocateConstitutiveData( dataRepositor
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

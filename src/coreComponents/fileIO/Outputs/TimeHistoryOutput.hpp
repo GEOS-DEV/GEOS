@@ -16,8 +16,8 @@
  * @file TimeHistoryOutput.hpp
  */
 
-#ifndef GEOSX_FILEIO_OUTPUTS_HISTORYOUTPUT_HPP_
-#define GEOSX_FILEIO_OUTPUTS_HISTORYOUTPUT_HPP_
+#ifndef GEOS_FILEIO_OUTPUTS_HISTORYOUTPUT_HPP_
+#define GEOS_FILEIO_OUTPUTS_HISTORYOUTPUT_HPP_
 
 #include "OutputBase.hpp"
 #include "fileIO/timeHistory/HistoryCollection.hpp"
@@ -26,7 +26,7 @@
 
 #include "LvArray/src/Array.hpp" // just for collector
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -37,7 +37,7 @@ namespace geosx
 class TimeHistoryOutput : public OutputBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
+  /// @copydoc geos::dataRepository::Group::Group(string const & name, Group * const parent)
   TimeHistoryOutput( string const & name,
                      Group * const parent );
 

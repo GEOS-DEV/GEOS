@@ -22,12 +22,12 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "mainInterface/ProblemManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace constitutive;
 using namespace dataRepository;
-using namespace extrinsicMeshData;
+using namespace fields;
 
 SolidMechanicsStateReset::SolidMechanicsStateReset( const string & name,
                                                     Group * const parent ):
@@ -59,19 +59,19 @@ void SolidMechanicsStateReset::postProcessInput()
   ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
   PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
 
-  GEOSX_THROW_IF( !physicsSolverManager.hasGroup( m_solidSolverName ),
-                  GEOSX_FMT( "Task {}: physics solver named {} not found",
-                             getName(), m_solidSolverName ),
-                  InputError );
+  GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_solidSolverName ),
+                 GEOS_FMT( "Task {}: physics solver named {} not found",
+                           getName(), m_solidSolverName ),
+                 InputError );
 
   m_solidSolver = &physicsSolverManager.getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
 }
 
 bool SolidMechanicsStateReset::execute( real64 const time_n,
-                                        real64 const GEOSX_UNUSED_PARAM( dt ),
-                                        integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                                        integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                                        real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+                                        real64 const GEOS_UNUSED_PARAM( dt ),
+                                        integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                        integer const GEOS_UNUSED_PARAM( eventCounter ),
+                                        real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                         DomainPartition & domain )
 {
   m_solidSolver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -81,17 +81,17 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
     // Option 1: zero out velocity, incremental displacement, and displacement
     if( m_resetDisplacements )
     {
-      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Task `{}`: at time {}s, physics solver `{}` is resetting total displacement and velocity to zero",
-                                            getName(), time_n, m_solidSolverName ) );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Task `{}`: at time {}s, physics solver `{}` is resetting total displacement and velocity to zero",
+                                          getName(), time_n, m_solidSolverName ) );
 
       NodeManager & nodeManager = mesh.getNodeManager();
 
-      if( nodeManager.hasExtrinsicData< solidMechanics::velocity >() )
+      if( nodeManager.hasField< solidMechanics::velocity >() )
       {
-        nodeManager.getExtrinsicData< solidMechanics::velocity >().zero();
+        nodeManager.getField< solidMechanics::velocity >().zero();
       }
-      nodeManager.getExtrinsicData< solidMechanics::totalDisplacement >().zero();
-      nodeManager.getExtrinsicData< solidMechanics::incrementalDisplacement >().zero();
+      nodeManager.getField< solidMechanics::totalDisplacement >().zero();
+      nodeManager.getField< solidMechanics::incrementalDisplacement >().zero();
     }
 
     // Option 2: enable / disable inelastic behavior
@@ -101,12 +101,12 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
                                                                             CellElementSubRegion & subRegion )
     {
       string const & solidMaterialName = subRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString() );
-      Group & constitutiveModels = subRegion.getGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );
+      Group & constitutiveModels = subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
 
-      GEOSX_LOG_LEVEL_RANK_0( 2, GEOSX_FMT( "Task `{}`: at time {}s, solid model `{}` is setting inelastic behavior to `{}` on subRegion `{}`. ",
-                                            getName(), time_n, solidMaterialName,
-                                            m_disableInelasticity ? "OFF" : "ON",
-                                            subRegion.getName() ) );
+      GEOS_LOG_LEVEL_RANK_0( 2, GEOS_FMT( "Task `{}`: at time {}s, solid model `{}` is setting inelastic behavior to `{}` on subRegion `{}`. ",
+                                          getName(), time_n, solidMaterialName,
+                                          m_disableInelasticity ? "OFF" : "ON",
+                                          subRegion.getName() ) );
 
       SolidBase & constitutiveRelation = constitutiveModels.getGroup< SolidBase >( solidMaterialName );
       constitutiveRelation.disableInelasticity( m_disableInelasticity );
@@ -120,4 +120,4 @@ REGISTER_CATALOG_ENTRY( TaskBase,
                         SolidMechanicsStateReset,
                         string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

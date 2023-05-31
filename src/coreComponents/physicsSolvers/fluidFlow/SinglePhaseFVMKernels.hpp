@@ -16,29 +16,29 @@
  * @file SinglePhaseFVMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVMKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVMKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVMKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVMKERNELS_HPP
 
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
-#include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
-#include "constitutive/fluid/SlurryFluidBase.hpp"
-#include "constitutive/fluid/SlurryFluidExtrinsicData.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/SlurryFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SlurryFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
-#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityFields.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace singlePhaseFVMKernels
@@ -69,34 +69,34 @@ public:
   using DofNumberAccessor = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
 
   using SinglePhaseFlowAccessors =
-    StencilAccessors< extrinsicMeshData::ghostRank,
-                      extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::pressure_n,
-                      extrinsicMeshData::flow::gravityCoefficient,
-                      extrinsicMeshData::flow::mobility,
-                      extrinsicMeshData::flow::dMobility_dPressure >;
+    StencilAccessors< fields::ghostRank,
+                      fields::flow::pressure,
+                      fields::flow::pressure_n,
+                      fields::flow::gravityCoefficient,
+                      fields::flow::mobility,
+                      fields::flow::dMobility_dPressure >;
 
   using SinglePhaseFluidAccessors =
     StencilMaterialAccessors< SingleFluidBase,
-                              extrinsicMeshData::singlefluid::density,
-                              extrinsicMeshData::singlefluid::dDensity_dPressure >;
+                              fields::singlefluid::density,
+                              fields::singlefluid::dDensity_dPressure >;
 
   using SlurryFluidAccessors =
     StencilMaterialAccessors< SlurryFluidBase,
-                              extrinsicMeshData::singlefluid::density,
-                              extrinsicMeshData::singlefluid::dDensity_dPressure >;
+                              fields::singlefluid::density,
+                              fields::singlefluid::dDensity_dPressure >;
 
   using PermeabilityAccessors =
     StencilMaterialAccessors< PermeabilityBase,
-                              extrinsicMeshData::permeability::permeability,
-                              extrinsicMeshData::permeability::dPerm_dPressure >;
+                              fields::permeability::permeability,
+                              fields::permeability::dPerm_dPressure >;
 
   using ProppantPermeabilityAccessors =
     StencilMaterialAccessors< PermeabilityBase,
-                              extrinsicMeshData::permeability::permeability,
-                              extrinsicMeshData::permeability::dPerm_dPressure,
-                              extrinsicMeshData::permeability::dPerm_dDispJump,
-                              extrinsicMeshData::permeability::permeabilityMultiplier >;
+                              fields::permeability::permeability,
+                              fields::permeability::dPerm_dPressure,
+                              fields::permeability::dPerm_dDispJump,
+                              fields::permeability::permeabilityMultiplier >;
 
   /**
    * @brief Constructor for the kernel interface
@@ -120,15 +120,15 @@ public:
     : m_rankOffset( rankOffset ),
     m_dt( dt ),
     m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
-    m_permeability( permeabilityAccessors.get( extrinsicMeshData::permeability::permeability {} ) ),
-    m_dPerm_dPres( permeabilityAccessors.get( extrinsicMeshData::permeability::dPerm_dPressure {} ) ),
-    m_ghostRank( singlePhaseFlowAccessors.get( extrinsicMeshData::ghostRank {} ) ),
-    m_gravCoef( singlePhaseFlowAccessors.get( extrinsicMeshData::flow::gravityCoefficient {} ) ),
-    m_pres( singlePhaseFlowAccessors.get( extrinsicMeshData::flow::pressure {} ) ),
-    m_mob( singlePhaseFlowAccessors.get( extrinsicMeshData::flow::mobility {} ) ),
-    m_dMob_dPres( singlePhaseFlowAccessors.get( extrinsicMeshData::flow::dMobility_dPressure {} ) ),
-    m_dens( singlePhaseFluidAccessors.get( extrinsicMeshData::singlefluid::density {} ) ),
-    m_dDens_dPres( singlePhaseFluidAccessors.get( extrinsicMeshData::singlefluid::dDensity_dPressure {} ) ),
+    m_permeability( permeabilityAccessors.get( fields::permeability::permeability {} ) ),
+    m_dPerm_dPres( permeabilityAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
+    m_ghostRank( singlePhaseFlowAccessors.get( fields::ghostRank {} ) ),
+    m_gravCoef( singlePhaseFlowAccessors.get( fields::flow::gravityCoefficient {} ) ),
+    m_pres( singlePhaseFlowAccessors.get( fields::flow::pressure {} ) ),
+    m_mob( singlePhaseFlowAccessors.get( fields::flow::mobility {} ) ),
+    m_dMob_dPres( singlePhaseFlowAccessors.get( fields::flow::dMobility_dPressure {} ) ),
+    m_dens( singlePhaseFluidAccessors.get( fields::singlefluid::density {} ) ),
+    m_dDens_dPres( singlePhaseFluidAccessors.get( fields::singlefluid::dDensity_dPressure {} ) ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs )
   {}
@@ -246,7 +246,7 @@ public:
      * @param[in] size size of the stencil for this connection
      * @param[in] numElems number of elements for this connection
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
       : stencilSize( size ),
       numFluxElems( numElems ),
@@ -287,7 +287,7 @@ public:
    * @param[in] iconn the connection index
    * @return the size of the stencil at this connection
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex stencilSize( localIndex const iconn ) const
   { return m_sei[iconn].size(); }
 
@@ -296,7 +296,7 @@ public:
    * @param[in] iconn the connection index
    * @return the number of elements at this connection
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex numPointsInFlux( localIndex const iconn ) const
   { return m_stencilWrapper.numPointsInFlux( iconn ); }
 
@@ -305,7 +305,7 @@ public:
    * @param[in] iconn the connection index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const iconn,
               StackVariables & stack ) const
   {
@@ -329,7 +329,7 @@ public:
    * @param[in] NoOpFunc the function used to customize the computation of the flux
    */
   template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
                     FUNC && kernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
@@ -503,7 +503,7 @@ public:
    * @param[inout] stack the stack variables
    */
   template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack,
                  FUNC && kernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
@@ -517,8 +517,8 @@ public:
       {
         globalIndex const globalRow = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
         localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
-        GEOSX_ASSERT_GE( localRow, 0 );
-        GEOSX_ASSERT_GT( m_localMatrix.numRows(), localRow );
+        GEOS_ASSERT_GE( localRow, 0 );
+        GEOS_ASSERT_GT( m_localMatrix.numRows(), localRow );
 
         RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow], stack.localFlux[i * numEqn] );
         m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
@@ -544,9 +544,9 @@ public:
   launch( localIndex const numConnections,
           KERNEL_TYPE const & kernelComponent )
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
-    forAll< POLICY >( numConnections, [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+    forAll< POLICY >( numConnections, [=] GEOS_HOST_DEVICE ( localIndex const iconn )
     {
       typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
                                                   kernelComponent.numPointsInFlux( iconn ) );
@@ -636,34 +636,34 @@ struct FluxKernel
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   using SinglePhaseFlowAccessors =
-    StencilAccessors< extrinsicMeshData::ghostRank,
-                      extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::pressure_n,
-                      extrinsicMeshData::flow::gravityCoefficient,
-                      extrinsicMeshData::flow::mobility,
-                      extrinsicMeshData::flow::dMobility_dPressure >;
+    StencilAccessors< fields::ghostRank,
+                      fields::flow::pressure,
+                      fields::flow::pressure_n,
+                      fields::flow::gravityCoefficient,
+                      fields::flow::mobility,
+                      fields::flow::dMobility_dPressure >;
 
   using SinglePhaseFluidAccessors =
     StencilMaterialAccessors< SingleFluidBase,
-                              extrinsicMeshData::singlefluid::density,
-                              extrinsicMeshData::singlefluid::dDensity_dPressure >;
+                              fields::singlefluid::density,
+                              fields::singlefluid::dDensity_dPressure >;
 
   using SlurryFluidAccessors =
     StencilMaterialAccessors< SlurryFluidBase,
-                              extrinsicMeshData::singlefluid::density,
-                              extrinsicMeshData::singlefluid::dDensity_dPressure >;
+                              fields::singlefluid::density,
+                              fields::singlefluid::dDensity_dPressure >;
 
   using PermeabilityAccessors =
     StencilMaterialAccessors< PermeabilityBase,
-                              extrinsicMeshData::permeability::permeability,
-                              extrinsicMeshData::permeability::dPerm_dPressure >;
+                              fields::permeability::permeability,
+                              fields::permeability::dPerm_dPressure >;
 
   using ProppantPermeabilityAccessors =
     StencilMaterialAccessors< PermeabilityBase,
-                              extrinsicMeshData::permeability::permeability,
-                              extrinsicMeshData::permeability::dPerm_dPressure,
-                              extrinsicMeshData::permeability::dPerm_dDispJump,
-                              extrinsicMeshData::permeability::permeabilityMultiplier >;
+                              fields::permeability::permeability,
+                              fields::permeability::dPerm_dPressure,
+                              fields::permeability::dPerm_dDispJump,
+                              fields::permeability::permeabilityMultiplier >;
 
 
   /**
@@ -711,7 +711,7 @@ struct FluxKernel
     forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [stencilWrapper, dt, rankOffset, dofNumber, ghostRank,
                                                               pres, gravCoef, dens, dDens_dPres, mob,
                                                               dMob_dPres, permeability, dPerm_dPres,
-                                                              seri, sesri, sei, localMatrix, localRhs] GEOSX_HOST_DEVICE ( localIndex const iconn )
+                                                              seri, sesri, sei, localMatrix, localRhs] GEOS_HOST_DEVICE ( localIndex const iconn )
     {
       localIndex const stencilSize = stencilWrapper.stencilSize( iconn );
       localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
@@ -763,8 +763,8 @@ struct FluxKernel
         {
           globalIndex const globalRow = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
           localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
-          GEOSX_ASSERT_GE( localRow, 0 );
-          GEOSX_ASSERT_GT( localMatrix.numRows(), localRow );
+          GEOS_ASSERT_GE( localRow, 0 );
+          GEOS_ASSERT_GT( localMatrix.numRows(), localRow );
 
           RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux[i] );
           localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
@@ -784,7 +784,7 @@ struct FluxKernel
    *
    */
   template< localIndex maxNumConnections >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   compute( localIndex const numFluxElems,
            arraySlice1d< localIndex const > const & seri,
@@ -847,31 +847,152 @@ struct FluxKernel
   }
 };
 
-struct FaceDirichletBCKernel
-{
-  template< typename VIEWTYPE >
-  using ElementViewConst = FluxKernel::ElementViewConst< VIEWTYPE >;
+/******************************** DirichletFaceBasedAssemblyKernel ********************************/
 
-  template< typename FLUID_WRAPPER >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void compute( arraySlice1d< localIndex const > const & seri,
-                       arraySlice1d< localIndex const > const & sesri,
-                       arraySlice1d< localIndex const > const & sefi,
-                       real64 const trans,
-                       real64 const dTrans_dPres,
-                       ElementViewConst< arrayView1d< real64 const > > const & pres,
-                       ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                       ElementViewConst< arrayView2d< real64 const > > const & dens,
-                       ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
-                       ElementViewConst< arrayView1d< real64 const > > const & mob,
-                       ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
-                       arrayView1d< real64 const > const & presFace,
-                       arrayView1d< real64 const > const & gravCoefFace,
-                       FLUID_WRAPPER const & fluidWrapper,
-                       real64 const dt,
-                       real64 & flux,
-                       real64 & dFlux_dP )
+/**
+ * @class DirichFaceBasedAssemblyKernel
+ * @tparam FLUIDWRAPPER the type of the fluid wrapper
+ * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
+ */
+template< integer NUM_DOF, typename FLUIDWRAPPER >
+class DirichletFaceBasedAssemblyKernel : public FaceBasedAssemblyKernel< NUM_DOF,
+                                                                         BoundaryStencilWrapper >
+{
+public:
+
+  using AbstractBase = singlePhaseFVMKernels::FaceBasedAssemblyKernelBase;
+  using DofNumberAccessor = AbstractBase::DofNumberAccessor;
+  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
+  using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
+  using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
+
+  using AbstractBase::m_dt;
+  using AbstractBase::m_rankOffset;
+  using AbstractBase::m_dofNumber;
+  using AbstractBase::m_ghostRank;
+  using AbstractBase::m_gravCoef;
+  using AbstractBase::m_pres;
+  using AbstractBase::m_mob;
+  using AbstractBase::m_dMob_dPres;
+  using AbstractBase::m_dens;
+  using AbstractBase::m_dDens_dPres;
+  using AbstractBase::m_permeability;
+  using AbstractBase::m_dPerm_dPres;
+
+  using AbstractBase::m_localMatrix;
+  using AbstractBase::m_localRhs;
+
+  using Base = singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_DOF,
+                                                               BoundaryStencilWrapper >;
+  using Base::numDof;
+  using Base::numEqn;
+  using Base::m_stencilWrapper;
+  using Base::m_seri;
+  using Base::m_sesri;
+  using Base::m_sei;
+
+  /**
+   * @brief Constructor for the kernel interface
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] faceManager the face manager
+   * @param[in] stencilWrapper reference to the stencil wrapper
+   * @param[in] fluidWrapper reference to the fluid wrapper
+   * @param[in] dofNumberAccessor
+   * @param[in] singlePhaseFlowAccessors
+   * @param[in] singlePhaseFluidAccessors
+   * @param[in] permeabilityAccessors
+   * @param[in] dt time step size
+   * @param[inout] localMatrix the local CRS matrix
+   * @param[inout] localRhs the local right-hand side vector
+   */
+  DirichletFaceBasedAssemblyKernel( globalIndex const rankOffset,
+                                    FaceManager const & faceManager,
+                                    BoundaryStencilWrapper const & stencilWrapper,
+                                    FLUIDWRAPPER const & fluidWrapper,
+                                    DofNumberAccessor const & dofNumberAccessor,
+                                    SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
+                                    SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
+                                    PermeabilityAccessors const & permeabilityAccessors,
+                                    real64 const & dt,
+                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                    arrayView1d< real64 > const & localRhs )
+    : Base( rankOffset,
+            stencilWrapper,
+            dofNumberAccessor,
+            singlePhaseFlowAccessors,
+            singlePhaseFluidAccessors,
+            permeabilityAccessors,
+            dt,
+            localMatrix,
+            localRhs ),
+    m_facePres( faceManager.getField< fields::flow::facePressure >() ),
+    m_faceGravCoef( faceManager.getField< fields::flow::gravityCoefficient >() ),
+    m_fluidWrapper( fluidWrapper )
+  {}
+
+  /**
+   * @struct StackVariables
+   * @brief Kernel variables (dof numbers, jacobian and residual) located on the stack
+   */
+  struct StackVariables
+  {
+public:
+
+    /**
+     * @brief Constructor for the stack variables
+     * @param[in] size size of the stencil for this connection
+     * @param[in] numElems number of elements for this connection
+     */
+    GEOS_HOST_DEVICE
+    StackVariables( localIndex const GEOS_UNUSED_PARAM( size ),
+                    localIndex GEOS_UNUSED_PARAM( numElems ) )
+    {}
+
+    /// Transmissibility
+    real64 transmissibility = 0.0;
+
+    /// Indices of the matrix rows/columns corresponding to the dofs in this face
+    globalIndex dofColIndices[numDof]{};
+
+    /// Storage for the face local residual
+    real64 localFlux[numEqn]{};
+
+    /// Storage for the face local Jacobian
+    real64 localFluxJacobian[numEqn][numDof]{};
+
+  };
+
+
+  /**
+   * @brief Performs the setup phase for the kernel.
+   * @param[in] iconn the connection index
+   * @param[in] stack the stack variables
+   */
+  GEOS_HOST_DEVICE
+  void setup( localIndex const iconn,
+              StackVariables & stack ) const
+  {
+    globalIndex const offset =
+      m_dofNumber[m_seri( iconn, BoundaryStencil::Order::ELEM )][m_sesri( iconn, BoundaryStencil::Order::ELEM )][m_sei( iconn, BoundaryStencil::Order::ELEM )];
+
+    for( integer jdof = 0; jdof < numDof; ++jdof )
+    {
+      stack.dofColIndices[jdof] = offset + jdof;
+    }
+  }
+
+  /**
+   * @brief Compute the local Dirichlet face flux contributions to the residual and Jacobian
+   * @tparam FUNC the type of the function that can be used to customize the computation of the phase fluxes
+   * @param[in] iconn the connection index
+   * @param[inout] stack the stack variables
+   * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
+   */
+  template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >
+  GEOS_HOST_DEVICE
+  void computeFlux( localIndex const iconn,
+                    StackVariables & stack,
+                    FUNC && compFluxKernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
   {
     using Order = BoundaryStencil::Order;
     localIndex constexpr numElems = BoundaryStencil::maxNumPointsInFlux;
@@ -879,107 +1000,173 @@ struct FaceDirichletBCKernel
     stackArray1d< real64, numElems > mobility( numElems );
     stackArray1d< real64, numElems > dMobility_dP( numElems );
 
-    localIndex const er  = seri[ Order::ELEM ];
-    localIndex const esr = sesri[ Order::ELEM ];
-    localIndex const ei  = sefi[ Order::ELEM ];
-    localIndex const kf  = sefi[ Order::FACE ];
+    localIndex const er  = m_seri( iconn, Order::ELEM );
+    localIndex const esr = m_sesri( iconn, Order::ELEM );
+    localIndex const ei  = m_sei( iconn, Order::ELEM );
+    localIndex const kf  = m_sei( iconn, Order::FACE );
 
     // Get flow quantities on the elem/face
     real64 faceDens, faceVisc;
-    fluidWrapper.compute( presFace[kf], faceDens, faceVisc );
+    m_fluidWrapper.compute( m_facePres[kf], faceDens, faceVisc );
 
-    mobility[Order::ELEM] = mob[er][esr][ei];
+    mobility[Order::ELEM] = m_mob[er][esr][ei];
     singlePhaseBaseKernels::MobilityKernel::compute( faceDens, faceVisc, mobility[Order::FACE] );
 
-    dMobility_dP[Order::ELEM] = dMob_dPres[er][esr][ei];
+    dMobility_dP[Order::ELEM] = m_dMob_dPres[er][esr][ei];
     dMobility_dP[Order::FACE] = 0.0;
 
     // Compute average density
-    real64 const densMean = 0.5 * ( dens[er][esr][ei][0] + faceDens );
-    real64 const dDens_dP = 0.5 * dDens_dPres[er][esr][ei][0];
+    real64 const densMean = 0.5 * ( m_dens[er][esr][ei][0] + faceDens );
+    real64 const dDens_dP = 0.5 * m_dDens_dPres[er][esr][ei][0];
 
     // Evaluate potential difference
-    real64 const potDif = (pres[er][esr][ei] - presFace[kf])
-                          - densMean * (gravCoef[er][esr][ei] - gravCoefFace[kf]);
-    real64 const dPotDif_dP = 1.0 - dDens_dP * gravCoef[er][esr][ei];
+    real64 const potDif = (m_pres[er][esr][ei] - m_facePres[kf])
+                          - densMean * (m_gravCoef[er][esr][ei] - m_faceGravCoef[kf]);
+    real64 const dPotDif_dP = 1.0 - dDens_dP * m_gravCoef[er][esr][ei];
 
-    real64 const f = trans * potDif;
-    real64 const dF_dP = trans * dPotDif_dP + dTrans_dPres * potDif;
+    real64 dTrans_dPerm[3];
+    m_stencilWrapper.computeWeights( iconn, m_permeability, stack.transmissibility, dTrans_dPerm );
+    real64 const dTrans_dPres = LvArray::tensorOps::AiBi< 3 >( dTrans_dPerm, m_dPerm_dPres[er][esr][ei][0] );
+
+    real64 const f = stack.transmissibility * potDif;
+    real64 const dF_dP = stack.transmissibility * dPotDif_dP + dTrans_dPres * potDif;
 
     // Upwind mobility
     localIndex const k_up = ( potDif >= 0 ) ? Order::ELEM : Order::FACE;
-    flux = dt * mobility[k_up] * f;
-    dFlux_dP = dt * ( mobility[k_up] * dF_dP + dMobility_dP[k_up] * f );
+    real64 const mobility_up = mobility[k_up];
+    real64 const dMobility_dP_up = dMobility_dP[k_up];
+
+    // call the lambda in the phase loop to allow the reuse of the fluxes and their derivatives
+    // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
+
+    compFluxKernelOp( er, esr, ei, kf, f, dF_dP, mobility_up, dMobility_dP_up );
+
+    // *** end of upwinding
+
+    // Populate local flux vector and derivatives
+
+    stack.localFlux[0] = m_dt * mobility[k_up] * f;
+    stack.localFluxJacobian[0][0] = m_dt * ( mobility_up * dF_dP + dMobility_dP_up * f );
   }
 
-  template< typename FLUID_WRAPPER >
-  static void launch( BoundaryStencilWrapper const & stencil,
-                      ElementViewConst< arrayView1d< integer const > > const & ghostRank,
-                      ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
-                      globalIndex const rankOffset,
-                      ElementViewConst< arrayView3d< real64 const > > const & perm,
-                      ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
-                      ElementViewConst< arrayView1d< real64 const > > const & pres,
-                      ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                      ElementViewConst< arrayView2d< real64 const > > const & dens,
-                      ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
-                      ElementViewConst< arrayView1d< real64 const > > const & mob,
-                      ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
-                      arrayView1d< real64 const > const & presFace,
-                      arrayView1d< real64 const > const & gravCoefFace,
-                      FLUID_WRAPPER const & fluidWrapper,
-                      real64 const dt,
-                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                      arrayView1d< real64 > const & localRhs )
+  /**
+   * @brief Performs the complete phase for the kernel.
+   * @param[in] iconn the connection index
+   * @param[inout] stack the stack variables
+   */
+  template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >
+  GEOS_HOST_DEVICE
+  void complete( localIndex const iconn,
+                 StackVariables & stack,
+                 FUNC && assemblyKernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
   {
-    BoundaryStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
-    BoundaryStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
-    BoundaryStencil::IndexContainerViewConstType const & sefi = stencil.getElementIndices();
+    using Order = BoundaryStencil::Order;
 
-    forAll< parallelDevicePolicy<> >( seri.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+    localIndex const er = m_seri( iconn, Order::ELEM );
+    localIndex const esr = m_sesri( iconn, Order::ELEM );
+    localIndex const ei = m_sei( iconn, Order::ELEM );
+
+    if( m_ghostRank[er][esr][ei] < 0 )
     {
-      localIndex const er  = seri( iconn, BoundaryStencil::Order::ELEM );
-      localIndex const esr = sesri( iconn, BoundaryStencil::Order::ELEM );
-      localIndex const ei  = sefi( iconn, BoundaryStencil::Order::ELEM );
+      // Add to global residual/jacobian
+      globalIndex const dofIndex = m_dofNumber[er][esr][ei];
+      localIndex const localRow = LvArray::integerConversion< localIndex >( dofIndex - m_rankOffset );
 
-      real64 trans;
-      real64 dTrans_dPerm[3];
-      stencil.computeWeights( iconn, perm, trans, dTrans_dPerm );
-      real64 const dTrans_dPres = LvArray::tensorOps::AiBi< 3 >( dTrans_dPerm, dPerm_dPres[er][esr][ei][0] );
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow], stack.localFlux[0] );
 
-      real64 flux, fluxJacobian;
+      AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
+        ( localRow,
+        stack.dofColIndices,
+        stack.localFluxJacobian[0],
+        numDof );
 
-      compute( seri[iconn],
-               sesri[iconn],
-               sefi[iconn],
-               trans,
-               dTrans_dPres,
-               pres,
-               gravCoef,
-               dens,
-               dDens_dPres,
-               mob,
-               dMob_dPres,
-               presFace,
-               gravCoefFace,
-               fluidWrapper,
-               dt,
-               flux,
-               fluxJacobian );
-
-      if( ghostRank[er][esr][ei] < 0 )
-      {
-        // Add to global residual/jacobian
-        globalIndex const dofIndex = dofNumber[er][esr][ei];
-        localIndex const localRow = LvArray::integerConversion< localIndex >( dofIndex - rankOffset );
-
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], flux );
-        localMatrix.addToRow< parallelDeviceAtomic >( localRow, &dofIndex, &fluxJacobian, 1 );
-      }
-    } );
-
+      assemblyKernelOp( localRow );
+    }
   }
+
+protected:
+
+  /// Views on face pressure, temperature, and composition
+  arrayView1d< real64 const > const m_facePres;
+
+  /// View on the face gravity coefficient
+  arrayView1d< real64 const > const m_faceGravCoef;
+
+  /// Reference to the fluid wrapper
+  FLUIDWRAPPER const m_fluidWrapper;
+
 };
+
+
+/**
+ * @class DirichletFaceBasedAssemblyKernelFactory
+ */
+class DirichletFaceBasedAssemblyKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] dofKey string to get the element degrees of freedom numbers
+   * @param[in] solverName name of the solver (to name accessors)
+   * @param[in] faceManager reference to the face manager
+   * @param[in] elemManager reference to the element region manager
+   * @param[in] stencilWrapper reference to the boundary stencil wrapper
+   * @param[in] fluidBase the single phase fluid constitutive model
+   * @param[in] dt time step size
+   * @param[inout] localMatrix the local CRS matrix
+   * @param[inout] localRhs the local right-hand side vector
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch( globalIndex const rankOffset,
+                   string const & dofKey,
+                   string const & solverName,
+                   FaceManager const & faceManager,
+                   ElementRegionManager const & elemManager,
+                   BoundaryStencilWrapper const & stencilWrapper,
+                   SingleFluidBase & fluidBase,
+                   real64 const & dt,
+                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   arrayView1d< real64 > const & localRhs )
+  {
+    constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
+    {
+      using FluidType = TYPEOFREF( fluid );
+      typename FluidType::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
+
+      integer constexpr NUM_DOF = 1;
+      using kernelType = DirichletFaceBasedAssemblyKernel< NUM_DOF, typename FluidType::KernelWrapper >;
+
+      ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
+        elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
+
+      dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
+
+      typename kernelType::SinglePhaseFlowAccessors singlePhaseFlowAccessors( elemManager, solverName );
+      typename kernelType::SinglePhaseFluidAccessors singlePhaseFluidAccessors( elemManager, solverName );
+      typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+
+      kernelType kernel( rankOffset,
+                         faceManager,
+                         stencilWrapper,
+                         fluidWrapper,
+                         dofNumberAccessor,
+                         singlePhaseFlowAccessors,
+                         singlePhaseFluidAccessors,
+                         permeabilityAccessors,
+                         dt,
+                         localMatrix,
+                         localRhs );
+
+      kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+    } );
+  }
+
+};
+
 
 /******************************** AquiferBCKernel ********************************/
 
@@ -998,7 +1185,7 @@ struct AquiferBCKernel
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   compute( real64 const & aquiferVolFlux,
            real64 const & dAquiferVolFlux_dPres,
@@ -1045,9 +1232,8 @@ struct AquiferBCKernel
     BoundaryStencil::IndexContainerViewConstType const & sefi = stencil.getElementIndices();
     BoundaryStencil::WeightContainerViewConstType const & weight = stencil.getWeights();
 
-    forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+    forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
     {
-
       // working variables
       real64 localFlux = 0.0;
       real64 localFluxJacobian = 0.0;
@@ -1082,8 +1268,8 @@ struct AquiferBCKernel
       {
         globalIndex const globalRow = dofNumber[er][esr][ei];
         localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
-        GEOSX_ASSERT_GE( localRow, 0 );
-        GEOSX_ASSERT_GT( localMatrix.numRows(), localRow );
+        GEOS_ASSERT_GE( localRow, 0 );
+        GEOS_ASSERT_GT( localMatrix.numRows(), localRow );
 
         RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux );
         localMatrix.addToRow< parallelDeviceAtomic >( localRow,
@@ -1099,6 +1285,6 @@ struct AquiferBCKernel
 
 } // namespace singlePhaseFVMKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVMKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVMKERNELS_HPP

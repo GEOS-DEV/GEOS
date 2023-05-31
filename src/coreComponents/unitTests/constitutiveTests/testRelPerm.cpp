@@ -15,15 +15,15 @@
 // Source includes
 #include "common/DataLayouts.hpp"
 #include "constitutiveTestHelpers.hpp"
-#include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
 
-using namespace geosx;
-using namespace geosx::testing;
-using namespace geosx::constitutive;
-using namespace geosx::constitutive::relperm;
-using namespace geosx::dataRepository;
+using namespace geos;
+using namespace geos::testing;
+using namespace geos::constitutive;
+using namespace geos::constitutive::relperm;
+using namespace geos::dataRepository;
 
 RelativePermeabilityBase & makeBrooksCoreyRelPerm( string const & name, Group & parent )
 {
@@ -984,11 +984,11 @@ TEST_F( RelPermTest, numericalDerivatives_TableRelPermHysteresisTwoPhase )
 
   // move the historical phase vol fraction back to the CPU since the test is performed on the CPU
   auto & phaseMinHistoricalVolFraction =
-    m_model->getReference< array2d< real64, compflow::LAYOUT_PHASE > >( extrinsicMeshData::relperm::phaseMinHistoricalVolFraction::key() );
-  phaseMinHistoricalVolFraction.move( LvArray::MemorySpace::host, false );
+    m_model->getReference< array2d< real64, compflow::LAYOUT_PHASE > >( fields::relperm::phaseMinHistoricalVolFraction::key() );
+  phaseMinHistoricalVolFraction.move( hostMemorySpace, false );
   auto & phaseMaxHistoricalVolFraction =
-    m_model->getReference< array2d< real64, compflow::LAYOUT_PHASE > >( extrinsicMeshData::relperm::phaseMaxHistoricalVolFraction::key() );
-  phaseMaxHistoricalVolFraction.move( LvArray::MemorySpace::host, false );
+    m_model->getReference< array2d< real64, compflow::LAYOUT_PHASE > >( fields::relperm::phaseMaxHistoricalVolFraction::key() );
+  phaseMaxHistoricalVolFraction.move( hostMemorySpace, false );
 
   while( sat[0] <= endSat )
   {
@@ -1003,11 +1003,11 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::GeosxState state( geosx::basicSetup( argc, argv ) );
+  geos::GeosxState state( geos::basicSetup( argc, argv ) );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::basicCleanup();
+  geos::basicCleanup();
 
   return result;
 }

@@ -15,12 +15,12 @@
 /**
  * @file traits.hpp
  */
-#ifndef GEOSX_LINEARALGEBRA_UTILITIES_TRAITS_HPP_
-#define GEOSX_LINEARALGEBRA_UTILITIES_TRAITS_HPP_
+#ifndef GEOS_LINEARALGEBRA_UTILITIES_TRAITS_HPP_
+#define GEOS_LINEARALGEBRA_UTILITIES_TRAITS_HPP_
 
 #include "codingUtilities/SFINAE_Macros.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace traits
@@ -44,6 +44,6 @@ struct VectorBasedTraits
 
 }
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_UTILITIES_TRAITS_HPP_
+#endif //GEOS_LINEARALGEBRA_UTILITIES_TRAITS_HPP_
