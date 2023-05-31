@@ -32,6 +32,22 @@ namespace fields
 namespace wavesolverfields
 {
 
+DECLARE_FIELD( Pressure_nm1,
+               "pressure_nm1",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Scalar pressure at time n-1." );
+
+DECLARE_FIELD( Pressure_n,
+               "pressure_n",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Scalar pressure at time n." );
+
 DECLARE_FIELD( Pressure_np1,
                "pressure_np1",
                array1d< real32 >,
@@ -87,6 +103,14 @@ DECLARE_FIELD( DampingVector,
                NOPLOT,
                WRITE_AND_READ,
                "Diagonal of the Damping Matrix." );
+
+DECLARE_FIELD( StiffnessVector,
+               "stiffnessVector",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Stiffness vector contains R_h*Pressure_n." );
 
 DECLARE_FIELD( MediumVelocity,
                "mediumVelocity",
@@ -247,6 +271,54 @@ DECLARE_FIELD( Mu,
                NOPLOT,
                WRITE_AND_READ,
                "Second Lame parameter: mu" );
+
+DECLARE_FIELD( PressureDoubleDerivative,
+               "pressureDoubleDerivative",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Double derivative of the pressure for each node to compute the gradient" );
+
+DECLARE_FIELD( PartialGradient,
+               "partialGradient",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Partiel gradient computed during backward propagation" );
+
+DECLARE_FIELD( AuxiliaryVar1PML,
+               "auxiliaryVar1PML",
+               array2d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "PML vectorial auxiliary variable 1." );
+
+DECLARE_FIELD( AuxiliaryVar2PML,
+               "auxiliaryVar2PML",
+               array2d< real32 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "PML vectorial auxiliary variable 2." );
+
+DECLARE_FIELD( AuxiliaryVar3PML,
+               "auxiliaryVar3PML",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "PML scalar auxiliary variable 3." );
+
+DECLARE_FIELD( AuxiliaryVar4PML,
+               "auxiliaryVar4PML",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "PML scalar auxiliary variable 4." );
 
 
 }
