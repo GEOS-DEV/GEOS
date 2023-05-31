@@ -21,97 +21,97 @@ using namespace geos;
 namespace typeDispatchTest
 {
 class ConstitutiveBase
-{   public:
-    ConstitutiveBase() = default;
-    protected:
-    int m_a;
+{
+public:
+  ConstitutiveBase() = default;
+  int m_a;
 };
 
 class Model1 : public ConstitutiveBase
 {
-    public:
-    Model1():
+public:
+  Model1():
     ConstitutiveBase()
-    {m_a = 1;};
+  {m_a = 1;};
 };
 
 class Model2 : public ConstitutiveBase
-{   
-    public:
-    Model2():
+{
+public:
+  Model2():
     ConstitutiveBase()
-    {m_a = 2; };
+  {m_a = 2; };
 };
 
 class FEMBase {};
 
 class QuadP1 : public FEMBase
 {
- static constexpr int num_nodes = 4;
+  public:
+  static constexpr int num_nodes = 4;
 };
 
 class TriangleP1 : public FEMBase
 {
- static constexpr int num_nodes = 3;
+  public:
+  static constexpr int num_nodes = 3;
 };
 
 }
 
-template< typename TYPES >
-class TypesCombinationDispatchTest : public ::testing::Test
+template< typename ... Ts >
+void testDispatchSimple( types::TypeList< Ts... > const list )
 {
-protected:
-
-  using TypeList = TYPES;
-
-  template< typename ... Ts >
-  void testDispatchSimple( types::TypeList< Ts... > const list )
+  bool const result = types::dispatchCombinations( list, []( auto tupleOfTypes )
   {
-    bool const result = types::dispatch( list, []( auto tupleOfTypes )
-    {
-      using FirstType  = camp::first< decltype(tupleOfTypes) >;
-      using SecondType = camp::second< decltype(tupleOfTypes) >;
-      std::cout << "test_dispatch_simple:  dispatched with " << typeid(FirstType).name() << ", " << typeid(SecondType).name() << std::endl;
-    }, 0.0f, 0 );
-  }
+    using FirstType  = camp::first< decltype(tupleOfTypes) >;
+    using SecondType = camp::second< decltype(tupleOfTypes) >;
+    std::cout << "test_dispatch_simple:  dispatched with " << typeid(FirstType).name() << ", " << typeid(SecondType).name() << std::endl;
+  }, 0.0f, 0 );
+  EXPECT_TRUE( result ) << "Dispatch failed to match the type";
+}
 
-  template< typename ... Ts >
-  void testDispatchVirtual( types::TypeList< Ts... > const list,
-                            typeDispatchTest::FEMBase & fem,
-                            typeDispatchTest::ConstitutiveBase & constitutiveModel )
+template< typename ... Ts >
+void testDispatchVirtual( types::TypeList< Ts... > const list,
+                          typeDispatchTest::FEMBase & fem,
+                          typeDispatchTest::ConstitutiveBase & constitutiveModel )
+{
+  bool const result = types::dispatchCombinations( list, [&]( auto tupleOfTypes )
   {
+    using FemType   = camp::first< decltype(tupleOfTypes) >;
+    using ModelType = camp::second< decltype(tupleOfTypes) >;
+    FemType & femCasted = static_cast< FemType & >(fem);
+    ModelType & modelCasted = static_cast< ModelType & >(constitutiveModel);
+    std::cout << "test_dispatch_virtual: dispatched with fem.num_nodes: " << femCasted.num_nodes << ", model.m_a = " << modelCasted.m_a << std::endl;
+  }, fem, constitutiveModel );
+  EXPECT_TRUE( result ) << "Dispatch failed to match the type";
+}
 
-    bool const result = types::dispatch( list, [&]( auto tupleOfTypes )
-    {
-      using FemType   = camp::first< decltype(tupleOfTypes) >;
-      using ModelType = camp::second< decltype(tupleOfTypes) >;
-      FemType & femCasted = static_cast< FemType & >(*fem);
-      ModelType & modelCasted = static_cast< ModelType & >(*model);
-      std::cout << "test_dispatch_virtual: dispatched with fem.num_nodes: " << femCasted.num_nodes << ", model.m_a = " << modelCasted.m_a << std::endl;
-    }, *fem, *model );
 
-    if( !result ) std::cout << "test_dispatch_virtual: not dispatched!" << std::endl;
-  }
-
-};
-
-TYPED_TEST( TypesCombinationDispatchTest, dispatchSimpleTypes )
+TEST( testDispatchSimple, DispatchSimpleTypes )
 {
   using Types = types::TypeList< types::TypeList< int, int >,
                                  types::TypeList< float, int > >;
 
-  this->testDispatchSimple( Types{} );
+  testDispatchSimple( Types{} );
 }
 
-TYPED_TEST( TypesCombinationDispatchTest, dispatchVirtualTypes )
+TEST( testDispatchVirtual, DispatchVirtualTypes )
 {
 
   using namespace typeDispatchTest;
   using Types = types::TypeList< types::TypeList< QuadP1, Model1 >,
                                  types::TypeList< TriangleP1, Model2 > >;
 
-  std::unique_ptr< FEMBase >         fem   = std::make_unique< QuadP1 >();
+  std::unique_ptr< FEMBase >         fem    = std::make_unique< QuadP1 >();
   std::unique_ptr< ConstitutiveBase > model = std::make_unique< Model1 >();
 
-  this->testDispatchVirtual( Types{}, *fem, *model );
+  testDispatchVirtual( Types{}, *fem, *model );
+}
+
+int main( int ac, char * av[] )
+{
+  ::testing::InitGoogleTest( &ac, av );
+  int const result = RUN_ALL_TESTS();
+  return result;
 }

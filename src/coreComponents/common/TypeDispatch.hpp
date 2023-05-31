@@ -275,7 +275,7 @@ auto createTypeIndexTuple( TypeList< Ts... > )
 }
 
 template< typename LIST, std::size_t ... Is >
-auto const & getTypeMap( LIST combinations, std::integer_sequence< std::size_t, Is... > )
+auto const & getTypeMap( LIST, std::integer_sequence< std::size_t, Is... > )
 {
   using KeyType = decltype( createTypeIndexTuple( camp::first< LIST >{} ) );
   static std::unordered_map< KeyType, std::size_t, tuple_hash > const result = { { createTypeIndexTuple( camp::at_t< LIST, camp::num< Is > >{} ), Is } ... };
