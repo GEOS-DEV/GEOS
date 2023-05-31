@@ -1161,6 +1161,7 @@ public:
    */
   struct StackVariables : public Base::StackVariables
   {
+    GEOS_HOST_DEVICE
     StackVariables()
     { }
 
@@ -1240,12 +1241,12 @@ public:
     Base::setup( ei, stack );
 
     stack.localMaxDeltaPres = 0.0;
-    stack.localMaxDeltaCompDens = 0.0;
     stack.localMaxDeltaTemp = 0.0;
+    stack.localMaxDeltaCompDens = 0.0;
 
     stack.localMinPresScalFac = 1.0;
-    stack.localMinCompDensScalFac = 1.0;
     stack.localMinTempScalFac = 1.0;
+    stack.localMinCompDensScalFac = 1.0;
   }
 
   /**
