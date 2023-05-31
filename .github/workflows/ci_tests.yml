@@ -47,8 +47,8 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v3
       with:
-        submodules: false
-        token: ${{ secrets.GITHUB_TOKEN }}
+        submodules: true
+        lfs: false
     - name: Check that submodules are up to date
       run: "scripts/test_submodule_updated.sh"
 
@@ -59,8 +59,8 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v3
       with:
-        submodules: false
-        token: ${{ secrets.GITHUB_TOKEN }}
+        submodules: true
+        lfs: false
     - name: Check style
       env:
         DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
@@ -75,8 +75,8 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v3
       with:
-        submodules: false
-        token: ${{ secrets.GITHUB_TOKEN }}
+        submodules: true
+        lfs: false
     - name: Check documentation
       env:
         DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
@@ -132,8 +132,8 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v3
       with:
-        submodules: false
-        token: ${{ secrets.GITHUB_TOKEN }}
+        submodules: true
+        lfs: false
 
     - name: Print environment
       run: printenv
@@ -192,8 +192,8 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v3
       with:
-        submodules: false
-        token: ${{ secrets.GITHUB_TOKEN }}
+        submodules: true
+        lfs: false
 
     - id: 'auth'
       uses: 'google-github-actions/auth@v1'
