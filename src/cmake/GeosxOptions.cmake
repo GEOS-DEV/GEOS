@@ -113,9 +113,9 @@ endif()
 #message( "SPHINX_FOUND = ${SPHINX_FOUND}" )
 #message( "SPHINX_EXECUTABLE = ${SPHINX_EXECUTABLE}" )
 
-if( NOT BLT_CXX_STD STREQUAL c++14 )
-    MESSAGE( FATAL_ERROR "c++14 is NOT enabled. GEOSX requires c++14" )
-endif( NOT BLT_CXX_STD STREQUAL c++14 )
+if( NOT BLT_CXX_STD STREQUAL c++17 )
+    MESSAGE( FATAL_ERROR "c++17 is NOT enabled. GEOSX requires c++17" )
+endif( NOT BLT_CXX_STD STREQUAL c++17 )
 
 message( "CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}" )
 
