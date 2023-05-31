@@ -275,11 +275,11 @@ auto createTypeIndexTuple( TypeList< Ts... > )
 }
 
 template< typename LIST, std::size_t ... Is >
-decltype( auto ) getTypeMap( LIST combinations, std::integer_sequence< std::size_t, Is... > )
+auto const & getTypeMap( LIST combinations, std::integer_sequence< std::size_t, Is... > )
 {
   using KeyType = decltype( createTypeIndexTuple( camp::first< LIST >{} ) );
   static std::unordered_map< KeyType, std::size_t, tuple_hash > const result = { { createTypeIndexTuple( camp::at_t< LIST, camp::num< Is > >{} ), Is } ... };
-  return (result);
+  return result;
 }
 
 /**
@@ -342,7 +342,7 @@ bool dispatch( TypeList< Ts... > const types,
   {
     GEOS_ERROR( "Type " << LvArray::system::demangle( type.name() ) << " was not dispatched.\n" <<
                 "Check the stack trace below and revise the type list passed to dispatch().\n" <<
-                "If you are unsure about this error, please report it to GEOSX issue tracker." );
+                "If you are unsure about this error, please report it to GEOS issue tracker." );
   }
   return success;
 }
@@ -352,7 +352,7 @@ bool dispatch( TypeList< Ts... > const types,
  * @brief
  *
  * @tparam LIST
- * @tparam F
+ * @tparam LAMBDA
  * @tparam Ts
  * @param combinations
  * @param lambda
@@ -373,7 +373,7 @@ bool dispatchCombinations( LIST const combinations,
   {
     GEOS_ERROR( "Type was not dispatched.\n" <<
                 "Check the stack trace below and revise the type list passed to dispatch().\n" <<
-                "If you are unsure about this error, please report it to GEOSX issue tracker." );
+                "If you are unsure about this error, please report it to GEOS issue tracker." );
   }
   return success;
 }
