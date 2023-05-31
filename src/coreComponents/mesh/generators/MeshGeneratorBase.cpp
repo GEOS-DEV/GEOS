@@ -13,8 +13,6 @@
  */
 
 #include "MeshGeneratorBase.hpp"
-#include "MeshGeneratorBase.hpp"
-#include "mesh/MeshBody.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
 
 namespace geos

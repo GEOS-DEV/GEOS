@@ -19,8 +19,10 @@
 #ifndef GEOSX_MESH_PARTITIONDESCRIPTOR_H_
 #define GEOSX_MESH_PARTITIONDESCRIPTOR_H_
 
-#include <set>
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
+
+#include <set>
+
 
 namespace geos
 {
