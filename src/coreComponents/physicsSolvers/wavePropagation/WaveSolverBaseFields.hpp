@@ -168,6 +168,55 @@ DECLARE_FIELD( Displacementz_np1,
                WRITE_AND_READ,
                "z-component of displacement at time n+1." );
 
+DECLARE_FIELD( Displacementx_nm1,
+               "displacementx_nm1",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "x-component of displacement at time n-1." );
+
+DECLARE_FIELD( Displacementy_nm1,
+               "displacementy_nm1",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "y-component of displacement at time n-1." );
+
+DECLARE_FIELD( Displacementz_nm1,
+               "displacementz_nm1",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "z-component of displacement at time n-1." );
+
+DECLARE_FIELD( Displacementx_n,
+               "displacementx_n",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "x-component of displacement at time n." );
+
+DECLARE_FIELD( Displacementy_n,
+               "displacementy_n",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "y-component of displacement at time n." );
+
+DECLARE_FIELD( Displacementz_n,
+               "displacementz_n",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "z-component of displacement at time n." );
+
+
 DECLARE_FIELD( Stresstensorxx,
                "stresstensorxx",
                array2d< real32 >,
@@ -239,6 +288,55 @@ DECLARE_FIELD( DampingVectorz,
                NOPLOT,
                WRITE_AND_READ,
                "Diagonal Damping Matrix in z-direction." );
+
+DECLARE_FIELD( StiffnessVectorx,
+               "stiffnessVectorx",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "x-component of stiffness vector." );
+
+DECLARE_FIELD( StiffnessVectory,
+               "stiffnessVectory",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "y-component of stiffness vector." );
+
+DECLARE_FIELD( StiffnessVectorz,
+               "stiffnessVectorz",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "z-component of stiffness vector." );
+              
+DECLARE_FIELD( ForcingRHSx,
+               "rhsx",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "RHS for x-direction" );
+
+DECLARE_FIELD( ForcingRHSy,
+               "rhsy",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "RHS for y-direction" );
+
+DECLARE_FIELD( ForcingRHSz,
+               "rhsz",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "RHS for z-direction" );
+
 
 DECLARE_FIELD( MediumVelocityVp,
                "mediumVelocityVp",

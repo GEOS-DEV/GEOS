@@ -21,10 +21,14 @@
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "WaveSolverUtils.hpp"
+#include "WaveSolverBaseFields.hpp"
+
 
 
 namespace geos
 {
+
+using namespace fields;
 
 /// Namespace to contain the elastic wave kernels.
 namespace elasticWaveEquationSEMKernels
@@ -429,15 +433,15 @@ public:
           finiteElementSpace,
           inputConstitutiveType ),
     m_X( nodeManager.referencePosition() ),
-    m_ux_n( nodeManager.getField< fields::Displacementx_n >() ),
-    m_uy_n( nodeManager.getField< fields::Displacementy_n >() ),
-    m_uz_n( nodeManager.getField< fields::Displacementz_n >() ),
-    m_stiffnessVectorx( nodeManager.getField< fields::StiffnessVectorx >() ),
-    m_stiffnessVectory( nodeManager.getField< fields::StiffnessVectory >() ),
-    m_stiffnessVectorz( nodeManager.getField< fields::StiffnessVectorz >() ),
-    m_density( elementSubRegion.template getField< fields::MediumDensity >() ),
-    m_velocityVp( elementSubRegion.template getField< fields::MediumVelocityVp >() ),
-    m_velocityVs( elementSubRegion.template getField< fields::MediumVelocityVs >() ),
+    m_ux_n( nodeManager.getField< wavesolverfields::Displacementx_n >() ),
+    m_uy_n( nodeManager.getField< wavesolverfields::Displacementy_n >() ),
+    m_uz_n( nodeManager.getField< wavesolverfields::Displacementz_n >() ),
+    m_stiffnessVectorx( nodeManager.getField< wavesolverfields::StiffnessVectorx >() ),
+    m_stiffnessVectory( nodeManager.getField< wavesolverfields::StiffnessVectory >() ),
+    m_stiffnessVectorz( nodeManager.getField< wavesolverfields::StiffnessVectorz >() ),
+    m_density( elementSubRegion.template getField< wavesolverfields::MediumDensity >() ),
+    m_velocityVp( elementSubRegion.template getField< wavesolverfields::MediumVelocityVp >() ),
+    m_velocityVs( elementSubRegion.template getField< wavesolverfields::MediumVelocityVs >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );
