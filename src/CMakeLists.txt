@@ -14,7 +14,7 @@ cmake_policy(SET CMP0056 NEW) # use CMAKE_EXE_LINKER_FLAGS in try_compile() in a
 ################################
 project( geosx LANGUAGES C CXX )
 include(GNUInstallDirs)
-set( BLT_CXX_STD "c++14" CACHE STRING "Version of C++ standard" )
+set( BLT_CXX_STD "c++17" CACHE STRING "Version of C++ standard" )
 if(CMAKE_BUILD_TYPE EQUAL "Debug")
   set( ENABLE_WARNINGS_AS_ERRORS "OFF" CACHE PATH "")
 else()
