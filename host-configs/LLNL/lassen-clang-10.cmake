@@ -1,4 +1,4 @@
-include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/LvArray/host-configs/LLNL/lassen-clang10-cuda11.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/LvArray/host-configs/LLNL/lassen-clang-10.cmake)
 
 # Fortran
 set(CMAKE_Fortran_COMPILER /usr/tce/packages/xl/xl-2022.08.19-cuda-11.2.0/bin/xlf_r  CACHE PATH "")

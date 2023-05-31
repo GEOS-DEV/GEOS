@@ -1,4 +1,4 @@
-include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/LvArray/host-configs/LLNL/tioga-cce@15.0.0.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/LvArray/host-configs/LLNL/tioga-cce-15.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/tioga-base.cmake)
 
 set( CONDUIT_DIR "${GEOSX_TPL_DIR}/conduit" CACHE PATH "" )

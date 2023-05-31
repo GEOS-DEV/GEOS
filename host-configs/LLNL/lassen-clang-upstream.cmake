@@ -1,4 +1,4 @@
-include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/LvArray/host-configs/LLNL/lassen-clang@upstream.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/LvArray/host-configs/LLNL/lassen-clang-upstream.cmake)
 
 # Fortran
 set(CMAKE_Fortran_COMPILER /usr/tce/packages/xl/xl-2020.11.12/bin/xlf_r CACHE PATH "")

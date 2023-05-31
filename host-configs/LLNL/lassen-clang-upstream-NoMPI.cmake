@@ -1,4 +1,4 @@
-include(${CMAKE_CURRENT_LIST_DIR}/../../host-configs/LLNL/lassen-clang@upstream.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../../host-configs/LLNL/lassen-clang-upstream.cmake)
 
 set(CONFIG_NAME "lassen-clang@upstream-NoMPI" CACHE PATH "" FORCE)
 set(GEOSX_TPL_ROOT_DIR /usr/gapps/GEOSX/thirdPartyLibs CACHE PATH "" FORCE)
