@@ -488,9 +488,9 @@ class Geosx(CMakePackage, CudaPackage):
         # options.append(self.define_from_variant('BUILD_SHARED_LIBS', 'shared'))
 
         # if '~tests~examples~benchmarks' in spec:
-        #     options.append('-DENABLE_TESTS=OFF')
+        #     options.append('-DGEOS_ENABLE_TESTS=OFF')
         # else:
-        #     options.append('-DENABLE_TESTS=ON')
+        #     options.append('-DGEOS_ENABLE_TESTS=ON')
 
         # if '~test' in spec:
         #     options.append('-DDISABLE_UNIT_TESTS=ON')
