@@ -14,7 +14,7 @@ jobs:
   # PR status must be "Open" to run CI.
   check_pull_request_is_not_a_draft:
     # We use the most recent ubuntu distribution available in Github Actions to ensure maximum support of google cloud's sdk.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Check that the PR is not a draft (cancel rest of jobs otherwise)
       run: |
@@ -26,7 +26,7 @@ jobs:
   # This job will fail if this is not the case.
   check_pull_request_is_assigned:
     needs: [check_pull_request_is_not_a_draft]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     # Assignee ID will be null if PR is not assigned
     - name: Check that the PR is assigned
@@ -40,7 +40,7 @@ jobs:
 
   check_submodules:
     needs: [check_pull_request_is_not_a_draft]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     # The integrated test sumbmodule repository contains large data (using git lfs).
     # To save time (and money) we do not let Github Actions automatically clone all our (lfs) subrepositories and do it by hand.
@@ -54,7 +54,7 @@ jobs:
 
   code_style:
     needs: [check_pull_request_is_not_a_draft]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3
@@ -70,7 +70,7 @@ jobs:
 
   documentation:
     needs: [check_pull_request_is_not_a_draft]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3
@@ -87,7 +87,7 @@ jobs:
 
   linux_builds:
     name: ${{ matrix.name }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [check_pull_request_is_not_a_draft]
     strategy:
 
@@ -152,7 +152,7 @@ jobs:
 
   auto_deploy_builds:
     name: ${{ matrix.name }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [check_pull_request_is_not_a_draft]
     strategy:
 
