@@ -250,6 +250,71 @@ bool dispatchViaTable( TypeList< Ts... > const types,
   return false;
 }
 
+/**
+ * @brief struct to define the hash of a tuple
+ * 
+ */
+struct tuple_hash
+{
+  template< class... Ts >
+  std::size_t operator()( const std::tuple< Ts... > & t ) const
+  {
+    std::size_t hash = 0;
+    std::apply( [&hash]( auto &&... args )
+    {
+      ((hash ^= std::hash< std::decay_t< decltype(args) > >{} (args)), ...);
+    }, t );
+    return hash;
+  }
+};
+
+template< typename ... Ts >
+auto createTypeIndexTuple( TypeList< Ts... > )
+{
+  return std::make_tuple( std::type_index( typeid(Ts))... );
+}
+
+template< typename LIST, std::size_t ... Is >
+decltype( auto ) getTypeMap( LIST combinations, std::integer_sequence< std::size_t, Is... > )
+{
+  using KeyType = decltype( createTypeIndexTuple( camp::first< LIST >{} ) );
+  static std::unordered_map< KeyType, std::size_t, tuple_hash > const result = { { createTypeIndexTuple( camp::at_t< LIST, camp::num< Is > >{} ), Is } ... };
+  return (result);
+}
+
+/**
+ * @brief
+ *
+ * @tparam TypeTuples
+ * @tparam LAMBDA
+ * @param combinations
+ * @param type_index
+ * @param lambda
+ * @return true
+ * @return false
+ */
+template< typename ... TypeTuples, typename LAMBDA >
+bool dispatchViaTable( TypeList< TypeTuples... > const combinations,
+                       std::tuple< std::type_index, std::type_index > const typeTuple_index,
+                       LAMBDA && lambda )
+{
+  static_assert( sizeof...(TypeTuples) > 0, "Dispatching on empty type list not supported" );
+
+  // Initialize a table of handlers, once per unique combination of type list and lambda
+  using Handler = void (*)( LAMBDA && );
+  static Handler const handlers[] = { []( LAMBDA && f ){ f( TypeTuples{} ); } ... };
+
+  auto const & typeIndexMap = getTypeMap( combinations, std::index_sequence_for< TypeTuples... >{} );
+  auto const it = typeIndexMap.find( typeTuple_index );
+
+  if( it != typeIndexMap.end() )
+  {
+    handlers[ it->second ]( std::forward< LAMBDA >( lambda ) );
+    return true;
+  }
+  return false;
+}
+
 } // namespace internal
 
 /**
@@ -276,6 +341,37 @@ bool dispatch( TypeList< Ts... > const types,
   if( !success && errorIfTypeNotFound )
   {
     GEOS_ERROR( "Type " << LvArray::system::demangle( type.name() ) << " was not dispatched.\n" <<
+                "Check the stack trace below and revise the type list passed to dispatch().\n" <<
+                "If you are unsure about this error, please report it to GEOSX issue tracker." );
+  }
+  return success;
+}
+
+
+/**
+ * @brief
+ *
+ * @tparam LIST
+ * @tparam F
+ * @tparam Ts
+ * @param combinations
+ * @param lambda
+ * @param objects
+ * @return true
+ * @return false
+ */
+template< typename LIST, typename LAMBDA, typename ... Ts >
+bool dispatchCombinations( LIST const combinations,
+                           LAMBDA && lambda,
+                           Ts && ... objects )
+{
+  bool const success = internal::dispatchViaTable( combinations,
+                                                   std::make_tuple( std::type_index( typeid(objects))... ),
+                                                   std::forward< LAMBDA >( lambda ) );
+
+  if( !success )
+  {
+    GEOS_ERROR( "Type was not dispatched.\n" <<
                 "Check the stack trace below and revise the type list passed to dispatch().\n" <<
                 "If you are unsure about this error, please report it to GEOSX issue tracker." );
   }
