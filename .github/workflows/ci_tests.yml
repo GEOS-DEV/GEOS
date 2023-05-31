@@ -171,12 +171,12 @@ jobs:
         lfs: false
 
     - id: 'auth'
-      if: matrix.GCP_BUCKET == 'true'
+      if: matrix.GCP_BUCKET
       uses: 'google-github-actions/auth@v1'
       with:
         credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
     - name: 'Set up Cloud SDK'
-      if: matrix.GCP_BUCKET == 'true'
+      if: matrix.GCP_BUCKET
       uses: 'google-github-actions/setup-gcloud@v1'
       with:
         version: '>= 363.0.0'
@@ -187,7 +187,7 @@ jobs:
     # Build and test only
     # Builds only the geosx executable (timeout when building tests)
     - name: Build and test
-      if: matrix.GCP_BUCKET == 'false'
+      if: matrix.GCP_BUCKET
       env:
         DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
         CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
@@ -199,7 +199,7 @@ jobs:
 
     # Build, test, uploads GEOSX and its TPL to GCP/GCS using gcloud CLI
     - name: Build and test and deploy
-      if: matrix.GCP_BUCKET == 'true'
+      if: matrix.GCP_BUCKET
       env:
         DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
         CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
