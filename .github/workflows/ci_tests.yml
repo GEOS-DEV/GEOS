@@ -77,6 +77,7 @@ jobs:
       with:
         submodules: true
         lfs: false
+        fetch-depth: 2
     - name: Check documentation
       env:
         DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
