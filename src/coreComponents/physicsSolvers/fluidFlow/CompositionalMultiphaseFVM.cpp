@@ -80,6 +80,9 @@ void CompositionalMultiphaseFVM::setupDofs( DomainPartition const & domain,
                        m_numDofPerCell,
                        getMeshTargets() );
 
+  // this call with instruct GEOS to reorder the dof numbers
+  dofManager.enableLocalReordering( viewKeyStruct::elemDofFieldString() );
+
   // for the volume balance equation, disable global coupling
   // this equation is purely local (not coupled to neighbors or other physics)
   dofManager.disableGlobalCouplingForEquation( viewKeyStruct::elemDofFieldString(),
