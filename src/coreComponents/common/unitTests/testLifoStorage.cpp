@@ -76,7 +76,7 @@ void testLifoStorage( int elemCnt, int numberOfElementsOnDevice, int numberOfEle
 
   array1d< float > array( elemCnt );
   array.move( local::RAJAHelper< POLICY >::space );
-  lifoStorage< float, localIndex > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
+  LifoStorage< float, localIndex > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
 
   for( int j = 0; j < totalNumberOfBuffers; j++ )
   {
@@ -129,7 +129,7 @@ void testLifoStorageAsync( int elemCnt, int numberOfElementsOnDevice, int number
 {
   array1d< float > array( elemCnt );
   array.move( local::RAJAHelper< POLICY >::space );
-  lifoStorage< float, localIndex > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
+  LifoStorage< float, localIndex > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
 
   for( int j = 0; j < totalNumberOfBuffers; j++ )
   {
