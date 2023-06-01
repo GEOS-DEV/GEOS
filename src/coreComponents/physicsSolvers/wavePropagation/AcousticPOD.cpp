@@ -288,11 +288,13 @@ void AcousticPOD::postProcessInput()
       m_a_np1.resize( phi.size( 0 ));
       m_a_n.resize( phi.size( 0 ));
       m_a_nm1.resize( phi.size( 0 ));
+      m_a_dt2.resize( phi.size( 0 ), m_nsamplesWaveField);
       m_rhsPOD.resize( phi.size( 0 ));
 
       m_a_n.zero();
       m_a_nm1.zero();
       m_a_np1.zero();
+      m_a_dt2.zero();
       m_rhsPOD.zero();
 
       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const
@@ -691,6 +693,8 @@ real64 AcousticPOD::explicitStepForward( real64 const & time_n,
     arrayView1d< real32 > const a_nm1 = m_a_nm1.toView();
     arrayView1d< real32 > const a_n = m_a_n.toView();
     arrayView1d< real32 > const a_np1 = m_a_np1.toView();
+    localIndex const indexWaveField = m_indexWaveField;
+
     if( computeGradient )
     {
 
@@ -698,7 +702,7 @@ real64 AcousticPOD::explicitStepForward( real64 const & time_n,
 
       forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
         {
-          a_dt2[m_indexWaveField][m] = (a_np1[m] - 2*a_n[m] + a_nm1[m])/(dt*dt);
+          a_dt2[m][indexWaveField] = (a_np1[m] - 2*a_n[m] + a_nm1[m])/(dt*dt);
         } );
       m_indexWaveField += 1;
     }
@@ -748,22 +752,20 @@ real64 AcousticPOD::explicitStepBackward( real64 const & time_n,
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
         constexpr localIndex numNodesPerElem = 8;
 
-        array1d< real32 > phi1d( phi.size( 1 ));
-        arrayView1d< real32 > const phim = phi1d.toView();
-
-        for( localIndex m=0; m<phi.size( 0 ); ++m )
-        {
-          for( localIndex i=0; i<phi.size( 1 ); ++i )
-          {
-            phim[i]=phi[m][i];
-          }
+	localIndex const indexWaveField = m_indexWaveField;
+        array1d< real64 > phim;
+        phim.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
+	arrayView1d< real64 > phimV = phim.toView();
+	for( localIndex m=0; m<phi.size( 0 ); ++m )
+	{
+	  LvArray::memcpy(phim.toSlice(), phi[m].toSliceConst());
           GEOS_MARK_SCOPE ( updatePartialGradient );
           forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const eltIdx )
             {
               for( localIndex i = 0; i < numNodesPerElem; ++i )
               {
                 localIndex nodeIdx = elemsToNodes[eltIdx][i];
-                grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/8.0 * (a_dt2[m_indexWaveField-1][m] * phim[nodeIdx] * a_n[m] * phim[nodeIdx]);
+                grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/8.0 * (a_dt2[m][indexWaveField-1] * phimV[nodeIdx] * a_n[m] * phimV[nodeIdx]);
               }
             } );
         }
