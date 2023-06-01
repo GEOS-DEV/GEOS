@@ -79,8 +79,8 @@ void testKernelDriver()
     }
   } );
 
-  array2d <real64> xCoordsData(numNodes,3);
-  arrayView2d <real64> const & xCoords = xCoordsData;
+  array2d< real64 > xCoordsData( numNodes, 3 );
+  arrayView2d< real64 > const & xCoords = xCoordsData;
   xCoords[0][0]=-1.0;
   xCoords[1][0]=-1.0/sqrt( 5.0 );
   xCoords[2][0]=1.0/sqrt( 5.0 );
