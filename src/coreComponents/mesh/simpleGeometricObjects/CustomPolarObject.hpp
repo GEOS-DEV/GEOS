@@ -43,7 +43,7 @@ public:
    * @param parent pointer to the parent group in the data hierarchy.
    */
   CustomPolarObject( const string & name,
-          Group * const parent );
+                     Group * const parent );
 
   /**
    * @brief Default destructor.
@@ -94,29 +94,6 @@ public:
     m_coefficients = coefficients;
   }
 
-  // /**
-  //  * @brief Update a single coeff. of the geometric function describing the boundary of the object.
-  //  * @param entry define the entry to be modified
-  //  * @param value the new value for that entry
-  //  * @return void
-  //  */
-  // void setCustomPolarObjectFunction( integer const entry, real64 const value )
-  // {
-  //   if( m_radius.m_coefficients.size() < entry+1 )
-  //   {
-  //     std::cout<<"ERROR - COEFF VECTOR NOT LARGE ENOUGH\n";
-  //     return;
-  //     //GEOSX_ERROR("Vector of coefficients in the CustomPolarObject object is not large enough. Requested change to entry "<<entry<<" array size:
-  //     // "<<m_radius.m_coefficients.size()<<"\n");
-  //   }
-  //   m_radius.m_coefficients[entry] = value;
-  // }
-
-  // real64 getRadius( real64 angle ) const
-  // {
-  //   return m_radius.getRadius( angle );
-  // }
-
   real64 getRadius( real64 angle ) const
   {
     real64 radius = 0;
@@ -127,46 +104,7 @@ public:
       count++;
     }
     return radius;
-  }  
-
-
-
-  // class VariableRadius
-  // {
-  // public:
-
-  //     VariableRadius()
-  //     {
-  //       m_coefficients.resize( 6 );
-  //       m_coefficients[0] = 1.0;
-  //       m_coefficients[1] = 0.0;
-  //       m_coefficients[2] = 0.15;
-  //       m_coefficients[3] = 0.0;
-  //       m_coefficients[4] = 0.0;
-  //       m_coefficients[5] = 0.0;
-  //     }
-
-  //   real64 getRadius( real64 angle ) const
-  //   {
-  //     real64 radius = 0;
-  //     integer count = 0;
-  //     for( auto coeff:m_coefficients )
-  //     {
-  //       radius = radius + coeff*cos( count*angle );
-  //       count++;
-  //     }
-  //     return radius;
-  //   }
-
-  //   void updateCoefficients( integer index, real64 value )
-  //   {
-  //     m_coefficients[index]=value;
-  //   }
-
-  //   array1d< real64 > m_coefficients;
-
-  // };
-
+  }
 
 protected:
 
@@ -180,8 +118,6 @@ private:
 
   /// center of the CustomPolarObject in (x,y,z) coordinates
   R1Tensor m_center;
-  /// Dimensions of the CustomPolarObject's radius (as a function of theta)
-  //VariableRadius m_radius;
   /// Coefficients of the polar function relating the radius to theta
   array1d< real64 > m_coefficients;
   /// tolerance to determine if a point sits on the CustomPolarObject or not
@@ -192,7 +128,6 @@ private:
   struct viewKeyStruct
   {
     static constexpr char const * centerString() { return "center"; }
-    // static constexpr char const * radiusString() { return "radius"; }
     static constexpr char const * coefficientsString() { return "coefficients"; }
     static constexpr char const * toleranceString() { return "tolerance"; }
   };

@@ -48,8 +48,8 @@ Rectangle::Rectangle( const string & name, Group * const parent ):
 
 //constructor given two points, used for 2.5D problems
 Rectangle::Rectangle( const real64 oldX, const real64 oldY,
-                            const real64 newX, const real64 newY,
-                            const string & name, Group * const parent ):
+                      const real64 newX, const real64 newY,
+                      const string & name, Group * const parent ):
   PlanarGeometricObject( name, parent ),
   m_origin{ 0.0, 0.0, 0.0 },
   m_tolerance( 1e-5 )

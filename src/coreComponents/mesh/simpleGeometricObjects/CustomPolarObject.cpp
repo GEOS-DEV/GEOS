@@ -32,14 +32,10 @@ CustomPolarObject::CustomPolarObject( const string & name, Group * const parent 
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "(x,y,z) coordinates of the center of the CustomPolarObject" );
 
-  // registerWrapper( viewKeyStruct::radiusString(), &m_radius ).
-  //   setInputFlag( InputFlags::OPTIONAL ).
-  //   setDescription( "Coefficients of the CustomPolarObject function." );
-
   registerWrapper( viewKeyStruct::coefficientsString(), &m_coefficients ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Coefficients of the CustomPolarObject function relating the local" 
-                    "radius to the angle theta." );  
+    setDescription( "Coefficients of the CustomPolarObject function relating the local"
+                    "radius to the angle theta." );
 
   registerWrapper( viewKeyStruct::toleranceString(), &m_tolerance ).
     setInputFlag( InputFlags::OPTIONAL ).

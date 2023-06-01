@@ -58,7 +58,7 @@ public:
     : MGRStrategyBase( 7 )
   {
 
-    /// IDEAL strategy but it seg faults 
+    /// IDEAL strategy but it seg faults
     // // we keep u and p
     // m_labels[0].push_back( 0 );
     // m_labels[0].push_back( 1 );

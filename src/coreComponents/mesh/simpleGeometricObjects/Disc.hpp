@@ -43,7 +43,7 @@ public:
    * @param parent pointer to the parent group in the data hierarchy.
    */
   Disc( const string & name,
-          Group * const parent );
+        Group * const parent );
 
   /**
    * @brief Default destructor.
