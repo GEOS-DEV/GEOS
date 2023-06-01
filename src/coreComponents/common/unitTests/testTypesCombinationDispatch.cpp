@@ -20,41 +20,30 @@ using namespace geos;
 
 namespace typeDispatchTest
 {
-class ConstitutiveBase
+class Base
 {
 public:
-  ConstitutiveBase() = default;
-  int m_a;
+  A() = default;
+  virtual ~A() = default;
+  virtual int getTypeName() const;
 };
 
-class Model1 : public ConstitutiveBase
+class B : public A
 {
 public:
-  Model1():
-    ConstitutiveBase()
-  {m_a = 1;};
+  virtual string getTypeName() const override final { return "B";}
 };
 
-class Model2 : public ConstitutiveBase
+class C : public A
 {
 public:
-  Model2():
-    ConstitutiveBase()
-  {m_a = 2; };
+  virtual string getTypeName() const override final { return "C";}
 };
 
-class FEMBase {};
-
-class QuadP1 : public FEMBase
+class D : public A
 {
-  public:
-  static constexpr int num_nodes = 4;
-};
-
-class TriangleP1 : public FEMBase
-{
-  public:
-  static constexpr int num_nodes = 3;
+public:
+  virtual string getTypeName() const override final { return "D";}
 };
 
 }
@@ -72,14 +61,14 @@ void testDispatchSimple( types::TypeList< Ts... > const list )
 
 template< typename TRUE_TYPES_LIST, typename ... Ts >
 void testDispatchVirtual( types::TypeList< Ts... > const list,
-                          typeDispatchTest::FEMBase & fem,
-                          typeDispatchTest::ConstitutiveBase & constitutiveModel )
+                          typeDispatchTest::A & t1,
+                          typeDispatchTest::A & t2 )
 {
   bool const result = types::dispatchCombinations( list, []( auto tupleOfTypes )
   {
     EXPECT_TRUE( ( std::is_same< camp::first< decltype(tupleOfTypes) >, camp::first< TRUE_TYPES_LIST > >::value ) ) << "Dispatch matched the wrong type";
     EXPECT_TRUE( ( std::is_same< camp::second< decltype(tupleOfTypes) >, camp::second< TRUE_TYPES_LIST > >::value ) ) << "Dispatch matched the wrong type";
-  }, fem, constitutiveModel );
+  }, t1, t2 );
   EXPECT_TRUE( result ) << "Dispatch failed to match the type";
 }
 
@@ -96,13 +85,14 @@ TEST( testDispatchVirtual, DispatchVirtualTypes )
 {
 
   using namespace typeDispatchTest;
-  using Types = types::TypeList< types::TypeList< QuadP1, Model1 >,
-                                 types::TypeList< TriangleP1, Model2 > >;
+  using Types = types::TypeList< types::TypeList< B, B >,
+                                 types::TypeList< B, C >,
+                                 types::TypeList< C, C > >;
 
-  std::unique_ptr< FEMBase >         fem    = std::make_unique< QuadP1 >();
-  std::unique_ptr< ConstitutiveBase > model = std::make_unique< Model1 >();
+  std::unique_ptr< A > b = std::make_unique< B >();
+  std::unique_ptr< A > c = std::make_unique< C >();
 
-  testDispatchVirtual< types::TypeList< QuadP1, Model1 > >( Types{}, *fem, *model );
+  testDispatchVirtual< types::TypeList< B, C > >( Types{}, *b, *c );
 }
 
 int main( int ac, char * av[] )
