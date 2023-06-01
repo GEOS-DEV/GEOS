@@ -492,10 +492,8 @@ void AcousticPOD::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
 
   arrayView2d< real64 const > const receiverCoordinates = m_receiverCoordinates.toViewConst();
   arrayView2d< localIndex > const receiverNodeIds = m_receiverNodeIds.toView();
-  arrayView2d< real64 > const receiverConstants = m_receiverConstants.toView();
   arrayView1d< localIndex > const receiverIsLocal = m_receiverIsLocal.toView();
   receiverNodeIds.setValues< EXEC_POLICY >( -1 );
-  receiverConstants.setValues< EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
 
   real32 const timeSourceFrequency = this->m_timeSourceFrequency;
@@ -554,7 +552,6 @@ void AcousticPOD::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
         receiverCoordinates,
         receiverIsLocal,
         receiverNodeIds,
-        receiverConstants,
         sourceValue,
         dt,
         timeSourceFrequency,
@@ -697,16 +694,15 @@ real64 AcousticPOD::explicitStepForward( real64 const & time_n,
 
     if( computeGradient )
     {
-
       arrayView2d< real32 > const a_dt2 =  m_a_dt2.toView();
-
+      std::cout<<"coucou"<<std::endl;
       forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
         {
           a_dt2[m][indexWaveField] = (a_np1[m] - 2*a_n[m] + a_nm1[m])/(dt*dt);
         } );
       m_indexWaveField += 1;
     }
-
+    std::cout<<"coucou2"<<std::endl;
     forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
       {
         a_nm1[m] = a_n[m];
@@ -1319,7 +1315,7 @@ void AcousticPOD::computeAllSeismoTraces( real64 const time_n,
        ((timeSeismo = m_dtSeismoTrace*(m_nsamplesSeismoTrace-m_indexSeismoTrace-1)) >= (time_n - dt -  epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace);
        m_indexSeismoTrace++ )
   {
-    WaveSolverUtils::computeSeismoTracePOD( time_n, (m_forward)?dt:-dt, timeSeismo, (m_forward)?m_indexSeismoTrace:(m_nsamplesSeismoTrace-m_indexSeismoTrace-1), m_receiverNodeIds, m_receiverConstants,
+    WaveSolverUtils::computeSeismoTracePOD( time_n, (m_forward)?dt:-dt, timeSeismo, (m_forward)?m_indexSeismoTrace:(m_nsamplesSeismoTrace-m_indexSeismoTrace-1), m_receiverNodeIds,
                                             m_receiverIsLocal,
                                             m_nsamplesSeismoTrace, m_outputSeismoTrace, var_np1, var_n, phi, varAtReceivers );
   }
