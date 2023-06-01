@@ -19,7 +19,6 @@
 #ifndef GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_DISC_HPP_
 #define GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_DISC_HPP_
 
-#include "SimpleGeometricObjectBase.hpp"
 #include "PlanarGeometricObject.hpp"
 
 namespace geos
@@ -74,8 +73,8 @@ public:
   ///@{
 
   /**
-   * @brief Get the center of the circle.
-   * @return the center of the circle
+   * @brief Get the center of the disc.
+   * @return the center of the disc
    */
   virtual R1Tensor & getCenter() override final {return m_center;}
 
@@ -94,11 +93,11 @@ protected:
 
 private:
 
-  /// center of the circle in (x,y,z) coordinates
+  /// center of the disc in (x,y,z) coordinates
   R1Tensor m_center;
-  /// Dimensions of the circle's radius
+  /// Dimensions of the disc's radius
   real64 m_radius;
-  /// tolerance to determine if a point sits on the circle or not
+  /// tolerance to determine if a point sits on the disc or not
   real64 m_tolerance;
 
   /// @cond DO_NOT_DOCUMENT

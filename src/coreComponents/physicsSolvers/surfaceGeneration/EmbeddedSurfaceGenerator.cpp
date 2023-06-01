@@ -71,9 +71,9 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( "FractureRegion" );
 
-  registerWrapper( viewKeyStruct::targetObjectsNameString(), &m_targetObjects ).
-    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setApplyDefaultValue( "{}" );
+  registerWrapper( viewKeyStruct::targetObjectsNameString(), &m_targetObjectsName ).
+    setInputFlag( dataRepository::InputFlags::REQUIRED ).
+    setDescription( "List of geometric objects that will be used to initialized the embedded surfaces/fractures." );
 
   // this->getWrapper< string >( viewKeyStruct::discretizationString() ).
   // setInputFlag( InputFlags::FALSE );
@@ -132,8 +132,8 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   NewObjectLists newObjects;  
 
   // Loop over all the fracture planes
-  geometricObjManager.forGeometricObject< PlanarGeometricObject > ( m_targetObjects, [&]( localIndex const,  
-                                                                                          PlanarGeometricObject & fracture )
+  geometricObjManager.forGeometricObject< PlanarGeometricObject > ( m_targetObjectsName, [&]( localIndex const,  
+                                                                                              PlanarGeometricObject & fracture )
   {
     /* 1. Find out if an element is cut by the fracture or not.
      * Loop over all the elements and for each one of them loop over the nodes and compute the

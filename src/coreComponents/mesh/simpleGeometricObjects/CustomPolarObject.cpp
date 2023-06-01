@@ -36,6 +36,11 @@ CustomPolarObject::CustomPolarObject( const string & name, Group * const parent 
   //   setInputFlag( InputFlags::OPTIONAL ).
   //   setDescription( "Coefficients of the CustomPolarObject function." );
 
+  registerWrapper( viewKeyStruct::coefficientsString(), &m_coefficients ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Coefficients of the CustomPolarObject function relating the local" 
+                    "radius to the angle theta." );  
+
   registerWrapper( viewKeyStruct::toleranceString(), &m_tolerance ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( 1e-5 ).

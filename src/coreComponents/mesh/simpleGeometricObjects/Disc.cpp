@@ -31,17 +31,17 @@ Disc::Disc( const string & name, Group * const parent ):
 {
   registerWrapper( viewKeyStruct::centerString(), &m_center ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "(x,y,z) coordinates of the center of the circle" );
+    setDescription( "(x,y,z) coordinates of the center of the disc" );
 
   registerWrapper( viewKeyStruct::radiusString(), &m_radius ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Radius of the circle." );
+    setDescription( "Radius of the disc." );
 
   registerWrapper( viewKeyStruct::toleranceString(), &m_tolerance ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( 1e-5 ).
-    setDescription( "Tolerance to determine if a point sits on the circle or not. "
-                    "It is relative to the maximum dimension of the circle." );
+    setDescription( "Tolerance to determine if a point sits on the disc or not. "
+                    "It is relative to the maximum dimension of the disc." );
 
 }
 
@@ -64,13 +64,13 @@ bool Disc::isCoordInObject( real64 const ( &coord ) [3] ) const
   real64 dummy[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( coord );
   LvArray::tensorOps::subtract< 3 >( dummy, m_center );
 
-  // 1. Check if point is on the plane of the circle
+  // 1. Check if point is on the plane of the disc
   if( std::abs( LvArray::tensorOps::AiBi< 3 >( dummy, m_normal ) ) > m_tolerance )
   {
     isInside = false;
   }
 
-  // 2. Check if it is inside the circle
+  // 2. Check if it is inside the disc
   if( LvArray::tensorOps::l2NormSquared< 3 >( dummy ) > m_radius*m_radius )
   {
     isInside = false;

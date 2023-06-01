@@ -123,7 +123,7 @@ private:
   // fracture region name
   string m_fractureRegionName;
   // target geometric objects to turn into fractures
-  array1d< string > m_targetObjects;
+  array1d< string > m_targetObjectsName;
   // Flag for consistent communication ordering
   int m_mpiCommOrder;
 };

@@ -19,7 +19,6 @@
 #ifndef GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_RECTANGLE_HPP_
 #define GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_RECTANGLE_HPP_
 
-#include "SimpleGeometricObjectBase.hpp"
 #include "PlanarGeometricObject.hpp"
 
 namespace geos
