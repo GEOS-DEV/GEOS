@@ -99,8 +99,8 @@ TEST( testDispatchVirtual, DispatchVirtualTypes )
   using Types = types::TypeList< types::TypeList< QuadP1, Model1 >,
                                  types::TypeList< TriangleP1, Model2 > >;
 
-  std::unique_ptr< FEMBase >         fem    = std::make_unique< TriangleP1 >();
-  std::unique_ptr< ConstitutiveBase > model = std::make_unique< Model2 >();
+  std::unique_ptr< FEMBase >         fem    = std::make_unique< QuadP1 >();
+  std::unique_ptr< ConstitutiveBase > model = std::make_unique< Model1 >();
 
   testDispatchVirtual< types::TypeList< QuadP1, Model1 > >( Types{}, *fem, *model );
 }
