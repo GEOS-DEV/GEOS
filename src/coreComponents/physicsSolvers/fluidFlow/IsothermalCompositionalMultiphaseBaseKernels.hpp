@@ -102,7 +102,7 @@ namespace internal
 
 template< typename T, typename LAMBDA >
 void kernelLaunchSelectorPhaseSwitch( T value,
-                                 LAMBDA && lambda )
+                                      LAMBDA && lambda )
 {
   static_assert( std::is_integral< T >::value, "kernelLaunchSelectorPhaseSwitch: type should be integral" );
 
@@ -127,7 +127,7 @@ void kernelLaunchSelectorPhaseSwitch( T value,
 
 template< typename T, typename LAMBDA >
 void kernelLaunchSelectorCompSwitch( T value,
-                                 LAMBDA && lambda )
+                                     LAMBDA && lambda )
 {
   static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: type should be integral" );
 
