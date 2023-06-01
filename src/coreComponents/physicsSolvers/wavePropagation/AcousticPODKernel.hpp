@@ -152,7 +152,6 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< real64 const > const receiverCoordinates,
           arrayView1d< localIndex > const receiverIsLocal,
           arrayView2d< localIndex > const receiverNodeIds,
-          arrayView2d< real64 > const receiverConstants,
           arrayView2d< real32 > const sourceValue,
           real64 const dt,
           real32 const timeSourceFrequency,
@@ -221,54 +220,52 @@ struct PrecomputeSourceAndReceiverKernel
               }
             } // end loop over all sources
           } );
-
-      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    } // end loop over phi m
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+        {
+	  real64 const center[3] = { elemCenter[k][0],
+				     elemCenter[k][1],
+				     elemCenter[k][2] };
+	  // Step 2: locate the receivers, and precompute the receiver term
+	  
+	  /// loop over all the receivers that haven't been found yet
+	  for( localIndex ircv = 0; ircv < receiverCoordinates.size( 0 ); ++ircv )
           {
-            real64 const center[3] = { elemCenter[k][0],
-                                       elemCenter[k][1],
-                                       elemCenter[k][2] };
-            // Step 2: locate the receivers, and precompute the receiver term
+	    if( receiverIsLocal[ircv] == 0 )
+	    {
+	      real64 const coords[3] = { receiverCoordinates[ircv][0],
+					 receiverCoordinates[ircv][1],
+					 receiverCoordinates[ircv][2] };
 
-            /// loop over all the receivers that haven't been found yet
-            for( localIndex ircv = 0; ircv < receiverCoordinates.size( 0 ); ++ircv )
-            {
-              if( receiverIsLocal[ircv] == 0 )
-              {
-                real64 const coords[3] = { receiverCoordinates[ircv][0],
-                                           receiverCoordinates[ircv][1],
-                                           receiverCoordinates[ircv][2] };
-
-                real64 coordsOnRefElem[3]{};
-                bool const receiverFound =
-                  WaveSolverUtils::locateSourceElement( numFacesPerElem,
-                                                        center,
-                                                        faceNormal,
-                                                        faceCenter,
-                                                        elemsToFaces[k],
-                                                        coords );
-
-                if( receiverFound && elemGhostRank[k] < 0 )
-                {
-                  WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-                                                                                    elemsToNodes[k],
-                                                                                    X,
-                                                                                    coordsOnRefElem );
-
-                  receiverIsLocal[ircv] = 1;
-
-                  real64 Ntest[FE_TYPE::numNodes];
-                  FE_TYPE::calcN( coordsOnRefElem, Ntest );
-
-                  for( localIndex a = 0; a < numNodesPerElem; ++a )
-                  {
-                    receiverNodeIds[ircv][a] = elemsToNodes[k][a];
-                    receiverConstants[ircv][a] = Ntest[a];
-                  }
-                }
-              } // end loop over receivers
-            }
-          } );
-    } // end loop m pod
+	      real64 coordsOnRefElem[3]{};
+	      bool const receiverFound =
+		WaveSolverUtils::locateSourceElement( numFacesPerElem,
+						      center,
+						      faceNormal,
+						      faceCenter,
+						      elemsToFaces[k],
+						      coords );
+	      
+	      if( receiverFound && elemGhostRank[k] < 0 )
+	      {
+		WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+										  elemsToNodes[k],
+										  X,
+										  coordsOnRefElem );
+		
+		receiverIsLocal[ircv] = 1;
+		
+		real64 Ntest[FE_TYPE::numNodes];
+		FE_TYPE::calcN( coordsOnRefElem, Ntest );
+		
+		for( localIndex a = 0; a < numNodesPerElem; ++a )
+	        {
+		  receiverNodeIds[ircv][a] = elemsToNodes[k][a];
+		}
+	      }
+	    } // end loop over receivers
+	  }
+	} );
   }
 };
 
