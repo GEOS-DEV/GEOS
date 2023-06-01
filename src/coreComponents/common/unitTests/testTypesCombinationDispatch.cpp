@@ -20,30 +20,30 @@ using namespace geos;
 
 namespace typeDispatchTest
 {
-class Base
+class A
 {
 public:
   A() = default;
   virtual ~A() = default;
-  virtual int getTypeName() const;
+  virtual string getTypeName() const {return "A";}
 };
 
 class B : public A
 {
 public:
-  virtual string getTypeName() const override final { return "B";}
+  virtual string getTypeName() const { return "B";}
 };
 
 class C : public A
 {
 public:
-  virtual string getTypeName() const override final { return "C";}
+  virtual string getTypeName() const { return "C";}
 };
 
 class D : public A
 {
 public:
-  virtual string getTypeName() const override final { return "D";}
+  virtual string getTypeName() const { return "D";}
 };
 
 }
@@ -87,10 +87,13 @@ TEST( testDispatchVirtual, DispatchVirtualTypes )
   using namespace typeDispatchTest;
   using Types = types::TypeList< types::TypeList< B, B >,
                                  types::TypeList< B, C >,
-                                 types::TypeList< C, C > >;
+                                 types::TypeList< B, D > >;
 
   std::unique_ptr< A > b = std::make_unique< B >();
   std::unique_ptr< A > c = std::make_unique< C >();
+
+  // std::cout << "I am " << b->getTypeName() << std::endl;
+  // std::cout << "I am " << c->getTypeName() << std::endl;
 
   testDispatchVirtual< types::TypeList< B, C > >( Types{}, *b, *c );
 }
