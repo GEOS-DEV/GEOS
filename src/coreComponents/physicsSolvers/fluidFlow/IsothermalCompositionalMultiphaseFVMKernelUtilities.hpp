@@ -62,6 +62,18 @@ struct PotGrad
             real64 ( & dGravHead_dP )[numFluxSupportPoints],
             real64 ( & dGravHead_dC )[numFluxSupportPoints][numComp] )
   {
+
+    for( integer i = 0; i < numFluxSupportPoints; ++i )
+    {
+      dPresGrad_dP[i] = 0.0;
+      dGravHead_dP[i] = 0.0;
+      for( integer jc = 0; jc < numComp; ++jc )
+      {
+        dPresGrad_dC[i][jc] = 0.0;
+        dGravHead_dC[i][jc] = 0.0;
+      }
+    }
+
     // create local work arrays
     real64 densMean = 0.0;
     real64 dDensMean_dP[numFluxSupportPoints]{};
