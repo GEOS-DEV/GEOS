@@ -59,19 +59,34 @@ void testDispatchSimple( types::TypeList< Ts... > const list )
   EXPECT_TRUE( result ) << "Dispatch failed to match the type";
 }
 
-template< typename TRUE_TYPES_LIST, typename ... Ts >
-void testDispatchVirtual( types::TypeList< Ts... > const list,
-                          typeDispatchTest::A & t1,
-                          typeDispatchTest::A & t2 )
+
+template < typename TRUE_TYPES_LIST, size_t I = 0, typename... Ts >
+typename std::enable_if<I == sizeof...(Ts), void>::type
+checkType(types::TypeList<Ts...> )
 {
-  bool const result = types::dispatchCombinations( list, []( auto tupleOfTypes )
-  {
-    EXPECT_TRUE( ( std::is_same< camp::first< decltype(tupleOfTypes) >, camp::first< TRUE_TYPES_LIST > >::value ) ) << "Dispatch matched the wrong type";
-    EXPECT_TRUE( ( std::is_same< camp::second< decltype(tupleOfTypes) >, camp::second< TRUE_TYPES_LIST > >::value ) ) << "Dispatch matched the wrong type";
-  }, t1, t2 );
-  EXPECT_TRUE( result ) << "Dispatch failed to match the type";
+    return;
+}
+ 
+template< typename TRUE_TYPES_LIST, size_t I = 0, typename... Ts>
+typename std::enable_if< (I < sizeof...(Ts)), void>::type
+checkType( types::TypeList<Ts...> list )
+{
+    EXPECT_TRUE( ( std::is_same< camp::at_t< decltype(list), camp::num<I> >, 
+                                 camp::at_t< TRUE_TYPES_LIST, camp::num<I> > >::value ) ) << "Dispatch matched the wrong type";
+    // check next element
+    checkType< TRUE_TYPES_LIST, I + 1>( list );
 }
 
+template< typename TRUE_TYPES_LIST, typename ... Ts, typename ...Vs >
+void testDispatchVirtual( types::TypeList< Ts... > const list,
+                          Vs && ... objects )
+{
+  bool const result = types::dispatchCombinations( list, []( auto tupleOfTypes )
+  { 
+    checkType< TRUE_TYPES_LIST >( tupleOfTypes );
+  }, std::forward< Vs >( objects ) ... );
+  EXPECT_TRUE( result ) << "Dispatch failed to match the type";
+}
 
 TEST( testDispatchSimple, DispatchSimpleTypes )
 {
@@ -81,7 +96,7 @@ TEST( testDispatchSimple, DispatchSimpleTypes )
   testDispatchSimple( Types{} );
 }
 
-TEST( testDispatchVirtual, DispatchVirtualTypes )
+TEST( testDispatchVirtual, DispatchVirtualTypePairs )
 {
 
   using namespace typeDispatchTest;
@@ -92,10 +107,22 @@ TEST( testDispatchVirtual, DispatchVirtualTypes )
   std::unique_ptr< A > b = std::make_unique< B >();
   std::unique_ptr< A > c = std::make_unique< C >();
 
-  // std::cout << "I am " << b->getTypeName() << std::endl;
-  // std::cout << "I am " << c->getTypeName() << std::endl;
+  testDispatchVirtual< types::TypeList< B, C > >( Types{}, *b, *c );  
+}
 
-  testDispatchVirtual< types::TypeList< B, C > >( Types{}, *b, *c );
+TEST( testDispatchVirtual, DispatchVirtualTypeTriplets )
+{
+
+  using namespace typeDispatchTest;
+  using Types = types::TypeList< types::TypeList< B, B, B>,
+                                 types::TypeList< B, C, C >,
+                                 types::TypeList< B, C, D > >;
+
+  std::unique_ptr< A > b = std::make_unique< B >();
+  std::unique_ptr< A > c = std::make_unique< C >();
+  std::unique_ptr< A > d = std::make_unique< D >();
+
+  testDispatchVirtual< types::TypeList< B, C, D > >( Types{}, *b, *c, *d);
 }
 
 int main( int ac, char * av[] )

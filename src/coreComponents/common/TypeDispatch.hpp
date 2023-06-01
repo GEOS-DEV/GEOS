@@ -293,9 +293,9 @@ auto const & getTypeMap( LIST, std::integer_sequence< std::size_t, Is... > )
  * @return true
  * @return false
  */
-template< typename ... TypeTuples, typename LAMBDA >
+template< typename ... TypeTuples, typename Index_type, typename LAMBDA >
 bool dispatchViaTable( TypeList< TypeTuples... > const combinations,
-                       std::tuple< std::type_index, std::type_index > const typeTuple_index,
+                       Index_type const type_index,
                        LAMBDA && lambda )
 {
   static_assert( sizeof...(TypeTuples) > 0, "Dispatching on empty type list not supported" );
@@ -305,7 +305,7 @@ bool dispatchViaTable( TypeList< TypeTuples... > const combinations,
   static Handler const handlers[] = { []( LAMBDA && f ){ f( TypeTuples{} ); } ... };
 
   auto const & typeIndexMap = getTypeMap( combinations, std::index_sequence_for< TypeTuples... >{} );
-  auto const it = typeIndexMap.find( typeTuple_index );
+  auto const it = typeIndexMap.find( type_index );
 
   if( it != typeIndexMap.end() )
   {
