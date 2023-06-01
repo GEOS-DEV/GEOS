@@ -40,7 +40,8 @@ using namespace constitutive;
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
 template< integer NUM_PHASE, integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
-class FaceBasedAssemblyKernel : public isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_PHASE, NUM_COMP, NUM_DOF, STENCILWRAPPER >
+class FaceBasedAssemblyKernel :
+  public isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_PHASE, NUM_COMP, NUM_DOF, STENCILWRAPPER >
 {
 public:
 
@@ -336,12 +337,12 @@ public:
                    arrayView1d< real64 > const & localRhs )
   {
     isothermalCompositionalMultiphaseBaseKernels::
-      internal::kernelLaunchSelectorSwitch( numPhases, [&]( auto NP )
+      internal::kernelLaunchSelectorPhaseSwitch( numPhases, [&]( auto NP )
     {
       integer constexpr NUM_PHASE = NP();
 
       isothermalCompositionalMultiphaseBaseKernels::
-        internal::kernelLaunchSelectorSwitch( numComps, [&]( auto NC )
+        internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         integer constexpr NUM_DOF = NC() + 1;

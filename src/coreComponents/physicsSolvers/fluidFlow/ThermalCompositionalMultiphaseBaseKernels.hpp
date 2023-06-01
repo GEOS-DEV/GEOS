@@ -110,11 +110,11 @@ public:
                    MultiFluidBase const & fluid )
   {
     isothermalCompositionalMultiphaseBaseKernels::
-      internal::kernelLaunchSelectorSwitch( numComp, [&]( auto NC )
+      internal::kernelLaunchSelectorCompSwitch( numComp, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
       isothermalCompositionalMultiphaseBaseKernels::
-        internal::kernelLaunchSelectorSwitch( numPhase, [&]( auto NP )
+        internal::kernelLaunchSelectorPhaseSwitch( numPhase, [&]( auto NP )
       {
         integer constexpr NUM_PHASE = NP();
         PhaseVolumeFractionKernel< NUM_COMP, NUM_PHASE > kernel( subRegion, fluid );
@@ -427,7 +427,7 @@ public:
                    arrayView1d< real64 > const & localRhs )
   {
     isothermalCompositionalMultiphaseBaseKernels::
-      internal::kernelLaunchSelectorSwitch( numComps, [&]( auto NC )
+      internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       localIndex constexpr NUM_COMP = NC();
       localIndex constexpr NUM_DOF = NC() + 2;

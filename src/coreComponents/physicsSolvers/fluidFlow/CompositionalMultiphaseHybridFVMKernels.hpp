@@ -822,10 +822,10 @@ public:
                    MultiFluidBase const & fluid,
                    RelativePermeabilityBase const & relperm )
   {
-    isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorSwitch( numComp, [&]( auto NC )
+    isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
-      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorSwitch( numPhase, [&]( auto NP )
+      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorPhaseSwitch( numPhase, [&]( auto NP )
       {
         integer constexpr NUM_PHASE = NP();
         PhaseMobilityKernel< NUM_COMP, NUM_PHASE > kernel( subRegion, fluid, relperm );

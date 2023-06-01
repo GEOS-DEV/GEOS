@@ -101,10 +101,35 @@ namespace internal
 {
 
 template< typename T, typename LAMBDA >
-void kernelLaunchSelectorSwitch( T value,
+void kernelLaunchSelectorPhaseSwitch( T value,
                                  LAMBDA && lambda )
 {
-  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorSwitch: type should be integral" );
+  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorPhaseSwitch: type should be integral" );
+
+  switch( value )
+  {
+    case 2:
+    {
+      lambda( std::integral_constant< T, 2 >() );
+      return;
+    }
+    case 3:
+    {
+      lambda( std::integral_constant< T, 3 >() );
+      return;
+    }
+    default:
+    {
+      GEOS_ERROR( "Unsupported number of phases: " << value );
+    }
+  }
+}
+
+template< typename T, typename LAMBDA >
+void kernelLaunchSelectorCompSwitch( T value,
+                                 LAMBDA && lambda )
+{
+  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: type should be integral" );
 
   switch( value )
   {
@@ -241,7 +266,7 @@ public:
   createAndLaunch( integer const numComp,
                    ObjectManagerBase & subRegion )
   {
-    internal::kernelLaunchSelectorSwitch( numComp, [&]( auto NC )
+    internal::kernelLaunchSelectorCompSwitch( numComp, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
       ComponentFractionKernel< NUM_COMP > kernel( subRegion );
@@ -415,10 +440,10 @@ public:
                    ObjectManagerBase & subRegion,
                    MultiFluidBase const & fluid )
   {
-    internal::kernelLaunchSelectorSwitch( numComp, [&]( auto NC )
+    internal::kernelLaunchSelectorCompSwitch( numComp, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
-      internal::kernelLaunchSelectorSwitch( numPhase, [&]( auto NP )
+      internal::kernelLaunchSelectorPhaseSwitch( numPhase, [&]( auto NP )
       {
         integer constexpr NUM_PHASE = NP();
         PhaseVolumeFractionKernel< NUM_COMP, NUM_PHASE > kernel( subRegion, fluid );
@@ -902,7 +927,7 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    internal::kernelLaunchSelectorSwitch( numComps, [&]( auto NC )
+    internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
       integer constexpr NUM_DOF = NC() + 1;
@@ -2001,7 +2026,7 @@ template< typename KERNELWRAPPER, typename ... ARGS >
 void KernelLaunchSelector1( integer const numComp,
                             ARGS && ... args )
 {
-  internal::kernelLaunchSelectorSwitch( numComp, [&]( auto NC )
+  internal::kernelLaunchSelectorCompSwitch( numComp, [&]( auto NC )
   {
     KERNELWRAPPER::template launch< NC() >( std::forward< ARGS >( args )... );
   } );
@@ -2015,14 +2040,14 @@ void KernelLaunchSelector2( integer const numComp,
   // Ideally this would be inside the dispatch, but it breaks on Summit with GCC 9.1.0 and CUDA 11.0.3.
   if( numPhase == 2 )
   {
-    internal::kernelLaunchSelectorSwitch( numComp, [&]( auto NC )
+    internal::kernelLaunchSelectorCompSwitch( numComp, [&]( auto NC )
     {
       KERNELWRAPPER::template launch< NC(), 2 >( std::forward< ARGS >( args ) ... );
     } );
   }
   else if( numPhase == 3 )
   {
-    internal::kernelLaunchSelectorSwitch( numComp, [&]( auto NC )
+    internal::kernelLaunchSelectorCompSwitch( numComp, [&]( auto NC )
     {
       KERNELWRAPPER::template launch< NC(), 3 >( std::forward< ARGS >( args ) ... );
     } );

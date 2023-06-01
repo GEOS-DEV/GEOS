@@ -74,6 +74,7 @@ struct MultiFluidVarSlice
 template< typename T, int NDIM, int USD, int USD_DC >
 struct MultiFluidVarView
 {
+  GEOS_HOST_DEVICE
   MultiFluidVarView() = default;
 
   ArrayView< T, NDIM, USD > value;        ///< View into property values

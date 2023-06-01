@@ -235,10 +235,10 @@ public:
                    MultiFluidBase const & fluid,
                    RelativePermeabilityBase const & relperm )
   {
-    isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorSwitch( numComp, [&]( auto NC )
+    isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
-      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorSwitch( numPhase, [&]( auto NP )
+      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorPhaseSwitch( numPhase, [&]( auto NP )
       {
         integer constexpr NUM_PHASE = NP();
         PhaseMobilityKernel< NUM_COMP, NUM_PHASE > kernel( subRegion, fluid, relperm );
@@ -795,11 +795,11 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorSwitch( numPhases, [&]( auto NP )
+    isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorPhaseSwitch( numPhases, [&]( auto NP )
     {
       integer constexpr NUM_PHASE = NP();
 
-      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorSwitch( numComps, [&]( auto NC )
+      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         integer constexpr NUM_DOF = NC() + 1;
@@ -1316,11 +1316,11 @@ public:
       using FluidType = TYPEOFREF( fluid );
       typename FluidType::KernelWrapper const fluidWrapper = fluid.createKernelWrapper();
 
-      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorSwitch( numPhases, [&]( auto NP )
+      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorPhaseSwitch( numPhases, [&]( auto NP )
       {
         integer constexpr NUM_PHASE = NP();
 
-        isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorSwitch( numComps, [&]( auto NC )
+        isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
         {
           integer constexpr NUM_COMP = NC();
           integer constexpr NUM_DOF = NC() + 1;

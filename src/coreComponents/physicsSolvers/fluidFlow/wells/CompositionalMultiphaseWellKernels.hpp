@@ -624,11 +624,11 @@ public:
                    ObjectManagerBase & subRegion,
                    MultiFluidBase const & fluid )
   {
-    isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorSwitch( numComp, [&]( auto NC )
+    isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
       isothermalCompositionalMultiphaseBaseKernels::
-        internal::kernelLaunchSelectorSwitch( numPhase, [&]( auto NP )
+        internal::kernelLaunchSelectorPhaseSwitch( numPhase, [&]( auto NP )
       {
         integer constexpr NUM_PHASE = NP();
         TotalMassDensityKernel< NUM_COMP, NUM_PHASE > kernel( subRegion, fluid );
