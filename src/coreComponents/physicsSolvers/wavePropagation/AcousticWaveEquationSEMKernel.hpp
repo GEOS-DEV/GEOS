@@ -199,7 +199,7 @@ struct MassMatrixKernel
    * @param[in] numFacesPerElem number of faces per element
    * @param[in] X coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
-   * @param[in] velocity cell-wise velocity
+   * @param[in] Vp cell-wise P-wavespeed
    * @param[out] mass diagonal of the mass matrix
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
@@ -207,7 +207,7 @@ struct MassMatrixKernel
   launch( localIndex const size,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
-          arrayView1d< real32 const > const velocity,
+          arrayView1d< real32 const > const Vp,
           arrayView1d< real32 > const mass )
 
   {
@@ -216,7 +216,7 @@ struct MassMatrixKernel
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
-      real32 const invC2 = 1.0 / ( velocity[k] * velocity[k] );
+      real32 const invC2 = 1.0 / ( Vp[k] * Vp[k] );
       real64 xLocal[ numNodesPerElem ][ 3 ];
       for( localIndex a = 0; a < numNodesPerElem; ++a )
       {
@@ -257,7 +257,7 @@ struct DampingMatrixKernel
    * @param[in] facesToNodes map from face to nodes
    * @param[in] facesDomainBoundaryIndicator flag equal to 1 if the face is on the boundary, and to 0 otherwise
    * @param[in] freeSurfaceFaceIndicator flag equal to 1 if the face is on the free surface, and to 0 otherwise
-   * @param[in] velocity cell-wise velocity
+   * @param[in] Vp cell-wise P-wavespeed
    * @param[out] damping diagonal of the damping matrix
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
@@ -268,7 +268,7 @@ struct DampingMatrixKernel
           ArrayOfArraysView< localIndex const > const facesToNodes,
           arrayView1d< integer const > const facesDomainBoundaryIndicator,
           arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
-          arrayView1d< real32 const > const velocity,
+          arrayView1d< real32 const > const Vp,
           arrayView1d< real32 > const damping )
   {
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
@@ -282,7 +282,7 @@ struct DampingMatrixKernel
           k = facesToElems( f, 1 );
         }
 
-        real32 const alpha = 1.0 / velocity[k];
+        real32 const alpha = 1.0 / Vp[k];
 
         constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
 
@@ -388,7 +388,7 @@ struct PMLKernel
    * @param[in] targetSet list of cells in the target set
    * @param[in] X coordinates of the nodes
    * @param[in] elemToNodesViewConst constant array view of map from element to nodes
-   * @param[in] velocity cell-wise velocity
+   * @param[in] Vp cell-wise P-wavespeed
    * @param[in] p_n pressure field at time n
    * @param[in] v_n PML auxiliary field at time n
    * @param[in] u_n PML auxiliary field at time n
@@ -407,7 +407,7 @@ struct PMLKernel
   launch( SortedArrayView< localIndex const > const targetSet,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst,
-          arrayView1d< real32 const > const velocity,
+          arrayView1d< real32 const > const Vp,
           arrayView1d< real32 const > const p_n,
           arrayView2d< real32 const > const v_n,
           arrayView1d< real32 const > const u_n,
@@ -430,7 +430,7 @@ struct PMLKernel
       localIndex const k = targetSet[l];
 
       /// wave speed at the element
-      real32 const c = velocity[k];
+      real32 const c = Vp[k];
 
       /// coordinates of the element nodes
       real64 xLocal[ numNodesPerElem ][ 3 ];
@@ -540,7 +540,7 @@ struct waveSpeedPMLKernel
    * @param[in] targetSet list of cells in the target set
    * @param[in] X coordinates of the nodes
    * @param[in] elemToNodesViewConst constant array view of map from element to nodes
-   * @param[in] velocity cell-wise velocity
+   * @param[in] Vp cell-wise P-wavespeed
    * @param[in] xMin coordinate limits of the inner PML boundaries, left-front-top
    * @param[in] xMax coordinate limits of the inner PML boundaries, right-back-bottom
    * @param[out] cMin PML wave speed, left-front-top
@@ -553,7 +553,7 @@ struct waveSpeedPMLKernel
   launch( SortedArrayView< localIndex const > const targetSet,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst,
-          arrayView1d< real32 const > const velocity,
+          arrayView1d< real32 const > const Vp,
           real32 const (&xMin)[3],
           real32 const (&xMax)[3],
           real32 (& cMin)[3],
@@ -584,7 +584,7 @@ struct waveSpeedPMLKernel
       localIndex const k = targetSet[l];
 
       /// wave speed at the element
-      real32 const c = velocity[k];
+      real32 const c = Vp[k];
 
       /// coordinates of the element center
       real64 xLocal[ 3 ] = {0.0, 0.0, 0.0};

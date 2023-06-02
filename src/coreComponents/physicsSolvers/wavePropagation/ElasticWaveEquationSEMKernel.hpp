@@ -236,7 +236,7 @@ struct MassMatrixKernel
    * @param[in] numFacesPerElem number of faces per element
    * @param[in] X coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
-   * @param[in] velocity cell-wise velocity
+   * @param[in] density cell-wise density
    * @param[out] mass diagonal of the mass matrix
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
@@ -309,8 +309,8 @@ struct DampingMatrixKernel
           arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
           arrayView2d< real64 const > const faceNormal,
           arrayView1d< real32 const > const density,
-          arrayView1d< real32 const > const velocityVp,
-          arrayView1d< real32 const > const velocityVs,
+          arrayView1d< real32 const > const Vp,
+          arrayView1d< real32 const > const Vs,
           arrayView1d< real32 > const dampingx,
           arrayView1d< real32 > const dampingy,
           arrayView1d< real32 > const dampingz )
@@ -339,15 +339,15 @@ struct DampingMatrixKernel
 
         for( localIndex q = 0; q < numNodesPerFace; ++q )
         {
-          real32 const localIncrementx = density[k] * (velocityVp[k]*LvArray::math::abs( faceNormal[f][0] ) + velocityVs[k]*sqrt( faceNormal[f][1]*faceNormal[f][1] +
+          real32 const localIncrementx = density[k] * (Vp[k]*LvArray::math::abs( faceNormal[f][0] ) + Vs[k]*sqrt( faceNormal[f][1]*faceNormal[f][1] +
                                                                                                                                   faceNormal[f][2]*faceNormal[f][2] ) )* m_finiteElement.computeDampingTerm(
             q,
             xLocal );
-          real32 const localIncrementy = density[k] * (velocityVp[k]*LvArray::math::abs( faceNormal[f][1] ) + velocityVs[k]*sqrt( faceNormal[f][0]*faceNormal[f][0] +
+          real32 const localIncrementy = density[k] * (Vp[k]*LvArray::math::abs( faceNormal[f][1] ) + Vs[k]*sqrt( faceNormal[f][0]*faceNormal[f][0] +
                                                                                                                                   faceNormal[f][2]*faceNormal[f][2] ) )* m_finiteElement.computeDampingTerm(
             q,
             xLocal );
-          real32 const localIncrementz = density[k] * (velocityVp[k]*LvArray::math::abs( faceNormal[f][2] ) + velocityVs[k]*sqrt( faceNormal[f][0]*faceNormal[f][0] +
+          real32 const localIncrementz = density[k] * (Vp[k]*LvArray::math::abs( faceNormal[f][2] ) + Vs[k]*sqrt( faceNormal[f][0]*faceNormal[f][0] +
                                                                                                                                   faceNormal[f][1]*faceNormal[f][1] ) )*  m_finiteElement.computeDampingTerm(
             q,
             xLocal );
@@ -439,9 +439,9 @@ public:
     m_stiffnessVectorx( nodeManager.getField< matricialFields::StiffnessVectorx >() ),
     m_stiffnessVectory( nodeManager.getField< matricialFields::StiffnessVectory >() ),
     m_stiffnessVectorz( nodeManager.getField< matricialFields::StiffnessVectorz >() ),
-    m_density( elementSubRegion.template getField< geophysicalFields::MediumDensity >() ),
-    m_velocityVp( elementSubRegion.template getField< geophysicalFields::MediumVelocityVp >() ),
-    m_velocityVs( elementSubRegion.template getField< geophysicalFields::MediumVelocityVs >() ),
+    m_density( elementSubRegion.template getField< geophysicalFields::Density >() ),
+    m_Vp( elementSubRegion.template getField< geophysicalFields::Pwavespeed >() ),
+    m_Vs( elementSubRegion.template getField< geophysicalFields::Swavespeed >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );
@@ -492,8 +492,8 @@ public:
         stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
       }
     }
-    stack.mu = m_density[k] * m_velocityVs[k] * m_velocityVs[k];
-    stack.lambda = m_density[k] *m_velocityVp[k] * m_velocityVp[k] - 2.0*stack.mu;
+    stack.mu = m_density[k] * m_Vs[k] * m_Vs[k];
+    stack.lambda = m_density[k] *m_Vp[k] * m_Vp[k] - 2.0*stack.mu;
   }
 
   /**
@@ -559,10 +559,10 @@ protected:
   arrayView1d< real32 const > const m_density;
 
   /// The array containing the P-wavespeed
-  arrayView1d< real32 const > const m_velocityVp;
+  arrayView1d< real32 const > const m_Vp;
 
   /// The array containing the S-wavespeed
-  arrayView1d< real32 const > const m_velocityVs;
+  arrayView1d< real32 const > const m_Vs;
 
   /// The time increment for this time integration step.
   real64 const m_dt;

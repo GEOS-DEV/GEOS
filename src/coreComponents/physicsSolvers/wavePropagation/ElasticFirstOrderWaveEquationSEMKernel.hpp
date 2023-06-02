@@ -352,8 +352,8 @@ struct StressComputation
           arrayView1d< real32 const > const uy_np1,
           arrayView1d< real32 const > const uz_np1,
           arrayView1d< real32 const > const density,
-          arrayView1d< real32 const > const velocityVp,
-          arrayView1d< real32 const > const velocityVs,
+          arrayView1d< real32 const > const Vp,
+          arrayView1d< real32 const > const Vs,
           arrayView1d< real32 > const lambda,
           arrayView1d< real32 > const mu,
           arrayView2d< real64 const > const sourceConstants,
@@ -383,8 +383,8 @@ struct StressComputation
         }
       }
 
-      mu[k] = density[k] * velocityVs[k] * velocityVs[k];
-      lambda[k] = density[k] * velocityVp[k] * velocityVp[k] - 2.0*mu[k];
+      mu[k] = density[k] * Vs[k] * Vs[k];
+      lambda[k] = density[k] * Vp[k] * Vp[k] - 2.0*mu[k];
 
       real32 uelemxx[numNodesPerElem] = {0.0};
       real32 uelemyy[numNodesPerElem] = {0.0};

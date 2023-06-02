@@ -107,32 +107,25 @@ DECLARE_FIELD( StiffnessVectorz,
 
 namespace geophysicalFields
 {
-  DECLARE_FIELD( MediumVelocity,
-               "mediumVelocity",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Medium velocity of the cell" );
-
-  DECLARE_FIELD( MediumDensity,
-               "mediumDensity",
+ 
+ DECLARE_FIELD( Density,
+               "Density",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "Medium density of the cell" );
 
-  DECLARE_FIELD( MediumVelocityVp,
-               "mediumVelocityVp",
+  DECLARE_FIELD( Pwavespeed,
+               "Pwavespeed",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "P-waves speed in the cell" );
 
-DECLARE_FIELD( MediumVelocityVs,
-               "mediumVelocityVs",
+DECLARE_FIELD( Swavespeed,
+               "Swavespeed",
                array1d< real32 >,
                0,
                NOPLOT,

@@ -96,7 +96,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< geophysicalFields::MediumVelocity >( this->getName() );
+      subRegion.registerField< geophysicalFields::Pwavespeed >( this->getName() );
       subRegion.registerField< acousticSecondOrderSemFields::PartialGradient >( this->getName() );
     } );
 
@@ -280,7 +280,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
-      arrayView1d< real32 const > const velocity = elementSubRegion.getField< geophysicalFields::MediumVelocity >();
+      arrayView1d< real32 const > const Vp = elementSubRegion.getField< geophysicalFields::Pwavespeed >();
 
       /// Partial gradient if gradient as to be computed
       arrayView1d< real32 > grad = elementSubRegion.getField< acousticSecondOrderSemFields::PartialGradient >();
@@ -297,7 +297,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
         kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
                                                                X,
                                                                elemsToNodes,
-                                                               velocity,
+                                                               Vp,
                                                                mass );
 
         acousticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
@@ -308,7 +308,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                facesToNodes,
                                                                facesDomainBoundaryIndicator,
                                                                freeSurfaceFaceIndicator,
-                                                               velocity,
+                                                               Vp,
                                                                damping );
       } );
     } );
@@ -546,7 +546,7 @@ void AcousticWaveEquationSEM::initializePML()
       CellElementSubRegion::NodeMapType const & elemToNodes =
         subRegion.getReference< CellElementSubRegion::NodeMapType >( CellElementSubRegion::viewKeyStruct::nodeListString() );
       traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
-      arrayView1d< real32 const > const vel = subRegion.getReference< array1d< real32 > >( geophysicalFields::MediumVelocity::key());
+      arrayView1d< real32 const > const Vp = subRegion.getReference< array1d< real32 > >( geophysicalFields::Pwavespeed::key());
       finiteElement::FiniteElementBase const &
       fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
@@ -563,7 +563,7 @@ void AcousticWaveEquationSEM::initializePML()
           ( targetSet,
           X,
           elemToNodesViewConst,
-          vel,
+          Vp,
           xMin,
           xMax,
           cMin,
@@ -676,7 +676,7 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
       traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
 
       /// Array view of the wave speed
-      arrayView1d< real32 const > const vel = subRegion.getReference< array1d< real32 > >( geophysicalFields::MediumVelocity::key());
+      arrayView1d< real32 const > const Vp = subRegion.getReference< array1d< real32 > >( geophysicalFields::Pwavespeed::key());
 
       /// Get the object needed to determine the type of the element in the subregion
       finiteElement::FiniteElementBase const &
@@ -711,7 +711,7 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
           ( targetSet,
           X,
           elemToNodesViewConst,
-          vel,
+          Vp,
           p_n,
           v_n,
           u_n,
@@ -877,7 +877,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
       elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                   CellElementSubRegion & elementSubRegion )
       {
-        arrayView1d< real32 const > const velocity = elementSubRegion.getField< geophysicalFields::MediumVelocity >();
+        arrayView1d< real32 const > const Vp = elementSubRegion.getField< geophysicalFields::Pwavespeed >();
         arrayView1d< real32 > grad = elementSubRegion.getField< acousticSecondOrderSemFields::PartialGradient >();
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
         constexpr localIndex numNodesPerElem = 8;
@@ -890,7 +890,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
             for( localIndex i = 0; i < numNodesPerElem; ++i )
             {
               localIndex nodeIdx = elemsToNodes[eltIdx][i];
-              grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/8.0 * (p_dt2[nodeIdx] * p_n[nodeIdx]);
+              grad[eltIdx] += (-2/Vp[eltIdx]) * mass[nodeIdx]/8.0 * (p_dt2[nodeIdx] * p_n[nodeIdx]);
             }
           }
         } );

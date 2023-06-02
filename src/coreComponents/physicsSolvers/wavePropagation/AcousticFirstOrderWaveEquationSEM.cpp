@@ -106,8 +106,8 @@ void AcousticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< geophysicalFields::MediumVelocity >( this->getName() );
-      subRegion.registerField< geophysicalFields::MediumDensity >( this->getName() );
+      subRegion.registerField< geophysicalFields::Pwavespeed >( this->getName() );
+      subRegion.registerField< geophysicalFields::Density >( this->getName() );
 
       subRegion.registerField< acousticFirstOrderSemFields::Velocity_x >( this->getName() );
       subRegion.registerField< acousticFirstOrderSemFields::Velocity_y >( this->getName() );
@@ -286,8 +286,8 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
     {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
-      arrayView1d< real32 const > const velocity = elementSubRegion.getField< geophysicalFields::MediumVelocity >();
-      arrayView1d< real32 const > const density = elementSubRegion.getField< geophysicalFields::MediumDensity >();
+      arrayView1d< real32 const > const Vp = elementSubRegion.getField< geophysicalFields::Pwavespeed >();
+      arrayView1d< real32 const > const density = elementSubRegion.getField< geophysicalFields::Density >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -300,7 +300,7 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
         kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
                                                                X,
                                                                elemsToNodes,
-                                                               velocity,
+                                                               Vp,
                                                                density,
                                                                mass );
 
@@ -312,7 +312,7 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
                                                                facesToNodes,
                                                                facesDomainBoundaryIndicator,
                                                                freeSurfaceFaceIndicator,
-                                                               velocity,
+                                                               Vp,
                                                                damping );
       } );
     } );
@@ -434,7 +434,7 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
                                                                                           CellElementSubRegion & elementSubRegion )
     {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-      arrayView1d< real32 const > const density = elementSubRegion.getField< geophysicalFields::MediumDensity >();
+      arrayView1d< real32 const > const density = elementSubRegion.getField< geophysicalFields::Density >();
       arrayView2d< real32 > const velocity_x = elementSubRegion.getField< acousticFirstOrderSemFields::Velocity_x >();
       arrayView2d< real32 > const velocity_y = elementSubRegion.getField< acousticFirstOrderSemFields::Velocity_y >();
       arrayView2d< real32 > const velocity_z = elementSubRegion.getField< acousticFirstOrderSemFields::Velocity_z >();

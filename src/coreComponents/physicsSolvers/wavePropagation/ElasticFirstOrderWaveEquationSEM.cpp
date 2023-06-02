@@ -133,9 +133,9 @@ void ElasticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< geophysicalFields::MediumVelocityVp >( this->getName() );
-      subRegion.registerField< geophysicalFields::MediumVelocityVs >( this->getName() );
-      subRegion.registerField< geophysicalFields::MediumDensity >( this->getName() );
+      subRegion.registerField< geophysicalFields::Pwavespeed >( this->getName() );
+      subRegion.registerField< geophysicalFields::Swavespeed >( this->getName() );
+      subRegion.registerField< geophysicalFields::Density >( this->getName() );
       subRegion.registerField< geophysicalFields::Lambda >( this->getName() );
       subRegion.registerField< geophysicalFields::Mu >( this->getName() );
 
@@ -340,9 +340,9 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
-      arrayView1d< real32 > const density = elementSubRegion.getField< geophysicalFields::MediumDensity >();
-      arrayView1d< real32 > const velocityVp = elementSubRegion.getField< geophysicalFields::MediumVelocityVp >();
-      arrayView1d< real32 > const velocityVs = elementSubRegion.getField< geophysicalFields::MediumVelocityVs >();
+      arrayView1d< real32 > const density = elementSubRegion.getField< geophysicalFields::Density >();
+      arrayView1d< real32 > const velocityVp = elementSubRegion.getField< geophysicalFields::Pwavespeed >();
+      arrayView1d< real32 > const velocityVs = elementSubRegion.getField< geophysicalFields::Swavespeed >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -507,9 +507,9 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
-      arrayView1d< real32 const > const velocityVp = elementSubRegion.getField< geophysicalFields::MediumVelocityVp >();
-      arrayView1d< real32 const > const velocityVs = elementSubRegion.getField< geophysicalFields::MediumVelocityVs >();
-      arrayView1d< real32 const > const density = elementSubRegion.getField< geophysicalFields::MediumDensity >();
+      arrayView1d< real32 const > const Vp = elementSubRegion.getField< geophysicalFields::Pwavespeed >();
+      arrayView1d< real32 const > const Vs = elementSubRegion.getField< geophysicalFields::Swavespeed >();
+      arrayView1d< real32 const > const density = elementSubRegion.getField< geophysicalFields::Density >();
 
       arrayView1d< real32 > const lambda = elementSubRegion.getField< geophysicalFields::Lambda >();
       arrayView1d< real32 > const mu = elementSubRegion.getField< geophysicalFields::Mu >();
@@ -538,8 +538,8 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
           uy_np1,
           uz_np1,
           density,
-          velocityVp,
-          velocityVs,
+          Vp,
+          Vs,
           lambda,
           mu,
           sourceConstants,

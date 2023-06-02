@@ -143,9 +143,9 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< geophysicalFields::MediumVelocityVp >( this->getName() );
-      subRegion.registerField< geophysicalFields::MediumVelocityVs >( this->getName() );
-      subRegion.registerField< geophysicalFields::MediumDensity >( this->getName() );
+      subRegion.registerField< geophysicalFields::Pwavespeed >( this->getName() );
+      subRegion.registerField< geophysicalFields::Swavespeed >( this->getName() );
+      subRegion.registerField< geophysicalFields::Density >( this->getName() );
     } );
 
   } );
@@ -445,9 +445,9 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
-      arrayView1d< real32 > const density = elementSubRegion.getField< geophysicalFields::MediumDensity >();
-      arrayView1d< real32 > const velocityVp = elementSubRegion.getField< geophysicalFields::MediumVelocityVp >();
-      arrayView1d< real32 > const velocityVs = elementSubRegion.getField< geophysicalFields::MediumVelocityVs >();
+      arrayView1d< real32 > const density = elementSubRegion.getField< geophysicalFields::Density >();
+      arrayView1d< real32 > const Vp = elementSubRegion.getField< geophysicalFields::Pwavespeed >();
+      arrayView1d< real32 > const Vs = elementSubRegion.getField< geophysicalFields::Swavespeed >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -476,8 +476,8 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                freeSurfaceFaceIndicator,
                                                                faceNormal,
                                                                density,
-                                                               velocityVp,
-                                                               velocityVs,
+                                                               Vp,
+                                                               Vs,
                                                                dampingx,
                                                                dampingy,
                                                                dampingz );
