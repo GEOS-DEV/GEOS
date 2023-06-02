@@ -263,7 +263,7 @@ auto const & getTypeMap( LIST, std::integer_sequence< std::size_t, Is... > )
  * @return true
  * @return false
  */
-template< typename ... TypeTuples, typename Index_type, typename LAMBDA >
+template< typename ... TypeTuples, typename LAMBDA, typename Index_type >
 bool dispatchViaTable( TypeList< TypeTuples... > const combinations,
                        LAMBDA && lambda,
                        Index_type const type_index )
