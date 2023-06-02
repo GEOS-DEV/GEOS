@@ -111,7 +111,7 @@ TEST( ReverseCutHillMcKeeOrderingTest, reorder )
     283, 285, 213, 278, 282, 284, 285, 286, 279, 283, 284, 285, 287, 215, 264, 280,
     284, 286, 287, 265, 281, 285, 286, 287 };
 
-  ReverseCutHillMcKeeOrdering::
+  reverseCutHillMcKeeOrdering::
     computePermutation( offsets, columns, rankOffset, permutation );
 
   for( localIndex i = 0; i < numRows; ++i )

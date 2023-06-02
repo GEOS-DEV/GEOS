@@ -186,10 +186,12 @@ public:
                  map< std::pair< string, string >, array1d< string > > const & regions );
 
   /**
-   * @brief Enable the local reodering of the dof numbers
+   * @brief Set the local reodering of the dof numbers
    * @param [in] fieldName the name of the field
+   * @param [in] reorderingType the reordering type
    */
-  void enableLocalReordering( string const & fieldName );
+  void setLocalReorderingType( string const & fieldName,
+                               LocalReorderingType const reorderingType );
 
   /**
    * @brief Disable the global coupling for a given equation
@@ -546,12 +548,21 @@ private:
   void removeIndexArray( FieldDescription const & field );
 
   /**
+   * @brief Compute a local reordering of the dofNumbers or alternatively, return a trivial permutation
+   * @param field the field descriptor
+   * @return permutation the local permutation used to fill the index array for this field
+   */
+  array1d< localIndex > computePermutation( FieldDescription & field );
+
+  /**
    * @brief Compute a local reordering of the dofNumbers
    * @param field the field descriptor
    * @param permutation the local permutation used to fill the index array for this field
+   * @detail This function throws an error if the field requires a trivial permutation
    */
-  void computePermutation( FieldDescription & field,
-                           array1d< localIndex > & permutation );
+  void computePermutation( FieldDescription const & field,
+                           arrayView1d< localIndex > const permutation );
+
 
   /**
    * @brief Calculate or estimate the number of nonzero entries in each local row

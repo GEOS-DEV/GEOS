@@ -174,11 +174,17 @@ void forMeshSupport( std::vector< DofManager::FieldSupport > const & support,
   }
 }
 
+void fillTrivialPermutation( arrayView1d< localIndex > const permutation )
+{
+  forAll< parallelHostPolicy >( permutation.size(), [&]( localIndex const i )
+  {
+    permutation[i] = i;
+  } );
+}
+
 } // namespace
 
-
-void DofManager::computePermutation( FieldDescription & field,
-                                     array1d< localIndex > & permutation )
+array1d< localIndex > DofManager::computePermutation( FieldDescription & field )
 {
   localIndex const fieldIndex = getFieldIndex( field.name );
 
@@ -198,30 +204,37 @@ void DofManager::computePermutation( FieldDescription & field,
   computeFieldDimensions( fieldIndex );
 
   // the number of local dofs is available at this point, we allocate space for the permutation
-  permutation.resize( numLocalDofs( field.name ) );
-  forAll< parallelHostPolicy >( permutation.size(), [&]( localIndex const i )
-  {
-    permutation[i] = i;
-  } );
+  array1d< localIndex > permutation( numLocalDofs( field.name ) );
 
   // if no reordering is requesting, we just return the identity permutation
   if( field.reorderingType == LocalReorderingType::None )
   {
-    // restore the number of components
-    field.numComponents = numComps;
-    field.globallyCoupledComponents = globallyCoupledComps;
-    // reset the offsets, since they will be recomputed with the proper number of components
-    // this is important to get the right reordering for multiphysics problems
-    field.numLocalDof  = 0;
-    field.rankOffset   = 0;
-    field.numGlobalDof = 0;
-    field.globalOffset = 0;
-    if( fieldIndex > 0 )
-    {
-      field.blockOffset = 0;
-    }
-    return;
+    fillTrivialPermutation( permutation );
   }
+  else
+  {
+    fillTrivialPermutation( permutation );
+    computePermutation( field, permutation );
+  }
+
+  // reset the number of components
+  field.numComponents = numComps;
+  field.globallyCoupledComponents = globallyCoupledComps;
+  // reset the offsets, since they will be recomputed with the proper number of components
+  // this is important to get the right reordering for multiphysics problems
+  field.numLocalDof  = 0;
+  field.rankOffset   = 0;
+  field.numGlobalDof = 0;
+  field.globalOffset = 0;
+  field.blockOffset = 0;
+
+  return permutation;
+}
+
+void DofManager::computePermutation( FieldDescription const & field,
+                                     arrayView1d< localIndex > const permutation )
+{
+  localIndex const fieldIndex = getFieldIndex( field.name );
 
   // step 3: allocate and fill the dofNumber array
   //         this is needed to have dofNumber computed with numComps = 1
@@ -249,30 +262,22 @@ void DofManager::computePermutation( FieldDescription & field,
 
   localIndex const * const offsets = pattern.getOffsets();
   globalIndex const * const columns = pattern.getColumns();
+  array1d< localIndex > reversePermutation( permutation.size() );
 
   if( field.reorderingType == LocalReorderingType::ReverseCutHillMcKee )
   {
-    ReverseCutHillMcKeeOrdering::
-      computePermutation( offsets, columns, rankOffset(), permutation );
+    reverseCutHillMcKeeOrdering::
+      computePermutation( offsets, columns, rankOffset(), reversePermutation );
   }
   else
   {
     GEOS_ERROR( "This local ordering type is not supported yet" );
   }
 
-  // reset the number of components
-  field.numComponents = numComps;
-  field.globallyCoupledComponents = globallyCoupledComps;
-  // reset the offsets, since they will be recomputed with the proper number of components
-  // this is important to get the right reordering for multiphysics problems
-  field.numLocalDof  = 0;
-  field.rankOffset   = 0;
-  field.numGlobalDof = 0;
-  field.globalOffset = 0;
-  if( fieldIndex > 0 )
+  forAll< parallelHostPolicy >( permutation.size(), [&]( localIndex const i )
   {
-    field.blockOffset = 0;
-  }
+    permutation[reversePermutation[i]] = i;
+  } );
 }
 
 void DofManager::createIndexArray( FieldDescription const & field,
@@ -468,10 +473,11 @@ void DofManager::addField( string const & fieldName,
   addField( fieldName, location, components, support );
 }
 
-void DofManager::enableLocalReordering( string const & fieldName )
+void DofManager::setLocalReorderingType( string const & fieldName,
+                                         LocalReorderingType const reorderingType )
 {
   FieldDescription & field = m_fields[getFieldIndex( fieldName )];
-  field.reorderingType = LocalReorderingType::ReverseCutHillMcKee;
+  field.reorderingType = reorderingType;
 }
 
 void DofManager::disableGlobalCouplingForEquation( string const & fieldName,
@@ -1519,9 +1525,7 @@ void DofManager::reorderByRank()
   for( FieldDescription & field : m_fields )
   {
     // compute local permutation of dofs, if needed
-    array1d< localIndex > permutation;
-    permutations[field.name] = permutation;
-    computePermutation( field, permutations.at( field.name ) );
+    permutations[ field.name ] = computePermutation( field );
   }
 
   // Second loop: compute the dof number array

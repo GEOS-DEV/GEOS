@@ -268,7 +268,8 @@ void CompositionalMultiphaseHybridFVM::setupDofs( DomainPartition const & GEOS_U
                           DofManager::Connector::Face );
 
   // this call with instruct GEOS to reorder the dof numbers
-  dofManager.enableLocalReordering( viewKeyStruct::elemDofFieldString() );
+  dofManager.setLocalReorderingType( viewKeyStruct::elemDofFieldString(),
+                                     DofManager::LocalReorderingType::ReverseCutHillMcKee );
 
   // for the volume balance equation, disable global coupling
   // this equation is purely local (not coupled to neighbors or other physics)
