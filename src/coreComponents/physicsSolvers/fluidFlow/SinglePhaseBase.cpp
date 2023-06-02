@@ -21,8 +21,9 @@
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
-#include "constitutive/fluid/SingleFluidFields.hpp"
-#include "constitutive/fluid/singleFluidSelector.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidSelector.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
 #include "constitutive/thermalConductivity/singlePhaseThermalConductivitySelector.hpp"
@@ -414,6 +415,10 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       initTemp.setValues< parallelDevicePolicy<> >( temp );
     } );
   } );
+
+  // report to the user if some pore volumes are very small
+  // note: this function is here because: 1) porosity has been initialized and 2) NTG has been applied
+  validatePoreVolumes( domain );
 }
 
 void SinglePhaseBase::computeHydrostaticEquilibrium()
@@ -607,7 +612,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
       arrayView1d< real64 > const & deltaPres = subRegion.template getField< fields::flow::deltaPressure >();
 
       singlePhaseBaseKernels::StatisticsKernel::
-        saveDeltaPressure< parallelDevicePolicy<> >( subRegion.size(), pres, initPres, deltaPres );
+        saveDeltaPressure( subRegion.size(), pres, initPres, deltaPres );
       saveConvergedState( subRegion );
 
       arrayView1d< real64 > const & dVol = subRegion.template getField< fields::flow::deltaVolume >();
@@ -765,7 +770,7 @@ void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
                                                                            [&]( localIndex const,
                                                                                 auto & subRegion )
     {
-      accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs);
+      accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );
     } );
   } );
 }
@@ -953,15 +958,17 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & )
   {
+    integer const isThermal = m_isThermal;
+
     fsManager.apply< ElementSubRegionBase,
                      SourceFluxBoundaryCondition >( time_n + dt,
                                                     mesh,
                                                     SourceFluxBoundaryCondition::catalogName(),
-                                                    [&]( SourceFluxBoundaryCondition const & fs,
-                                                         string const & setName,
-                                                         SortedArrayView< localIndex const > const & targetSet,
-                                                         ElementSubRegionBase & subRegion,
-                                                         string const & )
+                                                    [&, isThermal]( SourceFluxBoundaryCondition const & fs,
+                                                                    string const & setName,
+                                                                    SortedArrayView< localIndex const > const & targetSet,
+                                                                    ElementSubRegionBase & subRegion,
+                                                                    string const & )
     {
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
@@ -969,6 +976,17 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
         GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
                                    getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(),
                                    fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+
+        if( isThermal )
+        {
+          char const msg[] = "SinglePhaseBase {} with isThermal = 1. At time {}s, "
+                             "the <{}> source flux boundary condition '{}' will be applied with the following behavior"
+                             "\n - negative value (injection): the mass balance equation is modified to considered the additional source term"
+                             "\n - positive value (production): both the mass balance and the energy balance equations are modified to considered the additional source term. " \
+                             "\n For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.";
+          GEOS_LOG_RANK_0( GEOS_FMT( msg,
+                                     getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(), fs.getName() ) );
+        }
       }
 
       if( targetSet.size() == 0 )
@@ -1007,25 +1025,78 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       // get the normalizer
       real64 const sizeScalingFactor = bcAllSetsSize[bcNameToBcId.at( fs.getName())];
 
-      forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
-                                                           targetSet,
-                                                           rankOffset,
-                                                           ghostRank,
-                                                           dofNumber,
-                                                           rhsContributionArrayView,
-                                                           localRhs] GEOS_HOST_DEVICE ( localIndex const a )
+      if( isThermal )
       {
-        // we need to filter out ghosts here, because targetSet may contain them
-        localIndex const ei = targetSet[a];
-        if( ghostRank[ei] >= 0 )
-        {
-          return;
-        }
+        SingleFluidBase const & fluid =
+          getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
 
-        // add the value to the mass balance equation
-        globalIndex const rowIndex = dofNumber[ei] - rankOffset;
-        localRhs[rowIndex] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
-      } );
+        arrayView2d< real64 const > const enthalpy = fluid.enthalpy();
+        arrayView2d< real64 const > const dEnthalpy_dTemperature = fluid.dEnthalpy_dTemperature();
+        arrayView2d< real64 const > const dEnthalpy_dPressure    = fluid.dEnthalpy_dPressure();
+        forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
+                                                             targetSet,
+                                                             rankOffset,
+                                                             ghostRank,
+                                                             dofNumber,
+                                                             enthalpy,
+                                                             dEnthalpy_dTemperature,
+                                                             dEnthalpy_dPressure,
+                                                             rhsContributionArrayView,
+                                                             localRhs,
+                                                             localMatrix] GEOS_HOST_DEVICE ( localIndex const a )
+        {
+          // we need to filter out ghosts here, because targetSet may contain them
+          localIndex const ei = targetSet[a];
+          if( ghostRank[ei] >= 0 )
+          {
+            return;
+          }
+
+          // add the value to the mass balance equation
+          globalIndex const massRowIndex   = dofNumber[ei] - rankOffset;
+          globalIndex const energyRowIndex = massRowIndex + 1;
+          real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
+          localRhs[massRowIndex] += rhsValue;
+          //add the value to the energey balance equation if the flux is positive (i.e., it's a producer)
+          if( rhsContributionArrayView[a] > 0.0 )
+          {
+            globalIndex const pressureDofIndex    = dofNumber[ei] - rankOffset;
+            globalIndex const temperatureDofIndex = pressureDofIndex + 1;
+
+            localRhs[energyRowIndex] += enthalpy[ei][0] * rhsValue;
+
+            globalIndex dofIndices[2]{pressureDofIndex, temperatureDofIndex};
+            real64 jacobian[2]{rhsValue * dEnthalpy_dPressure[ei][0], rhsValue * dEnthalpy_dTemperature[ei][0]};
+
+            localMatrix.template addToRow< serialAtomic >( energyRowIndex,
+                                                           dofIndices,
+                                                           jacobian,
+                                                           2 );
+          }
+        } );
+      }
+      else
+      {
+        forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
+                                                             targetSet,
+                                                             rankOffset,
+                                                             ghostRank,
+                                                             dofNumber,
+                                                             rhsContributionArrayView,
+                                                             localRhs] GEOS_HOST_DEVICE ( localIndex const a )
+        {
+          // we need to filter out ghosts here, because targetSet may contain them
+          localIndex const ei = targetSet[a];
+          if( ghostRank[ei] >= 0 )
+          {
+            return;
+          }
+
+          // add the value to the mass balance equation
+          globalIndex const rowIndex = dofNumber[ei] - rankOffset;
+          localRhs[rowIndex] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
+        } );
+      }
     } );
   } );
 }

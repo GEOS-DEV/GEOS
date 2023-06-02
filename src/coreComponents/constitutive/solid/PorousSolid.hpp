@@ -20,7 +20,6 @@
 #ifndef GEOS_CONSTITUTIVE_SOLID_POROUSSOLID_HPP_
 #define GEOS_CONSTITUTIVE_SOLID_POROUSSOLID_HPP_
 
-#include "constitutive/fluid/layouts.hpp"
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/solid/porosity/BiotPorosity.hpp"
 #include "constitutive/solid/SolidBase.hpp"
