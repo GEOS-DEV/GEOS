@@ -18,6 +18,8 @@
 
 #include "HypreMatrix.hpp"
 
+#include "common/TimingMacros.hpp"
+#include "common/GeosxConfig.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreKernels.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
@@ -148,6 +150,8 @@ void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const
                           localIndex const numLocalColumns,
                           MPI_Comm const & comm )
 {
+  GEOS_MARK_FUNCTION;
+
   RAJA::ReduceMax< ReducePolicy< hypre::execPolicy >, localIndex > maxRowEntries( 0 );
   forAll< hypre::execPolicy >( localMatrix.numRows(),
                                [localMatrix, maxRowEntries] GEOS_HYPRE_DEVICE ( localIndex const row )
@@ -258,6 +262,8 @@ void HypreMatrix::open()
 
 void HypreMatrix::close()
 {
+  GEOS_MARK_FUNCTION;
+
   GEOS_LAI_ASSERT( !closed() );
 
   GEOS_LAI_CHECK_ERROR( HYPRE_IJMatrixAssemble( m_ij_mat ) );
@@ -319,9 +325,11 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
                           globalIndex const colIndex0,
                           real64 const value0 )
 {
+  GEOS_MARK_FUNCTION;
+
   GEOS_LAI_ASSERT( insertable() );
 
-#if defined(GEOSX_USE_HYPRE_CUDA)
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
   array1d< HYPRE_BigInt > rowIndexDevice( 1 );
   array1d< HYPRE_BigInt > colIndexDevice( 1 );
   array1d< HYPRE_Int > ncolsDevice( 1 );
@@ -332,10 +340,10 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
   ncolsDevice[0] = 1;
   valueDevice[0] = value0;
 
-  rowIndexDevice.move( LvArray::MemorySpace::cuda, false );
-  colIndexDevice.move( LvArray::MemorySpace::cuda, false );
-  ncolsDevice.move( LvArray::MemorySpace::cuda, false );
-  valueDevice.move( LvArray::MemorySpace::cuda, false );
+  rowIndexDevice.move( parallelDeviceMemorySpace, false );
+  colIndexDevice.move( parallelDeviceMemorySpace, false );
+  ncolsDevice.move( parallelDeviceMemorySpace, false );
+  valueDevice.move( parallelDeviceMemorySpace, false );
 
   HYPRE_Int * const ncols = ncolsDevice.data();
   HYPRE_BigInt const * const rowIndex = rowIndexDevice.data();
@@ -366,6 +374,8 @@ void HypreMatrix::add( globalIndex const rowIndex,
                        real64 const * values,
                        localIndex size )
 {
+  GEOS_MARK_FUNCTION;
+
   GEOS_LAI_ASSERT( modifiable() );
 
   HYPRE_Int ncols = LvArray::integerConversion< HYPRE_Int >( size );
@@ -382,6 +392,8 @@ void HypreMatrix::set( globalIndex const rowIndex,
                        real64 const * values,
                        localIndex size )
 {
+  GEOS_MARK_FUNCTION;
+
   GEOS_LAI_ASSERT( modifiable() );
   GEOS_LAI_ASSERT_GE( rowIndex, ilower() );
   GEOS_LAI_ASSERT_GT( iupper(), rowIndex );
@@ -400,17 +412,19 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
                           real64 const * values,
                           localIndex size )
 {
+  GEOS_MARK_FUNCTION;
+
   GEOS_LAI_ASSERT( insertable() );
 
-#if defined(GEOSX_USE_HYPRE_CUDA)
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
   array1d< globalIndex > rowIndexDevice( 1 );
   array1d< HYPRE_Int > ncolsDevice( 1 );
 
   rowIndexDevice[0] = rowIndex0;
   ncolsDevice[0] = LvArray::integerConversion< HYPRE_Int >( size );
 
-  rowIndexDevice.move( LvArray::MemorySpace::cuda, false );
-  ncolsDevice.move( LvArray::MemorySpace::cuda, false );
+  rowIndexDevice.move( parallelDeviceMemorySpace, false );
+  ncolsDevice.move( parallelDeviceMemorySpace, false );
 
   globalIndex const * const rowIndex = rowIndexDevice.data();
   HYPRE_Int * const ncols = ncolsDevice.data();
@@ -432,6 +446,8 @@ void HypreMatrix::add( globalIndex const rowIndex,
                        arraySlice1d< globalIndex const > const & colIndices,
                        arraySlice1d< real64 const > const & values )
 {
+  GEOS_MARK_FUNCTION;
+
   GEOS_LAI_ASSERT( modifiable() );
 
   HYPRE_Int ncols = LvArray::integerConversion< HYPRE_Int >( colIndices.size() );
@@ -447,6 +463,8 @@ void HypreMatrix::set( globalIndex const rowIndex,
                        arraySlice1d< globalIndex const > const & colIndices,
                        arraySlice1d< real64 const > const & values )
 {
+  GEOS_MARK_FUNCTION;
+
   GEOS_LAI_ASSERT( modifiable() );
   GEOS_LAI_ASSERT_GE( rowIndex, ilower() );
   GEOS_LAI_ASSERT_GT( iupper(), rowIndex );
@@ -464,6 +482,8 @@ void HypreMatrix::insert( globalIndex const rowIndex,
                           arraySlice1d< globalIndex const > const & colIndices,
                           arraySlice1d< real64 const > const & values )
 {
+  GEOS_MARK_FUNCTION;
+
   GEOS_LAI_ASSERT( insertable() );
 
   HYPRE_Int ncols = LvArray::integerConversion< HYPRE_Int >( colIndices.size() );
@@ -545,6 +565,8 @@ void HypreMatrix::insert( arrayView1d< globalIndex const > const & rowIndices,
                           arrayView1d< globalIndex const > const & colIndices,
                           arrayView1d< real64 const > const & values )
 {
+  GEOS_MARK_FUNCTION;
+
   GEOS_LAI_ASSERT_EQ( rowIndices.size(), colIndices.size() );
   GEOS_LAI_ASSERT_GE( rowIndices.size(), values.size() );
 
@@ -555,11 +577,11 @@ void HypreMatrix::insert( arrayView1d< globalIndex const > const & rowIndices,
   {
     nCols[i] = 1;
   }
-#if defined(GEOSX_USE_HYPRE_CUDA)
-  rowIndices.move( LvArray::MemorySpace::cuda, false );
-  colIndices.move( LvArray::MemorySpace::cuda, false );
-  values.move( LvArray::MemorySpace::cuda, false );
-  nCols.move( LvArray::MemorySpace::cuda, false );
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+  rowIndices.move( parallelDeviceMemorySpace, false );
+  colIndices.move( parallelDeviceMemorySpace, false );
+  values.move( parallelDeviceMemorySpace, false );
+  nCols.move( parallelDeviceMemorySpace, false );
 #endif
   GEOS_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
                                                    numRows,
@@ -817,18 +839,24 @@ void HypreMatrix::rescaleRows( arrayView1d< globalIndex const > const & rowIndic
 void HypreMatrix::separateComponentFilter( HypreMatrix & dst,
                                            integer const dofsPerNode ) const
 {
+  GEOS_MARK_FUNCTION;
+
   localIndex const maxRowEntries = maxRowLength();
   integer const temp = maxRowEntries % dofsPerNode;
   GEOS_LAI_ASSERT_EQ( temp, 0 );
 
   CRSMatrix< real64 > tempMat;
+
   tempMat.resize( numLocalRows(), numGlobalCols(), maxRowEntries / dofsPerNode );
   CRSMatrixView< real64 > const tempMatView = tempMat.toView();
 
   globalIndex const firstLocalRow = ilower();
   globalIndex const firstLocalCol = jlower();
+
   hypre::CSRData< true > const diag{ hypre_ParCSRMatrixDiag( unwrapped() ) };
+
   hypre::CSRData< true > const offd{ hypre_ParCSRMatrixOffd( unwrapped() ) };
+
   HYPRE_BigInt const * const colMap = hypre::getOffdColumnMap( unwrapped() );
 
   auto const getComponent = [dofsPerNode] GEOS_HYPRE_DEVICE ( auto const i )
@@ -862,6 +890,7 @@ void HypreMatrix::separateComponentFilter( HypreMatrix & dst,
   } );
 
   dst.create( tempMatView.toViewConst(), numLocalCols(), comm() );
+
   dst.setDofManager( dofManager() );
 }
 
@@ -975,10 +1004,14 @@ localIndex HypreMatrix::rowLength( globalIndex const globalRowIndex ) const
   HYPRE_Int ia_diag_h[2];
   HYPRE_Int ia_offd_h[2];
 
-#if defined(GEOSX_USE_HYPRE_CUDA)
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA
   // Don't know if this is faster or slower than launching a kernel. We should deprecate this function in any case.
   cudaMemcpy( ia_diag_h, ia_diag + localRow, 2 * sizeof( HYPRE_Int ), cudaMemcpyDeviceToHost );
   cudaMemcpy( ia_offd_h, ia_offd + localRow, 2 * sizeof( HYPRE_Int ), cudaMemcpyDeviceToHost );
+#elif GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+  // Don't know if this is faster or slower than launching a kernel. We should deprecate this function in any case.
+  hipMemcpy( ia_diag_h, ia_diag + localRow, 2 * sizeof( HYPRE_Int ), hipMemcpyDeviceToHost );
+  hipMemcpy( ia_offd_h, ia_offd + localRow, 2 * sizeof( HYPRE_Int ), hipMemcpyDeviceToHost );
 #else
   ia_diag_h[0] = ia_diag[localRow]; ia_diag_h[1] = ia_diag[localRow + 1];
   ia_offd_h[0] = ia_offd[localRow]; ia_offd_h[1] = ia_offd[localRow + 1];

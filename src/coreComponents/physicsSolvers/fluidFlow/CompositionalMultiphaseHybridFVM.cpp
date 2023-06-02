@@ -20,7 +20,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
-#include "constitutive/fluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
@@ -266,6 +266,11 @@ void CompositionalMultiphaseHybridFVM::setupDofs( DomainPartition const & GEOS_U
   dofManager.addCoupling( viewKeyStruct::elemDofFieldString(),
                           viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Face );
+
+  // for the volume balance equation, disable global coupling
+  // this equation is purely local (not coupled to neighbors or other physics)
+  dofManager.disableGlobalCouplingForEquation( viewKeyStruct::elemDofFieldString(),
+                                               m_numComponents );
 
   // setup the connectivity of face fields
   dofManager.addField( viewKeyStruct::faceDofFieldString(),
