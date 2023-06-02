@@ -159,6 +159,15 @@ using Increment = typename IncrementImpl< T, N >::type;
 template< typename ... Ts >
 using TypeList = camp::list< Ts... >;
 
+template< typename LIST >
+using ListofTypeList = internal::Apply< camp::list, LIST >;
+
+// template< typename ... Ts >
+// struct ListofTypeList< camp::list< Ts ... > >
+// {
+//   using types = internal::Apply< camp::list, LIST  >;
+// };
+
 /**
  * @brief Concatenate multiple type lists.
  */
