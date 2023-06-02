@@ -1243,7 +1243,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
         string const & fieldName = wrapper.getName();
         viewPointers[esr][fieldName] = &wrapper;
 
-        types::dispatchCombinations( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
+        types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
         {
           using ArrayType = camp::first< decltype( tupleOfTypes ) >;
           Wrapper< ArrayType > const & sourceWrapper = Wrapper< ArrayType >::cast( wrapper );
@@ -1263,7 +1263,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
     WrapperBase & wrapper = *wrapperIter.second;
     string const & fieldName = wrapper.getName();
 
-    types::dispatchCombinations( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
+    types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
     {
       using ArrayType = camp::first< decltype( tupleOfTypes ) >;
       Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );

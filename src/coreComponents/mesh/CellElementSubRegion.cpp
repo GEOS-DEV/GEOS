@@ -92,12 +92,12 @@ void CellElementSubRegion::copyFromCellBlock( CellBlockABC & cellBlock )
   this->constructGlobalToLocalMap();
   cellBlock.forExternalProperties( [&]( WrapperBase & wrapper )
   {
-    types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
+    types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
     {
-      using ArrayType = decltype( array );
+      using ArrayType = camp::first< decltype( tupleOfTypes ) >;
       Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
       this->registerWrapper( wrapper.getName(), std::make_unique< ArrayType >( wrapperT.reference() ) );
-    } );
+    }, wrapper );
   } );
 }
 

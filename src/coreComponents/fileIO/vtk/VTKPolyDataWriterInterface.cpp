@@ -513,7 +513,7 @@ writeField( WrapperBase const & wrapper,
             localIndex const offset,
             vtkDataArray * data )
 {
-    types::dispatchCombinations( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
+  types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
   {
     using ArrayType = camp::first< decltype( tupleOfTypes ) >;
     using T = typename ArrayType::ValueType;
@@ -543,7 +543,7 @@ writeField( WrapperBase const & wrapper,
             localIndex const offset,
             vtkDataArray * data )
 {
-    types::dispatchCombinations( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
+  types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
   {
     using ArrayType = camp::first< decltype( tupleOfTypes ) >;
     using T = typename ArrayType::ValueType;
@@ -731,7 +731,7 @@ writeElementField( Group const & subRegions,
     WrapperBase const & wrapper = subRegion.getWrapperBase( field );
     if( first )
     {
-        types::dispatchCombinations( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
+      types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
       {
         using ArrayType = camp::first< decltype( tupleOfTypes ) >;
         using T = typename ArrayType::ValueType;
@@ -776,7 +776,7 @@ void VTKPolyDataWriterInterface::writeNodeFields( NodeManager const & nodeManage
     if( isFieldPlotEnabled( wrapper ) )
     {
       vtkSmartPointer< vtkDataArray > data;
-        types::dispatchCombinations( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
+      types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
       {
         using ArrayType = camp::first< decltype( tupleOfTypes ) >;
         using T = typename ArrayType::ValueType;

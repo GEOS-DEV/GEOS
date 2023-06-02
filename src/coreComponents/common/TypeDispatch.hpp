@@ -162,12 +162,6 @@ using TypeList = camp::list< Ts... >;
 template< typename LIST >
 using ListofTypeList = internal::Apply< camp::list, LIST >;
 
-// template< typename ... Ts >
-// struct ListofTypeList< camp::list< Ts ... > >
-// {
-//   using types = internal::Apply< camp::list, LIST  >;
-// };
-
 /**
  * @brief Concatenate multiple type lists.
  */
@@ -226,42 +220,9 @@ using StandardArrays = Join< RealArrays, IntegralArrays >;
 
 namespace internal
 {
-
-template< typename ... Ts, std::size_t ... Is >
-std::unordered_map< std::type_index, std::size_t > const &
-getTypeIndexMap( TypeList< Ts... >,
-                 std::index_sequence< Is... > )
-{
-  static std::unordered_map< std::type_index, std::size_t > const result( { { typeid( Ts ), Is } ... } );
-  return result;
-}
-
-template< typename ... Ts, typename LAMBDA >
-bool dispatchViaTable( TypeList< Ts... > const types,
-                       std::type_index const type,
-                       LAMBDA && lambda )
-{
-  static_assert( sizeof...(Ts) > 0, "Dispatching on empty type list not supported" );
-
-  // Initialize a table of handlers, once per unique combination of type list and lambda
-  using Handler = void (*)( LAMBDA && );
-  static Handler const handlers[] = { []( LAMBDA && f ){ f( Ts{} ); } ... };
-
-  // Initialize a hashmap of std::type_index to contiguous indices, once per unique type list
-  auto const & typeIndexMap = getTypeIndexMap( types, std::index_sequence_for< Ts... >{} );
-  auto const it = typeIndexMap.find( type );
-  if( it != typeIndexMap.end() )
-  {
-    GEOS_ASSERT_GT( sizeof...( Ts ), it->second ); // sanity check
-    handlers[ it->second ]( std::forward< LAMBDA >( lambda ) );
-    return true;
-  }
-  return false;
-}
-
 /**
  * @brief struct to define the hash of a tuple
- * 
+ *
  */
 struct tuple_hash
 {
@@ -286,7 +247,7 @@ auto createTypeIndexTuple( TypeList< Ts... > )
 template< typename LIST, std::size_t ... Is >
 auto const & getTypeMap( LIST, std::integer_sequence< std::size_t, Is... > )
 {
-  using KeyType = decltype( createTypeIndexTuple( camp::first< LIST >{} ) );
+  using KeyType = decltype( createTypeIndexTuple( camp::first< LIST > {} ) );
   static std::unordered_map< KeyType, std::size_t, tuple_hash > const result = { { createTypeIndexTuple( camp::at_t< LIST, camp::num< Is > >{} ), Is } ... };
   return result;
 }
@@ -304,8 +265,8 @@ auto const & getTypeMap( LIST, std::integer_sequence< std::size_t, Is... > )
  */
 template< typename ... TypeTuples, typename Index_type, typename LAMBDA >
 bool dispatchViaTable( TypeList< TypeTuples... > const combinations,
-                       Index_type const type_index,
-                       LAMBDA && lambda )
+                       LAMBDA && lambda,
+                       Index_type const type_index )
 {
   static_assert( sizeof...(TypeTuples) > 0, "Dispatching on empty type list not supported" );
 
@@ -328,55 +289,27 @@ bool dispatchViaTable( TypeList< TypeTuples... > const combinations,
 
 /**
  * @brief Dispatch a generic worker function @p lambda based on runtime type.
- * @tparam Ts list of types
- * @tparam LAMBDA type of user-provided function or lambda, must have one auto argument
- * @param types list of types as an object (for deduction)
- * @param type type index of the runtime type
- * @param errorIfTypeNotFound flag indicating whether dispatch should issue an error when type not matched
- * @param lambda user-provided callable, will be called with a single prvalue of type indicated by @p type
+ *
+ * @tparam LIST type of the list of types
+ * @tparam LAMBDA  type of user-provided function or lambda, must have one auto argument
+ * @tparam Ts types of the objects to be dispatched.
+ * @param combinations list of types
+ * @param lambda lambda user-provided callable
+ * @param objects objects to be dispatched
  * @return @p true iff type has been dispatch
  *
- * @todo Do we want @p errorIfTypeNotFound parameter? Options:
+ * todo Do we want errorIfTypeNotFound parameter? Options:
  *       - make it a template parameter (caller always knows whether or not it wants hard errors)
  *       - make the caller process return value and raise error if needed (and however they want)
  */
-template< typename ... Ts, typename LAMBDA >
-bool dispatch( TypeList< Ts... > const types,
-               std::type_index const type,
-               bool const errorIfTypeNotFound,
-               LAMBDA && lambda )
-{
-  bool const success = internal::dispatchViaTable( types, type, std::forward< LAMBDA >( lambda ) );
-  if( !success && errorIfTypeNotFound )
-  {
-    GEOS_ERROR( "Type " << LvArray::system::demangle( type.name() ) << " was not dispatched.\n" <<
-                "Check the stack trace below and revise the type list passed to dispatch().\n" <<
-                "If you are unsure about this error, please report it to GEOS issue tracker." );
-  }
-  return success;
-}
-
-
-/**
- * @brief
- *
- * @tparam LIST
- * @tparam LAMBDA
- * @tparam Ts
- * @param combinations
- * @param lambda
- * @param objects
- * @return true
- * @return false
- */
 template< typename LIST, typename LAMBDA, typename ... Ts >
-bool dispatchCombinations( LIST const combinations,
-                           LAMBDA && lambda,
-                           Ts && ... objects )
+bool dispatch( LIST const combinations,
+               LAMBDA && lambda,
+               Ts && ... objects )
 {
   bool const success = internal::dispatchViaTable( combinations,
-                                                   std::make_tuple( std::type_index( typeid(objects))... ),
-                                                   std::forward< LAMBDA >( lambda ) );
+                                                   std::forward< LAMBDA >( lambda ),
+                                                   std::make_tuple( std::type_index( typeid(objects))... ) );
 
   if( !success )
   {

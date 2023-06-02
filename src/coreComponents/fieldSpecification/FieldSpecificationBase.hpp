@@ -652,15 +652,15 @@ void FieldSpecificationBase::applyFieldValue( SortedArrayView< localIndex const 
   // // This function is used in setting boundary/initial conditions on simulation fields.
   // // This is meaningful for 1/2/3D real arrays and sometimes 1D integer (indicator) arrays.
   using FieldTypes = types::ListofTypeList< types::Join< types::ArrayTypes< types::RealTypes, types::DimsUpTo< 3 > >,
-                                           types::ArrayTypes< types::TypeList< integer >, types::DimsSingle< 1 > > > >;
-                                 
+                                                         types::ArrayTypes< types::TypeList< integer >, types::DimsSingle< 1 > > > >;
 
-  types::dispatchCombinations( FieldTypes{}, [&]( auto tupleOfTypes )
+
+  types::dispatch( FieldTypes{}, [&]( auto tupleOfTypes )
   {
     using ArrayType = camp::first< decltype( tupleOfTypes ) >;
     auto & wrapperT = dataRepository::Wrapper< ArrayType >::cast( wrapper );
     applyFieldValueKernel< FIELD_OP, POLICY >( wrapperT.reference().toView(), targetSet, time, dataGroup );
-  }, wrapper );                                      
+  }, wrapper );
 }
 
 template< typename FIELD_OP, typename POLICY, typename T, int NDIM, int USD >
@@ -698,7 +698,7 @@ void FieldSpecificationBase::applyBoundaryConditionToSystem( SortedArrayView< lo
 
   // We're reading values from a field, which is only well-defined for dims 1 and 2
   using FieldTypes = types::ListofTypeList< types::ArrayTypes< types::RealTypes, types::DimsUpTo< 2 > > >;
-  types::dispatchCombinations( FieldTypes{}, [&]( auto tupleOfTypes )
+  types::dispatch( FieldTypes{}, [&]( auto tupleOfTypes )
   {
     using ArrayType = camp::first< decltype( tupleOfTypes ) >;
     auto const & wrapperT = dataRepository::Wrapper< ArrayType >::cast( wrapper );

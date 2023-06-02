@@ -4,9 +4,8 @@
 
 set(gtest_geosx_tests
     testDataTypes.cpp
-    testTypeDispatch.cpp
     testFixedSizeDeque.cpp
-    testTypesCombinationDispatch.cpp
+    testTypeDispatch.cpp
     testLifoStorage.cpp
    )
 
