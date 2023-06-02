@@ -425,7 +425,7 @@ void InternalWellGenerator::connectPerforationsToWellElements()
     GEOS_THROW_IF( m_perfDistFromHead[iperf] > wellLength,
                    GEOS_FMT( "{}: Distance from well perforation to head ({} = {}) is larger than well"
                              " polyline length ({})\n \n You should check the following values:"
-                             "\n   1 - {}\n   2 - the {} of the used WellControls named {}\n   3 - {}, Z values",
+                             "\n   1 - {}\n   2 - {}, Z values",
                              perf.getWrapperDataContext( Perforation::viewKeyStruct::distanceFromHeadString() ),
                              Perforation::viewKeyStruct::distanceFromHeadString(),
                              m_perfDistFromHead[iperf], wellLength,
