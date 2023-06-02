@@ -62,7 +62,7 @@ struct PotGrad
             real64 ( & dGravHead_dP )[numFluxSupportPoints],
             real64 ( & dGravHead_dC )[numFluxSupportPoints][numComp] )
   {
-
+    // assign derivatives arrays to zero
     for( integer i = 0; i < numFluxSupportPoints; ++i )
     {
       dPresGrad_dP[i] = 0.0;
