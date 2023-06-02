@@ -102,7 +102,7 @@ void testLifoStorageBig( int elemCnt, int numberOfElementsOnDevice, int numberOf
 {
 
   array1d< float > array( elemCnt );
-  array.move( RAJAHelper< POLICY >::space );
+  array.move( local::RAJAHelper< POLICY >::space );
   LifoStorage< float, localIndex > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
 
   for( int j = 0; j < 10; j++ )
