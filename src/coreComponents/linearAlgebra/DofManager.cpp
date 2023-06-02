@@ -1266,7 +1266,8 @@ namespace
 {
 
 template< typename FIELD_OP, typename POLICY, typename FIELD_VIEW >
-void vectorToFieldKernel( arrayView1d< real64 const > const & localVector,
+void vectorToFieldKernel( ObjectManagerBase & GEOS_UNUSED_PARAM( manager ),
+                          arrayView1d< real64 const > const & localVector,
                           FIELD_VIEW const & field,
                           arrayView1d< globalIndex const > const & dofNumber,
                           arrayView1d< integer const > const & ghostRank,
@@ -1293,12 +1294,43 @@ void vectorToFieldKernel( arrayView1d< real64 const > const & localVector,
   } );
 }
 
-template< typename FIELD_OP, typename POLICY >
+template< typename FIELD_OP, typename POLICY, typename FIELD_VIEW >
+void vectorToFieldKernel( ObjectManagerBase & manager,
+                          arrayView1d< real64 const > const & localVector,
+                          FIELD_VIEW const & field,
+                          arrayView1d< globalIndex const > const & dofNumber,
+                          arrayView1d< integer const > const & ghostRank,
+                          string const & scalingFactorName,
+                          localIndex const dofOffset,
+                          DofManager::CompMask const mask )
+{
+  arrayView1d< real64 const > const & scalingFactor = manager.getReference< array1d< real64 > >( scalingFactorName );
+
+  forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+  {
+    if( ghostRank[i] < 0 && dofNumber[i] >= 0 )
+    {
+      localIndex const lid = dofNumber[i] - dofOffset;
+      GEOS_ASSERT_GE( lid, 0 );
+
+      integer fieldComp = 0;
+      for( integer const vecComp : mask )
+      {
+        FIELD_OP::template SpecifyFieldValue( field,
+                                              i,
+                                              fieldComp++,
+                                              scalingFactor[i] * localVector[lid + vecComp] );
+      }
+    }
+  } );
+}
+
+template< typename FIELD_OP, typename POLICY, typename SCALING_FACTOR_TYPE >
 void vectorToFieldImpl( arrayView1d< real64 const > const & localVector,
                         ObjectManagerBase & manager,
                         string const & dofKey,
                         string const & fieldName,
-                        real64 const scalingFactor,
+                        SCALING_FACTOR_TYPE const & scalingFactor,
                         localIndex const dofOffset,
                         DofManager::CompMask const mask )
 {
@@ -1314,7 +1346,8 @@ void vectorToFieldImpl( arrayView1d< real64 const > const & localVector,
   {
     using ArrayType = decltype( array );
     Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
-    vectorToFieldKernel< FIELD_OP, POLICY >( localVector,
+    vectorToFieldKernel< FIELD_OP, POLICY >( manager,
+                                             localVector,
                                              wrapperT.reference().toView(),
                                              dofNumber,
                                              ghostRank,
@@ -1352,12 +1385,12 @@ void fieldToVectorKernel( arrayView1d< real64 > const & localVector,
   } );
 }
 
-template< typename FIELD_OP, typename POLICY >
+template< typename FIELD_OP, typename POLICY, typename SCALING_FACTOR_TYPE >
 void fieldToVectorImpl( arrayView1d< real64 > const & localVector,
                         ObjectManagerBase const & manager,
                         string const & dofKey,
                         string const & fieldName,
-                        real64 const scalingFactor,
+                        SCALING_FACTOR_TYPE const & scalingFactor,
                         localIndex const dofOffset,
                         DofManager::CompMask const mask )
 {
@@ -1385,11 +1418,11 @@ void fieldToVectorImpl( arrayView1d< real64 > const & localVector,
 
 } // namespace
 
-template< typename FIELD_OP, typename POLICY >
+template< typename FIELD_OP, typename POLICY, typename SCALING_FACTOR_TYPE >
 void DofManager::vectorToField( arrayView1d< real64 const > const & localVector,
                                 string const & srcFieldName,
                                 string const & dstFieldName,
-                                real64 const scalingFactor,
+                                SCALING_FACTOR_TYPE const & scalingFactor,
                                 CompMask mask ) const
 {
   FieldDescription const & field = m_fields[getFieldIndex( srcFieldName )];
@@ -1437,10 +1470,11 @@ void DofManager::copyVectorToField( arrayView1d< real64 const > const & localVec
                                                                     mask );
 }
 
+template< typename SCALING_FACTOR_TYPE >
 void DofManager::addVectorToField( arrayView1d< real64 const > const & localVector,
                                    string const & srcFieldName,
                                    string const & dstFieldName,
-                                   real64 const scalingFactor,
+                                   SCALING_FACTOR_TYPE const & scalingFactor,
                                    CompMask const mask ) const
 {
   vectorToField< FieldSpecificationAdd, parallelDevicePolicy<> >( localVector,
@@ -1449,6 +1483,16 @@ void DofManager::addVectorToField( arrayView1d< real64 const > const & localVect
                                                                   scalingFactor,
                                                                   mask );
 }
+template void DofManager::addVectorToField< real64 >( arrayView1d< real64 const > const & localVector,
+                                                      string const & srcFieldName,
+                                                      string const & dstFieldName,
+                                                      real64 const & scalingFactor,
+                                                      CompMask const mask ) const;
+template void DofManager::addVectorToField< char const * >( arrayView1d< real64 const > const & localVector,
+                                                            string const & srcFieldName,
+                                                            string const & dstFieldName,
+                                                            char const * const & scalingFactor,
+                                                            CompMask const mask ) const;
 
 template< typename FIELD_OP, typename POLICY >
 void DofManager::fieldToVector( arrayView1d< real64 > const & localVector,

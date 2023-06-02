@@ -407,10 +407,11 @@ public:
    * @param scalingFactor a factor to scale vector values by
    * @param mask component selection mask
    */
+  template< typename SCALING_FACTOR_TYPE >
   void addVectorToField( arrayView1d< real64 const > const & localVector,
                          string const & srcFieldName,
                          string const & dstFieldName,
-                         real64 scalingFactor,
+                         SCALING_FACTOR_TYPE const & scalingFactor,
                          CompMask mask = CompMask( MAX_COMP, true ) ) const;
 
   /**
@@ -606,11 +607,11 @@ private:
    * @param scalingFactor a factor to scale vector values by
    * @param mask component selection mask (for partial copy)
    */
-  template< typename FIELD_OP, typename POLICY >
+  template< typename FIELD_OP, typename POLICY, typename SCALING_FACTOR_TYPE >
   void vectorToField( arrayView1d< real64 const > const & localVector,
                       string const & srcFieldName,
                       string const & dstFieldName,
-                      real64 scalingFactor,
+                      SCALING_FACTOR_TYPE const & scalingFactor,
                       CompMask mask ) const;
 
   /**
