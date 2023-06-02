@@ -736,8 +736,8 @@ public:
           finiteElementSpace,
           inputConstitutiveType ),
     m_X( nodeManager.referencePosition() ),
-    m_p_n( nodeManager.getField< wavesolverfields::Pressure_n >() ),
-    m_stiffnessVector( nodeManager.getField< wavesolverfields::StiffnessVector >() ),
+    m_p_n( nodeManager.getField< acousticSecondOrderSemFields::Pressure_n >() ),
+    m_stiffnessVector( nodeManager.getField< matricialFields::StiffnessVector >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );

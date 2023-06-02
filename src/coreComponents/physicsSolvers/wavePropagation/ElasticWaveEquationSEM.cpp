@@ -115,37 +115,37 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    nodeManager.registerField< wavesolverfields::Displacementx_nm1,
-                               wavesolverfields::Displacementy_nm1,
-                               wavesolverfields::Displacementz_nm1,
-                               wavesolverfields::Displacementx_n,
-                               wavesolverfields::Displacementy_n,
-                               wavesolverfields::Displacementz_n,
-                               wavesolverfields::Displacementx_np1,
-                               wavesolverfields::Displacementy_np1,
-                               wavesolverfields::Displacementz_np1,
-                               wavesolverfields::ForcingRHSx,
-                               wavesolverfields::ForcingRHSy,
-                               wavesolverfields::ForcingRHSz,
-                               wavesolverfields::MassVector,
-                               wavesolverfields::DampingVectorx,
-                               wavesolverfields::DampingVectory,
-                               wavesolverfields::DampingVectorz,
-                               wavesolverfields::StiffnessVectorx,
-                               wavesolverfields::StiffnessVectory,
-                               wavesolverfields::StiffnessVectorz,
-                               wavesolverfields::FreeSurfaceNodeIndicator >( this->getName() );
+    nodeManager.registerField< elasticSecondOrderSemFields::Displacementx_nm1,
+                               elasticSecondOrderSemFields::Displacementy_nm1,
+                               elasticSecondOrderSemFields::Displacementz_nm1,
+                               elasticSecondOrderSemFields::Displacementx_n,
+                               elasticSecondOrderSemFields::Displacementy_n,
+                               elasticSecondOrderSemFields::Displacementz_n,
+                               elasticSecondOrderSemFields::Displacementx_np1,
+                               elasticSecondOrderSemFields::Displacementy_np1,
+                               elasticSecondOrderSemFields::Displacementz_np1,
+                               elasticSecondOrderSemFields::ForcingRHSx,
+                               elasticSecondOrderSemFields::ForcingRHSy,
+                               elasticSecondOrderSemFields::ForcingRHSz,
+                               matricialFields::MassVector,
+                               matricialFields::DampingVectorx,
+                               matricialFields::DampingVectory,
+                               matricialFields::DampingVectorz,
+                               matricialFields::StiffnessVectorx,
+                               matricialFields::StiffnessVectory,
+                               matricialFields::StiffnessVectorz,
+                               geophysicalFields::FreeSurfaceNodeIndicator >( this->getName() );
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerField< wavesolverfields::FreeSurfaceFaceIndicator >( this->getName() );
+    faceManager.registerField< geophysicalFields::FreeSurfaceFaceIndicator >( this->getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< wavesolverfields::MediumVelocityVp >( this->getName() );
-      subRegion.registerField< wavesolverfields::MediumVelocityVs >( this->getName() );
-      subRegion.registerField< wavesolverfields::MediumDensity >( this->getName() );
+      subRegion.registerField< geophysicalFields::MediumVelocityVp >( this->getName() );
+      subRegion.registerField< geophysicalFields::MediumVelocityVs >( this->getName() );
+      subRegion.registerField< geophysicalFields::MediumDensity >( this->getName() );
     } );
 
   } );
@@ -426,18 +426,18 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     // mass matrix to be computed in this function
-    arrayView1d< real32 > const mass = nodeManager.getField< wavesolverfields::MassVector >();
+    arrayView1d< real32 > const mass = nodeManager.getField< matricialFields::MassVector >();
     mass.zero();
     /// damping matrix to be computed for each dof in the boundary of the mesh
-    arrayView1d< real32 > const dampingx = nodeManager.getField< wavesolverfields::DampingVectorx >();
-    arrayView1d< real32 > const dampingy = nodeManager.getField< wavesolverfields::DampingVectory >();
-    arrayView1d< real32 > const dampingz = nodeManager.getField< wavesolverfields::DampingVectorz >();
+    arrayView1d< real32 > const dampingx = nodeManager.getField< matricialFields::DampingVectorx >();
+    arrayView1d< real32 > const dampingy = nodeManager.getField< matricialFields::DampingVectory >();
+    arrayView1d< real32 > const dampingz = nodeManager.getField< matricialFields::DampingVectorz >();
     dampingx.zero();
     dampingy.zero();
     dampingz.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
-    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< wavesolverfields::FreeSurfaceFaceIndicator >();
+    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< geophysicalFields::FreeSurfaceFaceIndicator >();
 
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
@@ -445,9 +445,9 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
-      arrayView1d< real32 > const density = elementSubRegion.getField< wavesolverfields::MediumDensity >();
-      arrayView1d< real32 > const velocityVp = elementSubRegion.getField< wavesolverfields::MediumVelocityVp >();
-      arrayView1d< real32 > const velocityVs = elementSubRegion.getField< wavesolverfields::MediumVelocityVs >();
+      arrayView1d< real32 > const density = elementSubRegion.getField< geophysicalFields::MediumDensity >();
+      arrayView1d< real32 > const velocityVp = elementSubRegion.getField< geophysicalFields::MediumVelocityVp >();
+      arrayView1d< real32 > const velocityVs = elementSubRegion.getField< geophysicalFields::MediumVelocityVs >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -496,23 +496,23 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
   FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getFaceManager();
   NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getNodeManager();
 
-  arrayView1d< real32 > const ux_np1 = nodeManager.getField< wavesolverfields::Displacementx_np1 >();
-  arrayView1d< real32 > const uy_np1 = nodeManager.getField< wavesolverfields::Displacementy_np1 >();
-  arrayView1d< real32 > const uz_np1 = nodeManager.getField< wavesolverfields::Displacementz_np1 >();
-  arrayView1d< real32 > const ux_n = nodeManager.getField< wavesolverfields::Displacementx_n >();
-  arrayView1d< real32 > const uy_n = nodeManager.getField< wavesolverfields::Displacementy_n >();
-  arrayView1d< real32 > const uz_n = nodeManager.getField< wavesolverfields::Displacementz_n >();
-  arrayView1d< real32 > const ux_nm1 = nodeManager.getField< wavesolverfields::Displacementx_nm1 >();
-  arrayView1d< real32 > const uy_nm1 = nodeManager.getField< wavesolverfields::Displacementy_nm1 >();
-  arrayView1d< real32 > const uz_nm1 = nodeManager.getField< wavesolverfields::Displacementz_nm1 >();
+  arrayView1d< real32 > const ux_np1 = nodeManager.getField< elasticSecondOrderSemFields::Displacementx_np1 >();
+  arrayView1d< real32 > const uy_np1 = nodeManager.getField< elasticSecondOrderSemFields::Displacementy_np1 >();
+  arrayView1d< real32 > const uz_np1 = nodeManager.getField< elasticSecondOrderSemFields::Displacementz_np1 >();
+  arrayView1d< real32 > const ux_n = nodeManager.getField< elasticSecondOrderSemFields::Displacementx_n >();
+  arrayView1d< real32 > const uy_n = nodeManager.getField< elasticSecondOrderSemFields::Displacementy_n >();
+  arrayView1d< real32 > const uz_n = nodeManager.getField< elasticSecondOrderSemFields::Displacementz_n >();
+  arrayView1d< real32 > const ux_nm1 = nodeManager.getField< elasticSecondOrderSemFields::Displacementx_nm1 >();
+  arrayView1d< real32 > const uy_nm1 = nodeManager.getField< elasticSecondOrderSemFields::Displacementy_nm1 >();
+  arrayView1d< real32 > const uz_nm1 = nodeManager.getField< elasticSecondOrderSemFields::Displacementz_nm1 >();
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   /// set array of indicators: 1 if a face is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< wavesolverfields::FreeSurfaceFaceIndicator >();
+  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< geophysicalFields::FreeSurfaceFaceIndicator >();
 
   /// set array of indicators: 1 if a node is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< wavesolverfields::FreeSurfaceNodeIndicator >();
+  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< geophysicalFields::FreeSurfaceNodeIndicator >();
 
   fsManager.apply( time,
                    domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
@@ -601,31 +601,31 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< real32 const > const mass = nodeManager.getField< wavesolverfields::MassVector >();
-    arrayView1d< real32 const > const dampingx = nodeManager.getField< wavesolverfields::DampingVectorx >();
-    arrayView1d< real32 const > const dampingy = nodeManager.getField< wavesolverfields::DampingVectory >();
-    arrayView1d< real32 const > const dampingz = nodeManager.getField< wavesolverfields::DampingVectorz >();
-    arrayView1d< real32 > const stiffnessVectorx = nodeManager.getField< wavesolverfields::StiffnessVectorx >();
-    arrayView1d< real32 > const stiffnessVectory = nodeManager.getField< wavesolverfields::StiffnessVectory >();
-    arrayView1d< real32 > const stiffnessVectorz = nodeManager.getField< wavesolverfields::StiffnessVectorz >();
+    arrayView1d< real32 const > const mass = nodeManager.getField< matricialFields::MassVector >();
+    arrayView1d< real32 const > const dampingx = nodeManager.getField< matricialFields::DampingVectorx >();
+    arrayView1d< real32 const > const dampingy = nodeManager.getField< matricialFields::DampingVectory >();
+    arrayView1d< real32 const > const dampingz = nodeManager.getField< matricialFields::DampingVectorz >();
+    arrayView1d< real32 > const stiffnessVectorx = nodeManager.getField< matricialFields::StiffnessVectorx >();
+    arrayView1d< real32 > const stiffnessVectory = nodeManager.getField< matricialFields::StiffnessVectory >();
+    arrayView1d< real32 > const stiffnessVectorz = nodeManager.getField< matricialFields::StiffnessVectorz >();
 
 
-    arrayView1d< real32 > const ux_nm1 = nodeManager.getField< wavesolverfields::Displacementx_nm1 >();
-    arrayView1d< real32 > const uy_nm1 = nodeManager.getField< wavesolverfields::Displacementy_nm1 >();
-    arrayView1d< real32 > const uz_nm1 = nodeManager.getField< wavesolverfields::Displacementz_nm1 >();
-    arrayView1d< real32 > const ux_n = nodeManager.getField< wavesolverfields::Displacementx_n >();
-    arrayView1d< real32 > const uy_n = nodeManager.getField< wavesolverfields::Displacementy_n >();
-    arrayView1d< real32 > const uz_n = nodeManager.getField< wavesolverfields::Displacementz_n >();
-    arrayView1d< real32 > const ux_np1 = nodeManager.getField< wavesolverfields::Displacementx_np1 >();
-    arrayView1d< real32 > const uy_np1 = nodeManager.getField< wavesolverfields::Displacementy_np1 >();
-    arrayView1d< real32 > const uz_np1 = nodeManager.getField< wavesolverfields::Displacementz_np1 >();
+    arrayView1d< real32 > const ux_nm1 = nodeManager.getField< elasticSecondOrderSemFields::Displacementx_nm1 >();
+    arrayView1d< real32 > const uy_nm1 = nodeManager.getField< elasticSecondOrderSemFields::Displacementy_nm1 >();
+    arrayView1d< real32 > const uz_nm1 = nodeManager.getField< elasticSecondOrderSemFields::Displacementz_nm1 >();
+    arrayView1d< real32 > const ux_n = nodeManager.getField< elasticSecondOrderSemFields::Displacementx_n >();
+    arrayView1d< real32 > const uy_n = nodeManager.getField< elasticSecondOrderSemFields::Displacementy_n >();
+    arrayView1d< real32 > const uz_n = nodeManager.getField< elasticSecondOrderSemFields::Displacementz_n >();
+    arrayView1d< real32 > const ux_np1 = nodeManager.getField< elasticSecondOrderSemFields::Displacementx_np1 >();
+    arrayView1d< real32 > const uy_np1 = nodeManager.getField< elasticSecondOrderSemFields::Displacementy_np1 >();
+    arrayView1d< real32 > const uz_np1 = nodeManager.getField< elasticSecondOrderSemFields::Displacementz_np1 >();
 
     /// get array of indicators: 1 if node on free surface; 0 otherwise
-    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< wavesolverfields::FreeSurfaceNodeIndicator >();
+    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< geophysicalFields::FreeSurfaceNodeIndicator >();
 
-    arrayView1d< real32 > const rhsx = nodeManager.getField< wavesolverfields::ForcingRHSx >();
-    arrayView1d< real32 > const rhsy = nodeManager.getField< wavesolverfields::ForcingRHSy >();
-    arrayView1d< real32 > const rhsz = nodeManager.getField< wavesolverfields::ForcingRHSz >();
+    arrayView1d< real32 > const rhsx = nodeManager.getField< elasticSecondOrderSemFields::ForcingRHSx >();
+    arrayView1d< real32 > const rhsy = nodeManager.getField< elasticSecondOrderSemFields::ForcingRHSy >();
+    arrayView1d< real32 > const rhsz = nodeManager.getField< elasticSecondOrderSemFields::ForcingRHSz >();
 
     auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dt );
 
@@ -668,7 +668,7 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
     /// synchronize pressure fields
     FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addFields( FieldLocation::Node, { wavesolverfields::Displacementx_np1::key(), wavesolverfields::Displacementy_np1::key(), wavesolverfields::Displacementz_np1::key() } );
+    fieldsToBeSync.addFields( FieldLocation::Node, { elasticSecondOrderSemFields::Displacementx_np1::key(), elasticSecondOrderSemFields::Displacementy_np1::key(), elasticSecondOrderSemFields::Displacementz_np1::key() } );
 
     CommunicationTools & syncFields = CommunicationTools::getInstance();
     syncFields.synchronizeFields( fieldsToBeSync,
@@ -728,12 +728,12 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
                                                                 arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
-    arrayView1d< real32 const > const ux_n = nodeManager.getField< wavesolverfields::Displacementx_n >();
-    arrayView1d< real32 const > const ux_np1 = nodeManager.getField< wavesolverfields::Displacementx_np1 >();
-    arrayView1d< real32 const > const uy_n = nodeManager.getField< wavesolverfields::Displacementy_n >();
-    arrayView1d< real32 const > const uy_np1 = nodeManager.getField< wavesolverfields::Displacementy_np1 >();
-    arrayView1d< real32 const > const uz_n = nodeManager.getField< wavesolverfields::Displacementz_n >();
-    arrayView1d< real32 const > const uz_np1 = nodeManager.getField< wavesolverfields::Displacementz_np1 >();
+    arrayView1d< real32 const > const ux_n = nodeManager.getField< elasticSecondOrderSemFields::Displacementx_n >();
+    arrayView1d< real32 const > const ux_np1 = nodeManager.getField< elasticSecondOrderSemFields::Displacementx_np1 >();
+    arrayView1d< real32 const > const uy_n = nodeManager.getField< elasticSecondOrderSemFields::Displacementy_n >();
+    arrayView1d< real32 const > const uy_np1 = nodeManager.getField< elasticSecondOrderSemFields::Displacementy_np1 >();
+    arrayView1d< real32 const > const uz_n = nodeManager.getField< elasticSecondOrderSemFields::Displacementz_n >();
+    arrayView1d< real32 const > const uz_np1 = nodeManager.getField< elasticSecondOrderSemFields::Displacementz_np1 >();
     arrayView2d< real32 > const uXReceivers   = m_displacementXNp1AtReceivers.toView();
     arrayView2d< real32 > const uYReceivers   = m_displacementYNp1AtReceivers.toView();
     arrayView2d< real32 > const uZReceivers   = m_displacementZNp1AtReceivers.toView();

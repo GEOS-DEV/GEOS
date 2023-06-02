@@ -72,13 +72,6 @@ public:
   /**@}*/
 
   /**
-   * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
-   * @param cycleNumber the cycle number/step number of evaluation of the source
-   * @param rhs the right hand side vector to be computed
-   */
-  virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs );
-
-  /**
    * TODO: move implementation into WaveSolverUtils
    * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
    * @param time_n the time corresponding to the field values pressure_n
