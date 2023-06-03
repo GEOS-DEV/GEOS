@@ -1,0 +1,133 @@
+@startuml
+<style>
+classDiagram {
+  class {
+      ' attributes and methods
+      FontColor blue
+      ' class name
+      header {
+        FontSize 20
+        FontStyle bold
+      }
+  }
+}
+</style>
+
+set separator ::
+
+
+Class Body {
+Represents physical body
+}
+
+
+abstract class Mesh::MeshBase {
+Contains objects that represent a geometric description of the **Body** or portion of the **Body**
+There can be multiple **Mesh** to describe a **Body** or portions of the **Body**
++referencePosition()
++Mappings()
+}
+
+
+abstract Class Discretization::DiscretizationBase<MESHTYPE> {
+Contains data/methods to describe the discretization of a **Mesh**.
+--
+MESHTYPE * m_mesh;
+}
+
+Class Discretization::DiscretizationFEM {
+There is one instantiation for every FEM h/p refinement of the **Mesh**
+--
+}
+
+
+class Discretization::DiscretizationStencil {
+    -localIndex m_numGraphNodes
+    -localIndex m_numGraphEdges
+
+    ...manage/allocate data on GraphNodes and GraphEdges
+}
+
+class Discretization::DiscretizationParticle {
+}
+
+class Discretization::DiscretizationFunctions {
+
+static transferOperator( to, from, fieldPath )
+}
+
+class Mesh::VertexManager {
+    +edgeList()
+    +faceList()
+    +elementList()
+    +elementSubRegionList()
+    +elementRegionList()
+}
+
+class Mesh::EdgeManager {
+    +nodeList()
+    +faceList()
+}
+
+class Mesh::FaceManager {
+    +nodeList()
+    +edgeList()
+    +elementList()
+    +elementSubRegionList()
+    +elementRegionList()
+}
+
+class Discretization::ElementManager {
+    +forElementRegion(f)
+    +forElementSubRegion(f)
+}
+
+class Discretization::ConstitutiveBase {
+    - int m_numQuadraturePoints
+    - Array2d scalarState (numElems, m_numQuadraturePoints) 
+    - Array3d vectorState (numElems, m_numQuadraturePoints, numComponents) 
+}
+
+
+Body "1" *-- "1..*" Mesh::MeshBase
+
+Mesh::MeshBase <|-- Mesh::MeshUnstructured
+Mesh::MeshBase <|-- Mesh::MeshIJK
+Mesh::MeshIJK <|-- Mesh::MeshTransformedIJK
+
+Mesh::MeshUnstructured "1" *-- "1..1" Mesh::VertexManager
+Mesh::MeshUnstructured "1" *-- "1..1" Mesh::EdgeManager
+Mesh::MeshUnstructured "1" *-- "1..1" Mesh::FaceManager
+Mesh::MeshUnstructured "1" *-- "1..1" Mesh::CellManager
+
+Mesh::MeshBase "1" o-- "1..*" Discretization::DiscretizationBase 
+
+Discretization::DiscretizationBase <|-- Discretization::DiscretizationFEM
+Discretization::DiscretizationBase <|-- Discretization::DiscretizationParticle
+Discretization::DiscretizationBase <|-- Discretization::DiscretizationStencil
+
+
+Discretization::DiscretizationFEM "1" *-- "1" Discretization::NodeFieldManager
+Discretization::DiscretizationFEM "1" *-- "1" Discretization::EdgeFieldManager
+Discretization::DiscretizationFEM "1" *-- "1" Discretization::FaceFieldManager
+Discretization::DiscretizationFEM "1" *-- "1" Discretization::ElementManager
+
+
+Discretization::ElementManager "1" *-- "0..n" Discretization::ElementRegionBase
+
+Discretization::ElementRegionBase <|-- Discretization::WellElementRegion
+Discretization::ElementRegionBase <|-- Discretization::FaceElementRegion
+Discretization::ElementRegionBase <|-- Discretization::CellElementRegion
+
+Discretization::ElementRegionBase "1" *-- "1..n" Discretization::ElementSubElementRegionBase
+
+
+Discretization::ElementSubElementRegionBase <|-- Discretization::WellElementSubRegion
+Discretization::ElementSubElementRegionBase <|-- Discretization::FaceElementSubRegion
+Discretization::ElementSubElementRegionBase <|-- Discretization::CellElementSubRegion
+
+
+Discretization::ElementSubElementRegionBase "1" *-- "1..n" Discretization::ConstitutiveBase
+
+
+@enduml
