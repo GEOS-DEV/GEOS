@@ -158,7 +158,7 @@ if( ENABLE_VTK )
     set_source_files_properties( generators/VTKMeshGeneratorTools.cpp PROPERTIES LANGUAGE CXX )
 endif()
 
-if( ENABLE_TESTS )
+if( GEOS_ENABLE_TESTS )
     add_subdirectory( unitTests )
 endif( )
 
