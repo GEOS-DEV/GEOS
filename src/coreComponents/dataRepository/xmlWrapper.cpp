@@ -35,7 +35,7 @@ void stringToInputVariable( Tensor< T, SIZE > & target, string const & inputValu
   std::istringstream ss( inputValue );
   auto const errorMsg = [&]( auto const & msg )
   {
-    return GEOS_FMT( "{} for Tensor<{}> at position {} in input: {}", msg, SIZE, ss.tellg(), inputValue );
+    return GEOS_FMT( "{} for Tensor<{}> at position {} in input: {}", msg, SIZE, static_cast< int >( ss.tellg() ), inputValue );
   };
 
   // Read the head
