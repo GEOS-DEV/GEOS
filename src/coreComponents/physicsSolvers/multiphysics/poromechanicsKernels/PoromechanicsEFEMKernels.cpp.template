@@ -1,6 +1,5 @@
 
-#include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanics_impl.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp"
 #include "policies.hpp"
 
 
@@ -16,10 +15,9 @@ namespace geos
 {
 using namespace constitutive;
 using namespace finiteElement;
-namespace poromechanicsKernels
+namespace poromechanicsEFEMKernels
 {
-  INSTANTIATION( SinglePhasePoromechanics )
-  INSTANTIATION( MultiphasePoromechanics )  
+  INSTANTIATION( SinglePhasePoromechanicsEFEM )
 }
 }
 
