@@ -56,7 +56,7 @@ class Discretization::DiscretizationFunctions {
 static transferOperator( to, from, fieldPath )
 }
 
-class Mesh::VertexManager {
+class Mesh::VertexManagerBase {
     +edgeList()
     +faceList()
     +elementList()
@@ -64,12 +64,12 @@ class Mesh::VertexManager {
     +elementRegionList()
 }
 
-class Mesh::EdgeManager {
+class Mesh::EdgeManagerBase {
     +nodeList()
     +faceList()
 }
 
-class Mesh::FaceManager {
+class Mesh::FaceManagerBase {
     +nodeList()
     +edgeList()
     +elementList()
@@ -91,14 +91,18 @@ class Discretization::ConstitutiveBase {
 
 Body "1" *-- "1..*" Mesh::MeshBase
 
-Mesh::MeshBase <|-- Mesh::MeshUnstructured
 Mesh::MeshBase <|-- Mesh::MeshIJK
 Mesh::MeshIJK <|-- Mesh::MeshTransformedIJK
+Mesh::MeshBase <|-- Mesh::MeshUnstructured
 
-Mesh::MeshUnstructured "1" *-- "1..1" Mesh::VertexManager
-Mesh::MeshUnstructured "1" *-- "1..1" Mesh::EdgeManager
-Mesh::MeshUnstructured "1" *-- "1..1" Mesh::FaceManager
-Mesh::MeshUnstructured "1" *-- "1..1" Mesh::CellManager
+Mesh::MeshBase "1" *-- "1..1" Mesh::VertexManagerBase
+Mesh::MeshBase "1" *-- "1..1" Mesh::EdgeManagerBase
+Mesh::MeshBase "1" *-- "1..1" Mesh::FaceManagerBase
+Mesh::MeshBase "1" *-- "1..1" Mesh::CellManager
+
+Mesh::CellManager "1" *-- "1..*" Mesh::CellRegion
+Mesh::CellRegion "1" *-- "1..*" Mesh::CellSubRegion
+
 
 Mesh::MeshBase "1" o-- "1..*" Discretization::DiscretizationBase 
 
@@ -115,19 +119,23 @@ Discretization::DiscretizationFEM "1" *-- "1" Discretization::ElementManager
 
 Discretization::ElementManager "1" *-- "0..n" Discretization::ElementRegionBase
 
+/'
 Discretization::ElementRegionBase <|-- Discretization::WellElementRegion
 Discretization::ElementRegionBase <|-- Discretization::FaceElementRegion
 Discretization::ElementRegionBase <|-- Discretization::CellElementRegion
+'/
+Discretization::ElementRegionBase "1" *-- "1..n" Discretization::ElementSubRegionBase
 
-Discretization::ElementRegionBase "1" *-- "1..n" Discretization::ElementSubElementRegionBase
-
-
+/'
 Discretization::ElementSubElementRegionBase <|-- Discretization::WellElementSubRegion
 Discretization::ElementSubElementRegionBase <|-- Discretization::FaceElementSubRegion
 Discretization::ElementSubElementRegionBase <|-- Discretization::CellElementSubRegion
+'/
 
+Discretization::ElementSubRegionBase "1" *-- "1..n" Discretization::ConstitutiveBase
 
-Discretization::ElementSubElementRegionBase "1" *-- "1..n" Discretization::ConstitutiveBase
-
+Discretization::ElementManager -- Mesh::CellManager
+Discretization::ElementRegionBase -- Mesh::CellRegion
+Discretization::ElementSubRegionBase -- Mesh::CellSubRegion
 
 @enduml

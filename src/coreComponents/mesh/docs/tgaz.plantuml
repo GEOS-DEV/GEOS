@@ -1,0 +1,160 @@
+skinparam class {
+BorderColor<<Exists>> Blue
+}
+skinparam linetype polyline
+
+package Mappings {
+
+interface Nodes {
+    +{abstract}numNodes()
+    +{abstract}position(n): PhysicalPoint
+}
+
+class NodesIJK {
+    - hi: array1d<double>
+    - hj: array1d<double>
+    - hk: array1d<double>
+    - origin: PhysicalPoint
+    + h(i, j, k): double[3]
+    + h(n): double[3]
+    + position(i, j, k): PhysicalPoint
+    + position(n): PhysicalPoint
+}
+
+class NodesArray2d {
+    - postitions: array2d<double>
+    + position(n): PhysicalPoint
+}
+
+}
+
+
+package CellBlockManager {
+
+package public {
+
+interface CellBlockManagerABC <<Exists>> {
+    +{abstract}getNodePositions(): Nodes
+}
+
+interface CellBlockABC <<Exists>> {
+    +{abstract}getElementToNodes(): array2d<localIndex>
+}
+
+
+CellBlockManagerABC ...* Nodes
+CellBlockManagerABC ...* CellBlockABC
+
+NodesArray2d --|> Nodes
+NodesIJK --|> Nodes
+
+}
+
+package private {
+
+class InternalMeshGenerator <<Exists>>
+class VTKMeshGenerator <<Exists>>
+class CellBlockManagerIJK
+class CellBlockManagerUnstructured <<Exists>>
+
+}
+
+note right of private
+Dummy hierarchy
+end note
+
+CellBlockManagerUnstructured --|> CellBlockManagerABC
+CellBlockManagerIJK --|> CellBlockManagerABC
+
+VTKMeshGenerator ...> CellBlockManagerUnstructured
+VTKMeshGenerator ...> CellBlockManagerIJK
+InternalMeshGenerator ...> CellBlockManagerUnstructured
+InternalMeshGenerator ...> CellBlockManagerIJK
+
+}
+
+package GEOS_data_model {
+
+class NodeManager <<Exists>> {
+    +getNodePositions(): Nodes
+}
+
+class CellElementSubRegion <<Exists>> {
+    +getElementToNodes(): array2d<localIndex>
+}
+
+}
+
+NodeManager ...* Nodes
+NodeManager ...* CellBlockABC
+
+package Geometry {
+
+package nested_impl {
+
+class MappingIJK {
+    - i, j, k: localIndex[3]
+    - nodes: *NodesIJK 
+    + mapping(pt: ReferencePoint): PhysicalPoint
+    + jacobian(pt: PhysicalPoint): double[3][3]
+    + detJacobian(pt: PhysicalPoint): double
+    + diffBasisFunctions(pt: PhysicalPoint): Any
+}
+
+class MappingIso {
+    - n: localIndex
+    - elementToNodes: *array2d<localIndex>
+    - nodes: *NodesArray2d
+    + mapping(pt: ReferencePoint): PhysicalPoint
+    + jacobian(pt: PhysicalPoint): double[3][3]
+    + detJacobian(pt: PhysicalPoint): double
+    + diffBasisFunctions(pt: PhysicalPoint): Any
+}
+
+class Geometry<MAPPING> {
+    - mappings: array1d<MAPPING>
+    +getMapping(i: localIndex): MAPPING
+}
+
+Geometry ...* MappingIJK
+Geometry ...* MappingIso
+Geometry ...> NodeManager
+
+}
+
+package flat_impl {
+
+class GeometryIJK {
+    - nodes: *NodesIJK 
+    + mapping(i: localIndex, pt: ReferencePoint): PhysicalPoint
+    + jacobian(i: localIndex, pt: PhysicalPoint): double[3][3]
+    + detJacobian(i: localIndex, pt: PhysicalPoint): double
+    + diffBasisFunctions(i: localIndex, pt: PhysicalPoint): Any
+}
+
+class GeometryIso<CellType> {
+    - elementToNodes: *array2d<localIndex>
+    - nodes: *NodesArray2d
+    + mapping(i: localIndex, pt: ReferencePoint): PhysicalPoint
+    + jacobian(i: localIndex, pt: PhysicalPoint): double[3][3]
+    + detJacobian(i: localIndex, pt: PhysicalPoint): double
+    + diffBasisFunctions(i: localIndex, pt: PhysicalPoint): Any
+}
+
+}
+
+GeometryIso ...> NodeManager
+GeometryIso ...> CellElementSubRegion
+GeometryIJK ...> NodeManager
+
+}
+
+note bottom of Geometry
+in FEM kernels m_geometry replaces m_X
+
+for ci in cells:
+    for gp in gauss points of ci:
+        pt = m_geometry.mapping(ci, gp)
+        j = m_geometry.jacobian(ci, gp)
+        ...
+end note
