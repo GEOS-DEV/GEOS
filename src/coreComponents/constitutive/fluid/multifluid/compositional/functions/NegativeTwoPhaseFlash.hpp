@@ -98,4 +98,6 @@ private:
 
 } // namespace geos
 
+#include "NegativeTwoPhaseFlash_impl.hpp"
+
 #endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_NEGATIVETWOPHASEFLASH_HPP_

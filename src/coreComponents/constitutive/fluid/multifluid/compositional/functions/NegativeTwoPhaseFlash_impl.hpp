@@ -11,16 +11,44 @@
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
-
 /**
- * @file NegativeTwoPhaseFlash.cpp
+ * @file NegativeTwoPhaseFlash_impl.hpp
  */
 
-#include "NegativeTwoPhaseFlash.hpp"
+#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_NEGATIVETWOPHASEFLASH_IMPL_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_NEGATIVETWOPHASEFLASH_IMPL_HPP_
+
 #include "RachfordRice.hpp"
-#include "CubicEOSPhaseModel.hpp"
 //#include "KValueInitialization.hpp"
 
+namespace
+{
+  /**
+   * @brief Normalise a composition in place to ensure that the components add up to unity
+   * @param[in] numComps number of components
+   * @param[in/out] composition composition to be normalized
+   * @return the sum of the given values
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static real64 normalizeComposition( integer const numComps,
+                                      arraySlice1d< real64 > const composition )
+  {
+    real64 totalMoles = 0.0;
+    for( integer ic=0; ic< numComps; ic++ )
+    {
+      totalMoles += composition[ic];
+    }
+    real64 const oneOverTotalMoles = 1.0 / (totalMoles + epsilon);
+    for( integer ic=0; ic< numComps; ic++ )
+    {
+      composition[ic] *= oneOverTotalMoles;
+    }
+    return totalMoles;
+  }
+};
+
+}
 namespace geos
 {
 
@@ -46,7 +74,7 @@ struct KValueInitialization
 };
 
 template< typename EOS_TYPE >
-bool NegativeTwoPhaseFlash< EOS_TYPE >::compute(
+bool NegativeTwoPhaseFlash::compute< EOS_TYPE >(
   integer const numComps,
   real64 const pressure,
   real64 const temperature,
@@ -172,9 +200,8 @@ bool NegativeTwoPhaseFlash< EOS_TYPE >::compute(
   return converged;
 }
 
-template struct NegativeTwoPhaseFlash< PengRobinsonEOS >;
-template struct NegativeTwoPhaseFlash< SoaveRedlichKwongEOS >;
-
 } // namespace constitutive
 
 } // namespace geos
+
+#endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_NEGATIVETWOPHASEFLASH_IMPL_HPP_
