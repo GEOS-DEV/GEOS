@@ -35,22 +35,14 @@ set( common_sources
      initializeEnvironment.cpp
    )
 
-set( dependencyList lvarray pugixml RAJA chai conduit::conduit fmt::fmt )
+set( dependencyList ${parallelDeps} lvarray pugixml RAJA chai conduit::conduit fmt::fmt )
 
 if ( ENABLE_MKL )
   set( dependencyList ${dependencyList} mkl )
 endif()
 
-if( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
-endif( )
-
-if( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif( )
-
-if( ENABLE_MPI )
-  set( dependencyList ${dependencyList} mpi )
+if( ENABLE_CALIPER )
+  set( dependencyList ${dependencyList} caliper )
 endif()
 
 if( ENABLE_CALIPER )
@@ -77,4 +69,6 @@ target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 geosx_add_code_checks(PREFIX common )
 
-add_subdirectory( unitTests )
+if( GEOS_ENABLE_TESTS )
+  add_subdirectory( unitTests )
+endif()

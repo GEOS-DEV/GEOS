@@ -28,14 +28,14 @@
 namespace geos
 {
 
-// Note that in the current implementation, the order of the templates in CoupledSolver< ... > matters
-// We put CompositionalMultiphaseBase first to start with a flow solve in the sequential option
-class MultiphasePoromechanics : public CoupledSolver< CompositionalMultiphaseBase,
-                                                      SolidMechanicsLagrangianFEM >
+// Note that in the current implementation, the order of the templates in CoupledSolver< ... > matters a lot
+// Changing the order of these templates can break a lot of things (labels in MGR for instance) and must be done carefully
+class MultiphasePoromechanics : public CoupledSolver< SolidMechanicsLagrangianFEM,
+                                                      CompositionalMultiphaseBase >
 {
 public:
 
-  using Base = CoupledSolver< CompositionalMultiphaseBase, SolidMechanicsLagrangianFEM >;
+  using Base = CoupledSolver< SolidMechanicsLagrangianFEM, CompositionalMultiphaseBase >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -44,8 +44,8 @@ public:
 
   enum class SolverType : integer
   {
-    Flow = 0,
-    SolidMechanics = 1
+    SolidMechanics = 0,
+    Flow = 1
   };
 
   /// String used to form the solverName used to register solvers in CoupledSolver
@@ -228,7 +228,7 @@ real64 MultiphasePoromechanics::assemblyLaunch( MeshLevel & mesh,
                                 std::forward< PARAMS >( params )... );
 
   return finiteElement::
-           regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+           regionBasedKernelApplication< parallelDevicePolicy< >,
                                          CONSTITUTIVE_BASE,
                                          CellElementSubRegion >( mesh,
                                                                  regionNames,

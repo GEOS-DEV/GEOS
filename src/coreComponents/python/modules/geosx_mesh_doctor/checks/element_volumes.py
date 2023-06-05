@@ -1,12 +1,19 @@
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
 from typing import List, Tuple
 import uuid
 
-from vtkmodules.vtkFiltersVerdict import (
-    vtkCellSizeFilter
+from vtkmodules.vtkCommonDataModel import (
+    VTK_HEXAHEDRON,
+    VTK_PYRAMID,
+    VTK_TETRA,
+    VTK_WEDGE,
 )
-from vtk.util.numpy_support import (
+from vtkmodules.vtkFiltersVerdict import (
+    vtkCellSizeFilter,
+    vtkMeshQuality,
+)
+from vtkmodules.util.numpy_support import (
     vtk_to_numpy,
 )
 
@@ -25,28 +32,48 @@ class Result:
 
 
 def __check(mesh, options: Options) -> Result:
-    f = vtkCellSizeFilter()
+    cs = vtkCellSizeFilter()
 
-    f.ComputeAreaOff()
-    f.ComputeLengthOff()
-    f.ComputeSumOff()
-    f.ComputeVertexCountOff()
-    f.ComputeVolumeOn()
+    cs.ComputeAreaOff()
+    cs.ComputeLengthOff()
+    cs.ComputeSumOff()
+    cs.ComputeVertexCountOff()
+    cs.ComputeVolumeOn()
     volume_array_name = "__MESH_DOCTOR_VOLUME-" + str(uuid.uuid4())  # Making the name unique
-    f.SetVolumeArrayName(volume_array_name)
+    cs.SetVolumeArrayName(volume_array_name)
 
-    f.SetInputData(mesh)
-    f.Update()
-    output = f.GetOutput()
-    cd = output.GetCellData()
-    for i in range(cd.GetNumberOfArrays()):
-        if cd.GetArrayName(i) == volume_array_name:
-            volume = vtk_to_numpy(cd.GetArray(i))
+    cs.SetInputData(mesh)
+    cs.Update()
+
+    mq = vtkMeshQuality()
+    SUPPORTED_TYPES = [VTK_HEXAHEDRON, VTK_TETRA]
+
+    mq.SetTetQualityMeasureToVolume()
+    mq.SetHexQualityMeasureToVolume()
+    if hasattr(mq, "SetPyramidQualityMeasureToVolume"):  # This feature is quite recent
+        mq.SetPyramidQualityMeasureToVolume()
+        SUPPORTED_TYPES.append(VTK_PYRAMID)
+        mq.SetWedgeQualityMeasureToVolume()
+        SUPPORTED_TYPES.append(VTK_WEDGE)
+    else:
+        logging.debug("Your \"pyvtk\" version does not bring pyramid not wedge support with vtkMeshQuality. Using the fallback solution.")
+
+    mq.SetInputData(mesh)
+    mq.Update()
+
+    volume = cs.GetOutput().GetCellData().GetArray(volume_array_name)
+    quality = mq.GetOutput().GetCellData().GetArray("Quality")  # Name is imposed by vtk.
+
     assert volume is not None
+    assert quality is not None
+    volume = vtk_to_numpy(volume)
+    quality = vtk_to_numpy(quality)
     small_volumes: List[Tuple[int, float]] = []
-    for i, v in enumerate(volume):
-        if v < options.min_volume:
-            small_volumes.append((i, v))
+    for i, pack in enumerate(zip(volume, quality)):
+        v, q = pack
+        vol = q if mesh.GetCellType(i) in SUPPORTED_TYPES else v
+        if vol < options.min_volume:
+            small_volumes.append((i, vol))
     return Result(element_volumes=small_volumes)
 
 

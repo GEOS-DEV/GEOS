@@ -88,11 +88,8 @@ public:
     m_levelRestrictType[2]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[2] = MGRCoarseGridMethod::cprLikeBlockDiag;
 
-    // ILU smoothing for the system made of pressure and densities
-    m_levelSmoothType[1]  = 16;
-    m_levelSmoothIters[1] = 1;
-    // Block GS smoothing for the system made of pressure and densities (except the last one)
-    m_levelSmoothType[2]  = 1;
+    // ILU smoothing for the system made of pressure and densities (except the last one)
+    m_levelSmoothType[2]  = 16;
     m_levelSmoothIters[2] = 1;
   }
 
@@ -123,6 +120,9 @@ public:
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.coarseSolver.ptr ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 0 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 1 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( mgrData.coarseSolver.ptr, 1 ) );
+    //GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.coarseSolver.ptr, hypre::getAMGRelaxationType(
+    // LinearSolverParameters::AMG::SmootherType::chebyshev ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.coarseSolver.ptr, 0.0 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.coarseSolver.ptr, 1 ) );
 

@@ -135,7 +135,7 @@ public:
    *   point.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static void calcN( localIndex const q,
                      StackVariables const & stack,
                      real64 ( &N )[numNodes] );
@@ -162,7 +162,7 @@ public:
    */
   template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, bool UPPER >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static void addGradGradStabilization( StackVariables const & stack,
                                         real64 ( &matrix )
                                         [maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT]
@@ -190,7 +190,7 @@ private:
    */
   template< typename T >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   constexpr static T linearMap( T const i, T const j )
   {
     return i + 2 * j;
@@ -203,7 +203,7 @@ private:
    * @return parent coordinate in the r direction.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   constexpr static real64 parentCoords0( localIndex const a )
   {
     return -1.0 + 2.0 * (a & 1);
@@ -216,7 +216,7 @@ private:
    * @return parent coordinate in the r direction.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   constexpr static real64 parentCoords1( localIndex const a )
   {
     return -1.0 + ( a & 2 );
@@ -228,7 +228,7 @@ private:
 
 template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, bool UPPER >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
   addGradGradStabilization( StackVariables const & stack,
                             real64 ( & matrix )
@@ -242,7 +242,7 @@ void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void
 H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
   calcN( real64 const (&coords)[2],
@@ -256,7 +256,7 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
   }
 }
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void
 H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
   calcN( localIndex const q,
@@ -271,7 +271,7 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
   calcN( localIndex const q,
          StackVariables const & GEOS_UNUSED_PARAM( stack ),
@@ -283,7 +283,7 @@ void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
 //*************************************************************************************************
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 real64
 H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
   transformedQuadratureWeight( localIndex const q,
