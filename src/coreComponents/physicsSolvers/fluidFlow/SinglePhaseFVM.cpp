@@ -418,12 +418,12 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
 
 template< typename BASE >
 void SinglePhaseFVM< BASE >::assembleEDFMFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),
-                                                           real64 const dt,
-                                                           DomainPartition const & domain,
-                                                           DofManager const & dofManager,
-                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                           arrayView1d< real64 > const & localRhs,
-                                                           string const & jumpDofKey )
+                                                    real64 const dt,
+                                                    DomainPartition const & domain,
+                                                    DofManager const & dofManager,
+                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                    arrayView1d< real64 > const & localRhs,
+                                                    string const & jumpDofKey )
 {
   GEOS_MARK_FUNCTION;
 

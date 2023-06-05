@@ -276,7 +276,6 @@ public:
           integer const localDofIndexTemp = localDofIndexPres + 1;
           stack.localFluxJacobian[k[0]*numEqn + numEqn - 1][localDofIndexTemp] =  m_dt * stack.dEnergyFlux_dT[ke];
           stack.localFluxJacobian[k[1]*numEqn + numEqn - 1][localDofIndexTemp] = -m_dt * stack.dEnergyFlux_dT[ke];
-
         }
 
         connectionIndex++;
