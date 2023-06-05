@@ -65,7 +65,7 @@ void SinglePhaseConstantThermalConductivity::update( arrayView2d< real64 const >
   }
   arrayView3d< real64 > const effectiveConductivity = m_effectiveConductivity;
 
-  forAll< parallelDevicePolicy<> >( initialPorosity.size( 0 ), [=] ( localIndex const ei )
+  forAll< parallelDevicePolicy<> >( initialPorosity.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
     // NOTE: enforcing 1 quadrature point
     for( localIndex q = 0; q < 1; ++q )
