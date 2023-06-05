@@ -116,7 +116,7 @@ public:
    * @brief Get the target's time step behavior.
    * @return The time stepping type
    */
-  TimesteppingBehavior getTimesteppingBehavior() { return m_timesteppingBehavior; }
+  TimesteppingBehavior getTimesteppingBehavior() const { return m_timesteppingBehavior; }
 
 private:
 

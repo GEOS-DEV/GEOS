@@ -237,7 +237,7 @@ void PeriodicEvent::cleanup( real64 const time_n,
 
 void PeriodicEvent::validate() const
 {
-  ExecutableGroup * target = getEventTarget();
+  ExecutableGroup const * target = getEventTarget();
   if( target == nullptr )
   {
     return;
