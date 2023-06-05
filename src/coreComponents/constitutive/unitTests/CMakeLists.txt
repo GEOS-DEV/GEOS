@@ -10,6 +10,8 @@ set( gtest_geosx_tests
      testModifiedCamClay.cpp
      testParticleFluidEnums.cpp
      testPropertyConversions.cpp
+     testCubicEOS.cpp
+     testRachfordRice.cpp
    )
 
 set( dependencyList gtest constitutive ${parallelDeps} )
