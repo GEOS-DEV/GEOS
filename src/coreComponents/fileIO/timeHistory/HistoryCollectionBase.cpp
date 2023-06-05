@@ -126,8 +126,6 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
                        std::domain_error );
       }
 
-
-
       string const meshBodyName = targetTokens[0];
       MeshBody const & meshBody = domain.getMeshBody( meshBodyName );
 
