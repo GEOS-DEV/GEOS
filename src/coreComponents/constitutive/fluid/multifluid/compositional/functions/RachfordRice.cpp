@@ -25,9 +25,9 @@ namespace constitutive
 {
 
 real64
-RachfordRice::solve( arrayView1d< real64 const > const kValues,
-                     arrayView1d< real64 const > const feed,
-                     arrayView1d< integer const > const presentComponentIds )
+RachfordRice::solve( arraySlice1d< real64 const > const kValues,
+                     arraySlice1d< real64 const > const feed,
+                     arraySlice1d< integer const > const presentComponentIds )
 {
   real64 gasPhaseMoleFraction = 0;
 
@@ -152,9 +152,9 @@ RachfordRice::solve( arrayView1d< real64 const > const kValues,
 }
 
 real64
-RachfordRice::evaluate( arrayView1d< real64 const > const kValues,
-                        arrayView1d< real64 const > const feed,
-                        arrayView1d< integer const > const presentComponentIds,
+RachfordRice::evaluate( arraySlice1d< real64 const > const kValues,
+                        arraySlice1d< real64 const > const feed,
+                        arraySlice1d< integer const > const presentComponentIds,
                         real64 const & x )
 {
   real64 value = 0.0;
@@ -167,9 +167,9 @@ RachfordRice::evaluate( arrayView1d< real64 const > const kValues,
 }
 
 real64
-RachfordRice::evaluateDerivative( arrayView1d< real64 const > const kValues,
-                                  arrayView1d< real64 const > const feed,
-                                  arrayView1d< integer const > const presentComponentIds,
+RachfordRice::evaluateDerivative( arraySlice1d< real64 const > const kValues,
+                                  arraySlice1d< real64 const > const feed,
+                                  arraySlice1d< integer const > const presentComponentIds,
                                   real64 const & x )
 {
   real64 value = 0.0;

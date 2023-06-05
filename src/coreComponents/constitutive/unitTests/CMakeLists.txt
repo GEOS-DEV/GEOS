@@ -7,6 +7,7 @@ set( gtest_geosx_tests
      testDruckerPrager.cpp
      testElasticIsotropic.cpp
      testModifiedCamClay.cpp
+     testNegativeTwoPhaseFlash.cpp
      testParticleFluidEnums.cpp
      testPropertyConversions.cpp
      testCubicEOS.cpp
