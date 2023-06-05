@@ -15,7 +15,7 @@
 // Source includes
 #include "common/DataTypes.hpp"
 #include "codingUtilities/UnitTestUtilities.hpp"
-#include "constitutive/fluid/multifluid/compositional/KValueInitialization.hpp"
+#include "constitutive/fluid/multifluid/compositional/functions/KValueInitialization.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
