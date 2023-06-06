@@ -54,6 +54,7 @@ public:
                        arrayView1d< real64 > const & thermalExpansionCoefficient,
                        arrayView2d< real64 > const & meanStressIncrement,
                        arrayView1d< real64 > const & bulkModulus,
+                       arrayView1d< real64 > const & pressure,
                        real64 const & grainBulkModulus ): PorosityBaseUpdates( newPorosity,
                                                                                porosity_n,
                                                                                dPorosity_dPressure,
@@ -64,7 +65,8 @@ public:
     m_thermalExpansionCoefficient( thermalExpansionCoefficient ),
     m_meanStressIncrement( meanStressIncrement ),
     m_bulkModulus( bulkModulus ),
-    m_grainBulkModulus( grainBulkModulus )
+    m_grainBulkModulus( grainBulkModulus ),
+    m_pressure(pressure)
   {}
 
   GEOS_HOST_DEVICE
@@ -109,19 +111,32 @@ public:
                         real64 & porosity,
                         real64 & dPorosity_dPressure,
                         real64 & dPorosity_dTemperature,
-                        real64 const & biotCoefficient,
+                        real64 & biotCoefficient,
                         real64 const & thermalExpansionCoefficient,
                         real64 const & meanStressIncrement,
                         real64 const & bulkModulus ) const
   {
+
+    biotCoefficient= 1.0;
+
     real64 const biotSkeletonModulusInverse = (biotCoefficient - referencePorosity) / m_grainBulkModulus;
     real64 const porosityThermalExpansion = 3 * thermalExpansionCoefficient * biotCoefficient;
 
-    porosity = porosity_n + biotSkeletonModulusInverse * pressure + biotCoefficient * biotCoefficient / bulkModulus * pressure
+    GEOS_UNUSED_VAR(biotSkeletonModulusInverse, porosityThermalExpansion, pressure, temperature, meanStressIncrement, bulkModulus, porosity_n);
+
+    porosity = porosity_n + biotSkeletonModulusInverse * pressure
                - porosityThermalExpansion * temperature
-               + biotCoefficient * meanStressIncrement / bulkModulus;
+               + biotCoefficient * (meanStressIncrement + biotCoefficient*pressure + 3*thermalExpansionCoefficient*bulkModulus*temperature) / bulkModulus;
+
+
+    //std::cout << porosity << "\t" << porosity_n << "\t" << pressure << "\t" << meanStressIncrement << std::endl;
+
+    //porosity = porosity_n + (biotCoefficient - porosity_n) * pressure / bulkModulus + 3.0 * thermalExpansionCoefficient * temperature + biotCoefficient * meanStressIncrement / bulkModulus;
 
     dPorosity_dPressure = biotSkeletonModulusInverse + biotCoefficient * biotCoefficient / bulkModulus;
+    //dPorosity_dPressure = (biotCoefficient - porosity_n) / bulkModulus;
+    
+    
     dPorosity_dTemperature = -porosityThermalExpansion;
   }
 
@@ -133,8 +148,12 @@ public:
                                                  real64 const & temperature,
                                                  real64 const & temperature_n ) const override final
   {
-    real64 const deltaPressure    = pressure - pressure_n;
+    real64 const deltaPressure    = pressure - m_pressure[k];
     real64 const deltaTemperature = temperature - temperature_n;
+
+    GEOS_UNUSED_VAR(pressure_n);
+
+    //std::cout << k << std::endl;
 
     computePorosity( deltaPressure,
                      deltaTemperature,
@@ -164,6 +183,18 @@ public:
                                        real64 const & totalMeanStressIncrement ) const
   {
     m_meanStressIncrement[k][q] = totalMeanStressIncrement;
+    //
+
+    //if (q == 0) {m_meanStressIncrement[k][0] = 0.0;}
+    //m_meanStressIncrement[k][0] += totalMeanStressIncrement / 8.0;
+    //GEOS_UNUSED_VAR(q);
+
+    //std::cout << "k = " << k << "\t q = " << q << "\t totalMeanStressIncrement = " << totalMeanStressIncrement << std::endl;
+  }
+
+  GEOS_HOST_DEVICE
+  void updateSequentialPressure(real64 const & pressure, localIndex const k) const {
+    m_pressure[k] = pressure;
   }
 
 protected:
@@ -176,6 +207,8 @@ protected:
   arrayView1d< real64 > m_bulkModulus;
 
   real64 m_grainBulkModulus;
+
+  arrayView1d <real64> m_pressure;
 };
 
 class BiotPorosity : public PorosityBase
@@ -198,10 +231,18 @@ public:
 
     static constexpr char const *solidBulkModulusString() { return "solidBulkModulus"; }
 
+    static constexpr char const *pressureString() { return "sequentialPressure"; }
+
     static constexpr char const *defaultThermalExpansionCoefficientString() { return "defaultThermalExpansionCoefficient"; }
   } viewKeys;
 
   virtual void initializeState() const override final;
+
+  virtual void saveConvergedState() const override final                                                                                                                                 
+  {                                                                                                                                                                                      
+       PorosityBase::saveConvergedState();                                                                                                                                                  
+          m_meanStressIncrement.zero();                                                                                                                                                        
+  }  
 
   virtual arrayView1d< real64 const > const getBiotCoefficient() const override final
   {
@@ -226,6 +267,7 @@ public:
                           m_thermalExpansionCoefficient,
                           m_meanStressIncrement,
                           m_bulkModulus,
+                          m_pressure,
                           m_grainBulkModulus );
   }
 
@@ -243,6 +285,8 @@ protected:
   real64 m_grainBulkModulus;
 
   real64 m_defaultThermalExpansionCoefficient;
+
+  array1d< real64 > m_pressure;   
 };
 
 }   /* namespace constitutive */
