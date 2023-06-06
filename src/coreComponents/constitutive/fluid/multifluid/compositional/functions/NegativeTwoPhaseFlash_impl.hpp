@@ -46,6 +46,7 @@ struct KValueInitialization
   }
 };
 
+GEOS_HOST_DEVICE
 template< typename EOS_TYPE >
 bool NegativeTwoPhaseFlash< EOS_TYPE >::compute(
   integer const numComps,
