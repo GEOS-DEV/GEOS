@@ -158,8 +158,9 @@ RachfordRice::evaluate( arraySlice1d< real64 const > const kValues,
                         real64 const & x )
 {
   real64 value = 0.0;
-  for( integer ic = 0; ic < presentComponentIds.size(); ++ic )
+  for( integer i = 0; i < presentComponentIds.size(); ++i )
   {
+    integer const ic = presentComponentIds[i];
     real64 const k = ( kValues[ic] - 1.0 );
     value += feed[ic] * k / ( 1.0 + x * k );
   }
@@ -182,7 +183,6 @@ RachfordRice::evaluateDerivative( arraySlice1d< real64 const > const kValues,
   }
   return value;
 }
-
 
 } // namespace constitutive
 

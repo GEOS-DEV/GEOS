@@ -37,7 +37,7 @@ public:
   static constexpr integer maxIterations = 200;
   /// Epsilon used in the calculations
   static constexpr real64 epsilon = LvArray::NumericLimits< real64 >::epsilon;
-  // Tolerance for checking fugacity ratio convergence
+  /// Tolerance for checking fugacity ratio convergence
   static constexpr real64 fugacityTolerance = 1.0e-8;
 
   /**
