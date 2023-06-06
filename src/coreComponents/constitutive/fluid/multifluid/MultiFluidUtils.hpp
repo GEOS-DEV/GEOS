@@ -75,7 +75,8 @@ template< typename T, int NDIM, int USD, int USD_DC >
 struct MultiFluidVarView
 {
   GEOS_HOST_DEVICE
-  MultiFluidVarView()
+  //template < typename value_view, typename derivs_view >
+  MultiFluidVarView( ArrayView< T, NDIM, USD > _value, ArrayView< T, NDIM + 1, USD_DC > _derivs ): value( _value ), derivs( _derivs )
   {}
 
   ArrayView< T, NDIM, USD > value;        ///< View into property values
