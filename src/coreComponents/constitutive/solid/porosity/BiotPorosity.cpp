@@ -51,6 +51,11 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::solidBulkModulusString(), &m_bulkModulus ).
     setApplyDefaultValue( 1e-6 ).
     setDescription( "Solid bulk modulus" );
+
+
+  registerWrapper( viewKeyStruct::pressureString(), &m_pressure ).
+    setApplyDefaultValue( 4934.86 ).
+    setDescription( "Sequential Pressure" );
 }
 
 void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,

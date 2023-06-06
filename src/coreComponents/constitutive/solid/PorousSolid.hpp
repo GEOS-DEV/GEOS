@@ -143,16 +143,20 @@ public:
     real64 const deltaPressure    = pressure - pressure_n;
     real64 const deltaTemperature = temperature - temperature_n;
 
+    //std::cout << "deltaPressure " << deltaPressure;
 
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
     real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
 
     real64 const effectiveMeanStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
+    //std::cout << "effectiveMeanStressIncrement " << effectiveMeanStressIncrement << std::endl;
 
-    real64 const totalMeanStressIncrement = effectiveMeanStressIncrement - biotCoefficient * deltaPressure - 3 * thermalExpansionCoefficient * bulkModulus * deltaTemperature;
+    real64 const totalMeanStressIncrement = effectiveMeanStressIncrement; // - biotCoefficient * deltaPressure - 3 * thermalExpansionCoefficient * bulkModulus * deltaTemperature;
+    GEOS_UNUSED_VAR(biotCoefficient, deltaPressure, thermalExpansionCoefficient, deltaTemperature);
 
     m_porosityUpdate.updateTotalMeanStressIncrement( k, q, totalMeanStressIncrement );
+    m_porosityUpdate.updateSequentialPressure(pressure, k);
 
     // The body force is calculated in the SolidMechanics kernel and the fluid contribution is neglected here
   }

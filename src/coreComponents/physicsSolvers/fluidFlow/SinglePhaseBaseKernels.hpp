@@ -216,9 +216,13 @@ public:
               StackVariables & stack ) const
   {
     // initialize the pore volume
-    stack.poreVolume = ( m_volume[ei] + m_deltaVolume[ei] ) * m_porosityNew[ei][0];
-    stack.poreVolume_n = m_volume[ei] * m_porosity_n[ei][0];
-    stack.dPoreVolume_dPres = ( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dPres[ei][0];
+    //stack.poreVolume = ( m_volume[ei] + m_deltaVolume[ei] ) * m_porosityNew[ei][0]; // Average here
+    //stack.poreVolume_n = m_volume[ei] * m_porosity_n[ei][0];
+    //stack.dPoreVolume_dPres = ( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dPres[ei][0];
+
+    stack.poreVolume = ( m_volume[ei] + m_deltaVolume[ei] ) * (m_porosityNew[ei][0] + m_porosityNew[ei][1] + m_porosityNew[ei][2] +m_porosityNew[ei][3] +m_porosityNew[ei][4] +m_porosityNew[ei][5] +m_porosityNew[ei][6] +m_porosityNew[ei][7]) / 8.0; // Average here
+    stack.poreVolume_n = m_volume[ei] * (m_porosity_n[ei][0] + m_porosity_n[ei][1] + m_porosity_n[ei][2] +m_porosity_n[ei][3] +m_porosity_n[ei][4] +m_porosity_n[ei][5] +m_porosity_n[ei][6] +m_porosity_n[ei][7]) / 8.0;
+    stack.dPoreVolume_dPres = ( m_volume[ei] + m_deltaVolume[ei] ) * (m_dPoro_dPres[ei][0] + m_dPoro_dPres[ei][1] + m_dPoro_dPres[ei][2] + m_dPoro_dPres[ei][3] + m_dPoro_dPres[ei][4] + m_dPoro_dPres[ei][5] + m_dPoro_dPres[ei][6] + m_dPoro_dPres[ei][7] )  / 8.0;
 
     // set row index and degrees of freedom indices for this element
     stack.localRow = m_dofNumber[ei] - m_rankOffset;
