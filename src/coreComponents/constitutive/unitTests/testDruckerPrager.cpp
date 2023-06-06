@@ -112,7 +112,7 @@ void testDruckerPragerDriver()
 
   for( localIndex loadstep=0; loadstep < 50; ++loadstep )
   {
-    forAll< parallelDevicePolicy<> >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    forAll< POLICY >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       real64 stress[6] = {0};
       real64 stiffness[6][6] = {{0}};
@@ -147,8 +147,8 @@ void testDruckerPragerDriver()
 }
 
 
-#ifdef USE_CUDA
-TEST( DruckerPragerTests, testDruckerPragerHost )
+#ifdef GEOS_USE_DEVICE
+TEST( DruckerPragerTests, testDruckerPragerDevice )
 {
   testDruckerPragerDriver< geos::parallelDevicePolicy< > >();
 }
@@ -232,7 +232,7 @@ void testDruckerPragerExtendedDriver()
   //FILE* fp = fopen("pq.txt","w");
   for( localIndex loadstep=0; loadstep < 300; ++loadstep )
   {
-    forAll< parallelDevicePolicy<> >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    forAll< POLICY >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       real64 stress[6] = {0};
       real64 stiffness[6][6] = {{0}};
@@ -269,7 +269,7 @@ void testDruckerPragerExtendedDriver()
   EXPECT_TRUE( SolidUtilities::checkSmallStrainStiffness( cmw, 0, 0, timeIncrement, data.strainIncrement ) );
 }
 
-#ifdef USE_CUDA
+#ifdef GEOS_USE_DEVICE
 TEST( DruckerPragerTests, testDruckerPragerExtendedDevice )
 {
   testDruckerPragerExtendedDriver< geos::parallelDevicePolicy< > >();

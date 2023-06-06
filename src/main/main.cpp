@@ -76,4 +76,5 @@ int main( int argc, char *argv[] )
     LvArray::system::callErrorHandler();
     std::abort();
   }
+  return 0;
 }

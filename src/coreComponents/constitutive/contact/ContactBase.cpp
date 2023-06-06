@@ -100,11 +100,21 @@ void ContactBase::allocateConstitutiveData( Group & parent,
   real64 const slope = ( hydraulicApertureValues[n] - hydraulicApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
   real64 const apertureTransition = ( hydraulicApertureValues[n] - slope * apertureValues[n] ) / ( 1.0 - slope );
 
-  coords.emplaceBack( 0, apertureTransition );
-  hydraulicApertureValues.emplace_back( apertureTransition );
-  coords.emplaceBack( 0, apertureTransition*10e9 );
-  hydraulicApertureValues.emplace_back( apertureTransition*10e9 );
-  apertureTable.reInitializeFunction();
+  // if the aperture transition is larger than the last coordinates, we enlarge the table
+  // this check is necessary to ensure that the coordinates are strictly increasing
+  if( apertureTransition > apertureValues[apertureValues.size()-1] )
+  {
+    coords.emplaceBack( 0, apertureTransition );
+    hydraulicApertureValues.emplace_back( apertureTransition );
+    // if the aperture transition is larger than 0, we keep enlarging the table
+    // this check is necessary to ensure that the coordinates are strictly increasing
+    if( apertureTransition > 0 )
+    {
+      coords.emplaceBack( 0, apertureTransition*10e9 );
+      hydraulicApertureValues.emplace_back( apertureTransition*10e9 );
+      apertureTable.reInitializeFunction();
+    }
+  }
 
   m_apertureTable = &apertureTable;
 }

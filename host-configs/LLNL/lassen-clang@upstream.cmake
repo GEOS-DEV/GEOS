@@ -13,5 +13,9 @@ set(MPI_Fortran_COMPILER /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-rel
 
 include(${CMAKE_CURRENT_LIST_DIR}/lassen-base.cmake)
 
+# HYPRE options
+set( ENABLE_HYPRE_DEVICE "CUDA" CACHE STRING "" )
+set( ENABLE_HYPRE_MIXINT TRUE CACHE STRING "" )
+
 # ATS
 set(ATS_ARGUMENTS "--ats jsrun_omp --ats jsrun_bind=packed"  CACHE PATH "")

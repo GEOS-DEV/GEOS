@@ -137,7 +137,7 @@ void testModifiedCamClayDriver()
 
   for( localIndex loadstep=0; loadstep < 500; ++loadstep )
   {
-    forAll< parallelDevicePolicy<> >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    forAll< POLICY >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       real64 stressLocal[6] = {0};
       real64 stiffnessLocal[6][6] = {{0}};
@@ -169,7 +169,7 @@ void testModifiedCamClayDriver()
 }
 
 
-#ifdef USE_CUDA
+#ifdef GEOS_USE_DEVICE
 TEST( ModifiedCamClayTests, testModifiedCamClayDevice )
 {
   testModifiedCamClayDriver< geos::parallelDevicePolicy< > >();

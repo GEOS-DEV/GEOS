@@ -19,7 +19,7 @@
 #include "SinglePhasePoromechanicsEmbeddedFractures.hpp"
 
 #include "constitutive/contact/ContactSelector.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMKernelsHelper.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
@@ -435,8 +435,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
 
     solidMechanicsSolver()->getMaxForce() =
       finiteElement::
-        regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                      constitutive::PorousSolidBase,
+        regionBasedKernelApplication< parallelDevicePolicy< >,
+                                      constitutive::PorousSolid< ElasticIsotropic >,
                                       CellElementSubRegion >( mesh,
                                                               regionNames,
                                                               solidMechanicsSolver()->getDiscretizationName(),
@@ -456,8 +456,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
 
     real64 maxTraction =
       finiteElement::
-        regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                      constitutive::PorousSolidBase,
+        regionBasedKernelApplication< parallelDevicePolicy< >,
+                                      constitutive::PorousSolid< ElasticIsotropic >,
                                       CellElementSubRegion >( mesh,
                                                               regionNames,
                                                               solidMechanicsSolver()->getDiscretizationName(),

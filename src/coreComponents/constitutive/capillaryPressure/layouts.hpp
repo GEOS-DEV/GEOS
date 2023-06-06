@@ -31,7 +31,7 @@ namespace constitutive
 namespace cappres
 {
 
-#if defined( GEOSX_USE_CUDA )
+#if defined( GEOS_USE_DEVICE )
 
 /// Constitutive model phase capillary pressure array layout
 using LAYOUT_CAPPRES = RAJA::PERM_JKI;
