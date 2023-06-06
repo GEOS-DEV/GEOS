@@ -1,0 +1,31 @@
+@startuml
+<style>
+classDiagram {
+  class {
+      ' attributes and methods
+      FontColor blue
+      ' class name
+      header {
+        FontSize 20
+        FontStyle bold
+      }
+  }
+}
+</style>
+
+set separator ::
+
+!include Mesh.plantuml
+
+!include Discretization.plantuml
+
+
+
+Discretization::DiscretizationBase -- Mesh::Mesh
+
+Discretization::MeshInterface::ElementManager -- Mesh::CellManager
+Discretization::MeshInterface::ElementRegionBase -- Mesh::CellRegion
+Discretization::MeshInterface::ElementSubRegionBase -- Mesh::CellSubRegion
+
+
+@enduml

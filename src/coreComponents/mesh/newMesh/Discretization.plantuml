@@ -1,0 +1,76 @@
+@startuml(id=Discretization)
+
+set separator ::
+
+namespace Discretization {
+
+abstract Class DiscretizationBase<MESHTYPE> {
+Contains data/methods to describe the discretization of a **Mesh**.
+--
+MESHTYPE * m_mesh;
+}
+
+Class DiscretizationFEM {
+There is one instantiation for every FEM h/p refinement of the **Mesh**
+--
+}
+
+class DiscretizationStencil {
+    -localIndex m_numGraphNodes
+    -localIndex m_numGraphEdges
+
+    ...manage/allocate data on GraphNodes and GraphEdges
+}
+
+class DiscretizationParticle {
+}
+
+class DiscretizationFunctions {
+
+static transferOperator( to, from, fieldPath )
+}
+
+namespace MeshInterface {
+class ElementManager {
+    +forElementRegion(f)
+    +forElementSubRegion(f)
+}
+
+class NodeFieldManager {}
+class EdgeFieldManager {}
+class FaceFieldManager {}
+class ElementManager {}
+
+
+
+class ConstitutiveBase {
+    - int m_numQuadraturePoints
+    - Array2d scalarState (numElems, m_numQuadraturePoints) 
+    - Array3d vectorState (numElems, m_numQuadraturePoints, numComponents) 
+}
+
+ElementManager "1" *-- "0..n" ElementRegionBase
+ElementRegionBase "1" *-- "1..n" ElementSubRegionBase
+ElementSubRegionBase "1" *-- "1..n" ConstitutiveBase
+
+} /' namespace MeshInterface '/
+ 
+
+DiscretizationBase <|-- DiscretizationFEM
+DiscretizationBase <|-- DiscretizationStencil
+
+DiscretizationFEM <|-- DiscretizationMPM
+DiscretizationParticle <|-- DiscretizationMPM
+
+DiscretizationBase "1" *-- "1" Discretization::MeshInterface::ElementManager
+DiscretizationBase "1" *-- "1" Discretization::MeshInterface::NodeFieldManager
+DiscretizationBase "1" *-- "1" Discretization::MeshInterface::EdgeFieldManager
+DiscretizationBase "1" *-- "1" Discretization::MeshInterface::FaceFieldManager
+
+
+} /' namespace Discretization '/
+
+
+
+
+@enduml
