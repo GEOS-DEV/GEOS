@@ -243,7 +243,7 @@ PyObject * getState( PyObject * self, PyObject * args ) noexcept
 {
   GEOS_UNUSED_VAR( self, args );
 
-  if(g_state == nullptr)
+  if( g_state == nullptr )
   {
     return PyLong_FromLong( 0 );
   }
