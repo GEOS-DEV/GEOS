@@ -126,8 +126,9 @@ void computeSinglePhaseFlux( localIndex const ( &seri )[2],
 
 }
 
-GEOS_HOST_DEVICE
+
 template< typename ENERGYFLUX_DERIVATIVE_TYPE >
+GEOS_HOST_DEVICE
 void computeEnthalpyFlux( localIndex const ( &seri )[2],
                           localIndex const ( &sesri )[2],
                           localIndex const ( &sei )[2],
@@ -258,8 +259,9 @@ void computeEnthalpyFlux( localIndex const ( &seri )[2],
   }
 }
 
-GEOS_HOST_DEVICE
+
 template< typename ENERGYFLUX_DERIVATIVE_TYPE >
+GEOS_HOST_DEVICE
 void computeConductiveFlux( localIndex const ( &seri )[2],
                             localIndex const ( &sesri )[2],
                             localIndex const ( &sei )[2],
