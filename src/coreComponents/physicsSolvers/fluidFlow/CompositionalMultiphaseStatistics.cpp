@@ -26,11 +26,12 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/fields/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
+#include "physicsSolvers/fluidFlow/fields/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositionalMultiphase/KernelUtilities.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositionalMultiphase/StatisticsKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositionalMultiphase/FVM/CFLKernels.hpp"
 
 
 namespace geos

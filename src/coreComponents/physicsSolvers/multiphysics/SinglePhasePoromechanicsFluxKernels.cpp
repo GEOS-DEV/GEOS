@@ -16,8 +16,8 @@
  * @file SinglePhasePoromechanicsFluxKernels.cpp
  */
 
-#include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
-#include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/FVM/FluxKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/FVM/FluxKernelsHelper.hpp"
 #include "SinglePhasePoromechanicsFluxKernels.hpp"
 
 namespace geos

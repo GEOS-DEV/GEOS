@@ -28,13 +28,18 @@
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/ObjectManagerBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/fields/CompositionalMultiphaseBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/fields/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositionalMultiphase/KernelUtilities.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositionalMultiphase/PropertyKernelBase.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositionalMultiphase/ScalingForSystemSolutionKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositionalMultiphase/SolutionCheckKernel.hpp"
+#include "physicsSolvers/SolverBaseKernels.hpp"
+
 
 namespace geos
 {

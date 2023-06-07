@@ -27,11 +27,18 @@
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
+#include "physicsSolvers/fluidFlow/fields/CompositionalMultiphaseBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositionalMultiphase/hybridFVM/KernelUtilities.hpp"
+#include "physicsSolvers/fluidFlow/fields/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositionalMultiphase/KernelUtilities.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/hybridFVM/KernelUtilities.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositionalMultiphase/ResidualNormKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositionalMultiphase/ScalingForSystemSolutionKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositionalMultiphase/SolutionCheckKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositionalMultiphase/hybridFVM/FluxKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositionalMultiphase/hybridFVM/PrecomputeKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositionalMultiphase/hybridFVM/PhaseMobilityKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositionalMultiphase/hybridFVM/ResidualNormKernel.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code

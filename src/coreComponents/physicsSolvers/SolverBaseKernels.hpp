@@ -22,6 +22,7 @@
 #include "codingUtilities/EnumStrings.hpp"
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geos
 {
