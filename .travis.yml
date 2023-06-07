@@ -193,7 +193,7 @@ jobs:
     env:
     - DOCKER_REPOSITORY=geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda10.2.89p2
     - CMAKE_BUILD_TYPE=Release
-    - BUILD_AND_TEST_ARGS="--disable-unit-tests --disable-schema-deployment"
+    - BUILD_AND_TEST_ARGS="--disable-unit-tests --build-exe-only --disable-schema-deployment"
     - HOST_CONFIG=host-configs/TOTAL/pecan-GPU.cmake
     - GCP_BUCKET=geosx/Pecan-GPU
   - stage: builds
