@@ -305,15 +305,15 @@ struct DampingMatrixKernel
         real32 vti_q_xy= 0, vti_q_z = 0, vti_qp_xy= 0;
         if(lateralSurfaceFaceIndicator[f] == 1)
         {
-          vti_p_xy  = alpha*(1+2*epsilon[k]);
-          vti_q_xy  = -alpha*(vti_f[k]-1);
-          vti_qp_xy = alpha*(vti_f[k]-2*delta[k]);
+          vti_p_xy  = (1+2*epsilon[k]);
+          vti_q_xy  = -(vti_f[k]-1);
+          vti_qp_xy = (vti_f[k]+2*delta[k]);
         }
         if(bottomSurfaceFaceIndicator[f] == 1)
         {
-          vti_p_z  = -alpha*(vti_f[k]-1);
-          vti_pq_z = alpha*vti_f[k];
-          vti_q_z  = alpha;
+          vti_p_z  = -(vti_f[k]-1);
+          vti_pq_z = vti_f[k];
+          vti_q_z  = 1;
         }
 
         constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
@@ -333,13 +333,13 @@ struct DampingMatrixKernel
           real32 const localIncrement = alpha*m_finiteElement.computeDampingTerm( q, xLocal );
           RAJA::atomicAdd< ATOMIC_POLICY >( &damping[facesToNodes[f][q]], localIncrement );
 
-          real32 const localIncrement_p = (vti_p_xy + vti_p_z) * m_finiteElement.computeDampingTerm( q, xLocal );
+          real32 const localIncrement_p = alpha*(vti_p_xy + vti_p_z) * m_finiteElement.computeDampingTerm( q, xLocal );
           RAJA::atomicAdd< ATOMIC_POLICY >( &damping_p[facesToNodes[f][q]], localIncrement_p );
 
-          real32 const localIncrement_pq = vti_pq_z * m_finiteElement.computeDampingTerm( q, xLocal );
+          real32 const localIncrement_pq = alpha*vti_pq_z * m_finiteElement.computeDampingTerm( q, xLocal );
           RAJA::atomicAdd< ATOMIC_POLICY >( &damping_pq[facesToNodes[f][q]], localIncrement_pq );
 
-          real32 const localIncrement_q = (vti_q_xy + vti_q_z) * m_finiteElement.computeDampingTerm( q, xLocal );
+          real32 const localIncrement_q = alpha*(vti_q_xy + vti_q_z) * m_finiteElement.computeDampingTerm( q, xLocal );
           RAJA::atomicAdd< ATOMIC_POLICY >( &damping_q[facesToNodes[f][q]], localIncrement_q );
 
           real32 const localIncrement_qp = vti_qp_xy * m_finiteElement.computeDampingTerm( q, xLocal );
