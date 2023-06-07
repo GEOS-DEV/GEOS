@@ -68,20 +68,20 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ -5, 195, 275, 315, 395, 595 }"
-      yCoords="{ 185, 345, 485, 625, 785 }"
-      zCoords="{ 295, 515, 595, 895 }"
-      nx="{ 10, 10, 10, 10, 10 }"
-      ny="{ 10, 210, 210, 10 }"
-      nz="{ 10, 120, 450 }"
-      yBias="{ 0.0, 0.4, -0.4, 0.0}"
-      zBias="{ 0.0, 0.4, -0.4}"
+      xCoords="{ 0, 200, 300, 400, 600 }"
+      yCoords="{ 0, 200, 280, 320, 400, 600 }"
+      zCoords="{ 0, 220, 300, 450, 600 }"
+      nx="{ 10, 150, 150, 10 }"
+      ny="{ 10, 10, 10, 10, 10 }"
+      nz="{ 10, 120, 225, 10 }"
+      xBias="{ 0.0, 0.4, -0.4, 0.0}"
+      zBias="{ 0.0, 0.4, -0.4, 0.0}"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
   <!-- SPHINX_MESH_END -->
 
   <Events
-    maxTime="8100.0">
+    maxTime="7500.0">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
@@ -117,7 +117,7 @@
     <PeriodicEvent
       name="outputs5"
       beginTime="1000.0"
-      endTime="8100.0"
+      endTime="7500.0"
       forceDt="100.0"
       target="/Outputs/vtkOutput"/> 
 
@@ -152,7 +152,7 @@
     <PeriodicEvent
       name="solverApplications5"
       beginTime="1000.0"
-      endTime="8100.0"
+      endTime="7500.0"
       forceDt="100.0"
       target="/Solvers/hydrofracture"/>
   </Events>
@@ -196,8 +196,8 @@
 
     <ConstantPermeability
        name="rockPerm"
-       permeabilityComponents="{ 1.0e-17, 1.0e-17, 1.0e-17 }"
-       pressureDependenceConstant="5e-7"
+       permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15 }"
+       pressureDependenceConstant="3e-7"
        defaultReferencePressure="20e6"/> 
 
     <ElasticIsotropic
@@ -226,7 +226,7 @@
 
     <FrictionlessContact
       name="fractureContact"
-      penaltyStiffness="1.0e0"
+      penaltyStiffness="1.0e6"
       apertureTableName="apertureTable"/>
   </Constitutive>
   <!-- SPHINX_MATERIAL_END -->
@@ -249,44 +249,13 @@
 
   <!-- SPHINX_BC -->
   <FieldSpecifications>
-
-    <FieldSpecification
-       name="permx"
-       initialCondition="1"
-       component="0"
-       setNames="{ all }"
-       objectPath="ElementRegions/Domain/cb1"
-       fieldName="rockPerm_initialPermeability"
-       scale="1"
-       functionName="permxFunc"/>
-
-     <FieldSpecification
-       name="permy"
-       initialCondition="1"
-       component="1"
-       setNames="{ all }"
-       objectPath="ElementRegions/Domain/cb1"
-       fieldName="rockPerm_initialPermeability"
-       scale="1"
-       functionName="permyFunc"/>
-
-     <FieldSpecification
-       name="permz"
-       initialCondition="1"
-       component="2"
-       setNames="{ all }"
-       objectPath="ElementRegions/Domain/cb1"
-       fieldName="rockPerm_initialPermeability"
-       scale="1"
-       functionName="permzFunc"/>
-
     <FieldSpecification 
       name="Sh"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain/cb1"
       fieldName="rock_stress"
-      component="0"
+      component="1"
       functionName="ShFunction"
       scale="-1e6"/>
 
@@ -296,7 +265,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Domain/cb1"
       fieldName="rock_stress"
-      component="1"
+      component="0"
       functionName="SHFunction"
       scale="-1e6"/>
 
@@ -385,52 +354,31 @@
 
     <TableFunction
       name="timeFunction"
-      coordinates="{ 0.0, 359.9, 360.1, 719.9, 720.1, 1199.9, 1200.1, 1499.9, 1500.1, 2099.9, 2100.1, 4499.9, 4500.1, 6299.9, 6300.1, 6899.9, 6900.1, 7499.9, 7500.1, 7799.9, 7800.1, 8100 }"
-      values="{ 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0, 5.0, 5.0, 6.0, 6.0, 7.0, 7.0, 4.0, 4.0, 3.0, 3.0, 2.0, 2.0, 1.0, 1.0 }"/>
-
-    <TableFunction
-      name="permxFunc"
-      inputVarNames="{ elementCenter }"
-      coordinateFiles="{ perm_tables/xlin.geos, perm_tables/ylin.geos, perm_tables/zlin.geos }"
-      voxelFile="perm_tables/perm_x.geos"
-      interpolation="nearest"/>
-
-    <TableFunction
-      name="permyFunc"
-      inputVarNames="{ elementCenter }"
-      coordinateFiles="{ perm_tables/xlin.geos, perm_tables/ylin.geos, perm_tables/zlin.geos }"
-      voxelFile="perm_tables/perm_y.geos"
-      interpolation="nearest"/>
-
-    <TableFunction
-      name="permzFunc"
-      inputVarNames="{ elementCenter }"
-      coordinateFiles="{ perm_tables/xlin.geos, perm_tables/ylin.geos, perm_tables/zlin.geos }"
-      voxelFile="perm_tables/perm_z.geos"
-      interpolation="nearest"/>
+      coordinates="{ 0.0, 359.9, 360.1, 719.9, 720.1, 1199.9, 1200.1, 1499.9, 1500.1, 2099.9, 2100.1, 4499.9, 4500.1, 6299.9, 6300.1, 6899.9, 6900.1, 7500 }"
+      values="{ 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0, 5.0, 5.0, 6.0, 6.0, 7.0, 7.0, 4.0, 4.0, 3.0, 3.0 }"/>
 
     <TableFunction
       name="ShFunction"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ stressTable/xlin.geos, stressTable/ylin.geos, stressTable/zlin.geos }"
+      coordinateFiles="{ stressTable/xlin.geos, stressTable/ylin.geos, stressTable/zlinLocal.geos }"
       voxelFile="stressTable/Shmin.geos"/>
 
     <TableFunction
       name="SHFunction"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ stressTable/xlin.geos, stressTable/ylin.geos, stressTable/zlin.geos }"
+      coordinateFiles="{ stressTable/xlin.geos, stressTable/ylin.geos, stressTable/zlinLocal.geos }"
       voxelFile="stressTable/Shmax.geos"/>
     
     <TableFunction
       name="SvFunction"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ stressTable/xlin.geos, stressTable/ylin.geos, stressTable/zlin.geos }"
+      coordinateFiles="{ stressTable/xlin.geos, stressTable/ylin.geos, stressTable/zlinLocal.geos }"
       voxelFile="stressTable/Sv.geos"/>
     
     <TableFunction
       name="presFunction"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ stressTable/xlin.geos, stressTable/ylin.geos, stressTable/zlin.geos }"
+      coordinateFiles="{ stressTable/xlin.geos, stressTable/ylin.geos, stressTable/zlinLocal.geos }"
       voxelFile="stressTable/pres.geos"/>
   </Functions>
 
@@ -438,22 +386,22 @@
   <!-- SPHINX_INITIALFRAC -->
     <Box
       name="fracture"
-      xMin="{ 294.9, 480.9, 590.9 }"
-      xMax="{ 295.1, 489.1, 599.1 }"/>
+      xMin="{ 295.9, 299.9, 295.9 }"
+      xMax="{ 304.1, 300.1, 304.1 }"/>
   <!-- SPHINX_INITIALFRAC_END -->
 
   <!-- SPHINX_INJSOURCE -->
     <Box
       name="source"
-      xMin="{ 294.9, 482.9, 592.9 }"
-      xMax="{ 295.1, 487.1, 597.1 }"/>
+      xMin="{ 297.9, 299.9, 297.9 }"
+      xMax="{ 302.1, 300.1, 302.1 }"/>
   <!-- SPHINX_INJSOURCE_END -->
 
   <!-- SPHINX_FRACPLANE -->
     <Box
       name="core"
-      xMin="{ 294.9, -1000.1, -1000.1 }"
-      xMax="{ 295.1, 1000.1, 1000.1 }"/>
+      xMin="{ -0.1, 299.9, -0.1 }"
+      xMax="{ 1000.1, 300.1, 1000.1 }"/>
   <!-- SPHINX_FRACPLANE_END -->
   </Geometry>
 
@@ -461,7 +409,7 @@
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="16AStimulation-insituStress-injectionReal-stressGradient-leakoff-heteroPresPerm"/>
+      plotFileRoot="16AStimulation-insituStress-injectionReal-stressGradient-leakoff-presPerm-penalty=1e6"/>
 
     <Restart
       name="restartOutput"/>

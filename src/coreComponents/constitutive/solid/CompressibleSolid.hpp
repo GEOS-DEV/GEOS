@@ -61,6 +61,7 @@ public:
     m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, pressure_n, temperature, temperature_n );
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     m_permUpdate.updateFromPorosity( k, q, porosity );
+    m_permUpdate.updateFromPressure( k, q, pressure_n, pressure );
   }
 
   GEOS_HOST_DEVICE

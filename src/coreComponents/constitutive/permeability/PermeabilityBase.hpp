@@ -56,6 +56,15 @@ public:
   }
 
   GEOS_HOST_DEVICE
+  virtual void updateFromPressure( localIndex const k,
+                                   localIndex const q,
+                                   real64 const & pressure_n, 
+                                   real64 const & pressure ) const
+  {
+    GEOS_UNUSED_VAR( k, q, pressure_n, pressure );
+  }
+
+  GEOS_HOST_DEVICE
   virtual void updateFromAperture( localIndex const k,
                                    localIndex const q,
                                    real64 const & oldHydraulicAperture,
