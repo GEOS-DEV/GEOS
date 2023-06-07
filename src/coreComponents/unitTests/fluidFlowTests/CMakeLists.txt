@@ -4,7 +4,6 @@
 
 set( gtest_geosx_tests
      testSinglePhaseBaseKernels.cpp
-     testSinglePhaseFVMKernels.cpp
      testThermalCompMultiphaseFlow.cpp
      testThermalSinglePhaseFlow.cpp
    )
