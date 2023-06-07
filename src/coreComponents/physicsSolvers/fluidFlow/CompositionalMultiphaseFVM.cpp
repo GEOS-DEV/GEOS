@@ -484,10 +484,12 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
 {
   GEOS_MARK_FUNCTION;
 
+  bool const localScaling = m_nonlinearSolverParameters.scalingType() == NonlinearSolverParameters::ScalingType::Local;
+
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
   DofManager::CompMask componentMask( m_numDofPerCell, 1, m_numComponents+1 );
 
-  if( m_nonlinearSolverParameters.scalingType() == NonlinearSolverParameters::ScalingType::Local )
+  if( localScaling )
   {
     dofManager.addVectorToField( localSolution,
                                  viewKeyStruct::elemDofFieldString(),
@@ -504,7 +506,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
                                  pressureMask );
   }
 
-  if( m_nonlinearSolverParameters.scalingType() == NonlinearSolverParameters::ScalingType::Local )
+  if( localScaling )
   {
     dofManager.addVectorToField( localSolution,
                                  viewKeyStruct::elemDofFieldString(),
@@ -524,7 +526,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
   if( m_isThermal )
   {
     DofManager::CompMask temperatureMask( m_numDofPerCell, m_numComponents+1, m_numComponents+2 );
-    if( m_nonlinearSolverParameters.scalingType() == NonlinearSolverParameters::ScalingType::Local )
+    if( localScaling )
     {
       dofManager.addVectorToField( localSolution,
                                    viewKeyStruct::elemDofFieldString(),

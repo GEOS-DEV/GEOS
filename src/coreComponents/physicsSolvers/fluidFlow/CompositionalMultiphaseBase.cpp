@@ -512,19 +512,20 @@ real64 CompositionalMultiphaseBase::updatePhaseVolumeFraction( ObjectManagerBase
   string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, fluidName );
 
-  real64 maxDeltaPhaseVolFrac  = m_isThermal ?
-                                 thermalCompositionalMultiphaseBaseKernels::
-                                   PhaseVolumeFractionKernelFactory::
-                                   createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                                              m_numPhases,
-                                                                              dataGroup,
-                                                                              fluid )
+  real64 maxDeltaPhaseVolFrac  =
+    m_isThermal ?
+    thermalCompositionalMultiphaseBaseKernels::
+      PhaseVolumeFractionKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                 m_numPhases,
+                                                 dataGroup,
+                                                 fluid )
 :    isothermalCompositionalMultiphaseBaseKernels::
-                                   PhaseVolumeFractionKernelFactory::
-                                   createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                                              m_numPhases,
-                                                                              dataGroup,
-                                                                              fluid );
+      PhaseVolumeFractionKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                 m_numPhases,
+                                                 dataGroup,
+                                                 fluid );
 
   maxDeltaPhaseVolFrac = MpiWrapper::max( maxDeltaPhaseVolFrac );
 

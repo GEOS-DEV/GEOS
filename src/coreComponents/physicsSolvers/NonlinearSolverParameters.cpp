@@ -20,8 +20,7 @@ namespace geos
 using namespace dataRepository;
 
 NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
-                                                      Group * const parent )
-  :
+                                                      Group * const parent ):
   Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL );
@@ -52,9 +51,8 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
   registerWrapper( viewKeysStruct::lineSearchCutFactorString(), &m_lineSearchCutFactor ).
     setApplyDefaultValue( 0.5 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription(
-    "Line search cut factor. For instance, a value of 0.5 will result in the effective application of"
-    " the last solution by a factor of (0.5, 0.25, 0.125, ...)" );
+    setDescription( "Line search cut factor. For instance, a value of 0.5 will result in the effective application of"
+                    " the last solution by a factor of (0.5, 0.25, 0.125, ...)" );
 
   registerWrapper( viewKeysStruct::normTypeString(), &m_normType ).
     setInputFlag( InputFlags::FALSE ).
@@ -96,26 +94,22 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
   registerWrapper( viewKeysStruct::timeStepDecreaseIterLimString(), &m_timeStepDecreaseIterLimit ).
     setApplyDefaultValue( 0.7 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription(
-    "Fraction of the max Newton iterations above which the solver asks for the time-step to be decreased for the next time step." );
+    setDescription( "Fraction of the max Newton iterations above which the solver asks for the time-step to be decreased for the next time step." );
 
   registerWrapper( viewKeysStruct::timeStepIncreaseIterLimString(), &m_timeStepIncreaseIterLimit ).
     setApplyDefaultValue( 0.4 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription(
-    "Fraction of the max Newton iterations below which the solver asks for the time-step to be increased for the next time step." );
+    setDescription( "Fraction of the max Newton iterations below which the solver asks for the time-step to be increased for the next time step." );
 
   registerWrapper( viewKeysStruct::timeStepDecreaseFactorString(), &m_timeStepDecreaseFactor ).
     setApplyDefaultValue( 0.5 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription(
-    "Factor by which the time step is decreased when the number of Newton iterations is large." );
+    setDescription( "Factor by which the time step is decreased when the number of Newton iterations is large." );
 
   registerWrapper( viewKeysStruct::timeStepIncreaseFactorString(), &m_timeStepIncreaseFactor ).
     setApplyDefaultValue( 2.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription(
-    "Factor by which the time step is increased when the number of Newton iterations is small." );
+    setDescription( "Factor by which the time step is increased when the number of Newton iterations is small." );
 
   registerWrapper( viewKeysStruct::timeStepCutFactorString(), &m_timeStepCutFactor ).
     setApplyDefaultValue( 0.5 ).
@@ -148,8 +142,7 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( SequentialConvergenceCriterion::ResidualNorm ).
     setDescription( "Criterion used to check outer-loop convergence in sequential schemes. "
-                    "Valid options:\n* "
-                    + EnumStrings< SequentialConvergenceCriterion >::concat( "\n* " ) );
+                    "Valid options:\n* " + EnumStrings< SequentialConvergenceCriterion >::concat( "\n* " ) );
 
   registerWrapper( viewKeysStruct::subcyclingOptionString(), &m_subcyclingOption ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
@@ -171,6 +164,7 @@ void NonlinearSolverParameters::postProcessInput()
     GEOS_ERROR( " timeStepIncreaseIterLimit should be smaller than timeStepDecreaseIterLimit!!" );
   }
 }
+
 
 
 REGISTER_CATALOG_ENTRY( Group, NonlinearSolverParameters, string const &, Group * const )

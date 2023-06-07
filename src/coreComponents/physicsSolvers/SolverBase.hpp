@@ -571,7 +571,6 @@ public:
     static constexpr char const * discretizationString() { return "discretization"; }
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
     static constexpr char const * meshTargetsString() { return "meshTargets"; }
-    static constexpr char const * localChopString() { return "localChop"; }
 
   };
 

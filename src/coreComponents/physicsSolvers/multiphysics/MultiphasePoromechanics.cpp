@@ -47,8 +47,7 @@ MultiphasePoromechanics::MultiphasePoromechanics( const string & name,
     setDescription( "Stabilization type. Options are:\n" +
                     toString( StabilizationType::None ) + " - Add no stabilization to mass equation,\n" +
                     toString( StabilizationType::Global ) + " - Add stabilization to all faces,\n" +
-                    toString( StabilizationType::Local )
-                    + " - Add stabilization only to interiors of macro elements." );
+                    toString( StabilizationType::Local ) + " - Add stabilization only to interiors of macro elements." );
 
   registerWrapper( viewKeyStruct::stabilizationRegionNamesString(), &m_stabilizationRegionNames ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -79,9 +78,9 @@ void MultiphasePoromechanics::registerDataOnMesh( Group & meshBodies )
 {
   SolverBase::registerDataOnMesh( meshBodies );
 
-  forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
-                                                   MeshLevel & mesh,
-                                                   arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -111,8 +110,7 @@ void MultiphasePoromechanics::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-void MultiphasePoromechanics::setupCoupling( DomainPartition const &
-                                             GEOS_UNUSED_PARAM( domain ),
+void MultiphasePoromechanics::setupCoupling( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                              DofManager & dofManager ) const
 {
   dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
@@ -136,9 +134,9 @@ void MultiphasePoromechanics::assembleSystem( real64 const GEOS_UNUSED_PARAM( ti
 
   set< string > poromechanicsRegionNames;
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                               MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     poromechanicsRegionNames.insert( regionNames.begin(), regionNames.end() );
 
@@ -178,15 +176,15 @@ void MultiphasePoromechanics::assembleSystem( real64 const GEOS_UNUSED_PARAM( ti
 
   // step 2: apply mechanics solver on its target regions not included in the poromechanics solver target regions
 
-  solidMechanicsSolver()->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                                       MeshLevel & mesh,
-                                                                                       arrayView1d< string const > const & regionNames )
+  solidMechanicsSolver()->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                                        MeshLevel & mesh,
+                                                                                        arrayView1d< string const > const & regionNames )
   {
 
     // collect the target region of the mechanics solver not included in the poromechanics target regions
     array1d< string > filteredRegionNames;
     filteredRegionNames.reserve( regionNames.size() );
-    for( string const & regionName: regionNames )
+    for( string const & regionName : regionNames )
     {
       // if the mechanics target region is not included in the poromechanics target region, save the string
       if( poromechanicsRegionNames.count( regionName ) == 0 )
@@ -243,9 +241,9 @@ void MultiphasePoromechanics::assembleSystem( real64 const GEOS_UNUSED_PARAM( ti
 void MultiphasePoromechanics::updateState( DomainPartition & domain )
 {
   real64 maxDeltaPhaseVolFrac = 0.0;
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                               MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
@@ -295,9 +293,9 @@ void MultiphasePoromechanics::initializePreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                               MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
@@ -323,21 +321,21 @@ void MultiphasePoromechanics::updateStabilizationParameters( DomainPartition & d
   // Step 1: we loop over the regions where stabilization is active and collect their name
 
   set< string > regionFilter;
-  for( string const & regionName: m_stabilizationRegionNames )
+  for( string const & regionName : m_stabilizationRegionNames )
   {
     regionFilter.insert( regionName );
   }
 
   // Step 2: loop over the target regions of the solver, and tag the elements belonging to stabilization regions
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                               MeshLevel & mesh,
-                                                               arrayView1d< string const > const & targetRegionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & targetRegionNames )
   {
     // keep only the target regions that are in the filter
     array1d< string > filteredTargetRegionNames;
     filteredTargetRegionNames.reserve( targetRegionNames.size() );
 
-    for( string const & targetRegionName: targetRegionNames )
+    for( string const & targetRegionName : targetRegionNames )
     {
       if( regionFilter.count( targetRegionName ) )
       {
@@ -348,6 +346,7 @@ void MultiphasePoromechanics::updateStabilizationParameters( DomainPartition & d
     // loop over the elements and update the stabilization constant
     mesh.getElemManager().forElementSubRegions( filteredTargetRegionNames.toViewConst(), [&]( localIndex const,
                                                                                               ElementSubRegionBase & subRegion )
+
     {
       arrayView1d< integer > const macroElementIndex = subRegion.getField< fields::flow::macroElementIndex >();
       arrayView1d< real64 > const elementStabConstant = subRegion.getField< fields::flow::elementStabConstant >();
@@ -373,15 +372,14 @@ void MultiphasePoromechanics::updateStabilizationParameters( DomainPartition & d
         real64 const bC = biotCoefficient[ei];
 
         macroElementIndex[ei] = 1;
-        elementStabConstant[ei] = stabilizationMultiplier * 9.0 * ( bC * bC ) / ( 32.0 * ( 10.0 * sM / 3.0 + bM ) );
+        elementStabConstant[ei] = stabilizationMultiplier * 9.0 * (bC * bC) / (32.0 * (10.0 * sM / 3.0 + bM));
 
       } );
     } );
   } );
 }
 
-void MultiphasePoromechanics::mapSolutionBetweenSolvers( DomainPartition & domain,
-                                                         integer const solverType )
+void MultiphasePoromechanics::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
 {
   GEOS_MARK_FUNCTION;
   if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )

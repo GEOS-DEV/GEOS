@@ -293,7 +293,7 @@ public:
   /// Flag to specify whether subcycling is allowed or not in sequential schemes
   integer m_subcyclingOption;
 
-  /// Flag for local chop
+  /// Solution scaling type
   ScalingType m_scalingType;
 };
 

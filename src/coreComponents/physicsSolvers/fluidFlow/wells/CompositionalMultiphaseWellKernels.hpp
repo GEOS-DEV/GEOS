@@ -944,7 +944,7 @@ public:
   template< typename POLICY >
   static integer
   createAndLaunch( integer const allowCompDensChopping,
-                   integer const localChop,
+                   integer const localScaling,
                    real64 const scalingFactor,
                    globalIndex const rankOffset,
                    integer const numComp,
@@ -957,7 +957,7 @@ public:
     arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::well::pressureScalingFactor >();
     arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::well::globalCompDensityScalingFactor >();
     isothermalCompositionalMultiphaseBaseKernels::
-      SolutionCheckKernel kernel( allowCompDensChopping, localChop, scalingFactor, rankOffset,
+      SolutionCheckKernel kernel( allowCompDensChopping, localScaling, scalingFactor, rankOffset,
                                   numComp, dofKey, subRegion, localSolution, pressure, compDens, pressureScalingFactor, compDensScalingFactor );
     return isothermalCompositionalMultiphaseBaseKernels::
              SolutionCheckKernel::

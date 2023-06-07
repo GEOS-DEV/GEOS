@@ -90,7 +90,7 @@ public:
   {
     forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
-      localIndex const ei = targetSet[i];
+      localIndex const ei = targetSet[ i ];
       kernelComponent.compute( ei );
     } );
   }
@@ -101,42 +101,24 @@ namespace internal
 {
 
 template< typename T, typename LAMBDA >
-void kernelLaunchSelectorCompSwitch( T value,
-                                     LAMBDA && lambda )
+void kernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
 {
   static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: type should be integral" );
 
   switch( value )
   {
     case 1:
-    {
-      lambda( std::integral_constant< T, 1 >() );
-      return;
-    }
+    { lambda( std::integral_constant< T, 1 >() ); return; }
     case 2:
-    {
-      lambda( std::integral_constant< T, 2 >() );
-      return;
-    }
+    { lambda( std::integral_constant< T, 2 >() ); return; }
     case 3:
-    {
-      lambda( std::integral_constant< T, 3 >() );
-      return;
-    }
+    { lambda( std::integral_constant< T, 3 >() ); return; }
     case 4:
-    {
-      lambda( std::integral_constant< T, 4 >() );
-      return;
-    }
+    { lambda( std::integral_constant< T, 4 >() ); return; }
     case 5:
-    {
-      lambda( std::integral_constant< T, 5 >() );
-      return;
-    }
+    { lambda( std::integral_constant< T, 5 >() ); return; }
     default:
-    {
-      GEOS_ERROR( "Unsupported number of components: " << value );
-    }
+    { GEOS_ERROR( "Unsupported number of components: " << value ); }
   }
 }
 
@@ -168,7 +150,7 @@ public:
     m_compDens( subRegion.getField< fields::flow::globalCompDensity >() ),
     m_compFrac( subRegion.getField< fields::flow::globalCompFraction >() ),
     m_dCompFrac_dCompDens( subRegion.getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >() )
-  { }
+  {}
 
   /**
    * @brief Compute the phase volume fractions in an element
@@ -241,7 +223,7 @@ public:
   createAndLaunch( integer const numComp,
                    ObjectManagerBase & subRegion )
   {
-    internal::kernelLaunchSelectorCompSwitch( numComp, [&]( auto NC )
+    internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
     {
       integer constexpr NUM_COMP = NC();
       ComponentFractionKernel< NUM_COMP > kernel( subRegion );
@@ -286,7 +268,7 @@ public:
     m_dPhaseFrac( fluid.dPhaseFraction() ),
     m_phaseDens( fluid.phaseDensity() ),
     m_dPhaseDens( fluid.dPhaseDensity() )
-  { }
+  {}
 
   /**
    * @brief Compute the phase volume fractions in an element
@@ -326,11 +308,11 @@ public:
     {
 
       // set the saturation to zero if the phase is absent
-      bool const phaseExists = ( phaseFrac[ip] > 0 );
+      bool const phaseExists = (phaseFrac[ip] > 0);
       if( !phaseExists )
       {
         phaseVolFrac[ip] = 0.;
-        for( integer jc = 0; jc < numComp + 2; ++jc )
+        for( integer jc = 0; jc < numComp+2; ++jc )
         {
           dPhaseVolFrac[ip][jc] = 0.;
         }
@@ -340,19 +322,19 @@ public:
       // Expression for volume fractions: S_p = (nu_p / rho_p) * rho_t
       real64 const phaseDensInv = 1.0 / phaseDens[ip];
 
-      // store old saturation to compute DS later
+      // store old saturation to compute change later
       real64 const satOld = phaseVolFrac[ip];
 
       // compute saturation and derivatives except multiplying by the total density
       phaseVolFrac[ip] = phaseFrac[ip] * phaseDensInv;
 
       dPhaseVolFrac[ip][Deriv::dP] =
-        ( dPhaseFrac[ip][Deriv::dP] - phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dP] ) * phaseDensInv;
+        (dPhaseFrac[ip][Deriv::dP] - phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dP]) * phaseDensInv;
 
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        dPhaseVolFrac[ip][Deriv::dC + jc] =
-          ( dPhaseFrac[ip][Deriv::dC + jc] - phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dC + jc] ) * phaseDensInv;
+        dPhaseVolFrac[ip][Deriv::dC+jc] =
+          (dPhaseFrac[ip][Deriv::dC+jc] - phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dC+jc]) * phaseDensInv;
       }
 
       // apply chain rule to convert derivatives from global component fractions to densities
@@ -365,8 +347,8 @@ public:
       // now finalize the computation by multiplying by total density
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        dPhaseVolFrac[ip][Deriv::dC + jc] *= totalDensity;
-        dPhaseVolFrac[ip][Deriv::dC + jc] += phaseVolFrac[ip] * dTotalDens_dCompDens;
+        dPhaseVolFrac[ip][Deriv::dC+jc] *= totalDensity;
+        dPhaseVolFrac[ip][Deriv::dC+jc] += phaseVolFrac[ip] * dTotalDens_dCompDens;
       }
 
       phaseVolFrac[ip] *= totalDensity;
@@ -451,7 +433,7 @@ public:
     real64 maxDeltaPhaseVolFrac = 0.0;
     if( numPhase == 2 )
     {
-      internal::kernelLaunchSelectorCompSwitch( numComp, [&]( auto NC )
+      internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         PhaseVolumeFractionKernel< NUM_COMP, 2 > kernel( subRegion, fluid );
@@ -460,7 +442,7 @@ public:
     }
     else if( numPhase == 3 )
     {
-      internal::kernelLaunchSelectorCompSwitch( numComp, [&]( auto NC )
+      internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         PhaseVolumeFractionKernel< NUM_COMP, 3 > kernel( subRegion, fluid );
@@ -605,7 +587,7 @@ public:
     m_dPhaseCompFrac( fluid.dPhaseCompFraction() ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs )
-  { }
+  {}
 
   /**
    * @struct StackVariables
@@ -723,7 +705,7 @@ public:
       for( integer jc = 0; jc < numComp; ++jc )
       {
         dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * phaseVolFrac[ip]
-                              + phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dC + jc];
+                              + phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dC+jc];
         dPhaseAmount_dC[jc] *= stack.poreVolume;
       }
 
@@ -789,7 +771,7 @@ public:
 
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        stack.localJacobian[numComp][jc + 1] -= dPhaseVolFrac[ip][Deriv::dC + jc];
+        stack.localJacobian[numComp][jc+1] -= dPhaseVolFrac[ip][Deriv::dC+jc];
       }
     }
 
@@ -826,7 +808,7 @@ public:
     // - the component mass balance equations (i = 0 to i = numComp-1)
     // - the volume balance equations (i = numComp)
     // note that numDof includes derivatives wrt temperature if this class is derived in ThermalKernels
-    for( integer i = 0; i < numComp + 1; ++i )
+    for( integer i = 0; i < numComp+1; ++i )
     {
       m_localRhs[stack.localRow + i] += stack.localResidual[i];
       m_localMatrix.addToRow< serialAtomic >( stack.localRow + i,
@@ -945,10 +927,10 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
+    internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
     {
       integer constexpr NUM_COMP = NC();
-      integer constexpr NUM_DOF = NC() + 1;
+      integer constexpr NUM_DOF = NC()+1;
       ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
       kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
       ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template launch< POLICY >( subRegion.size(), kernel );
@@ -1018,7 +1000,6 @@ public:
 
     /// The local value
     TYPE localMinVal;
-
   };
 
   /**
@@ -1154,7 +1135,7 @@ public:
             compDensScalingFactor ),
     m_maxRelativePresChange( maxRelativePresChange ),
     m_maxCompFracChange( maxCompFracChange )
-  { }
+  {}
 
   /**
    * @struct StackVariables
@@ -1434,7 +1415,7 @@ public:
    * @param[in] compDens the component density vector
    */
   SolutionCheckKernel( integer const allowCompDensChopping,
-                       integer const localChop,
+                       integer const localScaling,
                        real64 const scalingFactor,
                        globalIndex const rankOffset,
                        integer const numComp,
@@ -1456,8 +1437,8 @@ public:
             compDensScalingFactor ),
     m_allowCompDensChopping( allowCompDensChopping ),
     m_scalingFactor( scalingFactor ),
-    m_localChop( localChop )
-  { }
+    m_localScaling( localScaling )
+  {}
 
   /**
    * @brief Compute the local value
@@ -1484,7 +1465,7 @@ public:
                              StackVariables & stack,
                              FUNC && kernelOp = NoOpFunc{} ) const
   {
-    real64 const newPres = m_pressure[ei] + m_localChop > 0 ? m_pressureScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow];
+    real64 const newPres = m_pressure[ei] + m_localScaling > 0 ? m_pressureScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow];
     if( newPres < 0 )
     {
       stack.localMinVal = 0;
@@ -1497,7 +1478,7 @@ public:
     {
       for( integer ic = 0; ic < m_numComp; ++ic )
       {
-        real64 const newDens = m_compDens[ei][ic] + m_localChop > 0 ? m_compDensScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow + ic + 1];
+        real64 const newDens = m_compDens[ei][ic] + m_localScaling > 0 ? m_compDensScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow + ic + 1];
         if( newDens < 0 )
         {
           stack.localMinVal = 0;
@@ -1509,7 +1490,7 @@ public:
       real64 totalDens = 0.0;
       for( integer ic = 0; ic < m_numComp; ++ic )
       {
-        real64 const newDens = m_compDens[ei][ic] + m_localChop > 0 ? m_compDensScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow + ic + 1];
+        real64 const newDens = m_compDens[ei][ic] + m_localScaling > 0 ? m_compDensScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow + ic + 1];
         totalDens += ( newDens > 0.0 ) ? newDens : 0.0;
       }
       if( totalDens < 0 )
@@ -1529,8 +1510,8 @@ protected:
   /// scaling factor
   real64 const m_scalingFactor;
 
-  /// flag for local chop
-  integer const m_localChop = 0;
+  /// flag for local scaling
+  integer const m_localScaling = 0;
 
 };
 
@@ -1555,7 +1536,7 @@ public:
   template< typename POLICY >
   static integer
   createAndLaunch( integer const allowCompDensChopping,
-                   integer const localChop,
+                   integer const localScaling,
                    real64 const scalingFactor,
                    globalIndex const rankOffset,
                    integer const numComp,
@@ -1571,7 +1552,7 @@ public:
       subRegion.getField< fields::flow::pressureScalingFactor >();
     arrayView1d< real64 > compDensScalingFactor =
       subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
-    SolutionCheckKernel kernel( allowCompDensChopping, localChop, scalingFactor, rankOffset,
+    SolutionCheckKernel kernel( allowCompDensChopping, localScaling, scalingFactor, rankOffset,
                                 numComp, dofKey, subRegion, localSolution, pressure, compDens, pressureScalingFactor, compDensScalingFactor );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );
   }
@@ -1609,7 +1590,7 @@ public:
     m_volume( subRegion.getElementVolume() ),
     m_porosity_n( solid.getPorosity_n() ),
     m_totalDens_n( fluid.totalDensity_n() )
-  { }
+  {}
 
   GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const ei,
@@ -1658,7 +1639,7 @@ public:
     // step 2: volume residual
 
     real64 const val = m_localResidual[stack.localRow + m_numComponents] * m_totalDens_n[ei][0]; // we need a mass here, hence the
-    // multiplication
+                                                                                                 // multiplication
     stack.localValue[0] += val * val;
     stack.localNormalizer[0] += massNormalizer;
   }
@@ -1877,7 +1858,7 @@ struct StatisticsKernel
     totalUncompactedPoreVol = subRegionTotalUncompactedPoreVol.get();
 
     // dummy loop to bring data back to the CPU
-    forAll< serialPolicy >( 1, [phaseDynamicPoreVol, phaseMass, trappedPhaseMass, immobilePhaseMass, dissolvedComponentMass]( localIndex const )
+    forAll< serialPolicy >( 1, [phaseDynamicPoreVol, phaseMass, trappedPhaseMass, immobilePhaseMass, dissolvedComponentMass] ( localIndex const )
     {
       GEOS_UNUSED_VAR( phaseDynamicPoreVol, phaseMass, trappedPhaseMass, immobilePhaseMass, dissolvedComponentMass );
     } );
@@ -1906,7 +1887,7 @@ struct HydrostaticPressureKernel
                               integer const ipInit,
                               integer const maxNumEquilIterations,
                               real64 const & equilTolerance,
-                              real64 const (&gravVector)[3],
+                              real64 const (&gravVector)[ 3 ],
                               FLUID_WRAPPER fluidWrapper,
                               arrayView1d< TableFunction::KernelWrapper const > compFracTableWrappers,
                               TableFunction::KernelWrapper tempTableWrapper,
@@ -1925,7 +1906,7 @@ struct HydrostaticPressureKernel
     StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseVisc( 1, 1, numPhases );
     StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseEnthalpy( 1, 1, numPhases );
     StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseInternalEnergy( 1, 1, numPhases );
-    StackArray< real64, 4, constitutive::MultiFluidBase::MAX_NUM_PHASES * constitutive::MultiFluidBase::MAX_NUM_COMPONENTS,
+    StackArray< real64, 4, constitutive::MultiFluidBase::MAX_NUM_PHASES *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS,
                 multifluid::LAYOUT_PHASE_COMP > phaseCompFrac( 1, 1, numPhases, numComps );
     real64 totalDens = 0.0;
 
@@ -2036,7 +2017,7 @@ struct HydrostaticPressureKernel
           integer const ipInit,
           integer const maxNumEquilIterations,
           real64 const equilTolerance,
-          real64 const (&gravVector)[3],
+          real64 const (&gravVector)[ 3 ],
           real64 const & minElevation,
           real64 const & elevationIncrement,
           real64 const & datumElevation,
@@ -2082,7 +2063,7 @@ struct HydrostaticPressureKernel
 
     // Step 2: find the closest elevation to datumElevation
 
-    forAll< parallelHostPolicy >( size, [=]( localIndex const i )
+    forAll< parallelHostPolicy >( size, [=] ( localIndex const i )
     {
       real64 const elevation = minElevation + i * elevationIncrement;
       elevationValues[0][i] = elevation;
@@ -2129,7 +2110,7 @@ struct HydrostaticPressureKernel
     // Step 4: for each elevation above the reference elevation, compute the pressure
 
     localIndex const numEntriesAboveRef = size - iRef - 1;
-    forAll< serialPolicy >( numEntriesAboveRef, [=, &returnVal]( localIndex const i )
+    forAll< serialPolicy >( numEntriesAboveRef, [=, &returnVal] ( localIndex const i )
     {
       ReturnType const returnValAboveRef =
         computeHydrostaticPressure( numComps,
@@ -2141,12 +2122,12 @@ struct HydrostaticPressureKernel
                                     fluidWrapper,
                                     compFracTableWrappers,
                                     tempTableWrapper,
-                                    elevationValues[0][iRef + i],
-                                    pressureValues[iRef + i],
-                                    phaseMassDens[iRef + i],
-                                    elevationValues[0][iRef + i + 1],
-                                    pressureValues[iRef + i + 1],
-                                    phaseMassDens[iRef + i + 1] );
+                                    elevationValues[0][iRef+i],
+                                    pressureValues[iRef+i],
+                                    phaseMassDens[iRef+i],
+                                    elevationValues[0][iRef+i+1],
+                                    pressureValues[iRef+i+1],
+                                    phaseMassDens[iRef+i+1] );
       if( returnValAboveRef == ReturnType::FAILED_TO_CONVERGE )
       {
         returnVal = ReturnType::FAILED_TO_CONVERGE;
@@ -2162,7 +2143,7 @@ struct HydrostaticPressureKernel
     // Step 5: for each elevation below the reference elevation, compute the pressure
 
     localIndex const numEntriesBelowRef = iRef;
-    forAll< serialPolicy >( numEntriesBelowRef, [=, &returnVal]( localIndex const i )
+    forAll< serialPolicy >( numEntriesBelowRef, [=, &returnVal] ( localIndex const i )
     {
       ReturnType const returnValBelowRef =
         computeHydrostaticPressure( numComps,
@@ -2174,12 +2155,12 @@ struct HydrostaticPressureKernel
                                     fluidWrapper,
                                     compFracTableWrappers,
                                     tempTableWrapper,
-                                    elevationValues[0][iRef - i],
-                                    pressureValues[iRef - i],
-                                    phaseMassDens[iRef - i],
-                                    elevationValues[0][iRef - i - 1],
-                                    pressureValues[iRef - i - 1],
-                                    phaseMassDens[iRef - i - 1] );
+                                    elevationValues[0][iRef-i],
+                                    pressureValues[iRef-i],
+                                    phaseMassDens[iRef-i],
+                                    elevationValues[0][iRef-i-1],
+                                    pressureValues[iRef-i-1],
+                                    phaseMassDens[iRef-i-1] );
       if( returnValBelowRef == ReturnType::FAILED_TO_CONVERGE )
       {
         returnVal = ReturnType::FAILED_TO_CONVERGE;
@@ -2201,31 +2182,28 @@ struct HydrostaticPressureKernel
 /******************************** Kernel launch machinery ********************************/
 
 template< typename KERNELWRAPPER, typename ... ARGS >
-void KernelLaunchSelector1( integer const numComp,
-                            ARGS && ... args )
+void KernelLaunchSelector1( integer const numComp, ARGS && ... args )
 {
-  internal::kernelLaunchSelectorCompSwitch( numComp, [&]( auto NC )
+  internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
   {
     KERNELWRAPPER::template launch< NC() >( std::forward< ARGS >( args )... );
   } );
 }
 
 template< typename KERNELWRAPPER, typename ... ARGS >
-void KernelLaunchSelector2( integer const numComp,
-                            integer const numPhase,
-                            ARGS && ... args )
+void KernelLaunchSelector2( integer const numComp, integer const numPhase, ARGS && ... args )
 {
   // Ideally this would be inside the dispatch, but it breaks on Summit with GCC 9.1.0 and CUDA 11.0.3.
   if( numPhase == 2 )
   {
-    internal::kernelLaunchSelectorCompSwitch( numComp, [&]( auto NC )
+    internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
     {
       KERNELWRAPPER::template launch< NC(), 2 >( std::forward< ARGS >( args ) ... );
     } );
   }
   else if( numPhase == 3 )
   {
-    internal::kernelLaunchSelectorCompSwitch( numComp, [&]( auto NC )
+    internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
     {
       KERNELWRAPPER::template launch< NC(), 3 >( std::forward< ARGS >( args ) ... );
     } );
