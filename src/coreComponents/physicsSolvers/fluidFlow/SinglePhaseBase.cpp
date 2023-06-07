@@ -265,6 +265,19 @@ void SinglePhaseBase::updateSolidInternalEnergyModel( ObjectManagerBase & dataGr
   thermalSinglePhaseBaseKernels::SolidInternalEnergyUpdateKernel::launch< parallelDevicePolicy<> >( dataGroup.size(), solidInternalEnergyWrapper, temp );
 }
 
+void SinglePhaseBase::updateThermalConductivity( ElementSubRegionBase & subRegion ) const
+{
+  CoupledSolidBase const & porousSolid =
+    getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+
+  arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
+
+  string const & thermalConductivityName = subRegion.template getReference< string >( viewKeyStruct::thermalConductivityNamesString() );
+  SinglePhaseThermalConductivityBase const & conductivityMaterial =
+    getConstitutiveModel< SinglePhaseThermalConductivityBase >( subRegion, thermalConductivityName );
+  conductivityMaterial.update( porosity );
+}
+
 void SinglePhaseBase::updateFluidState( ObjectManagerBase & subRegion ) const
 {
   updateFluidModel( subRegion );
@@ -625,6 +638,8 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
       if( m_isThermal )
       {
         updateSolidInternalEnergyModel( subRegion );
+        updateThermalConductivity( subRegion );
+
       }
 
     } );
