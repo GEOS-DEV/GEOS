@@ -203,7 +203,7 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
 
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+  arrayView2d< real32 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition32().toViewConst();
   arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
   arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
 
@@ -338,7 +338,7 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
     arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+    arrayView2d< real32 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition32().toViewConst();
     arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
 
     /// get face to node map
@@ -516,7 +516,7 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
 
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+    arrayView2d< real32 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition32().toViewConst();
 
     arrayView1d< real32 const > const mass = nodeManager.getField< wavesolverfields::MassVector >();
     arrayView1d< real32 > const dampingx = nodeManager.getField< wavesolverfields::DampingVectorx >();
