@@ -201,7 +201,7 @@ public:
    * @brief set the name of the field.
    * @param name name of the field to be set.
    */
-  void setFieldName( string const & name );
+  void addFieldName( string const & name );
 
   /**
    * @brief set the name of the coefficient.
@@ -284,7 +284,7 @@ protected:
 
 
   /// name of the primary solution field
-  string m_fieldName;
+  array1d< string > m_fieldNames;
 
   /// name of the coefficient field
   string m_coeffName;
