@@ -145,6 +145,27 @@ public:
                               BoundedPlane const * fracture );
 
   /**
+   * @brief Function to add a new embedded surface element for a planar, 3D crack.
+   * @param cellIndex cell element index
+   * @param regionIndex cell element region index
+   * @param subRegionIndex cell element subregion index
+   * @param nodeManager the nodemanager group
+   * @param embSurfNodeManager the embSurfNodeManager group
+   * @param edgeManager the edgemanager group
+   * @param cellToEdges cellElement to edges map
+   * @param fracCenter the center of the fracture element to be added
+   * @return boolean defining whether the embedded element was added or not
+   */
+  bool addNewPlanarEmbeddedSurface( localIndex const cellIndex,
+                                                              localIndex const regionIndex,
+                                                              localIndex const subRegionIndex,
+                                                              NodeManager const & nodeManager,
+                                                              EmbeddedSurfaceNodeManager & embSurfNodeManager,
+                                                              EdgeManager const & edgeManager,
+                                                              FixedOneToManyRelation const & cellToEdges,
+                                                              R1Tensor const & fracCenter );   
+
+  /**
    * @brief inherit ghost rank from cell elements.
    * @param cellGhostRank cell element ghost ranks
    */

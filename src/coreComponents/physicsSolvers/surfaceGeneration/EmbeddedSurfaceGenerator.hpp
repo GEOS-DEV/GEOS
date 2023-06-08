@@ -74,6 +74,13 @@ public:
   }
 
   /**
+   * @brief function to update embedded fracture geometry in the 3D planar case 
+   * @return bool, true if a fracture element was added, false if none. 
+   *
+   */
+  bool propagationStep3D();  
+
+  /**
    * @brief xxx
    * @param[in] ...
    * @param[in] ...
@@ -85,6 +92,22 @@ public:
                              real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition & domain ) override;
+
+
+  void insertToCut(localIndex elem)
+  {
+    m_elemsToCut.insert(elem);
+  }                           
+
+  SortedArray<localIndex> const & getCutList()
+  {
+    return m_elemsToCut;
+  } 
+
+  void emptyCutList()
+  {
+    m_elemsToCut.clear();
+  } 
 
   /**@}*/
 
@@ -101,6 +124,12 @@ private:
   void setGlobalIndices( ElementRegionManager & elemManager,
                          EmbeddedSurfaceNodeManager & embSurfNodeManager,
                          EmbeddedSurfaceSubRegion & embeddedSurfaceSubregion );
+
+  void updateGlobalIndices( ElementRegionManager & elemManager,
+                            EmbeddedSurfaceNodeManager & embSurfNodeManager,
+                            EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion,
+                            localIndex numberOfEmbElemsBeforeCut,
+                            localIndex numberOfEmbNodesBeforeCut );                         
 
   void addEmbeddedElementsToSets( ElementRegionManager const & elemManager,
                                   EmbeddedSurfaceSubRegion & embeddedSurfaceSubregion );
@@ -121,6 +150,8 @@ private:
 
   // fracture region name
   string m_fractureRegionName;
+  // set of elems to cut at a certain time step
+  SortedArray<localIndex> m_elemsToCut;  
   // Flag for consistent communication ordering
   int m_mpiCommOrder;
 };
