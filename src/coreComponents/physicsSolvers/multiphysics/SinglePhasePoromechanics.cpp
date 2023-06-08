@@ -190,6 +190,36 @@ void SinglePhasePoromechanics::assembleSystem( real64 const time_n,
 
   GEOS_MARK_FUNCTION;
 
+
+  assembleElementBasedTerms( time_n,
+                             dt,
+                             domain,
+                             dofManager,
+                             localMatrix,
+                             localRhs );
+
+  // tell the flow solver that this is a stress initialization step
+  flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
+
+  // step 3: compute the fluxes (face-based contributions)
+  flowSolver()->assembleFluxTerms( time_n, dt,
+                                   domain,
+                                   dofManager,
+                                   localMatrix,
+                                   localRhs );
+
+}
+
+void SinglePhasePoromechanics::assembleElementBasedTerms( real64 const time_n,
+                                                          real64 const dt,
+                                                          DomainPartition & domain,
+                                                          DofManager const & dofManager,
+                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                          arrayView1d< real64 > const & localRhs )
+{
+  GEOS_UNUSED_VAR( time_n );
+  GEOS_UNUSED_VAR( dt );
+
   real64 poromechanicsMaxForce = 0.0;
   real64 mechanicsMaxForce = 0.0;
 
@@ -268,18 +298,6 @@ void SinglePhasePoromechanics::assembleSystem( real64 const time_n,
   } );
 
   solidMechanicsSolver()->getMaxForce() = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
-
-
-  // tell the flow solver that this is a stress initialization step
-  flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
-
-  // step 3: compute the fluxes (face-based contributions)
-
-  flowSolver()->assembleFluxTerms( time_n, dt,
-                                   domain,
-                                   dofManager,
-                                   localMatrix,
-                                   localRhs );
 }
 
 void SinglePhasePoromechanics::createPreconditioner()
