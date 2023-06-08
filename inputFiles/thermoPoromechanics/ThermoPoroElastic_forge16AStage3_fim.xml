@@ -1,0 +1,376 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+   gravityVector="{ 0.0, 0.0, -9.81 }">
+
+   <SinglePhasePoromechanics
+    name="thermoPoroSolver"
+    solidSolverName="solidMechSolver"
+    flowSolverName="flowSolver"
+    isThermal="1"
+    logLevel="1"
+    targetRegions="{ Domain }">
+    <NonlinearSolverParameters
+      newtonMaxIter="200"
+      newtonTol="1e-6"/>
+    <LinearSolverParameters
+      directParallel="0"/>
+   </SinglePhasePoromechanics>
+
+   <SolidMechanicsLagrangianSSLE
+    name="solidMechSolver"
+    timeIntegrationOption="QuasiStatic"
+    logLevel="1"
+    discretization="FE1"
+    targetRegions="{ Domain }">
+   </SolidMechanicsLagrangianSSLE>
+
+   <SinglePhaseFVM
+    name="flowSolver"
+    logLevel="1"
+    discretization="tpfaFlow"
+    temperature="273.0"
+    isThermal="1"
+    targetRegions="{ Domain }">
+   </SinglePhaseFVM>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 200, 390, 1000 }"
+      yCoords="{ 0, 400, 570, 1000  }"
+      zCoords="{ 0, 500, 690, 1000 }"
+      nx="{ 10, 19, 10 }"
+      ny="{ 10, 17, 10 }"
+      nz="{ 10, 19, 10 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Events
+      minTime="-1e11"
+      maxTime="7500">
+
+    <SoloEvent
+      name="singlePhaseThermoPoroelasticityPreEquilibrationStep"
+      targetTime="-1e11"
+      beginTime="-1e11"
+      target="/Tasks/singlePhaseThermoPoroelasticityPreEquilibrationStep"/>
+    <SoloEvent
+      name="solidMechanicsPreEquilibrationStep"
+      targetTime="-1e11"
+      beginTime="-1e11"      
+      target="/Tasks/solidMechanicsPreEquilibrationStep"/>
+
+    <PeriodicEvent
+      name="outputs"
+      beginTime="0.0"
+      timeFrequency="5.0"
+      targetExactTimestep="0"
+      target="/Outputs/thermoPoroVTKOutput"/>
+    
+    <PeriodicEvent
+      name="solverApplicationsEquilibration"
+      beginTime="-1e11"
+      endTime="0"
+      maxEventDt="1e11"
+      target="/Solvers/thermoPoroSolver"/>
+
+    <SoloEvent
+      name="singlePhaseThermoPoroelasticityPostEquilibrationStep"
+      targetTime="0"
+      target="/Tasks/singlePhaseThermoPoroelasticityPostEquilibrationStep"/>
+    <SoloEvent
+      name="solidMechanicsPostEquilibrationStep"
+      targetTime="0"
+      target="/Tasks/solidMechanicsPostEquilibrationStep"/>
+
+    <PeriodicEvent
+      name="solverApplications1"
+      beginTime="0.0"
+      endTime="10.0"
+      forceDt="1.0"
+      target="/Solvers/thermoPoroSolver"/>
+
+    <PeriodicEvent
+      name="solverApplications2"
+      beginTime="10.0"
+      endTime="100.0"
+      forceDt="5.0"
+      target="/Solvers/thermoPoroSolver"/>
+
+    <PeriodicEvent
+      name="solverApplications3"
+      beginTime="100.0"
+      endTime="1000.0"
+      forceDt="10.0"
+      target="/Solvers/thermoPoroSolver"/>
+
+    <PeriodicEvent
+      name="solverApplications4"
+      beginTime="1000.0"
+      endTime="7500.0"
+      forceDt="50.0"
+      target="/Solvers/thermoPoroSolver"/>
+  </Events>
+  
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="tpfaFlow"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ cb1 }"
+      materialList="{ rock, water, thermalCond }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <PorousElasticIsotropic
+      name="rock"
+      solidModelName="rockSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
+
+    <ElasticIsotropic
+      name="rockSolid"
+      defaultDensity="2700"
+      defaultBulkModulus="38.1944444444e9"
+      defaultShearModulus="21.8253968254e9"
+      defaultThermalExpansionCoefficient="1e-6"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      grainBulkModulus="1e11"
+      defaultReferencePorosity="0.01"
+      defaultThermalExpansionCoefficient="0.0"/>
+
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      volumetricHeatCapacity="2.4e6"
+      referenceTemperature="0.0"
+      referenceInternalEnergy="0.0"/>
+    
+    <ThermalCompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="1e-3"
+      referencePressure="0.0"
+      referenceTemperature="0.0"
+      compressibility="5e-10"
+      referenceViscosity="1e-3"
+      thermalExpansionCoeff="0.0"
+      viscosibility="0.0"
+      volumetricHeatCapacity="4.2e6"
+      referenceInternalEnergy="0.001"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-16, 1.0e-16, 1.0e-16 }"
+      pressureDependenceConstant="3e-7"
+      defaultReferencePressure="20e6"/>
+    
+    <SinglePhaseConstantThermalConductivity
+      name="thermalCond"
+      thermalConductivityComponents="{ 2.5, 2.5, 2.5 }"/>    
+  </Constitutive>
+
+  <FieldSpecifications>
+
+    <FieldSpecification
+       name="permx"
+       initialCondition="1"
+       component="0"
+       setNames="{ all }"
+       objectPath="ElementRegions/Domain/cb1"
+       fieldName="rockPerm_permeability"
+       scale="1"
+       functionName="permxFunc"/>
+
+     <FieldSpecification
+       name="permy"
+       initialCondition="1"
+       component="1"
+       setNames="{ all }"
+       objectPath="ElementRegions/Domain/cb1"
+       fieldName="rockPerm_permeability"
+       scale="1"
+       functionName="permyFunc"/>
+
+     <FieldSpecification
+       name="permz"
+       initialCondition="1"
+       component="2"
+       setNames="{ all }"
+       objectPath="ElementRegions/Domain/cb1"
+       fieldName="rockPerm_permeability"
+       scale="1"
+       functionName="permzFunc"/>
+     
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="pressure"
+      functionName="PresFunction"
+      scale="1.0e6"/>
+
+    <FieldSpecification
+      name="initialTemperature"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="temperature"
+      functionName="TempFunction"
+      scale="1.0"/>
+
+    <FieldSpecification 
+      name="sigma_h"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="rockSolid_stress"
+      component="0"
+      scale="392.90e6"/>
+    <FieldSpecification 
+      name="sigma_H"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="rockSolid_stress"
+      component="1"
+      scale="386.78e6"/>
+    <FieldSpecification 
+      name="sigma_v"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="rockSolid_stress"
+      component="2"
+      scale="372.78e6"/>
+    <!-- SPHINX_IC_END -->   
+
+    <!-- SPHINX_ZERO_DISPLACEMENT_BC -->    
+    <FieldSpecification
+      name="xconstraint"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      setNames="{ xneg, xpos }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      fieldName="totalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      setNames="{ zneg, zpos }"/>
+    <!-- SPHINX_ZERO_DISPLACEMENT_BC_END -->        
+
+    <SourceFlux
+      name="sourceTerm"
+      objectPath="ElementRegions/Domain/cb1"
+      scale="-13.25"
+      setNames="{ source }"
+      functionName="timeFunction"/>
+    
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="timeFunction"
+      coordinates="{ 0.0, 359.9, 360.1, 719.9, 720.1, 1199.9, 1200.1, 1499.9, 1500.1, 2099.9, 2100.1, 4499.9, 4500.1, 6299.9, 6300.1, 6899.9, 6900.1, 7500 }"
+      values="{ 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0, 5.0, 5.0, 6.0, 6.0, 7.0, 7.0, 4.0, 4.0, 3.0, 3.0 }"/>
+
+    <TableFunction
+      name="PresFunction"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ forge_tables/xlin.geos, forge_tables/ylin.geos, forge_tables/zlin.geos }"
+      voxelFile="forge_tables/pres.geos"/>
+
+    <TableFunction
+      name="TempFunction"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ forge_tables/xlin.geos, forge_tables/ylin.geos, forge_tables/zlin.geos }"
+      voxelFile="forge_tables/temp.geos"/>
+
+    <TableFunction
+      name="permxFunc"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ perm_tables/xlin.geos, perm_tables/ylin.geos, perm_tables/zlin.geos }"
+      voxelFile="perm_tables/perm_x.geos"
+      interpolation="nearest"/>
+
+    <TableFunction
+      name="permyFunc"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ perm_tables/xlin.geos, perm_tables/ylin.geos, perm_tables/zlin.geos }"
+      voxelFile="perm_tables/perm_y.geos"
+      interpolation="nearest"/>
+
+    <TableFunction
+      name="permzFunc"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ perm_tables/xlin.geos, perm_tables/ylin.geos, perm_tables/zlin.geos }"
+      voxelFile="perm_tables/perm_z.geos"
+      interpolation="nearest"/>
+  </Functions>
+
+  <Tasks>
+    <SinglePhasePoromechanicsInitialization 
+      logLevel="1"      
+      name="singlePhaseThermoPoroelasticityPreEquilibrationStep"
+      performStressInitialization="1"
+      poromechanicsSolverName="thermoPoroSolver"/>
+    <SolidMechanicsStateReset 
+      logLevel="2"      
+      name="solidMechanicsPreEquilibrationStep"
+      solidSolverName="solidMechSolver"/>
+    
+    <SinglePhasePoromechanicsInitialization 
+      logLevel="1"      
+      name="singlePhaseThermoPoroelasticityPostEquilibrationStep"
+      performStressInitialization="0"
+      poromechanicsSolverName="thermoPoroSolver"/>
+    <SolidMechanicsStateReset 
+      logLevel="2"      
+      name="solidMechanicsPostEquilibrationStep"
+      solidSolverName="solidMechSolver"/>
+  </Tasks>
+
+  <Outputs>
+    <VTK
+      name="thermoPoroVTKOutput"
+      plotFileRoot="thermoPoro_forge_fim_mu=1e-3_presPerm_coarse"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Geometry>
+    <Box
+      name="source"
+      xMin="{ 279.9, 469.9, 579.9 }"
+      xMax="{ 310.1, 490.1, 610.1 }"/>
+  </Geometry>
+
+</Problem>

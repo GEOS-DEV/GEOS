@@ -1,0 +1,260 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers>
+    <SinglePhaseFVM
+      name="singleFlow"
+      logLevel="1"
+      discretization="tpfaFlow"
+      temperature="273.0"
+      isThermal="1"
+      targetRegions="{ region }">
+      <NonlinearSolverParameters
+        newtonMaxIter="100"
+        newtonMinIter="0"
+        newtonTol="1.0e-6"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"/>
+    </SinglePhaseFVM>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 200, 390, 1000 }"
+      yCoords="{ 0, 400, 570, 1000  }"
+      zCoords="{ 0, 500, 690, 1000 }"
+      nx="{ 20, 95, 61 }"
+      ny="{ 40, 85, 43 }"
+      nz="{ 50, 95, 31 }"
+      cellBlockNames="{ cb }"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="source"
+      xMin="{ 279.9, 469.9, 579.9 }"
+      xMax="{ 310.1, 500.1, 610.1 }"/>
+  </Geometry>
+
+  <Events
+      maxTime="7500">
+
+    <PeriodicEvent
+      name="outputs"
+      beginTime="0.0"
+      timeFrequency="5.0"
+      targetExactTimestep="0"
+      target="/Outputs/VTKOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications1"
+      beginTime="0.0"
+      endTime="10.0"
+      forceDt="1.0"
+      target="/Solvers/singleFlow"/>
+
+    <PeriodicEvent
+      name="solverApplications2"
+      beginTime="10.0"
+      endTime="100.0"
+      forceDt="1.0"
+      target="/Solvers/singleFlow"/>
+
+    <PeriodicEvent
+      name="solverApplications3"
+      beginTime="100.0"
+      endTime="4500.0"
+      forceDt="2.0"
+      target="/Solvers/singleFlow"/>
+
+    <PeriodicEvent
+      name="solverApplications4"
+      beginTime="4500.0"
+      endTime="7500.0"
+      forceDt="10.0"
+      target="/Solvers/singleFlow"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="tpfaFlow"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="region"
+      cellBlocks="{ cb }"
+      materialList="{ fluid, rock, thermalCond }"/>
+  </ElementRegions>
+
+  <Constitutive>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.01"
+      referencePressure="0.0"
+      compressibility="1.0e-11"/>
+
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      volumetricHeatCapacity="2.4e6"
+      referenceTemperature="0.0"
+      referenceInternalEnergy="0.0"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-16, 1.0e-16, 1.0e-16 }"
+      pressureDependenceConstant="3e-7"
+      defaultReferencePressure="20e6"/>
+
+    <ThermalCompressibleSinglePhaseFluid
+      name="fluid"
+      defaultDensity="1000"
+      defaultViscosity="1e-3"
+      referencePressure="0.0"
+      referenceTemperature="0.0"
+      compressibility="5e-10"
+      referenceViscosity="1e-3"
+      thermalExpansionCoeff="0.0"
+      viscosibility="0.0"
+      volumetricHeatCapacity="4.2e6"
+      referenceInternalEnergy="0.001"/>
+
+    <SinglePhaseConstantThermalConductivity
+      name="thermalCond"
+      thermalConductivityComponents="{ 2.5, 2.5, 2.5 }"/>
+    
+  </Constitutive>
+
+  <FieldSpecifications>
+
+    <FieldSpecification
+       name="permx"
+       initialCondition="1"
+       component="0"
+       setNames="{ all }"
+       objectPath="ElementRegions/region/cb"
+       fieldName="rockPerm_initialPermeability"
+       scale="1"
+       functionName="permxFunc"/>
+
+     <FieldSpecification
+       name="permy"
+       initialCondition="1"
+       component="1"
+       setNames="{ all }"
+       objectPath="ElementRegions/region/cb"
+       fieldName="rockPerm_initialPermeability"
+       scale="1"
+       functionName="permyFunc"/>
+
+     <FieldSpecification
+       name="permz"
+       initialCondition="1"
+       component="2"
+       setNames="{ all }"
+       objectPath="ElementRegions/region/cb"
+       fieldName="rockPerm_initialPermeability"
+       scale="1"
+       functionName="permzFunc"/>
+
+    <FieldSpecification
+      name="refPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/region/cb"
+      fieldName="rockPerm_referencePressure"
+      functionName="PresFunction"
+      scale="1.0e6"/>
+
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/region/cb"
+      fieldName="pressure"
+      functionName="PresFunction"
+      scale="1.0e6"/>
+
+    <FieldSpecification
+      name="initialTemperature"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/region/cb"
+      fieldName="temperature"
+      functionName="TempFunction"
+      scale="1.0"/>
+
+    <SourceFlux
+      name="sourcePres"
+      objectPath="ElementRegions/region/cb"
+      scale="-13.25"
+      setNames="{ source }"
+      functionName="timeFunction"/>
+
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="timeFunction"
+      coordinates="{ 0.0, 359.9, 360.1, 719.9, 720.1, 1199.9, 1200.1, 1499.9, 1500.1, 2099.9, 2100.1, 4499.9, 4500.1, 6299.9, 6300.1, 6899.9, 6900.1, 7500 }"
+      values="{ 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0, 5.0, 5.0, 6.0, 6.0, 7.0, 7.0, 4.0, 4.0, 3.0, 3.0 }"/>
+
+    <TableFunction
+      name="PresFunction"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ forge_tables/xlin.geos, forge_tables/ylin.geos, forge_tables/zlin.geos }"
+      voxelFile="forge_tables/pres.geos"/>
+
+    <TableFunction
+      name="TempFunction"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ forge_tables/xlin.geos, forge_tables/ylin.geos, forge_tables/zlin.geos }"
+      voxelFile="forge_tables/temp.geos"/>
+
+    <TableFunction
+      name="permxFunc"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ perm_tables/xlin.geos, perm_tables/ylin.geos, perm_tables/zlin.geos }"
+      voxelFile="perm_tables/perm_x.geos"
+      interpolation="nearest"/>
+
+    <TableFunction
+      name="permyFunc"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ perm_tables/xlin.geos, perm_tables/ylin.geos, perm_tables/zlin.geos }"
+      voxelFile="perm_tables/perm_y.geos"
+      interpolation="nearest"/>
+
+    <TableFunction
+      name="permzFunc"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ perm_tables/xlin.geos, perm_tables/ylin.geos, perm_tables/zlin.geos }"
+      voxelFile="perm_tables/perm_z.geos"
+      interpolation="nearest"/>
+  </Functions>
+
+  <Outputs>
+    <VTK
+      name="VTKOutput"
+      plotFileRoot="thermoFlow_forge_noTempSource_pressurePerm"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>
