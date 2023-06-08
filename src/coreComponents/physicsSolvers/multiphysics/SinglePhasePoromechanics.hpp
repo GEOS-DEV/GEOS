@@ -141,6 +141,12 @@ protected:
 
   virtual void initializePreSubGroups() override;
 
+  void assembleElementBasedTerms( real64 const time_n,
+                                  real64 const dt,
+                                  DomainPartition & domain,
+                                  DofManager const & dofManager,
+                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  arrayView1d< real64 > const & localRhs );
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
 
