@@ -239,14 +239,14 @@ MeshLevel::MeshLevel( string const & name,
 
   } );
 
-    CellBlockManagerABC & cellBlockManager = meshBody->getGroup< CellBlockManagerABC >( keys::cellManager );
+  CellBlockManagerABC & cellBlockManager = meshBody->getGroup< CellBlockManagerABC >( keys::cellManager );
 
-    cellBlockManager.generateHighOrderMaps( order,
-                                            maxVertexGlobalID,
-                                            maxEdgeGlobalID,
-                                            maxFaceGlobalID,
-                                            edgeLocalToGlobal,
-                                            faceLocalToGlobal );
+  cellBlockManager.generateHighOrderMaps( order,
+                                          maxVertexGlobalID,
+                                          maxEdgeGlobalID,
+                                          maxFaceGlobalID,
+                                          edgeLocalToGlobal,
+                                          faceLocalToGlobal );
 
 
   /////////////////////////
