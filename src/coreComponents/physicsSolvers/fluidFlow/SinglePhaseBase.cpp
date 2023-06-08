@@ -25,7 +25,6 @@
 #include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidSelector.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
-#include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
 #include "constitutive/thermalConductivity/singlePhaseThermalConductivitySelector.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
