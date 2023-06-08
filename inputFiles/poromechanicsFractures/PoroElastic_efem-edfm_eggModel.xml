@@ -58,6 +58,7 @@
       name="SurfaceGenerator"      
       targetRegions="{ Reservoir, Overburden, Underburden, Sideburden, Fracture }"
       fractureRegion="Fracture"
+      targetObjects="{ FracturePlane1, FracturePlane2, FracturePlane3, FracturePlane4, FracturePlane5 }"
       logLevel="1"
       discretization="FE1"
       mpiCommOrder="1"/>

@@ -30,6 +30,7 @@
       logLevel="1"
       discretization="fluidTPFA"
       targetRegions="{ Domain, Fracture }"
+      targetObjects="{ FracturePlane }"
       fractureRegion="Fracture"
       mpiCommOrder="1"/>
   </Solvers>

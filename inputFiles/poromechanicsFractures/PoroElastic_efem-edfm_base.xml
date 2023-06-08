@@ -17,8 +17,7 @@
         maxTimeStepCuts="4"/>
       <LinearSolverParameters
         directParallel="0"
-        solverType="gmres"
-        preconditionerType="mgr"/>
+        solverType="direct"/>
     </SinglePhasePoromechanicsEmbeddedFractures>
 
     <SolidMechanicsEmbeddedFractures
@@ -48,6 +47,7 @@
       targetRegions="{ Domain, Fracture }"
       discretization="FE1"    
       fractureRegion="Fracture"
+      targetObjects="{ FracturePlane }"
       logLevel="1"
       mpiCommOrder="1"/>
   </Solvers>
