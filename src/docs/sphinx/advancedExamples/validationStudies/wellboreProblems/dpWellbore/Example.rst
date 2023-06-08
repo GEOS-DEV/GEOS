@@ -66,7 +66,7 @@ The parameters used in the simulation are summarized in the following table.
 | :math:`p_w`      | Mud Pressure            | [MPa]            | -2.0          |
 +------------------+-------------------------+------------------+---------------+
 
-The validations of GEOS results against analyticla results is shown in the figure below:
+The validation of GEOS results against analytical results is shown in the figure below:
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/dpWellbore/dpWellbore_plot.py
 
