@@ -45,8 +45,8 @@ def compute_bij(sr, s0, sz, dFdp, dFdq, E, nu, dFdpc,dpcdepsVp,dGdp):
 def solution_plastic(sr, s0, sz, epsV, xd, dx, dFdp, dFdq, E, nu, dFdpc,dpcdepsVp,dGdp):
     b11,b12,b13,b22,b23,b33,b21,b31,b32,delta = compute_bij(sr, s0, sz, dFdp, dFdq, E, nu, dFdpc,dpcdepsVp,dGdp)
 
-    exp_epsilon_V = np.exp(epsV)# epsV is the volumetric strain from the elastic-plastic boundary
-    tmp = 1 - xd - exp_epsilon_V / (1 - xd)
+    exp_epsilon_V = np.exp(epsV) # epsV is the volumetric strain from the elastic-plastic boundary
+    tmp = 1.0 - 2.0*xd - exp_epsilon_V # Use natural logarithm form for large volume strain
     
     DrDx = -(sr - s0) / tmp
     sr += DrDx * dx
@@ -77,7 +77,7 @@ def compute_radialCoordinate(xi,epsV):
         dxi = xi[i-1]-xi[i]
         exp_epsilon_V = np.exp(epsV[i-1])
     
-        integral += dxi / (1 - xi[i - 1] - exp_epsilon_V / (1 - xi[i - 1]) ) 
+        integral += dxi / (1.0 - 2.0*xi[i - 1] - exp_epsilon_V) # Use natural logarithm form for large volume strain
         r[i - 1] = np.exp(integral)
         
     return r
