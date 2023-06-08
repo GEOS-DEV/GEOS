@@ -132,6 +132,9 @@ protected:
   /// tolerance to determine if a point sits on the PlanarGeometricObject or not
   real64 m_tolerance;
 
+  /// tolerance to check if base is orthonormal
+  static constexpr real64 orthoNormalBaseTolerance = 1e-10;
+
   /// @cond DO_NOT_DOCUMENT
 
   struct viewKeyStruct

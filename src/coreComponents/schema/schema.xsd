@@ -85,17 +85,17 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="mapPair">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}]*" />
+			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}\s]*\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="path">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}]*" />
+			<xsd:pattern value=".*[\[\]`$].*|[^*?&lt;&gt;\|:&quot;;,\s]*\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="path_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([^,\{\}]*,\s*)*[^,\{\}]*)?\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([^*?&lt;&gt;\|:&quot;;,\s]+\s*,\s*)*[^*?&lt;&gt;\|:&quot;;,\s]+\s*)?\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32">
@@ -145,12 +145,12 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="string">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}]*" />
+			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}\s]*\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="string_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([^,\{\}]*,\s*)*[^,\{\}]*)?\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:element name="Problem" type="ProblemType" />
@@ -804,6 +804,8 @@
 		<xsd:attribute name="maxTime" type="real64" default="1.79769e+308" />
 		<!--minTime => Start simulation time for the global event loop.-->
 		<xsd:attribute name="minTime" type="real64" default="0" />
+		<!--timeOutputFormat => Format of the time in the GEOS log.-->
+		<xsd:attribute name="timeOutputFormat" type="geos_EventManager_TimeOutputFormat" default="seconds" />
 	</xsd:complexType>
 	<xsd:complexType name="HaltEventType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -904,6 +906,11 @@
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geos_EventManager_TimeOutputFormat">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|seconds|minutes|hours|days|years|full" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="FieldSpecificationsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Aquifer" type="AquiferType" />
@@ -2625,6 +2632,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
+		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver used by the coupled solver-->

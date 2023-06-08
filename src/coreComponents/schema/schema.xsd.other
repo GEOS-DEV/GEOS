@@ -85,17 +85,17 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="mapPair">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}]*" />
+			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}\s]*\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="path">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}]*" />
+			<xsd:pattern value=".*[\[\]`$].*|[^*?&lt;&gt;\|:&quot;;,\s]*\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="path_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([^,\{\}]*,\s*)*[^,\{\}]*)?\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([^*?&lt;&gt;\|:&quot;;,\s]+\s*,\s*)*[^*?&lt;&gt;\|:&quot;;,\s]+\s*)?\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32">
@@ -145,12 +145,12 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="string">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}]*" />
+			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}\s]*\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="string_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([^,\{\}]*,\s*)*[^,\{\}]*)?\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:element name="Problem" type="ProblemType" />
@@ -431,7 +431,7 @@
 		<!--faceElementToCellStencil => (no description available)-->
 		<xsd:attribute name="faceElementToCellStencil" type="geos_FaceElementToCellStencil" />
 		<!--fieldName => Name of primary solution field-->
-		<xsd:attribute name="fieldName" type="string" />
+		<xsd:attribute name="fieldName" type="string_array" />
 		<!--fractureStencil => (no description available)-->
 		<xsd:attribute name="fractureStencil" type="geos_SurfaceElementStencil" />
 		<!--targetRegions => List of regions to build the stencil for-->
