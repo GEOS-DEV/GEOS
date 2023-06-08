@@ -15,6 +15,7 @@
 // Source includes
 #include "mainInterface/initialization.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FVM/FluxKernel.hpp"
+#include "finiteVolume/CellElementStencilTPFA.hpp"
 #include "testFlowKernelHelpers.hpp"
 
 // TPL includes
