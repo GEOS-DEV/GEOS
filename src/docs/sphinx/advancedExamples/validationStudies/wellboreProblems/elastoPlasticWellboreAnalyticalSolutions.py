@@ -14,8 +14,8 @@ def compute_a(sr,s0,sz,sigma,dGdp, dGdq):
     dqdsigma = 3.0*(sigma-p)/2.0/q
     return dGdp*dpdsigma + dGdq*dqdsigma
 
-def compute_bij(sr, s0, sz, dGdp, dGdq, E, nu, dGdpc,dpcdepsVp,dGdp):
-    h = hardeningRate(dGdpc,dpcdepsVp,dGdp)
+def compute_bij(sr, s0, sz, dGdp, dGdq, E, nu, dFdpc,dpcdepsVp,dGdp):
+    h = hardeningRate(dFdpc,dpcdepsVp,dGdp)
     
     ar = compute_a(sr,s0,sz,sr,dGdp,dGdq)
     a0 = compute_a(sr,s0,sz,s0,dGdp,dGdq)
@@ -42,8 +42,8 @@ def compute_bij(sr, s0, sz, dGdp, dGdq, E, nu, dGdpc,dpcdepsVp,dGdp):
     return b11,b12,b13,b22,b23,b33,b21,b31,b32,delta
     
 
-def solution_plastic(sr, s0, sz, epsV, xd, dx, dGdp, dGdq, E, nu, dGdpc,dpcdepsVp,dGdp):
-    b11,b12,b13,b22,b23,b33,b21,b31,b32,delta = compute_bij(sr, s0, sz, dGdp, dGdq, E, nu, dGdpc,dpcdepsVp,dGdp)
+def solution_plastic(sr, s0, sz, epsV, xd, dx, dGdp, dGdq, E, nu, dFdpc,dpcdepsVp,dGdp):
+    b11,b12,b13,b22,b23,b33,b21,b31,b32,delta = compute_bij(sr, s0, sz, dGdp, dGdq, E, nu, dFdpc,dpcdepsVp,dGdp)
 
     exp_epsilon_V = np.exp(epsV) # epsV is the volumetric strain from the elastic-plastic boundary
     tmp = 1.0 - 2.0*xd - exp_epsilon_V # Use natural logarithm form for large volume strain
