@@ -272,8 +272,6 @@ void EmbeddedSurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 
 bool EmbeddedSurfaceGenerator::propagationStep3D()
 {
-  GEOSX_MARK_FUNCTION;
-
   // Get domain
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -466,7 +464,7 @@ void EmbeddedSurfaceGenerator::updateGlobalIndices( ElementRegionManager & elemM
 
   globalIndexOffset[0] = elemManager.maxGlobalIndex(); 
   localIndex totalNumberOfNewSurfaceElements = numberOfNewSurfaceElemsPerRank[ 0 ];  
-  GEOSX_UNUSED_VAR(totalNumberOfNewSurfaceElements);
+  GEOS_UNUSED_VAR(totalNumberOfNewSurfaceElements);
   for( int rank = 1; rank < commSize; ++rank )
   {
     globalIndexOffset[rank] = globalIndexOffset[rank - 1] + numberOfNewSurfaceElemsPerRank[rank - 1];
