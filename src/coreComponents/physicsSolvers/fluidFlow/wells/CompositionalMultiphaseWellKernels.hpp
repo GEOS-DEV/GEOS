@@ -49,7 +49,7 @@ static constexpr real64 minDensForDivision = 1e-10;
 // tag to access well and reservoir elements in perforation rates computation
 struct SubRegionTag
 {
-  static constexpr integer RES = 0;
+  static constexpr integer RES  = 0;
   static constexpr integer WELL = 1;
 };
 
@@ -57,7 +57,7 @@ struct SubRegionTag
 struct ElemTag
 {
   static constexpr integer CURRENT = 0;
-  static constexpr integer NEXT = 1;
+  static constexpr integer NEXT    = 1;
 };
 
 // define the column offset of the derivatives
@@ -155,9 +155,9 @@ struct FluxKernel
              real64 const ( &dCompFlux_dRate )[NC],
              real64 const ( &dCompFlux_dPresUp )[NC],
              real64 const ( &dCompFlux_dCompDensUp )[NC][NC],
-             real64 ( &localFlux )[2 * NC],
-             real64 ( &localFluxJacobian_dRate )[2 * NC][1],
-             real64 ( &localFluxJacobian_dPresCompUp )[2 * NC][NC + 1] );
+             real64 ( &localFlux )[2*NC],
+             real64 ( &localFluxJacobian_dRate )[2*NC][1],
+             real64 ( &localFluxJacobian_dPresCompUp )[2*NC][NC + 1] );
 
   template< integer NC >
   static void
@@ -199,7 +199,7 @@ struct PressureRelationKernel
              arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dTotalMassDens_dCompDens,
              arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dTotalMassDens_dCompDensNext,
              real64 & localPresRel,
-             real64 ( &localPresRelJacobian )[2 * ( NC + 1 )] );
+             real64 ( &localPresRelJacobian )[2*(NC+1)] );
 
   template< integer NC >
   static void
@@ -396,7 +396,7 @@ struct VolumeBalanceKernel
              arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
              arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac,
              real64 & localVolBalance,
-             real64 ( &localVolBalanceJacobian )[NC + 1] );
+             real64 ( &localVolBalanceJacobian )[NC+1] );
 
   template< integer NC >
   static void
@@ -529,7 +529,7 @@ public:
     m_totalMassDens( subRegion.getField< fields::well::totalMassDensity >() ),
     m_dTotalMassDens_dPres( subRegion.getField< fields::well::dTotalMassDensity_dPressure >() ),
     m_dTotalMassDens_dCompDens( subRegion.getField< fields::well::dTotalMassDensity_dGlobalCompDensity >() )
-  { }
+  {}
 
   /**
    * @brief Compute the total mass density in an element
@@ -571,7 +571,7 @@ public:
       applyChainRule( numComp, dCompFrac_dCompDens, dPhaseMassDens[ip], dMassDens_dC, Deriv::dC );
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        dTotalMassDens_dCompDens[ic] += dPhaseVolFrac[ip][Deriv::dC + ic] * phaseMassDens[ip]
+        dTotalMassDens_dCompDens[ic] += dPhaseVolFrac[ip][Deriv::dC+ic] * phaseMassDens[ip]
                                         + phaseVolFrac[ip] * dMassDens_dC[ic];
       }
 
@@ -624,17 +624,24 @@ public:
                    ObjectManagerBase & subRegion,
                    MultiFluidBase const & fluid )
   {
-    isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&]( auto NC )
+    if( numPhase == 2 )
     {
-      integer constexpr NUM_COMP = NC();
-      isothermalCompositionalMultiphaseBaseKernels::
-        internal::kernelLaunchSelectorPhaseSwitch( numPhase, [&]( auto NP )
+      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
-        integer constexpr NUM_PHASE = NP();
-        TotalMassDensityKernel< NUM_COMP, NUM_PHASE > kernel( subRegion, fluid );
-        TotalMassDensityKernel< NUM_COMP, NUM_PHASE >::template launch< POLICY >( subRegion.size(), kernel );
+        integer constexpr NUM_COMP = NC();
+        TotalMassDensityKernel< NUM_COMP, 2 > kernel( subRegion, fluid );
+        TotalMassDensityKernel< NUM_COMP, 2 >::template launch< POLICY >( subRegion.size(), kernel );
       } );
-    } );
+    }
+    else if( numPhase == 3 )
+    {
+      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      {
+        integer constexpr NUM_COMP = NC();
+        TotalMassDensityKernel< NUM_COMP, 3 > kernel( subRegion, fluid );
+        TotalMassDensityKernel< NUM_COMP, 3 >::template launch< POLICY >( subRegion.size(), kernel );
+      } );
+    }
   }
 };
 
@@ -684,7 +691,7 @@ public:
     m_volume( subRegion.getElementVolume() ),
     m_phaseDens_n( fluid.phaseDensity_n() ),
     m_totalDens_n( fluid.totalDensity_n() )
-  { }
+  {}
 
   GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const iwelem,

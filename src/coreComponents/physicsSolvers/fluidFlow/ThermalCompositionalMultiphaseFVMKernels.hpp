@@ -65,7 +65,7 @@ public:
                        MultiFluidBase const & fluid,
                        RelativePermeabilityBase const & relperm )
     : Base( subRegion, fluid, relperm )
-  { }
+  {}
 
   /**
    * @brief Compute the phase mobilities in an element
@@ -84,9 +84,9 @@ public:
     arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > const dPhaseRelPerm_dPhaseVolFrac = m_dPhaseRelPerm_dPhaseVolFrac[ei][0];
     arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dPhaseVolFrac[ei];
 
-    Base::compute( ei, [&]( localIndex const ip,
-                            real64 const & phaseMob,
-                            arraySlice1d< real64, compflow::USD_PHASE_DC - 2 > const & dPhaseMob )
+    Base::compute( ei, [&] ( localIndex const ip,
+                             real64 const & phaseMob,
+                             arraySlice1d< real64, compflow::USD_PHASE_DC - 2 > const & dPhaseMob )
     {
       // Step 1: compute the derivative of relPerm[ip] wrt temperature
       real64 dRelPerm_dT = 0.0;
@@ -97,7 +97,7 @@ public:
 
       // Step 2: compute the derivative of phaseMob[ip] wrt temperature
       dPhaseMob[Deriv::dT] = dRelPerm_dT * phaseDens[ip] / phaseVisc[ip]
-                             + phaseMob * ( dPhaseDens[ip][Deriv::dT] / phaseDens[ip] - dPhaseVisc[ip][Deriv::dT] / phaseVisc[ip] );
+                             + phaseMob * (dPhaseDens[ip][Deriv::dT] / phaseDens[ip] - dPhaseVisc[ip][Deriv::dT] / phaseVisc[ip] );
     } );
   }
 
@@ -127,18 +127,26 @@ public:
                    MultiFluidBase const & fluid,
                    RelativePermeabilityBase const & relperm )
   {
-    isothermalCompositionalMultiphaseBaseKernels::
-      internal::kernelLaunchSelectorCompSwitch( numComp, [&]( auto NC )
+    if( numPhase == 2 )
     {
-      integer constexpr NUM_COMP = NC();
       isothermalCompositionalMultiphaseBaseKernels::
-        internal::kernelLaunchSelectorPhaseSwitch( numPhase, [&]( auto NP )
+        internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
-        integer constexpr NUM_PHASE = NP();
-        PhaseMobilityKernel< NUM_COMP, NUM_PHASE > kernel( subRegion, fluid, relperm );
-        PhaseMobilityKernel< NUM_COMP, NUM_PHASE >::template launch< POLICY >( subRegion.size(), kernel );
+        integer constexpr NUM_COMP = NC();
+        PhaseMobilityKernel< NUM_COMP, 2 > kernel( subRegion, fluid, relperm );
+        PhaseMobilityKernel< NUM_COMP, 2 >::template launch< POLICY >( subRegion.size(), kernel );
       } );
-    } );
+    }
+    else if( numPhase == 3 )
+    {
+      isothermalCompositionalMultiphaseBaseKernels::
+        internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      {
+        integer constexpr NUM_COMP = NC();
+        PhaseMobilityKernel< NUM_COMP, 3 > kernel( subRegion, fluid, relperm );
+        PhaseMobilityKernel< NUM_COMP, 3 >::template launch< POLICY >( subRegion.size(), kernel );
+      } );
+    }
   }
 };
 
@@ -261,17 +269,16 @@ public:
     m_phaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::phaseEnthalpy {} ) ),
     m_dPhaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::dPhaseEnthalpy {} ) ),
     m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) )
-  { }
+  {}
 
   struct StackVariables : public Base::StackVariables
   {
 public:
 
     GEOS_HOST_DEVICE
-    StackVariables( localIndex const size,
-                    localIndex numElems )
+    StackVariables( localIndex const size, localIndex numElems )
       : Base::StackVariables( size, numElems )
-    { }
+    {}
 
     using Base::StackVariables::stencilSize;
     using Base::StackVariables::numConnectedElems;
@@ -308,20 +315,20 @@ public:
     // Computing dCompFlux_dT and the enthalpy flux requires quantities already computed in the base computeFlux,
     // such as potGrad, phaseFlux, and the indices of the upwind cell
     // We use the lambda below (called **inside** the phase loop of the base computeFlux) to access these variables
-    Base::computeFlux( iconn, stack, [&]( integer const ip,
-                                          localIndex const (&k)[2],
-                                          localIndex const (&seri)[2],
-                                          localIndex const (&sesri)[2],
-                                          localIndex const (&sei)[2],
-                                          localIndex const connectionIndex,
-                                          localIndex const k_up,
-                                          localIndex const er_up,
-                                          localIndex const esr_up,
-                                          localIndex const ei_up,
-                                          real64 const & potGrad,
-                                          real64 const & phaseFlux,
-                                          real64 const (&dPhaseFlux_dP)[2],
-                                          real64 const (&dPhaseFlux_dC)[2][numComp] )
+    Base::computeFlux( iconn, stack, [&] ( integer const ip,
+                                           localIndex const (&k)[2],
+                                           localIndex const (&seri)[2],
+                                           localIndex const (&sesri)[2],
+                                           localIndex const (&sei)[2],
+                                           localIndex const connectionIndex,
+                                           localIndex const k_up,
+                                           localIndex const er_up,
+                                           localIndex const esr_up,
+                                           localIndex const ei_up,
+                                           real64 const & potGrad,
+                                           real64 const & phaseFlux,
+                                           real64 const (&dPhaseFlux_dP)[2],
+                                           real64 const (&dPhaseFlux_dC)[2][numComp] )
     {
       // We are in the loop over phases, ip provides the current phase index.
 
@@ -340,9 +347,9 @@ public:
 
       for( integer i = 0; i < numFluxSupportPoints; ++i )
       {
-        localIndex const er = seri[i];
+        localIndex const er  = seri[i];
         localIndex const esr = sesri[i];
-        localIndex const ei = sei[i];
+        localIndex const ei  = sei[i];
 
         real64 const dDens_dT = m_dPhaseMassDens[er][esr][ei][0][ip][Deriv::dT];
         dDensMean_dT[i] = 0.5 * dDens_dT;
@@ -357,9 +364,9 @@ public:
       // compute potential difference MPFA-style
       for( integer i = 0; i < numFluxSupportPoints; ++i )
       {
-        localIndex const er = seri[i];
+        localIndex const er  = seri[i];
         localIndex const esr = sesri[i];
-        localIndex const ei = sei[i];
+        localIndex const ei  = sei[i];
 
         // Step 2.1: compute derivative of capillary pressure wrt temperature
         real64 dCapPressure_dT = 0.0;
@@ -427,8 +434,8 @@ public:
       // Step 4: add dCompFlux_dTemp to localFluxJacobian
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        integer const eqIndex0 = k[0] * numEqn + ic;
-        integer const eqIndex1 = k[1] * numEqn + ic;
+        integer const eqIndex0 = k[0]* numEqn + ic;
+        integer const eqIndex1 = k[1]* numEqn + ic;
         for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
         {
           integer const localDofIndexTemp = k[ke] * numDof + numDof - 1;
@@ -469,8 +476,8 @@ public:
       // Step 6: add convectiveFlux and its derivatives to localFlux and localFluxJacobian
       integer const localRowIndexEnergy0 = k[0] * numEqn + numEqn - 1;
       integer const localRowIndexEnergy1 = k[1] * numEqn + numEqn - 1;
-      stack.localFlux[localRowIndexEnergy0] += m_dt * convectiveEnergyFlux;
-      stack.localFlux[localRowIndexEnergy1] -= m_dt * convectiveEnergyFlux;
+      stack.localFlux[localRowIndexEnergy0] +=  m_dt * convectiveEnergyFlux;
+      stack.localFlux[localRowIndexEnergy1] -=  m_dt * convectiveEnergyFlux;
 
       for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
       {
@@ -478,8 +485,8 @@ public:
         stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexPres] += m_dt * dConvectiveEnergyFlux_dP[ke];
         stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexPres] -= m_dt * dConvectiveEnergyFlux_dP[ke];
         integer const localDofIndexTemp = localDofIndexPres + numDof - 1;
-        stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexTemp] += m_dt * dConvectiveEnergyFlux_dT[ke];
-        stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexTemp] -= m_dt * dConvectiveEnergyFlux_dT[ke];
+        stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexTemp] +=  m_dt * dConvectiveEnergyFlux_dT[ke];
+        stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexTemp] -=  m_dt * dConvectiveEnergyFlux_dT[ke];
 
         for( integer jc = 0; jc < numComp; ++jc )
         {
@@ -515,9 +522,9 @@ public:
       for( k[1] = k[0] + 1; k[1] < stack.numConnectedElems; ++k[1] )
       {
         real64 const thermalTrans[2] = { stack.thermalTransmissibility[connectionIndex][0], stack.thermalTransmissibility[connectionIndex][1] };
-        localIndex const seri[2] = { m_seri( iconn, k[0] ), m_seri( iconn, k[1] ) };
-        localIndex const sesri[2] = { m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] ) };
-        localIndex const sei[2] = { m_sei( iconn, k[0] ), m_sei( iconn, k[1] ) };
+        localIndex const seri[2]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
+        localIndex const sesri[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
+        localIndex const sei[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
         real64 conductiveEnergyFlux = 0.0;
         real64 dConductiveEnergyFlux_dT[numFluxSupportPoints]{};
@@ -525,9 +532,9 @@ public:
         // Step 2: compute temperature difference at the interface
         for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
         {
-          localIndex const er = seri[ke];
+          localIndex const er  = seri[ke];
           localIndex const esr = sesri[ke];
-          localIndex const ei = sei[ke];
+          localIndex const ei  = sei[ke];
 
           conductiveEnergyFlux += thermalTrans[ke] * m_temp[er][esr][ei];
           dConductiveEnergyFlux_dT[ke] += thermalTrans[ke];
@@ -536,14 +543,14 @@ public:
         // Step 3: add conductiveFlux and its derivatives to localFlux and localFluxJacobian
         integer const localRowIndexEnergy0 = k[0] * numEqn + numEqn - 1;
         integer const localRowIndexEnergy1 = k[1] * numEqn + numEqn - 1;
-        stack.localFlux[localRowIndexEnergy0] += m_dt * conductiveEnergyFlux;
-        stack.localFlux[localRowIndexEnergy1] -= m_dt * conductiveEnergyFlux;
+        stack.localFlux[localRowIndexEnergy0] +=  m_dt * conductiveEnergyFlux;
+        stack.localFlux[localRowIndexEnergy1] -=  m_dt * conductiveEnergyFlux;
 
         for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
         {
           integer const localDofIndexTemp = k[ke] * numDof + numDof - 1;
-          stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexTemp] += m_dt * dConductiveEnergyFlux_dT[ke];
-          stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexTemp] -= m_dt * dConductiveEnergyFlux_dT[ke];
+          stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexTemp] +=  m_dt * dConductiveEnergyFlux_dT[ke];
+          stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexTemp] -=  m_dt * dConductiveEnergyFlux_dT[ke];
         }
       }
     }
@@ -561,15 +568,15 @@ public:
   {
     // Call Case::complete to assemble the component mass balance equations (i = 0 to i = numDof-2)
     // In the lambda, add contribution to residual and jacobian into the energy balance equation
-    Base::complete( iconn, stack, [&]( integer const i,
-                                       localIndex const localRow )
+    Base::complete( iconn, stack, [&] ( integer const i,
+                                        localIndex const localRow )
     {
       // beware, there is  volume balance eqn in m_localRhs and m_localMatrix!
-      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn], stack.localFlux[i * numEqn + numEqn - 1] );
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn], stack.localFlux[i * numEqn + numEqn-1] );
       AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
         ( localRow + numEqn,
         stack.dofColIndices.data(),
-        stack.localFluxJacobian[i * numEqn + numEqn - 1].dataIfContiguous(),
+        stack.localFluxJacobian[i * numEqn + numEqn-1].dataIfContiguous(),
         stack.stencilSize * numDof );
 
     } );
@@ -786,7 +793,7 @@ public:
     m_phaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::phaseEnthalpy {} ) ),
     m_dPhaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::dPhaseEnthalpy {} ) ),
     m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) )
-  { }
+  {}
 
   struct StackVariables : public Base::StackVariables
   {
@@ -798,10 +805,9 @@ public:
      * @param[in] numElems number of elements for this connection
      */
     GEOS_HOST_DEVICE
-    StackVariables( localIndex const size,
-                    localIndex numElems )
+    StackVariables( localIndex const size, localIndex numElems )
       : Base::StackVariables( size, numElems )
-    { }
+    {}
 
     using Base::StackVariables::transmissibility;
     using Base::StackVariables::dofColIndices;
@@ -847,18 +853,18 @@ public:
     // Computing dCompFlux_dT and the enthalpy flux requires quantities already computed in the base computeFlux,
     // such as potGrad, phaseFlux, and the indices of the upwind cell
     // We use the lambda below (called **inside** the phase loop of the base computeFlux) to access these variables
-    Base::computeFlux( iconn, stack, [&]( integer const ip,
-                                          localIndex const er,
-                                          localIndex const esr,
-                                          localIndex const ei,
-                                          localIndex const kf,
-                                          real64 const & f, // potGrad times trans
-                                          real64 const & facePhaseMob,
-                                          arraySlice1d< const real64, multifluid::USD_PHASE - 2 > const & facePhaseEnthalpy,
-                                          arraySlice2d< const real64, multifluid::USD_PHASE_COMP - 2 > const & facePhaseCompFrac,
-                                          real64 const & phaseFlux,
-                                          real64 const & dPhaseFlux_dP,
-                                          real64 const (&dPhaseFlux_dC)[numComp] )
+    Base::computeFlux( iconn, stack, [&] ( integer const ip,
+                                           localIndex const er,
+                                           localIndex const esr,
+                                           localIndex const ei,
+                                           localIndex const kf,
+                                           real64 const & f, // potGrad times trans
+                                           real64 const & facePhaseMob,
+                                           arraySlice1d< const real64, multifluid::USD_PHASE - 2 > const & facePhaseEnthalpy,
+                                           arraySlice2d< const real64, multifluid::USD_PHASE_COMP-2 > const & facePhaseCompFrac,
+                                           real64 const & phaseFlux,
+                                           real64 const & dPhaseFlux_dP,
+                                           real64 const (&dPhaseFlux_dC)[numComp] )
     {
       // We are in the loop over phases, ip provides the current phase index.
 
@@ -978,18 +984,18 @@ public:
     // Step 1: add dCompFlux_dTemp to localFluxJacobian
     for( integer ic = 0; ic < numComp; ++ic )
     {
-      stack.localFluxJacobian[ic][numDof - 1] = m_dt * stack.dCompFlux_dT[ic];
+      stack.localFluxJacobian[ic][numDof-1] =  m_dt * stack.dCompFlux_dT[ic];
     }
 
     // Step 2: add energyFlux and its derivatives to localFlux and localFluxJacobian
-    integer const localRowIndexEnergy = numEqn - 1;
-    stack.localFlux[localRowIndexEnergy] = m_dt * stack.energyFlux;
+    integer const localRowIndexEnergy = numEqn-1;
+    stack.localFlux[localRowIndexEnergy] =  m_dt * stack.energyFlux;
 
-    stack.localFluxJacobian[localRowIndexEnergy][0] = m_dt * stack.dEnergyFlux_dP;
-    stack.localFluxJacobian[localRowIndexEnergy][numDof - 1] = m_dt * stack.dEnergyFlux_dT;
+    stack.localFluxJacobian[localRowIndexEnergy][0] =  m_dt * stack.dEnergyFlux_dP;
+    stack.localFluxJacobian[localRowIndexEnergy][numDof-1] =  m_dt * stack.dEnergyFlux_dT;
     for( integer jc = 0; jc < numComp; ++jc )
     {
-      stack.localFluxJacobian[localRowIndexEnergy][jc + 1] = m_dt * stack.dEnergyFlux_dC[jc];
+      stack.localFluxJacobian[localRowIndexEnergy][jc+1] =  m_dt * stack.dEnergyFlux_dC[jc];
     }
   }
 
@@ -1004,14 +1010,14 @@ public:
   {
     // Call Case::complete to assemble the component mass balance equations (i = 0 to i = numDof-2)
     // In the lambda, add contribution to residual and jacobian into the energy balance equation
-    Base::complete( iconn, stack, [&]( localIndex const localRow )
+    Base::complete( iconn, stack, [&] ( localIndex const localRow )
     {
       // beware, there is  volume balance eqn in m_localRhs and m_localMatrix!
-      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn], stack.localFlux[numEqn - 1] );
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn], stack.localFlux[numEqn-1] );
       AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
         ( localRow + numEqn,
         stack.dofColIndices,
-        stack.localFluxJacobian[numEqn - 1],
+        stack.localFluxJacobian[numEqn-1],
         numDof );
 
     } );

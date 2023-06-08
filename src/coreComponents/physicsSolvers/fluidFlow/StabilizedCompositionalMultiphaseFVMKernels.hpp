@@ -151,17 +151,16 @@ public:
     m_phaseRelPerm_n( relPermAccessors.get( fields::relperm::phaseRelPerm_n {} ) ),
     m_macroElementIndex( stabCompFlowAccessors.get( fields::flow::macroElementIndex {} ) ),
     m_elementStabConstant( stabCompFlowAccessors.get( fields::flow::elementStabConstant {} ) )
-  { }
+  {}
 
   struct StackVariables : public Base::StackVariables
   {
 public:
 
     GEOS_HOST_DEVICE
-    StackVariables( localIndex const size,
-                    localIndex numElems )
+    StackVariables( localIndex const size, localIndex numElems )
       : Base::StackVariables( size, numElems )
-    { }
+    {}
 
     using Base::StackVariables::stencilSize;
     using Base::StackVariables::numConnectedElems;
@@ -194,20 +193,20 @@ public:
     //  1) compFlux and its derivatives,
     //
     // We use the lambda below (called **inside** the phase loop of the base computeFlux) to compute stabilization terms
-    Base::computeFlux( iconn, stack, [&]( integer const ip,
-                                          localIndex const (&k)[2],
-                                          localIndex const (&seri)[2],
-                                          localIndex const (&sesri)[2],
-                                          localIndex const (&sei)[2],
-                                          localIndex const connectionIndex,
-                                          localIndex const k_up,
-                                          localIndex const er_up,
-                                          localIndex const esr_up,
-                                          localIndex const ei_up,
-                                          real64 const & potGrad,
-                                          real64 const & phaseFlux,
-                                          real64 const (&dPhaseFlux_dP)[2],
-                                          real64 const (&dPhaseFlux_dC)[2][numComp] )
+    Base::computeFlux( iconn, stack, [&] ( integer const ip,
+                                           localIndex const (&k)[2],
+                                           localIndex const (&seri)[2],
+                                           localIndex const (&sesri)[2],
+                                           localIndex const (&sei)[2],
+                                           localIndex const connectionIndex,
+                                           localIndex const k_up,
+                                           localIndex const er_up,
+                                           localIndex const esr_up,
+                                           localIndex const ei_up,
+                                           real64 const & potGrad,
+                                           real64 const & phaseFlux,
+                                           real64 const (&dPhaseFlux_dP)[2],
+                                           real64 const (&dPhaseFlux_dC)[2][numComp] )
     {
       GEOS_UNUSED_VAR( k_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, er_up, esr_up, ei_up );
 
@@ -226,23 +225,23 @@ public:
       // Step 1: compute the pressure jump at the interface
       for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
       {
-        localIndex const er = seri[ke];
+        localIndex const er  = seri[ke];
         localIndex const esr = sesri[ke];
-        localIndex const ei = sei[ke];
+        localIndex const ei  = sei[ke];
 
         stencilMacroElements[ke] = m_macroElementIndex[er][esr][ei];
 
         // use the jump in *delta* pressure in the stabilization term
         dPresGradStab +=
-          m_elementStabConstant[er][esr][ei] * stabTrans[ke] * ( m_pres[er][esr][ei] - m_pres_n[er][esr][ei] );
+          m_elementStabConstant[er][esr][ei] * stabTrans[ke] * (m_pres[er][esr][ei] - m_pres_n[er][esr][ei]);
       }
 
       // Step 2: compute the stabilization flux
-      integer const k_up_stab = ( dPresGradStab >= 0 ) ? 0 : 1;
+      integer const k_up_stab = (dPresGradStab >= 0) ? 0 : 1;
 
-      localIndex const er_up_stab = seri[k_up_stab];
+      localIndex const er_up_stab  = seri[k_up_stab];
       localIndex const esr_up_stab = sesri[k_up_stab];
-      localIndex const ei_up_stab = sei[k_up_stab];
+      localIndex const ei_up_stab  = sei[k_up_stab];
 
       bool const areInSameMacroElement = stencilMacroElements[0] == stencilMacroElements[1];
       bool const isStabilizationActive = stencilMacroElements[0] >= 0 && stencilMacroElements[1] >= 0;
@@ -270,13 +269,13 @@ public:
         integer const eqIndex0 = k[0] * numEqn + ic;
         integer const eqIndex1 = k[1] * numEqn + ic;
 
-        stack.localFlux[eqIndex0] += stabFlux[ic];
+        stack.localFlux[eqIndex0] +=  stabFlux[ic];
         stack.localFlux[eqIndex1] += -stabFlux[ic];
 
         for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
         {
           localIndex const localDofIndexPres = k[ke] * numDof;
-          stack.localFluxJacobian[eqIndex0][localDofIndexPres] += dStabFlux_dP[ke][ic];
+          stack.localFluxJacobian[eqIndex0][localDofIndexPres] +=  dStabFlux_dP[ke][ic];
           stack.localFluxJacobian[eqIndex1][localDofIndexPres] += -dStabFlux_dP[ke][ic];
         }
       }
