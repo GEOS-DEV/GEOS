@@ -43,7 +43,7 @@ class DirichletFaceBasedAssemblyKernel : public FaceBasedAssemblyKernel< NUM_DOF
 {
 public:
 
-  using AbstractBase = FaceBasedAssemblyKernelBase;
+  using AbstractBase = singlePhaseFVMKernels::FaceBasedAssemblyKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
   using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
