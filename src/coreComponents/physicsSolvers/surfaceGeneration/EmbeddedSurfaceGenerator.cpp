@@ -385,7 +385,7 @@ bool EmbeddedSurfaceGenerator::propagationStep3D()
 
 real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                              real64 const & GEOS_UNUSED_PARAM( dt ),
-                                             const int GEOS_UNUSED_PARAM( cycleNumber ),
+                                             const int cycleNumber,
                                              DomainPartition & domain )
 {
   real64 rval = 0;
@@ -393,6 +393,26 @@ real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOS_UNUSED_PARAM( t
    * This should be the method that generates new fracture elements based on the propagation criterion of choice.
    */
   // Add the embedded elements to the fracture stencil.
+
+  ///toy propagation example
+  //t = 1 -> 1,11
+  //t = 2 -> 2,12,22
+  //t = 3 -> 3,13,23,33
+  //t = n -> t,10+t, 20+t, ...
+  if(cycleNumber>0){
+    insertToCut(60+cycleNumber);
+    insertToCut(60-cycleNumber);
+    insertToCut(60+11*cycleNumber);
+    insertToCut(60-11*cycleNumber);
+  
+    bool const addedOrNot = propagationStep3D();
+
+    std::cout<<"ADDED OR NOT = "<<addedOrNot<<std::endl;
+    
+    emptyCutList();
+  }
+  //////////////////////
+
   addToFractureStencil( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,

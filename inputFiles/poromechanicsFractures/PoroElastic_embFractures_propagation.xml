@@ -12,6 +12,8 @@
       solidSolverName="matrixMechSolver"
       logLevel="1">
       <NonlinearSolverParameters
+        newtonMinIter="2"
+        newtonTol="10"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
         directParallel="0"/>
@@ -48,29 +50,34 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 3 }"
+      xCoords="{ 0, 1 }"
       yCoords="{ 0, 3 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 11 }"
+      zCoords="{ 0, 3 }"
+      nx="{ 1 }"
       ny="{ 11 }"
-      nz="{ 1 }"
+      nz="{ 11 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
     <BoundedPlane
       name="FracturePlane"
-      normal="{ 0, 0, 1 }"
-      origin="{ 0.0, 0.0, 0.5 }"
-      lengthVector="{ 1, 0, 0 }"
-      widthVector="{ 0, 1, 0 }"
-      dimensions="{ 1.0, 1.0 }"/>
+      normal="{ 1, 0, 0 }"
+      origin="{ 0.5, 1.5, 1.5 }"
+      lengthVector="{ 0, 1, 0 }"
+      widthVector="{ 0, 0, 1 }"
+      dimensions="{ 0.5, 0.5 }"/>
   </Geometry>
 
   <Events
-    maxTime="10">
-    <SoloEvent
+    maxTime="30">
+    <!-- <SoloEvent
       name="preFracture"
+      target="/Solvers/SurfaceGenerator"/> -->
+
+    <PeriodicEvent
+      name="fracturing"
+      forceDt="10"
       target="/Solvers/SurfaceGenerator"/>
 
     <PeriodicEvent
@@ -83,10 +90,10 @@
       cycleFrequency="10"
       target="/Outputs/vtkOutput"/>
 
-    <PeriodicEvent
+    <!-- <PeriodicEvent
       name="restarts"
       timeFrequency="10"
-      target="/Outputs/restartOutput"/>
+      target="/Outputs/restartOutput"/> -->
   </Events>
 
   <NumericalMethods>
@@ -248,7 +255,7 @@
       plotLevel="2"
       format="binary"/>
 
-    <Restart
-      name="restartOutput"/>
+    <!-- <Restart
+      name="restartOutput"/> -->
   </Outputs>
 </Problem>
