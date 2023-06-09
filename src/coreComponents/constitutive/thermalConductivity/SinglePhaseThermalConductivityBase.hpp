@@ -116,6 +116,15 @@ public:
   { GEOS_UNUSED_VAR( convergedPorosity ); }
 
   /**
+   * @brief Update the thermal conductivity state
+   * @param[in] porosity the  porosity field after reservoir initialization
+   *
+   * Note: this is needed because of the fracture subregions which do not exist at initialization
+   */
+  virtual void update( arrayView2d< real64 const > const & porosity ) const
+  { GEOS_UNUSED_VAR( porosity ); }
+
+  /**
    * @brief Getter for the effective conductivities in the subRegion
    * @return an arrayView of effective conductivities
    */
