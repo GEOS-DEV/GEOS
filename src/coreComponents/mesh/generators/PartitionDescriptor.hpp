@@ -56,6 +56,7 @@ public:
    */
   void setMetisNeighborList( std::vector< int > const & metisNeighborList )
   {
+    m_metisNeighborList.clear();
     m_metisNeighborList.insert( metisNeighborList.cbegin(), metisNeighborList.cend() );
   }
 
