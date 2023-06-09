@@ -375,6 +375,38 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
           }
         }
       } );
+      elemRegion.forElementSubRegionsIndex< FaceElementSubRegion >( [&]( localIndex const esr,
+                                                                         FaceElementSubRegion const & subRegion )
+      {
+//        std::set< globalIndex > globNodes;
+//        for( localIndex const & li: nodeAdjacencySet )
+//        {
+//          globNodes.insert( nodeManager.localToGlobalMap()[li] );
+//        }
+
+        for( int i = 0; i < subRegion.m_duplicatedNodes.size(); ++i )
+        {
+//          std::set< globalIndex > const tmp( subRegion.m_duplicatedNodes[i].begin(), subRegion.m_duplicatedNodes[i].end() );
+//          std::vector< globalIndex > intersection;
+//          std::set_intersection( globNodes.cbegin(), globNodes.cend(),
+//                                 tmp.cbegin(), tmp.cend(),
+//                                 std::back_inserter( intersection ) );
+//          if( intersection.empty() )
+//          { continue; }
+          for( globalIndex const & n: subRegion.m_duplicatedNodes[i] )
+          {
+            auto it = nodeManager.globalToLocalMap().find( n );
+            if( it != nodeManager.globalToLocalMap().cend() )
+            {
+              if( nodeAdjacencySet.find( it->second ) == nodeAdjacencySet.cend() )
+              {
+                GEOS_LOG_RANK( "Inserting duplicated node loc " << it->second << " glob " << it->first );
+                nodeAdjacencySet.insert( it->second );
+              }
+            }
+          }
+        }
+      } );
     }
   }
 

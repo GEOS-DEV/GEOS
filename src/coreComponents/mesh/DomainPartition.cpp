@@ -159,7 +159,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
   {
     MeshLevel & meshLevel = meshBody.getBaseDiscretization();
 
-    std::map< globalIndex, std::set< globalIndex > > duplicatedNodes;
+    std::set< std::set< globalIndex > > duplicatedNodes;
     meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >(
       [&]( FaceElementSubRegion const & subRegion )
       {
@@ -169,8 +169,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
           for( globalIndex const & n: nodes )
           {
             std::set< globalIndex > tmp( nodes.begin(), nodes.end() );
-            tmp.erase( n );
-            duplicatedNodes[n].insert( tmp.cbegin(), tmp.cend() );
+            duplicatedNodes.insert( tmp );
           }
         }
 	    } );

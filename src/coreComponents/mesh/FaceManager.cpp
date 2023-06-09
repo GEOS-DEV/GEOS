@@ -144,7 +144,7 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
       return;
     }
 
-    constexpr char err[] = "Internal error when trying to connect matrix mapping and fracture mapping.";
+    constexpr char err[] = "Internal error when trying to connect matrix mapping and fracture mapping. Face {} seems wrongly connected.";
 
     FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
     int const esr = 0;  // Since there's only on unique subregion, the index is always 0.
@@ -152,17 +152,17 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
     // And since a 2d element is connected to a given face, and since a face can only have 2 neighbors,
     // then the second neighbor of the face is bound to be undefined (i.e. -1).
     ArrayOfArraysView< localIndex const > const & elem2dToFaces = subRegion.faceList().toViewConst();
-    for( int ei = 0; ei < elem2dToFaces.size(); ++ei )
+    for( localIndex ei = 0; ei < elem2dToFaces.size(); ++ei )
     {
-      for( int const & face: elem2dToFaces[ei] )
+      for( localIndex const & face: elem2dToFaces[ei] )
       {
-        GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementRegion( face, 0 ), -1, err );
-        GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementSubRegion( face, 0 ), -1, err );
-        GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementIndex( face, 0 ), -1, err );
+        GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementRegion( face, 0 ), -1, GEOS_FMT( err, face ) );
+        GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementSubRegion( face, 0 ), -1, GEOS_FMT( err, face ) );
+        GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementIndex( face, 0 ), -1, GEOS_FMT( err, face ) );
 
-        GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementRegion( face, 1 ), -1, err );
-        GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementSubRegion( face, 1 ), -1, err );
-        GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementIndex( face, 1 ), -1, err );
+        GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementRegion( face, 1 ), -1, GEOS_FMT( err, face ) );
+        GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementSubRegion( face, 1 ), -1, GEOS_FMT( err, face ) );
+        GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementIndex( face, 1 ), -1, GEOS_FMT( err, face ) );
 
         m_toElements.m_toElementRegion( face, 1 ) = er;
         m_toElements.m_toElementSubRegion( face, 1 ) = esr;
@@ -173,10 +173,10 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
   // Connecting all the 3d elements (information is already in the m_toElements mappings) and all the 2d elements.
   elemRegionManager.forElementRegionsComplete< SurfaceElementRegion >( connect2dElems );
 
-	if( baseMeshLevel )
-	{
-		computeGeometry( nodeManager );
-	}
+  if( baseMeshLevel )
+  {
+    computeGeometry( nodeManager );
+  }
 }
 
 void FaceManager::setupRelatedObjectsInRelations( NodeManager const & nodeManager,

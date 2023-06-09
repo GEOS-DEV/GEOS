@@ -337,7 +337,7 @@ void
 CommunicationTools::
   findMatchedPartitionBoundaryObjects( ObjectManagerBase & objectManager,
                                        std::vector< NeighborCommunicator > & allNeighbors,
-                                       std::map< globalIndex, std::set< globalIndex > > const & m )
+                                       std::set< std::set< globalIndex > > const & m )
 {
   GEOS_MARK_FUNCTION;
   arrayView1d< integer > const & domainBoundaryIndicator = objectManager.getDomainBoundaryIndicator();
@@ -408,23 +408,26 @@ CommunicationTools::
         }
       }
       std::set< globalIndex > const candidates( neighborPartitionBoundaryObjects[i].begin(), neighborPartitionBoundaryObjects[i].end() );
-      for( auto const & p: m )
+      for( std::set< globalIndex > const & duplicatedNodes: m )
       {
-        globalIndex const & gi = p.first;
-        std::set< globalIndex > const & dup = p.second;
         std::vector< globalIndex > intersection;
-        std::set_intersection( dup.cbegin(), dup.cend(), candidates.cbegin(), candidates.cend(), std::back_inserter( intersection ) );
-        if( !intersection.empty() )
+        std::set_intersection( duplicatedNodes.cbegin(), duplicatedNodes.cend(),
+                               candidates.cbegin(), candidates.cend(),
+                               std::back_inserter( intersection ) );
+        auto const & g2l = objectManager.globalToLocalMap();
+        if( intersection.empty() )
+        { continue; }
+        for( globalIndex const & gi: duplicatedNodes )
         {
-          auto const & mp = objectManager.globalToLocalMap();
-          auto it = mp.find( gi );
-          if( it != mp.cend() )
+          auto it = g2l.find( gi );
+          if( it != g2l.cend() )
           {
             secondLevelMatches.emplace_back( it->second );
+            GEOS_LOG_RANK("Found a second level match : loc " << it->second << " " << " glob " << gi );
           }
         }
       }
-      GEOS_LOG( "After the second level." );
+      GEOS_LOG_RANK( "After the second level." );
     }
   }
 }
