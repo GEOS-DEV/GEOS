@@ -293,14 +293,14 @@ protected:
 
 namespace fields
 {
-  using reference32Type = array2d< real32, nodes::REFERENCE_POSITION_PERM >;
-  DECLARE_FIELD( referencePosition32,
-                 "referencePosition32",
-                 reference32Type,
-                 0,
-                 NOPLOT,
-                 WRITE_AND_READ,
-                 "Copy of the referencePosition from NodeManager in 32 bits integer" );
+using reference32Type = array2d< real32, nodes::REFERENCE_POSITION_PERM >;
+DECLARE_FIELD( referencePosition32,
+               "referencePosition32",
+               reference32Type,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Copy of the referencePosition from NodeManager in 32 bits integer" );
 }
 } /* namespace geos */
 
