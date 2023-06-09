@@ -32,7 +32,7 @@ TEST( CubicEOSTest, testCubicEOSTwoComponentsSRK )
 {
   constexpr integer numComps = 2;
 
-  auto fluid = TestFluid< numComps >::create( {"C1", "C5"} );
+  auto fluid = TestFluid< numComps >::create( {Fluid::C1, Fluid::C5} );
 
   auto criticalPressure = fluid->getCriticalPressure();
   auto criticalTemperature = fluid->getCriticalTemperature();
@@ -127,7 +127,7 @@ TEST( CubicEOSTest, testCubicEOSFourComponentsPR )
 {
   constexpr integer numComps = 4;
 
-  auto fluid = TestFluid< numComps >::create( {"N2", "C8", "C10", "H2O"} );
+  auto fluid = TestFluid< numComps >::create( {Fluid::N2, Fluid::C8, Fluid::C10, Fluid::H2O} );
 
   auto criticalPressure = fluid->getCriticalPressure();
   auto criticalTemperature = fluid->getCriticalTemperature();
@@ -221,7 +221,7 @@ TEST( CubicEOSTest, testCubicEOSFourComponentsSRK )
 {
   constexpr integer numComps = 4;
 
-  auto fluid = TestFluid< numComps >::create( {"N2", "C8", "C10", "H2O"} );
+  auto fluid = TestFluid< numComps >::create( {Fluid::N2, Fluid::C8, Fluid::C10, Fluid::H2O} );
 
   auto criticalPressure = fluid->getCriticalPressure();
   auto criticalTemperature = fluid->getCriticalTemperature();
@@ -378,20 +378,20 @@ protected:
 
 template<>
 DerivativeTestFixture< PengRobinsonEOS, 2 >::DerivativeTestFixture()
-  : m_fluid( TestFluid< 2 >::create( {"C1", "C5"} ))
+  : m_fluid( TestFluid< 2 >::create( {Fluid::C1, Fluid::C5} ))
 {}
 template<>
 DerivativeTestFixture< SoaveRedlichKwongEOS, 2 >::DerivativeTestFixture()
-  : m_fluid( TestFluid< 2 >::create( {"C1", "C5"} ))
+  : m_fluid( TestFluid< 2 >::create( {Fluid::C1, Fluid::C5} ))
 {}
 
 template<>
 DerivativeTestFixture< PengRobinsonEOS, 4 >::DerivativeTestFixture()
-  : m_fluid( TestFluid< 4 >::create( {"N2", "C8", "C10", "H2O"} ))
+  : m_fluid( TestFluid< 4 >::create( {Fluid::N2, Fluid::C8, Fluid::C10, Fluid::H2O} ))
 {}
 template<>
 DerivativeTestFixture< SoaveRedlichKwongEOS, 4 >::DerivativeTestFixture()
-  : m_fluid( TestFluid< 4 >::create( {"N2", "C8", "C10", "H2O"} ))
+  : m_fluid( TestFluid< 4 >::create( {Fluid::N2, Fluid::C8, Fluid::C10, Fluid::H2O} ))
 {}
 
 template< typename EOS, int NC >

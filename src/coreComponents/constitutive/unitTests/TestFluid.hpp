@@ -27,12 +27,28 @@ namespace geos
 namespace testing
 {
 
-struct FluidCatalogue
+struct Fluid
 {
-  static std::map< std::string, real64 const > const Pc;
-  static std::map< std::string, real64 const > const Tc;
-  static std::map< std::string, real64 const > const Ac;
-  static std::map< std::string, real64 const > const Mw;
+  static constexpr integer NC =  11;
+
+  static constexpr integer H2O =  0;
+  static constexpr integer CO2 =  1;
+  static constexpr integer N2  =  2;
+  static constexpr integer H2S =  3;
+  static constexpr integer C1  =  4;
+  static constexpr integer C2  =  5;
+  static constexpr integer C3  =  6;
+  static constexpr integer C4  =  7;
+  static constexpr integer C5  =  8;
+  static constexpr integer C8  =  9;
+  static constexpr integer C10 = 10;
+
+  static constexpr integer Pc = 0;
+  static constexpr integer Tc = 1;
+  static constexpr integer Ac = 2;
+  static constexpr integer Mw = 3;
+
+  static std::array< real64, 44 > data;
 };
 
 template< int NC >
@@ -44,18 +60,13 @@ class TestFluid
 public:
   ~TestFluid() = default;
 
-  static std::unique_ptr< TestFluid< NC > > create( std::array< std::string, NC > const & componentNames )
+  static std::unique_ptr< TestFluid< NC > > create( std::array< integer, NC > const & components )
   {
-    std::unique_ptr< TestFluid< NC > > testFluid( new TestFluid());
-    Feed< NC > data;
-    std::transform( componentNames.begin(), componentNames.end(), data.begin(), []( auto const & name ){ return 1.0e5 * FluidCatalogue::Pc.at( name ); } );
-    createArray( testFluid->criticalPressure, data );
-    std::transform( componentNames.begin(), componentNames.end(), data.begin(), []( auto const & name ){ return FluidCatalogue::Tc.at( name ); } );
-    createArray( testFluid->criticalTemperature, data );
-    std::transform( componentNames.begin(), componentNames.end(), data.begin(), []( auto const & name ){ return FluidCatalogue::Ac.at( name ); } );
-    createArray( testFluid->acentricFactor, data );
-    std::transform( componentNames.begin(), componentNames.end(), data.begin(), []( auto const & name ){ return FluidCatalogue::Mw.at( name ); } );
-    createArray( testFluid->molecularWeight, data );
+    std::unique_ptr< TestFluid< NC > > testFluid( new TestFluid() );
+    createArray( testFluid->criticalPressure, components, Fluid::Pc, Fluid::data );
+    createArray( testFluid->criticalTemperature, components, Fluid::Tc, Fluid::data );
+    createArray( testFluid->acentricFactor, components, Fluid::Ac, Fluid::data );
+    createArray( testFluid->molecularWeight, components, Fluid::Mw, Fluid::data );
     return testFluid;
   }
 
@@ -76,6 +87,15 @@ private:
   array1d< real64 > molecularWeight;
   array1d< real64 > volumeShift;
 
+private:
+  template< typename ARRAY, typename LIST, typename DATAARRAY >
+  static void createArray( ARRAY & array, LIST const & indices, integer const row, DATAARRAY const & data )
+  {
+    for( auto const i : indices )
+    {
+      array.emplace_back( data[Fluid::NC *row+i] );
+    }
+  }
 public:
   template< typename ARRAY, typename LIST >
   static void createArray( ARRAY & array, LIST const & data )
@@ -87,25 +107,19 @@ public:
   }
 };
 
-std::map< std::string, real64 const > const FluidCatalogue::Pc = {
-  {"H2O", 2.2050e+02}, {"CO2", 7.3750e+01}, {"N2", 3.4000e+01}, {"H2S", 8.9630e+01},
-  {"C1", 1.2960e+01}, {"C2", 4.8721e+01}, {"C3", 4.2481e+01}, {"C4", 3.6400e+01},
-  {"C5", 4.5990e+01}, {"C8", 2.5300e+01}, {"C10", 1.4600e+01}
-};
-std::map< std::string, real64 const > const FluidCatalogue::Tc = {
-  {"H2O", 6.4700e+02}, {"CO2", 3.0410e+02}, {"N2", 1.2620e+02}, {"H2S", 3.7353e+02},
-  {"C1", 3.3150e+01}, {"C2", 3.0532e+02}, {"C3", 3.6983e+02}, {"C4", 4.0785e+02},
-  {"C5", 1.9060e+02}, {"C8", 6.2200e+02}, {"C10", 7.8200e+02}
-};
-std::map< std::string, real64 const > const FluidCatalogue::Ac = {
-  {"H2O", 3.4400e-01}, {"CO2", 2.3900e-01}, {"N2", 4.0000e-02}, {"H2S", 9.4200e-02},
-  {"C1", -2.1900e-01}, {"C2", 9.9500e-02}, {"C3", 1.5230e-01}, {"C4", 1.8440e-01},
-  {"C5", 1.1400e-02}, {"C8", 4.4300e-01}, {"C10", 8.1600e-01}
-};
-std::map< std::string, real64 const > const FluidCatalogue::Mw = {
-  {"H2O", 1.8015e+01}, {"CO2", 4.4010e+01}, {"N2", 2.8013e+01}, {"H2S", 3.4100e+01},
-  {"C1", 1.6043e+01}, {"C2", 3.0070e+01}, {"C3", 4.4097e+01}, {"C4", 5.8124e+01},
-  {"C5", 7.2151e+01}, {"C8", 1.1423e+02}, {"C10", 1.4228e+02}
+std::array< real64, 44 > Fluid::data = {
+  // -- Pc
+  2.2050e+07, 7.3750e+06, 3.4000e+06, 8.9630e+06, 1.2960e+06, 4.8721e+06,
+  4.2481e+06, 3.6400e+06, 4.5990e+06, 2.5300e+06, 1.4600e+06,
+  // -- Tc
+  6.4700e+02, 3.0410e+02, 1.2620e+02, 3.7353e+02, 3.3150e+01, 3.0532e+02,
+  3.6983e+02, 4.0785e+02, 1.9060e+02, 6.2200e+02, 7.8200e+02,
+  // -- Ac
+  3.4400e-01, 2.3900e-01, 4.0000e-02, 9.4200e-02, -2.1900e-01, 9.9500e-02,
+  1.5230e-01, 1.8440e-01, 1.1400e-02, 4.4300e-01, 8.1600e-01,
+  // -- Mw
+  1.8015e+01, 4.4010e+01, 2.8013e+01, 3.4100e+01, 1.6043e+01, 3.0070e+01,
+  4.4097e+01, 5.8124e+01, 7.2151e+01, 1.1423e+02, 1.4228e+02,
 };
 
 }// testing
