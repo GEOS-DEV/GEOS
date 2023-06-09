@@ -469,10 +469,20 @@ public:
   }
 };
 
+using MixCoeffDerivativePR2TestFixture = MixCoeffDerivativeTestFixture< PengRobinsonEOS, 2 >;
 using MixCoeffDerivativePR4TestFixture = MixCoeffDerivativeTestFixture< PengRobinsonEOS, 4 >;
+using MixCoeffDerivativeSRK2TestFixture = MixCoeffDerivativeTestFixture< SoaveRedlichKwongEOS, 2 >;
 using MixCoeffDerivativeSRK4TestFixture = MixCoeffDerivativeTestFixture< SoaveRedlichKwongEOS, 4 >;
 
+TEST_P( MixCoeffDerivativePR2TestFixture, testNumericalDerivatives )
+{
+  testNumericalDerivatives( GetParam() );
+}
 TEST_P( MixCoeffDerivativePR4TestFixture, testNumericalDerivatives )
+{
+  testNumericalDerivatives( GetParam() );
+}
+TEST_P( MixCoeffDerivativeSRK2TestFixture, testNumericalDerivatives )
 {
   testNumericalDerivatives( GetParam() );
 }
@@ -480,6 +490,44 @@ TEST_P( MixCoeffDerivativeSRK4TestFixture, testNumericalDerivatives )
 {
   testNumericalDerivatives( GetParam() );
 }
+
+// 2-component fluid test
+INSTANTIATE_TEST_SUITE_P(
+  CubicEOSTest,
+  MixCoeffDerivativePR2TestFixture,
+  ::testing::Values(
+    TestData< 2 >{ 1.83959e+06, 2.97150e+02, {0.100000, 0.900000} },
+    TestData< 2 >{ 1.83959e+06, 2.97150e+02, {0.500000, 0.500000} },
+    TestData< 2 >{ 1.83959e+06, 2.97150e+02, {0.001000, 0.999000} },
+    TestData< 2 >{ 1.83959e+08, 2.97150e+02, {0.100000, 0.900000} },
+    TestData< 2 >{ 1.83959e+08, 2.97150e+02, {0.500000, 0.500000} },
+    TestData< 2 >{ 1.83959e+08, 2.97150e+02, {0.001000, 0.999000} },
+    TestData< 2 >{ 1.83959e+06, 3.63000e+02, {0.100000, 0.900000} },
+    TestData< 2 >{ 1.83959e+06, 3.63000e+02, {0.500000, 0.500000} },
+    TestData< 2 >{ 1.83959e+06, 3.63000e+02, {0.001000, 0.999000} },
+    TestData< 2 >{ 1.83959e+08, 3.63000e+02, {0.100000, 0.900000} },
+    TestData< 2 >{ 1.83959e+08, 3.63000e+02, {0.500000, 0.500000} },
+    TestData< 2 >{ 1.83959e+08, 3.63000e+02, {0.001000, 0.999000} }
+    )
+  );
+INSTANTIATE_TEST_SUITE_P(
+  CubicEOSTest,
+  MixCoeffDerivativeSRK2TestFixture,
+  ::testing::Values(
+    TestData< 2 >{ 1.83959e+06, 2.97150e+02, {0.100000, 0.900000} },
+    TestData< 2 >{ 1.83959e+06, 2.97150e+02, {0.500000, 0.500000} },
+    TestData< 2 >{ 1.83959e+06, 2.97150e+02, {0.001000, 0.999000} },
+    TestData< 2 >{ 1.83959e+08, 2.97150e+02, {0.100000, 0.900000} },
+    TestData< 2 >{ 1.83959e+08, 2.97150e+02, {0.500000, 0.500000} },
+    TestData< 2 >{ 1.83959e+08, 2.97150e+02, {0.001000, 0.999000} },
+    TestData< 2 >{ 1.83959e+06, 3.63000e+02, {0.100000, 0.900000} },
+    TestData< 2 >{ 1.83959e+06, 3.63000e+02, {0.500000, 0.500000} },
+    TestData< 2 >{ 1.83959e+06, 3.63000e+02, {0.001000, 0.999000} },
+    TestData< 2 >{ 1.83959e+08, 3.63000e+02, {0.100000, 0.900000} },
+    TestData< 2 >{ 1.83959e+08, 3.63000e+02, {0.500000, 0.500000} },
+    TestData< 2 >{ 1.83959e+08, 3.63000e+02, {0.001000, 0.999000} }
+    )
+  );
 
 // 4-component fluid test
 INSTANTIATE_TEST_SUITE_P(
