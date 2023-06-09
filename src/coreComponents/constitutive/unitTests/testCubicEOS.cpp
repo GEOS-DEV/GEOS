@@ -12,11 +12,11 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-
 // Source includes
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
+#include "TestFluid.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
@@ -25,30 +25,25 @@ using namespace geos;
 using namespace geos::testing;
 using namespace geos::constitutive;
 
-static constexpr real64 relTol = 1e-5;
+static constexpr real64 relTol = 1.0e-5;
+static constexpr real64 absTol = 1.0e-8;
 
 TEST( CubicEOSTest, testCubicEOSTwoComponentsSRK )
 {
   constexpr integer numComps = 2;
 
+  auto fluid = TestFluid< numComps >::create( {"C1", "C5"} );
+
+  auto criticalPressure = fluid->getCriticalPressure();
+  auto criticalTemperature = fluid->getCriticalTemperature();
+  auto omega = fluid->getAcentricFactor();
+  real64 binaryInteractionCoefficients = 0.0; // not implemented yet
+
   real64 pressure = 0.0;
   real64 temperature = 0.0;
   array1d< real64 > composition( numComps );
-  array1d< real64 > criticalPressure( numComps );
-  array1d< real64 > criticalTemperature( numComps );
-  array1d< real64 > omega( numComps );
-  real64 binaryInteractionCoefficients = 0.0; // not implemented yet
   array1d< real64 > logFugacityCoefficients( numComps );
   array1d< real64 > expectedLogFugacityCoefficients( numComps );
-
-  criticalPressure[0] = 12.96e5;
-  criticalPressure[1] = 45.99e5;
-
-  criticalTemperature[0] = 33.15;
-  criticalTemperature[1] = 190.6;
-
-  omega[0] = -0.219;
-  omega[1] = 0.0114;
 
   ///////////////////////////////////////////
 
@@ -132,30 +127,18 @@ TEST( CubicEOSTest, testCubicEOSFourComponentsPR )
 {
   constexpr integer numComps = 4;
 
+  auto fluid = TestFluid< numComps >::create( {"N2", "C8", "C10", "H2O"} );
+
+  auto criticalPressure = fluid->getCriticalPressure();
+  auto criticalTemperature = fluid->getCriticalTemperature();
+  auto omega = fluid->getAcentricFactor();
+  real64 binaryInteractionCoefficients = 0.0; // not implemented yet
+
   real64 pressure = 0.0;
   real64 temperature = 0.0;
   array1d< real64 > composition( numComps );
-  array1d< real64 > criticalPressure( numComps );
-  array1d< real64 > criticalTemperature( numComps );
-  array1d< real64 > omega( numComps );
-  real64 binaryInteractionCoefficients = 0.0; // not implemented yet
   array1d< real64 > logFugacityCoefficients( numComps );
   array1d< real64 > expectedLogFugacityCoefficients( numComps );
-
-  criticalPressure[0] = 34e5;
-  criticalPressure[1] = 25.3e5;
-  criticalPressure[2] = 14.6e5;
-  criticalPressure[3] = 220.5e5;
-
-  criticalTemperature[0] = 126.2;
-  criticalTemperature[1] = 622.0;
-  criticalTemperature[2] = 782.0;
-  criticalTemperature[3] = 647.0;
-
-  omega[0] = 0.04;
-  omega[1] = 0.443;
-  omega[2] = 0.816;
-  omega[3] = 0.344;
 
   ///////////////////////////////////////////
 
@@ -236,32 +219,20 @@ TEST( CubicEOSTest, testCubicEOSFourComponentsPR )
 
 TEST( CubicEOSTest, testCubicEOSFourComponentsSRK )
 {
-  integer const numComps = 4;
+  constexpr integer numComps = 4;
+
+  auto fluid = TestFluid< numComps >::create( {"N2", "C8", "C10", "H2O"} );
+
+  auto criticalPressure = fluid->getCriticalPressure();
+  auto criticalTemperature = fluid->getCriticalTemperature();
+  auto omega = fluid->getAcentricFactor();
+  real64 binaryInteractionCoefficients = 0.0; // not implemented yet
 
   real64 pressure = 0.0;
   real64 temperature = 0.0;
   array1d< real64 > composition( 4 );
-  array1d< real64 > criticalPressure( 4 );
-  array1d< real64 > criticalTemperature( 4 );
-  array1d< real64 > omega( 4 );
-  real64 binaryInteractionCoefficients = 0.0; // not implemented yet
   array1d< real64 > logFugacityCoefficients( 4 );
   array1d< real64 > expectedLogFugacityCoefficients( 4 );
-
-  criticalPressure[0] = 34e5;
-  criticalPressure[1] = 25.3e5;
-  criticalPressure[2] = 14.6e5;
-  criticalPressure[3] = 220.5e5;
-
-  criticalTemperature[0] = 126.2;
-  criticalTemperature[1] = 622.0;
-  criticalTemperature[2] = 782.0;
-  criticalTemperature[3] = 647.0;
-
-  omega[0] = 0.04;
-  omega[1] = 0.443;
-  omega[2] = 0.816;
-  omega[3] = 0.344;
 
   ///////////////////////////////////////////
 
@@ -339,3 +310,212 @@ TEST( CubicEOSTest, testCubicEOSFourComponentsSRK )
   checkRelativeError( logFugacityCoefficients[3], expectedLogFugacityCoefficients[3], relTol );
 
 }
+
+// -----------------------------------------------------------------
+// Derivative tests
+// -----------------------------------------------------------------
+
+template< int NC >
+using TestData = std::tuple< real64 const, real64 const, Feed< NC > const >;
+
+template< typename EOS, int NC >
+class DerivativeTestFixture : public ::testing::TestWithParam< TestData< NC > >
+{
+public:
+  static constexpr integer numComps = NC;
+  using ParamType = std::tuple< real64 const, real64 const, Feed< NC > const >;
+public:
+  DerivativeTestFixture();
+  ~DerivativeTestFixture() = default;
+
+protected:
+  void checkDerivative( real64 const a, real64 const b, string const & name ) const
+  {
+    checkRelativeError( a, b, relTol, absTol, name );
+  }
+
+  std::unique_ptr< TestFluid< NC > > m_fluid;
+};
+
+template<>
+DerivativeTestFixture< PengRobinsonEOS, 2 >::DerivativeTestFixture()
+  : m_fluid( TestFluid< 2 >::create( {"C1", "C5"} ))
+{}
+template<>
+DerivativeTestFixture< SoaveRedlichKwongEOS, 2 >::DerivativeTestFixture()
+  : m_fluid( TestFluid< 2 >::create( {"C1", "C5"} ))
+{}
+
+template<>
+DerivativeTestFixture< PengRobinsonEOS, 4 >::DerivativeTestFixture()
+  : m_fluid( TestFluid< 4 >::create( {"N2", "C8", "C10", "H2O"} ))
+{}
+template<>
+DerivativeTestFixture< SoaveRedlichKwongEOS, 4 >::DerivativeTestFixture()
+  : m_fluid( TestFluid< 4 >::create( {"N2", "C8", "C10", "H2O"} ))
+{}
+
+template< typename EOS, int NC >
+class MixCoeffDerivativeTestFixture : public DerivativeTestFixture< EOS, NC >
+{
+public:
+  using DerivativeTestFixture< EOS, NC >::numComps;
+  using ParamType = typename DerivativeTestFixture< EOS, NC >::ParamType;
+public:
+  void testNumericalDerivatives( ParamType const & testData ) const
+  {
+    auto criticalPressure = this->m_fluid->getCriticalPressure();
+    auto criticalTemperature = this->m_fluid->getCriticalTemperature();
+    auto omega = this->m_fluid->getAcentricFactor();
+    real64 binaryInteractionCoefficients = 0.0; // not implemented yet
+
+    array1d< real64 > aPureCoefficient( numComps );
+    array1d< real64 > bPureCoefficient( numComps );
+    real64 aMixtureCoefficient = 0.0;
+    real64 bMixtureCoefficient = 0.0;
+    real64 currentAMixtureCoefficient = 0.0;
+    real64 currentBMixtureCoefficient = 0.0;
+    real64 fdDerivative = 0.0;
+
+    real64 daMixtureCoefficient_dp = 0.0;
+    real64 dbMixtureCoefficient_dp = 0.0;
+    real64 daMixtureCoefficient_dt = 0.0;
+    real64 dbMixtureCoefficient_dt = 0.0;
+    array1d< real64 > daMixtureCoefficient_dz( numComps );
+    array1d< real64 > dbMixtureCoefficient_dz( numComps );
+
+    array1d< real64 > composition;
+    real64 const pressure = std::get< 0 >( testData );
+    real64 const temperature = std::get< 1 >( testData );
+    TestFluid< NC >::createArray( composition, std::get< 2 >( testData ));
+
+    auto computeCoefficients = [&]( real64 const p, real64 const t, auto const & z, real64 & a, real64 & b ){
+      CubicEOSPhaseModel< EOS >::computeMixtureCoefficients(
+        numComps,
+        p, t, z,
+        criticalPressure, criticalTemperature, omega,
+        binaryInteractionCoefficients,
+        aPureCoefficient,
+        bPureCoefficient,
+        a, b
+        );
+    };
+
+    // Calculate values
+    computeCoefficients( pressure, temperature, composition, aMixtureCoefficient, bMixtureCoefficient );
+    // Calculate derivatives
+    CubicEOSPhaseModel< EOS >::computeMixtureCoefficients(
+      numComps,
+      pressure,
+      temperature,
+      composition,
+      criticalPressure,
+      criticalTemperature,
+      omega,
+      binaryInteractionCoefficients,
+      aPureCoefficient,
+      bPureCoefficient,
+      aMixtureCoefficient,
+      bMixtureCoefficient,
+      daMixtureCoefficient_dp,
+      dbMixtureCoefficient_dp,
+      daMixtureCoefficient_dt,
+      dbMixtureCoefficient_dt,
+      daMixtureCoefficient_dz,
+      dbMixtureCoefficient_dz );
+    // Compare against numerical derivatives
+    // -- Pressure derivative
+    real64 const dp = 1.0e-4 * pressure;
+    computeCoefficients( pressure-dp, temperature, composition, currentAMixtureCoefficient, currentBMixtureCoefficient );
+    fdDerivative = -(currentAMixtureCoefficient - aMixtureCoefficient) / dp;
+    this->checkDerivative( daMixtureCoefficient_dp, fdDerivative, "Mixing Coeff A left pressure derivative" );
+    fdDerivative = -(currentBMixtureCoefficient - bMixtureCoefficient) / dp;
+    this->checkDerivative( dbMixtureCoefficient_dp, fdDerivative, "Mixing Coeff B left pressure derivative" );
+    computeCoefficients( pressure+dp, temperature, composition, currentAMixtureCoefficient, currentBMixtureCoefficient );
+    fdDerivative = (currentAMixtureCoefficient - aMixtureCoefficient) / dp;
+    this->checkDerivative( daMixtureCoefficient_dp, fdDerivative, "Mixing Coeff A right pressure derivative" );
+    fdDerivative = (currentBMixtureCoefficient - bMixtureCoefficient) / dp;
+    this->checkDerivative( dbMixtureCoefficient_dp, fdDerivative, "Mixing Coeff B right pressure derivative" );
+    // -- Temperature derivative
+    real64 const dt = 1.0e-6 * temperature;
+    computeCoefficients( pressure, temperature-dt, composition, currentAMixtureCoefficient, currentBMixtureCoefficient );
+    fdDerivative = -(currentAMixtureCoefficient - aMixtureCoefficient) / dt;
+    this->checkDerivative( daMixtureCoefficient_dt, fdDerivative, "Mixing Coeff A left temperature derivative" );
+    fdDerivative = -(currentBMixtureCoefficient - bMixtureCoefficient) / dt;
+    this->checkDerivative( dbMixtureCoefficient_dt, fdDerivative, "Mixing Coeff B left temperature derivative" );
+    computeCoefficients( pressure, temperature+dt, composition, currentAMixtureCoefficient, currentBMixtureCoefficient );
+    fdDerivative = (currentAMixtureCoefficient - aMixtureCoefficient) / dt;
+    this->checkDerivative( daMixtureCoefficient_dt, fdDerivative, "Mixing Coeff A right temperature derivative" );
+    fdDerivative = (currentBMixtureCoefficient - bMixtureCoefficient) / dt;
+    this->checkDerivative( dbMixtureCoefficient_dt, fdDerivative, "Mixing Coeff B right temperature derivative" );
+    // -- Composition derivatives derivative
+    real64 const dz = 1.0e-7;
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      composition[ic] -= dz;
+      computeCoefficients( pressure, temperature, composition, currentAMixtureCoefficient, currentBMixtureCoefficient );
+      fdDerivative = -(currentAMixtureCoefficient - aMixtureCoefficient) / dz;
+      this->checkDerivative( daMixtureCoefficient_dz[ic], fdDerivative, "Mixing Coeff A left composition derivative" );
+      fdDerivative = -(currentBMixtureCoefficient - bMixtureCoefficient) / dz;
+      this->checkDerivative( dbMixtureCoefficient_dz[ic], fdDerivative, "Mixing Coeff B left composition derivative" );
+      composition[ic] += 2.0*dz;
+      computeCoefficients( pressure, temperature, composition, currentAMixtureCoefficient, currentBMixtureCoefficient );
+      fdDerivative = (currentAMixtureCoefficient - aMixtureCoefficient) / dz;
+      this->checkDerivative( daMixtureCoefficient_dz[ic], fdDerivative, "Mixing Coeff A right composition derivative" );
+      fdDerivative = (currentBMixtureCoefficient - bMixtureCoefficient) / dz;
+      this->checkDerivative( dbMixtureCoefficient_dz[ic], fdDerivative, "Mixing Coeff B right composition derivative" );
+      composition[ic] -= dz;
+    }
+  }
+};
+
+using MixCoeffDerivativePR4TestFixture = MixCoeffDerivativeTestFixture< PengRobinsonEOS, 4 >;
+using MixCoeffDerivativeSRK4TestFixture = MixCoeffDerivativeTestFixture< SoaveRedlichKwongEOS, 4 >;
+
+TEST_P( MixCoeffDerivativePR4TestFixture, testNumericalDerivatives )
+{
+  testNumericalDerivatives( GetParam() );
+}
+TEST_P( MixCoeffDerivativeSRK4TestFixture, testNumericalDerivatives )
+{
+  testNumericalDerivatives( GetParam() );
+}
+
+// 4-component fluid test
+INSTANTIATE_TEST_SUITE_P(
+  CubicEOSTest,
+  MixCoeffDerivativePR4TestFixture,
+  ::testing::Values(
+    TestData< 4 >{ 1.83959e+06, 2.97150e+02, {0.030933, 0.319683, 0.637861, 0.011523} },
+    TestData< 4 >{ 1.83959e+06, 2.97150e+02, {0.000000, 0.349686, 0.637891, 0.012423} },
+    TestData< 4 >{ 1.83959e+06, 2.97150e+02, {0.000000, 0.349686, 0.650314, 0.000000} },
+    TestData< 4 >{ 1.83959e+08, 2.97150e+02, {0.030933, 0.319683, 0.637861, 0.011523} },
+    TestData< 4 >{ 1.83959e+08, 2.97150e+02, {0.000000, 0.349686, 0.637891, 0.012423} },
+    TestData< 4 >{ 1.83959e+08, 2.97150e+02, {0.000000, 0.349686, 0.650314, 0.000000} },
+    TestData< 4 >{ 1.83959e+06, 3.63000e+02, {0.030933, 0.319683, 0.637861, 0.011523} },
+    TestData< 4 >{ 1.83959e+06, 3.63000e+02, {0.000000, 0.349686, 0.637891, 0.012423} },
+    TestData< 4 >{ 1.83959e+06, 3.63000e+02, {0.000000, 0.349686, 0.650314, 0.000000} },
+    TestData< 4 >{ 1.83959e+08, 3.63000e+02, {0.030933, 0.319683, 0.637861, 0.011523} },
+    TestData< 4 >{ 1.83959e+08, 3.63000e+02, {0.000000, 0.349686, 0.637891, 0.012423} },
+    TestData< 4 >{ 1.83959e+08, 3.63000e+02, {0.000000, 0.349686, 0.650314, 0.000000} }
+    )
+  );
+
+INSTANTIATE_TEST_SUITE_P(
+  CubicEOSTest,
+  MixCoeffDerivativeSRK4TestFixture,
+  ::testing::Values(
+    TestData< 4 >{ 1.83959e+06, 2.97150e+02, {0.030933, 0.319683, 0.637861, 0.011523} },
+    TestData< 4 >{ 1.83959e+06, 2.97150e+02, {0.000000, 0.349686, 0.637891, 0.012423} },
+    TestData< 4 >{ 1.83959e+06, 2.97150e+02, {0.000000, 0.349686, 0.650314, 0.000000} },
+    TestData< 4 >{ 1.83959e+08, 2.97150e+02, {0.030933, 0.319683, 0.637861, 0.011523} },
+    TestData< 4 >{ 1.83959e+08, 2.97150e+02, {0.000000, 0.349686, 0.637891, 0.012423} },
+    TestData< 4 >{ 1.83959e+08, 2.97150e+02, {0.000000, 0.349686, 0.650314, 0.000000} },
+    TestData< 4 >{ 1.83959e+06, 3.63000e+02, {0.030933, 0.319683, 0.637861, 0.011523} },
+    TestData< 4 >{ 1.83959e+06, 3.63000e+02, {0.000000, 0.349686, 0.637891, 0.012423} },
+    TestData< 4 >{ 1.83959e+06, 3.63000e+02, {0.000000, 0.349686, 0.650314, 0.000000} },
+    TestData< 4 >{ 1.83959e+08, 3.63000e+02, {0.030933, 0.319683, 0.637861, 0.011523} },
+    TestData< 4 >{ 1.83959e+08, 3.63000e+02, {0.000000, 0.349686, 0.637891, 0.012423} },
+    TestData< 4 >{ 1.83959e+08, 3.63000e+02, {0.000000, 0.349686, 0.650314, 0.000000} }
+    )
+  );
