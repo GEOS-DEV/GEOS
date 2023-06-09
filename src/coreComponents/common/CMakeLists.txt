@@ -35,7 +35,7 @@ set( common_sources
      initializeEnvironment.cpp
    )
 
-set( dependencyList ${parallelDeps} lvarray pugixml RAJA chai conduit::conduit fmt )
+set( dependencyList ${parallelDeps} lvarray pugixml RAJA chai conduit::conduit fmt::fmt )
 
 if ( ENABLE_MKL )
   set( dependencyList ${dependencyList} mkl )
@@ -69,6 +69,6 @@ target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 geosx_add_code_checks(PREFIX common )
 
-if(GEOSX_ENABLE_TESTS)
+if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
 endif()

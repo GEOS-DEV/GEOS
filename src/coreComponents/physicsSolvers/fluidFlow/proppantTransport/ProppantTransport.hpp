@@ -20,8 +20,8 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORT_HPP_
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
-#include "constitutive/fluid/ParticleFluidBase.hpp"
-#include "constitutive/fluid/SlurryFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/ParticleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SlurryFluidBase.hpp"
 
 namespace geos
 {
