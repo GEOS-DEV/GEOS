@@ -194,6 +194,23 @@ public:
                                 real64 const & bMixtureCoefficient,
                                 real64 & compressibilityFactor );
 
+  /**
+   * @brief Compute the compressibility factor derivatives using mixture coefficients
+   * @param[in] numComps number of components
+   * @param[in] aMixtureCoefficient mixture coefficient (A)
+   * @param[in] bMixtureCoefficient mixture coefficient (B)
+   * @param[in] compressibilityFactor the current compressibility factor
+   * @param[in] daMixtureCoefficient_dp derivative of mixture coefficient (A) wrt pressure
+   * @param[in] dbMixtureCoefficient_dp derivative of mixture coefficient (B) wrt pressure
+   * @param[in] daMixtureCoefficient_dt derivative of mixture coefficient (A) wrt temperature
+   * @param[in] dbMixtureCoefficient_dt derivative of mixture coefficient (B) wrt temperature
+   * @param[in] daMixtureCoefficient_dz derivative of mixture coefficient (A) wrt composition
+   * @param[in] dbMixtureCoefficient_dz derivative of mixture coefficient (B) wrt composition
+   * @param[out] dCompressibilityFactor_dp derivative of the compressibility factor wrt pressure
+   * @param[out] dCompressibilityFactor_dt derivative of the compressibility factor wrt temperature
+   * @param[out] dCompressibilityFactor_dz derivative of the compressibility factor wrt composition
+   * @note Assumes that pressure and temperature are strictly positive
+   */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void
