@@ -318,6 +318,45 @@ TEST( CubicEOSTest, testCubicEOSFourComponentsSRK )
 template< int NC >
 using TestData = std::tuple< real64 const, real64 const, Feed< NC > const >;
 
+template< int NC >
+struct TestFeed
+{
+  static std::array< Feed< NC >, 3 > const feeds;
+};
+
+template<>
+std::array< Feed< 2 >, 3 > const TestFeed< 2 >::feeds = {
+  Feed< 2 >{0.100000, 0.900000},
+  Feed< 2 >{0.500000, 0.500000},
+  Feed< 2 >{0.001000, 0.999000}
+};
+
+template<>
+std::array< Feed< 4 >, 3 > const TestFeed< 4 >::feeds = {
+  Feed< 4 >{0.030933, 0.319683, 0.637861, 0.011523},
+  Feed< 4 >{0.000000, 0.349686, 0.637891, 0.012423},
+  Feed< 4 >{0.000000, 0.349686, 0.650314, 0.000000}
+};
+
+template< int NC >
+std::vector< TestData< NC > > generateTestData()
+{
+  std::initializer_list< real64 const > pressures( {1.83959e+06, 1.83959e+08} );
+  std::initializer_list< real64 const > temperatures( {2.97150e+02, 3.63000e+02} );
+  std::vector< TestData< NC > > testData;
+  for( const real64 pressure : pressures )
+  {
+    for( const real64 temperature : temperatures )
+    {
+      for( const auto & composition : TestFeed< NC >::feeds )
+      {
+        testData.emplace_back( pressure, temperature, composition );
+      }
+    }
+  }
+  return testData;
+}
+
 template< typename EOS, int NC >
 class DerivativeTestFixture : public ::testing::TestWithParam< TestData< NC > >
 {
@@ -389,10 +428,10 @@ public:
     real64 const temperature = std::get< 1 >( testData );
     TestFluid< NC >::createArray( composition, std::get< 2 >( testData ));
 
-    auto computeCoefficients = [&]( real64 const p, real64 const t, auto const & z, real64 & a, real64 & b ){
+    auto computeCoefficients = [&]( real64 const p, real64 const t, auto const & zmf, real64 & a, real64 & b ){
       CubicEOSPhaseModel< EOS >::computeMixtureCoefficients(
         numComps,
-        p, t, z,
+        p, t, zmf,
         criticalPressure, criticalTemperature, omega,
         binaryInteractionCoefficients,
         aPureCoefficient,
@@ -495,75 +534,198 @@ TEST_P( MixCoeffDerivativeSRK4TestFixture, testNumericalDerivatives )
 INSTANTIATE_TEST_SUITE_P(
   CubicEOSTest,
   MixCoeffDerivativePR2TestFixture,
-  ::testing::Values(
-    TestData< 2 >{ 1.83959e+06, 2.97150e+02, {0.100000, 0.900000} },
-    TestData< 2 >{ 1.83959e+06, 2.97150e+02, {0.500000, 0.500000} },
-    TestData< 2 >{ 1.83959e+06, 2.97150e+02, {0.001000, 0.999000} },
-    TestData< 2 >{ 1.83959e+08, 2.97150e+02, {0.100000, 0.900000} },
-    TestData< 2 >{ 1.83959e+08, 2.97150e+02, {0.500000, 0.500000} },
-    TestData< 2 >{ 1.83959e+08, 2.97150e+02, {0.001000, 0.999000} },
-    TestData< 2 >{ 1.83959e+06, 3.63000e+02, {0.100000, 0.900000} },
-    TestData< 2 >{ 1.83959e+06, 3.63000e+02, {0.500000, 0.500000} },
-    TestData< 2 >{ 1.83959e+06, 3.63000e+02, {0.001000, 0.999000} },
-    TestData< 2 >{ 1.83959e+08, 3.63000e+02, {0.100000, 0.900000} },
-    TestData< 2 >{ 1.83959e+08, 3.63000e+02, {0.500000, 0.500000} },
-    TestData< 2 >{ 1.83959e+08, 3.63000e+02, {0.001000, 0.999000} }
-    )
+  ::testing::ValuesIn( generateTestData< 2 >())
   );
 INSTANTIATE_TEST_SUITE_P(
   CubicEOSTest,
   MixCoeffDerivativeSRK2TestFixture,
-  ::testing::Values(
-    TestData< 2 >{ 1.83959e+06, 2.97150e+02, {0.100000, 0.900000} },
-    TestData< 2 >{ 1.83959e+06, 2.97150e+02, {0.500000, 0.500000} },
-    TestData< 2 >{ 1.83959e+06, 2.97150e+02, {0.001000, 0.999000} },
-    TestData< 2 >{ 1.83959e+08, 2.97150e+02, {0.100000, 0.900000} },
-    TestData< 2 >{ 1.83959e+08, 2.97150e+02, {0.500000, 0.500000} },
-    TestData< 2 >{ 1.83959e+08, 2.97150e+02, {0.001000, 0.999000} },
-    TestData< 2 >{ 1.83959e+06, 3.63000e+02, {0.100000, 0.900000} },
-    TestData< 2 >{ 1.83959e+06, 3.63000e+02, {0.500000, 0.500000} },
-    TestData< 2 >{ 1.83959e+06, 3.63000e+02, {0.001000, 0.999000} },
-    TestData< 2 >{ 1.83959e+08, 3.63000e+02, {0.100000, 0.900000} },
-    TestData< 2 >{ 1.83959e+08, 3.63000e+02, {0.500000, 0.500000} },
-    TestData< 2 >{ 1.83959e+08, 3.63000e+02, {0.001000, 0.999000} }
-    )
+  ::testing::ValuesIn( generateTestData< 2 >())
   );
 
 // 4-component fluid test
 INSTANTIATE_TEST_SUITE_P(
   CubicEOSTest,
   MixCoeffDerivativePR4TestFixture,
-  ::testing::Values(
-    TestData< 4 >{ 1.83959e+06, 2.97150e+02, {0.030933, 0.319683, 0.637861, 0.011523} },
-    TestData< 4 >{ 1.83959e+06, 2.97150e+02, {0.000000, 0.349686, 0.637891, 0.012423} },
-    TestData< 4 >{ 1.83959e+06, 2.97150e+02, {0.000000, 0.349686, 0.650314, 0.000000} },
-    TestData< 4 >{ 1.83959e+08, 2.97150e+02, {0.030933, 0.319683, 0.637861, 0.011523} },
-    TestData< 4 >{ 1.83959e+08, 2.97150e+02, {0.000000, 0.349686, 0.637891, 0.012423} },
-    TestData< 4 >{ 1.83959e+08, 2.97150e+02, {0.000000, 0.349686, 0.650314, 0.000000} },
-    TestData< 4 >{ 1.83959e+06, 3.63000e+02, {0.030933, 0.319683, 0.637861, 0.011523} },
-    TestData< 4 >{ 1.83959e+06, 3.63000e+02, {0.000000, 0.349686, 0.637891, 0.012423} },
-    TestData< 4 >{ 1.83959e+06, 3.63000e+02, {0.000000, 0.349686, 0.650314, 0.000000} },
-    TestData< 4 >{ 1.83959e+08, 3.63000e+02, {0.030933, 0.319683, 0.637861, 0.011523} },
-    TestData< 4 >{ 1.83959e+08, 3.63000e+02, {0.000000, 0.349686, 0.637891, 0.012423} },
-    TestData< 4 >{ 1.83959e+08, 3.63000e+02, {0.000000, 0.349686, 0.650314, 0.000000} }
-    )
+  ::testing::ValuesIn( generateTestData< 4 >())
   );
 
 INSTANTIATE_TEST_SUITE_P(
   CubicEOSTest,
   MixCoeffDerivativeSRK4TestFixture,
-  ::testing::Values(
-    TestData< 4 >{ 1.83959e+06, 2.97150e+02, {0.030933, 0.319683, 0.637861, 0.011523} },
-    TestData< 4 >{ 1.83959e+06, 2.97150e+02, {0.000000, 0.349686, 0.637891, 0.012423} },
-    TestData< 4 >{ 1.83959e+06, 2.97150e+02, {0.000000, 0.349686, 0.650314, 0.000000} },
-    TestData< 4 >{ 1.83959e+08, 2.97150e+02, {0.030933, 0.319683, 0.637861, 0.011523} },
-    TestData< 4 >{ 1.83959e+08, 2.97150e+02, {0.000000, 0.349686, 0.637891, 0.012423} },
-    TestData< 4 >{ 1.83959e+08, 2.97150e+02, {0.000000, 0.349686, 0.650314, 0.000000} },
-    TestData< 4 >{ 1.83959e+06, 3.63000e+02, {0.030933, 0.319683, 0.637861, 0.011523} },
-    TestData< 4 >{ 1.83959e+06, 3.63000e+02, {0.000000, 0.349686, 0.637891, 0.012423} },
-    TestData< 4 >{ 1.83959e+06, 3.63000e+02, {0.000000, 0.349686, 0.650314, 0.000000} },
-    TestData< 4 >{ 1.83959e+08, 3.63000e+02, {0.030933, 0.319683, 0.637861, 0.011523} },
-    TestData< 4 >{ 1.83959e+08, 3.63000e+02, {0.000000, 0.349686, 0.637891, 0.012423} },
-    TestData< 4 >{ 1.83959e+08, 3.63000e+02, {0.000000, 0.349686, 0.650314, 0.000000} }
-    )
+  ::testing::ValuesIn( generateTestData< 4 >())
+  );
+
+template< typename EOS, int NC >
+class CompressibilityDerivativeTestFixture : public DerivativeTestFixture< EOS, NC >
+{
+public:
+  using DerivativeTestFixture< EOS, NC >::numComps;
+  using ParamType = typename DerivativeTestFixture< EOS, NC >::ParamType;
+public:
+  void testNumericalDerivatives( ParamType const & testData ) const
+  {
+    auto criticalPressure = this->m_fluid->getCriticalPressure();
+    auto criticalTemperature = this->m_fluid->getCriticalTemperature();
+    auto omega = this->m_fluid->getAcentricFactor();
+    real64 binaryInteractionCoefficients = 0.0; // not implemented yet
+
+    array1d< real64 > aPureCoefficient( numComps );
+    array1d< real64 > bPureCoefficient( numComps );
+    real64 aMixtureCoefficient = 0.0;
+    real64 bMixtureCoefficient = 0.0;
+    real64 daMixtureCoefficient_dp = 0.0;
+    real64 dbMixtureCoefficient_dp = 0.0;
+    real64 daMixtureCoefficient_dt = 0.0;
+    real64 dbMixtureCoefficient_dt = 0.0;
+    array1d< real64 > daMixtureCoefficient_dz( numComps );
+    array1d< real64 > dbMixtureCoefficient_dz( numComps );
+
+    real64 compressibilityFactor = 0.0;
+    real64 dCompressibilityFactor_dp = 0.0;
+    real64 dCompressibilityFactor_dt = 0.0;
+    array1d< real64 > dCompressibilityFactor_dz( numComps );
+
+    real64 currentCompressibilityFactor = 0.0;
+    real64 fdDerivative = 0.0;
+
+    array1d< real64 > composition;
+    real64 const pressure = std::get< 0 >( testData );
+    real64 const temperature = std::get< 1 >( testData );
+    TestFluid< NC >::createArray( composition, std::get< 2 >( testData ));
+
+    auto computeCompressibilityFactor = [&]( real64 const p, real64 const t, auto const & zmf, real64 & z ){
+      CubicEOSPhaseModel< EOS >::computeMixtureCoefficients(
+        numComps,
+        p, t, zmf,
+        criticalPressure, criticalTemperature, omega,
+        binaryInteractionCoefficients,
+        aPureCoefficient,
+        bPureCoefficient,
+        aMixtureCoefficient, bMixtureCoefficient
+        );
+      CubicEOSPhaseModel< EOS >::computeCompressibilityFactor(
+        numComps,
+        zmf,
+        binaryInteractionCoefficients,
+        aPureCoefficient,
+        bPureCoefficient,
+        aMixtureCoefficient,
+        bMixtureCoefficient,
+        z );
+    };
+
+    // Calculate values
+    computeCompressibilityFactor( pressure, temperature, composition, compressibilityFactor );
+    // Calculate derivatives
+    CubicEOSPhaseModel< EOS >::computeMixtureCoefficients(
+      numComps,
+      pressure,
+      temperature,
+      composition,
+      criticalPressure,
+      criticalTemperature,
+      omega,
+      binaryInteractionCoefficients,
+      aPureCoefficient,
+      bPureCoefficient,
+      aMixtureCoefficient,
+      bMixtureCoefficient,
+      daMixtureCoefficient_dp,
+      dbMixtureCoefficient_dp,
+      daMixtureCoefficient_dt,
+      dbMixtureCoefficient_dt,
+      daMixtureCoefficient_dz,
+      dbMixtureCoefficient_dz );
+    CubicEOSPhaseModel< EOS >::computeCompressibilityFactor(
+      numComps,
+      aMixtureCoefficient,
+      bMixtureCoefficient,
+      compressibilityFactor,
+      daMixtureCoefficient_dp,
+      dbMixtureCoefficient_dp,
+      daMixtureCoefficient_dt,
+      dbMixtureCoefficient_dt,
+      daMixtureCoefficient_dz,
+      dbMixtureCoefficient_dz,
+      dCompressibilityFactor_dp,
+      dCompressibilityFactor_dt,
+      dCompressibilityFactor_dz );
+    // Compare against numerical derivatives
+    // -- Pressure derivative
+    real64 const dp = 1.0e-4 * pressure;
+    computeCompressibilityFactor( pressure-dp, temperature, composition, currentCompressibilityFactor );
+    fdDerivative = -(currentCompressibilityFactor - compressibilityFactor) / dp;
+    this->checkDerivative( dCompressibilityFactor_dp, fdDerivative, "Compressibility factor left pressure derivative" );
+    computeCompressibilityFactor( pressure+dp, temperature, composition, currentCompressibilityFactor );
+    fdDerivative = (currentCompressibilityFactor - compressibilityFactor) / dp;
+    this->checkDerivative( dCompressibilityFactor_dp, fdDerivative, "Compressibility factor right pressure derivative" );
+    // -- Temperature derivative
+    real64 const dt = 1.0e-6 * temperature;
+    computeCompressibilityFactor( pressure, temperature-dt, composition, currentCompressibilityFactor );
+    fdDerivative = -(currentCompressibilityFactor - compressibilityFactor) / dt;
+    this->checkDerivative( dCompressibilityFactor_dt, fdDerivative, "Compressibility factor left temperature derivative" );
+    computeCompressibilityFactor( pressure, temperature+dt, composition, currentCompressibilityFactor );
+    fdDerivative = (currentCompressibilityFactor - compressibilityFactor) / dt;
+    this->checkDerivative( dCompressibilityFactor_dt, fdDerivative, "Compressibility factor right temperature derivative" );
+    // -- Composition derivatives derivative
+    real64 const dz = 1.0e-7;
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      composition[ic] -= dz;
+      computeCompressibilityFactor( pressure, temperature, composition, currentCompressibilityFactor );
+      fdDerivative = -(currentCompressibilityFactor - compressibilityFactor) / dz;
+      this->checkDerivative( dCompressibilityFactor_dz[ic], fdDerivative, "Compressibility factor left composition derivative" );
+      composition[ic] += 2.0*dz;
+      computeCompressibilityFactor( pressure, temperature, composition, currentCompressibilityFactor );
+      fdDerivative = (currentCompressibilityFactor - compressibilityFactor) / dz;
+      this->checkDerivative( dCompressibilityFactor_dz[ic], fdDerivative, "Compressibility factor right composition derivative" );
+      composition[ic] -= dz;
+    }
+  }
+};
+
+using CompressibilityDerivativePR2TestFixture = CompressibilityDerivativeTestFixture< PengRobinsonEOS, 2 >;
+using CompressibilityDerivativePR4TestFixture = CompressibilityDerivativeTestFixture< PengRobinsonEOS, 4 >;
+using CompressibilityDerivativeSRK2TestFixture = CompressibilityDerivativeTestFixture< SoaveRedlichKwongEOS, 2 >;
+using CompressibilityDerivativeSRK4TestFixture = CompressibilityDerivativeTestFixture< SoaveRedlichKwongEOS, 4 >;
+
+TEST_P( CompressibilityDerivativePR2TestFixture, testNumericalDerivatives )
+{
+  testNumericalDerivatives( GetParam() );
+}
+TEST_P( CompressibilityDerivativePR4TestFixture, testNumericalDerivatives )
+{
+  testNumericalDerivatives( GetParam() );
+}
+TEST_P( CompressibilityDerivativeSRK2TestFixture, testNumericalDerivatives )
+{
+  testNumericalDerivatives( GetParam() );
+}
+TEST_P( CompressibilityDerivativeSRK4TestFixture, testNumericalDerivatives )
+{
+  testNumericalDerivatives( GetParam() );
+}
+
+// 2-component fluid test
+INSTANTIATE_TEST_SUITE_P(
+  CubicEOSTest,
+  CompressibilityDerivativePR2TestFixture,
+  ::testing::ValuesIn( generateTestData< 2 >())
+  );
+INSTANTIATE_TEST_SUITE_P(
+  CubicEOSTest,
+  CompressibilityDerivativeSRK2TestFixture,
+  ::testing::ValuesIn( generateTestData< 2 >())
+  );
+
+// 4-component fluid test
+INSTANTIATE_TEST_SUITE_P(
+  CubicEOSTest,
+  CompressibilityDerivativePR4TestFixture,
+  ::testing::ValuesIn( generateTestData< 4 >())
+  );
+INSTANTIATE_TEST_SUITE_P(
+  CubicEOSTest,
+  CompressibilityDerivativeSRK4TestFixture,
+  ::testing::ValuesIn( generateTestData< 4 >())
   );
