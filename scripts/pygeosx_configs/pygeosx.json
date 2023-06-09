@@ -1,11 +1,11 @@
 {
-"package_name": "geosx",
-"package_version": "develop",
-"package_final_phase": "hostconfig",
+"package_name": "pygeosx",
+"package_version": "fakeversion",
+"package_final_phase": "",
 "package_source_dir": "../..",
 "spack_url": "https://github.com/spack/spack",
 "spack_commit": "e493ab31c6f81a9e415a4b0e0e2263374c61e758",
-"spack_configs_path": "scripts/spack_configs",
+"spack_configs_path": "scripts/pygeosx_configs",
 "spack_packages_path": "scripts/spack_packages/packages",
 "spack_concretizer": "clingo"
 }

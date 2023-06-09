@@ -10,10 +10,10 @@
 # See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
 #------------------------------------------------------------------------------------------------------------
 
-# geosx@develop%clang@10.0.1+cuda cuda_arch=70 ^cuda@11.2.2+allow-unsupported-compilers
+# %gcc@8.3.1
 #
-# Uberenv command to build geos dependencies:
-# python3 ./scripts/uberenv/uberenv.py --spec="%clang@10.0.1+cuda cuda_arch=70 ^cuda@11.2.2+allow-unsupported-compilers"
+# Uberenv command to build pygeosx dependencies:
+# python3 ./scripts/uberenv/uberenv.py --spec="%gcc@8.3.1" --project-json="scripts/pygeosx_configs/pygeosx.json"
 
 spack:
   config:
@@ -26,38 +26,13 @@ spack:
     build_stage::
     - $spack/../build_stage
 
-  # Regular TPLs do not need views
-  view: false
+  view:
+    default:
+      root: ../view
+      projections: 
+        all: '{name}-{version}'
 
   compilers::
-  - compiler:
-      spec: clang@10.0.1
-      paths:
-        cc: /usr/tce/packages/clang/clang-ibm-10.0.1-gcc-8.3.1/bin/clang
-        cxx: /usr/tce/packages/clang/clang-ibm-10.0.1-gcc-8.3.1/bin/clang++
-        f77: /usr/tce/packages/gcc/gcc-8.3.1/bin/gfortran
-        fc: /usr/tce/packages/gcc/gcc-8.3.1/bin/gfortran
-      flags:
-        # Fix for "undefined reference to `_gfortran_transfer_integer_write'"
-        ldlibs: -lgfortran
-      operating_system: rhel7
-      target: ppc64le
-      modules: []
-      environment: {}
-      extra_rpaths: []
-  - compiler:
-      spec: clang@11.0.1
-      paths:
-        cc: /usr/tce/packages/clang/clang-ibm-11.0.1/bin/clang
-        cxx: /usr/tce/packages/clang/clang-ibm-11.0.1/bin/clang++
-        f77: /usr/tce/packages/gcc/gcc-8.3.1/bin/gfortran
-        fc: /usr/tce/packages/gcc/gcc-8.3.1/bin/gfortran
-      flags: {}
-      operating_system: rhel7
-      target: ppc64le
-      modules: []
-      environment: {}
-      extra_rpaths: []
   - compiler:
       spec: gcc@8.3.1
       paths:
@@ -76,30 +51,17 @@ spack:
 
   packages:
     all:
-      compiler: [gcc, clang]
+      compiler: [gcc]
       providers:
         mpi: [spectrum-mpi]
-        blas: [essl]
-        lapack: [essl]
+        blas: [openblas]
+        lapack: [openblas]
 
     spectrum-mpi:
       buildable: False
       externals:
         - spec: spectrum-mpi@release%gcc@8.3.1
           prefix: /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-gcc-8.3.1
-        # Previously clang@upstream - clingo doesn't like "upstream" version
-        - spec: spectrum-mpi@10.3.1.03rtm0%clang@9.0.0
-          prefix: /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-clang-upstream-2019.03.26
-        - spec: spectrum-mpi@release%clang@10.0.1
-          prefix: /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-clang-ibm-10.0.1-gcc-8.3.1/
-        - spec: spectrum-mpi@10.3.1.03rtm0 %clang@11.0.1
-          prefix: /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-clang-ibm-11.0.1/
-
-    essl:
-      buildable: False
-      externals:
-        - spec: essl@6.3.0.1
-          prefix: /usr/tcetmp/packages/essl/essl-6.3.0.1/
 
     cuda:
       buildable: False
@@ -138,13 +100,11 @@ spack:
       externals:
         - spec: diffutils@3.3
           prefix: /usr/bin/
-    # This needs to be the prefix to the python3 LC installation
-    # or pygeosx package built by spack/uberenv
-    python:
-      buildable: False
-      externals:
-      - spec: python@3.8.2
-        prefix: /usr/tce/packages/python/python-3.8.2
+    # python:
+    #   buildable: False
+    #   externals:
+    #   - spec: python@3.8.2
+    #     prefix: /usr/tce/packages/python/python-3.8.2/
     autoconf:
       buildable: False
       externals:
@@ -169,4 +129,14 @@ spack:
       buildable: False
       externals:
         - spec: flex@2.5.37
+          prefix: /usr
+    tk:
+      buildable: False
+      externals:
+        - spec: tk@8.5
+          prefix: /usr
+    tcl:
+      buildable: False
+      externals:
+        - spec: tcl@8.5
           prefix: /usr

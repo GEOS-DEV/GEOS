@@ -10,10 +10,10 @@
 # See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
 #------------------------------------------------------------------------------------------------------------
 
-# geosx@develop%clang@14.0.6
+#  %clang@14.0.6
 #
 # Uberenv command to build pygeosx dependencies:
-# python3 ./scripts/uberenv/uberenv.py --spec="%clang@14.0.6"
+# python3 ./scripts/uberenv/uberenv.py --spec="%clang@14.0.6" --project-json="scripts/pygeosx_configs/pygeosx.json"
 
 spack:
   config:
@@ -26,8 +26,11 @@ spack:
     build_stage::
     - $spack/../build_stage
 
-  # Regular TPLs do not need views
-  view: false
+  view:
+    default:
+      root: ../view
+      projections: 
+        all: '{name}-{version}'
 
   compilers::
   - compiler:
@@ -42,24 +45,11 @@ spack:
       modules: []
       environment: {}
       extra_rpaths: []
-  - compiler:
-      spec: gcc@12.1.1
-      paths:
-        cc: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/gcc
-        cxx: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/g++
-        f77: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/gfortran
-        fc: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/gfortran
-      flags: {}
-      operating_system: rhel8
-      target: x86_64
-      modules: []
-      environment: {}
-      extra_rpaths: []
 
   packages:
     all:
       target: [ivybridge]
-      compiler: [gcc, clang]
+      compiler: [clang]
       providers:
         mpi: [mvapich2]
         blas: [intel-oneapi-mkl]
@@ -69,8 +59,6 @@ spack:
     mvapich2:
       buildable: False
       externals:
-        - spec: mvapich2@2.3%gcc@12.1.1
-          prefix: /usr/tce/packages/mvapich2/mvapich2-2.3.6-gcc-12.1.1-magic
         - spec: mvapich2@2.3%clang@14.0.6
           prefix:  /usr/tce/packages/mvapich2/mvapich2-2.3.6-clang-14.0.6-magic
 
@@ -117,12 +105,6 @@ spack:
       externals:
         - spec: diffutils@3.3
           prefix: /usr/bin
-    # This needs to be the prefix to the pygeosx LC installation
-    python:
-      buildable: False
-      externals:
-      - spec: python@3.10.8
-        prefix: /usr/tce/packages/python/python-3.10.8/
     py-sphinx:
       buildable: False
       externals:
@@ -152,4 +134,14 @@ spack:
       buildable: False
       externals:
         - spec: flex@2.6.1
+          prefix: /usr
+    tk:
+      buildable: False
+      externals:
+        - spec: tk@8.6
+          prefix: /usr
+    tcl:
+      buildable: False
+      externals:
+        - spec: tcl@8.6
           prefix: /usr

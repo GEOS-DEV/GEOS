@@ -1,4 +1,4 @@
-# Copyright 2013-2022 Lawrence Livermore National Security, LLC and other
+# Copyright 2013-2023 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
@@ -68,7 +68,7 @@ class Geosx(CMakePackage, CudaPackage):
             description='Linear algebra interface.',
             values=('trilinos', 'hypre', 'petsc'),
             multi=False)
-    variant('pygeosx', default=True, description='Build the GEOSX python interface.')
+    variant('pygeosx', default=True, description='Add path to the python interface.')
 
     # SPHINX_END_VARIANTS
 
@@ -111,7 +111,9 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # IO
     #
-    depends_on('hdf5@1.12.1')
+    depends_on('hdf5')
+
+    # depends_on('hdf5@1.12.1')
     depends_on('silo@4.11~fortran')
 
     depends_on('conduit@0.8.2~test~fortran~hdf5_compat')
@@ -154,20 +156,8 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # Python
     #
-    # depends_on('python+shared +pic', when='+pygeosx')
-    # depends_on('py-numpy@1.19:+blas+lapack', when='+pygeosx')
-    # depends_on('py-scipy@1.5.2:', when='+pygeosx')
-    # depends_on('py-mpi4py@3.0.3:', when='+pygeosx')
-    # depends_on('py-pip', when='+pygeosx')
+    depends_on('python', when='+pygeosx')
 
-    # pygeosx dependencies?
-    depends_on("py-numpy@1.21.0:1.23.4+blas+lapack", type=("build"), when='+pygeosx')
-    depends_on('py-mpi4py', type=('build'), when='+pygeosx')
-    depends_on('py-virtualenv', type=('build'), when='+pygeosx')
-    depends_on('python@3.8:+shared+pic+tkinter+optimizations', type=('build'), when='+pygeosx')
-    depends_on("py-scipy", when='+pygeosx')
-    # depends_on("openblas")
-    depends_on("py-matplotlib", when='+pygeosx')
 
     #
     # Dev tools
@@ -222,7 +212,7 @@ class Geosx(CMakePackage, CudaPackage):
             var = '-'.join([var, 'cuda'])
 
         hostname = socket.gethostname().rstrip('1234567890')
-        host_config_path = "%s-%s-%s%s.cmake" % (hostname, self._get_sys_type(spec), spec.compiler, var)
+        host_config_path = "%s-%s-%s%s.cmake" % (hostname, self._get_sys_type(spec), (str(spec.compiler)).replace('=',''), var)
 
         dest_dir = self.stage.source_path
         host_config_path = os.path.abspath(pjoin(dest_dir, host_config_path))
@@ -438,9 +428,9 @@ class Geosx(CMakePackage, CudaPackage):
                 if enable:
                     cfg.write(cmake_cache_entry('{}_DIR'.format(cmake_name), spec[tpl].prefix))
 
-                    if tpl == 'hypre' and '+hypre-cuda' in spec:
+                    if tpl == 'hypre' and '+cuda' in spec:
                         cfg.write(cmake_cache_string('ENABLE_HYPRE_DEVICE', "CUDA"))
-                    elif tpl == 'hypre' and '+hypre-hip' in spec:
+                    elif tpl == 'hypre' and '+hip' in spec:
                         cfg.write(cmake_cache_string('ENABLE_HYPRE_DEVICE', "HIP"))
                 else:
                     cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
