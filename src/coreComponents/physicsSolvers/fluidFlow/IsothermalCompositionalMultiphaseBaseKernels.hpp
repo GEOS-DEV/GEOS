@@ -526,6 +526,7 @@ public:
    */
   ElementBasedAssemblyKernel( localIndex const numPhases,
                               globalIndex const rankOffset,
+                              integer const useTotalMassEquation,
                               string const dofKey,
                               ElementSubRegionBase const & subRegion,
                               MultiFluidBase const & fluid,
@@ -534,6 +535,7 @@ public:
                               arrayView1d< real64 > const & localRhs )
     : m_numPhases( numPhases ),
     m_rankOffset( rankOffset ),
+    m_useTotalMassEquation( useTotalMassEquation ),
     m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
     m_elemGhostRank( subRegion.ghostRank() ),
     m_volume( subRegion.getElementVolume() ),
@@ -764,10 +766,13 @@ public:
   {
     using namespace compositionalMultiphaseUtilities;
 
-    // apply equation/variable change transformation to the component mass balance equations
-    real64 work[numDof]{};
-    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numDof, stack.localJacobian, work );
-    shiftElementsAheadByOneAndReplaceFirstElementWithSum( numComp, stack.localResidual );
+    if( m_useTotalMassEquation > 0 )
+    {
+      // apply equation/variable change transformation to the component mass balance equations
+      real64 work[numDof]{};
+      shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numDof, stack.localJacobian, work );
+      shiftElementsAheadByOneAndReplaceFirstElementWithSum( numComp, stack.localResidual );
+    }
 
     // add contribution to residual and jacobian into:
     // - the component mass balance equations (i = 0 to i = numComp-1)
@@ -820,6 +825,9 @@ protected:
 
   /// Offset for my MPI rank
   globalIndex const m_rankOffset;
+
+  /// Flag to specify whether total mass equation is used or not
+  integer const m_useTotalMassEquation;
 
   /// View on the dof numbers
   arrayView1d< globalIndex const > const m_dofNumber;
@@ -885,6 +893,7 @@ public:
   createAndLaunch( integer const numComps,
                    integer const numPhases,
                    globalIndex const rankOffset,
+                   integer const useTotalMassEquation,
                    string const dofKey,
                    ElementSubRegionBase const & subRegion,
                    MultiFluidBase const & fluid,
@@ -897,7 +906,7 @@ public:
       integer constexpr NUM_COMP = NC();
       integer constexpr NUM_DOF = NC()+1;
       ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
-      kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
+      kernel( numPhases, rankOffset, useTotalMassEquation, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
       ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template launch< POLICY >( subRegion.size(), kernel );
     } );
   }

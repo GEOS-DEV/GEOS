@@ -243,6 +243,7 @@ public:
   FaceBasedAssemblyKernel( integer const numPhases,
                            globalIndex const rankOffset,
                            integer const hasCapPressure,
+                           integer const useTotalMassEquation,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
                            CompFlowAccessors const & compFlowAccessors,
@@ -258,6 +259,7 @@ public:
     : Base( numPhases,
             rankOffset,
             hasCapPressure,
+            useTotalMassEquation,
             stencilWrapper,
             dofNumberAccessor,
             compFlowAccessors,
@@ -629,6 +631,7 @@ public:
                    globalIndex const rankOffset,
                    string const & dofKey,
                    integer const hasCapPressure,
+                   integer const useTotalMassEquation,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
@@ -655,7 +658,7 @@ public:
       typename KernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
       typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
 
-      KernelType kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
+      KernelType kernel( numPhases, rankOffset, hasCapPressure, useTotalMassEquation, stencilWrapper, dofNumberAccessor,
                          compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
                          capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
                          dt, localMatrix, localRhs );
@@ -759,6 +762,7 @@ public:
   DirichletFaceBasedAssemblyKernel( integer const numPhases,
                                     globalIndex const rankOffset,
                                     integer const hasCapPressure,
+                                    integer const useTotalMassEquation,
                                     FaceManager const & faceManager,
                                     BoundaryStencilWrapper const & stencilWrapper,
                                     FLUIDWRAPPER const & fluidWrapper,
@@ -776,6 +780,7 @@ public:
     : Base( numPhases,
             rankOffset,
             hasCapPressure,
+            useTotalMassEquation,
             faceManager,
             stencilWrapper,
             fluidWrapper,
@@ -1065,6 +1070,7 @@ public:
   createAndLaunch( integer const numComps,
                    integer const numPhases,
                    globalIndex const rankOffset,
+                   integer const useTotalMassEquation,
                    string const & dofKey,
                    string const & solverName,
                    FaceManager const & faceManager,
@@ -1102,7 +1108,7 @@ public:
         // for now, we neglect capillary pressure in the kernel
         bool const hasCapPressure = false;
 
-        KernelType kernel( numPhases, rankOffset, hasCapPressure, faceManager, stencilWrapper, fluidWrapper,
+        KernelType kernel( numPhases, rankOffset, hasCapPressure, useTotalMassEquation, faceManager, stencilWrapper, fluidWrapper,
                            dofNumberAccessor, compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
                            capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
                            dt, localMatrix, localRhs );

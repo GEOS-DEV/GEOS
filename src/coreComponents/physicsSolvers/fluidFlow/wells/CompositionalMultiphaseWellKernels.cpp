@@ -282,6 +282,7 @@ void
 FluxKernel::
   launch( localIndex const size,
           globalIndex const rankOffset,
+          integer const useTotalMassEquation,
           WellControls const & wellControls,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< localIndex const > const & nextWellElemIndex,
@@ -479,11 +480,14 @@ FluxKernel::
         dofColIndices_dPresCompUp[jdof] = offsetUp + COFFSET::DPRES + jdof;
       }
 
-      // Apply equation/variable change transformation(s)
-      real64 work[NC+1]{};
-      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC, 1, 2, localFluxJacobian_dRate, work );
-      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC, NC + 1, 2, localFluxJacobian_dPresCompUp, work );
-      shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( NC, NC, 2, localFlux );
+      if( useTotalMassEquation )
+      {
+        // Apply equation/variable change transformation(s)
+        real64 work[NC + 1]{};
+        shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC, 1, 2, localFluxJacobian_dRate, work );
+        shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC, NC + 1, 2, localFluxJacobian_dPresCompUp, work );
+        shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( NC, NC, 2, localFlux );
+      }
 
       for( integer i = 0; i < 2*NC; ++i )
       {
@@ -509,6 +513,7 @@ FluxKernel::
   void FluxKernel:: \
     launch< NC >( localIndex const size, \
                   globalIndex const rankOffset, \
+                  integer const useTotalMassEquation, \
                   WellControls const & wellControls, \
                   arrayView1d< globalIndex const > const & wellElemDofNumber, \
                   arrayView1d< localIndex const > const & nextWellElemIndex, \

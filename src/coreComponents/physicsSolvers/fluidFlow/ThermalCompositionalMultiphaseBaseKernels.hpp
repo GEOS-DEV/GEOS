@@ -184,13 +184,14 @@ public:
    */
   ElementBasedAssemblyKernel( localIndex const numPhases,
                               globalIndex const rankOffset,
+                              integer const useTotalMassEquation,
                               string const dofKey,
                               ElementSubRegionBase const & subRegion,
                               MultiFluidBase const & fluid,
                               CoupledSolidBase const & solid,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
-    : Base( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs ),
+    : Base( numPhases, rankOffset, useTotalMassEquation, dofKey, subRegion, fluid, solid, localMatrix, localRhs ),
     m_dPoro_dTemp( solid.getDporosity_dTemperature() ),
     m_phaseInternalEnergy_n( fluid.phaseInternalEnergy_n() ),
     m_phaseInternalEnergy( fluid.phaseInternalEnergy() ),
@@ -427,6 +428,7 @@ public:
   createAndLaunch( localIndex const numComps,
                    localIndex const numPhases,
                    globalIndex const rankOffset,
+                   integer const useTotalMassEquation,
                    string const dofKey,
                    ElementSubRegionBase const & subRegion,
                    MultiFluidBase const & fluid,
@@ -440,7 +442,7 @@ public:
       localIndex constexpr NUM_COMP = NC();
       localIndex constexpr NUM_DOF = NC()+2;
       ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
-      kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
+      kernel( numPhases, rankOffset, useTotalMassEquation, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
       ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template
       launch< POLICY, ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF > >( subRegion.size(), kernel );
     } );

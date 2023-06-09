@@ -247,6 +247,7 @@ public:
     static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
     static constexpr char const * maxRelativeTempChangeString() { return "maxRelativeTemperatureChange"; }
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
+    static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
 
   };
 
@@ -351,6 +352,8 @@ public:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
+  integer useTotalMassEquation() const { return m_useTotalMassEquation; }
+
 protected:
 
   virtual void postProcessInput() override;
@@ -432,6 +435,9 @@ protected:
 
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
   integer m_allowCompDensChopping;
+
+  /// flag indicating whether total mass equation is used
+  integer m_useTotalMassEquation;
 
   /// name of the fluid constitutive model used as a reference for component/phase description
   string m_referenceFluidModelName;

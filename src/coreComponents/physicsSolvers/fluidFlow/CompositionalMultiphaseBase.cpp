@@ -61,7 +61,8 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   m_hasCapPressure( 0 ),
   m_keepFlowVariablesConstantDuringInitStep( 0 ),
   m_minScalingFactor( 0.01 ),
-  m_allowCompDensChopping( 1 )
+  m_allowCompDensChopping( 1 ),
+  m_useTotalMassEquation( 1 )
 {
 //START_SPHINX_INCLUDE_00
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
@@ -115,6 +116,12 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
     setDescription( "Flag indicating whether local (cell-wise) chopping of negative compositions is allowed" );
+
+  this->registerWrapper( viewKeyStruct::useTotalMassEquationString(), &m_useTotalMassEquation ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1 ).
+    setDescription( "Flag indicating whether total mass equation is used" );
 
 }
 
@@ -1210,6 +1217,7 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
           createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                      m_numPhases,
                                                      dofManager.rankOffset(),
+                                                     m_useTotalMassEquation,
                                                      dofKey,
                                                      subRegion,
                                                      fluid,
@@ -1224,6 +1232,7 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
           createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                      m_numPhases,
                                                      dofManager.rankOffset(),
+                                                     m_useTotalMassEquation,
                                                      dofKey,
                                                      subRegion,
                                                      fluid,
@@ -1379,12 +1388,14 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
 
       integer const fluidComponentId = fs.getComponent();
       integer const numFluidComponents = m_numComponents;
+      integer const useTotalMassEquation = m_useTotalMassEquation;
       forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
                                                            targetSet,
                                                            rankOffset,
                                                            ghostRank,
                                                            fluidComponentId,
                                                            numFluidComponents,
+                                                           useTotalMassEquation,
                                                            dofNumber,
                                                            rhsContributionArrayView,
                                                            localRhs] GEOS_HOST_DEVICE ( localIndex const a )
@@ -1396,15 +1407,23 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
           return;
         }
 
-        // for all "fluid components", we add the value to the total mass balance equation
-        globalIndex const totalMassBalanceRow = dofNumber[ei] - rankOffset;
-        localRhs[totalMassBalanceRow] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor
-                                                                                          // here
-
-        // for all "fluid components" except the last one, we add the value to the component mass balance equation (shifted appropriately)
-        if( fluidComponentId < numFluidComponents - 1 )
+        if( useTotalMassEquation > 0 )
         {
-          globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidComponentId + 1; // component mass bal equations are shifted
+          // for all "fluid components", we add the value to the total mass balance equation
+          globalIndex const totalMassBalanceRow = dofNumber[ei] - rankOffset;
+          localRhs[totalMassBalanceRow] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the
+                                                                                            // sizeScalingFactor
+                                                                                            // here
+          if( fluidComponentId < numFluidComponents - 1 )
+          {
+            globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidComponentId + 1; // component mass bal equations are shifted
+            localRhs[compMassBalanceRow] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the
+                                                                                             // sizeScalingFactor here
+          }
+        }
+        else
+        {
+          globalIndex const compMassBalanceRow = dofNumber[ei] - rankOffset + fluidComponentId;
           localRhs[compMassBalanceRow] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the
                                                                                            // sizeScalingFactor here
         }

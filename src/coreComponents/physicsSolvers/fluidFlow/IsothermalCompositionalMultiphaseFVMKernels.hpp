@@ -319,6 +319,7 @@ public:
   FaceBasedAssemblyKernelBase( integer const numPhases,
                                globalIndex const rankOffset,
                                integer const hasCapPressure,
+                               integer const useTotalMassEquation,
                                DofNumberAccessor const & dofNumberAccessor,
                                CompFlowAccessors const & compFlowAccessors,
                                MultiFluidAccessors const & multiFluidAccessors,
@@ -338,6 +339,9 @@ protected:
 
   /// Flag to specify whether capillary pressure is used or not
   integer const m_hasCapPressure;
+
+  /// Flag to specify whether total mass equation is used or not
+  integer const m_useTotalMassEquation;
 
   /// Time step size
   real64 const m_dt;
@@ -437,6 +441,7 @@ public:
   FaceBasedAssemblyKernel( integer const numPhases,
                            globalIndex const rankOffset,
                            integer const hasCapPressure,
+                           integer const useTotalMassEquation,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
                            CompFlowAccessors const & compFlowAccessors,
@@ -449,6 +454,7 @@ public:
     : FaceBasedAssemblyKernelBase( numPhases,
                                    rankOffset,
                                    hasCapPressure,
+                                   useTotalMassEquation,
                                    dofNumberAccessor,
                                    compFlowAccessors,
                                    multiFluidAccessors,
@@ -694,12 +700,15 @@ public:
   {
     using namespace compositionalMultiphaseUtilities;
 
-    // Apply equation/variable change transformation(s)
-    stackArray1d< real64, maxStencilSize * numDof > work( stack.stencilSize * numDof );
-    shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numEqn, numDof*stack.stencilSize, stack.numConnectedElems,
-                                                             stack.localFluxJacobian, work );
-    shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numEqn, stack.numConnectedElems,
-                                                               stack.localFlux );
+    if( m_useTotalMassEquation > 0 )
+    {
+      // Apply equation/variable change transformation(s)
+      stackArray1d< real64, maxStencilSize * numDof > work( stack.stencilSize * numDof );
+      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numEqn, numDof * stack.stencilSize, stack.numConnectedElems,
+                                                               stack.localFluxJacobian, work );
+      shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numEqn, stack.numConnectedElems,
+                                                                 stack.localFlux );
+    }
 
     // add contribution to residual and jacobian into:
     // - the component mass balance equations (i = 0 to i = numComp-1)
@@ -796,6 +805,7 @@ public:
                    globalIndex const rankOffset,
                    string const & dofKey,
                    integer const hasCapPressure,
+                   integer const useTotalMassEquation,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
@@ -818,7 +828,7 @@ public:
       typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
       typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
-      kernelType kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
+      kernelType kernel( numPhases, rankOffset, hasCapPressure, useTotalMassEquation, stencilWrapper, dofNumberAccessor,
                          compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
                          dt, localMatrix, localRhs );
       kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
@@ -906,6 +916,7 @@ public:
   DirichletFaceBasedAssemblyKernel( integer const numPhases,
                                     globalIndex const rankOffset,
                                     integer const hasCapPressure,
+                                    integer const useTotalMassEquation,
                                     FaceManager const & faceManager,
                                     BoundaryStencilWrapper const & stencilWrapper,
                                     FLUIDWRAPPER const & fluidWrapper,
@@ -920,6 +931,7 @@ public:
     : Base( numPhases,
             rankOffset,
             hasCapPressure,
+            useTotalMassEquation,
             stencilWrapper,
             dofNumberAccessor,
             compFlowAccessors,
@@ -1290,6 +1302,7 @@ public:
   createAndLaunch( integer const numComps,
                    integer const numPhases,
                    globalIndex const rankOffset,
+                   integer const useTotalMassEquation,
                    string const & dofKey,
                    string const & solverName,
                    FaceManager const & faceManager,
@@ -1323,7 +1336,7 @@ public:
         // for now, we neglect capillary pressure in the kernel
         bool const hasCapPressure = false;
 
-        kernelType kernel( numPhases, rankOffset, hasCapPressure, faceManager, stencilWrapper, fluidWrapper,
+        kernelType kernel( numPhases, rankOffset, hasCapPressure, useTotalMassEquation, faceManager, stencilWrapper, fluidWrapper,
                            dofNumberAccessor, compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
                            dt, localMatrix, localRhs );
         kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
