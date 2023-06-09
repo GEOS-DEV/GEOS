@@ -209,7 +209,7 @@ install( DIRECTORY ../scripts/
 
 add_custom_target( geosx_generate_install_schema
          ALL
-         COMMAND ${CMAKE_COMMAND} -E env OMP_NUM_THREADS=1 geosx -s ${CMAKE_BINARY_DIR}/schema.xsd >generate_schema.log 2>&1 || (cat generate_schema.log && exit 1)
+         COMMAND geosx -s ${CMAKE_BINARY_DIR}/schema.xsd >generate_schema.log 2>&1 || (cat generate_schema.log && exit 1)
          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
          DEPENDS geosx
          COMMENT "Generating XML schema to install"
