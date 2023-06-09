@@ -580,6 +580,9 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::assembleSystem( real64 const t
                                localMatrix,
                                localRhs );
 
+    // tell the flow solver that this is a stress initialization step
+    flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
+
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,

@@ -19,6 +19,7 @@
 #include "PoromechanicsInitialization.hpp"
 
 #include "physicsSolvers/PhysicsSolverManager.hpp"
+#include "physicsSolvers/multiphysics/HydrofractureSolver.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "mainInterface/ProblemManager.hpp"
@@ -40,6 +41,12 @@ template<> class PoromechanicsCatalogNames< SinglePhasePoromechanics >
 {
 public:
   static string name() { return "SinglePhasePoromechanicsInitialization"; }
+};
+// Class specialization for a POROMECHANICS_SOLVER set to HydrofractureSolver
+template<> class PoromechanicsCatalogNames< HydrofractureSolver < SinglePhasePoromechanics > >
+{
+public:
+  static string name() { return "HydrofractureInitialization"; }
 };
 // Class specialization for a POROMECHANICS_SOLVER set to MultiphasePoromechanics
 template<> class PoromechanicsCatalogNames< MultiphasePoromechanics >
@@ -126,8 +133,10 @@ execute( real64 const time_n,
 
 namespace
 {
+typedef PoromechanicsInitialization< HydrofractureSolver< SinglePhasePoromechanics > > HydrofractureInitialization;
 typedef PoromechanicsInitialization< MultiphasePoromechanics > MultiphasePoromechanicsInitialization;
 typedef PoromechanicsInitialization< SinglePhasePoromechanics > SinglePhasePoromechanicsInitialization;
+REGISTER_CATALOG_ENTRY( TaskBase, HydrofractureInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphasePoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsInitialization, string const &, Group * const )
 }

@@ -152,6 +152,9 @@ protected:
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
 
+  /// Flag to indicate that the solver is going to perform stress initialization
+  integer m_performStressInitialization;
+
 private:
 
   /**
@@ -172,9 +175,6 @@ private:
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
                          PARAMS && ... params );
-
-  /// Flag to indicate that the solver is going to perform stress initialization
-  integer m_performStressInitialization;
 };
 
 template< typename CONSTITUTIVE_BASE,

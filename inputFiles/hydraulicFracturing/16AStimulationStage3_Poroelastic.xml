@@ -1,0 +1,446 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
+  <!-- SPHINX_HYDROFRACSOLVER -->
+    <Hydrofracture
+      name="hydrofracture"
+      solidSolverName="lagsolve"
+      flowSolverName="SinglePhaseFlow"
+      surfaceGeneratorName="SurfaceGen"
+      logLevel="1"
+      targetRegions="{ Domain, Fracture }"
+      isMatrixPoroelastic="1"
+      contactRelationName="fractureContact"
+      maxNumResolves="5">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-4"
+        newtonMaxIter="50"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovAdaptiveTol="1"/>
+    </Hydrofracture>
+  <!-- SPHINX_HYDROFRACSOLVER_END -->
+
+  <!-- SPHINX_MECHANICALSOLVER -->
+    <SolidMechanicsLagrangianSSLE
+      name="lagsolve"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Domain, Fracture }"
+      contactRelationName="fractureContact">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-4"/>
+      <LinearSolverParameters
+        solverType="gmres"/>
+    </SolidMechanicsLagrangianSSLE>
+  <!-- SPHINX_MECHANICALSOLVER_END -->
+
+  <!-- SPHINX_SINGLEPHASEFVM -->
+    <SinglePhaseFVM
+      name="SinglePhaseFlow"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Domain, Fracture }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-4"
+        newtonMaxIter="10"/>
+      <LinearSolverParameters
+        solverType="gmres"/>
+    </SinglePhaseFVM>
+  <!-- SPHINX_SINGLEPHASEFVM_END -->
+
+  <!-- SPHINX_SURFACEGENERATOR -->
+    <SurfaceGenerator
+      name="SurfaceGen"
+      targetRegions="{ Domain }"
+      nodeBasedSIF="1"      
+      rockToughness="3.0e6"
+      mpiCommOrder="1"/>
+  <!-- SPHINX_SURFACEGENERATOR_END -->
+  </Solvers>
+
+  <!-- SPHINX_MESH -->
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -5, 195, 275, 315, 395, 595 }"
+      yCoords="{ 185, 345, 485, 625, 785 }"
+      zCoords="{ 295, 515, 595, 895 }"
+      nx="{ 10, 10, 10, 10, 10 }"
+      ny="{ 10, 210, 210, 10 }"
+      nz="{ 10, 120, 450 }"
+      yBias="{ 0.0, 0.4, -0.4, 0.0}"
+      zBias="{ 0.0, 0.4, -0.4}"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+  <!-- SPHINX_MESH_END -->
+
+  <Events
+    minTime="-1e11"
+    maxTime="8100.0">
+
+    <SoloEvent
+      name="hydroFracturePreEquilibrationStep"
+      targetTime="-1e11"
+      beginTime="-1e11"
+      target="/Tasks/hydroFracturePreEquilibrationStep"/>
+    <SoloEvent
+      name="solidMechanicsPreEquilibrationStep"
+      targetTime="-1e11"
+      beginTime="-1e11"      
+      target="/Tasks/solidMechanicsPreEquilibrationStep"/>
+
+    <PeriodicEvent
+      name="solverApplicationsEquilibration"
+      beginTime="-1e11"
+      endTime="0"
+      maxEventDt="1e11"
+      target="/Solvers/hydrofracture"/>
+
+    <SoloEvent
+      name="hydroFracturePostEquilibrationStep"
+      targetTime="0"
+      target="/Tasks/hydroFracturePostEquilibrationStep"/>
+    <SoloEvent
+      name="solidMechanicsPostEquilibrationStep"
+      targetTime="0"
+      target="/Tasks/solidMechanicsPostEquilibrationStep"/>
+
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
+
+    <PeriodicEvent
+      name="outputs1"
+      beginTime="0.0"
+      endTime="5.0"
+      forceDt="0.5"
+      target="/Outputs/vtkOutput"/> 
+
+    <PeriodicEvent
+      name="outputs2"
+      beginTime="5.0"
+      endTime="100.0"
+      forceDt="1.0"
+      target="/Outputs/vtkOutput"/> 
+
+    <PeriodicEvent
+      name="outputs3"
+      beginTime="100.0"
+      endTime="360.0"
+      forceDt="10.0"
+      target="/Outputs/vtkOutput"/> 
+    
+    <PeriodicEvent
+      name="outputs4"
+      beginTime="360.0"
+      endTime="1000.0"
+      forceDt="40.0"
+      target="/Outputs/vtkOutput"/> 
+
+    <PeriodicEvent
+      name="outputs5"
+      beginTime="1000.0"
+      endTime="7500.0"
+      forceDt="100.0"
+      target="/Outputs/vtkOutput"/> 
+
+    <PeriodicEvent
+      name="solverApplications1"
+      beginTime="0.0"
+      endTime="5.0"
+      forceDt="0.5"
+      target="/Solvers/hydrofracture"/>
+
+    <PeriodicEvent
+      name="solverApplications2"
+      beginTime="5.0"
+      endTime="100.0"
+      forceDt="1.0"
+      target="/Solvers/hydrofracture"/>
+
+    <PeriodicEvent
+      name="solverApplications3"
+      beginTime="100.0"
+      endTime="360.0"
+      forceDt="10.0"
+      target="/Solvers/hydrofracture"/>
+
+    <PeriodicEvent
+      name="solverApplications4"
+      beginTime="360.0"
+      endTime="1000.0"
+      forceDt="40.0"
+      target="/Solvers/hydrofracture"/>
+
+    <PeriodicEvent
+      name="solverApplications5"
+      beginTime="1000.0"
+      endTime="8100.0"
+      forceDt="100.0"
+      target="/Solvers/hydrofracture"/>
+  </Events>
+
+  <!-- SPHINX_ELEMENTREGIONS -->
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ cb1 }"
+      materialList="{ gel, porousRock }"/>
+
+    <SurfaceElementRegion
+      name="Fracture"      
+      defaultAperture="0.04e-3"
+      materialList="{ gel, rock, fractureFilling, fractureContact }"/>
+  </ElementRegions>
+  <!-- SPHINX_ELEMENTREGIONS_END -->
+
+  <!-- SPHINX_MATERIAL -->
+  <Constitutive>
+    <CompressibleSinglePhaseFluid
+      name="gel"
+      defaultDensity="1000"
+      defaultViscosity="1.0e-1"
+      referencePressure="0.0"
+      compressibility="5e-10"
+      referenceViscosity="0.1"
+      viscosibility="0.0"/>
+
+    <PorousElasticIsotropic
+       name="porousRock"
+       solidModelName="rock"
+       porosityModelName="rockPorosity"
+       permeabilityModelName="rockPerm"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      grainBulkModulus="1e11"
+      defaultReferencePorosity="0.01"/>
+
+    <ConstantPermeability
+       name="rockPerm"
+       permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15 }"/> 
+
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="2400"
+      defaultBulkModulus="38.1944444444e9"
+      defaultShearModulus="21.8253968254e9"/>
+
+    <CompressibleSolidParallelPlatesPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm"/>
+
+    <FrictionlessContact
+      name="fractureContact"
+      penaltyStiffness="1.0e12"
+      apertureTableName="apertureTable"/>
+  </Constitutive>
+  <!-- SPHINX_MATERIAL_END -->
+  
+  <!-- SPHINX_NUMERICAL -->
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"
+        />
+    </FiniteVolume>
+  </NumericalMethods>
+  <!-- SPHINX_NUMERICAL_END -->
+
+  <!-- SPHINX_BC -->
+  <FieldSpecifications>
+    <FieldSpecification 
+      name="Sh"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="rock_stress"
+      component="0"
+      scale="-18.02e6"/>
+
+    <FieldSpecification 
+      name="SH"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="rock_stress"
+      component="1"
+      scale="-24.02e6"/>
+
+    <FieldSpecification 
+      name="Sv"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="rock_stress"
+      component="2"
+      scale="-37.58e6"/>
+
+    <FieldSpecification
+       name="initialPressure"
+       initialCondition="1"
+       objectPath="ElementRegions/Domain/cb1"
+       fieldName="pressure"
+       setNames="{all}"
+       functionName="presFunction"
+       scale="1e6"/>  
+
+    <FieldSpecification
+      name="refPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="rockPerm_referencePressure"
+      functionName="presFunction"
+      scale="1.0e6"/>
+
+    <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ core }"
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
+
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg, zpos }"/>
+
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
+
+    <SourceFlux
+      name="sourceTerm"
+      objectPath="ElementRegions/Fracture"
+      scale="-13.25"
+      setNames="{ source }"
+      functionName="timeFunction"/>
+  </FieldSpecifications>
+  <!-- SPHINX_BC_END -->
+
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -0.01, -0.03e-3, 0.0 }"
+      values="{ 0.002e-3, 0.02e-3, 0.04e-3 }"/>
+
+    <TableFunction
+      name="timeFunction"
+      coordinates="{ 0.0, 359.9, 360.1, 719.9, 720.1, 1199.9, 1200.1, 1499.9, 1500.1, 2099.9, 2100.1, 4499.9, 4500.1, 6299.9, 6300.1, 6899.9, 6900.1, 7499.9, 7500.1, 7799.9, 7800.1, 8100 }"
+      values="{ 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0, 5.0, 5.0, 6.0, 6.0, 7.0, 7.0, 4.0, 4.0, 3.0, 3.0, 2.0, 2.0, 1.0, 1.0 }"/>
+    
+    <TableFunction
+      name="presFunction"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ stressTable/xlin.geos, stressTable/ylin.geos, stressTable/zlin.geos }"
+      voxelFile="stressTable/pres.geos"/>
+  </Functions>
+
+  <Geometry>
+  <!-- SPHINX_INITIALFRAC -->
+    <Box
+      name="fracture"
+      xMin="{ 294.9, 480.9, 590.9 }"
+      xMax="{ 295.1, 489.1, 599.1 }"/>
+  <!-- SPHINX_INITIALFRAC_END -->
+
+  <!-- SPHINX_INJSOURCE -->
+    <Box
+      name="source"
+      xMin="{ 294.9, 482.9, 592.9 }"
+      xMax="{ 295.1, 487.1, 597.1 }"/>
+  <!-- SPHINX_INJSOURCE_END -->
+
+  <!-- SPHINX_FRACPLANE -->
+    <Box
+      name="core"
+      xMin="{ 294.9, -1000.1, -1000.1 }"
+      xMax="{ 295.1, 1000.1, 1000.1 }"/>
+  <!-- SPHINX_FRACPLANE_END -->
+  </Geometry>
+
+  <Tasks>
+    <HydrofractureInitialization 
+      logLevel="1"      
+      name="hydroFracturePreEquilibrationStep"
+      performStressInitialization="1"
+      poromechanicsSolverName="hydrofracture"/>
+    <SolidMechanicsStateReset 
+      logLevel="2"      
+      name="solidMechanicsPreEquilibrationStep"
+      solidSolverName="lagsolve"/>
+    
+    <HydrofractureInitialization 
+      logLevel="1"      
+      name="hydroFracturePostEquilibrationStep"
+      performStressInitialization="0"
+      poromechanicsSolverName="hydrofracture"/>
+    <SolidMechanicsStateReset 
+      logLevel="2"      
+      name="solidMechanicsPostEquilibrationStep"
+      solidSolverName="lagsolve"/>
+  </Tasks>
+
+  <!-- SPHINX_OUTPUT -->    
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="16AStimulation-poroElastic"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+  <!-- SPHINX_OUTPUT_END -->
+
+</Problem>
