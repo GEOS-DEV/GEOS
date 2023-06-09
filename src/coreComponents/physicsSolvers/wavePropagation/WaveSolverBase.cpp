@@ -169,6 +169,29 @@ void WaveSolverBase::reinit()
   initializePostInitialConditionsPreSubGroups();
 }
 
+void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
+{
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
+
+    nodeManager.registerField< fields::referencePosition32 >( this->getName() );
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+
+    nodeManager.getField< fields::referencePosition32 >().resizeDimension< 1 > ( X.size( 1 ) );
+    arrayView2d< real32, nodes::REFERENCE_POSITION_USD > const X32  = nodeManager.getField< fields::referencePosition32 >();
+    for( int i = 0; i < X.size( 0 ); i++ )
+    {
+      for( int j = 0; j < X.size( 1 ); j++ )
+      {
+        X32[i][j] = X[i][j];
+      }
+    }
+  } );
+}
+
 void WaveSolverBase::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();

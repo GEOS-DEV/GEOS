@@ -428,7 +428,7 @@ public:
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
-    m_X( nodeManager.referencePosition32() ),
+    m_X( nodeManager.getField< fields::referencePosition32 >() ),
     m_ux_n( nodeManager.getField< fields::Displacementx_n >() ),
     m_uy_n( nodeManager.getField< fields::Displacementy_n >() ),
     m_uz_n( nodeManager.getField< fields::Displacementz_n >() ),

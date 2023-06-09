@@ -39,8 +39,7 @@ using namespace dataRepository;
 NodeManager::NodeManager( string const & name,
                           Group * const parent ):
   ObjectManagerBase( name, parent ),
-  m_referencePosition( 0, 3 ),
-  m_referencePosition32( 0, 3 )
+  m_referencePosition( 0, 3 )
 {
   registerWrapper( viewKeyStruct::referencePositionString(), &m_referencePosition );
   //END_SPHINX_REFPOS_REG
@@ -143,14 +142,6 @@ void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
 
   m_referencePosition = cellBlockManager.getNodePositions();
 
-  m_referencePosition32.resize( m_referencePosition.size( 0 ), m_referencePosition.size( 1 ) );
-  for( int i = 0; i < m_referencePosition.size( 0 ); i++ )
-  {
-    for( int j = 0; j < m_referencePosition.size( 1 ); j++ )
-    {
-      m_referencePosition32[i][j] = m_referencePosition[i][j];
-    }
-  }
   m_toEdgesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getNodeToEdges(),
                                                              LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
   m_toFacesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getNodeToFaces(),

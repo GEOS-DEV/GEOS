@@ -188,6 +188,10 @@ protected:
                                        DomainPartition & domain,
                                        bool const computeGradient ) = 0;
 
+
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
+
+
   localIndex getNumNodesPerElem();
 
   /// Coordinates of the sources in the mesh
@@ -287,6 +291,17 @@ protected:
 
 };
 
+namespace fields
+{
+  using reference32Type = array2d< real32, nodes::REFERENCE_POSITION_PERM >;
+  DECLARE_FIELD( referencePosition32,
+                 "referencePosition32",
+                 reference32Type,
+                 0,
+                 NOPLOT,
+                 WRITE_AND_READ,
+                 "Copy of the referencePosition from NodeManager in 32 bits integer" );
+}
 } /* namespace geos */
 
 #endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERBASE_HPP_ */

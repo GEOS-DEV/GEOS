@@ -396,30 +396,18 @@ public:
 
   //START_SPHINX_REFPOS_ACCESS
   /**
-   * @brief Get the mutable reference position array. This table will contain all the node coordinates in 64 bits floating point.
+   * @brief Get the mutable reference position array. This table will contain all the node coordinates.
    * @return reference position array
    */
   array2d< real64, nodes::REFERENCE_POSITION_PERM > & referencePosition() { return m_referencePosition; }
-  /**
-   * @brief Get the mutable reference position array. This table will contain all the node coordinates in 32 bits floating point.
-   * @return reference position array
-   */
-  array2d< real32, nodes::REFERENCE_POSITION_PERM > & referencePosition32() { return m_referencePosition32; }
 
   /**
-   * @brief Provide an immutable arrayView of the reference position. This table will contain all the node coordinates in 64 bits floating
-   * point.
+   * @brief Provide an immutable arrayView of the reference position. This table will contain all the node coordinates.
    * @return an immutable arrayView of the reference position.
    */
+
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > referencePosition() const
   { return m_referencePosition; }
-  /**
-   * @brief Provide an immutable arrayView of the reference position. This table will contain all the node coordinates in 32 bits floating
-   * point.
-   * @return an immutable arrayView of the reference position.
-   */
-  arrayView2d< real32 const, nodes::REFERENCE_POSITION_USD > referencePosition32() const
-  { return m_referencePosition32; }
   //END_SPHINX_REFPOS_ACCESS
 
   ///@}
@@ -443,7 +431,6 @@ private:
   //START_SPHINX_REFPOS
   /// reference position of the nodes
   array2d< real64, nodes::REFERENCE_POSITION_PERM > m_referencePosition;
-  array2d< real32, nodes::REFERENCE_POSITION_PERM > m_referencePosition32;
   //END_SPHINX_REFPOS
 
   /// nodes-to-edges relation

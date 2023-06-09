@@ -735,7 +735,7 @@ public:
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
-    m_X( nodeManager.referencePosition32() ),
+    m_X( nodeManager.getField< fields::referencePosition32 >() ),
     m_p_n( nodeManager.getField< fields::Pressure_n >() ),
     m_stiffnessVector( nodeManager.getField< fields::StiffnessVector >() ),
     m_dt( dt )
