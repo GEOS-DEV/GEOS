@@ -22,10 +22,10 @@
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
-#include "constitutive/fluid/SingleFluidFields.hpp"
-#include "constitutive/fluid/SlurryFluidBase.hpp"
-#include "constitutive/fluid/SlurryFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/SlurryFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SlurryFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
@@ -1234,7 +1234,6 @@ struct AquiferBCKernel
 
     forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
     {
-
       // working variables
       real64 localFlux = 0.0;
       real64 localFluxJacobian = 0.0;

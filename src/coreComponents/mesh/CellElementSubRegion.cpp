@@ -90,13 +90,13 @@ void CellElementSubRegion::copyFromCellBlock( CellBlockABC const & cellBlock )
   this->m_localToGlobalMap = cellBlock.localToGlobalMap();
 
   this->constructGlobalToLocalMap();
-  const_cast< CellBlockABC & >( cellBlock ).forExternalProperties( [&]( WrapperBase & wrapper )
+  cellBlock.forExternalProperties( [&]( WrapperBase const & wrapper )
   {
     types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
     {
       using ArrayType = decltype( array );
-      Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
-      this->registerWrapper( wrapper.getName(), std::make_unique< ArrayType >( wrapperT.reference() ) );
+      auto const src = Wrapper< ArrayType >::cast( wrapper ).reference().toViewConst();
+      this->registerWrapper( wrapper.getName(), std::make_unique< ArrayType >( &src ) );
     } );
   } );
 }

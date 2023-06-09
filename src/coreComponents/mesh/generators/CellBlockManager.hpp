@@ -19,12 +19,12 @@
 #ifndef GEOS_MESH_CELLBLOCKMANAGER_H_
 #define GEOS_MESH_CELLBLOCKMANAGER_H_
 
-#include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/CellBlock.hpp"
 #include "mesh/generators/FaceBlock.hpp"
 #include "mesh/generators/InternalWellGenerator.hpp"
 #include "mesh/generators/LineBlock.hpp"
 #include "mesh/generators/LineBlockABC.hpp"
+#include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/PartitionDescriptor.hpp"
 
 namespace geos
@@ -110,6 +110,13 @@ public:
    */
   void setNumNodes( localIndex numNodes ); // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
 
+  void generateHighOrderMaps( localIndex const order,
+                              globalIndex const maxVertexGlobalID,
+                              globalIndex const maxEdgeGlobalID,
+                              globalIndex const maxFaceGlobalID,
+                              arrayView1d< globalIndex const > const edgeLocalToGlobal,
+                              arrayView1d< globalIndex const > const faceLocalToGlobal ) override;
+
   localIndex numNodes() const override;
 
   localIndex numEdges() const override;
@@ -170,9 +177,9 @@ public:
   FaceBlock & registerFaceBlock( string const & name );
 
   /**
-   * @brief Registers and returns a well block of name @p name.
-   * @param name The name of the created well block.
-   * @return A reference to the new well block. The CellBlockManager owns this new instance.
+   * @brief Registers and returns a line block of name @p name.
+   * @param name The name of the created line block.
+   * @return A reference to the new line block. The CellBlockManager owns this new instance.
    */
   LineBlock & registerLineBlock( string const & name );
   /**
@@ -187,6 +194,7 @@ public:
   }
 
   real64 getGlobalLength() const override { return m_globalLength; }
+
   /**
    * @brief Setter for the global length
    * @param globalLength the global length
@@ -267,7 +275,6 @@ private:
   localIndex m_numNodes;
   localIndex m_numFaces;
   localIndex m_numEdges;
-
 };
 
 }

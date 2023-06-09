@@ -94,6 +94,11 @@ public:
   void setupCommunications( bool use_nonblocking );
 
   /**
+   * @brief Constructs the global information of this DomainPartition, needed to set up ghosting
+   */
+  void setupBaseLevelMeshGlobalInfo();
+
+  /**
    * @brief Recursively builds neighbors if an MPI cartesian topology is used (i.e. not metis).
    * @param idim Dimension index in the cartesian.
    * @param cartcomm Communicator with cartesian structure.

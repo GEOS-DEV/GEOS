@@ -12,7 +12,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mainInterface/initialization.hpp"
@@ -166,13 +166,13 @@ void testNumericalJacobian( SinglePhaseFVM< SinglePhaseBase > & solver,
   jacobian.zero();
 
   assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
-  residual.move( LvArray::MemorySpace::host, false );
+  residual.move( hostMemorySpace, false );
 
   // copy the analytical residual
   array1d< real64 > residualOrig( residual );
 
   // create the numerical jacobian
-  jacobian.move( LvArray::MemorySpace::host );
+  jacobian.move( hostMemorySpace );
   CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
   jacobianFD.zero();
 

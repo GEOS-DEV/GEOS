@@ -19,7 +19,7 @@
 #include "SinglePhasePoromechanicsConformingFractures.hpp"
 
 #include "constitutive/solid/PorousSolid.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
@@ -212,13 +212,19 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
 
     // 1. Cell-based contributions to Kuu, Kup, Kpu, Kpp blocks
     finiteElement::
-      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                    constitutive::PorousSolidBase,
+      regionBasedKernelApplication< parallelDevicePolicy< >,
+                                    constitutive::PorousSolid< ElasticIsotropic >,
                                     CellElementSubRegion >( mesh,
                                                             regionNames,
                                                             contactSolver()->getSolidSolver()->getDiscretizationName(),
                                                             SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
                                                             kernelFactory );
+
+    mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          FaceElementSubRegion const & subRegion )
+    {
+      poromechanicsSolver()->flowSolver()->accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );
+    } );
 
     /// 2.a assemble Kut
     contactSolver()->assembleForceResidualDerivativeWrtTraction( mesh, regionNames, dofManager, localMatrix, localRhs );

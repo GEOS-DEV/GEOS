@@ -20,7 +20,7 @@
 #include "HydrofractureSolver.hpp"
 
 #include "constitutive/contact/ContactSelector.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "physicsSolvers/multiphysics/HydrofractureSolverKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
@@ -311,9 +311,9 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
     } );
 
 //#if defined(USE_CUDA)
-//    deltaVolume.move( LvArray::MemorySpace::cuda );
-//    aperture.move( LvArray::MemorySpace::cuda );
-//    hydraulicAperture.move( LvArray::MemorySpace::cuda );
+//    deltaVolume.move( parallelDeviceMemorySpace );
+//    aperture.move( parallelDeviceMemorySpace );
+//    hydraulicAperture.move( parallelDeviceMemorySpace );
 //#endif
   } );
 }
@@ -555,6 +555,8 @@ void HydrofractureSolver::assembleSystem( real64 const time,
                                           arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
+  // Add Adp
+  // Apd App
 
   solidMechanicsSolver()->assembleSystem( time,
                                           dt,
@@ -562,7 +564,7 @@ void HydrofractureSolver::assembleSystem( real64 const time,
                                           dofManager,
                                           localMatrix,
                                           localRhs );
-
+  // Add
   flowSolver()->assembleAccumulationTerms( domain,
                                            dofManager,
                                            localMatrix,
@@ -574,10 +576,11 @@ void HydrofractureSolver::assembleSystem( real64 const time,
                                             localMatrix,
                                             localRhs,
                                             getDerivativeFluxResidual_dAperture() );
-
+  // App
   assembleForceResidualDerivativeWrtPressure( domain, localMatrix, localRhs );
+  // Adp
   assembleFluidMassResidualDerivativeWrtDisplacement( domain, localMatrix );
-
+  // Apd
   this->getRefDerivativeFluxResidual_dAperture()->zero();
 }
 
@@ -619,7 +622,9 @@ HydrofractureSolver::
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
-      forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+      // if matching on lassen/crusher, move to device policy
+      using execPolicy = serialPolicy;
+      forAll< execPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
         constexpr int kfSign[2] = { -1, 1 };
 
@@ -646,7 +651,6 @@ HydrofractureSolver::
         {
           localIndex const faceIndex = elemsToFaces[kfe][kf];
 
-
           for( localIndex a=0; a<numNodesPerFace; ++a )
           {
 
@@ -654,7 +658,7 @@ HydrofractureSolver::
             {
               rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + i;
               nodeRHS[3*a+i] = nodalForce[i] * kfSign[kf];
-              fext[faceToNodeMap( faceIndex, a )][i] += nodalForce[i] * kfSign[kf];
+              RAJA::atomicAdd( AtomicPolicy< execPolicy >{}, &(fext[faceToNodeMap( faceIndex, a )][i]), nodalForce[i] * kfSign[kf] );
 
               dRdP( 3*a+i, 0 ) = Ja * Nbar[i] * kfSign[kf];
             }
@@ -668,11 +672,11 @@ HydrofractureSolver::
               for( int i=0; i<3; ++i )
               {
                 // TODO: use parallel atomic when loop is parallel
-                RAJA::atomicAdd( serialAtomic{}, &localRhs[localRow + i], nodeRHS[3*a+i] );
-                localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + i,
-                                                                                  &colDOF,
-                                                                                  &dRdP[3*a+i][0],
-                                                                                  1 );
+                RAJA::atomicAdd( AtomicPolicy< execPolicy >{}, &localRhs[localRow + i], nodeRHS[3*a+i] );
+                localMatrix.addToRowBinarySearchUnsorted< AtomicPolicy< execPolicy > >( localRow + i,
+                                                                                        &colDOF,
+                                                                                        &dRdP[3*a+i][0],
+                                                                                        1 );
               }
             }
           }

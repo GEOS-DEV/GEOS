@@ -19,20 +19,23 @@
 #ifndef GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 #define GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "mesh/generators/CellBlockManagerABC.hpp"
+
 #include "dataRepository/Group.hpp"
 #include "dataRepository/WrapperBase.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
-#include "mesh/generators/CellBlockManager.hpp"
 
 namespace geos
 {
 
-namespace dataRepository
-{}
-
+// This forward declaration prevents from exposing the internals of the module,
+// which are only accessed through some private functions signatures.
+// In order to avoid this forward declaration, we could expose an ABC
+// instead of exposing the MeshGeneratorBase implementation.
+class CellBlockManager;
 
 /**
  *  @class MeshGeneratorBase

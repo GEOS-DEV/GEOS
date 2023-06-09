@@ -23,7 +23,8 @@ set( physicsSolvers_headers
      fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp
      fluidFlow/ThermalCompositionalMultiphaseBaseKernels.hpp
      fluidFlow/CompositionalMultiphaseFVM.hpp
-     fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp
+     fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp 
+     fluidFlow/IsothermalCompositionalMultiphaseFVMKernelUtilities.hpp    
      fluidFlow/ThermalCompositionalMultiphaseFVMKernels.hpp
      fluidFlow/CompositionalMultiphaseHybridFVM.hpp
      fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
@@ -33,6 +34,7 @@ set( physicsSolvers_headers
      fluidFlow/ReactiveCompositionalMultiphaseOBLKernels.hpp
      fluidFlow/FlowSolverBase.hpp
      fluidFlow/FlowSolverBaseFields.hpp
+     fluidFlow/FlowSolverBaseKernels.hpp     
      fluidFlow/FluxKernelsHelper.hpp
      fluidFlow/HybridFVMHelperKernels.hpp
      fluidFlow/proppantTransport/ProppantTransport.hpp
@@ -196,7 +198,7 @@ set( physicsSolvers_sources
   include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
   include( multiphysics/poromechanicsKernels/PoromechanicsKernels.cmake)
 
-set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
+set( dependencyList ${parallelDeps} constitutive mesh linearAlgebra discretizationMethods events )
 if( ENABLE_PYGEOSX )
   list( APPEND physicsSolvers_headers
   python/PySolver.hpp
@@ -204,14 +206,6 @@ if( ENABLE_PYGEOSX )
   list( APPEND physicsSolvers_sources
         python/PySolver.cpp )
   list( APPEND dependencyList Python3::Python pylvarray )
-endif()
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
 endif()
 
 blt_add_library( NAME       physicsSolvers

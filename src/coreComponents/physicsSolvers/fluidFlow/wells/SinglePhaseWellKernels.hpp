@@ -19,8 +19,8 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
 
-#include "constitutive/fluid/SingleFluidFields.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "mesh/ElementRegionManager.hpp"
@@ -76,7 +76,9 @@ struct ControlEquationHelper
   static constexpr real64 EPS = 1e-15;
 
   GEOS_HOST_DEVICE
-  static void
+  inline
+  static
+  void
   switchControl( bool const isProducer,
                  WellControls::Control const & currentControl,
                  real64 const & targetBHP,
@@ -86,7 +88,9 @@ struct ControlEquationHelper
                  WellControls::Control & newControl );
 
   GEOS_HOST_DEVICE
-  static void
+  inline
+  static
+  void
   compute( globalIndex const rankOffset,
            WellControls::Control const currentControl,
            real64 const & targetBHP,
@@ -181,7 +185,9 @@ struct PerforationKernel
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   GEOS_HOST_DEVICE
-  static void
+  inline
+  static
+  void
   compute( real64 const & resPressure,
            real64 const & resDensity,
            real64 const & dResDensity_dPres,
