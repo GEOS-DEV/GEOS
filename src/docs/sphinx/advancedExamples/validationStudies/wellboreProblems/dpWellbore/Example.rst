@@ -8,7 +8,7 @@ Drucker-Prager Model with Hardening for Wellbore Problems
 
 **Context**
 
-This is an alternative to the example :ref:`ExampleEDPWellbore` where the Drucker-Prager constitutive with cohesion hardening (see :ref:`DruckerPrager`) is considered. Analytical solutions to this problem are not provided from open literature but they can be derived following the guide of (Chen and Abousleiman 2017)  <https://www.sciencedirect.com/science/article/pii/S1365160917301090>`__. Details of those solutions are given in Python scripts associated to this example.
+This is an alternative to the example :ref:`ExampleEDPWellbore`, and the Drucker-Prager constitutive with cohesion hardening (see :ref:`DruckerPrager`) is hereby considered. Analytical solutions to this problem are not provided from literature work, however they can be derived following `(Chen and Abousleiman 2017)  <https://www.sciencedirect.com/science/article/pii/S1365160917301090>`__. Details of those solutions are given in Python scripts associated to this example.
 
 **Input file**
 
@@ -30,7 +30,7 @@ The related integrated test is
   inputFiles/solidMechanics/DruckerPragerWellbore_smoke.xml
 
 
-The Drucker-Prager properties are specified in the ``Constitutive`` section: 
+The Drucker-Prager material properties are specified in the ``Constitutive`` section: 
 
 .. literalinclude:: ../../../../../../../inputFiles/solidMechanics/DruckerPragerWellbore_base.xml
     :language: xml
@@ -38,7 +38,7 @@ The Drucker-Prager properties are specified in the ``Constitutive`` section:
     :end-before: <!-- SPHINX_DP_WELLBORE_MATERIAL_END -->
 
 
-Here, ``rock`` is designated as the material in the computational domain. Drucker Prager model ``DruckerPrager`` is used to simulate the elastoplastic behavior of ``rock``. The material parameters, ``defaultFrictionAngle``, ``defaultDilationAngle`` and ``defaultCohesion`` denote the friction angle, the dilation angle, and the cohesion, respectively. In this example, cohesion is increased by a linear hardening law that is defined by the parameter ``defaultHardeningRate``. The constitutive parameters such as the density, the bulk modulus, and the shear modulus are specified in the International System of Units.
+Here, ``rock`` is designated as the material in the computational domain. Drucker Prager model ``DruckerPrager`` is used to simulate the elastoplastic behavior of ``rock``. The material parameters, ``defaultFrictionAngle``, ``defaultDilationAngle`` and ``defaultCohesion`` denote the friction angle, the dilation angle, and the cohesion, respectively. In this example, the hardening of the cohesion is described by a linear hardening law, which is governed by the parameter ``defaultHardeningRate``. The constitutive parameters such as the density, the bulk modulus, and the shear modulus are specified in the International System of Units.
 
 The parameters used in the simulation are summarized in the following table.
 
