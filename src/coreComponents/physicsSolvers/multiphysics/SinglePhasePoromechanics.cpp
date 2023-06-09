@@ -349,6 +349,13 @@ void SinglePhasePoromechanics::updateState( DomainPartition & domain )
   } );
 }
 
+void SinglePhasePoromechanics::resetStateToBeginningOfStep( DomainPartition & domain )
+{
+  Base::resetStateToBeginningOfStep( domain ); 
+
+  flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
+}  
+
 void SinglePhasePoromechanics::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
 {
   GEOS_MARK_FUNCTION;

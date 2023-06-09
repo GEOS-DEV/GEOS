@@ -121,6 +121,8 @@ public:
 
   /**@}*/
 
+  virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override;
+
   virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx ) override final;
 
   struct viewKeyStruct : Base::viewKeyStruct
