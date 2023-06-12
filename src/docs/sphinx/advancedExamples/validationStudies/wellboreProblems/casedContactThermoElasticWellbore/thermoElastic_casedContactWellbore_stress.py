@@ -1,8 +1,3 @@
-import os
-import sys
-sys.path.append("/data/PLI/sytuan/Libs")
-sys.path.append("/data/PLI/sytuan/Libs/matplotlib")
-
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -151,7 +146,6 @@ def main():
 	plt.legend(loc='upper right')
 
 	plt.savefig('stress.png')
-	os.system('xdg-open stress.png')
 	
 if __name__ == "__main__":
 	main()

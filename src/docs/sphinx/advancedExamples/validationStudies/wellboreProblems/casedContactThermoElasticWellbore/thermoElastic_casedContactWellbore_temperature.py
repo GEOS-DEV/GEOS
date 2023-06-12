@@ -1,8 +1,3 @@
-import os
-import sys
-sys.path.append("/data/PLI/sytuan/Libs")
-sys.path.append("/data/PLI/sytuan/Libs/matplotlib")
-
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -74,7 +69,6 @@ def main():
 	plt.legend(loc='lower right')
 
 	plt.savefig('temperature.png')
-	os.system('xdg-open temperature.png')
 
 if __name__ == "__main__":
 	main()
