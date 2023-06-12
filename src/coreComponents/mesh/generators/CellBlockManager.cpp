@@ -1060,11 +1060,12 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
 
     cellBlock.resizeNumNodes( numNodesPerCell );
     elemsToNodesNew = cellBlock.getElemToNode();
+    localIndex const numCellElements = cellBlock.numElements();
 
     // then loop through all the elements and assign the globalID according to the globalID of the Element
     // and insert the new local to global ID ( for the internal nodes of elements ) into the nodeLocalToGlobal
     // retrieve finite element type
-    for( localIndex iter_elem = 0; iter_elem < cellBlock.numElements(); ++iter_elem )
+    for( localIndex iter_elem = 0; iter_elem < numCellElements; ++iter_elem )
     {
       localIndex newCellNodes = 0;
       for( localIndex iter_vertex = 0; iter_vertex < numVerticesPerCell; iter_vertex++ )
