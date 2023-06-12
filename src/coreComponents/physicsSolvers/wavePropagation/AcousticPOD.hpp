@@ -86,7 +86,6 @@ public:
                                        real64 const dt,
                                        arrayView1d< real32 const > const var_np1,
                                        arrayView1d< real32 const > const var_n,
-                                       arrayView2d< real64 const > const phi,
                                        arrayView2d< real32 > varAtReceivers );
 
 
@@ -218,6 +217,8 @@ private:
   // Contribution on POD basis for the source
   array2d< real64 > m_sourceConstantsPOD;
 
+  // Contribution on POD basis for the receivers
+  array2d< real64 > m_receiverConstantsPOD;
 };
 
 

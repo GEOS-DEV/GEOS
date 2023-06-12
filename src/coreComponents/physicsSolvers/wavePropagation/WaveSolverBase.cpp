@@ -275,7 +275,7 @@ void WaveSolverBase::postProcessInput()
   {
     m_nsamplesWaveField = 0;
   }
-
+   
   localIndex const nsamples = int( (maxTime-minTime) /dt) + 1;
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );

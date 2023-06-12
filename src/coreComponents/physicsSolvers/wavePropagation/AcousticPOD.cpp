@@ -205,7 +205,7 @@ void AcousticPOD::postProcessInput()
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
 
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
-
+  
   if( m_forward == 0 )
   {
     DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -274,6 +274,8 @@ void AcousticPOD::postProcessInput()
         m_stiffnessPOD_f.zero();
         m_massPOD_f.zero();
         m_dampingPOD_f.zero();
+	m_a_dt2.resize( phi.size( 0 ), m_nsamplesWaveField);
+	m_a_dt2.zero();
       }
       else
       {
@@ -288,13 +290,11 @@ void AcousticPOD::postProcessInput()
       m_a_np1.resize( phi.size( 0 ));
       m_a_n.resize( phi.size( 0 ));
       m_a_nm1.resize( phi.size( 0 ));
-      m_a_dt2.resize( phi.size( 0 ), m_nsamplesWaveField);
       m_rhsPOD.resize( phi.size( 0 ));
 
       m_a_n.zero();
       m_a_nm1.zero();
       m_a_np1.zero();
-      m_a_dt2.zero();
       m_rhsPOD.zero();
 
       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const
@@ -489,16 +489,23 @@ void AcousticPOD::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
   sourceNodeIds.setValues< EXEC_POLICY >( -1 );
   sourceConstantsPOD.zero();
   sourceIsAccessible.zero();
-
+  
   arrayView2d< real64 const > const receiverCoordinates = m_receiverCoordinates.toViewConst();
   arrayView2d< localIndex > const receiverNodeIds = m_receiverNodeIds.toView();
+
+  m_receiverConstantsPOD.resize( receiverCoordinates.size( 0 ), phi.size( 0 ));
+  
+  arrayView2d< real64 > const receiverConstantsPOD = m_receiverConstantsPOD.toView();
   arrayView1d< localIndex > const receiverIsLocal = m_receiverIsLocal.toView();
   receiverNodeIds.setValues< EXEC_POLICY >( -1 );
+  receiverConstantsPOD.zero();
   receiverIsLocal.zero();
 
   real32 const timeSourceFrequency = this->m_timeSourceFrequency;
   localIndex const rickerOrder = this->m_rickerOrder;
   arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
+  sourceValue.zero();
+  
   real64 dt = 0;
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
@@ -551,7 +558,8 @@ void AcousticPOD::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
         phi,
         receiverCoordinates,
         receiverIsLocal,
-        receiverNodeIds,
+	receiverNodeIds,
+	receiverConstantsPOD,
         sourceValue,
         dt,
         timeSourceFrequency,
@@ -572,6 +580,7 @@ void AcousticPOD::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
                          sourceValue.size( 0 )*sourceValue.size( 1 ),
                          MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                          MPI_COMM_GEOSX );
+
 }
 
 void AcousticPOD::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs )
@@ -695,14 +704,12 @@ real64 AcousticPOD::explicitStepForward( real64 const & time_n,
     if( computeGradient )
     {
       arrayView2d< real32 > const a_dt2 =  m_a_dt2.toView();
-      std::cout<<"coucou"<<std::endl;
       forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
         {
           a_dt2[m][indexWaveField] = (a_np1[m] - 2*a_n[m] + a_nm1[m])/(dt*dt);
         } );
       m_indexWaveField += 1;
     }
-    std::cout<<"coucou2"<<std::endl;
     forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
       {
         a_nm1[m] = a_n[m];
@@ -754,6 +761,7 @@ real64 AcousticPOD::explicitStepBackward( real64 const & time_n,
 	arrayView1d< real64 > phimV = phim.toView();
 	for( localIndex m=0; m<phi.size( 0 ); ++m )
 	{
+	  //std::cout<<m<<" "<<indexWaveField-1<<" : "<<a_dt2[m][indexWaveField-1]<<std::endl;
 	  LvArray::memcpy(phim.toSlice(), phi[m].toSliceConst());
           GEOS_MARK_SCOPE ( updatePartialGradient );
           forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const eltIdx )
@@ -779,7 +787,7 @@ real64 AcousticPOD::explicitStepBackward( real64 const & time_n,
   return dtOut;
 }
 
-real64 AcousticPOD::explicitStepInternal( real64 const &,
+real64 AcousticPOD::explicitStepInternal( real64 const & time_n,
                                           real64 const & dt,
                                           integer cycleNumber,
                                           DomainPartition & domain )
@@ -878,14 +886,15 @@ real64 AcousticPOD::explicitStepInternal( real64 const &,
         arrayView2d< real32 const > const mass = m_massPOD_b.toViewConst();
         arrayView2d< real32 const > const invA = m_invAPOD.toViewConst();
         array1d< real32 > b( a_n.size());
-
+	arrayView1d< real32 > bV = b.toView();
+	
         for( localIndex m = 0; m < a_n.size(); ++m )
         {
-          b[m] = dt2 * rhs[m];
+          bV[m] = dt2 * rhs[m];
           for( localIndex n = 0; n < a_n.size(); ++n )
           {
-            b[m] += (2 * mass[m][n] - dt2 * stiffness[m][n]) * a_n[n];
-            b[m] -= (mass[m][n] - dt * 0.5 * damping[m][n]) * a_nm1[n];
+            bV[m] += (2 * mass[m][n] - dt2 * stiffness[m][n]) * a_n[n];
+            bV[m] -= (mass[m][n] - dt * 0.5 * damping[m][n]) * a_nm1[n];
           }
           rhs[m] = 0.0;
         }
@@ -894,18 +903,16 @@ real64 AcousticPOD::explicitStepInternal( real64 const &,
             a_np1[m] = 0.0;
             for( localIndex n = 0; n < a_n.size(); ++n )
             {
-              a_np1[m] += invA[m][n] * b[n];
+              a_np1[m] += invA[m][n] * bV[n];
             }
           } );
       }
     }
 
     //compute the seismic traces since last step.
-    //arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
+    arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
 
-    //NodeManager & nodeManager = mesh.getNodeManager();
-    //arrayView2d< real64 const > const phi = nodeManager.getField< fields::Phi >();
-    //computeAllSeismoTraces( time_n, dt, a_np1, a_n, phi, pReceivers );
+    computeAllSeismoTraces( time_n, dt, a_np1, a_n, pReceivers );
 
   } );
 
@@ -1280,12 +1287,10 @@ void AcousticPOD::cleanup( real64 const time_n,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & )
   {
-    NodeManager & nodeManager = mesh.getNodeManager();
-    arrayView2d< real64 const > const phi = nodeManager.getField< fields::Phi >();
     arrayView1d< real32 const > const a_n = m_a_n.toView();
     arrayView1d< real32 const > const a_np1 =  m_a_np1.toView();
     arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
-    computeAllSeismoTraces( time_n, 0, a_np1, a_n, phi, pReceivers );
+    computeAllSeismoTraces( time_n, 0, a_np1, a_n, pReceivers );
   } );
 }
 
@@ -1293,7 +1298,6 @@ void AcousticPOD::computeAllSeismoTraces( real64 const time_n,
                                           real64 const dt,
                                           arrayView1d< real32 const > const var_np1,
                                           arrayView1d< real32 const > const var_n,
-                                          arrayView2d< real64 const > const phi,
                                           arrayView2d< real32 > varAtReceivers )
 {
 
@@ -1315,9 +1319,9 @@ void AcousticPOD::computeAllSeismoTraces( real64 const time_n,
        ((timeSeismo = m_dtSeismoTrace*(m_nsamplesSeismoTrace-m_indexSeismoTrace-1)) >= (time_n - dt -  epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace);
        m_indexSeismoTrace++ )
   {
-    WaveSolverUtils::computeSeismoTracePOD( time_n, (m_forward)?dt:-dt, timeSeismo, (m_forward)?m_indexSeismoTrace:(m_nsamplesSeismoTrace-m_indexSeismoTrace-1), m_receiverNodeIds,
+    WaveSolverUtils::computeSeismoTracePOD( time_n, (m_forward)?dt:-dt, timeSeismo, (m_forward)?m_indexSeismoTrace:(m_nsamplesSeismoTrace-m_indexSeismoTrace-1), m_receiverConstantsPOD,
                                             m_receiverIsLocal,
-                                            m_nsamplesSeismoTrace, m_outputSeismoTrace, var_np1, var_n, phi, varAtReceivers );
+                                            m_nsamplesSeismoTrace, m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
   }
 }
 
