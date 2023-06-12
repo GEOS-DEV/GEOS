@@ -13,25 +13,34 @@ note as N1
   kernel( ...... )
   {
     using INDEX_TYPE = FE_INTERFACE::INDEX_TYPE;
-    using TRANSFORMATION = FE_INTERFACE::TRANSFORM
+    using TRANSFORMATION = FE_INTERFACE::TRANSFORM;
+    using CELLTYPE = FE_INTERFACE::CELL;
+    using FE_SPACE = FE_INTERFACE::FE_SPACE;
 
     kernelLaunch<POLICY>( 0, n, [=]( localIndex const k )
     {
-      INDEX_TYPE const index( k )
+      INDEX_TYPE const index( k );
 
-      var = gather( globalVar );
+      // gather coords, DOFs
+      CELLTYPE celldata = FE_INTERFACE::DATA::createCell();
+      FE_SPACE::LOCAL_DOF_ARRAY_TYPE localDofs;
+      FE_SPACE::fillLocalDofsArray( DofArrayView, localDofs );
+
       for( INDEX_TYPE const q; q<numQuadrature; ++q )
       {
         real64 J[3][3];
 
-        transform<FE_INTERFACE::QUADRATURE>.formJacobian( index, q, J );
+        TRANSFORMATION::formJacobian( index, q, celldata, J );
+        real64 invJ[3][3];
+        REAL_TYPE detJ = inverse(J, invJ)
 
-        detJ = inverse(J, invJ)
-        gradVar[3][3] = fem.gradient( q, var, invJ );
+        gradVar[3][3] = gradient<FE_SPACE>( q, localDofs, invJ );
         
+        // constitutive updates
         Dresult = constitutive.operatorD( constitutiveIndex(index, q), gradVar )
 
-        result = fem.plusGradNajAij< qa, qb, qc >( invJ, Dresult );
+        // integration 
+        result = plusGradNajAij<FE_SPACE >( q, invJ, Dresult );
 
       }
     });
@@ -56,6 +65,8 @@ class TransformationAtQuadrature<QUADRATURE> {
 class FiniteElementSpace< FUNCSPACE, CELL, BASIS > {
   +value( VAR_TYPE const (&var)[NSP], REAL_TYPE const (&coord)[DIMS] )
   +gradient( VAR_TYPE const (&var)[NSP], real64 (&invJ)[3][3] )
+  using LOCAL_DOF_ARRAY_TYPE = m_Dof[NSP][NUM_DOF_PER_SP]
+  -LOCAL_DOF_ARRAY_TYPE dofs;
 }
 
 class FiniteElementInterface< FESPACE, QUADRATURE >  {
@@ -64,12 +75,23 @@ class FiniteElementInterface< FESPACE, QUADRATURE >  {
 }
 
 
+namespace Basis {
 class Basis< INDEX_TYPE, REAL_TYPE, ORDER > {
   constexpr REAL_TYPE value( INDEX_TYPE const functionIndex, REAL_TYPE const coord );
   constexpr REAL_TYPE gradient( INDEX_TYPE const functionIndex, REAL_TYPE const coord );
+}
+
+class BasisLagrange {
 
 }
 
+class BasisNURBS {
+}
+
+Basis <|-- BasisLagrange
+Basis <|-- BasisNURBS
+
+}
 
 class Quadrature<INDEX_TYPE, REAL_TYPE> {
 +constexpr INDEX_TYPE m_numPoints;
@@ -77,6 +99,7 @@ class Quadrature<INDEX_TYPE, REAL_TYPE> {
 }
 
 
+namespace Cell {
 interface Cell<NUM_DOF_PER_SP> {
   +constexpr INDEX_TYPE numVertices()
   +vertexCoords()=0
@@ -84,30 +107,25 @@ interface Cell<NUM_DOF_PER_SP> {
 
 class CellTetrahedron {
   -REAL_TYPE m_VertexCoords[4][3]
-  -REAL_TYPE m_Dof[4][NUM_DOF_PER_SP]
   +vertexCoords()
 }
 
 class CellPyramid {
   -REAL_TYPE m_VertexCoords[5][3]
-  -REAL_TYPE m_Dof[4][NUM_DOF_PER_SP]
   +vertexCoords()
 }
 
 class CellWedge {
   -REAL_TYPE m_VertexCoords[6][3]
-  -REAL_TYPE m_Dof[4][NUM_DOF_PER_SP]
   +vertexCoords()
 }
 
 class CellHexahedronUnstructured {
   -REAL_TYPE m_VertexCoords[8][3]
-  -REAL_TYPE m_Dof[4][NUM_DOF_PER_SP]
   +vertexCoords()
 }
 
 class CellHexahedronIJK {
-  -REAL_TYPE m_Dof[4][NUM_DOF_PER_SP]
   +vertexCoords()
 }
 
@@ -115,24 +133,26 @@ class CellHexahedronIJK {
 
 
 Cell <|-- CellTetrahedron
-Cell <|-- CellPyramid
-Cell <|-- CellWedge
-Cell <|-- CellHexahedronUnstructured
-Cell <|-- CellHexahedronIJK
-
+Cell <|--- CellPyramid
+Cell <|---- CellWedge
+Cell <|----- CellHexahedronUnstructured
+Cell <|------ CellHexahedronIJK
+}
 
 
 FiniteElementInterface <-- FiniteElementSpace
 FiniteElementInterface <-- Quadrature
 FiniteElementSpace <-- FunctionalSpace
-FiniteElementSpace <-- Basis
-FiniteElementSpace <-- Cell
+FiniteElementSpace <-- Basis.Basis
+FiniteElementSpace <-- Cell.Cell
 
 Transformation <|-- TransformationIsoparametric
 TransformationIsoparametric <|-- TransformationAtQuadrature
-TransformationIsoparametric <-- Basis
-TransformationIsoparametric <-- Cell
+TransformationIsoparametric <-- Basis.Basis
+TransformationIsoparametric <-- Cell.Cell
 TransformationAtQuadrature <-- Quadrature
+
+FiniteElementInterface <-- TransformationAtQuadrature
 
 }
 
