@@ -71,20 +71,20 @@ public:
                                        bool const computeGradient ) override;
   /**@}*/
 
-  // /**
-  //  * TODO: move implementation into WaveSolverUtils
-  //  * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
-  //  * @param time_n the time corresponding to the field values pressure_n
-  //  * @param dt the simulation timestep
-  //  * @param var_np1 the field values at time_n + dt
-  //  * @param var_n the field values at time_n
-  //  * @param var_receivers the array holding the trace values, where the output is written
-  //  */
-  // virtual void computeAllSeismoTraces( real64 const time_n,
-  //                                      real64 const dt,
-  //                                      arrayView1d< real32 const > const var_np1,
-  //                                      arrayView1d< real32 const > const var_n,
-  //                                      arrayView2d< real32 > varAtReceivers );
+  /**
+   * TODO: move implementation into WaveSolverUtils
+   * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
+   * @param time_n the time corresponding to the field values pressure_n
+   * @param dt the simulation timestep
+   * @param var_np1 the field values at time_n + dt
+   * @param var_n the field values at time_n
+   * @param var_receivers the array holding the trace values, where the output is written
+   */
+  virtual void computeAllSeismoTraces( real64 const time_n,
+                                       real64 const dt,
+                                       arrayView1d< real32 const > const var_np1,
+                                       arrayView1d< real32 const > const var_n,
+                                       arrayView2d< real32 > varAtReceivers );
 
   /**
    * TODO: move implementation into WaveSolverUtils

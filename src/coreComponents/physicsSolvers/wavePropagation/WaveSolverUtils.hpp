@@ -192,37 +192,6 @@ struct WaveSolverUtils
 
   }
 
-  static void computeAllSeismoTrace(real64 const time_n,
-                                    real64 dt,
-                                    arrayView1d< real32 const > const var_np1,
-                                    arrayView1d< real32 const > const var_n,
-                                    arrayView2d< real32 > varAtReceivers,
-                                    localIndex const m_forward,
-                                    localIndex const dtSeismoTrace,
-                                    localIndex const m_indexSeismoTrace,
-                                    real64 const epsilonLoc,
-                                    localIndex const nsamplesSeismoTrace,
-                                    arrayView2d < localIndex > receiverNodeIds,
-                                    arrayView2d< real64 > receiverConstants,
-                                    arrayView1d < localIndex > receiverIsLocal,
-                                    localIndex const outputSeismoTrace)
-
-  {
-
-      localIndex indexSeismoTrace = m_indexSeismoTrace;
-
-      for( real64 timeSeismo;
-       (m_forward)?((timeSeismo = dtSeismoTrace*indexSeismoTrace) <= (time_n + dt + epsilonLoc) && indexSeismoTrace < nsamplesSeismoTrace):
-       ((timeSeismo = dtSeismoTrace*(nsamplesSeismoTrace-indexSeismoTrace-1)) >= (time_n - dt -  epsilonLoc) && indexSeismoTrace < nsamplesSeismoTrace);
-       indexSeismoTrace++ )
-       {
-          computeSeismoTrace( time_n, (m_forward)?dt:-dt, timeSeismo, (m_forward)?indexSeismoTrace:(nsamplesSeismoTrace-indexSeismoTrace-1), receiverNodeIds, receiverConstants,
-                              receiverIsLocal,nsamplesSeismoTrace, outputSeismoTrace, var_np1, var_n, varAtReceivers);
-       }
-
-  }
-
-
   /**
    * @brief Check if the source point is inside an element or not
    */
