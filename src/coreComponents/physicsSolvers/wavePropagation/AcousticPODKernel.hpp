@@ -69,7 +69,7 @@ struct PrecomputeStiffnessPOD
       {
         LvArray::memcpy(phin.toSlice(), phi[n].toSliceConst());
 	
-        std::cout<<"("<<m<<","<<n<<")"<<std::endl;
+        //std::cout<<"("<<m<<","<<n<<")"<<std::endl;
 
         forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
         {
@@ -152,6 +152,7 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< real64 const > const receiverCoordinates,
           arrayView1d< localIndex > const receiverIsLocal,
           arrayView2d< localIndex > const receiverNodeIds,
+	  arrayView2d< real64 > const receiverConstants,
           arrayView2d< real32 > const sourceValue,
           real64 const dt,
           real32 const timeSourceFrequency,
@@ -220,8 +221,8 @@ struct PrecomputeSourceAndReceiverKernel
               }
             } // end loop over all sources
           } );
-    } // end loop over phi m
-    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+      
+      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
         {
 	  real64 const center[3] = { elemCenter[k][0],
 				     elemCenter[k][1],
@@ -252,20 +253,24 @@ struct PrecomputeSourceAndReceiverKernel
 										  elemsToNodes[k],
 										  X,
 										  coordsOnRefElem );
-		
-		receiverIsLocal[ircv] = 1;
-		
+
+		if( m == sizePhi -1)
+		{
+		  receiverIsLocal[ircv] = 1;
+		}
 		real64 Ntest[FE_TYPE::numNodes];
 		FE_TYPE::calcN( coordsOnRefElem, Ntest );
 		
 		for( localIndex a = 0; a < numNodesPerElem; ++a )
 	        {
 		  receiverNodeIds[ircv][a] = elemsToNodes[k][a];
+		  receiverConstants[ircv][m] += phimV[receiverNodeIds[ircv][a]] * Ntest[a];
 		}
 	      }
 	    } // end loop over receivers
 	  }
 	} );
+    } // end loop over phi m
   }
 };
 
@@ -315,7 +320,7 @@ struct MassMatrixKernel
       {
         LvArray::memcpy(phin.toSlice(), phi[n].toSliceConst());
 	
-        std::cout<<"("<<m<<","<<n<<")"<<std::endl;
+        //std::cout<<"("<<m<<","<<n<<")"<<std::endl;
 
         forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
             {
@@ -451,7 +456,7 @@ struct DampingMatrixKernel
       {
         LvArray::memcpy(phin.toSlice(), phi[n].toSliceConst());
 
-        std::cout<<"("<<m<<","<<n<<")"<<std::endl;
+        //std::cout<<"("<<m<<","<<n<<")"<<std::endl;
 
         forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
         {
