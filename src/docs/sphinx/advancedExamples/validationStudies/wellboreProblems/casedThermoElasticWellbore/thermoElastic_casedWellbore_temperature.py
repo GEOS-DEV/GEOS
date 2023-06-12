@@ -67,7 +67,7 @@ def main():
 	plt.xlim(0.15,0.4)
 
 	plt.legend(loc='lower right')
-	plt.show()
+	plt.savefig('temperature.png')
 
 if __name__ == "__main__":
 	main()
