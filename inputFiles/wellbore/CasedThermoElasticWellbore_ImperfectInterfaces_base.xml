@@ -494,6 +494,21 @@
 
   <Tasks>
 
+    <!-- SPHINX_TemperatureCollection -->
+    <PackCollection
+      name="temperatureCollection_casing"
+      objectPath="ElementRegions/casing/casing"
+      fieldName="temperature"/>
+    <PackCollection
+      name="temperatureCollection_cement"
+      objectPath="ElementRegions/cement/cement"
+      fieldName="temperature"/>
+    <PackCollection
+      name="temperatureCollection_rock"
+      objectPath="ElementRegions/rock/rock"
+      fieldName="temperature"/>
+    <!-- SPHINX_TemperatureCollectionEnd -->
+
     <PackCollection
       name="stressCollection_casing"
       objectPath="ElementRegions/casing/casing"
@@ -520,6 +535,19 @@
   </Tasks>
 
   <Outputs>
+    <TimeHistory
+      name="temperatureHistoryOutput_casing"
+      sources="{ /Tasks/temperatureCollection_casing }"
+      filename="temperatureHistory_casing"/>
+    <TimeHistory
+      name="temperatureHistoryOutput_cement"
+      sources="{ /Tasks/temperatureCollection_cement }"
+      filename="temperatureHistory_cement"/>
+    <TimeHistory
+      name="temperatureHistoryOutput_rock"
+      sources="{ /Tasks/temperatureCollection_rock }"
+      filename="temperatureHistory_rock"/>
+
     <TimeHistory
       name="stressHistoryOutput_casing"
       sources="{ /Tasks/stressCollection_casing }"

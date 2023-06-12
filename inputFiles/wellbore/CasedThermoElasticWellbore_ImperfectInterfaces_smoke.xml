@@ -5,12 +5,12 @@
     <File name="./CasedThermoElasticWellbore_ImperfectInterfaces_base.xml" />
   </Included>
 
-   <!-- SPHINX_WellboreMesh -->
+  <!-- SPHINX_WellboreMesh -->
   <Mesh>
     <InternalWellbore
       name="mesh1"
       elementTypes="{ C3D8, C3D8, C3D8 }"
-      radius="{ 0.1, 0.106, 0.133, 0.17 }"
+      radius="{ 0.15707, 0.17780, 0.21272, 1.5707 }"
       theta="{ 0, 90 }"
       zCoords="{ 0, 0.1 }"
       nr="{ 2, 2, 2 }"
@@ -18,7 +18,7 @@
       nz="{ 1 }"
       trajectory="{ { 0.0, 0.0, 0.0 },
                     { 0.0, 0.0, 0.1 } }"
-      autoSpaceRadialElems="{ 0, 0, 0 }"
+      autoSpaceRadialElems="{ 0, 0, 1 }"
       cellBlockNames="{ casing, cement, rock }"
       />
   </Mesh>
@@ -30,16 +30,16 @@
       name="casingCementInterface"
       firstFaceCenter="{ 0.0, 0.0,  -0.001 }"
       secondFaceCenter="{ 0.0, 0.0, 0.101 }"
-      outerRadius="0.1061"
-      innerRadius="0.1059"
+      outerRadius="0.17781"
+      innerRadius="0.17779"
     />
 
     <Cylinder
       name="cementRockInterface"
       firstFaceCenter="{ 0.0, 0.0,  -0.001 }"
       secondFaceCenter="{ 0.0, 0.0, 0.101 }"
-      outerRadius="0.1331"
-      innerRadius="0.1329"
+      outerRadius="0.21273"
+      innerRadius="0.21271"
     />
   </Geometry>
   <!-- SPHINX_CementSheathInterfacesEnd -->

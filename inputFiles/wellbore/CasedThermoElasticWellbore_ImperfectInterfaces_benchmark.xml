@@ -10,15 +10,15 @@
     <InternalWellbore
       name="mesh1"
       elementTypes="{ C3D8, C3D8, C3D8 }"
-      radius="{ 0.1, 0.106, 0.133, 0.17 }"
+      radius="{ 0.15707, 0.17780, 0.21272, 1.5707 }"
       theta="{ 0, 90 }"
       zCoords="{ 0, 0.1 }"
-      nr="{ 3, 5, 5 }"
-      nt="{ 40 }"
+      nr="{ 5, 5, 5 }"
+      nt="{ 10 }"
       nz="{ 1 }"
       trajectory="{ { 0.0, 0.0, 0.0 },
                     { 0.0, 0.0, 0.1 } }"
-      autoSpaceRadialElems="{ 0, 0, 0 }"
+      autoSpaceRadialElems="{ 0, 0, 1 }"
       cellBlockNames="{ casing, cement, rock }"
       />
   </Mesh>
@@ -30,76 +30,97 @@
       name="casingCementInterface"
       firstFaceCenter="{ 0.0, 0.0,  -0.001 }"
       secondFaceCenter="{ 0.0, 0.0, 0.101 }"
-      outerRadius="0.1061"
-      innerRadius="0.1059"
+      outerRadius="0.17781"
+      innerRadius="0.17779"
     />
 
     <Cylinder
       name="cementRockInterface"
       firstFaceCenter="{ 0.0, 0.0,  -0.001 }"
       secondFaceCenter="{ 0.0, 0.0, 0.101 }"
-      outerRadius="0.1331"
-      innerRadius="0.1329"
+      outerRadius="0.21273"
+      innerRadius="0.21271"
     />
   </Geometry>
   <!-- SPHINX_CementSheathInterfacesEnd -->
 
-  <Events maxTime="2.0">
+  <Events
+    maxTime="1e5">
 
     <PeriodicEvent
       name="stressHistoryCollection_casing"
-      endTime="2.0"
-      forceDt="0.1"
+      endTime="1e5"
+      forceDt="1e4"
       target="/Tasks/stressCollection_casing"/>
     <PeriodicEvent
       name="stressHistoryCollection_cement"
-      endTime="2.0"
-      forceDt="0.1"
+      endTime="1e5"
+      forceDt="1e4"
       target="/Tasks/stressCollection_cement"/>
     <PeriodicEvent
       name="stressHistoryCollection_rock"
-      endTime="2.0"
-      forceDt="0.1"
+      endTime="1e5"
+      forceDt="1e4"
       target="/Tasks/stressCollection_rock"/>
     <PeriodicEvent
       name="stressTimeHistoryOutput_casing"
-      endTime="2.0"
-      forceDt="0.1"
+      endTime="1e5"
+      forceDt="1e4"
       target="/Outputs/stressHistoryOutput_casing"/>
     <PeriodicEvent
       name="stressTimeHistoryOutput_cement"
-      endTime="2.0"
-      forceDt="0.1"
+      endTime="1e5"
+      forceDt="1e4"
       target="/Outputs/stressHistoryOutput_cement"/>
     <PeriodicEvent
       name="stressTimeHistoryOutput_rock"
-      endTime="2.0"
-      forceDt="0.1"
+      endTime="1e5"
+      forceDt="1e4"
       target="/Outputs/stressHistoryOutput_rock"/>
 
     <PeriodicEvent
+      name="temperatureHistoryCollection_casing"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/temperatureCollection_casing"/>
+    <PeriodicEvent
+      name="temperatureHistoryCollection_cement"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/temperatureCollection_cement"/>
+    <PeriodicEvent
+      name="temperatureHistoryCollection_rock"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/temperatureCollection_rock"/>
+    <PeriodicEvent
+      name="temperatureTimeHistoryOutput_casing"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/temperatureHistoryOutput_casing"/>
+    <PeriodicEvent
+      name="temperatureTimeHistoryOutput_cement"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/temperatureHistoryOutput_cement"/>
+    <PeriodicEvent
+      name="temperatureTimeHistoryOutput_rock"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/temperatureHistoryOutput_rock"/>
+
+    <!-- SPHINX_DisplacementPeriodicEvent -->
+    <PeriodicEvent
       name="displacementHistoryCollection"
-      endTime="2.0"
-      forceDt="0.1"
+      endTime="1e5"
+      forceDt="1e4"
       target="/Tasks/displacementCollection"/>
     <PeriodicEvent
       name="displacementTimeHistoryOutput"
-      endTime="2.0"
-      forceDt="0.1"
+      endTime="1e5"
+      forceDt="1e4"
       target="/Outputs/displacementHistoryOutput"/>
-
-    <!-- SPHINX_EventDisplacementJumpHistoryCollection -->
-    <PeriodicEvent
-      name="displacementJumpHistoryCollection"
-      endTime="2.0"
-      forceDt="0.1"
-      target="/Tasks/displacementJumpCollection"/>
-    <PeriodicEvent
-      name="displacementJumpTimeHistoryOutput"
-      endTime="2.0"
-      forceDt="0.1"
-      target="/Outputs/displacementJumpHistoryOutput"/>
-    <!-- SPHINX_EventDisplacementJumpHistoryCollectionEnd -->
+    <!-- SPHINX_DisplacementPeriodicEventEnd -->
 
     <!-- SPHINX_EventSurfaceGen -->
     <SoloEvent
@@ -109,18 +130,17 @@
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="0.1"
+      forceDt="1e3"
       target="/Solvers/fractureThermoPoroElasticSolver"/>
 
     <PeriodicEvent
       name="outputs"
-      forceDt="0.1"
+      forceDt="1e4"
       target="/Outputs/vtkOutput"/>
     
     <!--PeriodicEvent
       name="restarts"
-      timeFrequency="1.0"
-      targetExactTimestep="0"
+      timeFrequency="5e4"
       target="/Outputs/restartOutput"/-->
   </Events>
 
