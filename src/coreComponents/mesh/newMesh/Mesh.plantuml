@@ -13,7 +13,8 @@ classDiagram {
 }
 </style>
 
-set separator ::
+!pragma useNewPackage
+set separator .
 
 
 Class Body {
@@ -21,71 +22,147 @@ Represents physical body
 }
 
 
-Body "1" *-- "1..*" Mesh::Mesh
+Body "1" *-- "1..*" Mesh.MeshAbstract
 
 namespace Mesh {
 
-class Mesh<STRUCTURE> {
+abstract MeshAbstract {
 Contains objects that represent a geometric description of the **Body** or portion of the **Body**
 There can be multiple **Mesh** to describe a **Body** or portions of the **Body**
 --
--STRUCTURE::VERTEX m_verticies
--STRUCTURE::EDGE m_edges
--STRUCTURE::FACE m_faces
--STRUCTURE::CELL m_cells
+blah
 --
-+referencePosition()
-+Mappings()
++numVerticies()
++numEdges()
++numFaces()
++numCells()
++template< typename INDEX_TYPE > vertexCoordinate( INDEX_TYPE const dims )
++template< typename INDEX_TYPE > edgeCenter( INDEX_TYPE const dims )
++template< typename INDEX_TYPE > faceCenter( INDEX_TYPE const dims )
++template< typename INDEX_TYPE > cellCenter( INDEX_TYPE const dims )
++template< typename INDEX_TYPE > edgeLength( INDEX_TYPE const dims )
++template< typename INDEX_TYPE > real64 const * faceNormal( INDEX_TYPE const dims )
++template< typename INDEX_TYPE > real64 faceArea( INDEX_TYPE const dims )
++template< typename INDEX_TYPE > real64 cellVolume( INDEX_TYPE const dims )
+--
++template< typename INDEX_TYPE > edgesToVertices( INDEX_TYPE const dims )
++template< typename INDEX_TYPE > facesToVertices( INDEX_TYPE const dims ) 
++template< typename INDEX_TYPE > facesToEdges( INDEX_TYPE const dims ) 
++template< typename INDEX_TYPE > cellsToVertices( INDEX_TYPE const dims )
++template< typename INDEX_TYPE > cellsToEdges( INDEX_TYPE const dims )
++template< typename INDEX_TYPE > cellsToFaces( INDEX_TYPE const dims )
++template< typename INDEX_TYPE > vertexToEdges( INDEX_TYPE const dims )
++template< typename INDEX_TYPE > vertexToFaces( INDEX_TYPE const dims )
++template< typename INDEX_TYPE > vertexToCells( INDEX_TYPE const dims )
++template< typename INDEX_TYPE > edgeToFaces( INDEX_TYPE const dims )
++template< typename INDEX_TYPE > edgeToCells( INDEX_TYPE const dims )
++template< typename INDEX_TYPE > faceToCells( INDEX_TYPE const dims )
+
 }
 
+note "Need to implement a contiguous array1d<array1d<arrayofarray<TYPE>>" as N1
 
 
+class MeshUnstructured {
+  -array2d<real64> m_Coords
+  -array2d<localIndex > m_edgesToVertices 
+  -arrayOfArrays<localIndex > m_facesToVertices 
+  -arrayOfArrays<localIndex > m_facesToEdges 
+  -array1d< array1d< arrayOfArrays<localIndex > > > m_cellsToVertices
+  -array1d< array1d< arrayOfArrays<localIndex > > > m_cellsToEdges
+  -array1d< array1d< arrayOfArrays<localIndex > > > m_cellsToFaces
+  -arrayOfArrays<localIndex> m_vertexToEdges
+  -arrayOfArrays<localIndex> m_vertexToFaces
+  -arrayOfArrays<localIndex> m_vertexToCells
+  -arrayOfArrays<localIndex> m_edgeToFaces
+  -arrayOfArrays<localIndex> m_edgeToCells
+  -array2d<localIndex> m_faceToCells
 
-abstract class VertexManagerBase {
+}
+
+class MeshUniformIJK {
+  -real64 m_hx
+  -real64 m_hy
+  -real64 m_hz
+  +linearIndex(i,j,k)
+  +ijkIndex(i)
+
+}
+
+class MeshVariableIJK {
+  -array1d<real64> m_xCoords;
+  -array1d<real64> m_yCoords;
+  -array1d<real64> m_zCoords;
+  +linearIndex(i,j,k)
+  +ijkIndex(i)
+
+}
+
+namespace legacyGEOS {
+
+abstract class VertexManager {
     +edgeList()
     +faceList()
-    +elementList()
-    +elementSubRegionList()
-    +elementRegionList()
+    +cellList()
+
 }
 
-abstract class EdgeManagerBase {
+abstract class EdgeManager {
     +nodeList()
+    +faceList()
+    +cellList()
+}
+
+abstract class FaceManager {
+    +nodeList()
+    +edgeList()
+    +cellList()
+}
+abstract class CellManager {
+    +nodeList()
+    +edgeList()
     +faceList()
 }
 
-abstract class FaceManagerBase {
+abstract class CellRegion {
     +nodeList()
     +edgeList()
-    +elementList()
-    +elementSubRegionList()
-    +elementRegionList()
+    +faceList()
+}
+
+abstract class CellSubRegion {
+    +nodeList()
+    +edgeList()
+    +faceList()
 }
 
 
+} /' legacyGEOS '/
 
 
 
 
-Mesh::Mesh "1" *-- "1" Mesh::VertexManagerBase
-Mesh::Mesh "1" *-- "1" Mesh::EdgeManagerBase
-Mesh::Mesh "1" *-- "1" Mesh::FaceManagerBase
-Mesh::Mesh "1" *-- "1" Mesh::CellManager
 
-Mesh::VertexManagerBase  <|--  Mesh::VertexManagerIJK
-Mesh::VertexManagerBase  <|--  Mesh::VertexManagerUnstructured
+MeshAbstract <|-- MeshUnstructured
+MeshAbstract <|-- MeshUniformIJK
+MeshAbstract <|-- MeshVariableIJK
 
-Mesh::EdgeManagerBase  <|--  Mesh::EdgeManagerIJK
-Mesh::EdgeManagerBase  <|--  Mesh::EdgeManagerUnstructured
 
-Mesh::FaceManagerBase  <|--  Mesh::FaceManagerIJK
-Mesh::FaceManagerBase  <|--  Mesh::FaceManagerUnstructured
+Mesh.MeshAbstract "1" *-- "1" Mesh.legacyGEOS.VertexManager
+Mesh.MeshAbstract "1" *-- "1" Mesh.legacyGEOS.EdgeManager
+Mesh.MeshAbstract "1" *-- "1" Mesh.legacyGEOS.FaceManager
+Mesh.MeshAbstract "1" *-- "1" Mesh.legacyGEOS.CellManager
 
-Mesh::CellManager "1" *-- "1..*" Mesh::CellRegion
-Mesh::CellRegion "1" *-- "1..*" Mesh::CellSubRegion
+Mesh.legacyGEOS.CellManager "1" *-- "1..*" Mesh.legacyGEOS.CellRegion
+Mesh.legacyGEOS.CellRegion "1" *-- "1..*" Mesh.legacyGEOS.CellSubRegion
 
 
 } /'namespace Mesh '/
+
+
+Mesh.MeshUnstructured::m_cellsToVertices -- Mesh.N1 
+Mesh.MeshUnstructured::m_cellsToEdges -- Mesh.N1 
+Mesh.MeshUnstructured::m_cellsToFaces -- Mesh.N1 
 
 
 @enduml

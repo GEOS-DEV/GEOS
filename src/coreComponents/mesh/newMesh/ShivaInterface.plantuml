@@ -1,0 +1,140 @@
+@startuml(id=ShivaInterface)
+
+!pragma useNewPackage
+set separator .
+
+
+namespace ShivaInterface {
+
+note as N1
+  // launch with single thread per element
+
+  template< typename FE_INTERFACE, CONSTITUTIVE >
+  kernel( ...... )
+  {
+    using INDEX_TYPE = FE_INTERFACE::INDEX_TYPE;
+    using TRANSFORMATION = FE_INTERFACE::TRANSFORM
+
+    kernelLaunch<POLICY>( 0, n, [=]( localIndex const k )
+    {
+      INDEX_TYPE const index( k )
+
+      var = gather( globalVar );
+      for( INDEX_TYPE const q; q<numQuadrature; ++q )
+      {
+        real64 J[3][3];
+
+        transform<FE_INTERFACE::QUADRATURE>.formJacobian( index, q, J );
+
+        detJ = inverse(J, invJ)
+        gradVar[3][3] = fem.gradient( q, var, invJ );
+        
+        Dresult = constitutive.operatorD( constitutiveIndex(index, q), gradVar )
+
+        result = fem.plusGradNajAij< qa, qb, qc >( invJ, Dresult );
+
+      }
+    });
+  }
+endnote
+
+
+
+class Transformation {
+}
+
+class TransformationIsoparametric {
+  +formTransformation( INDEX_TYPE index, COORD coord, real64 (&J)[3][3] )
+
+
+}
+
+class TransformationAtQuadrature<QUADRATURE> {
+  +formTransformation( INDEX_TYPE cellIndex, INDEX_TYPE qi, real64 (&J)[3][3] )
+}
+
+class FiniteElementSpace< FUNCSPACE, CELL, BASIS > {
+  +value( VAR_TYPE const (&var)[NSP], REAL_TYPE const (&coord)[DIMS] )
+  +gradient( VAR_TYPE const (&var)[NSP], real64 (&invJ)[3][3] )
+}
+
+class FiniteElementInterface< FESPACE, QUADRATURE >  {
+  +value( INDEX_TYPE const q, VAR_TYPE const (&var)[NSP] )
+  +gradient( INDEX_TYPE const q, AR_TYPE const (&var)[NSP], real64 const (&invJ)[3][3] )
+}
+
+
+class Basis< INDEX_TYPE, REAL_TYPE, ORDER > {
+  constexpr REAL_TYPE value( INDEX_TYPE const functionIndex, REAL_TYPE const coord );
+  constexpr REAL_TYPE gradient( INDEX_TYPE const functionIndex, REAL_TYPE const coord );
+
+}
+
+
+class Quadrature<INDEX_TYPE, REAL_TYPE> {
++constexpr INDEX_TYPE m_numPoints;
++constexpr getCoord( INDEX_TYPE const qi );
+}
+
+
+interface Cell<NUM_DOF_PER_SP> {
+  +constexpr INDEX_TYPE numVertices()
+  +vertexCoords()=0
+}
+
+class CellTetrahedron {
+  -REAL_TYPE m_VertexCoords[4][3]
+  -REAL_TYPE m_Dof[4][NUM_DOF_PER_SP]
+  +vertexCoords()
+}
+
+class CellPyramid {
+  -REAL_TYPE m_VertexCoords[5][3]
+  -REAL_TYPE m_Dof[4][NUM_DOF_PER_SP]
+  +vertexCoords()
+}
+
+class CellWedge {
+  -REAL_TYPE m_VertexCoords[6][3]
+  -REAL_TYPE m_Dof[4][NUM_DOF_PER_SP]
+  +vertexCoords()
+}
+
+class CellHexahedronUnstructured {
+  -REAL_TYPE m_VertexCoords[8][3]
+  -REAL_TYPE m_Dof[4][NUM_DOF_PER_SP]
+  +vertexCoords()
+}
+
+class CellHexahedronIJK {
+  -REAL_TYPE m_Dof[4][NUM_DOF_PER_SP]
+  +vertexCoords()
+}
+
+
+
+
+Cell <|-- CellTetrahedron
+Cell <|-- CellPyramid
+Cell <|-- CellWedge
+Cell <|-- CellHexahedronUnstructured
+Cell <|-- CellHexahedronIJK
+
+
+
+FiniteElementInterface <-- FiniteElementSpace
+FiniteElementInterface <-- Quadrature
+FiniteElementSpace <-- FunctionalSpace
+FiniteElementSpace <-- Basis
+FiniteElementSpace <-- Cell
+
+Transformation <|-- TransformationIsoparametric
+TransformationIsoparametric <|-- TransformationAtQuadrature
+TransformationIsoparametric <-- Basis
+TransformationIsoparametric <-- Cell
+TransformationAtQuadrature <-- Quadrature
+
+}
+
+
+@enduml

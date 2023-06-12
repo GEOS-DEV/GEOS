@@ -11,19 +11,48 @@ MESHTYPE * m_mesh;
 }
 
 Class DiscretizationFEM {
-There is one instantiation for every FEM h/p refinement of the **Mesh**
+There is one instantiation of DiscretizationFEM every h/p refinement of the **Mesh**
 --
+array1d< arrayOfArray< FEM_TYPE > > m_femTypes
 }
+note right of DiscretizationFEM::m_femTypes
+indices are:
+ ( objectType )( regionIndex, subRegionIndex ) 
+endnote
 
 class DiscretizationStencil {
+    manage/allocate data on GraphNodes and GraphLinks across mesh objects.
+    We want a single index space, which means we allocate/store here in a 
+    complex data structure mapping to the mesh field objects
+    --
     -localIndex m_numGraphNodes
-    -localIndex m_numGraphEdges
+    -localIndex m_numGraphLinks
+    --
+    scalar fields
+    - array1d<arrayOfArrays< > > m_scalar
 
-    ...manage/allocate data on GraphNodes and GraphEdges
 }
+note right of DiscretizationStencil::m_scalar
+need new contiguous array type "arrayOfArrayOfArrayOfArray"
+  Indices are:
+   ( objectType )( regionIndex, subRegionIndex )(index0,...)
+  Requirements for new "arrayOfArrayOfArrayOfArray"
+  - accessible as single index from POV of stencil since it is contiguous.
+  - arrayView of slices to hang stand-alone view/slice in each object
+  - lightweight single index arrayView
+endnote
+
 
 class DiscretizationParticle {
+
 }
+
+class ConstitutiveBase {
+    - localIndex m_numPoints
+    - array1d scalarState (numPoints) 
+    - Array2d vectorState (numPoints, numComponents) 
+}
+
 
 class DiscretizationFunctions {
 
@@ -36,10 +65,25 @@ class ElementManager {
     +forElementSubRegion(f)
 }
 
-class NodeFieldManager {}
-class EdgeFieldManager {}
-class FaceFieldManager {}
-class ElementManager {}
+class NodeFieldManager {
+    holds fields on nodes
+}
+class EdgeFieldManager {
+    holds fields on edges
+    +edgeLength()
+}
+class FaceFieldManager {
+    holds fields on faces
+    +faceNormal()
+}
+class ElementManager {
+    holds fields conatined in elements
+    +elementVolume()
+}
+
+class ElementRegionBase {
+    -m_scalar
+}
 
 
 
@@ -62,10 +106,13 @@ DiscretizationBase <|-- DiscretizationStencil
 DiscretizationFEM <|-- DiscretizationMPM
 DiscretizationParticle <|-- DiscretizationMPM
 
-DiscretizationBase "1" *-- "1" Discretization::MeshInterface::ElementManager
-DiscretizationBase "1" *-- "1" Discretization::MeshInterface::NodeFieldManager
-DiscretizationBase "1" *-- "1" Discretization::MeshInterface::EdgeFieldManager
-DiscretizationBase "1" *-- "1" Discretization::MeshInterface::FaceFieldManager
+DiscretizationParticle *-- ConstitutiveBase
+
+DiscretizationBase "1" *-- "1" MeshInterface::ElementManager
+DiscretizationBase "1" *-- "1" MeshInterface::NodeFieldManager
+DiscretizationBase "1" *-- "1" MeshInterface::EdgeFieldManager
+DiscretizationBase "1" *-- "1" MeshInterface::FaceFieldManager
+
 
 
 } /' namespace Discretization '/

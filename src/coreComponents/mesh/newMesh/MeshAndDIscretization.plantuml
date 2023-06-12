@@ -21,11 +21,16 @@ set separator ::
 
 
 
-Discretization::DiscretizationBase -- Mesh::Mesh
+Discretization::DiscretizationBase -- Mesh::MeshAbstract
 
-Discretization::MeshInterface::ElementManager -- Mesh::CellManager
-Discretization::MeshInterface::ElementRegionBase -- Mesh::CellRegion
-Discretization::MeshInterface::ElementSubRegionBase -- Mesh::CellSubRegion
+
+Discretization::MeshInterface::NodeFieldManager -- Mesh::legacyGEOS::NodeManager
+Discretization::MeshInterface::edgeFieldManager -- Mesh::legacyGEOS::edgeManager
+Discretization::MeshInterface::FaceFieldManager -- Mesh::legacyGEOS::FaceManager
+
+Discretization::MeshInterface::ElementManager -- Mesh::legacyGEOS::CellManager
+Discretization::MeshInterface::ElementRegionBase -- Mesh::legacyGEOS::CellRegion
+Discretization::MeshInterface::ElementSubRegionBase -- Mesh::legacyGEOS::CellSubRegion
 
 
 @enduml
