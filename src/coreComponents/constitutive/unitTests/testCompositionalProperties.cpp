@@ -39,6 +39,14 @@ using CompositionalPropertiesTestData = std::tuple<
 template< typename EOS_TYPE, integer NC >
 std::vector< CompositionalPropertiesTestData< NC > > generateTestData();
 
+template< integer NC >
+std::unique_ptr< TestFluid< NC > > createFluid();
+template<>
+std::unique_ptr< TestFluid< 4 > > createFluid< 4 >()
+{
+  return TestFluid< 4 >::create( {Fluid::N2, Fluid::C8, Fluid::C10, Fluid::H2O} );
+}
+
 template< typename EOS_TYPE, integer NC >
 class CompositionalPropertiesTestDataTestFixture : public ::testing::TestWithParam< CompositionalPropertiesTestData< NC > >
 {
@@ -46,7 +54,7 @@ public:
   static constexpr integer numComps = NC;
 public:
   CompositionalPropertiesTestDataTestFixture()
-    : m_fluid( TestFluid< 4 >::create( {Fluid::N2, Fluid::C8, Fluid::C10, Fluid::H2O} ))
+    : m_fluid( createFluid< NC >() )
   {}
   ~CompositionalPropertiesTestDataTestFixture() = default;
 
@@ -120,6 +128,80 @@ public:
       computeMolarDensity( pressure, temperature, composition, currentMolarDensity );
       fdDerivative = (currentMolarDensity - molarDensity) / dz;
       checkDerivative( dMolarDensity_dz[ic], fdDerivative, "Molar density right composition derivative" );
+      composition[ic] -= dz;
+    }
+  }
+
+  // Compares the calculated mass density against the expected value from PVT package
+  void testMassDensity( CompositionalPropertiesTestData< NC > const & data )
+  {
+    real64 const pressure = std::get< 0 >( data );
+    real64 const temperature = std::get< 1 >( data );
+    array1d< real64 > composition;
+    TestFluid< NC >::createArray( composition, std::get< 2 >( data ));
+    real64 const expectedMassDensity = std::get< 5 >( data );
+
+    real64 massDensity = 0.0;
+    computeMassDensity( pressure,
+                        temperature,
+                        composition,
+                        massDensity );
+    checkRelativeError( massDensity, expectedMassDensity, relTol, absTol );
+  }
+
+  // Compares the calculated mass density derivatives against numerical calculated
+  // finite difference values
+  void testMassDensityDerivative( CompositionalPropertiesTestData< NC > const & data )
+  {
+    real64 const pressure = std::get< 0 >( data );
+    real64 const temperature = std::get< 1 >( data );
+    array1d< real64 > composition;
+    TestFluid< NC >::createArray( composition, std::get< 2 >( data ));
+
+    real64 massDensity = 0.0;
+    real64 currentMassDensity = 0.0;
+    real64 fdDerivative = 0.0;
+    real64 dMassDensity_dp = 0.0;
+    real64 dMassDensity_dt = 0.0;
+    array1d< real64 > dMassDensity_dz( numComps );
+
+    computeMassDensity( pressure,
+                        temperature,
+                        composition,
+                        massDensity,
+                        dMassDensity_dp,
+                        dMassDensity_dt,
+                        dMassDensity_dz );
+
+    // Compare against numerical derivatives
+    // -- Pressure derivative
+    real64 const dp = 1.0e-4 * pressure;
+    computeMassDensity( pressure-dp, temperature, composition, currentMassDensity );
+    fdDerivative = -(currentMassDensity - massDensity) / dp;
+    checkDerivative( dMassDensity_dp, fdDerivative, "Mass density left pressure derivative" );
+    computeMassDensity( pressure+dp, temperature, composition, currentMassDensity );
+    fdDerivative = (currentMassDensity - massDensity) / dp;
+    checkDerivative( dMassDensity_dp, fdDerivative, "Mass density right pressure derivative" );
+    // -- Temperature derivative
+    real64 const dt = 1.0e-6 * temperature;
+    computeMassDensity( pressure, temperature-dt, composition, currentMassDensity );
+    fdDerivative = -(currentMassDensity - massDensity) / dt;
+    checkDerivative( dMassDensity_dt, fdDerivative, "Mass density left temperature derivative" );
+    computeMassDensity( pressure, temperature+dt, composition, currentMassDensity );
+    fdDerivative = (currentMassDensity - massDensity) / dt;
+    checkDerivative( dMassDensity_dt, fdDerivative, "Mass density right temperature derivative" );
+    // -- Composition derivatives derivative
+    real64 const dz = 1.0e-7;
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      composition[ic] -= dz;
+      computeMassDensity( pressure, temperature, composition, currentMassDensity );
+      fdDerivative = -(currentMassDensity - massDensity) / dz;
+      checkDerivative( dMassDensity_dz[ic], fdDerivative, "Mass density left composition derivative" );
+      composition[ic] += 2.0*dz;
+      computeMassDensity( pressure, temperature, composition, currentMassDensity );
+      fdDerivative = (currentMassDensity - massDensity) / dz;
+      checkDerivative( dMassDensity_dz[ic], fdDerivative, "Mass density right composition derivative" );
       composition[ic] -= dz;
     }
   }
@@ -291,6 +373,57 @@ private:
                            dMolarDensity_dt,
                            dMolarDensity_dz );
   }
+  void computeMassDensity( real64 const pressure, real64 const temperature,
+                           arrayView1d< real64 const > const & composition,
+                           real64 & massDensity ) const
+  {
+    auto molecularWeight = m_fluid->getMolecularWeight();
+
+    real64 molarDensity = 0.0;
+    computeMolarDensity( pressure, temperature, composition, molarDensity );
+    constitutive::CompositionalProperties::
+      computeMassDensity( numComps,
+                          composition,
+                          molecularWeight,
+                          molarDensity,
+                          massDensity );
+  }
+
+  void computeMassDensity( real64 const pressure, real64 const temperature,
+                           arrayView1d< real64 const > const & composition,
+                           real64 & massDensity,
+                           real64 & dMassDensity_dp,
+                           real64 & dMassDensity_dt,
+                           arraySlice1d< real64 > const dMassDensity_dz ) const
+  {
+    auto molecularWeight = m_fluid->getMolecularWeight();
+    computeMassDensity( pressure, temperature, composition,
+                        massDensity );
+
+    real64 molarDensity = 0.0;
+    real64 dMolarDensity_dp = 0.0;
+    real64 dMolarDensity_dt = 0.0;
+    array1d< real64 > dMolarDensity_dz( numComps );
+    computeMolarDensity( pressure, temperature,
+                         composition,
+                         molarDensity,
+                         dMolarDensity_dp,
+                         dMolarDensity_dt,
+                         dMolarDensity_dz );
+
+    constitutive::CompositionalProperties::
+      computeMassDensity( numComps,
+                          molecularWeight,
+                          molarDensity,
+                          dMolarDensity_dp,
+                          dMolarDensity_dt,
+                          dMolarDensity_dz,
+                          massDensity,
+                          dMassDensity_dp,
+                          dMassDensity_dt,
+                          dMassDensity_dz );
+  }
+
 protected:
   std::unique_ptr< TestFluid< NC > > m_fluid;
 };
@@ -307,6 +440,16 @@ TEST_P( PR4Comp, testMolarDensityDerivative )
   testMolarDensityDerivative( GetParam() );
 }
 
+TEST_P( PR4Comp, testMassDensity )
+{
+  testMassDensity( GetParam() );
+}
+
+TEST_P( PR4Comp, testMassDensityDerivative )
+{
+  testMassDensityDerivative( GetParam() );
+}
+
 // Test data generated from PVT package
 // All compositions are single phase
 template<>
@@ -314,7 +457,6 @@ std::vector< CompositionalPropertiesTestData< 4 > > generateTestData< constituti
 {
   return {
     { 1.000000e+05, 2.771500e+02, { 0.000000, 0.495099, 0.495118, 0.009783 }, 3.733061e+03, 1.271768e+02, 4.747588e+05 },
-    { 1.000000e+05, 2.771500e+02, { 0.000000, 0.000000, 0.000000, 1.000000 }, 4.770489e+04, 1.801500e+01, 8.594036e+05 },
     { 1.000000e+05, 2.771500e+02, { 0.000652, 0.128231, 0.128281, 0.742836 }, 1.119134e+04, 4.630013e+01, 5.181608e+05 },
     { 1.000000e+05, 2.771500e+02, { 0.855328, 0.000205, 0.000000, 0.144467 }, 4.348717e+01, 2.658628e+01, 1.156162e+03 },
     { 1.000000e+05, 2.886500e+02, { 0.000507, 0.112984, 0.113029, 0.773480 }, 1.214893e+04, 4.293636e+01, 5.216311e+05 },
@@ -323,17 +465,13 @@ std::vector< CompositionalPropertiesTestData< 4 > > generateTestData< constituti
     { 1.000000e+05, 2.981500e+02, { 0.653033, 0.000901, 0.000000, 0.346066 }, 4.049414e+01, 2.463074e+01, 9.974005e+02 },
     { 1.000000e+05, 2.981500e+02, { 0.000506, 0.143046, 0.143326, 0.713122 }, 1.013248e+04, 4.959370e+01, 5.025071e+05 },
     { 1.000000e+05, 2.981500e+02, { 0.582848, 0.000748, 0.000000, 0.416404 }, 4.053125e+01, 2.391430e+01, 9.692764e+02 },
-    { 1.000000e+05, 2.981500e+02, { 0.000000, 0.000000, 0.000000, 1.000000 }, 4.708118e+04, 1.801500e+01, 8.481674e+05 },
     { 1.000000e+05, 2.981500e+02, { 0.972848, 0.000000, 0.000000, 0.027152 }, 4.036515e+01, 2.774153e+01, 1.119791e+03 },
     { 1.000000e+05, 3.331500e+02, { 0.000000, 0.477146, 0.477164, 0.045691 }, 3.754190e+03, 1.232183e+02, 4.625850e+05 },
     { 1.000000e+05, 3.331500e+02, { 0.210877, 0.008984, 0.000001, 0.780137 }, 3.640845e+01, 2.098792e+01, 7.641376e+02 },
-    { 1.000000e+05, 3.331500e+02, { 0.000000, 0.000000, 0.000000, 1.000000 }, 4.593024e+04, 1.801500e+01, 8.274334e+05 },
     { 1.000000e+05, 3.331500e+02, { 0.818043, 0.000000, 0.000000, 0.181957 }, 3.614852e+01, 2.619379e+01, 9.468669e+02 },
     { 1.000000e+05, 3.721500e+02, { 0.000000, 0.104818, 0.104822, 0.790360 }, 3.312721e+01, 4.112577e+01, 1.362382e+03 },
     { 1.000000e+05, 3.721500e+02, { 0.000117, 0.356347, 0.549688, 0.093848 }, 3.581375e+03, 1.206090e+02, 4.319462e+05 },
     { 1.013250e+05, 2.771500e+02, { 0.000000, 0.495099, 0.495118, 0.009783 }, 3.733064e+03, 1.271768e+02, 4.747592e+05 },
-    { 1.013250e+05, 2.771500e+02, { 0.000000, 0.000000, 0.000000, 1.000000 }, 4.770490e+04, 1.801500e+01, 8.594037e+05 },
-    { 1.013250e+05, 2.886500e+02, { 0.000000, 0.000000, 0.000000, 1.000000 }, 4.736914e+04, 1.801500e+01, 8.533550e+05 },
     { 1.013250e+05, 2.886500e+02, { 0.000516, 0.112950, 0.112994, 0.773540 }, 1.215157e+04, 4.292888e+01, 5.216533e+05 },
     { 1.013250e+05, 2.886500e+02, { 0.780815, 0.000514, 0.000000, 0.218672 }, 4.233123e+01, 2.587101e+01, 1.095152e+03 },
     { 1.013250e+05, 2.886500e+02, { 0.000599, 0.132633, 0.132752, 0.734016 }, 1.081051e+04, 4.727865e+01, 5.111063e+05 },
@@ -345,7 +483,6 @@ std::vector< CompositionalPropertiesTestData< 4 > > generateTestData< constituti
     { 1.013250e+05, 3.331500e+02, { 0.000000, 0.000000, 0.000000, 1.000000 }, 4.593026e+04, 1.801500e+01, 8.274336e+05 },
     { 1.013250e+05, 3.331500e+02, { 0.000000, 0.000000, 0.000000, 1.000000 }, 4.593025e+04, 1.801500e+01, 8.274336e+05 },
     { 1.013250e+05, 3.331500e+02, { 0.820407, 0.000000, 0.000000, 0.179593 }, 3.662747e+01, 2.621743e+01, 9.602781e+02 },
-    { 1.013250e+05, 3.721500e+02, { 0.000000, 0.000000, 0.000000, 1.000000 }, 4.445595e+04, 1.801500e+01, 8.008740e+05 },
     { 1.013250e+05, 3.721500e+02, { 0.080408, 0.000000, 0.000000, 0.919592 }, 3.299996e+01, 1.881892e+01, 6.210236e+02 },
     { 5.000000e+06, 2.771500e+02, { 0.000000, 0.495216, 0.495235, 0.009549 }, 3.742134e+03, 1.272026e+02, 4.760091e+05 },
     { 5.000000e+06, 2.771500e+02, { 0.000000, 0.000000, 0.000000, 1.000000 }, 4.772799e+04, 1.801500e+01, 8.598197e+05 },

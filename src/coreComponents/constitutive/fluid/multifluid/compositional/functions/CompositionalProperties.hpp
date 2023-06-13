@@ -85,6 +85,46 @@ public:
                                    real64 & dMolarDensity_dp,
                                    real64 & dMolarDensity_dt,
                                    arraySlice1d< real64 > const & dMolarDensity_dz );
+
+  /**
+   * @brief Compute the mass density of a mixture from the composition and the molar density
+   * @param[in] numComps number of components
+   * @param[in] composition composition of the mixture
+   * @param[in] molecularWeight the component molecular weights
+   * @param[in] molarDensity the mixture molar density
+   * @param[out] massDensity the calculated mass density
+   */
+  GEOS_HOST_DEVICE
+  static void computeMassDensity( integer const numComps,
+                                  arraySlice1d< real64 const > const & composition,
+                                  arraySlice1d< real64 const > const & molecularWeight,
+                                  real64 const molarDensity,
+                                  real64 & massDensity );
+
+  /**
+   * @brief Compute the mass density derivatives
+   * @param[in] numComps number of components
+   * @param[in] molecularWeight the component molecular weights
+   * @param[in] molarDensity the mixture molar density
+   * @param[in] dMolarDensity_dp derivative of the molar density wrt pressure
+   * @param[in] dMolarDensity_dt derivative of the molar density wrt temperature
+   * @param[in] dMolarDensity_dz derivative of the molar density wrt composition
+   * @param[in] massDensity mass density
+   * @param[out] dMassDensity_dp derivative of the mass density wrt pressure
+   * @param[out] dMassDensity_dt derivative of the mass density wrt temperature
+   * @param[out] dMassDensity_dz derivative of the mass density wrt composition
+   */
+  GEOS_HOST_DEVICE
+  static void computeMassDensity( integer const numComps,
+                                  arraySlice1d< real64 const > const & molecularWeight,
+                                  real64 const molarDensity,
+                                  real64 const dMolarDensity_dp,
+                                  real64 const dMolarDensity_dt,
+                                  arraySlice1d< real64 const > const dMolarDensity_dz,
+                                  real64 const massDensity,
+                                  real64 & dMassDensity_dp,
+                                  real64 & dMassDensity_dt,
+                                  arraySlice1d< real64 > const & dMassDensity_dz );
 };
 
 } // namespace constitutive
