@@ -67,15 +67,16 @@ public:
     createArray( testFluid->criticalTemperature, components, Fluid::Tc, Fluid::data );
     createArray( testFluid->acentricFactor, components, Fluid::Ac, Fluid::data );
     createArray( testFluid->molecularWeight, components, Fluid::Mw, Fluid::data );
+    createArray( testFluid->volumeShift, std::array< real64, NC >() );
     return testFluid;
   }
 
-  arrayView1d< real64 const > const getCriticalPressure() const { return criticalPressure.toViewConst(); }
-  arrayView1d< real64 const > const getCriticalTemperature() const { return criticalTemperature.toViewConst(); }
-  arrayView1d< real64 const > const getCriticalVolume() const { return criticalVolume.toViewConst(); }
-  arrayView1d< real64 const > const getAcentricFactor() const { return acentricFactor.toViewConst(); }
-  arrayView1d< real64 const > const getMolecularWeight() const { return molecularWeight.toViewConst(); }
-  arrayView1d< real64 const > const getVolumeShift() const { return volumeShift.toViewConst(); }
+  arrayView1d< real64 > const getCriticalPressure() const { return criticalPressure.toView(); }
+  arrayView1d< real64 > const getCriticalTemperature() const { return criticalTemperature.toView(); }
+  arrayView1d< real64 > const getCriticalVolume() const { return criticalVolume.toView(); }
+  arrayView1d< real64 > const getAcentricFactor() const { return acentricFactor.toView(); }
+  arrayView1d< real64 > const getMolecularWeight() const { return molecularWeight.toView(); }
+  arrayView1d< real64 > const getVolumeShift() const { return volumeShift.toView(); }
 
 private:
   TestFluid() = default;
@@ -101,6 +102,14 @@ public:
   static void createArray( ARRAY & array, LIST const & data )
   {
     for( auto const value : data )
+    {
+      array.emplace_back( value );
+    }
+  }
+  template< typename ARRAY >
+  static void createArray( ARRAY & array, real64 const value )
+  {
+    for( integer ic = 0; ic < NC; ++ic )
     {
       array.emplace_back( value );
     }

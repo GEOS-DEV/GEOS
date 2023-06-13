@@ -3,6 +3,7 @@
 #
 
 set( gtest_geosx_tests
+     testCompositionalProperties.cpp
      testDamageUtilities.cpp
      testDruckerPrager.cpp
      testElasticIsotropic.cpp
