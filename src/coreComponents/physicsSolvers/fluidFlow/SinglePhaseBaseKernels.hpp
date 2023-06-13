@@ -215,10 +215,27 @@ public:
   void setup( localIndex const ei,
               StackVariables & stack ) const
   {
+    localIndex const numQuad = m_porosityNew.size( 1 ); 
+
+    real64 avgPorosityNew = 0.0; 
+    real64 avgPorosity_n = 0.0; 
+    real64 avgdPoro_dPres = 0.0;
+
+    for( localIndex q = 0; q < numQuad; ++q )
+    {
+      avgPorosityNew += m_porosityNew[ei][q]; 
+      avgPorosity_n += m_porosity_n[ei][q]; 
+      avgdPoro_dPres += m_dPoro_dPres[ei][q]; 
+    }
+
+    avgPorosityNew = avgPorosityNew / numQuad; 
+    avgPorosity_n = avgPorosity_n / numQuad; 
+    avgdPoro_dPres = avgdPoro_dPres / numQuad; 
+    
     // initialize the pore volume
-    stack.poreVolume = ( m_volume[ei] + m_deltaVolume[ei] ) * m_porosityNew[ei][0];
-    stack.poreVolume_n = m_volume[ei] * m_porosity_n[ei][0];
-    stack.dPoreVolume_dPres = ( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dPres[ei][0];
+    stack.poreVolume = ( m_volume[ei] + m_deltaVolume[ei] ) * avgPorosityNew;
+    stack.poreVolume_n = m_volume[ei] * avgPorosity_n;
+    stack.dPoreVolume_dPres = ( m_volume[ei] + m_deltaVolume[ei] ) * avgdPoro_dPres;
 
     // set row index and degrees of freedom indices for this element
     stack.localRow = m_dofNumber[ei] - m_rankOffset;
