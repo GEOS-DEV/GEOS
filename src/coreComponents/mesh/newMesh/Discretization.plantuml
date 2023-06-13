@@ -10,7 +10,7 @@ Contains data/methods to describe the discretization of a **Mesh**.
 MESHTYPE * m_mesh;
 }
 
-Class DiscretizationFEM {
+Class DiscretizationFEM<INDEX_TYPE> {
 There is one instantiation of DiscretizationFEM every h/p refinement of the **Mesh**
 --
 array1d< arrayOfArray< FEM_TYPE > > m_femTypes
@@ -18,6 +18,8 @@ array1d< arrayOfArray< FEM_TYPE > > m_femTypes
 note right of DiscretizationFEM::m_femTypes
 indices are:
  ( objectType )( regionIndex, subRegionIndex ) 
+
+FEM_TYPE is ShivaInterface::FEM_INTERFACE...maybe this isn't required.
 endnote
 
 class DiscretizationStencil {

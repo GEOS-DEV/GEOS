@@ -6,6 +6,81 @@ set separator .
 
 namespace ShivaInterface {
 
+
+namespace Geometry {
+namespace Cell {
+interface Cell {
+  This family of classes are data/interface
+  +constexpr int numVertices()
+  +constexpr int numEdges()
+  +constexpr int numFaces()
+}
+
+class CellTetrahedron_Pyramid_Wedge_Hexahdron {
+  -using INDEX_TYPE = int;
+  -REAL_TYPE m_VertexCoords[4/5/6/8][3]
+  +inline vertexCoords( INDEX_TYPE const vindex, int const component ) override final;
+}
+
+class CellHexahedronIJK {
+  -using INDEX_TYPE = <int,int,int>};
+  +inline vertexCoords( INDEX_TYPE const vindex, int const component ) override final;
+}
+
+class CellPolyhedral {
+  -using INDEX_TYPE = <int,int,int>};
+  +inline vertexCoords( INDEX_TYPE const vindex, int const component ) override final;
+}
+
+
+
+
+Cell <|-- CellTetrahedron_Pyramid_Wedge_Hexahdron
+Cell <|--- CellHexahedronIJK
+Cell <|---- CellPolyhedral
+}
+
+
+entity Mapping {
+  +jacobianTransform<CELL,BASIS>( CELL const & cell, REAL_TYPE const &(parentCoord)[3], REAL_TYPE &(J)[3][3] )
+}
+  note as jacobianTransformNote
+  jacobianTransform<CELL,BASIS>( CELL const & cell, REAL_TYPE const &(parentCoord)[3], REAL_TYPE &(J)[3][3] )
+  for( int a=0; a<CELL::numVertices(); ++a )
+  {
+    REAL_TYPE const dNdX[3] = { BASIS::gradient(a,coord) };
+    for( int i=0; i<3; ++i )
+    {
+      for( int j=0; j<3; ++j )
+      {
+        J[i][j] = J[i][j] + dNdXi[ j ] * cell.vertexCoords(a,i);
+      }
+    }
+  }
+
+
+  jacobianTransform<CellHexIJK,BASIS>( CellHexIJK const & cell, REAL_TYPE const &(parentCoord)[3], REAL_TYPE &(J)[3][3] )
+  for( int ai=0; ai<2; ++ai )
+  for( int aj=0; aj<2; ++aj )
+  for( int ak=0; ak<2; ++ak )
+  {
+    REAL_TYPE const dNdX[3] = { BASIS::gradient(ai,aj,ak,coord) };
+    for( int i=0; i<3; ++i )
+    {
+      for( int j=0; j<3; ++j )
+      {
+        J[i][j] = J[i][j] + dNdXi[ j ] * cell.vertexCoords(ai,aj,ak,i);
+      }
+    }
+  }
+
+  endnote
+
+  Mapping::jacobianTransform -- jacobianTransformNote
+}
+
+namespace FiniteElementMethod {
+
 note as N1
   // launch with single thread per element
 
@@ -13,9 +88,7 @@ note as N1
   kernel( ...... )
   {
     using INDEX_TYPE = FE_INTERFACE::INDEX_TYPE;
-    using TRANSFORMATION = FE_INTERFACE::TRANSFORM;
     using CELLTYPE = FE_INTERFACE::CELL;
-    using FE_SPACE = FE_INTERFACE::FE_SPACE;
 
     kernelLaunch<POLICY>( 0, n, [=]( localIndex const k )
     {
@@ -30,7 +103,7 @@ note as N1
       {
         real64 J[3][3];
 
-        TRANSFORMATION::formJacobian( index, q, celldata, J );
+        FE_INTERFACE::jacobianTransform( index, q, celldata, J );
         real64 invJ[3][3];
         REAL_TYPE detJ = inverse(J, invJ)
 
@@ -47,41 +120,38 @@ note as N1
   }
 endnote
 
-
-
-class Transformation {
+class ParentElement< FUNCSPACE, CELL, BASIS > {
+  constrxpr NSP = f ( BASIS, CELL, FUNC_SPACE )
+  +real64 shapeFunctionValue( int const a, REAL_TYPE const (&parentCoord)[DIMS] )
+  +shapeFunctionGradient( int const a, REAL_TYPE const (&parentCoord)[DIMS] , real64 &(parentGrad)[3] )
+  +VAR_TYPE value<VAR_TYPE>( VAR_TYPE const & var[NSP], REAL_TYPE const (&parentCoord)[DIMS] )
+  +parentGradient( VAR_TYPE const (&var)[NSP], REAL_TYPE const (&parentCoord)[DIMS] , real64 &(parentGrad)[3] )
 }
 
-class TransformationIsoparametric {
-  +formTransformation( INDEX_TYPE index, COORD coord, real64 (&J)[3][3] )
-
+class FiniteElementSpace< FINITEELEMENT, MAPPING > {
+  +jacobianTransform( CELL const & cell, REAL_TYPE const &(parentCoord)[3], REAL_TYPE &(J)[3][3] )
+  +VAR_TYPE value<VAR_TYPE>( VAR_TYPE const & var[NSP], REAL_TYPE const (&parentCoord)[DIMS] )
+  +gradient( VAR_TYPE const (&var)[NSP], REAL_TYPE const (&parentCoord)[DIMS] , REAL_TYPE const &(J)[3][3], real64 &(grad)[3] )
 
 }
 
-class TransformationAtQuadrature<QUADRATURE> {
-  +formTransformation( INDEX_TYPE cellIndex, INDEX_TYPE qi, real64 (&J)[3][3] )
-}
-
-class FiniteElementSpace< FUNCSPACE, CELL, BASIS > {
-  +value( VAR_TYPE const (&var)[NSP], REAL_TYPE const (&coord)[DIMS] )
-  +gradient( VAR_TYPE const (&var)[NSP], real64 (&invJ)[3][3] )
-  using LOCAL_DOF_ARRAY_TYPE = m_Dof[NSP][NUM_DOF_PER_SP]
-  -LOCAL_DOF_ARRAY_TYPE dofs;
-}
 
 class FiniteElementInterface< FESPACE, QUADRATURE >  {
-  +value( INDEX_TYPE const q, VAR_TYPE const (&var)[NSP] )
-  +gradient( INDEX_TYPE const q, AR_TYPE const (&var)[NSP], real64 const (&invJ)[3][3] )
+  using DOF_DIMS = ??
+  using LOCAL_DOF_ARRAY_TYPE = real64[NSP][DOF_DIMS]
+  +jacobianTransform( int const q, CELL const & cell, REAL_TYPE &(J)[3][3] )
+  +value( INDEX_TYPE const q, LOCAL_DOF_ARRAY_TYPE const &dofs )
+  +gradient( INDEX_TYPE const q, LOCAL_DOF_ARRAY_TYPE const &var , real64 const (&invJ)[3][3], real64 const &(gradVar)[DOF_DIMS][3] )
 }
 
 
 namespace Basis {
-class Basis< INDEX_TYPE, REAL_TYPE, ORDER > {
+class Basis< INDEX_TYPE, REAL_TYPE > {
   constexpr REAL_TYPE value( INDEX_TYPE const functionIndex, REAL_TYPE const coord );
-  constexpr REAL_TYPE gradient( INDEX_TYPE const functionIndex, REAL_TYPE const coord );
+  constexpr REAL_TYPE[3] gradient( INDEX_TYPE const functionIndex, REAL_TYPE const coord );
 }
 
-class BasisLagrange {
+class BasisLagrange<ORDER> {
 
 }
 
@@ -93,66 +163,45 @@ Basis <|-- BasisNURBS
 
 }
 
-class Quadrature<INDEX_TYPE, REAL_TYPE> {
-+constexpr INDEX_TYPE m_numPoints;
+namespace Quadrature {
+
+interface Quadrature{}
+
+class QuadratureGaussLegendre<INDEX_TYPE, REAL_TYPE, NUM_PTS> {
++constexpr int m_numPoints = NUM_PTS;
 +constexpr getCoord( INDEX_TYPE const qi );
 }
 
-
-namespace Cell {
-interface Cell<NUM_DOF_PER_SP> {
-  +constexpr INDEX_TYPE numVertices()
-  +vertexCoords()=0
+class QuadratureGaussLobatto<INDEX_TYPE, REAL_TYPE, NUM_PTS> {
+  +constexpr int m_numPoints = NUM_PTS;
+  +constexpr getCoord( INDEX_TYPE const qi );
 }
 
-class CellTetrahedron {
-  -REAL_TYPE m_VertexCoords[4][3]
-  +vertexCoords()
-}
-
-class CellPyramid {
-  -REAL_TYPE m_VertexCoords[5][3]
-  +vertexCoords()
-}
-
-class CellWedge {
-  -REAL_TYPE m_VertexCoords[6][3]
-  +vertexCoords()
-}
-
-class CellHexahedronUnstructured {
-  -REAL_TYPE m_VertexCoords[8][3]
-  +vertexCoords()
-}
-
-class CellHexahedronIJK {
-  +vertexCoords()
+Quadrature <|-- QuadratureGaussLegendre
+Quadrature <|--- QuadratureGaussLobatto
 }
 
 
 
 
-Cell <|-- CellTetrahedron
-Cell <|--- CellPyramid
-Cell <|---- CellWedge
-Cell <|----- CellHexahedronUnstructured
-Cell <|------ CellHexahedronIJK
+class FunctionalSpace {
+  H1, L2, RT
 }
-
 
 FiniteElementInterface <-- FiniteElementSpace
-FiniteElementInterface <-- Quadrature
-FiniteElementSpace <-- FunctionalSpace
-FiniteElementSpace <-- Basis.Basis
-FiniteElementSpace <-- Cell.Cell
+FiniteElementSpace <-- ParentElement
+FiniteElementInterface <-- Quadrature.Quadrature
+ParentElement <-- FunctionalSpace
+ParentElement <-- Basis.Basis
 
-Transformation <|-- TransformationIsoparametric
-TransformationIsoparametric <|-- TransformationAtQuadrature
-TransformationIsoparametric <-- Basis.Basis
-TransformationIsoparametric <-- Cell.Cell
-TransformationAtQuadrature <-- Quadrature
 
-FiniteElementInterface <-- TransformationAtQuadrature
+}
+
+
+FiniteElementMethod.FiniteElementSpace <-- Geometry.Mapping
+FiniteElementMethod.ParentElement <-- Geometry.Cell.Cell
+
+
 
 }
 
