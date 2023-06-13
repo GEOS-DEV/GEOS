@@ -121,7 +121,9 @@ quadraturePointKernel( localIndex const k,
                                                   real64 const detJ )
   {
     real64 KwTm_gauss[3]{};
-    real64 const thermalExpansionCoefficient = 1.0; /// TODO: should not be hardcoded.
+    real64 thermalExpansionCoefficient{}; 
+
+    m_constitutiveUpdate.getThermalExpansionCoefficient( k, thermalExpansionCoefficient );
 
     // assemble KwTmLocal
     LvArray::tensorOps::fill< 3 >( KwTm_gauss, 0 );
@@ -131,7 +133,7 @@ quadraturePointKernel( localIndex const k,
       KwTm_gauss[1] += eqMatrix[1][i];
       KwTm_gauss[2] += eqMatrix[2][i];
     }
-    LvArray::tensorOps::scaledAdd< 3 >( stack.localKwTm, KwTm_gauss, detJ*thermalExpansionCoefficient );
+    LvArray::tensorOps::scaledAdd< 3 >( stack.localKwTm, KwTm_gauss, 3*detJ*thermalExpansionCoefficient );
   } );
 
 }
