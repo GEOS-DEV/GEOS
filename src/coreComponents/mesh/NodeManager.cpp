@@ -132,11 +132,14 @@ void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
 }
 
 void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
-                                           ElementRegionManager const & elemRegionManager )
+                                           ElementRegionManager const & elemRegionManager,
+                                           bool baseMeshLevel )
 {
   GEOS_MARK_FUNCTION;
-
-  resize( cellBlockManager.numNodes() );
+  if( baseMeshLevel )
+  {
+    resize( cellBlockManager.numNodes() );
+  }
 
   m_referencePosition = cellBlockManager.getNodePositions();
   m_referencePosition32.resize( m_referencePosition.size( 0 ), m_referencePosition.size( 1 ) );

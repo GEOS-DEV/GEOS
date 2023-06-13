@@ -9,7 +9,7 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Domain, Fracture }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
+        newtonTol="1.0e-4"
         newtonMaxIter="8"/>
       <LinearSolverParameters
         directParallel="0"/>
