@@ -16,7 +16,7 @@
       maxNumResolves="5">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
-        newtonMaxIter="50"/>
+        newtonMaxIter="100"/>
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="mgr"
@@ -205,10 +205,10 @@
     <CompressibleSinglePhaseFluid
       name="gel"
       defaultDensity="1000"
-      defaultViscosity="1.0e-1"
+      defaultViscosity="1.0e-3"
       referencePressure="0.0"
       compressibility="5e-10"
-      referenceViscosity="0.1"
+      referenceViscosity="1e-3"
       viscosibility="0.0"/>
 
     <PorousElasticIsotropic
@@ -219,12 +219,12 @@
 
     <BiotPorosity
       name="rockPorosity"
-      grainBulkModulus="1e11"
+      grainBulkModulus="1e27"
       defaultReferencePorosity="0.01"/>
 
     <ConstantPermeability
        name="rockPerm"
-       permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15 }"/> 
+       permeabilityComponents="{ 1.0e-16, 1.0e-16, 1.0e-16 }"/> 
 
     <ElasticIsotropic
       name="rock"
@@ -275,6 +275,37 @@
 
   <!-- SPHINX_BC -->
   <FieldSpecifications>
+
+    <FieldSpecification
+       name="permx"
+       initialCondition="1"
+       component="0"
+       setNames="{ all }"
+       objectPath="ElementRegions/Domain/cb1"
+       fieldName="rockPerm_initialPermeability"
+       scale="1"
+       functionName="permxFunc"/>
+
+     <FieldSpecification
+       name="permy"
+       initialCondition="1"
+       component="1"
+       setNames="{ all }"
+       objectPath="ElementRegions/Domain/cb1"
+       fieldName="rockPerm_initialPermeability"
+       scale="1"
+       functionName="permyFunc"/>
+
+     <FieldSpecification
+       name="permz"
+       initialCondition="1"
+       component="2"
+       setNames="{ all }"
+       objectPath="ElementRegions/Domain/cb1"
+       fieldName="rockPerm_initialPermeability"
+       scale="1"
+       functionName="permzFunc"/>
+
     <FieldSpecification 
       name="Sh"
       initialCondition="1"
@@ -373,12 +404,33 @@
     <TableFunction
       name="apertureTable"
       coordinates="{ -0.01, -0.03e-3, 0.0 }"
-      values="{ 0.002e-3, 0.02e-3, 0.04e-3 }"/>
+      values="{ 0.004e-3, 0.02e-3, 0.04e-3 }"/>
 
     <TableFunction
       name="timeFunction"
       coordinates="{ 0.0, 359.9, 360.1, 719.9, 720.1, 1199.9, 1200.1, 1499.9, 1500.1, 2099.9, 2100.1, 4499.9, 4500.1, 6299.9, 6300.1, 6899.9, 6900.1, 7499.9, 7500.1, 7799.9, 7800.1, 8100 }"
       values="{ 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0, 5.0, 5.0, 6.0, 6.0, 7.0, 7.0, 4.0, 4.0, 3.0, 3.0, 2.0, 2.0, 1.0, 1.0 }"/>
+    
+    <TableFunction
+      name="permxFunc"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ perm_tables/xlin.geos, perm_tables/ylin.geos, perm_tables/zlin.geos }"
+      voxelFile="perm_tables/perm_x.geos"
+      interpolation="nearest"/>
+
+    <TableFunction
+      name="permyFunc"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ perm_tables/xlin.geos, perm_tables/ylin.geos, perm_tables/zlin.geos }"
+      voxelFile="perm_tables/perm_y.geos"
+      interpolation="nearest"/>
+
+    <TableFunction
+      name="permzFunc"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ perm_tables/xlin.geos, perm_tables/ylin.geos, perm_tables/zlin.geos }"
+      voxelFile="perm_tables/perm_z.geos"
+      interpolation="nearest"/>
     
     <TableFunction
       name="presFunction"
@@ -436,7 +488,7 @@
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="16AStimulation-poroElastic"/>
+      plotFileRoot="16AStimulation-poroElastic-DFNperm-mu=1e-3"/>
 
     <Restart
       name="restartOutput"/>

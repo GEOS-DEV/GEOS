@@ -26,6 +26,8 @@
     logLevel="1"
     discretization="FE1"
     targetRegions="{ Domain }">
+    <LinearSolverParameters
+      logLevel="2"/>
    </SolidMechanicsLagrangianSSLE>
 
    <SinglePhaseFVM
@@ -151,11 +153,11 @@
       defaultDensity="2700"
       defaultBulkModulus="38.1944444444e9"
       defaultShearModulus="21.8253968254e9"
-      defaultThermalExpansionCoefficient="1e-6"/>
+      defaultThermalExpansionCoefficient="8e-7"/>
 
     <BiotPorosity
       name="rockPorosity"
-      grainBulkModulus="1e11"
+      grainBulkModulus="1e27"
       defaultReferencePorosity="0.01"
       defaultThermalExpansionCoefficient="0.0"/>
 
@@ -168,11 +170,11 @@
     <ThermalCompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
-      defaultViscosity="1e-3"
+      defaultViscosity="1e-4"
       referencePressure="0.0"
       referenceTemperature="0.0"
-      compressibility="5e-10"
-      referenceViscosity="1e-3"
+      compressibility="1e-8"
+      referenceViscosity="1e-4"
       thermalExpansionCoeff="0.0"
       viscosibility="0.0"
       volumetricHeatCapacity="4.2e6"
@@ -180,7 +182,7 @@
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 1.0e-16, 1.0e-16, 1.0e-16 }"
+      permeabilityComponents="{ 4.0e-15, 4.0e-15, 4.0e-15 }"
       pressureDependenceConstant="3e-7"
       defaultReferencePressure="20e6"/>
     
@@ -231,6 +233,15 @@
       scale="1.0e6"/>
 
     <FieldSpecification
+      name="refPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="rockPerm_referencePressure"
+      functionName="PresFunction"
+      scale="1.0e6"/>
+
+    <FieldSpecification
       name="initialTemperature"
       initialCondition="1"
       setNames="{ all }"
@@ -246,7 +257,7 @@
       objectPath="ElementRegions/Domain/cb1"
       fieldName="rockSolid_stress"
       component="0"
-      scale="392.90e6"/>
+      scale="32.77e6"/>
     <FieldSpecification 
       name="sigma_H"
       initialCondition="1"
@@ -254,7 +265,7 @@
       objectPath="ElementRegions/Domain/cb1"
       fieldName="rockSolid_stress"
       component="1"
-      scale="386.78e6"/>
+      scale="26.65e6"/>
     <FieldSpecification 
       name="sigma_v"
       initialCondition="1"
@@ -262,7 +273,7 @@
       objectPath="ElementRegions/Domain/cb1"
       fieldName="rockSolid_stress"
       component="2"
-      scale="372.78e6"/>
+      scale="12.65e6"/>
     <!-- SPHINX_IC_END -->   
 
     <!-- SPHINX_ZERO_DISPLACEMENT_BC -->    
@@ -362,7 +373,7 @@
   <Outputs>
     <VTK
       name="thermoPoroVTKOutput"
-      plotFileRoot="thermoPoro_forge_fim_mu=1e-3_presPerm_coarse"/>
+      plotFileRoot="thermoPoro_forge_fim"/>
 
     <Restart
       name="restartOutput"/>
