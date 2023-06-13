@@ -86,7 +86,7 @@ void Rectangle::postProcessInput()
 
   GEOS_ERROR_IF( std::fabs( std::fabs( LvArray::tensorOps::AiBi< 3 >( m_normal, vector )) - 1 ) > orthoNormalBaseTolerance
                  || std::fabs( LvArray::tensorOps::AiBi< 3 >( m_widthVector, m_lengthVector )) > orthoNormalBaseTolerance,
-                 "Error: the 3 vectors provided in the BoundedPlane do not form an orthonormal basis!" );
+                 "Error: the 3 vectors provided in the Rectangle do not form an orthonormal basis!" );
 
   GEOS_ERROR_IF( m_dimensions.size() != 2, "Error: Need to provide both length and width!" );
 

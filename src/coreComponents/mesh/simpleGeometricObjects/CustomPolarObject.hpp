@@ -94,6 +94,11 @@ public:
     m_coefficients = coefficients;
   }
 
+  /**
+   * @brief Get value of the radius of the surface for each angle theta
+   * @param angle the given angle
+   * @return the radius for that angle
+  */
   real64 getRadius( real64 angle ) const
   {
     real64 radius = 0;
