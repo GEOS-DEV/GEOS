@@ -19,7 +19,7 @@
 
 #include "Damage.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -130,10 +130,10 @@ void Damage< BASE >::postProcessInput()
 {
   BASE::postProcessInput();
 
-  GEOSX_ERROR_IF( m_extDrivingForceFlag != 0 && m_extDrivingForceFlag!= 1, "invalid external driving force flag option - must be 0 or 1" );
-  GEOSX_ERROR_IF( m_extDrivingForceFlag == 1 && m_tensileStrength <= 0.0, "tensile strength must be input and positive when the external driving force flag is turned on" );
-  GEOSX_ERROR_IF( m_extDrivingForceFlag == 1 && m_compressStrength <= 0.0, "compressive strength must be input and positive when the external driving force flag is turned on" );
-  GEOSX_ERROR_IF( m_extDrivingForceFlag == 1 && m_deltaCoefficient < 0.0, "delta coefficient must be input and non-negative when the external driving force flag is turned on" );
+  GEOS_ERROR_IF( m_extDrivingForceFlag != 0 && m_extDrivingForceFlag!= 1, "invalid external driving force flag option - must be 0 or 1" );
+  GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_tensileStrength <= 0.0, "tensile strength must be input and positive when the external driving force flag is turned on" );
+  GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_compressStrength <= 0.0, "compressive strength must be input and positive when the external driving force flag is turned on" );
+  GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_deltaCoefficient < 0.0, "delta coefficient must be input and non-negative when the external driving force flag is turned on" );
 }
 
 template< typename BASE >
@@ -161,7 +161,7 @@ void Damage< BASE >::saveConvergedState() const
   arrayView2d< real64 const > newDamage = m_newDamage;
   arrayView2d< real64 > oldDamage = m_oldDamage;
 
-  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( numE, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < numQ; ++q )
     {
@@ -175,4 +175,4 @@ typedef Damage< ElasticIsotropic > DamageElasticIsotropic;
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DamageElasticIsotropic, string const &, Group * const )
 
 }
-} /* namespace geosx */
+} /* namespace geos */

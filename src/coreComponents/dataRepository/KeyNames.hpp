@@ -16,12 +16,12 @@
  * @file KeyNames.hpp
  */
 
-#ifndef GEOSX_DATAREPOSITORY__KEYNAMES_HPP_
-#define GEOSX_DATAREPOSITORY__KEYNAMES_HPP_
+#ifndef GEOS_DATAREPOSITORY__KEYNAMES_HPP_
+#define GEOS_DATAREPOSITORY__KEYNAMES_HPP_
 
 #include <string>
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -38,4 +38,4 @@ static constexpr auto cellManager = "cellManager";
 }
 }
 }
-#endif /* GEOSX_DATAREPOSITORY__KEYNAMES_HPP_ */
+#endif /* GEOS_DATAREPOSITORY__KEYNAMES_HPP_ */

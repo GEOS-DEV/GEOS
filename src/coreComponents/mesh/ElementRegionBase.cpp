@@ -15,11 +15,9 @@
 #include "ElementRegionBase.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
-#include "constitutive/solid/SolidBase.hpp"
 
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -64,9 +62,9 @@ string ElementRegionBase::verifyMeshBodyName( Group const & meshBodies,
     {
       meshBodyName = onlyMeshBodyName;
     }
-    GEOSX_ERROR_IF_NE_MSG( onlyMeshBodyName,
-                           meshBodyName,
-                           "MeshBody specified does not match MeshBody in hierarchy." );
+    GEOS_ERROR_IF_NE_MSG( onlyMeshBodyName,
+                          meshBodyName,
+                          "MeshBody specified does not match MeshBody in hierarchy." );
   }
   else
   {
@@ -78,9 +76,9 @@ string ElementRegionBase::verifyMeshBodyName( Group const & meshBodies,
         meshBodyFound = true;
       }
     } );
-    GEOSX_ERROR_IF( !meshBodyFound,
-                    "There are multiple MeshBodies in this problem, but the "
-                    "specified MeshBody name "<<meshBodyName<<" was not found" );
+    GEOS_ERROR_IF( !meshBodyFound,
+                   "There are multiple MeshBodies in this problem, but the "
+                   "specified MeshBody name "<<meshBodyName<<" was not found" );
   }
 
   return meshBodyName;

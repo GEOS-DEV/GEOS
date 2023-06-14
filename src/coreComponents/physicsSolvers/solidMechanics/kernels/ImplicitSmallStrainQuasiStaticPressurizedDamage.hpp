@@ -16,13 +16,13 @@
  * @file ImplicitSmallStrainQuasiStaticPressurizedDamage.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINQUASISTATICPRESSURIZEDDAMAGE_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINQUASISTATICPRESSURIZEDDAMAGE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINQUASISTATICPRESSURIZEDDAMAGE_HPP_
+#define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINQUASISTATICPRESSURIZEDDAMAGE_HPP_
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace solidMechanicsLagrangianFEMKernels
@@ -118,7 +118,7 @@ public:
 public:
 
     /// Constructor.
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
                                        xLocal(),
@@ -154,7 +154,7 @@ public:
    * incremental displacement, and degree of freedom numbers are placed into
    * element local stack storage.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const k,
               StackVariables & stack ) const;
 
@@ -172,11 +172,11 @@ public:
      * @param a Node index for the row.
      * @param b Node index for the col.
      */
-    GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
+    GEOS_HOST_DEVICE GEOS_FORCE_INLINE constexpr
     void operator() ( localIndex const a, localIndex const b )
     {
-      GEOSX_UNUSED_VAR( a );
-      GEOSX_UNUSED_VAR( b );
+      GEOS_UNUSED_VAR( a );
+      GEOS_UNUSED_VAR( b );
     }
 
     /**
@@ -184,10 +184,10 @@ public:
      *   integrating the divergence to produce nodal forces.
      * @param stress The stress array.
      */
-    GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
+    GEOS_HOST_DEVICE GEOS_FORCE_INLINE constexpr
     void operator() ( real64 (& stress)[6] )
     {
-      GEOSX_UNUSED_VAR( stress );
+      GEOS_UNUSED_VAR( stress );
     }
   };
 
@@ -202,7 +202,7 @@ public:
    * stack variable is filled by the constitutive model.
    */
   template< typename STRESS_MODIFIER = NoOpFunctors >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack,
@@ -211,8 +211,8 @@ public:
   /**
    * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
 
@@ -250,8 +250,8 @@ protected:
    * @param[in] k Element index.
    * @return A parameter representative of the stiffness matrix dstress/dstrain
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   real64 computeStabilizationScaling( localIndex const k ) const
   {
     // TODO: generalize this to other constitutive models (currently we assume linear elasticity).
@@ -270,8 +270,8 @@ using QuasiStaticPressurizedDamageFactory = finiteElement::KernelFactory< Implic
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
-} // namespace geosx
+} // namespace geos
 
 #include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
-#endif // GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINQUASISTATIC_HPP_
+#endif // GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINQUASISTATIC_HPP_

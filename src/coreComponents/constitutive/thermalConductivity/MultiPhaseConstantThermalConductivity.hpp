@@ -16,13 +16,13 @@
  * @file MultiPhaseConstantThermalConductivity.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_CONSTANTTHERMALCONDUCTIVITY_HPP_
-#define GEOSX_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_CONSTANTTHERMALCONDUCTIVITY_HPP_
+#ifndef GEOS_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_CONSTANTTHERMALCONDUCTIVITY_HPP_
+#define GEOS_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_CONSTANTTHERMALCONDUCTIVITY_HPP_
 
 #include "constitutive/thermalConductivity/MultiPhaseThermalConductivityBase.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -45,12 +45,12 @@ public:
     : MultiPhaseThermalConductivityBaseUpdate( effectiveConductivity, dEffectiveConductivity_dPhaseVolFrac )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const & laggedPorosity,
                        arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override
-  { GEOSX_UNUSED_VAR( k, q, laggedPorosity, phaseVolFraction ); }
+  { GEOS_UNUSED_VAR( k, q, laggedPorosity, phaseVolFraction ); }
 
 };
 
@@ -109,7 +109,7 @@ private:
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif //GEOSX_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_CONSTANTTHERMALCONDUCTIVITY_HPP_
+#endif //GEOS_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_CONSTANTTHERMALCONDUCTIVITY_HPP_

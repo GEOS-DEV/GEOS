@@ -16,13 +16,13 @@
  * @file SinglePhaseConstantThermalConductivity.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_CONSTANTTHERMALCONDUCTIVITY_HPP_
-#define GEOSX_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_CONSTANTTHERMALCONDUCTIVITY_HPP_
+#ifndef GEOS_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_CONSTANTTHERMALCONDUCTIVITY_HPP_
+#define GEOS_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_CONSTANTTHERMALCONDUCTIVITY_HPP_
 
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivityBase.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -43,11 +43,11 @@ public:
     : SinglePhaseThermalConductivityBaseUpdate( effectiveConductivity )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const & laggedPorosity ) const override
-  { GEOSX_UNUSED_VAR( k, q, laggedPorosity ); }
+  { GEOS_UNUSED_VAR( k, q, laggedPorosity ); }
 
 };
 
@@ -74,6 +74,12 @@ public:
   static string catalogName() { return "SinglePhaseConstantThermalConductivity"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
+
+
+  virtual void initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity ) const override final;
+
+  virtual void update( arrayView2d< real64 const > const & porosity ) const override final;
+
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = SinglePhaseConstantThermalConductivityUpdate;
@@ -105,7 +111,7 @@ private:
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif //GEOSX_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_CONSTANTTHERMALCONDUCTIVITY_HPP_
+#endif //GEOS_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_CONSTANTTHERMALCONDUCTIVITY_HPP_

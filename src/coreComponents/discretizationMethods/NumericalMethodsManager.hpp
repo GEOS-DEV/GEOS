@@ -16,14 +16,14 @@
  * @file NumericalMethodsManager.hpp
  */
 
-#ifndef GEOSX_DISCRETIZATIONMETHODS_NUMERICALMETHODSMANAGER_HPP_
-#define GEOSX_DISCRETIZATIONMETHODS_NUMERICALMETHODSMANAGER_HPP_
+#ifndef GEOS_DISCRETIZATIONMETHODS_NUMERICALMETHODSMANAGER_HPP_
+#define GEOS_DISCRETIZATIONMETHODS_NUMERICALMETHODSMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -100,6 +100,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_DISCRETIZATIONMETHODS_NUMERICALMETHODSMANAGER_HPP_ */
+#endif /* GEOS_DISCRETIZATIONMETHODS_NUMERICALMETHODSMANAGER_HPP_ */

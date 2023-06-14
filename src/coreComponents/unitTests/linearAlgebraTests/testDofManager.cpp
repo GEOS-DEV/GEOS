@@ -32,30 +32,32 @@
 
 #include <memory>
 
-using namespace geosx;
-using namespace geosx::testing;
-using namespace geosx::dataRepository;
+using namespace geos;
+using namespace geos::testing;
+using namespace geos::dataRepository;
 
 char const * xmlInput =
-  "<Problem>"
-  "  <Mesh>"
-  "    <InternalMesh name=\"mesh\""
-  "                  elementTypes=\"{C3D8}\""
-  "                  xCoords=\"{0, 1, 2, 3, 4}\""
-  "                  yCoords=\"{0, 1}\""
-  "                  zCoords=\"{0, 1}\""
-  "                  nx=\"{4, 4, 4, 4}\""
-  "                  ny=\"{4}\""
-  "                  nz=\"{5}\""
-  "                  cellBlockNames=\"{block1, block2, block3, block4}\"/>"
-  "  </Mesh>"
-  "  <ElementRegions>"
-  "    <CellElementRegion name=\"region1\" cellBlocks=\"{block1}\" materialList=\"{}\" />"
-  "    <CellElementRegion name=\"region2\" cellBlocks=\"{block2}\" materialList=\"{}\" />"
-  "    <CellElementRegion name=\"region3\" cellBlocks=\"{block3}\" materialList=\"{}\" />"
-  "    <CellElementRegion name=\"region4\" cellBlocks=\"{block4}\" materialList=\"{}\" />"
-  "  </ElementRegions>"
-  "</Problem>";
+  R"xml(
+  <Problem>
+    <Mesh>
+      <InternalMesh name="mesh"
+                    elementTypes="{C3D8}"
+                    xCoords="{0, 1, 2, 3, 4}"
+                    yCoords="{0, 1}"
+                    zCoords="{0, 1}"
+                    nx="{4, 4, 4, 4}"
+                    ny="{4}"
+                    nz="{5}"
+                    cellBlockNames="{block1, block2, block3, block4}"/>
+    </Mesh>
+    <ElementRegions>
+      <CellElementRegion name="region1" cellBlocks="{block1}" materialList="{}" />
+      <CellElementRegion name="region2" cellBlocks="{block2}" materialList="{}" />
+      <CellElementRegion name="region3" cellBlocks="{block3}" materialList="{}" />
+      <CellElementRegion name="region4" cellBlocks="{block4}" materialList="{}" />
+    </ElementRegions>
+  </Problem>
+  )xml";
 
 /**
  * @brief Base class for all DofManager test fixtures.
@@ -72,7 +74,7 @@ protected:
     domain( state.getProblemManager().getDomainPartition() ),
     dofManager( "test" )
   {
-    geosx::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
+    geos::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
     dofManager.setDomain( domain );
   }
 
@@ -100,7 +102,7 @@ void collectLocalDofNumbers( DomainPartition const & domain,
     MeshLevel const & meshLevel = meshBody.getMeshLevel( regions.meshLevelName );
 
     ObjectManagerBase const & manager = meshLevel.getGroup< ObjectManagerBase >
-                                          ( geosx::testing::internal::testMeshHelper< LOC >::managerKey() );
+                                          ( geos::testing::internal::testMeshHelper< LOC >::managerKey() );
     arrayView1d< globalIndex const > dofIndex = manager.getReference< array1d< globalIndex > >( dofIndexKey );
 
     forLocalObjects< LOC >( meshLevel, regions.regionNames, [&]( localIndex const idx )
@@ -252,7 +254,7 @@ void DofManagerIndicesTest::test( std::vector< FieldDesc > const & fields )
       }
       default:
       {
-        GEOSX_ERROR( "Unsupported" );
+        GEOS_ERROR( "Unsupported" );
       }
     }
     std::sort( dofNumbers.begin(), dofNumbers.end() );
@@ -572,7 +574,7 @@ void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
       }
       break;
       default:
-        GEOSX_ERROR( "Unsupported" );
+        GEOS_ERROR( "Unsupported" );
     }
     numLocalDof += numLocalObj * f.components;
     numCompTotal += f.components;
@@ -596,7 +598,7 @@ void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
 
   for( FieldDesc const & f : fields )
   {
-    GEOSX_LOG_RANK( "rankOffset = "<<dofManager.rankOffset() );
+    GEOS_LOG_RANK( "rankOffset = "<<dofManager.rankOffset() );
     f.makePattern( domain,
                    dofManager.getKey( f.name ),
                    getRegions( domain, f.regions ),
@@ -1106,6 +1108,6 @@ TEST( DofManagerRegions, aggregateInitialization )
 
 int main( int argc, char * * argv )
 {
-  geosx::testing::LinearAlgebraTestScope scope( argc, argv );
+  geos::testing::LinearAlgebraTestScope scope( argc, argv );
   return RUN_ALL_TESTS();
 }

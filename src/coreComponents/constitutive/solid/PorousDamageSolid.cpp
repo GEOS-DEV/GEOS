@@ -23,7 +23,7 @@
 #include "DamageSpectral.hpp"
 #include "DamageVolDev.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -49,4 +49,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDamageSpectralElasticIsotropic, 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDamageVolDevElasticIsotropic, string const &, Group * const )
 
 }
-} /* namespace geosx */
+} /* namespace geos */

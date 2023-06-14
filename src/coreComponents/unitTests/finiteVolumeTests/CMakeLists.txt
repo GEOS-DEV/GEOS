@@ -6,24 +6,12 @@ set( gtest_geosx_tests
      testMimeticInnerProducts.cpp
    )
 
-set( dependencyList gtest )
+set( dependencyList ${parallelDeps} gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
   set (dependencyList ${dependencyList} geosx_core )
 else()
   set (dependencyList ${dependencyList} ${geosx_core_libs} )
-endif()
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
-endif()
-
-if ( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
 endif()
 
 #
@@ -39,7 +27,7 @@ foreach(test ${gtest_geosx_tests})
 
     # Guard to prevent GCC (version 8) from giving warnings due
     # to some sort of possible conversion from int to long unsigned.
-    # See also discussion here: https://github.com/GEOSX/LvArray/pull/250
+    # See also discussion here: https://github.com/GEOS-DEV/LvArray/pull/250
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
       if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.3.1)
         target_compile_options(${test_name} PRIVATE "-Wno-stringop-overflow")

@@ -16,13 +16,13 @@
  * @file SlipDependentPermeability.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_PERMEABILITY_SLIPDEPENDENTPERMEABILITY_HPP_
-#define GEOSX_CONSTITUTIVE_PERMEABILITY_SLIPDEPENDENTPERMEABILITY_HPP_
+#ifndef GEOS_CONSTITUTIVE_PERMEABILITY_SLIPDEPENDENTPERMEABILITY_HPP_
+#define GEOS_CONSTITUTIVE_PERMEABILITY_SLIPDEPENDENTPERMEABILITY_HPP_
 
 #include "constitutive/permeability/PermeabilityBase.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -44,13 +44,13 @@ public:
     m_initialPermeability( initialPermeability )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const ( &dispJump )[3],
                 R1Tensor const & initialPermeability,
                 arraySlice1d< real64 > const & permeability,
                 arraySlice2d< real64 > const & dPerm_dDispJump ) const;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void updateFromApertureAndShearDisplacement( localIndex const k,
                                                        localIndex const q,
                                                        real64 const & oldHydraulicAperture,
@@ -59,7 +59,7 @@ public:
                                                        real64 const ( &dispJump )[3],
                                                        real64 const ( &traction )[3] ) const override
   {
-    GEOSX_UNUSED_VAR( q, oldHydraulicAperture, newHydraulicAperture, traction, pressure );
+    GEOS_UNUSED_VAR( q, oldHydraulicAperture, newHydraulicAperture, traction, pressure );
 
     compute( dispJump,
              m_initialPermeability,
@@ -141,8 +141,8 @@ private:
 };
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SlipDependentPermeabilityUpdate::compute( real64 const ( &dispJump )[3],
                                                R1Tensor const & initialPermeability,
                                                arraySlice1d< real64 > const & permeability,
@@ -170,6 +170,6 @@ void SlipDependentPermeabilityUpdate::compute( real64 const ( &dispJump )[3],
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif //GEOSX_CONSTITUTIVE_PERMEABILITY_FRACTUREPERMEABILITY_HPP_
+#endif //GEOS_CONSTITUTIVE_PERMEABILITY_FRACTUREPERMEABILITY_HPP_

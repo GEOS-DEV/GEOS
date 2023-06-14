@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MESH_CELLBLOCK_HPP_
-#define GEOSX_MESH_CELLBLOCK_HPP_
+#ifndef GEOS_MESH_CELLBLOCK_HPP_
+#define GEOS_MESH_CELLBLOCK_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
@@ -21,7 +21,7 @@
 #include "mesh/generators/CellBlockABC.hpp"
 #include "mesh/ElementType.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -203,6 +203,11 @@ public:
    */
   void resize( dataRepository::indexType const numElements ) override final;
 
+  /**
+   * @brief Resize the cell block to hold @p numnodes
+   * @param numNodes The new number of nodes.
+   */
+  void resizeNumNodes ( dataRepository::indexType const numNodes );
   ///@}
 
   /**
@@ -257,4 +262,4 @@ private:
 
 }
 
-#endif /* GEOSX_MESH_CELLBLOCK_HPP_ */
+#endif /* GEOS_MESH_CELLBLOCK_HPP_ */

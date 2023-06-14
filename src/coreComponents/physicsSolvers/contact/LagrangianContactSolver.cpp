@@ -22,7 +22,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/ContactSelector.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -48,7 +48,7 @@
 #pragma GCC optimize "O0"
 #endif
 
-namespace geosx
+namespace geos
 {
 
 using namespace constitutive;
@@ -138,7 +138,7 @@ void LagrangianContactSolver::setConstitutiveNames( ElementSubRegionBase & subRe
 
   string & contactRelationName = subRegion.getReference< string >( viewKeyStruct::contactRelationNameString() );
   contactRelationName = this->m_contactRelationName;
-  GEOSX_ERROR_IF( contactRelationName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+  GEOS_ERROR_IF( contactRelationName.empty(), GEOS_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
 }
 
 
@@ -161,7 +161,7 @@ void LagrangianContactSolver::initializePreSubGroups()
   {
 
     FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_stabilizationName );
-    fluxApprox.setFieldName( contact::traction::key() );
+    fluxApprox.addFieldName( contact::traction::key() );
     fluxApprox.setCoeffName( "penaltyStiffness" );
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
@@ -257,7 +257,7 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
 
   } );
 
-  GEOSX_LOG_LEVEL_RANK_0( 1, " ***** ImplicitStepComplete *****" );
+  GEOS_LOG_LEVEL_RANK_0( 1, " ***** ImplicitStepComplete *****" );
 }
 
 void LagrangianContactSolver::postProcessInput()
@@ -273,7 +273,7 @@ LagrangianContactSolver::~LagrangianContactSolver()
 
 void LagrangianContactSolver::computeTolerances( DomainPartition & domain ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -517,7 +517,7 @@ void LagrangianContactSolver::computeFaceDisplacementJump( DomainPartition & dom
 void LagrangianContactSolver::setupDofs( DomainPartition const & domain,
                                          DofManager & dofManager ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   if( m_setupSolidSolverDofs )
   {
     m_solidSolver->setupDofs( domain, dofManager );
@@ -572,7 +572,7 @@ void LagrangianContactSolver::assembleSystem( real64 const time,
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   synchronizeFractureState( domain );
 
@@ -594,13 +594,13 @@ void LagrangianContactSolver::assembleSystem( real64 const time,
 }
 
 
-real64 LagrangianContactSolver::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time ),
-                                                       real64 const & GEOSX_UNUSED_PARAM( dt ),
+real64 LagrangianContactSolver::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time ),
+                                                       real64 const & GEOS_UNUSED_PARAM( dt ),
                                                        DomainPartition const & domain,
                                                        DofManager const & dofManager,
                                                        arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   real64 momentumR2 = 0.0;
   real64 contactR2 = 0.0;
 
@@ -619,7 +619,7 @@ real64 LagrangianContactSolver::calculateResidualNorm( real64 const & GEOSX_UNUS
 
     RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum0( 0.0 );
     forAll< parallelDevicePolicy<> >( nodeManager.size(),
-                                      [localRhs, localSum0, dispDofNumber, rankOffset, elemGhostRank] GEOSX_HOST_DEVICE ( localIndex const k )
+                                      [localRhs, localSum0, dispDofNumber, rankOffset, elemGhostRank] GEOS_HOST_DEVICE ( localIndex const k )
     {
       if( elemGhostRank[k] < 0 )
       {
@@ -703,10 +703,10 @@ real64 LagrangianContactSolver::calculateResidualNorm( real64 const & GEOSX_UNUS
     // Add 0 just to match Matlab code results
     globalResidualNorm[2] /= (m_initialResidual[2]+1.0);
   }
-  GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( Rdisplacement, Rtraction, Rtotal ) = ( {:15.6e}, {:15.6e}, {:15.6e} );",
-                                        globalResidualNorm[0],
-                                        globalResidualNorm[1],
-                                        globalResidualNorm[2] ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( Rdisplacement, Rtraction, Rtotal ) = ( {:15.6e}, {:15.6e}, {:15.6e} );",
+                                      globalResidualNorm[0],
+                                      globalResidualNorm[1],
+                                      globalResidualNorm[2] ) );
   return globalResidualNorm[2];
 }
 
@@ -746,7 +746,7 @@ void LagrangianContactSolver::createPreconditioner( DomainPartition const & doma
     }
     else
     {
-      GEOSX_ERROR( "LagrangianContactSolver::CreatePreconditioner leadingBlockApproximation option " << leadingBlockApproximation << " not supported" );
+      GEOS_ERROR( "LagrangianContactSolver::CreatePreconditioner leadingBlockApproximation option " << leadingBlockApproximation << " not supported" );
     }
 
     // Preconditioner for the leading block: tracPrecond
@@ -783,7 +783,7 @@ void LagrangianContactSolver::createPreconditioner( DomainPartition const & doma
 
 void LagrangianContactSolver::computeRotationMatrices( DomainPartition & domain ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -825,7 +825,7 @@ void LagrangianContactSolver::computeFaceNodalArea( arrayView2d< real64 const, n
   // finiteElement::FiniteElementBase const &
   // fe = fractureSubRegion->getReference< finiteElement::FiniteElementBase >( surfaceGenerator->getDiscretizationName() );
   // but it's either empty (unknown discretization) or for 3D only (e.g., hexahedra)
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   localIndex const TriangularPermutation[3] = { 0, 1, 2 };
   localIndex const QuadrilateralPermutation[4] = { 0, 1, 3, 2 };
@@ -882,7 +882,7 @@ void LagrangianContactSolver::computeFaceNodalArea( arrayView2d< real64 const, n
   }
   else
   {
-    GEOSX_ERROR( "LagrangianContactSolver: face with " << numNodesPerFace << " nodes. Only triangles and quadrilaterals are supported." );
+    GEOS_ERROR( "LagrangianContactSolver: face with " << numNodesPerFace << " nodes. Only triangles and quadrilaterals are supported." );
   }
 }
 
@@ -893,7 +893,7 @@ void LagrangianContactSolver::
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
@@ -1026,7 +1026,7 @@ void LagrangianContactSolver::
                                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                 arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
   ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -1148,8 +1148,6 @@ void LagrangianContactSolver::
                 real64 sliding[ 2 ] = { dispJump[kfe][1] - previousDispJump[kfe][1], dispJump[kfe][2] - previousDispJump[kfe][2] };
                 real64 slidingNorm = sqrt( sliding[ 0 ]*sliding[ 0 ] + sliding[ 1 ]*sliding[ 1 ] );
 
-//                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " sliding: " << sliding[0] << " " << sliding[1] );
-
                 if( !( ( m_nonlinearSolverParameters.m_numNewtonIterations == 0 ) && ( fractureState[kfe] == contact::FractureState::NewSlip ) )
                     && slidingNorm > slidingTolerance[kfe] )
                 {
@@ -1220,8 +1218,6 @@ void LagrangianContactSolver::
               }
             case contact::FractureState::Open:
               {
-//                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " opening: " << dispJump[kfe][0] );
-
                 for( localIndex i = 0; i < 3; ++i )
                 {
                   elemRHS[i] = +Ja * traction[kfe][i];
@@ -1269,7 +1265,7 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                      arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
@@ -1288,14 +1284,12 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
   arrayView2d< localIndex const > const & faceToElemSubRegion = faceToElem.m_toElementSubRegion.toViewConst();
   arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex.toViewConst();
 
-  // Form the SurfaceGenerator, get the fracture name and use it to retrieve the faceMap (from fracture element to face)
-  SurfaceGenerator const & surfaceGenerator = this->getParent().getGroup< SurfaceGenerator >( "SurfaceGen" );
-  SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( surfaceGenerator.getFractureRegionName() );
+  SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getFractureRegionName() );
   FaceElementSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
 
-  GEOSX_ERROR_IF( !fractureSubRegion.hasField< contact::traction >(), "The fracture subregion must contain traction field." );
+  GEOS_ERROR_IF( !fractureSubRegion.hasField< contact::traction >(), "The fracture subregion must contain traction field." );
   arrayView2d< localIndex const > const faceMap = fractureSubRegion.faceList();
-  GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
+  GEOS_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
 
   // Get the state of fracture elements
   arrayView1d< integer const > const & fractureState =
@@ -1381,7 +1375,7 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
             realNodes++;
           }
         }
-        GEOSX_ERROR_IF( realNodes != 2, "An edge shared by two fracture elements must have 2 nodes." );
+        GEOS_ERROR_IF( realNodes != 2, "An edge shared by two fracture elements must have 2 nodes." );
         edge.resize( realNodes );
 
         // Compute nodal area factor
@@ -1680,7 +1674,7 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
                                                    real64 const scalingFactor,
                                                    DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   if( m_setupSolidSolverDofs )
   {
@@ -1725,7 +1719,7 @@ void LagrangianContactSolver::updateState( DomainPartition & domain )
 
 bool LagrangianContactSolver::resetConfigurationToDefault( DomainPartition & domain ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   using namespace fields::contact;
 
@@ -1756,7 +1750,7 @@ bool LagrangianContactSolver::resetConfigurationToDefault( DomainPartition & dom
 
 bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   using namespace fields::contact;
 
@@ -1881,34 +1875,10 @@ bool LagrangianContactSolver::isFractureAllInStickCondition( DomainPartition con
 real64 LagrangianContactSolver::setNextDt( real64 const & currentDt,
                                            DomainPartition & domain )
 {
-  GEOSX_UNUSED_VAR( domain );
+  GEOS_UNUSED_VAR( domain );
   return currentDt;
-}
-
-bool LagrangianContactSolver::isElementInOpenState( FaceElementSubRegion const & subRegion,
-                                                    localIndex const kfe ) const
-{
-  GEOSX_MARK_FUNCTION;
-
-  using namespace fields::contact;
-
-  // It can be used only thanks to the global synchronization in AssembleSystem (SynchronizeFractureState)
-  bool res = false;
-  if( subRegion.hasWrapper( contact::traction::key() ) )
-  {
-    arrayView1d< integer const > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
-    if( kfe >= 0 && kfe < subRegion.size() )
-    {
-      res = ( fractureState[kfe] == FractureState::Open );
-    }
-    else
-    {
-      GEOSX_ERROR( "isElementInOpenState called with index out of range: " << kfe << " not in [0," << subRegion.size() << "]" );
-    }
-  }
-  return res;
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, LagrangianContactSolver, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

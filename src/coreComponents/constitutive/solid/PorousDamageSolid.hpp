@@ -17,16 +17,16 @@
  * @file PorousDamageSolid.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_POROUSDAMAGESOLID_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_POROUSDAMAGESOLID_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_POROUSDAMAGESOLID_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_POROUSDAMAGESOLID_HPP_
 
-#include "constitutive/fluid/layouts.hpp"
+#include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/solid/porosity/BiotPorosity.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/permeability/DamagePermeability.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -53,11 +53,12 @@ public:
     CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, DamagePermeability >( solidModel, porosityModel, permModel )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void smallStrainUpdatePoromechanics( localIndex const k,
                                        localIndex const q,
                                        real64 const & pressure_n,
                                        real64 const & pressure,
+                                       real64 const & timeIncrement,
                                        real64 const ( &fluidPressureGradient )[3],
                                        real64 const & deltaTemperatureFromInit,
                                        real64 const & deltaTemperatureFromLastStep,
@@ -80,6 +81,7 @@ public:
                         q,
                         pressure_n,
                         pressure,
+                        timeIncrement,
                         deltaTemperatureFromInit,
                         strainIncrement,
                         totalStress,
@@ -128,7 +130,7 @@ public:
    * @param k the element number
    * @param stiffness the stiffness array
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void getElasticStiffness( localIndex const k, localIndex const q, real64 ( & stiffness )[6][6] ) const
   {
     m_solidUpdate.getElasticStiffness( k, q, stiffness );
@@ -141,7 +143,7 @@ private:
   using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, DamagePermeability >::m_permUpdate;
 
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void updateBiotCoefficient( localIndex const k ) const
   {
     // This call is not general like this.
@@ -156,7 +158,7 @@ private:
 
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void updateMatrixPermeability( localIndex const k ) const
   {
     integer const quadSize = m_solidUpdate.m_newDamage[k].size();
@@ -173,7 +175,7 @@ private:
     m_permUpdate.updateDamagePermeability( k, damageAvg );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computePorosity( localIndex const k,
                         localIndex const q,
                         real64 const & deltaPressure,
@@ -186,15 +188,11 @@ private:
                         real64 & dPorosity_dPressure,
                         real64 & dPorosity_dTemperature ) const
   {
-    real64 const thermalExpansionCoefficient = 0.0;
-    //   m_solidUpdate.getThermalExpansionCoefficient( k );
-
     m_porosityUpdate.updateFromPressureTemperatureAndStrain( k,
                                                              q,
                                                              deltaPressure,
                                                              deltaTemperature,
                                                              strainIncrement,
-                                                             thermalExpansionCoefficient,
                                                              dPorosity_dVolStrain,
                                                              dPorosity_dPressure,
                                                              dPorosity_dTemperature );
@@ -210,11 +208,12 @@ private:
     dPorosity_dPressure *= ( 1 - damage );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeTotalStress( localIndex const k,
                            localIndex const q,
                            real64 const & pressure_n,
                            real64 const & pressure,
+                           real64 const & timeIncrement,
                            real64 const & deltaTemperature,
                            real64 const ( &strainIncrement )[6],
                            real64 ( & totalStress )[6],
@@ -222,11 +221,12 @@ private:
                            real64 ( & dTotalStress_dTemperature )[6],
                            DiscretizationOps & stiffness ) const
   {
-    GEOSX_UNUSED_VAR( pressure_n );
+    GEOS_UNUSED_VAR( pressure_n );
     
     // Compute total stress increment and its derivative w.r.t. pressure
     m_solidUpdate.smallStrainUpdate( k,
                                      q,
+                                     timeIncrement,
                                      strainIncrement,
                                      totalStress, // first effective stress increment accumulated
                                      stiffness );
@@ -259,7 +259,7 @@ private:
     dTotalStress_dTemperature[5] = 0;
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFractureFlowTerm( localIndex const k,
                                 localIndex const q,
                                 real64 const & pressure,
@@ -267,7 +267,7 @@ private:
                                 real64 ( & fractureFlowTerm )[3],
                                 real64 ( & dFractureFlowTerm_dPressure )[3] ) const
   {
-    GEOSX_UNUSED_VAR( pressure );
+    GEOS_UNUSED_VAR( pressure );
 
     // Compute fracture flow term and its derivative w.r.t pressure
     real64 const pressureDamage = m_solidUpdate.pressureDamageFunction( k, q );
@@ -354,6 +354,6 @@ private:
 
 
 }
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_POROUSDAMAGESOLID_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_POROUSDAMAGESOLID_HPP_ */

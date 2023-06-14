@@ -211,6 +211,13 @@ Element: CompressibleSolidConstantPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidConstantPermeability.rst
 
 
+.. _XML_CompressibleSolidExponentialDecayPermeability:
+
+Element: CompressibleSolidExponentialDecayPermeability
+======================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidExponentialDecayPermeability.rst
+
+
 .. _XML_CompressibleSolidParallelPlatesPermeability:
 
 Element: CompressibleSolidParallelPlatesPermeability
@@ -316,6 +323,13 @@ Element: DruckerPrager
 .. include:: ../../coreComponents/schema/docs/DruckerPrager.rst
 
 
+.. _XML_ElasticFirstOrderSEM:
+
+Element: ElasticFirstOrderSEM
+=============================
+.. include:: ../../coreComponents/schema/docs/ElasticFirstOrderSEM.rst
+
+
 .. _XML_ElasticIsotropic:
 
 Element: ElasticIsotropic
@@ -370,6 +384,13 @@ Element: EmbeddedSurfaceGenerator
 Element: Events
 ===============
 .. include:: ../../coreComponents/schema/docs/Events.rst
+
+
+.. _XML_ExponentialDecayPermeability:
+
+Element: ExponentialDecayPermeability
+=====================================
+.. include:: ../../coreComponents/schema/docs/ExponentialDecayPermeability.rst
 
 
 .. _XML_ExtendedDruckerPrager:
@@ -1170,6 +1191,27 @@ Element: VanGenuchtenCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure.rst
 
 
+.. _XML_ViscoDruckerPrager:
+
+Element: ViscoDruckerPrager
+===========================
+.. include:: ../../coreComponents/schema/docs/ViscoDruckerPrager.rst
+
+
+.. _XML_ViscoExtendedDruckerPrager:
+
+Element: ViscoExtendedDruckerPrager
+===================================
+.. include:: ../../coreComponents/schema/docs/ViscoExtendedDruckerPrager.rst
+
+
+.. _XML_ViscoModifiedCamClay:
+
+Element: ViscoModifiedCamClay
+=============================
+.. include:: ../../coreComponents/schema/docs/ViscoModifiedCamClay.rst
+
+
 .. _XML_WellControls:
 
 Element: WellControls
@@ -1189,6 +1231,13 @@ Element: WellElementRegion
 Element: WillisRichardsPermeability
 ===================================
 .. include:: ../../coreComponents/schema/docs/WillisRichardsPermeability.rst
+
+
+.. _XML_crusher:
+
+Element: crusher
+================
+.. include:: ../../coreComponents/schema/docs/crusher.rst
 
 
 .. _XML_lassen:
@@ -1412,6 +1461,13 @@ Datastructure: CompressibleSolidConstantPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidConstantPermeability_other.rst
 
 
+.. _DATASTRUCTURE_CompressibleSolidExponentialDecayPermeability:
+
+Datastructure: CompressibleSolidExponentialDecayPermeability
+============================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidExponentialDecayPermeability_other.rst
+
+
 .. _DATASTRUCTURE_CompressibleSolidParallelPlatesPermeability:
 
 Datastructure: CompressibleSolidParallelPlatesPermeability
@@ -1524,6 +1580,13 @@ Datastructure: DruckerPrager
 .. include:: ../../coreComponents/schema/docs/DruckerPrager_other.rst
 
 
+.. _DATASTRUCTURE_ElasticFirstOrderSEM:
+
+Datastructure: ElasticFirstOrderSEM
+===================================
+.. include:: ../../coreComponents/schema/docs/ElasticFirstOrderSEM_other.rst
+
+
 .. _DATASTRUCTURE_ElasticIsotropic:
 
 Datastructure: ElasticIsotropic
@@ -1578,6 +1641,13 @@ Datastructure: EmbeddedSurfaceGenerator
 Datastructure: Events
 =====================
 .. include:: ../../coreComponents/schema/docs/Events_other.rst
+
+
+.. _DATASTRUCTURE_ExponentialDecayPermeability:
+
+Datastructure: ExponentialDecayPermeability
+===========================================
+.. include:: ../../coreComponents/schema/docs/ExponentialDecayPermeability_other.rst
 
 
 .. _DATASTRUCTURE_ExtendedDruckerPrager:
@@ -2399,6 +2469,27 @@ Datastructure: VanGenuchtenCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure_other.rst
 
 
+.. _DATASTRUCTURE_ViscoDruckerPrager:
+
+Datastructure: ViscoDruckerPrager
+=================================
+.. include:: ../../coreComponents/schema/docs/ViscoDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_ViscoExtendedDruckerPrager:
+
+Datastructure: ViscoExtendedDruckerPrager
+=========================================
+.. include:: ../../coreComponents/schema/docs/ViscoExtendedDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_ViscoModifiedCamClay:
+
+Datastructure: ViscoModifiedCamClay
+===================================
+.. include:: ../../coreComponents/schema/docs/ViscoModifiedCamClay_other.rst
+
+
 .. _DATASTRUCTURE_WellControls:
 
 Datastructure: WellControls
@@ -2432,6 +2523,13 @@ Datastructure: WillisRichardsPermeability
 Datastructure: commandLine
 ==========================
 .. include:: ../../coreComponents/schema/docs/commandLine_other.rst
+
+
+.. _DATASTRUCTURE_crusher:
+
+Datastructure: crusher
+======================
+.. include:: ../../coreComponents/schema/docs/crusher_other.rst
 
 
 .. _DATASTRUCTURE_domain:

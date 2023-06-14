@@ -16,12 +16,12 @@
  * @file BoundedPlane.hpp
  */
 
-#ifndef GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_BOUNDEDPLANE_HPP_
-#define GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_BOUNDEDPLANE_HPP_
+#ifndef GEOS_MESH_SIMPLEGEOMETRICOBJECTS_BOUNDEDPLANE_HPP_
+#define GEOS_MESH_SIMPLEGEOMETRICOBJECTS_BOUNDEDPLANE_HPP_
 
 #include "SimpleGeometricObjectBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -147,6 +147,9 @@ private:
   /// tolerance to determine if a point sits on the plane or not
   real64 m_tolerance;
 
+  /// tolerance to check if base is orthonormal
+  static constexpr real64 orthoNormalBaseTolerance = 1e-10;
+
   /// @cond DO_NOT_DOCUMENT
 
   struct viewKeyStruct
@@ -162,6 +165,6 @@ private:
   /// @endcond
 
 };
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_BOUNDEDPLANE_HPP_*/
+#endif /* GEOS_MESH_SIMPLEGEOMETRICOBJECTS_BOUNDEDPLANE_HPP_*/

@@ -18,8 +18,8 @@
  * @brief Overrides the SSLE constitutive updates to account for a damage varible and spectral split.
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_DAMAGESPECTRAL_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_DAMAGESPECTRAL_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_DAMAGESPECTRAL_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_DAMAGESPECTRAL_HPP_
 #include "Damage.hpp"
 #include "DamageSpectralUtilities.hpp"
 #include "PropertyConversions.hpp"
@@ -30,7 +30,7 @@
 
 using namespace LvArray;
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -95,8 +95,8 @@ public:
 
   // Lorentz type degradation functions
 
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
+  inline
+  GEOS_HOST_DEVICE
   virtual real64 getDegradationValue( localIndex const k,
                                       localIndex const q ) const override
   {
@@ -110,8 +110,8 @@ public:
   }
 
 
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
+  inline
+  GEOS_HOST_DEVICE
   virtual real64 getDegradationDerivative( real64 const d ) const override
   {
     #if QUADRATIC_DISSIPATION
@@ -124,8 +124,8 @@ public:
   }
 
 
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
+  inline
+  GEOS_HOST_DEVICE
   virtual real64 getDegradationSecondDerivative( real64 const d ) const override
   {
     #if QUADRATIC_DISSIPATION
@@ -138,16 +138,17 @@ public:
   }
 
 
-  GEOSX_HOST_DEVICE
-  virtual void smallStrainUpdate( localIndex const k,
-                                  localIndex const q,
-                                  real64 const ( &strainIncrement )[6],
-                                  real64 ( & stress )[6],
-                                  real64 ( & stiffness )[6][6] ) const override final
+  GEOS_HOST_DEVICE
+  void smallStrainUpdate( localIndex const k,
+                          localIndex const q,
+                          real64 const & timeIncrement,
+                          real64 const ( &strainIncrement )[6],
+                          real64 ( & stress )[6],
+                          real64 ( & stiffness )[6][6] ) const
   {
     // perform elastic update for "undamaged" stress
 
-    UPDATE_BASE::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );  // elastic trial update
+    UPDATE_BASE::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );  // elastic trial update
 
     if( m_disableInelasticity )
     {
@@ -258,18 +259,19 @@ public:
   }
 
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( & stress )[6],
                                   DiscretizationOps & stiffness ) const final
   {
-    smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );
+    smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
   }
 
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual real64 getStrainEnergyDensity( localIndex const k,
                                          localIndex const q ) const override final
   {
@@ -277,12 +279,12 @@ public:
   }
 
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual real64 getEnergyThreshold( localIndex const k,
                                      localIndex const q ) const override final
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
 
     return m_criticalStrainEnergy;
   }
@@ -346,6 +348,6 @@ public:
 
 
 }
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_DAMAGESPECTRAL_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_DAMAGESPECTRAL_HPP_ */

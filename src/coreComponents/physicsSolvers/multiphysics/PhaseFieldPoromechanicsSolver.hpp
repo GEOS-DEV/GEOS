@@ -17,21 +17,21 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PHASEFIELDPOROMECHANICSSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PHASEFIELDPOROMECHANICSSOLVER_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_PHASEFIELDPOROMECHANICSSOLVER_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_PHASEFIELDPOROMECHANICSSOLVER_HPP_
 
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/simplePDE/PhaseFieldDamageFEM.hpp"
 
-namespace geosx
+namespace geos
 {
 
-class PhaseFieldPoromechanicsSolver : public CoupledSolver< SinglePhasePoromechanicsSolver, PhaseFieldDamageFEM >
+class PhaseFieldPoromechanicsSolver : public CoupledSolver< SinglePhasePoromechanics, PhaseFieldDamageFEM >
 {
 public:
 
-  using Base = CoupledSolver< SinglePhasePoromechanicsSolver, PhaseFieldDamageFEM >;
+  using Base = CoupledSolver< SinglePhasePoromechanics, PhaseFieldDamageFEM >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -69,7 +69,7 @@ public:
    * @brief accessor for the pointer to the poromechanics solver
    * @return a pointer to the poromechanics solver
    */
-  SinglePhasePoromechanicsSolver * poromechancisSolver() const
+  SinglePhasePoromechanics * poromechancisSolver() const
   {
     return std::get< toUnderlying( SolverType::Poromechanics ) >( m_solvers );
   }
@@ -108,7 +108,7 @@ struct DamageAndDamageGradientInterpolationKernel
                                      arrayView2d< real64 > damageFieldOnMaterial,
                                      arrayView3d< real64 > damageGradOnMaterial )
   {
-    forAll< parallelDevicePolicy<> >( m_numElems, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< parallelDevicePolicy<> >( m_numElems, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
       constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
@@ -136,7 +136,7 @@ struct DamageAndDamageGradientInterpolationKernel
         real64 dNdX[ numNodesPerElement ][ 3 ];
         real64 const detJ = FE_TYPE::calcGradN( q, xLocal, dNdX );
 
-        GEOSX_UNUSED_VAR( detJ );
+        GEOS_UNUSED_VAR( detJ );
 
         real64 qDamage = 0.0;
         real64 qDamageGrad[3] = {0, 0, 0};
@@ -156,6 +156,6 @@ struct DamageAndDamageGradientInterpolationKernel
   localIndex m_numElems;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PhaseFieldPoromechanicsSOLVER_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_PhaseFieldPoromechanicsSOLVER_HPP_ */

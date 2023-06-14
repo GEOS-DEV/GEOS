@@ -16,13 +16,13 @@
  * @file DamagePermeability.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_PERMEABILITY_DAMAGEPERMEABILITY_HPP_
-#define GEOSX_CONSTITUTIVE_PERMEABILITY_DAMAGEPERMEABILITY_HPP_
+#ifndef GEOS_CONSTITUTIVE_PERMEABILITY_DAMAGEPERMEABILITY_HPP_
+#define GEOS_CONSTITUTIVE_PERMEABILITY_DAMAGEPERMEABILITY_HPP_
 
 #include "constitutive/permeability/PermeabilityBase.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -38,7 +38,7 @@ public:
     m_bulkPermeability( bulkPermeability )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void updateDamagePermeability ( localIndex const k,
                                   real64 const & damage ) const
   {
@@ -105,7 +105,7 @@ private:
 
 }/* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 
-#endif //GEOSX_CONSTITUTIVE_PERMEABILITY_DAMAGEPERMEABILITY_HPP_
+#endif //GEOS_CONSTITUTIVE_PERMEABILITY_DAMAGEPERMEABILITY_HPP_

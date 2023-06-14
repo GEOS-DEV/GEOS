@@ -16,15 +16,15 @@
  * @file SinglePhasePoromechanicsDamageKernel.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSDAMAGE_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSDAMAGE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSDAMAGE_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSDAMAGE_HPP_
 
 #include "finiteElement/BilinearFormUtilities.hpp"
 #include "finiteElement/LinearFormUtilities.hpp"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace poromechanicsDamageKernels
@@ -114,7 +114,7 @@ public:
     static constexpr int numDispDofPerElem =  Base::StackVariables::maxNumRows;
 
     /// Constructor.
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
             xLocal(),
@@ -212,7 +212,7 @@ public:
    * @param[in] strainIncrement the strain increment used in total stress and porosity computation
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void smallStrainUpdate( localIndex const k,
                           localIndex const q,
                           real64 const ( &strainIncrement )[6],
@@ -229,7 +229,7 @@ public:
    * @param[in] dSolidDensity_dPressure the derivative of solid density wrt pressure
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeBodyForce( localIndex const k,
                          localIndex const q,
                          real64 const & porosity,
@@ -250,7 +250,7 @@ public:
    * @param[in] dPorosity_dTemperature the derivative of porosity wrt temperature
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFluidIncrement( localIndex const k,
                               localIndex const q,
                               real64 const & porosity,
@@ -272,7 +272,7 @@ public:
    *   totalStress = totalStress( strainIncrement, pressure)
    *   bodyForce   = bodyForce( strainIncrement, pressure)
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
                                      real64 const ( &dNdX )[numNodesPerElem][3],
                                      real64 const & detJxW,
@@ -289,7 +289,7 @@ public:
    *   fluidMass = fluidMass( strainIncrement, pressure)
    *   fluidMassFlux = fluidMassFlux( pressure)
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
                                       real64 const & detJxW,
                                       StackVariables & stack ) const;
@@ -302,11 +302,11 @@ public:
    * incremental displacement, and degree of freedom numbers are placed into
    * element local stack storage.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const k,
               StackVariables & stack ) const;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const;
@@ -314,7 +314,7 @@ public:
   /**
    * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
 
@@ -380,6 +380,6 @@ using SinglePhasePoromechanicsDamageKernelFactory =
 
 } // namespace poromechanicsDamageKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSDAMAGE_HPP_
+#endif // GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSDAMAGE_HPP_

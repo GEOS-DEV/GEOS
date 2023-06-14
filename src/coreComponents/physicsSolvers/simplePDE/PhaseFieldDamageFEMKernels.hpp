@@ -16,18 +16,18 @@
  * @file PhaseFieldDamageKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEKERNELS_HPP_
-#define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEKERNELS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEKERNELS_HPP_
+#define GEOS_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEKERNELS_HPP_
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 
-namespace geosx
+namespace geos
 {
 //*****************************************************************************
 /**
  * @brief Implements kernels for solving the Damage(or phase-field) equation
  * in a phase-field fracture problem.
- * @copydoc geosx::finiteElement::KernelBase
+ * @copydoc geos::finiteElement::KernelBase
  * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
  *                            @p SUBREGION_TYPE.
  * @tparam UNUSED An unused parameter since we are assuming that the test and
@@ -37,7 +37,7 @@ namespace geosx
  * Implements the KernelBase interface functions required for solving the
  * Damage(or phase-field) equation in a phase-field fracture problem.
  * It uses the finite element kernel application functions such as
- * geosx::finiteElement::RegionBasedKernelApplication.
+ * geos::finiteElement::RegionBasedKernelApplication.
  *
  * In this implementation, the template parameter @p NUM_NODES_PER_ELEM is used
  * in place of both @p NUM_TEST_SUPPORT_POINTS_PER_ELEM and
@@ -84,7 +84,7 @@ public:
 
   /**
    * @brief Constructor
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param fieldName The name of the primary field
    *                  (i.e. Temperature, Pressure, etc.)
    */
@@ -124,7 +124,7 @@ public:
   //***************************************************************************
   /**
    * @class StackVariables
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::StackVariables
+   * @copydoc geos::finiteElement::ImplicitKernelBase::StackVariables
    *
    * Adds a stack array for the primary field.
    */
@@ -135,7 +135,7 @@ public:
     /**
      * @brief Constructor
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
             xLocal(),
@@ -157,14 +157,14 @@ public:
 
   /**
    * @brief Copy global values from primary field to a local stack array.
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::setup
+   * @copydoc geos::finiteElement::ImplicitKernelBase::setup
    *
    * For the PhaseFieldDamageKernel implementation, global values from the
    * primaryField, and degree of freedom numbers are placed into element local
    * stack storage.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -183,10 +183,10 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::quadraturePointJacobianContribution
+   * @copydoc geos::finiteElement::ImplicitKernelBase::quadraturePointJacobianContribution
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const
@@ -254,21 +254,23 @@ public:
                                          ( volStrain * currentDamagePressure * m_constitutiveUpdate.pressureDamageFunctionSecondDerivative( qp_damage ) * N[a] * N[b] );
       }
     }
+
+
   }
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
+   * @copydoc geos::finiteElement::ImplicitKernelBase::complete
    *
    * Form element residual from the fully formed element Jacobian dotted with
    * the primary field and map the element local Jacobian/Residual to the
    * global matrix/vector.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( k );
     real64 maxForce = 0;
 
     for( int a = 0; a < numNodesPerElem; ++a )
@@ -317,8 +319,8 @@ using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDa
                                                                     int,
                                                                     real64 >;
 
-} // namespace geosx
+} // namespace geos
 
 #include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
-#endif // GEOSX_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEKERNELS_HPP_
+#endif // GEOS_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEKERNELS_HPP_

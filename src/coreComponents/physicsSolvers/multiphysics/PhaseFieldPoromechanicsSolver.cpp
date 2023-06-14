@@ -28,7 +28,7 @@
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -49,7 +49,7 @@ void PhaseFieldPoromechanicsSolver::resetStateToBeginningOfStep( DomainPartition
 void PhaseFieldPoromechanicsSolver::postProcessInput()
 {
   Base::postProcessInput();
-  GEOSX_WARNING_IF( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::FullyImplicit,
+  GEOS_WARNING_IF( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::FullyImplicit,
                     "FullyImplicit coupling not implemented for this solver. A sequential coupling approach will be used." );
   getNonlinearSolverParameters().m_couplingType = NonlinearSolverParameters::CouplingType::Sequential;
 }
@@ -63,7 +63,7 @@ void PhaseFieldPoromechanicsSolver::mapSolutionBetweenSolvers( DomainPartition &
 {
   if( solverType ==  static_cast< integer >( SolverType::Damage ) )
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                   MeshLevel & mesh,
                                                                   arrayView1d< string const > const & regionNames )
@@ -124,7 +124,7 @@ void PhaseFieldPoromechanicsSolver::applyDamageOnTractionBC( DomainPartition & d
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & )
@@ -180,4 +180,4 @@ void PhaseFieldPoromechanicsSolver::applyDamageOnTractionBC( DomainPartition & d
 
 REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldPoromechanicsSolver, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

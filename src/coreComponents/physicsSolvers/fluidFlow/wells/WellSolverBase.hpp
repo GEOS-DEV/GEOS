@@ -16,12 +16,12 @@
  * @file WellSolverBase.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASE_HPP_
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;
@@ -151,16 +151,16 @@ public:
                                   real64 const & dt,
                                   DomainPartition & domain ) override;
 
-  virtual void implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                     DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override {}
+  virtual void implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                     real64 const & GEOS_UNUSED_PARAM( dt ),
+                                     DomainPartition & GEOS_UNUSED_PARAM( domain ) ) override {}
 
-  virtual void applyBoundaryConditions( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                                        real64 const GEOSX_UNUSED_PARAM( dt ),
-                                        DomainPartition & GEOSX_UNUSED_PARAM( domain ),
-                                        DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
-                                        CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
-                                        arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) ) override {}
+  virtual void applyBoundaryConditions( real64 const GEOS_UNUSED_PARAM( time_n ),
+                                        real64 const GEOS_UNUSED_PARAM( dt ),
+                                        DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                        DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                        CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                        arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) override {}
 
 
   /**@}*/
@@ -313,4 +313,4 @@ protected:
 
 }
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASE_HPP_
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASE_HPP_

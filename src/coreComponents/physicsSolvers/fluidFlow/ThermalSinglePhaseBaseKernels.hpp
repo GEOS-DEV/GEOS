@@ -16,12 +16,12 @@
  * @file ThermalSinglePhaseBaseKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEBASEKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEBASEKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEBASEKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEBASEKERNELS_HPP
 
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace thermalSinglePhaseBaseKernels
@@ -31,8 +31,8 @@ namespace thermalSinglePhaseBaseKernels
 
 struct MobilityKernel
 {
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   static void
   compute( real64 const & dens,
            real64 const & dDens_dPres,
@@ -49,8 +49,8 @@ struct MobilityKernel
     dMob_dTemp = dDens_dTemp / visc - mob / visc * dVisc_dTemp;
   }
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   static void
   compute( real64 const & dens,
            real64 const & visc,
@@ -71,7 +71,7 @@ struct MobilityKernel
                       arrayView1d< real64 > const & dMob_dPres,
                       arrayView1d< real64 > const & dMob_dTemp )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       compute( dens[a][0],
                dDens_dPres[a][0],
@@ -91,7 +91,7 @@ struct MobilityKernel
                       arrayView2d< real64 const > const & visc,
                       arrayView1d< real64 > const & mob )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       compute( dens[a][0],
                visc[a][0],
@@ -148,6 +148,7 @@ public:
                               arrayView1d< real64 > const & localRhs )
     : Base( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs ),
     m_dDensity_dTemp( fluid.dDensity_dTemperature() ),
+    m_dPoro_dTemp( solid.getDporosity_dTemperature() ),
     m_internalEnergy_n( fluid.internalEnergy_n() ),
     m_internalEnergy( fluid.internalEnergy() ),
     m_dInternalEnergy_dPres( fluid.dInternalEnergy_dPressure() ),
@@ -165,7 +166,7 @@ public:
   {
 public:
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables()
       : Base::StackVariables()
     {}
@@ -177,6 +178,9 @@ public:
     using Base::StackVariables::dofIndices;
     using Base::StackVariables::localResidual;
     using Base::StackVariables::localJacobian;
+
+    /// Derivative of pore volume with respect to temperature
+    real64 dPoreVolume_dTemp = 0.0;
 
     // Solid energy
 
@@ -199,22 +203,25 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const ei,
               StackVariables & stack ) const
   {
     Base::setup( ei, stack );
 
+    stack.dPoreVolume_dTemp = ( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dTemp[ei][0];
+
     // initialize the solid volume
     real64 const solidVolume = ( m_volume[ei] + m_deltaVolume[ei] ) * ( 1.0 - m_porosityNew[ei][0] );
     real64 const solidVolume_n = m_volume[ei] * ( 1.0 - m_porosity_n[ei][0] );
     real64 const dSolidVolume_dPres = -( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dPres[ei][0];
+    real64 const dSolidVolume_dTemp = -( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dTemp[ei][0];
 
     // initialize the solid internal energy
     stack.solidEnergy = solidVolume * m_rockInternalEnergy[ei][0];
     stack.solidEnergy_n = solidVolume_n * m_rockInternalEnergy_n[ei][0];
     stack.dSolidEnergy_dPres = dSolidVolume_dPres * m_rockInternalEnergy[ei][0];
-    stack.dSolidEnergy_dTemp = solidVolume * m_dRockInternalEnergy_dTemp[ei][0];
+    stack.dSolidEnergy_dTemp = solidVolume * m_dRockInternalEnergy_dTemp[ei][0] + dSolidVolume_dTemp * m_rockInternalEnergy[ei][0];
   }
 
   /**
@@ -224,14 +231,14 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] kernelOp the function used to customize the kernel
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeAccumulation( localIndex const ei,
                             StackVariables & stack ) const
   {
     Base::computeAccumulation( ei, stack, [&] ()
     {
       // Step 1: assemble the derivatives of the mass balance equation w.r.t temperature
-      stack.localJacobian[0][numDof-1] = stack.poreVolume * m_dDensity_dTemp[ei][0];
+      stack.localJacobian[0][numDof-1] = stack.poreVolume * m_dDensity_dTemp[ei][0] + stack.dPoreVolume_dTemp * m_density[ei][0];
 
       // Step 2: assemble the fluid part of the accumulation term of the energy equation
       real64 const fluidEnergy = stack.poreVolume * m_density[ei][0] * m_internalEnergy[ei][0];
@@ -242,7 +249,8 @@ public:
                                      + stack.poreVolume * m_density[ei][0] * m_dInternalEnergy_dPres[ei][0];
 
       real64 const dFluidEnergy_dT = stack.poreVolume * m_dDensity_dTemp[ei][0] * m_internalEnergy[ei][0]
-                                     + stack.poreVolume * m_density[ei][0] * m_dInternalEnergy_dTemp[ei][0];
+                                     + stack.poreVolume * m_density[ei][0] * m_dInternalEnergy_dTemp[ei][0]
+                                     + stack.dPoreVolume_dTemp * m_density[ei][0] * m_internalEnergy[ei][0];
 
       // local accumulation
       stack.localResidual[numEqn-1] = fluidEnergy - fluidEnergy_n;
@@ -263,7 +271,7 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void complete( localIndex const ei,
                  StackVariables & stack ) const
   {
@@ -284,6 +292,9 @@ protected:
 
   /// View on derivative of fluid density w.r.t temperature
   arrayView2d< real64 const > const m_dDensity_dTemp;
+
+  /// View on derivative of porosity w.r.t temperature
+  arrayView2d< real64 const > const m_dPoro_dTemp;
 
   /// Views on fluid internal energy
   arrayView2d< real64 const > const m_internalEnergy_n;
@@ -342,7 +353,7 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeAccumulation( localIndex const ei,
                             Base::StackVariables & stack ) const
   {
@@ -439,7 +450,7 @@ struct FluidUpdateKernel
                       arrayView1d< real64 const > const & pres,
                       arrayView1d< real64 const > const & temp )
   {
-    forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
@@ -460,7 +471,7 @@ struct SolidInternalEnergyUpdateKernel
           SOLID_INTERNAL_ENERGY_WRAPPER const & solidInternalEnergyWrapper,
           arrayView1d< real64 const > const & temp )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       solidInternalEnergyWrapper.update( k, temp[k] );
     } );
@@ -501,7 +512,7 @@ public:
     m_solidInternalEnergy_n( solidInternalEnergy.getInternalEnergy_n() )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeMassEnergyNormalizers( localIndex const ei,
                                      real64 & massNormalizer,
                                      real64 & energyNormalizer ) const
@@ -513,7 +524,7 @@ public:
                                               + m_fluidInternalEnergy_n[ei][0] * m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] ) );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const ei,
                             LinfStackVariables & stack ) const override
   {
@@ -536,7 +547,7 @@ public:
     }
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeL2( localIndex const ei,
                           L2StackVariables & stack ) const override
   {
@@ -624,6 +635,6 @@ public:
 
 } // namespace thermalSinglePhaseBaseKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEBASEKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEBASEKERNELS_HPP
