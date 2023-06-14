@@ -43,7 +43,7 @@ public:
   static string name() { return "SinglePhasePoromechanicsInitialization"; }
 };
 // Class specialization for a POROMECHANICS_SOLVER set to HydrofractureSolver
-template<> class PoromechanicsCatalogNames< HydrofractureSolver < SinglePhasePoromechanics > >
+template<> class PoromechanicsCatalogNames< HydrofractureSolver< SinglePhasePoromechanics > >
 {
 public:
   static string name() { return "HydrofractureInitialization"; }

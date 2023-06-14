@@ -36,15 +36,15 @@ public:
                               arrayView3d< real64 > const & permeability,
                               arrayView3d< real64 > const & initialPermeability,
                               arrayView3d< real64 > const & dPerm_dPressure )
-    : PermeabilityBaseUpdate( permeability, dPerm_dPressure ), 
-    m_pressureDependenceConstant( pressureDependenceConstant ), 
+    : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
+    m_pressureDependenceConstant( pressureDependenceConstant ),
     m_referencePressure( referencePressure ),
     m_initialPermeability( initialPermeability )
   {}
 
   GEOS_HOST_DEVICE
   void compute( real64 const & deltaPressure,
-                real64 const pressureDependenceConstant, 
+                real64 const pressureDependenceConstant,
                 real64 const (&initialPermeability)[3],
                 arraySlice1d< real64 > const & permeability,
                 arraySlice1d< real64 > const & dPerm_dPressure ) const;
@@ -56,15 +56,15 @@ public:
                                    real64 const & pressure ) const override
   {
     GEOS_UNUSED_VAR( q, pressure );
-    
-    real64 const deltaPressure = pressure_n - m_referencePressure[k]; 
 
-    real64 initialPermeability[3]; 
+    real64 const deltaPressure = pressure_n - m_referencePressure[k];
 
-    initialPermeability[0] = m_initialPermeability[k][0][0]; 
-    initialPermeability[1] = m_initialPermeability[k][0][1]; 
-    initialPermeability[2] = m_initialPermeability[k][0][2]; 
-    
+    real64 initialPermeability[3];
+
+    initialPermeability[0] = m_initialPermeability[k][0][0];
+    initialPermeability[1] = m_initialPermeability[k][0][1];
+    initialPermeability[2] = m_initialPermeability[k][0][2];
+
     compute( deltaPressure,
              m_pressureDependenceConstant,
              initialPermeability,
@@ -74,10 +74,10 @@ public:
 
 private:
 
-  /// Pressure dependence constant 
+  /// Pressure dependence constant
   real64 m_pressureDependenceConstant;
 
-  /// Reference pressure 
+  /// Reference pressure
   arrayView1d< real64 const > const m_referencePressure;
 
   arrayView3d< real64 > m_initialPermeability;
@@ -112,7 +112,7 @@ public:
    */
   KernelWrapper createKernelWrapper() const
   {
-    return KernelWrapper( m_pressureDependenceConstant, 
+    return KernelWrapper( m_pressureDependenceConstant,
                           m_referencePressure,
                           m_permeability,
                           m_initialPermeability,
@@ -137,9 +137,9 @@ private:
 
   R1Tensor m_permeabilityComponents;
 
-  real64 m_pressureDependenceConstant; 
+  real64 m_pressureDependenceConstant;
 
-  real64 m_defaultReferencePressure; 
+  real64 m_defaultReferencePressure;
 
   array1d< real64 > m_referencePressure;
 
@@ -150,11 +150,11 @@ private:
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void ConstantPermeabilityUpdate::compute( real64 const & deltaPressure,
-                                          real64 const pressureDependenceConstant, 
+                                          real64 const pressureDependenceConstant,
                                           real64 const (&initialPermeability)[3],
                                           arraySlice1d< real64 > const & permeability,
                                           arraySlice1d< real64 > const & dPerm_dPressure ) const
-{  
+{
   for( localIndex i=0; i < permeability.size(); i++ )
   {
     real64 const perm = initialPermeability[i] * std::exp( pressureDependenceConstant * deltaPressure );

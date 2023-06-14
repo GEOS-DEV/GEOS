@@ -62,7 +62,7 @@ public:
   {
     m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, pressure_n, temperature, temperature_n );
 
-    m_permUpdate.updateFromPressure( k, q, pressure_n, pressure);
+    m_permUpdate.updateFromPressure( k, q, pressure_n, pressure );
   }
 
   GEOS_HOST_DEVICE

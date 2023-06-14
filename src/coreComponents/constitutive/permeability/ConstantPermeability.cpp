@@ -67,9 +67,9 @@ ConstantPermeability::deliverClone( string const & name,
 void ConstantPermeability::allocateConstitutiveData( dataRepository::Group & parent,
                                                      localIndex const numConstitutivePointsPerParentIndex )
 {
-  m_initialPermeability.resize( 0, 1, 3 ); 
+  m_initialPermeability.resize( 0, 1, 3 );
 
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex ); 
+  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   integer const numQuad = 1; // NOTE: enforcing 1 quadrature point
 
