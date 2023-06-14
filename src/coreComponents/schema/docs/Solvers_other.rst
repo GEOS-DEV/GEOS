@@ -3,11 +3,13 @@
 =========================================== ==== ================================================================ 
 Name                                        Type Description                                                      
 =========================================== ==== ================================================================ 
+AcousticFirstOrderSEM                       node :ref:`DATASTRUCTURE_AcousticFirstOrderSEM`                       
 AcousticSEM                                 node :ref:`DATASTRUCTURE_AcousticSEM`                                 
 CompositionalMultiphaseFVM                  node :ref:`DATASTRUCTURE_CompositionalMultiphaseFVM`                  
 CompositionalMultiphaseHybridFVM            node :ref:`DATASTRUCTURE_CompositionalMultiphaseHybridFVM`            
 CompositionalMultiphaseReservoir            node :ref:`DATASTRUCTURE_CompositionalMultiphaseReservoir`            
 CompositionalMultiphaseWell                 node :ref:`DATASTRUCTURE_CompositionalMultiphaseWell`                 
+ElasticFirstOrderSEM                        node :ref:`DATASTRUCTURE_ElasticFirstOrderSEM`                        
 ElasticSEM                                  node :ref:`DATASTRUCTURE_ElasticSEM`                                  
 EmbeddedSurfaceGenerator                    node :ref:`DATASTRUCTURE_EmbeddedSurfaceGenerator`                    
 FlowProppantTransport                       node :ref:`DATASTRUCTURE_FlowProppantTransport`                       

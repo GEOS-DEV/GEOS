@@ -13,8 +13,8 @@
  */
 
 
-#ifndef GEOSX_CONSTITUTIVE_TABLECAPILLARYPRESSUREHYSTERESIS_HPP
-#define GEOSX_CONSTITUTIVE_TABLECAPILLARYPRESSUREHYSTERESIS_HPP
+#ifndef GEOS_CONSTITUTIVE_TABLECAPILLARYPRESSUREHYSTERESIS_HPP
+#define GEOS_CONSTITUTIVE_TABLECAPILLARYPRESSUREHYSTERESIS_HPP
 
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
 #include "functions/TableFunction.hpp"
@@ -22,7 +22,7 @@
 #include "constitutive/KilloughHysteresis.hpp"
 #include "CapillaryPressureFields.hpp"
 
-namespace geosx {
+namespace geos {
 
 
     namespace constitutive {
@@ -80,72 +80,72 @@ namespace geosx {
                         arrayView4d<real64, relperm::USD_RELPERM_DS> const &dPhaseCapPressure_dPhaseVolFrac);
 
                 //actual workers
-                GEOSX_HOST_DEVICE
+                GEOS_HOST_DEVICE
                 void computeBoundCapillaryPressure(TableFunction::KernelWrapper const &drainageCapPressureWrapper,
                                                    real64 const &phaseVolFraction,
                                                    real64 &phaseCapPressure,
                                                    real64 &dPhaseCapPressure_dPhaseVolFrac) const;
 
-                GEOSX_HOST_DEVICE
+                GEOS_HOST_DEVICE
                 void
                 computeImbibitionWettingCapillaryPressure(
                         const arrayView1d<const TableFunction::KernelWrapper> &wettingKernelWapper,
                         const KilloughHysteresis::HysteresisCurve &wettingCurve,
                         const KilloughHysteresis::HysteresisCurve &nonWettingCurve,
-                        const geosx::real64 &landParam,
-                        const geosx::real64 &phaseVolFraction,
-                        const geosx::real64 &phaseMinHistoricalVolFraction,
-                        geosx::real64 &phaseTrappedVolFrac,
-                        geosx::real64 &phaseCapPressure,
-                        geosx::real64 &dPhaseCapPressure_dPhaseVolFrac,
+                        const geos::real64 &landParam,
+                        const geos::real64 &phaseVolFraction,
+                        const geos::real64 &phaseMinHistoricalVolFraction,
+                        geos::real64 &phaseTrappedVolFrac,
+                        geos::real64 &phaseCapPressure,
+                        geos::real64 &dPhaseCapPressure_dPhaseVolFrac,
                         const ModeIndexType &mode) const;
 
                 //two phase flow overload
-                GEOSX_HOST_DEVICE
+                GEOS_HOST_DEVICE
                 void
                 computeImbibitionWettingCapillaryPressure(
                         const arrayView1d<const TableFunction::KernelWrapper> &wettingKernelWapper,
                         const KilloughHysteresis::HysteresisCurve &wettingCurve,
-                        const geosx::real64 &landParam,
-                        const geosx::real64 &phaseVolFraction,
-                        const geosx::real64 &phaseMinHistoricalVolFraction,
-                        geosx::real64 &phaseTrappedVolFrac,
-                        geosx::real64 &phaseCapPressure,
-                        geosx::real64 &dPhaseCapPressure_dPhaseVolFrac,
+                        const geos::real64 &landParam,
+                        const geos::real64 &phaseVolFraction,
+                        const geos::real64 &phaseMinHistoricalVolFraction,
+                        geos::real64 &phaseTrappedVolFrac,
+                        geos::real64 &phaseCapPressure,
+                        geos::real64 &dPhaseCapPressure_dPhaseVolFrac,
                         const ModeIndexType &mode) const;
 
-                GEOSX_HOST_DEVICE
+                GEOS_HOST_DEVICE
                 void
                 computeImbibitionNonWettingCapillaryPressure(
                         const arrayView1d<const TableFunction::KernelWrapper> &nonWettingKernelWrapper,
                         const KilloughHysteresis::HysteresisCurve &nonWettingCurve,
                         const KilloughHysteresis::HysteresisCurve &wettingCurve,
-                        const geosx::real64 &landParam,
-                        const geosx::real64 &phaseVolFraction,
-                        const geosx::real64 &phaseMaxHistoricalVolFraction,
-                        geosx::real64 &phaseTrappedVolFrac,
-                        geosx::real64 &phaseCapPressure,
-                        geosx::real64 &dPhaseCapPressure_dPhaseVolFrac,
+                        const geos::real64 &landParam,
+                        const geos::real64 &phaseVolFraction,
+                        const geos::real64 &phaseMaxHistoricalVolFraction,
+                        geos::real64 &phaseTrappedVolFrac,
+                        geos::real64 &phaseCapPressure,
+                        geos::real64 &dPhaseCapPressure_dPhaseVolFrac,
                         const ModeIndexType &mode) const;
 
                 //2phase flow overload
-                GEOSX_HOST_DEVICE
+                GEOS_HOST_DEVICE
                 void
                 computeImbibitionNonWettingCapillaryPressure(
                         const arrayView1d<const TableFunction::KernelWrapper> &nonWettingKernelWrapper,
                         const KilloughHysteresis::HysteresisCurve &nonWettingCurve,
-                        const geosx::real64 &landParam,
-                        const geosx::real64 &phaseVolFraction,
-                        const geosx::real64 &phaseMaxHistoricalVolFraction,
-                        geosx::real64 &phaseTrappedVolFrac,
-                        geosx::real64 &phaseCapPressure,
-                        geosx::real64 &dPhaseCapPressure_dPhaseVolFrac,
+                        const geos::real64 &landParam,
+                        const geos::real64 &phaseVolFraction,
+                        const geos::real64 &phaseMaxHistoricalVolFraction,
+                        geos::real64 &phaseTrappedVolFrac,
+                        geos::real64 &phaseCapPressure,
+                        geos::real64 &dPhaseCapPressure_dPhaseVolFrac,
                         const ModeIndexType &mode) const;
 
 
 
                 //wrapper call wrt number of phase
-                GEOSX_HOST_DEVICE
+                GEOS_HOST_DEVICE
                 void computeTwoPhaseWetting(integer const ipWetting,
                                             integer const ipNonWetting,
                                             arraySlice1d<real64 const, compflow::USD_PHASE - 1> const &phaseVolFraction,
@@ -160,7 +160,7 @@ namespace geosx {
                                             ModeIndexType &mode) const;
 
 
-                GEOSX_HOST_DEVICE
+                GEOS_HOST_DEVICE
                 void computeTwoPhaseNonWetting(integer const ipWetting,
                                                integer const ipNonWetting,
                                                arraySlice1d<real64 const,
@@ -176,7 +176,7 @@ namespace geosx {
                                                                     2> const &dPhaseCapPressure_dPhaseVolFrac,
                                                ModeIndexType &mode) const;
 
-                GEOSX_HOST_DEVICE
+                GEOS_HOST_DEVICE
                 void computeThreePhase(integer const ipWetting,
                                        integer const ipInter,
                                        integer const ipNonWetting,
@@ -192,7 +192,7 @@ namespace geosx {
                                        ModeIndexType &mode) const;
 
                 //uppermost call-wrappers
-                GEOSX_HOST_DEVICE
+                GEOS_HOST_DEVICE
                 virtual void compute(arraySlice1d<real64 const, compflow::USD_PHASE - 1> const &phaseVolFraction,
                                      arraySlice1d<real64 const,
                                              compflow::USD_PHASE - 1> const &phaseMaxHistoricalVolFraction,
@@ -204,7 +204,7 @@ namespace geosx {
                                              cappres::USD_CAPPRES_DS - 2> const &dPhaseCapPressure_dPhaseVolFrac,
                                      ModeIndexType &mode) const;
 
-                GEOSX_HOST_DEVICE
+                GEOS_HOST_DEVICE
                 virtual void update(localIndex const k,
                                     localIndex const q,
                                     arraySlice1d<real64 const,
@@ -393,7 +393,7 @@ namespace geosx {
 
         };
 
-        GEOSX_HOST_DEVICE
+        GEOS_HOST_DEVICE
         inline void TableCapillaryPressureHysteresis::KernelWrapper::compute(
                 arraySlice1d<real64 const, compflow::USD_PHASE - 1> const &phaseVolFraction,
                 arraySlice1d<real64 const, compflow::USD_PHASE - 1> const &phaseMaxHistoricalVolFraction,
@@ -457,10 +457,10 @@ namespace geosx {
 
         }
 
-        GEOSX_HOST_DEVICE
-        inline void TableCapillaryPressureHysteresis::KernelWrapper::update(const geosx::localIndex k,
-                                                                            const geosx::localIndex q,
-                                                                            const arraySlice1d<const geosx::real64,
+        GEOS_HOST_DEVICE
+        inline void TableCapillaryPressureHysteresis::KernelWrapper::update(const geos::localIndex k,
+                                                                            const geos::localIndex q,
+                                                                            const arraySlice1d<const geos::real64,
                                                                                     compflow::USD_PHASE
                                                                                     - 1> &phaseVolFraction) const {
             compute(phaseVolFraction,
@@ -474,6 +474,6 @@ namespace geosx {
 
 
     } //constitutive
-} // geosx
+} // geos
 
-#endif //GEOSX_CONSTITUTIVE_TABLECAPILLARYPRESSUREHYSTERESIS_HPP
+#endif //GEOS_CONSTITUTIVE_TABLECAPILLARYPRESSUREHYSTERESIS_HPP

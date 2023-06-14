@@ -16,28 +16,28 @@
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
-#include "constitutive/fluid/multiFluidSelector.hpp"
-#include "constitutive/fluid/PVTFunctions/PhillipsBrineViscosity.hpp"
-#include "constitutive/fluid/PVTFunctions/EzrokhiBrineViscosity.hpp"
-#include "constitutive/fluid/PVTFunctions/FenghourCO2Viscosity.hpp"
-#include "constitutive/fluid/PVTFunctions/PhillipsBrineDensity.hpp"
-#include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
-#include "constitutive/fluid/PVTFunctions/CO2Solubility.hpp"
-#include "constitutive/fluid/PVTFunctions/BrineEnthalpy.hpp"
-#include "constitutive/fluid/PVTFunctions/CO2Enthalpy.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
+#include "constitutive/fluid/multifluid/CO2Brine/functions/PhillipsBrineViscosity.hpp"
+#include "constitutive/fluid/multifluid/CO2Brine/functions/EzrokhiBrineViscosity.hpp"
+#include "constitutive/fluid/multifluid/CO2Brine/functions/FenghourCO2Viscosity.hpp"
+#include "constitutive/fluid/multifluid/CO2Brine/functions/PhillipsBrineDensity.hpp"
+#include "constitutive/fluid/multifluid/CO2Brine/functions/SpanWagnerCO2Density.hpp"
+#include "constitutive/fluid/multifluid/CO2Brine/functions/CO2Solubility.hpp"
+#include "constitutive/fluid/multifluid/CO2Brine/functions/BrineEnthalpy.hpp"
+#include "constitutive/fluid/multifluid/CO2Brine/functions/CO2Enthalpy.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
 
-using namespace geosx;
-using namespace geosx::testing;
-using namespace geosx::constitutive;
-using namespace geosx::dataRepository;
-using namespace geosx::stringutilities;
-using namespace geosx::constitutive::PVTProps;
-using namespace geosx::constitutive::multifluid;
+using namespace geos;
+using namespace geos::testing;
+using namespace geos::constitutive;
+using namespace geos::dataRepository;
+using namespace geos::stringutilities;
+using namespace geos::constitutive::PVTProps;
+using namespace geos::constitutive::multifluid;
 
 /// Input tables written into temporary files during testing
 
@@ -48,8 +48,9 @@ static const char * pvtLiquidPhillipsTableContent = "DensityFun PhillipsBrineDen
 static const char * pvtLiquidEnthalpyTableContent = "EnthalpyFun BrineEnthalpy 1e6 1.5e7 5e4 367.15 369.15 1 0.2";
 
 // the last are set relatively high (1e-4) to increase derivative value and check it properly
-static const char * pvtLiquidEzrokhiTableContent = "DensityFun EzrokhiBrineDensity 2.01e-6 -6.34e-7 1e-4\n"
-                                                   "ViscosityFun EzrokhiBrineViscosity 2.42e-7 0 1e-4";
+// This string has some more various whitespace values in it to test if everything goes well anyway.
+static const char * pvtLiquidEzrokhiTableContent = "\tDensityFun   EzrokhiBrineDensity   2.01e-6 -6.34e-7 1e-4\n\r"
+                                                   "\tViscosityFun EzrokhiBrineViscosity 2.42e-7 0        1e-4\n\r\n\r";
 
 static const char * pvtGasTableContent = "DensityFun SpanWagnerCO2Density 1e5 7.5e7 5e4 285.15 369.15 4.0\n" // we want to test the full
                                                                                                              // (pres, temp) range here
@@ -356,9 +357,9 @@ std::unique_ptr< MODEL > makePVTFunction( string const & filename,
   string str;
   while( std::getline( is, str ) )
   {
-    string_array const strs = stringutilities::tokenize( str, " " );
+    array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
 
-    if( strs[0] == key )
+    if( strs.size()>1 && strs[0] == key )
     {
       pvtFunction = std::make_unique< MODEL >( strs[1],
                                                strs,
@@ -366,8 +367,8 @@ std::unique_ptr< MODEL > makePVTFunction( string const & filename,
                                                componentMolarWeight );
     }
   }
-  GEOSX_ERROR_IF( pvtFunction == nullptr,
-                  "Could not find " << key << " in " << filename );
+  GEOS_ERROR_IF( pvtFunction == nullptr,
+                 "Could not find " << key << " in " << filename );
 
   return pvtFunction;
 }
@@ -396,9 +397,9 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
   string str;
   while( std::getline( is, str ) )
   {
-    string_array const strs = stringutilities::tokenize( str, " " );
+    array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
 
-    if( strs[0] == key )
+    if( strs.size()>1 && strs[0] == key )
     {
       flashModel = std::make_unique< MODEL >( strs[1],
                                               strs,
@@ -407,8 +408,8 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
                                               componentMolarWeight );
     }
   }
-  GEOSX_ERROR_IF( flashModel == nullptr,
-                  "Could not find " << key << " in " << filename );
+  GEOS_ERROR_IF( flashModel == nullptr,
+                 "Could not find " << key << " in " << filename );
 
   return flashModel;
 }
@@ -505,7 +506,6 @@ TEST_F( EzrokhiBrineViscosityTest, brineViscosityValuesAndDeriv )
 
   EzrokhiBrineViscosity::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  integer counter = 0;
   for( integer iComp = 0; iComp < 3; ++iComp )
   {
     for( integer iPres = 0; iPres < 3; ++iPres )
@@ -513,7 +513,6 @@ TEST_F( EzrokhiBrineViscosityTest, brineViscosityValuesAndDeriv )
       for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
-        counter++;
       }
     }
     comp[0] += deltaComp;
@@ -653,7 +652,6 @@ TEST_F( PhillipsBrineDensityTest, brineCO2DensityMolarValuesAndDeriv )
 
   PhillipsBrineDensity::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  integer counter = 0;
   for( integer iComp = 0; iComp < 3; ++iComp )
   {
     for( integer iPres = 0; iPres < 3; ++iPres )
@@ -661,7 +659,6 @@ TEST_F( PhillipsBrineDensityTest, brineCO2DensityMolarValuesAndDeriv )
       for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
-        counter++;
       }
     }
     comp[0] += deltaComp;
@@ -704,7 +701,6 @@ TEST_F( EzrokhiBrineDensityTest, brineCO2DensityMassValuesAndDeriv )
 
   EzrokhiBrineDensity::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  integer counter = 0;
   for( integer iComp = 0; iComp < 3; ++iComp )
   {
     for( integer iPres = 0; iPres < 3; ++iPres )
@@ -712,7 +708,6 @@ TEST_F( EzrokhiBrineDensityTest, brineCO2DensityMassValuesAndDeriv )
       for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
-        counter++;
       }
     }
     comp[0] += deltaComp;
@@ -735,7 +730,6 @@ TEST_F( EzrokhiBrineDensityTest, brineCO2DensityMolarValuesAndDeriv )
 
   EzrokhiBrineDensity::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  integer counter = 0;
   for( integer iComp = 0; iComp < 3; ++iComp )
   {
     for( integer iPres = 0; iPres < 3; ++iPres )
@@ -743,7 +737,6 @@ TEST_F( EzrokhiBrineDensityTest, brineCO2DensityMolarValuesAndDeriv )
       for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
-        counter++;
       }
     }
     comp[0] += deltaComp;
@@ -1121,11 +1114,11 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::GeosxState state( geosx::basicSetup( argc, argv ) );
+  geos::GeosxState state( geos::basicSetup( argc, argv ) );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::basicCleanup();
+  geos::basicCleanup();
 
   return result;
 }

@@ -18,26 +18,25 @@
       trajectory="{ { 0.0, 0.0, 0.0 },
                     { 0.0, 0.0, 0.1 } }"
       autoSpaceRadialElems="{ 0, 0, 0 }"
-      useCartesianOuterBoundary="3"
       cellBlockNames="{ cb }"
       />
   </Mesh>
 
   <Events
-    maxTime="1.5e7">
+    maxTime="1e5">
     <PeriodicEvent
       name="outputs"
-      timeFrequency="2.5e6"
+      timeFrequency="1e4"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="2.5e6"
+      maxEventDt="1e4"
       target="/Solvers/singleFlow"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="7.5e6"
+      timeFrequency="5e4"
       target="/Outputs/restartOutput"/>
   </Events>
 

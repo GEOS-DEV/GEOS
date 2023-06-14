@@ -19,7 +19,7 @@
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -70,4 +70,4 @@ void PermeabilityBase::allocateConstitutiveData( dataRepository::Group & parent,
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PermeabilityBase, string const &, Group * const )
 }
-} /* namespace geosx */
+} /* namespace geos */

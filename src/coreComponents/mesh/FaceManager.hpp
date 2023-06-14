@@ -16,14 +16,14 @@
  * @file FaceManager.hpp
  */
 
-#ifndef GEOSX_MESH_FACEMANAGER_HPP_
-#define GEOSX_MESH_FACEMANAGER_HPP_
+#ifndef GEOS_MESH_FACEMANAGER_HPP_
+#define GEOS_MESH_FACEMANAGER_HPP_
 
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "ToElementRelation.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class NodeManager;
@@ -117,10 +117,11 @@ public:
    * @param[in] cellBlockManager Provides the mappings.
    * @param[in] elemRegionManager element region manager, needed to map blocks to subregion
    * @param[in] nodeManager Provides the nodes positions.
+   * @param[in] baseMeshLevel True if this manager belonds to the base mesh level, false otherwise
    */
   void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
                                 ElementRegionManager const & elemRegionManager,
-                                NodeManager const & nodeManager );
+                                NodeManager const & nodeManager, bool baseMeshLevel );
 
   /**
    * @brief Link the current manager to other managers.
@@ -365,7 +366,7 @@ public:
    * @return non-const reference to faces-to-ElementRegion relation
    * @copydetails FaceManager::elementList()
    */
-  array2d< localIndex > const & elementRegionList() { return m_toElements.m_toElementRegion; }
+  array2d< localIndex > & elementRegionList() { return m_toElements.m_toElementRegion; }
 
   /**
    * @brief Get an immutable accessor to the faces-to-ElementRegion relation.
@@ -379,7 +380,7 @@ public:
    * @return non-const reference to faces-to-ElementSubRegion relation
    * @copydetails FaceManager::elementList()
    */
-  array2d< localIndex > const & elementSubRegionList() { return m_toElements.m_toElementSubRegion; }
+  array2d< localIndex > & elementSubRegionList() { return m_toElements.m_toElementSubRegion; }
 
   /**
    * @brief Get an immutable accessor to the faces-to-ElementSubRegion relation.
@@ -403,7 +404,7 @@ public:
    * In particular, any mismatch like @a (e.g.) <tt>f -> (e0, e1)</tt> and
    * <tt>f -> (er1, er0)</tt> will probably result in a bug.
    * @warning @p e, @p er or @p esr will equal -1 if undefined.
-   * @see geosx::NodeManager::elementList that shares the same kind of pattern.
+   * @see geos::NodeManager::elementList that shares the same kind of pattern.
    */
   array2d< localIndex > & elementList() { return m_toElements.m_toElementIndex; }
 
@@ -470,7 +471,7 @@ private:
   array2d< real64 > m_faceNormal;
 
   /// constant expression of the maximum number of nodes per faces
-  constexpr static int MAX_FACE_NODES = 9;
+  constexpr static int MAX_FACE_NODES = 16;
 
 };
 

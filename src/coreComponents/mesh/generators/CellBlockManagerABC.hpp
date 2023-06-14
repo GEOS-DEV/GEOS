@@ -12,15 +12,15 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_CELLBLOCKMANAGERABC_HPP
-#define GEOSX_CELLBLOCKMANAGERABC_HPP
+#ifndef GEOS_CELLBLOCKMANAGERABC_HPP
+#define GEOS_CELLBLOCKMANAGERABC_HPP
 
 #include "CellBlockUtilities.hpp"
 #include "dataRepository/Group.hpp"
 
 #include <map>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -191,6 +191,22 @@ public:
    * @return A reference to constant map.
    */
   virtual std::map< string, SortedArray< localIndex > > const & getNodeSets() const = 0;
+
+  /**
+   * @brief Generates in place the high-order maps for this cell block manager.
+   * @param[in] order The order of the discretization.
+   * @param[in] maxVertexGlobalID: maximum globalID for nodes
+   * @param[in] maxEdgeGlobalID: maximum globalID for edges
+   * @param[in] maxFaceGlobalID: maximum globalID for faces
+   * @param[in] edgeLocalToGlobal The local to global map for edges.
+   * @param[in] faceLocalToGlobal The local to global map for faces.
+   */
+  virtual void generateHighOrderMaps( localIndex const order,
+                                      globalIndex const maxVertexGlobalID,
+                                      globalIndex const maxEdgeGlobalID, globalIndex const maxFaceGlobalID,
+                                      arrayView1d< globalIndex const > const edgeLocalToGlobal,
+                                      arrayView1d< globalIndex const > const faceLocalToGlobal ) = 0;
+
 };
 
 }

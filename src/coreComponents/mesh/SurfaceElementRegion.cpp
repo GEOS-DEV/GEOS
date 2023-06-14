@@ -21,7 +21,7 @@
 #include "SurfaceElementRegion.hpp"
 
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -66,7 +66,7 @@ void SurfaceElementRegion::generateMesh( Group & faceBlocks )
     }
     else
     {
-      GEOSX_INFO( "No face block \"" << m_faceBlockName << "\" was found in the mesh. Empty surface region was created." );
+      GEOS_LOG_RANK_0( "No face block \"" << m_faceBlockName << "\" was found in the mesh. Empty surface region was created." );
     }
   }
 }
@@ -219,4 +219,4 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, SurfaceElementRegion, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

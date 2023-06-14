@@ -3,7 +3,7 @@
 Event Management
 ===============================================================================
 
-The goal of the GEOSX event manager is to be flexible with regards to event type, application order, and method of triggering.  The event manager is configured via the ``Event`` block in an input .xml file, i.e.:
+The goal of the GEOS event manager is to be flexible with regards to event type, application order, and method of triggering.  The event manager is configured via the ``Event`` block in an input .xml file, i.e.:
 
 .. code-block:: xml
 
@@ -57,7 +57,7 @@ The children of the Event block define the events that may execute during a simu
 
 PeriodicEvent
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-This is the most common type of event used in GEOSX.  As its name suggests, it will execute periodically during a simulation.  It can be triggered based upon a user-defined ``cycleFrequency`` or ``timeFrequency``.
+This is the most common type of event used in GEOS.  As its name suggests, it will execute periodically during a simulation.  It can be triggered based upon a user-defined ``cycleFrequency`` or ``timeFrequency``.
 
 If cycleFrequency is specified, the event will attempt to execute every X cycles.  Note: the default behavior for a PeriodicEvent is to execute every cycle.  The event forecast for this case is given by: ``forecast = cycleFrequency - (cycle - lastCycle)`` .
 

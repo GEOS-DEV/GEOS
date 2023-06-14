@@ -19,7 +19,7 @@
 #include "functions/FunctionManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 
-namespace geosx {
+namespace geos {
 
     using namespace dataRepository;
 
@@ -156,16 +156,16 @@ namespace geosx {
             using TPP = ThreePhasePairPhaseType;
 
             integer const numPhases = m_phaseNames.size();
-            GEOSX_THROW_IF(numPhases != 2 && numPhases != 3,
-                           GEOSX_FMT("{}: the expected number of fluid phases is either two, or three",
+            GEOS_THROW_IF(numPhases != 2 && numPhases != 3,
+                           GEOS_FMT("{}: the expected number of fluid phases is either two, or three",
                                      getFullName()),
                            InputError);
 
             m_phaseHasHysteresis.resize(2);
 
             if (numPhases == 2) {
-                GEOSX_THROW_IF(m_drainageWettingNonWettingCapPresTableName.empty(),
-                               GEOSX_FMT(
+                GEOS_THROW_IF(m_drainageWettingNonWettingCapPresTableName.empty(),
+                               GEOS_FMT(
                                        "{}: for a two-phase flow simulation, we must use {} to specify the capillary pressure table for the drainage pair (wetting phase, non-wetting phase)",
                                        getFullName(),
                                        viewKeyStruct::drainageWettingNonWettingCapPresTableNameString()),
@@ -182,9 +182,9 @@ namespace geosx {
             } else if (numPhases == 3) {
 
 
-                GEOSX_THROW_IF(m_drainageWettingIntermediateCapPresTableName.empty() ||
+                GEOS_THROW_IF(m_drainageWettingIntermediateCapPresTableName.empty() ||
                                m_drainageNonWettingIntermediateCapPresTableName.empty(),
-                               GEOSX_FMT(
+                               GEOS_FMT(
                                        "{}: for a three-phase flow simulation, we must use {} to specify the capillary pressure table "
                                        "for the pair (wetting phase, intermediate phase), and {} to specify the capillary pressure table "
                                        "for the pair (non-wetting phase, intermediate phase)",
@@ -208,9 +208,9 @@ namespace geosx {
             KilloughHysteresis::postProcessInput(m_jerauldParam_a, m_jerauldParam_b, 0,
                                                  m_killoughCurvatureParamCapPres);
 
-            GEOSX_THROW_IF(m_phaseHasHysteresis[TPP::INTERMEDIATE_WETTING] == 0 &&
+            GEOS_THROW_IF(m_phaseHasHysteresis[TPP::INTERMEDIATE_WETTING] == 0 &&
                            m_phaseHasHysteresis[TPP::INTERMEDIATE_NONWETTING] == 0,
-                           GEOSX_FMT(
+                           GEOS_FMT(
                                    "{}: we must use {} (2-phase) / {} or {} (3-phase) to specify at least one imbibition relative permeability table",
                                    getFullName(),
                                    viewKeyStruct::imbibitionWettingNonWettingCapPresTableNameString(),
@@ -243,9 +243,11 @@ namespace geosx {
                         nonWettingPhaseMaxVolumeFraction, nonWettingMaxCapPres;
 
                 {
+		  
+		  imbibitionNonWettingMinCapPres = 0.0; 
 
-                    GEOSX_THROW_IF(!functionManager.hasGroup(m_drainageWettingNonWettingCapPresTableName),
-                                   GEOSX_FMT("{}: the table function named {} could not be found",
+                    GEOS_THROW_IF(!functionManager.hasGroup(m_drainageWettingNonWettingCapPresTableName),
+                                   GEOS_FMT("{}: the table function named {} could not be found",
                                              getFullName(),
                                              m_drainageWettingNonWettingCapPresTableName),
                                    InputError);
@@ -280,8 +282,8 @@ namespace geosx {
                 }
 
                 {
-                    GEOSX_THROW_IF(!functionManager.hasGroup(m_imbibitionWettingNonWettingCapPresTableName),
-                                   GEOSX_FMT("{}: the table function named {} could not be found",
+                    GEOS_THROW_IF(!functionManager.hasGroup(m_imbibitionWettingNonWettingCapPresTableName),
+                                   GEOS_FMT("{}: the table function named {} could not be found",
                                              getFullName(),
                                              m_imbibitionWettingNonWettingCapPresTableName),
                                    InputError);
@@ -332,17 +334,18 @@ namespace geosx {
 
             } else if (numPhases == 3) {
 
-                real64 drainageWettingPhaseMaxVolumeFraction, drainageWettingMinCapPres,
-                        drainageNonWettingPhaseMinVolumeFraction, drainageNonWettingMinCapPres,
-                        imbibitionWettingPhaseMaxVolumeFraction, imbibitionWettingMinCapPres,
-                        imbibitionNonWettingPhaseMinVolumeFraction, imbibitionNonWettingMinCapPres,
-                        wettingPhaseMinVolumeFraction, wettingMaxCapPres,
-                        nonWettingPhaseMaxVolumeFraction, nonWettingMaxCapPres;
+	      real64 drainageWettingPhaseMaxVolumeFraction, drainageWettingMinCapPres,
+		drainageNonWettingPhaseMinVolumeFraction, drainageNonWettingMinCapPres,
+		imbibitionWettingPhaseMaxVolumeFraction, imbibitionWettingMinCapPres,
+		imbibitionNonWettingPhaseMinVolumeFraction, imbibitionNonWettingMinCapPres,
+		wettingPhaseMinVolumeFraction, wettingMaxCapPres,
+		nonWettingPhaseMaxVolumeFraction, nonWettingMaxCapPres;
 
+	      GEOS_UNUSED_VAR( drainageWettingMinCapPres );	      
 //define scope to avoid differentiate temp var (lazy)
                 {
-                    GEOSX_THROW_IF(!functionManager.hasGroup(m_drainageWettingIntermediateCapPresTableName),
-                                   GEOSX_FMT("{}: the table function named {} could not be found",
+                    GEOS_THROW_IF(!functionManager.hasGroup(m_drainageWettingIntermediateCapPresTableName),
+                                   GEOS_FMT("{}: the table function named {} could not be found",
                                              getFullName(),
                                              m_drainageWettingIntermediateCapPresTableName),
                                    InputError);
@@ -355,8 +358,8 @@ namespace geosx {
                                                                                   drainageNonWettingMinCapPres,
                                                                                   wettingMaxCapPres);
 
-                    GEOSX_THROW_IF(!functionManager.hasGroup(m_drainageNonWettingIntermediateCapPresTableName),
-                                   GEOSX_FMT("{}: the table function named {} could not be found",
+                    GEOS_THROW_IF(!functionManager.hasGroup(m_drainageNonWettingIntermediateCapPresTableName),
+                                   GEOS_FMT("{}: the table function named {} could not be found",
                                              getFullName(),
                                              m_drainageNonWettingIntermediateCapPresTableName),
                                    InputError);
@@ -375,8 +378,8 @@ namespace geosx {
 
                 if (!m_imbibitionWettingIntermediateCapPresTableName.empty()) {
 
-                    GEOSX_THROW_IF(!functionManager.hasGroup(m_imbibitionWettingIntermediateCapPresTableName),
-                                   GEOSX_FMT("{}: the table function named {} could not be found",
+                    GEOS_THROW_IF(!functionManager.hasGroup(m_imbibitionWettingIntermediateCapPresTableName),
+                                   GEOS_FMT("{}: the table function named {} could not be found",
                                              getFullName(),
                                              m_imbibitionWettingIntermediateCapPresTableName),
                                    InputError);
@@ -395,8 +398,8 @@ namespace geosx {
 
                 if (!m_imbibitionNonWettingIntermediateCapPresTableName.empty()) {
 
-                    GEOSX_THROW_IF(!functionManager.hasGroup(m_imbibitionNonWettingIntermediateCapPresTableName),
-                                   GEOSX_FMT("{}: the table function named {} could not be found",
+                    GEOS_THROW_IF(!functionManager.hasGroup(m_imbibitionNonWettingIntermediateCapPresTableName),
+                                   GEOS_FMT("{}: the table function named {} could not be found",
                                              getFullName(),
                                              m_imbibitionNonWettingIntermediateCapPresTableName),
                                    InputError);
@@ -416,16 +419,16 @@ namespace geosx {
             auto const eps = 1e-15;
             if (numPhases == 2) {
                 //TODO weak make stronger
-                GEOSX_THROW_IF(
+                GEOS_THROW_IF(
                         m_wettingCurve.isZero() && m_nonWettingCurve.isZero(),
-                        GEOSX_FMT(
+                        GEOS_FMT(
                                 "{}: Inconsistent data for capillary pressure hysteresis. No hysteresis curve is defined.",
                                 getFullName()),
                         InputError);
 
-                GEOSX_THROW_IF(
+                GEOS_THROW_IF(
                         !m_wettingCurve.isZero() && !m_nonWettingCurve.isZero(),
-                        GEOSX_FMT(
+                        GEOS_FMT(
                                 "{}: Inconsistent data for capillary pressure hysteresis. Both non wetting and wetting hysteresis curve are defined in two phase flow setting.",
                                 getFullName()),
                         InputError);
@@ -433,18 +436,18 @@ namespace geosx {
 
             } else if (numPhases == 3) {
 
-                GEOSX_THROW_IF(std::fabs(m_wettingCurve.oppositeBoundPhaseVolFraction - (1. - m_nonWettingCurve.oppositeBoundPhaseVolFraction - m_phaseIntermediateMinVolFraction)) > eps,
-                               GEOSX_FMT(
+                GEOS_THROW_IF(std::fabs(m_wettingCurve.oppositeBoundPhaseVolFraction - (1. - m_nonWettingCurve.oppositeBoundPhaseVolFraction - m_phaseIntermediateMinVolFraction)) > eps,
+                               GEOS_FMT(
                                        "{}: Inconsistent data for capillary pressure hysteresis. {}, {} and {} should sum up to 1.",
                                        getFullName(), "Sw_min", "Snw_max", "Sinter_min"),
                                InputError);
-                GEOSX_THROW_IF(std::fabs(m_wettingCurve.drainageExtremaPhaseVolFraction - (1. - m_nonWettingCurve.drainageExtremaPhaseVolFraction - m_phaseIntermediateMinVolFraction)) > eps,
-                               GEOSX_FMT(
+                GEOS_THROW_IF(std::fabs(m_wettingCurve.drainageExtremaPhaseVolFraction - (1. - m_nonWettingCurve.drainageExtremaPhaseVolFraction - m_phaseIntermediateMinVolFraction)) > eps,
+                               GEOS_FMT(
                                        "{}: Inconsistent data for capillary pressure hysteresis. {}, {} and {} should sum up to 1.",
                                        getFullName(), "Sw_min", "Snw_max", "Sinter_min"),
                                InputError);
-                GEOSX_THROW_IF(std::fabs(m_wettingCurve.imbibitionExtremaPhaseVolFraction - (1. - m_nonWettingCurve.imbibitionExtremaPhaseVolFraction - m_phaseIntermediateMinVolFraction)) > eps,
-                               GEOSX_FMT(
+                GEOS_THROW_IF(std::fabs(m_wettingCurve.imbibitionExtremaPhaseVolFraction - (1. - m_nonWettingCurve.imbibitionExtremaPhaseVolFraction - m_phaseIntermediateMinVolFraction)) > eps,
+                               GEOS_FMT(
                                        "{}: Inconsistent data for capillary pressure hysteresis. {}, {} and {} should sum up to 1.",
                                        getFullName(), "Sw_min", "Snw_max", "Sinter_min"),
                                InputError);
@@ -498,7 +501,7 @@ namespace geosx {
             localIndex const numElems = phaseVolFraction.size(0);
             integer const numPhases = numFluidPhases();
 
-            forAll<parallelDevicePolicy<> >(numElems, [=] GEOSX_HOST_DEVICE(localIndex const ei) {
+            forAll<parallelDevicePolicy<> >(numElems, [=] GEOS_HOST_DEVICE(localIndex const ei) {
                 for (integer ip = 0; ip < numPhases; ++ip) {
                     phaseMaxHistoricalVolFraction[ei][ip] = LvArray::math::max(phaseVolFraction[ei][ip],
                                                                                phaseMaxHistoricalVolFraction[ei][ip]);
@@ -514,19 +517,21 @@ namespace geosx {
                 const arrayView1d<const TableFunction::KernelWrapper> &wettingKernelWapper,
                 const KilloughHysteresis::HysteresisCurve &wettingCurve,
                 const KilloughHysteresis::HysteresisCurve &nonWettingCurve, //discard if not needed
-                const geosx::real64 &landParam,
-                const geosx::real64 &phaseVolFraction,
-                const geosx::real64 &phaseMinHistoricalVolFraction,
-                geosx::real64 &phaseTrappedVolFrac,
-                geosx::real64 &phaseCapPressure,
-                geosx::real64 &dPhaseCapPressure_dPhaseVolFrac,
+                const geos::real64 &landParam,
+                const geos::real64 &phaseVolFraction,
+                const geos::real64 &phaseMinHistoricalVolFraction,
+                geos::real64 &phaseTrappedVolFrac,
+                geos::real64 &phaseCapPressure,
+                geos::real64 &dPhaseCapPressure_dPhaseVolFrac,
                 const ModeIndexType &mode) const {
-            GEOSX_ASSERT(wettingCurve.isWetting());
+            GEOS_ASSERT(wettingCurve.isWetting());
             real64 const S = phaseVolFraction;
             real64 const Smxi = wettingCurve.imbibitionExtremaPhaseVolFraction;
             real64 const Smxd = wettingCurve.drainageExtremaPhaseVolFraction;
             real64 const Smin = wettingCurve.oppositeBoundPhaseVolFraction;
 
+	    GEOS_UNUSED_VAR( Smxi, Smxd, phaseTrappedVolFrac );	      
+	    
 //  if( S <= Smin )
 //  {
 //    //below accessible range
@@ -594,7 +599,7 @@ namespace geosx {
 
 
                 } else {
-                    GEOSX_THROW(GEOSX_FMT("{}: State is {}.Shouldnt be used in pure DRAINAGE or IMBIBITION.",
+                    GEOS_THROW(GEOS_FMT("{}: State is {}.Shouldnt be used in pure DRAINAGE or IMBIBITION.",
                                           "TableCapillaryPressureHysteresis",
                                           (mode == ModeIndexType::DRAINAGE) ? "DRAINAGE" : ((mode ==
                                                                                              ModeIndexType::IMBIBITION)
@@ -612,19 +617,21 @@ namespace geosx {
         TableCapillaryPressureHysteresis::KernelWrapper::computeImbibitionWettingCapillaryPressure(
                 const arrayView1d<const TableFunction::KernelWrapper> &wettingKernelWapper,
                 const KilloughHysteresis::HysteresisCurve &wettingCurve,
-                const geosx::real64 &landParam,
-                const geosx::real64 &phaseVolFraction,
-                const geosx::real64 &phaseMinHistoricalVolFraction,
-                geosx::real64 &phaseTrappedVolFrac,
-                geosx::real64 &phaseCapPressure,
-                geosx::real64 &dPhaseCapPressure_dPhaseVolFrac,
+                const geos::real64 &landParam,
+                const geos::real64 &phaseVolFraction,
+                const geos::real64 &phaseMinHistoricalVolFraction,
+                geos::real64 &phaseTrappedVolFrac,
+                geos::real64 &phaseCapPressure,
+                geos::real64 &dPhaseCapPressure_dPhaseVolFrac,
                 const ModeIndexType &mode) const {
-            GEOSX_ASSERT(wettingCurve.isWetting());
+            GEOS_ASSERT(wettingCurve.isWetting());
             real64 const S = phaseVolFraction;
             real64 const Smxi = wettingCurve.imbibitionExtremaPhaseVolFraction;
             real64 const Smxd = wettingCurve.drainageExtremaPhaseVolFraction;
             real64 const Smin = wettingCurve.oppositeBoundPhaseVolFraction;
 
+	    GEOS_UNUSED_VAR( Smxi, Smxd, phaseTrappedVolFrac );	      
+	    
 //  if( S <= Smin )
 //  {
 //    //below accessible range
@@ -695,7 +702,7 @@ namespace geosx {
 
 
                 } else {
-                    GEOSX_THROW(GEOSX_FMT("{}: State is {}.Shouldnt be used in pure DRAINAGE or IMBIBITION.",
+                    GEOS_THROW(GEOS_FMT("{}: State is {}.Shouldnt be used in pure DRAINAGE or IMBIBITION.",
                                           "TableCapillaryPressureHysteresis",
                                           (mode == ModeIndexType::DRAINAGE) ? "DRAINAGE" : ((mode ==
                                                                                              ModeIndexType::IMBIBITION)
@@ -708,27 +715,27 @@ namespace geosx {
             }
 
         }
-        void TableCapillaryPressureHysteresis::KernelWrapper::computeTwoPhaseWetting(const geosx::integer ipWetting,
-                                                                                     const geosx::integer ipNonWetting,
-                                                                                     const arraySlice1d<const geosx::real64,
+        void TableCapillaryPressureHysteresis::KernelWrapper::computeTwoPhaseWetting(const geos::integer ipWetting,
+                                                                                     const geos::integer GEOS_UNUSED_PARAM( ipNonWetting ),
+                                                                                     const arraySlice1d<const geos::real64,
                                                                                              compflow::USD_PHASE -
                                                                                              1> &phaseVolFraction,
-                                                                                     const arraySlice1d<const geosx::real64,
+                                                                                     const arraySlice1d<const geos::real64,
                                                                                              compflow::USD_PHASE
                                                                                              -
                                                                                              1> &phaseMaxHistoricalVolFraction,
-                                                                                     const arraySlice1d<const geosx::real64,
+                                                                                     const arraySlice1d<const geos::real64,
                                                                                              compflow::USD_PHASE
                                                                                              -
                                                                                              1> &phaseMinHistoricalVolFraction,
-                                                                                     const arraySlice1d<geosx::real64,
+                                                                                     const arraySlice1d<geos::real64,
                                                                                              relperm::USD_RELPERM
                                                                                              - 2> &phaseTrappedVolFrac,
-                                                                                     arraySlice1d<geosx::real64,
+                                                                                     arraySlice1d<geos::real64,
                                                                                              relperm::USD_RELPERM
                                                                                              -
                                                                                              2> const &phaseCapPressure,
-                                                                                     arraySlice2d<geosx::real64,
+                                                                                     arraySlice2d<geos::real64,
                                                                                              relperm::USD_RELPERM_DS
                                                                                              -
                                                                                              2> const &dPhaseCapPressure_dPhaseVolFrac,
@@ -840,28 +847,28 @@ namespace geosx {
 
         }
 
-        void TableCapillaryPressureHysteresis::KernelWrapper::computeTwoPhaseNonWetting(const geosx::integer ipWetting,
-                                                                                        const geosx::integer ipNonWetting,
-                                                                                        const arraySlice1d<const geosx::real64,
+        void TableCapillaryPressureHysteresis::KernelWrapper::computeTwoPhaseNonWetting(const geos::integer ipWetting,
+                                                                                        const geos::integer ipNonWetting,
+                                                                                        const arraySlice1d<const geos::real64,
                                                                                                 compflow::USD_PHASE -
                                                                                                 1> &phaseVolFraction,
-                                                                                        const arraySlice1d<const geosx::real64,
+                                                                                        const arraySlice1d<const geos::real64,
                                                                                                 compflow::USD_PHASE
                                                                                                 -
                                                                                                 1> &phaseMaxHistoricalVolFraction,
-                                                                                        const arraySlice1d<const geosx::real64,
+                                                                                        const arraySlice1d<const geos::real64,
                                                                                                 compflow::USD_PHASE
                                                                                                 -
                                                                                                 1> &phaseMinHistoricalVolFraction,
-                                                                                        const arraySlice1d<geosx::real64,
+                                                                                        const arraySlice1d<geos::real64,
                                                                                                 relperm::USD_RELPERM
                                                                                                 -
                                                                                                 2> &phaseTrappedVolFrac,
-                                                                                        arraySlice1d<geosx::real64,
+                                                                                        arraySlice1d<geos::real64,
                                                                                                 relperm::USD_RELPERM
                                                                                                 -
                                                                                                 2> const &phaseCapPressure,
-                                                                                        arraySlice2d<geosx::real64,
+                                                                                        arraySlice2d<geos::real64,
                                                                                                 relperm::USD_RELPERM_DS
                                                                                                 -
                                                                                                 2> const &dPhaseCapPressure_dPhaseVolFrac,
@@ -966,27 +973,27 @@ namespace geosx {
 
         }
 
-        void TableCapillaryPressureHysteresis::KernelWrapper::computeThreePhase(const geosx::integer ipWetting,
-                                                                                const geosx::integer ipInter,
-                                                                                const geosx::integer ipNonWetting,
-                                                                                const arraySlice1d<const geosx::real64,
+        void TableCapillaryPressureHysteresis::KernelWrapper::computeThreePhase(const geos::integer ipWetting,
+                                                                                const geos::integer GEOS_UNUSED_PARAM( ipInter ),
+                                                                                const geos::integer ipNonWetting,
+                                                                                const arraySlice1d<const geos::real64,
                                                                                         compflow::USD_PHASE -
                                                                                         1> &phaseVolFraction,
-                                                                                const arraySlice1d<const geosx::real64,
+                                                                                const arraySlice1d<const geos::real64,
                                                                                         compflow::USD_PHASE
                                                                                         -
                                                                                         1> &phaseMaxHistoricalVolFraction,
-                                                                                const arraySlice1d<const geosx::real64,
+                                                                                const arraySlice1d<const geos::real64,
                                                                                         compflow::USD_PHASE
                                                                                         -
                                                                                         1> &phaseMinHistoricalVolFraction,
-                                                                                const arraySlice1d<geosx::real64,
+                                                                                const arraySlice1d<geos::real64,
                                                                                         relperm::USD_RELPERM
                                                                                         - 2> &phaseTrappedVolFrac,
-                                                                                const arraySlice1d<geosx::real64,
+                                                                                const arraySlice1d<geos::real64,
                                                                                         relperm::USD_RELPERM -
                                                                                         2> &phaseCapPressure,
-                                                                                const arraySlice2d<geosx::real64,
+                                                                                const arraySlice2d<geos::real64,
                                                                                         relperm::USD_RELPERM_DS
                                                                                         -
                                                                                         2> &dPhaseCapPressure_dPhaseVolFrac,
@@ -1137,19 +1144,21 @@ namespace geosx {
                 const arrayView1d<const TableFunction::KernelWrapper> &nonWettingKernelWrapper,
                 const KilloughHysteresis::HysteresisCurve &nonWettingCurve,
                 const KilloughHysteresis::HysteresisCurve &wettingCurve,
-                const geosx::real64 &landParam,
-                const geosx::real64 &phaseVolFraction,
-                const geosx::real64 &phaseMaxHistoricalVolFraction,
-                geosx::real64 &phaseTrappedVolFrac,
-                geosx::real64 &phaseCapPressure,
-                geosx::real64 &dPhaseCapPressure_dPhaseVolFrac,
+                const geos::real64 &landParam,
+                const geos::real64 &phaseVolFraction,
+                const geos::real64 &phaseMaxHistoricalVolFraction,
+                geos::real64 &phaseTrappedVolFrac,
+                geos::real64 &phaseCapPressure,
+                geos::real64 &dPhaseCapPressure_dPhaseVolFrac,
                 const ModeIndexType &mode) const {
-            GEOSX_ASSERT(!nonWettingCurve.isWetting());
+            GEOS_ASSERT(!nonWettingCurve.isWetting());
             real64 const S = phaseVolFraction;
             real64 const Smii = nonWettingCurve.imbibitionExtremaPhaseVolFraction;
             real64 const Smid = nonWettingCurve.drainageExtremaPhaseVolFraction;
             real64 const Smax = nonWettingCurve.oppositeBoundPhaseVolFraction;
 
+	    GEOS_UNUSED_VAR( Smii, Smid );
+	    
 //  if( S >= Smax )
 //  {
 //    //above accessible range
@@ -1223,7 +1232,7 @@ namespace geosx {
                     dPhaseCapPressure_dPhaseVolFrac = dpcd_dS + F * (dpcd_dS - dpci_dS);
                     dPhaseCapPressure_dPhaseVolFrac += dF_dS * (pcd - pci);
                 } else {
-                    GEOSX_THROW(GEOSX_FMT("{}: State is {}.Shouldnt be used in pure DRAINAGE or IMBIBITION.",
+                    GEOS_THROW(GEOS_FMT("{}: State is {}.Shouldnt be used in pure DRAINAGE or IMBIBITION.",
                                           "TableCapillaryPressureHysteresis",
                                           (mode == ModeIndexType::DRAINAGE) ? "DRAINAGE" : ((mode ==
                                                                                              ModeIndexType::IMBIBITION)
@@ -1241,20 +1250,22 @@ namespace geosx {
         TableCapillaryPressureHysteresis::KernelWrapper::computeImbibitionNonWettingCapillaryPressure(
                 const arrayView1d<const TableFunction::KernelWrapper> &nonWettingKernelWrapper,
                 const KilloughHysteresis::HysteresisCurve &nonWettingCurve,
-                const geosx::real64 &landParam,
-                const geosx::real64 &phaseVolFraction,
-                const geosx::real64 &phaseMaxHistoricalVolFraction,
-                geosx::real64 &phaseTrappedVolFrac,
-                geosx::real64 &phaseCapPressure,
-                geosx::real64 &dPhaseCapPressure_dPhaseVolFrac,
+                const geos::real64 &landParam,
+                const geos::real64 &phaseVolFraction,
+                const geos::real64 &phaseMaxHistoricalVolFraction,
+                geos::real64 &phaseTrappedVolFrac,
+                geos::real64 &phaseCapPressure,
+                geos::real64 &dPhaseCapPressure_dPhaseVolFrac,
                 const ModeIndexType &mode) const {
 
-            GEOSX_ASSERT(!nonWettingCurve.isWetting());
+            GEOS_ASSERT(!nonWettingCurve.isWetting());
             real64 const S = phaseVolFraction;
             real64 const Smii = nonWettingCurve.imbibitionExtremaPhaseVolFraction;
             real64 const Smid = nonWettingCurve.drainageExtremaPhaseVolFraction;
             real64 const Smax = nonWettingCurve.oppositeBoundPhaseVolFraction;
 
+	    GEOS_UNUSED_VAR( Smii, Smid );
+	    
 //  if( S >= Smax )
 //  {
 //    //above accessible range
@@ -1328,7 +1339,7 @@ namespace geosx {
                     dPhaseCapPressure_dPhaseVolFrac = dpcd_dS + F * (dpcd_dS - dpci_dS);
                     dPhaseCapPressure_dPhaseVolFrac += dF_dS * (pcd - pci);
                 } else {
-                    GEOSX_THROW(GEOSX_FMT("{}: State is {}.Shouldnt be used in pure DRAINAGE or IMBIBITION.",
+                    GEOS_THROW(GEOS_FMT("{}: State is {}.Shouldnt be used in pure DRAINAGE or IMBIBITION.",
                                           "TableCapillaryPressureHysteresis",
                                           (mode == ModeIndexType::DRAINAGE) ? "DRAINAGE" : ((mode ==
                                                                                              ModeIndexType::IMBIBITION)
@@ -1344,9 +1355,9 @@ namespace geosx {
 
         void TableCapillaryPressureHysteresis::KernelWrapper::computeBoundCapillaryPressure(
                 const TableFunction::KernelWrapper &drainageRelpermWrapper,
-                const geosx::real64 &phaseVolFraction,
-                geosx::real64 &phaseCapPressure,
-                geosx::real64 &dPhaseCapPressure_dPhaseVolFrac) const {
+                const geos::real64 &phaseVolFraction,
+                geos::real64 &phaseCapPressure,
+                geos::real64 &dPhaseCapPressure_dPhaseVolFrac) const {
             phaseCapPressure = drainageRelpermWrapper.compute(&phaseVolFraction,
                                                               &dPhaseCapPressure_dPhaseVolFrac);
 
@@ -1445,22 +1456,22 @@ namespace geosx {
                 arrayView1d<const TableFunction::KernelWrapper> const &wettingNonWettingCapillaryPressureKernelWrappers,
                 arrayView1d<const TableFunction::KernelWrapper> const &wettingIntermediateCapillaryPressureKernelWrappers,
                 arrayView1d<const TableFunction::KernelWrapper> const &nonWettingIntermediateCapillaryPressureKernelWrappers,
-                const arrayView1d<const geosx::integer> &phaseHasHysteresis,
-                const arrayView1d<const geosx::real64> &landParam,
+                const arrayView1d<const geos::integer> &phaseHasHysteresis,
+                const arrayView1d<const geos::real64> &landParam,
                 const real64 & jerauldParam_a,
                 const real64 & jerauldParam_b,
                 const real64 & killoughCurvaturePcParam,
-                const geosx::real64 &phaseIntermediateMinVolFraction,
+                const geos::real64 &phaseIntermediateMinVolFraction,
                 const KilloughHysteresis::HysteresisCurve &wettingCurve,
                 const KilloughHysteresis::HysteresisCurve &nonWettingCurve,
-                const arrayView2d<const geosx::real64, compflow::USD_PHASE> &phaseMinHistoricalVolFraction,
-                const arrayView2d<const geosx::real64, compflow::USD_PHASE> &phaseMaxHistoricalVolFraction,
+                const arrayView2d<const geos::real64, compflow::USD_PHASE> &phaseMinHistoricalVolFraction,
+                const arrayView2d<const geos::real64, compflow::USD_PHASE> &phaseMaxHistoricalVolFraction,
                 arrayView1d<integer const> const &phaseTypes,
                 arrayView1d<integer const> const &phaseOrder,
                 arrayView1d<integer> const &mode,
                 arrayView3d<real64, cappres::USD_CAPPRES> const &phaseTrapped,
-                const arrayView3d<geosx::real64, relperm::USD_RELPERM> &phaseCapPressure,
-                const arrayView4d<geosx::real64, relperm::USD_RELPERM_DS> &dPhaseCapPressure_dPhaseVolFrac)
+                const arrayView3d<geos::real64, relperm::USD_RELPERM> &phaseCapPressure,
+                const arrayView4d<geos::real64, relperm::USD_RELPERM_DS> &dPhaseCapPressure_dPhaseVolFrac)
                 :
                 CapillaryPressureBaseUpdate(phaseTypes,
                                             phaseOrder,
@@ -1488,4 +1499,4 @@ namespace geosx {
         REGISTER_CATALOG_ENTRY(ConstitutiveBase, TableCapillaryPressureHysteresis, std::string const &, Group * const)
 
     }
-} // geosx
+} // geos

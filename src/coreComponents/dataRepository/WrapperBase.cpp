@@ -20,7 +20,7 @@
 #include "RestartFlags.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -77,7 +77,7 @@ string WrapperBase::dumpInputOptions( bool const outputHeader ) const
 
   if( getInputFlag() == InputFlags::OPTIONAL || getInputFlag() == InputFlags::REQUIRED )
   {
-    rval.append( GEOSX_FMT( "  | {:20} | {:9} | {} \n", getName(), InputFlagToString( getInputFlag() ), getDescription() ) );
+    rval.append( GEOS_FMT( "  | {:20} | {:9} | {} \n", getName(), InputFlagToString( getInputFlag() ), getDescription() ) );
   }
 
   return rval;
@@ -104,9 +104,21 @@ int WrapperBase::setTotalviewDisplay() const
 }
 #endif
 
+void WrapperBase::processInputException( std::exception const & ex,
+                                         xmlWrapper::xmlNode const & targetNode ) const
+{
+  xmlWrapper::xmlAttribute const & attribute = targetNode.attribute( getName().c_str() );
+  string const inputStr = string( attribute.value() );
+  string subExStr = string( "***** XML parsing error in " ) + targetNode.path() +
+                    " (name=" + targetNode.attribute( "name" ).value() + ")/" + attribute.name() +
+                    "\n***** Input value: '" + inputStr + "'\n";
+
+  throw InputError( subExStr + ex.what() );
+}
+
 
 }
-} /* namespace geosx */
+} /* namespace geos */
 
 #if defined(USE_TOTALVIEW_OUTPUT)
 /**
@@ -115,7 +127,7 @@ int WrapperBase::setTotalviewDisplay() const
  * @param wrapper A pointer to the wrapper that will be displayed.
  * @return 0
  */
-int TV_ttf_display_type( const geosx::dataRepository::WrapperBase * wrapper )
+int TV_ttf_display_type( const geos::dataRepository::WrapperBase * wrapper )
 {
   if( wrapper!=nullptr )
   {

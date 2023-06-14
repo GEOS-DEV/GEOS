@@ -16,8 +16,8 @@
  * @file DofManager.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_
-#define GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_
+#ifndef GEOS_LINEARALGEBRA_DOFMANAGER_HPP_
+#define GEOS_LINEARALGEBRA_DOFMANAGER_HPP_
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/utilities/ComponentMask.hpp"
@@ -25,7 +25,7 @@
 
 #include <numeric>
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;
@@ -63,14 +63,35 @@ public:
   /**
    * @brief Describes field support on a single mesh body/level
    */
-  struct Regions
+  struct FieldSupport
   {
+public:
     /// name of the mesh body
     string meshBodyName;
     /// name of the mesh level
     string meshLevelName;
     /// list of the region names
-    std::vector< string > regionNames;
+    std::set< string > regionNames;
+
+    /**
+     * @brief add the regionNames contained in \p input if the meshBodyName and the meshLevelName of input match the
+     * ones of this obj
+     *
+     * @param input a FieldSupport descriptor
+     * @return true regionNames were added
+     * @return false regionNames were not added
+     */
+    bool add( FieldSupport const & input )
+    {
+      bool added = false;
+      if( meshBodyName  == input.meshBodyName && meshLevelName == input.meshLevelName )
+      {
+        regionNames.insert( input.regionNames.begin(), input.regionNames.end() );
+        added = true;
+      }
+
+      return added;
+    }
   };
 
   /**
@@ -143,17 +164,33 @@ public:
   void addField( string const & fieldName,
                  FieldLocation location,
                  integer components,
-                 std::vector< Regions > const & regions = {} );
+                 std::vector< FieldSupport > const & regions = {} );
 
   /**
-   * @copydoc addField(string const &, FieldLocation, integer, std::vector< Regions > const &)
+   * @copydoc addField(string const &, FieldLocation, integer, std::vector< FieldSupport > const &)
    *
-   * Overload for  map< string, array1d< string > > bodyRegions used by physics solvers.
+   * Overload for  map< string, array1d< string > > bodyFieldSupport used by physics solvers.
    */
   void addField( string const & fieldName,
                  FieldLocation location,
                  integer components,
                  map< std::pair< string, string >, array1d< string > > const & regions );
+
+  /**
+   * @brief Disable the global coupling for a given equation
+   * @param [in] fieldName the name of the field
+   * @param [in] c the index of the equation
+   */
+  void disableGlobalCouplingForEquation( string const & fieldName,
+                                         integer const c );
+
+  /**
+   * @brief Disable the global coupling for a set of equations
+   * @param [in] fieldName the name of the field
+   * @param [in] components the indices of the equations
+   */
+  void disableGlobalCouplingForEquations( string const & fieldName,
+                                          arrayView1d< integer const > const components );
 
   /**
    * @brief Add coupling between two fields.
@@ -181,10 +218,10 @@ public:
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
                     Connector connectivity,
-                    std::vector< Regions > const & regions = {},
+                    std::vector< FieldSupport > const & regions = {},
                     bool symmetric = true );
   /**
-   * @copydoc addCoupling( string const & ,string const & ,Connector , std::vector< Regions > const & , bool  );
+   * @copydoc addCoupling( string const & ,string const & ,Connector , std::vector< FieldSupport > const & , bool  );
    */
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
@@ -353,10 +390,11 @@ public:
    * @param scalingFactor a factor to scale vector values by
    * @param mask component selection mask
    */
+  template< typename SCALING_FACTOR_TYPE >
   void addVectorToField( arrayView1d< real64 const > const & localVector,
                          string const & srcFieldName,
                          string const & dstFieldName,
-                         real64 scalingFactor,
+                         SCALING_FACTOR_TYPE const & scalingFactor,
                          CompMask mask = CompMask( MAX_COMP, true ) ) const;
 
   /**
@@ -445,9 +483,11 @@ private:
     string name;                   ///< field name
     string key;                    ///< string key for index array
     string docstring;              ///< documentation string
-    std::vector< Regions > support;///< list of mesh body/level/region supports
+    std::vector< FieldSupport > support;///< list of mesh body/level/region supports
     FieldLocation location;             ///< support location
     integer numComponents = 1;     ///< number of vector components
+    CompMask globallyCoupledComponents; ///< mask to distinguish globally coupled components from locally coupled components (the latter
+                                        ///< don't interact with neighbors)
     localIndex numLocalDof = 0;    ///< number of local rows
     globalIndex numGlobalDof = 0;  ///< number of global rows
     globalIndex blockOffset = 0;   ///< offset of this field's block in a block-wise ordered system
@@ -461,7 +501,7 @@ private:
   struct CouplingDescription
   {
     Connector connector = Connector::None;  //!< geometric object defining dof connections
-    std::vector< Regions > support; //!< list of region names
+    std::vector< FieldSupport > support; //!< list of region names
     FluxApproximationBase const * stencils = nullptr; //!< pointer to flux stencils for stencil based connections
   };
 
@@ -530,11 +570,11 @@ private:
    * @param scalingFactor a factor to scale vector values by
    * @param mask component selection mask (for partial copy)
    */
-  template< typename FIELD_OP, typename POLICY >
+  template< typename FIELD_OP, typename POLICY, typename SCALING_FACTOR_TYPE >
   void vectorToField( arrayView1d< real64 const > const & localVector,
                       string const & srcFieldName,
                       string const & dstFieldName,
-                      real64 scalingFactor,
+                      SCALING_FACTOR_TYPE const & scalingFactor,
                       CompMask mask ) const;
 
   /**
@@ -570,6 +610,6 @@ private:
   bool m_reordered = false;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /*GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_DOFMANAGER_HPP_*/

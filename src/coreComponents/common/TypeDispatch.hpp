@@ -18,8 +18,8 @@
  * Collection of tools to help dispatch templated functions on types
  */
 
-#ifndef GEOSX_COMMON_TYPEDISPATCH_HPP
-#define GEOSX_COMMON_TYPEDISPATCH_HPP
+#ifndef GEOS_COMMON_TYPEDISPATCH_HPP
+#define GEOS_COMMON_TYPEDISPATCH_HPP
 
 #include "common/DataTypes.hpp"
 
@@ -27,7 +27,7 @@
 
 #include <unordered_map>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -122,7 +122,7 @@ struct ArrayType;
 template< typename T, typename NDIM, typename LAYOUT >
 struct ArrayType< camp::list< T, camp::list< NDIM, LAYOUT > > >
 {
-  using type = ::geosx::Array< T, NDIM::value, LAYOUT >;
+  using type = ::geos::Array< T, NDIM::value, LAYOUT >;
 };
 
 // Helper to apply a template to all types in a list
@@ -166,7 +166,7 @@ template< typename ... Ls >
 using Join = typename camp::join< Ls ... >::type;
 
 /**
- * @brief Construct a list of GEOSX multidimensional array types (geosx::Array), containing all
+ * @brief Construct a list of GEOSX multidimensional array types (geos::Array), containing all
  *        value types in type list @p TYPES and all dimensionalities in list of integral constants @p NDIMS.
  */
 template< typename TYPES, typename NDIMS >
@@ -243,7 +243,7 @@ bool dispatchViaTable( TypeList< Ts... > const types,
   auto const it = typeIndexMap.find( type );
   if( it != typeIndexMap.end() )
   {
-    GEOSX_ASSERT_GT( sizeof...( Ts ), it->second ); // sanity check
+    GEOS_ASSERT_GT( sizeof...( Ts ), it->second ); // sanity check
     handlers[ it->second ]( std::forward< LAMBDA >( lambda ) );
     return true;
   }
@@ -275,15 +275,15 @@ bool dispatch( TypeList< Ts... > const types,
   bool const success = internal::dispatchViaTable( types, type, std::forward< LAMBDA >( lambda ) );
   if( !success && errorIfTypeNotFound )
   {
-    GEOSX_ERROR( "Type " << LvArray::system::demangle( type.name() ) << " was not dispatched.\n" <<
-                 "Check the stack trace below and revise the type list passed to dispatch().\n" <<
-                 "If you are unsure about this error, please report it to GEOSX issue tracker." );
+    GEOS_ERROR( "Type " << LvArray::system::demangle( type.name() ) << " was not dispatched.\n" <<
+                "Check the stack trace below and revise the type list passed to dispatch().\n" <<
+                "If you are unsure about this error, please report it to GEOSX issue tracker." );
   }
   return success;
 }
 
 } // namespace types
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_COMMON_TYPEDISPATCH_HPP
+#endif //GEOS_COMMON_TYPEDISPATCH_HPP

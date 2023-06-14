@@ -16,8 +16,8 @@
  * @file TableRelativePermeabilityHysteresis.hpp
  */
 
-#ifndef GEOSX_KILLOUGHHYSTERESIS_HPP
-#define GEOSX_KILLOUGHHYSTERESIS_HPP
+#ifndef GEOS_KILLOUGHHYSTERESIS_HPP
+#define GEOS_KILLOUGHHYSTERESIS_HPP
 
 #include "constitutive/ConstitutiveBase.hpp"
 #include "functions/TableFunction.hpp"
@@ -25,7 +25,7 @@
 #include "relativePermeability/Layouts.hpp"
 #include "capillaryPressure/Layouts.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -142,7 +142,7 @@ public:
                                real64 const &killoughCurvatureParamRelPerm,
                                real64 const &killoughCurvatureParamPc);
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void computeLandCoefficient( HysteresisCurve const & hcruve, real64 & landParam );
   /**
    * @brief Function computing the trapped critical phase volume fraction
@@ -153,7 +153,7 @@ public:
    * @param[in] jerauldParam_b jerauld expononent
    * @param[out] Scrt the trapped critical phase volume fraction
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void computeTrappedCriticalPhaseVolFraction( HysteresisCurve const & hcurve,
                                                       real64 const & Shy,
                                                       real64 const & landParam,
@@ -176,4 +176,4 @@ public:
 
 }
 
-#endif //GEOSX_KILLOUGHHYSTERESIS_HPP
+#endif //GEOS_KILLOUGHHYSTERESIS_HPP

@@ -17,12 +17,12 @@
  *
  */
 
-#ifndef GEOSX_FIELDSPECIFICATION_SOURCEFLUXBOUNDARYCONDITION_HPP_
-#define GEOSX_FIELDSPECIFICATION_SOURCEFLUXBOUNDARYCONDITION_HPP_
+#ifndef GEOS_FIELDSPECIFICATION_SOURCEFLUXBOUNDARYCONDITION_HPP_
+#define GEOS_FIELDSPECIFICATION_SOURCEFLUXBOUNDARYCONDITION_HPP_
 
 #include "FieldSpecificationBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -45,13 +45,6 @@ public:
   SourceFluxBoundaryCondition() = delete;
 
   /**
-   * @brief destructor
-   */
-  virtual ~SourceFluxBoundaryCondition() override;
-
-  virtual void initializePreSubGroups() override;
-
-  /**
    * @brief Static Factory Catalog Functions
    * @return the catalog name
    */
@@ -64,6 +57,6 @@ public:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FIELDSPECIFICATION_SOURCEFLUXBOUNDARYCONDITION_HPP_ */
+#endif /* GEOS_FIELDSPECIFICATION_SOURCEFLUXBOUNDARYCONDITION_HPP_ */

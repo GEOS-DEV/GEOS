@@ -19,7 +19,7 @@
 #include "constitutive/solid/porosity/PorosityBase.hpp"
 #include "constitutive/solid/porosity/PorosityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -33,6 +33,7 @@ PorosityBase::PorosityBase( string const & name, Group * const parent ):
   m_newPorosity(),
   m_porosity_n(),
   m_dPorosity_dPressure(),
+  m_dPorosity_dTemperature(),
   m_initialPorosity(),
   m_referencePorosity(),
   m_defaultReferencePorosity()
@@ -47,6 +48,8 @@ PorosityBase::PorosityBase( string const & name, Group * const parent ):
 
   registerField( fields::porosity::dPorosity_dPressure{}, &m_dPorosity_dPressure );
 
+  registerField( fields::porosity::dPorosity_dTemperature{}, &m_dPorosity_dTemperature );
+
   registerField( fields::porosity::initialPorosity{}, &m_initialPorosity );
 
   registerField( fields::porosity::referencePorosity{}, &m_referencePorosity );
@@ -58,6 +61,7 @@ void PorosityBase::allocateConstitutiveData( dataRepository::Group & parent,
   m_newPorosity.resize( 0, numConstitutivePointsPerParentIndex );
   m_porosity_n.resize( 0, numConstitutivePointsPerParentIndex );
   m_dPorosity_dPressure.resize( 0, numConstitutivePointsPerParentIndex );
+  m_dPorosity_dTemperature.resize( 0, numConstitutivePointsPerParentIndex );
   m_initialPorosity.resize( 0, numConstitutivePointsPerParentIndex );
 
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
@@ -75,7 +79,7 @@ void PorosityBase::scaleReferencePorosity( arrayView1d< real64 const > scalingFa
 
   arrayView1d< real64 > referencePorosity = m_referencePorosity;
 
-  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( numE, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     referencePorosity[k] *= scalingFactors[k];
   } );
@@ -93,4 +97,4 @@ void PorosityBase::initializeState() const
 }
 
 }
-} /* namespace geosx */
+} /* namespace geos */

@@ -19,7 +19,7 @@
 #include "KilloughHysteresis.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -32,26 +32,26 @@ void KilloughHysteresis::postProcessInput(real64 const &jerauldParam_a, real64 c
                                           real64 const &killoughCurvatureParamRelPerm,
                                           real64 const &killoughCurvatureParamPc)
 {
-  GEOSX_THROW_IF( jerauldParam_a < 0,
-                  GEOSX_FMT( "{}: the parameter {} must be positive",
+  GEOS_THROW_IF( jerauldParam_a < 0,
+                  GEOS_FMT( "{}: the parameter {} must be positive",
                              catalogName(),
                              viewKeyStruct::jerauldParameterAString() ),
                   InputError );
 
-  GEOSX_THROW_IF( jerauldParam_b < 0,
-                  GEOSX_FMT( "{}: the paramater {} must be postitive",
+  GEOS_THROW_IF( jerauldParam_b < 0,
+                  GEOS_FMT( "{}: the paramater {} must be postitive",
                              catalogName(),
                              viewKeyStruct::jerauldParameterBString() ),
                   InputError );
 
-  GEOSX_THROW_IF( killoughCurvatureParamRelPerm < 0,
-                  GEOSX_FMT( "{}: the paramater {} must be postitive",
+  GEOS_THROW_IF( killoughCurvatureParamRelPerm < 0,
+                  GEOS_FMT( "{}: the paramater {} must be postitive",
                              catalogName(),
                              viewKeyStruct::killoughCurvatureParameterRelPermString() ),
                   InputError );
 
-  GEOSX_THROW_IF( killoughCurvatureParamPc < 0,
-                    GEOSX_FMT( "{}: the paramater {} must be postitive",
+  GEOS_THROW_IF( killoughCurvatureParamPc < 0,
+                    GEOS_FMT( "{}: the paramater {} must be postitive",
                                catalogName(),
                                viewKeyStruct::killoughCurvatureParameterPcString() ),
                     InputError );
@@ -74,8 +74,8 @@ void KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::HysteresisC
     real64 const Smxd = hcurve.drainageExtremaPhaseVolFraction;
     real64 const Smxi = hcurve.imbibitionExtremaPhaseVolFraction;
     real64 const Swc = Scrd;
-    GEOSX_THROW_IF(  (Smxi - Smxd) > 0,
-                     GEOSX_FMT( "{}: For wetting phase hysteresis, imbibition end-point saturation Smxi( {} ) must be smaller than the drainage saturation end-point Smxd( {} ).\n"
+    GEOS_THROW_IF(  (Smxi - Smxd) > 0,
+                     GEOS_FMT( "{}: For wetting phase hysteresis, imbibition end-point saturation Smxi( {} ) must be smaller than the drainage saturation end-point Smxd( {} ).\n"
                                 "Crossing relative permeability curves.\n",
                                 catalogName(),
                                 Smxi,
@@ -91,8 +91,8 @@ void KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::HysteresisC
     real64 const Smx =  hcurve.oppositeBoundPhaseVolFraction;
     real64 const Scrd = hcurve.drainageExtremaPhaseVolFraction;
     real64 const Scri = hcurve.imbibitionExtremaPhaseVolFraction;
-    GEOSX_THROW_IF( (Scrd - Scri) > 0,
-                    GEOSX_FMT( "{}: For non-wetting phase hysteresis, drainage trapped saturation Scrd( {} ) must be smaller than the imbibition saturation Scri( {} ).\n"
+    GEOS_THROW_IF( (Scrd - Scri) > 0,
+                    GEOS_FMT( "{}: For non-wetting phase hysteresis, drainage trapped saturation Scrd( {} ) must be smaller than the imbibition saturation Scri( {} ).\n"
                                "Crossing relative permeability curves.\n",
                                catalogName(),
                                Scrd,
@@ -103,7 +103,7 @@ void KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::HysteresisC
   }
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 KilloughHysteresis::
   computeTrappedCriticalPhaseVolFraction( HysteresisCurve const & hcurve,

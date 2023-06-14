@@ -16,8 +16,8 @@
  * @file VTKUtilities.hpp
  */
 
-#ifndef GEOSX_MESH_GENERATORS_VTKUTILITIES_HPP
-#define GEOSX_MESH_GENERATORS_VTKUTILITIES_HPP
+#ifndef GEOS_MESH_GENERATORS_VTKUTILITIES_HPP
+#define GEOS_MESH_GENERATORS_VTKUTILITIES_HPP
 
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
@@ -32,7 +32,7 @@
 #include <numeric>
 #include <unordered_set>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -71,9 +71,11 @@ vtkSmartPointer< vtkMultiProcessController > getController();
 /**
  * @brief Load the VTK file into the VTK data structure
  * @param[in] filePath the Path of the file to load
+ * @param[in] blockName The name of the block to import (will be considered for multi-block files only).
  * @return a vtk mesh
  */
-vtkSmartPointer< vtkDataSet > loadMesh( Path const & filePath );
+vtkSmartPointer< vtkDataSet > loadMesh( Path const & filePath,
+                                        const string & blockName = "" );
 
 /**
  * @brief Compute the rank neighbor candidate list.
@@ -131,6 +133,60 @@ std::vector< vtkDataArray * >
 findArraysForImport( vtkDataSet & mesh,
                      arrayView1d< string const > const & srcFieldNames );
 
+/**
+ * @brief Collect the data to be imported.
+ * @param[in] mesh an input mesh
+ * @param[in] sourceName a field name
+ * @return A VTK data array pointer.
+ */
+vtkDataArray * findArrayForImport( vtkDataSet & mesh, string const & sourceName );
+
+/**
+ * @brief Check if the vtk mesh as a cell data field of name @p sourceName
+ * @param[in] mesh an input mesh
+ * @param[in] sourceName a field name
+ * @return The boolean result.
+ * @note No check is performed to see if the type of the vtk array matches any requirement.
+ */
+bool hasArray( vtkDataSet & mesh, string const & sourceName );
+
+/**
+ * @brief build cell block name from regionId and cellType
+ * @param[in] type The type of element in the region
+ * @param[in] regionId The region considered
+ * @return The cell block name
+ */
+string buildCellBlockName( ElementType const type, int const regionId );
+
+/**
+ * @brief Imports 2d and 3d arrays from @p vtkArray to @p wrapper, only for @p cellIds
+ * @param cellIds The cells for which we should copy the data.
+ * @param vtkArray The source.
+ * @param wrapper The destination.
+ */
+void importMaterialField( std::vector< vtkIdType > const & cellIds,
+                          vtkDataArray * vtkArray,
+                          WrapperBase & wrapper );
+
+/**
+ * @brief Imports 1d and 2d arrays from @p vtkArray to @p wrapper, only for @p cellIds
+ * @param cellIds The cells for which we should copy the data.
+ * @param vtkArray The source.
+ * @param wrapper The destination.
+ */
+void importRegularField( std::vector< vtkIdType > const & cellIds,
+                         vtkDataArray * vtkArray,
+                         WrapperBase & wrapper );
+
+/**
+ * @brief Imports 1d and 2d arrays from @p vtkArray to @p wrapper, for all the elements/cells of the provided wrapper.
+ * @param vtkArray The source.
+ * @param wrapper The destination.
+ */
+void importRegularField( vtkDataArray * vtkArray,
+                         WrapperBase & wrapper );
+
+
 } // namespace vtk
 
 /**
@@ -147,8 +203,8 @@ real64 writeNodes( integer const logLevel,
                    vtkDataSet & mesh,
                    string_array & nodesetNames,
                    CellBlockManager & cellBlockManager,
-                   const geosx::R1Tensor & translate,
-                   const geosx::R1Tensor & scale );
+                   const geos::R1Tensor & translate,
+                   const geos::R1Tensor & scale );
 
 /**
  * @brief Build all the cell blocks.
@@ -159,7 +215,7 @@ real64 writeNodes( integer const logLevel,
  */
 void writeCells( integer const logLevel,
                  vtkDataSet & mesh,
-                 const geosx::vtk::CellMapType & cellMap,
+                 const geos::vtk::CellMapType & cellMap,
                  CellBlockManager & cellBlockManager );
 
 /**
@@ -173,31 +229,9 @@ void writeCells( integer const logLevel,
  */
 void writeSurfaces( integer const logLevel,
                     vtkDataSet & mesh,
-                    const geosx::vtk::CellMapType & cellMap,
+                    const geos::vtk::CellMapType & cellMap,
                     CellBlockManager & cellBlockManager );
 
-/**
- * @brief Import data on 3d cells restricted to cells in a specific region
- *
- * @param logLevel the log level
- * @param regionId The id of the region
- * @param elemType The type of the element to store the data
- * @param cellIds The cell ids of the specific region
- * @param elemManager The instance that stores the elements.
- * @param fieldNames An array of the fields names
- * @param srcArrays an array of data to import
- * @param fieldsToBeSync Indentifies the fields to synchronize
- */
-void importFieldOnCellElementSubRegion( integer const logLevel,
-                                        integer const regionId,
-                                        ElementType const elemType,
-                                        std::vector< vtkIdType > const & cellIds,
-                                        ElementRegionManager & elemManager,
-                                        arrayView1d< string const > const & fieldNames,
-                                        std::vector< vtkDataArray * > const & srcArrays,
-                                        FieldIdentifiers & fieldsToBeSync );
+} // namespace geos
 
-
-} // namespace geosx
-
-#endif /* GEOSX_MESH_GENERATORS_VTKUTILITIES_HPP */
+#endif /* GEOS_MESH_GENERATORS_VTKUTILITIES_HPP */

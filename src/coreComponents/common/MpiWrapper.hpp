@@ -15,8 +15,8 @@
  * @file MpiWrapper.hpp
  */
 
-#ifndef GEOSX_COMMON_MPIWRAPPER_HPP_
-#define GEOSX_COMMON_MPIWRAPPER_HPP_
+#ifndef GEOS_COMMON_MPIWRAPPER_HPP_
+#define GEOS_COMMON_MPIWRAPPER_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/Span.hpp"
@@ -90,11 +90,11 @@ struct MPI_Status
 #if defined(NDEBUG)
 #define MPI_CHECK_ERROR( error ) ((void) error)
 #else
-#define MPI_CHECK_ERROR( error ) GEOSX_ERROR_IF_NE( error, MPI_SUCCESS );
+#define MPI_CHECK_ERROR( error ) GEOS_ERROR_IF_NE( error, MPI_SUCCESS );
 #endif
 
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -224,9 +224,12 @@ public:
    * @param[inout] array_of_requests The MPI_Requests to actively wait on.
    * @param[in] func A callable object accepting an integer denoting the MPI_Request index
    *              which has completed.
-   * @return MPI_SUCCESS or an MPI_ERROR returned by geosx::internal calls to MPI_WaitAny.
+   * @return MPI_SUCCESS or an MPI_ERROR returned by internal calls to MPI_WaitAny.
    */
-  static int activeWaitAny( const int count, MPI_Request array_of_requests[], std::function< void ( int ) > func );
+  static int activeWaitAny( const int count,
+                            MPI_Request array_of_requests[],
+                            MPI_Status array_of_statuses[],
+                            std::function< MPI_Request ( int ) > func );
 
   /**
    * Wait on MPI_Requests to complete on or more at a time and trigger a callback to
@@ -235,24 +238,12 @@ public:
    * @param[inout] array_of_requests The MPI_Requests to actively wait on.
    * @param[in] func A callable object accepting an integer denoting the MPI_Request index
    *              which has completed.
-   * @return MPI_SUCCESS or an MPI_ERROR returned by geosx::internal calls to MPI_WaitSome.
+   * @return MPI_SUCCESS or an MPI_ERROR returned by internal calls to MPI_WaitSome.
    */
-  static int activeWaitSome( const int count, MPI_Request array_of_requests[], std::function< void ( int ) > func );
-
-  /**
-   * Active non-blocking phased communication with multiple participants,
-   *  each participant in each phase cannot depend on the previous phases
-   *  being complete for any participant other than itself.
-   * @param[in] participants The number of participants in each phase
-   * @param[in] phases A vector of function objects taking int and returning MPI_Requests
-   *               denoting the state of that participant in that phase.
-   * @note The only restriction on phase[N](index) being called is that phase[N-1](index)
-   *       has been called and the MPI_Request returned by that call has completed.
-   * @note One can add a final recv phase by having that phase return MPI_REQUEST_NULL.
-   * @return MPI_SUCCESS or and MPI_ERROR from geosx::internal calls to MPI_WaitAny.
-   */
-  static int activeWaitSomePartialPhase( const int participants,
-                                         std::vector< std::function< MPI_Request ( int ) > > const & phases );
+  static int activeWaitSome( const int count,
+                             MPI_Request array_of_requests[],
+                             MPI_Status array_of_statuses[],
+                             std::function< MPI_Request ( int ) > func );
 
   /**
    * Active non-blocking phased communication with multiple participants,
@@ -264,10 +255,10 @@ public:
    * @note The restriction on phase[N](index) being called is that phase[N-1](0 - (particpants-1))
    *       have all been called and the MPI_Requests from those calls have all been completed.
    * @note One can add a final recv phase by having that phase return MPI_REQUEST_NULL.
-   * @return MPI_SUCCESS or and MPI_ERROR from geosx::internal calls to MPI_WaitAny.
+   * @return MPI_SUCCESS or and MPI_ERROR from internal calls to MPI_WaitAny.
    */
   static int activeWaitSomeCompletePhase( const int participants,
-                                          std::vector< std::function< MPI_Request ( int ) > > const & phases );
+                                          std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases );
 
   /**
    * Active blocking phased communication with multiple participants,
@@ -280,10 +271,10 @@ public:
    *       and phase[N](0..index) have all been called and the MPI_Requests from those calls have all
    *       been completed.
    * @note One can add a final recv phase by having that phase return MPI_REQUEST_NULL.
-   * @return MPI_SUCCESS or and MPI_ERROR from geosx::internal calls to MPI_WaitAny.
+   * @return MPI_SUCCESS or and MPI_ERROR from internal calls to MPI_WaitAny.
    */
   static int activeWaitOrderedCompletePhase( const int participants,
-                                             std::vector< std::function< MPI_Request ( int ) > > const & phases );
+                                             std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases );
   ///@}
 
 #if !defined(GEOSX_USE_MPI)
@@ -444,7 +435,7 @@ public:
                    MPI_Status * MPI_PARAM( request ) );
 
   template< typename T >
-  static int iSend( arrayView1d< T const > const & buf,
+  static int iSend( arrayView1d< T > const & buf,
                     int MPI_PARAM( dest ),
                     int tag,
                     MPI_Comm MPI_PARAM( comm ),
@@ -631,7 +622,7 @@ inline MPI_Op MpiWrapper::getMpiOp( Reduction const op )
       return MPI_PROD;
     }
     default:
-      GEOSX_ERROR( "Unsupported reduction operation" );
+      GEOS_ERROR( "Unsupported reduction operation" );
       return MPI_NO_OP;
   }
 }
@@ -644,13 +635,13 @@ int MpiWrapper::allgather( T_SEND const * const sendbuf,
                            MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Allgather( sendbuf, sendcount, geosx::internal::getMpiType< T_SEND >(),
-                        recvbuf, recvcount, geosx::internal::getMpiType< T_RECV >(),
+  return MPI_Allgather( sendbuf, sendcount, internal::getMpiType< T_SEND >(),
+                        recvbuf, recvcount, internal::getMpiType< T_RECV >(),
                         comm );
 #else
   static_assert( std::is_same< T_SEND, T_RECV >::value,
                  "MpiWrapper::allgather() for serial run requires send and receive buffers are of the same type" );
-  GEOSX_ERROR_IF_NE_MSG( sendcount, recvcount, "sendcount is not equal to recvcount." );
+  GEOS_ERROR_IF_NE_MSG( sendcount, recvcount, "sendcount is not equal to recvcount." );
   std::copy( sendbuf, sendbuf + sendcount, recvbuf )
   return 0;
 #endif
@@ -665,13 +656,13 @@ int MpiWrapper::allgatherv( T_SEND const * const sendbuf,
                             MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Allgatherv( sendbuf, sendcount, geosx::internal::getMpiType< T_SEND >(),
-                         recvbuf, recvcounts, displacements, geosx::internal::getMpiType< T_RECV >(),
+  return MPI_Allgatherv( sendbuf, sendcount, internal::getMpiType< T_SEND >(),
+                         recvbuf, recvcounts, displacements, internal::getMpiType< T_RECV >(),
                          comm );
 #else
   static_assert( std::is_same< T_SEND, T_RECV >::value,
                  "MpiWrapper::allgatherv() for serial run requires send and receive buffers are of the same type" );
-  GEOSX_ERROR_IF_NE_MSG( sendcount, recvcount, "sendcount is not equal to recvcount." );
+  GEOS_ERROR_IF_NE_MSG( sendcount, recvcount, "sendcount is not equal to recvcount." );
   std::copy( sendbuf, sendbuf + sendcount, recvbuf )
   return 0;
 #endif
@@ -685,7 +676,7 @@ void MpiWrapper::allGather( T const myValue, array1d< T > & allValues, MPI_Comm 
   int const mpiSize = commSize( comm );
   allValues.resize( mpiSize );
 
-  MPI_Datatype const MPI_TYPE = geosx::internal::getMpiType< T >();
+  MPI_Datatype const MPI_TYPE = internal::getMpiType< T >();
 
   MPI_Allgather( &myValue, 1, MPI_TYPE, allValues.data(), 1, MPI_TYPE, comm );
 
@@ -706,10 +697,10 @@ int MpiWrapper::allGather( arrayView1d< T const > const & sendValues,
   allValues.resize( mpiSize * sendSize );
   return MPI_Allgather( sendValues.data(),
                         sendSize,
-                        geosx::internal::getMpiType< T >(),
+                        internal::getMpiType< T >(),
                         allValues.data(),
                         sendSize,
-                        geosx::internal::getMpiType< T >(),
+                        internal::getMpiType< T >(),
                         comm );
 
 #else
@@ -730,7 +721,7 @@ int MpiWrapper::allReduce( T const * const sendbuf,
                            MPI_Comm const MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
-  MPI_Datatype const mpiType = geosx::internal::getMpiType< T >();
+  MPI_Datatype const mpiType = internal::getMpiType< T >();
   return MPI_Allreduce( sendbuf == recvbuf ? MPI_IN_PLACE : sendbuf, recvbuf, count, mpiType, op, comm );
 #else
   if( sendbuf != recvbuf )
@@ -749,7 +740,7 @@ int MpiWrapper::scan( T const * const sendbuf,
                       MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Scan( sendbuf, recvbuf, count, geosx::internal::getMpiType< T >(), op, comm );
+  return MPI_Scan( sendbuf, recvbuf, count, internal::getMpiType< T >(), op, comm );
 #else
   memcpy( recvbuf, sendbuf, count*sizeof(T) );
   return 0;
@@ -764,7 +755,7 @@ int MpiWrapper::exscan( T const * const MPI_PARAM( sendbuf ),
                         MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Exscan( sendbuf, recvbuf, count, geosx::internal::getMpiType< T >(), op, comm );
+  return MPI_Exscan( sendbuf, recvbuf, count, internal::getMpiType< T >(), op, comm );
 #else
   memset( recvbuf, 0, count*sizeof(T) );
   return 0;
@@ -778,7 +769,7 @@ int MpiWrapper::bcast( T * const MPI_PARAM( buffer ),
                        MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Bcast( buffer, count, geosx::internal::getMpiType< T >(), root, comm );
+  return MPI_Bcast( buffer, count, internal::getMpiType< T >(), root, comm );
 #else
   return 0;
 #endif
@@ -789,7 +780,7 @@ template< typename T >
 void MpiWrapper::broadcast( T & MPI_PARAM( value ), int MPI_PARAM( srcRank ), MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
-  MPI_Bcast( &value, 1, geosx::internal::getMpiType< T >(), srcRank, comm );
+  MPI_Bcast( &value, 1, internal::getMpiType< T >(), srcRank, comm );
 #endif
 }
 
@@ -803,7 +794,7 @@ void MpiWrapper::broadcast< string >( string & MPI_PARAM( value ),
   int size = LvArray::integerConversion< int >( value.size() );
   broadcast( size, srcRank, comm );
   value.resize( size );
-  MPI_Bcast( const_cast< char * >( value.data() ), size, geosx::internal::getMpiType< char >(), srcRank, comm );
+  MPI_Bcast( const_cast< char * >( value.data() ), size, internal::getMpiType< char >(), srcRank, comm );
 #endif
 }
 
@@ -816,15 +807,15 @@ int MpiWrapper::gather( TS const * const sendbuf,
                         MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Gather( sendbuf, sendcount, geosx::internal::getMpiType< TS >(),
-                     recvbuf, recvcount, geosx::internal::getMpiType< TR >(),
+  return MPI_Gather( sendbuf, sendcount, internal::getMpiType< TS >(),
+                     recvbuf, recvcount, internal::getMpiType< TR >(),
                      root, comm );
 #else
   static_assert( std::is_same< TS, TR >::value,
                  "MpiWrapper::gather() for serial run requires send and receive buffers are of the same type" );
   std::size_t const sendBufferSize = sendcount * sizeof(TS);
   std::size_t const recvBufferSize = recvcount * sizeof(TR);
-  GEOSX_ERROR_IF_NE_MSG( sendBufferSize, recvBufferSize, "size of send buffer and receive buffer are not equal" );
+  GEOS_ERROR_IF_NE_MSG( sendBufferSize, recvBufferSize, "size of send buffer and receive buffer are not equal" );
   memcpy( recvbuf, sendbuf, sendBufferSize );
   return 0;
 #endif
@@ -840,15 +831,15 @@ int MpiWrapper::gatherv( TS const * const sendbuf,
                          MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Gatherv( sendbuf, sendcount, geosx::internal::getMpiType< TS >(),
-                      recvbuf, recvcounts, displs, geosx::internal::getMpiType< TR >(),
+  return MPI_Gatherv( sendbuf, sendcount, internal::getMpiType< TS >(),
+                      recvbuf, recvcounts, displs, internal::getMpiType< TR >(),
                       root, comm );
 #else
   static_assert( std::is_same< TS, TR >::value,
                  "MpiWrapper::gather() for serial run requires send and receive buffers are of the same type" );
   std::size_t const sendBufferSize = sendcount * sizeof(TS);
   std::size_t const recvBufferSize = recvcounts[0] * sizeof(TR);
-  GEOSX_ERROR_IF_NE_MSG( sendBufferSize, recvBufferSize, "size of send buffer and receive buffer are not equal" );
+  GEOS_ERROR_IF_NE_MSG( sendBufferSize, recvBufferSize, "size of send buffer and receive buffer are not equal" );
   memcpy( recvbuf, sendbuf, sendBufferSize );
   return 0;
 #endif
@@ -863,20 +854,21 @@ int MpiWrapper::iRecv( T * const buf,
                        MPI_Request * MPI_PARAM( request ) )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Irecv( buf, count, geosx::internal::getMpiType< T >(), source, tag, comm, request );
+  GEOS_ERROR_IF( (*request)!=MPI_REQUEST_NULL,
+                 "Attempting to use an MPI_Request that is still in use." );
+  return MPI_Irecv( buf, count, internal::getMpiType< T >(), source, tag, comm, request );
 #else
   std::map< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
   std::map< int, std::pair< int, void * > >::iterator iPointer = pointerMap.find( tag );
 
   if( iPointer==pointerMap.end() )
   {
-    pointerMap.insert( {tag, {1, buf}
-                       } );
+    pointerMap.insert( {tag, {1, buf} } );
   }
   else
   {
-    GEOSX_ERROR_IF( iPointer->second.first != 0,
-                    "Tag does is assigned, but pointer was not set by iSend." );
+    GEOS_ERROR_IF( iPointer->second.first != 0,
+                   "Tag does is assigned, but pointer was not set by iSend." );
     memcpy( buf, iPointer->second.second, count*sizeof(T) );
     pointerMap.erase( iPointer );
   }
@@ -897,7 +889,7 @@ int MpiWrapper::recv( array1d< T > & buf,
   MPI_Probe( source, tag, comm, &status );
   MPI_Get_count( &status, MPI_CHAR, &count );
 
-  GEOSX_ASSERT_EQ( count % sizeof( T ), 0 );
+  GEOS_ASSERT_EQ( count % sizeof( T ), 0 );
   buf.resize( count / sizeof( T ) );
 
   return MPI_Recv( reinterpret_cast< char * >( buf.data() ),
@@ -908,20 +900,22 @@ int MpiWrapper::recv( array1d< T > & buf,
                    comm,
                    request );
 #else
-  GEOSX_ERROR( "Not implemented!" );
+  GEOS_ERROR( "Not implemented!" );
   return MPI_SUCCESS;
 #endif
 }
 
 template< typename T >
-int MpiWrapper::iSend( arrayView1d< T const > const & buf,
+int MpiWrapper::iSend( arrayView1d< T > const & buf,
                        int MPI_PARAM( dest ),
                        int tag,
                        MPI_Comm MPI_PARAM( comm ),
                        MPI_Request * MPI_PARAM( request ) )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Isend( reinterpret_cast< char const * >( buf.data() ),
+  GEOS_ERROR_IF( (*request)!=MPI_REQUEST_NULL,
+                 "Attempting to use an MPI_Request that is still in use." );
+  return MPI_Isend( reinterpret_cast< void const * >( buf.data() ),
                     buf.size() * sizeof( T ),
                     MPI_CHAR,
                     dest,
@@ -929,7 +923,7 @@ int MpiWrapper::iSend( arrayView1d< T const > const & buf,
                     comm,
                     request );
 #else
-  GEOSX_ERROR( "Not implemented." );
+  GEOS_ERROR( "Not implemented." );
   return MPI_SUCCESS;
 #endif
 }
@@ -943,7 +937,9 @@ int MpiWrapper::iSend( T const * const buf,
                        MPI_Request * MPI_PARAM( request ) )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Isend( buf, count, geosx::internal::getMpiType< T >(), dest, tag, comm, request );
+  GEOS_ERROR_IF( (*request)!=MPI_REQUEST_NULL,
+                 "Attempting to use an MPI_Request that is still in use." );
+  return MPI_Isend( buf, count, internal::getMpiType< T >(), dest, tag, comm, request );
 #else
   std::map< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
   std::map< int, std::pair< int, void * > >::iterator iPointer = pointerMap.find( tag );
@@ -955,8 +951,8 @@ int MpiWrapper::iSend( T const * const buf,
   }
   else
   {
-    GEOSX_ERROR_IF( iPointer->second.first != 1,
-                    "Tag does is assigned, but pointer was not set by iRecv." );
+    GEOS_ERROR_IF( iPointer->second.first != 1,
+                   "Tag does is assigned, but pointer was not set by iRecv." );
     memcpy( iPointer->second.second, buf, count*sizeof(T) );
     pointerMap.erase( iPointer );
   }
@@ -971,7 +967,7 @@ U MpiWrapper::prefixSum( T const value, MPI_Comm comm )
 
 #ifdef GEOSX_USE_MPI
   U const convertedValue = value;
-  int const error = MPI_Exscan( &convertedValue, &localResult, 1, geosx::internal::getMpiType< U >(), MPI_SUM, comm );
+  int const error = MPI_Exscan( &convertedValue, &localResult, 1, internal::getMpiType< U >(), MPI_SUM, comm );
   MPI_CHECK_ERROR( error );
 #endif
   if( commRank() == 0 )
@@ -994,7 +990,7 @@ T MpiWrapper::reduce( T const & value, Reduction const op, MPI_Comm const comm )
 template< typename T >
 void MpiWrapper::reduce( Span< T const > const src, Span< T > const dst, Reduction const op, MPI_Comm const comm )
 {
-  GEOSX_ASSERT_EQ( src.size(), dst.size() );
+  GEOS_ASSERT_EQ( src.size(), dst.size() );
   allReduce( src.data(), dst.data(), LvArray::integerConversion< int >( src.size() ), getMpiOp( op ), comm );
 }
 
@@ -1034,6 +1030,6 @@ void MpiWrapper::max( Span< T const > src, Span< T > dst, MPI_Comm comm )
   MpiWrapper::reduce( src, dst, Reduction::Max, comm );
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_COMMON_MPIWRAPPER_HPP_ */
+#endif /* GEOS_COMMON_MPIWRAPPER_HPP_ */

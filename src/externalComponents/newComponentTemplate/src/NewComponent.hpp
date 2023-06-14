@@ -21,7 +21,7 @@
 #include "physicsSolvers/SolverBase.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -52,6 +52,6 @@ private:
   NewComponent& operator=(const NewComponent&&) = delete;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* COMPONENTS_NEWCOMPONENTTEMPLATE_SRC_NEWCOMPONENT_HPP_ */

@@ -20,7 +20,7 @@
 #include "ThermalConductivityFields.hpp"
 #include "SinglePhaseThermalConductivityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -52,4 +52,4 @@ void SinglePhaseThermalConductivityBase::allocateConstitutiveData( dataRepositor
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

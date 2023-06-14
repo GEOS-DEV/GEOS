@@ -16,12 +16,12 @@
  * @file Perforation.hpp
  */
 
-#ifndef GEOSX_MESH_PERFORATION_HPP
-#define GEOSX_MESH_PERFORATION_HPP
+#ifndef GEOS_MESH_PERFORATION_HPP
+#define GEOS_MESH_PERFORATION_HPP
 
 #include "dataRepository/Group.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -131,6 +131,6 @@ private:
 
 };
 
-} //namespace geosx
+} //namespace geos
 
-#endif //GEOSX_MESH_PERFORATION_HPP
+#endif //GEOS_MESH_PERFORATION_HPP

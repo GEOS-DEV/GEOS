@@ -16,14 +16,14 @@
  * @file VTKOutput.hpp
  */
 
-#ifndef GEOSX_FILEIO_OUTPUTS_VTKOUTPUT_HPP_
-#define GEOSX_FILEIO_OUTPUTS_VTKOUTPUT_HPP_
+#ifndef GEOS_FILEIO_OUTPUTS_VTKOUTPUT_HPP_
+#define GEOS_FILEIO_OUTPUTS_VTKOUTPUT_HPP_
 
 #include "OutputBase.hpp"
 #include "fileIO/vtk/VTKPolyDataWriterInterface.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -33,7 +33,7 @@ class VTKOutput : public OutputBase
 {
 public:
 
-  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
+  /// @copydoc geos::dataRepository::Group::Group(string const & name, Group * const parent)
   VTKOutput( string const & name, Group * const parent );
 
   /// Destructor
@@ -88,6 +88,7 @@ public:
   {
     static constexpr auto plotFileRoot = "plotFileRoot";
     static constexpr auto writeFEMFaces = "writeFEMFaces";
+    static constexpr auto writeGhostCells = "writeGhostCells";
     static constexpr auto plotLevel = "plotLevel";
     static constexpr auto binaryString = "format";
     static constexpr auto outputRegionTypeString = "outputRegionType";
@@ -110,6 +111,9 @@ private:
   integer m_writeFaceMesh;
   integer m_plotLevel;
 
+  /// Should the vtk files contain the ghost cells or not.
+  integer m_writeGhostCells;
+
   /// flag to decide whether we only plot the specified field names
   integer m_onlyPlotSpecifiedFieldNames;
 
@@ -127,6 +131,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FILEIO_OUTPUTS_VTKOUTPUT_HPP_ */
+#endif /* GEOS_FILEIO_OUTPUTS_VTKOUTPUT_HPP_ */

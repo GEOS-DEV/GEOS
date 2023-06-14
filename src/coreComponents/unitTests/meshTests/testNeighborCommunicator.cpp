@@ -31,7 +31,7 @@
 #include <ctime>
 #include <cstdlib>
 
-using namespace geosx;
+using namespace geos;
 
 #ifndef GTEST_SKIP
 #define GTEST_SKIP() return
@@ -66,7 +66,7 @@ TEST( TestNeighborComms, testBuffers )
 #if defined(UMPIRE_ENABLE_CUDA) && defined(USE_CHAI)
 void pack( buffer_unit_type * buf, arrayView1d< const int > & veloc_view, localIndex size )
 {
-  forAll< parallelDevicePolicy< > >( size, [=] GEOSX_HOST_DEVICE ( localIndex ii )
+  forAll< parallelDevicePolicy< > >( size, [=] GEOS_HOST_DEVICE ( localIndex ii )
   {
     reinterpret_cast< int * >(buf)[ii] = veloc_view.data()[ii];
   } );
@@ -74,7 +74,7 @@ void pack( buffer_unit_type * buf, arrayView1d< const int > & veloc_view, localI
 
 void unpack( buffer_unit_type * buf, arrayView1d< int > & veloc_view, localIndex size )
 {
-  forAll< parallelDevicePolicy< > >( size, [=] GEOSX_HOST_DEVICE ( localIndex ii )
+  forAll< parallelDevicePolicy< > >( size, [=] GEOS_HOST_DEVICE ( localIndex ii )
   {
     veloc_view.data()[ii] = reinterpret_cast< int * >(buf)[ii];
   } );
@@ -100,7 +100,7 @@ TEST( TestNeighborComms, testMPICommunication_fromPinnedSetOnDevice )
     MPI_Request request;
     if( rnk == 0 )
     {
-      veloc.move( LvArray::MemorySpace::cuda );
+      veloc.move( parallelDeviceMemorySpace );
       auto veloc_view = veloc.toViewConst();
       pack( buf, veloc_view, size );
       MpiWrapper::iSend( buf, byte_size, 1, 0, MPI_COMM_GEOSX, &request );
@@ -114,7 +114,7 @@ TEST( TestNeighborComms, testMPICommunication_fromPinnedSetOnDevice )
       EXPECT_EQ( err, MPI_SUCCESS );
       auto veloc_view = veloc.toView();
       unpack( buf, veloc_view, size );
-      veloc.move( LvArray::MemorySpace::host );
+      veloc.move( hostMemorySpace );
       for( int ii = 0; ii < size; ++ii )
         EXPECT_EQ( veloc[ii], ii );
     }
@@ -125,8 +125,8 @@ TEST( TestNeighborComms, testMPICommunication_fromPinnedSetOnDevice )
 int main( int ac, char * av[] )
 {
   ::testing::InitGoogleTest( &ac, av );
-  geosx::basicSetup( ac, av );
+  geos::basicSetup( ac, av );
   int const result = RUN_ALL_TESTS();
-  geosx::basicCleanup();
+  geos::basicCleanup();
   return result;
 }

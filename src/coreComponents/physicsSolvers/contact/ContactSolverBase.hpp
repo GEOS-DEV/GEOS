@@ -17,13 +17,13 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_
+#define GEOS_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
 #include "physicsSolvers/contact/ContactFields.hpp"
 
-namespace geosx
+namespace geos
 {
 class SolidMechanicsLagrangianFEM;
 
@@ -36,11 +36,6 @@ public:
   ~ContactSolverBase() override = default;
 
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override;
-
-  virtual real64 solverStep( real64 const & time_n,
-                             real64 const & dt,
-                             int const cycleNumber,
-                             DomainPartition & domain ) override;
 
   virtual real64
   explicitStep( real64 const & time_n,
@@ -66,6 +61,8 @@ public:
 
   void setSolidSolverDofFlags( bool const flag ) { m_setupSolidSolverDofs = flag; }
 
+  void synchronizeFractureState( DomainPartition & domain ) const;
+
 protected:
 
   virtual void postProcessInput() override;
@@ -75,8 +72,8 @@ protected:
                                        globalIndex & numSlip,
                                        globalIndex & numOpen ) const;
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   static bool compareFractureStates( integer const state0,
                                      integer const state1 )
   {
@@ -84,8 +81,6 @@ protected:
            || ( state0 == fields::contact::FractureState::NewSlip && state1 == fields::contact::FractureState::Slip )
            || ( state0 == fields::contact::FractureState::Slip && state1 == fields::contact::FractureState::NewSlip );
   }
-
-  void synchronizeFractureState( DomainPartition & domain ) const;
 
   /// Solid mechanics solver name
   string m_solidSolverName;
@@ -118,6 +113,6 @@ protected:
   };
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_ */

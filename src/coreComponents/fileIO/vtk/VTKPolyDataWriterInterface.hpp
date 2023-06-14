@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_FILEIO_VTK_VTKPOLYDATAWRITERINTERFACE_HPP_
-#define GEOSX_FILEIO_VTK_VTKPOLYDATAWRITERINTERFACE_HPP_
+#ifndef GEOS_FILEIO_VTK_VTKPOLYDATAWRITERINTERFACE_HPP_
+#define GEOS_FILEIO_VTK_VTKPOLYDATAWRITERINTERFACE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "dataRepository/WrapperBase.hpp"
@@ -26,7 +26,7 @@ class vtkUnstructuredGrid;
 class vtkPointData;
 class vtkCellData;
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;
@@ -75,6 +75,15 @@ public:
    * @param[in] outputName folder name in which all the files will be written
    */
   explicit VTKPolyDataWriterInterface( string outputName );
+
+  /**
+   * @brief Defines if the vtk outputs should contain the ghost cells.
+   * @param writeGhostCells The boolean flag.
+   */
+  void setWriteGhostCells( bool writeGhostCells )
+  {
+    m_writeGhostCells = writeGhostCells;
+  }
 
   /**
    * @brief Sets the plot level
@@ -283,6 +292,9 @@ private:
   /// file containing all the paths to the VTM files.
   VTKPVDWriter m_pvd;
 
+  /// Should the vtk files contain the ghost cells or not.
+  bool m_writeGhostCells;
+
   /// Maximum plot level to be written.
   dataRepository::PlotLevel m_plotLevel;
 
@@ -306,6 +318,6 @@ private:
 };
 
 } // namespace vtk
-} // namespace geosx
+} // namespace geos
 
 #endif

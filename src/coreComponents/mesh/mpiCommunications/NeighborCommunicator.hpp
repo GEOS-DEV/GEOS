@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MESH_MPICOMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_
-#define GEOSX_MESH_MPICOMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_
+#ifndef GEOS_MESH_MPICOMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_
+#define GEOS_MESH_MPICOMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_
 
 #include "common/MpiWrapper.hpp"
 #include "mesh/FieldIdentifiers.hpp"
@@ -22,10 +22,10 @@
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "LvArray/src/limits.hpp"
 
-namespace geosx
+namespace geos
 {
-inline int CommTag( int const GEOSX_UNUSED_PARAM( senderRank ),
-                    int const GEOSX_UNUSED_PARAM( receiverRank ),
+inline int CommTag( int const GEOS_UNUSED_PARAM( senderRank ),
+                    int const GEOS_UNUSED_PARAM( receiverRank ),
                     int const comm )
 {
 //  int m_size;
@@ -333,6 +333,6 @@ void NeighborCommunicator::mpiISendReceiveData( array1d< T > const & sendBuffer,
                    mpiComm );
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_MPICOMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_ */
+#endif /* GEOS_MESH_MPICOMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_ */
