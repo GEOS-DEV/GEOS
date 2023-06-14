@@ -149,7 +149,7 @@ protected:
   array1d< real64 > m_waterOilRelPermExponentInv;
   array1d< real64 > m_waterOilRelPermMaxValue;
 
-    // gas-oil data
+  // gas-oil data
   array1d< real64 > m_gasOilRelPermExponentInv;
   array1d< real64 > m_gasOilRelPermMaxValue;
 

@@ -18,5 +18,5 @@
 
 namespace geos
 {
-    template void RelpermDriver::runTest< geos::constitutive::BrooksCoreyStone2RelativePermeability >( geos::constitutive::BrooksCoreyStone2RelativePermeability &, arrayView2d< real64 > const & );
+template void RelpermDriver::runTest< geos::constitutive::BrooksCoreyStone2RelativePermeability >( geos::constitutive::BrooksCoreyStone2RelativePermeability &, arrayView2d< real64 > const & );
 }

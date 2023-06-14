@@ -968,33 +968,36 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   // use saturation-weighted interpolation
   real64 const shiftedWettingVolFrac = ( phaseVolFraction[ipWetting] - m_drainagePhaseMinVolFraction[ipWetting] );
 
-    if (m_flagInterpolator == 0) {
-        relpermInterpolators::Baker::compute( shiftedWettingVolFrac,
-                                              phaseVolFraction[ipNonWetting],
-                                              m_phaseOrder,
-                                              interRelPerm_wi,
-                                              dInterRelPerm_wi_dInterVolFrac,
-                                              interRelPerm_nwi,
-                                              dInterRelPerm_nwi_dInterVolFrac,
-                                              phaseRelPerm[ipInter],
-                                              dPhaseRelPerm_dPhaseVolFrac[ipInter] );
+  if( m_flagInterpolator == 0 )
+  {
+    relpermInterpolators::Baker::compute( shiftedWettingVolFrac,
+                                          phaseVolFraction[ipNonWetting],
+                                          m_phaseOrder,
+                                          interRelPerm_wi,
+                                          dInterRelPerm_wi_dInterVolFrac,
+                                          interRelPerm_nwi,
+                                          dInterRelPerm_nwi_dInterVolFrac,
+                                          phaseRelPerm[ipInter],
+                                          dPhaseRelPerm_dPhaseVolFrac[ipInter] );
 
-    } else {
-        relpermInterpolators::Stone2::compute(shiftedWettingVolFrac,
-                                              phaseVolFraction[ipNonWetting],
-                                              m_phaseOrder,
-                                              m_waterOilRelPermMaxValue[ipNonWetting],
-                                              interRelPerm_wi,
-                                              dInterRelPerm_wi_dInterVolFrac,
-                                              interRelPerm_nwi,
-                                              dInterRelPerm_nwi_dInterVolFrac,
-                                              phaseRelPerm[ipWetting],
-                                              dPhaseRelPerm_dPhaseVolFrac[ipWetting][ipWetting],
-                                              phaseRelPerm[ipNonWetting],
-                                              dPhaseRelPerm_dPhaseVolFrac[ipNonWetting][ipNonWetting],
-                                              phaseRelPerm[ipInter],
-                                              dPhaseRelPerm_dPhaseVolFrac[ipInter] );
-    }
+  }
+  else
+  {
+    relpermInterpolators::Stone2::compute( shiftedWettingVolFrac,
+                                           phaseVolFraction[ipNonWetting],
+                                           m_phaseOrder,
+                                           m_waterOilRelPermMaxValue[ipNonWetting],
+                                           interRelPerm_wi,
+                                           dInterRelPerm_wi_dInterVolFrac,
+                                           interRelPerm_nwi,
+                                           dInterRelPerm_nwi_dInterVolFrac,
+                                           phaseRelPerm[ipWetting],
+                                           dPhaseRelPerm_dPhaseVolFrac[ipWetting][ipWetting],
+                                           phaseRelPerm[ipNonWetting],
+                                           dPhaseRelPerm_dPhaseVolFrac[ipNonWetting][ipNonWetting],
+                                           phaseRelPerm[ipInter],
+                                           dPhaseRelPerm_dPhaseVolFrac[ipInter] );
+  }
 }
 
 GEOS_HOST_DEVICE

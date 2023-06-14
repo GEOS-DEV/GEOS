@@ -73,10 +73,10 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
     setSizedFromParent( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
 
-  registerWrapper( viewKeyStruct::flagInterpolatorString(), &m_flagInterpolator).
-    setInputFlag( InputFlags::OPTIONAL).
-    setDefaultValue(0).
-          setDescription("Flag wheter choose Baker(0) or StoneII (else) interpolation (temp).");
+  registerWrapper( viewKeyStruct::flagInterpolatorString(), &m_flagInterpolator ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( 0 ).
+    setDescription( "Flag wheter choose Baker(0) or StoneII (else) interpolation (temp)." );
 }
 
 void TableRelativePermeability::postProcessInput()
@@ -198,7 +198,7 @@ void TableRelativePermeability::initializePreSubGroups()
       else if( ip == 1 ) // intermediate phase is oil
       {
         m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = phaseMinVolFrac;
-          m_waterOilMaxRelPerm = phaseRelPermEndPoint;
+        m_waterOilMaxRelPerm = phaseRelPermEndPoint;
       }
     }
     for( integer ip = 0; ip < m_nonWettingIntermediateRelPermTableNames.size(); ++ip )
@@ -274,11 +274,11 @@ TableRelativePermeability::KernelWrapper::
                                     phaseOrder,
                                     phaseRelPerm,
                                     dPhaseRelPerm_dPhaseVolFrac,
-                                    phaseTrappedVolFrac),
-    m_relPermKernelWrappers(relPermKernelWrappers),
-    m_phaseMinVolumeFraction(phaseMinVolumeFraction),
-    m_waterOilRelPermMaxValue(waterPhaseMaxVolumeFraction),
-    m_flagInterpolator(flagInterpolator) {}
+                                    phaseTrappedVolFrac ),
+  m_relPermKernelWrappers( relPermKernelWrappers ),
+  m_phaseMinVolumeFraction( phaseMinVolumeFraction ),
+  m_waterOilRelPermMaxValue( waterPhaseMaxVolumeFraction ),
+  m_flagInterpolator( flagInterpolator ) {}
 
 TableRelativePermeability::KernelWrapper
 TableRelativePermeability::createKernelWrapper()

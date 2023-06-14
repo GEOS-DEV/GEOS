@@ -62,7 +62,7 @@ public:
 
   void setFlagToStoneII()
   {
-      m_flagInterpolator = 1;
+    m_flagInterpolator = 1;
   }
 
   /// Type of kernel wrapper for in-kernel update
@@ -123,7 +123,7 @@ private:
     /// Minimum volume fraction for each phase (deduced from the table)
     arrayView1d< real64 const > m_phaseMinVolumeFraction;
 
-    real64 const  m_waterOilRelPermMaxValue;
+    real64 const m_waterOilRelPermMaxValue;
 
     integer const m_flagInterpolator;
   };
@@ -259,32 +259,35 @@ TableRelativePermeability::KernelWrapper::
   real64 const shiftedWettingVolFrac = (phaseVolFraction[ipWetting] - m_phaseMinVolumeFraction[ipWetting]);
 
   // TODO: add template to choose the interpolator from the XML file
-  if (m_flagInterpolator == 0) {
-      relpermInterpolators::Baker::compute( shiftedWettingVolFrac,
-                                            phaseVolFraction[ipNonWetting],
-                                            m_phaseOrder,
-                                            interRelPerm_wi,
-                                            dInterRelPerm_wi_dInterVolFrac,
-                                            interRelPerm_nwi,
-                                            dInterRelPerm_nwi_dInterVolFrac,
-                                            phaseRelPerm[ipInter],
-                                            dPhaseRelPerm_dPhaseVolFrac[ipInter] );
+  if( m_flagInterpolator == 0 )
+  {
+    relpermInterpolators::Baker::compute( shiftedWettingVolFrac,
+                                          phaseVolFraction[ipNonWetting],
+                                          m_phaseOrder,
+                                          interRelPerm_wi,
+                                          dInterRelPerm_wi_dInterVolFrac,
+                                          interRelPerm_nwi,
+                                          dInterRelPerm_nwi_dInterVolFrac,
+                                          phaseRelPerm[ipInter],
+                                          dPhaseRelPerm_dPhaseVolFrac[ipInter] );
 
-  } else {
-      relpermInterpolators::Stone2::compute(shiftedWettingVolFrac,
-                                            phaseVolFraction[ipNonWetting],
-                                            m_phaseOrder,
-                                            m_waterOilRelPermMaxValue,
-                                            interRelPerm_wi,
-                                            dInterRelPerm_wi_dInterVolFrac,
-                                            interRelPerm_nwi,
-                                            dInterRelPerm_nwi_dInterVolFrac,
-                                            phaseRelPerm[ipWetting],
-                                            dPhaseRelPerm_dPhaseVolFrac[ipWetting][ipWetting],
-                                            phaseRelPerm[ipNonWetting],
-                                            dPhaseRelPerm_dPhaseVolFrac[ipNonWetting][ipNonWetting],
-                                            phaseRelPerm[ipInter],
-                                            dPhaseRelPerm_dPhaseVolFrac[ipInter] );
+  }
+  else
+  {
+    relpermInterpolators::Stone2::compute( shiftedWettingVolFrac,
+                                           phaseVolFraction[ipNonWetting],
+                                           m_phaseOrder,
+                                           m_waterOilRelPermMaxValue,
+                                           interRelPerm_wi,
+                                           dInterRelPerm_wi_dInterVolFrac,
+                                           interRelPerm_nwi,
+                                           dInterRelPerm_nwi_dInterVolFrac,
+                                           phaseRelPerm[ipWetting],
+                                           dPhaseRelPerm_dPhaseVolFrac[ipWetting][ipWetting],
+                                           phaseRelPerm[ipNonWetting],
+                                           dPhaseRelPerm_dPhaseVolFrac[ipNonWetting][ipNonWetting],
+                                           phaseRelPerm[ipInter],
+                                           dPhaseRelPerm_dPhaseVolFrac[ipInter] );
   }
 
 
