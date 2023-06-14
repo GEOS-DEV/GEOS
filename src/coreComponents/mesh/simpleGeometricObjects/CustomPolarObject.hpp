@@ -86,7 +86,6 @@ public:
   /**
    * @brief Update the geometric function describing the boundary of the object.
    * @param coefficients define all the coefficients of the radius function.
-   * @return void
    */
   void setCustomPolarObjectFunction( array1d< real64 > & coefficients )
   {
@@ -98,7 +97,7 @@ public:
    * @brief Get value of the radius of the surface for each angle theta
    * @param angle the given angle
    * @return the radius for that angle
-  */
+   */
   real64 getRadius( real64 angle ) const
   {
     real64 radius = 0;
