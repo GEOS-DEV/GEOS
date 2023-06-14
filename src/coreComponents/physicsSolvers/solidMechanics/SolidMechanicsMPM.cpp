@@ -2845,38 +2845,53 @@ void SolidMechanicsMPM::particleToGrid( ParticleManager & particleManager,
     int const numDims = m_numDims;
     int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
     int const damageFieldPartitioning = m_damageFieldPartitioning;
-    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // Can be parallized using atomics -
-                                                                                                // remember to pass copies of class
-                                                                                                // variables
-      {                                                                                          // Grid max damage will require reduction
+
+    
+    // Can be parallized using atomics -remember to pass copies of class, Grid max damage will require reduction
+    forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp ) 
+      {                                                                                          
         localIndex const p = activeParticleIndices[pp];
 
         for( int g = 0; g < 8 * numberOfVerticesPerParticle; g++ )
         {
+          real64 particleContributionToGrid;
+          
           localIndex const mappedNode = mappedNodes[pp][g];
-          int const nodeFlag = ( damageFieldPartitioning == 1 && LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNode], particleDamageGradient[p] ) < 0.0 ) ? 1 : 0; // 0
-                                                                                                                                                                             // undamaged
-                                                                                                                                                                             // or
-                                                                                                                                                                             // "A"
-                                                                                                                                                                             // field,
-                                                                                                                                                                             // 1
-                                                                                                                                                                             // for
-                                                                                                                                                                             // "B"
-                                                                                                                                                                             // field
+          // 0 undamaged or "A" field, 1 for "B" field
+          int const nodeFlag = ( damageFieldPartitioning == 1 && LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNode], particleDamageGradient[p] ) < 0.0 ) ? 1 : 0; 
           int const fieldIndex = nodeFlag * m_numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
-          gridMass[mappedNode][fieldIndex] += particleMass[p] * shapeFunctionValues[pp][g];
-          // TODO: Normalizing by volume might be better
-          gridDamage[mappedNode][fieldIndex] += particleMass[p] * ( particleSurfaceFlag[p] == 1 ? 1 : particleDamage[pp] ) * shapeFunctionValues[pp][g];
-          gridMaxDamage[mappedNode][fieldIndex] = fmax( gridMaxDamage[mappedNode][fieldIndex], particleSurfaceFlag[p] == 1 ? 1 : particleDamage[pp] );
+          
+          // gridMass[mappedNode][fieldIndex] += particleMass[p] * shapeFunctionValues[pp][g];
+          particleContributionToGrid = particleMass[p] * shapeFunctionValues[pp][g];
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &gridMass[mappedNode][fieldIndex], particleContributionToGrid  );
+
+          // For GPU particle to grid, this needs to be atomic
+          // gridDamage[mappedNode][fieldIndex] += particleMass[p] * ( particleSurfaceFlag[p] == 1 ? 1 : particleDamage[pp] ) * shapeFunctionValues[pp][g];
+          particleMass[p] * ( particleSurfaceFlag[p] == 1 ? 1 : particleDamage[pp] ) * shapeFunctionValues[pp][g];
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &gridDamage[mappedNode][fieldIndex], particleContributionToGrid  );
+
+          // For GPU particle to grid, this needs to be atomic
+          // gridMaxDamage[mappedNode][fieldIndex] = fmax( gridMaxDamage[mappedNode][fieldIndex], particleSurfaceFlag[p] == 1 ? 1 : particleDamage[pp] );
+          particleContributionToGrid = particleSurfaceFlag[p] == 1 ? 1. : particleDamage[pp];
+          RAJA::atomicMax( parallelDeviceAtomic{}, &gridMaxDamage[mappedNode][fieldIndex], particleContributionToGrid  );
+
           for( int i=0; i<numDims; i++ )
           {
-            gridMomentum[mappedNode][fieldIndex][i] += particleMass[p] * particleVelocity[p][i] * shapeFunctionValues[pp][g];
+            // gridMomentum[mappedNode][fieldIndex][i] += particleMass[p] * particleVelocity[p][i] * shapeFunctionValues[pp][g];
+            particleContributionToGrid = particleMass[p] * particleVelocity[p][i] * shapeFunctionValues[pp][g];
+            RAJA::atomicAdd( parallelDeviceAtomic{}, &gridMomentum[mappedNode][fieldIndex][i], particleContributionToGrid  );
+
             // TODO: Switch to volume weighting?
-            gridMaterialPosition[mappedNode][fieldIndex][i] += particleMass[p] * (particlePosition[p][i] - gridPosition[mappedNode][i]) * shapeFunctionValues[pp][g];
+            //gridMaterialPosition[mappedNode][fieldIndex][i] += particleMass[p] * (particlePosition[p][i] - gridPosition[mappedNode][i]) * shapeFunctionValues[pp][g];
+            particleContributionToGrid = particleMass[p] * (particlePosition[p][i] - gridPosition[mappedNode][i]) * shapeFunctionValues[pp][g];
+            RAJA::atomicAdd( parallelDeviceAtomic{}, &gridMaterialPosition[mappedNode][fieldIndex][i], particleContributionToGrid  );
+
             for( int k=0; k<numDims; k++ )
             {
               int voigt = voigtMap[k][i];
-              gridInternalForce[mappedNode][fieldIndex][i] -= particleStress[p][voigt] * shapeFunctionGradientValues[pp][g][k] * particleVolume[p];
+              // gridInternalForce[mappedNode][fieldIndex][i] -= particleStress[p][voigt] * shapeFunctionGradientValues[pp][g][k] * particleVolume[p];
+              particleContributionToGrid = -1.0*particleStress[p][voigt] * shapeFunctionGradientValues[pp][g][k] * particleVolume[p];
+              RAJA::atomicAdd( parallelDeviceAtomic{}, &gridInternalForce[mappedNode][fieldIndex][i], particleContributionToGrid  );
             }
           }
         }
@@ -3098,7 +3113,7 @@ void SolidMechanicsMPM::gridToParticle( real64 dt,
     int const numDims = m_numDims;
     int const damageFieldPartitioning = m_damageFieldPartitioning;
     int const numContactGroups = m_numContactGroups;
-    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+    forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
       localIndex const p = activeParticleIndices[pp];
 
