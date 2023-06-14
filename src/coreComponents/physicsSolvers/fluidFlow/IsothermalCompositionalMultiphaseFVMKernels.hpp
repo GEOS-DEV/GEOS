@@ -869,6 +869,7 @@ public:
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
 
   using AbstractBase::m_dt;
+  using AbstractBase::m_useTotalMassEquation;
   using AbstractBase::m_numPhases;
   using AbstractBase::m_rankOffset;
   using AbstractBase::m_dofNumber;
@@ -1228,10 +1229,13 @@ public:
     using namespace compositionalMultiphaseUtilities;
     using Order = BoundaryStencil::Order;
 
-    // Apply equation/variable change transformation(s)
-    real64 work[numDof]{};
-    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numDof, stack.localFluxJacobian, work );
-    shiftElementsAheadByOneAndReplaceFirstElementWithSum( numComp, stack.localFlux );
+    if( m_useTotalMassEquation > 0 )
+    {
+      // Apply equation/variable change transformation(s)
+      real64 work[numDof]{};
+      shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numDof, stack.localFluxJacobian, work );
+      shiftElementsAheadByOneAndReplaceFirstElementWithSum( numComp, stack.localFlux );
+    }
 
     // add contribution to residual and jacobian into:
     // - the component mass balance equations (i = 0 to i = numComp-1)
@@ -1543,6 +1547,7 @@ struct AquiferBCKernel
   launch( integer const numPhases,
           integer const ipWater,
           bool const allowAllPhasesIntoAquifer,
+          integer const useTotalMassEquation,
           BoundaryStencil const & stencil,
           globalIndex const rankOffset,
           ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,

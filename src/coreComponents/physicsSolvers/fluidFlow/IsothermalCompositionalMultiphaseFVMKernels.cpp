@@ -555,6 +555,7 @@ AquiferBCKernel::
   launch( integer const numPhases,
           integer const ipWater,
           bool const allowAllPhasesIntoAquifer,
+          integer const useTotalMassEquation,
           BoundaryStencil const & stencil,
           globalIndex const rankOffset,
           ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
@@ -636,11 +637,13 @@ AquiferBCKernel::
       dofColIndices[jdof] = offset + jdof;
     }
 
-    // Apply equation/variable change transformation(s)
-    real64 work[NDOF];
-    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF, localFluxJacobian, work );
-    shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, localFlux );
-
+    if( useTotalMassEquation > 0 )
+    {
+      // Apply equation/variable change transformation(s)
+      real64 work[NDOF];
+      shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF, localFluxJacobian, work );
+      shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, localFlux );
+    }
 
     // Add to residual/jacobian
     if( ghostRank[er][esr][ei] < 0 )
@@ -668,6 +671,7 @@ AquiferBCKernel::
     launch< NC >( integer const numPhases, \
                   integer const ipWater, \
                   bool const allowAllPhasesIntoAquifer, \
+                  integer const useTotalMassEquation, \
                   BoundaryStencil const & stencil, \
                   globalIndex const rankOffset, \
                   ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber, \

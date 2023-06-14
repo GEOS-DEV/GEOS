@@ -417,11 +417,14 @@ FluxKernel::
         oneSidedDofColIndices_dPresCompUp[jdof] = offsetUp + COFFSET::DPRES + jdof;
       }
 
-      // Apply equation/variable change transformation(s)
-      real64 work[NC+1]{};
-      shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, 1, oneSidedFluxJacobian_dRate, work );
-      shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC + 1, oneSidedFluxJacobian_dPresCompUp, work );
-      shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, oneSidedFlux );
+      if( useTotalMassEquation > 0 )
+      {
+        // Apply equation/variable change transformation(s)
+        real64 work[NC + 1]{};
+        shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, 1, oneSidedFluxJacobian_dRate, work );
+        shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC + 1, oneSidedFluxJacobian_dPresCompUp, work );
+        shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, oneSidedFlux );
+      }
 
       for( integer i = 0; i < NC; ++i )
       {
@@ -480,7 +483,7 @@ FluxKernel::
         dofColIndices_dPresCompUp[jdof] = offsetUp + COFFSET::DPRES + jdof;
       }
 
-      if( useTotalMassEquation )
+      if( useTotalMassEquation > 0 )
       {
         // Apply equation/variable change transformation(s)
         real64 work[NC + 1]{};
@@ -1287,6 +1290,7 @@ AccumulationKernel::
   launch( localIndex const size,
           integer const numPhases,
           globalIndex const rankOffset,
+          integer const useTotalMassEquation,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< integer const > const & wellElemGhostRank,
           arrayView1d< real64 const > const & wellElemVolume,
@@ -1346,10 +1350,13 @@ AccumulationKernel::
       dofColIndices[idof] = wellElemDofNumber[iwelem] + COFFSET::DPRES + idof;
     }
 
-    // Apply equation/variable change transformation(s)
-    real64 work[NC+1];
-    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC + 1, localAccumJacobian, work );
-    shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, localAccum );
+    if( useTotalMassEquation > 0 )
+    {
+      // Apply equation/variable change transformation(s)
+      real64 work[NC + 1];
+      shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC + 1, localAccumJacobian, work );
+      shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, localAccum );
+    }
 
     // add contribution to residual and jacobian
     for( integer ic = 0; ic < NC; ++ic )
@@ -1369,6 +1376,7 @@ AccumulationKernel::
     launch< NC >( localIndex const size, \
                   integer const numPhases, \
                   globalIndex const rankOffset, \
+                  integer const useTotalMassEquation, \
                   arrayView1d< globalIndex const > const & wellElemDofNumber, \
                   arrayView1d< integer const > const & wellElemGhostRank, \
                   arrayView1d< real64 const > const & wellElemVolume, \
