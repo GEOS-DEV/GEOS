@@ -181,10 +181,10 @@ jobs:
     - ENABLE_HYPRE_DEVICE=CUDA
     - ENABLE_TRILINOS=OFF
   - stage: builds
-    name: Centos (7.6, gcc 8.3.1, open-mpi 1.10.7, cuda 10.1.243)
+    name: Centos (7.7, gcc 8.3.1, open-mpi 1.10.7, cuda 11.2.0)
     <<: *__geosx_linux_build
     env:
-    - DOCKER_REPOSITORY=geosx/centos7.6.1810-gcc8.3.1-cuda10.1.243
+    - DOCKER_REPOSITORY=geosx/centos7.7-gcc8.3.1-cuda11.2.0
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS="--disable-unit-tests --disable-schema-deployment"
   - stage: builds
