@@ -132,8 +132,8 @@ struct Stone2
      * The interpolation is based on the modified Stone 2 method
      * Reference: Eclipse technical description
      */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   static void compute( real64 const & shiftedWaterVolFrac,
                       real64 const & gasVolFrac,
                       arraySlice1d< integer const > const & phaseOrder,

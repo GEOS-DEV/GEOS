@@ -109,8 +109,6 @@ public:
 
 private:
 
-    arrayView1d< real64 const > m_phaseMinVolumeFraction;
-
     /// Kernel wrappers for relative permeabilities in the following order:
     /// Two-phase flow:
     ///  0- wetting-phase
