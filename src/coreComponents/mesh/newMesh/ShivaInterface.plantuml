@@ -10,45 +10,57 @@ namespace ShivaInterface {
 namespace Geometry {
 namespace Cell {
 interface Cell {
-  This family of classes are data/interface
+  This family of classes have a dual role.
+  There is type information and constexpr quantities for use from the type,
+  and there is data that is for use when instantiated.
+  This can be broken up into separate classes if motivated.
   +constexpr int numVertices()
   +constexpr int numEdges()
   +constexpr int numFaces()
 }
 
 class CellTetrahedron_Pyramid_Wedge_Hexahdron {
-  -using IndexType = int;
-  -REAL_TYPE m_VertexCoords[4/5/6/8][3]
+  +using IndexType = int;
+  +using JacobianType = real64[3][3];
+  +REAL_TYPE m_VertexCoords[4/5/6/8][3]
+  +constexpr vertexParentCoords( IndexType const vindex, int const component )
   +inline vertexCoords( IndexType const vindex, int const component ) override final;
 }
 
 class CellHexahedronIJK {
-  -using IndexType = <int,int,int>};
+  +using IndexType = <int,int,int>};
+  +using JacobianType = real64[3];
+  +REAL_TYPE m_h[3]
+  +constexpr vertexParentCoords( IndexType const vindex, int const component )
   +inline vertexCoords( IndexType const vindex, int const component ) override final;
 }
 
-class CellPolyhedral {
-  -using IndexType = <int,int,int>};
+class CellHexahedronUniformIJK {
+  +using IndexType = <int,int,int>};
+  +using JacobianType = real64;
+  +REAL_TYPE m_h
+  +constexpr vertexParentCoords( IndexType const vindex, int const component )
   +inline vertexCoords( IndexType const vindex, int const component ) override final;
 }
+
 
 
 
 
 Cell <|-- CellTetrahedron_Pyramid_Wedge_Hexahdron
 Cell <|--- CellHexahedronIJK
-Cell <|---- CellPolyhedral
+Cell <|---- CellHexahedronUniformIJK
 }
 
 
 entity Mapping {
-  +jacobianTransform<CELL,BASIS>( CELL const & cell, REAL_TYPE const &(parentCoord)[3], REAL_TYPE &(J)[3][3] )
+  +jacobianTransform<CellHexIJK,BASIS,JACOBIAN>( CellHexIJK const & cell, REAL_TYPE const &(parentCoord)[3], JACOBIAN & J )
 }
   note as jacobianTransformNote
-  jacobianTransform<CELL,BASIS>( CELL const & cell, REAL_TYPE const &(parentCoord)[3], REAL_TYPE &(J)[3][3] )
+  jacobianTransform<CellHexIJK,BASIS,JACOBIAN>( CellHexIJK const & cell, REAL_TYPE const &(parentCoord)[3], JACOBIAN & J )
   for( int a=0; a<CELL::numVertices(); ++a )
   {
-    REAL_TYPE const dNdX[3] = { BASIS::gradient(a,coord) };
+    REAL_TYPE const dNdXi[3] = { BASIS::gradient(a,coord) };
     for( int i=0; i<3; ++i )
     {
       for( int j=0; j<3; ++j )
@@ -59,18 +71,16 @@ entity Mapping {
   }
 
 
-  jacobianTransform<CellHexIJK,BASIS>( CellHexIJK const & cell, REAL_TYPE const &(parentCoord)[3], REAL_TYPE &(J)[3][3] )
-  for( int ai=0; ai<2; ++ai )
-  for( int aj=0; aj<2; ++aj )
-  for( int ak=0; ak<2; ++ak )
+  jacobianTransform<CellHexUniformIJK,BASIS,real64>( CellHexIJK const & cell, REAL_TYPE const &(parentCoord)[3], real64 & J )
   {
-    REAL_TYPE const dNdX[3] = { BASIS::gradient(ai,aj,ak,coord) };
+    J = cell.m_h / 2 ;
+  }
+
+  jacobianTransform<CellHexIJK,BASIS,real64[3]>( CellHexIJK const & cell, REAL_TYPE const &(parentCoord)[3], real64 &(J)[3] )
+  {
     for( int i=0; i<3; ++i )
     {
-      for( int j=0; j<3; ++j )
-      {
-        J[i][j] = J[i][j] + dNdXi[ j ] * cell.vertexCoords(ai,aj,ak,i);
-      }
+      J[i] = cell.m_h[i] / 2 ;
     }
   }
 
@@ -101,10 +111,10 @@ note as N1
 
       for( IndexType const q; q<numQuadrature; ++q )
       {
-        real64 J[3][3];
+        FE_INTERFACE::JacobianType J;
 
-        FE_INTERFACE::jacobianTransform( index, q, celldata, J );
-        real64 invJ[3][3];
+        FE_INTERFACE::jacobianTransform( q, celldata, J );
+        FE_INTERFACE::JacobianType invJ;
         REAL_TYPE detJ = inverse(J, invJ)
 
         gradVar[3][3] = gradient<FE_SPACE>( q, localDofs, invJ );
@@ -125,7 +135,8 @@ class ParentElement< FUNCSPACE, CELL, BASIS > {
   +using CellType = CELL;
   +using BasisType = BASIS;
   +using IndexType = CELL::IndexType;
-  +constrxpr NSP = f ( BASIS, CELL, FUNC_SPACE )
+  +using JacobianType = CELL::JacobianType;
+  +constexpr int NSP = f ( BASIS, CELL, FUNC_SPACE )
   +real64 shapeFunctionValue( int const a, REAL_TYPE const (&parentCoord)[DIMS] )
   +shapeFunctionGradient( int const a, REAL_TYPE const (&parentCoord)[DIMS] , real64 &(parentGrad)[3] )
   +VAR_TYPE value<VAR_TYPE>( VAR_TYPE const & var[NSP], REAL_TYPE const (&parentCoord)[DIMS] )
@@ -139,9 +150,10 @@ class FiniteElementSpace< PARENTELEMENT, MAPPING > {
   +using MappingType = MAPPING;
   +using IndexType = PARENTELEMENT::IndexType;
   +using PARENTELEMENT::NSP;
-  +jacobianTransform( CellType const & cell, REAL_TYPE const &(parentCoord)[3], REAL_TYPE &(J)[3][3] )
+  +using JacobianType = PARENTELEMENT::JacobianType;
+  +jacobianTransform( CellType const & cell, REAL_TYPE const &(parentCoord)[3], JacobianType & J )
   +VAR_TYPE value<VAR_TYPE>( VAR_TYPE const & var[NSP], REAL_TYPE const (&parentCoord)[DIMS] )
-  +gradient( VAR_TYPE const (&var)[NSP], REAL_TYPE const (&parentCoord)[DIMS] , REAL_TYPE const &(J)[3][3], real64 &(grad)[3] )
+  +gradient( VAR_TYPE const (&var)[NSP], REAL_TYPE const (&parentCoord)[DIMS] , JacobianType const &(J), real64 &(grad)[3] )
 
 }
 
@@ -153,13 +165,15 @@ class FiniteElementInterface< FESPACE, QUADRATURE >  {
   +using CellType = FESPACE::CellType;
   +using IndexType = FESPACE::IndexType;
   +using FESPACE::NSP;
-  +using numQP = QUADRATURE::numPoints;
+  +constexpr int numQP = QUADRATURE::numPoints;
+  +using JacobianType = FiniteElementSpace::JacobianType;
+
   +using LOCAL_DOF_ARRAY_TYPE<DOF_DIMS> = DofArrayHelper<DOF_DIMS,NSP>::LOCAL_DOF_ARRAY_TYPE;
-  +jacobianTransform( int const q, CELL const & cell, REAL_TYPE &(J)[3][3] )
-  +jacobianTransform( CELL const & cell, REAL_TYPE &(J)[numQP][3][3] )
+  +jacobianTransform( int const q, CELL const & cell, JacobianType &(J) )
+  +jacobianTransform( CELL const & cell, JacobianType &(J)[numQP] )
   +value( INDEX_TYPE const q, LOCAL_DOF_ARRAY_TYPE const &dofs )
-  +gradient( INDEX_TYPE const q, LOCAL_DOF_ARRAY_TYPE const &var , real64 const (&invJ)[3][3], real64 const &(gradVar)[3] )
-  +gradient( INDEX_TYPE const q, LOCAL_DOF_ARRAY_TYPE const &var , real64 const (&invJ)[3][3], real64 const &(gradVar)[DOF_DIMS][3] )
+  +gradient( INDEX_TYPE const q, LOCAL_DOF_ARRAY_TYPE<DOF_DIMS> const &var , JacobianType const (&invJ), real64 const &(gradVar)[3] )
+  +gradient( INDEX_TYPE const q, LOCAL_DOF_ARRAY_TYPE<DOF_DIMS> const &var , JacobianType const (&invJ), real64 const &(gradVar)[DOF_DIMS][3] )
 }
 
 class DofArrayHelper<NUM_DOF_VALUES_PER_POINT,NSP>{
@@ -230,6 +244,16 @@ ParentElement::BasisType <-- Basis.Basis
 
 FiniteElementMethod.FiniteElementSpace::MappingType <-- Geometry.Mapping
 FiniteElementMethod.ParentElement::CellType <-- Geometry.Cell.Cell
+
+
+/'
+namespace VirtualElementMethod {
+  class VirtualElementInterface {}
+
+}
+
+VirtualElementMethod.VirtualElementInterface <-- Geometry.Cell.Cell
+'/
 
 
 
