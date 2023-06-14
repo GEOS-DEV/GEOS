@@ -46,6 +46,7 @@
       name="FracturePlane"
       normal="{1.0, 0.0, 0.0}"
       center="{0.0, 0.0, 0.0}"
+      coefficients="{1.0, 0.0, 1.0, 2.0}"
       lengthVector="{0.0, 1.0, 0.0}"
       widthVector="{0.0, 0.0, 1.0}"/>
     <!-- <Disc
