@@ -1,5 +1,5 @@
 site_name(HOST_NAME)
-set(CONFIG_NAME "${HOST_NAME}-darwin-x86_64-clang@apple-mp" CACHE PATH "") 
+set(CONFIG_NAME "${HOST_NAME}-clang@apple-mp" CACHE PATH "") 
 message("CONFIG_NAME = ${CONFIG_NAME}")
 
 set(CMAKE_C_COMPILER "/usr/bin/clang" CACHE PATH "")
@@ -15,7 +15,7 @@ set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE)
 
 set(ENABLE_PVTPackage ON CACHE BOOL "" FORCE)
 
-set(CUDA_ENABLED "OFF" CACHE PATH "" FORCE)
+set(ENABLE_CUDA "OFF" CACHE PATH "" FORCE)
 set(ENABLE_OPENMP "OFF" CACHE PATH "" FORCE)
 
 set(ENABLE_CALIPER "OFF" CACHE PATH "" FORCE )
@@ -24,6 +24,9 @@ set( BLAS_LIBRARIES /Users/cusini1/local/opt/openblas/lib/libblas.dylib CACHE PA
 set( LAPACK_LIBRARIES /Users/cusini1/local/opt/openblas/lib/liblapack.dylib CACHE PATH "" FORCE )
 
 set(ENABLE_DOXYGEN OFF CACHE BOOL "" FORCE)
+set(ENABLE_MATHPRESSO OFF CACHE BOOL "" FORCE )
+set(GEOSX_BUILD_OBJ_LIBS ON CACHE BOOL "" FORCE)
+
 
 #set( DOXYGEN_EXECUTABLE /usr/local/bin/doxygen CACHE PATH "" FORCE )
 #set( SPHINX_EXECUTABLE /usr/local/bin/sphinx-build CACHE PATH "" FORCE )

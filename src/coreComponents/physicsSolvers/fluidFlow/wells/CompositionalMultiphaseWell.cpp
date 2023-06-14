@@ -24,9 +24,9 @@
 #include "common/FieldSpecificationOps.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/fluid/MultiFluidBase.hpp"
-#include "constitutive/fluid/MultiFluidFields.hpp"
-#include "constitutive/fluid/multiFluidSelector.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "dataRepository/Group.hpp"
@@ -648,6 +648,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
                                 &wellControlsName,
                                 &massUnit] ( localIndex const )
     {
+      GEOS_UNUSED_VAR( massUnit );
       using Deriv = multifluid::DerivativeOffset;
 
       stackArray1d< real64, maxNumComp > work( numComp );
@@ -665,6 +666,9 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
         {
           GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa and T_surface = {} K",
                                    wellControlsName, surfacePres, surfaceTemp ) );
+#ifdef GEOS_USE_HIP
+          GEOS_UNUSED_VAR( wellControlsName );
+#endif
         }
       }
       else

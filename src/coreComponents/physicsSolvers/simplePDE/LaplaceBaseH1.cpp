@@ -211,14 +211,14 @@ void LaplaceBaseH1::
                                          string const & GEOS_UNUSED_PARAM( fieldName ) )
     {
       bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                         parallelDevicePolicy< 32 > >( targetSet,
-                                                                       time,
-                                                                       targetGroup,
-                                                                       m_fieldName,
-                                                                       dofManager.getKey( m_fieldName ),
-                                                                       dofManager.rankOffset(),
-                                                                       localMatrix,
-                                                                       localRhs );
+                                         parallelDevicePolicy< > >( targetSet,
+                                                                    time,
+                                                                    targetGroup,
+                                                                    m_fieldName,
+                                                                    dofManager.getKey( m_fieldName ),
+                                                                    dofManager.rankOffset(),
+                                                                    localMatrix,
+                                                                    localRhs );
     } );
   } );
 }

@@ -329,7 +329,7 @@ struct DampingMatrixKernel
         {
           for( localIndex i = 0; i < 3; ++i )
           {
-            xLocal[a][i] = X( facesToNodes( k, a ), i );
+            xLocal[a][i] = X( facesToNodes( f, a ), i );
           }
         }
 
@@ -475,7 +475,7 @@ public:
    * Copies the primary variable, and position into the local stack array.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -500,7 +500,7 @@ public:
    *
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const

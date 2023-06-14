@@ -18,7 +18,7 @@
 
 #include "ProppantTransportKernels.hpp"
 
-#include "constitutive/fluid/ParticleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/ParticleFluidBase.hpp"
 
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
@@ -31,6 +31,7 @@ namespace proppantTransportKernels
 {
 
 GEOS_HOST_DEVICE
+inline
 void
 AccumulationKernel::
   compute( localIndex const numComps,
@@ -995,6 +996,7 @@ void FluxKernel::
 
 
 GEOS_HOST_DEVICE
+inline
 void
 ProppantPackVolumeKernel::
   computeProppantPackVolume( localIndex const numElems,
@@ -1200,6 +1202,7 @@ void ProppantPackVolumeKernel::
 }
 
 GEOS_HOST_DEVICE
+inline
 void
 ProppantPackVolumeKernel::
   updateProppantPackVolume( localIndex const numElems,
