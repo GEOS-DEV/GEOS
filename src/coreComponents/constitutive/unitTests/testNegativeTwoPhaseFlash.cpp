@@ -107,7 +107,7 @@ public:
     array1d< real64 > liquidComposition( numComps );
     array1d< real64 > vapourComposition( numComps );
 
-    bool status = constitutive::NegativeTwoPhaseFlash< EOS_TYPE >::compute(
+    bool status = constitutive::NegativeTwoPhaseFlash< EOS_TYPE, EOS_TYPE >::compute(
       numComps,
       pressure,
       temperature,

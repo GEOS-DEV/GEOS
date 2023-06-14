@@ -27,7 +27,7 @@ namespace geos
 namespace constitutive
 {
 
-template< typename EOS_TYPE >
+template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
 struct NegativeTwoPhaseFlash
 {
 public:
@@ -81,12 +81,12 @@ private:
                                       arraySlice1d< real64 > const composition )
   {
     real64 totalMoles = 0.0;
-    for( integer ic=0; ic< numComps; ic++ )
+    for( integer ic = 0; ic < numComps; ++ic )
     {
       totalMoles += composition[ic];
     }
     real64 const oneOverTotalMoles = 1.0 / (totalMoles + epsilon);
-    for( integer ic=0; ic< numComps; ic++ )
+    for( integer ic = 0; ic < numComps; ++ic )
     {
       composition[ic] *= oneOverTotalMoles;
     }

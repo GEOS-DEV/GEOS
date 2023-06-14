@@ -47,8 +47,8 @@ struct KValueInitialization
 };
 
 GEOS_HOST_DEVICE
-template< typename EOS_TYPE >
-bool NegativeTwoPhaseFlash< EOS_TYPE >::compute(
+template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
+bool NegativeTwoPhaseFlash< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::compute(
   integer const numComps,
   real64 const pressure,
   real64 const temperature,
@@ -68,14 +68,14 @@ bool NegativeTwoPhaseFlash< EOS_TYPE >::compute(
   stackArray1d< integer, maxNumComps > presentComponentIds;
 
   // Initialise compositions to feed composition
-  for( integer ic = 0; ic<numComps; ++ic )
+  for( integer ic = 0; ic < numComps; ++ic )
   {
     liquidComposition[ic] = composition[ic];
     vapourComposition[ic] = composition[ic];
   }
 
   // Check for machine-zero feed values
-  for( integer ic = 0; ic<numComps; ++ic )
+  for( integer ic = 0; ic < numComps; ++ic )
   {
     if( epsilon < composition[ic] )
     {
@@ -108,31 +108,31 @@ bool NegativeTwoPhaseFlash< EOS_TYPE >::compute(
     normalizeComposition( numComps, vapourComposition );
 
     // Compute the phase fugacities
-    CubicEOSPhaseModel< EOS_TYPE >::compute( numComps,
-                                             pressure,
-                                             temperature,
-                                             liquidComposition,
-                                             criticalPressure,
-                                             criticalTemperature,
-                                             acentricFactor,
-                                             binaryInteractionCoefficients,
-                                             logLiquidFugacity );
-    CubicEOSPhaseModel< EOS_TYPE >::compute( numComps,
-                                             pressure,
-                                             temperature,
-                                             vapourComposition,
-                                             criticalPressure,
-                                             criticalTemperature,
-                                             acentricFactor,
-                                             binaryInteractionCoefficients,
-                                             logVapourFugacity );
+    CubicEOSPhaseModel< EOS_TYPE_LIQUID >::compute( numComps,
+                                                    pressure,
+                                                    temperature,
+                                                    liquidComposition,
+                                                    criticalPressure,
+                                                    criticalTemperature,
+                                                    acentricFactor,
+                                                    binaryInteractionCoefficients,
+                                                    logLiquidFugacity );
+    CubicEOSPhaseModel< EOS_TYPE_VAPOUR >::compute( numComps,
+                                                    pressure,
+                                                    temperature,
+                                                    vapourComposition,
+                                                    criticalPressure,
+                                                    criticalTemperature,
+                                                    acentricFactor,
+                                                    binaryInteractionCoefficients,
+                                                    logVapourFugacity );
 
     // Compute fugacity ratios and check convergence
     converged = true;
 
     for( integer const ic : presentComponentIds )
     {
-      fugacityRatios[ic]= exp( logLiquidFugacity[ic] - logVapourFugacity[ic] ) * liquidComposition[ic] / vapourComposition[ic];
+      fugacityRatios[ic] = exp( logLiquidFugacity[ic] - logVapourFugacity[ic] ) * liquidComposition[ic] / vapourComposition[ic];
       if( fugacityTolerance < fabs( fugacityRatios[ic] - 1.0 ) )
       {
         converged = false;
@@ -155,7 +155,7 @@ bool NegativeTwoPhaseFlash< EOS_TYPE >::compute(
   if( vapourPhaseMoleFraction <= 0.0 )
   {
     vapourPhaseMoleFraction = 0.0;
-    for( integer ic = 0; ic<numComps; ++ic )
+    for( integer ic = 0; ic < numComps; ++ic )
     {
       liquidComposition[ic] = composition[ic];
     }
@@ -163,7 +163,7 @@ bool NegativeTwoPhaseFlash< EOS_TYPE >::compute(
   else if( 1.0 <= vapourPhaseMoleFraction )
   {
     vapourPhaseMoleFraction = 1.0;
-    for( integer ic = 0; ic<numComps; ++ic )
+    for( integer ic = 0; ic < numComps; ++ic )
     {
       vapourComposition[ic] = composition[ic];
     }
