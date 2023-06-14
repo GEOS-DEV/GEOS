@@ -44,6 +44,32 @@ class CellHexahedronUniformIJK {
 }
 
 
+interface JacobianTransformTypeHelper {
+  real64 inverse<T>( T const & J, T & Jinv )
+}
+
+note bottom of JacobianTransformTypeHelper
+  real64 inverse( real64 const & J, real64 & Jinv )
+  {
+    Jinv = 1/J;
+    return J*J*J;
+  }
+
+  real64 inverse( real64 const (&J)[3], real64 (&Jinv)[3] )
+  {
+    Jinv[0] = 1/J[0];
+    Jinv[1] = 1/J[1];
+    Jinv[2] = 1/J[2];
+    return J[0]*J[1]*J[2];
+  }
+
+  real64 inverse( real64 const (&J)[3][3], real64 (&Jinv)[3][3] )
+  {
+    return LvArray::tensorOps::invert< 3 >( Jinv, J );
+  }
+
+endnote
+
 
 
 
@@ -115,7 +141,7 @@ note as N1
 
         FE_INTERFACE::jacobianTransform( q, celldata, J );
         FE_INTERFACE::JacobianType invJ;
-        REAL_TYPE detJ = inverse(J, invJ)
+        REAL_TYPE detJ = JacobianTransformTypeHelper::inverse(J, invJ)
 
         gradVar[3][3] = gradient<FE_SPACE>( q, localDofs, invJ );
         
