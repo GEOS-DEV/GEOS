@@ -2889,6 +2889,7 @@ void SolidMechanicsMPM::particleToGrid( ParticleManager & particleManager,
             for( int k=0; k<numDims; k++ )
             {
               int voigt = voigtMap[k][i];
+              // this order need to change the permutaiton order should be RAJA::perm_JI TODO
               // gridInternalForce[mappedNode][fieldIndex][i] -= particleStress[p][voigt] * shapeFunctionGradientValues[pp][g][k] * particleVolume[p];
               particleContributionToGrid = -1.0*particleStress[p][voigt] * shapeFunctionGradientValues[pp][g][k] * particleVolume[p];
               RAJA::atomicAdd( parallelDeviceAtomic{}, &gridInternalForce[mappedNode][fieldIndex][i], particleContributionToGrid  );
@@ -3887,7 +3888,7 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
               {
                 real64 zWeight = k*zRel + (1-k)*(1.0-zRel);
                 real64 dzWeight = k/hEl[2] - (1-k)/hEl[2];
-                mappedNodes[pp][node] = ijkMap[centerIJK[0]+i][centerIJK[1]+j][centerIJK[2]+k];
+                mappedNodes[pp][node] = ijkMap[centerIJK[0]+i][centerIJK[1]+j][centerIJK[2]+k]; //TODO see if this should be () instead of []
                 shapeFunctionValues[pp][node] = xWeight * yWeight * zWeight;
                 shapeFunctionGradientValues[pp][node][0] = dxWeight * yWeight * zWeight;
                 shapeFunctionGradientValues[pp][node][1] = xWeight * dyWeight * zWeight;
