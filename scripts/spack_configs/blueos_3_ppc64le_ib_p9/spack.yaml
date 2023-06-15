@@ -111,8 +111,8 @@ spack:
     cmake:
       buildable: False
       externals:
-      - spec: cmake@3.21.1
-        prefix: /usr/tce/packages/cmake/cmake-3.21.1
+      - spec: cmake@3.23.1
+        prefix: /usr/tce/packages/cmake/cmake-3.23.1
     readline:
       buildable: False
       externals:

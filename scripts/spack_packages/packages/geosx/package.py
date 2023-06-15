@@ -14,7 +14,7 @@ from os.path import join as pjoin
 
 # Tested specs are located at scripts/spack_configs/<$SYS_TYPE>/spack.yaml (e.g. %clang@10.0.1)
 
-# WARNING: +petsc and +pygeosx variants are yet to be tested.
+# WARNING: +petsc variant is yet to be tested.
 
 
 def cmake_cache_entry(name, value, comment=""):
@@ -81,8 +81,7 @@ class Geosx(CMakePackage, CudaPackage):
 
     # SPHINX_BEGIN_DEPENDS
 
-    # Trilinos requires cmake 3.17 or newer
-    depends_on('cmake@3.17:', type='build')
+    depends_on('cmake@3.23:', type='build')
     #
     # Virtual packages
     #
