@@ -40,7 +40,7 @@ findNodeWithMinDegree( localIndex const numRows,
 {
   RAJA::ReduceMinLoc< serialReduce, localIndex > minDegree( numRows+1, -1 );
 
-  forAll< serialPolicy >( numRows, [=] GEOS_HOST_DEVICE ( localIndex const i )
+  forAll< serialPolicy >( numRows, [=] ( localIndex const i )
   {
     if( marker[i] < 0 )
     {
@@ -340,7 +340,7 @@ computePermutation( localIndex const * const offsets,
   // at most numRows levels
   array1d< localIndex > level_i( numRows+1 );
   array1d< localIndex > level_j( numRows );
-  forAll< parallelHostPolicy >( numRows, [&] GEOS_HOST_DEVICE ( localIndex const i )
+  forAll< parallelHostPolicy >( numRows, [&] ( localIndex const i )
   {
     degree[i] = offsets[i + 1] - offsets[i];
     marker[i] = -1;
