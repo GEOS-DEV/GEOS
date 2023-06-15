@@ -612,6 +612,13 @@ protected:
 
   /// @endcond
 
+  /**
+   * @brief Helper method to process an exception that has been thrown during xml parsing.
+   * @param ex The caught exception.
+   * @param targetNode The node from which this Group is interpreted.
+   */
+  void processInputException( std::exception const & ex, xmlWrapper::xmlNode const & targetNode ) const;
+
 protected:
 
   /// Name of the object that is being wrapped
