@@ -5,6 +5,8 @@ set( SinglePhasePoromechanicsEFEMPolicy "geos::parallelDevicePolicy< ${GEOSX_BLO
 set( MultiphasePoromechanicsPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
 set( ThermalMultiphasePoromechanicsPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
 set( ThermalSinglePhasePoromechanicsPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
+set( ThermalSinglePhasePoromechanicsEFEMPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
+
 
 configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp.in
                 ${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/policies.hpp )
