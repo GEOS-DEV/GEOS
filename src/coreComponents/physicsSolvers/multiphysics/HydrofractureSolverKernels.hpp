@@ -168,7 +168,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
           GEOS_UNUSED_VAR( hydraulicAperture );
           real64 const dAper_dU = dHydraulicAperture_dAperture * dGap_dU;
 
-          dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dAper_dU;
+          dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) =  0 * dRdAper * dAper_dU;
         }
       }
     }
