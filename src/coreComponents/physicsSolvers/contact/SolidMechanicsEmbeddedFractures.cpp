@@ -323,7 +323,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
       real64 maxTraction = finiteElement::
                              regionBasedKernelApplication
                            < parallelDevicePolicy< >,
-                             constitutive::SolidBase,
+                             constitutive::ElasticIsotropic,
                              CellElementSubRegion >( mesh,
                                                      regionNames,
                                                      m_solidSolver->getDiscretizationName(),
