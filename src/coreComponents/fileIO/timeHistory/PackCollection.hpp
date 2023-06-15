@@ -74,11 +74,13 @@ private:
     static constexpr char const * fieldNameString() { return "fieldName"; }
     static constexpr char const * setNamesString() { return "setNames"; }
     static constexpr char const * onlyOnSetChangeString() { return "onlyOnSetChange"; }
+    static constexpr char const * disableCoordCollectionString() { return "disableCoordCollection"; }
 
     dataRepository::ViewKey objectPath = { "objectPath" };
     dataRepository::ViewKey fieldName = { "fieldName" };
     dataRepository::ViewKey setNames = { "setNames" };
     dataRepository::ViewKey onlyOnSetChange = { "onlyOnSetChange" };
+    dataRepository::ViewKey disableCoordCollection = { "disableCoordCollection" };
   } viewKeys;
   /// @endcond
 
@@ -125,7 +127,7 @@ private:
   localIndex m_onlyOnSetChange;
   /// Whether to create coordinate meta-collectors if collected objects are mesh objects (set to true for coordinate meta-collectors to
   /// avoid init recursion)
-  bool m_disableCoordCollection;
+  integer m_disableCoordCollection;
   /// Whether initializePostSubGroups has been called, since we only wan't to execute it once
   ///  It is called explicitly by the output to ensure this is in a valid state to collect info from to perform setup
   ///  It is also called by the normal initialization process

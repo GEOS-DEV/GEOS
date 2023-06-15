@@ -10,7 +10,6 @@ PackCollection::PackCollection ( string const & name, Group * parent )
   , m_setNames( )
   , m_setChanged( true )
   , m_onlyOnSetChange( 0 )
-  , m_disableCoordCollection( false )
   , m_initialized( false )
 {
   registerWrapper( PackCollection::viewKeysStruct::objectPathString(), &m_objectPath ).
@@ -29,6 +28,11 @@ PackCollection::PackCollection ( string const & name, Group * parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( 0 ).
     setDescription( "Whether or not to only collect when the collected sets of indices change in any way." );
+
+  registerWrapper( PackCollection::viewKeysStruct::disableCoordCollectionString(), &m_disableCoordCollection ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( 0 ).
+    setDescription( "Whether or not to create coordinate meta-collectors if collected objects are mesh objects." );
 }
 
 void PackCollection::initializePostSubGroups( )
