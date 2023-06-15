@@ -611,7 +611,7 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
    * negate the rhs vector upon assembly. Thus, it sets the value to negative of the desired
    * update for the field. For a linear problem, this may lead to unexpected results.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static inline void
   SpecifyFieldValue( globalIndex const dof,
                      globalIndex const dofRankOffset,

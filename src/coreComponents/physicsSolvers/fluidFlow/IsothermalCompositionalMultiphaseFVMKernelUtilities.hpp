@@ -322,7 +322,7 @@ struct FluxUtilities
 
 } // namespace isothermalCompositionalMultiPhaseFVMKernelUtilities
 
-} // namespace geosx
+} // namespace geos
 
 
 #endif // GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELUTILITIES_HPP_

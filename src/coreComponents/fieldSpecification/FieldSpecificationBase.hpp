@@ -672,7 +672,7 @@ void FieldSpecificationBase::applyBoundaryConditionToSystemKernel( SortedArrayVi
 {
   integer const component = getComponent();
   this->applyBoundaryConditionToSystem< FIELD_OP, POLICY >( targetSet, time, dataGroup, dofMap, dofRankOffset, diagonal, rhs,
-                                                            [fieldView, component] GEOSX_HOST_DEVICE ( localIndex const a )
+                                                            [fieldView, component] GEOS_HOST_DEVICE ( localIndex const a )
   {
     real64 value = 0.0;
     FieldSpecificationEqual::readFieldValue( fieldView, a, component, value );
@@ -798,7 +798,7 @@ FieldSpecificationBase::
     }
 
     forAll< POLICY >( targetSet.size(),
-                      [targetSet, dof, dofMap, dofRankOffset, component, diagonal, rhsContribution, value, lambda] GEOSX_HOST_DEVICE ( localIndex const i )
+                      [targetSet, dof, dofMap, dofRankOffset, component, diagonal, rhsContribution, value, lambda] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const a = targetSet[ i ];
       dof[ i ] = dofMap[ a ] + component;
@@ -820,7 +820,7 @@ FieldSpecificationBase::
     real64 const value = m_scale * dt;
 
     forAll< POLICY >( targetSet.size(),
-                      [targetSet, dof, dofMap, dofRankOffset, component, diagonal, rhsContribution, results, value, lambda] GEOSX_HOST_DEVICE (
+                      [targetSet, dof, dofMap, dofRankOffset, component, diagonal, rhsContribution, results, value, lambda] GEOS_HOST_DEVICE (
                         localIndex const i )
     {
       localIndex const a = targetSet[ i ];

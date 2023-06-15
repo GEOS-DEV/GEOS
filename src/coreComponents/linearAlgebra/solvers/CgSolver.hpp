@@ -165,6 +165,6 @@ protected:
 
 };
 
-} // namespace GEOSX
+} // namespace geos
 
 #endif /*GEOS_LINEARALGEBRA_SOLVERS_CGSOLVER_HPP_*/

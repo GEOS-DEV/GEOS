@@ -19,7 +19,6 @@
 // Source includes
 #include "LaplaceFEM.hpp"
 #include "LaplaceFEMKernels.hpp"
-#include "TeamLaplaceFEMKernels.hpp"
 
 namespace geos
 {

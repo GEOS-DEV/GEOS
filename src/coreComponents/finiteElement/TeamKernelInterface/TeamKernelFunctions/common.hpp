@@ -23,7 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -63,8 +63,8 @@ enum class ThreadingModel {
 template < typename StackVariables,
            typename Lambda3D,
            std::enable_if_t< StackVariables::threading_model == ThreadingModel::Serial, bool > = true >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void loop3D( StackVariables & stack,
              localIndex loop_bound_1,
              localIndex loop_bound_2,
@@ -102,8 +102,8 @@ void loop3D( StackVariables & stack,
 template < typename StackVariables,
            typename Lambda3D,
            std::enable_if_t< StackVariables::threading_model == ThreadingModel::Distributed1D, bool > = true >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void loop3D( StackVariables & stack,
              localIndex loop_bound_1,
              localIndex loop_bound_2,
@@ -141,8 +141,8 @@ void loop3D( StackVariables & stack,
 template < typename StackVariables,
            typename Lambda3D,
            std::enable_if_t< StackVariables::threading_model == ThreadingModel::Distributed2D, bool > = true >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void loop3D( StackVariables & stack,
              localIndex loop_bound_1,
              localIndex loop_bound_2,
@@ -176,8 +176,8 @@ void loop3D( StackVariables & stack,
 template < typename StackVariables,
            typename Lambda3D,
            std::enable_if_t< StackVariables::threading_model == ThreadingModel::Distributed3D, bool > = true >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void loop3D( StackVariables & stack,
              localIndex loop_bound_1,
              localIndex loop_bound_2,
@@ -193,6 +193,6 @@ void loop3D( StackVariables & stack,
   }
 }
 
-} // namespace geosx
+} // namespace geos
 
 #endif /* GEOSX_FINITEELEMENT_TEAMKERNELFUNCTION_COMMON_HPP_ */

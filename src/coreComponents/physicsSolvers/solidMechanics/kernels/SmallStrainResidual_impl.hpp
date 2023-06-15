@@ -22,7 +22,7 @@
 #include "SmallStrainResidual.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 /// Namespace to contain the solid mechanics kernels.
@@ -51,17 +51,17 @@ SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::SmallStrainRe
   m_input( inputSrc ),
   m_res( inputDst )
 {
-  GEOSX_UNUSED_VAR( edgeManager );
-  GEOSX_UNUSED_VAR( faceManager );
-  GEOSX_UNUSED_VAR( targetRegionIndex );
+  GEOS_UNUSED_VAR( edgeManager );
+  GEOS_UNUSED_VAR( faceManager );
+  GEOS_UNUSED_VAR( targetRegionIndex );
 }
 
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( localIndex const k,
                                                                                StackVariables & stack ) const
 {
@@ -72,7 +72,9 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( l
     #pragma unroll
     for( int i=0; i<numDofPerTrialSupportPoint; ++i )
     {
+#if defined(CALC_FEM_SHAPE_IN_KERNEL)
       stack.xLocal[ a ][ i ] = m_X( nodeIndex, i );
+#endif
       stack.varLocal[ a ][ i ] = m_input( nodeIndex, i );
     }
   }
@@ -81,13 +83,13 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( l
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel( localIndex const k,
                                                                                                localIndex const q,
                                                                                                StackVariables & stack ) const
 {
-#define USE_JACOBIAN
+//#define USE_JACOBIAN
 #if !defined( USE_JACOBIAN )
   real64 dNdX[ numNodesPerElem ][ 3 ];
   real64 const detJ = FE_TYPE::calcGradN( q, stack.xLocal, dNdX );
@@ -129,8 +131,8 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::complete( localIndex const k,
                                                                                     StackVariables const & stack ) const
 {
@@ -163,8 +165,8 @@ real64 SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::comple
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( localIndex const k,
                                                                                real64 (&xLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
                                                                                real64 (&varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const
@@ -185,8 +187,8 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( l
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel( localIndex const k,
                                                                                                localIndex const qa,
                                                                                                localIndex const qb,
@@ -281,8 +283,8 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 template< int qa, int qb, int qc >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel( localIndex const k,
                                                                                                real64 const (&xLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
                                                                                                real64 const (&varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
@@ -339,8 +341,8 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::complete( localIndex const k,
                                                                                     real64 const (&fLocal) [ numNodesPerElem ][ numDofPerTestSupportPoint ] ) const
 {
@@ -373,12 +375,12 @@ SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 kernelLaunch( localIndex const numElems,
               KERNEL_TYPE const & kernelComponent )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
 #define KERNEL_OPTION 3
 #if KERNEL_OPTION == 1
   forAll< POLICY >( numElems,
-                    [=] GEOSX_DEVICE ( localIndex const k )
+                    [=] GEOS_DEVICE ( localIndex const k )
   {
     typename KERNEL_TYPE::StackVariables stack;
 
@@ -402,7 +404,7 @@ kernelLaunch( localIndex const numElems,
 #elif KERNEL_OPTION == 2 // no stack
 
     forAll< POLICY >( numElems,
-                      [=] GEOSX_DEVICE ( localIndex const k )
+                      [=] GEOS_DEVICE ( localIndex const k )
     {
       real64 fLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ] = {{0}};
       real64 varLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
@@ -420,7 +422,7 @@ kernelLaunch( localIndex const numElems,
     } );
 #else
     forAll< POLICY >( numElems,
-                      [=] GEOSX_DEVICE ( localIndex const k )
+                      [=] GEOS_DEVICE ( localIndex const k )
     {
       real64 fLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ] = {{0}};
       real64 varLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
@@ -448,6 +450,6 @@ kernelLaunch( localIndex const numElems,
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_SMALLSTRAINRESIDUAL_IMPL_HPP_

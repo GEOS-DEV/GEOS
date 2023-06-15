@@ -743,6 +743,11 @@ else()
     message(STATUS "Not using VTK")
 endif()
 
+################################
+# FMT
+################################
+if(DEFINED FMT_DIR)
+    message(STATUS "FMT_DIR = ${FMT_DIR}")
 
     find_package(fmt REQUIRED
                  PATHS ${FMT_DIR}

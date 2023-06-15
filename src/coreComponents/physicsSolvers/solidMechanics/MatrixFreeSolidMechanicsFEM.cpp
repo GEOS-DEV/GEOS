@@ -18,7 +18,6 @@
 
 // Source includes
 #include "MatrixFreeSolidMechanicsFEM.hpp"
-#include "TeamSolidMechanicsFEMKernels.hpp"
 #include "kernels/SmallStrainResidual.hpp"
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "mesh/MeshBody.hpp"
@@ -31,7 +30,7 @@
 #include "SolidMechanicsFields.hpp"
 #include "LvArray/src/output.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace dataRepository
@@ -67,13 +66,13 @@ MatrixFreeSolidMechanicsFEMOperator::
 
 void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, ParallelVector & dst ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const localSrc = src.values();
   arrayView1d< real64 > const localDst = dst.open();
   // We do it by hand to avoid hypre call
   using POLICY = parallelDeviceAsyncPolicy<>;
-  forAll< POLICY >( localDst.size(), [localDst] GEOSX_HOST_DEVICE ( localIndex const i )
+  forAll< POLICY >( localDst.size(), [localDst] GEOS_HOST_DEVICE ( localIndex const i )
   {
     localDst[ i ] = 0.0;
   } );
@@ -142,7 +141,7 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
 
 void MatrixFreeSolidMechanicsFEMOperator::computeDiagonal( ParallelVector & diagonal ) const
 {
-  GEOSX_ERROR( "computeDiagonal: operation not yet implemented" );
+  GEOS_ERROR( "computeDiagonal: operation not yet implemented" );
 }
 
 globalIndex MatrixFreeSolidMechanicsFEMOperator::numGlobalRows() const
@@ -230,7 +229,7 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
                                                 const int cycleNumber,
                                                 DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
 //  std::cout<<"MatrixFreeSolidMechanicsFEM::solverStep - begin"<<std::endl;
   m_dofManager.setDomain( domain );
@@ -307,10 +306,10 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
   return dt;
 }
 
-void MatrixFreeSolidMechanicsFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+void MatrixFreeSolidMechanicsFEM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                              DofManager & dofManager ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 //  std::cout<<"MatrixFreeSolidMechanicsFEM::setupDofs - begin"<<std::endl;
 
   dofManager.addField( fields::solidMechanics::totalDisplacement::key(),
@@ -353,7 +352,7 @@ void MatrixFreeSolidMechanicsFEM::setConstitutiveNamesCallSuper( ElementSubRegio
 
   string & solidMaterialName = subRegion.getReference< string >( "solidMaterialNames" );
   solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
-  GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
+  GEOS_ERROR_IF( solidMaterialName.empty(), GEOS_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
 }
 
 
@@ -363,7 +362,7 @@ MatrixFreeSolidMechanicsFEM::applySystemSolution( DofManager const & dofManager,
                                                   real64 const scalingFactor,
                                                   DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 //  std::cout<<"MatrixFreeSolidMechanicsFEM::applySystemSolution - begin"<<std::endl;
   dofManager.addVectorToField( localSolution,
                                fields::solidMechanics::totalDisplacement::key(),
@@ -403,4 +402,4 @@ MatrixFreeSolidMechanicsFEM::applySystemSolution( DofManager const & dofManager,
 //START_SPHINX_INCLUDE_REGISTER
 REGISTER_CATALOG_ENTRY( SolverBase, MatrixFreeSolidMechanicsFEM, string const &, Group * const )
 //END_SPHINX_INCLUDE_REGISTER
-} /* namespace geosx */
+} /* namespace geos */

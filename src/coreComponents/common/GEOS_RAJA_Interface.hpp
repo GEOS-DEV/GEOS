@@ -262,6 +262,6 @@ using thread_x = RAJA::LoopPolicy<RAJA::loop_exec>;
 #define GEOSX_STATIC_SHARED static
 #endif
 
-} // namespace geosx
+} // namespace geos
 
 #endif // GEOS_RAJAINTERFACE_RAJAINTERFACE_HPP

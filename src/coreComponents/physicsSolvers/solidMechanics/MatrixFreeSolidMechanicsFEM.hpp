@@ -20,7 +20,7 @@
 #include "linearAlgebra/solvers/PreconditionerIdentity.hpp"
 #include "linearAlgebra/common/LinearOperatorWithBC.hpp"
 
-namespace geosx
+namespace geos
 {
 
 // Like most physics solvers, the Laplace solver derives from a generic SolverBase class.
@@ -80,7 +80,7 @@ public:
                      integer const cycleNumber,
                      DomainPartition & domain ) override;
 
-  virtual void setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+  virtual void setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                           DofManager & dofManager ) const override;
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
@@ -99,6 +99,6 @@ protected:
   using FieldType = array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM >;
 
 };
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_MFSOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_ */

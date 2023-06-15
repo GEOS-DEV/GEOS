@@ -224,7 +224,7 @@ public:
                            real64 ( &gradN )[numNodes][3] );
 
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static real64 calcGradN( localIndex const qa,
                            localIndex const qb,
                            localIndex const qc,
@@ -280,7 +280,7 @@ public:
     return detJ * weight;
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static real64 invJacobianTransformation( int const qa,
                                            int const qb,
                                            int const qc,
@@ -314,7 +314,7 @@ public:
   }
 
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void symmetricGradient( int const qa,
                                  int const qb,
                                  int const qc,
@@ -350,7 +350,7 @@ public:
   gradient( qa, qb, qc, invJ, var, grad );
 }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void gradient( int const qa,
                         int const qb,
                         int const qc,
@@ -358,7 +358,7 @@ public:
                         real64 const (&var)[numNodes][3],
                         real64 ( &grad )[3][3] );
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void parentGradient2( int const qa,
                                int const qb,
                                int const qc,
@@ -369,14 +369,14 @@ public:
 
 
   template< int qa, int qb, int qc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void parentGradient2( real64 const (&var1)[numNodes][3],
                                real64 const (&var2)[numNodes][3],
                                real64 ( &grad1 )[3][3],
                                real64 ( &grad2 )[3][3] );
 
   template< int qa, int qb, int qc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void parentGradient( real64 const (&var1)[numNodes][3],
                               real64 ( &grad1 )[3][3] );
 
@@ -403,7 +403,7 @@ public:
                               real64 ( &R )[numNodes][3] );
 
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void plusGradNajAij( int const qa,
                               int const qb,
                               int const qc,
@@ -412,7 +412,7 @@ public:
                               real64 ( &R )[numNodes][3] );
 
   template< int qa, int qb, int qc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void plusGradNajAij( real64 const (&invJ)[3][3],
                               real64 const (&var)[6],
                               real64 ( &R )[numNodes][3] );
@@ -499,13 +499,13 @@ private:
 
 
   template< int qa, int qb, int qc, typename FUNC, typename ... PARAMS >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void supportLoop( FUNC && func,
                            PARAMS &&... params );
 
 
   template< int qa, int qb, int qc, int a, int b, int c, typename FUNC, typename ... PARAMS >
-  GEOSX_HOST_DEVICE 
+  GEOS_HOST_DEVICE 
   static void
   supportLoopImpl( FUNC && func,
                    PARAMS &&... params );
@@ -667,7 +667,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
 
 
 template< int qa, int qb, int qc, int a, int b, int c, typename FUNC, typename ... PARAMS >
-GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE void
+GEOS_HOST_DEVICE GEOS_FORCE_INLINE void
 H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoopImpl( FUNC && func,
                  PARAMS &&... params )
 {
@@ -696,7 +696,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoopImpl( FUNC && func,
 
 
 template< int qa, int qb, int qc, typename FUNC, typename ... PARAMS >
-GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE void
+GEOS_HOST_DEVICE GEOS_FORCE_INLINE void
 H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( FUNC && func,
                                                      PARAMS &&... params )
 {
@@ -726,8 +726,8 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN( localIndex const q,
   return calcGradN( qa, qb, qc, X, gradN );
 }
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64
 H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN( localIndex const qa,
                                                   localIndex const qb,
@@ -776,17 +776,18 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
                                                  real64 const (&X)[numNodes][3],
                                                  real64 (& J)[3][3] )
   {
-    real64 const * const GEOSX_RESTRICT Xnode = X[nodeIndex];
-   J[0][0] = J[0][0] + dNdXi[0] * Xnode[0];
-   J[0][1] = J[0][1] + dNdXi[1] * Xnode[0];
-   J[0][2] = J[0][2] + dNdXi[2] * Xnode[0];
-   J[1][0] = J[1][0] + dNdXi[0] * Xnode[1];
-   J[1][1] = J[1][1] + dNdXi[1] * Xnode[1];
-   J[1][2] = J[1][2] + dNdXi[2] * Xnode[1];
-   J[2][0] = J[2][0] + dNdXi[0] * Xnode[2];
-   J[2][1] = J[2][1] + dNdXi[1] * Xnode[2];
-   J[2][2] = J[2][2] + dNdXi[2] * Xnode[2];
-  }, X, J );
+    real64 const * const GEOS_RESTRICT Xnode = X[nodeIndex];
+    J[0][0] = J[0][0] + dNdXi[0] * Xnode[0];
+    J[0][1] = J[0][1] + dNdXi[1] * Xnode[0];
+    J[0][2] = J[0][2] + dNdXi[2] * Xnode[0];
+    J[1][0] = J[1][0] + dNdXi[0] * Xnode[1];
+    J[1][1] = J[1][1] + dNdXi[1] * Xnode[1];
+    J[1][2] = J[1][2] + dNdXi[2] * Xnode[1];
+    J[2][0] = J[2][0] + dNdXi[0] * Xnode[2];
+    J[2][1] = J[2][1] + dNdXi[1] * Xnode[2];
+    J[2][2] = J[2][2] + dNdXi[2] * Xnode[2];
+  }, 
+  X, J );
 
 }
 
@@ -833,8 +834,8 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
 }
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void H1_Hexahedron_Lagrange1_GaussLegendre2::symmetricGradient( int const qa,
                                                                 int const qb,
                                                                 int const qc,
@@ -853,8 +854,8 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::symmetricGradient( int const qa,
   grad[5] = fullGrad[1][0] + fullGrad[0][1];
 }
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( int const q,
                                                              real64 const (&invJ)[3][3],
                                                              real64 const (&var)[6],
@@ -866,8 +867,8 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( int const q,
   plusGradNajAij( qa, qb, qc, invJ, var, R );
 }
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( int const qa,
                                                              int const qb,
                                                              int const qc,
@@ -902,8 +903,8 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( int const qa,
 }
 
 template< int qa, int qb, int qc >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( real64 const (&invJ)[3][3],
                                                              real64 const (&var)[6],
                                                              real64 (& R)[numNodes][3] )
@@ -922,7 +923,7 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( real64 const (&invJ
   };
 
   supportLoop< qa, qb, qc > (
-               [] GEOSX_HOST_DEVICE
+               [] GEOS_HOST_DEVICE
                  ( real64 const (&dNdXi)[3],
                  int const nodeIndex,
                  real64 const (&var)[3][3],
@@ -934,8 +935,8 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( real64 const (&invJ
   }, fullVar, R );
 }
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const qa,
                                                        int const qb,
                                                        int const qc,
@@ -945,7 +946,7 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const qa,
 {
   real64 parentGrad[3][3] = {{0}};
 
-  supportLoop( qa, qb, qc, [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
+  supportLoop( qa, qb, qc, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
                                                   int const nodeIndex,
                                                   real64 const (&var)[numNodes][3],
                                                   real64 (& grad)[3][3] )
@@ -977,8 +978,8 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const qa,
 }
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void H1_Hexahedron_Lagrange1_GaussLegendre2::parentGradient2( int const qa,
                                                               int const qb,
                                                               int const qc,
@@ -987,7 +988,7 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::parentGradient2( int const qa,
                                                               real64 ( &grad1 )[3][3],
                                                               real64 ( &grad2 )[3][3] )
 {
-  supportLoop( qa, qb, qc, [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
+  supportLoop( qa, qb, qc, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
                                                   int const nodeIndex,
                                                   real64 const (&var1)[numNodes][3],
                                                   real64 const (&var2)[numNodes][3],
@@ -1008,14 +1009,14 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::parentGradient2( int const qa,
 }
 
 template< int qa, int qb, int qc >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void H1_Hexahedron_Lagrange1_GaussLegendre2::parentGradient2( real64 const (&var1)[numNodes][3],
                                                               real64 const (&var2)[numNodes][3],
                                                               real64 ( &grad1 )[3][3],
                                                               real64 ( &grad2 )[3][3] )
 {
-  supportLoop<qa,qb,qc>( [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
+  supportLoop<qa,qb,qc>( [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
                                                   int const nodeIndex,
                                                   real64 const (&var1)[numNodes][3],
                                                   real64 const (&var2)[numNodes][3],
@@ -1036,12 +1037,12 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::parentGradient2( real64 const (&var
 }
 
 template< int qa, int qb, int qc >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void H1_Hexahedron_Lagrange1_GaussLegendre2::parentGradient( real64 const (&var)[numNodes][3],
                                                               real64 ( &grad )[3][3] )
 {
-  supportLoop<qa,qb,qc>( [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
+  supportLoop<qa,qb,qc>( [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
                                                   int const nodeIndex,
                                                   real64 const (&var)[numNodes][3],
                                                   real64 (& grad)[3][3] )

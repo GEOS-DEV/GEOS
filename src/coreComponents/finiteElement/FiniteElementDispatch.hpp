@@ -78,7 +78,8 @@
 
 #if !defined( GEOS_USE_HIP )
 // can only compile GL_FE_TYPES when not using cce+rocm
-#define ALL_FE_TYPES BASE_FE_TYPES, GL_FE_TYPES
+#define ALL_FE_TYPES finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2
+//BASE_FE_TYPES, GL_FE_TYPES
 #else
 #define ALL_FE_TYPES BASE_FE_TYPES
 #endif

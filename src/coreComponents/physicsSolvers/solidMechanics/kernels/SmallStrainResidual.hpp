@@ -23,7 +23,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 /// Namespace to contain the solid mechanics kernels.
@@ -112,7 +112,7 @@ public:
   struct StackVariables : Base::StackVariables
   {
 public:
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       fLocal{ { 0.0} },
       varLocal{ {0.0} },
@@ -141,7 +141,7 @@ public:
    *
    * Copies the primary variable, and position into the local stack array.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const k,
               StackVariables & stack ) const;
 
@@ -154,7 +154,7 @@ public:
    * the stress divergence, rather than using the dedicated component function
    * to allow for some variable reuse.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const;
@@ -165,7 +165,7 @@ public:
    * ### SmallStrainResidual Description
    * Performs the distribution of the nodal force out to the rank local arrays.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 complete( localIndex const k,
                    StackVariables const & stack ) const;
 
@@ -179,7 +179,7 @@ public:
 
 
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const k,
               real64 (&xLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
               real64 (&varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const;
@@ -193,7 +193,7 @@ public:
    * the stress divergence, rather than using the dedicated component function
    * to allow for some variable reuse.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
                               localIndex const qa,
                               localIndex const qb,
@@ -204,7 +204,7 @@ public:
 
 
   template< int qa, int qb, int qc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
                               real64 const (&xLocal)[ numNodesPerElem ][ numDofPerTrialSupportPoint ],
                               real64 const (&varLocal)[ numNodesPerElem ][ numDofPerTrialSupportPoint ],
@@ -216,7 +216,7 @@ public:
    * ### SmallStrainResidual Description
    * Performs the distribution of the nodal force out to the rank local arrays.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 complete( localIndex const k,
                    real64 const (&fLocal) [ numNodesPerElem ][ numDofPerTestSupportPoint ] ) const;
 
@@ -278,6 +278,6 @@ using SmallStrainResidualFactory = finiteElement::KernelFactory< SmallStrainResi
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
-} // namespace geosx
+} // namespace geos
 
 #endif //GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_SMALLSTRAINRESIDUAL_HPP_

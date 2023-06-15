@@ -19,11 +19,11 @@
 
 #include "LvArray/src/output.hpp"
 
-namespace geosx
+namespace geos
 {
 
 template< typename T >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline real64 bcFieldValue( T const & field, 
                             localIndex const index, 
                             int const component )
@@ -32,7 +32,7 @@ inline real64 bcFieldValue( T const & field,
 } 
 
 template<>
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline real64 bcFieldValue<arrayView1d<real64 const>>( arrayView1d<real64 const> const & field, 
                                                        localIndex const index, 
                                                        int const )
@@ -77,7 +77,7 @@ public:
 
   // struct fieldFunctor
   // {
-  //   GEOSX_HOST_DEVICE real64 operator()( localIndex const a )
+  //   GEOS_HOST_DEVICE real64 operator()( localIndex const a )
   //   {
   //     return 
   //   }
@@ -128,7 +128,7 @@ public:
         }
         break;
       case DiagPolicy::KeepDiagonal:
-        GEOSX_ERROR("Not yet implemented.");
+        GEOS_ERROR("Not yet implemented.");
         // TODO: compute diagonal
         break;
     }
@@ -147,7 +147,7 @@ public:
                             string const &,
                             SortedArrayView< localIndex const > const & targetSet,
                             dataRepository::Group & targetGroup,
-                            string const & GEOSX_UNUSED_PARAM( fieldName ) )
+                            string const & GEOS_UNUSED_PARAM( fieldName ) )
       {
         totalSize += targetSet.size();
       } );
@@ -220,7 +220,7 @@ public:
                                                              m_diagonal.toViewConst(),
                                                              dof,
                                                              rhsContribution,
-                                                             [=] GEOSX_HOST_DEVICE (localIndex const a)->real64
+                                                             [=] GEOS_HOST_DEVICE (localIndex const a)->real64
                                                              {
                                                                return bcFieldValue( field, a, component );
                                                              } );
@@ -246,7 +246,7 @@ public:
    */
   void computeConstrainedRHS( ParallelVector & rhs, ParallelVector & solution ) const
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
     using POLICY = parallelDevicePolicy<>;
 
@@ -259,7 +259,7 @@ public:
     arrayView1d< real64 const > const localDiag = m_diagonal.toViewConst();
     arrayView1d< real64 const > const localRhsContributions = m_rhsContributions.toViewConst();
     forAll< POLICY >( m_constrainedDofIndices.size(),
-                      [ initSolution, localBC, localBCIndices, localBCDofs, localDiag, localRhsContributions ] GEOSX_HOST_DEVICE
+                      [ initSolution, localBC, localBCIndices, localBCDofs, localDiag, localRhsContributions ] GEOS_HOST_DEVICE
                         ( localIndex const i )
     {
       localIndex const idx = localBCIndices[ i ];
@@ -286,7 +286,7 @@ public:
     // D_GG x_BC
     arrayView1d< real64 > const localRhs = rhs.open();
     forAll< POLICY >( m_constrainedDofIndices.size(),
-                      [ localRhs, localBCIndices, localRhsContributions ] GEOSX_HOST_DEVICE
+                      [ localRhs, localBCIndices, localRhsContributions ] GEOS_HOST_DEVICE
                         ( localIndex const i )
     {
       localIndex const idx = localBCIndices[ i ]; 
@@ -303,14 +303,14 @@ public:
    */
   virtual void apply( ParallelVector const & src, ParallelVector & dst ) const
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
     using POLICY = parallelDeviceAsyncPolicy<>;
 
     arrayView1d< real64 > const localSrcWithBC = srcWithBC.open();
     arrayView1d< real64 const > const localSrc = src.values();
 
-    forAll< POLICY >( localSrc.size(), [localSrcWithBC, localSrc] GEOSX_HOST_DEVICE ( localIndex const i )
+    forAll< POLICY >( localSrc.size(), [localSrcWithBC, localSrc] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localSrcWithBC[ i ] = localSrc[ i ];
     } );
@@ -318,7 +318,7 @@ public:
     arrayView1d< localIndex const > const localBCIndices = m_constrainedIndices.toViewConst();
 //    std::cout << "constrained ind: " << localBCIndices << std::endl;
 
-    forAll< POLICY >( m_constrainedDofIndices.size(), [localSrcWithBC, localBCIndices] GEOSX_HOST_DEVICE ( localIndex const i )
+    forAll< POLICY >( m_constrainedDofIndices.size(), [localSrcWithBC, localBCIndices] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localSrcWithBC[ localBCIndices[ i ] ] = 0.0;
     } );
@@ -337,7 +337,7 @@ public:
     {
       case DiagPolicy::DiagonalOne:
         {
-          forAll< POLICY >( m_constrainedDofIndices.size(), [ localSrc, localDst, localBCIndices ] GEOSX_HOST_DEVICE ( localIndex const i )
+          forAll< POLICY >( m_constrainedDofIndices.size(), [ localSrc, localDst, localBCIndices ] GEOS_HOST_DEVICE ( localIndex const i )
           {
             localIndex const idx = localBCIndices[ i ];
             localDst[ idx ] = localSrc [ idx ];
@@ -347,7 +347,7 @@ public:
         break;
       case DiagPolicy::DiagonalZero:
         {
-          forAll< POLICY >( m_constrainedDofIndices.size(), [ localDst, localBCIndices ] GEOSX_HOST_DEVICE ( localIndex const i )
+          forAll< POLICY >( m_constrainedDofIndices.size(), [ localDst, localBCIndices ] GEOS_HOST_DEVICE ( localIndex const i )
           {
             localIndex const idx = localBCIndices[ i ];
             localDst[ idx ] = 0.0;
@@ -355,7 +355,7 @@ public:
         }
         break;
       case DiagPolicy::KeepDiagonal:
-        GEOSX_ERROR("Not yet implemented.");
+        GEOS_ERROR("Not yet implemented.");
         // TODO: set dst to diag * xBC
         break;
     }
@@ -403,6 +403,6 @@ private:
   array1d< real64 > m_diagonal;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOSX_LINEARALGEBRA_INTERFACES_LINEAROPERATORWITHBC_HPP_ */

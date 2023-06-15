@@ -254,7 +254,7 @@ void SolidMechanicsLagrangianFEM::setConstitutiveNames( ElementSubRegionBase & s
 
 //   FiniteElementDiscretization const &
 //   feDiscretization = feDiscretizationManager.getGroup< FiniteElementDiscretization >( m_discretizationName );
-//   GEOSX_UNUSED_VAR( feDiscretization );
+//   GEOS_UNUSED_VAR( feDiscretization );
 // }
 
 

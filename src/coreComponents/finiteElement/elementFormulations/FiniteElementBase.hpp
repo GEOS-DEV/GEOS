@@ -18,7 +18,7 @@
 
 #if defined(GEOS_USE_DEVICE)
 #define CALC_FEM_SHAPE_IN_KERNEL
-//#endif
+#endif
 
 
 
@@ -520,7 +520,7 @@ public:
 
 
   template< int NUM_SUPPORT_POINTS>
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void symmetricGradient( int const q,
                                  real64 const (&invJ)[3][3],
                                  real64 const (&var)[NUM_SUPPORT_POINTS][3],
@@ -663,7 +663,7 @@ public:
                               real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
   template< int NUM_SUPPORT_POINTS>
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void plusGradNajAij( int const q,
                               real64 const (&invJ)[3][3],
                               real64 const (&var)[6],
