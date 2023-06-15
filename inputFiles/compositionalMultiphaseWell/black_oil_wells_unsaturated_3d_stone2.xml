@@ -183,11 +183,11 @@
         <BrooksCoreyStone2RelativePermeability
                 name="relperm"
                 phaseNames="{ oil, gas, water }"
-                phaseMinVolumeFraction="{ 0.0, 0.0, 0.0}"
+                phaseMinVolumeFraction="{ 0.1, 0.05, 0.2}"
                 waterOilRelPermExponent="{ 2.0, 2.0}"
                 gasOilRelPermExponent="{ 2.0, 2.0 }"
                 waterOilRelPermMaxValue="{ 1.0, 1.0 }"
-                gasOilRelPermMaxValue="{ 1.0, 1.0 }"/>
+                gasOilRelPermMaxValue="{ 0.8, 0.4 }"/>
 
         <ConstantPermeability
                 name="rockPerm"
