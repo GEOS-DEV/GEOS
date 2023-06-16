@@ -62,7 +62,9 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   m_keepFlowVariablesConstantDuringInitStep( 0 ),
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 ),
-  m_useTotalMassEquation( 1 )
+  m_useTotalMassEquation( 1 ),
+  m_useSimpleAccumulation( 0 ),
+  m_minCompDens( isothermalCompositionalMultiphaseBaseKernels::minDensForDivision )
 {
 //START_SPHINX_INCLUDE_00
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
@@ -73,6 +75,10 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Use mass formulation instead of molar" );
+  this->registerWrapper( viewKeyStruct::useVolumeConstraintString(), &m_useVolumeConstraint ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Use volume constrain or not" );
 
   this->registerWrapper( viewKeyStruct::solutionChangeScalingFactorString(), &m_solutionChangeScalingFactor ).
     setSizedFromParent( 0 ).
@@ -122,6 +128,18 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
     setDescription( "Flag indicating whether total mass equation is used" );
+
+  this->registerWrapper( viewKeyStruct::useSimpleAccumulationString(), &m_useSimpleAccumulation ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag indicating whether simple accumulation form is used" );
+
+  this->registerWrapper( viewKeyStruct::minCompDensString(), &m_minCompDens ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( isothermalCompositionalMultiphaseBaseKernels::minDensForDivision ).
+    setDescription( "Minimum allowed global component density" );
 
 }
 
@@ -196,8 +214,18 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
     m_numPhases = referenceFluid.numFluidPhases();
     m_numComponents = referenceFluid.numFluidComponents();
   }
-  // n_c components + one pressure ( + one temperature if needed )
-  m_numDofPerCell = m_isThermal ? m_numComponents + 2 : m_numComponents + 1;
+
+  if( m_isThermal )
+  {
+    m_numDofPerCell = m_numComponents + 2;  // n_c components + one pressure + one temperature
+  }
+  else
+  {
+    if( m_useVolumeConstraint )
+      m_numDofPerCell = m_numComponents + 1; // n_c components + one pressure
+    else
+      m_numDofPerCell = m_numComponents;  // n_c-1 components + one pressure
+  }
 
   // 2. Register and resize all fields as necessary
   forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
@@ -1218,6 +1246,8 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
                                                      m_numPhases,
                                                      dofManager.rankOffset(),
                                                      m_useTotalMassEquation,
+                                                     m_useSimpleAccumulation,
+                                                     m_useVolumeConstraint,
                                                      dofKey,
                                                      subRegion,
                                                      fluid,
@@ -1233,6 +1263,8 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
                                                      m_numPhases,
                                                      dofManager.rankOffset(),
                                                      m_useTotalMassEquation,
+                                                     m_useSimpleAccumulation,
+                                                     m_useVolumeConstraint,
                                                      dofKey,
                                                      subRegion,
                                                      fluid,
@@ -1848,9 +1880,9 @@ void CompositionalMultiphaseBase::chopNegativeDensities( DomainPartition & domai
         {
           for( integer ic = 0; ic < numComp; ++ic )
           {
-            if( compDens[ei][ic] < minDensForDivision )
+            if( compDens[ei][ic] < m_minCompDens )
             {
-              compDens[ei][ic] = minDensForDivision;
+              compDens[ei][ic] = m_minCompDens;
             }
           }
         }

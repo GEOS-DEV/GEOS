@@ -243,7 +243,6 @@ public:
   FaceBasedAssemblyKernel( integer const numPhases,
                            globalIndex const rankOffset,
                            integer const hasCapPressure,
-                           integer const useTotalMassEquation,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
                            CompFlowAccessors const & compFlowAccessors,
@@ -259,7 +258,6 @@ public:
     : Base( numPhases,
             rankOffset,
             hasCapPressure,
-            useTotalMassEquation,
             stencilWrapper,
             dofNumberAccessor,
             compFlowAccessors,
@@ -568,12 +566,13 @@ public:
   GEOS_HOST_DEVICE
   inline
   void complete( localIndex const iconn,
-                 StackVariables & stack ) const
+                 StackVariables & stack,
+                 integer const useTotalMassEquation ) const
   {
     // Call Case::complete to assemble the component mass balance equations (i = 0 to i = numDof-2)
     // In the lambda, add contribution to residual and jacobian into the energy balance equation
-    Base::complete( iconn, stack, [&] ( integer const i,
-                                        localIndex const localRow )
+    Base::complete( iconn, stack, useTotalMassEquation, [&] ( integer const i,
+                                                              localIndex const localRow )
     {
       // beware, there is  volume balance eqn in m_localRhs and m_localMatrix!
       RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn], stack.localFlux[i * numEqn + numEqn-1] );
@@ -658,11 +657,11 @@ public:
       typename KernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
       typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
 
-      KernelType kernel( numPhases, rankOffset, hasCapPressure, useTotalMassEquation, stencilWrapper, dofNumberAccessor,
+      KernelType kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
                          compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
                          capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
                          dt, localMatrix, localRhs );
-      KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+      KernelType::template launch< POLICY >( stencilWrapper.size(), useTotalMassEquation, kernel );
     } );
   }
 };
@@ -762,7 +761,6 @@ public:
   DirichletFaceBasedAssemblyKernel( integer const numPhases,
                                     globalIndex const rankOffset,
                                     integer const hasCapPressure,
-                                    integer const useTotalMassEquation,
                                     FaceManager const & faceManager,
                                     BoundaryStencilWrapper const & stencilWrapper,
                                     FLUIDWRAPPER const & fluidWrapper,
@@ -780,7 +778,6 @@ public:
     : Base( numPhases,
             rankOffset,
             hasCapPressure,
-            useTotalMassEquation,
             faceManager,
             stencilWrapper,
             fluidWrapper,
@@ -1009,11 +1006,12 @@ public:
    */
   GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
-                 StackVariables & stack ) const
+                 StackVariables & stack,
+                 integer const useTotalMassEquation ) const
   {
     // Call Case::complete to assemble the component mass balance equations (i = 0 to i = numDof-2)
     // In the lambda, add contribution to residual and jacobian into the energy balance equation
-    Base::complete( iconn, stack, [&] ( localIndex const localRow )
+    Base::complete( iconn, stack, useTotalMassEquation, [&] ( localIndex const localRow )
     {
       // beware, there is  volume balance eqn in m_localRhs and m_localMatrix!
       RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn], stack.localFlux[numEqn-1] );
@@ -1108,11 +1106,11 @@ public:
         // for now, we neglect capillary pressure in the kernel
         bool const hasCapPressure = false;
 
-        KernelType kernel( numPhases, rankOffset, hasCapPressure, useTotalMassEquation, faceManager, stencilWrapper, fluidWrapper,
+        KernelType kernel( numPhases, rankOffset, hasCapPressure, faceManager, stencilWrapper, fluidWrapper,
                            dofNumberAccessor, compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
                            capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
                            dt, localMatrix, localRhs );
-        KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+        KernelType::template launch< POLICY >( stencilWrapper.size(), useTotalMassEquation, kernel );
       } );
     } );
   }

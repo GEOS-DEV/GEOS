@@ -229,6 +229,7 @@ public:
 
     static constexpr char const * inputTemperatureString() { return "temperature"; }
     static constexpr char const * useMassFlagString() { return "useMass"; }
+    static constexpr char const * useVolumeConstraintString() { return "useVolumeConstraint"; }
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
@@ -248,6 +249,8 @@ public:
     static constexpr char const * maxRelativeTempChangeString() { return "maxRelativeTemperatureChange"; }
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
     static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
+    static constexpr char const * useSimpleAccumulationString() { return "useSimpleAccumulation"; }
+    static constexpr char const * minCompDensString() { return "minCompDens"; }
 
   };
 
@@ -403,6 +406,9 @@ protected:
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
 
+  /// flag to determine whether or not use volume constraint equation
+  integer m_useVolumeConstraint;
+
   /// flag to determine whether or not to apply capillary pressure
   integer m_hasCapPressure;
 
@@ -438,6 +444,12 @@ protected:
 
   /// flag indicating whether total mass equation is used
   integer m_useTotalMassEquation;
+
+  /// flag indicating whether simple accumulation form is used
+  integer m_useSimpleAccumulation;
+
+  /// minimum allowed global component density
+  real64 m_minCompDens;
 
   /// name of the fluid constitutive model used as a reference for component/phase description
   string m_referenceFluidModelName;

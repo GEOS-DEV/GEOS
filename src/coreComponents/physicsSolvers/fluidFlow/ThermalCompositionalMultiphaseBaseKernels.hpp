@@ -184,14 +184,13 @@ public:
    */
   ElementBasedAssemblyKernel( localIndex const numPhases,
                               globalIndex const rankOffset,
-                              integer const useTotalMassEquation,
                               string const dofKey,
                               ElementSubRegionBase const & subRegion,
                               MultiFluidBase const & fluid,
                               CoupledSolidBase const & solid,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
-    : Base( numPhases, rankOffset, useTotalMassEquation, dofKey, subRegion, fluid, solid, localMatrix, localRhs ),
+    : Base( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs ),
     m_dPoro_dTemp( solid.getDporosity_dTemperature() ),
     m_phaseInternalEnergy_n( fluid.phaseInternalEnergy_n() ),
     m_phaseInternalEnergy( fluid.phaseInternalEnergy() ),
@@ -373,10 +372,12 @@ public:
 
   GEOS_HOST_DEVICE
   void complete( localIndex const ei,
-                 StackVariables & stack ) const
+                 StackVariables & stack,
+                 integer const useTotalMassEquation,
+                 integer const useVolumeConstraint ) const
   {
     // Step 1: assemble the component mass balance equations and volume balance equations
-    Base::complete( ei, stack );
+    Base::complete( ei, stack, useTotalMassEquation, useVolumeConstraint );
 
     // Step 2: assemble the energy equation
     m_localRhs[stack.localRow + numEqn-1] += stack.localResidual[numEqn-1];
@@ -429,6 +430,8 @@ public:
                    localIndex const numPhases,
                    globalIndex const rankOffset,
                    integer const useTotalMassEquation,
+                   integer const useSimpleAccumulation,
+                   integer const useVolumeConstraint,
                    string const dofKey,
                    ElementSubRegionBase const & subRegion,
                    MultiFluidBase const & fluid,
@@ -442,9 +445,10 @@ public:
       localIndex constexpr NUM_COMP = NC();
       localIndex constexpr NUM_DOF = NC()+2;
       ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
-      kernel( numPhases, rankOffset, useTotalMassEquation, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
+      kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
       ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template
-      launch< POLICY, ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF > >( subRegion.size(), kernel );
+      launch< POLICY, ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF > >( subRegion.size(), useTotalMassEquation,
+                                                                         useSimpleAccumulation, useVolumeConstraint, kernel );
     } );
   }
 

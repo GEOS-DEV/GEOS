@@ -319,7 +319,6 @@ public:
   FaceBasedAssemblyKernelBase( integer const numPhases,
                                globalIndex const rankOffset,
                                integer const hasCapPressure,
-                               integer const useTotalMassEquation,
                                DofNumberAccessor const & dofNumberAccessor,
                                CompFlowAccessors const & compFlowAccessors,
                                MultiFluidAccessors const & multiFluidAccessors,
@@ -339,9 +338,6 @@ protected:
 
   /// Flag to specify whether capillary pressure is used or not
   integer const m_hasCapPressure;
-
-  /// Flag to specify whether total mass equation is used or not
-  integer const m_useTotalMassEquation;
 
   /// Time step size
   real64 const m_dt;
@@ -441,7 +437,6 @@ public:
   FaceBasedAssemblyKernel( integer const numPhases,
                            globalIndex const rankOffset,
                            integer const hasCapPressure,
-                           integer const useTotalMassEquation,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
                            CompFlowAccessors const & compFlowAccessors,
@@ -454,7 +449,6 @@ public:
     : FaceBasedAssemblyKernelBase( numPhases,
                                    rankOffset,
                                    hasCapPressure,
-                                   useTotalMassEquation,
                                    dofNumberAccessor,
                                    compFlowAccessors,
                                    multiFluidAccessors,
@@ -696,11 +690,12 @@ public:
   inline
   void complete( localIndex const iconn,
                  StackVariables & stack,
+                 integer const useTotalMassEquation,
                  FUNC && assemblyKernelOp = NoOpFunc{} ) const
   {
     using namespace compositionalMultiphaseUtilities;
 
-    if( m_useTotalMassEquation > 0 )
+    if( useTotalMassEquation > 0 )
     {
       // Apply equation/variable change transformation(s)
       stackArray1d< real64, maxStencilSize * numDof > work( stack.stencilSize * numDof );
@@ -748,6 +743,7 @@ public:
   template< typename POLICY, typename KERNEL_TYPE >
   static void
   launch( localIndex const numConnections,
+          integer const useTotalMassEquation,
           KERNEL_TYPE const & kernelComponent )
   {
     GEOS_MARK_FUNCTION;
@@ -758,7 +754,7 @@ public:
 
       kernelComponent.setup( iconn, stack );
       kernelComponent.computeFlux( iconn, stack );
-      kernelComponent.complete( iconn, stack );
+      kernelComponent.complete( iconn, stack, useTotalMassEquation );
     } );
   }
 
@@ -828,10 +824,10 @@ public:
       typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
       typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
-      kernelType kernel( numPhases, rankOffset, hasCapPressure, useTotalMassEquation, stencilWrapper, dofNumberAccessor,
+      kernelType kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
                          compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
                          dt, localMatrix, localRhs );
-      kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+      kernelType::template launch< POLICY >( stencilWrapper.size(), useTotalMassEquation, kernel );
     } );
   }
 };
@@ -869,7 +865,6 @@ public:
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
 
   using AbstractBase::m_dt;
-  using AbstractBase::m_useTotalMassEquation;
   using AbstractBase::m_numPhases;
   using AbstractBase::m_rankOffset;
   using AbstractBase::m_dofNumber;
@@ -917,7 +912,6 @@ public:
   DirichletFaceBasedAssemblyKernel( integer const numPhases,
                                     globalIndex const rankOffset,
                                     integer const hasCapPressure,
-                                    integer const useTotalMassEquation,
                                     FaceManager const & faceManager,
                                     BoundaryStencilWrapper const & stencilWrapper,
                                     FLUIDWRAPPER const & fluidWrapper,
@@ -932,7 +926,6 @@ public:
     : Base( numPhases,
             rankOffset,
             hasCapPressure,
-            useTotalMassEquation,
             stencilWrapper,
             dofNumberAccessor,
             compFlowAccessors,
@@ -1224,12 +1217,13 @@ public:
   GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack,
+                 integer const useTotalMassEquation,
                  FUNC && assemblyKernelOp = NoOpFunc{} ) const
   {
     using namespace compositionalMultiphaseUtilities;
     using Order = BoundaryStencil::Order;
 
-    if( m_useTotalMassEquation > 0 )
+    if( useTotalMassEquation > 0 )
     {
       // Apply equation/variable change transformation(s)
       real64 work[numDof]{};
@@ -1340,10 +1334,10 @@ public:
         // for now, we neglect capillary pressure in the kernel
         bool const hasCapPressure = false;
 
-        kernelType kernel( numPhases, rankOffset, hasCapPressure, useTotalMassEquation, faceManager, stencilWrapper, fluidWrapper,
+        kernelType kernel( numPhases, rankOffset, hasCapPressure, faceManager, stencilWrapper, fluidWrapper,
                            dofNumberAccessor, compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
                            dt, localMatrix, localRhs );
-        kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+        kernelType::template launch< POLICY >( stencilWrapper.size(), useTotalMassEquation, kernel );
       } );
     } );
   }
