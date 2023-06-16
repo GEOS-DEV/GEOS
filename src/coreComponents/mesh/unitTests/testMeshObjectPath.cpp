@@ -353,44 +353,44 @@ void checkRegionNames( std::vector< string > const & names )
   EXPECT_TRUE( names[12] == "region1" );
 }
 
-// TEST( testMeshObjectPath, forObjectsInPath )
-// {
-//   TestMesh & testMesh = TestMesh::getTestMesh();
-//   Group & meshBodies = testMesh.meshBodies();
-//   Group const & meshBodiesConst = meshBodies;
-//   string const path = "*/*/ElementRegions";
-//   MeshObjectPath meshObjectPath( path, meshBodiesConst );
+TEST( testMeshObjectPath, forObjectsInPathFromMeshBodies )
+{
+  TestMesh & testMesh = TestMesh::getTestMesh();
+  Group & meshBodies = testMesh.meshBodies();
+  Group const & meshBodiesConst = meshBodies;
+  string const path = "*/*/ElementRegions";
+  MeshObjectPath meshObjectPath( path, meshBodiesConst );
 
-//   {
-//     std::vector< string > names;
-//     meshObjectPath.forObjectsInPath< CellElementSubRegion >( meshBodiesConst,
-//                                                              [&]( ElementSubRegionBase const & elemSubRegionBase )
-//     {
-//       names.push_back( elemSubRegionBase.getName() );
-//     } );
-//     checkSubRegionNames( names );
-//   }
+  {
+    std::vector< string > names;
+    meshObjectPath.forObjectsInPath< CellElementSubRegion >( meshBodiesConst,
+                                                             [&]( ElementSubRegionBase const & elemSubRegionBase )
+    {
+      names.push_back( elemSubRegionBase.getName() );
+    } );
+    checkSubRegionNames( names );
+  }
 
-//   {
-//     std::vector< string > names;
-//     meshObjectPath.forObjectsInPath< CellElementSubRegion >( meshBodies,
-//                                                              [&]( ElementSubRegionBase & elemSubRegionBase )
-//     {
-//       names.push_back( elemSubRegionBase.getName() );
-//     } );
-//     checkSubRegionNames( names );
-//   }
+  {
+    std::vector< string > names;
+    meshObjectPath.forObjectsInPath< CellElementSubRegion >( meshBodies,
+                                                             [&]( ElementSubRegionBase & elemSubRegionBase )
+    {
+      names.push_back( elemSubRegionBase.getName() );
+    } );
+    checkSubRegionNames( names );
+  }
 
-//   {
-//     std::vector< string > names;
-//     meshObjectPath.forObjectsInPath< CellElementRegion >( meshBodiesConst,
-//                                                           [&]( CellElementRegion const & elemRegionBase )
-//     {
-//       names.push_back( elemRegionBase.getName() );
-//     } );
-//     checkRegionNames( names );
-//   }
-// }
+  {
+    std::vector< string > names;
+    meshObjectPath.forObjectsInPath< CellElementRegion >( meshBodiesConst,
+                                                          [&]( CellElementRegion const & elemRegionBase )
+    {
+      names.push_back( elemRegionBase.getName() );
+    } );
+    checkRegionNames( names );
+  }
+}
 
 template< typename OBJECT_TYPE, typename CHECK_FUNC >
 void testForObjectInPathsMeshLevel( Group & meshBodies,
