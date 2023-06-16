@@ -14,7 +14,7 @@
       zCoords="{ 0, 1 }"
       nx="{ 3, 3 }"
       ny="{ 5 }"
-      nz="{ 2 }"
+      nz="{ 1 }"
 	  xBias="{ 0.5, -0.5 }"
       cellBlockNames="{cb1}"/>
   </Mesh>
@@ -57,6 +57,24 @@
       endTime="10.0"
       forceDt="0.5"
       target="/Solvers/hydrofracture"/>
+
+    <PeriodicEvent
+      name="sourcePressureCollection"
+      target="/Tasks/sourcePressureCollection"/>
+
+    <PeriodicEvent
+      name="sourceHydraulicApertureCollection"
+      target="/Tasks/sourceHydraulicApertureCollection"/>
+
+    <PeriodicEvent
+      name="curveOutput"
+      timeFrequency="5.0"
+      targetExactTimestep="0"
+      target="/Outputs/curveOutput"/>
+
+    <!-- <PeriodicEvent
+      name="vtk"
+      target="/Outputs/vtkOutput"/> -->
 
     <PeriodicEvent
       name="restarts"
