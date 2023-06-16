@@ -55,7 +55,7 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[out] sourceConstants constant part of the source terms
    * @param[in] receiverCoordinates coordinates of the receiver terms
    * @param[out] receiverIsLocal flag indicating whether the receiver is local or not
-   * @param[out] rcvElem element where a receiver is located
+   * @param[out] receiverElem element where a receiver is located
    * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
    * @param[out] receiverConstants constant part of the receiver term
    * @param[out] sourceValue value of the temporal source (eg. Ricker)
@@ -82,7 +82,7 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< real64 > const sourceConstants,
           arrayView2d< real64 const > const receiverCoordinates,
           arrayView1d< localIndex > const receiverIsLocal,
-          arrayView1d< localIndex > const rcvElem,
+          arrayView1d< localIndex > const receiverElem,
           arrayView2d< localIndex > const receiverNodeIds,
           arrayView2d< real64 > const receiverConstants,
           arrayView2d< real32 > const sourceValue,
@@ -173,7 +173,7 @@ struct PrecomputeSourceAndReceiverKernel
                                                                               X,
                                                                               coordsOnRefElem );
             receiverIsLocal[ircv] = 1;
-            rcvElem[ircv] = k;
+            receiverElem[ircv] = k;
 
             real64 Ntest[FE_TYPE::numNodes];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
@@ -207,7 +207,7 @@ struct MassMatrixKernel
    * @param[in] size the number of cells in the subRegion
    * @param[in] X coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
-   * @param[in] Vp cell-wise velocity
+   * @param[in] Vp cell-wise P-velocity
    * @param[in] density cell-wise density
    * @param[out] mass diagonal of the mass matrix
    */
@@ -268,7 +268,7 @@ struct DampingMatrixKernel
    * @param[in] facesToNodes map from face to nodes
    * @param[in] facesDomainBoundaryIndicator flag equal to 1 if the face is on the boundary, and to 0 otherwise
    * @param[in] freeSurfaceFaceIndicator flag equal to 1 if the face is on the free surface, and to 0 otherwise
-   * @param[in] velocity cell-wise velocity
+   * @param[in] Vp cell-wise P-velocity
    * @param[out] damping diagonal of the damping matrix
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
@@ -338,6 +338,7 @@ struct VelocityComputation
    * @param[in] X coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] p_np1 pressure array (only used here)
+   * @param[in] density cell-wise density
    * @param[in] dt time-step
    * @param[out] velocity_x velocity array in the x direction (updated here)
    * @param[out] velocity_y velocity array in the y direction (updated here)
@@ -449,14 +450,14 @@ struct PressureComputation
    * @param[out] velocity_x velocity array in the x direction (only used here)
    * @param[out] velocity_y velocity array in the y direction (only used here)
    * @param[out] velocity_z velocity array in the z direction (only used here)
-   * @param[in] mass the mass matrix
-   * @param[in] damping the damping matrix
+   * @param[in] mass diagonal of the mass matrix
+   * @param[in] damping diagonal of the damping matrix
    * @param[in] sourceConstants constant part of the source terms
    * @param[in] sourceValue value of the temporal source (eg. Ricker)
    * @param[in] sourceIsAccessible flag indicating whether the source is accessible or not
    * @param[in] sourceElem element where a source is located
-   * @param[in] cycleNumber the number of cycle
    * @param[in] dt time-step
+   * @param[in] cycleNumber the number of cycle
    * @param[out] p_np1 pressure array (updated here)
    */
 

@@ -186,7 +186,7 @@ private:
   array1d< localIndex > m_sourceElem;
 
   /// Array containing the elements which contain a receiver
-  array1d< localIndex > m_rcvElem;
+  array1d< localIndex > m_receiverElem;
 
 };
 

@@ -43,19 +43,26 @@ struct PrecomputeSourceAndReceiverKernel
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
    * @param[in] numNodesPerElem number of nodes per element
+   * @param[in] numFacesPerElem number of faces per element 
    * @param[in] X coordinates of the nodes
+   * @param[in] elemGhostRank rank of the ghost element
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] elemsToFaces map from element to faces
-   * @param[in] facesToNodes map from faces to nodes
    * @param[in] elemCenter coordinates of the element centers
+   * @param[in] faceNormal normal of each faces
+   * @param[in] faceCenter coordinates of the center of a face
    * @param[in] sourceCoordinates coordinates of the source terms
    * @param[out] sourceIsAccessible flag indicating whether the source is accessible or not
    * @param[out] sourceNodeIds indices of the nodes of the element where the source is located
-   * @param[out] sourceNodeConstants constant part of the source terms
+   * @param[out] sourceConstants constant part of the source terms
    * @param[in] receiverCoordinates coordinates of the receiver terms
    * @param[out] receiverIsLocal flag indicating whether the receiver is local or not
    * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
-   * @param[out] receiverNodeConstants constant part of the receiver term
+   * @param[out] receiverConstants constant part of the receiver term
+   * @param[out] sourceValue value of the temporal source (eg. Ricker)
+   * @param[in] dt time-step
+   * @param[in] timeSourceFrequency the central frequency of the source
+   * @param[in] rickerOrder order of the Ricker wavelet
    */
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
