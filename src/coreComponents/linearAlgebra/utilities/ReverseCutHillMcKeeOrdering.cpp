@@ -38,7 +38,7 @@ findNodeWithMinDegree( localIndex const numRows,
                        arrayView1d< localIndex > const marker,
                        localIndex & rootRef )
 {
-  RAJA::ReduceMinLoc< serialReduce, localIndex > minDegree( numRows+1, -1 );
+  RAJA::ReduceMinLoc< serialReduce, localIndex > minDegree( LvArray::NumericLimits< localIndex >::max, -1 );
 
   forAll< serialPolicy >( numRows, [=] ( localIndex const i )
   {
@@ -358,6 +358,7 @@ computePermutation( localIndex const * const offsets,
 
     // Numbering of this component
     computeNewOrdering( offsets, columns, numRows, rankOffset, root, marker, perm, currentNum );
+
   }
 }
 
