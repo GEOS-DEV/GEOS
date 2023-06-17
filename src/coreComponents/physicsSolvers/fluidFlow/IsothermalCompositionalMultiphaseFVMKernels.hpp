@@ -817,7 +817,10 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      if( upwindingParams.upwindingScheme == UpwindingScheme::C1PPU && isothermalCompositionalMultiphaseFVMKernelUtilities::epsC1PPU > 0) //upwindingParams.epsC1PPU > 0 )
+      if( upwindingParams.upwindingScheme == UpwindingScheme::C1PPU && isothermalCompositionalMultiphaseFVMKernelUtilities::epsC1PPU > 0 ) //upwindingParams.epsC1PPU
+                                                                                                                                           // >
+                                                                                                                                           // 0
+                                                                                                                                           // )
       {
         using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER, isothermalCompositionalMultiphaseFVMKernelUtilities::C1PPUPhaseFlux >;
         typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
