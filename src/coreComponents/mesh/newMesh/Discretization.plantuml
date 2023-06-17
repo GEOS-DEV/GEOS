@@ -8,6 +8,7 @@ abstract Class DiscretizationBase<MESHTYPE> {
 Contains data/methods to describe the discretization of a **Mesh**.
 --
 MESHTYPE * m_mesh;
+MeshInterface * m_meshInterface;
 }
 
 Class DiscretizationFEM<INDEX_TYPE> {
@@ -62,6 +63,10 @@ static transferOperator( to, from, fieldPath )
 }
 
 namespace MeshInterface {
+class MeshBasedFields {
+
+}
+
 class ElementManager {
     +forElementRegion(f)
     +forElementSubRegion(f)
@@ -89,18 +94,34 @@ class ElementRegionBase {
 
 
 
-class ConstitutiveBase {
+class MeshBasedConstitutive {
     - int m_numQuadraturePoints
     - Array2d scalarState (numElems, m_numQuadraturePoints) 
     - Array3d vectorState (numElems, m_numQuadraturePoints, numComponents) 
 }
 
+
+MeshBasedFields "1" *-- "1" ElementManager
+MeshBasedFields "1" *-- "1" NodeFieldManager
+MeshBasedFields "1" *-- "1" EdgeFieldManager
+MeshBasedFields "1" *-- "1" FaceFieldManager
+
 ElementManager "1" *-- "0..n" ElementRegionBase
 ElementRegionBase "1" *-- "1..n" ElementSubRegionBase
 ElementSubRegionBase "1" *-- "1..n" ConstitutiveBase
 
+
 } /' namespace MeshInterface '/
  
+
+namespace ConstitutiveModels {
+  abstract ConstitutiveBase {
+    +localIndex m_numConstitutivePoints;
+    +int m_numQuadraturePoints;
+  }
+
+
+}
 
 DiscretizationBase <|-- DiscretizationFEM
 DiscretizationBase <|-- DiscretizationStencil
@@ -110,14 +131,12 @@ DiscretizationParticle <|-- DiscretizationMPM
 
 DiscretizationParticle *-- ConstitutiveBase
 
-DiscretizationBase "1" *-- "1" MeshInterface::ElementManager
-DiscretizationBase "1" *-- "1" MeshInterface::NodeFieldManager
-DiscretizationBase "1" *-- "1" MeshInterface::EdgeFieldManager
-DiscretizationBase "1" *-- "1" MeshInterface::FaceFieldManager
+DiscretizationBase <-- MeshInterface::MeshBasedFields
 
 
 
 } /' namespace Discretization '/
+
 
 
 

@@ -25,7 +25,7 @@ Discretization::DiscretizationBase -- Mesh::MeshAbstract
 
 
 Discretization::MeshInterface::NodeFieldManager -- Mesh::legacyGEOS::NodeManager
-Discretization::MeshInterface::edgeFieldManager -- Mesh::legacyGEOS::edgeManager
+Discretization::MeshInterface::EdgeFieldManager -- Mesh::legacyGEOS::edgeManager
 Discretization::MeshInterface::FaceFieldManager -- Mesh::legacyGEOS::FaceManager
 
 Discretization::MeshInterface::ElementManager -- Mesh::legacyGEOS::CellManager
