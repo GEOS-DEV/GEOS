@@ -101,23 +101,6 @@ namespace internal
 {
 
 template< typename T, typename LAMBDA >
-void kernelLaunchSelectorPhaseSwitch( T value,
-                                      LAMBDA && lambda )
-{
-  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorPhaseSwitch: type should be integral" );
-
-  switch( value )
-  {
-    case 2:
-    { lambda( std::integral_constant< T, 2 >() ); return; }
-    case 3:
-    { lambda( std::integral_constant< T, 3 >() ); return; }
-    default:
-    { GEOS_ERROR( "Unsupported number of phases: " << value ); }
-  }
-}
-
-template< typename T, typename LAMBDA >
 void kernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
 {
   static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: type should be integral" );

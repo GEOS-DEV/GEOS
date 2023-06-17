@@ -160,8 +160,8 @@ public:
  * @tparam STENCILWRAPPER the type of the stencil wrapper
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NUM_PHASE, integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
-class FaceBasedAssemblyKernel : public isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_PHASE, NUM_COMP, NUM_DOF, STENCILWRAPPER >
+template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
+class FaceBasedAssemblyKernel : public isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >
 {
 public:
 
@@ -182,6 +182,7 @@ public:
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
 
   using AbstractBase::m_dt;
+  using AbstractBase::m_numPhases;
   using AbstractBase::m_hasCapPressure;
   using AbstractBase::m_rankOffset;
   using AbstractBase::m_dofNumber;
@@ -195,8 +196,7 @@ public:
   using AbstractBase::m_dCompFrac_dCompDens;
   using AbstractBase::m_dPhaseCapPressure_dPhaseVolFrac;
 
-  using Base = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_PHASE, NUM_COMP, NUM_DOF, STENCILWRAPPER >;
-  using Base::numPhase;
+  using Base = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -224,6 +224,7 @@ public:
 
   /**
    * @brief Constructor for the kernel interface
+   * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] hasCapPressure flag specifying whether capillary pressure is used or not
    * @param[in] stencilWrapper reference to the stencil wrapper
@@ -239,7 +240,8 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  FaceBasedAssemblyKernel( globalIndex const rankOffset,
+  FaceBasedAssemblyKernel( integer const numPhases,
+                           globalIndex const rankOffset,
                            integer const hasCapPressure,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
@@ -253,9 +255,10 @@ public:
                            real64 const & dt,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs )
-    : Base( rankOffset,
+    : Base( numPhases,
+            rankOffset,
             hasCapPressure,
-            0.0,                  // no C1-PPU
+            //0.0,                  // no C1-PPU
             stencilWrapper,
             dofNumberAccessor,
             compFlowAccessors,
@@ -372,7 +375,7 @@ public:
         real64 dCapPressure_dT = 0.0;
         if( m_hasCapPressure )
         {
-          for( integer jp = 0; jp < numPhase; ++jp )
+          for( integer jp = 0; jp < m_numPhases; ++jp )
           {
             real64 const dCapPressure_dS = m_dPhaseCapPressure_dPhaseVolFrac[er][esr][ei][0][ip][jp];
             dCapPressure_dT += dCapPressure_dS * m_dPhaseVolFrac[er][esr][ei][jp][Deriv::dT];
@@ -635,35 +638,29 @@ public:
                    arrayView1d< real64 > const & localRhs )
   {
     isothermalCompositionalMultiphaseBaseKernels::
-      internal::kernelLaunchSelectorPhaseSwitch( numPhases, [&]( auto NP )
+      internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
-      integer constexpr NUM_PHASE = NP();
+      integer constexpr NUM_COMP = NC();
+      integer constexpr NUM_DOF = NC() + 2;
 
-      isothermalCompositionalMultiphaseBaseKernels::
-        internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
-      {
-        integer constexpr NUM_COMP = NC();
-        integer constexpr NUM_DOF = NC() + 2;
+      ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
+        elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
+      dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-        ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
-          elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
-        dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
+      using KernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+      typename KernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
+      typename KernelType::ThermalCompFlowAccessors thermalCompFlowAccessors( elemManager, solverName );
+      typename KernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+      typename KernelType::ThermalMultiFluidAccessors thermalMultiFluidAccessors( elemManager, solverName );
+      typename KernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+      typename KernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+      typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
 
-        using KernelType = FaceBasedAssemblyKernel< NUM_PHASE, NUM_COMP, NUM_DOF, STENCILWRAPPER >;
-        typename KernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-        typename KernelType::ThermalCompFlowAccessors thermalCompFlowAccessors( elemManager, solverName );
-        typename KernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-        typename KernelType::ThermalMultiFluidAccessors thermalMultiFluidAccessors( elemManager, solverName );
-        typename KernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-        typename KernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-        typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
-
-        KernelType kernel( rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
-                           compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
-                           capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
-                           dt, localMatrix, localRhs );
-        KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
-      } );
+      KernelType kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
+                         compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
+                         capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
+                         dt, localMatrix, localRhs );
+      KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }
 };
@@ -678,9 +675,8 @@ public:
  * @tparam FLUIDWRAPPER the type of the fluid wrapper
  * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
  */
-template< integer NUM_PHASE, integer NUM_COMP, integer NUM_DOF, typename FLUIDWRAPPER >
-class DirichletFaceBasedAssemblyKernel : public isothermalCompositionalMultiphaseFVMKernels::DirichletFaceBasedAssemblyKernel< NUM_PHASE,
-                                                                                                                               NUM_COMP,
+template< integer NUM_COMP, integer NUM_DOF, typename FLUIDWRAPPER >
+class DirichletFaceBasedAssemblyKernel : public isothermalCompositionalMultiphaseFVMKernels::DirichletFaceBasedAssemblyKernel< NUM_COMP,
                                                                                                                                NUM_DOF,
                                                                                                                                FLUIDWRAPPER >
 {
@@ -703,6 +699,7 @@ public:
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
 
   using AbstractBase::m_dt;
+  using AbstractBase::m_numPhases;
   using AbstractBase::m_hasCapPressure;
   using AbstractBase::m_rankOffset;
   using AbstractBase::m_dofNumber;
@@ -715,8 +712,7 @@ public:
   using AbstractBase::m_dCompFrac_dCompDens;
   using AbstractBase::m_dPhaseCapPressure_dPhaseVolFrac;
 
-  using Base = isothermalCompositionalMultiphaseFVMKernels::DirichletFaceBasedAssemblyKernel< NUM_PHASE, NUM_COMP, NUM_DOF, FLUIDWRAPPER >;
-  using Base::numPhase;
+  using Base = isothermalCompositionalMultiphaseFVMKernels::DirichletFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, FLUIDWRAPPER >;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -726,6 +722,7 @@ public:
   using Base::m_sei;
   using Base::m_faceTemp;
   using Base::m_faceGravCoef;
+
 
   using ThermalCompFlowAccessors =
     StencilAccessors< fields::flow::temperature >;
@@ -760,7 +757,8 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  DirichletFaceBasedAssemblyKernel( globalIndex const rankOffset,
+  DirichletFaceBasedAssemblyKernel( integer const numPhases,
+                                    globalIndex const rankOffset,
                                     integer const hasCapPressure,
                                     FaceManager const & faceManager,
                                     BoundaryStencilWrapper const & stencilWrapper,
@@ -776,7 +774,8 @@ public:
                                     real64 const & dt,
                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                     arrayView1d< real64 > const & localRhs )
-    : Base( rankOffset,
+    : Base( numPhases,
+            rankOffset,
             hasCapPressure,
             faceManager,
             stencilWrapper,
@@ -1083,38 +1082,32 @@ public:
       typename FluidType::KernelWrapper const fluidWrapper = fluid.createKernelWrapper();
 
       isothermalCompositionalMultiphaseBaseKernels::
-        internal::kernelLaunchSelectorPhaseSwitch( numPhases, [&]( auto NP )
+        internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
       {
-        integer constexpr NUM_PHASE = NP();
+        integer constexpr NUM_COMP = NC();
+        integer constexpr NUM_DOF = NC() + 2;
 
-        isothermalCompositionalMultiphaseBaseKernels::
-          internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
-        {
-          integer constexpr NUM_COMP = NC();
-          integer constexpr NUM_DOF = NC() + 2;
+        ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
+          elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
+        dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-          ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
-            elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
-          dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
+        using KernelType = DirichletFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
+        typename KernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
+        typename KernelType::ThermalCompFlowAccessors thermalCompFlowAccessors( elemManager, solverName );
+        typename KernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+        typename KernelType::ThermalMultiFluidAccessors thermalMultiFluidAccessors( elemManager, solverName );
+        typename KernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+        typename KernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+        typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
 
-          using KernelType = DirichletFaceBasedAssemblyKernel< NUM_PHASE, NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
-          typename KernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-          typename KernelType::ThermalCompFlowAccessors thermalCompFlowAccessors( elemManager, solverName );
-          typename KernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-          typename KernelType::ThermalMultiFluidAccessors thermalMultiFluidAccessors( elemManager, solverName );
-          typename KernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-          typename KernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-          typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
+        // for now, we neglect capillary pressure in the kernel
+        bool const hasCapPressure = false;
 
-          // for now, we neglect capillary pressure in the kernel
-          bool const hasCapPressure = false;
-
-          KernelType kernel( rankOffset, hasCapPressure, faceManager, stencilWrapper, fluidWrapper,
-                             dofNumberAccessor, compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
-                             capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
-                             dt, localMatrix, localRhs );
-          KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
-        } );
+        KernelType kernel( numPhases, rankOffset, hasCapPressure, faceManager, stencilWrapper, fluidWrapper,
+                           dofNumberAccessor, compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
+                           capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
+                           dt, localMatrix, localRhs );
+        KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
       } );
     } );
   }

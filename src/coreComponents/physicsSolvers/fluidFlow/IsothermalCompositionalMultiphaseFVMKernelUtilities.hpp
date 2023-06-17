@@ -32,6 +32,9 @@ namespace geos
 namespace isothermalCompositionalMultiphaseFVMKernelUtilities
 {
 
+// TODO make input parameter
+static constexpr real64 epsC1PPU = 1e-8;
+
 template< typename VIEWTYPE >
 using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
@@ -42,7 +45,9 @@ struct PotGrad
   template< integer numComp, integer numFluxSupportPoints >
   GEOS_HOST_DEVICE
   static void
-  compute ( integer const numPhase, integer const ip, integer const hasCapPressure,
+  compute ( integer const numPhase,
+            integer const ip,
+            integer const hasCapPressure,
             localIndex const ( &seri )[numFluxSupportPoints],
             localIndex const ( &sesri )[numFluxSupportPoints],
             localIndex const ( &sei )[numFluxSupportPoints],
@@ -213,7 +218,7 @@ struct PPUPhaseFlux
   compute( integer const numPhase,
            integer const ip,
            integer const hasCapPressure,
-           real64 const GEOS_UNUSED_PARAM( epsC1PPU ),
+           //real64 const GEOS_UNUSED_PARAM( epsC1PPU ),
            localIndex const ( &seri )[numFluxSupportPoints],
            localIndex const ( &sesri )[numFluxSupportPoints],
            localIndex const ( &sei )[numFluxSupportPoints],
@@ -318,7 +323,7 @@ struct C1PPUPhaseFlux
   compute( integer const numPhase,
            integer const ip,
            integer const hasCapPressure,
-           real64 const epsC1PPU,
+           //real64 const epsC1PPU,
            localIndex const ( &seri )[numFluxSupportPoints],
            localIndex const ( &sesri )[numFluxSupportPoints],
            localIndex const ( &sei )[numFluxSupportPoints],
@@ -513,6 +518,7 @@ struct PhaseComponentFlux
       }
     }
   }
+
 };
 
 } // namespace isothermalCompositionalMultiPhaseFVMKernelUtilities
