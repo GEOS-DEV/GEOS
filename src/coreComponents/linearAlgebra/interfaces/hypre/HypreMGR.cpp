@@ -169,7 +169,7 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
       setStrategy< SinglePhaseReservoirHybridFVM >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
-    case LinearSolverParameters::MGR::StrategyType::solidMechancisEmbeddedFractures:
+    case LinearSolverParameters::MGR::StrategyType::solidMechanicsEmbeddedFractures:
     {
       setStrategy< SolidMechanicsEmbeddedFractures >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
