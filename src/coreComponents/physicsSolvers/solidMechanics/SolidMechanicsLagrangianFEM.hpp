@@ -284,12 +284,17 @@ public:
    * @param fixedNodes The nodes which will have the displacement prescribed as a BC
    * @param fixedValues The values of displacement to be prescribe at these nodes
    */
-  void setInternalBoundaryConditions( arrayView1d< localIndex > const & fixedNodes, arrayView2d< real64 > const & fixedValues );
+  void setInternalBoundaryConditions( arrayView1d< localIndex > const & fixedNodes, arrayView2d< real64 > const & fixedValues, map<globalIndex, globalIndex>* patchToBaseMap );
 
   void setPressureEffects()
   {
     m_pressureEffectsFlag = 1;
   }
+
+  void setSubdomainElements( SortedArray< localIndex > const & subdomainElems )
+  {
+    m_subdomainElems = subdomainElems.toView();
+  }  
 
 protected:
   virtual void postProcessInput() override final;
@@ -312,6 +317,9 @@ protected:
   array1d< localIndex > m_fixedDisplacementNodes;
   array2d< real64 > m_fixedDisplacementValues;
   bool m_internalBCsFlag;
+  SortedArrayView< const localIndex > m_subdomainElems;
+  map<globalIndex, globalIndex>* m_patchToBaseElementRelation;
+
 
 
   /// Rigid body modes
@@ -374,6 +382,107 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
 
   applyContactConstraint( dofManager, domain, localMatrix, localRhs );
 }
+
+template< typename FE_TYPE >
+struct BaseDispInterpolationKernel
+{
+  //this is the patch subRegion
+  BaseDispInterpolationKernel( CellElementSubRegion const & subRegion, map<globalIndex, globalIndex>* patchToBaseMap ):
+    m_numElems( subRegion.size() ),
+    m_patchToBaseMap( patchToBaseMap )
+  {}
+
+  void interpolateBaseDisp( DomainPartition & domain )
+  {
+
+    //base node manager
+    NodeManager & baseNodeManager = domain.getMeshBody( 0 ).getBaseDiscretization().getNodeManager();    
+    NodeManager & patchNodeManager = domain.getMeshBody( 1 ).getBaseDiscretization().getNodeManager();    
+    ElementRegionBase const & baseElementRegion = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager().getRegion( 0 );
+    ElementRegionBase const & patchElementRegion = domain.getMeshBody( 1 ).getBaseDiscretization().getElemManager().getRegion( 0 );
+    CellElementSubRegion const & baseSubRegion = baseElementRegion.getSubRegion< CellElementSubRegion >( 0 );
+    CellElementSubRegion const & patchSubRegion = patchElementRegion.getSubRegion< CellElementSubRegion >( 0 );
+    arrayView1d< integer const > const & patchGhostRank = patchSubRegion.ghostRank();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const xNodesBase = baseNodeManager.referencePosition();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const xNodesPatch = patchNodeManager.referencePosition();
+    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & baseNodalDisp = baseNodeManager.getField< fields::solidMechanics::totalDisplacement >();    
+    auto const & baseElemsToNodes  = baseSubRegion.nodeList().toViewConst();
+    auto const & patchElemsToNodes = patchSubRegion.nodeList().toViewConst();
+    arrayView1d< real64 > nodalDispXOnMesh = patchNodeManager.getReference< array1d< real64 > >( "TranfsDispX" );
+    arrayView1d< real64 > nodalDispYOnMesh = patchNodeManager.getReference< array1d< real64 > >( "TranfsDispY" );
+    arrayView1d< real64 > nodalDispZOnMesh = patchNodeManager.getReference< array1d< real64 > >( "TranfsDispZ" );    
+    arrayView2d< const real64 > baseElemCenters = baseSubRegion.getElementCenter();
+    arrayView1d< globalIndex const > patchLocalToGlobalMap = patchSubRegion.localToGlobalMap();
+    unordered_map< globalIndex, localIndex > const & baseGlobalToLocalMap = baseSubRegion.globalToLocalMap();
+
+    //looping over all patchElems
+    forAll< serialPolicy >( m_numElems, [=] ( localIndex const k )
+    {
+      //useful element properties
+      constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
+      
+      //only interpolate over real elements because the mapping function doesnt work well for the others
+      if(patchGhostRank[k]<0)
+      {
+        
+        real64 xLocalPatch[ numNodesPerElement ][ 3 ];
+        real64 baseNodalDispLocal[ numNodesPerElement ][3];
+
+        //conversion from patch to base
+        globalIndex K = patchLocalToGlobalMap[k];
+        globalIndex baseK = (*m_patchToBaseMap)[K];
+        localIndex basek = baseGlobalToLocalMap.at(baseK);
+        //unordered_map< globalIndex, localIndex > const & 
+        //arrayView1d< globalIndex const > 
+        //these element measures are half of the element size
+        real64 hx = abs(xNodesBase[baseElemsToNodes( basek, 0 )][0] - baseElemCenters[basek][0]);
+        real64 hy = abs(xNodesBase[baseElemsToNodes( basek, 0 )][1] - baseElemCenters[basek][1]);
+        real64 hz = abs(xNodesBase[baseElemsToNodes( basek, 0 )][2] - baseElemCenters[basek][2]);
+
+        for( localIndex a = 0; a < numNodesPerElement; ++a )
+        {
+          localIndex const localNodeIndex = patchElemsToNodes( k, a );
+
+          for( int dim=0; dim < 3; ++dim )
+          {
+            xLocalPatch[a][dim] = xNodesPatch[ localNodeIndex ][dim];
+          }
+
+          //element level displacement values at nodes
+          baseNodalDispLocal[ a ][0] = baseNodalDisp[ localNodeIndex ][0];
+          baseNodalDispLocal[ a ][1] = baseNodalDisp[ localNodeIndex ][1];
+          baseNodalDispLocal[ a ][2] = baseNodalDisp[ localNodeIndex ][2];
+
+          real64 N[ numNodesPerElement ];
+
+          //convert x,y,z to parent coordinates
+          real64 parentX[3];
+          parentX[0] = (xLocalPatch[a][0] - baseElemCenters[basek][0]) / hx;
+          parentX[1] = (xLocalPatch[a][1] - baseElemCenters[basek][1]) / hy;
+          parentX[2] = (xLocalPatch[a][2] - baseElemCenters[basek][2]) / hz;
+
+          //get shape function values at parent coordinates
+          FE_TYPE::calcN( parentX, N );
+
+          real64 nDisp[3];
+          //interpolate disp field using shape function values
+          FE_TYPE::value( N, baseNodalDispLocal, nDisp );
+
+          //write to mesh
+          nodalDispXOnMesh[localNodeIndex] = nDisp[0];
+          nodalDispYOnMesh[localNodeIndex] = nDisp[1];
+          nodalDispZOnMesh[localNodeIndex] = nDisp[2];
+        
+        }
+
+      }
+    } );
+  }
+
+  localIndex m_numElems;
+  map<globalIndex, globalIndex>* m_patchToBaseMap;
+};     
+
 
 } /* namespace geosx */
 

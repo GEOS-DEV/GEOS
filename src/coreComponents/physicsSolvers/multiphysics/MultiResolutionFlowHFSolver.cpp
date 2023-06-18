@@ -1075,7 +1075,7 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
     int added = m_addedFractureElements;
     added = MpiWrapper::sum(added);
     GEOSX_LOG_LEVEL_RANK_0(1, "isPatchConverged "<<isPatchConverged);
-    if ( added == 0 && iter > 0 && isPatchConverged)
+    if ( added >= 0 && iter > 0 && isPatchConverged)//THIS SHOULD BE ADDED == 0
     {
       GEOSX_LOG_LEVEL_RANK_0( 1, "***** The Global-Local iterative scheme has converged in " << iter << " iterations! *****\n" );
       isConverged = true;
@@ -1113,7 +1113,7 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
     //THIS IS LIKELY TRANSFERING PRESSURE_N
     //patchSolver.implicitStepComplete( time_n, dt, domain );
     baseSolver.implicitStepComplete( time_n, dt, domain );
-    patchSolidSolver.setInternalBoundaryConditions( m_nodeFixDisp, m_fixedDispList );
+    patchSolidSolver.setInternalBoundaryConditions( m_nodeFixDisp, m_fixedDispList, &m_patchToBaseElementRelation );
     writeBasePressuresToPatch(base, patch);
 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", PatchSolver: " );
@@ -1134,10 +1134,11 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
     if( time_n > 0 )
     {
       //efemGenerator.propagationStep( domain, m_baseTip, m_patchTip, m_baseTipElementIndex );
-      //cutDamagedElements( base, patch );  
+      cutDamagedElements( base, patch );  
       buildSubdomainSet( base, patch );
-      //patchDamageSolver.setSubdomainElements( m_subdomainElems );
-      //patchSolidSolver.setSubdomainElements( m_subdomainElems );
+      std::cout<<"subdomain size: "<<m_baseCrackFrontBuffer.size()<<std::endl;
+      patchDamageSolver.setSubdomainElements( m_baseCrackFrontBuffer );
+      patchSolidSolver.setSubdomainElements( m_baseCrackFrontBuffer );
       baseSolver.setupSystem( domain,
                               baseSolver.getDofManager(),
                               baseSolver.getLocalMatrix(),

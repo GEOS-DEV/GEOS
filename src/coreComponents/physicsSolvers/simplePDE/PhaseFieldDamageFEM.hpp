@@ -126,6 +126,12 @@ public:
 
   void setInitialCrackNodes( arrayView1d< localIndex > const & fracturedNodes );
 
+  void fillDofsOutsideSubdomain( DomainPartition & domain,
+                                 DofManager const & dofManager,
+                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs );
+
+
   void applyIrreversibilityConstraint( DofManager const & dofManager,
                                        DomainPartition & domain,
                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,

@@ -362,6 +362,7 @@ void PhaseFieldDamageFEM::applyBoundaryConditions(
 
 #if 1
   setInitialCrackDamageBCs( domain, dofManager, localMatrix, localRhs );
+  fillDofsOutsideSubdomain( domain, dofManager, localMatrix, localRhs );
 #endif
 
   if( getLogLevel() == 2 )
@@ -555,6 +556,72 @@ void PhaseFieldDamageFEM::setInitialCrackDamageBCs( DomainPartition & domain,
   if( getLogLevel() == 2 )
   {
     GEOSX_LOG_RANK_0( "After PhaseFieldDamageFEM::setInitialCrackDamageBCs" );
+    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+    std::cout << localMatrix.toViewConst();
+  }
+}
+
+void PhaseFieldDamageFEM::fillDofsOutsideSubdomain( DomainPartition & domain,
+                                                    DofManager const & dofManager,
+                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                    arrayView1d< real64 > const & localRhs )
+{
+  GEOSX_MARK_FUNCTION;
+
+  if( getLogLevel() == 2 )
+  {
+    GEOSX_LOG_RANK_0( "Before PhaseFieldDamageFEM::fillDofsOutsideSubdomain" );
+    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+    std::cout << localMatrix.toViewConst();
+  }
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
+    arrayView1d< globalIndex const > const & dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( "Damage" ) );
+    arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( "Damage" );
+    globalIndex const rankOffSet = dofManager.rankOffset();
+    ArrayOfArrays< localIndex > & nodeToElems = nodeManager.elementList();
+
+    forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const nodeIndex )
+    {
+      //node to elems
+      //if all associated elements are not on m_subdomainElems
+      bool outside = true;
+      for(auto neighborElem:nodeToElems[nodeIndex])
+      {
+        if(m_subdomainElems.contains(neighborElem))
+        {
+          outside = false;
+        } 
+      }
+      if(outside)
+      {
+        //set matrix diagonal to 1 or whatever scaled value    
+        localIndex const dof = dofIndex[nodeIndex];
+        real64 const damageAtNode = nodalDamage[nodeIndex];
+        real64 rhsContribution;
+        FieldSpecificationEqual::SpecifyFieldValue( dof,
+                                                    rankOffSet,
+                                                    localMatrix,
+                                                    rhsContribution,
+                                                    0.0,
+                                                    damageAtNode );
+
+        globalIndex const localRow = dof - rankOffSet;
+        if( localRow >=0 && localRow < localRhs.size() )
+        {
+          localRhs[ localRow ] = rhsContribution;
+        }        
+      }
+    });
+
+  });
+  if( getLogLevel() == 2 )
+  {
+    GEOSX_LOG_RANK_0( "After PhaseFieldDamageFEM::fillDofsOutsideSubdomain" );
     GEOSX_LOG_RANK_0( "\nJacobian:\n" );
     std::cout << localMatrix.toViewConst();
   }

@@ -689,8 +689,8 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
   PhaseFieldDamageFEM &
   patchDamageSolver = *patchSolver.damageSolver();
 
-  SolidMechanicsLagrangianFEM &
-  patchSolidSolver = *patchSolver.solidMechanicsSolver();
+  //SolidMechanicsLagrangianFEM &
+  //patchSolidSolver = *patchSolver.solidMechanicsSolver();
 
   baseSolver.setupSystem( domain,
                           baseSolver.getDofManager(),
@@ -795,7 +795,7 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
     //write disp BCs to local disp solver
     //TODO: m_nodeFixDisp and m_fixedDispList dont need to be members, they can be initialized at every time step, this is actually safer
     //since the size of the boundary can change
-    patchSolidSolver.setInternalBoundaryConditions( m_nodeFixDisp, m_fixedDispList );
+    //patchSolidSolver.setInternalBoundaryConditions( m_nodeFixDisp, m_fixedDispList );
 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", PatchSolver: " );
 

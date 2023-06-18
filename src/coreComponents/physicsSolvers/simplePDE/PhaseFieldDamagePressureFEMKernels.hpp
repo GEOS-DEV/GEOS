@@ -214,8 +214,8 @@ public:
   {
     GEOSX_MARK_FUNCTION;
 
-    bool subDomainLaunch = !kernelComponent.m_subdomainElems.empty();
-    localIndex loopSize = subDomainLaunch ? kernelComponent.m_subdomainElems.size() : numElems;
+    bool const subDomainLaunch = !kernelComponent.m_subdomainElems.empty();
+    localIndex const loopSize = subDomainLaunch ? kernelComponent.m_subdomainElems.size() : numElems;
 
     // Define a RAJA reduction variable to get the maximum residual contribution.
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
@@ -224,7 +224,7 @@ public:
     forAll< POLICY >( loopSize,
                       [=] GEOSX_HOST_DEVICE ( localIndex const i )
     {
-      localIndex k = subDomainLaunch ? kernelComponent.m_subdomainElems[i]: i;
+      localIndex const k = subDomainLaunch ? kernelComponent.m_subdomainElems[i]: i;
 
       typename KERNEL_TYPE::StackVariables stack;
 

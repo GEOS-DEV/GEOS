@@ -79,6 +79,7 @@ public:
   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
   /// will be the actual number of nodes per element.
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
+  static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_dofNumber;
@@ -106,7 +107,8 @@ public:
                        globalIndex const rankOffset,
                        CRSMatrixView< real64, globalIndex const > const inputMatrix,
                        arrayView1d< real64 > const inputRhs,
-                       real64 const (&inputGravityVector)[3] ):
+                       real64 const (&inputGravityVector)[3],
+                       SortedArrayView< const localIndex > const subdomainElems ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -125,7 +127,8 @@ public:
     m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
     m_pressureMatrix( elementSubRegion.template getReference< array1d< real64 > >( "hardCodedPMatrixName" ) ),
-    m_pressureFracture( elementSubRegion.template getReference< array1d< real64 > >( "hardCodedPFractureName" ) )
+    m_pressureFracture( elementSubRegion.template getReference< array1d< real64 > >( "hardCodedPFractureName" ) ),
+    m_subdomainElems( subdomainElems )
     //m_pressureMatrix( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::matrixPressure >() ),
     //m_pressureFracture( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::fracturePressure >() )
   {}
@@ -204,6 +207,49 @@ public:
     }
 
   }
+
+  /**
+   * @copydoc ::geosx::finiteElement::KernelBase::kernelLaunch
+   *
+   * @detail it uses the kernelLaunch interface of KernelBase but it only launches the kernel
+   * on the set of fractured elements within the subregion.
+   *
+   */
+  //START_kernelLauncher
+  template< typename POLICY,
+            typename KERNEL_TYPE >
+  static
+  real64
+  kernelLaunch( localIndex const numElems,
+                KERNEL_TYPE const & kernelComponent )
+  {
+    GEOSX_MARK_FUNCTION;
+
+    bool const subDomainLaunch = !kernelComponent.m_subdomainElems.empty();
+    localIndex const loopSize = subDomainLaunch ? kernelComponent.m_subdomainElems.size() : numElems;
+
+    // Define a RAJA reduction variable to get the maximum residual contribution.
+    RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
+    //EXEMPLE OF KERNEL LAUNCH ON SUBDOMAIN - ANDRE
+    //make a m_subdomainElems variable
+    forAll< POLICY >( loopSize,
+                      [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    {
+      localIndex const k = subDomainLaunch ? kernelComponent.m_subdomainElems[i]: i;
+
+      typename KERNEL_TYPE::StackVariables stack;
+
+      kernelComponent.setup( k, stack );
+      for( integer q=0; q<numQuadraturePointsPerElem; ++q )
+      {
+        kernelComponent.quadraturePointKernel( k, q, stack );
+      }
+      maxResidual.max( kernelComponent.complete( k, stack ) );
+    } );
+
+    return maxResidual.get();
+  }
+  // //END_kernelLauncher 
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -430,6 +476,8 @@ protected:
   /// The rank-global background pressure arrays.
   arrayView1d< real64 const > const m_pressureMatrix;
   arrayView1d< real64 const > const m_pressureFracture;
+  SortedArrayView< localIndex const > const m_subdomainElems;
+
 
 };
 
@@ -439,9 +487,9 @@ using QuasiStaticPressureFactory = finiteElement::KernelFactory< QuasiStaticPres
                                                                  globalIndex,
                                                                  CRSMatrixView< real64, globalIndex const > const,
                                                                  arrayView1d< real64 > const,
-                                                                 real64 const (&)[3] >;
-
-
+                                                                 real64 const (&)[3],
+                                                                 SortedArrayView< const localIndex > const >;
+                                                         
 } // namespace solidMechanicsLagrangianFEMKernels
 
 } // namespace geosx

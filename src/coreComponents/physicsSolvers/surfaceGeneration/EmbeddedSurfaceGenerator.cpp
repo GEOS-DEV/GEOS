@@ -667,61 +667,6 @@ real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOSX_UNUSED_PARAM( 
    * This should be the method that generates new fracture elements based on the propagation criterion of choice.
    */
 
-  // MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
-  // // Get managers
-  // ElementRegionManager & elemManager = meshLevel.getElemManager();
-  // ElementRegionBase & elementRegion = elemManager.getRegion( 0 );
-  // CellElementSubRegion & subRegion = elementRegion.getSubRegion< CellElementSubRegion >( 0 );
-  // auto fracturedElements = subRegion.fracturedElementsList();
-  // if(time_n >= 1.0)
-  // {
-  // //make a list of elems to test
-  //   //std::vector<localIndex> toCut = {250, 251, 252, 253, 539, 564, 589, 614, 639, 664, 689, 714, 739, 2275, 2276, 2277, 2278};
-  //   //std::set<localIndex> initialFront = {8,33,58,83,107,132,156,179,180,200,201,202,203};
-  //   std::set<localIndex> toCut;
-  //   if(cycleNumber%2==0)
-  //   {
-  //     for(auto item:fracturedElements){
-  //       if (item > 624){
-  //         toCut.insert(item+25);//y prop
-  //       }
-  //       else {
-  //         toCut.insert(item+1);//z prop
-  //         toCut.insert(item+25);//y prop
-  //       }
-  //     }
-  //   }
-  //   else
-  //   {
-  //     for(auto item:fracturedElements){
-  //       if (item > 624){
-  //         toCut.insert(item+1);//z prop
-  //         toCut.insert(item+25);//y prop
-  //       }
-  //       else {
-  //         toCut.insert(item+1);//z prop
-  //       }
-  //     }
-  //   } 
-  //   //time update
-  //   //for(size_t i=0; i<toCut.size(); i++)
-  //   //{
-  //   for(auto item:toCut ) 
-  //   { 
-  //     propagationStep3D( domain, item );
-
-  //     // if(toCut[i] < 300){
-  //     //   propagationStep3D( domain, toCut[i]-25*(time_n-1) );
-  //     // }
-  //     // else if(toCut[i] > 2000){
-  //     //   propagationStep3D( domain, toCut[i]+25*(time_n-1) );
-  //     // }
-  //     // else{
-  //     //   propagationStep3D( domain, toCut[i]+time_n-1 );
-  //     // }
-  //   }
-  //}
-
   // Add the embedded elements to the fracture stencil.
   addToFractureStencil( domain );
 

@@ -60,7 +60,9 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_strainTheory( 0 ),
   m_pressureEffectsFlag( 0 ),
   m_iComm( CommunicationTools::getInstance().getCommID() ),
-  m_internalBCsFlag( false )
+  m_internalBCsFlag( false ),
+  m_subdomainElems(),
+  m_patchToBaseElementRelation(nullptr)
 {
 
   registerWrapper( viewKeyStruct::newmarkGammaString(), &m_newmarkGamma ).
@@ -148,6 +150,21 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
 
     nodes.registerField< solidMechanics::incrementalDisplacement >( getName() ).
       reference().resizeDimension< 1 >( 3 );
+
+    nodes.registerWrapper< real64_array >( "TranfsDispX" )
+      .setApplyDefaultValue( 0.0 )
+      .setPlotLevel( PlotLevel::LEVEL_0 )
+      .setDescription( "MultiResolution transfer of displacement X" );   
+
+    nodes.registerWrapper< real64_array >( "TranfsDispY" )
+      .setApplyDefaultValue( 0.0 )
+      .setPlotLevel( PlotLevel::LEVEL_0 )
+      .setDescription( "MultiResolution transfer of displacement Y" );
+
+    nodes.registerWrapper< real64_array >( "TranfsDispZ" )
+      .setApplyDefaultValue( 0.0 )
+      .setPlotLevel( PlotLevel::LEVEL_0 )
+      .setDescription( "MultiResolution transfer of displacement Z" );      
 
     if( m_timeIntegrationOption != TimeIntegrationOption::QuasiStatic )
     {
@@ -974,7 +991,8 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
                       solidMechanicsLagrangianFEMKernels::QuasiStaticPressureFactory >( domain,
                                                                                         dofManager,
                                                                                         localMatrix,
-                                                                                        localRhs );
+                                                                                        localRhs,
+                                                                                        m_subdomainElems );
     }
     else
     { // standard quasi-static run
@@ -1353,7 +1371,8 @@ SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition const & d
 }
 
 void SolidMechanicsLagrangianFEM::setInternalBoundaryConditions( arrayView1d< localIndex > const & fixedNodes,
-                                                                 arrayView2d< real64 > const & fixedValues )
+                                                                 arrayView2d< real64 > const & fixedValues,
+                                                                 map<globalIndex, globalIndex>* patchToBaseMap )
 {
   localIndex count = 0;
   m_fixedDisplacementNodes.resize( fixedNodes.size() );
@@ -1367,6 +1386,7 @@ void SolidMechanicsLagrangianFEM::setInternalBoundaryConditions( arrayView1d< lo
     ++count;
   }
   m_internalBCsFlag = true;
+  m_patchToBaseElementRelation = patchToBaseMap;
 
 }
 
@@ -1389,6 +1409,16 @@ void SolidMechanicsLagrangianFEM::applyInternalDisplacementBCImplicit( real64 co
     GEOSX_LOG_RANK_0( "\nJacobian:\n" );
     std::cout << localMatrix.toViewConst();
   }
+   
+  CellElementSubRegion const & patchSubRegion = domain.getMeshBody( 1 ).getBaseDiscretization().
+                                                getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
+  
+
+  //launch kernel that interpolates the displacement fields from base to patch
+  using FE_TYPE = finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2;
+  BaseDispInterpolationKernel< FE_TYPE > interpolationKernel( patchSubRegion, m_patchToBaseElementRelation );
+  interpolationKernel.interpolateBaseDisp( domain );  
+  MPI_Barrier(MPI_COMM_WORLD);
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel &,
@@ -1397,37 +1427,57 @@ void SolidMechanicsLagrangianFEM::applyInternalDisplacementBCImplicit( real64 co
     //const NodeManager & nodeManager = mesh.getNodeManager();
     //THIS CALL TO GET NODE MANAGER IS NOT ROBUST
     //TO DO: find a robust way to get the correct meshBody
-    NodeManager const & nodeManager = domain.getMeshBody( 1 ).getBaseDiscretization().getNodeManager();
+    NodeManager & nodeManager = domain.getMeshBody( 1 ).getBaseDiscretization().getNodeManager();
     arrayView1d< globalIndex const > const & dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofKey );
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const nodalDisplacements = nodeManager.getField< fields::solidMechanics::totalDisplacement >();
+    arrayView1d< real64 > nodalDispXOnMesh = nodeManager.getReference< array1d< real64 > >( "TranfsDispX" );
+    arrayView1d< real64 > nodalDispYOnMesh = nodeManager.getReference< array1d< real64 > >( "TranfsDispY" );
+    arrayView1d< real64 > nodalDispZOnMesh = nodeManager.getReference< array1d< real64 > >( "TranfsDispZ" );      
+    
+    //new approach
+    globalIndex const rankOffSet = dofManager.rankOffset();
+    ArrayOfArrays< localIndex > & nodeToElems = nodeManager.elementList();
 
-    localIndex count = 0;
-    for( localIndex fixed_node : m_fixedDisplacementNodes )
+    forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const nodeIndex )
     {
-      for( localIndex i = 0; i < 3; i++ )
+      //node to elems
+      //if all associated elements are not on m_subdomainElems
+      bool outside = true;
+      for(auto neighborElem:nodeToElems[nodeIndex])
       {
-        localIndex const dof = dofIndex[fixed_node]+i;
-        real64 const dispToBeApplied = m_fixedDisplacementValues( count, i );
-        real64 const dispCurrentDof = nodalDisplacements( fixed_node, i );
-        GEOSX_LOG_LEVEL_RANK_0( 2, "constrained dof: "<<dof );
-        GEOSX_LOG_LEVEL_RANK_0( 2, "constrained disp: "<<dispToBeApplied );
-        GEOSX_LOG_LEVEL_RANK_0( 2, "current disp: "<<dispCurrentDof );
-        real64 rhsContribution;
-        FieldSpecificationEqual::SpecifyFieldValue( dof,
-                                                    dofManager.rankOffset(),
-                                                    localMatrix,
-                                                    rhsContribution,
-                                                    dispToBeApplied,
-                                                    dispCurrentDof );
-
-        globalIndex const localRow = dof - dofManager.rankOffset();
-        if( localRow >=0 && localRow < localRhs.size() )
+        if(m_subdomainElems.contains(neighborElem))
         {
-          localRhs[ localRow ] = rhsContribution;
-        }
+          outside = false;
+        } 
       }
-      ++count;
-    }
+      //prescribed values for nodes outside subdomain
+      if(outside)
+      {
+        real64 dispToBeApplied[3];
+        dispToBeApplied[0] = nodalDispXOnMesh[nodeIndex];
+        dispToBeApplied[1] = nodalDispYOnMesh[nodeIndex];
+        dispToBeApplied[2] = nodalDispZOnMesh[nodeIndex];
+        for( localIndex i = 0; i < 3; i++ )
+        {
+          //set matrix diagonal to 1 or whatever scaled value    
+          localIndex const dof = dofIndex[nodeIndex]+i;
+          real64 const dispCurrentDof = nodalDisplacements( nodeIndex, i );          
+          real64 rhsContribution;
+          FieldSpecificationEqual::SpecifyFieldValue( dof,
+                                                      rankOffSet,
+                                                      localMatrix,
+                                                      rhsContribution,
+                                                      dispToBeApplied[i],
+                                                      dispCurrentDof );
+
+          globalIndex const localRow = dof - rankOffSet;
+          if( localRow >=0 && localRow < localRhs.size() )
+          {
+            localRhs[ localRow ] = rhsContribution;
+          }     
+        }   
+      }
+    });
 
   } );
   if( getLogLevel() == 2 )
