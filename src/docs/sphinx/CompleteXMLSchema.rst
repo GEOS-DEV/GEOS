@@ -57,11 +57,11 @@ Element: Blueprint
 .. include:: ../../coreComponents/schema/docs/Blueprint.rst
 
 
-.. _XML_BoundedPlane:
+.. _XML_Rectangle:
 
-Element: BoundedPlane
+Element: Rectangle
 =====================
-.. include:: ../../coreComponents/schema/docs/BoundedPlane.rst
+.. include:: ../../coreComponents/schema/docs/Rectangle.rst
 
 
 .. _XML_Box:
@@ -1272,11 +1272,11 @@ Datastructure: Blueprint
 .. include:: ../../coreComponents/schema/docs/Blueprint_other.rst
 
 
-.. _DATASTRUCTURE_BoundedPlane:
+.. _DATASTRUCTURE_Rectangle:
 
-Datastructure: BoundedPlane
+Datastructure: Rectangle
 ===========================
-.. include:: ../../coreComponents/schema/docs/BoundedPlane_other.rst
+.. include:: ../../coreComponents/schema/docs/Rectangle_other.rst
 
 
 .. _DATASTRUCTURE_Box:
