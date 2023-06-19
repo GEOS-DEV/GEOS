@@ -112,6 +112,7 @@ private:
   {
     constexpr static char const * solidMaterialNameString() {return "solidMaterialNames"; }
     constexpr static char const * fractureRegionNameString() {return "fractureRegion"; }
+    constexpr static char const * targetObjectsNameString() {return "targetObjects"; }
     constexpr static char const * mpiCommOrderString() { return "mpiCommOrder"; }
 
     //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive
@@ -121,6 +122,8 @@ private:
 
   // fracture region name
   string m_fractureRegionName;
+  // target geometric objects to turn into fractures
+  array1d< string > m_targetObjectsName;
   // Flag for consistent communication ordering
   int m_mpiCommOrder;
 };
