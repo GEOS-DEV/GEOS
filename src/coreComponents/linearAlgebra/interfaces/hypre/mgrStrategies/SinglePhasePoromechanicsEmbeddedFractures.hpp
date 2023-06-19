@@ -57,10 +57,35 @@ public:
   explicit SinglePhasePoromechanicsEmbeddedFractures( arrayView1d< int const > const & )
     : MGRStrategyBase( 7 )
   {
-    // we keep u and p
-    m_labels[0].push_back( 0 );
-    m_labels[0].push_back( 1 );
-    m_labels[0].push_back( 2 );
+
+    /// IDEAL strategy but it seg faults
+    // // we keep u and p
+    // m_labels[0].push_back( 0 );
+    // m_labels[0].push_back( 1 );
+    // m_labels[0].push_back( 2 );
+    // m_labels[0].push_back( 6 );
+    // // we keep p
+    // m_labels[1].push_back( 6 );
+
+    // setupLabels();
+
+    // // Level 0
+    // m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel;
+    // m_levelFRelaxType[0]       = MGRFRelaxationType::gsElimWInverse; // gaussian elimination for the dispJump block
+    // m_levelInterpType[0]       = MGRInterpolationType::blockJacobi;
+    // m_levelRestrictType[0]     = MGRRestrictionType::injection;
+    // m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
+
+    // // Level 1
+    // m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::amgVCycle;
+    // m_levelInterpType[1]       = MGRInterpolationType::jacobi;
+    // m_levelRestrictType[1]     = MGRRestrictionType::injection;
+    // m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::nonGalerkin;
+
+    // we keep w and p
+    m_labels[0].push_back( 3 );
+    m_labels[0].push_back( 4 );
+    m_labels[0].push_back( 5 );
     m_labels[0].push_back( 6 );
     // we keep p
     m_labels[1].push_back( 6 );
@@ -68,16 +93,17 @@ public:
     setupLabels();
 
     // Level 0
-    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel;
-    m_levelInterpType[0]       = MGRInterpolationType::blockJacobi;
+    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::amgVCycle;
+    m_levelInterpType[0]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
+    m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::nonGalerkin;
 
     // Level 1
-    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::amgVCycle;
-    m_levelInterpType[1]       = MGRInterpolationType::jacobi;
+    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::singleLevel;
+    m_levelFRelaxType[1]       = MGRFRelaxationType::gsElimWInverse; // gaussian elimination for the dispJump block
+    m_levelInterpType[1]       = MGRInterpolationType::blockJacobi;
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::nonGalerkin;
+    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::galerkin;
 
     m_numGlobalSmoothSweeps = 0;
   }
@@ -97,12 +123,14 @@ public:
                                                                  mgrData.pointMarkers.data() ) );
 
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, toUnderlyingPtr( m_levelFRelaxMethod ) ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxType( precond.ptr, toUnderlyingPtr( m_levelFRelaxType ) ));
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( precond.ptr, toUnderlyingPtr( m_levelInterpType ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelRestrictType( precond.ptr, toUnderlyingPtr( m_levelRestrictType ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, toUnderlyingPtr( m_levelCoarseGridMethod ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( precond.ptr, 1 ));
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( precond.ptr, 0 ));
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalSmoothIters( precond.ptr, m_numGlobalSmoothSweeps ) );
+
 
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.coarseSolver.ptr ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 0 ) );

@@ -3,52 +3,25 @@
 <Problem>
  <Included>
     <File
-      name="./EmbFrac_Compression_CoulombFriction_base.xml"/>
+      name="./Sneddon_embeddedFracShapes_base.xml"/>
   </Included>
 
-  <Mesh>
+  <!-- SPHINX_SNEDDON_MESH -->
+  <Mesh>  
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ -40, -3.5, 3.5, 40 }"
-      yCoords="{ -40, -3.5, 3.5, 40 }"
+      xCoords="{ -20, -4, 4, 20 }"
+      yCoords="{ -20, -4, 4, 20 }"
       zCoords="{ 0, 1 }"
-      nx="{ 10, 21, 10 }"
-      ny="{ 10, 21, 10 }"
+      nx="{ 10, 11, 10 }"
+      ny="{ 10, 31, 10 }"
       nz="{ 1 }"
-      cellBlockNames="{ cb1 }"/>
+      cellBlockNames="{ cb1 }"/> 
   </Mesh>
-
-  <Geometry>
-    <Rectangle
-      name="FracturePlane"
-      normal="{-0.342020143325669, 0.939692620785908, 0.0}"
-      origin="{0.0, 0.0, 0.5}"
-      lengthVector="{0.939692620785908, 0.342020143325669, 0.0}"
-      widthVector="{0, 0, 1}"
-      dimensions="{ 2,  10 }"/>
-
-    <Box
-      name="rightPoint"
-      xMin="{ 39.9, -0.5, -0.001}"
-      xMax="{ 40.1,  0.5,  1.001}"/>
-
-    <Box
-      name="leftPoint"
-      xMin="{-40.1, -0.5, -0.001}"
-      xMax="{-39.9,  0.5,  1.001}"/>
-
-    <Box
-      name="topPoint"
-      xMin="{-0.5, 39.9, -0.001}"
-      xMax="{ 0.5, 40.1,  1.001}"/>
-
-    <Box
-      name="bottomPoint"
-      xMin="{-0.5, -40.1, -0.001}"
-      xMax="{ 0.5, -39.9,  1.001}"/>
-  </Geometry>
+  <!-- SPHINX_SNEDDON_MESH_END -->  
   
+  <!-- SPHINX_SNEDDON_EVENTS -->
   <Events
     maxTime="1.0">
     <SoloEvent
@@ -83,5 +56,7 @@
       name="restarts"
       timeFrequency="1.0"
       target="/Outputs/restartOutput"/>    
-  </Events> 
+  </Events>
+  <!-- SPHINX_SNEDDON_EVENTS_END -->
+ 
 </Problem>

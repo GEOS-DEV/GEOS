@@ -25,7 +25,7 @@
 
   <!-- SPHINX_SNEDDON_GEOMETRY -->
   <Geometry>
-    <BoundedPlane
+    <Rectangle
       name="FracturePlane"
       normal="{ 0, 1, 0 }"
       origin="{ 500, 500.5, 50 }"

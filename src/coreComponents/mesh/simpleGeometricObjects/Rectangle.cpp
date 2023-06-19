@@ -13,39 +13,24 @@
  */
 
 /**
- * @file BoundedPlane.cpp
+ * @file Rectangle.cpp
  */
 
-#include "BoundedPlane.hpp"
+#include "Rectangle.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geos
 {
 using namespace dataRepository;
 
-BoundedPlane::BoundedPlane( const string & name, Group * const parent ):
-  SimpleGeometricObjectBase( name, parent ),
+Rectangle::Rectangle( const string & name, Group * const parent ):
+  PlanarGeometricObject( name, parent ),
   m_origin{ 0.0, 0.0, 0.0 },
-  m_normal{ 0.0, 0.0, 1.0 },
-  m_lengthVector{ 0.0, 0.0, 0.0 },
-  m_widthVector{ 0.0, 0.0, 0.0 },
   m_tolerance()
 {
   registerWrapper( viewKeyStruct::originString(), &m_origin ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Origin point (x,y,z) of the plane (basically, any point on the plane)" );
-
-  registerWrapper( viewKeyStruct::normalString(), &m_normal ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Normal (n_x,n_y,n_z) to the plane (will be normalized automatically)" );
-
-  registerWrapper( viewKeyStruct::mLengthVectorString(), &m_lengthVector ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Tangent vector defining the orthonormal basis along with the normal." );
-
-  registerWrapper( viewKeyStruct::mWidthVectorString(), &m_widthVector ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Tangent vector defining the orthonormal basis along with the normal." );
 
   registerWrapper( viewKeyStruct::dimensionsString(), &m_dimensions ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -61,10 +46,32 @@ BoundedPlane::BoundedPlane( const string & name, Group * const parent ):
   m_points.resize( 4, 3 );
 }
 
-BoundedPlane::~BoundedPlane()
+//constructor given two points, used for 2.5D problems
+Rectangle::Rectangle( const real64 oldX, const real64 oldY,
+                      const real64 newX, const real64 newY,
+                      const string & name, Group * const parent ):
+  PlanarGeometricObject( name, parent ),
+  m_origin{ 0.0, 0.0, 0.0 },
+  m_tolerance( 1e-5 )
+{
+  m_origin = { (oldX + newX)/2.0, (oldY + newY)/2.0, 0.0};
+  m_normal = { -(newY-oldY), newX-oldX, 0.0 };
+  m_lengthVector = { newX-oldX, newY-oldY, 0.0 };
+  m_widthVector = { 0.0, 0.0, 1.0 };
+  real64 norm = std::sqrt( pow( newX-oldX, 2 )+pow( newY-oldY, 2 ));
+  m_dimensions.resize( 2 );
+  m_dimensions[0] = norm+1e-4; //small tolerance to ensure that both ends are contained in the plane - TODO: try to use m_tolerance
+  m_dimensions[1] = 5; //TODO: this is arbitrary, it only needs to be larger than the z thickness in the 2.5D model
+
+  m_points.resize( 4, 3 );
+  //parent->registerGroup< Rectangle >( name, std::move( this ) );
+  this->postProcessInput();
+}
+
+Rectangle::~Rectangle()
 {}
 
-void BoundedPlane::postProcessInput()
+void Rectangle::postProcessInput()
 {
   // Make sure that you have an orthonormal basis.
   LvArray::tensorOps::normalize< 3 >( m_normal );
@@ -79,14 +86,14 @@ void BoundedPlane::postProcessInput()
 
   GEOS_ERROR_IF( std::fabs( std::fabs( LvArray::tensorOps::AiBi< 3 >( m_normal, vector )) - 1 ) > orthoNormalBaseTolerance
                  || std::fabs( LvArray::tensorOps::AiBi< 3 >( m_widthVector, m_lengthVector )) > orthoNormalBaseTolerance,
-                 "Error: the 3 vectors provided in the BoundedPlane do not form an orthonormal basis!" );
+                 "Error: the 3 vectors provided in the Rectangle do not form an orthonormal basis!" );
 
   GEOS_ERROR_IF( m_dimensions.size() != 2, "Error: Need to provide both length and width!" );
 
   findRectangleLimits();
 }
 
-void BoundedPlane::findRectangleLimits()
+void Rectangle::findRectangleLimits()
 {
   real64 lengthVec[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_lengthVector );
   real64 widthVec[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_widthVector );
@@ -120,7 +127,7 @@ void BoundedPlane::findRectangleLimits()
   }
 }
 
-bool BoundedPlane::isCoordInObject( real64 const ( &coord ) [3] ) const
+bool Rectangle::isCoordInObject( real64 const ( &coord ) [3] ) const
 {
   bool isInside = true;
 
@@ -161,6 +168,6 @@ bool BoundedPlane::isCoordInObject( real64 const ( &coord ) [3] ) const
   return isInside;
 }
 
-REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, BoundedPlane, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Rectangle, string const &, Group * const )
 
-} /* namespace geos */
+} /* namespace geosx */
