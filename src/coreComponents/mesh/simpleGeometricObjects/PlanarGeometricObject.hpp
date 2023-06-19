@@ -13,11 +13,11 @@
  */
 
 /**
- * @file BoundedPlane.hpp
+ * @file PlanarGeometricObject.hpp
  */
 
-#ifndef GEOS_MESH_SIMPLEGEOMETRICOBJECTS_BOUNDEDPLANE_HPP_
-#define GEOS_MESH_SIMPLEGEOMETRICOBJECTS_BOUNDEDPLANE_HPP_
+#ifndef GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_PLANARGEOMETRICOBJECT_HPP_
+#define GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_PLANARGEOMETRICOBJECT_HPP_
 
 #include "SimpleGeometricObjectBase.hpp"
 
@@ -25,10 +25,10 @@ namespace geos
 {
 
 /**
- * @class BoundedPlane
- * @brief Class to represent a geometric box in GEOSX.
+ * @class PlanarGeometricObject
+ * @brief Abstract class to implement functions used by all bounded geometric objects in GEOSX, such as disc or plane.
  */
-class BoundedPlane : public SimpleGeometricObjectBase
+class PlanarGeometricObject : public SimpleGeometricObjectBase
 {
 public:
 
@@ -42,13 +42,13 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  BoundedPlane( const string & name,
-                Group * const parent );
+  PlanarGeometricObject( const string & name,
+                         Group * const parent );
 
   /**
    * @brief Default destructor.
    */
-  virtual ~BoundedPlane() override;
+  virtual ~PlanarGeometricObject() override;
 
   ///@}
 
@@ -61,16 +61,16 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static string catalogName() { return "BoundedPlane"; }
+  static string catalogName() { return "PlanarGeometricObject"; }
 
   ///@}
 
-  bool isCoordInObject( real64 const ( &coord ) [3] ) const override final;
-
   /**
-   * @brief Find the bounds of the plane.
+   * @brief Check if the input coordinates are in the object.
+   * @param[in] coord the coordinates to test
+   * @return true if the coordinates are in the object, false otherwise
    */
-  void findRectangleLimits();
+  virtual bool isCoordInObject( real64 const ( &coord ) [3] ) const override = 0;
 
   /**
    * @name Getters
@@ -87,17 +87,6 @@ public:
    * @copydoc getNormal()
    */
   R1Tensor const & getNormal() const {return m_normal;}
-
-  /**
-   * @brief Get the origin of the plane.
-   * @return the origin of the plane
-   */
-  R1Tensor & getCenter() {return m_origin;}
-
-  /**
-   * @copydoc getCenter()
-   */
-  R1Tensor const & getCenter() const {return m_origin;}
 
   /**
    * @brief Get one of the tangent vectors defining the orthonormal basis along with the normal.
@@ -121,30 +110,26 @@ public:
    */
   R1Tensor const & getLengthVector() const {return m_lengthVector;}
 
+  /**
+   * @brief Get the origin of the plane.
+   * @return the origin of the plane
+   */
+  virtual R1Tensor & getCenter() = 0;
+
+  /**
+   * @copydoc getCenter()
+   */
+  virtual R1Tensor const & getCenter() const = 0;
 
 protected:
 
-  /**
-   * @brief This function provides the capability to post process input values prior to
-   * any other initialization operations.
-   */
-  virtual void postProcessInput() override final;
-
-private:
-
-  /// Origin point (x,y,z) of the plane (basically, any point on the plane)
-  R1Tensor m_origin;
   /// Normal (n_x,n_y,n_z) to the plane (will be normalized automatically)
   R1Tensor m_normal;
   /// Length vector in the orthonormal basis along with the normal
   R1Tensor m_lengthVector;
   /// Width vector in the orthonormal basis along with the normal
   R1Tensor m_widthVector;
-  /// Dimensions of the bounded plane
-  array1d< real64 > m_dimensions;
-  /// Length and width of the bounded plane
-  array2d< real64 > m_points;
-  /// tolerance to determine if a point sits on the plane or not
+  /// tolerance to determine if a point sits on the PlanarGeometricObject or not
   real64 m_tolerance;
 
   /// tolerance to check if base is orthonormal
@@ -154,17 +139,14 @@ private:
 
   struct viewKeyStruct
   {
-    static constexpr char const * originString() { return "origin"; }
     static constexpr char const * normalString() { return "normal"; }
-    static constexpr char const * dimensionsString() { return "dimensions"; }
     static constexpr char const * mLengthVectorString() { return "lengthVector"; }
     static constexpr char const * mWidthVectorString() { return "widthVector"; }
-    static constexpr char const * toleranceString() { return "tolerance"; }
   };
 
   /// @endcond
 
 };
-} /* namespace geos */
+} /* namespace geosx */
 
-#endif /* GEOS_MESH_SIMPLEGEOMETRICOBJECTS_BOUNDEDPLANE_HPP_*/
+#endif /* GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_PLANARGEOMETRICOBJECT_HPP_*/

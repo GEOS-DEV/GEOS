@@ -3,7 +3,7 @@
 ============ ==== ================================= 
 Name         Type Description                       
 ============ ==== ================================= 
-BoundedPlane node :ref:`DATASTRUCTURE_BoundedPlane` 
+Rectangle node :ref:`DATASTRUCTURE_Rectangle` 
 Box          node :ref:`DATASTRUCTURE_Box`          
 Cylinder     node :ref:`DATASTRUCTURE_Cylinder`     
 ThickPlane   node :ref:`DATASTRUCTURE_ThickPlane`   
