@@ -93,8 +93,8 @@ ElasticWaveEquationSEM::~ElasticWaveEquationSEM()
 
 void ElasticWaveEquationSEM::initializePreSubGroups()
 {
-  
- localIndex const numNodesPerElem = WaveSolverBase::getNumNodesPerElem();
+
+  localIndex const numNodesPerElem = WaveSolverBase::getNumNodesPerElem();
 
   WaveSolverBase::initializePreSubGroups();
 
@@ -668,7 +668,8 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
     /// synchronize pressure fields
     FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addFields( FieldLocation::Node, { elasticSecondOrderSemFields::Displacementx_np1::key(), elasticSecondOrderSemFields::Displacementy_np1::key(), elasticSecondOrderSemFields::Displacementz_np1::key() } );
+    fieldsToBeSync.addFields( FieldLocation::Node,
+                              { elasticSecondOrderSemFields::Displacementx_np1::key(), elasticSecondOrderSemFields::Displacementy_np1::key(), elasticSecondOrderSemFields::Displacementz_np1::key() } );
 
     CommunicationTools & syncFields = CommunicationTools::getInstance();
     syncFields.synchronizeFields( fieldsToBeSync,

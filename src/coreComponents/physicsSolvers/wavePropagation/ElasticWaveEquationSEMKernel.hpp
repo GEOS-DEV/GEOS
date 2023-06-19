@@ -340,15 +340,15 @@ struct DampingMatrixKernel
         for( localIndex q = 0; q < numNodesPerFace; ++q )
         {
           real32 const localIncrementx = density[k] * (Vp[k]*LvArray::math::abs( faceNormal[f][0] ) + Vs[k]*sqrt( faceNormal[f][1]*faceNormal[f][1] +
-                                                                                                                                  faceNormal[f][2]*faceNormal[f][2] ) )* m_finiteElement.computeDampingTerm(
+                                                                                                                  faceNormal[f][2]*faceNormal[f][2] ) )* m_finiteElement.computeDampingTerm(
             q,
             xLocal );
           real32 const localIncrementy = density[k] * (Vp[k]*LvArray::math::abs( faceNormal[f][1] ) + Vs[k]*sqrt( faceNormal[f][0]*faceNormal[f][0] +
-                                                                                                                                  faceNormal[f][2]*faceNormal[f][2] ) )* m_finiteElement.computeDampingTerm(
+                                                                                                                  faceNormal[f][2]*faceNormal[f][2] ) )* m_finiteElement.computeDampingTerm(
             q,
             xLocal );
           real32 const localIncrementz = density[k] * (Vp[k]*LvArray::math::abs( faceNormal[f][2] ) + Vs[k]*sqrt( faceNormal[f][0]*faceNormal[f][0] +
-                                                                                                                                  faceNormal[f][1]*faceNormal[f][1] ) )*  m_finiteElement.computeDampingTerm(
+                                                                                                                  faceNormal[f][1]*faceNormal[f][1] ) )*  m_finiteElement.computeDampingTerm(
             q,
             xLocal );
 

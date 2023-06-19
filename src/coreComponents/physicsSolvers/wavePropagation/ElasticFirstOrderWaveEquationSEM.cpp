@@ -54,32 +54,32 @@ ElasticFirstOrderWaveEquationSEM::ElasticFirstOrderWaveEquationSEM( const std::s
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );
 
-  registerWrapper( viewKeyStruct::displacementzNp1AtReceiversString(), &m_sigmaxxNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::sigmaxxNp1AtReceiversString(), &m_sigmaxxNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );
 
-  registerWrapper( viewKeyStruct::displacementzNp1AtReceiversString(), &m_sigmayyNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::sigmayyNp1AtReceiversString(), &m_sigmayyNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );
 
-  registerWrapper( viewKeyStruct::displacementzNp1AtReceiversString(), &m_sigmazzNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::sigmazzNp1AtReceiversString(), &m_sigmazzNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );
 
-  registerWrapper( viewKeyStruct::displacementzNp1AtReceiversString(), &m_sigmaxyNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::sigmaxyNp1AtReceiversString(), &m_sigmaxyNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );
 
-  registerWrapper( viewKeyStruct::displacementzNp1AtReceiversString(), &m_sigmaxzNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::sigmaxzNp1AtReceiversString(), &m_sigmaxzNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );
 
-  registerWrapper( viewKeyStruct::displacementzNp1AtReceiversString(), &m_sigmayzNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::sigmayzNp1AtReceiversString(), &m_sigmayzNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );
@@ -89,7 +89,7 @@ ElasticFirstOrderWaveEquationSEM::ElasticFirstOrderWaveEquationSEM( const std::s
     setSizedFromParent( 0 ).
     setDescription( "Element containing the sources" );
 
-  registerWrapper( viewKeyStruct::receiverElemString(), &m_rcvElem ).
+  registerWrapper( viewKeyStruct::receiverElemString(), &m_receiverElem ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Element containing the receivers" );
@@ -180,7 +180,7 @@ void ElasticFirstOrderWaveEquationSEM::postProcessInput()
   m_sourceElem.resize( numSourcesGlobal );
 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  m_rcvElem.resize( numReceiversGlobal );
+  m_receiverElem.resize( numReceiversGlobal );
 
   m_displacementxNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
   m_displacementyNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
@@ -219,7 +219,7 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
   arrayView2d< localIndex > const receiverNodeIds = m_receiverNodeIds.toView();
   arrayView2d< real64 > const receiverConstants = m_receiverConstants.toView();
   arrayView1d< localIndex > const receiverIsLocal = m_receiverIsLocal.toView();
-  arrayView1d< localIndex > const rcvElem = m_rcvElem.toView();
+  arrayView1d< localIndex > const receiverElem = m_receiverElem.toView();
 
   receiverNodeIds.setValues< serialPolicy >( -1 );
   receiverConstants.setValues< serialPolicy >( -1 );
@@ -282,7 +282,7 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
         sourceConstants,
         receiverCoordinates,
         receiverIsLocal,
-        rcvElem,
+        receiverElem,
         receiverNodeIds,
         receiverConstants,
         sourceValue,
@@ -341,8 +341,8 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
       arrayView1d< real32 > const density = elementSubRegion.getField< geophysicalFields::Density >();
-      arrayView1d< real32 > const velocityVp = elementSubRegion.getField< geophysicalFields::Pwavespeed >();
-      arrayView1d< real32 > const velocityVs = elementSubRegion.getField< geophysicalFields::Swavespeed >();
+      arrayView1d< real32 > const Vp = elementSubRegion.getField< geophysicalFields::Pwavespeed >();
+      arrayView1d< real32 > const Vs = elementSubRegion.getField< geophysicalFields::Swavespeed >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -371,8 +371,8 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
                                                                freeSurfaceFaceIndicator,
                                                                faceNormal,
                                                                density,
-                                                               velocityVp,
-                                                               velocityVs,
+                                                               Vp,
+                                                               Vs,
                                                                dampingx,
                                                                dampingy,
                                                                dampingz );
@@ -598,7 +598,8 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
     } );
 
     FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addFields( FieldLocation::Node, { elasticFirstOrderSemFields::Displacementx_np1::key(), elasticFirstOrderSemFields::Displacementy_np1::key(), elasticFirstOrderSemFields::Displacementz_np1::key()} );
+    fieldsToBeSync.addFields( FieldLocation::Node,
+                              { elasticFirstOrderSemFields::Displacementx_np1::key(), elasticFirstOrderSemFields::Displacementy_np1::key(), elasticFirstOrderSemFields::Displacementz_np1::key()} );
     fieldsToBeSync.addElementFields( {elasticFirstOrderSemFields::Stresstensorxx::key(), elasticFirstOrderSemFields::Stresstensoryy::key(), elasticFirstOrderSemFields::Stresstensorzz::key(),
                                       elasticFirstOrderSemFields::Stresstensorxy::key(),
                                       elasticFirstOrderSemFields::Stresstensorxz::key(), elasticFirstOrderSemFields::Stresstensoryz::key()}, regionNames );
@@ -721,7 +722,7 @@ void ElasticFirstOrderWaveEquationSEM::compute2dVariableAllSeismoTraces( real64 
        (timeSeismo = m_dtSeismoTrace*indexSeismoTrace) <= (time_n + epsilonLoc) && indexSeismoTrace < m_nsamplesSeismoTrace;
        indexSeismoTrace++ )
   {
-    WaveSolverUtils::compute2dVariableSeismoTrace( time_n, dt, timeSeismo, indexSeismoTrace, m_rcvElem, m_receiverConstants, m_receiverIsLocal,
+    WaveSolverUtils::compute2dVariableSeismoTrace( time_n, dt, timeSeismo, indexSeismoTrace, m_receiverElem, m_receiverConstants, m_receiverIsLocal,
                                                    m_nsamplesSeismoTrace, m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
   }
 }

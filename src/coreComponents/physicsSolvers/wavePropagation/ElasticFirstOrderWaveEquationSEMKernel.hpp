@@ -53,12 +53,12 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[in] rickerOrder Order of the Ricker wavelet
    * @param[out] sourceIsLocal flag indicating whether the source is local or not
    * @param[out] sourceNodeIds indices of the nodes of the element where the source is located
-   * @param[out] sourceConstantsx constant part of the source terms in x-direction
-   * @param[out] sourceConstantsy constant part of the source terms in y-direction
-   * @param[out] sourceConstantsz constant part of the source terms in z-direction
+   * @param[out] sourceConstants constant part of the source terms
+   * @param[out] sourceElem element where a source is located
    * @param[out] receiverIsLocal flag indicating whether the receiver is local or not
    * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
    * @param[out] receiverNodeConstants constant part of the receiver term
+   * @param[out] receiverElem element where a receiver is located
    * @param[out] sourceValue array containing the value of the time dependent source (Ricker for e.g)
    */
   template< typename EXEC_POLICY, typename FE_TYPE >
@@ -80,7 +80,7 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< real64 > const sourceConstants,
           arrayView2d< real64 const > const receiverCoordinates,
           arrayView1d< localIndex > const receiverIsLocal,
-          arrayView1d< localIndex > const rcvElem,
+          arrayView1d< localIndex > const receiverElem,
           arrayView2d< localIndex > const receiverNodeIds,
           arrayView2d< real64 > const receiverConstants,
           arrayView2d< real32 > const sourceValue,
@@ -170,7 +170,7 @@ struct PrecomputeSourceAndReceiverKernel
                                                                               X,
                                                                               coordsOnRefElem );
             receiverIsLocal[ircv] = 1;
-            rcvElem[ircv] = k;
+            receiverElem[ircv] = k;
 
             real64 Ntest[FE_TYPE::numNodes];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
@@ -201,10 +201,9 @@ struct MassMatrixKernel
    * @tparam EXEC_POLICY the execution policy
    * @tparam ATOMIC_POLICY the atomic policy
    * @param[in] size the number of cells in the subRegion
-   * @param[in] numFacesPerElem number of faces per element
    * @param[in] X coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
-   * @param[in] velocity cell-wise velocity
+   * @param[in] density cell-wise density
    * @param[out] mass diagonal of the mass matrix
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
@@ -262,8 +261,13 @@ struct DampingMatrixKernel
    * @param[in] facesToNodes map from face to nodes
    * @param[in] facesDomainBoundaryIndicator flag equal to 1 if the face is on the boundary, and to 0 otherwise
    * @param[in] freeSurfaceFaceIndicator flag equal to 1 if the face is on the free surface, and to 0 otherwise
-   * @param[in] velocity cell-wise velocity
-   * @param[out] damping diagonal of the damping matrix
+   * @param[in] faceNormal array containing normals coordinates in all direction for all faces of a cell
+   * @param[in] density cell-wise density
+   * @param[in] Vp cell wise P-wavespeed
+   * @param[in] Vs cell wise S-wavespeed
+   * @param[out] dampingx diagonal of the damping matrix in x-direction
+   * @param[out] dampingy diagonal of the damping matrix in y-direction
+   * @param[out] dampingz diagonal of the damping matrix in z-direction
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
@@ -275,8 +279,8 @@ struct DampingMatrixKernel
           arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
           arrayView2d< real64 const > const faceNormal,
           arrayView1d< real32 const > const density,
-          arrayView1d< real32 const > const velocityVp,
-          arrayView1d< real32 const > const velocityVs,
+          arrayView1d< real32 const > const Vp,
+          arrayView1d< real32 const > const Vs,
           arrayView1d< real32 > const dampingx,
           arrayView1d< real32 > const dampingy,
           arrayView1d< real32 > const dampingz )
@@ -305,16 +309,16 @@ struct DampingMatrixKernel
 
         for( localIndex q = 0; q < numNodesPerFace; ++q )
         {
-          real32 const localIncrementx = density[k] * (velocityVp[k]*LvArray::math::abs( faceNormal[f][0] ) + velocityVs[k]*sqrt( faceNormal[f][1]*faceNormal[f][1] +
-                                                                                                                                  faceNormal[f][2]*faceNormal[f][2] ) )* m_finiteElement.computeDampingTerm(
+          real32 const localIncrementx = density[k] * (Vp[k]*LvArray::math::abs( faceNormal[f][0] ) + Vs[k]*sqrt( faceNormal[f][1]*faceNormal[f][1] +
+                                                                                                                  faceNormal[f][2]*faceNormal[f][2] ) )* m_finiteElement.computeDampingTerm(
             q,
             xLocal );
-          real32 const localIncrementy = density[k] * (velocityVp[k]*LvArray::math::abs( faceNormal[f][1] ) + velocityVs[k]*sqrt( faceNormal[f][0]*faceNormal[f][0] +
-                                                                                                                                  faceNormal[f][2]*faceNormal[f][2] ) )* m_finiteElement.computeDampingTerm(
+          real32 const localIncrementy = density[k] * (Vp[k]*LvArray::math::abs( faceNormal[f][1] ) + Vs[k]*sqrt( faceNormal[f][0]*faceNormal[f][0] +
+                                                                                                                  faceNormal[f][2]*faceNormal[f][2] ) )* m_finiteElement.computeDampingTerm(
             q,
             xLocal );
-          real32 const localIncrementz = density[k] * (velocityVp[k]*LvArray::math::abs( faceNormal[f][2] ) + velocityVs[k]*sqrt( faceNormal[f][0]*faceNormal[f][0] +
-                                                                                                                                  faceNormal[f][1]*faceNormal[f][1] ) )*  m_finiteElement.computeDampingTerm(
+          real32 const localIncrementz = density[k] * (Vp[k]*LvArray::math::abs( faceNormal[f][2] ) + Vs[k]*sqrt( faceNormal[f][0]*faceNormal[f][0] +
+                                                                                                                  faceNormal[f][1]*faceNormal[f][1] ) )*  m_finiteElement.computeDampingTerm(
             q,
             xLocal );
 
@@ -528,7 +532,7 @@ struct VelocityComputation
           arrayView2d< real32 const > const stressxy,
           arrayView2d< real32 const > const stressxz,
           arrayView2d< real32 const > const stressyz,
-          arrayView1d< const real32 > const mass,
+          arrayView1d< real32 const > const mass,
           arrayView1d< real32 const > const dampingx,
           arrayView1d< real32 const > const dampingy,
           arrayView1d< real32 const > const dampingz,

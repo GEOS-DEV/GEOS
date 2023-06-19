@@ -1054,7 +1054,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
     if( time_n >= 0 )
     {
-     computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers);
+      computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
     }
     /// prepare next step
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
@@ -1094,7 +1094,7 @@ void AcousticWaveEquationSEM::cleanup( real64 const time_n,
     arrayView1d< real32 const > const p_n = nodeManager.getField< acousticSecondOrderSemFields::Pressure_n >();
     arrayView1d< real32 const > const p_np1 = nodeManager.getField< acousticSecondOrderSemFields::Pressure_np1 >();
     arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
-    computeAllSeismoTraces( time_n, 0, p_np1, p_n, pReceivers);
+    computeAllSeismoTraces( time_n, 0, p_np1, p_n, pReceivers );
 
   } );
 }

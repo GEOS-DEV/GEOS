@@ -30,8 +30,8 @@ namespace fields
 {
 
 namespace matricialFields
-{ 
-  DECLARE_FIELD( MassVector,
+{
+DECLARE_FIELD( MassVector,
                "massVector",
                array1d< real32 >,
                0,
@@ -107,8 +107,8 @@ DECLARE_FIELD( StiffnessVectorz,
 
 namespace geophysicalFields
 {
- 
- DECLARE_FIELD( Density,
+
+DECLARE_FIELD( Density,
                "Density",
                array1d< real32 >,
                0,
@@ -116,7 +116,7 @@ namespace geophysicalFields
                WRITE_AND_READ,
                "Medium density of the cell" );
 
-  DECLARE_FIELD( Pwavespeed,
+DECLARE_FIELD( Pwavespeed,
                "Pwavespeed",
                array1d< real32 >,
                0,
@@ -148,7 +148,7 @@ DECLARE_FIELD( Mu,
                WRITE_AND_READ,
                "Second Lame parameter: mu" );
 
-  DECLARE_FIELD( FreeSurfaceFaceIndicator,
+DECLARE_FIELD( FreeSurfaceFaceIndicator,
                "freeSurfaceFaceIndicator",
                array1d< localIndex >,
                0,
@@ -156,7 +156,7 @@ DECLARE_FIELD( Mu,
                WRITE_AND_READ,
                "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
 
-  DECLARE_FIELD( FreeSurfaceNodeIndicator,
+DECLARE_FIELD( FreeSurfaceNodeIndicator,
                "freeSurfaceNodeIndicator",
                array1d< localIndex >,
                0,
@@ -167,7 +167,7 @@ DECLARE_FIELD( Mu,
 
 namespace acousticSecondOrderSemFields
 {
-  DECLARE_FIELD( Pressure_nm1,
+DECLARE_FIELD( Pressure_nm1,
                "pressure_nm1",
                array1d< real32 >,
                0,
@@ -175,7 +175,7 @@ namespace acousticSecondOrderSemFields
                WRITE_AND_READ,
                "Scalar pressure at time n-1." );
 
-  DECLARE_FIELD( Pressure_n,
+DECLARE_FIELD( Pressure_n,
                "pressure_n",
                array1d< real32 >,
                0,
@@ -183,7 +183,7 @@ namespace acousticSecondOrderSemFields
                WRITE_AND_READ,
                "Scalar pressure at time n." );
 
-  DECLARE_FIELD( Pressure_np1,
+DECLARE_FIELD( Pressure_np1,
                "pressure_np1",
                array1d< real32 >,
                0,
@@ -191,7 +191,7 @@ namespace acousticSecondOrderSemFields
                WRITE_AND_READ,
                "Scalar pressure at time n+1." );
 
-  DECLARE_FIELD( ForcingRHS,
+DECLARE_FIELD( ForcingRHS,
                "rhs",
                array1d< real32 >,
                0,
@@ -199,7 +199,7 @@ namespace acousticSecondOrderSemFields
                WRITE_AND_READ,
                "RHS" );
 
-  DECLARE_FIELD( AuxiliaryVar1PML,
+DECLARE_FIELD( AuxiliaryVar1PML,
                "auxiliaryVar1PML",
                array2d< real32 >,
                0,
@@ -250,7 +250,7 @@ DECLARE_FIELD( PartialGradient,
 
 namespace acousticFirstOrderSemFields
 {
-  DECLARE_FIELD( Velocity_x,
+DECLARE_FIELD( Velocity_x,
                "velocity_x",
                array2d< real32 >,
                0,
@@ -258,7 +258,7 @@ namespace acousticFirstOrderSemFields
                WRITE_AND_READ,
                "Velocity in the x-direction." );
 
-  DECLARE_FIELD( Velocity_y,
+DECLARE_FIELD( Velocity_y,
                "velocity_y",
                array2d< real32 >,
                0,
@@ -266,7 +266,7 @@ namespace acousticFirstOrderSemFields
                WRITE_AND_READ,
                "Velocity in the y-direction." );
 
-  DECLARE_FIELD( Velocity_z,
+DECLARE_FIELD( Velocity_z,
                "velocity_z",
                array2d< real32 >,
                0,
@@ -274,7 +274,7 @@ namespace acousticFirstOrderSemFields
                WRITE_AND_READ,
                "Velocity in the z-direction." );
 
-   DECLARE_FIELD( Pressure_np1,
+DECLARE_FIELD( Pressure_np1,
                "pressure_np1",
                array1d< real32 >,
                0,
@@ -285,7 +285,7 @@ namespace acousticFirstOrderSemFields
 
 namespace elasticSecondOrderSemFields
 {
-  DECLARE_FIELD( Displacementx_np1,
+DECLARE_FIELD( Displacementx_np1,
                "displacementx_np1",
                array1d< real32 >,
                0,
@@ -385,7 +385,7 @@ DECLARE_FIELD( ForcingRHSz,
 
 namespace elasticFirstOrderSemFields
 {
-   DECLARE_FIELD( Stresstensorxx,
+DECLARE_FIELD( Stresstensorxx,
                "stresstensorxx",
                array2d< real32 >,
                0,
@@ -433,7 +433,7 @@ DECLARE_FIELD( Stresstensoryz,
                WRITE_AND_READ,
                "yz-components of the stress tensor (symetric of zy-component)." );
 
- DECLARE_FIELD( Displacementx_np1,
+DECLARE_FIELD( Displacementx_np1,
                "displacementx_np1",
                array1d< real32 >,
                0,
@@ -456,7 +456,7 @@ DECLARE_FIELD( Displacementz_np1,
                LEVEL_0,
                WRITE_AND_READ,
                "z-component of displacement at time n+1." );
-        
+
 }
 
 }

@@ -111,7 +111,7 @@ public:
   struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
     static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }
-    
+
   } waveEquationViewKeys;
 
 

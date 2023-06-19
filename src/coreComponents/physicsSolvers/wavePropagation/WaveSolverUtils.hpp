@@ -39,23 +39,23 @@ struct WaveSolverUtils
     }
 
     constexpr real32 pi = M_PI;
-    real32 const lam = (f0*pi)*(f0*pi);
+    real32 const lambda = (f0*pi)*(f0*pi);
 
     switch( order )
     {
       case 2:
       {
-        pulse = 2.0*lam*(2.0*lam*(time_n-o_tpeak)*(time_n-o_tpeak)-1.0)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
+        pulse = 2.0*lambda*(2.0*lambda*(time_n-o_tpeak)*(time_n-o_tpeak)-1.0)*exp( -lambda*(time_n-o_tpeak)*(time_n-o_tpeak));
       }
       break;
       case 1:
       {
-        pulse = -2.0*lam*(time_n-o_tpeak)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
+        pulse = -2.0*lambda*(time_n-o_tpeak)*exp( -lambda*(time_n-o_tpeak)*(time_n-o_tpeak));
       }
       break;
       case 0:
       {
-        pulse = -(time_n-o_tpeak)*exp( -2*lam*(time_n-o_tpeak)*(time_n-o_tpeak) );
+        pulse = -(time_n-o_tpeak)*exp( -2*lambda*(time_n-o_tpeak)*(time_n-o_tpeak) );
       }
       break;
       default:
@@ -132,7 +132,7 @@ struct WaveSolverUtils
                                             real64 const dt,
                                             real64 const timeSeismo,
                                             localIndex iSeismo,
-                                            arrayView1d< localIndex const > const rcvElem,
+                                            arrayView1d< localIndex const > const receiverElem,
                                             arrayView2d< real64 const > const receiverConstants,
                                             arrayView1d< localIndex const > const receiverIsLocal,
                                             localIndex const nsamplesSeismoTrace,
@@ -157,8 +157,8 @@ struct WaveSolverUtils
           real32 vtmp_n = 0.0;
           for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
           {
-            vtmp_np1 += var_np1[rcvElem[ircv]][inode] * receiverConstants[ircv][inode];
-            vtmp_n += var_n[rcvElem[ircv]][inode] * receiverConstants[ircv][inode];
+            vtmp_np1 += var_np1[receiverElem[ircv]][inode] * receiverConstants[ircv][inode];
+            vtmp_n += var_n[receiverElem[ircv]][inode] * receiverConstants[ircv][inode];
           }
           // linear interpolation between the pressure value at time_n and time_(n+1)
           varAtReceivers[iSeismo][ircv] = a1*vtmp_n + a2*vtmp_np1;

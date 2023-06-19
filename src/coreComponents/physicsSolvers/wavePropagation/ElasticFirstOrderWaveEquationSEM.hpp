@@ -69,7 +69,7 @@ public:
                                        bool const computeGradient ) override;
 
   /**@}*/
-  
+
   /**
    * TODO: move implementation into WaveSolverBase
    * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
@@ -126,7 +126,7 @@ public:
     static constexpr char const * sigmayzNp1AtReceiversString() { return "sigmayzNp1AtReceivers"; }
 
     static constexpr char const * sourceElemString() { return "sourceElem"; }
-    static constexpr char const * receiverElemString() { return "rcvElem"; }
+    static constexpr char const * receiverElemString() { return "receiverElem"; }
 
   } waveEquationViewKeys;
 
@@ -204,7 +204,7 @@ private:
   array1d< localIndex > m_sourceElem;
 
   /// Array containing the elements which contain a receiver
-  array1d< localIndex > m_rcvElem;
+  array1d< localIndex > m_receiverElem;
 
 };
 

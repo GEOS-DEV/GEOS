@@ -43,7 +43,7 @@ struct PrecomputeSourceAndReceiverKernel
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
    * @param[in] numNodesPerElem number of nodes per element
-   * @param[in] numFacesPerElem number of faces per element 
+   * @param[in] numFacesPerElem number of faces per element
    * @param[in] X coordinates of the nodes
    * @param[in] elemGhostRank rank of the ghost element
    * @param[in] elemsToNodes map from element to nodes
