@@ -6,6 +6,44 @@
       name="./Sneddon_embeddedFrac_base.xml"/>
   </Included>
 
+  <Solvers
+    gravityVector="{0.0, 0.0, 0.0}">
+  <!-- SPHINX_SNEDDON_SOLVER -->
+    <SolidMechanicsEmbeddedFractures
+      name="mechSolve"
+      targetRegions="{ Domain, Fracture }"
+      fractureRegionName="Fracture"
+      initialDt="10"
+      solidSolverName="matrixSolver"
+      contactRelationName="fractureContact"
+      logLevel="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="2"
+        maxTimeStepCuts="1"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
+    </SolidMechanicsEmbeddedFractures>
+
+    <SolidMechanicsLagrangianSSLE
+      name="matrixSolver"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Domain }"/>
+
+    <EmbeddedSurfaceGenerator
+      name="SurfaceGenerator"
+      discretization="FE1"
+      targetRegions="{ Domain, Fracture }"
+      fractureRegion="Fracture"
+      logLevel="1"
+      mpiCommOrder="1"/>
+  </Solvers>
+  <!-- SPHINX_SNEDDON_SOLVER_END -->
+
   <!-- SPHINX_SNEDDON_MESH -->
   <Mesh>  
     <InternalMesh

@@ -1,57 +1,79 @@
 <?xml version="1.0" ?>
 
 <Problem>
- <Included>
+
+  <Included>
     <File
       name="./Sneddon_embeddedFrac_base.xml"/>
   </Included>
 
-  <!-- SPHINX_SNEDDON_MESH -->
-  <Mesh>  
+  <Solvers
+    gravityVector="{0.0, 0.0, 0.0}">
+  <!-- SPHINX_SNEDDON_SOLVER -->
+    <SolidMechanicsEmbeddedFractures
+      name="mechSolve"
+      targetRegions="{ Domain, Fracture }"
+      fractureRegionName="Fracture"
+      initialDt="10"
+      solidSolverName="matrixSolver"
+      contactRelationName="fractureContact"
+      logLevel="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="2"
+        maxTimeStepCuts="1"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="mgr"
+        logLevel="0"/>
+    </SolidMechanicsEmbeddedFractures>
+
+    <SolidMechanicsLagrangianSSLE
+      name="matrixSolver"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Domain }"/>
+
+    <EmbeddedSurfaceGenerator
+      name="SurfaceGenerator"
+      discretization="FE1"
+      targetRegions="{ Domain, Fracture }"
+      fractureRegion="Fracture"
+      logLevel="1"
+      mpiCommOrder="1"/>
+  </Solvers>
+
+  <Mesh>
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ -20, -4, 4, 20 }"
-      yCoords="{ -20, -4, 4, 20 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 10, 101, 10 }"
-      ny="{ 10, 901, 10 }"
-      nz="{ 1 }"
-      cellBlockNames="{ cb1 }"/> 
+      xCoords="{ 0, 3 }"
+      yCoords="{ 0, 3 }"
+      zCoords="{ 0, 3 }"
+      nx="{ 95 }"
+      ny="{ 95 }"
+      nz="{ 15 }"
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
-  <!-- SPHINX_SNEDDON_MESH_END -->  
+
+ 
   
-  <!-- SPHINX_SNEDDON_EVENTS -->
   <Events
-    maxTime="1.0">
+    maxTime="10">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGenerator"/>
 
     <PeriodicEvent
       name="solverApplications"
-      beginTime="0.0"
-      endTime="1.0"
-      forceDt="1.0"
+      forceDt="10"
       target="/Solvers/mechSolve"/>
 
     <PeriodicEvent
       name="outputs"
-      targetExactTimestep="0"
+      cycleFrequency="10"
       target="/Outputs/vtkOutput"/>
-
-    <PeriodicEvent
-      name="timeHistoryCollection"
-      timeFrequency="1.0"
-      targetExactTimestep="0"
-      target="/Tasks/displacementJumpCollection" />
-
-    <PeriodicEvent
-      name="timeHistoryOutput"
-      timeFrequency="1.0"
-      targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput"/>    
   </Events>
-  <!-- SPHINX_SNEDDON_EVENTS_END -->
- 
+  
 </Problem>
