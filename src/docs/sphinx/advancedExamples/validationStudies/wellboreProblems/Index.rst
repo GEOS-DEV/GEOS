@@ -14,6 +14,8 @@ Wellbore Problems
    deviatedElasticWellbore/Example
 
    edpWellbore/Example
+
+   dpWellbore/Example
    
    mccWellbore/Example   
 
