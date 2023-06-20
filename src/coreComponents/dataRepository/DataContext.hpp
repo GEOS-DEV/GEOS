@@ -42,10 +42,10 @@ public:
 
   /**
    * @brief Construct a new DataContext object.
-   * @param objectName the target object name
+   * @param targetName the target object name
    * @param isDataFileContext true if this Context is a DataFileContext
    */
-  DataContext( string const & objectName, bool isDataFileContext );
+  DataContext( string const & targetName, bool isDataFileContext );
 
   /**
    * @brief Destroy the DataContext object
@@ -61,8 +61,8 @@ public:
   /**
    * @return Get the target object name
    */
-  string getObjectName() const
-  { return m_objectName; }
+  string getTargetName() const
+  { return m_targetName; }
 
   /**
    * @brief Flag on availability of file information. Used to provide more user-friendly information.
@@ -78,10 +78,10 @@ public:
 
 protected:
 
-  /// see getObjectName()
-  string const m_objectName;
+  /// @see getObjectName()
+  string const m_targetName;
 
-  /// see isDataFileContext()
+  /// @see isDataFileContext()
   bool const m_isDataFileContext;
 
 };
@@ -214,15 +214,15 @@ public:
 
 protected:
 
-  /// see getTypeName()
+  /// @see getTypeName()
   string const m_typeName;
-  /// see getFilePath()
+  /// @see getFilePath()
   string const m_filePath;
-  /// see getLine()
+  /// @see getLine()
   size_t const m_line;
-  /// see getLineOffset()
+  /// @see getLineOffset()
   size_t const m_offsetInLine;
-  /// see getOffset()
+  /// @see getOffset()
   size_t const m_offset;
 
 };

@@ -25,8 +25,8 @@ namespace dataRepository
 {
 
 
-DataContext::DataContext( string const & objectName, bool const isDataFileContext ):
-  m_objectName( objectName ),
+DataContext::DataContext( string const & targetName, bool const isDataFileContext ):
+  m_targetName( targetName ),
   m_isDataFileContext( isDataFileContext )
 {}
 
@@ -115,7 +115,7 @@ DataFileContext::DataFileContext( WrapperBase & wrapper, xmlWrapper::xmlAttribut
 string DataFileContext::toString() const
 {
   std::ostringstream oss;
-  oss << m_objectName;
+  oss << m_targetName;
   if( m_line != xmlWrapper::xmlDocument::npos )
   {
     oss << " (" << splitPath( m_filePath ).second << ", l." << m_line << ")";

@@ -60,7 +60,7 @@ void getElementsRecursive( xmlDocument const & document, xmlNode const & targetN
 
   // The Group name will be the name attribute value, or the node tag name if the name attribute
   // doesn't exist.
-  string groupName = [&]() {
+  string const groupName = [&]() {
     xmlAttribute nameAtt = targetNode.attribute( "name" );
     return nameAtt ? string( nameAtt.value() ) : string( targetNode.name() );
   }();
@@ -97,7 +97,7 @@ void verifyDataFileContext( DataFileContext const & fileContext,
 
   // verifying if all DataFileContext data have been found
   EXPECT_FALSE( fileContext.getFilePath().empty() ) << errInfo;
-  EXPECT_FALSE( fileContext.getObjectName().empty() ) << errInfo;
+  EXPECT_FALSE( fileContext.getTargetName().empty() ) << errInfo;
   EXPECT_FALSE( fileContext.getTypeName().empty() ) << errInfo;
   EXPECT_NE( fileContext.getOffset(), xmlDocument::npos ) << errInfo;
   EXPECT_NE( fileContext.getLine(), xmlDocument::npos ) << errInfo;
@@ -150,7 +150,6 @@ void verifyDataFileContext( DataFileContext const & fileContext,
 void verifyGroupDataFileContextRecursive( xmlDocument const & document, Group const & group,
                                           std::set< string > & verifications )
 {
-  // GEOS_LOG( "Verifying "<< group.getName());
   if( group.getDataContext().isDataFileContext() )
   {
     verifyDataFileContext( dynamic_cast< DataFileContext const & >( group.getDataContext() ),

@@ -119,7 +119,8 @@ public:
   void parseInputString( string const & xmlString );
 
   /**
-   * @brief Parses the input xml document
+   * @brief Parses the input xml document. Also add the includes content to the xmlDocument when
+   * `Include` nodes are encountered.
    * @param xmlDocument The parsed xml document handle
    */
   void parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument );

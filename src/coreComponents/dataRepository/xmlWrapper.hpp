@@ -51,9 +51,13 @@ namespace xmlWrapper
 using xmlResult = pugi::xml_parse_result;
 
 /// Alias for the type of an xml node.
+/// An xmlNode behave as a pointer object: passing it by value to a function which modify it
+/// will modify the original xmlNode object.
 using xmlNode = pugi::xml_node;
 
 /// Alias for the type of an xml attribute.
+/// An xmlAttribute behave as a pointer object: passing it by value to a function which modify it
+/// will modify the original xmlAttribute object.
 using xmlAttribute = pugi::xml_attribute;
 
 /// Alias for the type variant of an xml node.
@@ -165,6 +169,7 @@ public:
 
   /**
    * @brief Load document from zero-terminated string. No encoding conversions are applied.
+   * Free any previously loaded xml tree.
    * Wrapper of pugi::xml_document::load_buffer() method.
    * @param contents the string containing the document content
    * @param loadNodeFileInfo Load the node source file info, allowing getNodePosition() to work.
@@ -175,7 +180,8 @@ public:
                          unsigned int options = pugi::parse_default );
 
   /**
-   * @brief Load document from file. Wrapper of pugi::xml_document::load_buffer() method.
+   * @brief Load document from file. Free any previously loaded xml tree.
+   * Wrapper of pugi::xml_document::load_buffer() method.
    * @param path the path of an xml file to load.
    * @param loadNodeFileInfo Load the node source file info, allowing getNodePosition() to work.
    * @param options the parsing options
@@ -188,7 +194,8 @@ public:
 
   /**
    * @brief Load document from buffer. Copies/converts the buffer, so it may be deleted or changed
-   * after the function returns. Wrapper of pugi::xml_document::load_buffer() method.
+   * after the function returns. Free any previously loaded xml tree.
+   * Wrapper of pugi::xml_document::load_buffer() method.
    * @param contents the buffer containing the document content
    * @param size the size of the buffer in bytes
    * @param loadNodeFileInfo Load the node source file info, allowing getNodePosition() to work.
@@ -247,9 +254,9 @@ public:
 private:
   /// Used to retrieve node positions as pugixml buffer is private and processed.
   map< string, string > m_originalBuffers;
-  /// see getFilePath()
+  /// @see getFilePath()
   string m_rootFilePath;
-  // see hasNodeFileInfo()
+  /// @see hasNodeFileInfo()
   bool m_hasNodeFileInfo;
 };
 
