@@ -754,19 +754,19 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     parallelDeviceEvents events;
 
     WaveSolverUtils::UpdateP( nodeManager,
-                              ux_nm1, ux_n,  ux_np1,
+                              ux_nm1, ux_n, ux_np1,
                               mass, stiffnessVectorx, rhsx,
                               m_dampingNodes, m_dampingVectorX,
                               dt, streamx, events );
 
     WaveSolverUtils::UpdateP( nodeManager,
-                              uy_nm1, uy_n,  uy_np1,
+                              uy_nm1, uy_n, uy_np1,
                               mass, stiffnessVectory, rhsy,
                               m_dampingNodes, m_dampingVectorY,
                               dt, streamy, events );
 
     WaveSolverUtils::UpdateP( nodeManager,
-                              uz_nm1, uz_n,  uz_np1,
+                              uz_nm1, uz_n, uz_np1,
                               mass, stiffnessVectorz, rhsz,
                               m_dampingNodes, m_dampingVectorZ,
                               dt, streamz, events );

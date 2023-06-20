@@ -295,11 +295,11 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
         acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
-        kernelM.template launch< parallelHostPolicy , parallelHostAtomic >( elementSubRegion.size(),
-                                                                            X,
-                                                                            elemsToNodes,
-                                                                            velocity,
-                                                                            mass );
+        kernelM.template launch< parallelHostPolicy, parallelHostAtomic >( elementSubRegion.size(),
+                                                                           X,
+                                                                           elemsToNodes,
+                                                                           velocity,
+                                                                           mass );
 
         acousticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
@@ -967,7 +967,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       parallelDeviceStream stream;
       parallelDeviceEvents events;
       WaveSolverUtils::UpdateP( nodeManager,
-                                p_nm1, p_n,  p_np1,
+                                p_nm1, p_n, p_np1,
                                 mass, stiffnessVector, rhs,
                                 m_dampingNodes, m_dampingVector,
                                 dt, stream, events );
