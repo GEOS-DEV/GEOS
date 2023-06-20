@@ -121,7 +121,7 @@ void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager,
 
   // Here, we need to take into account the fact that the fractures elements
   // share the same nodes as the matrix.
-  // So nodes can be considered as boundary objects while the face built on top of it may no.
+  // So nodes can be considered as boundary objects while the face built on top of it may not.
 
   // We'll proceed as follows.
   //

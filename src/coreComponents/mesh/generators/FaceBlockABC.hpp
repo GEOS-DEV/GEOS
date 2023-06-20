@@ -156,6 +156,8 @@ public:
   virtual array1d< globalIndex > localToGlobalMap() const = 0;
 
   virtual ArrayOfArrays< globalIndex > getDuplicatedNodes() const = 0;
+
+  virtual ArrayOfArrays< localIndex > get2dElemTo2dNodes() const = 0;
 };
 
 }

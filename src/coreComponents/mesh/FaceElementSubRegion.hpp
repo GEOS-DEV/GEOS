@@ -234,6 +234,8 @@ public:
    */
   ArrayOfArrays< globalIndex > m_duplicatedNodes;
 
+  ArrayOfArrays< localIndex > m_2dElemTo2dNodes;
+
   /**
    * @brief @return The array of shape function derivatives.
    */

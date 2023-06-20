@@ -139,7 +139,7 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
   // we store the cell block mapping at the sub region mapping location.
   // It will later be transformed into a sub regions mapping.  // Last, we fill the regions mapping with dummy -1 values that should all be replaced eventually.
   auto const elem2dToElems = faceBlock.get2dElemToElems();
-  m_2dFaceTo2dElems.resize( num2dElements, 2 );
+  m_2dElemToElems.resize( num2dElements, 2 );
   for( int i = 0; i < num2dElements; ++i )
   {
     for( localIndex const & j: elem2dToElems.toCellIndex[i] )
@@ -171,6 +171,8 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
   }
 
   m_duplicatedNodes = faceBlock.getDuplicatedNodes();
+
+  m_2dElemTo2dNodes = faceBlock.get2dElemTo2dNodes();
 
   // TODO We still need to be able to import fields on the FaceElementSubRegion.
 }
@@ -389,10 +391,11 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
                                                  FaceManager const & faceManager,
                                                  ElementRegionManager const & elemManager )
 {
+  GEOS_LOG_RANK("I WAS THERE fixSecondaryMappings: " << this->getName() );
   // Here I can fix the other mappings which are not properly defined...
   localIndex const num2dElems = this->size();
 
-  std::map< globalIndex, globalIndex > referenceDuplicatedNodes;
+  std::map< globalIndex, globalIndex > referenceDuplicatedNodes;  // Take the minimum duplicated node for each bucket.
   {
     std::set< std::set< globalIndex > > mergedDuplicatedNodes;
     m_otherDuplicatedNodes.push_back( m_duplicatedNodes );
@@ -547,10 +550,11 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
     localIndex esr;
     localIndex ei;
     localIndex face;
+    std::vector< localIndex > nodes;
 
     bool operator<( ElemPath const & other ) const
     {
-      return std::tie( er, esr, ei, face ) < std::tie( other.er, other.esr, other.ei, other.face );
+      return std::tie( er, esr, ei, face, nodes ) < std::tie( other.er, other.esr, other.ei, other.face, other.nodes );
     }
   };
 
@@ -562,20 +566,23 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
   {
     auto const & elemToFaces = subRegion.faceList().base();
     auto const & faceToNodes = faceManager.nodeList();
+    auto const & isOnBoundary = subRegion.getDomainBoundaryIndicator();
     for( localIndex ei = 0; ei < elemToFaces.size( 0 ); ++ei )
     {
+      if( not isOnBoundary[ei] )
+      { continue; }
+
       for( auto const & face: elemToFaces[ei] )
       {
-        std::set< globalIndex > nodesOfFace;
+        std::set< globalIndex > nodesOfFace;  // Signature of the face nodes.
         for( localIndex const & n: faceToNodes[face] )
         {
           auto const it = referenceDuplicatedNodes.find( nodeManager.localToGlobalMap()[n] );
-          if( it != referenceDuplicatedNodes.cend() )
-          {
-            nodesOfFace.insert( it->second );
-          }
+          GEOS_ERROR_IF( it == referenceDuplicatedNodes.cend(), "Could not find the node in the manager" );
+          nodesOfFace.insert( it->second );
         }
-        ElemPath const path = ElemPath{ er, esr, ei, face };
+        std::vector< localIndex > const nodes( faceToNodes[face].begin(), faceToNodes[face].end() );
+        ElemPath const path = ElemPath{ er, esr, ei, face, nodes };
         faceNodesToElems[nodesOfFace].insert( path );
       }
     }
@@ -587,13 +594,13 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
     if( m_2dElemToElems.m_toElementIndex.sizeOfArray( e2d ) >= 2 )
     { continue; }
 
-    std::set< globalIndex > nodes;
+    std::set< globalIndex > refNodes;  // TODO think about those ref node twice.
     for( localIndex const & n: m_toNodesRelation[e2d] )
     {
-      nodes.insert( referenceDuplicatedNodes.at( nodeManager.localToGlobalMap()[n] ) );
+      refNodes.insert( referenceDuplicatedNodes.at( nodeManager.localToGlobalMap()[n] ) );
     }
 
-    auto const match = faceNodesToElems.find( nodes );
+    auto const match = faceNodesToElems.find( refNodes );
     if( match != faceNodesToElems.cend() )
     {
       GEOS_LOG_RANK( "Found a match for " << e2d );
@@ -606,9 +613,9 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
           m_2dElemToElems.m_toElementSubRegion.emplaceBack( e2d, path.esr );
           m_2dElemToElems.m_toElementIndex.emplaceBack( e2d, path.ei );
           m_toFacesRelation.emplaceBack( e2d, path.face );
-          for( globalIndex const & gn: nodes )
+          for( localIndex const & n: path.nodes )
           {
-            m_toNodesRelation.emplaceBack( e2d, nodeManager.globalToLocalMap().at( gn ) );
+            m_toNodesRelation.emplaceBack( e2d, n );
           }
         }
       }

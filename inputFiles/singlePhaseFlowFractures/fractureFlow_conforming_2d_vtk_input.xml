@@ -29,13 +29,18 @@
 <!--      faceBlocks="{fracture}"-->
 <!--      file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/toy.vtm"/>-->
 
+<!--    <VTKMesh-->
+<!--      surfacicFieldsToImport="{aperture}"-->
+<!--      surfacicFieldsInGEOSX="{elementAperture}"-->
+<!--      name="mesh1"-->
+<!--      useGlobalIds="0"-->
+<!--      faceBlocks="{fracture}"-->
+<!--      file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/tShapedFracturedCube.vtm"/>-->
     <VTKMesh
-      surfacicFieldsToImport="{aperture}"
-      surfacicFieldsInGEOSX="{elementAperture}"
       name="mesh1"
-      useGlobalIds="0"
+      useGlobalIds="1"
       faceBlocks="{fracture}"
-      file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/tShapedFracturedCube.vtm"/>
+      file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/x-shape-fracture/xShapedFracturedCube.vtm"/>
 <!--      file="tShapedFracturedCube.vtm"/>-->
   </Mesh>
 
@@ -95,8 +100,12 @@
   <ElementRegions>
     <CellElementRegion
       name="Region"
-      cellBlocks="{ hexahedra, wedges }"
+      cellBlocks="{ hexahedra }"
       materialList="{ water, rock }"/>
+<!--    <CellElementRegion-->
+<!--      name="Region"-->
+<!--      cellBlocks="{ hexahedra, wedges }"-->
+<!--      materialList="{ water, rock }"/>-->
 
     <SurfaceElementRegion
       name="Fracture"

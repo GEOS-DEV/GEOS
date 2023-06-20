@@ -256,18 +256,37 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOS_UNUSED_PARAM( c
       elemManager.constructReferenceAccessor< array1d< localIndex > >( ObjectManagerBase::viewKeyStruct::adjacencyListString(),
                                                                        std::to_string( this->m_neighborRank ) );
 
-    NeighborData const & nd = nodeManager.getNeighborData( m_neighborRank );
-    std::set< localIndex > seedNodeListTmp;
-    std::set< localIndex > matchedPartitionBoundary( nd.matchedPartitionBoundary().begin(), nd.matchedPartitionBoundary().end() );
-    std::set< localIndex > secondLevelMatches( nd.secondLevelMatches().begin(), nd.secondLevelMatches().end() );
-    std::merge( matchedPartitionBoundary.cbegin(), matchedPartitionBoundary.cend(), secondLevelMatches.cbegin(), secondLevelMatches.cend(), std::inserter( seedNodeListTmp, seedNodeListTmp.end() ) );
-    array1d< localIndex > seedNodeList;
-    seedNodeList.reserve( seedNodeListTmp.size() );
-    for( auto const & i: seedNodeListTmp )
-    {
-      seedNodeList.emplace_back( i );
-    }
-    mesh.generateAdjacencyLists( seedNodeList.toViewConst(),
+//    NeighborData const & nd = nodeManager.getNeighborData( m_neighborRank );
+//    std::set< localIndex > seedNodeListTmp;
+//    std::set< localIndex > matchedPartitionBoundary( nd.matchedPartitionBoundary().begin(), nd.matchedPartitionBoundary().end() );
+//    std::set< localIndex > secondLevelMatches( nd.secondLevelMatches().begin(), nd.secondLevelMatches().end() );
+//    std::merge( matchedPartitionBoundary.cbegin(), matchedPartitionBoundary.cend(), secondLevelMatches.cbegin(), secondLevelMatches.cend(), std::inserter( seedNodeListTmp, seedNodeListTmp.end() ) );
+//    array1d< localIndex > seedNodeList;
+//    seedNodeList.reserve( seedNodeListTmp.size() );
+//    for( auto const & i: seedNodeListTmp )
+//    {
+//      seedNodeList.emplace_back( i );
+//    }
+//
+//    {
+//      std::string msg;
+//      for( localIndex const & ln: matchedPartitionBoundary)
+//      {
+//        msg += std::to_string(ln) + ",";
+//      }
+//      GEOS_LOG_RANK("matchedPartitionBoundary = " << msg);
+//    }
+//    {
+//      std::string msg;
+//      for( localIndex const & ln: secondLevelMatches)
+//      {
+//        msg += std::to_string(ln) + ",";
+//      }
+//      GEOS_LOG_RANK("secondLevelMatches = " << msg);
+//    }
+
+//    mesh.generateAdjacencyLists( seedNodeList.toViewConst(),
+    mesh.generateAdjacencyLists( nodeManager.getNeighborData( m_neighborRank ).matchedPartitionBoundary(),
                                  nodeAdjacencyList,
                                  edgeAdjacencyList,
                                  faceAdjacencyList,

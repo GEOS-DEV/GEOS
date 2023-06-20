@@ -113,6 +113,10 @@ public:
 
   void setDuplicatedNodes( ArrayOfArrays< globalIndex > && duplicatedNodes );
 
+  ArrayOfArrays< localIndex > get2dElemTo2dNodes() const override;
+
+  void set2dElemTo2dNodes( ArrayOfArrays< localIndex > && elem2dTo2dNodes );
+
 private:
 
   localIndex m_num2dElements;
@@ -129,6 +133,8 @@ private:
   array1d< globalIndex > m_localToGlobalMap;
 
   ArrayOfArrays< globalIndex > m_duplicatedNodes;
+
+  ArrayOfArrays< localIndex > m_2dElemTo2dNodes;
 };
 
 

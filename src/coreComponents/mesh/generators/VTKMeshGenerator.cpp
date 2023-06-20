@@ -156,7 +156,7 @@ void VTKMeshGenerator::importVolumicFieldOnArray( string const & cellBlockName,
                                                   bool isMaterialField,
                                                   dataRepository::WrapperBase & wrapper ) const
 {
-  for( auto const & typeRegions : m_cellMap )
+  for( auto const & typeRegions: m_cellMap )
   {
     // Restrict data import to 3D cells
     if( getElementDim( typeRegions.first ) == 3 )
@@ -166,7 +166,9 @@ void VTKMeshGenerator::importVolumicFieldOnArray( string const & cellBlockName,
         string const currentCellBlockName = vtk::buildCellBlockName( typeRegions.first, regionCells.first );
         // We don't know how the user mapped cell blocks to regions, so we must check all of them
         if( cellBlockName != currentCellBlockName )
+        {
           continue;
+        }
 
         vtkDataArray * vtkArray = vtk::findArrayForImport( *m_vtkMesh, meshFieldName );
         if( isMaterialField )
@@ -194,14 +196,17 @@ void VTKMeshGenerator::importSurfacicFieldOnArray( string const & faceBlockName,
   // Note that there is no additional work w.r.t. the cells on which we want to import the fields,
   // because the face blocks are heterogeneous.
   // We always take the whole data, we do not select cell type by cell type.
-  for( auto const & p: m_faceBlockMeshes )
+  vtkSmartPointer< vtkDataSet > faceMesh = m_faceBlockMeshes.at( faceBlockName );
+  if( faceMesh->GetNumberOfCells() == 0 )
   {
-    vtkSmartPointer< vtkDataSet > faceMesh = p.second;
-    if( vtk::hasArray( *faceMesh, meshFieldName ) )
-    {
-      vtkDataArray * vtkArray = vtk::findArrayForImport( *faceMesh, meshFieldName );
-      return vtk::importRegularField( vtkArray, wrapper );
-    }
+    GEOS_LOG_RANK( "Empty fracture mesh \"" << faceBlockName << "\", most probably because of parallel partitioning. Ignoring..." );
+    // TODO Improve the check here.
+    return;
+  }
+  if( vtk::hasArray( *faceMesh, meshFieldName ) )
+  {
+    vtkDataArray * vtkArray = vtk::findArrayForImport( *faceMesh, meshFieldName );
+    return vtk::importRegularField( vtkArray, wrapper );
   }
 
   GEOS_ERROR( "Could not import field \"" << meshFieldName << "\" from face block \"" << faceBlockName << "\"." );

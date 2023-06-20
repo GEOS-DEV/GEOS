@@ -144,7 +144,7 @@ public:
    * @note Based on the face to element region mapping that must be defined.
    * @see ObjectManagerBase::getDomainBoundaryIndicator()
    */
-  void setDomainBoundaryObjects();
+  void setDomainBoundaryObjects( ElementRegionManager const & elemRegionManager );
 
   /**
    * @brief Build sets from the node sets

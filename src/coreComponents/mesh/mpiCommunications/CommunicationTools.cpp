@@ -427,7 +427,13 @@ CommunicationTools::
           }
         }
       }
-      GEOS_LOG_RANK( "After the second level." );
+      for( localIndex const & li: secondLevelMatches )
+      {
+        if( std::find( matchedPartitionBoundaryObjects.begin(), matchedPartitionBoundaryObjects.end(), li ) == matchedPartitionBoundaryObjects.end() )
+        {
+          matchedPartitionBoundaryObjects.emplace_back( li );
+        }
+      }
     }
   }
 }

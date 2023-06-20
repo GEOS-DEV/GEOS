@@ -301,6 +301,115 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
   std::set< localIndex > faceAdjacencySet;
   std::vector< std::vector< std::set< localIndex > > > elementAdjacencySet( elemManager.numRegions() );
 
+
+  auto const addVolumicSupport = [&]( localIndex const er,
+                                      localIndex const esr,
+                                      auto const & subRegion )
+  {
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = subRegion.nodeList();
+    arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
+    for( auto const elementIndex: elementAdjacencySet[er][esr] )
+    {
+      for( localIndex a = 0; a < elemsToNodes.size( 1 ); ++a )
+      {
+        nodeAdjacencySet.insert( elemsToNodes[elementIndex][a] );
+      }
+
+      for( localIndex a = 0; a < elemsToFaces.size( 1 ); ++a )
+      {
+        faceAdjacencySet.insert( elemsToFaces[elementIndex][a] );
+
+        localIndex const faceIndex = elemsToFaces[elementIndex][a];
+        localIndex const numEdges = faceToEdges.sizeOfArray( faceIndex );
+        for( localIndex b = 0; b < numEdges; ++b )
+        {
+          edgeAdjacencySet.insert( faceToEdges( faceIndex, b ) );
+        }
+      }
+    }
+  };
+
+  auto const addFractureSupport = [&]( localIndex const er,
+                                 localIndex const esr,
+                                 FaceElementSubRegion const & subRegion )
+  {
+    ArrayOfArraysView< localIndex const > const elems2dToNodes = subRegion.nodeList().toViewConst();  // TODO What about edges and faces?
+    ArrayOfArraysView< localIndex const > const elems2dToFaces = subRegion.faceList().toViewConst();
+    ArrayOfArraysView< localIndex const > const elem2dToEdges = subRegion.edgeList().toViewConst();
+    for( auto const ei: elementAdjacencySet[er][esr] )
+    {
+      for( auto const & ni: elems2dToNodes[ei] )
+      {
+        nodeAdjacencySet.insert( ni );
+      }
+      for( auto const & edi: elem2dToEdges[ei] )
+      {
+        edgeAdjacencySet.insert( edi );
+      }
+      for( auto const & fi: elems2dToFaces[ei] )
+      {
+        faceAdjacencySet.insert( fi );
+      }
+    }
+  };
+
+//  auto const addDuplicatedFractureNodes = [&]( localIndex const er,
+//                                               localIndex const esr,
+//                                               FaceElementSubRegion const & subRegion )
+//  {
+//    auto toESR = subRegion.getToCellRelation().m_toElementSubRegion;
+//    for( auto i = 0; i < toESR.size(); ++i )
+//    {
+//      if( toESR[i].size() > 1 )
+//      { continue; }
+//
+//      for( localIndex const & lln: subRegion.m_2dElemTo2dNodes[i] )
+//      {
+//        for( globalIndex const & gn: subRegion.m_duplicatedNodes[lln] )
+//        {
+//          auto it = nodeManager.globalToLocalMap().find( gn );
+//          if( it != nodeManager.globalToLocalMap().cend() )
+//          {
+//            if( nodeAdjacencySet.find( it->second ) == nodeAdjacencySet.cend() )
+//            {
+//              GEOS_LOG_RANK( "Inserting duplicated node loc " << it->second << " glob " << it->first );
+//              nodeAdjacencySet.insert( it->second );
+//            }
+//          }
+//        }
+//      }
+//    }
+//  };
+
+//  auto const addDuplicatedFractureNodes = [&]( localIndex const er,
+//                                               localIndex const esr,
+//                                               FaceElementSubRegion const & subRegion )
+//  {
+//    for( localIndex const & ln: nodeAdjacencySet)
+//    {
+//      globalIndex const & gn = nodeManager.localToGlobalMap()[ln];
+//      for( int i = 0; i < subRegion.m_duplicatedNodes.size(); ++i )
+//      {
+//        std::set< globalIndex > const gns( subRegion.m_duplicatedNodes[i].begin(), subRegion.m_duplicatedNodes[i].end() );
+//        if( gns.find( gn ) != gns.cend() )
+//        {
+//          for( globalIndex const & n: gns )
+//          {
+//            auto it = nodeManager.globalToLocalMap().find( n );
+//            if( it != nodeManager.globalToLocalMap().cend() )
+//            {
+//              if( nodeAdjacencySet.find( it->second ) == nodeAdjacencySet.cend() )
+//              {
+//                GEOS_LOG_RANK( "Inserting duplicated node loc " << it->second << " glob " << it->first );
+//                nodeAdjacencySet.insert( it->second );
+//              }
+//            }
+//          }
+//        }
+//      }
+//    }
+//  };
+
   for( localIndex a=0; a<elemManager.numRegions(); ++a )
   {
     elementAdjacencySet[a].resize( elemManager.getRegion( a ).numSubRegions() );
@@ -314,10 +423,10 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
     {
       for( localIndex b = 0; b < nodeToElementRegionList.sizeOfArray( nodeIndex ); ++b )
       {
-        localIndex const regionIndex = nodeToElementRegionList[nodeIndex][b];
-        localIndex const subRegionIndex = nodeToElementSubRegionList[nodeIndex][b];
-        localIndex const elementIndex = nodeToElementList[nodeIndex][b];
-        elementAdjacencySet[regionIndex][subRegionIndex].insert( elementIndex );
+        localIndex const er = nodeToElementRegionList[nodeIndex][b];
+        localIndex const esr = nodeToElementSubRegionList[nodeIndex][b];
+        localIndex const ei = nodeToElementList[nodeIndex][b];
+        elementAdjacencySet[er][esr].insert( ei );
       }
     }
 
@@ -329,86 +438,39 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
                                             WellElementSubRegion >( [&]( localIndex const esr,
                                                                          auto const & subRegion )
       {
-        arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = subRegion.nodeList();
-        arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
-        for( auto const elementIndex: elementAdjacencySet[er][esr] )
-        {
-          for( localIndex a = 0; a < elemsToNodes.size( 1 ); ++a )
-          {
-            nodeAdjacencySet.insert( elemsToNodes[elementIndex][a] );
-          }
-
-          for( localIndex a = 0; a < elemsToFaces.size( 1 ); ++a )
-          {
-            faceAdjacencySet.insert( elemsToFaces[elementIndex][a] );
-
-            localIndex const faceIndex = elemsToFaces[elementIndex][a];
-            localIndex const numEdges = faceToEdges.sizeOfArray( faceIndex );
-            for( localIndex b = 0; b < numEdges; ++b )
-            {
-              edgeAdjacencySet.insert( faceToEdges( faceIndex, b ) );
-            }
-          }
-        }
+        addVolumicSupport( er, esr, subRegion );
       } );
+
       elemRegion.forElementSubRegionsIndex< FaceElementSubRegion >( [&]( localIndex const esr,
                                                                          FaceElementSubRegion const & subRegion )
       {
-        ArrayOfArraysView< localIndex const > const elems2dToNodes = subRegion.nodeList().toViewConst();  // TODO What about edges and faces?
-        ArrayOfArraysView< localIndex const > const elems2dToFaces = subRegion.faceList().toViewConst();
-        ArrayOfArraysView< localIndex const > const elem2dToEdges = subRegion.edgeList().toViewConst();
-        for( auto const ei: elementAdjacencySet[er][esr] )
-        {
-          for( auto const & ni: elems2dToNodes[ei] )
-          {
-            nodeAdjacencySet.insert( ni );
-          }
-          for( auto const & edi: elem2dToEdges[ei] )
-          {
-            edgeAdjacencySet.insert( edi );
-          }
-          for( auto const & fi: elems2dToFaces[ei] )
-          {
-            if( fi < 0 )
-            { continue; }
-            faceAdjacencySet.insert( fi );
-          }
-        }
+        addFractureSupport( er, esr, subRegion );
       } );
-      elemRegion.forElementSubRegionsIndex< FaceElementSubRegion >( [&]( localIndex const esr,
-                                                                         FaceElementSubRegion const & subRegion )
-      {
-//        std::set< globalIndex > globNodes;
-//        for( localIndex const & li: nodeAdjacencySet )
-//        {
-//          globNodes.insert( nodeManager.localToGlobalMap()[li] );
-//        }
 
-        for( int i = 0; i < subRegion.m_duplicatedNodes.size(); ++i )
-        {
-//          std::set< globalIndex > const tmp( subRegion.m_duplicatedNodes[i].begin(), subRegion.m_duplicatedNodes[i].end() );
-//          std::vector< globalIndex > intersection;
-//          std::set_intersection( globNodes.cbegin(), globNodes.cend(),
-//                                 tmp.cbegin(), tmp.cend(),
-//                                 std::back_inserter( intersection ) );
-//          if( intersection.empty() )
-//          { continue; }
-          for( globalIndex const & n: subRegion.m_duplicatedNodes[i] )
-          {
-            auto it = nodeManager.globalToLocalMap().find( n );
-            if( it != nodeManager.globalToLocalMap().cend() )
-            {
-              if( nodeAdjacencySet.find( it->second ) == nodeAdjacencySet.cend() )
-              {
-                GEOS_LOG_RANK( "Inserting duplicated node loc " << it->second << " glob " << it->first );
-                nodeAdjacencySet.insert( it->second );
-              }
-            }
-          }
-        }
-      } );
+//      elemRegion.forElementSubRegionsIndex< FaceElementSubRegion >( [&]( localIndex const esr,
+//                                                                         FaceElementSubRegion const & subRegion )
+//      {
+//        addDuplicatedFractureNodes( er, esr, subRegion );
+//      } );
     }
   }
+
+//  {
+//    std::string msg;
+//    for( localIndex const & ln: nodeAdjacencySet)
+//    {
+//      msg += std::to_string(ln) + ",";
+//    }
+//    GEOS_LOG_RANK("nodes = " << msg);
+//  }
+//  {
+//    std::string msg;
+//    for( localIndex const & ln: seedNodeList)
+//    {
+//      msg += std::to_string(ln) + ",";
+//    }
+//    GEOS_LOG_RANK("seed node list nodes = " << msg);
+//  }
 
   nodeAdjacencyList.resize( LvArray::integerConversion< localIndex >( nodeAdjacencySet.size()));
   std::copy( nodeAdjacencySet.begin(), nodeAdjacencySet.end(), nodeAdjacencyList.begin() );
@@ -419,17 +481,17 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
   faceAdjacencyList.resize( LvArray::integerConversion< localIndex >( faceAdjacencySet.size()));
   std::copy( faceAdjacencySet.begin(), faceAdjacencySet.end(), faceAdjacencyList.begin() );
 
-  for( localIndex kReg=0; kReg<elemManager.numRegions(); ++kReg )
+  for( localIndex er=0; er < elemManager.numRegions(); ++er )
   {
-    ElementRegionBase const & elemRegion = elemManager.getRegion( kReg );
+    ElementRegionBase const & elemRegion = elemManager.getRegion( er );
 
-    for( localIndex kSubReg = 0; kSubReg < elemRegion.numSubRegions(); ++kSubReg )
+    for( localIndex esr = 0; esr < elemRegion.numSubRegions(); ++esr )
     {
-      elementAdjacencyList[kReg][kSubReg].get().clear();
-      elementAdjacencyList[kReg][kSubReg].get().resize( LvArray::integerConversion< localIndex >( elementAdjacencySet[kReg][kSubReg].size()) );
-      std::copy( elementAdjacencySet[kReg][kSubReg].begin(),
-                 elementAdjacencySet[kReg][kSubReg].end(),
-                 elementAdjacencyList[kReg][kSubReg].get().begin() );
+      elementAdjacencyList[er][esr].get().clear();
+      elementAdjacencyList[er][esr].get().resize( LvArray::integerConversion< localIndex >( elementAdjacencySet[er][esr].size()) );
+      std::copy( elementAdjacencySet[er][esr].begin(),
+                 elementAdjacencySet[er][esr].end(),
+                 elementAdjacencyList[er][esr].get().begin() );
 
     }
   }

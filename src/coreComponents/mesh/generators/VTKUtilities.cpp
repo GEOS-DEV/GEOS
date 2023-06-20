@@ -766,8 +766,6 @@ vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mes
     int everyone;
     MpiWrapper::allReduce( &me, &everyone, 1, MPI_MAX, MPI_COMM_GEOSX );
 
-    GEOS_LOG_RANK( "mine: " << me << ", others: " << everyone << ", numCells: " << mesh->GetNumberOfCells() );
-
     if( everyone and not me )
     {
       mesh->GetPointData()->SetGlobalIds( vtkIdTypeArray::New() );
@@ -849,6 +847,8 @@ redistributeMesh( vtkSmartPointer< vtkDataSet > loadedMesh,
     result.main = mesh;
     result.faceBlocks = namesToFractures;
   }
+
+  GEOS_LOG_RANK( "Mesh sizes are: main = " << result.main->GetNumberOfCells() << " faceBlock = " << result.faceBlocks.at( "fracture" )->GetNumberOfCells() );
 
   return result;
 }

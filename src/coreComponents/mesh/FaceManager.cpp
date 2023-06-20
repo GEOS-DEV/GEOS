@@ -96,7 +96,7 @@ void FaceManager::buildSets( NodeManager const & nodeManager )
   } );
 }
 
-void FaceManager::setDomainBoundaryObjects()
+void FaceManager::setDomainBoundaryObjects( ElementRegionManager const & elemRegionManager )
 {
   arrayView1d< integer > const isFaceOnDomainBoundary = getDomainBoundaryIndicator();
   isFaceOnDomainBoundary.zero();
@@ -107,15 +107,39 @@ void FaceManager::setDomainBoundaryObjects()
   {
     if( toElementRegion( kf, 1 ) == -1 )
     {
+//      GEOS_LOG_RANK( "TODO ERROR!" ); // TODO we cannot rely on te second argument being empty anymore...
       isFaceOnDomainBoundary( kf ) = 1;
     }
   } );
+
+  auto const f = [&]( localIndex er,
+                      SurfaceElementRegion const & region )
+  {
+    if( region.subRegionType() != SurfaceElementRegion::SurfaceSubRegionType::faceElement )
+    {
+      return;
+    }
+
+    FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
+    ArrayOfArraysView< localIndex const > const elem2dToFaces = subRegion.faceList().toViewConst();
+    for( int ei = 0; ei < elem2dToFaces.size(); ++ei )
+    {
+      if( elem2dToFaces.sizeOfArray( ei ) == 2 )
+      { continue; }
+
+      for( localIndex const & face: elem2dToFaces[ei] )
+      {
+        isFaceOnDomainBoundary[face] = 1;
+      }
+    }
+  };
+  elemRegionManager.forElementRegionsComplete< SurfaceElementRegion >( f );
 }
 
 void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
                                            ElementRegionManager const & elemRegionManager,
                                            NodeManager const & nodeManager,
-										   bool baseMeshLevel )
+                                           bool baseMeshLevel )
 {
   GEOS_MARK_FUNCTION;
 

@@ -604,6 +604,31 @@ array1d< globalIndex > computeLocalToGlobal( vtkSmartPointer< vtkDataSet > faceM
 }
 
 
+ArrayOfArrays< localIndex > compute2dElemTo2dNodes( vtkSmartPointer< vtkDataSet > faceMesh )
+{
+  vtkIdType const numCells = faceMesh->GetNumberOfCells();
+  std::vector< localIndex > sizes( numCells );
+  for( auto i = 0; i < numCells; ++i )
+  {
+    sizes[i] = faceMesh->GetCell( i )->GetNumberOfPoints();
+  }
+
+  ArrayOfArrays< localIndex > result;
+  result.resizeFromCapacities< geos::serialPolicy >( sizes.size(), sizes.data() );
+  for( auto i = 0; i < numCells; ++i )
+  {
+    vtkIdList * const pointIds = faceMesh->GetCell( i )->GetPointIds();
+    vtkIdType const numPoints = pointIds->GetNumberOfIds();
+    for( int j = 0; j < numPoints; ++j )
+    {
+      result.emplaceBack( i, pointIds->GetId( j ) );
+    }
+  }
+
+  return result;
+}
+
+
 void importFractureNetwork( string const & faceBlockName,
                             vtkSmartPointer< vtkDataSet > faceMesh,
                             vtkSmartPointer< vtkDataSet > mesh,
@@ -636,8 +661,11 @@ void importFractureNetwork( string const & faceBlockName,
   // Mappings are now computed. Just create the face block by value.
   FaceBlock & faceBlock = cellBlockManager.registerFaceBlock( faceBlockName );
 
+  ArrayOfArrays< localIndex > elem2dTo2dNodes = compute2dElemTo2dNodes( faceMesh );
+
   faceBlock.setNum2dElements( num2dElements );
   faceBlock.setNum2dFaces( num2dFaces );
+  faceBlock.set2dElemTo2dNodes( std::move( elem2dTo2dNodes ) );
   faceBlock.set2dElemToNodes( std::move( elem2dToNodes ) );
   faceBlock.set2dElemToEdges( std::move( elem2DToEdges ) );
   faceBlock.set2dFaceToEdge( std::move( face2dToEdge ) );
