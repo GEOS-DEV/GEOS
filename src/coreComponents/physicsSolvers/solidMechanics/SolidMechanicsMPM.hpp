@@ -356,6 +356,15 @@ public:
 
   void resizeMappingArrays( ParticleManager & particleManager );
 
+  void GEOS_DEVICE mapNodes(arrayView3d< int const > const ijkMap,
+                            const real64 xLocalMin[3],
+                            const real64 hEl[3],
+                            SortedArrayView< localIndex const > const activeParticleIndices,
+                            arrayView2d< real64 const > const particlePosition,
+                            arrayView3d< real64 const > const particleRVectors,
+                            localIndex const p,
+                            int* mappedNodes);
+
   void populateMappingArrays( ParticleManager & particleManager,
                               NodeManager & nodeManager );
 
