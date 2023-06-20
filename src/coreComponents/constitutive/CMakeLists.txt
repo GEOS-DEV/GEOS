@@ -52,6 +52,7 @@ set( constitutive_headers
      fluid/multifluid/CO2Brine/functions/WaterDensity.hpp
      fluid/multifluid/compositional/functions/RachfordRice.hpp
      fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp     
+     fluid/multifluid/compositional/functions/KValueInitialization.hpp
      fluid/multifluid/reactive/ReactiveBrineFluid.hpp
      fluid/multifluid/reactive/ReactiveMultiFluid.hpp
      fluid/multifluid/reactive/ReactiveMultiFluidFields.hpp
