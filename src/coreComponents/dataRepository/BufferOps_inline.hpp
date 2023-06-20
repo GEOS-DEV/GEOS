@@ -31,7 +31,7 @@ namespace bufferOps
 {
 
 template< bool DO_PACKING, typename T >
-typename std::enable_if< is_host_scalar_packable_v< T >, localIndex >::type
+typename std::enable_if< is_host_packable_scalar< T >, localIndex >::type
 Pack( buffer_unit_type * & buffer, T const & var )
 {
   localIndex const sizeOfPackedChars = sizeof(T);
@@ -291,7 +291,7 @@ localIndex PackByIndex( buffer_unit_type * & buffer,
 }
 
 template< bool DO_PACKING, typename MAP_TYPE, typename T_INDICES >
-typename std::enable_if< is_map_host_packable_by_index< MAP_TYPE >, localIndex >::type
+typename std::enable_if< is_host_packable_map_by_index< MAP_TYPE >, localIndex >::type
 PackByIndex( buffer_unit_type * & buffer,
              MAP_TYPE const & var,
              T_INDICES const & packIndices )
@@ -310,7 +310,7 @@ PackByIndex( buffer_unit_type * & buffer,
 // Unpack(buffer,var)
 //------------------------------------------------------------------------------
 template< typename T >
-typename std::enable_if< is_host_scalar_packable_v< T >, localIndex >::type
+typename std::enable_if< is_host_packable_scalar< T >, localIndex >::type
 Unpack( buffer_unit_type const * & buffer,
         T & var )
 {
@@ -570,7 +570,7 @@ UnpackByIndex( buffer_unit_type const * & buffer,
 }
 
 template< typename MAP_TYPE, typename T_INDICES >
-typename std::enable_if< is_map_host_packable_by_index< MAP_TYPE >, localIndex >::type
+typename std::enable_if< is_host_packable_map_by_index< MAP_TYPE >, localIndex >::type
 UnpackByIndex( buffer_unit_type const * & buffer,
                MAP_TYPE & map,
                T_INDICES const & unpackIndices )
@@ -1756,7 +1756,7 @@ Unpack( buffer_unit_type const * & buffer,
 }
 
 template< bool DO_PACKING, typename MAP_TYPE, typename T_INDICES >
-typename std::enable_if< is_map_host_packable_by_index< MAP_TYPE >, localIndex >::type
+typename std::enable_if< is_host_packable_map_by_index< MAP_TYPE >, localIndex >::type
 Pack( buffer_unit_type * & buffer, MAP_TYPE const & var, T_INDICES const & packIndices )
 {
   typename MAP_TYPE::size_type const length = var.size();
@@ -1773,7 +1773,7 @@ Pack( buffer_unit_type * & buffer, MAP_TYPE const & var, T_INDICES const & packI
 
 
 template< typename MAP_TYPE, typename T_INDICES >
-typename std::enable_if< is_map_host_packable_by_index< MAP_TYPE >, localIndex >::type
+typename std::enable_if< is_host_packable_map_by_index< MAP_TYPE >, localIndex >::type
 Unpack( buffer_unit_type const * & buffer, MAP_TYPE & map, T_INDICES const & unpackIndices )
 {
   map.clear();

@@ -31,32 +31,36 @@ namespace geos
 namespace bufferOps
 {
 
-
-template< typename T >
-constexpr bool is_noncontainer_device_packable = std::is_arithmetic< T >::value ||
-                                                 std::is_enum< T >::value ||
-                                                 traits::is_tensorT< T >;
-
 // Forward decl so we can use this for contained types
 template< typename T >
 struct is_device_packable_helper;
 
+
+/// Whether an object of type T is itself packable on device
+template< typename T >
+constexpr bool is_device_packable_object = std::is_arithmetic< T >::value ||
+                                           std::is_enum< T >::value ||
+                                           traits::is_tensorT< T >;
+
+/// Whether an object is an lvarray arrayview which contains device-packable values when fully indexed
 template< typename >
 constexpr bool is_device_packable_array = false;
 
 template< typename T, int NDIM, int USD >
 constexpr bool is_device_packable_array< ArrayView< T, NDIM, USD > > = is_device_packable_helper< T >::value;
 
+
 template< typename T >
 struct is_device_packable_helper
 {
-  static constexpr bool value = is_noncontainer_device_packable< T > || is_device_packable_array< T >;
+  static constexpr bool value = is_device_packable_object< T > || is_device_packable_array< T >;
 };
 
-
+/// Whether an object is device packable
 template< typename T >
 constexpr bool is_device_packable = is_device_packable_helper< std::remove_const_t< std::remove_pointer_t< T > > >::value;
 
+/// Whether an object can be indexed to pack a subset of the contained values on device
 template< typename T >
 constexpr bool is_device_packable_by_index = is_device_packable_array< T >;
 

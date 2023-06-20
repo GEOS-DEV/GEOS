@@ -121,7 +121,11 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
 
   Group const * targetGrp = this->getTargetObject( domain, m_objectPath );
   WrapperBase const & targetField = targetGrp->getWrapperBase( m_fieldName );
-  GEOS_ERROR_IF( !targetField.isPackable( ), "The object targeted for collection must be packable in its last modified memory space!" );
+  GEOS_ERROR_IF( !targetField.isPackable( ), GEOS_FMT( "The object targeted for collection ({}: {}, {}: {}) must be packable in its last modified memory space!",
+                                                        viewKeysStruct::objectPathString(),
+                                                        m_objectPath,
+                                                        viewKeysStruct::fieldNameString(),
+                                                        m_fieldName ) );
 
   // If no set or "all" is specified we retrieve the entire field.
   // If sets are specified we retrieve the field only from those sets.

@@ -87,7 +87,9 @@ HAS_MEMBER_FUNCTION_NO_RTYPE( registerTouch, LvArray::MemorySpace() );
  * @tparam CLASS The type to test.
  */
 template< typename CLASS >
-static constexpr bool HasMemorySpaceFunctions = HasMemberFunction_move< CLASS > && HasMemberFunction_registerTouch< CLASS > && HasMemberFunction_getPreviousSpace< CLASS >;
+static constexpr bool HasMemorySpaceFunctions = HasMemberFunction_move< CLASS > &&
+                                                HasMemberFunction_registerTouch< CLASS > &&
+                                                HasMemberFunction_getPreviousSpace< CLASS >;
 
 /**
  * @brief Defines a static constexpr bool HasMemberFunction_setName< @p CLASS >

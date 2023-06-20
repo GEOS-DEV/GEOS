@@ -788,7 +788,7 @@ private:
     }
     else
     {
-      return bufferOps::is_device_packable< U >;
+      return bufferOps::is_device_packable< decltype( referenceAsView() ) >;
     }
   }
 
@@ -811,7 +811,7 @@ private:
     }
     else
     {
-      return bufferOps::is_device_packable_by_index< U >;
+      return bufferOps::is_device_packable_by_index< decltype( referenceAsView() ) >;
     }
   }
 
