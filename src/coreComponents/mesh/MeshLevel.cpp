@@ -235,17 +235,18 @@ MeshLevel::MeshLevel( string const & name,
 
       newSubRegion.constructGlobalToLocalMap();
 
-      CellBlockManagerABC & cellBlockManager = meshBody->getGroup< CellBlockManagerABC >( keys::cellManager );
-
-      cellBlockManager.generateHighOrderMaps( order,
-                                              maxVertexGlobalID,
-                                              maxEdgeGlobalID,
-                                              maxFaceGlobalID,
-                                              edgeLocalToGlobal,
-                                              faceLocalToGlobal );
     } );
+
   } );
 
+  CellBlockManagerABC & cellBlockManager = meshBody->getGroup< CellBlockManagerABC >( keys::cellManager );
+
+  cellBlockManager.generateHighOrderMaps( order,
+                                          maxVertexGlobalID,
+                                          maxEdgeGlobalID,
+                                          maxFaceGlobalID,
+                                          edgeLocalToGlobal,
+                                          faceLocalToGlobal );
 
 
   /////////////////////////
