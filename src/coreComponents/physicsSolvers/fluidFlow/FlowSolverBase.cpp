@@ -152,8 +152,12 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
   {
 
     FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
-    fluxApprox.setFieldName( fields::flow::pressure::key() );
+    fluxApprox.addFieldName( fields::flow::pressure::key() );
     fluxApprox.setCoeffName( fields::permeability::permeability::key() );
+    if( m_isThermal )
+    {
+      fluxApprox.addFieldName( fields::flow::temperature::key() );
+    }
   }
 }
 
