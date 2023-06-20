@@ -195,6 +195,9 @@ private:
   /// Array containing the elements which contain a receiver
   array1d< localIndex > m_rcvElem;
 
+  /// Damping terms
+  array1d< real32 > m_dampingVector;
+
 };
 
 

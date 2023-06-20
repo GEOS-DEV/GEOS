@@ -110,6 +110,8 @@ void ElasticFirstOrderWaveEquationSEM::initializePreSubGroups()
 void ElasticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
 
+  WaveSolverBase::registerDataOnMesh( meshBodies );
+
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
                                                     arrayView1d< string const > const & )
@@ -122,9 +124,6 @@ void ElasticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                wavesolverfields::Displacementz_np1,
                                wavesolverfields::ForcingRHS,
                                wavesolverfields::MassVector,
-                               wavesolverfields::DampingVectorx,
-                               wavesolverfields::DampingVectory,
-                               wavesolverfields::DampingVectorz,
                                wavesolverfields::FreeSurfaceNodeIndicator >( this->getName() );
 
     FaceManager & faceManager = mesh.getFaceManager();
@@ -348,12 +347,13 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
     arrayView1d< real32 > const mass = nodeManager.getField< wavesolverfields::MassVector >();
     mass.zero();
     /// damping matrix to be computed for each dof in the boundary of the mesh
-    arrayView1d< real32 > const dampingx = nodeManager.getField< wavesolverfields::DampingVectorx >();
-    arrayView1d< real32 > const dampingy = nodeManager.getField< wavesolverfields::DampingVectory >();
-    arrayView1d< real32 > const dampingz = nodeManager.getField< wavesolverfields::DampingVectorz >();
-    dampingx.zero();
-    dampingy.zero();
-    dampingz.zero();
+    arrayView1d< localIndex > const nodeToDampingIdx = nodeManager.getField< fields::wavesolverfields::NodeToDampingIndex >();
+    m_dampingVectorX.resize( m_dampingNodes.size() );
+    m_dampingVectorY.resize( m_dampingNodes.size() );
+    m_dampingVectorZ.resize( m_dampingNodes.size() );
+    m_dampingVectorX.zero();
+    m_dampingVectorY.zero();
+    m_dampingVectorZ.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
     arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< wavesolverfields::FreeSurfaceFaceIndicator >();
@@ -397,9 +397,10 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
                                                                density,
                                                                velocityVp,
                                                                velocityVs,
-                                                               dampingx,
-                                                               dampingy,
-                                                               dampingz );
+                                                               nodeToDampingIdx,
+                                                               m_dampingVectorX,
+                                                               m_dampingVectorY,
+                                                               m_dampingVectorZ );
       } );
     } );
   } );
@@ -519,10 +520,6 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
     arrayView1d< real32 const > const mass = nodeManager.getField< wavesolverfields::MassVector >();
-    arrayView1d< real32 > const dampingx = nodeManager.getField< wavesolverfields::DampingVectorx >();
-    arrayView1d< real32 > const dampingy = nodeManager.getField< wavesolverfields::DampingVectory >();
-    arrayView1d< real32 > const dampingz = nodeManager.getField< wavesolverfields::DampingVectorz >();
-
 
     arrayView1d< real32 > const ux_np1 = nodeManager.getField< wavesolverfields::Displacementx_np1 >();
     arrayView1d< real32 > const uy_np1 = nodeManager.getField< wavesolverfields::Displacementy_np1 >();
@@ -596,9 +593,10 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
           stressxz,
           stressyz,
           mass,
-          dampingx,
-          dampingy,
-          dampingz,
+          m_dampingNodes,
+          m_dampingVectorX,
+          m_dampingVectorY,
+          m_dampingVectorZ,
           dt,
           ux_np1,
           uy_np1,

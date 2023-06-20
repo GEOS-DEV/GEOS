@@ -213,6 +213,13 @@ private:
   /// Array containing the elements which contain a receiver
   array1d< localIndex > m_rcvElem;
 
+  /// Damping terms in X direction
+  array1d< real32 > m_dampingVectorX;
+  /// Damping terms in Y direction
+  array1d< real32 > m_dampingVectorY;
+  /// Damping terms in Z direction
+  array1d< real32 > m_dampingVectorZ;
+
 };
 
 } /* namespace geos */

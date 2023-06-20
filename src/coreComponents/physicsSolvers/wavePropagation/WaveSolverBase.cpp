@@ -18,6 +18,7 @@
  */
 
 #include "WaveSolverBase.hpp"
+#include "WaveSolverBaseFields.hpp"
 
 #include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
@@ -169,6 +170,85 @@ void WaveSolverBase::reinit()
   initializePostInitialConditionsPreSubGroups();
 }
 
+void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
+{
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
+
+    nodeManager.registerField< fields::wavesolverfields::NodeToDampingIndex >( this->getName() );
+  } );
+}
+
+void WaveSolverBase::initializePostInitialConditionsPreSubGroups()
+{
+  SolverBase::initializePostInitialConditionsPreSubGroups();
+
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
+    FaceManager & faceManager = mesh.getFaceManager();
+
+    /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
+    arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
+
+    /// get face to node map
+    ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
+
+    /// get array of indicators: 1 if face is on the free surface; 0 otherwise
+    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::wavesolverfields::FreeSurfaceFaceIndicator >();
+
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          CellElementSubRegion & elementSubRegion )
+    {
+
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
+
+      finiteElement::FiniteElementBase const &
+      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+      finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
+      {
+        using FE_TYPE = TYPEOFREF( finiteElement );
+
+        /// damping matrix to be computed for each dof in the boundary of the mesh
+        std::set< int > dampingNodesSet;
+        arrayView1d< localIndex > const nodeToDampingIdx = nodeManager.getField< fields::wavesolverfields::NodeToDampingIndex >();
+
+
+        /// get array of indicators: 1 if face is on the free surface; 0 otherwise
+        constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
+
+        for( int f = 0; f < faceManager.size(); f++ )
+        {
+          // face on the domain boundary and not on free surface
+          if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
+          {
+            for( localIndex q = 0; q < numNodesPerFace; ++q )
+            {
+              dampingNodesSet.insert( facesToNodes[f][q] );
+            }
+          }
+        }
+        m_dampingNodes.resize( dampingNodesSet.size() );
+
+        int i = 0;
+        for( int k : dampingNodesSet )
+        {
+          m_dampingNodes[i] = k;
+          nodeToDampingIdx[k] = i;
+          i++;
+        }
+      } );
+    } );
+  } );
+
+}
 void WaveSolverBase::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();

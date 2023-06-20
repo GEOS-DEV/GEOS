@@ -88,6 +88,8 @@ void AcousticFirstOrderWaveEquationSEM::initializePreSubGroups()
 void AcousticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
 
+  WaveSolverBase::registerDataOnMesh( meshBodies );
+
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
                                                     arrayView1d< string const > const & )
@@ -97,7 +99,6 @@ void AcousticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     nodeManager.registerField< wavesolverfields::Pressure_np1,
                                wavesolverfields::ForcingRHS,
                                wavesolverfields::MassVector,
-                               wavesolverfields::DampingVector,
                                wavesolverfields::FreeSurfaceNodeIndicator >( this->getName() );
 
     FaceManager & faceManager = mesh.getFaceManager();
@@ -297,8 +298,9 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
     arrayView1d< real32 > const mass = nodeManager.getField< wavesolverfields::MassVector >();
 
     /// damping matrix to be computed for each dof in the boundary of the mesh
-    arrayView1d< real32 > const damping = nodeManager.getField< wavesolverfields::DampingVector >();
-    damping.zero();
+    arrayView1d< localIndex > const nodeToDampingIdx = nodeManager.getField< fields::wavesolverfields::NodeToDampingIndex >();
+    m_dampingVector.resize( m_dampingNodes.size() );
+    m_dampingVector.zero();
     mass.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
@@ -336,7 +338,8 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
                                                                facesDomainBoundaryIndicator,
                                                                freeSurfaceFaceIndicator,
                                                                velocity,
-                                                               damping );
+                                                               nodeToDampingIdx,
+                                                               m_dampingVector );
       } );
     } );
   } );
@@ -453,7 +456,6 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
     arrayView1d< real32 const > const mass = nodeManager.getField< wavesolverfields::MassVector >();
-    arrayView1d< real32 const > const damping = nodeManager.getField< wavesolverfields::DampingVector >();
 
     arrayView1d< real32 > const p_np1 = nodeManager.getField< wavesolverfields::Pressure_np1 >();
 
@@ -498,7 +500,8 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
           velocity_y,
           velocity_z,
           mass,
-          damping,
+          m_dampingNodes,
+          m_dampingVector,
           sourceConstants,
           sourceValue,
           sourceIsAccessible,

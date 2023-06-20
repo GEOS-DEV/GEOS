@@ -269,6 +269,7 @@ struct DampingMatrixKernel
    * @param[in] facesDomainBoundaryIndicator flag equal to 1 if the face is on the boundary, and to 0 otherwise
    * @param[in] freeSurfaceFaceIndicator flag equal to 1 if the face is on the free surface, and to 0 otherwise
    * @param[in] velocity cell-wise velocity
+   * @param[in] nodeToDampingIdx Damping node indexes in damping vector array.
    * @param[out] damping diagonal of the damping matrix
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
@@ -280,6 +281,7 @@ struct DampingMatrixKernel
           arrayView1d< integer const > const facesDomainBoundaryIndicator,
           arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
           arrayView1d< real32 const > const velocity,
+          arrayView1d< localIndex const > const nodeToDampingIdx,
           arrayView1d< real32 > const damping )
   {
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
@@ -309,7 +311,7 @@ struct DampingMatrixKernel
         for( localIndex q = 0; q < numNodesPerFace; ++q )
         {
           real32 const localIncrement = alpha * m_finiteElement.computeDampingTerm( q, xLocal );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &damping[facesToNodes[f][q]], localIncrement );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &damping[nodeToDampingIdx[facesToNodes[f][q]]], localIncrement );
         }
       }
     } ); // end loop over element
@@ -450,6 +452,7 @@ struct PressureComputation
    * @param[out] velocity_y velocity array in the y direction (only used here)
    * @param[out] velocity_z velocity array in the z direction (only used here)
    * @param[in] mass the mass matrix
+   * @param[in] dampingNodes the damping matrix nodes
    * @param[in] damping the damping matrix
    * @param[in] sourceConstants constant part of the source terms
    * @param[in] sourceValue value of the temporal source (eg. Ricker)
@@ -470,6 +473,7 @@ struct PressureComputation
           arrayView2d< real32 const > const velocity_y,
           arrayView2d< real32 const > const velocity_z,
           arrayView1d< real32 const > const mass,
+          arrayView1d< localIndex const > const dampingNodes,
           arrayView1d< real32 const > const damping,
           arrayView2d< real64 const > const sourceConstants,
           arrayView2d< real32 const > const sourceValue,
@@ -482,9 +486,9 @@ struct PressureComputation
   {
 
     //Pre-mult by the first factor for damping
-    forAll< EXEC_POLICY >( size_node, [=] GEOS_HOST_DEVICE ( localIndex const a )
+    forAll< EXEC_POLICY >( dampingNodes.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      p_np1[a] *= 1.0-((dt/2)*(damping[a]/mass[a]));
+      p_np1[dampingNodes[a]] *= 1.0-((dt/2)*(damping[a]/mass[dampingNodes[a]]));
     } );
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
@@ -566,9 +570,9 @@ struct PressureComputation
     } );
 
     //Pre-mult by the first factor for damping
-    forAll< EXEC_POLICY >( size_node, [=] GEOS_HOST_DEVICE ( localIndex const a )
+    forAll< EXEC_POLICY >( dampingNodes.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      p_np1[a] /= 1.0+((dt/2)*(damping[a]/mass[a]));
+      p_np1[dampingNodes[a]] /= 1.0+((dt/2)*(damping[a]/mass[dampingNodes[a]]));
     } );
   }
 

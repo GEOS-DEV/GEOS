@@ -26,6 +26,7 @@
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "WaveSolverUtils.hpp"
+#include "WaveSolverBaseFields.hpp"
 
 namespace geos
 {
@@ -180,6 +181,8 @@ void ElasticWaveEquationSEM::initializePreSubGroups()
 void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
 
+  WaveSolverBase::registerDataOnMesh( meshBodies );
+
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
                                                     arrayView1d< string const > const & )
@@ -199,9 +202,6 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                fields::ForcingRHSy,
                                fields::ForcingRHSz,
                                fields::MassVector,
-                               fields::DampingVectorx,
-                               fields::DampingVectory,
-                               fields::DampingVectorz,
                                fields::StiffnessVectorx,
                                fields::StiffnessVectory,
                                fields::StiffnessVectorz,
@@ -535,12 +535,13 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVector >();
     mass.zero();
     /// damping matrix to be computed for each dof in the boundary of the mesh
-    arrayView1d< real32 > const dampingx = nodeManager.getField< fields::DampingVectorx >();
-    arrayView1d< real32 > const dampingy = nodeManager.getField< fields::DampingVectory >();
-    arrayView1d< real32 > const dampingz = nodeManager.getField< fields::DampingVectorz >();
-    dampingx.zero();
-    dampingy.zero();
-    dampingz.zero();
+    arrayView1d< localIndex > const nodeToDampingIdx = nodeManager.getField< fields::wavesolverfields::NodeToDampingIndex >();
+    m_dampingVectorX.resize( m_dampingNodes.size() );
+    m_dampingVectorY.resize( m_dampingNodes.size() );
+    m_dampingVectorZ.resize( m_dampingNodes.size() );
+    m_dampingVectorX.zero();
+    m_dampingVectorY.zero();
+    m_dampingVectorZ.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
     arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
@@ -584,9 +585,10 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                density,
                                                                velocityVp,
                                                                velocityVs,
-                                                               dampingx,
-                                                               dampingy,
-                                                               dampingz );
+                                                               nodeToDampingIdx,
+                                                               m_dampingVectorX,
+                                                               m_dampingVectorY,
+                                                               m_dampingVectorZ );
       } );
     } );
   } );
@@ -712,9 +714,6 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     NodeManager & nodeManager = mesh.getNodeManager();
 
     arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVector >();
-    arrayView1d< real32 const > const dampingx = nodeManager.getField< fields::DampingVectorx >();
-    arrayView1d< real32 const > const dampingy = nodeManager.getField< fields::DampingVectory >();
-    arrayView1d< real32 const > const dampingz = nodeManager.getField< fields::DampingVectorz >();
     arrayView1d< real32 > const stiffnessVectorx = nodeManager.getField< fields::StiffnessVectorx >();
     arrayView1d< real32 > const stiffnessVectory = nodeManager.getField< fields::StiffnessVectory >();
     arrayView1d< real32 > const stiffnessVectorz = nodeManager.getField< fields::StiffnessVectorz >();
@@ -751,30 +750,29 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
     addSourceToRightHandSide( cycleNumber, rhsx, rhsy, rhsz );
 
+    parallelDeviceStream streamx, streamy, streamz;
+    parallelDeviceEvents events;
+
+    WaveSolverUtils::UpdateP( nodeManager,
+                              ux_nm1, ux_n,  ux_np1,
+                              mass, stiffnessVectorx, rhsx,
+                              m_dampingNodes, m_dampingVectorX,
+                              dt, streamx, events );
+
+    WaveSolverUtils::UpdateP( nodeManager,
+                              uy_nm1, uy_n,  uy_np1,
+                              mass, stiffnessVectory, rhsy,
+                              m_dampingNodes, m_dampingVectorY,
+                              dt, streamy, events );
+
+    WaveSolverUtils::UpdateP( nodeManager,
+                              uz_nm1, uz_n,  uz_np1,
+                              mass, stiffnessVectorz, rhsz,
+                              m_dampingNodes, m_dampingVectorZ,
+                              dt, streamz, events );
+    waitAllDeviceEvents( events );
 
 
-    real64 const dt2 = dt*dt;
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-    {
-      if( freeSurfaceNodeIndicator[a] != 1 )
-      {
-        ux_np1[a] = ux_n[a];
-        ux_np1[a] *= 2.0*mass[a];
-        ux_np1[a] -= (mass[a]-0.5*dt*dampingx[a])*ux_nm1[a];
-        ux_np1[a] += dt2*(rhsx[a]-stiffnessVectorx[a]);
-        ux_np1[a] /= mass[a]+0.5*dt*dampingx[a];
-        uy_np1[a] = uy_n[a];
-        uy_np1[a] *= 2.0*mass[a];
-        uy_np1[a] -= (mass[a]-0.5*dt*dampingy[a])*uy_nm1[a];
-        uy_np1[a] += dt2*(rhsy[a]-stiffnessVectory[a]);
-        uy_np1[a] /= mass[a]+0.5*dt*dampingy[a];
-        uz_np1[a] = uz_n[a];
-        uz_np1[a] *= 2.0*mass[a];
-        uz_np1[a] -= (mass[a]-0.5*dt*dampingz[a])*uz_nm1[a];
-        uz_np1[a] += dt2*(rhsz[a]-stiffnessVectorz[a]);
-        uz_np1[a] /= mass[a]+0.5*dt*dampingz[a];
-      }
-    } );
 
     /// synchronize pressure fields
     FieldIdentifiers fieldsToBeSync;
