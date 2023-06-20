@@ -78,20 +78,7 @@ private:
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static real64 normalizeComposition( integer const numComps,
-                                      arraySlice1d< real64 > const composition )
-  {
-    real64 totalMoles = 0.0;
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      totalMoles += composition[ic];
-    }
-    real64 const oneOverTotalMoles = 1.0 / (totalMoles + epsilon);
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      composition[ic] *= oneOverTotalMoles;
-    }
-    return totalMoles;
-  }
+                                      arraySlice1d< real64 > const composition );
 };
 
 } // namespace constitutive

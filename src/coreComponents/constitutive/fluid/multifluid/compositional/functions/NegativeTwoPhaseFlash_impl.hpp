@@ -20,7 +20,7 @@
 
 #include "CubicEOSPhaseModel.hpp"
 #include "RachfordRice.hpp"
-//#include "KValueInitialization.hpp"
+#include "KValueInitialization.hpp"
 
 namespace geos
 {
@@ -28,23 +28,24 @@ namespace geos
 namespace constitutive
 {
 
-struct KValueInitialization
+GEOS_HOST_DEVICE
+template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
+real64 NegativeTwoPhaseFlash< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::normalizeComposition(
+  integer const numComps,
+  arraySlice1d< real64 > const composition )
 {
-  static void
-  computeWilsonGasLiquidKvalue( integer const numComps,
-                                real64 const GEOS_UNUSED_PARAM( pressure ),
-                                real64 const GEOS_UNUSED_PARAM( temperature ),
-                                arrayView1d< real64 const > const GEOS_UNUSED_PARAM( criticalPressure ),
-                                arrayView1d< real64 const > const GEOS_UNUSED_PARAM( criticalTemperature ),
-                                arrayView1d< real64 const > const GEOS_UNUSED_PARAM( acentricFactor ),
-                                arraySlice1d< real64 > const kValues )
+  real64 totalMoles = 0.0;
+  for( integer ic = 0; ic < numComps; ++ic )
   {
-    for( integer ic = 0; ic <numComps; ++ic )
-    {
-      kValues[ic] = 1.0;
-    }
+    totalMoles += composition[ic];
   }
-};
+  real64 const oneOverTotalMoles = 1.0 / (totalMoles + epsilon);
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    composition[ic] *= oneOverTotalMoles;
+  }
+  return totalMoles;
+}
 
 GEOS_HOST_DEVICE
 template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
