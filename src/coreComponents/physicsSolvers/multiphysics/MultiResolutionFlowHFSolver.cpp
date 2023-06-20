@@ -773,7 +773,7 @@ void MultiResolutionFlowHFSolver::buildSubdomainSet( MeshLevel & base,
       patchElemCenter[0] = patchElemCenters[k][0];
       patchElemCenter[1] = patchElemCenters[k][1];
       patchElemCenter[2] = patchElemCenters[k][2];
-      real64 thresholdDist = 1.0;
+      real64 thresholdDist = 10;
       real64 minDist = 1.0e20;
       for(localIndex j=0; j<allData.size(0); j++)
       {
@@ -1123,11 +1123,13 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
     //                                             cycleNumber,
     //                                             domain );
 
-    dtReturnTemporary = patchSolver.unitSequentiallyCoupledSolverStep( isPatchConverged,
-                                                                       time_n,
-                                                                       dtReturn,
-                                                                       cycleNumber,
-                                                                       domain );
+    for(int subs=0; subs<2; ++subs){
+      dtReturnTemporary = patchSolver.unitSequentiallyCoupledSolverStep( isPatchConverged,
+                                                                        time_n,
+                                                                        dtReturn,
+                                                                        cycleNumber,
+                                                                        domain );
+    }
     isPatchConverged=true;                                                                                                               
                              
     // this->findPhaseFieldTip( m_patchTip, domain.getMeshBody( patchTarget.first ).getBaseDiscretization());

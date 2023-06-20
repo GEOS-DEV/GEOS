@@ -1408,6 +1408,7 @@ void SolidMechanicsLagrangianFEM::applyInternalDisplacementBCImplicit( real64 co
     GEOSX_LOG_RANK_0( "Before SolidMechanicsLagrangianFEM::applyInternalDisplacementBCImplicit" );
     GEOSX_LOG_RANK_0( "\nJacobian:\n" );
     std::cout << localMatrix.toViewConst();
+    std::cout << localRhs;
   }
    
   CellElementSubRegion const & patchSubRegion = domain.getMeshBody( 1 ).getBaseDiscretization().
@@ -1420,6 +1421,7 @@ void SolidMechanicsLagrangianFEM::applyInternalDisplacementBCImplicit( real64 co
   interpolationKernel.interpolateBaseDisp( domain );  
   MPI_Barrier(MPI_COMM_WORLD);
 
+  #if 1
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel &,
                                                                 arrayView1d< string const > const & )
@@ -1442,12 +1444,12 @@ void SolidMechanicsLagrangianFEM::applyInternalDisplacementBCImplicit( real64 co
     {
       //node to elems
       //if all associated elements are not on m_subdomainElems
-      bool outside = true;
+      bool outside = false;
       for(auto neighborElem:nodeToElems[nodeIndex])
       {
-        if(m_subdomainElems.contains(neighborElem))
+        if(!m_subdomainElems.contains(neighborElem))
         {
-          outside = false;
+          outside = true;
         } 
       }
       //prescribed values for nodes outside subdomain
@@ -1487,6 +1489,7 @@ void SolidMechanicsLagrangianFEM::applyInternalDisplacementBCImplicit( real64 co
     std::cout << localMatrix.toViewConst();
     std::cout << localRhs.toViewConst();
   }
+  #endif
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianFEM, string const &, dataRepository::Group * const )

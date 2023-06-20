@@ -438,21 +438,18 @@ struct BaseDispInterpolationKernel
         real64 hx = abs(xNodesBase[baseElemsToNodes( basek, 0 )][0] - baseElemCenters[basek][0]);
         real64 hy = abs(xNodesBase[baseElemsToNodes( basek, 0 )][1] - baseElemCenters[basek][1]);
         real64 hz = abs(xNodesBase[baseElemsToNodes( basek, 0 )][2] - baseElemCenters[basek][2]);
-
+        
+        //these are the patch nodes of element k
         for( localIndex a = 0; a < numNodesPerElement; ++a )
         {
-          localIndex const localNodeIndex = patchElemsToNodes( k, a );
+          localIndex const patchLocalNodeIndex = patchElemsToNodes( k, a );
 
           for( int dim=0; dim < 3; ++dim )
           {
-            xLocalPatch[a][dim] = xNodesPatch[ localNodeIndex ][dim];
+            xLocalPatch[a][dim] = xNodesPatch[ patchLocalNodeIndex ][dim];
           }
 
-          //element level displacement values at nodes
-          baseNodalDispLocal[ a ][0] = baseNodalDisp[ localNodeIndex ][0];
-          baseNodalDispLocal[ a ][1] = baseNodalDisp[ localNodeIndex ][1];
-          baseNodalDispLocal[ a ][2] = baseNodalDisp[ localNodeIndex ][2];
-
+          //this are base shape functions
           real64 N[ numNodesPerElement ];
 
           //convert x,y,z to parent coordinates
@@ -464,14 +461,25 @@ struct BaseDispInterpolationKernel
           //get shape function values at parent coordinates
           FE_TYPE::calcN( parentX, N );
 
+          //these are base nodes
+          for( localIndex b = 0; b < numNodesPerElement; ++b ){
+
+            localIndex const baseLocalNodeIndex = baseElemsToNodes( basek, b );          
+
+            //element level displacement values at surrounding base nodes
+            baseNodalDispLocal[ b ][0] = baseNodalDisp[ baseLocalNodeIndex ][0];
+            baseNodalDispLocal[ b ][1] = baseNodalDisp[ baseLocalNodeIndex ][1];
+            baseNodalDispLocal[ b ][2] = baseNodalDisp[ baseLocalNodeIndex ][2];
+          }
+
           real64 nDisp[3];
           //interpolate disp field using shape function values
           FE_TYPE::value( N, baseNodalDispLocal, nDisp );
 
           //write to mesh
-          nodalDispXOnMesh[localNodeIndex] = nDisp[0];
-          nodalDispYOnMesh[localNodeIndex] = nDisp[1];
-          nodalDispZOnMesh[localNodeIndex] = nDisp[2];
+          nodalDispXOnMesh[patchLocalNodeIndex] = nDisp[0];
+          nodalDispYOnMesh[patchLocalNodeIndex] = nDisp[1];
+          nodalDispZOnMesh[patchLocalNodeIndex] = nDisp[2];          
         
         }
 
