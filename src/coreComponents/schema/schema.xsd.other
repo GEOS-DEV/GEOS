@@ -326,13 +326,14 @@
 	<xsd:complexType name="TableFunctionType" />
 	<xsd:complexType name="GeometryType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="Rectangle" type="RectangleType" />
 			<xsd:element name="Box" type="BoxType" />
+			<xsd:element name="CustomPolarObject" type="CustomPolarObjectType" />
 			<xsd:element name="Cylinder" type="CylinderType" />
+			<xsd:element name="Disc" type="DiscType" />
+			<xsd:element name="Rectangle" type="RectangleType" />
 			<xsd:element name="ThickPlane" type="ThickPlaneType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="RectangleType" />
 	<xsd:complexType name="BoxType">
 		<!--center => (no description available)-->
 		<xsd:attribute name="center" type="R1Tensor" />
@@ -341,7 +342,10 @@
 		<!--sinStrike => (no description available)-->
 		<xsd:attribute name="sinStrike" type="real64" />
 	</xsd:complexType>
+	<xsd:complexType name="CustomPolarObjectType" />
 	<xsd:complexType name="CylinderType" />
+	<xsd:complexType name="DiscType" />
+	<xsd:complexType name="RectangleType" />
 	<xsd:complexType name="ThickPlaneType" />
 	<xsd:complexType name="IncludedType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -758,6 +762,8 @@
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
+		<xsd:attribute name="performStressInitialization" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="LagrangianContactType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
