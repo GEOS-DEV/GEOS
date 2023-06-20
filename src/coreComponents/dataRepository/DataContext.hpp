@@ -23,14 +23,12 @@
 #include "common/Logger.hpp"
 #include "xmlWrapper.hpp"
 #include "common/Format.hpp"
-#include "Group.hpp"
-#include "WrapperBase.hpp"
 
 namespace geos
 {
-
 namespace dataRepository
 {
+
 
 /// DataContext is an abstract class storing contextual information on an object:
 /// - Either its line position in a file (if applicable, implementation in DataFileContext),
@@ -86,89 +84,26 @@ protected:
 
 };
 
-/// Helps to know where a Group is in the hierarchy.
-/// See DataContext class for more info.
-class GroupContext : public DataContext
-{
-public:
-
-  /**
-   * @brief Construct a new GroupContext object
-   * @param group The reference to the Group related to this GroupContext.
-   */
-  GroupContext( Group & group );
-
-  /**
-   * @brief Destroy the GroupContext object
-   */
-  virtual ~GroupContext() {}
-
-  /**
-   * @return the reference to the Group related to this GroupContext.
-   */
-  Group & getGroup() const;
-
-  /**
-   * @return the group path with the file & line of the first parent for which this information exists.
-   */
-  virtual string toString() const;
-
-protected:
-
-  /**
-   * @brief Construct a new GroupContext object
-   * @param group The reference to the Group related to this GroupContext.
-   * @param objectName Target object name.
-   */
-  GroupContext( Group & group, string const & objectName );
-
-  /// The reference to the Group related to this GroupContext.
-  Group & m_group;
-
-};
-
-/// Dedicated implementation of GroupContext for Wrapper.
-/// See DataContext class for more info.
-class WrapperContext final : public GroupContext
-{
-public:
-
-  /**
-   * @brief Construct a new WrapperContext object
-   * @param wrapper the target Wrapper object
-   */
-  WrapperContext( WrapperBase & wrapper );
-
-  /**
-   * @brief Destroy the WrapperContext object
-   */
-  virtual ~WrapperContext() {}
-
-  /**
-   * @return the parent group DataContext followed by the wrapper name.
-   */
-  virtual string toString() const;
-
-};
-
-/// Stores information to retrieve where a Group or Wrapper has been declared in the input source file (e.g. XML)
+/// Stores information to retrieve where a target object has been declared in the input source
+/// file (e.g. XML).
 class DataFileContext final : public DataContext
 {
 public:
 
   /**
    * @brief Construct the file context of a Group from an xml node.
-   * @param group the target Group object
+   * @param node the target object xml node
    * @param nodePos the target object xml node position
-   * @param nodeTagName the xml node tag name.
    */
-  DataFileContext( Group & group, xmlWrapper::xmlNodePos const & nodePos, string const & nodeTagName );
+  DataFileContext( xmlWrapper::xmlNode const & node, xmlWrapper::xmlNodePos const & nodePos );
   /**
-   * @brief Construct the file context of a Group from an xml attribute.
-   * @param wrapper the target Wrapper object
+   * @brief Construct the file context of a Group from an xml node.
+   * @param node the xml node containing the xml attribute
+   * @param att the target object xml attribute
    * @param attPos the target object xml attribute position
    */
-  DataFileContext( WrapperBase & wrapper, xmlWrapper::xmlAttributePos const & attPos );
+  DataFileContext( xmlWrapper::xmlNode const & node, xmlWrapper::xmlAttribute const & att,
+                   xmlWrapper::xmlAttributePos const & attPos );
 
   /**
    * @brief Destroy the DataFileContext object
@@ -229,7 +164,6 @@ protected:
 
 
 } /* namespace dataRepository */
-
 } /* namespace geos */
 
 

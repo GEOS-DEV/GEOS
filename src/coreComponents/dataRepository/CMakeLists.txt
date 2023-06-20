@@ -23,6 +23,7 @@ set( dataRepository_headers
      wrapperHelpers.hpp
      xmlWrapper.hpp
      DataContext.hpp
+     GroupContext.hpp
      )
 
 #
@@ -37,6 +38,7 @@ set( dataRepository_sources
      WrapperBase.cpp
      xmlWrapper.cpp
      DataContext.cpp
+     GroupContext.cpp
      )
 
 set( dependencyList ${parallelDeps} codingUtilities pugixml )

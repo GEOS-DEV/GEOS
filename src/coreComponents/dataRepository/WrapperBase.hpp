@@ -24,6 +24,7 @@
 #include "xmlWrapper.hpp"
 #include "RestartFlags.hpp"
 #include "HistoryDataSpec.hpp"
+#include "DataContext.hpp"
 
 #if defined(GEOSX_USE_PYGEOSX)
 #include "LvArray/src/python/python.hpp"
@@ -45,7 +46,6 @@ namespace dataRepository
 {
 
 class Group;
-class DataContext;
 
 /**
  * @class WrapperBase
@@ -636,9 +636,11 @@ protected:
 
   /**
    * @brief Sets the m_dataContext to a DataFileContext by retrieving the attribute file line.
-   * @param nodePos the xml node position of the node containing this wrapper source attribute.
+   * @param node the node containing this wrapper source attribute.
+   * @param nodePos the xml node position of the node
    */
-  void createDataContext( xmlWrapper::xmlNodePos const & nodePos );
+  void createDataContext( xmlWrapper::xmlNode const & targetNode,
+                          xmlWrapper::xmlNodePos const & nodePos );
 
   /**
    * @brief Helper method to process an exception that has been thrown during xml parsing.

@@ -16,8 +16,7 @@
  * @file DataContext.cpp
  */
 
-#include "Group.hpp"
-#include "WrapperBase.hpp"
+#include "DataContext.hpp"
 
 namespace geos
 {
@@ -37,75 +36,38 @@ std::ostream & operator<<( std::ostream & os, DataContext const & sc )
 }
 
 
-GroupContext::GroupContext( Group & group, string const & objectName ):
-  DataContext( objectName, false ),
-  m_group( group )
-{}
-GroupContext::GroupContext( Group & group ):
-  GroupContext( group, group.getName() )
-{}
-
-string GroupContext::toString() const
+/**
+ * @return the node 'name' attribute if it exists, return the node tag name otherwise.
+ * @param node the target node.
+ */
+string getNodeName( xmlWrapper::xmlNode const & node )
 {
-  string path;
-  bool foundNearestLine = false;
-  for( Group const * parentGroup = &m_group; parentGroup->hasParent(); parentGroup = &parentGroup->getParent() )
+  xmlWrapper::xmlAttribute const nameAtt = node.attribute( "name" );
+  if( !nameAtt.empty() )
   {
-    if( !foundNearestLine && parentGroup->getDataContext().isDataFileContext() )
-    {
-      DataFileContext const & parentContext =
-        dynamic_cast< DataFileContext const & >( parentGroup->getDataContext() );
-      if( parentContext.getLine() != xmlWrapper::xmlDocument::npos )
-      {
-        path.insert( 0, '/' + parentGroup->getName() + '(' +
-                     splitPath( parentContext.getFilePath() ).second +
-                     ",l." + std::to_string( parentContext.getLine() ) + ')' );
-        foundNearestLine=true;
-      }
-      else
-      {
-        path.insert( 0, '/' + parentGroup->getName() );
-      }
-    }
-    else
-    {
-      path.insert( 0, '/' + parentGroup->getName() );
-    }
-  }
-  return path;
-}
-
-
-WrapperContext::WrapperContext( WrapperBase & wrapper ):
-  GroupContext( wrapper.getParent(), wrapper.getName() )
-{}
-
-string WrapperContext::toString() const
-{
-  if( m_group.getDataContext().isDataFileContext() )
-  {
-    return m_group.getDataContext().toString() + ", attribute " + m_objectName;
+    return string( node.attribute( "name" ).value() );
   }
   else
   {
-    return m_group.getDataContext().toString() + "/" + m_objectName;
+    return string( node.name() );
   }
 }
 
-
-DataFileContext::DataFileContext( Group & group, xmlWrapper::xmlNodePos const & nodePos,
-                                  string const & nodeTagName ):
-  DataContext( group.getName(), true ),
-  m_typeName( nodeTagName ),
+DataFileContext::DataFileContext( xmlWrapper::xmlNode const & node,
+                                  xmlWrapper::xmlNodePos const & nodePos ):
+  DataContext( getNodeName( node ), true ),
+  m_typeName( node.name() ),
   m_filePath( nodePos.filePath ),
   m_line( nodePos.line ),
   m_offsetInLine( nodePos.offsetInLine ),
   m_offset( nodePos.offset )
 {}
 
-DataFileContext::DataFileContext( WrapperBase & wrapper, xmlWrapper::xmlAttributePos const & attPos ):
-  DataContext( wrapper.getParent().getName() + "/" + wrapper.getName(), true ),
-  m_typeName( wrapper.getName() ),
+DataFileContext::DataFileContext( xmlWrapper::xmlNode const & node,
+                                  xmlWrapper::xmlAttribute const & att,
+                                  xmlWrapper::xmlAttributePos const & attPos ):
+  DataContext( getNodeName( node ) + '/' + att.name(), true ),
+  m_typeName( att.name() ),
   m_filePath( attPos.filePath ),
   m_line( attPos.line ),
   m_offsetInLine( attPos.offsetInLine ),

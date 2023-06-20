@@ -18,7 +18,7 @@
 
 #include "Group.hpp"
 #include "RestartFlags.hpp"
-#include "DataContext.hpp"
+#include "GroupContext.hpp"
 
 
 namespace geos
@@ -106,12 +106,14 @@ int WrapperBase::setTotalviewDisplay() const
 }
 #endif
 
-void WrapperBase::createDataContext( xmlWrapper::xmlNodePos const & nodePos )
+void WrapperBase::createDataContext( xmlWrapper::xmlNode const & targetNode,
+                                     xmlWrapper::xmlNodePos const & nodePos )
 {
+  xmlWrapper::xmlAttribute att = targetNode.attribute( m_name.c_str() );
   xmlWrapper::xmlAttributePos attPos = nodePos.getAttributeLine( m_name );
-  if( nodePos.isFound() && attPos.isFound() )
+  if( nodePos.isFound() && attPos.isFound() && !att.empty() )
   {
-    m_dataContext = std::make_unique< DataFileContext >( *this, attPos );
+    m_dataContext = std::make_unique< DataFileContext >( targetNode, att, attPos );
   }
 }
 
