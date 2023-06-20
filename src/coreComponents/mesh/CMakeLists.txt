@@ -52,11 +52,14 @@ set( mesh_headers
      mpiCommunications/NeighborData.hpp
      mpiCommunications/PartitionBase.hpp
      mpiCommunications/SpatialPartition.hpp
-     simpleGeometricObjects/BoundedPlane.hpp
+     simpleGeometricObjects/Rectangle.hpp
+     simpleGeometricObjects/Disc.hpp
+     simpleGeometricObjects/CustomPolarObject.hpp
      simpleGeometricObjects/Box.hpp
      simpleGeometricObjects/Cylinder.hpp
      simpleGeometricObjects/GeometricObjectManager.hpp
      simpleGeometricObjects/SimpleGeometricObjectBase.hpp
+     simpleGeometricObjects/PlanarGeometricObject.hpp
      simpleGeometricObjects/ThickPlane.hpp
      utilities/CIcomputationKernel.hpp
      utilities/ComputationalGeometry.hpp
@@ -107,11 +110,14 @@ set( mesh_sources
      mpiCommunications/NeighborCommunicator.cpp
      mpiCommunications/PartitionBase.cpp
      mpiCommunications/SpatialPartition.cpp
-     simpleGeometricObjects/BoundedPlane.cpp
+     simpleGeometricObjects/Rectangle.cpp
+     simpleGeometricObjects/Disc.cpp
+     simpleGeometricObjects/CustomPolarObject.cpp
      simpleGeometricObjects/Box.cpp
      simpleGeometricObjects/Cylinder.cpp
      simpleGeometricObjects/GeometricObjectManager.cpp
      simpleGeometricObjects/SimpleGeometricObjectBase.cpp
+     simpleGeometricObjects/PlanarGeometricObject.cpp
      simpleGeometricObjects/ThickPlane.cpp
      utilities/ComputationalGeometry.cpp
      )
