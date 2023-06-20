@@ -50,7 +50,7 @@ public:
    * @return the gas mole fraction
    **/
   GEOS_HOST_DEVICE
-  static real64
+  real64
   solve( arrayView1d< real64 const > const kValues,
          arrayView1d< real64 const > const feed,
          arrayView1d< integer const > const presentComponentIds );
@@ -66,7 +66,7 @@ private:
    * @return the value of the Rachford-Rice function at x
    **/
   GEOS_HOST_DEVICE
-  static real64
+  real64
   evaluate( arrayView1d< real64 const > const kValues,
             arrayView1d< real64 const > const feed,
             arrayView1d< integer const > const presentComponentIds,
@@ -81,7 +81,7 @@ private:
    * @return the value of the derivative of the Rachford-Rice function at x
    **/
   GEOS_HOST_DEVICE
-  static real64
+  real64
   evaluateDerivative( arrayView1d< real64 const > const kValues,
                       arrayView1d< real64 const > const feed,
                       arrayView1d< integer const > const presentComponentIds,

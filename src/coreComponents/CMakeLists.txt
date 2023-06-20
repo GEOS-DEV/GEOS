@@ -61,10 +61,10 @@ endforeach()
 # if we're building full static libs and not obj_libs
 if( NOT GEOSX_BUILD_SHARED_LIBS )
   set( geosx_core_list "" )
-  foreach( lib ${coreLibs} )
-    list( APPEND geosx_core_list ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
-  endforeach()
-  set ( geosx_core_libs "${geosx_core_list}" CACHE INTERNAL "" )
+  # foreach( lib ${coreLibs} )
+    # list( APPEND geosx_core_list ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
+  # endforeach()
+  set ( geosx_core_libs "${coreLibs}" CACHE INTERNAL "" )
 endif( )
 
 foreach( lib ${subdirs} )
@@ -84,8 +84,8 @@ elseif( GEOSX_BUILD_SHARED_LIBS AND NOT GEOSX_BUILD_OBJ_LIBS )
   blt_combine_static_libraries( NAME          geosx_core
                                 SOURCE_LIBS   ${coreLibs}
                                 LIB_TYPE      SHARED
-                                LINK_PREPEND  ${GEOSX_LINK_PREPEND_FLAG}
-                                LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG}
+                                LINK_PREPEND  ""#${GEOSX_LINK_PREPEND_FLAG}
+                                LINK_POSTPEND ""#${GEOSX_LINK_POSTPEND_FLAG}
                               )
 
 elseif( NOT GEOSX_BUILD_SHARED_LIBS AND GEOSX_BUILD_OBJ_LIBS )
