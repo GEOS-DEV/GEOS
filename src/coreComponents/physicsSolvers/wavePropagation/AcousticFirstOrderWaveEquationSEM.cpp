@@ -493,7 +493,6 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
           PressureComputation< FE_TYPE > kernel2( finiteElement );
         kernel2.template launch< EXEC_POLICY, ATOMIC_POLICY >
           ( elementSubRegion.size(),
-          nodeManager.size(),
           X,
           elemsToNodes,
           velocity_x,
