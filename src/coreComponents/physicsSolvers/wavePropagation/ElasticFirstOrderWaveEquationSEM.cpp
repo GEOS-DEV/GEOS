@@ -264,7 +264,7 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
 
       elasticFirstOrderWaveEquationSEMKernels::
         PrecomputeSourceAndReceiverKernel::
-        launch< EXEC_POLICY, FE_TYPE >
+        launch< parallelHostPolicy, FE_TYPE >
         ( elementSubRegion.size(),
         numNodesPerElem,
         numFacesPerElem,
@@ -303,11 +303,11 @@ void ElasticFirstOrderWaveEquationSEM::addSourceToRightHandSide( integer const &
 
   GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
 
-  forAll< serialPolicy >( m_sourceConstants.size( 0 ), [=] ( localIndex const isrc )
+  forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsAccessible[isrc] == 1 )
     {
-      for( localIndex inode = 0; inode < m_sourceConstants.size( 1 ); ++inode )
+      for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
       {
         real32 const localIncrement = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
         RAJA::atomicAdd< ATOMIC_POLICY >( &rhs[sourceNodeIds[isrc][inode]], localIncrement );
@@ -379,28 +379,28 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
 
         elasticFirstOrderWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
-        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                               X,
-                                                               elemsToNodes,
-                                                               density,
-                                                               mass );
+        kernelM.template launch< parallelHostPolicy, parallelHostAtomic >( elementSubRegion.size(),
+                                                                           X,
+                                                                           elemsToNodes,
+                                                                           density,
+                                                                           mass );
 
         elasticFirstOrderWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
-        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
-                                                               X,
-                                                               facesToElements,
-                                                               facesToNodes,
-                                                               facesDomainBoundaryIndicator,
-                                                               freeSurfaceFaceIndicator,
-                                                               faceNormal,
-                                                               density,
-                                                               velocityVp,
-                                                               velocityVs,
-                                                               nodeToDampingIdx,
-                                                               m_dampingVectorX,
-                                                               m_dampingVectorY,
-                                                               m_dampingVectorZ );
+        kernelD.template launch< parallelHostPolicy, parallelHostAtomic >( faceManager.size(),
+                                                                           X,
+                                                                           facesToElements,
+                                                                           facesToNodes,
+                                                                           facesDomainBoundaryIndicator,
+                                                                           freeSurfaceFaceIndicator,
+                                                                           faceNormal,
+                                                                           density,
+                                                                           velocityVp,
+                                                                           velocityVs,
+                                                                           nodeToDampingIdx,
+                                                                           m_dampingVectorX,
+                                                                           m_dampingVectorY,
+                                                                           m_dampingVectorZ );
       } );
     } );
   } );

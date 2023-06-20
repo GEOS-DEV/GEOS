@@ -166,8 +166,8 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
   arrayView2d< real64 > const sourceConstants = m_sourceConstants.toView();
   arrayView1d< localIndex > const sourceIsAccessible = m_sourceIsAccessible.toView();
   arrayView1d< localIndex > const sourceElem = m_sourceElem.toView();
-  sourceNodeIds.setValues< EXEC_POLICY >( -1 );
-  sourceConstants.setValues< EXEC_POLICY >( -1 );
+  sourceNodeIds.setValues< parallelHostPolicy >( -1 );
+  sourceConstants.setValues< parallelHostPolicy >( -1 );
   sourceIsAccessible.zero();
 
   arrayView2d< real64 const > const receiverCoordinates = m_receiverCoordinates.toViewConst();
@@ -175,8 +175,8 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
   arrayView2d< real64 > const receiverConstants = m_receiverConstants.toView();
   arrayView1d< localIndex > const receiverIsLocal = m_receiverIsLocal.toView();
   arrayView1d< localIndex > const rcvElem = m_rcvElem.toView();
-  receiverNodeIds.setValues< EXEC_POLICY >( -1 );
-  receiverConstants.setValues< EXEC_POLICY >( -1 );
+  receiverNodeIds.setValues< parallelHostPolicy >( -1 );
+  receiverConstants.setValues< parallelHostPolicy >( -1 );
   receiverIsLocal.zero();
 
   real32 const timeSourceFrequency = this->m_timeSourceFrequency;
@@ -217,7 +217,7 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
 
       acousticFirstOrderWaveEquationSEMKernels::
         PrecomputeSourceAndReceiverKernel::
-        launch< EXEC_POLICY, FE_TYPE >
+        launch< parallelHostPolicy, FE_TYPE >
         ( elementSubRegion.size(),
         numNodesPerElem,
         numFacesPerElem,
@@ -322,24 +322,24 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
 
         acousticFirstOrderWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
-        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                               X,
-                                                               elemsToNodes,
-                                                               velocity,
-                                                               density,
-                                                               mass );
+        kernelM.template launch< parallelHostPolicy, parallelHostAtomic >( elementSubRegion.size(),
+                                                                           X,
+                                                                           elemsToNodes,
+                                                                           velocity,
+                                                                           density,
+                                                                           mass );
 
         acousticFirstOrderWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
-        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
-                                                               X,
-                                                               facesToElements,
-                                                               facesToNodes,
-                                                               facesDomainBoundaryIndicator,
-                                                               freeSurfaceFaceIndicator,
-                                                               velocity,
-                                                               nodeToDampingIdx,
-                                                               m_dampingVector );
+        kernelD.template launch< parallelHostPolicy, parallelHostAtomic >( faceManager.size(),
+                                                                           X,
+                                                                           facesToElements,
+                                                                           facesToNodes,
+                                                                           facesDomainBoundaryIndicator,
+                                                                           freeSurfaceFaceIndicator,
+                                                                           velocity,
+                                                                           nodeToDampingIdx,
+                                                                           m_dampingVector );
       } );
     } );
   } );

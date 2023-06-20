@@ -295,18 +295,18 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
   arrayView2d< real64 > const sourceConstantsz = m_sourceConstantsz.toView();
   arrayView1d< localIndex > const sourceIsAccessible = m_sourceIsAccessible.toView();
 
-  sourceNodeIds.setValues< EXEC_POLICY >( -1 );
-  sourceConstantsx.setValues< EXEC_POLICY >( 0 );
-  sourceConstantsy.setValues< EXEC_POLICY >( 0 );
-  sourceConstantsz.setValues< EXEC_POLICY >( 0 );
+  sourceNodeIds.setValues< parallelHostPolicy >( -1 );
+  sourceConstantsx.zero();
+  sourceConstantsy.zero();
+  sourceConstantsz.zero();
   sourceIsAccessible.zero();
 
   arrayView2d< real64 const > const receiverCoordinates = m_receiverCoordinates.toViewConst();
   arrayView2d< localIndex > const receiverNodeIds = m_receiverNodeIds.toView();
   arrayView2d< real64 > const receiverConstants = m_receiverConstants.toView();
   arrayView1d< localIndex > const receiverIsLocal = m_receiverIsLocal.toView();
-  receiverNodeIds.setValues< EXEC_POLICY >( -1 );
-  receiverConstants.setValues< EXEC_POLICY >( 0 );
+  receiverNodeIds.setValues< parallelHostPolicy >( -1 );
+  receiverConstants.zero();
   receiverIsLocal.zero();
 
   real32 const timeSourceFrequency = this->m_timeSourceFrequency;
@@ -347,7 +347,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
 
       elasticWaveEquationSEMKernels::
         PrecomputeSourceAndReceiverKernel::
-        launch< EXEC_POLICY, FE_TYPE >
+        launch< parallelHostPolicy, FE_TYPE >
         ( elementSubRegion.size(),
         numFacesPerElem,
         X,
@@ -409,7 +409,7 @@ void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                            MPI_COMM_GEOSX );
 
-    forAll< EXEC_POLICY >( numReceiversGlobal, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
+    forAll< parallelHostPolicy >( numReceiversGlobal, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
     {
       if( receiverIsLocal[ircv] == 1 )
       {
@@ -454,7 +454,7 @@ void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
   /// the remaining x-component contains DAS data, the other components are set to zero
   m_displacementXNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
   arrayView2d< real32 > const dasReceiver = m_displacementXNp1AtReceivers.toView();
-  forAll< EXEC_POLICY >( numReceiversGlobal, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
+  forAll< parallelHostPolicy >( numReceiversGlobal, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
   {
     if( receiverIsLocal[ircv] == 1 )
     {
@@ -567,28 +567,28 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
         elasticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
-        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                               X,
-                                                               elemsToNodes,
-                                                               density,
-                                                               mass );
+        kernelM.template launch< parallelHostPolicy, parallelHostAtomic >( elementSubRegion.size(),
+                                                                           X,
+                                                                           elemsToNodes,
+                                                                           density,
+                                                                           mass );
 
         elasticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
-        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
-                                                               X,
-                                                               facesToElements,
-                                                               facesToNodes,
-                                                               facesDomainBoundaryIndicator,
-                                                               freeSurfaceFaceIndicator,
-                                                               faceNormal,
-                                                               density,
-                                                               velocityVp,
-                                                               velocityVs,
-                                                               nodeToDampingIdx,
-                                                               m_dampingVectorX,
-                                                               m_dampingVectorY,
-                                                               m_dampingVectorZ );
+        kernelD.template launch< parallelHostPolicy, parallelHostAtomic >( faceManager.size(),
+                                                                           X,
+                                                                           facesToElements,
+                                                                           facesToNodes,
+                                                                           facesDomainBoundaryIndicator,
+                                                                           freeSurfaceFaceIndicator,
+                                                                           faceNormal,
+                                                                           density,
+                                                                           velocityVp,
+                                                                           velocityVs,
+                                                                           nodeToDampingIdx,
+                                                                           m_dampingVectorX,
+                                                                           m_dampingVectorY,
+                                                                           m_dampingVectorZ );
       } );
     } );
   } );
