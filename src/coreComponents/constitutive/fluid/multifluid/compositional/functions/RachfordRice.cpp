@@ -24,6 +24,7 @@ namespace geos
 namespace constitutive
 {
 
+GEOS_HOST_DEVICE
 real64
 RachfordRice::solve( arraySlice1d< real64 const > const kValues,
                      arraySlice1d< real64 const > const feed,
@@ -151,6 +152,7 @@ RachfordRice::solve( arraySlice1d< real64 const > const kValues,
   return gasPhaseMoleFraction = newtonValue;
 }
 
+GEOS_HOST_DEVICE
 real64
 RachfordRice::evaluate( arraySlice1d< real64 const > const kValues,
                         arraySlice1d< real64 const > const feed,
@@ -167,6 +169,7 @@ RachfordRice::evaluate( arraySlice1d< real64 const > const kValues,
   return value;
 }
 
+GEOS_HOST_DEVICE
 real64
 RachfordRice::evaluateDerivative( arraySlice1d< real64 const > const kValues,
                                   arraySlice1d< real64 const > const feed,

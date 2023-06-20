@@ -51,6 +51,7 @@ set( constitutive_headers
      fluid/multifluid/CO2Brine/functions/PureWaterProperties.hpp
      fluid/multifluid/CO2Brine/functions/WaterDensity.hpp
      fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp     
+     fluid/multifluid/compositional/functions/KValueInitialization.hpp
      fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp
      fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash_impl.hpp
      fluid/multifluid/compositional/functions/RachfordRice.hpp
