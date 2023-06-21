@@ -583,7 +583,6 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
           VelocityComputation< FE_TYPE > kernel2( finiteElement );
         kernel2.template launch< EXEC_POLICY, ATOMIC_POLICY >
           ( elementSubRegion.size(),
-          nodeManager.size(),
           X,
           elemsToNodes,
           stressxx,
