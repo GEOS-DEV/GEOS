@@ -914,11 +914,11 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
           else
           {
             // Boundary node
-            p_np1[a] += damping_p[a]*p_nm1/dt/2;
-            p_np1[a] += damping_pq[a]*q_nm1/dt/2;
+            p_np1[a] += damping_p[a]*p_nm1[a]/dt/2;
+            p_np1[a] += damping_pq[a]*q_nm1[a]/dt/2;
 
-            q_np1[a] += damping_q[a]*q_nm1/dt/2;
-            q_np1[a] += damping_qp[a]*p_nm1/dt/2;
+            q_np1[a] += damping_q[a]*q_nm1[a]/dt/2;
+            q_np1[a] += damping_qp[a]*p_nm1[a]/dt/2;
             // Hand-made Inversion of 2x2 matrix
             real32 coef_pp = mass[a]/dt2;
             coef_pp += damping_p[a]/dt/2;
