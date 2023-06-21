@@ -110,6 +110,15 @@ public:
   };
 
   /**
+   * @brief Indicates the type of (local to a rank) reordering applied to a given field
+   */
+  enum class LocalReorderingType
+  {
+    None,    ///< Do not reorder the variables
+    ReverseCutHillMcKee, ///< Use reverve CutHill-McKee reordering algorithm.
+  };
+
+  /**
    * @brief Constructor.
    *
    * @param [in] name a unique name for this DoF manager
@@ -175,6 +184,14 @@ public:
                  FieldLocation location,
                  integer components,
                  map< std::pair< string, string >, array1d< string > > const & regions );
+
+  /**
+   * @brief Set the local reodering of the dof numbers
+   * @param [in] fieldName the name of the field
+   * @param [in] reorderingType the reordering type
+   */
+  void setLocalReorderingType( string const & fieldName,
+                               LocalReorderingType const reorderingType );
 
   /**
    * @brief Disable the global coupling for a given equation
@@ -493,6 +510,7 @@ private:
     globalIndex blockOffset = 0;   ///< offset of this field's block in a block-wise ordered system
     globalIndex rankOffset = 0;    ///< field's first DoF on current processor (within its block, ignoring other fields)
     globalIndex globalOffset = 0;  ///< global offset of field's DOFs on current processor for multi-field problems
+    LocalReorderingType reorderingType = LocalReorderingType::None; ///< Type of local reordering applied to this field
   };
 
   /**
@@ -519,14 +537,33 @@ private:
   /**
    * @brief Create index array for the field
    * @param field the field descriptor
+   * @param permutation the local permutation used to fill the index array for this field
    */
-  void createIndexArray( FieldDescription const & field );
+  void createIndexArray( FieldDescription const & field,
+                         arrayView1d< localIndex const > const permutation );
 
   /**
    * @brief Remove an index array for the field
    * @param field the field descriptor
    */
   void removeIndexArray( FieldDescription const & field );
+
+  /**
+   * @brief Compute a local reordering of the dofNumbers or alternatively, return a trivial permutation
+   * @param field the field descriptor
+   * @return permutation the local permutation used to fill the index array for this field
+   */
+  array1d< localIndex > computePermutation( FieldDescription & field );
+
+  /**
+   * @brief Compute a local reordering of the dofNumbers
+   * @param field the field descriptor
+   * @param permutation the local permutation used to fill the index array for this field
+   * @detail This function throws an error if the field requires a trivial permutation
+   */
+  void computePermutation( FieldDescription const & field,
+                           arrayView1d< localIndex > const permutation );
+
 
   /**
    * @brief Calculate or estimate the number of nonzero entries in each local row
