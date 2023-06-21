@@ -293,7 +293,7 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsDFM( MeshLevel & m
 
     // For now, we do not filter out connections for which numElems == 1 in this function.
     // Instead, the filter takes place in the single-phase FluxKernels specialized for the SurfaceElementStencil
-    // (see physicsSolvers/multiphysics/SinglePhasePoromechanicsFluxKernels.cpp).
+    // (see physicsSolvers/multiphysics/SinglePhaseProppantFluxKernels.cpp).
     // The reason for doing the filtering there and not here is that the ProppantTransport solver
     // needs the connections numElems == 1 to produce correct results.
 
@@ -943,8 +943,12 @@ void TwoPointFluxApproximation::addEmbeddedFracturesToStencils( MeshLevel & mesh
 
 void TwoPointFluxApproximation::registerBoundaryStencil( Group & stencilGroup, string const & setName ) const
 {
-  stencilGroup.registerWrapper< BoundaryStencil >( setName ).
-    setRestartFlags( RestartFlags::NO_WRITE );
+  if( !stencilGroup.hasWrapper( setName ) )
+  {
+    // if not there yet, let's register the set name as a wrapper
+    stencilGroup.registerWrapper< BoundaryStencil >( setName ).
+      setRestartFlags( RestartFlags::NO_WRITE );
+  }
 }
 
 void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
