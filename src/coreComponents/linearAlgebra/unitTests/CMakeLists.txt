@@ -6,7 +6,8 @@ set( parallel_tests
      Matrices
      Vectors
      ExternalSolvers
-     KrylovSolvers )
+     KrylovSolvers
+     ReverseCutHillMcKeeOrdering )
 
 set( nranks 2 )
 
