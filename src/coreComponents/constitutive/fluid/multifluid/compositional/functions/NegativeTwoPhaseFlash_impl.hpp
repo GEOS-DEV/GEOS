@@ -84,7 +84,7 @@ bool NegativeTwoPhaseFlash< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::compute(
       presentComponentIds[presentCount++] = ic;
     }
   }
-  presentComponentIds.resize(presentCount);
+  presentComponentIds.resize( presentCount );
 
   KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
                                                       pressure,
