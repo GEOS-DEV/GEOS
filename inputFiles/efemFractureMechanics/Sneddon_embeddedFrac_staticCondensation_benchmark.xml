@@ -25,7 +25,7 @@
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="amg"
-        logLevel="0"/>
+        logLevel="1"/>
     </SolidMechanicsEmbeddedFractures>
 
     <SolidMechanicsLagrangianSSLE
@@ -39,6 +39,7 @@
       name="SurfaceGenerator"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
+      targetObjects="{ FracturePlane }"
       fractureRegion="Fracture"
       logLevel="1"
       mpiCommOrder="1"/>
