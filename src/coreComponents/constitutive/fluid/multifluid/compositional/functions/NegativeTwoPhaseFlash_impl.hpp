@@ -28,7 +28,6 @@ namespace geos
 namespace constitutive
 {
 
-GEOS_HOST_DEVICE
 template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
 real64 NegativeTwoPhaseFlash< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::normalizeComposition(
   integer const numComps,
@@ -47,7 +46,6 @@ real64 NegativeTwoPhaseFlash< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::normalizeCompo
   return totalMoles;
 }
 
-GEOS_HOST_DEVICE
 template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
 bool NegativeTwoPhaseFlash< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::compute(
   integer const numComps,
