@@ -29,6 +29,7 @@ namespace constitutive
 {
 
 template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
+GEOS_HOST_DEVICE
 real64 NegativeTwoPhaseFlash< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::normalizeComposition(
   integer const numComps,
   arraySlice1d< real64 > const composition )
@@ -47,6 +48,7 @@ real64 NegativeTwoPhaseFlash< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::normalizeCompo
 }
 
 template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
+GEOS_HOST_DEVICE
 bool NegativeTwoPhaseFlash< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::compute(
   integer const numComps,
   real64 const pressure,
@@ -64,7 +66,7 @@ bool NegativeTwoPhaseFlash< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::compute(
   stackArray1d< real64, maxNumComps > logVapourFugacity( numComps );
   stackArray1d< real64, maxNumComps > kVapourLiquid( numComps );
   stackArray1d< real64, maxNumComps > fugacityRatios( numComps );
-  stackArray1d< integer, maxNumComps > presentComponentIds;
+  stackArray1d< integer, maxNumComps > presentComponentIds( numComps );
 
   // Initialise compositions to feed composition
   for( integer ic = 0; ic < numComps; ++ic )
@@ -74,13 +76,15 @@ bool NegativeTwoPhaseFlash< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::compute(
   }
 
   // Check for machine-zero feed values
+  integer presentCount = 0;
   for( integer ic = 0; ic < numComps; ++ic )
   {
     if( epsilon < composition[ic] )
     {
-      presentComponentIds.emplace_back( ic );
+      presentComponentIds[presentCount++] = ic;
     }
   }
+  presentComponentIds.resize(presentCount);
 
   KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
                                                       pressure,
