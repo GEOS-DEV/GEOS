@@ -1,0 +1,78 @@
+site_name(HOST_NAME)
+set(CONFIG_NAME "cvx-rhel7-gpu" CACHE PATH "" FORCE)
+message( "CONFIG_NAME=${CONFIG_NAME}" )
+
+set(GCC_ROOT "/util/gcc/gcc-9.3.0" CACHE PATH "")
+set(CMAKE_C_COMPILER "${GCC_ROOT}/bin/gcc" CACHE PATH "" FORCE)
+set(CMAKE_CXX_COMPILER "${GCC_ROOT}/bin/g++" CACHE PATH "" FORCE)
+set(CMAKE_Fortran_COMPILER "${GCC_ROOT}/bin/gfortran" CACHE PATH "" FORCE)
+set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
+
+set(ENABLE_MPI ON CACHE PATH "" FORCE)
+set(MPI_ROOT "/vend/intel/parallel_studio_xe_2018_update3/compilers_and_libraries_2018.3.222/linux/mpi/intel64" CACHE PATH "")
+set(MPI_C_COMPILER "${MPI_ROOT}/bin/mpicc" CACHE PATH "" FORCE)
+set(MPI_CXX_COMPILER "${MPI_ROOT}/bin/mpicxx" CACHE PATH "" FORCE)
+set(MPI_Fortran_COMPILER "${MPI_ROOT}/bin/mpiifort" CACHE PATH "" FORCE)
+set(MPIEXEC "${MPI_ROOT}/bin/mpirun" CACHE PATH "" FORCE)
+set(MPIEXEC_NUMPROC_FLAG "-n" CACHE STRING "")
+set(ENABLE_WRAP_ALL_TESTS_WITH_MPIEXEC ON CACHE BOOL "")
+
+#set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE)
+set(ENABLE_CALIPER OFF CACHE BOOL "")
+
+set(ENABLE_HYPRE ON CACHE BOOL "" FORCE)
+set(ENABLE_TRILINOS OFF CACHE BOOL "" FORCE)
+set(GEOSX_LA_INTERFACE "Hypre" CACHE STRING "" FORCE) 
+
+if( (ENABLE_HYPRE AND ENABLE_TRILINOS) OR (NOT ENABLE_TRILINOS AND NOT ENABLE_HYPRE))
+  MESSAGE(SEND_ERROR "Exactly one of ENABLE_HYPRE and ENABLE_TRILINOS must be defined.")
+  MESSAGE(SEND_ERROR "ENABLE_HYPRE = ${ENABLE_HYPRE}.")
+  MESSAGE(SEND_ERROR "ENABLE_TRILINOS = ${ENABLE_TRILINOS}.")
+endif()
+
+MESSAGE(STATUS "GEOSX_LA_INTERFACE = ${GEOSX_LA_INTERFACE}")
+
+# set(ENABLE_CUDA "$ENV{ENABLE_CUDA}" CACHE BOOL "" FORCE)
+
+set(ENABLE_OPENMP OFF CACHE BOOL "" FORCE)
+set(ENABLE_PAMELA ON CACHE BOOL "" FORCE)
+set(ENABLE_PVTPackage ON CACHE BOOL "" FORCE)
+set(ENABLE_DOXYGEN OFF CACHE BOOL "" FORCE)
+message( "ENABLE_DOXYGEN=${ENABLE_DOXYGEN}" )
+set(ENABLE_VALGRIND OFF CACHE BOOL "")
+set(ENABLE_CALIPER ON CACHE BOOL "")
+
+set(ENABLE_CUDA ON CACHE BOOL "" FORCE)
+set(CUDAToolkit_ROOT "/vend/nvidia/cuda/v11.0" CACHE PATH "" FORCE)
+set(CUDA_TOOLKIT_ROOT_DIR "/vend/nvidia/cuda/v11.0" CACHE PATH "" FORCE)
+set(CUDA_ARCH "sm_75" CACHE STRING "" FORCE)
+set(CMAKE_CUDA_ARCHITECTURES "75" CACHE STRING "")
+
+set(CMAKE_CUDA_HOST_COMPILER ${MPI_CXX_COMPILER} CACHE STRING "") 
+#set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER} CACHE STRING "")
+set(CMAKE_CUDA_COMPILER ${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc CACHE STRING "") 
+set(CMAKE_CUDA_STANDARD 14 CACHE STRING "") 
+set(CMAKE_CUDA_FLAGS "-restrict -arch ${CUDA_ARCH} --expt-extended-lambda --expt-relaxed-constexpr -Werror cross-execution-space-call,reorder,deprecated-declarations" CACHE STRING "") 
+set(CMAKE_CUDA_FLAGS_RELEASE "-O3 -DNDEBUG -Xcompiler -DNDEBUG -Xcompiler -O3" CACHE STRING "") 
+set(CMAKE_CUDA_FLAGS_RELWITHDEBINFO "-g -lineinfo ${CMAKE_CUDA_FLAGS_RELEASE}" CACHE STRING "") 
+set(CMAKE_CUDA_FLAGS_DEBUG "-g -G -O0 -Xcompiler -O0" CACHE STRING "") 
+
+
+
+
+if(ENABLE_CUDA)
+  if(ENABLE_HYPRE)
+    set(ENABLE_HYPRE_CUDA ON CACHE BOOL "" FORCE)
+    set(ENABLE_PETSC OFF CACHE BOOL "")   
+  endif()
+endif()
+
+# set(GEOSX_TPL_DIR "$ENV{GEOSX_TPL_DIR}" CACHE PATH "" FORCE)
+# set(GEOSX_TPL_DIR "/usr/local/GEOSX/GEOSX_TPL" CACHE PATH "" FORCE )
+# if(NOT ( EXISTS "${GEOSX_TPL_DIR}" AND IS_DIRECTORY "${GEOSX_TPL_DIR}" ) )
+# Pavel: edit that to provide the path for thirdPartyLibs
+#        alternatively (and preferably) use
+#          python scripts/config-build.py -hc host-configs/cvx-wsl.cmake -bt Release -D GEOSX_TPL_DIR=/full/path/to/thirdPartyLibs
+#set(GEOSX_TPL_DIR "../../thirdPartyLibs/install-cvx-rhel7-release" CACHE PATH "" FORCE)
+# endif()
+include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)
