@@ -56,7 +56,7 @@ public:
   explicit SolidMechanicsEmbeddedFractures( arrayView1d< int const > const & )
     : MGRStrategyBase( 6 )
   {
-    // we keep u 
+    // we keep u
     m_labels[0].push_back( 0 );
     m_labels[0].push_back( 1 );
     m_labels[0].push_back( 2 );
@@ -99,6 +99,7 @@ public:
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 0 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 1 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.coarseSolver.ptr, 0.0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( mgrData.coarseSolver.ptr, 0.8 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.coarseSolver.ptr, 1 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( mgrData.coarseSolver.ptr, 3 ) );
 
