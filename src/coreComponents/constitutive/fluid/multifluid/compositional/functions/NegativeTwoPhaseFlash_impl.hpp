@@ -148,7 +148,7 @@ bool NegativeTwoPhaseFlash< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::compute(
     }
 
     // Update K-values
-    for( auto ic : presentComponentIds )
+    for( integer const ic : presentComponentIds )
     {
       kVapourLiquid[ic] *= fugacityRatios[ic];
     }
