@@ -1,6 +1,6 @@
 
 
-#include "physicsSolvers/solidMechanics/kernels/SmallStrainResidual_impl.hpp"
+//#include "physicsSolvers/solidMechanics/kernels/SmallStrainResidual_impl.hpp"
 #include "physicsSolvers/solidMechanics/kernels/ExplicitSmallStrain_impl.hpp"
 #include "physicsSolvers/solidMechanics/kernels/ExplicitFiniteStrain_impl.hpp"
 #include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainNewmark_impl.hpp"
@@ -26,7 +26,7 @@ namespace solidMechanicsLagrangianFEMKernels
   INSTANTIATION( ExplicitFiniteStrain )
   INSTANTIATION( ImplicitSmallStrainNewmark )
   INSTANTIATION( ImplicitSmallStrainQuasiStatic )
-  INSTANTIATION( SmallStrainResidual )
+//  INSTANTIATION( SmallStrainResidual )
 }
 }
 

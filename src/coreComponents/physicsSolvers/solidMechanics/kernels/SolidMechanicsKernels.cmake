@@ -15,6 +15,9 @@ set( SmallStrainResidualPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} 
 configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp.in
                 ${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/policies.hpp )
 
+                configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp.in
+                ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp )
+
 
 set( kernelNames SolidMechanicsKernels )
 set( subregionList CellElementSubRegion )
@@ -30,17 +33,17 @@ set( solidBaseDispatch DamageSpectral<ElasticIsotropic>
                        ElasticIsotropicPressureDependent
                        ElasticOrthotropic )
 
-set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2 )
-#                           H1_Wedge_Lagrange1_Gauss6
-#                           H1_Tetrahedron_Lagrange1_Gauss1
-#                           H1_Pyramid_Lagrange1_Gauss5
-#                           H1_Tetrahedron_VEM_Gauss1
-#                           H1_Prism5_VEM_Gauss1
-#                           H1_Prism6_VEM_Gauss1
-#                           H1_Prism7_VEM_Gauss1
-#                           H1_Prism8_VEM_Gauss1
-#                           H1_Prism9_VEM_Gauss1
-#                           H1_Prism10_VEM_Gauss1 )
+set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
+                           H1_Wedge_Lagrange1_Gauss6
+                           H1_Tetrahedron_Lagrange1_Gauss1
+                           H1_Pyramid_Lagrange1_Gauss5
+                           H1_Tetrahedron_VEM_Gauss1
+                           H1_Prism5_VEM_Gauss1
+                           H1_Prism6_VEM_Gauss1
+                           H1_Prism7_VEM_Gauss1
+                           H1_Prism8_VEM_Gauss1
+                           H1_Prism9_VEM_Gauss1
+                           H1_Prism10_VEM_Gauss1 )
 
 if ( NOT ${ENABLE_HIP} )
   list(APPEND finiteElementDispatch
@@ -74,6 +77,9 @@ endif( )
     endforeach()
   endforeach()
 
+  list( APPEND physicsSolvers_sources "${CMAKE_SOURCE_DIR}/coreComponents/physicsSolvers/solidMechanics/kernels/SolidMechanicsSmallStrainResidualKernels.cpp" )
+
+  
   set( porousSolidDispatch PorousSolid<ElasticIsotropic> )
 
   set( kernelNames SolidMechanicsFixedStressThermoPoroElasticKernels )

@@ -15,6 +15,7 @@
 /**
  * @file MatrixFreeSolidMechanicsFEM.cpp
  */
+#define SELECTED_FE_TYPES H1_Hexahedron_Lagrange1_GaussLegendre2
 
 // Source includes
 #include "MatrixFreeSolidMechanicsFEM.hpp"
@@ -120,13 +121,13 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
                                                                                          "" );
 
     finiteElement::
-             regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                           constitutive::SolidBase,
-                                           CellElementSubRegion >( mesh,
-                                                                   regionNames,
-                                                                   m_finiteElementName,
-                                                                   "solidMaterialNames",
-                                                                   kernelFactory );
+    regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                  constitutive::ElasticIsotropic,
+                                  CellElementSubRegion >( mesh,
+                                                          regionNames,
+                                                          m_finiteElementName,
+                                                          "solidMaterialNames",
+                                                          kernelFactory );
 #endif
   }
 
@@ -403,3 +404,4 @@ MatrixFreeSolidMechanicsFEM::applySystemSolution( DofManager const & dofManager,
 REGISTER_CATALOG_ENTRY( SolverBase, MatrixFreeSolidMechanicsFEM, string const &, Group * const )
 //END_SPHINX_INCLUDE_REGISTER
 } /* namespace geos */
+#undef SELECTED_FE_TYPES

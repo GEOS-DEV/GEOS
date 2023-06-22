@@ -89,7 +89,7 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
                                                                                                localIndex const q,
                                                                                                StackVariables & stack ) const
 {
-//#define USE_JACOBIAN
+#define USE_JACOBIAN
 #if !defined( USE_JACOBIAN )
   real64 dNdX[ numNodesPerElem ][ 3 ];
   real64 const detJ = FE_TYPE::calcGradN( q, stack.xLocal, dNdX );
@@ -197,7 +197,7 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
                                                                                                real64 const (&varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
                                                                                                real64 (&fLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const
 {
-#define USE_JACOBIAN 2
+#define USE_JACOBIAN 1
 #if !defined(USE_JACOBIAN)
   real64 dNdX[ numNodesPerElem ][ 3 ];
   real64 const detJ = FE_TYPE::calcGradN( qa, qb, qc, xLocal, dNdX );

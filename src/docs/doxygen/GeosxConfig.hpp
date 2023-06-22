@@ -30,10 +30,10 @@
 #define GEOSX_USE_MPI
 
 /// Enables use of OpenMP (CMake option ENABLE_OPENMP)
-#define GEOSX_USE_OPENMP
+/* #undef GEOSX_USE_OPENMP */
 
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
-#define GEOS_USE_CUDA
+/* #undef GEOS_USE_CUDA */
 
 /// Enables use of CUDA NVToolsExt (CMake option ENABLE_CUDA_NVTOOLSEXT)
 /* #undef GEOS_USE_CUDA_NVTOOLSEXT */
@@ -126,25 +126,25 @@
 #define GEOSX_BLOCK_SIZE 32
 
 /// Version information for HDF5
-#define HDF5_VERSION 1.14.1
+#define HDF5_VERSION 1.12.1
 
 /// Version information for Conduit
-#define Conduit_VERSION 0.8.7
+#define Conduit_VERSION 0.8.2
 
 /// Version information for RAJA
-#define RAJA_VERSION 2022.10.5
+#define RAJA_VERSION 2022.3.0
 
 /// Version information for umpire
-#define umpire_VERSION 2022.10.0
+#define umpire_VERSION 2022.3.0
 
 /// Version information for chai
 /* #undef chai_VERSION */
 
 /// Version information for adiak
-#define adiak_VERSION ..
+/* #undef adiak_VERSION */
 
 /// Version information for caliper
-#define caliper_VERSION 2.8.0
+/* #undef caliper_VERSION */
 
 /// Version information for Metis
 #define METIS_VERSION 5.1.0
@@ -165,10 +165,10 @@
 #define VTK_VERSION 9.1.0
 
 /// Version information for fmt
-#define fmt_VERSION 10.0.0
+#define fmt_VERSION 8.0.1
 
 /// Version information for python
-#define Python3_VERSION 3.10.8
+#define Python3_VERSION 3.11.4
 
 /// Version information for CUDAToolkit
 /* #undef CUDAToolkit_VERSION */

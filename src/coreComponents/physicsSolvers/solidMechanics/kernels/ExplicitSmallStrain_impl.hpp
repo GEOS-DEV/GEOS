@@ -108,20 +108,24 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, timeIncrement, strain, stressLocal );
 #else
   m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
+#endif
+
   for( localIndex c = 0; c < 6; ++c )
   {
-#if UPDATE_STRESS == 1
-    stressLocal[ c ] = -( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * detJ;
+#if UPDATE_STRESS == 2
+    stressLocal[ c ] *= -detJ;
+#elif UPDATE_STRESS == 1
+    stressLocal[ c ] = -( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * detJ;   // TODO: decide on
+                                                                                                     // initial stress
+                                                                                                     // strategy
 #else
     stressLocal[ c ] *= -detJ;
 #endif
   }
-#endif
-
 
   FE_TYPE::plusGradNajAij( dNdX, stressLocal, stack.fLocal );
 
-#else //!defined( USE_JACOBIAN )
+#else
   real64 invJ[3][3];
   real64 const detJ = FE_TYPE::inverseJacobianTransformation( q, stack.xLocal, invJ );
 
@@ -134,19 +138,23 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, timeIncrement, strain, stressLocal );
 #else
   m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
+#endif
+
   for( localIndex c = 0; c < 6; ++c )
   {
-#if UPDATE_STRESS == 1
-    stressLocal[ c ] = ( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * DETJ;
+#if UPDATE_STRESS == 2
+    stressLocal[ c ] *= detJ;
+#elif UPDATE_STRESS == 1
+    stressLocal[ c ] = ( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * DETJ;   // TODO: decide on
+                                                                                                    // initial stress
+                                                                                                    // strategy
 #else
     stressLocal[ c ] *= DETJ;
 #endif
   }
 
-#endif
-
   FE_TYPE::plusGradNajAij( q, invJ, stressLocal, stack.fLocal );
-#endif // !defined( USE_JACOBIAN )
+#endif
 }
 
 template< typename SUBREGION_TYPE,
