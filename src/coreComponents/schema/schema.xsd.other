@@ -326,13 +326,14 @@
 	<xsd:complexType name="TableFunctionType" />
 	<xsd:complexType name="GeometryType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="BoundedPlane" type="BoundedPlaneType" />
 			<xsd:element name="Box" type="BoxType" />
+			<xsd:element name="CustomPolarObject" type="CustomPolarObjectType" />
 			<xsd:element name="Cylinder" type="CylinderType" />
+			<xsd:element name="Disc" type="DiscType" />
+			<xsd:element name="Rectangle" type="RectangleType" />
 			<xsd:element name="ThickPlane" type="ThickPlaneType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="BoundedPlaneType" />
 	<xsd:complexType name="BoxType">
 		<!--center => (no description available)-->
 		<xsd:attribute name="center" type="R1Tensor" />
@@ -341,7 +342,10 @@
 		<!--sinStrike => (no description available)-->
 		<xsd:attribute name="sinStrike" type="real64" />
 	</xsd:complexType>
+	<xsd:complexType name="CustomPolarObjectType" />
 	<xsd:complexType name="CylinderType" />
+	<xsd:complexType name="DiscType" />
+	<xsd:complexType name="RectangleType" />
 	<xsd:complexType name="ThickPlaneType" />
 	<xsd:complexType name="IncludedType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
