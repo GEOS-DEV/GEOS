@@ -89,6 +89,10 @@ void CompositionalMultiphaseFVM::setupDofs( DomainPartition const & domain,
                        m_numDofPerCell,
                        getMeshTargets() );
 
+  // this call with instruct GEOS to reorder the dof numbers
+  //dofManager.setLocalReorderingType( viewKeyStruct::elemDofFieldString(),
+  //                                   DofManager::LocalReorderingType::ReverseCutHillMcKee );
+
   if( m_useVolumeConstraint )
   {
     // for the volume balance equation, disable global coupling
@@ -154,6 +158,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      elemDofKey,
                                                      m_hasCapPressure,
                                                      m_useTotalMassEquation,
+                                                     fluxApprox.upwindingParams(),
                                                      getName(),
                                                      mesh.getElemManager(),
                                                      stencilWrapper,
