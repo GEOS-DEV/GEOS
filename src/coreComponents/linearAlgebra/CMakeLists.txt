@@ -36,6 +36,7 @@ set( linearAlgebra_headers
      utilities/LinearSolverParameters.hpp
      utilities/LinearSolverResult.hpp
      utilities/NormalOperator.hpp
+     utilities/ReverseCutHillMcKeeOrdering.hpp
      utilities/TransposeOperator.hpp
    )
 
@@ -50,6 +51,7 @@ set( linearAlgebra_sources
      solvers/GmresSolver.cpp
      solvers/KrylovSolver.cpp
      solvers/SeparateComponentPreconditioner.cpp
+     utilities/ReverseCutHillMcKeeOrdering.cpp       
    )
 
 set( dependencyList ${parallelDeps} mesh denseLinearAlgebra )
