@@ -15,7 +15,7 @@
         directParallel="0"
         logLevel="200"
         krylovTol="1.0e-20"
-        krylovMaxIter="10"/>
+        krylovMaxIter="1000"/>
     </MatrixFreeSolidMechanicsFEM>
 
     <!-- <SolidMechanicsLagrangianSSLE
