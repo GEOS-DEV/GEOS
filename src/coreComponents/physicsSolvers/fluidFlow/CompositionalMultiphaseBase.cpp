@@ -1214,7 +1214,19 @@ void CompositionalMultiphaseBase::assembleSystem( real64 const GEOS_UNUSED_PARAM
                      dofManager,
                      localMatrix,
                      localRhs );
+
+//  if(!m_useVolumeConstraint)
+//  {
+//    reduceVolumeConstraint( localMatrix,
+//                            localRhs );
+//  }
 }
+
+//void CompositionalMultiphaseBase::reduceVolumeConstraint( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+//                                                          arrayView1d< real64 > const & localRhs ) const
+//{
+//
+//}
 
 void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( DomainPartition & domain,
                                                                              DofManager const & dofManager,

@@ -809,7 +809,7 @@ public:
   void complete( localIndex const ei,
                  StackVariables & stack,
                  integer const useTotalMassEquation,
-                 integer const useVolumeConstraint) const
+                 integer const GEOS_UNUSED_PARAM( useVolumeConstraint ) ) const
   {
     using namespace compositionalMultiphaseUtilities;
 
@@ -825,7 +825,8 @@ public:
     // - the component mass balance equations (i = 0 to i = numComp-1)
     // - the volume balance equations (i = numComp)
     // note that numDof includes derivatives wrt temperature if this class is derived in ThermalKernels
-    integer const numRows = useVolumeConstraint ? numComp+1 : numComp;
+    integer const numRows = numComp+1;
+    //integer const numRows = useVolumeConstraint ? numComp+1 : numComp;
     for( integer i = 0; i < numRows; ++i )
     {
       m_localRhs[stack.localRow + i] += stack.localResidual[i];
@@ -881,7 +882,7 @@ public:
       {
         kernelComponent.computeAccumulation( ei, stack );
       }
-      if( useVolumeConstraint > 0 )
+      //if( useVolumeConstraint > 0 )
       {
         kernelComponent.computeVolumeBalance( ei, stack );
       }
