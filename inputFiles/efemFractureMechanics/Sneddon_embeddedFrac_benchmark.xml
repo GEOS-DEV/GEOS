@@ -19,7 +19,7 @@
       contactRelationName="fractureContact"
       logLevel="1">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
+        newtonTol="1.0e-3"
         newtonMaxIter="2"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
@@ -71,10 +71,10 @@
       forceDt="10"
       target="/Solvers/mechSolve"/>
 
-    <PeriodicEvent
+    <!-- <PeriodicEvent
       name="outputs"
       cycleFrequency="10"
-      target="/Outputs/vtkOutput"/>
+      target="/Outputs/vtkOutput"/> -->
   </Events>
   
 </Problem>
