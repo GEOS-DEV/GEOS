@@ -33,10 +33,10 @@
 #define GEOSX_USE_OPENMP
 
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
-/* #undef GEOS_USE_CUDA */
+#define GEOS_USE_CUDA
 
 /// Enables use of CUDA NVToolsExt (CMake option ENABLE_CUDA_NVTOOLSEXT)
-/* #undef GEOS_USE_CUDA_NVTOOLSEXT */
+#define GEOS_USE_CUDA_NVTOOLSEXT
 
 /// Enables use of HIP (CMake option ENABLE_HIP)
 /* #undef GEOS_USE_HIP */
@@ -69,7 +69,7 @@
   /// Parsed hypre version information
   #define HYPRE_VERSION_MAJOR 2
   /// Parsed hypre version information
-  #define HYPRE_VERSION_MINOR 28
+  #define HYPRE_VERSION_MINOR 27
   /// Parsed hypre version information
   #define HYPRE_VERSION_PATCH 0
 #endif
@@ -81,7 +81,7 @@
 /// Denotes HYPRE using HIP
 #define GEOS_USE_HYPRE_HIP 2
 /// Macro determining what parellel interface hypre is using
-#define GEOS_USE_HYPRE_DEVICE GEOS_USE_HYPRE_CPU
+#define GEOS_USE_HYPRE_DEVICE GEOS_USE_HYPRE_CUDA
 
 /// Enables use of SuperLU_dist library through HYPRE (CMake option ENABLE_SUPERLU_DIST)
 #define GEOSX_USE_SUPERLU_DIST
@@ -171,7 +171,7 @@
 #define Python3_VERSION 3.10.8
 
 /// Version information for CUDAToolkit
-/* #undef CUDAToolkit_VERSION */
+#define CUDAToolkit_VERSION 11.6.112
 
 #if defined(GEOS_USE_CUDA) || defined(GEOS_USE_HIP)
 // This needs to be placed into this header in order to appropriately replace

@@ -782,8 +782,7 @@ private:
   isPackableImpl( ) const
   {
     static_assert( std::is_same< T, U >::value, "should only be instantiated for the wrapped type!" );
-    auto const & ref = reference();
-    if( ref.getPreviousSpace() == LvArray::MemorySpace::host && ref.checkTouch() )
+    if( reference().getPreviousSpace() == LvArray::MemorySpace::host )
     {
       // a type with the mem-space functions, that is not packable on device (e.g. array<string> ), should never be moved to device,
       //  so it should always have previousSpace == host and checkTouch == true, and we can then host-pack it if possible (should always be possible)
@@ -809,8 +808,7 @@ private:
   isPackableByIndexImpl( ) const
   {
     static_assert( std::is_same< T, U >::value, "should only be instantiated for the wrapped type!" );
-    auto const & ref = reference();
-    if( ref.getPreviousSpace() == LvArray::MemorySpace::host && ref.checkTouch() )
+    if( reference().getPreviousSpace() == LvArray::MemorySpace::host )
     {
       return bufferOps::is_host_packable_by_index< U >;
     }
@@ -863,8 +861,7 @@ private:
   unpackImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events )
   {
     static_assert( std::is_same< T, U >::value, "should only be instantiated for the wrapped type!" );
-    auto const & ref = reference();
-    if( ref.getPreviousSpace() == LvArray::MemorySpace::host && ref.checkTouch() )
+    if( reference().getPreviousSpace() == LvArray::MemorySpace::host )
     {
       return unpackHostImpl( buffer, withMetadata, events );
     }
@@ -917,8 +914,7 @@ private:
   unpackByIndexImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events )
   {
     static_assert( std::is_same< T, U >::value, "should only be instantiated for the wrapped type!" );
-    auto const & ref = reference();
-    if( ref.getPreviousSpace() == LvArray::MemorySpace::host && ref.checkTouch() )
+    if( reference().getPreviousSpace() == LvArray::MemorySpace::host )
     {
       return unpackByIndexHostImpl( buffer, unpackIndices, withMetadata, events );
     }
@@ -967,8 +963,12 @@ private:
     if( withMetadata )
     {
       packedSize += bufferOps::Pack< DO_PACKING >( buffer, getName() );
+      packedSize += bufferOps::Pack< DO_PACKING >( buffer, *m_data );
     }
-    packedSize += bufferOps::Pack< DO_PACKING >( buffer, *m_data );
+    else
+    {
+      packedSize += bufferOps::PackData< DO_PACKING >( buffer, *m_data );
+    }
 
     return packedSize;
   }
@@ -979,8 +979,7 @@ private:
             bool withMetadata,
             parallelDeviceEvents & events ) const
   {
-    auto const & ref = reference();
-    if( ref.getPreviousSpace() == LvArray::MemorySpace::host && ref.checkTouch() )
+    if( reference().getPreviousSpace() == LvArray::MemorySpace::host )
     {
       return packHostImpl< DO_PACKING >( buffer, withMetadata, events );
     }
@@ -1042,8 +1041,12 @@ private:
     if( withMetadata )
     {
       packedSize += bufferOps::Pack< DO_PACKING >( buffer, getName() );
+      packedSize += wrapperHelpers::PackByIndex< DO_PACKING >( buffer, *m_data, packList );
     }
-    packedSize += wrapperHelpers::PackByIndex< DO_PACKING >( buffer, *m_data, packList );
+    else
+    {
+      packedSize += wrapperHelpers::PackDataByIndex< DO_PACKING >( buffer, *m_data, packList );
+    }
 
     return packedSize;
   }
@@ -1056,8 +1059,7 @@ private:
                    parallelDeviceEvents & events ) const
   {
     static_assert( std::is_same< T, U >::value, "should only be instantiated for the wrapped type!" );
-    auto const & ref = reference();
-    if( ref.getPreviousSpace() == LvArray::MemorySpace::host && ref.checkTouch() )
+    if( reference().getPreviousSpace() == LvArray::MemorySpace::host )
     {
       return packByIndexHostImpl< DO_PACKING >( buffer, packList, withMetadata, events );
     }
