@@ -493,9 +493,9 @@ class Geosx(CMakePackage, CudaPackage):
 
         # Copy host-config out of temporary spack build directory into install
         # directory for geosx and current working directory
-        os.system('cp ' + host_config_path + ' ' + self.prefix)
-        cwd_path = os.path.dirname(os.path.dirname(self.prefix))
-        os.system('cp ' + host_config_path + ' ' + cwd_path)
+        # os.system('cp ' + host_config_path + ' ' + self.prefix)
+        # cwd_path = os.path.dirname(os.path.dirname(self.prefix))
+        # os.system('cp ' + host_config_path + ' ' + cwd_path)
 
     def cmake_args(self):
         pass
