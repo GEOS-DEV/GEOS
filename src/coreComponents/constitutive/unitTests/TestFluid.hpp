@@ -67,6 +67,7 @@ public:
     createArray( testFluid->criticalTemperature, components, Fluid::Tc, Fluid::data );
     createArray( testFluid->acentricFactor, components, Fluid::Ac, Fluid::data );
     createArray( testFluid->molecularWeight, components, Fluid::Mw, Fluid::data );
+    createArray( testFluid->volumeShift, std::vector< real64 >( NC, 0.0 ) );
     return testFluid;
   }
 
