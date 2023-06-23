@@ -329,7 +329,6 @@ struct DampingMatrixKernel
 
         for( localIndex q = 0; q < numNodesPerFace; ++q )
         {
-          //Debug
           real32 const localIncrement = alpha*m_finiteElement.computeDampingTerm( q, xLocal );
           RAJA::atomicAdd< ATOMIC_POLICY >( &damping[facesToNodes[f][q]], localIncrement );
 
