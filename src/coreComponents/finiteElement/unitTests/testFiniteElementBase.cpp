@@ -17,6 +17,7 @@
 #include "gtest/gtest.h"
 #include "testFiniteElementHelpers.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "common/Format.hpp"
 #include <chrono>
 
 
@@ -121,15 +122,15 @@ TEST( FiniteElementBase, test_capture )
     detJDimsView[0] = feBase.getDetJView().size( 0 );
     detJDimsView[1] = feBase.getDetJView().size( 1 );
 
-    printf( "gradNDimsView = { %ld, %ld, %ld, %ld }\n",
-            gradNDimsView[0],
-            gradNDimsView[1],
-            gradNDimsView[2],
-            gradNDimsView[3] );
+    GEOS_LOG( GEOS_FMT( "gradNDimsView = { {}, {}, {}, {} }\n",
+                        gradNDimsView[0],
+                        gradNDimsView[1],
+                        gradNDimsView[2],
+                        gradNDimsView[3] ) );
 
-    printf( "detJDimsView = { %ld, %ld }\n",
-            detJDimsView[0],
-            detJDimsView[1] );
+    GEOS_LOG( GEOS_FMT( "detJDimsView = { {}, {} }",
+                         detJDimsView[0],
+                         detJDimsView[1] ) );
   } );
 
   forAll< serialPolicy >( 1, [ feBase, gradNDimsView, detJDimsView ]( int const i )

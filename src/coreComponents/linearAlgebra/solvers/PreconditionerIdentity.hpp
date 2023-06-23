@@ -15,6 +15,7 @@
 #ifndef GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERIDENTITY_HPP_
 #define GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERIDENTITY_HPP_
 
+#include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/common/LinearOperator.hpp"
 #include "linearAlgebra/common/PreconditionerBase.hpp"
 
