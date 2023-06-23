@@ -70,7 +70,7 @@
 
 
   <Events
-    maxTime="1015.0">
+    maxTime="1016.0">
  
     <PeriodicEvent
       name="solverApplication0"
@@ -88,8 +88,8 @@
     <PeriodicEvent
       name="solverApplication2"
       beginTime="1012.0"
-      endTime="1015.0"
-      forceDt="0.04"
+      endTime="1016.0"
+      forceDt="0.02"
       target="/Solvers/phasefieldPoroSolve"/>
 
     <PeriodicEvent
@@ -108,8 +108,8 @@
     <PeriodicEvent
       name="vtkOutput2"
       beginTime="1012.0"
-      endTime="1015.0"
-      forceDt="0.04"
+      endTime="1016.0"
+      forceDt="0.02"
       target="/Outputs/VTKOutput"/>
 
     <PeriodicEvent
@@ -228,7 +228,7 @@
       name="shearYPos"    
       setNames="{ ypos }"
       objectPath="faceManager"
-      scale="5"
+      scale="2.8"
       tractionType="vector"
       direction="{1,0,0}" />
 
@@ -236,7 +236,7 @@
       name="shearYNeg"    
       setNames="{ yneg }"
       objectPath="faceManager"
-      scale="5"
+      scale="2.8"
       tractionType="vector"
       direction="{-1,0,0}"/>
 
@@ -319,7 +319,7 @@
   <Outputs>
     <VTK
       name="VTKOutput"
-      plotFileRoot="phaseFieldPoro_nucleation_wellbore2dConcrete_L=0p5_r=4_b=0p8_8-12-0-shear=5"/>
+      plotFileRoot="phaseFieldPoro_nucleation_wellbore2dConcrete_L=0p5_r=4_b=0p8_8-12-0-shear=2p8"/>
 
     <Restart
       name="restartOutput"/>
