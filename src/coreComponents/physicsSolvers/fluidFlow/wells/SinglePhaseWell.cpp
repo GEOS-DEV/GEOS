@@ -1028,7 +1028,7 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
       }
       if( !wellControls.isWellOpen( time_n + dt ) )
       {
-        GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
+        GEOS_LOG( GEOS_FMT( "{}: well {} is shut", wellControlsName, getName() ) );
         return;
       }
 

@@ -72,12 +72,6 @@ void TableFunction::readFile( string const & filename, array1d< real64 > & targe
   }
 }
 
-void TableFunction::setLogLevel( integer const logLevel )
-{
-  setLogLevel(logLevel);
-  getLogLevel();
-}
-
 void TableFunction::setInterpolationMethod( InterpolationType const method )
 {
   m_interpolationMethod = method;

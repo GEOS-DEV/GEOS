@@ -287,8 +287,6 @@ private:
    */
   void setTableValues( real64_array values );
 
-  void setLogLevel( integer logLevel );
-
   /**
    * @brief Create an instance of the kernel wrapper
    * @return the kernel wrapper
@@ -375,9 +373,9 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
     arraySlice1d< real64 const > const coords = m_coordinates[dim];
     if( input[dim] <= coords[0] )
     {
-      if(m_logLevel > 0)
+      if(m_logLevel > 0 && input[dim] < coords[0])
       {
-        GEOS_WARNING("Table " << m_tableName << ": argument value << " << input[dim] << " is below the minimum range limit " << coords[0] );
+        GEOS_WARNING("Table " << m_tableName << ": argument value " << input[dim] << " is below the minimum range limit " << coords[0] );
       }
       // Coordinate is to the left of this axis
       bounds[dim][0] = 0;
@@ -387,9 +385,9 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
     }
     else if( input[dim] >= coords[coords.size() - 1] )
     {
-      if(m_logLevel > 0)
+      if(m_logLevel > 0 && input[dim] > coords[coords.size() - 1])
       {
-        GEOS_WARNING("Table " << m_tableName << ": argument value << " << input[dim] << " is above the maximum range limit " << coords[coords.size() - 1] );
+        GEOS_WARNING("Table " << m_tableName << ": argument value " << input[dim] << " is above the maximum range limit " << coords[coords.size() - 1] );
       }
       // Coordinate is to the right of this axis
       bounds[dim][0] = coords.size() - 1;
