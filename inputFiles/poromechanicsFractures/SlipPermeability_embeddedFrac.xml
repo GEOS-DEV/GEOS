@@ -41,6 +41,7 @@
       name="SurfaceGenerator"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
+      targetObjects="{ FracturePlane }"
       fractureRegion="Fracture"
       logLevel="2"
       mpiCommOrder="1"/>
@@ -60,7 +61,7 @@
   </Mesh>
 
   <Geometry>
-    <BoundedPlane
+    <Rectangle
       name="FracturePlane"
       normal="{-0.342020143325669, 0.939692620785908, 0.0}"
       origin="{0.0, 0.0, 0.5}"

@@ -47,6 +47,7 @@
       targetRegions="{ Domain, Fracture }"
       discretization="FE1"    
       fractureRegion="Fracture"
+      targetObjects="{ FracturePlane }"
       logLevel="1"
       mpiCommOrder="1"/>
   </Solvers>
