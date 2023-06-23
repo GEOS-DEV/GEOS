@@ -299,18 +299,23 @@ struct DampingMatrixKernel
         }
 
         // ABC coefficients
-        real32 const alpha = 1.0 / velocity[k];
+        real32 alpha = 1.0 / velocity[k];
         // VTI coefficients
         real32 vti_p_xy= 0, vti_p_z = 0, vti_pq_z = 0;
         real32 vti_q_xy= 0, vti_q_z = 0, vti_qp_xy= 0;
         if(lateralSurfaceFaceIndicator[f] == 1)
         {
+          // ABC coefficients updated to fit horizontal velocity
+          alpha /= sqrt(1+2*epsilon[k]);
+
           vti_p_xy  = (1+2*epsilon[k]);
           vti_q_xy  = -(vti_f[k]-1);
           vti_qp_xy = (vti_f[k]+2*delta[k]);
         }
         if(bottomSurfaceFaceIndicator[f] == 1)
         {
+          // ABC coefficients updated to fit horizontal velocity
+          alpha /= sqrt(1+2*delta[k]);
           vti_p_z  = -(vti_f[k]-1);
           vti_pq_z = vti_f[k];
           vti_q_z  = 1;
