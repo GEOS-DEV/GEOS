@@ -226,36 +226,36 @@ void SolidMechanicsLagrangianFEM::setConstitutiveNames( ElementSubRegionBase & s
 }
 
 
-// void SolidMechanicsLagrangianFEM::initializePreSubGroups()
-// {
-//   SolverBase::initializePreSubGroups();
+void SolidMechanicsLagrangianFEM::initializePreSubGroups()
+{
+  SolverBase::initializePreSubGroups();
 
-//   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
 
-//   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-//                                                                 MeshLevel & meshLevel,
-//                                                                 arrayView1d< string const > const & regionNames )
-//   {
-//     ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
-//     elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
-//                                                                        [&]( localIndex const,
-//                                                                             CellElementSubRegion & subRegion )
-//     {
-//       string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-//       solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
-//     } );
-//   } );
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & meshLevel,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+    elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                       [&]( localIndex const,
+                                                                            CellElementSubRegion & subRegion )
+    {
+      string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+      solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
+    } );
+  } );
 
-//   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
-//   FiniteElementDiscretizationManager const &
-//   feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
+  FiniteElementDiscretizationManager const &
+  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
 
-//   FiniteElementDiscretization const &
-//   feDiscretization = feDiscretizationManager.getGroup< FiniteElementDiscretization >( m_discretizationName );
-//   GEOS_UNUSED_VAR( feDiscretization );
-// }
+  FiniteElementDiscretization const &
+  feDiscretization = feDiscretizationManager.getGroup< FiniteElementDiscretization >( m_discretizationName );
+  GEOS_UNUSED_VAR( feDiscretization );
+}
 
 
 
@@ -317,7 +317,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
     FaceManager const & faceManager = mesh.getFaceManager();
     EdgeManager const & edgeManager = mesh.getEdgeManager();
     arrayView1d< real64 > & mass = nodes.getField< solidMechanics::mass >();
-
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD> const  X = nodes.referencePosition();
     arrayView1d< integer const > const & nodeGhostRank = nodes.ghostRank();
 
     // to fill m_sendOrReceiveNodes and m_nonSendOrReceiveNodes, we first insert
@@ -357,7 +357,6 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
           "SolidMechanicsLagrangianFEM::m_elemsNotAttachedToSendOrReceiveNodes["
           + std::to_string( er ) + "][" + std::to_string( esr ) + "]" );
 
-        arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
         finiteElement::FiniteElementBase const &
@@ -379,27 +378,33 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
           constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
           real64 N[maxSupportPoints];
+          real64 xLocal[maxSupportPoints][3];
+
+
           for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
           {
             typename FE_TYPE::StackVariables feStack;
             finiteElement.template setup< FE_TYPE >( k, meshData, feStack );
-            localIndex const numSupportPoints =
-              finiteElement.template numSupportPoints< FE_TYPE >( feStack );
+            localIndex const numSupportPoints = finiteElement.template numSupportPoints< FE_TYPE >( feStack );
 
-//#if ! defined( CALC_FEM_SHAPE_IN_KERNEL ) // we don't calculate detJ in this case
+            for( localIndex a=0; a< numSupportPoints; ++a )
+            {
+              for( localIndex i=0; i<3; ++i )
+              {
+                xLocal[a][i] = X( elemsToNodes(k,a), i );
+              }
+            }
+
             for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
             {
-              real64 const detJ = 1;//finiteElement.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
-
-              FE_TYPE::calcN( q, feStack, N );
+              real64 J[3][3];
+              real64 const detJW = FE_TYPE::invJacobianTransformation(q,xLocal,J);
 
               for( localIndex a=0; a< numSupportPoints; ++a )
               {
-//                mass[elemsToNodes[k][a]] += rho[k][q] * detJ[k][q] * N[a];
-                mass[elemsToNodes[k][a]] += rho[k][q] * detJ * N[a];
+                mass[elemsToNodes[k][a]] += rho[k][q] * detJW * N[a];
               }
             }
-//#endif
 
             bool isAttachedToGhostNode = false;
             for( localIndex a=0; a<elementSubRegion.numNodesPerElement(); ++a )

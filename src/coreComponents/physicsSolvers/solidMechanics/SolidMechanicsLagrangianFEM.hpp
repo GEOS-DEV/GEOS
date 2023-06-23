@@ -82,7 +82,7 @@ public:
    */
   static string catalogName() { return "SolidMechanics_LagrangianFEM"; }
 
-//  virtual void initializePreSubGroups() override;
+  virtual void initializePreSubGroups() override;
 
   virtual void registerDataOnMesh( Group & meshBodies ) override final;
 

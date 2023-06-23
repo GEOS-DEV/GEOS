@@ -228,39 +228,6 @@ RAJA_INLINE void forRange( INDEX const begin, INDEX const end, LAMBDA && body )
   RAJA::forall< POLICY >( RAJA::TypedRangeSegment< INDEX >( begin, end ), std::forward< LAMBDA >( body ) );
 }
 
-/*
-RAJA Teams Policy setup
-*/
-using namespace RAJA::expt;
-#if defined(RAJA_ENABLE_CUDA)
-#define GEOSX_RAJA_DEVICE RAJA::ExecPlace::DEVICE
-using team_launch_policy = RAJA::LaunchPolicy<RAJA::seq_launch_t, RAJA::cuda_launch_t<true>>;
-using team_x = RAJA::LoopPolicy<RAJA::loop_exec, RAJA::cuda_block_x_loop>;
-using thread_z = RAJA::LoopPolicy<RAJA::loop_exec, RAJA::cuda_thread_z_loop>;
-using thread_y = RAJA::LoopPolicy<RAJA::loop_exec, RAJA::cuda_thread_y_loop>;
-using thread_x = RAJA::LoopPolicy<RAJA::loop_exec, RAJA::cuda_thread_x_loop>;
-#define GEOSX_SHARED RAJA_TEAM_SHARED
-#define GEOSX_STATIC_SHARED RAJA_TEAM_SHARED
-#elif defined(RAJA_ENABLE_HIP)
-#define GEOSX_RAJA_DEVICE RAJA::ExecPlace::DEVICE
-using team_launch_policy = RAJA::LaunchPolicy<RAJA::seq_launch_t, RAJA::hip_launch_t<true>>;
-using team_x = RAJA::LoopPolicy<RAJA::loop_exec, RAJA::hip_block_x_loop>;
-using thread_z = RAJA::LoopPolicy<RAJA::loop_exec, RAJA::hip_thread_z_loop>;
-using thread_y = RAJA::LoopPolicy<RAJA::loop_exec, RAJA::hip_thread_y_loop>;
-using thread_x = RAJA::LoopPolicy<RAJA::loop_exec, RAJA::hip_thread_x_loop>;
-#define GEOSX_SHARED RAJA_TEAM_SHARED
-#define GEOSX_STATIC_SHARED RAJA_TEAM_SHARED
-#else
-#define GEOSX_RAJA_DEVICE RAJA::ExecPlace::HOST
-using team_launch_policy = RAJA::LaunchPolicy<RAJA::seq_launch_t>;
-using team_x = RAJA::LoopPolicy<RAJA::loop_exec>;
-using thread_z = RAJA::LoopPolicy<RAJA::loop_exec>;
-using thread_y = RAJA::LoopPolicy<RAJA::loop_exec>;
-using thread_x = RAJA::LoopPolicy<RAJA::loop_exec>;
-#define GEOSX_SHARED
-#define GEOSX_STATIC_SHARED static
-#endif
-
 } // namespace geos
 
 #endif // GEOS_RAJAINTERFACE_RAJAINTERFACE_HPP

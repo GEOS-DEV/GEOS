@@ -3,7 +3,7 @@
 <Problem>
 
   <Included>
-    <File name="./TeamLaplace_base.xml"/>
+    <File name="./Laplace_base.xml"/>
   </Included>
 
   <Mesh>
@@ -13,9 +13,9 @@
       xCoords="{ 0, 1 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 3 }"
-      ny="{ 1 }"
-      nz="{ 1 }"
+      nx="{ 10 }"
+      ny="{ 10 }"
+      nz="{ 10 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
