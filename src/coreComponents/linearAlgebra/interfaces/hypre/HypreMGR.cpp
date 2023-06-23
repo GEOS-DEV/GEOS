@@ -78,11 +78,6 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
       setStrategy< CompositionalMultiphaseFVM >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
-    case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM_NC:
-    {
-      setStrategy< CompositionalMultiphaseFVM_NC >( params.mgr, numComponentsPerField, precond, mgrData );
-      break;
-    }
     case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM:
     {
       setStrategy< CompositionalMultiphaseHybridFVM >( params.mgr, numComponentsPerField, precond, mgrData );
