@@ -375,7 +375,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
     {
       if(m_logLevel > 0 && input[dim] < coords[0])
       {
-        GEOS_WARNING("Table " << m_tableName << ": argument value " << input[dim] << " is below the minimum range limit " << coords[0] );
+        GEOS_WARNING( GEOS_FMT( "Table {}: argument value {} is below the minimum range limit {}", input[dim], coords[0] ) );
       }
       // Coordinate is to the left of this axis
       bounds[dim][0] = 0;
@@ -387,7 +387,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
     {
       if(m_logLevel > 0 && input[dim] > coords[coords.size() - 1])
       {
-        GEOS_WARNING("Table " << m_tableName << ": argument value " << input[dim] << " is above the maximum range limit " << coords[coords.size() - 1] );
+        GEOS_WARNING( GEOS_FMT( "Table {}: argument value {} is above the minimum range limit {}", input[dim], coords[coords.size() - 1] ) );
       }
       // Coordinate is to the right of this axis
       bounds[dim][0] = coords.size() - 1;
