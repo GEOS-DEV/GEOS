@@ -373,11 +373,10 @@ public:
   GEOS_HOST_DEVICE
   void complete( localIndex const ei,
                  StackVariables & stack,
-                 integer const useTotalMassEquation,
-                 integer const useVolumeConstraint ) const
+                 integer const useTotalMassEquation ) const
   {
     // Step 1: assemble the component mass balance equations and volume balance equations
-    Base::complete( ei, stack, useTotalMassEquation, useVolumeConstraint );
+    Base::complete( ei, stack, useTotalMassEquation );
 
     // Step 2: assemble the energy equation
     m_localRhs[stack.localRow + numEqn-1] += stack.localResidual[numEqn-1];
@@ -431,7 +430,6 @@ public:
                    globalIndex const rankOffset,
                    integer const useTotalMassEquation,
                    integer const useSimpleAccumulation,
-                   integer const useVolumeConstraint,
                    string const dofKey,
                    ElementSubRegionBase const & subRegion,
                    MultiFluidBase const & fluid,
@@ -448,7 +446,7 @@ public:
       kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
       ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template
       launch< POLICY, ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF > >( subRegion.size(), useTotalMassEquation,
-                                                                         useSimpleAccumulation, useVolumeConstraint, kernel );
+                                                                         useSimpleAccumulation, kernel );
     } );
   }
 

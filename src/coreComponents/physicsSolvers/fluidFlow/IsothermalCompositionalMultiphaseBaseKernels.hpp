@@ -808,8 +808,7 @@ public:
   GEOS_HOST_DEVICE
   void complete( localIndex const ei,
                  StackVariables & stack,
-                 integer const useTotalMassEquation,
-                 integer const GEOS_UNUSED_PARAM( useVolumeConstraint ) ) const
+                 integer const useTotalMassEquation ) const
   {
     using namespace compositionalMultiphaseUtilities;
 
@@ -826,7 +825,6 @@ public:
     // - the volume balance equations (i = numComp)
     // note that numDof includes derivatives wrt temperature if this class is derived in ThermalKernels
     integer const numRows = numComp+1;
-    //integer const numRows = useVolumeConstraint ? numComp+1 : numComp;
     for( integer i = 0; i < numRows; ++i )
     {
       m_localRhs[stack.localRow + i] += stack.localResidual[i];
@@ -859,7 +857,6 @@ public:
   launch( localIndex const numElems,
           integer const useTotalMassEquation,
           integer const useSimpleAccumulation,
-          integer const useVolumeConstraint,
           KERNEL_TYPE const & kernelComponent )
   {
     GEOS_MARK_FUNCTION;
@@ -882,11 +879,8 @@ public:
       {
         kernelComponent.computeAccumulation( ei, stack );
       }
-      //if( useVolumeConstraint > 0 )
-      {
-        kernelComponent.computeVolumeBalance( ei, stack );
-      }
-      kernelComponent.complete( ei, stack, useTotalMassEquation, useVolumeConstraint );
+      kernelComponent.computeVolumeBalance( ei, stack );
+      kernelComponent.complete( ei, stack, useTotalMassEquation );
     } );
   }
 
@@ -968,7 +962,6 @@ public:
                    globalIndex const rankOffset,
                    integer const useTotalMassEquation,
                    integer const useSimpleAccumulation,
-                   integer const useVolumeConstraint,
                    string const dofKey,
                    ElementSubRegionBase const & subRegion,
                    MultiFluidBase const & fluid,
@@ -983,7 +976,7 @@ public:
       ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
       kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
       ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template launch< POLICY >( subRegion.size(), useTotalMassEquation,
-                                                                                  useSimpleAccumulation, useVolumeConstraint, kernel );
+                                                                                  useSimpleAccumulation, kernel );
     } );
   }
 

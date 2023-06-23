@@ -57,17 +57,14 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
 {
   CompositionalMultiphaseBase::initializePreSubGroups();
 
-  LinearSolverParameters::MGR::StrategyType& mgrStrategy = m_linearSolverParameters.get().mgr.strategy;
-  if(m_isThermal)
+  LinearSolverParameters::MGR::StrategyType & mgrStrategy = m_linearSolverParameters.get().mgr.strategy;
+  if( m_isThermal )
   {
     mgrStrategy = LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM;
   }
   else
   {
-    if(m_useVolumeConstraint)
-      mgrStrategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
-    else
-      mgrStrategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM_NC;
+    mgrStrategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
   }
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -93,13 +90,10 @@ void CompositionalMultiphaseFVM::setupDofs( DomainPartition const & domain,
   //dofManager.setLocalReorderingType( viewKeyStruct::elemDofFieldString(),
   //                                   DofManager::LocalReorderingType::ReverseCutHillMcKee );
 
-  if( m_useVolumeConstraint )
-  {
-    // for the volume balance equation, disable global coupling
-    // this equation is purely local (not coupled to neighbors or other physics)
-    dofManager.disableGlobalCouplingForEquation( viewKeyStruct::elemDofFieldString(),
-                                                 m_numComponents );
-  }
+  // for the volume balance equation, disable global coupling
+  // this equation is purely local (not coupled to neighbors or other physics)
+  dofManager.disableGlobalCouplingForEquation( viewKeyStruct::elemDofFieldString(),
+                                               m_numComponents );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -469,7 +463,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
   GEOS_MARK_FUNCTION;
 
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
-  DofManager::CompMask componentMask( m_numDofPerCell, 1, m_useVolumeConstraint ? m_numComponents+1 : m_numComponents );
+  DofManager::CompMask componentMask( m_numDofPerCell, 1, m_numComponents+1 );
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
@@ -486,8 +480,8 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
   if( m_isThermal )
   {
     DofManager::CompMask temperatureMask( m_numDofPerCell,
-                                          m_useVolumeConstraint ? m_numComponents+1 : m_numComponents,
-                                          m_useVolumeConstraint ? m_numComponents+2 : m_numComponents+1 );
+                                          m_numComponents+1,
+                                          m_numComponents+2 );
     dofManager.addVectorToField( localSolution,
                                  viewKeyStruct::elemDofFieldString(),
                                  fields::flow::temperature::key(),

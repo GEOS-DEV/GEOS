@@ -232,7 +232,6 @@ public:
 
     static constexpr char const * inputTemperatureString() { return "temperature"; }
     static constexpr char const * useMassFlagString() { return "useMass"; }
-    static constexpr char const * useVolumeConstraintString() { return "useVolumeConstraint"; }
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
@@ -408,9 +407,6 @@ protected:
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
-
-  /// flag to determine whether or not use volume constraint equation
-  integer m_useVolumeConstraint;
 
   /// flag to determine whether or not to apply capillary pressure
   integer m_hasCapPressure;

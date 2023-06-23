@@ -75,10 +75,6 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Use mass formulation instead of molar" );
-  this->registerWrapper( viewKeyStruct::useVolumeConstraintString(), &m_useVolumeConstraint ).
-    setApplyDefaultValue( 1 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Use volume constrain or not" );
 
   this->registerWrapper( viewKeyStruct::solutionChangeScalingFactorString(), &m_solutionChangeScalingFactor ).
     setSizedFromParent( 0 ).
@@ -221,10 +217,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
   }
   else
   {
-    if( m_useVolumeConstraint )
-      m_numDofPerCell = m_numComponents + 1; // n_c components + one pressure
-    else
-      m_numDofPerCell = m_numComponents;  // n_c-1 components + one pressure
+    m_numDofPerCell = m_numComponents + 1; // n_c components + one pressure
   }
 
   // 2. Register and resize all fields as necessary
@@ -1214,19 +1207,7 @@ void CompositionalMultiphaseBase::assembleSystem( real64 const GEOS_UNUSED_PARAM
                      dofManager,
                      localMatrix,
                      localRhs );
-
-//  if(!m_useVolumeConstraint)
-//  {
-//    reduceVolumeConstraint( localMatrix,
-//                            localRhs );
-//  }
 }
-
-//void CompositionalMultiphaseBase::reduceVolumeConstraint( CRSMatrixView< real64, globalIndex const > const & localMatrix,
-//                                                          arrayView1d< real64 > const & localRhs ) const
-//{
-//
-//}
 
 void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( DomainPartition & domain,
                                                                              DofManager const & dofManager,
@@ -1259,7 +1240,6 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
                                                      dofManager.rankOffset(),
                                                      m_useTotalMassEquation,
                                                      m_useSimpleAccumulation,
-                                                     m_useVolumeConstraint,
                                                      dofKey,
                                                      subRegion,
                                                      fluid,
@@ -1276,7 +1256,6 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
                                                      dofManager.rankOffset(),
                                                      m_useTotalMassEquation,
                                                      m_useSimpleAccumulation,
-                                                     m_useVolumeConstraint,
                                                      dofKey,
                                                      subRegion,
                                                      fluid,
