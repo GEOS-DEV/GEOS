@@ -151,8 +151,9 @@ void SolidMechanicsConformingFractures::implicitStepComplete( real64 const & tim
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
-                                                                arrayView1d< string const > const & )
+                                                                arrayView1d< string const > const & regionNames )
   {
+    GEOS_UNUSED_VAR( regionNames );
     meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
       arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
@@ -356,52 +357,26 @@ void SolidMechanicsConformingFractures::assembleSystem( real64 const time,
                                  localMatrix,
                                  localRhs );
 
-  /// ALEKS: I would call here the functions to assemble contact constraints
   if (m_contactEnforcementMethod == ContactEnforcementMethod::Penalty)
   {
-    assemblePenalizedContact(time, dt, domain, dofManager, localMatrix, localRhs);
+    // INTENTIONALLY LEFT BLANK FOR PENALIZED CONTACT
   }
-  /*else if (m_contactEnforcementMethod == ContactEnforcementMethod::NodalLagrangeMultiplier)
+  else if (m_contactEnforcementMethod == ContactEnforcementMethod::NodalLagrangeMultiplier)
   {
     assembleNodalLagrangeMultiplierContact();
   }
+  
   else if (m_contactEnforcementMethod == ContactEnforcementMethod::FaceLagrangeMultiplier)
   {
-    assembleFaceLagrangeMultiplierContact();
-  }*/
+    // TODO: CALL assembleFaceLagrangeMultiplierContact()
+    //assembleFaceLagrangeMultiplierContact();
+  }
 
 }
 
-void SolidMechanicsConformingFractures::assemblePenalizedContact( real64 const time,
-                                                                  real64 const dt,
-                                                                  DomainPartition & domain,
-                                                                  DofManager const & dofManager,
-                                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                  arrayView1d< real64 > const & localRhs )
+void SolidMechanicsConformingFractures::assembleNodalLagrangeMultiplierContact()
 {
   GEOS_MARK_FUNCTION;
-
-
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & meshLevel,
-                                                                arrayView1d< string const > const & regionNames )
-  {
-    //FaceManager const & faceManager = meshLevel.getFaceManager();
-    //NodeManager const & nodeManager = meshLevel.getNodeManager();
-    //ElementRegionManager const & elemManager = meshLevel.getElemManager();
-
-    //ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
-
-    //string const & tracDofKey = dofManager.getKey( contact::traction::key() );
-    //string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
-
-    //arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
-    //globalIndex const rankOffset = dofManager.rankOffset();
-
-    // Get the coordinates for all nodes
-    //arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
-
-  });
 }
 
 real64 SolidMechanicsConformingFractures::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time ),
@@ -411,7 +386,9 @@ real64 SolidMechanicsConformingFractures::calculateResidualNorm( real64 const & 
                                                                  arrayView1d< real64 const > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
-
+  GEOS_UNUSED_VAR(domain);
+  GEOS_UNUSED_VAR(dofManager);
+  GEOS_UNUSED_VAR(localRhs);
   return 0.0;
 }
 
@@ -553,7 +530,7 @@ void SolidMechanicsConformingFractures::applySystemSolution( DofManager const & 
 
 void SolidMechanicsConformingFractures::updateState( DomainPartition & domain )
 {
-  //computeFaceDisplacementJump( domain );
+  computeFaceDisplacementJump( domain );
 }
 
 bool SolidMechanicsConformingFractures::resetConfigurationToDefault( DomainPartition & domain ) const
@@ -566,6 +543,7 @@ bool SolidMechanicsConformingFractures::resetConfigurationToDefault( DomainParti
                                                                 MeshLevel & meshLevel,
                                                                 arrayView1d< string const > const & regionNames )
   {
+    GEOS_UNUSED_VAR( regionNames );
     NodeManager & nodes = meshLevel.getNodeManager();
     arrayView1d< integer > const & fractureState = nodes.getField< contact::fractureState >();
 
@@ -588,10 +566,10 @@ bool SolidMechanicsConformingFractures::updateConfiguration( DomainPartition & d
 
   int hasConfigurationConverged = true;
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & meshLevel,
-                                                                arrayView1d< string const > const & regionNames )
-  {} );
+  // forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  //                                                               MeshLevel & meshLevel,
+  //                                                               arrayView1d< string const > const & regionNames )
+  // {} );
   // Need to synchronize the fracture state due to the use will be made of in AssemblyStabilization
   synchronizeFractureState( domain );
 

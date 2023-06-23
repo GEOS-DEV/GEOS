@@ -406,6 +406,10 @@
 					<xsd:selector xpath="SinglePhaseWell" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="SolversSolidMechanicsConformingFracturesUniqueName">
+					<xsd:selector xpath="SolidMechanicsConformingFractures" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="SolversSolidMechanicsEmbeddedFracturesUniqueName">
 					<xsd:selector xpath="SolidMechanicsEmbeddedFractures" />
 					<xsd:field xpath="@name" />
@@ -1740,11 +1744,20 @@ the relative residual norm satisfies:
 		<xsd:attribute name="areaRelTol" type="real64" default="1e-08" />
 		<!--meanPermCoefficient => (no description available)-->
 		<xsd:attribute name="meanPermCoefficient" type="real64" default="1" />
+		<!--upwindingScheme => Type of upwinding scheme. Valid options:
+* PPU
+* C1PPU-->
+		<xsd:attribute name="upwindingScheme" type="geos_UpwindingScheme" default="PPU" />
 		<!--usePEDFM => (no description available)-->
 		<xsd:attribute name="usePEDFM" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geos_UpwindingScheme">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|PPU|C1PPU" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="OutputsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Blueprint" type="BlueprintType" />
@@ -1914,6 +1927,7 @@ the relative residual norm satisfies:
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 			</xsd:element>
+			<xsd:element name="SolidMechanicsConformingFractures" type="SolidMechanicsConformingFracturesType" />
 			<xsd:element name="SolidMechanicsEmbeddedFractures" type="SolidMechanicsEmbeddedFracturesType" />
 			<xsd:element name="SolidMechanicsLagrangianSSLE" type="SolidMechanicsLagrangianSSLEType" />
 			<xsd:element name="SolidMechanics_LagrangianFEM" type="SolidMechanics_LagrangianFEMType" />
@@ -2794,6 +2808,37 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="SolidMechanicsConformingFracturesType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--contactEnforcementMethod =>  add description here-->
+		<xsd:attribute name="contactEnforcementMethod" type="geos_SolidMechanicsConformingFractures_ContactEnforcementMethod" default="Penalty" />
+		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
+		<xsd:attribute name="contactRelationName" type="string" use="required" />
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
+		<xsd:attribute name="discretization" type="string" use="required" />
+		<!--fractureRegionName => Name of the fracture region.-->
+		<xsd:attribute name="fractureRegionName" type="string" use="required" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--solidSolverName => Name of the solid mechanics solver in the rock matrix-->
+		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:simpleType name="geos_SolidMechanicsConformingFractures_ContactEnforcementMethod">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|Penalty|NodalLagrangeMultiplier|FaceLagrangeMultiplier" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="SolidMechanicsEmbeddedFracturesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
