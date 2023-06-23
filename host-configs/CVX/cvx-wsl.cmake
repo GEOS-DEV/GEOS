@@ -14,4 +14,4 @@ set(MPI_Fortran_COMPILER "/usr/bin/mpifort" CACHE PATH "" FORCE)
 
 set(MPIEXEC_EXECUTABLE "/usr/bin/mpirun" CACHE PATH "" FORCE)
 
-include(cvx-base.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/cvx-base.cmake)

@@ -38,4 +38,4 @@ set(ENABLE_PVTPackage ON CACHE BOOL "" FORCE)
 set(ENABLE_DOXYGEN OFF CACHE BOOL "" FORCE)
 message( "ENABLE_DOXYGEN=${ENABLE_DOXYGEN}" )
 
-include(cvx-tpls.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/cvx-tpls.cmake)

@@ -61,4 +61,4 @@ if(ENABLE_CUDA)
   endif()
 endif()
 
-include(cvx-tpls.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/cvx-tpls.cmake)

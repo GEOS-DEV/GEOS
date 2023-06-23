@@ -14,4 +14,4 @@ set(MPI_Fortran_COMPILER "/vend/intel/parallel_studio_xe_2018_update3/compilers_
 
 set(MPIEXEC_EXECUTABLE "/vend/intel/parallel_studio_xe_2018_update3/compilers_and_libraries_2018.3.222/linux/mpi/intel64/bin/mpirun" CACHE PATH "" FORCE)
 
-include(cvx-base.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/cvx-base.cmake)
