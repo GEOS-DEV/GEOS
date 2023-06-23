@@ -33,6 +33,8 @@ TableFunction::TableFunction( const string & name,
   m_interpolationMethod( InterpolationType::Linear ),
   m_kernelWrapper( createKernelWrapper() )
 {
+  enableLogLevelInput();
+
   registerWrapper( viewKeyStruct::coordinatesString(), &m_tableCoordinates1D ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Coordinates inputs for 1D tables" );
@@ -164,7 +166,9 @@ void TableFunction::reInitializeFunction()
 
 TableFunction::KernelWrapper TableFunction::createKernelWrapper() const
 {
-  return { m_interpolationMethod,
+  return { getName(),
+           m_interpolationMethod,
+           getLogLevel(),
            m_coordinates.toViewConst(),
            m_values.toViewConst() };
 }
@@ -174,13 +178,17 @@ real64 TableFunction::evaluate( real64 const * const input ) const
   return m_kernelWrapper.compute( input );
 }
 
-TableFunction::KernelWrapper::KernelWrapper( InterpolationType const interpolationMethod,
+TableFunction::KernelWrapper::KernelWrapper( string const & tableName,
+                                             InterpolationType const interpolationMethod,
+                                             integer const logLevel,
                                              ArrayOfArraysView< real64 const > const & coordinates,
                                              arrayView1d< real64 const > const & values )
   :
+  m_tableName( tableName ),
   m_interpolationMethod( interpolationMethod ),
   m_coordinates( coordinates ),
-  m_values( values )
+  m_values( values ),
+  m_logLevel( logLevel)
 {}
 
 REGISTER_CATALOG_ENTRY( FunctionBase, TableFunction, string const &, Group * const )

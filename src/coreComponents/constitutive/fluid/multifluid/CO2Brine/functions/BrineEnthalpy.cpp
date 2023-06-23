@@ -186,10 +186,12 @@ TableFunction const * makeBrineEnthalpyTable( string_array const & inputParams,
 } // namespace
 
 BrineEnthalpy::BrineEnthalpy( string const & name,
+                              integer logLevel,
                               string_array const & inputParams,
                               string_array const & componentNames,
                               array1d< real64 > const & componentMolarWeight ):
   PVTFunctionBase( name,
+                   logLevel,
                    componentNames,
                    componentMolarWeight )
 {

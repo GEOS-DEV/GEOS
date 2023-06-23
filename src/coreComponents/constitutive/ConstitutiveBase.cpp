@@ -32,6 +32,8 @@ ConstitutiveBase::ConstitutiveBase( string const & name,
   m_numQuadraturePoints( 1 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+
+  enableLogLevelInput();
 }
 
 ConstitutiveBase::CatalogInterface::CatalogType & ConstitutiveBase::getCatalog()

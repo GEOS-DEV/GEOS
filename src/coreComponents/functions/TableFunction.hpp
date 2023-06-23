@@ -126,7 +126,9 @@ private:
      * @param[in] corners corners of the box that surround the value in N dimensions
      * @param[in] numCorners number of active table corners
      */
-    KernelWrapper( InterpolationType interpolationMethod,
+    KernelWrapper( string const & tableName,
+                   InterpolationType interpolationMethod,
+                   integer const logLevel,
                    ArrayOfArraysView< real64 const > const & coordinates,
                    arrayView1d< real64 const > const & values );
 
@@ -172,6 +174,9 @@ private:
     real64
     interpolateRound( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const;
 
+    /// Table name
+    string m_tableName;
+
     /// Table interpolation method
     TableFunction::InterpolationType m_interpolationMethod = InterpolationType::Linear;
 
@@ -180,6 +185,9 @@ private:
 
     /// Table values (in fortran order)
     arrayView1d< real64 const > m_values;
+
+    /// Verbosity flag
+    integer m_logLevel;
   };
 
   /**
@@ -365,6 +373,10 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
     arraySlice1d< real64 const > const coords = m_coordinates[dim];
     if( input[dim] <= coords[0] )
     {
+      if(m_logLevel > 0)
+      {
+        GEOS_WARNING("Table " << m_tableName << ": argument value << " << input[dim] << " is below the minimum range limit " << coords[0] );
+      }
       // Coordinate is to the left of this axis
       bounds[dim][0] = 0;
       bounds[dim][1] = 0;
@@ -373,6 +385,10 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
     }
     else if( input[dim] >= coords[coords.size() - 1] )
     {
+      if(m_logLevel > 0)
+      {
+        GEOS_WARNING("Table " << m_tableName << ": argument value << " << input[dim] << " is above the maximum range limit " << coords[coords.size() - 1] );
+      }
       // Coordinate is to the right of this axis
       bounds[dim][0] = coords.size() - 1;
       bounds[dim][1] = bounds[dim][0];

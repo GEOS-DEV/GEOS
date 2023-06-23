@@ -33,10 +33,12 @@ namespace PVTProps
 
 
 WaterDensity::WaterDensity( string const & name,
+                            integer const logLevel,
                             string_array const & inputParams,
                             string_array const & componentNames,
                             array1d< real64 > const & componentMolarWeight ):
   PVTFunctionBase( name,
+                   logLevel,
                    componentNames,
                    componentMolarWeight )
 {

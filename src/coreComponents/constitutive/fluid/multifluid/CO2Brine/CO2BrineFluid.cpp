@@ -267,8 +267,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
                  InputError );
 
   // then, we are ready to instantiate the phase models
-  m_phase1 = std::make_unique< PHASE1 >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight );
-  m_phase2 = std::make_unique< PHASE2 >( getName() + "_phaseModel2", phase2InputParams, m_componentNames, m_componentMolarWeight );
+  m_phase1 = std::make_unique< PHASE1 >( getName() + "_phaseModel1", getLogLevel(), phase1InputParams, m_componentNames, m_componentMolarWeight );
+  m_phase2 = std::make_unique< PHASE2 >( getName() + "_phaseModel2", getLogLevel(), phase2InputParams, m_componentNames, m_componentMolarWeight );
 
   // 2) Create the flash model
   {

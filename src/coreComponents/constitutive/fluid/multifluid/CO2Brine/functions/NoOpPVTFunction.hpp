@@ -78,14 +78,16 @@ class NoOpPVTFunction : public PVTFunctionBase
 public:
 
   NoOpPVTFunction( string const & name,
-                   string_array const & inputPara,
+                   integer const logLevel,
+                   string_array const & inputParams,
                    string_array const & componentNames,
                    array1d< real64 > const & componentMolarWeight )
     : PVTFunctionBase( name,
+                       logLevel,
                        componentNames,
                        componentMolarWeight )
   {
-    GEOS_UNUSED_VAR( inputPara );
+    GEOS_UNUSED_VAR( inputParams );
   }
 
   virtual ~NoOpPVTFunction() override = default;

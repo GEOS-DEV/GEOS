@@ -84,7 +84,8 @@ class SpanWagnerCO2Density : public PVTFunctionBase
 {
 public:
 
-  SpanWagnerCO2Density( string const &,
+  SpanWagnerCO2Density( string const & name,
+                        integer logLevel,
                         string_array const & inputParams,
                         string_array const & componentNames,
                         array1d< real64 > const & componentMolarWeight );

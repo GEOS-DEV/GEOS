@@ -113,10 +113,12 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
 } // namespace
 
 PhillipsBrineDensity::PhillipsBrineDensity( string const & name,
+                                            integer const logLevel,
                                             string_array const & inputParams,
                                             string_array const & componentNames,
                                             array1d< real64 > const & componentMolarWeight ):
   PVTFunctionBase( name,
+                   logLevel,
                    componentNames,
                    componentMolarWeight )
 {
@@ -138,7 +140,7 @@ PhillipsBrineDensity::createKernelWrapper() const
                         m_waterIndex );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineDensity, string const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineDensity, string const &, integer const, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // namespace PVTProps
 

@@ -65,12 +65,14 @@ class PVTFunctionBase
 public:
 
   PVTFunctionBase( string const & name,
+                   integer const logLevel,
                    array1d< string > const & componentNames,
                    array1d< real64 > const & componentMolarWeight )
     :
     m_functionName( name ),
     m_componentNames( componentNames ),
-    m_componentMolarWeight( componentMolarWeight )
+    m_componentMolarWeight( componentMolarWeight ),
+    m_logLevel( logLevel )
   {}
 
   virtual ~PVTFunctionBase() = default;
@@ -103,6 +105,7 @@ protected:
   /// Array storing the component molar weights
   array1d< real64 > m_componentMolarWeight;
 
+  integer m_logLevel;
 };
 
 } // end namespace PVTProps

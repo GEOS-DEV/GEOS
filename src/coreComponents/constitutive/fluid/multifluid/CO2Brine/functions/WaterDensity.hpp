@@ -80,6 +80,7 @@ class WaterDensity : public PVTFunctionBase
 public:
 
   WaterDensity( string const & name,
+                integer logLevel,
                 string_array const & inputParams,
                 string_array const & componentNames,
                 array1d< real64 > const & componentMolarWeight );

@@ -269,10 +269,12 @@ void SpanWagnerCO2Density::calculateCO2Density( string const & functionName,
 }
 
 SpanWagnerCO2Density::SpanWagnerCO2Density( string const & name,
+                                            integer const loglevel,
                                             string_array const & inputParams,
                                             string_array const & componentNames,
                                             array1d< real64 > const & componentMolarWeight ):
   PVTFunctionBase( name,
+                   loglevel,
                    componentNames,
                    componentMolarWeight )
 {

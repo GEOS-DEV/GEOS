@@ -55,18 +55,22 @@ struct PhaseModel
    * @param[in] componentMolarWeight molar weights of the components
    */
   PhaseModel( string const & phaseModelName,
+              integer const logLevel,
               array1d< array1d< string > > const & inputParams,
               string_array const & componentNames,
               array1d< real64 > const & componentMolarWeight )
     : density( phaseModelName + "_" + Density::catalogName(),
+               logLevel,
                inputParams[InputParamOrder::DENSITY],
                componentNames,
                componentMolarWeight ),
     viscosity( phaseModelName + "_" + Viscosity::catalogName(),
+               logLevel,
                inputParams[InputParamOrder::VISCOSITY],
                componentNames,
                componentMolarWeight ),
     enthalpy( phaseModelName + "_" + Enthalpy::catalogName(),
+              logLevel,
               inputParams[InputParamOrder::ENTHALPY],
               componentNames,
               componentMolarWeight )

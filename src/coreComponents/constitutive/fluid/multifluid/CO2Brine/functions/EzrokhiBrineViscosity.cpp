@@ -34,10 +34,12 @@ namespace PVTProps
 {
 
 EzrokhiBrineViscosity::EzrokhiBrineViscosity( string const & name,
+                                              integer const logLevel,
                                               string_array const & inputPara,
                                               string_array const & componentNames,
                                               array1d< real64 > const & componentMolarWeight ):
   PVTFunctionBase( name,
+                   logLevel,
                    componentNames,
                    componentMolarWeight )
 {
@@ -84,7 +86,7 @@ EzrokhiBrineViscosity::createKernelWrapper() const
                         m_coef2 );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, EzrokhiBrineViscosity, string const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, EzrokhiBrineViscosity, string const &, integer const, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // end namespace PVTProps
 

@@ -113,7 +113,8 @@ class EzrokhiBrineDensity : public PVTFunctionBase
 public:
 
   EzrokhiBrineDensity( string const & name,
-                       string_array const & inputPara,
+                       integer logLevel,
+                       string_array const & inputParams,
                        string_array const & componentNames,
                        array1d< real64 > const & componentMolarWeight );
 

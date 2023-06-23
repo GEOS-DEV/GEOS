@@ -88,6 +88,7 @@ class PhillipsBrineViscosity : public PVTFunctionBase
 public:
 
   PhillipsBrineViscosity( string const & name,
+                          integer logLevel,
                           string_array const & inputPara,
                           string_array const & componentNames,
                           array1d< real64 > const & componentMolarWeight );
