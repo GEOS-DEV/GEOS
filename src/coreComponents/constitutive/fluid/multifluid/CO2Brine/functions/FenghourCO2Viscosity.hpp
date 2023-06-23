@@ -80,7 +80,7 @@ class FenghourCO2Viscosity : public PVTFunctionBase
 public:
 
   FenghourCO2Viscosity( string const & name,
-                        integer logLevel,
+                        integer const logLevel,
                         string_array const & inputParams,
                         string_array const & componentNames,
                         array1d< real64 > const & componentMolarWeight );

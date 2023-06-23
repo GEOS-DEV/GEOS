@@ -84,7 +84,7 @@ class CO2Enthalpy : public PVTFunctionBase
 public:
 
   CO2Enthalpy( string const & name,
-               integer logLevel,
+               integer const logLevel,
                string_array const & inputParams,
                string_array const & componentNames,
                array1d< real64 > const & componentMolarWeight );

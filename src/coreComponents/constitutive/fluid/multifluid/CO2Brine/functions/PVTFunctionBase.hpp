@@ -79,6 +79,7 @@ public:
 
   using CatalogInterface = dataRepository::CatalogInterface< PVTFunctionBase,
                                                              string const &,
+                                                             integer const,
                                                              array1d< string > const &,
                                                              array1d< string > const &,
                                                              array1d< real64 > const & >;

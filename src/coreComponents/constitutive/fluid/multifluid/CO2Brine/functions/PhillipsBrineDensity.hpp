@@ -90,7 +90,7 @@ class PhillipsBrineDensity : public PVTFunctionBase
 public:
 
   PhillipsBrineDensity( string const & name,
-                        integer logLevel,
+                        integer const logLevel,
                         string_array const & inputParams,
                         string_array const & componentNames,
                         array1d< real64 > const & componentMolarWeight );
