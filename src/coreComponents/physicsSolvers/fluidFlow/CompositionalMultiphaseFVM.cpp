@@ -57,15 +57,9 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
 {
   CompositionalMultiphaseBase::initializePreSubGroups();
 
-  LinearSolverParameters::MGR::StrategyType & mgrStrategy = m_linearSolverParameters.get().mgr.strategy;
-  if( m_isThermal )
-  {
-    mgrStrategy = LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM;
-  }
-  else
-  {
-    mgrStrategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
-  }
+  m_linearSolverParameters.get().mgr.strategy = m_isThermal
+                                                ? LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM
+                                                : LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
@@ -94,6 +88,7 @@ void CompositionalMultiphaseFVM::setupDofs( DomainPartition const & domain,
   // this equation is purely local (not coupled to neighbors or other physics)
   dofManager.disableGlobalCouplingForEquation( viewKeyStruct::elemDofFieldString(),
                                                m_numComponents );
+
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -479,9 +474,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
 
   if( m_isThermal )
   {
-    DofManager::CompMask temperatureMask( m_numDofPerCell,
-                                          m_numComponents+1,
-                                          m_numComponents+2 );
+    DofManager::CompMask temperatureMask( m_numDofPerCell, m_numComponents+1, m_numComponents+2 );
     dofManager.addVectorToField( localSolution,
                                  viewKeyStruct::elemDofFieldString(),
                                  fields::flow::temperature::key(),

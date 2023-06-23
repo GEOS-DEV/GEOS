@@ -149,7 +149,6 @@ protected:
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
 
-
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 

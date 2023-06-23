@@ -692,9 +692,6 @@ public:
         stack.localResidual[ic] += phaseCompAmount - phaseCompAmount_n;
         stack.localJacobian[ic][0] += dPhaseCompAmount_dP;
 
-        if( ei==0 )
-          std::cout << ic << "\t" << stack.localJacobian[ic][0] << "\t";
-
         // jc - index of component w.r.t. whose compositional var the derivative is being taken
         // (i.e. col number in local matrix)
 
@@ -709,12 +706,7 @@ public:
                            "Zero diagonal in Jacobian" );
 
           stack.localJacobian[ic][jc + 1] += dPhaseCompAmount_dC;
-          if( ei==0 )
-            std::cout << stack.localJacobian[ic][jc + 1] << "\t";
-
         }
-        if( ei==0 )
-          std::cout <<std::endl;
       }
 
       // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
@@ -743,15 +735,11 @@ public:
       GEOS_ASSERT_MSG( ic == 0 && LvArray::math::abs( dCompAmount_dP ) < minDensForDivision,
                        "Zero diagonal in Jacobian" );
       stack.localJacobian[ic][0] += dCompAmount_dP;
-      if( ei==0 )
-        std::cout << ic << "\t" << stack.localJacobian[ic][0] << "\t";
 
       real64 const dCompAmount_dC = stack.poreVolume;
       GEOS_ASSERT_MSG( ic == ic + 1 && LvArray::math::abs( dCompAmount_dC ) < minDensForDivision,
                        "Zero diagonal in Jacobian" );
       stack.localJacobian[ic][ic + 1] += dCompAmount_dC;
-      if( ei==0 )
-        std::cout << stack.localJacobian[ic][ic + 1] << std::endl;
     }
   }
 
@@ -806,7 +794,7 @@ public:
    * @param[inout] stack the stack variables
    */
   GEOS_HOST_DEVICE
-  void complete( localIndex const ei,
+  void complete( localIndex const GEOS_UNUSED_PARAM( ei ),
                  StackVariables & stack,
                  integer const useTotalMassEquation ) const
   {
@@ -832,16 +820,6 @@ public:
                                               stack.dofIndices,
                                               stack.localJacobian[i],
                                               numDof );
-
-      if( ei==0 )
-      {
-        std::cout << i << "\t";
-        for( integer j = 0; j < numComp + 1; ++j )
-        {
-          std::cout << stack.localJacobian[i][j] << "\t";
-        }
-        std::cout << std::endl;
-      }
     }
   }
 
