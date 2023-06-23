@@ -1004,6 +1004,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       presTable->setTableCoordinates( elevationValues );
       presTable->setTableValues( pressureValues );
       presTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+      presTable->setLogLevel( getLogLevel() );
       TableFunction::KernelWrapper presTableWrapper = presTable->createKernelWrapper();
 
       // Step 4: assign pressure, temperature, and component fraction as a function of elevation

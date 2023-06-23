@@ -200,7 +200,8 @@ void calculateCO2Solubility( string const & functionName,
   }
 }
 
-TableFunction const * makeSolubilityTable( string_array const & inputParams,
+TableFunction const * makeSolubilityTable( integer const logLevel,
+                                           string_array const & inputParams,
                                            string const & functionName,
                                            FunctionManager & functionManager )
 {
@@ -242,6 +243,7 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
     solubilityTable->setTableCoordinates( tableCoords.getCoords() );
     solubilityTable->setTableValues( values );
     solubilityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    solubilityTable->setLogLevel( logLevel );
     return solubilityTable;
   }
 }
@@ -249,11 +251,13 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
 } // namespace
 
 CO2Solubility::CO2Solubility( string const & name,
+                              integer logLevel,
                               string_array const & inputParams,
                               string_array const & phaseNames,
                               string_array const & componentNames,
                               array1d< real64 > const & componentMolarWeight ):
   FlashModelBase( name,
+                  logLevel,
                   componentNames,
                   componentMolarWeight )
 {
@@ -276,7 +280,7 @@ CO2Solubility::CO2Solubility( string const & name,
   string const expectedWaterPhaseNames[] = { "Water", "water", "Liquid", "liquid" };
   m_phaseLiquidIndex = PVTFunctionHelpers::findName( phaseNames, expectedWaterPhaseNames, "phaseNames" );
 
-  m_CO2SolubilityTable = makeSolubilityTable( inputParams, m_modelName, FunctionManager::getInstance() );
+  m_CO2SolubilityTable = makeSolubilityTable( m_logLevel, inputParams, m_modelName, FunctionManager::getInstance() );
 }
 
 CO2Solubility::KernelWrapper CO2Solubility::createKernelWrapper() const
@@ -289,7 +293,7 @@ CO2Solubility::KernelWrapper CO2Solubility::createKernelWrapper() const
                         m_phaseLiquidIndex );
 }
 
-REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, string const &, string_array const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, string const &, integer const, string_array const &, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // end namespace PVTProps
 

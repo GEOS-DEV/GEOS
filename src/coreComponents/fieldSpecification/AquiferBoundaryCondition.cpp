@@ -257,7 +257,7 @@ void AquiferBoundaryCondition::setupDefaultPressureInfluenceFunction()
   pressureInfluenceTable->setTableCoordinates( dimensionlessTime );
   pressureInfluenceTable->setTableValues( pressureInfluence );
   pressureInfluenceTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-
+  pressureInfluenceTable->setLogLevel( getLogLevel() );
 }
 
 void AquiferBoundaryCondition::setGravityVector( R1Tensor const & gravityVector )

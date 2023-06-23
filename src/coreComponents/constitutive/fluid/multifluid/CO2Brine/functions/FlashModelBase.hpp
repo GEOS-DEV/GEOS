@@ -68,17 +68,20 @@ class FlashModelBase
 public:
 
   FlashModelBase( string const & name,
+                  integer const logLevel,
                   string_array const & componentNames,
                   array1d< real64 > const & componentMolarWeight ):
     m_modelName( name ),
     m_componentNames( componentNames ),
-    m_componentMolarWeight( componentMolarWeight )
+    m_componentMolarWeight( componentMolarWeight ),
+    m_logLevel( logLevel )
   {}
 
   virtual ~FlashModelBase() = default;
 
   using CatalogInterface = dataRepository::CatalogInterface< FlashModelBase,
                                                              string const &,
+                                                             integer const,
                                                              string_array const &,
                                                              string_array const &,
                                                              string_array const &,
@@ -103,6 +106,9 @@ protected:
 
   /// Array storing the component molar weights
   array1d< real64 > m_componentMolarWeight;
+
+  /// Verbosity flag
+  integer m_logLevel = 0;
 
 };
 

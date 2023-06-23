@@ -88,7 +88,8 @@ void calculateCO2Viscosity( PTTableCoordinates const & tableCoords,
   }
 }
 
-TableFunction const * makeViscosityTable( string_array const & inputParams,
+TableFunction const * makeViscosityTable( integer const logLevel,
+                                          string_array const & inputParams,
                                           string const & functionName,
                                           FunctionManager & functionManager )
 {
@@ -126,6 +127,7 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
     viscosityTable->setTableCoordinates( tableCoords.getCoords() );
     viscosityTable->setTableValues( viscosity );
     viscosityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    viscosityTable->setLogLevel( logLevel );
     return viscosityTable;
   }
 }
@@ -142,7 +144,7 @@ FenghourCO2Viscosity::FenghourCO2Viscosity( string const & name,
                      componentNames,
                      componentMolarWeight )
 {
-  m_CO2ViscosityTable = makeViscosityTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  m_CO2ViscosityTable = makeViscosityTable( m_logLevel, inputParams, m_functionName, FunctionManager::getInstance() );
 }
 
 FenghourCO2Viscosity::KernelWrapper
@@ -152,7 +154,7 @@ FenghourCO2Viscosity::createKernelWrapper() const
                         *m_CO2ViscosityTable );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, FenghourCO2Viscosity, string const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, FenghourCO2Viscosity, string const &, integer const, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // end namespace PVTProps
 

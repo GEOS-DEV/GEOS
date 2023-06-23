@@ -70,7 +70,8 @@ void calculateBrineDensity( PTTableCoordinates const & tableCoords,
   }
 }
 
-TableFunction const * makeDensityTable( string_array const & inputParams,
+TableFunction const * makeDensityTable( integer const logLevel,
+                                        string_array const & inputParams,
                                         string const & functionName,
                                         FunctionManager & functionManager )
 {
@@ -106,6 +107,7 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
     densityTable->setTableCoordinates( tableCoords.getCoords() );
     densityTable->setTableValues( densities );
     densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    densityTable->setLogLevel( logLevel );
     return densityTable;
   }
 }
@@ -128,7 +130,7 @@ PhillipsBrineDensity::PhillipsBrineDensity( string const & name,
   string const expectedWaterComponentNames[] = { "Water", "water" };
   m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, "componentNames" );
 
-  m_brineDensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  m_brineDensityTable = makeDensityTable( m_logLevel, inputParams, m_functionName, FunctionManager::getInstance() );
 }
 
 PhillipsBrineDensity::KernelWrapper

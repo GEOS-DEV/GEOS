@@ -50,8 +50,8 @@ EzrokhiBrineDensity::EzrokhiBrineDensity( string const & name,
   m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, "componentNames" );
 
   makeCoefficients( inputParams );
-  m_waterSatDensityTable = PureWaterProperties::makeSaturationDensityTable( m_functionName, FunctionManager::getInstance() );
-  m_waterSatPressureTable = PureWaterProperties::makeSaturationPressureTable( m_functionName, FunctionManager::getInstance() );
+  m_waterSatDensityTable = PureWaterProperties::makeSaturationDensityTable( m_logLevel, m_functionName, FunctionManager::getInstance() );
+  m_waterSatPressureTable = PureWaterProperties::makeSaturationPressureTable( m_logLevel, m_functionName, FunctionManager::getInstance() );
 }
 
 void EzrokhiBrineDensity::makeCoefficients( string_array const & inputPara )
@@ -91,7 +91,7 @@ EzrokhiBrineDensity::createKernelWrapper() const
                         m_coef2 );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, EzrokhiBrineDensity, string const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, EzrokhiBrineDensity, string const &, integer const, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // end namespace PVTProps
 

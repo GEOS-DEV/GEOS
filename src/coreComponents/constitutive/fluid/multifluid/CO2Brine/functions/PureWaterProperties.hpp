@@ -43,7 +43,8 @@ struct PureWaterProperties
    * @return a pointer to the newly created TableFunction
    */
   static
-  TableFunction const * makeSaturationViscosityTable( string const & functionName,
+  TableFunction const * makeSaturationViscosityTable( integer const logLevel,
+                                                      string const & functionName,
                                                       FunctionManager & functionManager );
 
   /**
@@ -53,7 +54,8 @@ struct PureWaterProperties
    * @return a pointer to the newly created TableFunction
    */
   static
-  TableFunction const * makeSaturationDensityTable( string const & functionName,
+  TableFunction const * makeSaturationDensityTable( integer const logLevel,
+                                                    string const & functionName,
                                                     FunctionManager & functionManager );
 
   /**
@@ -63,7 +65,8 @@ struct PureWaterProperties
    * @return a pointer to the newly created TableFunction
    */
   static
-  TableFunction const * makeSaturationPressureTable( string const & functionName,
+  TableFunction const * makeSaturationPressureTable( integer const logLevel,
+                                                     string const & functionName,
                                                      FunctionManager & functionManager );
 
   /// Water molecular weight in kg/mol

@@ -30,7 +30,8 @@ namespace PVTProps
 {
 
 TableFunction const *
-PureWaterProperties::makeSaturationViscosityTable( string const & functionName,
+PureWaterProperties::makeSaturationViscosityTable( integer const logLevel,
+                                                   string const & functionName,
                                                    FunctionManager & functionManager )
 {
   array1d< array1d< real64 > > temperatures;
@@ -105,12 +106,14 @@ PureWaterProperties::makeSaturationViscosityTable( string const & functionName,
     viscosityTable->setTableCoordinates( temperatures );
     viscosityTable->setTableValues( viscosities );
     viscosityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    viscosityTable->setLogLevel( logLevel );
     return viscosityTable;
   }
 }
 
 TableFunction const *
-PureWaterProperties::makeSaturationDensityTable( string const & functionName,
+PureWaterProperties::makeSaturationDensityTable( integer const logLevel,
+                                                 string const & functionName,
                                                  FunctionManager & functionManager )
 {
   array1d< array1d< real64 > > temperatures;
@@ -185,12 +188,14 @@ PureWaterProperties::makeSaturationDensityTable( string const & functionName,
     densityTable->setTableCoordinates( temperatures );
     densityTable->setTableValues( densities );
     densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    densityTable->setLogLevel( logLevel );
     return densityTable;
   }
 }
 
 TableFunction const *
-PureWaterProperties::makeSaturationPressureTable( string const & functionName,
+PureWaterProperties::makeSaturationPressureTable( integer const logLevel,
+                                                  string const & functionName,
                                                   FunctionManager & functionManager )
 {
   array1d< array1d< real64 > > temperatures;
@@ -265,6 +270,7 @@ PureWaterProperties::makeSaturationPressureTable( string const & functionName,
     pressureTable->setTableCoordinates( temperatures );
     pressureTable->setTableValues( pressures );
     pressureTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    pressureTable->setLogLevel( logLevel );
     return pressureTable;
   }
 }

@@ -174,7 +174,8 @@ namespace
 {
 
 /// Utility function to create a one-value table internally when not provided by the user
-TableFunction * createWellTable( string const & tableName,
+TableFunction * createWellTable( integer const logLevel,
+                                 string const & tableName,
                                  real64 const & constantValue )
 {
   array1d< array1d< real64 > > timeCoord;
@@ -188,6 +189,7 @@ TableFunction * createWellTable( string const & tableName,
   table->setTableCoordinates( timeCoord );
   table->setTableValues( constantValueArray );
   table->setInterpolationMethod( TableFunction::InterpolationType::Lower );
+  table->setLogLevel( logLevel );
   return table;
 }
 
@@ -335,7 +337,7 @@ void WellControls::postProcessInput()
   if( m_targetBHPTableName.empty() )
   {
     m_targetBHPTableName = getName()+"_ConstantBHP_table";
-    m_targetBHPTable = createWellTable( m_targetBHPTableName, m_targetBHP );
+    m_targetBHPTable = createWellTable( getLogLevel(), m_targetBHPTableName, m_targetBHP );
   }
   else
   {
@@ -352,7 +354,7 @@ void WellControls::postProcessInput()
   if( m_targetTotalRateTableName.empty() )
   {
     m_targetTotalRateTableName = getName()+"_ConstantTotalRate_table";
-    m_targetTotalRateTable = createWellTable( m_targetTotalRateTableName, m_targetTotalRate );
+    m_targetTotalRateTable = createWellTable( getLogLevel(), m_targetTotalRateTableName, m_targetTotalRate );
   }
   else
   {
@@ -369,7 +371,7 @@ void WellControls::postProcessInput()
   if( m_targetPhaseRateTableName.empty() )
   {
     m_targetPhaseRateTableName = getName()+"_ConstantPhaseRate_table";
-    m_targetPhaseRateTable = createWellTable( m_targetPhaseRateTableName, m_targetPhaseRate );
+    m_targetPhaseRateTable = createWellTable( getLogLevel(), m_targetPhaseRateTableName, m_targetPhaseRate );
   }
   else
   {
@@ -391,7 +393,7 @@ void WellControls::postProcessInput()
     m_statusTable = functionManager.getGroupPointer< TableFunction const >( m_statusTableName );
     if( m_statusTable==nullptr )
     {
-      m_statusTable = createWellTable( m_statusTableName, 1.0 );
+      m_statusTable = createWellTable( getLogLevel(), m_statusTableName, 1.0 );
     }
   }
   else

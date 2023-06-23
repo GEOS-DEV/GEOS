@@ -187,7 +187,7 @@ private:
     arrayView1d< real64 const > m_values;
 
     /// Verbosity flag
-    integer m_logLevel;
+    integer m_logLevel = 0;
   };
 
   /**
@@ -286,6 +286,8 @@ private:
    * @param values An array of table values in fortran order
    */
   void setTableValues( real64_array values );
+
+  void setLogLevel( integer logLevel );
 
   /**
    * @brief Create an instance of the kernel wrapper

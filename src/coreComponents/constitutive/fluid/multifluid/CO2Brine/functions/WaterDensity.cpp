@@ -43,7 +43,7 @@ WaterDensity::WaterDensity( string const & name,
                    componentMolarWeight )
 {
   GEOS_UNUSED_VAR( inputParams );
-  m_waterDensityTable = PureWaterProperties::makeSaturationDensityTable( m_functionName, FunctionManager::getInstance() );
+  m_waterDensityTable = PureWaterProperties::makeSaturationDensityTable( m_logLevel, m_functionName, FunctionManager::getInstance() );
 }
 
 WaterDensity::KernelWrapper
@@ -53,7 +53,7 @@ WaterDensity::createKernelWrapper() const
                         *m_waterDensityTable );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, WaterDensity, string const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, WaterDensity, string const &, integer const, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // namespace PVTProps
 

@@ -42,7 +42,7 @@ PhillipsBrineViscosity::PhillipsBrineViscosity( string const & name,
                    componentNames,
                    componentMolarWeight )
 {
-  m_waterViscosityTable = PureWaterProperties::makeSaturationViscosityTable( m_functionName, FunctionManager::getInstance() );
+  m_waterViscosityTable = PureWaterProperties::makeSaturationViscosityTable( m_logLevel, m_functionName, FunctionManager::getInstance() );
   makeCoefficients( inputPara );
 }
 
@@ -84,7 +84,7 @@ PhillipsBrineViscosity::createKernelWrapper() const
                         m_coef1 );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineViscosity, string const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineViscosity, string const &, integer const, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // end namespace PVTProps
 

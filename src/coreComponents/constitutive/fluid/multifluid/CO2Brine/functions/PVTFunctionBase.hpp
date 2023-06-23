@@ -106,7 +106,8 @@ protected:
   /// Array storing the component molar weights
   array1d< real64 > m_componentMolarWeight;
 
-  integer m_logLevel;
+  /// Verbosity flag
+  integer m_logLevel = 0;
 };
 
 } // end namespace PVTProps

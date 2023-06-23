@@ -289,6 +289,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
           if( strs[1] == FLASH::catalogName() )
           {
             m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),
+                                                 getLogLevel(),
                                                  strs,
                                                  m_phaseNames,
                                                  m_componentNames,

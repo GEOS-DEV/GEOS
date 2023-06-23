@@ -585,6 +585,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     presTable->setTableCoordinates( elevationValues );
     presTable->setTableValues( pressureValues );
     presTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    presTable->setLogLevel( getLogLevel() );
     TableFunction::KernelWrapper presTableWrapper = presTable->createKernelWrapper();
 
     // Step 4: assign pressure as a function of elevation

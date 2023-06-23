@@ -206,7 +206,8 @@ real64 spanWagnerCO2DensityFunction( string const & name,
 }
 
 
-TableFunction const * makeDensityTable( string_array const & inputParams,
+TableFunction const * makeDensityTable( integer const logLevel,
+                                        string_array const & inputParams,
                                         string const & functionName,
                                         FunctionManager & functionManager )
 {
@@ -240,6 +241,7 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
     densityTable->setTableCoordinates( tableCoords.getCoords() );
     densityTable->setTableValues( densities );
     densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    densityTable->setLogLevel( logLevel );
     return densityTable;
   }
 }
@@ -281,7 +283,7 @@ SpanWagnerCO2Density::SpanWagnerCO2Density( string const & name,
   string const expectedCO2ComponentNames[] = { "CO2", "co2" };
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, "componentNames" );
 
-  m_CO2DensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  m_CO2DensityTable = makeDensityTable( m_logLevel, inputParams, m_functionName, FunctionManager::getInstance() );
 }
 
 SpanWagnerCO2Density::KernelWrapper
@@ -292,7 +294,7 @@ SpanWagnerCO2Density::createKernelWrapper() const
                         m_CO2Index );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, SpanWagnerCO2Density, string const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, SpanWagnerCO2Density, string const &, integer const, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // namespace PVTProps
 

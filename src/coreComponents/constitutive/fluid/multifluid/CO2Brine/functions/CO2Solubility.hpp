@@ -104,6 +104,7 @@ class CO2Solubility : public FlashModelBase
 public:
 
   CO2Solubility( string const & name,
+                 integer const logLevel,
                  string_array const & inputParams,
                  string_array const & phaseNames,
                  string_array const & componentNames,
