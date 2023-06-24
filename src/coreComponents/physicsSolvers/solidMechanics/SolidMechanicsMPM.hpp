@@ -354,19 +354,18 @@ public:
 
   void cpdiDomainScaling( ParticleManager & particleManager );
 
-  void resizeMappingArrays( ParticleManager & particleManager );
+  // void resizeMappingArrays( ParticleManager & particleManager );
 
-  void GEOS_DEVICE mapNodes(arrayView3d< int const > const ijkMap,
-                            const real64 xLocalMin[3],
-                            const real64 hEl[3],
-                            SortedArrayView< localIndex const > const activeParticleIndices,
-                            arrayView2d< real64 const > const particlePosition,
-                            arrayView3d< real64 const > const particleRVectors,
-                            localIndex const p,
-                            int* mappedNodes);
-
-  void populateMappingArrays( ParticleManager & particleManager,
-                              NodeManager & nodeManager );
+  void GEOS_DEVICE mapNodesAndComputeShapeFunctions(arrayView3d< int const > const ijkMap,
+                                                    const real64 xLocalMin[3],
+                                                    const real64 hEl[3],
+                                                    ParticleType particleType,
+                                                    arraySlice1d< real64 const > const particlePosition,
+                                                    arraySlice2d< real64 const > const particleRVectors,
+                                                    arraySlice2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
+                                                    int * mappedNode,
+                                                    real64 * shapeFunctionValues,
+                                                    real64 shapeFunctionGradientValues[][3]);
 
 protected:
   virtual void postProcessInput() override final;
