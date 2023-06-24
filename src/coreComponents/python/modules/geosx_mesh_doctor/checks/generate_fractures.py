@@ -15,9 +15,11 @@ import numpy
 
 from vtkmodules.vtkCommonCore import (
     vtkIdList,
+    vtkIntArray,
     vtkPoints,
 )
 from vtkmodules.vtkCommonDataModel import (
+    vtkCell,
     vtkCellArray,
     vtkPolygon,
     vtkUnstructuredGrid,
@@ -45,6 +47,7 @@ from .vtk_utils import (
 class Options:
     policy: str
     field: str
+    field_type: str
     field_values: FrozenSet[int]
     split_on_domain_boundary: bool
     vtk_output: VtkOutput
@@ -100,7 +103,7 @@ def build_fracture_nodes(mesh: vtkUnstructuredGrid,
         for n in edge:
             is_boundary_fracture_node[n] = True
 
-    if split_on_domain_boundary:
+    if split_on_domain_boundary:  # This algorithm is false because two nodes on the boundary can have an edge inside a domain (if the edge crosses the domain of thickness 1)
         # Here, we split on domain boundaries
         is_boundary_point = __find_boundary_nodes(mesh)
         # Here, `is_boundary_fracture_node` is filled properly.
@@ -116,13 +119,15 @@ def build_fracture_nodes(mesh: vtkUnstructuredGrid,
                 move_to_boundary_fracture_node[n1] = True
         for n, move in enumerate(move_to_boundary_fracture_node):
             is_boundary_fracture_node[n] = move
+    # for n in 150674, 60073, 150626, 60025, 30551, 121152:
+    #     is_boundary_fracture_node[n] = True
 
     # Now compute the internal fracture nodes by "difference".
     is_internal_fracture_node = numpy.zeros(mesh.GetNumberOfPoints(), dtype=bool)
     for n in range(mesh.GetNumberOfPoints()):    # TODO duplicated, reorg the code.
         if is_fracture_node[n] and not is_boundary_fracture_node[n]:
             is_internal_fracture_node[n] = True
-    # return is_internal_fracture_node, is_boundary_fracture_node
+
     return FractureNodesInfo(is_internal_fracture_node=is_internal_fracture_node,
                              is_boundary_fracture_node=is_boundary_fracture_node)
 
@@ -145,7 +150,6 @@ def find_involved_cells(mesh: vtkUnstructuredGrid,
         raise ValueError(f"Cell field {field} does not exist in mesh, nothing done")
 
     cells_to_faces = defaultdict(list)
-    is_fracture_node = numpy.zeros(mesh.GetNumberOfPoints(), dtype=bool)    # all False
 
     # For each face of each cell, we search for the unique neighbor cell (if it exists).
     # Then, if the 2 values of the two cells match the field requirements,
@@ -163,15 +167,140 @@ def find_involved_cells(mesh: vtkUnstructuredGrid,
                 neighbor_cell_id = neighbor_cell_ids.GetId(j)
                 if f[neighbor_cell_id] != f[cell_id] and f[neighbor_cell_id] in field_values:
                     cells_to_faces[cell_id].append(i)
-                    for k in range(face.GetNumberOfPoints()):
-                        is_fracture_node[face.GetPointId(k)] = True
+
+    tmp = dict()
+    for cell_id, face_ids in cells_to_faces.items():
+        cell = mesh.GetCell(cell_id)
+        fracture_nodes = set()
+        for face_id in face_ids:
+            fracture_nodes.update(vtk_iter(cell.GetFace(face_id).GetPointIds()))
+        for face_id in range(cell.GetNumberOfFaces()):
+            if face_id not in face_ids:
+                face = cell.GetFace(face_id)
+                face_id_nodes = set(vtk_iter(face.GetPointIds()))
+                if face_id_nodes & fracture_nodes:
+                    mesh.GetCellNeighbors(cell_id, face.GetPointIds(), neighbor_cell_ids)
+                    assert neighbor_cell_ids.GetNumberOfIds() < 2
+                    for neighbor_cell_id in vtk_iter(neighbor_cell_ids):  # It's 0 or 1...
+                        if neighbor_cell_id not in cells_to_faces:
+                            tmp[neighbor_cell_id] = []
+
+    for k, v in cells_to_faces.items():
+        tmp[k] = v
+
+    return tmp
+
+
+def find_involved_cells_from_points(mesh: vtkUnstructuredGrid,
+                                    field: str,
+                                    field_values: FrozenSet[int]) -> Dict[int, Iterable[int]]:
+    """
+    To do the split, we need to find
+        - all the cells that are touching the fracture,
+        - the faces of those cells that are touching the fracture. TODO we may have no face (just an edge, for boundary purposes)
+    For convenience, will also return all the nodes belonging to those faces. (Let's call them fracture nodes.)
+    Also, there's something still not done about external fracture nodes and internal fracture nodes...
+    But a choice needs to be made when we are at the boundary of the simulation domain.
+    """
+    point_data = mesh.GetPointData()
+    if point_data.HasArray(field):
+        f = vtk_to_numpy(point_data.GetArray(field))
+    else:
+        raise ValueError(f"Point field {field} does not exist in mesh, nothing done")
+
+    def predicate(point_id):
+        return f[point_id] in field_values
+
+    cells_to_faces: Dict[int, Iterable[int]] = defaultdict(list)
+    # is_fracture_node: Sequence[bool] = numpy.zeros(mesh.GetNumberOfPoints(), dtype=bool)    # all False
+
+    # For each cell, we first check if the cell is touching one point on which we may split.
+    for cell_id in range(mesh.GetNumberOfCells()):
+        cell: vtkCell = mesh.GetCell(cell_id)
+        if not any(map(predicate, vtk_iter(cell.GetPointIds()))):
+            continue
+        # Now, we're looping on all the nodes of all the faces of the cell.
+        # If a face has a all it's node matching, we'll tag the face for split and we move forward.
+        for i in range(cell.GetNumberOfFaces()):
+            face = cell.GetFace(i)
+            if all(map(predicate, vtk_iter(face.GetPointIds()))):
+                cells_to_faces[cell_id].append(i)
+                # for k in range(face.GetNumberOfPoints()):
+                #     is_fracture_node[face.GetPointId(k)] = True
+
     return cells_to_faces
+
+
+def read_cell_to_faces(mesh: vtkUnstructuredGrid, field: str) -> Dict[int, Iterable[int]]:
+    c2f: vtkIntArray = mesh.GetCellData().GetArray(field)
+    cell_to_faces: Dict[int, Iterable[int]] = dict()
+
+    for ci in range(mesh.GetNumberOfCells()):
+        faces = []
+        values = c2f.GetTuple(ci)
+        for value in map(int, values):
+            if value != -1:
+                faces.append(value)
+        if faces:
+            cell_to_faces[ci] = tuple(faces)
+
+    is_fracture_node = numpy.zeros(mesh.GetNumberOfPoints(), dtype=bool)
+    for cell_id, face_ids in cell_to_faces.items():
+        cell = mesh.GetCell(cell_id)
+        for face_id in face_ids:
+            face = cell.GetFace(face_id)
+            for point_id in vtk_iter(face.GetPointIds()):
+                is_fracture_node[point_id] = True
+
+    nodes_to_elements = [[], ] * mesh.GetNumberOfPoints()
+    for cell_id in range(mesh.GetNumberOfCells()):
+        for point_id in vtk_iter(mesh.GetCell(cell_id).GetPointIds()):
+            nodes_to_elements[point_id].append(cell_id)
+
+    tmp = dict()
+    for node, elements in enumerate(nodes_to_elements):
+        if is_fracture_node[node]:
+            for e in elements:
+                tmp[e] = []
+
+    for k, v in cell_to_faces.items():
+        tmp[k] = v
+
+    # tmp = dict()
+    # neighbor_cell_ids = vtkIdList()
+    # for cell_id, face_ids in cell_to_faces.items():
+    #     cell = mesh.GetCell(cell_id)
+    #     fracture_nodes = set()
+    #     for face_id in face_ids:
+    #         fracture_nodes.update(vtk_iter(cell.GetFace(face_id).GetPointIds()))
+    #     for face_id in range(cell.GetNumberOfFaces()):
+    #         if face_id not in face_ids:
+    #             face = cell.GetFace(face_id)
+    #             face_id_nodes = set(vtk_iter(face.GetPointIds()))
+    #             if face_id_nodes & fracture_nodes:
+    #                 mesh.GetCellNeighbors(cell_id, face.GetPointIds(), neighbor_cell_ids)
+    #                 assert neighbor_cell_ids.GetNumberOfIds() < 2
+    #                 for neighbor_cell_id in vtk_iter(neighbor_cell_ids):  # It's 0 or 1...
+    #                     if neighbor_cell_id not in cell_to_faces:
+    #                         tmp[neighbor_cell_id] = []
+    #
+    # for k, v in cell_to_faces.items():
+    #     tmp[k] = v
+
+    return tmp
+
+    # return cell_to_faces
 
 
 class FractureInfo:
     def __init__(self, mesh: vtkUnstructuredGrid, options: Options):
         self.__mesh = mesh  # The original (non-split) mesh
-        self.cell_to_faces: Dict[int, Iterable[int]] = find_involved_cells(self.__mesh, options.field, options.field_values)
+        if options.field_type == "cells":
+            self.cell_to_faces: Dict[int, Iterable[int]] = find_involved_cells(self.__mesh, options.field, options.field_values)
+        elif options.field_type == "points":
+            self.cell_to_faces: Dict[int, Iterable[int]] = find_involved_cells_from_points(self.__mesh, options.field, options.field_values)
+        else:  # "cell_to_faces"
+            self.cell_to_faces: Dict[int, Iterable[int]] = read_cell_to_faces(self.__mesh, options.field)
         node_frac_info = build_fracture_nodes(mesh, self.cell_to_faces, options.split_on_domain_boundary)
         self.is_boundary_fracture_node: Sequence[bool] = node_frac_info.is_boundary_fracture_node
         self.is_internal_fracture_node: Sequence[bool] = node_frac_info.is_internal_fracture_node
@@ -423,9 +552,9 @@ def __color_fracture_sides(mesh: vtkUnstructuredGrid,
         return False
 
     face_node_set_to_cell = defaultdict(set)  # For each face (defined by its node set), gives all the cells containing this face.
-    for c, local_frac_f in cell_to_faces.items():
+    for c, local_frac_fs in cell_to_faces.items():
         cell = mesh.GetCell(c)
-        for f in [i for i in range(cell.GetNumberOfFaces()) if i not in local_frac_f]:
+        for f in [i for i in range(cell.GetNumberOfFaces()) if i not in local_frac_fs]:
             face = cell.GetFace(f)
             face_point_ids = frozenset(vtk_iter(face.GetPointIds()))
             if does_face_contain_boundary_node(face_point_ids):
@@ -489,8 +618,11 @@ def __generate_fracture_mesh(mesh: vtkUnstructuredGrid,
 
     field = numpy.ones((num_points, duplicated_nodes_info.max_duplicated_nodes()), dtype=int) * -1
     for i, n in enumerate(fracture_nodes):
-        for j, m in enumerate(duplicated_nodes_info.duplicated_nodes[n]):
-            field[i, j] = m
+        if n in duplicated_nodes_info.duplicated_nodes:
+            for j, m in enumerate(duplicated_nodes_info.duplicated_nodes[n]):  # Use .get(n, ())?
+                field[i, j] = m
+        else:
+            field[i, 0] = duplicated_nodes_info.renumbered_nodes[n]
     array = numpy_to_vtk(field, array_type=VTK_ID_TYPE)
     array.SetName("duplicated_nodes")
 
