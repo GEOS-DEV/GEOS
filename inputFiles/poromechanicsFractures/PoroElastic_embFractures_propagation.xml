@@ -75,10 +75,10 @@
       name="preFracture"
       target="/Solvers/SurfaceGenerator"/>
 
-    <!-- <PeriodicEvent
+    <PeriodicEvent
       name="fracturing"
       forceDt="10"
-      target="/Solvers/SurfaceGenerator"/> -->
+      target="/Solvers/SurfaceGenerator"/>
 
     <PeriodicEvent
       name="solverApplications"
