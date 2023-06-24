@@ -331,6 +331,15 @@ protected:
                                          int const cycleNumber,
                                          DomainPartition & domain )
   {
+    //this in only for the embeddedFracture solver to work when there is propagation 
+    //we should probably implement this somewhere else
+    setupSystem( domain,
+                 this->getDofManager(),
+                 this->getLocalMatrix(),
+                 this->getSystemRhs(),
+                 this->getSystemSolution(),
+                 true );
+    implicitStepSetup( time_n, dt, domain );
     return SolverBase::solverStep( time_n, dt, cycleNumber, domain );
   }
 

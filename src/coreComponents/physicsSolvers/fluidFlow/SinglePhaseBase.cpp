@@ -872,7 +872,6 @@ void applyAndSpecifyFieldValue( real64 const & time_n,
       subRegion.getReference< array1d< real64 > >( boundaryFieldKey );
     arrayView1d< real64 const > const field =
       subRegion.getReference< array1d< real64 > >( fieldKey );
-
     forAll< parallelDevicePolicy<> >( lset.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       localIndex const ei = lset[a];

@@ -379,7 +379,7 @@ bool EmbeddedSurfaceGenerator::propagationStep3D()
   embSurfNodeManager.compressRelationMaps();
 
   // Add the embedded elements to the fracture stencil. - THIS MIGHT BE REPEATED BECAUSE OF SOLVER STEP BELOW
-  addToFractureStencil( domain );
+  //addToFractureStencil( domain );
   return added;
 }
 

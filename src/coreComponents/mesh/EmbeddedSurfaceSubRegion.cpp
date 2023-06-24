@@ -146,7 +146,6 @@ bool EmbeddedSurfaceSubRegion::addNewPlanarEmbeddedSurface( localIndex const cel
 
     if(prodScalarProd < 0)
     {
-      edgeIndex = cellToEdges[cellIndex][ke];
       LvArray::tensorOps::copy< 3 >( lineDir, nodesCoord[edgeToNodes[edgeIndex][0]] );
       LvArray::tensorOps::subtract< 3 >( lineDir, nodesCoord[edgeToNodes[edgeIndex][1]] );
       LvArray::tensorOps::normalize< 3 >( lineDir );

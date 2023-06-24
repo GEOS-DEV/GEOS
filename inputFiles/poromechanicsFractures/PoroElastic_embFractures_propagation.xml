@@ -71,14 +71,14 @@
 
   <Events
     maxTime="30">
-    <!-- <SoloEvent
+    <SoloEvent
       name="preFracture"
-      target="/Solvers/SurfaceGenerator"/> -->
+      target="/Solvers/SurfaceGenerator"/>
 
-    <PeriodicEvent
+    <!-- <PeriodicEvent
       name="fracturing"
       forceDt="10"
-      target="/Solvers/SurfaceGenerator"/>
+      target="/Solvers/SurfaceGenerator"/> -->
 
     <PeriodicEvent
       name="solverApplications"
@@ -87,7 +87,7 @@
 
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="10"
+      cycleFrequency="1"
       target="/Outputs/vtkOutput"/>
 
     <!-- <PeriodicEvent
