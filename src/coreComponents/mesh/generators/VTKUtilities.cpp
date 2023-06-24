@@ -574,6 +574,7 @@ loadMesh( Path const & filePath,
   return {};
 }
 
+
 AllMeshes loadAllMeshes( Path const & filePath,
                          string const & mainBlockName,
                          array1d< string > const & faceBlockNames,
@@ -827,7 +828,7 @@ redistributeMesh( vtkSmartPointer< vtkDataSet > loadedMesh,
     }
   }
 
-    // Determine if redistribution is required
+  // Determine if redistribution is required
   vtkIdType const minCellsOnAnyRank = MpiWrapper::min( mesh->GetNumberOfCells(), comm );
   if( minCellsOnAnyRank == 0 )
   {
