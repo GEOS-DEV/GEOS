@@ -2,11 +2,6 @@ set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE)
 set(ENABLE_CALIPER ON CACHE BOOL "")
 
 set(ENABLE_HYPRE ON CACHE BOOL "" FORCE)
-# If not defined as argument, take from the environment...
-if(NOT DEFINED ENABLE_HYPRE)
-  set(ENABLE_HYPRE "$ENV{ENABLE_HYPRE}" CACHE BOOL "" FORCE)
-endif()
-# ... and then check the value.
 if(ENABLE_HYPRE)
   set(GEOSX_LA_INTERFACE "Hypre" CACHE STRING "" FORCE)
 else()
@@ -14,9 +9,6 @@ else()
 endif()
 
 # Same pattern
-if(NOT DEFINED ENABLE_TRILINOS)
-  set(ENABLE_TRILINOS "$ENV{ENABLE_TRILINOS}" CACHE BOOL "" FORCE)
-endif()
 if(ENABLE_TRILINOS)
   set(GEOSX_LA_INTERFACE "Trilinos" CACHE STRING "" FORCE)
 else()
