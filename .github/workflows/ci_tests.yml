@@ -130,8 +130,8 @@ jobs:
             CMAKE_BUILD_TYPE: Release
 
           # Matrix jobs that deploy to Google Cloud
-          - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 10.2.89p2)
-            DOCKER_REPOSITORY: geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda10.2.89p2
+          - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 11.5.119)
+            DOCKER_REPOSITORY: geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda11.5.119
             CMAKE_BUILD_TYPE: Release
             BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
             HOST_CONFIG: host-configs/TOTAL/pecan-GPU.cmake
