@@ -68,6 +68,7 @@ public:
                                       DomainPartition & domain,
                                       bool const computeGradient ) override;
 
+
   virtual real64 explicitStepBackward( real64 const & time_n,
                                        real64 const & dt,
                                        integer const cycleNumber,
@@ -171,26 +172,6 @@ private:
    * @param domain the partition domain
    */
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) override;
-
-  localIndex getNumNodesPerElem();
-
-  /// Indices of the nodes (in the right order) for each source point
-  array2d< localIndex > m_sourceNodeIds;
-
-  /// Constant part of the source for the nodes listed in m_sourceNodeIds
-  array2d< real64 > m_sourceConstants;
-
-  /// Flag that indicates whether the source is accessible (is local or in the  ghost cells) or not to the MPI rank
-  array1d< localIndex > m_sourceIsAccessible;
-
-  /// Indices of the element nodes (in the right order) for each receiver point
-  array2d< localIndex > m_receiverNodeIds;
-
-  /// Basis function evaluated at the receiver for the nodes listed in m_receiverNodeIds
-  array2d< real64 > m_receiverConstants;
-
-  /// Flag that indicates whether the receiver is local or not to the MPI rank
-  array1d< localIndex > m_receiverIsLocal;
 
   /// Pressure_p_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_pressureNp1AtReceivers;

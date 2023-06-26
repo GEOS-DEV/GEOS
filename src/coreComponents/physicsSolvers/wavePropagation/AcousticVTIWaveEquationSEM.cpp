@@ -81,62 +81,9 @@ AcousticVTIWaveEquationSEM::~AcousticVTIWaveEquationSEM()
   // TODO Auto-generated destructor stub
 }
 
-localIndex AcousticVTIWaveEquationSEM::getNumNodesPerElem()
-{
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
-
-  FiniteElementDiscretization const * const
-  feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
-  GEOS_THROW_IF( feDiscretization == nullptr,
-                  getName() << ": FE discretization not found: " << m_discretizationName,
-                  InputError );
-
-  localIndex numNodesPerElem = 0;
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(),
-                                  [&]( string const &,
-                                       MeshLevel const & mesh,
-                                       arrayView1d< string const > const & regionNames )
-  {
-    ElementRegionManager const & elemManager = mesh.getElemManager();
-    elemManager.forElementRegions( regionNames,
-                                   [&] ( localIndex const,
-                                         ElementRegionBase const & elemRegion )
-    {
-      elemRegion.forElementSubRegions( [&]( ElementSubRegionBase const & elementSubRegion )
-      {
-        finiteElement::FiniteElementBase const &
-        fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-        localIndex const numSupportPoints = fe.getNumSupportPoints();
-        if( numSupportPoints > numNodesPerElem )
-        {
-          numNodesPerElem = numSupportPoints;
-        }
-      } );
-    } );
-
-
-  } );
-  return numNodesPerElem;
-}
-
 void AcousticVTIWaveEquationSEM::initializePreSubGroups()
 {
   WaveSolverBase::initializePreSubGroups();
-
-  localIndex numNodesPerElem = getNumNodesPerElem();
-
-  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
-  m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
-  m_sourceConstants.resize( numSourcesGlobal, numNodesPerElem );
-
-  localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
-  m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
 
 }
 
@@ -201,47 +148,10 @@ void AcousticVTIWaveEquationSEM::postProcessInput()
 {
 
   WaveSolverBase::postProcessInput();
-  GEOS_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
-                  "Invalid number of physical coordinates for the sources",
-                  InputError );
-
-  GEOS_THROW_IF( m_receiverCoordinates.size( 1 ) != 3,
-                  "Invalid number of physical coordinates for the receivers",
-                  InputError );
-
-  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
-  real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
-  real64 dt = 0;
-  for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
-  {
-    EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/" + this->getName() )
-    {
-      dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
-    }
-  }
-
-  GEOS_THROW_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
-
-  if( m_dtSeismoTrace > 0 )
-  {
-    m_nsamplesSeismoTrace = int( maxTime / m_dtSeismoTrace) + 1;
-  }
-  else
-  {
-    m_nsamplesSeismoTrace = 0;
-  }
-  localIndex const nsamples = int(maxTime/dt) + 1;
-
-  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
-  m_sourceIsAccessible.resize( numSourcesGlobal );
 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  m_receiverIsLocal.resize( numReceiversGlobal );
 
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
-  m_sourceValue.resize( nsamples, numSourcesGlobal );
-
 }
 
 void AcousticVTIWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
@@ -722,91 +632,13 @@ real64 AcousticVTIWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
 
 real64 AcousticVTIWaveEquationSEM::explicitStepBackward( real64 const & time_n,
-                                                      real64 const & dt,
-                                                      integer cycleNumber,
-                                                      DomainPartition & domain,
-                                                      bool computeGradient )
+                                                     real64 const & dt,
+                                                     integer cycleNumber,
+                                                     DomainPartition & domain,
+                                                     bool computeGradient )
 {
-  real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(),
-                                  [&] ( string const &,
-                                        MeshLevel & mesh,
-                                        arrayView1d< string const > const & regionNames )
-  {
-    NodeManager & nodeManager = mesh.getNodeManager();
-
-    arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVector >();
-
-    arrayView1d< real32 > const p_nm1 = nodeManager.getField< fields::Pressure_p_nm1 >();
-    arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_p_n >();
-    arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_p_np1 >();
-
-    arrayView1d< real32 > const q_nm1 = nodeManager.getField< fields::Pressure_q_nm1 >();
-    arrayView1d< real32 > const q_n = nodeManager.getField< fields::Pressure_q_n >();
-    arrayView1d< real32 > const q_np1 = nodeManager.getField< fields::Pressure_q_np1 >();
-
-    if( computeGradient )
-    {
-      ElementRegionManager & elemManager = mesh.getElemManager();
-
-      arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
-
-      if( NULL == std::getenv( "DISABLE_LIFO" ) )
-      {
-        m_lifo->pop( p_dt2 );
-      }
-      else
-      {
-        GEOS_MARK_SCOPE ( DirectRead );
-
-        int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-        std::string fileName = GEOS_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
-        std::ifstream wf( fileName, std::ios::in | std::ios::binary );
-        GEOS_THROW_IF( !wf,
-                        "Could not open file "<< fileName << " for reading",
-                        InputError );
-        //std::string fileName = GEOS_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
-        //const int fileDesc = open( fileName.c_str(), O_RDONLY | O_DIRECT );
-        //GEOS_ERROR_IF( fileDesc == -1,
-        //                "Could not open file "<< fileName << " for reading: " << strerror( errno ) );
-        // maybe better with registerTouch()
-        p_dt2.move( MemorySpace::host, true );
-        wf.read( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
-        wf.close( );
-        remove( fileName.c_str() );
-      }
-      elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                  CellElementSubRegion & elementSubRegion )
-      {
-        arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
-        arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
-        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-        constexpr localIndex numNodesPerElem = 8;
-
-        GEOS_MARK_SCOPE ( updatePartialGradient );
-        forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const eltIdx )
-        {
-          for( localIndex i = 0; i < numNodesPerElem; ++i )
-          {
-            localIndex nodeIdx = elemsToNodes[eltIdx][i];
-            grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/8.0 * (p_dt2[nodeIdx] * p_n[nodeIdx]);
-          }
-        } );
-      } );
-    }
-
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-    {
-      p_nm1[a] = p_n[a];
-      p_n[a]   = p_np1[a];
-
-      q_nm1[a] = q_n[a];
-      q_n[a]   = q_np1[a];
-
-    } );
-  } );
-
-  return dtOut;
+  GEOS_ERROR( "This option is not supported yet" );
+  return -1;
 }
 
 real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
