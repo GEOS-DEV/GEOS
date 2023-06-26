@@ -1,5 +1,5 @@
-build-*
-install-*
+/build*/
+/install*/
 .cproject
 .project
 .pydevproject
@@ -15,7 +15,6 @@ install-*
 *.out
 *.core
 *.DS_Store
-/build/
 /Default/
 /debugTests/
 /Debug/
