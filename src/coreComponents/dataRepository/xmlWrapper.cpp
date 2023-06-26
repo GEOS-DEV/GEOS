@@ -77,17 +77,17 @@ template void stringToInputVariable( Tensor< real64, 6 > & target, string const 
  * @brief Adds the filePath and character offset info on the node in filePathString
  * and charOffsetString attributes. This function allow to keep track of the source
  * filename & offset of each node.
- * @param node the target node to add the informations on.
+ * @param targetNode the target node to add the informations on.
  * @param filePath the absolute path of the xml file containing the node.
  */
-void addNodeFileInfo( xmlNode node, string const & filePath )
+void addNodeFileInfo( xmlNode targetNode, string const & filePath )
 {
   // we keep the file path and the character offset on each node so we keep track of these
   // informations, even if the nodes are manipulated within the xml hierarchy.
-  node.append_attribute( filePathString ).set_value( filePath.c_str() );
-  node.append_attribute( charOffsetString ).set_value( node.offset_debug() );
+  targetNode.append_attribute( filePathString ).set_value( filePath.c_str() );
+  targetNode.append_attribute( charOffsetString ).set_value( targetNode.offset_debug() );
 
-  for( xmlNode subNode : node.children() )
+  for( xmlNode subNode : targetNode.children() )
   {
     addNodeFileInfo( subNode, filePath );
   }

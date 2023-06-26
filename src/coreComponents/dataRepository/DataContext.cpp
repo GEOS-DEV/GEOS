@@ -53,20 +53,20 @@ string getNodeName( xmlWrapper::xmlNode const & node )
   }
 }
 
-DataFileContext::DataFileContext( xmlWrapper::xmlNode const & node,
+DataFileContext::DataFileContext( xmlWrapper::xmlNode const & targetNode,
                                   xmlWrapper::xmlNodePos const & nodePos ):
-  DataContext( getNodeName( node ), true ),
-  m_typeName( node.name() ),
+  DataContext( getNodeName( targetNode ), true ),
+  m_typeName( targetNode.name() ),
   m_filePath( nodePos.filePath ),
   m_line( nodePos.line ),
   m_offsetInLine( nodePos.offsetInLine ),
   m_offset( nodePos.offset )
 {}
 
-DataFileContext::DataFileContext( xmlWrapper::xmlNode const & node,
+DataFileContext::DataFileContext( xmlWrapper::xmlNode const & targetNode,
                                   xmlWrapper::xmlAttribute const & att,
                                   xmlWrapper::xmlAttributePos const & attPos ):
-  DataContext( getNodeName( node ) + '/' + att.name(), true ),
+  DataContext( getNodeName( targetNode ) + '/' + att.name(), true ),
   m_typeName( att.name() ),
   m_filePath( attPos.filePath ),
   m_line( attPos.line ),

@@ -636,7 +636,7 @@ protected:
 
   /**
    * @brief Sets the m_dataContext to a DataFileContext by retrieving the attribute file line.
-   * @param node the node containing this wrapper source attribute.
+   * @param targetNode the node containing this wrapper source attribute.
    * @param nodePos the xml node position of the node
    */
   void createDataContext( xmlWrapper::xmlNode const & targetNode,

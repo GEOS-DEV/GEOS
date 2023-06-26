@@ -92,17 +92,17 @@ public:
 
   /**
    * @brief Construct the file context of a Group from an xml node.
-   * @param node the target object xml node
+   * @param targetNode the target object xml node
    * @param nodePos the target object xml node position
    */
-  DataFileContext( xmlWrapper::xmlNode const & node, xmlWrapper::xmlNodePos const & nodePos );
+  DataFileContext( xmlWrapper::xmlNode const & targetNode, xmlWrapper::xmlNodePos const & nodePos );
   /**
    * @brief Construct the file context of a Group from an xml node.
-   * @param node the xml node containing the xml attribute
+   * @param targetNode the xml node containing the xml attribute
    * @param att the target object xml attribute
    * @param attPos the target object xml attribute position
    */
-  DataFileContext( xmlWrapper::xmlNode const & node, xmlWrapper::xmlAttribute const & att,
+  DataFileContext( xmlWrapper::xmlNode const & targetNode, xmlWrapper::xmlAttribute const & att,
                    xmlWrapper::xmlAttributePos const & attPos );
 
   /**
