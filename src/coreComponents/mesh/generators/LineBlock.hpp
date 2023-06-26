@@ -213,9 +213,6 @@ private:
 
   // well node data
 
-  /// Number of nodes per well element
-  globalIndex m_numNodesPerElem;
-
   /// Global number of well nodes
   globalIndex m_numNodes;
 
@@ -237,11 +234,6 @@ private:
   array1d< globalIndex > m_perfElemId;
 
 
-
-  // Auxiliary data
-
-  // Number of physical dimensions
-  int m_nDims;
 
   // Perforation data
 

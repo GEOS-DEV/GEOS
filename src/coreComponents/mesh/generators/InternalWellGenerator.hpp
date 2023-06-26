@@ -275,9 +275,6 @@ private:
   /// Name of the constraints associated with this well
   string m_wellControlsName;
 
-  /// Name of the mesh body associated with this well
-  string m_meshBodyName;
-
 
 
   // Geometry of the well (later passed to the WellElementSubRegion)

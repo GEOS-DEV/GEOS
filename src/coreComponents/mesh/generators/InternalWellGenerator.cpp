@@ -36,7 +36,6 @@ InternalWellGenerator::InternalWellGenerator( string const & name, Group * const
   m_radius( 0 ),
   m_wellRegionName( "" ),
   m_wellControlsName( "" ),
-  m_meshBodyName( "" ),
   m_numElems( 0 ),
   m_numNodesPerElem( 2 ),
   m_numNodes( 0 ),
@@ -86,11 +85,6 @@ InternalWellGenerator::InternalWellGenerator( string const & name, Group * const
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Name of the set of constraints associated with this well" );
-
-  registerWrapper( viewKeyStruct::meshNameString(), &m_meshBodyName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setSizedFromParent( 0 ).
-    setDescription( "Name of the reservoir mesh associated with this well" );
 }
 
 void InternalWellGenerator::postProcessInput()
@@ -113,10 +107,6 @@ void InternalWellGenerator::postProcessInput()
 
   GEOS_THROW_IF( m_wellRegionName.empty(),
                  "Invalid well region name in well " << getName(),
-                 InputError );
-
-  GEOS_THROW_IF( m_meshBodyName.empty(),
-                 "Invalid mesh name in well " << getName(),
                  InputError );
 
   GEOS_THROW_IF( m_wellControlsName.empty(),
