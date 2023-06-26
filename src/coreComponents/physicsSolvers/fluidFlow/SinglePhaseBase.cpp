@@ -508,7 +508,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
     GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
                         SinglePhaseBase::catalogName() << " " << getDataContext() <<
-                        ": By looking at the elevation of the cell centers in this model, GEOSX found that " <<
+                        ": By looking at the elevation of the cell centers in this model, GEOS found that " <<
                         "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " <<
                         globalMaxElevation[equilIndex] << "\nBut, a datum elevation of " << datumElevation <<
                         " was specified in the input file to equilibrate the model.\n " <<

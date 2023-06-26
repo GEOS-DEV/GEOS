@@ -226,7 +226,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
           capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
           GEOS_THROW_IF( capPresName.empty(),
                          GEOS_FMT( "{}: Capillary pressure model not found on subregion {}",
-                                   getDataContext(), subRegion.getName() ),
+                                   getDataContext(), subRegion.getDataContext() ),
                          InputError );
         }
       }
@@ -301,7 +301,7 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
   fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
   GEOS_THROW_IF( fluidName.empty(),
                  GEOS_FMT( "{}: Fluid model not found on subregion {}",
-                           getDataContext(), subRegion.getName() ),
+                           getDataContext(), subRegion.getDataContext() ),
                  InputError );
 
   string & relPermName = subRegion.registerWrapper< string >( viewKeyStruct::relPermNamesString() ).
@@ -315,7 +315,7 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
 
   GEOS_THROW_IF( relPermName.empty(),
                  GEOS_FMT( "{}: Relative permeability model not found on subregion {}",
-                           getDataContext(), subRegion.getName() ),
+                           getDataContext(), subRegion.getDataContext() ),
                  InputError );
 
 
@@ -330,7 +330,7 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
     capPressureName = getConstitutiveName< CapillaryPressureBase >( subRegion );
     GEOS_THROW_IF( capPressureName.empty(),
                    GEOS_FMT( "{}: Capillary pressure model not found on subregion {}",
-                             getDataContext(), subRegion.getName() ),
+                             getDataContext(), subRegion.getDataContext() ),
                    InputError );
   }
 
@@ -346,7 +346,7 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
     thermalConductivityName = getConstitutiveName< MultiPhaseThermalConductivityBase >( subRegion );
     GEOS_THROW_IF( thermalConductivityName.empty(),
                    GEOS_FMT( "{}: Thermal conductivity model not found on subregion {}",
-                             getDataContext(), subRegion.getName() ),
+                             getDataContext(), subRegion.getDataContext() ),
                    InputError );
   }
 }
@@ -911,7 +911,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
       GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
                           CompositionalMultiphaseBase::catalogName() << " " << getDataContext() <<
-                          ": By looking at the elevation of the cell centers in this model, GEOSX found that " <<
+                          ": By looking at the elevation of the cell centers in this model, GEOS found that " <<
                           "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " <<
                           globalMaxElevation[equilIndex] << "\nBut, a datum elevation of " << datumElevation <<
                           " was specified in the input file to equilibrate the model.\n " <<
@@ -1011,7 +1011,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
 
         GEOS_LOG_RANK_0_IF( returnValue == isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
                             CompositionalMultiphaseBase::catalogName() << " " << getDataContext() <<
-                            ": currently, GEOSX assumes that there is only one mobile phase when computing the hydrostatic pressure. \n" <<
+                            ": currently, GEOS assumes that there is only one mobile phase when computing the hydrostatic pressure. \n" <<
                             "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n" <<
                             "Please make sure that only one phase is mobile at the beginning of the simulation. \n" <<
                             "If this is not the case, the problem will not be at equilibrium when the simulation starts" );
