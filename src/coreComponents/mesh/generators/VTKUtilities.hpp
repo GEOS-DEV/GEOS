@@ -95,7 +95,7 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes );
  * @return the vtk grid redistributed
  */
 vtkSmartPointer< vtkDataSet >
-redistributeMesh( vtkDataSet & loadedMesh,
+redistributeMesh( vtkSmartPointer< vtkDataSet > loadedMesh,
                   MPI_Comm const comm,
                   PartitionMethod const method,
                   int const partitionRefinement,
