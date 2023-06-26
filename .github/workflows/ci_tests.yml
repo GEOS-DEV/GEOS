@@ -7,7 +7,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GEOSX_TPL_TAG: 224-952
+  GEOSX_TPL_TAG: 224-955
 
 jobs:
   # Matrix jobs will be cancelled if PR is a draft.
@@ -113,7 +113,7 @@ jobs:
             ENABLE_TRILINOS: OFF
 
           - name: Centos (7.7, gcc 8.3.1, open-mpi 1.10.7, cuda 11.8.0)
-            DOCKER_REPOSITORY: geosx/centos7.7.1810-gcc8.3.1-cuda11.8.0
+            DOCKER_REPOSITORY: geosx/centos7.7-gcc8.3.1-cuda11.8.0
             CMAKE_BUILD_TYPE: Release
             BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
 
