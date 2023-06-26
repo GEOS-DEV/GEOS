@@ -33,6 +33,7 @@
       name="SurfaceGenerator"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
+      targetObjects="{ FracturePlane }"
       fractureRegion="Fracture"
       logLevel="1"
       mpiCommOrder="1"/>
@@ -41,7 +42,7 @@
 
   <!-- SPHINX_SNEDDON_GEOMETRY -->
   <Geometry>
-    <BoundedPlane
+    <Rectangle
       name="FracturePlane"
       normal="{1.0, 0.0, 0.0}"
       origin="{0.0, 0.0, 0.0}"

@@ -25,7 +25,8 @@
 #include "EdgeManager.hpp"
 #include "EmbeddedSurfaceNodeManager.hpp"
 #include "CellElementSubRegion.hpp"
-#include "simpleGeometricObjects/BoundedPlane.hpp"
+//Do we really need this include Rectangle?
+#include "simpleGeometricObjects/Rectangle.hpp"
 
 namespace geos
 {
@@ -142,7 +143,7 @@ public:
                               EmbeddedSurfaceNodeManager & embSurfNodeManager,
                               EdgeManager const & edgeManager,
                               FixedOneToManyRelation const & cellToEdges,
-                              BoundedPlane const * fracture );
+                              PlanarGeometricObject const * fracture );
 
   /**
    * @brief inherit ghost rank from cell elements.

@@ -85,17 +85,17 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="mapPair">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}]*" />
+			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}\s]*\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="path">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}]*" />
+			<xsd:pattern value=".*[\[\]`$].*|[^*?&lt;&gt;\|:&quot;;,\s]*\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="path_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([^,\{\}]*,\s*)*[^,\{\}]*)?\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([^*?&lt;&gt;\|:&quot;;,\s]+\s*,\s*)*[^*?&lt;&gt;\|:&quot;;,\s]+\s*)?\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32">
@@ -145,12 +145,12 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="string">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}]*" />
+			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}\s]*\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="string_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([^,\{\}]*,\s*)*[^,\{\}]*)?\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:element name="Problem" type="ProblemType" />
@@ -219,16 +219,24 @@
 				</xsd:unique>
 			</xsd:element>
 			<xsd:element name="Geometry" type="GeometryType" maxOccurs="1">
-				<xsd:unique name="GeometryBoundedPlaneUniqueName">
-					<xsd:selector xpath="BoundedPlane" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
 				<xsd:unique name="GeometryBoxUniqueName">
 					<xsd:selector xpath="Box" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="GeometryCustomPolarObjectUniqueName">
+					<xsd:selector xpath="CustomPolarObject" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="GeometryCylinderUniqueName">
 					<xsd:selector xpath="Cylinder" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="GeometryDiscUniqueName">
+					<xsd:selector xpath="Disc" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="GeometryRectangleUniqueName">
+					<xsd:selector xpath="Rectangle" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="GeometryThickPlaneUniqueName">
@@ -800,6 +808,8 @@
 		<xsd:attribute name="maxTime" type="real64" default="1.79769e+308" />
 		<!--minTime => Start simulation time for the global event loop.-->
 		<xsd:attribute name="minTime" type="real64" default="0" />
+		<!--timeOutputFormat => Format of the time in the GEOS log.-->
+		<xsd:attribute name="timeOutputFormat" type="geos_EventManager_TimeOutputFormat" default="seconds" />
 	</xsd:complexType>
 	<xsd:complexType name="HaltEventType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -900,6 +910,11 @@
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geos_EventManager_TimeOutputFormat">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|seconds|minutes|hours|days|years|full" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="FieldSpecificationsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Aquifer" type="AquiferType" />
@@ -1224,27 +1239,13 @@ stress - traction is applied to the faces as specified by the inner product of i
 	</xsd:simpleType>
 	<xsd:complexType name="GeometryType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="BoundedPlane" type="BoundedPlaneType" />
 			<xsd:element name="Box" type="BoxType" />
+			<xsd:element name="CustomPolarObject" type="CustomPolarObjectType" />
 			<xsd:element name="Cylinder" type="CylinderType" />
+			<xsd:element name="Disc" type="DiscType" />
+			<xsd:element name="Rectangle" type="RectangleType" />
 			<xsd:element name="ThickPlane" type="ThickPlaneType" />
 		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="BoundedPlaneType">
-		<!--dimensions => Length and width of the bounded plane-->
-		<xsd:attribute name="dimensions" type="real64_array" use="required" />
-		<!--lengthVector => Tangent vector defining the orthonormal basis along with the normal.-->
-		<xsd:attribute name="lengthVector" type="R1Tensor" use="required" />
-		<!--normal => Normal (n_x,n_y,n_z) to the plane (will be normalized automatically)-->
-		<xsd:attribute name="normal" type="R1Tensor" use="required" />
-		<!--origin => Origin point (x,y,z) of the plane (basically, any point on the plane)-->
-		<xsd:attribute name="origin" type="R1Tensor" use="required" />
-		<!--tolerance => Tolerance to determine if a point sits on the plane or not. It is relative to the maximum dimension of the plane.-->
-		<xsd:attribute name="tolerance" type="real64" default="1e-05" />
-		<!--widthVector => Tangent vector defining the orthonormal basis along with the normal.-->
-		<xsd:attribute name="widthVector" type="R1Tensor" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="BoxType">
 		<!--strike => The strike angle of the box-->
@@ -1253,6 +1254,22 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="xMax" type="R1Tensor" use="required" />
 		<!--xMin => Minimum (x,y,z) coordinates of the box-->
 		<xsd:attribute name="xMin" type="R1Tensor" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CustomPolarObjectType">
+		<!--center => (x,y,z) coordinates of the center of the CustomPolarObject-->
+		<xsd:attribute name="center" type="R1Tensor" use="required" />
+		<!--coefficients => Coefficients of the CustomPolarObject function relating the localradius to the angle theta.-->
+		<xsd:attribute name="coefficients" type="real64_array" use="required" />
+		<!--lengthVector => Tangent vector defining the orthonormal basis along with the normal.-->
+		<xsd:attribute name="lengthVector" type="R1Tensor" use="required" />
+		<!--normal => Normal (n_x,n_y,n_z) to the plane (will be normalized automatically)-->
+		<xsd:attribute name="normal" type="R1Tensor" use="required" />
+		<!--tolerance => Tolerance to determine if a point sits on the CustomPolarObject or not. It is relative to the maximum dimension of the CustomPolarObject.-->
+		<xsd:attribute name="tolerance" type="real64" default="1e-05" />
+		<!--widthVector => Tangent vector defining the orthonormal basis along with the normal.-->
+		<xsd:attribute name="widthVector" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1265,6 +1282,38 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="outerRadius" type="real64" use="required" />
 		<!--secondFaceCenter => Center point of the second face of the cylinder-->
 		<xsd:attribute name="secondFaceCenter" type="R1Tensor" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="DiscType">
+		<!--center => (x,y,z) coordinates of the center of the disc-->
+		<xsd:attribute name="center" type="R1Tensor" use="required" />
+		<!--lengthVector => Tangent vector defining the orthonormal basis along with the normal.-->
+		<xsd:attribute name="lengthVector" type="R1Tensor" use="required" />
+		<!--normal => Normal (n_x,n_y,n_z) to the plane (will be normalized automatically)-->
+		<xsd:attribute name="normal" type="R1Tensor" use="required" />
+		<!--radius => Radius of the disc.-->
+		<xsd:attribute name="radius" type="real64" use="required" />
+		<!--tolerance => Tolerance to determine if a point sits on the disc or not. It is relative to the maximum dimension of the disc.-->
+		<xsd:attribute name="tolerance" type="real64" default="1e-05" />
+		<!--widthVector => Tangent vector defining the orthonormal basis along with the normal.-->
+		<xsd:attribute name="widthVector" type="R1Tensor" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="RectangleType">
+		<!--dimensions => Length and width of the bounded plane-->
+		<xsd:attribute name="dimensions" type="real64_array" use="required" />
+		<!--lengthVector => Tangent vector defining the orthonormal basis along with the normal.-->
+		<xsd:attribute name="lengthVector" type="R1Tensor" use="required" />
+		<!--normal => Normal (n_x,n_y,n_z) to the plane (will be normalized automatically)-->
+		<xsd:attribute name="normal" type="R1Tensor" use="required" />
+		<!--origin => Origin point (x,y,z) of the plane (basically, any point on the plane)-->
+		<xsd:attribute name="origin" type="R1Tensor" use="required" />
+		<!--tolerance => Tolerance to determine if a point sits on the plane or not. It is relative to the maximum dimension of the plane.-->
+		<xsd:attribute name="tolerance" type="real64" default="1e-05" />
+		<!--widthVector => Tangent vector defining the orthonormal basis along with the normal.-->
+		<xsd:attribute name="widthVector" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2293,6 +2342,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--mpiCommOrder => Flag to enable MPI consistent communication ordering-->
 		<xsd:attribute name="mpiCommOrder" type="integer" default="0" />
+		<!--targetObjects => List of geometric objects that will be used to initialized the embedded surfaces/fractures.-->
+		<xsd:attribute name="targetObjects" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -2331,6 +2382,10 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--isMatrixPoroelastic => (no description available)-->
+		<xsd:attribute name="isMatrixPoroelastic" type="integer" default="0" />
+		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
+		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
@@ -2654,6 +2709,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
+		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver used by the coupled solver-->
@@ -2957,6 +3014,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PackCollectionType">
+		<!--disableCoordCollection => Whether or not to create coordinate meta-collectors if collected objects are mesh objects.-->
+		<xsd:attribute name="disableCoordCollection" type="integer" default="0" />
 		<!--fieldName => The name of the (packable) field associated with the specified object to retrieve data from-->
 		<xsd:attribute name="fieldName" type="string" use="required" />
 		<!--objectPath => The name of the object from which to retrieve field values.-->
