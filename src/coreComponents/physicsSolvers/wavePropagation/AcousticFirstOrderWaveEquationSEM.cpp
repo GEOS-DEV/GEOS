@@ -509,7 +509,6 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
         kernel2.template launch< EXEC_POLICY, ATOMIC_POLICY >
           ( elementSubRegion.size(),
           regionIndex,
-          nodeManager.size(),
           X,
           elemsToNodes,
           velocity_x,
