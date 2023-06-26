@@ -25,7 +25,6 @@
         name="wellProducer1"
         wellRegionName="wellRegion1"
         wellControlsName="wellControls1"
-        meshName="mesh"
         polylineNodeCoords="{ { 124, 340, 28 },
                               { 124, 340, 0 } }"
         polylineSegmentConn="{ { 0, 1 } }"
@@ -58,7 +57,6 @@
         name="wellProducer2"
         wellRegionName="wellRegion2"
         wellControlsName="wellControls2"
-        meshName="mesh"
         polylineNodeCoords="{ { 276, 316, 28 },
                               { 276, 316, 0 } }"
         polylineSegmentConn="{ { 0, 1 } }"
@@ -93,7 +91,6 @@
         name="wellProducer3"
         wellRegionName="wellRegion3"
         wellControlsName="wellControls3"
-        meshName="mesh"
         polylineNodeCoords="{ { 180, 124, 28 },
                               { 180, 124, 0 } }"
         polylineSegmentConn="{ { 0, 1 } }"
@@ -126,7 +123,6 @@
         name="wellProducer4"
         wellRegionName="wellRegion4"
         wellControlsName="wellControls4"
-        meshName="mesh"
         polylineNodeCoords="{ { 340, 140, 28 },
                               { 340, 140, 0 } }"
         polylineSegmentConn="{ { 0, 1 } }"
@@ -159,7 +155,6 @@
         name="wellInjector1"
         wellRegionName="wellRegion5"
         wellControlsName="wellControls5"
-        meshName="mesh"
         polylineNodeCoords="{ { 36, 452, 32 },
                               { 36, 452, 0 } }"
         polylineSegmentConn="{ { 0, 1 } }"
@@ -192,7 +187,6 @@
         name="wellInjector2"
         wellRegionName="wellRegion6"
         wellControlsName="wellControls6"
-        meshName="mesh"
         polylineNodeCoords="{ { 236, 420, 32 },
                               { 236, 420, 0 } }"
         polylineSegmentConn="{ { 0, 1 } }"
@@ -225,7 +219,6 @@
         name="wellInjector3"
         wellRegionName="wellRegion7"
         wellControlsName="wellControls7"
-        meshName="mesh"
         polylineNodeCoords="{ { 12, 276, 32 },
                               { 12, 276, 0 } }"
         polylineSegmentConn="{ { 0, 1 } }"
@@ -258,7 +251,6 @@
         name="wellInjector4"
         wellRegionName="wellRegion8"
         wellControlsName="wellControls8"
-        meshName="mesh"
         polylineNodeCoords="{ { 212, 228, 32 },
                               { 212, 228, 0 } }"
         polylineSegmentConn="{ { 0, 1 } }"
@@ -291,7 +283,6 @@
         name="wellInjector5"
         wellRegionName="wellRegion9"
         wellControlsName="wellControls9"
-        meshName="mesh"
         polylineNodeCoords="{ { 396, 276, 32 },
                               { 396, 276, 0 } }"
         polylineSegmentConn="{ { 0, 1 } }"
@@ -324,7 +315,6 @@
         name="wellInjector6"
         wellRegionName="wellRegion10"
         wellControlsName="wellControls10"
-        meshName="mesh"
         polylineNodeCoords="{ { 60, 68, 32 },
                               { 60, 68, 0 } }"
         polylineSegmentConn="{ { 0, 1 } }"
@@ -357,7 +347,6 @@
         name="wellInjector7"
         wellRegionName="wellRegion11"
         wellControlsName="wellControls11"
-        meshName="mesh"
         polylineNodeCoords="{ { 252, 12, 32 },
                               { 252, 12, 0 } }"
         polylineSegmentConn="{ { 0, 1 } }"
@@ -390,7 +379,6 @@
         name="wellInjector8"
         wellRegionName="wellRegion12"
         wellControlsName="wellControls12"
-        meshName="mesh"
         polylineNodeCoords="{ { 452, 44, 32 },
                               { 452, 44, 0 } }"
         polylineSegmentConn="{ { 0, 1 } }"

@@ -72,7 +72,6 @@
         name="wellProducer"
         wellRegionName="wellRegion1"
         wellControlsName="wellControls1"
-        meshName="mesh"
         polylineNodeCoords="{ { 5.0, 5.0, 2.0 },
                               { 5.0, 5.0, 0.0 } }"
         polylineSegmentConn="{ { 0, 1 } }"
@@ -86,7 +85,6 @@
         name="wellInjector"
         wellRegionName="wellRegion2"
         wellControlsName="wellControls2"
-        meshName="mesh"
         polylineNodeCoords="{ { 195.0, 195.0, 2.0 },
                               { 195.0, 195.0, 0.0 } }"
         polylineSegmentConn="{ { 0, 1 } }"

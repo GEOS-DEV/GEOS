@@ -22,7 +22,6 @@
         wellRegionName="wellRegion"
         wellControlsName="wellControls"
         logLevel="1"
-        meshName="mesh"
         polylineNodeCoords="{ { 5440.0, 3300.0, -2950.0 },
                               { 5440.0, 3300.0, -3000.00 } }"
         polylineSegmentConn="{ { 0, 1 } }"

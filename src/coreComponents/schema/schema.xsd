@@ -1393,8 +1393,6 @@ stress - traction is applied to the faces as specified by the inner product of i
 		</xsd:choice>
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--meshName => Name of the reservoir mesh associated with this well-->
-		<xsd:attribute name="meshName" type="string" use="required" />
 		<!--minElementLength => Minimum length of a well element, computed as (segment length / number of elements per segment ) [m]-->
 		<xsd:attribute name="minElementLength" type="real64" default="0.001" />
 		<!--minSegmentLength => Minimum length of a well segment [m]-->
