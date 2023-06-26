@@ -9,7 +9,7 @@ def arrayToXMLArray( array ):
     stringArray = '{%s}' % ', '.join(['%1.10f' % (x) for x in array])
     return stringArray
 
-class BoundedPlane:
+class Rectangle:
     
     def __init__(self, *args ) -> None:
         self.name = args[0]
@@ -43,7 +43,7 @@ class BoundedPlane:
     def print_XML_block(self):
         
         root = ET.Element("geos")
-        element = ET.SubElement(root, "BoundedPlane")
+        element = ET.SubElement(root, "Rectangle")
         element.set( "name" , self.name )
         element.set( "normal", arrayToXMLArray( self.normal ) )
         element.set( "origin", arrayToXMLArray( self.origin ) )
@@ -116,7 +116,7 @@ def compute_normal_fromAngles( strikeAngle, dipAngle ):
 def main():
     origin = [40, 37.5, 10]
     planes = []
-    planes.append(BoundedPlane("FracturePlane", -20, 60, origin))
+    planes.append(Rectangle("FracturePlane", -20, 60, origin))
 
     # Vertex # 1; X, m:  1.2026E+03; Y, m: -8.5871E+02; Z, m:  3.3080E+02
     # Vertex # 2; X, m:  1.2038E+03; Y, m: -8.5901E+02; Z, m:  3.3003E+02
@@ -125,7 +125,7 @@ def main():
                np.array([1.2038E+03, -8.5901E+02, 3.3003E+02]), 
                np.array([1.2027E+03, -8.5843E+02, 3.2935E+02]) ]
     
-    planes.append(BoundedPlane("FracturePlane", compute_normal_fromTriangleVertices( points ), origin))
+    planes.append(Rectangle("FracturePlane", compute_normal_fromTriangleVertices( points ), origin))
     plot(planes)
     for plane in planes:
         plane.print_XML_block()
