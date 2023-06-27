@@ -154,8 +154,8 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
 void NonlinearSolverParameters::postProcessInput()
 {
   GEOS_ERROR_IF_LE_MSG( m_timeStepDecreaseIterLimit, m_timeStepIncreaseIterLimit,
-                        getWrapperDataContext( viewKeysStruct::timeStepDecreaseIterLimString() ) <<
-                        ": should be smaller than " << viewKeysStruct::timeStepIncreaseIterLimString() );
+                        getWrapperDataContext( viewKeysStruct::timeStepIncreaseIterLimString() ) <<
+                        ": should be smaller than " << viewKeysStruct::timeStepDecreaseIterLimString() );
 }
 
 

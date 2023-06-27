@@ -3371,7 +3371,7 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition const & domain,
 
     if( numSharedNodes == 4 )
     {
-      GEOS_ERROR( getDataContext() << ": The fracture face has four shared nodes with its child.  This should not happen." );
+      GEOS_ERROR( getDataContext() << ": The fracture face has four shared nodes with its child. This should not happen." );
     }
     else if( numSharedNodes == 3 )
     {
@@ -3380,7 +3380,7 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition const & domain,
       //wu40: I think the following check is not necessary.
       if( lNodeFaceA.size() != 1 || lNodeFaceAp.size() != 1 )
       {
-        GEOS_ERROR( getDataContext() << ": hese two faces share three nodes but the number of remaining nodes is not one.  Something is wrong" );
+        GEOS_ERROR( getDataContext() << ": these two faces share three nodes but the number of remaining nodes is not one." );
       }
       else
       {
