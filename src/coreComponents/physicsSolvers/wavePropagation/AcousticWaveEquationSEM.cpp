@@ -96,7 +96,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
       subRegion.registerField< fields::MediumVelocity >( this->getName() );
-      subRegion.registerField< fields::MediumDensity >(this->getName() );
+      subRegion.registerField< fields::MediumDensity >( this->getName() );
       subRegion.registerField< fields::PartialGradient >( this->getName() );
     } );
 
