@@ -69,11 +69,11 @@ public:
                                       bool const computeGradient ) override;
 
 
-  virtual real64 explicitStepBackward( real64 const & time_n,
-                                       real64 const & dt,
-                                       integer const cycleNumber,
-                                       DomainPartition & domain,
-                                       bool const computeGradient ) override;
+  virtual real64 explicitStepBackward( real64 const & GEOS_UNUSED_PARAM(time_n),
+                                       real64 const & GEOS_UNUSED_PARAM(dt),
+                                       integer const GEOS_UNUSED_PARAM(cycleNumber),
+                                       DomainPartition & GEOS_UNUSED_PARAM(domain),
+                                       bool const GEOS_UNUSED_PARAM(computeGradient) ) override;
 
   /**@}*/
 
@@ -142,7 +142,7 @@ public:
    * @param time the time to apply the BC
    * @param domain the partition domain
    */
-  virtual void applyPML( [[maybe_unused]] real64 const time, [[maybe_unused]] DomainPartition & domain ) override {}
+  virtual void applyPML( real64 const GEOS_UNUSED_PARAM(time), DomainPartition & GEOS_UNUSED_PARAM(domain) ) override {}
 
 protected:
 
