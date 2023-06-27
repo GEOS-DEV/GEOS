@@ -28,6 +28,7 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "utilities/ComputationalGeometry.hpp"
+#include "CellElementRegion.hpp"
 
 namespace geos
 {
@@ -201,9 +202,10 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
     // The face should be connected to at least one element.
     if( facesToElements( faceIndex, 0 ) < 0 && facesToElements( faceIndex, 1 ) < 0 )
     {
-      GEOS_ERROR( getDataContext() << ": Face " << faceIndex << " is not connected to an element." <<
-                  "The cellBlocks of the CellElementRegions might not have referenced this face." <<
-                  " Be sure to include every primitive of every part of the mesh in the cellBlocks." );
+      GEOS_ERROR( getDataContext() << ": Face " << faceIndex << " is not connected to any cell." <<
+                  "You might have forgotten one cell type in the " <<
+                  elemManager.getWrapperDataContext( CellElementRegion::viewKeyStruct::sourceCellBlockNamesString() ) << 
+                  ", or your mesh might be invalid" );
     }
 
     // Take the first defined face-to-(elt/region/sub region) to sorting direction.
@@ -234,7 +236,7 @@ void FaceManager::sortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
                                  Span< localIndex > const faceNodes )
 {
   localIndex const numFaceNodes = LvArray::integerConversion< localIndex >( faceNodes.size() );
-  GEOS_THROW_IF_GT_MSG( numFaceNodes, MAX_FACE_NODES, "Node per face limit exceeded", std::runtime_error );
+  GEOS_THROW_IF_GT_MSG( numFaceNodes, MAX_FACE_NODES, "The number of maximum nodes allocated per cell face has been reached.", std::runtime_error );
 
   localIndex const firstNodeIndex = faceNodes[0];
 

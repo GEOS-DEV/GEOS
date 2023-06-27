@@ -177,7 +177,7 @@ void InternalMeshGenerator::postProcessInput()
     else
     {
       GEOS_ERROR( getDataContext() << ": InternalMeshGenerator: The number of element types is"
-                                      " inconsistent with the number of total block." );
+                                      " inconsistent with the number of total cell blocks." );
     }
   }
 

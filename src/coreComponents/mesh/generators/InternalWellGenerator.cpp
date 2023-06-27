@@ -122,7 +122,7 @@ void InternalWellGenerator::postProcessInput()
 
   GEOS_THROW_IF( m_radius <= 0,
                  "InternalWell " << getWrapperDataContext( viewKeyStruct::radiusString() ) <<
-                 ": Value must be greater that 0.",
+                 ": Radius value must be greater that 0.",
                  InputError );
 
   GEOS_THROW_IF( m_wellRegionName.empty(),
@@ -247,7 +247,7 @@ void InternalWellGenerator::constructPolylineNodeToSegmentMap()
                    InputError );
 
     GEOS_THROW_IF( m_polyNodeCoords[ipolyNode_a][2] < m_polyNodeCoords[ipolyNode_b][2],
-                   getDataContext() << ": Error in the topology of the well. Wn the polyline"<<
+                   getDataContext() << ": Error in the topology of the well. In the polyline"<<
                    ", each segment must be going down. \n" <<
                    "This is not the case between polyline nodes " << m_polyNodeCoords[ipolyNode_a] << " and " << m_polyNodeCoords[ipolyNode_b],
                    InputError );
