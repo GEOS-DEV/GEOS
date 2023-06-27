@@ -96,6 +96,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
       subRegion.registerField< fields::MediumVelocity >( this->getName() );
+      subRegion.registerField< fields::MediumDensity >(this->getName() );
       subRegion.registerField< fields::PartialGradient >( this->getName() );
     } );
 
@@ -280,6 +281,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
+      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensity >();
 
       /// Partial gradient if gradient as to be computed
       arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
@@ -297,6 +299,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                X,
                                                                elemsToNodes,
                                                                velocity,
+                                                               density,
                                                                mass );
 
         acousticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
@@ -308,6 +311,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                facesDomainBoundaryIndicator,
                                                                freeSurfaceFaceIndicator,
                                                                velocity,
+                                                               density,
                                                                damping );
       } );
     } );
