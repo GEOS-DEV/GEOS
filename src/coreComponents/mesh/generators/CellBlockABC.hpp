@@ -117,7 +117,7 @@ public:
    * @see getExternalProperties()
    */
   template< typename LAMBDA >
-  void forExternalProperties( LAMBDA && lambda )
+  void forExternalProperties( LAMBDA && lambda ) const
   {
     for( auto * wrapperBase: this->getExternalProperties() )
     {
@@ -136,7 +136,7 @@ private:
    * @note There is some `constness` concern for this member function.
    * @see forExternalProperties(LAMBDA && lambda)
    */
-  virtual std::list< dataRepository::WrapperBase * > getExternalProperties() = 0;
+  virtual std::list< dataRepository::WrapperBase const * > getExternalProperties() const = 0;
 };
 
 }

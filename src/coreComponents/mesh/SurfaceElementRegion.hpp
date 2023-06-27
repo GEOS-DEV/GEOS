@@ -98,7 +98,7 @@ public:
    */
   ///@{
 
-  virtual void generateMesh( Group & faceBlocks ) override;
+  virtual void generateMesh( Group const & faceBlocks ) override;
 
   /**
    * @brief This function generates and adds entries to the face/fracture mesh.

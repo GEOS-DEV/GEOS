@@ -82,7 +82,7 @@ public:
    * @brief Fill the CellElementSubRegion by copying those of the source CellBlock
    * @param cellBlock the CellBlock which properties (connectivity info) will be copied.
    */
-  void copyFromCellBlock( CellBlockABC & cellBlock );
+  void copyFromCellBlock( CellBlockABC const & cellBlock );
 
   ///@}
 

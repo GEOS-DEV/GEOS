@@ -4,7 +4,6 @@
 Name                  Type                Default  Description                                                                                          
 ===================== =================== ======== ==================================================================================================== 
 logLevel              integer             0        Log level                                                                                            
-meshName              string              required Name of the reservoir mesh associated with this well                                                 
 minElementLength      real64              0.001    Minimum length of a well element, computed as (segment length / number of elements per segment ) [m] 
 minSegmentLength      real64              0.01     Minimum length of a well segment [m]                                                                 
 name                  string              required A name is required for any non-unique nodes                                                          

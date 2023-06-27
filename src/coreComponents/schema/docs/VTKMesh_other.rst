@@ -1,9 +1,10 @@
 
 
-========== ==== =============================== 
-Name       Type Description                     
-========== ==== =============================== 
-meshLevels node :ref:`DATASTRUCTURE_meshLevels` 
-========== ==== =============================== 
+============ ==== ================================= 
+Name         Type Description                       
+============ ==== ================================= 
+InternalWell node :ref:`DATASTRUCTURE_InternalWell` 
+meshLevels   node :ref:`DATASTRUCTURE_meshLevels`   
+============ ==== ================================= 
 
 

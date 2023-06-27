@@ -249,9 +249,9 @@ private:
   /// Type of element in this block.
   ElementType m_elementType;
 
-  std::list< dataRepository::WrapperBase * > getExternalProperties() override
+  std::list< dataRepository::WrapperBase const * > getExternalProperties() const override
   {
-    std::list< dataRepository::WrapperBase * > result;
+    std::list< dataRepository::WrapperBase const * > result;
     for( string const & externalPropertyName : m_externalPropertyNames )
     {
       result.push_back( &this->getWrapperBase( externalPropertyName ) );
