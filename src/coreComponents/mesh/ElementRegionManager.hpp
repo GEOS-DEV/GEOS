@@ -146,14 +146,14 @@ public:
    * @brief Generate the mesh.
    * @param [in,out] cellBlockManager Reference to the abstract cell block manager.
    */
-  void generateMesh( CellBlockManagerABC & cellBlockManager );
+  void generateMesh( CellBlockManagerABC const & cellBlockManager );
 
   /**
    * @brief Generate the wells.
-   * @param [in] meshManager pointer to meshManager
+   * @param [in] cellBlockManager pointer to cellBlockManager
    * @param [in] meshLevel pointer to meshLevel
    */
-  void generateWells( MeshManager & meshManager, MeshLevel & meshLevel );
+  void generateWells( CellBlockManagerABC const & cellBlockManager, MeshLevel & meshLevel );
 
   /**
    * @brief Build sets from the node sets

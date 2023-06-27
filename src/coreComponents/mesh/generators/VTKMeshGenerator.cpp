@@ -21,7 +21,6 @@
 #include "mesh/generators/VTKFaceBlockUtilities.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
-#include "mesh/MeshBody.hpp"
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
 #include "common/MpiWrapper.hpp"
@@ -75,7 +74,7 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
                     " If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available" );
 }
 
-void VTKMeshGenerator::generateMesh( DomainPartition & domain )
+void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & )
 {
   // TODO refactor void MeshGeneratorBase::generateMesh( DomainPartition & domain )
   GEOS_MARK_FUNCTION;
@@ -95,23 +94,17 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
     GEOS_LOG_LEVEL_RANK_0( 2, "  finding neighbor ranks..." );
     std::vector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, comm );
     std::vector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
-    domain.getMetisNeighborList().insert( neighbors.begin(), neighbors.end() );
+    m_spatialPartition.setMetisNeighborList( std::move( neighbors ) );
     GEOS_LOG_LEVEL_RANK_0( 2, "  done!" );
   }
-
   GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': generating GEOSX mesh data structure", catalogName(), getName() ) );
 
-  MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( this->getName() );
-  meshBody.createMeshLevel( 0 );
-
-  CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
 
   GEOS_LOG_LEVEL_RANK_0( 2, "  preprocessing..." );
   m_cellMap = vtk::buildCellMap( *m_vtkMesh, m_attributeName );
 
   GEOS_LOG_LEVEL_RANK_0( 2, "  writing nodes..." );
-  real64 const globalLength = writeNodes( getLogLevel(), *m_vtkMesh, m_nodesetNames, cellBlockManager, this->m_translate, this->m_scale );
-  meshBody.setGlobalLengthScale( globalLength );
+  cellBlockManager.setGlobalLength( writeNodes( getLogLevel(), *m_vtkMesh, m_nodesetNames, cellBlockManager, this->m_translate, this->m_scale ) );
 
   GEOS_LOG_LEVEL_RANK_0( 2, "  writing cells..." );
   writeCells( getLogLevel(), *m_vtkMesh, m_cellMap, cellBlockManager );
