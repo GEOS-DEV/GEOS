@@ -39,8 +39,8 @@ jobs:
     #     echo "Is PR Assigned? (Check for Assignee ID)"
     #     echo $id
     #     if [[ $id != null ]]; then "true" ; else "false"; fi
-    - name: Success
-      run: "true"
+    - name: Fail
+      run: "false"
 
   check_submodules:
     needs: [check_pull_request_is_not_a_draft]
