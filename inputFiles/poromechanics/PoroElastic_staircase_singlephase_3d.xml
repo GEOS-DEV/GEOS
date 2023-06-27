@@ -74,45 +74,43 @@
       nx="{ 3, 3 }"
       ny="{ 3, 3 }"
       nz="{ 2, 2, 2, 2 }"
-      cellBlockNames="{ b00, b01, b02, b03, b04, b05, b06, b07, b08, b09, b10, b11, b12, b13, b14, b15 }"/>
+      cellBlockNames="{ b00, b01, b02, b03, b04, b05, b06, b07, b08, b09, b10, b11, b12, b13, b14, b15 }">
 
-    <InternalWell
-      name="well_producer1"
-      wellRegionName="wellRegion1"
-      wellControlsName="wellControls1"
-      meshName="mesh"
-      polylineNodeCoords="{ { 468.75, 31.25, 62.5 },
-                            { 468.75, 31.25, 0 } }"
-      polylineSegmentConn="{ { 0, 1 } }"
-      radius="0.1"
-      numElementsPerSegment="2">
-      <Perforation
-        name="producer1_perf1"
-        distanceFromHead="15.625"/>
-      <Perforation
-        name="producer1_perf2"
-        distanceFromHead="46.875"/>
-    </InternalWell>
+      <InternalWell
+        name="well_producer1"
+        wellRegionName="wellRegion1"
+        wellControlsName="wellControls1"
+        polylineNodeCoords="{ { 468.75, 31.25, 62.5 },
+                              { 468.75, 31.25, 0 } }"
+        polylineSegmentConn="{ { 0, 1 } }"
+        radius="0.1"
+        numElementsPerSegment="2">
+        <Perforation
+          name="producer1_perf1"
+          distanceFromHead="15.625"/>
+        <Perforation
+          name="producer1_perf2"
+          distanceFromHead="46.875"/>
+      </InternalWell>
 
-    <InternalWell
-      name="well_injector1"
-      logLevel="1"
-      wellRegionName="wellRegion2"
-      wellControlsName="wellControls2"
-      meshName="mesh"
-      polylineNodeCoords="{ { 468.75, 31.25, 250 },
-                            { 468.75, 31.25, 187.5 } }"
-      polylineSegmentConn="{ { 0, 1 } }"
-      radius="0.1"
-      numElementsPerSegment="2">
-      <Perforation
-        name="injector1_perf1"
-        distanceFromHead="15.625"/>
-      <Perforation
-        name="injector1_perf2"
-        distanceFromHead="46.875"/>
-    </InternalWell>
-    
+      <InternalWell
+        name="well_injector1"
+        logLevel="1"
+        wellRegionName="wellRegion2"
+        wellControlsName="wellControls2"
+        polylineNodeCoords="{ { 468.75, 31.25, 250 },
+                              { 468.75, 31.25, 187.5 } }"
+        polylineSegmentConn="{ { 0, 1 } }"
+        radius="0.1"
+        numElementsPerSegment="2">
+        <Perforation
+          name="injector1_perf1"
+          distanceFromHead="15.625"/>
+        <Perforation
+          name="injector1_perf2"
+          distanceFromHead="46.875"/>
+      </InternalWell>
+    </InternalMesh>
   </Mesh>
 
   <Events

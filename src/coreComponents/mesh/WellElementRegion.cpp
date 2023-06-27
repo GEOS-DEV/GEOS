@@ -41,9 +41,8 @@ WellElementRegion::WellElementRegion( string const & name, Group * const parent 
 WellElementRegion::~WellElementRegion()
 {}
 
-
 void WellElementRegion::generateWell( MeshLevel & mesh,
-                                      InternalWellGenerator const & wellGeometry,
+                                      LineBlockABC const & lineBlock,
                                       globalIndex nodeOffsetGlobal,
                                       globalIndex elemOffsetGlobal )
 {
@@ -55,17 +54,17 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
   subRegion.setWellControlsName( m_wellControlsName );
 
   PerforationData * const perforationData = subRegion.getPerforationData();
-  perforationData->setNumPerforationsGlobal( wellGeometry.getNumPerforations() );
+  perforationData->setNumPerforationsGlobal( lineBlock.numPerforations() );
 
-  globalIndex const numElemsGlobal        = wellGeometry.getNumElements();
-  globalIndex const numPerforationsGlobal = wellGeometry.getNumPerforations();
+  globalIndex const numElemsGlobal        = lineBlock.numElements();
+  globalIndex const numPerforationsGlobal = lineBlock.numPerforations();
 
   // 1) select the local perforations based on connectivity to the local reservoir elements
-  subRegion.connectPerforationsToMeshElements( mesh, wellGeometry );
+  subRegion.connectPerforationsToMeshElements( mesh, lineBlock );
 
   globalIndex const matchedPerforations = MpiWrapper::sum( perforationData->size() );
   GEOS_THROW_IF( matchedPerforations != numPerforationsGlobal,
-                 "Invalid mapping perforation-to-element in well " << wellGeometry.getName() << "." <<
+                 "Invalid mapping perforation-to-element in well " << lineBlock.getName() << "." <<
                  " This happens when GEOSX cannot match a perforation with a reservoir element." <<
                  " There are two common reasons for this error:\n" <<
                  " 1- The most common reason for this error is that a perforation is on a section of " <<
@@ -74,12 +73,11 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
                  " Please try to move the perforation slightly (to the interior of the perforated cell) to see if it fixes the problem.",
                  InputError );
 
-
   // 2) classify well elements based on connectivity to local mesh partition
   array1d< integer > elemStatusGlobal;
   elemStatusGlobal.resizeDefault( numElemsGlobal, WellElementSubRegion::WellElemStatus::UNOWNED );
 
-  arrayView1d< globalIndex const > const & perfElemIdGlobal = wellGeometry.getPerfElemIndex();
+  arrayView1d< globalIndex const > const & perfElemIdGlobal = lineBlock.getPerfElemIndex();
 
   for( localIndex iperfGlobal = 0; iperfGlobal < numPerforationsGlobal; ++iperfGlobal )
   {
@@ -98,7 +96,7 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
 
   // 3) select the local well elements and mark boundary nodes (for ghosting)
   subRegion.generate( mesh,
-                      wellGeometry,
+                      lineBlock,
                       elemStatusGlobal,
                       nodeOffsetGlobal,
                       elemOffsetGlobal );
@@ -123,7 +121,7 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
 
 
   // 5) construct the local perforation to well element map
-  perforationData->connectToWellElements( wellGeometry,
+  perforationData->connectToWellElements( lineBlock,
                                           subRegion.globalToLocalMap(),
                                           elemOffsetGlobal );
 

@@ -339,7 +339,7 @@ private:
   getDiscretizations() const;
 
   void generateMeshLevel( MeshLevel & meshLevel,
-                          CellBlockManagerABC & cellBlockManager,
+                          CellBlockManagerABC const & cellBlockManager,
                           Group const * const discretization,
                           arrayView1d< string const > const & targetRegions );
 

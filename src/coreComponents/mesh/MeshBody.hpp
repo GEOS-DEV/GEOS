@@ -20,7 +20,7 @@
 #define GEOS_MESH_MESHBODY_HPP_
 
 #include "MeshLevel.hpp"
-
+#include "dataRepository/KeyNames.hpp"
 
 namespace geos
 {
@@ -164,6 +164,23 @@ public:
   real64 getGlobalLengthScale() const
   {
     return m_globalLengthScale;
+  }
+
+  /**
+   * @brief Get the Abstract representation of the CellBlockManager attached to the MeshBody.
+   * @return The CellBlockManager.
+   */
+  CellBlockManagerABC const & getCellBlockManager() const
+  {
+    return this->getGroup< CellBlockManagerABC >( dataRepository::keys::cellManager );
+  }
+
+  /**
+   * @brief De register the CellBlockManager from this meshBody
+   */
+  void deregisterCellBlockManager()
+  {
+    this->deregisterGroup( dataRepository::keys::cellManager );
   }
 
   /**

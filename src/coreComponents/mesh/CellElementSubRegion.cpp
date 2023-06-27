@@ -66,7 +66,7 @@ void CellElementSubRegion::resizePerElementValues( localIndex const newNumNodesP
 }
 
 
-void CellElementSubRegion::copyFromCellBlock( CellBlockABC & cellBlock )
+void CellElementSubRegion::copyFromCellBlock( CellBlockABC const & cellBlock )
 {
   // Defines the (unique) element type of this cell element region,
   // and its associated number of nodes, edges, faces.
@@ -90,13 +90,13 @@ void CellElementSubRegion::copyFromCellBlock( CellBlockABC & cellBlock )
   this->m_localToGlobalMap = cellBlock.localToGlobalMap();
 
   this->constructGlobalToLocalMap();
-  cellBlock.forExternalProperties( [&]( WrapperBase & wrapper )
+  cellBlock.forExternalProperties( [&]( WrapperBase const & wrapper )
   {
     types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
     {
       using ArrayType = decltype( array );
-      Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
-      this->registerWrapper( wrapper.getName(), std::make_unique< ArrayType >( wrapperT.reference() ) );
+      auto const src = Wrapper< ArrayType >::cast( wrapper ).reference().toViewConst();
+      this->registerWrapper( wrapper.getName(), std::make_unique< ArrayType >( &src ) );
     } );
   } );
 }

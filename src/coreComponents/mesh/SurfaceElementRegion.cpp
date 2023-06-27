@@ -48,7 +48,7 @@ SurfaceElementRegion::~SurfaceElementRegion()
 {}
 
 
-void SurfaceElementRegion::generateMesh( Group & faceBlocks )
+void SurfaceElementRegion::generateMesh( Group const & faceBlocks )
 {
   Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
 
