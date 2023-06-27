@@ -630,6 +630,12 @@ real64 AcousticVTIWaveEquationSEM::explicitStepForward( real64 const & time_n,
   return dtOut;
 }
 
+void AcousticVTIWaveEquationSEM::initializePML() override
+{
+  GEOS_ERROR( "This option is not supported yet" );
+  return;
+}
+
 void AcousticVTIWaveEquationSEM::applyPML( real64 const time, 
                                         DomainPartition & domain)
 {
