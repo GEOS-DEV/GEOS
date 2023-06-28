@@ -135,14 +135,14 @@ public:
   /**
    * @brief (Empty but must be defined) Initialize Perfectly Matched Layer (PML) information
    */
-  virtual void initializePML() override
+  virtual void initializePML() override;
 
   /**
    * @brief  (Empty but must be defined) Apply Perfectly Matched Layer (PML) to the regions defined in the geometry box from the xml
    * @param time the time to apply the BC
    * @param domain the partition domain
    */
-  virtual void applyPML( real64 const GEOS_UNUSED_PARAM(time), DomainPartition & GEOS_UNUSED_PARAM(domain) ) override
+  virtual void applyPML( real64 const GEOS_UNUSED_PARAM(time), DomainPartition & GEOS_UNUSED_PARAM(domain) ) override;
 
 protected:
 
