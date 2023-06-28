@@ -132,17 +132,19 @@ set( mesh_sources
 set( dependencyList ${parallelDeps} schema dataRepository constitutive finiteElement parmetis metis )
 
 if( ENABLE_VTK )
-    message(STATUS "Adding VTKMeshGenerator sources and headers")
+    message(STATUS "Adding VTKMeshGenerator and VTKWellGenerator sources and headers")
     set( mesh_headers ${mesh_headers}
          generators/VTKFaceBlockUtilities.hpp
          generators/VTKMeshGenerator.hpp
          generators/VTKMeshGeneratorTools.hpp
+         generators/VTKWellGenerator.hpp
          generators/VTKUtilities.hpp
          )
     set( mesh_sources ${mesh_sources}
          generators/VTKFaceBlockUtilities.cpp
          generators/VTKMeshGenerator.cpp
          generators/VTKMeshGeneratorTools.cpp
+         generators/VTKWellGenerator.cpp
          generators/VTKUtilities.cpp
          )
     set( dependencyList ${dependencyList} VTK::IOLegacy VTK::FiltersParallelDIY2 )
