@@ -133,7 +133,7 @@ char const * PostXmlInput =
                           scale="5e6"/>
     </FieldSpecifications>
   </Problem>
-  )";  
+  )";
 
 template< typename LAMBDA >
 void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & solver,
@@ -342,7 +342,7 @@ public:
   {}
 
 protected:
- 
+
   void SetUp() override
   {
     solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseReservoirAndWells< SinglePhaseBase > >( "reservoirSystem" );
@@ -366,8 +366,8 @@ protected:
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
     testNumericalJacobian( *solver, domain, perturb, tol,
-                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                arrayView1d< real64 > const & localRhs )
+                           [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs )
     {
       solver->assembleCouplingTerms( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );
     } );
@@ -381,8 +381,8 @@ protected:
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
     testNumericalJacobian( *solver, domain, perturb, tol,
-                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                arrayView1d< real64 > const & localRhs )
+                           [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs )
     {
       solver->wellSolver()->assembleFluxTerms( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );
     } );
@@ -396,8 +396,8 @@ protected:
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
     testNumericalJacobian( *solver, domain, perturb, tol,
-                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                arrayView1d< real64 > const & localRhs )
+                           [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs )
     {
       solver->wellSolver()->assemblePressureRelations( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );
     } );
@@ -411,8 +411,8 @@ protected:
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
     testNumericalJacobian( *solver, domain, perturb, tol,
-                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                arrayView1d< real64 > const & localRhs )
+                           [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs )
     {
       solver->wellSolver()->assembleAccumulationTerms( domain, solver->getDofManager(), localMatrix, localRhs );
     } );
@@ -432,7 +432,7 @@ real64 constexpr SinglePhaseReservoirSolverTest::EPS;
 
 /**
  * @brief Test SinglePhaseReservoirSolver with InternalWell generator
- * 
+ *
  */
 class SinglePhaseReservoirSolverInternalWellTest : public SinglePhaseReservoirSolverTest
 {
@@ -446,8 +446,9 @@ public:
 protected:
 
   void SetUp() override
-  {    
-    string const internalWells = R"(
+  {
+    string const internalWells =
+      R"(
         <InternalWell name="well_producer1"
                       wellRegionName="wellRegion1"
                       wellControlsName="wellControls1"
@@ -470,7 +471,7 @@ protected:
             <Perforation name="injector1_perf1"
                          distanceFromHead="1.45"/>
         </InternalWell>)";
-    
+
     string const xmlInput = PreXmlInput + internalWells + PostXmlInput;
 
     setupProblemFromXML( state.getProblemManager(), xmlInput.c_str() );
@@ -502,7 +503,7 @@ TEST_F( SinglePhaseReservoirSolverInternalWellTest, jacobianNumericalCheck_Accum
 
 /**
  * @brief Test SinglePhaseReservoirSolver with VTKWell generator
- * 
+ *
  */
 class SinglePhaseReservoirSolverVTKWellTest : public SinglePhaseReservoirSolverTest
 {
@@ -535,11 +536,12 @@ protected:
                       numElementsPerSegment="1">
             <Perforation name="injector1_perf1"
                          distanceFromHead="1.45"/>
-        </VTKWell>)", testMeshDir + "/well1.vtk", testMeshDir + "/well2.vtk" );
-    
+        </VTKWell>)", testMeshDir + "/well1.vtk",
+                                       testMeshDir + "/well2.vtk" );
+
     string const xmlInput = PreXmlInput + vtkWells + PostXmlInput;
 
-    setupProblemFromXML( state.getProblemManager(), xmlInput.c_str()) ;
+    setupProblemFromXML( state.getProblemManager(), xmlInput.c_str());
     SinglePhaseReservoirSolverTest::SetUp();
   }
 };
