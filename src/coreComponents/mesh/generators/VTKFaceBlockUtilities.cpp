@@ -590,14 +590,17 @@ array1d< globalIndex > computeLocalToGlobal( vtkSmartPointer< vtkDataSet > faceM
 {
   array1d< globalIndex > l2g( faceMesh->GetNumberOfCells() );
 
-  vtkIdType const numLocalCells = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() )->GetNumberOfTuples();
-  vtkIdType const numGlobalCells = MpiWrapper::sum( numLocalCells );  // This will be used as an offset.
+  // In order to avoid any cell global id collision, we gather the max cell global id over all the ranks.
+  // Then we use this maximum as on offset.
+  // TODO This does not take into account multiple fractures.
+  vtkIdType const maxLocalCellId = vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() )->GetMaxId();
+  vtkIdType const maxGlobalCellId = MpiWrapper::max( maxLocalCellId );
+  vtkIdType const cellGlobalOffset = maxGlobalCellId + 1;
 
-  vtkIdTypeArray const * globalIds = vtkIdTypeArray::FastDownCast( faceMesh->GetPointData()->GetGlobalIds() );
-
+  vtkIdTypeArray const * globalIds = vtkIdTypeArray::FastDownCast( faceMesh->GetCellData()->GetGlobalIds() );
   for( auto i = 0; i < l2g.size(); ++i )
   {
-    l2g[i] = globalIds->GetValue( i ) + numGlobalCells;
+    l2g[i] = globalIds->GetValue( i ) + cellGlobalOffset;
   }
 
   return l2g;
