@@ -74,9 +74,20 @@ struct MultiFluidVarSlice
 template< typename T, int NDIM, int USD, int USD_DC >
 struct MultiFluidVarView
 {
-  #if defined( GEOS_USE_HIP )
-    MultiFluidVarView() = default;
-  #endif
+  MultiFluidVarView() = default;
+
+  GEOS_HOST_DEVICE 
+  MultiFluidVarView ( MultiFluidVarView const & src ) :
+  value(src.value),
+  derivs(src.derivs)
+  {}
+
+  GEOS_HOST_DEVICE 
+  MultiFluidVarView ( ArrayView< T, NDIM, USD > const & valueSrc, 
+                      ArrayView< T, NDIM + 1, USD_DC > const & derivsSrc ) :
+  value(valueSrc),
+  derivs(derivsSrc)
+  {};
 
   ArrayView< T, NDIM, USD > value;        ///< View into property values
   ArrayView< T, NDIM + 1, USD_DC > derivs; ///< View into property derivatives w.r.t. pressure, temperature, compositions
