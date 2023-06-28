@@ -122,10 +122,10 @@ RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && GEOS_UNUSED_PARAM( stream ),
 
 auto const parallelDeviceMemorySpace = parallelHostMemorySpace;
 
-template< unsigned long BLOCK_SIZE = 0 >
+template< size_t BLOCK_SIZE = 0 >
 using parallelDevicePolicy = parallelHostPolicy;
 
-template< unsigned long BLOCK_SIZE = 0 >
+template< size_t BLOCK_SIZE = 0 >
 using parallelDeviceAsyncPolicy = parallelHostPolicy;
 
 using parallelDeviceStream = parallelHostStream;
@@ -150,7 +150,8 @@ using parallelDeviceEvents = std::vector< parallelDeviceEvent >;
 namespace internalRajaInterface
 {
 template< typename >
-struct PolicyMap;
+struct PolicyMap
+{};
 
 template<>
 struct PolicyMap< serialPolicy >
@@ -169,8 +170,8 @@ struct PolicyMap< RAJA::omp_parallel_for_exec >
 #endif
 
 #if defined(GEOS_USE_CUDA)
-template< size_t BLOCK_SIZE, bool ASYNC >
-struct PolicyMap< RAJA::cuda_exec< BLOCK_SIZE, ASYNC > >
+template< typename X, typename Y, size_t BLOCK_SIZE, bool ASYNC >
+struct PolicyMap< RAJA::policy::cuda::cuda_exec_explicit< X, Y, BLOCK_SIZE, ASYNC > >
 {
   using atomic = RAJA::cuda_atomic;
   using reduce = RAJA::cuda_reduce;
