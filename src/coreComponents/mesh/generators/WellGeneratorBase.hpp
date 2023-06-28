@@ -278,6 +278,7 @@ protected:
 
   /**
    * @brief Merge perforations on the elements with multiple perforations.
+   * @param[in] elemToPerfMap Connectivity between well elements and Perforations
    */
   void mergePerforations( array1d< array1d< localIndex > > const & elemToPerfMap );
 
@@ -285,6 +286,7 @@ protected:
    * @brief At a given node, find the next segment going in the direction of the bottom of the well.
    * @param[in] topSegId index of the top segment
    * @param[in] currentNodeId index of the current node
+   * @return The Id of the next segment
    */
   globalIndex getNextSegmentIndex( globalIndex topSegId,
                                    globalIndex currentNodeId ) const;
