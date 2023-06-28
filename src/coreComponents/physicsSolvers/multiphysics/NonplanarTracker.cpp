@@ -79,18 +79,13 @@ void NonplanarTracker::buildBaseToPatchMaps( const MeshLevel & base,
                 {
                   arraySlice1d<const real64> faceCenter = baseFaceCenters[baseFaceList[k][f]];
                   arraySlice1d<const real64> faceNormal = baseFaceNormals[baseFaceList[k][f]];
-                  //array1d<real64> baseCenterMod = {baseCenter[0], baseCenter[1], baseCenter[2]};
-                  //array1d<real64> patchCenterMod = {patchCenter[0], patchCenter[1], patchCenter[2]};
                   //I need these copies because the tensorOps doesnt work on ArraySlices
                   R1Tensor baseCenterMod = {baseCenter[0], baseCenter[1], baseCenter[2]};
                   R1Tensor patchCenterMod = {patchCenter[0], patchCenter[1], patchCenter[2]};                  
-                  //baseCenterMod[0] = baseCenter[0]; baseCenterMod[1] = baseCenter[1]; baseCenterMod[2] = baseCenter[2];
-                  //patchCenterMod[0] = patchCenter[0]; patchCenterMod[1] = patchCenter[1]; patchCenterMod[2] = patchCenter[2];
                   LvArray::tensorOps::subtract< 3 >(baseCenterMod,faceCenter);
                   LvArray::tensorOps::subtract< 3 >(patchCenterMod,faceCenter);
                   real64 s1 = LvArray::tensorOps::AiBi< 3 >(baseCenterMod, faceNormal);
                   real64 s2 = LvArray::tensorOps::AiBi< 3 >(patchCenterMod, faceNormal);
-                  //std::cout<<"Base Element: "<<K<<", Patch Element: "<<N<<std::endl;
                   bool debugMode = false;
                   if(k==0 && n<12 && debugMode)
                   {
@@ -132,11 +127,95 @@ void NonplanarTracker::buildBaseToPatchMaps( const MeshLevel & base,
 
         });
 
-        //}
       }
 
     });
   });
+
+}
+
+void NonplanarTracker::buildBaseToPatchEdgeMap( meshLevel const & base, meshLevel const & patch )
+{
+    // Get num cuts of each edge
+    MeshManager & meshManager = this->getGroupByPath< MeshManager >( "/Problem/Mesh");
+    integer Nx = meshManager.getGroup<InternalMeshGenerator>(0).getNx();
+    integer Ny = meshManager.getGroup<InternalMeshGenerator>(0).getNy();
+    integer Nz = meshManager.getGroup<InternalMeshGenerator>(0).getNz();
+    integer nx = meshManager.getGroup<InternalMeshGenerator>(1).getNx();
+    integer ny = meshManager.getGroup<InternalMeshGenerator>(1).getNy();
+    integer nz = meshManager.getGroup<InternalMeshGenerator>(1).getNz();
+    localIndex rx=nx/Nx;
+    localIndex ry=ny/Ny;
+    localIndex rz=nz/Nz;
+    //loop over all base elems using map<globalIndex, set<globalIndex>> m_baseToPatchElementRelation;
+    ElementRegionManager const & baseElemManager = base.getElemManager();
+    //get elemsToNodes for patch
+    NodeManager const & patchNodeManager = patch.getNodeManager();
+    ElementRegionManager const & patchElemManager = patch.getElemManager();
+    // Hard-coded patch region and subRegion
+    ElementRegionBase const & patchElementRegion = patchElemManager.getRegion( 1 );
+    CellElementSubRegion const & patchSubRegion = patchElementRegion.getSubRegion< CellElementSubRegion >( 1 );
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & patchElemsToNodes = patchSubRegion.nodeList();   
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & patchNodePosition = patchNodeManager.referencePosition();
+    baseElemManager.forElementSubRegions< CellElementSubRegion,
+                                          FaceElementSubRegion >( [&] ( auto & baseElementSubRegion )
+    {       
+        arrayView1d< integer const > const baseGhostRank = baseElementSubRegion.ghostRank();  
+        arrayView2d< const real64 > const & baseElemCenters  = baseElementSubRegion.getElementCenter();
+        auto & cellToEdges = baseElementSubRegion.edgeList();
+        forAll< serialPolicy >( baseElementSubRegion.size(), [&] ( localIndex const k ) 
+        {
+            if(baseGhostRank[k]<0)
+            {
+                //get element center
+                real64 currBaseElemCenter[ 3 ];
+                LvArray::tensorOps::copy< 3 >( currBaseElemCenter, baseElemCenters[k] );
+                //build edgesToTriplet map
+                auto elementEdges = cellToEdges[k];
+                map<R1Tensor, localIndex> tripletToEdge;
+                //iterate over edges and find their associated triplet - build edge to triplet map
+                for(auto edge:elementEdges)
+                {
+                    //check triplet associated with edge
+                    //get edgeToNode at edge
+                    R1Tensor nodeA = edgeToNode[edge][0];
+                    R1Tensor nodeB = edgeToNode[edge][1];
+                    R1Tensor edgeMidPoint = (nodeA + nodeB)/2;
+                    R1Tensor diff = edgeMidPoint - currBaseElemCenter;
+                    //diff = (+- hx/2, +- hy/2, 0) or permutation
+                    diff = diff/{hx/2, hy/2, hz/2};
+                    tripletToEdge[diff] = edge;
+                }
+                for(auto patchElemGlobal:m_baseToPatchElementRelation[baseElementSubRegion.localToGlobalMap()[k]])
+                { 
+                    //get nodes
+                    for(size_t i=0; i<NUM_NODES_PER_ELEM; ++i)
+                    {
+                        localIndex currNode = patchElemsToNodes[patchSubRegion.globalToLocalMap()[patchElemGlobal]][i];
+                        real64 currNodePosition[ 3 ]; 
+                        LvArray::tensorOps::copy< 3 >( currNodePosition, patchNodePosition[currNode] );
+                        //compare currNodePosition to baseElemCenters[k];
+                        R1Tensor nodalTriplet = {0,0,0};
+                        nodalTiplet[0] = currNodePosition[0]-baseElemCenter[0]/hx;
+                        nodalTiplet[1] = currNodePosition[1]-baseElemCenter[1]/hy;
+                        nodalTiplet[2] = currNodePosition[2]-baseElemCenter[2]/hz;
+                        if (tipletToEdge.contains(nodalTriplet))
+                        {
+                            //relate current node to edge tripletToEdge[nodalTriplet];
+                            //find position using triplet
+                            //position = if abs(nodalTriplet[0]) < 1 
+                            //position = (1+nodalTriplet[0]/hx)*(Nx);
+                            //same for nodalTriplet[1] por [2]
+                            //insert to edge in the position order of SortedArray
+                        }                                                                         
+                    }
+                }
+            }      
+        });
+    });
+
+
+
 
 }
 
@@ -175,6 +254,7 @@ void NonplanarTracker::registerDataOnMesh( dataRepository::Group & meshBodies )
     const MeshLevel & patch = meshBodies.getGroup<MeshBody>(1).getBaseDiscretization();
 
     buildBaseToPatchMaps(base, patch);
+    buildBaseToPatchEdgeMap(base, patch);
 
 }
 
