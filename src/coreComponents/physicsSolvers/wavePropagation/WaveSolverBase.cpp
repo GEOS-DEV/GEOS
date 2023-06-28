@@ -225,11 +225,11 @@ void WaveSolverBase::postProcessInput()
 
   }
 
-  GEOS_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
+  GEOS_THROW_IF( m_sourceCoordinates.size( 0 ) > 0 && m_sourceCoordinates.size( 1 ) != 3,
                  "Invalid number of physical coordinates for the sources",
                  InputError );
 
-  GEOS_THROW_IF( m_receiverCoordinates.size( 1 ) != 3,
+  GEOS_THROW_IF( m_receiverCoordinates.size( 0 ) > 0 && m_receiverCoordinates.size( 1 ) != 3,
                  "Invalid number of physical coordinates for the receivers",
                  InputError );
 
