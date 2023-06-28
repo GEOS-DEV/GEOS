@@ -1,0 +1,72 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers>
+    <ElasticSEM
+      name="elasticSolver"
+      cflFactor="0.25"
+      targetRegions="{ Solid }"
+      sourceCoordinates="{ }"
+      timeSourceFrequency="0"
+      receiverCoordinates="{ }"
+      discretization="FE1"/>
+    <AcousticSEM
+      name="acousticSolver"
+      cflFactor="0.25"
+      discretization="FE1"
+      targetRegions="{ Fluid }"
+      sourceCoordinates="{ { 1500, 2400, 2900 } }"
+      timeSourceFrequency="5"
+      receiverCoordinates="{ { 3752.29351, 2400, 2933.3333 } }"
+      rickerOrder="3"/>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="5"
+        formulation="SEM"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Solid"
+      cellBlocks="{ 1_hexahedra }"
+      materialList="{ nullModel }"/>
+    <CellElementRegion
+      name="Fluid"
+      cellBlocks="{ 2_hexahedra }"
+      materialList="{ nullModel }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <NullModel name="nullModel"/>
+  </Constitutive>
+
+  <Mesh>
+     <VTKMesh         
+      name="Bilayer"      
+      file="acouselas3D_flu_komatitsch.vtu"
+      useGlobalIds="0"/>
+  </Mesh> 
+
+  <!-- defined in the .vtu -->
+  <FieldSpecifications>
+  </FieldSpecifications>
+
+  <Events maxTime="0.2">
+
+    <!-- control the timestepping here with forceDt -->
+    <PeriodicEvent
+      name="solidSolverApplications"
+      forceDt="4.2e-4"
+      target="/Solvers/elasticSolver"/>
+    <PeriodicEvent
+      name="fluidSolverApplications"
+      forceDt="4.2e-4"
+      target="/Solvers/acousticSolver"/>
+  </Events>
+
+</Problem>

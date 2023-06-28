@@ -229,10 +229,10 @@ void ElasticWaveEquationSEM::postProcessInput()
 
   WaveSolverBase::postProcessInput();
 
-  GEOS_ERROR_IF( m_sourceCoordinates.size( 1 ) != 3,
+  GEOS_ERROR_IF( m_sourceCoordinates.size( 0 ) > 0 && m_sourceCoordinates.size( 1 ) != 3,
                  "Invalid number of physical coordinates for the sources" );
 
-  GEOS_ERROR_IF( m_receiverCoordinates.size( 1 ) != 3,
+  GEOS_ERROR_IF( m_receiverCoordinates.size( 0 ) > 0 && m_receiverCoordinates.size( 1 ) != 3,
                  "Invalid number of physical coordinates for the receivers" );
 
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
