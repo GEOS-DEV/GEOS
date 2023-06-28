@@ -47,7 +47,6 @@ using ArraySliceOrRef = typename ArraySliceOrRefHelper< T, DIM, USD >::type;
 
 } // namespace internal
 
-
 /**
  * @brief Helper struct used to represent a variable and its compositional derivatives
  * @tparam DIM number of dimensions
@@ -61,8 +60,6 @@ struct MultiFluidVarSlice
     value( inputValue ),
     derivs( inputDerivs )
   {}
-
-  GEOS_HOST_DEVICE MultiFluidVarSlice( const MultiFluidVarSlice & );
 
   internal::ArraySliceOrRef< T, DIM, USD > value;        /// variable value
   internal::ArraySliceOrRef< T, DIM + 1, USD_DC > derivs; /// derivative w.r.t. pressure, temperature, compositions
@@ -94,13 +91,6 @@ struct MultiFluidVarView
 
   ArrayView< T, NDIM, USD > value;        ///< View into property values
   ArrayView< T, NDIM + 1, USD_DC > derivs; ///< View into property derivatives w.r.t. pressure, temperature, compositions
-
-  GEOS_HOST_DEVICE
-  MultiFluidVarView( ArrayView< T, NDIM, USD > inputValue,
-                     ArrayView< T, NDIM + 1, USD_DC > inputDerivs ):
-    value( inputValue ),
-    derivs( inputDerivs )
-  {}
 
   using SliceType = MultiFluidVarSlice< T, NDIM - 2, USD - 2, USD_DC - 2 >;
 
