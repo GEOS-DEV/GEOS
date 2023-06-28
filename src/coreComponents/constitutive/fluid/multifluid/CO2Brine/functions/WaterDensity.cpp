@@ -44,6 +44,16 @@ WaterDensity::WaterDensity( string const & name,
   m_waterDensityTable = PureWaterProperties::makeSaturationDensityTable( m_functionName, FunctionManager::getInstance() );
 }
 
+void WaterDensity::checkTablesParameters( real64 const pressure,
+                                          real64 const temperature ) const
+{
+  string const tableName = catalogName() + " water density";
+  m_waterDensityTable->checkCoord( pressure, 0, "pressure",
+                                   tableName.c_str() );
+  m_waterDensityTable->checkCoord( temperature, 1, "temperature",
+                                   tableName.c_str() );
+}
+
 WaterDensity::KernelWrapper
 WaterDensity::createKernelWrapper() const
 {

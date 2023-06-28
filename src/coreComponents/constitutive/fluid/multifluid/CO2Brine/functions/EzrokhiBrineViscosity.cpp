@@ -72,6 +72,14 @@ void EzrokhiBrineViscosity::makeCoefficients( string_array const & inputPara )
   }
 }
 
+void EzrokhiBrineViscosity::checkTablesParameters( real64 const GEOS_UNUSED_PARAM( pressure ),
+                                                   real64 const temperature ) const
+{
+  string const tableName = catalogName() + " water viscosity";
+  m_waterViscosityTable->checkCoord( temperature, 0, "temperature",
+                                     tableName.c_str() );
+}
+
 EzrokhiBrineViscosity::KernelWrapper
 EzrokhiBrineViscosity::createKernelWrapper() const
 {

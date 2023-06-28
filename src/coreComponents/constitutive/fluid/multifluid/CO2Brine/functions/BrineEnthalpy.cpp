@@ -203,6 +203,20 @@ BrineEnthalpy::BrineEnthalpy( string const & name,
   m_brineEnthalpyTable = makeBrineEnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
 }
 
+void BrineEnthalpy::checkTablesParameters( real64 const pressure,
+                                           real64 const temperature ) const
+{
+  string const brineEnthalpyTableName = catalogName() + " brine enthalpy";
+  m_brineEnthalpyTable->checkCoord( temperature, 0, "temperature",
+                                    brineEnthalpyTableName.c_str() );
+
+  string const co2EnthalpyTableName = catalogName() + " CO2 enthalpy";
+  m_CO2EnthalpyTable->checkCoord( pressure, 0, "pressure",
+                                  co2EnthalpyTableName.c_str() );
+  m_CO2EnthalpyTable->checkCoord( temperature, 1, "temperature",
+                                  co2EnthalpyTableName.c_str() );
+}
+
 
 
 BrineEnthalpy::KernelWrapper

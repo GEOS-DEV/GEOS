@@ -145,6 +145,8 @@ private:
 
   virtual integer getWaterPhaseIndex() const override final;
 
+  virtual void checkTablesParameters( real64 pressure, real64 temperature ) const override final;
+
   /**
    * @brief Names of the submodels for input
    */

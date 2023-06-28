@@ -55,6 +55,10 @@ InputError::InputError( std::exception const & subException, std::string const &
   std::runtime_error( InsertExMsg( subException.what(), msgToInsert ) )
 {}
 
+SimulationError::SimulationError( std::exception const & subException, std::string const & msgToInsert ):
+  std::runtime_error( InsertExMsg( subException.what(), msgToInsert ) )
+{}
+
 namespace logger
 {
 

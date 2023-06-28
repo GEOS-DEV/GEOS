@@ -53,6 +53,12 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  // TODO: This method should be implemented if an incorrect extrapolation of the pressure and temperature is encountered in the kernel
+  virtual void checkTablesParameters( real64 pressure, real64 temperature ) const override final
+  {
+    GEOS_UNUSED_VAR( pressure, temperature );
+  }
+
   /**
    * @brief Kernel wrapper class for BlackOilFluid
    *        This kernel can be called on the GPU

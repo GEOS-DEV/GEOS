@@ -92,6 +92,8 @@ public:
 
   virtual PVTFunctionType functionType() const = 0;
 
+  virtual void checkTablesParameters( real64 pressure, real64 temperature ) const = 0;
+
 protected:
 
   /// Name of the PVT function

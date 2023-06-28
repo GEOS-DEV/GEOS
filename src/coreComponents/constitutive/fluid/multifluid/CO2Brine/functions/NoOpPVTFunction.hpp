@@ -94,6 +94,10 @@ public:
 
   virtual string getCatalogName() const override final { return catalogName(); }
 
+  virtual void checkTablesParameters( real64 GEOS_UNUSED_PARAM( pressure ),
+                                      real64 GEOS_UNUSED_PARAM( temperature ) ) const override final
+  {}
+
   virtual PVTFunctionType functionType() const override
   {
     return PVTFunctionType::UNKNOWN;

@@ -143,6 +143,16 @@ FenghourCO2Viscosity::FenghourCO2Viscosity( string const & name,
   m_CO2ViscosityTable = makeViscosityTable( inputParams, m_functionName, FunctionManager::getInstance() );
 }
 
+void FenghourCO2Viscosity::checkTablesParameters( real64 const pressure,
+                                                  real64 const temperature ) const
+{
+  string const tableName = catalogName() + " CO2 viscosity";
+  m_CO2ViscosityTable->checkCoord( pressure, 0, "pressure",
+                                   tableName.c_str() );
+  m_CO2ViscosityTable->checkCoord( temperature, 1, "temperature",
+                                   tableName.c_str() );
+}
+
 FenghourCO2Viscosity::KernelWrapper
 FenghourCO2Viscosity::createKernelWrapper() const
 {

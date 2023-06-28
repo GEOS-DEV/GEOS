@@ -59,6 +59,8 @@ public:
 
   virtual bool isThermal() const override final;
 
+  virtual void checkTablesParameters( real64 pressure, real64 temperature ) const override final;
+
   /**
    * @brief Kernel wrapper class for ReactiveBrineFluid.
    */

@@ -138,6 +138,16 @@ PhillipsBrineDensity::createKernelWrapper() const
                         m_waterIndex );
 }
 
+void PhillipsBrineDensity::checkTablesParameters( real64 const pressure,
+                                                  real64 const temperature ) const
+{
+  string const tableName = catalogName() + " brine density";
+  m_brineDensityTable->checkCoord( pressure, 0, "pressure",
+                                   tableName.c_str() );
+  m_brineDensityTable->checkCoord( temperature, 1, "temperature",
+                                   tableName.c_str() );
+}
+
 REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineDensity, string const &, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // namespace PVTProps

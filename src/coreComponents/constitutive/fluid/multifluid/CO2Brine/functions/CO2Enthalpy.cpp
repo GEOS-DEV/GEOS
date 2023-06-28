@@ -279,6 +279,16 @@ CO2Enthalpy::calculateCO2Enthalpy( PTTableCoordinates const & tableCoords,
   }
 }
 
+void CO2Enthalpy::checkTablesParameters( real64 const pressure,
+                                         real64 const temperature ) const
+{
+  string const tableName = catalogName() + " CO2 enthalpy";
+  m_CO2EnthalpyTable->checkCoord( pressure, 0, "pressure",
+                                  tableName.c_str() );
+  m_CO2EnthalpyTable->checkCoord( temperature, 1, "temperature",
+                                  tableName.c_str() );
+}
+
 
 CO2Enthalpy::KernelWrapper
 CO2Enthalpy::createKernelWrapper() const

@@ -75,6 +75,17 @@ void EzrokhiBrineDensity::makeCoefficients( string_array const & inputPara )
   }
 }
 
+void EzrokhiBrineDensity::checkTablesParameters( real64 const GEOS_UNUSED_PARAM( pressure ),
+                                                 real64 const temperature ) const
+{
+  string const waterSatDensityTableName = catalogName() + " water saturation density";
+  m_waterSatDensityTable->checkCoord( temperature, 0, "temperature",
+                                      waterSatDensityTableName.c_str() );
+  string const waterSatPressureTableName = catalogName() + " water saturation pressure";
+  m_waterSatPressureTable->checkCoord( temperature, 0, "temperature",
+                                       waterSatPressureTableName.c_str() );
+}
+
 EzrokhiBrineDensity::KernelWrapper
 EzrokhiBrineDensity::createKernelWrapper() const
 {

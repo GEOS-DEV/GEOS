@@ -112,6 +112,8 @@ public:
   static string catalogName() { return "CO2Solubility"; }
 
   virtual string getCatalogName() const final { return catalogName(); }
+  
+  virtual void checkTablesParameters( real64 pressure, real64 temperature ) const override final;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = CO2SolubilityUpdate;

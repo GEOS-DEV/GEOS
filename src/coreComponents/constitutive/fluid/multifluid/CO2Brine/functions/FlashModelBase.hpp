@@ -91,6 +91,8 @@ public:
 
   virtual string getCatalogName() const = 0;
 
+  virtual void checkTablesParameters( real64 pressure, real64 temperature ) const = 0;
+
   string const & flashModelName() const { return m_modelName; }
 
 protected:

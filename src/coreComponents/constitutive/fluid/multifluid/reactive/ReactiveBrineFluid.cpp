@@ -196,6 +196,24 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
 }
 
 template< typename PHASE >
+void ReactiveBrineFluid< PHASE >::checkTablesParameters( real64 const pressure,
+                                                         real64 const temperature ) const
+{
+  real64 const temperatureInCelsius = temperature - 273.15;
+  try
+  {
+    m_phase->density.checkTablesParameters( pressure, temperatureInCelsius );
+    m_phase->viscosity.checkTablesParameters( pressure, temperatureInCelsius );
+    m_phase->enthalpy.checkTablesParameters( pressure, temperatureInCelsius );
+  } catch( SimulationError const & ex )
+  {
+    // TODO: replace getName() by getDataContext().toString() from incoming PR 2404
+    string const errorMsg = GEOS_FMT( "{}: Table input error.\n", getName() );
+    throw SimulationError( ex, errorMsg );
+  }
+}
+
+template< typename PHASE >
 typename ReactiveBrineFluid< PHASE > ::KernelWrapper
 ReactiveBrineFluid< PHASE > ::createKernelWrapper()
 {

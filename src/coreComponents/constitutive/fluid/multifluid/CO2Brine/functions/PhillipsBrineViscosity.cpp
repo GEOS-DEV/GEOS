@@ -73,6 +73,14 @@ void PhillipsBrineViscosity::makeCoefficients( string_array const & inputPara )
   m_coef1 =  d * (1.0 - exp( k * m ));
 }
 
+void PhillipsBrineViscosity::checkTablesParameters( real64 const GEOS_UNUSED_PARAM( pressure ),
+                                                    real64 const temperature ) const
+{
+  string const tableName = catalogName() + " water viscosity";
+  m_waterViscosityTable->checkCoord( temperature, 0, "temperature",
+                                     tableName.c_str() );
+}
+
 PhillipsBrineViscosity::KernelWrapper
 PhillipsBrineViscosity::createKernelWrapper() const
 {

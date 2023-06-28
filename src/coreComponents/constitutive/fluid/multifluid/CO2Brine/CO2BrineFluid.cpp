@@ -138,6 +138,45 @@ integer CO2BrineFluid< PHASE1, PHASE2, FLASH >::getWaterPhaseIndex() const
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
+void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const pressure,
+                                                                    real64 const temperature ) const
+{
+  real64 const temperatureInCelsius = temperature - 273.15;
+  try
+  {
+    m_phase1->density.checkTablesParameters( pressure, temperatureInCelsius );
+    m_phase1->viscosity.checkTablesParameters( pressure, temperatureInCelsius );
+    m_phase1->enthalpy.checkTablesParameters( pressure, temperatureInCelsius );
+  } catch( SimulationError const & ex )
+  {
+    // TODO: replace getName() by getDataContext() from incoming PR 2404
+    string const errorMsg = GEOS_FMT( "{}: Table input error for phase no. 1.\n", getName() );
+    throw SimulationError( ex, errorMsg );
+  }
+  try
+  {
+    m_phase2->density.checkTablesParameters( pressure, temperatureInCelsius );
+    m_phase2->viscosity.checkTablesParameters( pressure, temperatureInCelsius );
+    m_phase2->enthalpy.checkTablesParameters( pressure, temperatureInCelsius );
+  } catch( SimulationError const & ex )
+  {
+    // TODO: replace getName() by getDataContext() from incoming PR 2404
+    string const errorMsg = GEOS_FMT( "{}: Table input error for phase no. 2.\n", getName() );
+    throw SimulationError( ex, errorMsg );
+  }
+  try
+  {
+    m_flash->checkTablesParameters( pressure, temperatureInCelsius );
+  } catch( SimulationError const & ex )
+  {
+    // TODO: replace getName() by getDataContext() from incoming PR 2404
+    string const errorMsg = GEOS_FMT( "{}: Table input error for flash phase.\n", getName() );
+    throw SimulationError( ex, errorMsg );
+  }
+}
+
+
+template< typename PHASE1, typename PHASE2, typename FLASH >
 void CO2BrineFluid< PHASE1, PHASE2, FLASH >::initializePreSubGroups()
 {
   GEOS_THROW_IF( this->catalogName() == CO2BrineEzrokhiThermalFluid::catalogName(),

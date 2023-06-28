@@ -279,6 +279,16 @@ CO2Solubility::CO2Solubility( string const & name,
   m_CO2SolubilityTable = makeSolubilityTable( inputParams, m_modelName, FunctionManager::getInstance() );
 }
 
+void CO2Solubility::checkTablesParameters( real64 const pressure,
+                                           real64 const temperature ) const
+{
+  string const tableName = catalogName() + " CO2 solubility";
+  m_CO2SolubilityTable->checkCoord( pressure, 0, "pressure",
+                                    tableName.c_str() );
+  m_CO2SolubilityTable->checkCoord( temperature, 1, "temperature",
+                                    tableName.c_str() );
+}
+
 CO2Solubility::KernelWrapper CO2Solubility::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,

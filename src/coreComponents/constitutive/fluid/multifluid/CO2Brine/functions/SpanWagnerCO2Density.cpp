@@ -282,6 +282,16 @@ SpanWagnerCO2Density::SpanWagnerCO2Density( string const & name,
   m_CO2DensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
 }
 
+void SpanWagnerCO2Density::checkTablesParameters( real64 const pressure,
+                                                  real64 const temperature ) const
+{
+  string const tableName = catalogName() + " CO2 density";
+  m_CO2DensityTable->checkCoord( pressure, 0, "pressure",
+                                 tableName.c_str() );
+  m_CO2DensityTable->checkCoord( temperature, 1, "temperature",
+                                 tableName.c_str() );
+}
+
 SpanWagnerCO2Density::KernelWrapper
 SpanWagnerCO2Density::createKernelWrapper() const
 {

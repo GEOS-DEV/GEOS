@@ -87,6 +87,8 @@ public:
   static string catalogName() { return "WaterDensity"; }
 
   virtual string getCatalogName() const final { return catalogName(); }
+  
+  virtual void checkTablesParameters( real64 pressure, real64 temperature ) const override final;
 
   virtual PVTFunctionType functionType() const override
   {

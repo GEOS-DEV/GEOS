@@ -186,6 +186,9 @@ public:
    */
   virtual void saveConvergedState() const override;
 
+  //ajouter commentaire, mentionner l'exception
+  virtual void checkTablesParameters( real64 pressure, real64 temperature ) const = 0;
+
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
     static constexpr char const * componentNamesString() { return "componentNames"; }
