@@ -199,7 +199,7 @@ template< typename PHASE >
 void ReactiveBrineFluid< PHASE >::checkTablesParameters( real64 const pressure,
                                                          real64 const temperature ) const
 {
-  if( m_checkPVTTablesRanges )
+  if( !m_checkPVTTablesRanges )
     return;
 
   real64 const temperatureInCelsius = temperature - 273.15;

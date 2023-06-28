@@ -141,7 +141,7 @@ template< typename PHASE1, typename PHASE2, typename FLASH >
 void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const pressure,
                                                                     real64 const temperature ) const
 {
-  if( m_checkPVTTablesRanges )
+  if( !m_checkPVTTablesRanges )
     return;
 
   real64 const temperatureInCelsius = temperature - 273.15;
