@@ -135,6 +135,7 @@ set( physicsSolvers_headers
      wavePropagation/ElasticFirstOrderWaveEquationSEMKernel.hpp
      wavePropagation/AcousticFirstOrderWaveEquationSEM.hpp
      wavePropagation/AcousticFirstOrderWaveEquationSEMKernel.hpp
+     wavePropagation/AcousticElasticWaveEquationSEM.hpp
    )
 
 #
@@ -198,7 +199,7 @@ set( physicsSolvers_sources
      wavePropagation/ElasticWaveEquationSEM.cpp
      wavePropagation/ElasticFirstOrderWaveEquationSEM.cpp
      wavePropagation/AcousticFirstOrderWaveEquationSEM.cpp
-
+     wavePropagation/AcousticElasticWaveEquationSEM.cpp
    )
 
   include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
