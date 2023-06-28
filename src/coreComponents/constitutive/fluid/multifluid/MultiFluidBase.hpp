@@ -195,6 +195,7 @@ public:
     static constexpr char const * componentMolarWeightString() { return "componentMolarWeight"; }
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
     static constexpr char const * useMassString() { return "useMass"; }
+    static constexpr char const * checkPVTTablesRangesString() { return "checkPVTTablesRanges"; }
   };
 
 protected:
@@ -602,6 +603,9 @@ protected:
 
   // flag indicating whether input/output component fractions are treated as mass fractions
   int m_useMass;
+
+  /// Enable an error when the input pressure or temperature of the PVT tables is out of range
+  integer m_checkPVTTablesRanges;
 
   // general fluid composition information
 
