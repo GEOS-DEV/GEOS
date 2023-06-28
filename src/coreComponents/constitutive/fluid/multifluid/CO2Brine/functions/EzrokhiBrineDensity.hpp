@@ -122,7 +122,10 @@ public:
   static string catalogName() { return "EzrokhiBrineDensity"; }
 
   virtual string getCatalogName() const override final { return catalogName(); }
-  
+
+  /**
+   * @copydoc PVTFunctionBase::checkTablesParameters( real64 pressure, real64 temperature )
+   */
   virtual void checkTablesParameters( real64 pressure, real64 temperature ) const override final;
 
   virtual PVTFunctionType functionType() const override

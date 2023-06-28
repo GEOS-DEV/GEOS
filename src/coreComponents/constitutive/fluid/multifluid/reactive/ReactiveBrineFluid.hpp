@@ -59,6 +59,9 @@ public:
 
   virtual bool isThermal() const override final;
 
+  /**
+   * @copydoc MultiFluidBase::checkTablesParameters( real64 pressure, real64 temperature )
+   */
   virtual void checkTablesParameters( real64 pressure, real64 temperature ) const override final;
 
   /**

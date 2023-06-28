@@ -186,7 +186,12 @@ public:
    */
   virtual void saveConvergedState() const override;
 
-  //ajouter commentaire, mentionner l'exception
+  /**
+   * @brief If m_checkPVTTablesRanges, Check if the input values are in the expected PVT tables bounds
+   * @param pressure input pressure to check
+   * @param temperature input temperature to check
+   * @throw a SimulationError if one of the input values is out of bound.
+   */
   virtual void checkTablesParameters( real64 pressure, real64 temperature ) const = 0;
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
@@ -604,7 +609,7 @@ protected:
   // flag indicating whether input/output component fractions are treated as mass fractions
   int m_useMass;
 
-  /// Enable an error when the input pressure or temperature of the PVT tables is out of range
+  /// Enable an error when checkTableParameters() is called and the input pressure or temperature of the PVT tables is out of range
   integer m_checkPVTTablesRanges;
 
   // general fluid composition information
