@@ -7,7 +7,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GEOSX_TPL_TAG: 224-962
+  GEOSX_TPL_TAG: 224-965
 
 jobs:
   # Matrix jobs will be cancelled if PR is a draft.
