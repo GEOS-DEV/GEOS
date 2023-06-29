@@ -3,7 +3,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/pecan-CPU.cmake)
 
 # Now let's add what's dedicated to GPU.
 set(ENABLE_CUDA ON CACHE PATH "" FORCE)
-set(CUDA_TOOLKIT_ROOT_DIR /hrtc/apps/cuda/11.5.119/x86_64 CACHE PATH "")
+set(CUDA_TOOLKIT_ROOT_DIR /hrtc/apps/cuda/11.5.119/x86_64/centos7 CACHE PATH "")
 set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER} CACHE STRING "")
 set(CMAKE_CUDA_COMPILER ${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc CACHE STRING "")
 
