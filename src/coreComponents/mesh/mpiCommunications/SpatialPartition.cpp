@@ -47,7 +47,6 @@ real64 MapValueToRange( real64 value, real64 min, real64 max )
 
 SpatialPartition::SpatialPartition():
   PartitionBase(),
-  m_Partitions(),
   m_Periodic( nsdof ),
   m_coords( nsdof ),
   m_min{ 0.0 },
@@ -55,7 +54,8 @@ SpatialPartition::SpatialPartition():
   m_blockSize{ 1.0 },
   m_gridSize{ 0.0 },
   m_gridMin{ 0.0 },
-  m_gridMax{ 0.0 }
+  m_gridMax{ 0.0 },
+  m_Partitions()
 {
   m_size = 0;
   m_rank = 0;
