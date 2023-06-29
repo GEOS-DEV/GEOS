@@ -90,8 +90,11 @@ void getElementsRecursive( xmlDocument const & document, xmlNode const & targetN
  * @param fileContext the DataFileContext to verify.
  */
 void verifyDataFileContext( DataFileContext const & fileContext,
-                            xmlDocument const & document )
+                            xmlDocument const & document,
+                            std::set< string > & verifications )
 {
+  verifications.emplace( fileContext.getTargetName() );
+
   string const & strToVerify = fileContext.getTypeName();
   string const & errInfo = "Verifying " + strToVerify + " in " + fileContext.toString();
 
@@ -138,41 +141,6 @@ void verifyDataFileContext( DataFileContext const & fileContext,
   // does the fileContext line has been reached?
   EXPECT_TRUE( lineFound );
 }
-/**
- * @brief Verifies if the specified group, its children, and the associated wrappers have a
- * DataFileContext object that correctly locate from where the objects where declared in the
- * source file.
- * @param document root xml document (which potentially contains includes).
- * @param group The group to (recursively) verify.
- * @param verifCount a set that will be filled with the names, with the form
- * "GroupName" or "GroupName/WrapperName".
- */
-void verifyGroupDataFileContextRecursive( xmlDocument const & document, Group const & group,
-                                          std::set< string > & verifications )
-{
-  if( group.getDataContext().isDataFileContext() )
-  {
-    verifyDataFileContext( dynamic_cast< DataFileContext const & >( group.getDataContext() ),
-                           document );
-    verifications.emplace( group.getName() );
-  }
-
-  for( auto const & wrapperIterator : group.wrappers() )
-  {
-    WrapperBase const * wrapper = wrapperIterator.second;
-    if( wrapper->getDataContext().isDataFileContext() )
-    {
-      verifyDataFileContext( dynamic_cast< DataFileContext const & >( wrapper->getDataContext() ),
-                             document );
-      verifications.emplace( group.getName() + '/' + wrapper->getName() );
-    }
-  }
-
-  for( auto subGroup : group.getSubGroups() )
-  {
-    verifyGroupDataFileContextRecursive( document, *subGroup.second, verifications );
-  }
-}
 
 /**
  * @brief Returns the element that exists in setB but not in setA.
@@ -192,28 +160,30 @@ std::set< string > getDifference( std::set< string > const & setA,
 // - if the resulting Group & Wrapper hierarchy matches with the input xml documents and includes hierarchy.
 TEST( testXML, testXMLFileLines )
 {
-  xmlDocument xmlDocument;
+  xmlDocument xmlDoc;
   ProblemManager & problemManager = getGlobalState().getProblemManager();
 
   {
     problemManager.parseCommandLineInput();
     Group & commandLine = problemManager.getGroup( problemManager.groupKeys.commandLine );
     string const & inputFileName = commandLine.getReference< string >( problemManager.viewKeys.inputFileName );
-    xmlDocument.load_file( inputFileName.c_str(), true );
-    problemManager.parseXMLDocument( xmlDocument );
+    xmlDoc.load_file( inputFileName.c_str(), true );
+    problemManager.parseXMLDocument( xmlDoc );
   }
 
   GEOS_LOG( "Loaded files : " );
-  for( auto const & buffer: xmlDocument.getOriginalBuffers() )
+  for( auto const & buffer: xmlDoc.getOriginalBuffers() )
   {
     GEOS_LOG( "    " << buffer.first << " (" << buffer.second.size() << " chars)" );
   }
 
   std::set< string > expectedElements;
-  getElementsRecursive( xmlDocument, xmlDocument.root().child( "Problem" ), expectedElements );
+  getElementsRecursive( xmlDoc, xmlDoc.root().child( "Problem" ), expectedElements );
 
   std::set< string > verifiedElements;
-  verifyGroupDataFileContextRecursive( xmlDocument, problemManager, verifiedElements );
+  xmlDocument const & xmlDocConst=xmlDoc;
+  problemManager.forAllDataContextOfType< DataFileContext >( verifyDataFileContext,
+                                                             xmlDocConst, verifiedElements );
 
   std::set< string > const notFound = getDifference( expectedElements, verifiedElements );
   EXPECT_TRUE( notFound.empty() ) << "Info : There should not exist xml element that were not in "

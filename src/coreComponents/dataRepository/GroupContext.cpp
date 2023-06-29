@@ -25,7 +25,7 @@ namespace dataRepository
 
 
 GroupContext::GroupContext( Group & group, string const & objectName ):
-  DataContext( objectName, false ),
+  DataContext( objectName ),
   m_group( group )
 {}
 GroupContext::GroupContext( Group & group ):
@@ -38,21 +38,9 @@ string GroupContext::toString() const
   bool foundNearestLine = false;
   for( Group const * parentGroup = &m_group; parentGroup->hasParent(); parentGroup = &parentGroup->getParent() )
   {
-    if( !foundNearestLine && parentGroup->getDataContext().isDataFileContext() )
+    if( !foundNearestLine )
     {
-      DataFileContext const & parentContext =
-        dynamic_cast< DataFileContext const & >( parentGroup->getDataContext() );
-      if( parentContext.getLine() != xmlWrapper::xmlDocument::npos )
-      {
-        path.insert( 0, '/' + parentGroup->getName() + '(' +
-                     splitPath( parentContext.getFilePath() ).second +
-                     ",l." + std::to_string( parentContext.getLine() ) + ')' );
-        foundNearestLine=true;
-      }
-      else
-      {
-        path.insert( 0, '/' + parentGroup->getName() );
-      }
+      path.insert( 0, '/' + parentGroup->getDataContext().getTargetNameInPath( foundNearestLine ) );
     }
     else
     {
@@ -64,19 +52,14 @@ string GroupContext::toString() const
 
 
 WrapperContext::WrapperContext( WrapperBase & wrapper ):
-  GroupContext( wrapper.getParent(), wrapper.getName() )
+  GroupContext( wrapper.getParent(), wrapper.getParent().getName() + '/' + wrapper.getName() ),
+  m_typeName( wrapper.getName() )
 {}
 
 string WrapperContext::toString() const
 {
-  if( m_group.getDataContext().isDataFileContext() )
-  {
-    return m_group.getDataContext().toString() + ", attribute " + m_targetName;
-  }
-  else
-  {
-    return m_group.getDataContext().toString() + "/" + m_targetName;
-  }
+  DataContext const & parentDC = m_group.getDataContext();
+  return parentDC.toString() + parentDC.getWrapperSeparator() + m_typeName;
 }
 
 

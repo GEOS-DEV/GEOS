@@ -41,9 +41,8 @@ public:
   /**
    * @brief Construct a new DataContext object.
    * @param targetName the target object name
-   * @param isDataFileContext true if this Context is a DataFileContext
    */
-  DataContext( string const & targetName, bool isDataFileContext );
+  DataContext( string const & targetName );
 
   /**
    * @brief Destroy the DataContext object
@@ -62,12 +61,11 @@ public:
   string getTargetName() const
   { return m_targetName; }
 
-  /**
-   * @brief Flag on availability of file information. Used to provide more user-friendly information.
-   * @return true if the context is from a file.
-   */
-  bool isDataFileContext() const
-  { return m_isDataFileContext; }
+  virtual string getTargetNameInPath( bool & fileLineFound ) const
+  { fileLineFound = false; return m_targetName; }
+
+  virtual string getWrapperSeparator() const
+  { return "/"; }
 
   /**
    * @brief Insert contextual information in the provided stream.
@@ -78,9 +76,6 @@ protected:
 
   /// @see getObjectName()
   string const m_targetName;
-
-  /// @see isDataFileContext()
-  bool const m_isDataFileContext;
 
 };
 
@@ -114,6 +109,11 @@ public:
    * @return the target object name followed by the the file and line declaring it.
    */
   virtual string toString() const;
+
+  virtual string getTargetNameInPath( bool & foundNearestLine ) const override;
+
+  virtual string getWrapperSeparator() const override
+  { return ", attribute "; }
 
   /**
    * @return the type name in the source file (XML node tag name / attribute name).

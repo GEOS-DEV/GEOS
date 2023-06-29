@@ -92,6 +92,10 @@ public:
    */
   virtual string toString() const;
 
+protected:
+
+  string const m_typeName;
+
 };
 
 

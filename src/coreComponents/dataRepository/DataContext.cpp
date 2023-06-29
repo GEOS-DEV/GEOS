@@ -24,9 +24,8 @@ namespace dataRepository
 {
 
 
-DataContext::DataContext( string const & targetName, bool const isDataFileContext ):
-  m_targetName( targetName ),
-  m_isDataFileContext( isDataFileContext )
+DataContext::DataContext( string const & targetName ):
+  m_targetName( targetName )
 {}
 
 std::ostream & operator<<( std::ostream & os, DataContext const & sc )
@@ -55,7 +54,7 @@ string getNodeName( xmlWrapper::xmlNode const & node )
 
 DataFileContext::DataFileContext( xmlWrapper::xmlNode const & targetNode,
                                   xmlWrapper::xmlNodePos const & nodePos ):
-  DataContext( getNodeName( targetNode ), true ),
+  DataContext( getNodeName( targetNode ) ),
   m_typeName( targetNode.name() ),
   m_filePath( nodePos.filePath ),
   m_line( nodePos.line ),
@@ -66,7 +65,7 @@ DataFileContext::DataFileContext( xmlWrapper::xmlNode const & targetNode,
 DataFileContext::DataFileContext( xmlWrapper::xmlNode const & targetNode,
                                   xmlWrapper::xmlAttribute const & att,
                                   xmlWrapper::xmlAttributePos const & attPos ):
-  DataContext( getNodeName( targetNode ) + '/' + att.name(), true ),
+  DataContext( getNodeName( targetNode ) + '/' + att.name() ),
   m_typeName( att.name() ),
   m_filePath( attPos.filePath ),
   m_line( attPos.line ),
@@ -93,6 +92,17 @@ string DataFileContext::toString() const
   return oss.str();
 }
 
+string DataFileContext::getTargetNameInPath( bool & foundNearestLine ) const
+{
+  std::ostringstream oss;
+  oss << m_targetName;
+  foundNearestLine = ( m_line != xmlWrapper::xmlDocument::npos );
+  if( foundNearestLine )
+  {
+    oss << "(" << splitPath( m_filePath ).second << ",l." << m_line << ")";
+  }
+  return oss.str();
+}
 
 } /* namespace dataRepository */
 } /* namespace geos */

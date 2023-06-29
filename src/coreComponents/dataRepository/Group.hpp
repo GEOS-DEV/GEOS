@@ -1321,6 +1321,10 @@ public:
   DataContext const & getWrapperDataContext( KEY key ) const
   { return getWrapperBase< KEY >( key ).getDataContext(); }
 
+  template< typename TARGET_DC_TYPE, typename ... INPUT_PARAMS, typename ... FUNC_PARAMS >
+  void forAllDataContextOfType( void ( &func )( TARGET_DC_TYPE const &, FUNC_PARAMS ... ),
+                                INPUT_PARAMS && ... params ) const;
+
   /**
    * @brief Access the group's parent.
    * @return reference to parent Group
@@ -1672,6 +1676,33 @@ Wrapper< T > & Group::registerWrapper( string const & name,
     rval.resize( size());
   }
   return rval;
+}
+
+template< typename TARGET_DC_TYPE, typename ... INPUT_PARAMS, typename ... FUNC_PARAMS >
+void Group::forAllDataContextOfType( void ( &func )( TARGET_DC_TYPE const &, FUNC_PARAMS ... ),
+                                     INPUT_PARAMS && ... params ) const
+{
+  TARGET_DC_TYPE const & groupCtx =
+    dynamic_cast< TARGET_DC_TYPE const & >( *m_dataContext );
+  if( groupCtx )
+  {
+    func( groupCtx, std::forward< INPUT_PARAMS >( params ) ... );
+  }
+
+  for( auto const & wrapperIterator : m_wrappers )
+  {
+    TARGET_DC_TYPE const & wrapperCtx =
+      dynamic_cast< TARGET_DC_TYPE const & >( wrapperIterator.second->getDataContext() );
+    if( wrapperCtx )
+    {
+      func( wrapperCtx, std::forward< INPUT_PARAMS >( params ) ... );
+    }
+  }
+
+  for( auto subGroup : m_subGroups )
+  {
+    forAllTypedDataContext( *subGroup.second, func, std::forward< INPUT_PARAMS >( params ) ... );
+  }
 }
 
 } /* end namespace dataRepository */
