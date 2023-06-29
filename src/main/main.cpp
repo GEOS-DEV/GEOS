@@ -20,8 +20,6 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/GeosxState.hpp"
 
-// System includes
-#include <chrono>
 
 using namespace geos;
 
