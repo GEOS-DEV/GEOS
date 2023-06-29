@@ -96,6 +96,8 @@ public:
   virtual void setupCoupling( DomainPartition const & domain,
                               DofManager & dofManager ) const override;
 
+  virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override;
+
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,

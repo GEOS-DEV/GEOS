@@ -98,6 +98,8 @@ public:
   virtual void setupCoupling( DomainPartition const & domain,
                               DofManager & dofManager ) const override;
 
+  virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override;
+
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition & domain,

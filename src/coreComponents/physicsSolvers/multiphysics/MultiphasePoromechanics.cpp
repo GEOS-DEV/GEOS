@@ -213,9 +213,6 @@ void MultiphasePoromechanics::assembleSystem( real64 const GEOS_UNUSED_PARAM( ti
 
   solidMechanicsSolver()->getMaxForce() = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
 
-  // tell the flow solver that this is a stress initialization step
-  flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
-
   // step 3: compute the fluxes (face-based contributions)
 
   if( m_stabilizationType == StabilizationType::Global ||
@@ -261,6 +258,26 @@ void MultiphasePoromechanics::updateState( DomainPartition & domain )
 void MultiphasePoromechanics::initializePostInitialConditionsPreSubGroups()
 {
   SolverBase::initializePostInitialConditionsPreSubGroups();
+
+  arrayView1d< string const > const & poromechanicsTargetRegionNames =
+    this->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
+  arrayView1d< string const > const & solidMechanicsTargetRegionNames =
+    solidMechanicsSolver()->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
+  arrayView1d< string const > const & flowTargetRegionNames =
+    flowSolver()->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
+  for( integer i = 0; i < poromechanicsTargetRegionNames.size(); ++i )
+  {
+    GEOS_THROW_IF( std::find( solidMechanicsTargetRegionNames.begin(), solidMechanicsTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
+                   == solidMechanicsTargetRegionNames.end(),
+                   GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
+                             catalogName(), getName(), poromechanicsTargetRegionNames[i], solidMechanicsSolver()->getName() ),
+                   InputError );
+    GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
+                   == flowTargetRegionNames.end(),
+                   GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
+                             catalogName(), getName(), poromechanicsTargetRegionNames[i], flowSolver()->getName() ),
+                   InputError );
+  }
 
   integer & isFlowThermal = flowSolver()->getReference< integer >( FlowSolverBase::viewKeyStruct::isThermalString() );
   GEOS_LOG_RANK_0_IF( m_isThermal && !isFlowThermal,
@@ -310,6 +327,12 @@ void MultiphasePoromechanics::initializePreSubGroups()
       }
     } );
   } );
+}
+
+void MultiphasePoromechanics::resetStateToBeginningOfStep( DomainPartition & domain )
+{
+  Base::resetStateToBeginningOfStep( domain );
+  flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
 }
 
 void MultiphasePoromechanics::updateStabilizationParameters( DomainPartition & domain ) const
