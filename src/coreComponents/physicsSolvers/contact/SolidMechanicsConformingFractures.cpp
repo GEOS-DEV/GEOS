@@ -81,8 +81,7 @@ void SolidMechanicsConformingFractures::registerDataOnMesh( Group & meshBodies )
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&] ( localIndex const,
                                                                                  SurfaceElementSubRegion & subRegion )
     {
-
-      /// ALEKS: you may not need this.
+      // assuming rotation matrices are constant over one fracture element. This could be problematic for nonplanar fractures
       subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::rotationMatrixString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRegisteringObjects( this->getName()).
@@ -359,11 +358,11 @@ void SolidMechanicsConformingFractures::assembleSystem( real64 const time,
 
   if (m_contactEnforcementMethod == ContactEnforcementMethod::Penalty)
   {
-    // INTENTIONALLY LEFT BLANK FOR PENALIZED CONTACT
+    // TODO: INTENTIONALLY LEFT BLANK FOR PENALIZED CONTACT
   }
   else if (m_contactEnforcementMethod == ContactEnforcementMethod::NodalLagrangeMultiplier)
   {
-    assembleNodalLagrangeMultiplierContact();
+    assembleNodalLagrangeMultiplierContact( domain, dofManager, localMatrix, localRhs);
   }
   
   else if (m_contactEnforcementMethod == ContactEnforcementMethod::FaceLagrangeMultiplier)
@@ -374,10 +373,49 @@ void SolidMechanicsConformingFractures::assembleSystem( real64 const time,
 
 }
 
-void SolidMechanicsConformingFractures::assembleNodalLagrangeMultiplierContact()
+void SolidMechanicsConformingFractures::assembleNodalLagrangeMultiplierContact( DomainPartition & domain,
+                                                                                DofManager const & dofManager,
+                                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    assembleForceResidualDerivativeWrtTraction( mesh, regionNames, dofManager, localMatrix, localRhs );
+    assembleTractionResidualDerivativeWrtDisplacementAndTraction( mesh, regionNames, dofManager, localMatrix, localRhs );
+  } );
+
 }
+
+void LagrangianContactSolver::
+  assembleTractionResidualDerivativeWrtDisplacementAndTraction( MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & regionNames,
+                                                                DofManager const & dofManager,
+                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                arrayView1d< real64 > const & localRhs )
+{
+  GEOS_MARK_FUNCTION;
+
+
+}
+
+
+void LagrangianContactSolver::
+  assembleForceResidualDerivativeWrtTraction( MeshLevel const & mesh,
+                                              arrayView1d< string const > const & regionNames,
+                                              DofManager const & dofManager,
+                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                              arrayView1d< real64 > const & localRhs )
+{
+  GEOS_MARK_FUNCTION;
+
+
+  
+}
+
 
 real64 SolidMechanicsConformingFractures::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time ),
                                                                  real64 const & GEOS_UNUSED_PARAM( dt ),
@@ -394,8 +432,6 @@ real64 SolidMechanicsConformingFractures::calculateResidualNorm( real64 const & 
 
 void SolidMechanicsConformingFractures::computeRotationMatrices( DomainPartition & domain ) const
 {
-  /// ALEKS: I guess you may need this function in case you want, for example, to compute the jump.
-  // It should probably be somewhere else though. Plus I am not sure we need to carry around the matrix tbh.
 
   GEOS_MARK_FUNCTION;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -435,10 +471,8 @@ void SolidMechanicsConformingFractures::computeFaceNodalArea( arrayView2d< real6
                                                                   localIndex const kf0,
                                                                   array1d< real64 > & nodalArea ) const
 {
-  // I've tried to access the finiteElement::dispatch3D with
-  // finiteElement::FiniteElementBase const &
-  // fe = fractureSubRegion->getReference< finiteElement::FiniteElementBase >( surfaceGenerator->getDiscretizationName() );
-  // but it's either empty (unknown discretization) or for 3D only (e.g., hexahedra)
+  // TODO: This function assumes only triangular and quadrilateral faces. It should be generalized to arbitrary polygons.
+  //       For polygons with more than 4 nodes, the area should be computed by using the barycenter of the polygon. 
   GEOS_MARK_FUNCTION;
 
   localIndex const TriangularPermutation[3] = { 0, 1, 2 };

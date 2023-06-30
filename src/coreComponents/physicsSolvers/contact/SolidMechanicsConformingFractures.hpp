@@ -104,6 +104,19 @@ public:
 
   void updateState( DomainPartition & domain ) override final;
 
+  
+  void assembleForceResidualDerivativeWrtTraction( MeshLevel const & mesh,
+                                                   arrayView1d< string const > const & regionNames,
+                                                   DofManager const & dofManager,
+                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                   arrayView1d< real64 > const & localRhs );
+
+  void assembleForceResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
+                                                       arrayView1d< string const > const & regionNames,
+                                                       DofManager const & dofManager,
+                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                       arrayView1d< real64 > const & localRhs );
+
   bool resetConfigurationToDefault( DomainPartition & domain ) const override final;
   
   bool updateConfiguration( DomainPartition & domain ) override final;
