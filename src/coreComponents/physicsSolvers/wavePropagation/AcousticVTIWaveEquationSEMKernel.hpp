@@ -21,7 +21,9 @@
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "WaveSolverUtils.hpp"
+#include "WaveSolverBaseFields.hpp"
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
+
 
 namespace geos
 {
@@ -333,9 +335,6 @@ struct DampingMatrixKernel
 
         for( localIndex q = 0; q < numNodesPerFace; ++q )
         {
-          real32 const localIncrement = alpha*m_finiteElement.computeDampingTerm( q, xLocal );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &damping[facesToNodes[f][q]], localIncrement );
-
           real32 const localIncrement_p = alpha*(vti_p_xy + vti_p_z) * m_finiteElement.computeDampingTerm( q, xLocal );
           RAJA::atomicAdd< ATOMIC_POLICY >( &damping_p[facesToNodes[f][q]], localIncrement_p );
 
@@ -429,13 +428,13 @@ public:
           finiteElementSpace,
           inputConstitutiveType ),
     m_X( nodeManager.referencePosition() ),
-    m_p_n( nodeManager.getField< fields::Pressure_p_n >() ),
-    m_q_n( nodeManager.getField< fields::Pressure_q_n >() ),
-    m_stiffnessVector_p( nodeManager.getField< fields::StiffnessVector_p >() ),
-    m_stiffnessVector_q( nodeManager.getField< fields::StiffnessVector_q >() ),
-    m_epsilon( elementSubRegion.template getField< fields::Epsilon >() ),
-    m_delta( elementSubRegion.template getField< fields::Delta >() ),
-    m_vti_f( elementSubRegion.template getField< fields::F >() ),
+    m_p_n( nodeManager.getField< fields::wavesolverfields::Pressure_p_n >() ),
+    m_q_n( nodeManager.getField< fields::wavesolverfields::Pressure_q_n >() ),
+    m_stiffnessVector_p( nodeManager.getField< fields::wavesolverfields::StiffnessVector_p >() ),
+    m_stiffnessVector_q( nodeManager.getField< fields::wavesolverfields::StiffnessVector_q >() ),
+    m_epsilon( elementSubRegion.template getField< fields::wavesolverfields::Epsilon >() ),
+    m_delta( elementSubRegion.template getField< fields::wavesolverfields::Delta >() ),
+    m_vti_f( elementSubRegion.template getField< fields::wavesolverfields::F >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );
@@ -553,11 +552,11 @@ protected:
 
 
 /// The factory used to construct a ExplicitAcousticWaveEquation kernel.
-using ExplicitAcousticSEMFactory = finiteElement::KernelFactory< ExplicitAcousticSEM,
+using ExplicitAcousticVTISEMFactory = finiteElement::KernelFactory< ExplicitAcousticSEM,
                                                                  real64 >;
 
 } // namespace acousticVTIWaveEquationSEMKernels
 
 } // namespace geos
 
-#endif //GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEMKERNEL_HPP_
+#endif //GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIWAVEEQUATIONSEMKERNEL_HPP_
