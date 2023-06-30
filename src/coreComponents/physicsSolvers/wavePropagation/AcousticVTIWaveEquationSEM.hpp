@@ -48,7 +48,7 @@ public:
   AcousticVTIWaveEquationSEM & operator=( AcousticVTIWaveEquationSEM && ) = delete;
 
 
-  static string catalogName() { return "AcousticSEM_VTI"; }
+  static string catalogName() { return "AcousticVTISEM"; }
 
   bool dirExists( const std::string & dirName );
 
