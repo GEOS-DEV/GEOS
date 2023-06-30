@@ -112,8 +112,6 @@ void AcousticVTIWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                fields::DampingVector_qp,
                                fields::StiffnessVector_p,
                                fields::StiffnessVector_q,
-                               fields::StiffnessVector, //Debug
-                               fields::DampingVector, //Debug
                                fields::FreeSurfaceNodeIndicator,
                                fields::LateralSurfaceNodeIndicator,
                                fields::BottomSurfaceNodeIndicator >( this->getName() );
@@ -307,9 +305,6 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     damping_pq.zero();
     damping_q.zero();
     damping_qp.zero();
-    //DEBUG    
-    arrayView1d< real32 > const damping = nodeManager.getField< fields::DampingVector >();
-    damping.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
     arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
@@ -359,7 +354,6 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                epsilon,
                                                                delta,
                                                                vti_f,
-                                                               damping, //DEBUG    
                                                                damping_p,
                                                                damping_q,
                                                                damping_pq,
@@ -690,10 +684,6 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     arrayView1d< real32 > const stiffnessVector_q = nodeManager.getField< fields::StiffnessVector_q >();
     arrayView1d< real32 > const rhs = nodeManager.getField< fields::ForcingRHS >();
 
-    //DEbug
-    arrayView1d< real32 > const stiffnessVector = nodeManager.getField< fields::StiffnessVector >();
-    arrayView1d< real32 > const damping = nodeManager.getField< fields::DampingVector >();
-
     auto kernelFactory = acousticVTIWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
 
     finiteElement::
@@ -715,28 +705,6 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       GEOS_MARK_SCOPE ( updateP );
       forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
-        //Debug
-        /*
-        if( freeSurfaceNodeIndicator[a] != 1 )
-        {
-          p_np1[a] = p_n[a];
-          p_np1[a] *= 2.0*mass[a];
-          p_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
-          p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
-
-          q_np1[a] = 1;
-
-          if(lateralSurfaceNodeIndicator[a] != 1 && bottomSurfaceNodeIndicator[a] != 1)
-          {
-            // Interior node, no boundary terms
-            p_np1[a] /= mass[a];
-          }
-          else
-          {
-            p_np1[a] /= mass[a]+0.5*dt*damping[a];
-          }
-        }*/
-        // Good ?
         if( freeSurfaceNodeIndicator[a] != 1 )
         {
           p_np1[a] = 2.0*mass[a]*p_n[a]/dt2;
@@ -801,7 +769,6 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     /// prepare next step
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      stiffnessVector[a] = 0.0; //Debug
       stiffnessVector_p[a] = 0.0;
       stiffnessVector_q[a] = 0.0;
       rhs[a] = 0.0;
