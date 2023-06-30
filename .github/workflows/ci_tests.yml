@@ -216,3 +216,11 @@ jobs:
         GEOSX_BUNDLE=${TMP_DIR}/${GEOSX_EXPORT_DIR}.tar.gz
         tar czf ${GEOSX_BUNDLE} --directory=${TMP_DIR} ${GEOSX_EXPORT_DIR}
         CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOSX_BUNDLE} gs://${GCP_BUCKET}/
+
+  # Convenience job - passes when all other jobs have passed.
+  check_that_all_jobs_succeeded:
+    runs-on: ubuntu-22.04
+    needs: [check_pull_request_is_not_a_draft, check_pull_request_is_assigned, check_submodules, code_style, documentation, linux_builds]
+    steps:
+    - name: Success
+      run: "true"
