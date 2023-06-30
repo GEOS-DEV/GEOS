@@ -38,7 +38,7 @@
  * @tparam T The type of the object being formatted. This should be an
  *           enum class.
  */
-template < typename T >
+template< typename T >
 struct fmt::formatter< T, std::enable_if_t< std::is_enum< T >::value > >
 {
   /**
@@ -47,7 +47,7 @@ struct fmt::formatter< T, std::enable_if_t< std::is_enum< T >::value > >
    *            the format string.
    * @return An iterator pointing to the end of the format string.
    */
-  template < typename ParseContext >
+  template< typename ParseContext >
   constexpr auto parse( ParseContext & ctx )
   {
     return ctx.end();
@@ -60,7 +60,7 @@ struct fmt::formatter< T, std::enable_if_t< std::is_enum< T >::value > >
    *              the output iterator where the formatted string should be written.
    * @return An iterator pointing to the end of the formatted string.
    */
-  template < typename FormatContext >
+  template< typename FormatContext >
   auto format( const T & value, FormatContext & ctx )
   {
     return fmt::format_to( ctx.out(), "{}", static_cast< std::underlying_type_t< T > >( value ) );
