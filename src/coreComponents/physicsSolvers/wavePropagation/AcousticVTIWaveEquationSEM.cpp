@@ -564,50 +564,7 @@ real64 AcousticVTIWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
     if( computeGradient )
     {
-
-      arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
-
-      if( NULL == std::getenv( "DISABLE_LIFO" ) )
-      {
-        m_lifo->pushWait();
-      }
-      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const nodeIdx )
-      {
-        p_dt2[nodeIdx] = (p_np1[nodeIdx] - 2*p_n[nodeIdx] + p_nm1[nodeIdx])/(dt*dt);
-      } );
-
-      if( NULL == std::getenv( "DISABLE_LIFO" ) )
-      {
-        // Need to tell LvArray data is on GPU to avoir HtoD copy
-        p_dt2.move( MemorySpace::cuda, false );
-        m_lifo->pushAsync( p_dt2 );
-      }
-      else
-      {
-        GEOS_MARK_SCOPE ( DirectWrite );
-        p_dt2.move( MemorySpace::host, false );
-        int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-        std::string fileName = GEOS_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
-        int lastDirSeparator = fileName.find_last_of( "/\\" );
-        std::string dirName = fileName.substr( 0, lastDirSeparator );
-        if( string::npos != (size_t)lastDirSeparator && !dirExists( dirName ))
-          makeDirsForPath( dirName );
-
-        //std::string fileName = GEOS_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
-        //const int fileDesc = open( fileName.c_str(), O_CREAT | O_WRONLY | O_DIRECT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP |
-        // S_IROTH | S_IWOTH );
-
-        std::ofstream wf( fileName, std::ios::out | std::ios::binary );
-        GEOS_THROW_IF( !wf,
-                        "Could not open file "<< fileName << " for writting",
-                        InputError );
-        wf.write( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
-        wf.close( );
-        GEOS_THROW_IF( !wf.good(),
-                        "An error occured while writting "<< fileName,
-                        InputError );
-      }
-
+      GEOS_ERROR( "This option is not supported yet" );
     }
 
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
@@ -700,55 +657,52 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     /// calculate your time integrators
     real64 const dt2 = dt*dt;
 
-//    if( !usePML )
-  //  {
-      GEOS_MARK_SCOPE ( updateP );
-      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+    GEOS_MARK_SCOPE ( updateP );
+    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+    {
+      if( freeSurfaceNodeIndicator[a] != 1 )
       {
-        if( freeSurfaceNodeIndicator[a] != 1 )
+        p_np1[a] = 2.0*mass[a]*p_n[a]/dt2;
+        p_np1[a] -= mass[a]*p_nm1[a]/dt2;
+        p_np1[a] += stiffnessVector_p[a];
+        p_np1[a] += rhs[a];
+
+        q_np1[a] = 2.0*mass[a]*q_n[a]/dt2;
+        q_np1[a] -= mass[a]*q_nm1[a]/dt2;
+        q_np1[a] += stiffnessVector_q[a];
+        q_np1[a] += rhs[a];
+
+        if(lateralSurfaceNodeIndicator[a] != 1 && bottomSurfaceNodeIndicator[a] != 1)
         {
-          p_np1[a] = 2.0*mass[a]*p_n[a]/dt2;
-          p_np1[a] -= mass[a]*p_nm1[a]/dt2;
-          p_np1[a] += stiffnessVector_p[a];
-          p_np1[a] += rhs[a];
-
-          q_np1[a] = 2.0*mass[a]*q_n[a]/dt2;
-          q_np1[a] -= mass[a]*q_nm1[a]/dt2;
-          q_np1[a] += stiffnessVector_q[a];
-          q_np1[a] += rhs[a];
-
-          if(lateralSurfaceNodeIndicator[a] != 1 && bottomSurfaceNodeIndicator[a] != 1)
-          {
-            // Interior node, no boundary terms
-            p_np1[a] /= mass[a]/dt2;
-            q_np1[a] /= mass[a]/dt2;
-          }
-          else
-          {
-            // Boundary node
-            p_np1[a] += damping_p[a]*p_nm1[a]/dt/2;
-            p_np1[a] += damping_pq[a]*q_nm1[a]/dt/2;
-
-            q_np1[a] += damping_q[a]*q_nm1[a]/dt/2;
-            q_np1[a] += damping_qp[a]*p_nm1[a]/dt/2;
-            // Hand-made Inversion of 2x2 matrix
-            real32 coef_pp = mass[a]/dt2;
-            coef_pp += damping_p[a]/dt/2;
-            real32 coef_pq = damping_pq[a]/dt/2;
-
-            real32 coef_qq = mass[a]/dt2;
-            coef_qq += damping_q[a]/2/dt;
-            real32 coef_qp = damping_qp[a]/dt/2;
-            
-            real32 det_pq = 1/(coef_pp * coef_qq - coef_pq*coef_qp);
-            
-            real32 aux_p_np1 = p_np1[a];
-            p_np1[a] = det_pq*(coef_qq*p_np1[a] - coef_pq*q_np1[a]);
-            q_np1[a] = det_pq*(coef_pp*q_np1[a] - coef_qp*aux_p_np1);
-          }
+          // Interior node, no boundary terms
+          p_np1[a] /= mass[a]/dt2;
+          q_np1[a] /= mass[a]/dt2;
         }
-      } );
-//    }
+        else
+        {
+          // Boundary node
+          p_np1[a] += damping_p[a]*p_nm1[a]/dt/2;
+          p_np1[a] += damping_pq[a]*q_nm1[a]/dt/2;
+
+          q_np1[a] += damping_q[a]*q_nm1[a]/dt/2;
+          q_np1[a] += damping_qp[a]*p_nm1[a]/dt/2;
+          // Hand-made Inversion of 2x2 matrix
+          real32 coef_pp = mass[a]/dt2;
+          coef_pp += damping_p[a]/dt/2;
+          real32 coef_pq = damping_pq[a]/dt/2;
+
+          real32 coef_qq = mass[a]/dt2;
+          coef_qq += damping_q[a]/2/dt;
+          real32 coef_qp = damping_qp[a]/dt/2;
+          
+          real32 det_pq = 1/(coef_pp * coef_qq - coef_pq*coef_qp);
+          
+          real32 aux_p_np1 = p_np1[a];
+          p_np1[a] = det_pq*(coef_qq*p_np1[a] - coef_pq*q_np1[a]);
+          q_np1[a] = det_pq*(coef_pp*q_np1[a] - coef_qp*aux_p_np1);
+        }
+      }
+    } );
 
     /// synchronize pressure fields
     FieldIdentifiers fieldsToBeSync;
