@@ -80,6 +80,7 @@ public:
    * @param rhs the right hand side vector to be computed
    */
   virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs );
+  virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs, arrayView1d< real32 > const rhsSecondDerivative );
 
   /**
    * TODO: move implementation into WaveSolverBase
@@ -188,6 +189,14 @@ private:
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_pressureNp1AtReceivers;
 
+  /// RKN stage coefficients 
+  localIndex m_stage_rkn;
+  array1d< real32 > m_coefs_c;
+  array1d< real32 > m_coefs_b;
+  array1d< real32 > m_coefs_bbar;
+  array2d< real32 > m_coefs_abar;
+  
+  
 };
 
 
@@ -210,6 +219,7 @@ DECLARE_FIELD( Pressure_n,
                WRITE_AND_READ,
                "Scalar pressure at time n." );
 
+
 DECLARE_FIELD( Pressure_np1,
                "pressure_np1",
                array1d< real32 >,
@@ -218,6 +228,63 @@ DECLARE_FIELD( Pressure_np1,
                WRITE_AND_READ,
                "Scalar pressure at time n+1." );
 
+//// Additional vectors for Runge-kutta Nystrom(RKN) scheme
+
+DECLARE_FIELD( Pressure_prime_n,
+               "pressure_prime_n",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of the pressure at time n." );
+
+DECLARE_FIELD( Pressure_prime_np1,
+               "pressure_prime_np1",
+               array1d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Derivative of the pressure at time n+1." );
+
+DECLARE_FIELD( Intermediary_pressure_1_n,
+               "Intermediary_pressure_1_n",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "First Intermediary pressure at time n for RKN order 2, 3 and 4." );
+
+DECLARE_FIELD( Intermediary_pressure_2_n,
+               "Intermediary_pressure_2_n",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Second Intermediary pressure at time n for RKN order 3 and 4 only." );
+
+DECLARE_FIELD( Intermediary_pressure_3_n,
+               "Intermediary_pressure_3_n",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Third Intermediary pressure at time n for RKN order 4 only." );
+
+//// End Additional vectors for Runge-kutta Nystrom(RKN) scheme
+
+/// Additional Vectors for Modified Equation
+
+DECLARE_FIELD( ForcingRHSSecondDerivative,
+               "rhsSecondDerivative",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "RHS Second Derivative" );
+  
+/// End of Additional Vectors for Modified Equation
+
+  
 DECLARE_FIELD( ForcingRHS,
                "rhs",
                array1d< real32 >,

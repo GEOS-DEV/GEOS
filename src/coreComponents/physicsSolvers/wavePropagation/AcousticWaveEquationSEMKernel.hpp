@@ -129,6 +129,163 @@ struct PrecomputeSourceAndReceiverKernel
             {
               real64 const time = cycle*dt;
               sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder );
+	      //sourceValueSecondDerivativeRicker[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder + 2 );
+            }
+          }
+        }
+      } // end loop over all sources
+
+
+      // Step 2: locate the receivers, and precompute the receiver term
+
+      /// loop over all the receivers that haven't been found yet
+      for( localIndex ircv = 0; ircv < receiverCoordinates.size( 0 ); ++ircv )
+      {
+        if( receiverIsLocal[ircv] == 0 )
+        {
+          real64 const coords[3] = { receiverCoordinates[ircv][0],
+                                     receiverCoordinates[ircv][1],
+                                     receiverCoordinates[ircv][2] };
+
+          real64 coordsOnRefElem[3]{};
+          bool const receiverFound =
+            WaveSolverUtils::locateSourceElement( numFacesPerElem,
+                                                  center,
+                                                  faceNormal,
+                                                  faceCenter,
+                                                  elemsToFaces[k],
+                                                  coords );
+
+          if( receiverFound && elemGhostRank[k] < 0 )
+          {
+            WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+                                                                              elemsToNodes[k],
+                                                                              X,
+                                                                              coordsOnRefElem );
+
+            receiverIsLocal[ircv] = 1;
+
+            real64 Ntest[FE_TYPE::numNodes];
+            FE_TYPE::calcN( coordsOnRefElem, Ntest );
+
+            for( localIndex a = 0; a < numNodesPerElem; ++a )
+            {
+              receiverNodeIds[ircv][a] = elemsToNodes[k][a];
+              receiverConstants[ircv][a] = Ntest[a];
+            }
+          }
+        }
+      } // end loop over receivers
+
+    } );
+
+  }
+};
+
+
+
+  // Use When we consider the modified equation to perform time integration
+struct PrecomputeSourceAndReceiverKernelForModifiedEquation
+{
+
+
+
+  /**
+   * @brief Launches the precomputation of the source and receiver terms
+   * @tparam EXEC_POLICY execution policy
+   * @tparam FE_TYPE finite element type
+   * @param[in] size the number of cells in the subRegion
+   * @param[in] numNodesPerElem number of nodes per element
+   * @param[in] X coordinates of the nodes
+   * @param[in] elemsToNodes map from element to nodes
+   * @param[in] elemsToFaces map from element to faces
+   * @param[in] facesToNodes map from faces to nodes
+   * @param[in] elemCenter coordinates of the element centers
+   * @param[in] sourceCoordinates coordinates of the source terms
+   * @param[out] sourceIsAccessible flag indicating whether the source is accessible or not
+   * @param[out] sourceNodeIds indices of the nodes of the element where the source is located
+   * @param[out] sourceNodeConstants constant part of the source terms
+   * @param[in] receiverCoordinates coordinates of the receiver terms
+   * @param[out] receiverIsLocal flag indicating whether the receiver is local or not
+   * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
+   * @param[out] receiverNodeConstants constant part of the receiver term
+   */
+  template< typename EXEC_POLICY, typename FE_TYPE >
+  static void
+  launch( localIndex const size,
+          localIndex const numNodesPerElem,
+          localIndex const numFacesPerElem,
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView1d< integer const > const elemGhostRank,
+          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+          arrayView2d< localIndex const > const elemsToFaces,
+          arrayView2d< real64 const > const & elemCenter,
+          arrayView2d< real64 const > const faceNormal,
+          arrayView2d< real64 const > const faceCenter,
+          arrayView2d< real64 const > const sourceCoordinates,
+          arrayView1d< localIndex > const sourceIsAccessible,
+          arrayView2d< localIndex > const sourceNodeIds,
+          arrayView2d< real64 > const sourceConstants,
+          arrayView2d< real64 const > const receiverCoordinates,
+          arrayView1d< localIndex > const receiverIsLocal,
+          arrayView2d< localIndex > const receiverNodeIds,
+          arrayView2d< real64 > const receiverConstants,
+          arrayView2d< real32 > const sourceValue,
+	  arrayView2d< real32 > const sourceValueSecondDerivativeRicker,
+          real64 const dt,
+          real32 const timeSourceFrequency,
+          localIndex const rickerOrder )
+  {
+
+    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      real64 const center[3] = { elemCenter[k][0],
+                                 elemCenter[k][1],
+                                 elemCenter[k][2] };
+
+      // Step 1: locate the sources, and precompute the source term
+
+      /// loop over all the source that haven't been found yet
+      for( localIndex isrc = 0; isrc < sourceCoordinates.size( 0 ); ++isrc )
+      {
+        if( sourceIsAccessible[isrc] == 0 )
+        {
+          real64 const coords[3] = { sourceCoordinates[isrc][0],
+                                     sourceCoordinates[isrc][1],
+                                     sourceCoordinates[isrc][2] };
+
+          bool const sourceFound =
+            WaveSolverUtils::locateSourceElement( numFacesPerElem,
+                                                  center,
+                                                  faceNormal,
+                                                  faceCenter,
+                                                  elemsToFaces[k],
+                                                  coords );
+          if( sourceFound )
+          {
+            real64 coordsOnRefElem[3]{};
+
+
+            WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+                                                                              elemsToNodes[k],
+                                                                              X,
+                                                                              coordsOnRefElem );
+
+            sourceIsAccessible[isrc] = 1;
+            real64 Ntest[FE_TYPE::numNodes];
+            FE_TYPE::calcN( coordsOnRefElem, Ntest );
+
+            for( localIndex a = 0; a < numNodesPerElem; ++a )
+            {
+              sourceNodeIds[isrc][a] = elemsToNodes[k][a];
+              sourceConstants[isrc][a] = Ntest[a];
+            }
+
+            for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
+            {
+              real64 const time = cycle*dt;
+              sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder );
+	      sourceValueSecondDerivativeRicker[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder + 2 );
             }
           }
         }
@@ -824,10 +981,556 @@ protected:
 };
 
 
+//// Runge-kutta Nystrom Kernels
+
+
+/**
+ * @brief Implements kernels for solving the acoustic wave equations
+ *   explicit central rkn method and SEM
+ * @copydoc geosx::finiteElement::KernelBase
+ * @tparam SUBREGION_TYPE The type of subregion that the kernel will act on.
+ *
+ * ### AcousticWaveEquationSEMKernel Description
+ * Implements the KernelBase interface functions required for solving
+ * the acoustic wave equations using the
+ * "finite element kernel application" functions such as
+ * geosx::finiteElement::RegionBasedKernelApplication.
+ *
+ * The number of degrees of freedom per support point for both
+ * the test and trial spaces are specified as `1`.
+ */
+
+
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE >
+class ExplicitAcousticSEMrkn2 : public finiteElement::KernelBase< SUBREGION_TYPE,
+                                                                  CONSTITUTIVE_TYPE,
+                                                                  FE_TYPE,
+                                                                  1,
+                                                                  1 >
+{
+public:
+
+  /// Alias for the base class;
+  using Base = finiteElement::KernelBase< SUBREGION_TYPE,
+                                          CONSTITUTIVE_TYPE,
+                                          FE_TYPE,
+                                          1,
+                                          1 >;
+
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+  /// will be the actual number of nodes per element.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
+
+  using Base::numDofPerTestSupportPoint;
+  using Base::numDofPerTrialSupportPoint;
+  using Base::m_elemsToNodes;
+  using Base::m_elemGhostRank;
+  using Base::m_constitutiveUpdate;
+  using Base::m_finiteElementSpace;
+
+//*****************************************************************************
+  /**
+   * @brief Constructor
+   * @copydoc geosx::finiteElement::KernelBase::KernelBase
+   * @param nodeManager Reference to the NodeManager object.
+   * @param edgeManager Reference to the EdgeManager object.
+   * @param faceManager Reference to the FaceManager object.
+   * @param targetRegionIndex Index of the region the subregion belongs to.
+   * @param dt The time interval for the step.
+   *   elements to be processed during this kernel launch.
+   */
+  ExplicitAcousticSEMrkn2( NodeManager & nodeManager,
+                           EdgeManager const & edgeManager,
+                           FaceManager const & faceManager,
+                           localIndex const targetRegionIndex,
+                           SUBREGION_TYPE const & elementSubRegion,
+                           FE_TYPE const & finiteElementSpace,
+                           CONSTITUTIVE_TYPE & inputConstitutiveType,
+                           real64 const dt,
+			   arrayView1d <real32 const > coefs_c):
+    Base( elementSubRegion,
+          finiteElementSpace,
+          inputConstitutiveType ),
+    m_X( nodeManager.referencePosition() ),
+    m_p_n( nodeManager.getField< fields::Pressure_n >() ),
+    m_p_prime_n( nodeManager.getField< fields::Pressure_prime_n >() ),
+    m_stiffnessVector( nodeManager.getField< fields::StiffnessVector >() ),
+    m_dt( dt ),
+    m_c( coefs_c )
+  {
+    GEOSX_UNUSED_VAR( edgeManager );
+    GEOSX_UNUSED_VAR( faceManager );
+    GEOSX_UNUSED_VAR( targetRegionIndex );
+  }
+
+  //*****************************************************************************
+  /**
+   * @copydoc geosx::finiteElement::KernelBase::StackVariables
+   *
+   * ### ExplicitAcousticSEM Description
+   * Adds a stack arrays for the nodal force, primary displacement variable, etc.
+   */
+  struct StackVariables : Base::StackVariables
+  {
+public:
+    GEOSX_HOST_DEVICE
+    StackVariables():
+      xLocal()
+    {}
+
+    /// C-array stack storage for element local the nodal positions.
+    real64 xLocal[ numNodesPerElem ][ 3 ];
+  };
+  //***************************************************************************
+
+
+  /**
+   * @copydoc geosx::finiteElement::KernelBase::setup
+   *
+   * Copies the primary variable, and position into the local stack array.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void setup( localIndex const k,
+              StackVariables & stack ) const
+  {
+    /// numDofPerTrialSupportPoint = 1
+    for( localIndex a=0; a< numNodesPerElem; ++a )
+    {
+      localIndex const nodeIndex = m_elemsToNodes( k, a );
+      for( int i=0; i< 3; ++i )
+      {
+        stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
+      }
+    }
+  }
+
+  /**
+   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
+   *
+   * ### ExplicitAcousticSEM Description
+   * Calculates stiffness vector
+   *
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void quadraturePointKernel( localIndex const k,
+                              localIndex const q,
+                              StackVariables & stack ) const
+  {
+    m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
+    {
+      real32 const localIncrement = val*(m_p_n[m_elemsToNodes[k][j]]+m_c[0]*m_dt*m_p_prime_n[m_elemsToNodes[k][j]]);
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
+    } );
+  }
+
+protected:
+  /// The array containing the nodal position array.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+
+  /// The array containing the nodal pressure array.
+  arrayView1d< real32 const > const m_p_n;
+
+  arrayView1d< real32 const > const m_p_prime_n;
+
+  /// The array containing the product of the stiffness matrix and the nodal pressure.
+  arrayView1d< real32 > const m_stiffnessVector;
+
+  /// The time increment for this time integration step.
+  real64 const m_dt;
+
+  /// The c coefficient of intermediary pressure k1 of RKN
+  arrayView1d< real32 const > const m_c;
+};
+
+
+//// This kernel is designed for intermediary pressure k2 of Runge-Kutta Nystrom of order 4
+
+/**
+ * @brief Implements kernels for solving the acoustic wave equations
+ *   explicit central rkn method and SEM
+ * @copydoc geosx::finiteElement::KernelBase
+ * @tparam SUBREGION_TYPE The type of subregion that the kernel will act on.
+ *
+ * ### AcousticWaveEquationSEMKernel Description
+ * Implements the KernelBase interface functions required for solving
+ * the acoustic wave equations using the
+ * "finite element kernel application" functions such as
+ * geosx::finiteElement::RegionBasedKernelApplication.
+ *
+ * The number of degrees of freedom per support point for both
+ * the test and trial spaces are specified as `1`.
+ */
+
+
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE >
+class ExplicitAcousticSEMrkn4k2 : public finiteElement::KernelBase< SUBREGION_TYPE,
+                                                                  CONSTITUTIVE_TYPE,
+                                                                  FE_TYPE,
+                                                                  1,
+                                                                  1 >
+{
+public:
+
+  /// Alias for the base class;
+  using Base = finiteElement::KernelBase< SUBREGION_TYPE,
+                                          CONSTITUTIVE_TYPE,
+                                          FE_TYPE,
+                                          1,
+                                          1 >;
+
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+  /// will be the actual number of nodes per element.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
+
+  using Base::numDofPerTestSupportPoint;
+  using Base::numDofPerTrialSupportPoint;
+  using Base::m_elemsToNodes;
+  using Base::m_elemGhostRank;
+  using Base::m_constitutiveUpdate;
+  using Base::m_finiteElementSpace;
+
+//*****************************************************************************
+  /**
+   * @brief Constructor
+   * @copydoc geosx::finiteElement::KernelBase::KernelBase
+   * @param nodeManager Reference to the NodeManager object.
+   * @param edgeManager Reference to the EdgeManager object.
+   * @param faceManager Reference to the FaceManager object.
+   * @param targetRegionIndex Index of the region the subregion belongs to.
+   * @param dt The time interval for the step.
+   *   elements to be processed during this kernel launch.
+   */
+  ExplicitAcousticSEMrkn4k2( NodeManager & nodeManager,
+                           EdgeManager const & edgeManager,
+                           FaceManager const & faceManager,
+                           localIndex const targetRegionIndex,
+                           SUBREGION_TYPE const & elementSubRegion,
+                           FE_TYPE const & finiteElementSpace,
+                           CONSTITUTIVE_TYPE & inputConstitutiveType,
+			     real64 const dt,
+			     arrayView1d <real32 const > coefs_c,
+			     arrayView2d <real32 const > coefs_abar):
+    Base( elementSubRegion,
+          finiteElementSpace,
+          inputConstitutiveType ),
+    m_X( nodeManager.referencePosition() ),
+    m_p_n( nodeManager.getField< fields::Pressure_n >() ),
+    m_p_prime_n( nodeManager.getField< fields::Pressure_prime_n >() ),
+    m_stiffnessVector( nodeManager.getField< fields::StiffnessVector >() ),
+    m_dt( dt ),
+    m_c( coefs_c ),
+    m_abar( coefs_abar ),
+    m_K1_n( nodeManager.getField< fields::Intermediary_pressure_1_n >() )
+  {
+    m_dt2 = dt*dt ;
+    GEOSX_UNUSED_VAR( edgeManager );
+    GEOSX_UNUSED_VAR( faceManager );
+    GEOSX_UNUSED_VAR( targetRegionIndex );
+  }
+
+  //*****************************************************************************
+  /**
+   * @copydoc geosx::finiteElement::KernelBase::StackVariables
+   *
+   * ### ExplicitAcousticSEM Description
+   * Adds a stack arrays for the nodal force, primary displacement variable, etc.
+   */
+  struct StackVariables : Base::StackVariables
+  {
+public:
+    GEOSX_HOST_DEVICE
+    StackVariables():
+      xLocal()
+    {}
+
+    /// C-array stack storage for element local the nodal positions.
+    real64 xLocal[ numNodesPerElem ][ 3 ];
+  };
+  //***************************************************************************
+
+
+  /**
+   * @copydoc geosx::finiteElement::KernelBase::setup
+   *
+   * Copies the primary variable, and position into the local stack array.
+   */       
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void setup( localIndex const k,
+              StackVariables & stack ) const
+  {
+    /// numDofPerTrialSupportPoint = 1
+    for( localIndex a=0; a< numNodesPerElem; ++a )
+    {
+      localIndex const nodeIndex = m_elemsToNodes( k, a );
+      for( int i=0; i< 3; ++i )
+      {
+        stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
+      }
+    }
+  }
+
+  /**
+   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
+   *
+   * ### ExplicitAcousticSEM Description
+   * Calculates stiffness vector
+   *
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void quadraturePointKernel( localIndex const k,
+                              localIndex const q,
+                              StackVariables & stack ) const
+  {
+    m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
+    {
+      localIndex index= m_elemsToNodes[k][j];
+      real32 const localIncrement = val*(m_p_n[index]+m_c[1]*m_dt*m_p_prime_n[index]+m_abar[1][0]*m_dt2*m_K1_n[index]);
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
+    } );
+  }
+
+protected:
+  /// The array containing the nodal position array.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+
+  /// The array containing the nodal pressure array.
+  arrayView1d< real32 const > const m_p_n;
+
+  arrayView1d< real32 const > const m_p_prime_n;
+
+  /// The array containing the product of the stiffness matrix and the nodal pressure.
+  arrayView1d< real32 > const m_stiffnessVector;
+
+  /// The time increment for this time integration step.
+  real64 const m_dt;
+
+  /// The time integrator
+  real64 m_dt2;
+
+  /// The array containing the c coefficients of the intermediary pressure vectors k1, k2, and k3 of runge-kutta Nystrom.
+  arrayView1d< real32 const > const m_c;
+
+  /// The array containing the a_i,j coefficients of the intermediary pressure vectors k1, k2, and k3 of runge-kutta Nystrom.
+  arrayView2d< real32 const > const m_abar;
+
+  /// The array containing the intermediary pressure k1 for RKN
+  arrayView1d< real32 const > const m_K1_n;
+  
+};
+
+
+/// The kernel is designed for the intermediary pressure k3 of RKN of order 4
+
+/**
+ * @brief Implements kernels for solving the acoustic wave equations
+ *   explicit central rkn method and SEM
+ * @copydoc geosx::finiteElement::KernelBase
+ * @tparam SUBREGION_TYPE The type of subregion that the kernel will act on.
+ *
+ * ### AcousticWaveEquationSEMKernel Description
+ * Implements the KernelBase interface functions required for solving
+ * the acoustic wave equations using the
+ * "finite element kernel application" functions such as
+ * geosx::finiteElement::RegionBasedKernelApplication.
+ *
+ * The number of degrees of freedom per support point for both
+ * the test and trial spaces are specified as `1`.
+ */
+
+
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE >
+class ExplicitAcousticSEMrkn4k3 : public finiteElement::KernelBase< SUBREGION_TYPE,
+                                                                  CONSTITUTIVE_TYPE,
+                                                                  FE_TYPE,
+                                                                  1,
+                                                                  1 >
+{
+public:
+
+  /// Alias for the base class;
+  using Base = finiteElement::KernelBase< SUBREGION_TYPE,
+                                          CONSTITUTIVE_TYPE,
+                                          FE_TYPE,
+                                          1,
+                                          1 >;
+
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+  /// will be the actual number of nodes per element.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
+
+  using Base::numDofPerTestSupportPoint;
+  using Base::numDofPerTrialSupportPoint;
+  using Base::m_elemsToNodes;
+  using Base::m_elemGhostRank;
+  using Base::m_constitutiveUpdate;
+  using Base::m_finiteElementSpace;
+
+//*****************************************************************************
+  /**
+   * @brief Constructor
+   * @copydoc geosx::finiteElement::KernelBase::KernelBase
+   * @param nodeManager Reference to the NodeManager object.
+   * @param edgeManager Reference to the EdgeManager object.
+   * @param faceManager Reference to the FaceManager object.
+   * @param targetRegionIndex Index of the region the subregion belongs to.
+   * @param dt The time interval for the step.
+   *   elements to be processed during this kernel launch.
+   */
+  ExplicitAcousticSEMrkn4k3( NodeManager & nodeManager,
+                           EdgeManager const & edgeManager,
+                           FaceManager const & faceManager,
+                           localIndex const targetRegionIndex,
+                           SUBREGION_TYPE const & elementSubRegion,
+                           FE_TYPE const & finiteElementSpace,
+                           CONSTITUTIVE_TYPE & inputConstitutiveType,
+			     real64 const dt,
+			     arrayView1d <real32 const > coefs_c,
+			     arrayView2d <real32 const > coefs_abar):
+    Base( elementSubRegion,
+          finiteElementSpace,
+          inputConstitutiveType ),
+    m_X( nodeManager.referencePosition() ),
+    m_p_n( nodeManager.getField< fields::Pressure_n >() ),
+    m_p_prime_n( nodeManager.getField< fields::Pressure_prime_n >() ),
+    m_stiffnessVector( nodeManager.getField< fields::StiffnessVector >() ),
+    m_dt( dt ),
+    m_c( coefs_c ),
+    m_abar( coefs_abar ),
+    m_K1_n( nodeManager.getField< fields::Intermediary_pressure_1_n >() ),
+    m_K2_n( nodeManager.getField< fields::Intermediary_pressure_2_n >() )
+  {
+    m_dt2 = dt*dt ;
+    GEOSX_UNUSED_VAR( edgeManager );
+    GEOSX_UNUSED_VAR( faceManager );
+    GEOSX_UNUSED_VAR( targetRegionIndex );
+  }
+
+  //*****************************************************************************
+  /**
+   * @copydoc geosx::finiteElement::KernelBase::StackVariables
+   *
+   * ### ExplicitAcousticSEM Description
+   * Adds a stack arrays for the nodal force, primary displacement variable, etc.
+   */
+  struct StackVariables : Base::StackVariables
+  {
+public:
+    GEOSX_HOST_DEVICE
+    StackVariables():
+      xLocal()
+    {}
+
+    /// C-array stack storage for element local the nodal positions.
+    real64 xLocal[ numNodesPerElem ][ 3 ];
+  };
+  //***************************************************************************
+
+
+  /**
+   * @copydoc geosx::finiteElement::KernelBase::setup
+   *
+   * Copies the primary variable, and position into the local stack array.
+   */       
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void setup( localIndex const k,
+              StackVariables & stack ) const
+  {
+    /// numDofPerTrialSupportPoint = 1
+    for( localIndex a=0; a< numNodesPerElem; ++a )
+    {
+      localIndex const nodeIndex = m_elemsToNodes( k, a );
+      for( int i=0; i< 3; ++i )
+      {
+        stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
+      }
+    }
+  }
+
+  /**
+   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
+   *
+   * ### ExplicitAcousticSEM Description
+   * Calculates stiffness vector
+   *
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void quadraturePointKernel( localIndex const k,
+                              localIndex const q,
+                              StackVariables & stack ) const
+  {
+    m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
+    {
+      localIndex index= m_elemsToNodes[k][j];
+      real32 const localIncrement = val*(m_p_n[index]+m_c[2]*m_dt*m_p_prime_n[index]+m_abar[2][0]*m_dt2*m_K1_n[index]+m_abar[2][1]*m_dt2*m_K2_n[index]);
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
+    } );
+  }
+
+protected:
+  /// The array containing the nodal position array.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+
+  /// The array containing the nodal pressure array.
+  arrayView1d< real32 const > const m_p_n;
+
+  arrayView1d< real32 const > const m_p_prime_n;
+
+  /// The array containing the product of the stiffness matrix and the nodal pressure.
+  arrayView1d< real32 > const m_stiffnessVector;
+
+  /// The time increment for this time integration step.
+  real64 const m_dt;
+
+  /// The time integrator
+  real64 m_dt2;
+
+  /// The array containing the c coefficients of the intermediary pressure vectors k1, k2, and k3 of runge-kutta Nystrom.
+  arrayView1d< real32 const > const m_c;
+
+  /// The array containing the a_i,j coefficients of the intermediary pressure vectors k1, k2, and k3 of runge-kutta Nystrom.
+  arrayView2d< real32 const > const m_abar;
+
+  /// The array containing the intermediary pressure k1 for RKN
+  arrayView1d< real32 const > const m_K1_n;
+
+  /// The array containing the intermediary pressure k2 for RKN
+  arrayView1d< real32 const > const m_K2_n;
+ 
+ 
+};
+
+
+//// End of Runge-kutta Nystrom kernels
+
 
 /// The factory used to construct a ExplicitAcousticWaveEquation kernel.
 using ExplicitAcousticSEMFactory = finiteElement::KernelFactory< ExplicitAcousticSEM,
                                                                  real64 >;
+
+using ExplicitAcousticSEMFactoryrkn2 = finiteElement::KernelFactory< ExplicitAcousticSEMrkn2,
+                                                                     real64 , arrayView1d< real32 > >;
+
+using ExplicitAcousticSEMFactoryrkn4k2 = finiteElement::KernelFactory< ExplicitAcousticSEMrkn4k2,
+								       real64, arrayView1d< real32 >,arrayView2d< real32 > >;
+
+using ExplicitAcousticSEMFactoryrkn4k3 = finiteElement::KernelFactory< ExplicitAcousticSEMrkn4k3,
+								       real64 , arrayView1d< real32 >,arrayView2d< real32 > >;
+
 
 
 } // namespace acousticWaveEquationSEMKernels

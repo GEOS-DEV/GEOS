@@ -43,6 +43,11 @@ struct WaveSolverUtils
 
     switch( order )
     {
+      case 4:
+      {
+	pulse = 4.0*lam*lam*(-12.0*lam*(time_n-o_tpeak)*(time_n-o_tpeak)+4.0*lam*lam*(time_n-o_tpeak)*(time_n-o_tpeak)*(time_n-o_tpeak)*(time_n-o_tpeak)+3.0)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
+      }
+      break;
       case 2:
       {
         pulse = 2.0*lam*(2.0*lam*(time_n-o_tpeak)*(time_n-o_tpeak)-1.0)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
@@ -59,7 +64,7 @@ struct WaveSolverUtils
       }
       break;
       default:
-        GEOSX_ERROR( "This option is not supported yet, rickerOrder must be 0, 1 or 2" );
+        GEOSX_ERROR( "This option is not supported yet, rickerOrder must be 0, 1 ,2 or 4" );
     }
 
     return pulse;

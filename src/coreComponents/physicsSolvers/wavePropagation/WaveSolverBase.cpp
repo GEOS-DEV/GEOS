@@ -114,6 +114,21 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Flag to apply PML" );
 
+  registerWrapper( viewKeyStruct::useRKNString(), &m_useRKN ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Set to 1 to use Runge-Kutta Nystrom(RKN) scheme order two by default" );
+
+  registerWrapper( viewKeyStruct::useModeqString(), &m_useModeq ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Set to 1 to use Modified Equation scheme order four by default" );
+
+  registerWrapper( viewKeyStruct::timeSchemeOrderString(), &m_timeSchemeOrder ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 2 ).
+    setDescription( "Flag to choose the time scheme order 2,3 or 4" );
+
   registerWrapper( viewKeyStruct::useDASString(), &m_useDAS ).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0 ).

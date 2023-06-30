@@ -101,6 +101,9 @@ public:
     static constexpr char const * linearDASGeometryString() { return "linearDASGeometry"; }
 
     static constexpr char const * usePMLString() { return "usePML"; }
+    static constexpr char const * useRKNString() { return "useRKN"; }
+    static constexpr char const * useModeqString() { return "useModeq"; }
+    static constexpr char const * timeSchemeOrderString() { return "timeSchemeOrder"; }
     static constexpr char const * parametersPMLString() { return "parametersPML"; }
 
   };
@@ -189,6 +192,7 @@ protected:
   /// Precomputed value of the source terms
   array2d< real32 > m_sourceValue;
 
+   array2d< real32 > m_sourceValueSecondDerivativeRicker;
   /// Central frequency for the Ricker time source
   real32 m_timeSourceFrequency;
 
@@ -227,6 +231,17 @@ protected:
 
   /// Flag to apply PML
   integer m_usePML;
+
+  /////////////Additional declarations for RKN
+
+  /// Indicate the order of the rkn scheme
+  localIndex m_timeSchemeOrder;
+
+  /// Flag that indicates which time scheme is used
+  integer m_useRKN;
+
+  integer m_useModeq;
+  /////////////Additional declarations for RKN
 
   /// Indices of the nodes (in the right order) for each source point
   array2d< localIndex > m_sourceNodeIds;
