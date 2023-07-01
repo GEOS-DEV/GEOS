@@ -530,7 +530,7 @@ real64 AcousticVTIWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                      real64 const & dt,
                                                      integer cycleNumber,
                                                      DomainPartition & domain,
-                                                     bool computeGradient )
+                                                     bool GEOS_UNUSED_PARAM(computeGradient) )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
 
@@ -574,18 +574,18 @@ void AcousticVTIWaveEquationSEM::initializePML()
   return;
 }
 
-void AcousticVTIWaveEquationSEM::applyPML( real64 const time, 
-                                        DomainPartition & domain)
+void AcousticVTIWaveEquationSEM::applyPML( real64 const GEOS_UNUSED_PARAM(time), 
+                                        DomainPartition & GEOS_UNUSED_PARAM(domain))
 {
   GEOS_ERROR( "This option is not supported yet" );
   return;
 }
 
-real64 AcousticVTIWaveEquationSEM::explicitStepBackward( real64 const & time_n,
-                                                     real64 const & dt,
-                                                     integer cycleNumber,
-                                                     DomainPartition & domain,
-                                                     bool computeGradient )
+real64 AcousticVTIWaveEquationSEM::explicitStepBackward( real64 const & GEOS_UNUSED_PARAM(time_n),
+                                                     real64 const & GEOS_UNUSED_PARAM(dt),
+                                                     integer GEOS_UNUSED_PARAM(cycleNumber),
+                                                     DomainPartition & GEOS_UNUSED_PARAM(domain),
+                                                     bool GEOS_UNUSED_PARAM(computeGradient) )
 {
   GEOS_ERROR( "This option is not supported yet" );
   return -1;
