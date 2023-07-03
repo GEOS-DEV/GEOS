@@ -167,7 +167,7 @@ void TableFunction::checkCoord( real64 const coord,
                                 char const * const dimName,
                                 char const * const tableName ) const
 {
-  GEOS_THROW_IF( dim >= m_coordinates.size(),
+  GEOS_THROW_IF( dim >= m_coordinates.size() || dim < 0,
                  GEOS_FMT( "The {} dimension ( {} ) doesn't exist in the {} table.",
                            dimName, dim, tableName ),
                  SimulationError );

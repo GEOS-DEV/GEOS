@@ -18,6 +18,8 @@
 
 #include "common/DataTypes.hpp"
 
+#include "common/MathAndPhysConstants.hpp"
+
 #ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_PVTFUNCTIONHELPERS_HPP_
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_PVTFUNCTIONHELPERS_HPP_
 
@@ -195,7 +197,7 @@ initializePropertyTable( string_array const & inputParameters,
     GEOS_THROW_IF( PStart >= PEnd, "PStart must be strictly smaller than PEnd",
                    InputError );
 
-    constexpr real64 T_K = 273.15;
+    constexpr real64 T_K = constants::zeroKInC;
 
     real64 const TStart = stod( inputParameters[5] ) - T_K;
     real64 const TEnd = stod( inputParameters[6] )- T_K;

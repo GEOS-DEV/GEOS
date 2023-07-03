@@ -20,6 +20,7 @@
 
 #include "functions/FunctionManager.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/SpanWagnerCO2Density.hpp"
+#include "common/MathAndPhysConstants.hpp"
 
 namespace geos
 {
@@ -134,7 +135,7 @@ real64 HelmholtzCO2Enthalpy( real64 const & T,
 
   real64 theta, delta, R, deltard;
 
-  Tkelvin = T + 273.15;
+  Tkelvin = constants::convertKToC( T );
   rd=rho/dc;
   rt=Tc/Tkelvin;
 

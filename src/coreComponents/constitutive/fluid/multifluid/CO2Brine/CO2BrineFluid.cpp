@@ -19,6 +19,7 @@
 
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
+#include "common/MathAndPhysConstants.hpp"
 
 namespace geos
 {
@@ -144,7 +145,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
   if( !m_checkPVTTablesRanges )
     return;
 
-  real64 const temperatureInCelsius = temperature - 273.15;
+  real64 const temperatureInCelsius = constants::convertCToK( temperature );
   try
   {
     m_phase1->density.checkTablesParameters( pressure, temperatureInCelsius );

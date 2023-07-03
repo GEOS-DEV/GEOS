@@ -19,6 +19,7 @@
 
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
+#include "common/MathAndPhysConstants.hpp"
 
 namespace geos
 {
@@ -202,7 +203,7 @@ void ReactiveBrineFluid< PHASE >::checkTablesParameters( real64 const pressure,
   if( !m_checkPVTTablesRanges )
     return;
 
-  real64 const temperatureInCelsius = temperature - 273.15;
+  real64 const temperatureInCelsius = constants::convertCToK( temperature );
   try
   {
     m_phase->density.checkTablesParameters( pressure, temperatureInCelsius );

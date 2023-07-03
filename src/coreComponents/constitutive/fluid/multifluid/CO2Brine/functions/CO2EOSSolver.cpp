@@ -18,6 +18,8 @@
 
 #include "constitutive/fluid/multifluid/CO2Brine/functions/CO2EOSSolver.hpp"
 
+#include "common/MathAndPhysConstants.hpp"
+
 
 namespace geos
 {
@@ -141,7 +143,7 @@ CO2EOSSolver::solve( string const & name,
 
   GEOS_THROW_IF( !newtonHasConverged,
                  name << ": Newton's method failed to converge for pair "
-                      << "( pressure = " << pres*presMultiplierForReporting << " Pa, temperature = " << temp+273.15 << " K) :"
+                      << "( pressure = " << pres*presMultiplierForReporting << " Pa, temperature = " << constants::convertKToC( temp ) << " K) :"
                       << " final residual = " << res << ", final update = " << update << ", tolerance = " << tolerance,
                  InputError );
   return var;
