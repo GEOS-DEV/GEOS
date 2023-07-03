@@ -66,6 +66,11 @@ public:
   string getTargetName() const
   { return m_targetName; }
 
+  /**
+   * @return the target name formatted in such a way that it can be inserted in a hierarchy path.
+   * @param foundNearestLine reference to a boolean that is set to true if the file line of the
+   * data context could be determined, otherwise it is set to false.
+   */
   virtual string getTargetNameInPath( bool & fileLineFound ) const
   { fileLineFound = false; return m_targetName; }
 
@@ -117,6 +122,9 @@ public:
   string toString( string const & innerObjectName ) const override
   { return toString() + ", attribute " + innerObjectName; }
 
+  /**
+   * @copydoc DataContext::getTargetNameInPath( bool & foundNearestLine ) const
+   */
   virtual string getTargetNameInPath( bool & foundNearestLine ) const override;
 
   /**
