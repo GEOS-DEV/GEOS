@@ -96,72 +96,82 @@ jobs:
       fail-fast : false
       matrix:
         include:
-          - name: Ubuntu CUDA debug (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.2.152)
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.2.152
-            CMAKE_BUILD_TYPE: Debug
-            BUILD_AND_TEST_ARGS: "--disable-unit-tests --build-exe-only --disable-schema-deployment"
+          ## - name: Ubuntu CUDA debug (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.2.152)
+          ##   DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.2.152
+          ##   CMAKE_BUILD_TYPE: Debug
+          ##   BUILD_AND_TEST_ARGS: "--disable-unit-tests --build-exe-only --disable-schema-deployment"
+          ##   ENABLE_HYPRE: ON
+          ##   ENABLE_HYPRE_DEVICE: CUDA
+          ##   ENABLE_TRILINOS: OFF
+          ## 
+          ## - name: Ubuntu CUDA (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.2.152)
+          ##   DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.2.152
+          ##   CMAKE_BUILD_TYPE: Release
+          ##   BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
+          ##   ENABLE_HYPRE: ON
+          ##   ENABLE_HYPRE_DEVICE: CUDA
+          ##   ENABLE_TRILINOS: OFF
+          ## 
+          ## - name: Centos (7.6, gcc 8.3.1, open-mpi 1.10.7, cuda 10.1.243)
+          ##   DOCKER_REPOSITORY: geosx/centos7.6.1810-gcc8.3.1-cuda10.1.243
+          ##   CMAKE_BUILD_TYPE: Release
+          ##   BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
+          ## 
+          ## - name: Ubuntu (20.04, gcc 9.3.0, open-mpi 4.0.3)
+          ##   DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
+          ##   CMAKE_BUILD_TYPE: Release
+          ## 
+          ## - name: Ubuntu debug (20.04, gcc 10.3.0, open-mpi 4.0.3)
+          ##   DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
+          ##   CMAKE_BUILD_TYPE: Debug
+          ## 
+          ## - name: Ubuntu (20.04, gcc 10.3.0, open-mpi 4.0.3)
+          ##   DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
+          ##   CMAKE_BUILD_TYPE: Release
+          ## 
+          ## # Matrix jobs that deploy to Google Cloud
+          ## - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 10.2.89p2)
+          ##   DOCKER_REPOSITORY: geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda10.2.89p2
+          ##   CMAKE_BUILD_TYPE: Release
+          ##   BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
+          ##   HOST_CONFIG: host-configs/TOTAL/pecan-GPU.cmake
+          ##   GCP_BUCKET: geosx/Pecan-GPU
+          ## 
+          ## - name: Pecan CPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5)
+          ##   DOCKER_REPOSITORY: geosx/pecan-cpu-gcc8.2.0-openmpi4.0.1-mkl2019.5
+          ##   CMAKE_BUILD_TYPE: Release
+          ##   HOST_CONFIG: host-configs/TOTAL/pecan-CPU.cmake
+          ##   GCP_BUCKET: geosx/Pecan-CPU
+          ## 
+          ## - name: Pangea 2 (centos 7.6, gcc 8.3.0, open-mpi 2.1.5, mkl 2019.3)
+          ##   DOCKER_REPOSITORY: geosx/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
+          ##   CMAKE_BUILD_TYPE: Release
+          ##   GCP_BUCKET: geosx/Pangea2
+          ##   ENABLE_HYPRE: ON
+          ##   ENABLE_TRILINOS: OFF
+          ## 
+          ## - name: Sherlock CPU (centos 7.9.2009, gcc 10.1.0, open-mpi 4.1.2, openblas 0.3.10)
+          ##   DOCKER_REPOSITORY: geosx/sherlock-gcc10.1.0-openmpi4.1.2-openblas0.3.10-zlib1.2.11
+          ##   CMAKE_BUILD_TYPE: Release
+          ##   HOST_CONFIG: host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10.cmake
+          ##   GCP_BUCKET: geosx/Sherlock-CPU
+          ##   ENABLE_HYPRE: ON
+          ##   ENABLE_TRILINOS: OFF
+          ## 
+          ## - name: Ubuntu (22.04, gcc 11.2.0, open-mpi 4.1.2)
+          ##   DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
+          ##   CMAKE_BUILD_TYPE: Release
+          ##   GCP_BUCKET: geosx/ubuntu22.04-gcc11
+
+          - name: Pangea3
+            DOCKER_REPOSITORY: ppc64le/almalinux:8.8-20230524
+            CMAKE_BUILD_TYPE: Release
+            HOST_CONFIG: host-configs/TOTAL/pangea3-gcc8.4.1-openmpi-4.1.2.cmake
+            GCP_BUCKET: geosx/Pangea3
             ENABLE_HYPRE: ON
-            ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_TRILINOS: OFF
-
-          - name: Ubuntu CUDA (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.2.152)
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.2.152
-            CMAKE_BUILD_TYPE: Release
-            BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
-            ENABLE_HYPRE: ON
-            ENABLE_HYPRE_DEVICE: CUDA
-            ENABLE_TRILINOS: OFF
-
-          - name: Centos (7.6, gcc 8.3.1, open-mpi 1.10.7, cuda 10.1.243)
-            DOCKER_REPOSITORY: geosx/centos7.6.1810-gcc8.3.1-cuda10.1.243
-            CMAKE_BUILD_TYPE: Release
-            BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
-
-          - name: Ubuntu (20.04, gcc 9.3.0, open-mpi 4.0.3)
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
-            CMAKE_BUILD_TYPE: Release
-
-          - name: Ubuntu debug (20.04, gcc 10.3.0, open-mpi 4.0.3)
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
-            CMAKE_BUILD_TYPE: Debug
-
-          - name: Ubuntu (20.04, gcc 10.3.0, open-mpi 4.0.3)
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
-            CMAKE_BUILD_TYPE: Release
-
-          # Matrix jobs that deploy to Google Cloud
-          - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 10.2.89p2)
-            DOCKER_REPOSITORY: geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda10.2.89p2
-            CMAKE_BUILD_TYPE: Release
-            BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
-            HOST_CONFIG: host-configs/TOTAL/pecan-GPU.cmake
-            GCP_BUCKET: geosx/Pecan-GPU
-
-          - name: Pecan CPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5)
-            DOCKER_REPOSITORY: geosx/pecan-cpu-gcc8.2.0-openmpi4.0.1-mkl2019.5
-            CMAKE_BUILD_TYPE: Release
-            HOST_CONFIG: host-configs/TOTAL/pecan-CPU.cmake
-            GCP_BUCKET: geosx/Pecan-CPU
-
-          - name: Pangea 2 (centos 7.6, gcc 8.3.0, open-mpi 2.1.5, mkl 2019.3)
-            DOCKER_REPOSITORY: geosx/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
-            CMAKE_BUILD_TYPE: Release
-            GCP_BUCKET: geosx/Pangea2
-            ENABLE_HYPRE: ON
-            ENABLE_TRILINOS: OFF
-
-          - name: Sherlock CPU (centos 7.9.2009, gcc 10.1.0, open-mpi 4.1.2, openblas 0.3.10)
-            DOCKER_REPOSITORY: geosx/sherlock-gcc10.1.0-openmpi4.1.2-openblas0.3.10-zlib1.2.11
-            CMAKE_BUILD_TYPE: Release
-            HOST_CONFIG: host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10.cmake
-            GCP_BUCKET: geosx/Sherlock-CPU
-            ENABLE_HYPRE: ON
-            ENABLE_TRILINOS: OFF
-
-          - name: Ubuntu (22.04, gcc 11.2.0, open-mpi 4.1.2)
-            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
-            CMAKE_BUILD_TYPE: Release
-            GCP_BUCKET: geosx/ubuntu22.04-gcc11
+            ARCH: ppc64le
+            BUILD_AND_TEST_ARGS: "--disable-schema-deployment"
 
     steps:
     - name: Checkout Repository
@@ -175,11 +185,15 @@ jobs:
       uses: 'google-github-actions/auth@v1'
       with:
         credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
+
     - name: 'Set up Cloud SDK'
       if: matrix.GCP_BUCKET
       uses: 'google-github-actions/setup-gcloud@v1'
       with:
         version: '>= 363.0.0'
+
+
+
 
     - name: Print environment
       run: printenv
@@ -187,7 +201,7 @@ jobs:
     # Build and test only
     # Builds only the geosx executable (timeout when building tests)
     - name: Build and test
-      if: ${{ !(matrix.GCP_BUCKET) }}
+      if: ${{ !(matrix.ARCH) && !(matrix.GCP_BUCKET) }}
       env:
         DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
         CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
@@ -199,7 +213,7 @@ jobs:
 
     # Build, test, uploads GEOSX and its TPL to GCP/GCS using gcloud CLI
     - name: Build and test and deploy
-      if: matrix.GCP_BUCKET
+      if: ${{ !(matrix.ARCH) && matrix.GCP_BUCKET }}
       env:
         DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
         CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
@@ -216,6 +230,39 @@ jobs:
         GEOSX_BUNDLE=${TMP_DIR}/${GEOSX_EXPORT_DIR}.tar.gz
         tar czf ${GEOSX_BUNDLE} --directory=${TMP_DIR} ${GEOSX_EXPORT_DIR}
         CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOSX_BUNDLE} gs://${GCP_BUCKET}/
+
+    - uses: uraimo/run-on-arch-action@v2
+
+      name: Build on ${{ matrix.ARCH }}
+      if: ${{ matrix.ARCH && matrix.GCP_BUCKET }}
+      with:
+        arch: ${{ matrix.ARCH }}
+        distro: ubuntu22.04
+        # Not required, but speeds up builds by storing container images in
+        # a GitHub package registry.
+        # githubToken: ${{ github.token }}
+        env: |
+          DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
+          CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
+          BUILD_AND_TEST_ARGS: ${{ matrix.BUILD_AND_TEST_ARGS }}
+          HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
+          ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
+          ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
+          GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
+          ARCH: ${{ matrix.ARCH }}
+          GEOSX_TPL_TAG: ${{ env.GEOSX_TPL_TAG }}
+
+        run: |
+          uname -a
+          echo ::set-output name=uname::$(uname -a)
+          source ./scripts/ci_build_and_test.sh
+          TMP_DIR=/tmp
+          GEOSX_EXPORT_DIR=GEOSX-and-TPL-${GITHUB_SHA:0:7}
+          docker cp -a ${CONTAINER_NAME}:${GEOSX_TPL_DIR}/.. ${TMP_DIR}/${GEOSX_EXPORT_DIR}
+          GEOSX_BUNDLE=${TMP_DIR}/${GEOSX_EXPORT_DIR}.tar.gz
+          tar czf ${GEOSX_BUNDLE} --directory=${TMP_DIR} ${GEOSX_EXPORT_DIR}
+          CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOSX_BUNDLE} gs://${GCP_BUCKET}/
+
 
   # Convenience job - passes when all other jobs have passed.
   check_that_all_jobs_succeeded:
