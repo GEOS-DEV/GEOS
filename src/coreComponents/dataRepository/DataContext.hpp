@@ -54,6 +54,11 @@ public:
    * object comes from.
    */
   virtual string toString() const = 0;
+  /**
+   * @return The result of toString() properly suffixed by the name of a contained object.
+   */
+  virtual string toString( string const & innerObjectName ) const
+  { return toString() + '/' + innerObjectName; }
 
   /**
    * @return Get the target object name
@@ -63,9 +68,6 @@ public:
 
   virtual string getTargetNameInPath( bool & fileLineFound ) const
   { fileLineFound = false; return m_targetName; }
-
-  virtual string getWrapperSeparator() const
-  { return "/"; }
 
   /**
    * @brief Insert contextual information in the provided stream.
@@ -109,11 +111,13 @@ public:
    * @return the target object name followed by the the file and line declaring it.
    */
   virtual string toString() const;
+  /**
+   * @copydoc DataContext::toString()
+   */
+  string toString( string const & innerObjectName ) const override
+  { return toString() + ", attribute " + innerObjectName; }
 
   virtual string getTargetNameInPath( bool & foundNearestLine ) const override;
-
-  virtual string getWrapperSeparator() const override
-  { return ", attribute "; }
 
   /**
    * @return the type name in the source file (XML node tag name / attribute name).

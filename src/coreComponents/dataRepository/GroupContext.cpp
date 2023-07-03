@@ -58,8 +58,7 @@ WrapperContext::WrapperContext( WrapperBase & wrapper ):
 
 string WrapperContext::toString() const
 {
-  DataContext const & parentDC = m_group.getDataContext();
-  return parentDC.toString() + parentDC.getWrapperSeparator() + m_typeName;
+  return m_group.getDataContext().toString( m_typeName );
 }
 
 
