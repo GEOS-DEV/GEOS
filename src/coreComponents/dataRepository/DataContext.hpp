@@ -108,11 +108,6 @@ public:
                    xmlWrapper::xmlAttributePos const & attPos );
 
   /**
-   * @brief Destroy the DataFileContext object
-   */
-  virtual ~DataFileContext() {}
-
-  /**
    * @return the target object name followed by the the file and line declaring it.
    */
   virtual string toString() const;

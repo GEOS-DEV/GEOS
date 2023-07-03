@@ -42,11 +42,6 @@ public:
   GroupContext( Group & group );
 
   /**
-   * @brief Destroy the GroupContext object
-   */
-  virtual ~GroupContext() {}
-
-  /**
    * @return the reference to the Group related to this GroupContext.
    */
   Group & getGroup() const;
@@ -81,11 +76,6 @@ public:
    * @param wrapper the target Wrapper object
    */
   WrapperContext( WrapperBase & wrapper );
-
-  /**
-   * @brief Destroy the WrapperContext object
-   */
-  virtual ~WrapperContext() {}
 
   /**
    * @return the parent group DataContext followed by the wrapper name.
