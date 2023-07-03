@@ -16,19 +16,20 @@
  * @file SinglePhaseWellKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
 
-#include "constitutive/fluid/SingleFluidFields.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "physicsSolvers/SolverBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace singlePhaseWellKernels
@@ -74,8 +75,10 @@ struct ControlEquationHelper
   // add an epsilon to the checks to avoid control changes due to tiny pressure/rate updates
   static constexpr real64 EPS = 1e-15;
 
-  GEOSX_HOST_DEVICE
-  static void
+  GEOS_HOST_DEVICE
+  inline
+  static
+  void
   switchControl( bool const isProducer,
                  WellControls::Control const & currentControl,
                  real64 const & targetBHP,
@@ -84,8 +87,10 @@ struct ControlEquationHelper
                  real64 const & currentVolRate,
                  WellControls::Control & newControl );
 
-  GEOSX_HOST_DEVICE
-  static void
+  GEOS_HOST_DEVICE
+  inline
+  static
+  void
   compute( globalIndex const rankOffset,
            WellControls::Control const currentControl,
            real64 const & targetBHP,
@@ -179,8 +184,10 @@ struct PerforationKernel
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  GEOSX_HOST_DEVICE
-  static void
+  GEOS_HOST_DEVICE
+  inline
+  static
+  void
   compute( real64 const & resPressure,
            real64 const & resDensity,
            real64 const & dResDensity_dPres,
@@ -299,72 +306,161 @@ struct RateInitializationKernel
 
 /******************************** ResidualNormKernel ********************************/
 
-struct ResidualNormKernel
+/**
+ * @class ResidualNormKernel
+ */
+class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 1 >
 {
+public:
 
-  template< typename POLICY >
-  static void
-  launch( arrayView1d< real64 const > const & localResidual,
-          globalIndex const rankOffset,
-          bool const isLocallyOwned,
-          localIndex const iwelemControl,
-          WellControls const & wellControls,
-          arrayView1d< globalIndex const > const & wellElemDofNumber,
-          arrayView1d< integer const > const & wellElemGhostRank,
-          arrayView1d< real64 const > wellElemVolume,
-          arrayView2d< real64 const > const & wellElemDens_n,
-          real64 const & timeAtEndOfStep,
-          real64 const dt,
-          real64 * localResidualNorm )
+  using Base = solverBaseKernels::ResidualNormKernelBase< 1 >;
+  using Base::minNormalizer;
+  using Base::m_rankOffset;
+  using Base::m_localResidual;
+  using Base::m_dofNumber;
+
+  ResidualNormKernel( globalIndex const rankOffset,
+                      arrayView1d< real64 const > const & localResidual,
+                      arrayView1d< globalIndex const > const & dofNumber,
+                      arrayView1d< localIndex const > const & ghostRank,
+                      WellElementSubRegion const & subRegion,
+                      constitutive::SingleFluidBase const & fluid,
+                      WellControls const & wellControls,
+                      real64 const & timeAtEndOfStep,
+                      real64 const & dt )
+    : Base( rankOffset,
+            localResidual,
+            dofNumber,
+            ghostRank ),
+    m_dt( dt ),
+    m_isLocallyOwned( subRegion.isLocallyOwned() ),
+    m_iwelemControl( subRegion.getTopWellElementIndex() ),
+    m_currentControl( wellControls.getControl() ),
+    m_targetBHP( wellControls.getTargetBHP( timeAtEndOfStep ) ),
+    m_targetRate( wellControls.getTargetTotalRate( timeAtEndOfStep ) ),
+    m_volume( subRegion.getElementVolume() ),
+    m_density_n( fluid.density_n() )
+  {}
+
+  GEOS_HOST_DEVICE
+  virtual void computeLinf( localIndex const iwelem,
+                            LinfStackVariables & stack ) const override
   {
-    WellControls::Control const currentControl = wellControls.getControl();
-    real64 const targetBHP = wellControls.getTargetBHP( timeAtEndOfStep );
-    real64 const targetRate = wellControls.getTargetTotalRate( timeAtEndOfStep );
-    real64 const absTargetRate = LvArray::math::abs( targetRate );
-
-    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > sumScaled( 0.0 );
-
-    forAll< POLICY >( wellElemDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+    for( localIndex idof = 0; idof < 2; ++idof )
     {
-      if( wellElemGhostRank[iwelem] < 0 )
+      real64 normalizer = 0.0;
+      if( idof == singlePhaseWellKernels::RowOffset::CONTROL )
       {
-        for( localIndex idof = 0; idof < 2; ++idof )
+        // for the top well element, normalize using the current control
+        if( m_isLocallyOwned && iwelem == m_iwelemControl )
         {
-          real64 normalizer = 0.0;
-          if( idof == singlePhaseWellKernels::RowOffset::CONTROL )
+          if( m_currentControl == WellControls::Control::BHP )
           {
-            // for the top well element, normalize using the current control
-            if( isLocallyOwned && iwelem == iwelemControl )
-            {
-              if( currentControl == WellControls::Control::BHP )
-              {
-                normalizer = targetBHP;
-              }
-              else if( currentControl == WellControls::Control::TOTALVOLRATE )
-              {
-                normalizer = LvArray::math::max( absTargetRate, 1e-12 );
-              }
-            }
-            // for the pressure difference equation, always normalize by the BHP
-            else
-            {
-              normalizer = targetBHP;
-            }
+            // this residual entry is in pressure units
+            normalizer = m_targetBHP;
           }
-          else // SinglePhaseWell::RowOffset::MASSBAL
+          else if( m_currentControl == WellControls::Control::TOTALVOLRATE )
           {
-            normalizer = dt * absTargetRate * wellElemDens_n[iwelem][0];
-
-            // to make sure that everything still works well if the rate is zero, we add this check
-            normalizer = LvArray::math::max( normalizer, wellElemVolume[iwelem] * wellElemDens_n[iwelem][0] );
+            // this residual entry is in volume / time units
+            normalizer = LvArray::math::max( LvArray::math::abs( m_targetRate ), minNormalizer );
           }
-          localIndex const lid = wellElemDofNumber[iwelem] + idof - rankOffset;
-          real64 const val = localResidual[lid] / normalizer;
-          sumScaled += val * val;
+        }
+        // for the pressure difference equation, always normalize by the BHP
+        else
+        {
+          // this residual is in pressure units
+          normalizer = m_targetBHP;
         }
       }
-    } );
-    *localResidualNorm = *localResidualNorm + sumScaled.get();
+      else // SinglePhaseWell::RowOffset::MASSBAL
+      {
+        // this residual entry is in mass units
+        normalizer = m_dt * LvArray::math::abs( m_targetRate ) * m_density_n[iwelem][0];
+
+        // to make sure that everything still works well if the rate is zero, we add this check
+        normalizer = LvArray::math::max( normalizer, m_volume[iwelem] * m_density_n[iwelem][0] );
+      }
+
+      // we have the normalizer now, we can compute a dimensionless Linfty norm contribution
+      real64 const val = LvArray::math::abs( m_localResidual[stack.localRow + idof] ) / normalizer;
+      if( val > stack.localValue[0] )
+      {
+        stack.localValue[0] = val;
+      }
+
+    }
+  }
+
+  GEOS_HOST_DEVICE
+  virtual void computeL2( localIndex const iwelem,
+                          L2StackVariables & stack ) const override
+  {
+    GEOS_UNUSED_VAR( iwelem, stack );
+    GEOS_ERROR( "The L2 norm is not implemented for SinglePhaseWell" );
+  }
+
+
+protected:
+
+  /// Time step size
+  real64 const m_dt;
+
+  /// Flag indicating whether the well is locally owned or not
+  bool const m_isLocallyOwned;
+
+  /// Index of the element where the control is enforced
+  localIndex const m_iwelemControl;
+
+  /// Controls
+  WellControls::Control const m_currentControl;
+  real64 const m_targetBHP;
+  real64 const m_targetRate;
+
+  /// View on the volume
+  arrayView1d< real64 const > const m_volume;
+
+  /// View on total density at the previous converged time step
+  arrayView2d< real64 const > const m_density_n;
+
+};
+
+/**
+ * @class ResidualNormKernelFactory
+ */
+class ResidualNormKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] dofKey the string key to retrieve the degress of freedom numbers
+   * @param[in] localResidual the residual vector on my MPI rank
+   * @param[in] subRegion the well element subregion
+   * @param[in] fluid the fluid model
+   * @param[in] wellControls the controls
+   * @param[in] timeAtEndOfStep the time at the end of the step (time_n + dt)
+   * @param[in] dt the time step size
+   * @param[out] residualNorm the residual norm on the subRegion
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch( globalIndex const rankOffset,
+                   string const dofKey,
+                   arrayView1d< real64 const > const & localResidual,
+                   WellElementSubRegion const & subRegion,
+                   constitutive::SingleFluidBase const & fluid,
+                   WellControls const & wellControls,
+                   real64 const & timeAtEndOfStep,
+                   real64 const & dt,
+                   real64 (& residualNorm)[1] )
+  {
+    arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+    arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, subRegion, fluid, wellControls, timeAtEndOfStep, dt );
+    ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
   }
 
 };
@@ -384,7 +480,7 @@ struct SolutionCheckKernel
   {
     RAJA::ReduceMin< ReducePolicy< POLICY >, localIndex > minVal( 1 );
 
-    forAll< POLICY >( presDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( presDofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( ghostRank[ei] < 0 && presDofNumber[ei] >= 0 )
       {
@@ -403,6 +499,6 @@ struct SolutionCheckKernel
 
 } // end namespace singlePhaseWellKernels
 
-} // end namespace geosx
+} // end namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP

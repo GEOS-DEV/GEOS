@@ -16,14 +16,18 @@
  * @file CellBlockManager.hpp
  */
 
-#ifndef GEOSX_MESH_CELLBLOCKMANAGER_H_
-#define GEOSX_MESH_CELLBLOCKMANAGER_H_
+#ifndef GEOS_MESH_CELLBLOCKMANAGER_H_
+#define GEOS_MESH_CELLBLOCKMANAGER_H_
 
-#include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/CellBlock.hpp"
 #include "mesh/generators/FaceBlock.hpp"
+#include "mesh/generators/InternalWellGenerator.hpp"
+#include "mesh/generators/LineBlock.hpp"
+#include "mesh/generators/LineBlockABC.hpp"
+#include "mesh/generators/CellBlockManagerABC.hpp"
+#include "mesh/generators/PartitionDescriptor.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -106,6 +110,13 @@ public:
    */
   void setNumNodes( localIndex numNodes ); // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
 
+  void generateHighOrderMaps( localIndex const order,
+                              globalIndex const maxVertexGlobalID,
+                              globalIndex const maxEdgeGlobalID,
+                              globalIndex const maxFaceGlobalID,
+                              arrayView1d< globalIndex const > const edgeLocalToGlobal,
+                              arrayView1d< globalIndex const > const faceLocalToGlobal ) override;
+
   localIndex numNodes() const override;
 
   localIndex numEdges() const override;
@@ -145,7 +156,11 @@ public:
 
   Group & getCellBlocks() override;
 
+  Group const & getFaceBlocks() const override;
+
   Group & getFaceBlocks() override;
+
+  LineBlockABC const & getLineBlock( string name ) const override;
 
   /**
    * @brief Registers and returns a cell block of name @p name.
@@ -162,6 +177,12 @@ public:
   FaceBlock & registerFaceBlock( string const & name );
 
   /**
+   * @brief Registers and returns a line block of name @p name.
+   * @param name The name of the created line block.
+   * @return A reference to the new line block. The CellBlockManager owns this new instance.
+   */
+  LineBlock & registerLineBlock( string const & name );
+  /**
    * @brief Launch kernel function over all the sub-regions
    * @tparam LAMBDA type of the user-provided function
    * @param lambda kernel function
@@ -171,6 +192,14 @@ public:
   {
     this->getGroup( viewKeyStruct::cellBlocks() ).forSubGroups< CellBlock >( lambda );
   }
+
+  real64 getGlobalLength() const override { return m_globalLength; }
+
+  /**
+   * @brief Setter for the global length
+   * @param globalLength the global length
+   */
+  void setGlobalLength( real64 globalLength ) { m_globalLength = globalLength; }
 
 private:
 
@@ -183,7 +212,19 @@ private:
     /// Face blocks key
     static constexpr char const * faceBlocks()
     { return "faceBlocks"; }
+
+    /// Line blocks key
+    static constexpr char const * lineBlocks()
+    { return "lineBlocks"; }
   };
+
+  /**
+   * @brief Returns a group containing the well blocks as @p LineBlockABC instances.
+   * @return Mutable reference to the well blocks group.
+   *
+   * @note It should probably be better not to expose a non-const accessor here.
+   */
+  Group & getLineBlocks();
 
   /**
    * @brief Get cell block at index @p blockIndex.
@@ -229,10 +270,12 @@ private:
 
   std::map< string, SortedArray< localIndex > > m_nodeSets;
 
+  real64 m_globalLength;
+
   localIndex m_numNodes;
   localIndex m_numFaces;
   localIndex m_numEdges;
 };
 
 }
-#endif /* GEOSX_MESH_CELLBLOCKMANAGER_H_ */
+#endif /* GEOS_MESH_CELLBLOCKMANAGER_H_ */

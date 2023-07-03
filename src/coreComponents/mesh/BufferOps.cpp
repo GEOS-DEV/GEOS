@@ -19,7 +19,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "ElementRegionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace bufferOps
 {
@@ -82,7 +82,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += bufferOps::Unpack( buffer, numIndicesUnpacked );
-  GEOSX_ERROR_IF( numIndicesUnpacked != packList.size(), "" );
+  GEOS_ERROR_IF( numIndicesUnpacked != packList.size(), "" );
 
   using ElementID = std::array< localIndex, 3 >;
 
@@ -296,7 +296,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += bufferOps::Unpack( buffer, numIndicesUnpacked );
-  GEOSX_ERROR_IF( numIndicesUnpacked != packList.size(), "" );
+  GEOS_ERROR_IF( numIndicesUnpacked != packList.size(), "" );
 
   for( localIndex a=0; a<packList.size(); ++a )
   {
@@ -304,7 +304,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
     localIndex numSubIndicesUnpacked;
 
     sizeOfUnpackedChars += bufferOps::Unpack( buffer, numSubIndicesUnpacked );
-    GEOSX_ERROR_IF( numSubIndicesUnpacked != var.m_toElementRegion.size( 1 ), "" );
+    GEOS_ERROR_IF( numSubIndicesUnpacked != var.m_toElementRegion.size( 1 ), "" );
 
     for( localIndex b=0; b<numSubIndicesUnpacked; ++b )
     {

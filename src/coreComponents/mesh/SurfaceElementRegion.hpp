@@ -17,13 +17,13 @@
  *
  */
 
-#ifndef GEOSX_MESH_SURFACEELEMENTREGION_HPP_
-#define GEOSX_MESH_SURFACEELEMENTREGION_HPP_
+#ifndef GEOS_MESH_SURFACEELEMENTREGION_HPP_
+#define GEOS_MESH_SURFACEELEMENTREGION_HPP_
 
 #include "ElementRegionBase.hpp"
 #include "codingUtilities/EnumStrings.hpp"
 
-namespace geosx
+namespace geos
 {
 
 
@@ -98,7 +98,7 @@ public:
    */
   ///@{
 
-  virtual void generateMesh( Group & faceBlocks ) override;
+  virtual void generateMesh( Group const & faceBlocks ) override;
 
   /**
    * @brief This function generates and adds entries to the face/fracture mesh.
@@ -200,8 +200,8 @@ private:
     {
       subRegionNames.push_back( sr.getName() );
     } );
-    GEOSX_ERROR_IF( subRegionNames.size() != 1,
-                    "Surface region \"" << getName() << "\" should have one unique sub region. \"" << subRegionNames.size() << "\" found." );
+    GEOS_ERROR_IF( subRegionNames.size() != 1,
+                   "Surface region \"" << getName() << "\" should have one unique sub region. \"" << subRegionNames.size() << "\" found." );
     return subRegionNames.front();
   }
 
@@ -222,6 +222,6 @@ ENUM_STRINGS( SurfaceElementRegion::SurfaceSubRegionType,
               "faceElement",
               "embeddedElement" );
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* CORECOMPONENTS_MESH_SurfaceElementRegion_HPP_ */

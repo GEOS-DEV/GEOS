@@ -16,17 +16,17 @@
  * @file CompositionalMultiphaseBase.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_
 
 #include "common/DataLayouts.hpp"
-#include "constitutive/fluid/layouts.hpp"
+#include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/relativePermeability/layouts.hpp"
 #include "constitutive/capillaryPressure/layouts.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 //START_SPHINX_INCLUDE_00
@@ -150,6 +150,8 @@ public:
   virtual void updatePhaseMobility( ObjectManagerBase & dataGroup ) const = 0;
 
   void updateFluidState( ObjectManagerBase & dataGroup ) const;
+
+  virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override final;
 
   virtual void updateState( DomainPartition & domain ) override final;
 
@@ -470,9 +472,9 @@ void CompositionalMultiphaseBase::applyFieldValue( real64 const & time_n,
     if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
     {
       globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
-      GEOSX_LOG_RANK_0( GEOSX_FMT( logMessage,
-                                   getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                   fs.getName(), setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( logMessage,
+                                 getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                 fs.getName(), setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
     }
 
     // Specify the bc value of the field
@@ -485,6 +487,6 @@ void CompositionalMultiphaseBase::applyFieldValue( real64 const & time_n,
 }
 
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_

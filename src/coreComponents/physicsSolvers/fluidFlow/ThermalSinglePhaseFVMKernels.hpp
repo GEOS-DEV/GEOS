@@ -16,15 +16,15 @@
  * @file ThermalSinglePhaseFVMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEFVMKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEFVMKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEFVMKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEFVMKERNELS_HPP
 
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivityBase.hpp"
 #include "constitutive/thermalConductivity/ThermalConductivityFields.hpp"
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivityFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace thermalSinglePhaseFVMKernels
@@ -39,8 +39,8 @@ using namespace constitutive;
  * @tparam STENCILWRAPPER the type of the stencil wrapper
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NUM_DOF, typename STENCILWRAPPER >
-class FaceBasedAssemblyKernel : public singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_DOF, STENCILWRAPPER >
+template< integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER >
+class FaceBasedAssemblyKernel : public singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >
 {
 public:
 
@@ -66,7 +66,7 @@ public:
   using AbstractBase::m_mob;
   using AbstractBase::m_dens;
 
-  using Base = singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_DOF, STENCILWRAPPER >;
+  using Base = singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
   using Base::numDof;
   using Base::numEqn;
   using Base::maxNumElems;
@@ -141,7 +141,7 @@ public:
   {
 public:
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
       : Base::StackVariables( size, numElems ),
       energyFlux( 0.0 ),
@@ -177,7 +177,7 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
@@ -381,7 +381,7 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack ) const
   {
@@ -455,12 +455,13 @@ public:
                    arrayView1d< real64 > const & localRhs )
   {
     integer constexpr NUM_DOF = 2;
+    integer constexpr NUM_EQN = 2;
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-    using KernelType = FaceBasedAssemblyKernel< NUM_DOF, STENCILWRAPPER >;
+    using KernelType = FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
     typename KernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
     typename KernelType::ThermalSinglePhaseFlowAccessors thermalFlowAccessors( elemManager, solverName );
     typename KernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );
@@ -483,8 +484,8 @@ public:
  * @tparam FLUIDWRAPPER the type of the fluid wrapper
  * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
  */
-template< integer NUM_DOF, typename FLUIDWRAPPER >
-class DirichletFaceBasedAssemblyKernel : public singlePhaseFVMKernels::DirichletFaceBasedAssemblyKernel< NUM_DOF, FLUIDWRAPPER >
+template< integer NUM_EQN, integer NUM_DOF, typename FLUIDWRAPPER >
+class DirichletFaceBasedAssemblyKernel : public singlePhaseFVMKernels::DirichletFaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, FLUIDWRAPPER >
 {
 public:
 
@@ -516,7 +517,7 @@ public:
   using AbstractBase::m_localMatrix;
   using AbstractBase::m_localRhs;
 
-  using Base = singlePhaseFVMKernels::DirichletFaceBasedAssemblyKernel< NUM_DOF, FLUIDWRAPPER >;
+  using Base = singlePhaseFVMKernels::DirichletFaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, FLUIDWRAPPER >;
   using Base::numDof;
   using Base::numEqn;
   using Base::m_stencilWrapper;
@@ -608,7 +609,7 @@ public:
      * @param[in] size size of the stencil for this connection
      * @param[in] numElems number of elements for this connection
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables( localIndex const size,
                     localIndex numElems ):
       Base::StackVariables( size,
@@ -633,7 +634,7 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
@@ -706,7 +707,7 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack ) const
   {
@@ -787,8 +788,9 @@ public:
       typename FluidType::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
 
       integer constexpr NUM_DOF = 2;
+      integer constexpr NUM_EQN = 2;
 
-      using kernelType = DirichletFaceBasedAssemblyKernel< NUM_DOF, typename FluidType::KernelWrapper >;
+      using kernelType = DirichletFaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, typename FluidType::KernelWrapper >;
 
       ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
@@ -825,6 +827,6 @@ public:
 
 } // namespace thermalSinglePhaseFVMKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEFVMKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEFVMKERNELS_HPP

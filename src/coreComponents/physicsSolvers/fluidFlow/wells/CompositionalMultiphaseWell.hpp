@@ -16,16 +16,16 @@
  * @file CompositionalMultiphaseWell.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 
-#include "constitutive/fluid/layouts.hpp"
+#include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/relativePermeability/layouts.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -89,7 +89,9 @@ public:
 
 
   virtual real64
-  calculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( real64 const & time_n,
+                         real64 const & dt,
+                         DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
@@ -227,12 +229,16 @@ public:
 
   /**
    * @brief assembles the pressure relations at all connections between well elements except at the well head
+   * @param time_n time at the beginning of the time step
+   * @param dt the time step size
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void assemblePressureRelations( DomainPartition const & domain,
+  virtual void assemblePressureRelations( real64 const & time_n,
+                                          real64 const & dt,
+                                          DomainPartition const & domain,
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) override;
@@ -331,9 +337,13 @@ protected:
 
   /**
    * @brief Make sure that the well constraints are compatible
+   * @param time_n the time at the beginning of the time step
+   * @param dt the time step dt
    * @param subRegion the well subRegion
    */
-  void validateWellConstraints( WellElementSubRegion const & subRegion );
+  void validateWellConstraints( real64 const & time_n,
+                                real64 const & dt,
+                                WellElementSubRegion const & subRegion );
 
 private:
 
@@ -377,7 +387,7 @@ private:
 
 };
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_

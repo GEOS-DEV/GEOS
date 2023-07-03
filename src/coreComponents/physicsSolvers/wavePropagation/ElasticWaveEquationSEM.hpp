@@ -24,14 +24,14 @@
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class ElasticWaveEquationSEM : public WaveSolverBase
 {
 public:
 
-  using EXEC_POLICY = parallelDevicePolicy< 32 >;
+  using EXEC_POLICY = parallelDevicePolicy<  >;
   using ATOMIC_POLICY = parallelDeviceAtomic;
 
   /**
@@ -144,7 +144,7 @@ public:
 
 
   /** internal function to the class to compute explicitStep either for backward or forward.
-   * (requires not to be private because it is called from GEOSX_HOST_DEVICE method)
+   * (requires not to be private because it is called from GEOS_HOST_DEVICE method)
    * @param time_n time at the beginning of the step
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
@@ -432,6 +432,6 @@ DECLARE_FIELD( FreeSurfaceNodeIndicator,
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASSTICWAVEEQUATIONSEM_HPP_ */

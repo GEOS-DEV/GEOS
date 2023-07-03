@@ -16,12 +16,12 @@
  * @file BicgstabSolver.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_SOLVERS_BICGSTABSOLVER_HPP_
-#define GEOSX_LINEARALGEBRA_SOLVERS_BICGSTABSOLVER_HPP_
+#ifndef GEOS_LINEARALGEBRA_SOLVERS_BICGSTABSOLVER_HPP_
+#define GEOS_LINEARALGEBRA_SOLVERS_BICGSTABSOLVER_HPP_
 
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -96,6 +96,6 @@ protected:
 
 };
 
-} // namespace geosx
+} // namespace geos
 
-#endif /*GEOSX_LINEARALGEBRA_SOLVERS_BICGSTABSOLVER_HPP_ */
+#endif /*GEOS_LINEARALGEBRA_SOLVERS_BICGSTABSOLVER_HPP_ */

@@ -16,15 +16,15 @@
  * @file StringUtilities.hpp
  */
 
-#ifndef GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_
-#define GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_
+#ifndef GEOS_CODINGUTILITIES_STRINGUTILITIES_HPP_
+#define GEOS_CODINGUTILITIES_STRINGUTILITIES_HPP_
+
+#include "common/DataTypes.hpp"
 
 #include <iomanip>
 #include <sstream>
 
-#include "common/DataTypes.hpp"
-
-namespace geosx
+namespace geos
 {
 namespace stringutilities
 {
@@ -196,7 +196,37 @@ array1d< T > fromStringToArray( string const & str )
   return v;
 }
 
-} // namespace stringutilities
-} // namespace geosx
+/**
+ * @brief Take a numerical value and convert/scale it to a string with a metric
+ *  prefix. i.e. Kilo, Mega, Giga, Tera, Peta, Exa
+ *
+ * @tparam T Type of the value to be converted
+ * @param value The value to be converted
+ * @return String containging the scaled value.
+ */
+template< typename T >
+string toMetricPrefixString( T const & value );
 
-#endif /* GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_ */
+/**
+ * @brief Compute the length of a constant string at compile-time.
+ */
+// TODO c++17: this function is to remove in favor of std::string_view
+constexpr size_t cstrlen( char const * const str )
+{
+  if( str )
+  {
+    char const * ptr = str;
+    for(; *ptr != '\0'; ++ptr )
+    {}
+    return ptr - str;
+  }
+  else
+  {
+    return 0;
+  }
+}
+
+} // namespace stringutilities
+} // namespace geos
+
+#endif /* GEOS_CODINGUTILITIES_STRINGUTILITIES_HPP_ */

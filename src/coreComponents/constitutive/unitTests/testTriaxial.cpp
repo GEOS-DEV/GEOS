@@ -20,8 +20,8 @@
 #include "dataRepository/xmlWrapper.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
-using namespace geosx;
-using namespace ::geosx::constitutive;
+using namespace geos;
+using namespace ::geos::constitutive;
 
 template< typename POLICY >
 void testTriaxialDriver()
@@ -30,10 +30,10 @@ void testTriaxialDriver()
 }
 
 
-#ifdef USE_CUDA
+#ifdef GEOS_USE_DEVICE
 TEST( TriaxialTests, testTriaxialDevice )
 {
-  testCamClayDriver< geosx::parallelDevicePolicy< > >();
+  testCamClayDriver< geos::parallelDevicePolicy< > >();
 }
 #endif
 TEST( TriaxialTests, testTriaxialHost )

@@ -12,13 +12,13 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_RELPERMDRIVER_HPP_
-#define GEOSX_RELPERMDRIVER_HPP_
+#ifndef GEOS_RELPERMDRIVER_HPP_
+#define GEOS_RELPERMDRIVER_HPP_
 
 #include "events/tasks/TaskBase.hpp"
 #include "constitutive/relativePermeability/TableRelativePermeabilityHysteresis.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class RelpermDriver : public TaskBase
@@ -33,13 +33,13 @@ public:
 
   void postProcessInput() override;
 
-  virtual bool execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                        real64 const GEOSX_UNUSED_PARAM( dt ),
-                        integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                        integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                        real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+  virtual bool execute( real64 const GEOS_UNUSED_PARAM( time_n ),
+                        real64 const GEOS_UNUSED_PARAM( dt ),
+                        integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                        integer const GEOS_UNUSED_PARAM( eventCounter ),
+                        real64 const GEOS_UNUSED_PARAM( eventProgress ),
                         DomainPartition &
-                        GEOSX_UNUSED_PARAM( domain ) ) override;
+                        GEOS_UNUSED_PARAM( domain ) ) override;
 
   /**
    * @brief Run test using loading protocol in table
@@ -119,4 +119,4 @@ private:
 
 }
 
-#endif //GEOSX_RELPERMDRIVER_HPP_
+#endif //GEOS_RELPERMDRIVER_HPP_
