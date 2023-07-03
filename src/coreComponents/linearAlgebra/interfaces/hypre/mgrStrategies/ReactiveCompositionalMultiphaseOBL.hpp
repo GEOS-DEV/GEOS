@@ -65,7 +65,7 @@ public:
 
     setupLabels();
 
-#ifdef GEOSX_USE_HYPRE_CUDA // Why a different relaxation type for CPU and GPU?
+#if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP // Why a different relaxation type for CPU and GPU?
     m_levelFRelaxType[0]          = MGRFRelaxationType::l1jacobi;
 #else
     m_levelFRelaxType[0]          = MGRFRelaxationType::jacobi;
@@ -89,7 +89,7 @@ public:
   {
     setReduction( precond, mgrData );
 
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 )); // truncate intermediate/coarse grids
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 )); // truncate intermediate/coarse grids (NEEDED?)
 
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
     setPressureAMG( mgrData.coarseSolver );

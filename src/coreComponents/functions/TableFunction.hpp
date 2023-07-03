@@ -332,9 +332,10 @@ private:
   KernelWrapper m_kernelWrapper;
 
 };
-
+/// @cond DO_NOT_DOCUMENT
 template< typename IN_ARRAY >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::compute( IN_ARRAY const & input ) const
 {
@@ -350,6 +351,7 @@ TableFunction::KernelWrapper::compute( IN_ARRAY const & input ) const
 
 template< typename IN_ARRAY >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
 {
@@ -422,6 +424,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
 
 template< typename IN_ARRAY >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input ) const
 {
@@ -483,6 +486,7 @@ TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input ) const
 
 template< typename IN_ARRAY, typename OUT_ARRAY >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::compute( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
 {
@@ -500,6 +504,7 @@ TableFunction::KernelWrapper::compute( IN_ARRAY const & input, OUT_ARRAY && deri
 
 template< typename IN_ARRAY, typename OUT_ARRAY >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
 {
@@ -600,6 +605,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARR
 
 template< typename IN_ARRAY, typename OUT_ARRAY >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
 {
@@ -607,6 +613,8 @@ TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input, OUT_ARRA
   GEOS_ERROR( "Rounding interpolation with derivatives not implemented" );
   return 0.0;
 }
+
+/// @endcond
 
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( TableFunction::InterpolationType,

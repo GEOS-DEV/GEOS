@@ -165,6 +165,16 @@ public:
    */
   string dumpInputOptions() const;
 
+  /**
+   * @brief @return a comma separated string containing all sub groups name.
+   */
+  string dumpSubGroupsNames() const;
+
+  /**
+   * @brief @return a comma separated string containing all wrappers name.
+   */
+  string dumpWrappersNames() const;
+
   ///@}
 
   //START_SPHINX_INCLUDE_REGISTER_GROUP
@@ -323,7 +333,11 @@ public:
   T & getGroup( KEY const & key )
   {
     Group * const child = m_subGroups[ key ];
-    GEOS_THROW_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
+    GEOS_THROW_IF( child == nullptr,
+                   "Group " << getPath() << " has no child named " << key << std::endl
+                            << dumpSubGroupsNames(),
+                   std::domain_error );
+
     return dynamicCast< T & >( *child );
   }
 
@@ -334,7 +348,11 @@ public:
   T const & getGroup( KEY const & key ) const
   {
     Group const * const child = m_subGroups[ key ];
-    GEOS_THROW_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
+    GEOS_THROW_IF( child == nullptr,
+                   "Group " << getPath() << " has no child named " << key << std::endl
+                            << dumpSubGroupsNames(),
+                   std::domain_error );
+
     return dynamicCast< T const & >( *child );
   }
 
@@ -381,6 +399,11 @@ public:
   localIndex numSubGroups() const { return m_subGroups.size(); }
 
   /**
+   * @return An array containing all sub groups keys
+   */
+  std::vector< string > getSubGroupsNames() const;
+
+  /**
    * @brief Check whether a sub-group exists.
    * @param name the name of sub-group to search for
    * @return @p true if sub-group exists, @p false otherwise
@@ -388,6 +411,21 @@ public:
   template< typename T = Group >
   bool hasGroup( string const & name ) const
   { return dynamicCast< T const * >( m_subGroups[ name ] ) != nullptr; }
+
+  /**
+   * @brief Check whether a sub-group exists by type.
+   * @tparam T The type of sub-group to search for
+   * @return @p true if sub-group of type T exists, @p false otherwise
+   */
+  template< typename T >
+  bool hasSubGroupOfType( ) const
+  {
+    bool hasSubGroup = false;
+    // since forSubGroups only applies the lambda to groups matching the type,
+    //   any calls to the lambda indicates that we have a subgroup of the correct type.
+    forSubGroups< T >( [&]( T const & ){ hasSubGroup = true; } );
+    return hasSubGroup;
+  }
 
   ///@}
 
@@ -1047,7 +1085,11 @@ public:
   WrapperBase const & getWrapperBase( KEY const & key ) const
   {
     WrapperBase const * const wrapper = m_wrappers[ key ];
-    GEOS_THROW_IF( wrapper == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
+    GEOS_THROW_IF( wrapper == nullptr,
+                   "Group " << getPath() << " has no wrapper named " << key << std::endl
+                            << dumpWrappersNames(),
+                   std::domain_error );
+
     return *wrapper;
   }
 
@@ -1058,7 +1100,11 @@ public:
   WrapperBase & getWrapperBase( KEY const & key )
   {
     WrapperBase * const wrapper = m_wrappers[ key ];
-    GEOS_THROW_IF( wrapper == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
+    GEOS_THROW_IF( wrapper == nullptr,
+                   "Group " << getPath() << " has no wrapper named " << key << std::endl
+                            << dumpWrappersNames(),
+                   std::domain_error );
+
     return *wrapper;
   }
 
@@ -1089,6 +1135,11 @@ public:
    */
   indexType numWrappers() const
   { return m_wrappers.size(); }
+
+  /**
+   * @return An array containing all wrappers keys
+   */
+  std::vector< string > getWrappersNames() const;
 
   ///@}
 
@@ -1244,6 +1295,7 @@ public:
 
   /**
    * @brief Return the path of this Group in the data repository.
+   * Starts with '/' followed by the hierarchy of the children of the "Problem" in which the Group is.
    * @return The path of this group in the data repository.
    */
   string getPath() const;
@@ -1286,7 +1338,7 @@ public:
    * @brief Check whether this Group is resized when its parent is resized.
    * @return @p true if Group is resized with parent group, @p false otherwise
    */
-  integer sizedFromParent() const
+  int sizedFromParent() const
   { return m_sizedFromParent; }
 
   /**

@@ -117,10 +117,11 @@ public:
    * @param[in] cellBlockManager Provides the mappings.
    * @param[in] elemRegionManager element region manager, needed to map blocks to subregion
    * @param[in] nodeManager Provides the nodes positions.
+   * @param[in] baseMeshLevel True if this manager belonds to the base mesh level, false otherwise
    */
   void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
                                 ElementRegionManager const & elemRegionManager,
-                                NodeManager const & nodeManager );
+                                NodeManager const & nodeManager, bool baseMeshLevel );
 
   /**
    * @brief Link the current manager to other managers.
@@ -365,7 +366,7 @@ public:
    * @return non-const reference to faces-to-ElementRegion relation
    * @copydetails FaceManager::elementList()
    */
-  array2d< localIndex > const & elementRegionList() { return m_toElements.m_toElementRegion; }
+  array2d< localIndex > & elementRegionList() { return m_toElements.m_toElementRegion; }
 
   /**
    * @brief Get an immutable accessor to the faces-to-ElementRegion relation.
@@ -379,7 +380,7 @@ public:
    * @return non-const reference to faces-to-ElementSubRegion relation
    * @copydetails FaceManager::elementList()
    */
-  array2d< localIndex > const & elementSubRegionList() { return m_toElements.m_toElementSubRegion; }
+  array2d< localIndex > & elementSubRegionList() { return m_toElements.m_toElementSubRegion; }
 
   /**
    * @brief Get an immutable accessor to the faces-to-ElementSubRegion relation.
@@ -470,7 +471,7 @@ private:
   array2d< real64 > m_faceNormal;
 
   /// constant expression of the maximum number of nodes per faces
-  constexpr static int MAX_FACE_NODES = 11;
+  constexpr static int MAX_FACE_NODES = 16;
 
 };
 

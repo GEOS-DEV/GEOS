@@ -59,7 +59,7 @@ public:
     setupLabels();
 
     // Level 0
-#ifdef GEOSX_USE_HYPRE_CUDA
+#if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP
     m_levelFRelaxType[0]          = MGRFRelaxationType::l1jacobi;
 #else
     m_levelFRelaxType[0]          = MGRFRelaxationType::gsElimWInverse;

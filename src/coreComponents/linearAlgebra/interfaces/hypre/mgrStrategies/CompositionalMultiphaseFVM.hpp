@@ -63,7 +63,7 @@ public:
 
     setupLabels();
 
-#ifdef GEOSX_USE_HYPRE_CUDA // Why a different relaxation type for CPU and GPU?
+#if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP // Why a different relaxation type for CPU and GPU?
     m_levelFRelaxType[0]          = MGRFRelaxationType::l1jacobi;
 #else
     m_levelFRelaxType[0]          = MGRFRelaxationType::jacobi;
@@ -74,8 +74,8 @@ public:
     m_levelCoarseGridMethod[0]    = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
 
-#ifdef GEOSX_USE_HYPRE_CUDA
-    m_levelFRelaxType[1]          = MGRFRelaxationType::l1jacobi;
+#if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP // Why a different relaxation type for CPU and GPU?
+    m_levelFRelaxType[1]          = MGRFRelaxationType::l1jacobi; 
 #else
     m_levelFRelaxType[1]          = MGRFRelaxationType::jacobi;
 #endif

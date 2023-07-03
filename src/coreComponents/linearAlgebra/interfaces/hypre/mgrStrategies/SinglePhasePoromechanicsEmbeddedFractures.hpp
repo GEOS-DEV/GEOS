@@ -57,10 +57,35 @@ public:
   explicit SinglePhasePoromechanicsEmbeddedFractures( arrayView1d< int const > const & )
     : MGRStrategyBase( 7 )
   {
-    // we keep u and p
-    m_labels[0].push_back( 0 );
-    m_labels[0].push_back( 1 );
-    m_labels[0].push_back( 2 );
+
+    /// IDEAL strategy but it seg faults
+    // // we keep u and p
+    // m_labels[0].push_back( 0 );
+    // m_labels[0].push_back( 1 );
+    // m_labels[0].push_back( 2 );
+    // m_labels[0].push_back( 6 );
+    // // we keep p
+    // m_labels[1].push_back( 6 );
+
+    // setupLabels();
+
+    // // Level 0
+    // m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel;
+    // m_levelFRelaxType[0]       = MGRFRelaxationType::gsElimWInverse; // gaussian elimination for the dispJump block
+    // m_levelInterpType[0]       = MGRInterpolationType::blockJacobi;
+    // m_levelRestrictType[0]     = MGRRestrictionType::injection;
+    // m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
+
+    // // Level 1
+    // m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::amgVCycle;
+    // m_levelInterpType[1]       = MGRInterpolationType::jacobi;
+    // m_levelRestrictType[1]     = MGRRestrictionType::injection;
+    // m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::nonGalerkin;
+
+    // we keep w and p
+    m_labels[0].push_back( 3 );
+    m_labels[0].push_back( 4 );
+    m_labels[0].push_back( 5 );
     m_labels[0].push_back( 6 );
     // we keep p
     m_labels[1].push_back( 6 );
@@ -68,19 +93,19 @@ public:
     setupLabels();
 
     // Level 0
-    m_levelFRelaxType[0]          = MGRFRelaxationType::jacobi;
+    m_levelFRelaxType[0]          = MGRFRelaxationType::amgVCycle;
     m_levelFRelaxIters[0]         = 1;
-    m_levelInterpType[0]       = MGRInterpolationType::blockJacobi;
+    m_levelInterpType[0]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
+    m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::nonGalerkin;
     m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
 
     // Level 1
-    m_levelFRelaxType[1]          = MGRFRelaxationType::amgVCycle;
+    m_levelFRelaxType[1]          = MGRFRelaxationType::gsElimWInverse;
     m_levelFRelaxIters[1]         = 1;
-    m_levelInterpType[1]       = MGRInterpolationType::jacobi;
+    m_levelInterpType[1]       = MGRInterpolationType::blockJacobi;
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::nonGalerkin;
+    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::none;
   }
 
@@ -98,12 +123,7 @@ public:
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( precond.ptr, 0 ));
 
     // Configure the BoomerAMG solver used as F-relaxation for the first level
-    // ...
-    // ... I commented this call since the F-relaxation solver can only be customized
-    // ... for level 0. So here, boomerAMG is set for the block corresponding to
-    // ... dofs wn, wt1, wt2, and not for displacement dofs on level 1
-    // ...
-    // setMechanicsFSolver( precond, mgrData );
+    setMechanicsFSolver( precond, mgrData );
 
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
     setPressureAMG( mgrData.coarseSolver );

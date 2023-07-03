@@ -66,7 +66,7 @@ public:
 
     setupLabels();
 
-#ifdef GEOSX_USE_HYPRE_CUDA
+#if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP
     m_levelFRelaxType[0]          = MGRFRelaxationType::l1jacobi;
 #else
     m_levelFRelaxType[0]          = MGRFRelaxationType::jacobi;
@@ -75,10 +75,10 @@ public:
     m_levelInterpType[0]       = MGRInterpolationType::jacobi; // Diagonal scaling (Jacobi)
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin; // Standard Galerkin
-    m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::ilu0;
+    m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::blockGaussSeidel;
     m_levelGlobalSmootherIters[0] = 1;
 
-#ifdef GEOSX_USE_HYPRE_CUDA
+#if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP
     m_levelFRelaxType[1]          = MGRFRelaxationType::l1jacobi;
 #else
     m_levelFRelaxType[1]          = MGRFRelaxationType::jacobi;
@@ -87,7 +87,7 @@ public:
     m_levelInterpType[1]       = MGRInterpolationType::injection; // Injection
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::cprLikeBlockDiag; // Non-Galerkin Quasi-IMPES CPR
-    m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::blockGaussSeidel;
+    m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::ilu0;
     m_levelGlobalSmootherIters[1] = 1;
   }
 
@@ -101,8 +101,6 @@ public:
               HypreMGRData & mgrData )
   {
     setReduction( precond, mgrData );
-
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 )); // Low tolerance to remove only zeros
 
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure/temperature reduced system
     setPressureTemperatureAMG( mgrData.coarseSolver );

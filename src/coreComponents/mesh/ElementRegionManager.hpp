@@ -146,14 +146,14 @@ public:
    * @brief Generate the mesh.
    * @param [in,out] cellBlockManager Reference to the abstract cell block manager.
    */
-  void generateMesh( CellBlockManagerABC & cellBlockManager );
+  void generateMesh( CellBlockManagerABC const & cellBlockManager );
 
   /**
    * @brief Generate the wells.
-   * @param [in] meshManager pointer to meshManager
+   * @param [in] cellBlockManager pointer to cellBlockManager
    * @param [in] meshLevel pointer to meshLevel
    */
-  void generateWells( MeshManager & meshManager, MeshLevel & meshLevel );
+  void generateWells( CellBlockManagerABC const & cellBlockManager, MeshLevel & meshLevel );
 
   /**
    * @brief Build sets from the node sets
@@ -225,6 +225,7 @@ public:
    * @brief Get a element region.
    * @param key The key of element region, either name or number.
    * @return Reference to const T.
+   * @throw std::domain_error if the requested region doesn't exist.
    */
   template< typename T=ElementRegionBase, typename KEY_TYPE=void >
   T const & getRegion( KEY_TYPE const & key ) const
@@ -236,6 +237,7 @@ public:
    * @brief Get a element region.
    * @param key The key of the element region, either name or number.
    * @return Reference to T.
+   * @throw std::domain_error if the requested region doesn't exist.
    */
   template< typename T=ElementRegionBase, typename KEY_TYPE=void >
   T & getRegion( KEY_TYPE const & key )

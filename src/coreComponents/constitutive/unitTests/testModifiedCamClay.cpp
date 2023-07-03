@@ -17,6 +17,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/ModifiedCamClay.hpp"
 #include "constitutive/solid/InvariantDecompositions.hpp"
+#include "constitutive/solid/SolidUtilities.hpp"
 #include "dataRepository/xmlWrapper.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
@@ -121,6 +122,7 @@ void testModifiedCamClayDriver()
 
   StrainData data;
   data.strainIncrement[0] = -1e-4;
+  real64 timeIncrement =0;
 
   // set initial stress
 
@@ -135,12 +137,11 @@ void testModifiedCamClayDriver()
 
   for( localIndex loadstep=0; loadstep < 500; ++loadstep )
   {
-    forAll< parallelDevicePolicy<> >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    forAll< POLICY >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       real64 stressLocal[6] = {0};
       real64 stiffnessLocal[6][6] = {{0}};
-      cmw.smallStrainUpdate( k, 0, data.strainIncrement, stressLocal, stiffnessLocal );
-      //    std::cout<< stressLocal[0] <<std::endl;
+      cmw.smallStrainUpdate( k, 0, timeIncrement, data.strainIncrement, stressLocal, stiffnessLocal );
     } );
     cm.saveConvergedState();
   }
@@ -150,7 +151,7 @@ void testModifiedCamClayDriver()
   getStress( cmw, stress );
 
   real64 invariantP, invariantQ;
-  real64 deviator[6];
+  real64 deviator[6]{};
 
   twoInvariant::stressDecomposition( stress,
                                      invariantP,
@@ -162,13 +163,13 @@ void testModifiedCamClayDriver()
   // we now use a finite-difference check of tangent stiffness to confirm
   // the analytical form is working properly.
 
-  cmw.checkSmallStrainStiffness( 0, 0, data.strainIncrement, true );
+  SolidUtilities::checkSmallStrainStiffness( cmw, 0, 0, timeIncrement, data.strainIncrement, true );
 
-  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, data.strainIncrement ) );
+  EXPECT_TRUE( SolidUtilities::checkSmallStrainStiffness( cmw, 0, 0, timeIncrement, data.strainIncrement ) );
 }
 
 
-#ifdef USE_CUDA
+#ifdef GEOS_USE_DEVICE
 TEST( ModifiedCamClayTests, testModifiedCamClayDevice )
 {
   testModifiedCamClayDriver< geos::parallelDevicePolicy< > >();

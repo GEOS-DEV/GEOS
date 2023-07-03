@@ -31,6 +31,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseKernels.hpp"
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 
 namespace geos
@@ -151,8 +152,12 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
   {
 
     FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
-    fluxApprox.setFieldName( fields::flow::pressure::key() );
+    fluxApprox.addFieldName( fields::flow::pressure::key() );
     fluxApprox.setCoeffName( fields::permeability::permeability::key() );
+    if( m_isThermal )
+    {
+      fluxApprox.addFieldName( fields::flow::temperature::key() );
+    }
   }
 }
 
@@ -247,6 +252,73 @@ void FlowSolverBase::initializePreSubGroups()
       }
     } );
   }
+}
+
+void FlowSolverBase::validatePoreVolumes( DomainPartition const & domain ) const
+{
+  real64 minPoreVolume = LvArray::NumericLimits< real64 >::max;
+  real64 maxPorosity = -LvArray::NumericLimits< real64 >::max;
+  globalIndex numElemsBelowPoreVolumeThreshold = 0;
+  globalIndex numElemsAbovePorosityThreshold = 0;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          CellElementSubRegion const & subRegion )
+    {
+
+      string const & solidName = subRegion.template getReference< string >( viewKeyStruct::solidNamesString() );
+      CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+
+      arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
+      arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+      real64 minPoreVolumeInSubRegion = 0.0;
+      real64 maxPorosityInSubRegion = 0.0;
+      localIndex numElemsBelowPoreVolumeThresholdInSubRegion = 0;
+      localIndex numElemsAbovePorosityThresholdInSubRegion = 0;
+
+      flowSolverBaseKernels::MinPoreVolumeMaxPorosityKernel::
+        computeMinPoreVolumeMaxPorosity( subRegion.size(),
+                                         ghostRank,
+                                         porosity,
+                                         volume,
+                                         minPoreVolumeInSubRegion,
+                                         maxPorosityInSubRegion,
+                                         numElemsBelowPoreVolumeThresholdInSubRegion,
+                                         numElemsAbovePorosityThresholdInSubRegion );
+
+      if( minPoreVolumeInSubRegion < minPoreVolume )
+      {
+        minPoreVolume = minPoreVolumeInSubRegion;
+      }
+      if( maxPorosityInSubRegion > maxPorosity )
+      {
+        maxPorosity = maxPorosityInSubRegion;
+      }
+
+      numElemsBelowPoreVolumeThreshold += numElemsBelowPoreVolumeThresholdInSubRegion;
+      numElemsAbovePorosityThreshold += numElemsAbovePorosityThresholdInSubRegion;
+    } );
+  } );
+
+  minPoreVolume = MpiWrapper::min( minPoreVolume );
+  maxPorosity = MpiWrapper::max( maxPorosity );
+  numElemsBelowPoreVolumeThreshold = MpiWrapper::sum( numElemsBelowPoreVolumeThreshold );
+  numElemsAbovePorosityThreshold = MpiWrapper::sum( numElemsAbovePorosityThreshold );
+
+  GEOS_LOG_RANK_0_IF( numElemsBelowPoreVolumeThreshold > 0,
+                      GEOS_FMT( "\nWarning! The mesh contains {} elements with a pore volume below {} m^3."
+                                "\nThe minimum pore volume is {} m^3."
+                                "\nOur recommendation is to check the validity of mesh and/or increase the porosity in these elements.\n",
+                                numElemsBelowPoreVolumeThreshold, flowSolverBaseKernels::poreVolumeThreshold, minPoreVolume ) );
+  GEOS_LOG_RANK_0_IF( numElemsAbovePorosityThreshold > 0,
+                      GEOS_FMT( "\nWarning! The mesh contains {} elements with a porosity above 1."
+                                "\nThe maximum porosity is {}.\n",
+                                numElemsAbovePorosityThreshold, maxPorosity ) );
 }
 
 void FlowSolverBase::initializePostInitialConditionsPreSubGroups()
@@ -367,6 +439,7 @@ void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & d
 
     arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
 
+    // TODO: move to FlowSolverBaseKernels to make this function "protected"
     forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const k = targetSet[i];
@@ -416,6 +489,7 @@ void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
     {
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
+      // TODO: move to FlowSolverBaseKernels to make this function "protected"
       // loop over all the elements of this target set
       RAJA::ReduceSum< ReducePolicy< parallelDevicePolicy<> >, localIndex > localSetSize( 0 );
       forAll< parallelDevicePolicy<> >( targetSet.size(),
