@@ -274,6 +274,7 @@ void FlowSolverBase::validatePoreVolumes( DomainPartition const & domain ) const
 
       arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
       arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
       real64 minPoreVolumeInSubRegion = 0.0;
       real64 maxPorosityInSubRegion = 0.0;
@@ -282,6 +283,7 @@ void FlowSolverBase::validatePoreVolumes( DomainPartition const & domain ) const
 
       flowSolverBaseKernels::MinPoreVolumeMaxPorosityKernel::
         computeMinPoreVolumeMaxPorosity( subRegion.size(),
+                                         ghostRank,
                                          porosity,
                                          volume,
                                          minPoreVolumeInSubRegion,
