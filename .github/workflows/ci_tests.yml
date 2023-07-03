@@ -250,6 +250,7 @@ jobs:
           ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
           GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
           ARCH: ${{ matrix.ARCH }}
+          GEOSX_TPL_TAG: ${{ GEOSX_TPL_TAG }}
 
         run: |
           uname -a
