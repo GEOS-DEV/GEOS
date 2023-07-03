@@ -219,7 +219,7 @@ xmlResult xmlDocument::load_string( const pugi::char_t * contents, bool loadNode
   // keeping a copy of original buffer to allow line retrieval
   if( loadNodeFileInfo )
   {
-    new (&m_originalBuffers) map< string, string >();
+    m_originalBuffers.clear();
     m_originalBuffers[m_rootFilePath] = string( contents );
 
     addNodeFileInfo( first_child(), m_rootFilePath );
@@ -240,7 +240,7 @@ xmlResult xmlDocument::load_file( const char * path, bool loadNodeFileInfo,
     std::stringstream buffer;
     buffer << t.rdbuf();
 
-    new (&m_originalBuffers) map< string, string >();
+    m_originalBuffers.clear();
     m_originalBuffers[m_rootFilePath] = string( buffer.str() );
 
     addNodeFileInfo( first_child(), getAbsolutePath( m_rootFilePath ) );
@@ -256,7 +256,7 @@ xmlResult xmlDocument::load_buffer( const void * contents, size_t size, bool loa
   //keeping a copy of original buffer
   if( loadNodeFileInfo )
   {
-    new (&m_originalBuffers) map< string, string >();
+    m_originalBuffers.clear();
     m_originalBuffers[m_rootFilePath] = string( ( char const * )contents, size );
 
     addNodeFileInfo( first_child(), m_rootFilePath );
