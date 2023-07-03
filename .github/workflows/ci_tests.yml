@@ -163,6 +163,15 @@ jobs:
             CMAKE_BUILD_TYPE: Release
             GCP_BUCKET: geosx/ubuntu22.04-gcc11
 
+          - name: Pangea3
+            DOCKER_REPOSITORY: ppc64le/almalinux:8.8-20230524
+            CMAKE_BUILD_TYPE: Release
+            HOST_CONFIG: host-configs/TOTAL/pangea3-gcc8.4.1-openmpi-4.1.2.cmake
+            GCP_BUCKET: geosx/Pangea3
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+            ARCH: ppc64le
+
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3
@@ -175,11 +184,15 @@ jobs:
       uses: 'google-github-actions/auth@v1'
       with:
         credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
+
     - name: 'Set up Cloud SDK'
       if: matrix.GCP_BUCKET
       uses: 'google-github-actions/setup-gcloud@v1'
       with:
         version: '>= 363.0.0'
+
+
+
 
     - name: Print environment
       run: printenv
@@ -187,7 +200,7 @@ jobs:
     # Build and test only
     # Builds only the geosx executable (timeout when building tests)
     - name: Build and test
-      if: ${{ !(matrix.GCP_BUCKET) }}
+      if: ${{ !(matrix.ARCH) && !(matrix.GCP_BUCKET) }}
       env:
         DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
         CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
@@ -199,7 +212,7 @@ jobs:
 
     # Build, test, uploads GEOSX and its TPL to GCP/GCS using gcloud CLI
     - name: Build and test and deploy
-      if: matrix.GCP_BUCKET
+      if: ${{ !(matrix.ARCH) && matrix.GCP_BUCKET }}
       env:
         DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
         CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
@@ -216,6 +229,38 @@ jobs:
         GEOSX_BUNDLE=${TMP_DIR}/${GEOSX_EXPORT_DIR}.tar.gz
         tar czf ${GEOSX_BUNDLE} --directory=${TMP_DIR} ${GEOSX_EXPORT_DIR}
         CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOSX_BUNDLE} gs://${GCP_BUCKET}/
+
+    - uses: uraimo/run-on-arch-action@v2
+
+      name: Build on ${{ matrix.ARCH }}
+      if: ${{ matrix.ARCH && matrix.GCP_BUCKET }}
+      env:
+        DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
+        CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
+        BUILD_AND_TEST_ARGS: ${{ matrix.BUILD_AND_TEST_ARGS }}
+        HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
+        ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
+        ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
+        GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
+        ARCH: ${{ matrix.ARCH }}
+
+      with:
+        arch: ${{ matrix.ARCH }}
+        distro: ubuntu22.04
+        # Not required, but speeds up builds by storing container images in
+        # a GitHub package registry.
+        # githubToken: ${{ github.token }}
+        run: |
+          uname -a
+          echo ::set-output name=uname::$(uname -a)
+          source ./scripts/ci_build_and_test.sh
+          TMP_DIR=/tmp
+          GEOSX_EXPORT_DIR=GEOSX-and-TPL-${GITHUB_SHA:0:7}
+          docker cp -a ${CONTAINER_NAME}:${GEOSX_TPL_DIR}/.. ${TMP_DIR}/${GEOSX_EXPORT_DIR}
+          GEOSX_BUNDLE=${TMP_DIR}/${GEOSX_EXPORT_DIR}.tar.gz
+          tar czf ${GEOSX_BUNDLE} --directory=${TMP_DIR} ${GEOSX_EXPORT_DIR}
+          CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOSX_BUNDLE} gs://${GCP_BUCKET}/
+
 
   # Convenience job - passes when all other jobs have passed.
   check_that_all_jobs_succeeded:
