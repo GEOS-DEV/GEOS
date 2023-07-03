@@ -79,17 +79,18 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
   GEOS_MARK_FUNCTION;
 
 #if defined(GEOSX_USE_MPI)
+  PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
+  SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
 
-  if( m_metisNeighborList.empty() )
+  const std::set< int > metisNeighborList = partition.getMetisNeighborList();
+  if( metisNeighborList.empty() )
   {
-    PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
-    SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
 
     //get communicator, rank, and coordinates
     MPI_Comm cartcomm;
     {
       int reorder = 0;
-      MpiWrapper::cartCreate( MPI_COMM_GEOSX, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm );
+      MpiWrapper::cartCreate( MPI_COMM_GEOSX, 3, partition.getPartitions().data(), partition.m_Periodic.data(), reorder, &cartcomm );
       GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications" );
     }
     int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
@@ -104,7 +105,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
   }
   else
   {
-    for( integer const neighborRank : m_metisNeighborList )
+    for( integer const neighborRank : metisNeighborList )
     {
       m_neighbors.emplace_back( neighborRank );
     }
@@ -248,7 +249,7 @@ void DomainPartition::addNeighbors( const unsigned int idim,
   }
   else
   {
-    const int dim = partition.m_Partitions( LvArray::integerConversion< localIndex >( idim ));
+    const int dim = partition.getPartitions()( LvArray::integerConversion< localIndex >( idim ));
     const bool periodic = partition.m_Periodic( LvArray::integerConversion< localIndex >( idim ));
     for( int i = -1; i < 2; i++ )
     {
