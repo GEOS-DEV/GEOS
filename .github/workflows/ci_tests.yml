@@ -171,7 +171,7 @@ jobs:
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             ARCH: ppc64le
-            BUILD_AND_TEST_ARGS: ""
+            BUILD_AND_TEST_ARGS: "--disable-schema-deployment"
 
     steps:
     - name: Checkout Repository
