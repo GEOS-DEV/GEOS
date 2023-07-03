@@ -234,22 +234,22 @@ jobs:
 
       name: Build on ${{ matrix.ARCH }}
       if: ${{ matrix.ARCH && matrix.GCP_BUCKET }}
-      env:
-        DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
-        CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
-        BUILD_AND_TEST_ARGS: ${{ matrix.BUILD_AND_TEST_ARGS }}
-        HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
-        ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
-        ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
-        GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
-        ARCH: ${{ matrix.ARCH }}
-
       with:
         arch: ${{ matrix.ARCH }}
         distro: ubuntu22.04
         # Not required, but speeds up builds by storing container images in
         # a GitHub package registry.
         # githubToken: ${{ github.token }}
+        env:
+          DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
+          CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
+          BUILD_AND_TEST_ARGS: ${{ matrix.BUILD_AND_TEST_ARGS }}
+          HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
+          ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
+          ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
+          GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
+          ARCH: ${{ matrix.ARCH }}
+
         run: |
           uname -a
           echo ::set-output name=uname::$(uname -a)
