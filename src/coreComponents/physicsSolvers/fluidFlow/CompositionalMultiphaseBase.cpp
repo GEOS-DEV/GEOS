@@ -223,17 +223,24 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
 
       subRegion.registerField< pressure >( getName() );
+      subRegion.registerField< pressure_n >( getName() );
       subRegion.registerField< initialPressure >( getName() );
       subRegion.registerField< deltaPressure >( getName() ); // for reporting/stats purposes
-      subRegion.registerField< pressure_n >( getName() );
-
       subRegion.registerField< bcPressure >( getName() ); // needed for the application of boundary conditions
+      if( m_isFixedStressPoromechanicsUpdate )
+      {
+        subRegion.registerField< pressure_k >( getName() ); // needed for the fixed-stress porosity update
+      }
 
       // these fields are always registered for the evaluation of the fluid properties
       subRegion.registerField< temperature >( getName() );
       subRegion.registerField< temperature_n >( getName() );
       subRegion.registerField< initialTemperature >( getName() );
       subRegion.registerField< bcTemperature >( getName() ); // needed for the application of boundary conditions
+      if( m_isFixedStressPoromechanicsUpdate )
+      {
+        subRegion.registerField< temperature_k >( getName() ); // needed for the fixed-stress porosity update
+      }
 
       // The resizing of the arrays needs to happen here, before the call to initializePreSubGroups,
       // to make sure that the dimensions are properly set before the timeHistoryOutput starts its initialization.
@@ -786,19 +793,16 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
     }
   } );
 
-  // 5. Save initial pressure (needed by the poromechanics solvers)
-  //    Specifically, the initial pressure is used to compute a deltaPressure = currentPres - initPres in the total stress
+  // 5. Save initial pressure
   mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                 ElementSubRegionBase & subRegion )
   {
     arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
     arrayView1d< real64 > const initPres = subRegion.getField< fields::flow::initialPressure >();
-    arrayView1d< real64 > const temp = subRegion.template getField< fields::flow::temperature >();
-    arrayView1d< real64 > const temp_n = subRegion.template getField< fields::flow::temperature_n >();
+    arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
     arrayView1d< real64 > const initTemp = subRegion.template getField< fields::flow::initialTemperature >();
     initPres.setValues< parallelDevicePolicy<> >( pres );
-    temp_n.setValues< parallelDevicePolicy<> >( temp ); // to make sure temperature_n has a meaningful value in isothermal simulations
-    initTemp.setValues< parallelDevicePolicy<> >( temp ); // to make sure temperature_n has a meaningful value in isothermal simulations
+    initTemp.setValues< parallelDevicePolicy<> >( temp );
   } );
 }
 
@@ -2053,6 +2057,19 @@ void CompositionalMultiphaseBase::saveConvergedState( ElementSubRegionBase & sub
     subRegion.template getField< fields::flow::globalCompDensity_n >();
   compDens_n.setValues< parallelDevicePolicy<> >( compDens );
 }
+
+void CompositionalMultiphaseBase::saveIterationState( ElementSubRegionBase & subRegion ) const
+{
+  if( !subRegion.hasField< fields::flow::globalCompDensity_k >() )
+  {
+    return;
+  }
+
+  arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.template getField< fields::flow::globalCompDensity >();
+  arrayView2d< real64, compflow::USD_COMP > const compDens_k = subRegion.template getField< fields::flow::globalCompDensity_k >();
+  compDens_k.setValues< parallelDevicePolicy<> >( compDens );
+}
+
 
 void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
 {

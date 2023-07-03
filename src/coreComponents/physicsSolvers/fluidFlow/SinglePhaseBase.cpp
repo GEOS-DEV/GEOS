@@ -80,12 +80,15 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase & subRegion )
     {
+      subRegion.registerField< pressure >( getName() );
       subRegion.registerField< pressure_n >( getName() );
       subRegion.registerField< initialPressure >( getName() );
       subRegion.registerField< deltaPressure >( getName() ); // for reporting/stats purposes
-      subRegion.registerField< pressure >( getName() );
-
       subRegion.registerField< bcPressure >( getName() ); // needed for the application of boundary conditions
+      if( m_isFixedStressPoromechanicsUpdate )
+      {
+        subRegion.registerField< pressure_k >( getName() ); // needed for the fixed-stress porosity update
+      }
 
       subRegion.registerField< deltaVolume >( getName() );
 
@@ -93,6 +96,10 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< temperature_n >( getName() );
       subRegion.registerField< initialTemperature >( getName() );
       subRegion.registerField< bcTemperature >( getName() ); // needed for the application of boundary conditions
+      if( m_isFixedStressPoromechanicsUpdate )
+      {
+        subRegion.registerField< temperature_k >( getName() ); // needed for the fixed-stress porosity update
+      }
 
       subRegion.registerField< mobility >( getName() );
       subRegion.registerField< dMobility_dPressure >( getName() );

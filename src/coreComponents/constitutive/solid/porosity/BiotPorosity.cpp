@@ -40,7 +40,9 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default thermal expansion coefficient" );
 
-  registerField( fields::porosity::biotCoefficient{}, &m_biotCoefficient );
+  registerField( fields::porosity::biotCoefficient{}, &m_biotCoefficient ).
+    setApplyDefaultValue( 1.0 ); // this is useful for sequential simulations, for the first flow solve
+  // ultimately, we want to be able to load the biotCoefficient from input directly, and this won't be necessary anymore
 
   registerField( fields::porosity::thermalExpansionCoefficient{}, &m_thermalExpansionCoefficient );
 
@@ -88,6 +90,12 @@ void BiotPorosity::initializeState() const
       initialPorosity[k][q] = referencePorosity[k];
     }
   } );
+}
+
+void BiotPorosity::saveConvergedState() const
+{
+  PorosityBase::saveConvergedState();
+  m_meanStressIncrement.zero();
 }
 
 

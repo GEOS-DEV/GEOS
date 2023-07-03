@@ -87,7 +87,7 @@ public:
                                                real64 & dPorosity_dTemperature ) const
   {
     real64 const biotSkeletonModulusInverse = (m_biotCoefficient[k] - m_referencePorosity[k]) / m_grainBulkModulus;
-    real64 const porosityThermalExpansion = 3 * m_thermalExpansionCoefficient[k] * m_biotCoefficient[k];
+    real64 const porosityThermalExpansion = 3 * m_thermalExpansionCoefficient[k] * ( m_biotCoefficient[k] - m_referencePorosity[k] );
 
     real64 const porosity = m_porosity_n[k][q]
                             + m_biotCoefficient[k] * LvArray::tensorOps::symTrace< 3 >( strainIncrement )
@@ -102,8 +102,10 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  void computePorosity( real64 const & pressure,
-                        real64 const & temperature,
+  void computePorosity( real64 const & deltaPressureFromBeginningOfTimeStep,
+                        real64 const & deltaPressureFromLastIteration,
+                        real64 const & deltaTemperatureFromBeginningOfTimeStep,
+                        real64 const & deltaTemperatureFromLastIteration,
                         real64 const & porosity_n,
                         real64 const & referencePorosity,
                         real64 & porosity,
@@ -115,29 +117,40 @@ public:
                         real64 const & bulkModulus ) const
   {
     real64 const biotSkeletonModulusInverse = (biotCoefficient - referencePorosity) / m_grainBulkModulus;
-    real64 const porosityThermalExpansion = 3 * thermalExpansionCoefficient * biotCoefficient;
+    real64 const porosityThermalExpansion = 3 * thermalExpansionCoefficient * ( biotCoefficient - referencePorosity );
+    real64 const fixedStressPressureCoefficient = biotCoefficient * biotCoefficient / bulkModulus;
+    real64 const fixedStressTemperatureCoefficient = 3 * biotCoefficient * thermalExpansionCoefficient;
 
-    porosity = porosity_n + biotSkeletonModulusInverse * pressure + biotCoefficient * biotCoefficient / bulkModulus * pressure
-               - porosityThermalExpansion * temperature
-               + biotCoefficient * meanStressIncrement / bulkModulus;
+    porosity = porosity_n
+               + biotCoefficient * meanStressIncrement / bulkModulus // change due to stress increment
+               + biotSkeletonModulusInverse * deltaPressureFromBeginningOfTimeStep // change due to pressure increment
+               - porosityThermalExpansion * deltaTemperatureFromBeginningOfTimeStep // change due to temperature increment
+               + fixedStressPressureCoefficient * deltaPressureFromLastIteration // fixed-stress pressure term
+               + fixedStressTemperatureCoefficient * deltaTemperatureFromLastIteration; // fixed-stress temperature term
 
-    dPorosity_dPressure = biotSkeletonModulusInverse + biotCoefficient * biotCoefficient / bulkModulus;
-    dPorosity_dTemperature = -porosityThermalExpansion;
+    dPorosity_dPressure = biotSkeletonModulusInverse + fixedStressPressureCoefficient;
+    dPorosity_dTemperature = -porosityThermalExpansion + fixedStressTemperatureCoefficient;
   }
 
   GEOS_HOST_DEVICE
   virtual void updateFromPressureAndTemperature( localIndex const k,
                                                  localIndex const q,
-                                                 real64 const & pressure,
-                                                 real64 const & pressure_n,
+                                                 real64 const & pressure, // current
+                                                 real64 const & pressure_k, // last iteration (for sequential)
+                                                 real64 const & pressure_n, // last time step
                                                  real64 const & temperature,
+                                                 real64 const & temperature_k,
                                                  real64 const & temperature_n ) const override final
   {
-    real64 const deltaPressure    = pressure - pressure_n;
-    real64 const deltaTemperature = temperature - temperature_n;
+    real64 const deltaPressureFromBeginningOfTimeStep = pressure - pressure_n;
+    real64 const deltaPressureFromLastIteration = pressure - pressure_k;
+    real64 const deltaTemperatureFromBeginningOfTimeStep = temperature - temperature_n;
+    real64 const deltaTemperatureFromLastIteration = temperature - temperature_k;
 
-    computePorosity( deltaPressure,
-                     deltaTemperature,
+    computePorosity( deltaPressureFromBeginningOfTimeStep,
+                     deltaPressureFromLastIteration,
+                     deltaTemperatureFromBeginningOfTimeStep,
+                     deltaTemperatureFromLastIteration,
                      m_porosity_n[k][q],
                      m_referencePorosity[k],
                      m_newPorosity[k][q],
@@ -202,6 +215,8 @@ public:
   } viewKeys;
 
   virtual void initializeState() const override final;
+
+  virtual void saveConvergedState() const override final;
 
   virtual arrayView1d< real64 const > const getBiotCoefficient() const override final
   {

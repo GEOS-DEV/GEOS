@@ -118,6 +118,19 @@ void MultiphasePoromechanics::setupCoupling( DomainPartition const & GEOS_UNUSED
                           DofManager::Connector::Elem );
 }
 
+void MultiphasePoromechanics::setupDofs( DomainPartition const & domain,
+                                         DofManager & dofManager ) const
+{
+  // note that the order of operations matters a lot here (for instance for the MGR labels)
+  // we must set up dofs for solid mechanics first, and then for flow
+  // that's the reason why this function is here and not in CoupledSolvers.hpp
+  solidMechanicsSolver()->setupDofs( domain, dofManager );
+  flowSolver()->setupDofs( domain, dofManager );
+
+  setupCoupling( domain, dofManager );
+}
+
+
 void MultiphasePoromechanics::assembleSystem( real64 const GEOS_UNUSED_PARAM( time ),
                                               real64 const dt,
                                               DomainPartition & domain,
@@ -297,7 +310,10 @@ void MultiphasePoromechanics::initializePreSubGroups()
 
   if( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
   {
-    solidMechanicsSolver()->turnOnFixedStressThermoPoromechanicsFlag();
+    // to let the solid mechanics solver that there is a pressure and temperature RHS in the mechanics solve
+    solidMechanicsSolver()->enableFixedStressPoromechanicsUpdate();
+    // to let the flow solver that saving pressure_k and temperature_k is necessary (for the fixed-stress porosity terms)
+    flowSolver()->enableFixedStressPoromechanicsUpdate();
   }
 
   GEOS_THROW_IF( m_stabilizationType == StabilizationType::Local,

@@ -75,6 +75,8 @@ public:
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
   };
 
+  void enableFixedStressPoromechanicsUpdate();
+
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
 
   virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const;
@@ -129,6 +131,18 @@ protected:
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const;
 
   /**
+   * @brief Utility function to save the iteration state on a subRegion (useful for sequential simulations)
+   * @param[in] subRegion the element subRegion
+   */
+  virtual void saveIterationState( ElementSubRegionBase & subRegion ) const;
+
+  /**
+   * @brief Utility function to save the iteration state (useful for sequential simulations)
+   * @param[in] domain the domain partition
+   */
+  virtual void saveIterationState( DomainPartition & domain ) const;
+
+  /**
    * @brief Helper function to compute/report the elements with small pore volumes
    * @param[in] domain the domain partition
    */
@@ -148,6 +162,9 @@ protected:
 
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
+
+  /// enable the fixed stress poromechanics update of porosity
+  bool m_isFixedStressPoromechanicsUpdate;
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
