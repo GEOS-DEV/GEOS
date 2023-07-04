@@ -26,13 +26,21 @@ namespace geos
 namespace constants
 {
 
-/// @brief Zero
+/// @brief Zero degree Celsius in Kelvin
 constexpr double zeroCInK = 273.15;
 
-inline constexpr double convertKToC( double degrees )
+/**
+ * @return the input Kelvin degrees converted in Celsius
+ * @param kelvin degrees input
+ */
+inline constexpr double convertKToC( double kelvin )
 { return degrees - zeroKInC; }
-inline constexpr double convertCToK( double degrees )
-{ return degrees + zeroKInC; }
+/**
+ * @return the input Celsius degrees converted in Kelvin
+ * @param kelvin degrees input
+ */
+inline constexpr double convertCToK( double celsius )
+{ return celsius + zeroKInC; }
 
 }
 
