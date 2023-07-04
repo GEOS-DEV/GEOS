@@ -149,14 +149,16 @@ public:
     real64 const deltaPressure    = pressure - pressure_n;
     real64 const deltaTemperature = temperature - temperature_n;
 
-
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
     real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
 
     real64 const effectiveMeanStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
-    real64 const totalMeanStressIncrement = effectiveMeanStressIncrement - biotCoefficient * deltaPressure - 3 * thermalExpansionCoefficient * bulkModulus * deltaTemperature;
+    // TODO: rename this to meanStrainIncrement
+    real64 const totalMeanStressIncrement = effectiveMeanStressIncrement;// - biotCoefficient * deltaPressure - 3 *
+                                                                         // thermalExpansionCoefficient * bulkModulus * deltaTemperature;
+    GEOS_UNUSED_VAR( biotCoefficient, deltaPressure, thermalExpansionCoefficient, bulkModulus, deltaTemperature );
 
     m_porosityUpdate.updateTotalMeanStressIncrement( k, q, totalMeanStressIncrement );
 
@@ -353,6 +355,25 @@ public:
   {
     return getPorosityModel().getBiotCoefficient();
   }
+
+  /**
+   * @brief Const/non-mutable accessor for the mean stress increment at the previous sequential iteration
+   * @return Accessor
+   */
+  arrayView2d< real64 const > const getMeanStressIncrement_k() const
+  {
+    return getPorosityModel().getMeanStressIncrement_k();
+  }
+
+  /**
+   * @brief Non-const accessor for the mean stress increment at the previous sequential iteration
+   * @return Accessor
+   */
+  arrayView1d< real64 > const getAverageMeanStressIncrement_k()
+  {
+    return getPorosityModel().getAverageMeanStressIncrement_k();
+  }
+
 
 private:
   using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getSolidModel;

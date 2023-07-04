@@ -454,8 +454,6 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
 {
   GEOS_MARK_FUNCTION;
 
-  FlowSolverBase::saveIterationState( domain ); // save data at level k, useful for sequential simulations
-
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
   DofManager::CompMask componentMask( m_numDofPerCell, 1, m_numComponents+1 );
 

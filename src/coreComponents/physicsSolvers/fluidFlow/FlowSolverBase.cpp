@@ -75,6 +75,7 @@ void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE
 {
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
   {
+
     for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
     {
       porousWrapper.updateStateFromPressureAndTemperature( k, q,
@@ -474,8 +475,8 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
       arrayView1d< real64 const > const & temperature_k = subRegion.getField< fields::flow::temperature_k >();
 
       updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion,
-                                                               pressure, pressure_n, pressure_k,
-                                                               temperature, temperature_n, temperature_k );
+                                                               pressure, pressure_k, pressure_n,
+                                                               temperature, temperature_k, temperature_n );
     }
     else // for fully implicit simulations
     {

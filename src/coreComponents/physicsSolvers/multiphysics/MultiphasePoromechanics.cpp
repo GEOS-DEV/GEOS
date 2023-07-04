@@ -22,6 +22,7 @@
 
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
+#include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp"
@@ -77,6 +78,14 @@ MultiphasePoromechanics::MultiphasePoromechanics( const string & name,
 void MultiphasePoromechanics::registerDataOnMesh( Group & meshBodies )
 {
   SolverBase::registerDataOnMesh( meshBodies );
+
+  if( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
+  {
+    // to let the solid mechanics solver that there is a pressure and temperature RHS in the mechanics solve
+    solidMechanicsSolver()->enableFixedStressPoromechanicsUpdate();
+    // to let the flow solver that saving pressure_k and temperature_k is necessary (for the fixed-stress porosity terms)
+    flowSolver()->enableFixedStressPoromechanicsUpdate();
+  }
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
@@ -308,14 +317,6 @@ void MultiphasePoromechanics::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
-  if( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
-  {
-    // to let the solid mechanics solver that there is a pressure and temperature RHS in the mechanics solve
-    solidMechanicsSolver()->enableFixedStressPoromechanicsUpdate();
-    // to let the flow solver that saving pressure_k and temperature_k is necessary (for the fixed-stress porosity terms)
-    flowSolver()->enableFixedStressPoromechanicsUpdate();
-  }
-
   GEOS_THROW_IF( m_stabilizationType == StabilizationType::Local,
                  catalogName() << " " << getName() << ": Local stabilization has been disabled temporarily",
                  InputError );
@@ -417,24 +418,43 @@ void MultiphasePoromechanics::updateStabilizationParameters( DomainPartition & d
 void MultiphasePoromechanics::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
 {
   GEOS_MARK_FUNCTION;
-  if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
+
+  /// After the flow solver
+  if( solverType == static_cast< integer >( SolverType::Flow ) )
   {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
                                                                  arrayView1d< string const > const & regionNames )
     {
+
+      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                            auto & subRegion )
+      {
+        // update the bulk density
+        // TODO: ideally, we would not recompute the bulk density, but a more general "rhs" containing the body force and the
+        // pressure/temperature terms
+        updateBulkDensity( subRegion );
+      } );
+    } );
+  }
+
+  /// After the solid mechanics solver
+  if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
+  {
+    // compute the average of the mean stress increment over quadrature points
+    averageMeanStressIncrement( domain );
+
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 arrayView1d< string const > const & regionNames )
+    {
+
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion )
       {
         // update the porosity after a change in displacement (after mechanics solve)
         // or a change in pressure/temperature (after a flow solve)
         flowSolver()->updatePorosityAndPermeability( subRegion );
-
-        // update the bulk density
-        // in fact, this is only needed after a flow solve, but we don't have a mechanism to know where we are in the outer loop
-        // TODO: ideally, we would not recompute the bulk density, but a more general "rhs" containing the body force and the
-        // pressure/temperature terms
-        updateBulkDensity( subRegion );
       } );
     } );
   }
@@ -457,6 +477,47 @@ void MultiphasePoromechanics::updateBulkDensity( ElementSubRegionBase & subRegio
                                                fluid,
                                                solid,
                                                subRegion );
+}
+
+void MultiphasePoromechanics::averageMeanStressIncrement( DomainPartition & domain )
+{
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          auto & subRegion )
+    {
+      // get the solid model (to access stress increment)
+      string const solidName = subRegion.template getReference< string >( viewKeyStruct::porousMaterialNamesString() );
+      CoupledSolidBase & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+
+      arrayView2d< real64 const > const meanStressIncrement_k = solid.getMeanStressIncrement_k();
+      arrayView1d< real64 > const averageMeanStressIncrement_k = solid.getAverageMeanStressIncrement_k();
+
+      finiteElement::FiniteElementBase & subRegionFE =
+        subRegion.template getReference< finiteElement::FiniteElementBase >( solidMechanicsSolver()->getDiscretizationName() );
+
+      // determine the finite element type
+      finiteElement::FiniteElementDispatchHandler< BASE_FE_TYPES >::
+      dispatch3D( subRegionFE, [&] ( auto const finiteElement )
+      {
+        using FE_TYPE = decltype( finiteElement );
+
+        // call the factory and launch the kernel
+        AverageOverQuadraturePoints1DKernelFactory::
+          createAndLaunch< CellElementSubRegion,
+                           FE_TYPE,
+                           parallelDevicePolicy<> >( mesh.getNodeManager(),
+                                                     mesh.getEdgeManager(),
+                                                     mesh.getFaceManager(),
+                                                     subRegion,
+                                                     finiteElement,
+                                                     meanStressIncrement_k,
+                                                     averageMeanStressIncrement_k );
+      } );
+    } );
+  } );
 }
 
 

@@ -43,10 +43,12 @@
       discretization="fluidTPFA"
       targetRegions="{ reservoir }"
       temperature="357.5"
+      maxCompFractionChange="0.1"
+      maxRelativePressureChange="0.1"      
       useMass="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-9"
-        lineSearchAction="None"
+	allowNonConverged="1"
         newtonMaxIter="40"/>
     </CompositionalMultiphaseFVM>      
       

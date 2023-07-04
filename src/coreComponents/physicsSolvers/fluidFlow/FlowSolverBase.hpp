@@ -81,6 +81,11 @@ public:
 
   virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const;
 
+  /**
+   * @brief Utility function to save the iteration state (useful for sequential simulations)
+   * @param[in] domain the domain partition
+   */
+  virtual void saveIterationState( DomainPartition & domain ) const;
 
   /**
    * @brief For each equilibrium initial condition, loop over all the target cells and compute the min/max elevation
@@ -131,16 +136,10 @@ protected:
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const;
 
   /**
-   * @brief Utility function to save the iteration state on a subRegion (useful for sequential simulations)
+   * @brief Utility function to save the state at the end of a sequential iteration
    * @param[in] subRegion the element subRegion
    */
   virtual void saveIterationState( ElementSubRegionBase & subRegion ) const;
-
-  /**
-   * @brief Utility function to save the iteration state (useful for sequential simulations)
-   * @param[in] domain the domain partition
-   */
-  virtual void saveIterationState( DomainPartition & domain ) const;
 
   /**
    * @brief Helper function to compute/report the elements with small pore volumes

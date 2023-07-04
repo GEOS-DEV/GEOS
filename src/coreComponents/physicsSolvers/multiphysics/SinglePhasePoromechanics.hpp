@@ -161,6 +161,12 @@ private:
    */
   void updateBulkDensity( ElementSubRegionBase & subRegion );
 
+  /**
+   * @brief Helper function to average the mean stress increment
+   * @param[in] domain the domain partition
+   */
+  void averageMeanStressIncrement( DomainPartition & domain );
+
   void createPreconditioner();
 
   template< typename CONSTITUTIVE_BASE,

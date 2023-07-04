@@ -248,11 +248,36 @@ public:
 
   virtual arrayView1d< real64 const > const getBiotCoefficient() const
   {
-    GEOS_ERROR( "getBiotPorosity() not implemented for this model" );
+    GEOS_ERROR( "getBiotCoefficient() not implemented for this model" );
 
     array1d< real64 > out;
     return out.toViewConst();
   }
+
+  /**
+   * @brief Const/non-mutable accessor for the mean stress increment at the previous sequential iteration
+   * @return Accessor
+   */
+  virtual arrayView2d< real64 const > const getMeanStressIncrement_k() const
+  {
+    GEOS_ERROR( "getMeanStressIncrement_k() not implemented for this model" );
+
+    array2d< real64 > out;
+    return out.toViewConst();
+  }
+
+  /**
+   * @brief Non-const accessor for the mean stress increment at the previous sequential iteration
+   * @return Accessor
+   */
+  virtual arrayView1d< real64 > const getAverageMeanStressIncrement_k()
+  {
+    GEOS_ERROR( "getAverageMeanStressIncrement_k() not implemented for this model" );
+
+    array1d< real64 > out;
+    return out.toView();
+  }
+
 
   using KernelWrapper = PorosityBaseUpdates;
 
