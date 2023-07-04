@@ -75,7 +75,7 @@ public:
     m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
 
 #if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP // Why a different relaxation type for CPU and GPU?
-    m_levelFRelaxType[1]          = MGRFRelaxationType::l1jacobi; 
+    m_levelFRelaxType[1]          = MGRFRelaxationType::l1jacobi;
 #else
     m_levelFRelaxType[1]          = MGRFRelaxationType::jacobi;
 #endif
