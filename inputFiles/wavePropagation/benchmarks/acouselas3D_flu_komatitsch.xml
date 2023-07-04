@@ -46,14 +46,16 @@
   </Constitutive>
 
   <Mesh>
-     <VTKMesh         
-      name="Bilayer"      
+     <VTKMesh  
+      name="Bilayer"
+      fieldsToImport="{ mediumVelocity,mediumVelocityVp,mediumVelocityVs,mediumDensity }"    
+      fieldNamesInGEOSX="{ mediumVelocity,mediumVelocityVp,mediumVelocityVs,mediumDensity }"
       file="acouselas3D_flu_komatitsch.vtu"
       useGlobalIds="0"/>
   </Mesh> 
 
-  <!-- defined in the .vtu -->
   <FieldSpecifications>
+
   </FieldSpecifications>
 
   <Events maxTime="0.2">
