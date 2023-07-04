@@ -1321,9 +1321,16 @@ public:
   DataContext const & getWrapperDataContext( KEY key ) const
   { return getWrapperBase< KEY >( key ).getDataContext(); }
 
-  template< typename TARGET_DC_TYPE, typename ... INPUT_PARAMS, typename ... FUNC_PARAMS >
-  void forAllDataContextOfType( void ( &func )( TARGET_DC_TYPE const &, FUNC_PARAMS ... ),
-                                INPUT_PARAMS && ... params ) const;
+  /**
+   * @brief Calls a lambda for the DataContext of this Group and the ones of its children Group and
+   * Wrapper if they can be casted to the requested class type.
+   * @tparam TARGET_DC the requested DataContext class or parent class type.
+   * @tparam LAMBDA the type of functor to call. The functor takes in parameter a DataContext of
+   * TARGET_DC type.
+   * @param func
+   */
+  template< typename TARGET_DC = DataContext, typename FUNC >
+  void forAllDataContext( FUNC func ) const;
 
   /**
    * @brief Access the group's parent.
@@ -1678,30 +1685,24 @@ Wrapper< T > & Group::registerWrapper( string const & name,
   return rval;
 }
 
-template< typename TARGET_DC_TYPE, typename ... INPUT_PARAMS, typename ... FUNC_PARAMS >
-void Group::forAllDataContextOfType( void ( &func )( TARGET_DC_TYPE const &, FUNC_PARAMS ... ),
-                                     INPUT_PARAMS && ... params ) const
+template< typename TARGET_DC = DataContext, typename FUNC >
+void Group::forAllDataContext( FUNC func ) const
 {
-  TARGET_DC_TYPE const & groupCtx =
-    dynamic_cast< TARGET_DC_TYPE const & >( *m_dataContext );
-  if( groupCtx )
+  if( auto * groupCtx = dynamic_cast< TARGET_DC const * >( &getDataContext() ) )
   {
-    func( groupCtx, std::forward< INPUT_PARAMS >( params ) ... );
+    func( *groupCtx );
   }
-
   for( auto const & wrapperIterator : m_wrappers )
   {
-    TARGET_DC_TYPE const & wrapperCtx =
-      dynamic_cast< TARGET_DC_TYPE const & >( wrapperIterator.second->getDataContext() );
+    auto * wrapperCtx = dynamic_cast< TARGET_DC const * >( &wrapperIterator.second->getDataContext() );
     if( wrapperCtx )
     {
-      func( wrapperCtx, std::forward< INPUT_PARAMS >( params ) ... );
+      func( *wrapperCtx );
     }
   }
-
   for( auto subGroup : m_subGroups )
   {
-    forAllTypedDataContext( *subGroup.second, func, std::forward< INPUT_PARAMS >( params ) ... );
+    subGroup.second->forAllDataContext< TARGET_DC >( func );
   }
 }
 

@@ -132,7 +132,7 @@ class xmlDocument : public pugi::xml_document
 {
 public:
   /// Error value for when an offset / line position is undefined.
-  static const size_t npos;
+  static constexpr size_t npos = string::npos;
 
   /**
    * @brief Construct an empty xmlDocument that waits to load something.

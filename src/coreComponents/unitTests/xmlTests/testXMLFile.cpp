@@ -181,9 +181,10 @@ TEST( testXML, testXMLFileLines )
   getElementsRecursive( xmlDoc, xmlDoc.root().child( "Problem" ), expectedElements );
 
   std::set< string > verifiedElements;
-  xmlDocument const & xmlDocConst=xmlDoc;
-  problemManager.forAllDataContextOfType< DataFileContext >( verifyDataFileContext,
-                                                             xmlDocConst, verifiedElements );
+  problemManager.forAllDataContext< DataFileContext >( [&]( DataFileContext const & ctx )
+  {
+    verifyDataFileContext( ctx, xmlDoc, verifiedElements );
+  } );
 
   std::set< string > const notFound = getDifference( expectedElements, verifiedElements );
   EXPECT_TRUE( notFound.empty() ) << "Info : There should not exist xml element that were not in "

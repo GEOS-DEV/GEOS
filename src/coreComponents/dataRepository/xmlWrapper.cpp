@@ -203,7 +203,7 @@ bool isFileMetadataAttribute( string const & name )
   return fileMetadataAttributes.find( name ) != fileMetadataAttributes.end();
 }
 
-const size_t xmlDocument::npos = string::npos;
+constexpr size_t xmlDocument::npos;
 size_t documentId=0;
 
 xmlDocument::xmlDocument():
