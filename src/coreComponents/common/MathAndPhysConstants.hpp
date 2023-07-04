@@ -26,11 +26,12 @@ namespace geos
 namespace constants
 {
 
-constexpr double zeroKInC = 273.15;
+/// @brief Zero
+constexpr double zeroCInK = 273.15;
 
-inline constexpr double convertCToK( double degrees )
-{ return degrees - zeroKInC; }
 inline constexpr double convertKToC( double degrees )
+{ return degrees - zeroKInC; }
+inline constexpr double convertCToK( double degrees )
 { return degrees + zeroKInC; }
 
 }

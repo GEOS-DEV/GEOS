@@ -145,7 +145,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
   if( !m_checkPVTTablesRanges )
     return;
 
-  real64 const temperatureInCelsius = constants::convertCToK( temperature );
+  real64 const temperatureInCelsius = constants::convertKToC( temperature );
   try
   {
     m_phase1->density.checkTablesParameters( pressure, temperatureInCelsius );

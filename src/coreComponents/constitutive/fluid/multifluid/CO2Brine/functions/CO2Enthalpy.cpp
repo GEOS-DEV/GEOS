@@ -135,7 +135,7 @@ real64 HelmholtzCO2Enthalpy( real64 const & T,
 
   real64 theta, delta, R, deltard;
 
-  Tkelvin = constants::convertKToC( T );
+  Tkelvin = constants::convertCToK( T );
   rd=rho/dc;
   rt=Tc/Tkelvin;
 

@@ -203,7 +203,7 @@ void ReactiveBrineFluid< PHASE >::checkTablesParameters( real64 const pressure,
   if( !m_checkPVTTablesRanges )
     return;
 
-  real64 const temperatureInCelsius = constants::convertCToK( temperature );
+  real64 const temperatureInCelsius = constants::convertKToC( temperature );
   try
   {
     m_phase->density.checkTablesParameters( pressure, temperatureInCelsius );

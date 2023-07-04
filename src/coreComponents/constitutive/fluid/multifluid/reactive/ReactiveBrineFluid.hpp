@@ -218,7 +218,7 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
   }
 
   // 2. Compute phase fractions and phase component fractions
-  real64 const temperatureInCelsius = constants::convertCToK( temperature );
+  real64 const temperatureInCelsius = constants::convertKToC( temperature );
 
   // 3. Compute phase density and phase viscoisty
   m_phase.density.compute( pressure,
@@ -291,7 +291,7 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
     phaseCompFraction.value[0][ic] = composition[ic];
   }
 
-  real64 const temperatureInCelsius = constants::convertCToK( temperature );
+  real64 const temperatureInCelsius = constants::convertKToC( temperature );
 
   // 2. Compute phase densities and phase viscosities
   m_phase.density.compute( pressure,

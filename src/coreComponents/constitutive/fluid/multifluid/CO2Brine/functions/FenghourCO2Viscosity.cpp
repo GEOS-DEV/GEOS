@@ -52,7 +52,7 @@ void fenghourCO2ViscosityFunction( real64 const & temperatureCent,
   constexpr real64 vcrit = 0.0;
 
   // temperature in Kelvin
-  real64 const temperatureKelvin = constants::convertKToC( temperatureCent );
+  real64 const temperatureKelvin = constants::convertCToK( temperatureCent );
   // equation (5) of Fenghour and Wakeham (1998)
   real64 const Tred = temperatureKelvin * esparInv;
   real64 const x = log( Tred );
