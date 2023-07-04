@@ -31,6 +31,9 @@ class AcousticWaveEquationSEM : public WaveSolverBase
 {
 public:
 
+  /// String used to form the solverName used to register solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "acoustic"; }
+
   using EXEC_POLICY = parallelDevicePolicy<  >;
   using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
 
@@ -206,8 +209,8 @@ DECLARE_FIELD( ForcingRHS,
                WRITE_AND_READ,
                "RHS" );
 
-DECLARE_FIELD( MassVector,
-               "massVector",
+DECLARE_FIELD( MassVectorA,
+               "massVectorA",
                array1d< real32 >,
                0,
                NOPLOT,
@@ -238,16 +241,16 @@ DECLARE_FIELD( StiffnessVector,
                WRITE_AND_READ,
                "Stiffness vector contains R_h*Pressure_n." );
 
-DECLARE_FIELD( FreeSurfaceFaceIndicator,
-               "freeSurfaceFaceIndicator",
+DECLARE_FIELD( FreeSurfaceFaceIndicatorA,
+               "freeSurfaceFaceIndicatorA",
                array1d< localIndex >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
 
-DECLARE_FIELD( FreeSurfaceNodeIndicator,
-               "freeSurfaceNodeIndicator",
+DECLARE_FIELD( FreeSurfaceNodeIndicatorA,
+               "freeSurfaceNodeIndicatorA",
                array1d< localIndex >,
                0,
                NOPLOT,

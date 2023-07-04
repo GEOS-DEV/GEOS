@@ -198,17 +198,17 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                fields::ForcingRHSx,
                                fields::ForcingRHSy,
                                fields::ForcingRHSz,
-                               fields::MassVector,
+                               fields::MassVectorE,
                                fields::DampingVectorx,
                                fields::DampingVectory,
                                fields::DampingVectorz,
                                fields::StiffnessVectorx,
                                fields::StiffnessVectory,
                                fields::StiffnessVectorz,
-                               fields::FreeSurfaceNodeIndicator >( this->getName() );
+                               fields::FreeSurfaceNodeIndicatorE >( this->getName() );
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerField< fields::FreeSurfaceFaceIndicator >( this->getName() );
+    faceManager.registerField< fields::FreeSurfaceFaceIndicatorE >( this->getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -532,7 +532,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     // mass matrix to be computed in this function
-    arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVector >();
+    arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVectorE >();
     mass.zero();
     /// damping matrix to be computed for each dof in the boundary of the mesh
     arrayView1d< real32 > const dampingx = nodeManager.getField< fields::DampingVectorx >();
@@ -543,7 +543,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     dampingz.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
-    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
+    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicatorE >();
 
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
@@ -615,10 +615,10 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   /// set array of indicators: 1 if a face is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
+  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicatorE >();
 
   /// set array of indicators: 1 if a node is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicator >();
+  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicatorE >();
 
 
   freeSurfaceFaceIndicator.zero();
@@ -711,7 +711,7 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVector >();
+    arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVectorE >();
     arrayView1d< real32 const > const dampingx = nodeManager.getField< fields::DampingVectorx >();
     arrayView1d< real32 const > const dampingy = nodeManager.getField< fields::DampingVectory >();
     arrayView1d< real32 const > const dampingz = nodeManager.getField< fields::DampingVectorz >();
@@ -731,7 +731,7 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     arrayView1d< real32 > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
 
     /// get array of indicators: 1 if node on free surface; 0 otherwise
-    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicator >();
+    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicatorE >();
 
     arrayView1d< real32 > const rhsx = nodeManager.getField< fields::ForcingRHSx >();
     arrayView1d< real32 > const rhsy = nodeManager.getField< fields::ForcingRHSy >();

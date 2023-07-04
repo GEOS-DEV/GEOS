@@ -17,7 +17,21 @@
  * @file AcousticElasticWaveEquation.cpp
  */
 
+#include "AcousticElasticWaveEquationSEM.hpp"
+#include "dataRepository/Group.hpp"
+
 namespace geos
 {
+using namespace dataRepository;
+using namespace fields;
 
+AcousticElasticWaveEquationSEM::AcousticElasticWaveEquationSEM( const string & name,
+                                                                Group * const parent )
+  : Base( name, parent )
+{
+  std::cout << "[AcousticElasticWaveEquationSEM] ctor" << std::endl;
 }
+
+REGISTER_CATALOG_ENTRY( SolverBase, AcousticElasticWaveEquationSEM, string const &, Group * const )
+
+} /* namespace geos */

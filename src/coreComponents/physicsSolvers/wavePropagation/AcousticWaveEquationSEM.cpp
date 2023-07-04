@@ -71,10 +71,10 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                fields::Pressure_np1,
                                fields::PressureDoubleDerivative,
                                fields::ForcingRHS,
-                               fields::MassVector,
+                               fields::MassVectorA,
                                fields::DampingVector,
                                fields::StiffnessVector,
-                               fields::FreeSurfaceNodeIndicator >( this->getName() );
+                               fields::FreeSurfaceNodeIndicatorA >( this->getName() );
 
     /// register  PML auxiliary variables only when a PML is specified in the xml
     if( m_usePML )
@@ -89,7 +89,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     }
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerField< fields::FreeSurfaceFaceIndicator >( this->getName() );
+    faceManager.registerField< fields::FreeSurfaceFaceIndicatorA >( this->getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -264,14 +264,14 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     // mass matrix to be computed in this function
-    arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVector >();
+    arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVectorA >();
     mass.zero();
     /// damping matrix to be computed for each dof in the boundary of the mesh
     arrayView1d< real32 > const damping = nodeManager.getField< fields::DampingVector >();
     damping.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
-    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
+    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicatorA >();
 
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
@@ -331,10 +331,10 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartition &
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   /// array of indicators: 1 if a face is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
+  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicatorA >();
 
   /// array of indicators: 1 if a node is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicator >();
+  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicatorA >();
 
   //freeSurfaceFaceIndicator.zero();
   //freeSurfaceNodeIndicator.zero();
@@ -836,7 +836,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVector >();
+    arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVectorA >();
 
     arrayView1d< real32 > const p_nm1 = nodeManager.getField< fields::Pressure_nm1 >();
     arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_n >();
@@ -925,14 +925,14 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVector >();
+    arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVectorA >();
     arrayView1d< real32 const > const damping = nodeManager.getField< fields::DampingVector >();
 
     arrayView1d< real32 > const p_nm1 = nodeManager.getField< fields::Pressure_nm1 >();
     arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_n >();
     arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
 
-    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicator >();
+    arrayView1d< localIndex const > const freeSurfaceNodeIndicatorA = nodeManager.getField< fields::FreeSurfaceNodeIndicatorA >();
     arrayView1d< real32 > const stiffnessVector = nodeManager.getField< fields::StiffnessVector >();
     arrayView1d< real32 > const rhs = nodeManager.getField< fields::ForcingRHS >();
 
@@ -963,7 +963,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       GEOS_MARK_SCOPE ( updateP );
       forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
-        if( freeSurfaceNodeIndicator[a] != 1 )
+        if( freeSurfaceNodeIndicatorA[a] != 1 )
         {
           p_np1[a] = p_n[a];
           p_np1[a] *= 2.0*mass[a];
@@ -997,7 +997,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       GEOS_MARK_SCOPE ( updatePWithPML );
       forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
-        if( freeSurfaceNodeIndicator[a] != 1 )
+        if( freeSurfaceNodeIndicatorA[a] != 1 )
         {
           real32 sigma[3];
           real64 xLocal[ 3 ];

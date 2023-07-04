@@ -31,6 +31,9 @@ class ElasticWaveEquationSEM : public WaveSolverBase
 {
 public:
 
+  /// String used to form the solverName used to register solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "elastic"; }
+
   using EXEC_POLICY = parallelDevicePolicy<  >;
   using ATOMIC_POLICY = parallelDeviceAtomic;
 
@@ -333,8 +336,8 @@ DECLARE_FIELD( ForcingRHSz,
                WRITE_AND_READ,
                "RHS for z-direction" );
 
-DECLARE_FIELD( MassVector,
-               "massVector",
+DECLARE_FIELD( MassVectorE,
+               "massVectorE",
                array1d< real32 >,
                0,
                NOPLOT,
@@ -413,16 +416,16 @@ DECLARE_FIELD( MediumDensity,
                WRITE_AND_READ,
                "Medium density of the cell" );
 
-DECLARE_FIELD( FreeSurfaceFaceIndicator,
-               "freeSurfaceFaceIndicator",
+DECLARE_FIELD( FreeSurfaceFaceIndicatorE,
+               "freeSurfaceFaceIndicatorE",
                array1d< localIndex >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
 
-DECLARE_FIELD( FreeSurfaceNodeIndicator,
-               "freeSurfaceNodeIndicator",
+DECLARE_FIELD( FreeSurfaceNodeIndicatorE,
+               "freeSurfaceNodeIndicatorE",
                array1d< localIndex >,
                0,
                NOPLOT,

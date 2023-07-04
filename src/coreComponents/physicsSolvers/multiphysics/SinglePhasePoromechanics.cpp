@@ -395,4 +395,4 @@ void SinglePhasePoromechanics::updateBulkDensity( ElementSubRegionBase & subRegi
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanics, string const &, Group * const )
 
-} /* namespace geos */
+}
