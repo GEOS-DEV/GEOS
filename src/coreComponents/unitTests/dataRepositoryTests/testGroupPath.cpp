@@ -117,6 +117,22 @@ TEST( testGroupPath, testGlobalPaths )
   }
   // checks if the exception has been thrown as expected
   ASSERT_TRUE( trowHappened );
+
+  auto const testDataContextString = [&]( string const & groupPath, string const & ctxString )
+  {
+    Group const * const groupToTest = &problem.getGroupByPath( groupPath );
+    ASSERT_NE( groupToTest, nullptr );
+    ASSERT_STREQ( groupToTest->getDataContext().toString().c_str(),
+                  ctxString.c_str() );
+  };
+  // check if the DataContext string of a Group declared in the XML is formatted as expected
+  testDataContextString(
+    "/Mesh/mesh1",
+    "mesh1 (CodeIncludedXML0, l.11)" );
+  // check if the DataContext string of an implicitly created Group is formatted as expected
+  testDataContextString(
+    "/domain/MeshBodies/mesh1/meshLevels/Level0/ElementRegions/elementRegionsGroup/Region2/elementSubRegions",
+    "/domain/MeshBodies/mesh1/meshLevels/Level0/ElementRegions/elementRegionsGroup/Region2(CodeIncludedXML0,l.37)/elementSubRegions" );
 }
 
 int main( int argc, char * * argv )
