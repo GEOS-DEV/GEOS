@@ -3,7 +3,10 @@
 <Problem>
   <Solvers>
     <AcousticElasticSEM
-      name="acousticelasticSolver"/>
+      name="acousticelasticSolver"
+      acousticSolverName="acousticSolver"
+      elasticSolverName="elasticSolver"
+      targetRegions="{ Solid, Fluid }"/>
     <ElasticSEM
       name="elasticSolver"
       cflFactor="0.25"
