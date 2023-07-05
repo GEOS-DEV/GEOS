@@ -19,7 +19,6 @@ set( common_headers
      TimingMacros.hpp
      TypeDispatch.hpp
      initializeEnvironment.hpp
-     MathAndPhysConstants.hpp
    )
 if ( ENABLE_CUDA )
   list( APPEND common_headers lifoStorage.hpp )

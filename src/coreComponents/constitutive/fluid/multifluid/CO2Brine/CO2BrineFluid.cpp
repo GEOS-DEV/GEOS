@@ -19,7 +19,7 @@
 
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
-#include "common/MathAndPhysConstants.hpp"
+#include "math/UOM.hpp"
 
 namespace geos
 {

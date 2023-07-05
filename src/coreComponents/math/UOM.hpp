@@ -13,12 +13,12 @@
  */
 
 /**
- * @file MathAndPhysConstants.hpp
- * @brief Regroups constant values, as well as conversion and calculation functions that are
- * globally used for math and physics computations.
+ * @file UOM.hpp
+ * @brief Regroups useful constants and functions relative to Units Of Measures
+ * that are globally used for math and physics computations.
  */
-#ifndef GEOS_COMMON_MATH_AND_PHYS_CONSTANTS_HPP_
-#define GEOS_COMMON_MATH_AND_PHYS_CONSTANTS_HPP_
+#ifndef GEOS_MATH_UOM_HPP_
+#define GEOS_MATH_UOM_HPP_
 
 namespace geos
 {
@@ -34,16 +34,16 @@ constexpr double zeroCInK = 273.15;
  * @param kelvin degrees input
  */
 inline constexpr double convertKToC( double kelvin )
-{ return degrees - zeroKInC; }
+{ return kelvin - zeroCInK; }
 /**
  * @return the input Celsius degrees converted in Kelvin
- * @param kelvin degrees input
+ * @param celsius degrees input
  */
 inline constexpr double convertCToK( double celsius )
-{ return celsius + zeroKInC; }
+{ return celsius + zeroCInK; }
 
 }
 
 }
 
-#endif //GEOS_COMMON_MATH_AND_PHYS_CONSTANTS_HPP_
+#endif //GEOS_MATH_UOM_HPP_
