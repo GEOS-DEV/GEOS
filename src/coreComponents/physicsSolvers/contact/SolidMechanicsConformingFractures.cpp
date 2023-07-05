@@ -109,7 +109,6 @@ void SolidMechanicsConformingFractures::setConstitutiveNames( ElementSubRegionBa
 void SolidMechanicsConformingFractures::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
-
 }
 
 void SolidMechanicsConformingFractures::setupSystem( DomainPartition & domain,
@@ -135,6 +134,8 @@ void SolidMechanicsConformingFractures::implicitStepSetup( real64 const & time_n
                                                            DomainPartition & domain )
 {
   computeRotationMatrices( domain );
+  //computeTolerance( domain );
+  computeFaceDisplacementJump( domain );
 
   m_solidSolver->implicitStepSetup( time_n, dt, domain );
 }
@@ -325,16 +326,37 @@ void SolidMechanicsConformingFractures::setupDofs( DomainPartition const & domai
                             solidMechanics::totalDisplacement::key(),
                             DofManager::Connector::Elem,
                             meshTargets );
+  }
+  else if (m_contactEnforcementMethod == ContactEnforcementMethod::NodalLagrangeMultiplier)
+  {
+    dofManager.addField( solidMechanics::totalDisplacement::key(),
+                      FieldLocation::Node,
+                      3,
+                      meshTargets );
 
-    // dofManager.addField(  contact::dispJump::key(),
-    //                       FieldLocation::Node,
-    //                       3,
-    //                       meshTargets );
+    dofManager.addField( contact::traction::key(),
+                       FieldLocation::Elem,
+                       3,
+                       meshTargets );
 
-    // dofManager.addCoupling( contact::dispJump::key(),
-    //                         contact::dispJump::key(),
-    //                         DofManager::Connector::Elem,
-    //                         meshTargets );
+    dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
+                            solidMechanics::totalDisplacement::key(),
+                            DofManager::Connector::Elem,
+                            meshTargets );
+
+    dofManager.addCoupling( contact::traction::key(),
+                            contact::traction::key(),
+                            DofManager::Connector::Face,
+                            meshTargets );
+
+    dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
+                            contact::traction::key(),
+                            DofManager::Connector::Elem,
+                            meshTargets );                         
+  }
+  else
+  {
+    GEOS_ERROR( "Unknown contact enforcement method." );
   }
 }
 
@@ -398,8 +420,7 @@ void LagrangianContactSolver::
                                                                 arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
-
-
+  
 }
 
 
@@ -412,9 +433,53 @@ void LagrangianContactSolver::
 {
   GEOS_MARK_FUNCTION;
 
+  FaceManager const & faceManager = mesh.getFaceManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
 
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+
+  string const & tracDofKey = dofManager.getKey( contact::traction::key() );
+  string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+
+  arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+  globalIndex const rankOffset = dofManager.rankOffset();
+
+  // Get the coordinates for all nodes
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
+
+  elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                            [&]( localIndex const,
+                                                                 FaceElementSubRegion const & subRegion )
+  {
+    arrayView1d< globalIndex const > const & tracDofNumber = subRegion.getReference< globalIndex_array >( tracDofKey );
+    arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( contact::traction::key() );
+    arrayView3d< real64 const > const & rotationMatrix = subRegion.getReference< array3d< real64 > >( contact::rotationMatrixString() );
+    arrayView2d< real64 const > const & elemsToFaces = subRegion.faceList();
+
+    constexpr localIndex TriangularPermutation[3] = { 0, 1, 2 };
+    constexpr localIndex QuadrilateralPermutation[4] = { 0, 1, 3, 2 };
+
+    forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+    {
+      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces( elemsToFaces[kfe][0]  ) );
+      localIndex const numQuadraturePointsPerElem = numNodesPerFace == 3 ? 1 : 4;
+
+      globalIndex rowDOF[12];
+      real64 nodeRHS[12];
+      stackArray2d< real64, 3*4*3 > dRdT(  3*numNodesPerFace, 3 );
+      localIndex colDOF[3] = { tracDofNumber[kfe], tracDofNumber[kfe] + 1, tracDofNumber[kfe] + 2 };
+
+      localIndex const * const permutation = ( numNodesPerFace == 3 ) ? TriangularPermutation : QuadrilateralPermutation;
+      real64 xLocal[2][4][3];
+      // for( localIndex kf = 0; kf )
+
+    });
+  
+  }
   
 }
+
 
 
 real64 SolidMechanicsConformingFractures::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time ),
@@ -432,7 +497,6 @@ real64 SolidMechanicsConformingFractures::calculateResidualNorm( real64 const & 
 
 void SolidMechanicsConformingFractures::computeRotationMatrices( DomainPartition & domain ) const
 {
-
   GEOS_MARK_FUNCTION;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
