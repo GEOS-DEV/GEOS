@@ -238,9 +238,8 @@ public:
   GEOS_HOST_DEVICE
   static real64 transformedQuadratureWeight( localIndex const q,
                                              real64 const (&X)[numNodes][3],
-                                             StackVariables const & GEOS_UNUSED_PARAM( stack ) )
-  { return transformedQuadratureWeight( q, X ); }
-
+                                             StackVariables const & stack )
+  { GEOS_UNUSED_VAR( stack ); return transformedQuadratureWeight( q, X ); }
 
   /**
    * @brief Calculates the isoparametric "Jacobian" transformation
