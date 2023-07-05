@@ -335,32 +335,78 @@ xmlNodePos::xmlNodePos( xmlDocument const & document_, string const & filePath_,
 bool xmlNodePos::isFound() const
 { return line != xmlDocument::npos; }
 
+size_t findTagEnd( string const & xmlBuffer, size_t const offset )
+{
+  bool outOfQuotes = true;
+  auto bufferEnd = xmlBuffer.cend();
+  for( auto it = xmlBuffer.cbegin() + offset; it != bufferEnd; ++it )
+  {
+    if( *it == '"' && *(it - 1) != '\\' )
+    {
+      outOfQuotes = !outOfQuotes;
+    }
+    else if( outOfQuotes && *it == '>' )
+    {
+      return it - xmlBuffer.cbegin();
+    }
+  }
+  return string::npos;
+}
+size_t findAttribute( string const & attName, string const & xmlBuffer, size_t const tagBegin, size_t const tagEnd )
+{
+  if( !attName.empty())
+  {
+    size_t searchStart = tagBegin;
+    try
+    {
+      std::smatch m;
+      // we search for a string which is the attribute name followed by an '=', eventually separated by spaces
+      if( std::regex_search( xmlBuffer.cbegin() + searchStart, xmlBuffer.cbegin() + tagEnd,
+                             m, std::regex( attName + "\\s*=\\s*\"" )))
+      {
+        size_t candidatePos = m.position() + searchStart;
+        string previousString = xmlBuffer.substr( tagBegin, candidatePos - tagBegin );
+        // we must be out of value surrounding quotes: the number of previous quotes '"' should be even (ignoring the inner quotes preceded
+        // by '\\')
+        size_t surroundingQuotesCount = 0;
+        size_t quotePos = 0;
+        while((quotePos = previousString.find( '"', quotePos + 1 )) != string::npos )
+        {
+          if( previousString[quotePos - 1] != '\\' )
+            ++surroundingQuotesCount;
+        }
+
+        if(((surroundingQuotesCount % 1) == 0))
+        {
+          return candidatePos;
+        }
+        searchStart = candidatePos + attName.size();
+      }
+    }
+    catch( std::regex_error const & )
+    {}
+  }
+  return xmlDocument::npos;
+}
+
 xmlAttributePos xmlNodePos::getAttributeLine( string const & attName ) const
 {
   string const * buffer = document.getOriginalBuffer( filePath );
-  size_t tagEnd = xmlDocument::npos;
-  size_t attOffset = xmlDocument::npos;
-  size_t attLine = xmlDocument::npos;
-  size_t attOffsetInLine = xmlDocument::npos;
+  size_t attOffset = offset;
+  size_t attLine = line;
+  size_t attOffsetInLine = offsetInLine;
 
   if( isFound() && buffer != nullptr && offset < buffer->size() )
   {
-    tagEnd = buffer->find( '>', offset );
+    size_t tagEnd = findTagEnd( *buffer, offset );
     if( tagEnd != string::npos )
     {
-      std::smatch m;
-      try
+      attOffset = findAttribute( attName, *buffer, offset, tagEnd );
+      if( attOffset != string::npos )
       {
-        // we search for a string which is the attribute name followed by an '=', eventually separated by spaces
-        if( std::regex_search( buffer->cbegin() + offset, buffer->cbegin() + tagEnd,
-                               m, std::regex( attName + "\\s*=" ) ) )
-        {
-          attOffset = m.position() + offset;
-          attLine = line + std::count( buffer->cbegin() + offset, buffer->cbegin() + attOffset, '\n' );
-          attOffsetInLine = attOffset - buffer->rfind( '\n', attOffset );
-        }
-      } catch( std::regex_error const & e )
-      { }
+        attLine = line + std::count( buffer->cbegin() + offset, buffer->cbegin() + attOffset, '\n' );
+        attOffsetInLine = attOffset - buffer->rfind( '\n', attOffset );
+      }
     }
   }
 
