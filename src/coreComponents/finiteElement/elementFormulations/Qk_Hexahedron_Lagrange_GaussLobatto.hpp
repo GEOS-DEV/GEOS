@@ -1078,8 +1078,13 @@ computeBxyMatrix( int const qa,
   B[5] = detJ*(Jinv[0][0]*Jinv[1][0] + Jinv[0][1]*Jinv[1][1]);
 }
 
-
-// Compute Grad(Phi) B Grad(Phi) coefficient
+/**
+ * @brief Computes the "Grad(Phi)*B*Grad(Phi)" coefficient of the stiffness term. The matrix B (usually equal to J^{-T} J^{-1}/det(J)) must be provided and Phi denotes a basis function.
+ * @param qa The 1d quadrature point index in xi0 direction (0,1)
+ * @param qb The 1d quadrature point index in xi1 direction (0,1)
+ * @param qc The 1d quadrature point index in xi2 direction (0,1)
+ * @param B Array to store the matrix B, in Voigt notation
+ */
 template< typename GL_BASIS >
 template< typename FUNC >
 GEOS_HOST_DEVICE
@@ -1167,8 +1172,12 @@ computeGradPhiBGradPhi( int qa,
     }
   }
 }
-// same as computeStiffnessTerm BUT use Bxy matrix instead of B.
-// The rest is litterally a copy/paste...
+
+/**
+ * @brief Computes partial-stiffness term with nabla_xy=[dx, dy, 0] at control point. Instead of the B matrix (=J^{-T} J^{-1}/det(J)), it uses B_xy=J^{-T} A_xy J^{-1}/det(J), computed by computeBxyMatrix. 
+ * @param q Integer index of the control point
+ * @param X Array containing the coordinates of the support points.
+ */
 template< typename GL_BASIS >
 template< typename FUNC >
 GEOS_HOST_DEVICE
@@ -1187,9 +1196,11 @@ computeStiffnessxyTerm( int q,
   computeGradPhiBGradPhi(qa,qb,qc, B, func );
 }
 
-
-// same as computeStiffnessTerm BUT use Bz matrix instead of B.
-// The rest is litterally a copy/paste...
+/**
+ * @brief Computes partial-stiffness term with nabla_z=[0, 0, dz] at control point. Instead of the B matrix (=J^{-T} J^{-1}/det(J)), it uses B_z=J^{-T} A_z J^{-1}/det(J), computed by computeBzMatrix. 
+ * @param q Integer index of the control point
+ * @param X Array containing the coordinates of the support points.
+ */
 template< typename GL_BASIS >
 template< typename FUNC >
 GEOS_HOST_DEVICE
@@ -1208,6 +1219,11 @@ computeStiffnesszTerm( int q,
   computeGradPhiBGradPhi(qa,qb,qc, B, func );
 }
 
+/**
+ * @brief Computes the stiffness term at control point
+ * @param q index of the control point
+ * @param X Array containing the coordinates of the support points.
+ */
 
 template< typename GL_BASIS >
 template< typename FUNC >
@@ -1388,8 +1404,6 @@ computeFirstOrderStiffnessTerm( int q,
             1 );
     }
   }
-
-
 
   for( int i=0; i<num1dNodes; i++ )
   {
