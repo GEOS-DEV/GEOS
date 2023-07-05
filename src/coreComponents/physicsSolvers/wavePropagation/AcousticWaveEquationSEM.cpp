@@ -969,7 +969,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
           p_np1[a] *= 2.0*mass[a];
           p_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
           p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
-          p_np1[a] /= mass[a]+0.5*dt*damping[a];
+          if (std::abs(mass[a]) > epsilonLoc) p_np1[a] /= mass[a]+0.5*dt*damping[a];
         }
       } );
     }

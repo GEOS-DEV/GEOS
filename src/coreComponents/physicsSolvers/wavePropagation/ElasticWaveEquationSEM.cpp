@@ -758,21 +758,22 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     {
       if( freeSurfaceNodeIndicator[a] != 1 )
       {
+        // std::cout << mass[a]  << ' ' <<  mass[a]+0.5*dt*dampingx[a] <<  mass[a]+0.5*dt*dampingz[a] << std::endl;
         ux_np1[a] = ux_n[a];
         ux_np1[a] *= 2.0*mass[a];
         ux_np1[a] -= (mass[a]-0.5*dt*dampingx[a])*ux_nm1[a];
         ux_np1[a] += dt2*(rhsx[a]-stiffnessVectorx[a]);
-        ux_np1[a] /= mass[a]+0.5*dt*dampingx[a];
+        if (std::abs(mass[a]) > epsilonLoc) ux_np1[a] /= mass[a]+0.5*dt*dampingx[a];
         uy_np1[a] = uy_n[a];
         uy_np1[a] *= 2.0*mass[a];
         uy_np1[a] -= (mass[a]-0.5*dt*dampingy[a])*uy_nm1[a];
         uy_np1[a] += dt2*(rhsy[a]-stiffnessVectory[a]);
-        uy_np1[a] /= mass[a]+0.5*dt*dampingy[a];
+        if (std::abs(mass[a]) > epsilonLoc) uy_np1[a] /= mass[a]+0.5*dt*dampingy[a];
         uz_np1[a] = uz_n[a];
         uz_np1[a] *= 2.0*mass[a];
         uz_np1[a] -= (mass[a]-0.5*dt*dampingz[a])*uz_nm1[a];
         uz_np1[a] += dt2*(rhsz[a]-stiffnessVectorz[a]);
-        uz_np1[a] /= mass[a]+0.5*dt*dampingz[a];
+        if (std::abs(mass[a]) > epsilonLoc) uz_np1[a] /= mass[a]+0.5*dt*dampingz[a];
       }
     } );
 

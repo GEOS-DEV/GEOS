@@ -7,14 +7,6 @@
       acousticSolverName="acousticSolver"
       elasticSolverName="elasticSolver"
       targetRegions="{ Solid, Fluid }"/>
-    <ElasticSEM
-      name="elasticSolver"
-      cflFactor="0.25"
-      targetRegions="{ Solid }"
-      sourceCoordinates="{ }"
-      timeSourceFrequency="0"
-      receiverCoordinates="{ }"
-      discretization="FE1"/>
     <AcousticSEM
       name="acousticSolver"
       cflFactor="0.25"
@@ -24,13 +16,21 @@
       timeSourceFrequency="5"
       receiverCoordinates="{ { 3752.29351, 2400, 2933.3333 } }"
       rickerOrder="3"/>
+    <ElasticSEM
+      name="elasticSolver"
+      cflFactor="0.25"
+      targetRegions="{ Solid }"
+      sourceCoordinates="{ }"
+      timeSourceFrequency="0"
+      receiverCoordinates="{ }"
+      discretization="FE1"/>
   </Solvers>
 
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        order="5"
+        order="3"
         formulation="SEM"/>
     </FiniteElements>
   </NumericalMethods>
@@ -51,7 +51,7 @@
   </Constitutive>
 
   <Mesh>
-     <VTKMesh  
+    <VTKMesh  
       name="Bilayer"
       fieldsToImport="{ mediumVelocity,mediumVelocityVp,mediumVelocityVs,mediumDensity }"    
       fieldNamesInGEOSX="{ mediumVelocity,mediumVelocityVp,mediumVelocityVs,mediumDensity }"
@@ -63,8 +63,11 @@
 
   </FieldSpecifications>
 
-  <Events maxTime="0.2">
+  <Outputs>
+    <VTK name="vtkOutput"/>
+  </Outputs>
 
+  <Events maxTime="0.2">
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solidSolverApplications"
@@ -74,6 +77,13 @@
       name="fluidSolverApplications"
       forceDt="4.2e-4"
       target="/Solvers/acousticSolver"/>
+    <!-- output -->
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="20.0"
+      targetExactTimestep="0"
+      target="/Outputs/vtkOutput">
+    </PeriodicEvent>
   </Events>
 
 </Problem>
