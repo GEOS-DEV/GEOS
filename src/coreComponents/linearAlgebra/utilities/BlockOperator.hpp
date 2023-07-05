@@ -16,12 +16,12 @@
  * @file BlockOperator.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_UTILITIES_BLOCKOPERATOR_HPP_
-#define GEOSX_LINEARALGEBRA_UTILITIES_BLOCKOPERATOR_HPP_
+#ifndef GEOS_LINEARALGEBRA_UTILITIES_BLOCKOPERATOR_HPP_
+#define GEOS_LINEARALGEBRA_UTILITIES_BLOCKOPERATOR_HPP_
 
 #include "linearAlgebra/utilities/BlockOperatorView.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -87,8 +87,8 @@ BlockOperator< VECTOR, OPERATOR >::BlockOperator( localIndex const nRows, localI
 template< typename VECTOR, typename OPERATOR >
 void BlockOperator< VECTOR, OPERATOR >::setPointers()
 {
-  GEOSX_LAI_ASSERT_EQ( this->numBlockRows(), m_operatorStorage.size( 0 ) );
-  GEOSX_LAI_ASSERT_EQ( this->numBlockCols(), m_operatorStorage.size( 1 ) );
+  GEOS_LAI_ASSERT_EQ( this->numBlockRows(), m_operatorStorage.size( 0 ) );
+  GEOS_LAI_ASSERT_EQ( this->numBlockCols(), m_operatorStorage.size( 1 ) );
   for( localIndex i = 0; i < m_operatorStorage.size( 0 ); ++i )
   {
     for( localIndex j = 0; j < m_operatorStorage.size( 1 ); ++j )
@@ -114,6 +114,6 @@ BlockOperator< VECTOR, OPERATOR >::BlockOperator( BlockOperator && rhs )
   setPointers();
 }
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_UTILITIES_BLOCKOPERATOR_HPP_
+#endif //GEOS_LINEARALGEBRA_UTILITIES_BLOCKOPERATOR_HPP_

@@ -18,7 +18,7 @@
 
 #include "FunctionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 FunctionManager * FunctionManager::m_instance = nullptr;
@@ -32,27 +32,27 @@ FunctionManager::FunctionManager( const string & name,
 {
   setInputFlags( InputFlags::OPTIONAL );
 
-  GEOSX_ERROR_IF( m_instance != nullptr, "Only one FunctionManager can exist at a time." );
+  GEOS_ERROR_IF( m_instance != nullptr, "Only one FunctionManager can exist at a time." );
   m_instance = this;
 }
 
 FunctionManager::~FunctionManager()
 {
-  GEOSX_ERROR_IF( m_instance != this, "m_instance != this should not be possible." );
+  GEOS_ERROR_IF( m_instance != this, "m_instance != this should not be possible." );
   m_instance = nullptr;
 }
 
 FunctionManager & FunctionManager::getInstance()
 {
-  GEOSX_ERROR_IF( m_instance == nullptr,
-                  "FunctionManager has not been constructed, or is already been destructed." );
+  GEOS_ERROR_IF( m_instance == nullptr,
+                 "FunctionManager has not been constructed, or is already been destructed." );
   return *m_instance;
 }
 
 Group * FunctionManager::createChild( string const & functionCatalogKey,
                                       string const & functionName )
 {
-  GEOSX_LOG_RANK_0( "   " << functionCatalogKey << ": " << functionName );
+  GEOS_LOG_RANK_0( "   " << functionCatalogKey << ": " << functionName );
   std::unique_ptr< FunctionBase > function = FunctionBase::CatalogInterface::factory( functionCatalogKey, functionName, this );
   return &this->registerGroup< FunctionBase >( functionName, std::move( function ) );
 }
@@ -67,4 +67,4 @@ void FunctionManager::expandObjectCatalogs()
   }
 }
 
-} // end of namespace geosx
+} // end of namespace geos

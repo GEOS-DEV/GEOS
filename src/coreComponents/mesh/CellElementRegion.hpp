@@ -16,12 +16,12 @@
  * @file CellElementRegion.hpp
  */
 
-#ifndef GEOSX_MESH_CELLELEMENTREGION_HPP_
-#define GEOSX_MESH_CELLELEMENTREGION_HPP_
+#ifndef GEOS_MESH_CELLELEMENTREGION_HPP_
+#define GEOS_MESH_CELLELEMENTREGION_HPP_
 
 #include "ElementRegionBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -113,7 +113,7 @@ public:
     }
   }
 
-  virtual void generateMesh( Group & cellBlocks ) override;
+  virtual void generateMesh( Group const & cellBlocks ) override;
 
   ///@}
 
@@ -141,6 +141,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_CELLELEMENTREGION_HPP_ */
+#endif /* GEOS_MESH_CELLELEMENTREGION_HPP_ */

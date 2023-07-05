@@ -16,12 +16,12 @@
  * @file EmbeddedSurfaceToCellStencil.hpp
  */
 
-#ifndef GEOSX_FINITEVOLUME_EMBEDDEDSURFACETOCELLSTENCIL_HPP_
-#define GEOSX_FINITEVOLUME_EMBEDDEDSURFACETOCELLSTENCIL_HPP_
+#ifndef GEOS_FINITEVOLUME_EMBEDDEDSURFACETOCELLSTENCIL_HPP_
+#define GEOS_FINITEVOLUME_EMBEDDEDSURFACETOCELLSTENCIL_HPP_
 
 #include "StencilBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -61,11 +61,11 @@ public:
    * @param[in] index the index of which the stencil size is request
    * @return The number of stencil entries for the provided index
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   constexpr localIndex stencilSize( localIndex const index ) const
   {
-    GEOSX_UNUSED_VAR( index );
+    GEOS_UNUSED_VAR( index );
     return maxStencilSize;
   }
 
@@ -74,11 +74,11 @@ public:
    * @param[in] index of the stencil entry for which to query the size
    * @return the number of points.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   constexpr localIndex numPointsInFlux( localIndex const index ) const
   {
-    GEOSX_UNUSED_VAR( index );
+    GEOS_UNUSED_VAR( index );
     return maxNumPointsInFlux;
   }
 
@@ -90,7 +90,7 @@ public:
    * @param[out] weight view weights
    * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeWeights( localIndex const iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
                        CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
@@ -105,7 +105,7 @@ public:
    * @param[out] weight view weights
    * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeWeights( localIndex iconn,
                        real64 ( &weight )[1][2],
                        real64 ( &dWeight_dVar )[1][2] ) const;
@@ -120,7 +120,7 @@ public:
    * @param[out] dWeight_dVar1 derivative of the weigths w.r.t to the variable 1
    * @param[out] dWeight_dVar2 derivative of the weigths w.r.t to the variable 2
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeWeights( localIndex const iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
                        CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar1,
@@ -134,10 +134,10 @@ public:
    * @param[in] iconn connection index
    * @param[out] stabilizationWeight view weights
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeStabilizationWeights( localIndex iconn,
                                     real64 ( & stabilizationWeight )[1][2] ) const
-  { GEOSX_UNUSED_VAR( iconn, stabilizationWeight ); }
+  { GEOS_UNUSED_VAR( iconn, stabilizationWeight ); }
 
 };
 
@@ -180,7 +180,7 @@ public:
    */
   constexpr localIndex stencilSize( localIndex const index ) const
   {
-    GEOSX_UNUSED_VAR( index );
+    GEOS_UNUSED_VAR( index );
     return maxStencilSize;
   }
 
@@ -188,7 +188,7 @@ private:
 
 };
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 EmbeddedSurfaceToCellStencilWrapper::
   computeWeights( localIndex iconn,
@@ -205,8 +205,12 @@ EmbeddedSurfaceToCellStencilWrapper::
   localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
   localIndex const ei1  =  m_elementIndices[iconn][1];
 
+  // DFM does not use fracture permeability but here it is used
+  // we impose t1 = t0 to be consistent with DFM implementation for comparison
+  // TODO add the contribution of fracture for both DFM and EDFM
   real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( coefficient[er0][esr0][ei0][0] );
-  real64 const t1 = m_weights[iconn][1] * LvArray::tensorOps::l2Norm< 3 >( coefficient[er1][esr1][ei1][0] );
+  // real64 const t1 = m_weights[iconn][1] * LvArray::tensorOps::l2Norm< 3 >( coefficient[er1][esr1][ei1][0] );
+  real64 const t1 = t0;
 
   real64 const sumOfTrans = t0+t1;
   real64 const value = t0*t1/sumOfTrans;
@@ -217,19 +221,25 @@ EmbeddedSurfaceToCellStencilWrapper::
   real64 const dt0 = m_weights[iconn][0] * dCoeff_dVar[er0][esr0][ei0][0][0];
   real64 const dt1 = m_weights[iconn][1] * dCoeff_dVar[er1][esr1][ei1][0][0];
 
-  dWeight_dVar[0][0] = ( dt0 * t1 * sumOfTrans - dt0 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
-  dWeight_dVar[0][1] = ( t0 * dt1 * sumOfTrans - dt1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+  // We impose the value to zero for consistency with DFM
+  // TODO Add the contribution of derivative to DFM and EDFM
+  dWeight_dVar[0][0] = 0 * ( dt0 * t1 * sumOfTrans - dt0 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+  dWeight_dVar[0][1] = 0 * ( t0 * dt1 * sumOfTrans - dt1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 EmbeddedSurfaceToCellStencilWrapper::
   computeWeights( localIndex iconn,
                   real64 ( & weight )[1][2],
                   real64 ( & dWeight_dVar )[1][2] ) const
 {
+  // DFM does not use fracture permeability but here it is used
+  // we impose t1 = t0 to be consistent with DFM implementation for comparison
+  // TODO add the contribution of fracture for both DFM and EDFM
   real64 const t0 = m_weights[iconn][0];
-  real64 const t1 = m_weights[iconn][1];
+  // real64 const t1 = m_weights[iconn][1];
+  real64 const t1 = t0;
 
   real64 const sumOfTrans = t0+t1;
   real64 const value = t0*t1/sumOfTrans;
@@ -240,11 +250,13 @@ EmbeddedSurfaceToCellStencilWrapper::
   real64 const dt0 = m_weights[iconn][0];
   real64 const dt1 = m_weights[iconn][1];
 
-  dWeight_dVar[0][0] = ( dt0 * t1 * sumOfTrans - dt0 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
-  dWeight_dVar[0][1] = ( t0 * dt1 * sumOfTrans - dt1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+  // We impose the value to zero for consistency with DFM
+  // TODO Add the contribution of derivative to DFM and EDFM
+  dWeight_dVar[0][0] = 0 * ( dt0 * t1 * sumOfTrans - dt0 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+  dWeight_dVar[0][1] = 0 * ( t0 * dt1 * sumOfTrans - dt1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 EmbeddedSurfaceToCellStencilWrapper::
   computeWeights( localIndex iconn,
@@ -263,8 +275,12 @@ EmbeddedSurfaceToCellStencilWrapper::
   localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
   localIndex const ei1  =  m_elementIndices[iconn][1];
 
+  // DFM does not use fracture permeability but here it is used
+  // we impose t1 = t0 to be consistent with DFM implementation for comparison
+  // TODO add the contribution of fracture for both DFM and EDFM
   real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( coefficient[er0][esr0][ei0][0] );
-  real64 const t1 = m_weights[iconn][1] * LvArray::tensorOps::l2Norm< 3 >( coefficient[er1][esr1][ei1][0] );
+  // real64 const t1 = m_weights[iconn][1] * LvArray::tensorOps::l2Norm< 3 >( coefficient[er1][esr1][ei1][0] );
+  real64 const t1 = t0;
 
   real64 const sumOfTrans = t0+t1;
   real64 const value = t0*t1/sumOfTrans;
@@ -277,12 +293,14 @@ EmbeddedSurfaceToCellStencilWrapper::
   real64 const dt0_dVar2 = m_weights[iconn][0] * dCoeff_dVar2[er0][esr0][ei0][0][0];
   real64 const dt1_dVar2 = m_weights[iconn][1] * dCoeff_dVar2[er1][esr1][ei1][0][0];
 
-  dWeight_dVar1[0][0] = ( dt0_dVar1 * t1 * sumOfTrans - dt0_dVar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
-  dWeight_dVar1[0][1] = ( t0 * dt1_dVar1 * sumOfTrans - dt1_dVar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+  // We impose the value to zero for consistency with DFM
+  // TODO Add the contribution of derivative to DFM and EDFM
+  dWeight_dVar1[0][0] = 0 * ( dt0_dVar1 * t1 * sumOfTrans - dt0_dVar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+  dWeight_dVar1[0][1] = 0 * ( t0 * dt1_dVar1 * sumOfTrans - dt1_dVar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
 
-  dWeight_dVar2[0][0] = ( dt0_dVar2 * t1 * sumOfTrans - dt0_dVar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
-  dWeight_dVar2[0][1] = ( t0 * dt1_dVar2 * sumOfTrans - dt1_dVar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+  dWeight_dVar2[0][0] = 0 * ( dt0_dVar2 * t1 * sumOfTrans - dt0_dVar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+  dWeight_dVar2[0][1] = 0 * ( t0 * dt1_dVar2 * sumOfTrans - dt1_dVar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
 }
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FINITEVOLUME_EMBEDDEDSURFACETOCELLSTENCIL_HPP_ */
+#endif /* GEOS_FINITEVOLUME_EMBEDDEDSURFACETOCELLSTENCIL_HPP_ */

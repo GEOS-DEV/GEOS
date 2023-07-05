@@ -16,14 +16,14 @@
  * @file MimeticInnerProductBase.hpp
  */
 
-#ifndef GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTBASE_HPP_
-#define GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTBASE_HPP_
+#ifndef GEOS_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTBASE_HPP_
+#define GEOS_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTBASE_HPP_
 
 #include "codingUtilities/Utilities.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductHelpers.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace mimeticInnerProduct
 {
@@ -83,7 +83,7 @@ public:
    * When tParam = 6, we obtain the quasi-Raviart-Thomas inner product
    */
   template< localIndex NF >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   computeParametricInnerProduct( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                                  arrayView1d< real64 const > const & transMultiplier,
@@ -99,7 +99,7 @@ public:
 };
 
 template< localIndex NF >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 MimeticInnerProductBase::computeParametricInnerProduct( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                                                         arrayView1d< real64 const > const & transMultiplier,
@@ -223,6 +223,6 @@ MimeticInnerProductBase::computeParametricInnerProduct( arrayView2d< real64 cons
 
 } // end namespace mimeticInnerProduct
 
-} // end namespace geosx
+} // end namespace geos
 
-#endif //GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTBASE_HPP_
+#endif //GEOS_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTBASE_HPP_

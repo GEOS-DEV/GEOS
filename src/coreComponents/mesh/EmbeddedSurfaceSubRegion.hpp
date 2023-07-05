@@ -16,8 +16,8 @@
  * @file EmbeddedSurfaceSubRegion.hpp
  */
 
-#ifndef GEOSX_MESH_EMBEDDEDSURFACESUBREGION_HPP_
-#define GEOSX_MESH_EMBEDDEDSURFACESUBREGION_HPP_
+#ifndef GEOS_MESH_EMBEDDEDSURFACESUBREGION_HPP_
+#define GEOS_MESH_EMBEDDEDSURFACESUBREGION_HPP_
 
 #include "SurfaceElementSubRegion.hpp"
 #include "InterObjectRelation.hpp"
@@ -25,9 +25,10 @@
 #include "EdgeManager.hpp"
 #include "EmbeddedSurfaceNodeManager.hpp"
 #include "CellElementSubRegion.hpp"
-#include "simpleGeometricObjects/BoundedPlane.hpp"
+//Do we really need this include Rectangle?
+#include "simpleGeometricObjects/Rectangle.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -142,7 +143,7 @@ public:
                               EmbeddedSurfaceNodeManager & embSurfNodeManager,
                               EdgeManager const & edgeManager,
                               FixedOneToManyRelation const & cellToEdges,
-                              BoundedPlane const * fracture );
+                              PlanarGeometricObject const * fracture );
 
   /**
    * @brief inherit ghost rank from cell elements.
@@ -316,6 +317,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_EMBEDDEDSURFACESUBREGION_HPP_ */
+#endif /* GEOS_MESH_EMBEDDEDSURFACESUBREGION_HPP_ */

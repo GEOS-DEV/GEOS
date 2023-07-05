@@ -16,15 +16,15 @@
  * @file IsothermalCompositionalMultiphaseBaseKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
-#include "constitutive/fluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "functions/TableFunction.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/ObjectManagerBase.hpp"
@@ -33,7 +33,7 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/SolverBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace isothermalCompositionalMultiphaseBaseKernels
@@ -70,7 +70,7 @@ public:
   launch( localIndex const numElems,
           KERNEL_TYPE const & kernelComponent )
   {
-    forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       kernelComponent.compute( ei );
     } );
@@ -88,7 +88,7 @@ public:
   launch( SortedArrayView< localIndex const > const & targetSet,
           KERNEL_TYPE const & kernelComponent )
   {
-    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const ei = targetSet[ i ];
       kernelComponent.compute( ei );
@@ -118,7 +118,7 @@ void kernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
     case 5:
     { lambda( std::integral_constant< T, 5 >() ); return; }
     default:
-    { GEOSX_ERROR( "Unsupported number of components: " << value ); }
+    { GEOS_ERROR( "Unsupported number of components: " << value ); }
   }
 }
 
@@ -159,7 +159,7 @@ public:
    * @param[in] phaseVolFractionKernelOp the function used to customize the kernel
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( localIndex const ei,
                 FUNC && compFractionKernelOp = NoOpFunc{} ) const
   {
@@ -277,7 +277,7 @@ public:
    * @param[in] phaseVolFractionKernelOp the function used to customize the kernel
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( localIndex const ei,
                 FUNC && phaseVolFractionKernelOp = NoOpFunc{} ) const
   {
@@ -429,7 +429,7 @@ struct RelativePermeabilityUpdateKernel
           RELPERM_WRAPPER const & relPermWrapper,
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex q = 0; q < relPermWrapper.numGauss(); ++q )
       {
@@ -444,7 +444,7 @@ struct RelativePermeabilityUpdateKernel
           RELPERM_WRAPPER const & relPermWrapper,
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac )
   {
-    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < relPermWrapper.numGauss(); ++q )
@@ -465,7 +465,7 @@ struct CapillaryPressureUpdateKernel
           CAPPRES_WRAPPER const & capPresWrapper,
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex q = 0; q < capPresWrapper.numGauss(); ++q )
       {
@@ -480,7 +480,7 @@ struct CapillaryPressureUpdateKernel
           CAPPRES_WRAPPER const & capPresWrapper,
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac )
   {
-    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < capPresWrapper.numGauss(); ++q )
@@ -594,7 +594,7 @@ public:
    * @param[in] ei the element index
    * @return the ghost rank of the element
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   integer elemGhostRank( localIndex const ei ) const
   { return m_elemGhostRank( ei ); }
 
@@ -604,7 +604,7 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const ei,
               StackVariables & stack ) const
   {
@@ -629,7 +629,7 @@ public:
    * @param[in] phaseAmountKernelOp the function used to customize the kernel
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeAccumulation( localIndex const ei,
                             StackVariables & stack,
                             FUNC && phaseAmountKernelOp = NoOpFunc{} ) const
@@ -716,7 +716,7 @@ public:
    * @param[in] phaseVolFractionSumKernelOp the function used to customize the kernel
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeVolumeBalance( localIndex const ei,
                              StackVariables & stack,
                              FUNC && phaseVolFractionSumKernelOp = NoOpFunc{} ) const
@@ -758,8 +758,8 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
-  void complete( localIndex const GEOSX_UNUSED_PARAM( ei ),
+  GEOS_HOST_DEVICE
+  void complete( localIndex const GEOS_UNUSED_PARAM( ei ),
                  StackVariables & stack ) const
   {
     using namespace compositionalMultiphaseUtilities;
@@ -795,9 +795,9 @@ public:
   launch( localIndex const numElems,
           KERNEL_TYPE const & kernelComponent )
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
-    forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( kernelComponent.elemGhostRank( ei ) >= 0 )
       {
@@ -959,7 +959,7 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void setup( localIndex const ei,
                       StackVariables & stack ) const
   {
@@ -974,7 +974,7 @@ public:
    * @param[in] i the looping index of the element/node/face
    * @return the ghost rank of the element/node/face
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   integer ghostRank( localIndex const i ) const
   { return m_ghostRank( i ); }
 
@@ -984,7 +984,7 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] kernelOp the function used to customize the kernel
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void compute( localIndex const ei,
                         StackVariables & stack ) const = 0;
 
@@ -1001,7 +1001,7 @@ public:
           KERNEL_TYPE const & kernelComponent )
   {
     RAJA::ReduceMin< ReducePolicy< POLICY >, TYPE > minVal( 1 );
-    forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( kernelComponent.ghostRank( ei ) >= 0 )
       {
@@ -1089,7 +1089,7 @@ public:
     m_maxCompFracChange( maxCompFracChange )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void compute( localIndex const ei,
                         StackVariables & stack ) const override
   {
@@ -1104,7 +1104,7 @@ public:
    * @param[in] kernelOp the function used to customize the kernel
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeScalingFactor( localIndex const ei,
                              StackVariables & stack,
                              FUNC && kernelOp = NoOpFunc{} ) const
@@ -1259,7 +1259,7 @@ public:
     m_scalingFactor( scalingFactor )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void compute( localIndex const ei,
                         StackVariables & stack ) const override
   {
@@ -1274,7 +1274,7 @@ public:
    * @param[in] kernelOp the function used to customize the kernel
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeSolutionCheck( localIndex const ei,
                              StackVariables & stack,
                              FUNC && kernelOp = NoOpFunc{} ) const
@@ -1398,7 +1398,7 @@ public:
     m_totalDens_n( fluid.totalDensity_n() )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const ei,
                             LinfStackVariables & stack ) const override
   {
@@ -1426,7 +1426,7 @@ public:
     }
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeL2( localIndex const ei,
                           L2StackVariables & stack ) const override
   {
@@ -1528,7 +1528,7 @@ struct StatisticsKernel
                      arrayView1d< real64 const > const & initPres,
                      arrayView1d< real64 > const & deltaPres )
   {
-    forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       deltaPres[ei] = pres[ei] - initPres[ei];
     } );
@@ -1609,7 +1609,7 @@ struct StatisticsKernel
                                              phaseMass,
                                              trappedPhaseMass,
                                              immobilePhaseMass,
-                                             dissolvedComponentMass] GEOSX_HOST_DEVICE ( localIndex const ei )
+                                             dissolvedComponentMass] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( elemGhostRank[ei] >= 0 )
       {
@@ -1666,7 +1666,7 @@ struct StatisticsKernel
     // dummy loop to bring data back to the CPU
     forAll< serialPolicy >( 1, [phaseDynamicPoreVol, phaseMass, trappedPhaseMass, immobilePhaseMass, dissolvedComponentMass] ( localIndex const )
     {
-      GEOSX_UNUSED_VAR( phaseDynamicPoreVol, phaseMass, trappedPhaseMass, immobilePhaseMass, dissolvedComponentMass );
+      GEOS_UNUSED_VAR( phaseDynamicPoreVol, phaseMass, trappedPhaseMass, immobilePhaseMass, dissolvedComponentMass );
     } );
   }
 };
@@ -2016,13 +2016,13 @@ void KernelLaunchSelector2( integer const numComp, integer const numPhase, ARGS 
   }
   else
   {
-    GEOSX_ERROR( "Unsupported number of phases: " << numPhase );
+    GEOS_ERROR( "Unsupported number of phases: " << numPhase );
   }
 }
 
 } // namespace isothermalCompositionalMultiphaseBaseKernels
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP

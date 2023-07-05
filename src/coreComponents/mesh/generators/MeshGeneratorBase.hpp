@@ -16,21 +16,26 @@
  * @file MeshGeneratorBase.hpp
  */
 
-#ifndef GEOSX_MESH_GENERATORS_MESHGENERATORBASE_HPP
-#define GEOSX_MESH_GENERATORS_MESHGENERATORBASE_HPP
+#ifndef GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
+#define GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
+
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "mesh/generators/CellBlockManagerABC.hpp"
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/WrapperBase.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 
-namespace geosx
+
+namespace geos
 {
 
-namespace dataRepository
-{}
-
-class DomainPartition;
+// This forward declaration prevents from exposing the internals of the module,
+// which are only accessed through some private functions signatures.
+// In order to avoid this forward declaration, we could expose an ABC
+// instead of exposing the MeshGeneratorBase implementation.
+class CellBlockManager;
 
 /**
  *  @class MeshGeneratorBase
@@ -55,6 +60,9 @@ public:
    */
   static string catalogName() { return "MeshGeneratorBase"; }
 
+  /// This function is used to expand any catalogs in the data structure
+  virtual void expandObjectCatalogs() override;
+
   /// using alias for templated Catalog meshGenerator type
   using CatalogInterface = dataRepository::CatalogInterface< MeshGeneratorBase, string const &, Group * const >;
 
@@ -74,18 +82,35 @@ public:
 
   /**
    * @brief Generate the mesh object the input mesh object.
-   * @param[in] domain the domain partition from which to construct the mesh object
+   * @param parent The parent group of the CellBlockManager.
+   * @param[in] partition Number of domaoins in each dimesion (X,Y,Z)
+   * @return The generated CellBlockManagerABC
    */
-  virtual void generateMesh( DomainPartition & domain ) = 0;
+  CellBlockManagerABC & generateMesh( Group & parent, array1d< int > const & partition );
 
   /**
-   * @brief import fields from the mesh  on the array accessible via the given wrapper.
-   * @param cellBlockName name of the cell block to copy data from.
+   * @brief Describe which kind of block must be considered.
+   */
+  enum struct Block
+  {
+    VOLUMIC,
+    SURFACIC,
+    LINEIC
+  };
+
+  /**
+   * @brief import field from the mesh on the array accessible via the given wrapper.
+   * @param block Type of block to import from.
+   * @param blockName name of the block to copy data from.
    * @param meshFieldName name of the field in the meshd
    * @param isMaterialField Indicate if we want to import material or regular fields
    * @param wrapper Wrapper to access the array
    */
-  virtual void importFieldsOnArray( string const & cellBlockName, string const & meshFieldName, bool isMaterialField, dataRepository::WrapperBase & wrapper ) const = 0;
+  virtual void importFieldOnArray( Block block,
+                                   string const & blockName,
+                                   string const & meshFieldName,
+                                   bool isMaterialField,
+                                   dataRepository::WrapperBase & wrapper ) const = 0;
 
   /**
    * @brief Free internal resources associated with mesh/data import.
@@ -96,15 +121,44 @@ public:
   virtual void freeResources() {}
 
   /**
-   * @brief Get the name mapping between mesh field names and Internal GEOSX field names.
+   * @brief Get the name mapping between mesh volumic field names and internal GEOSX volumic field names.
    * @return The string to string mapping of field names.
    */
-  std::map< string, string > getFieldsMapping() const { return m_fieldsMapping; }
+  std::map< string, string > const & getVolumicFieldsMapping() const { return m_volumicFields; }
+
+  /**
+   * @brief Get the name mapping between mesh surfacic field names and internal GEOSX surfacic field names.
+   * @return The string to string mapping of field names.
+   */
+  std::map< string, string > const & getSurfacicFieldsMapping() const { return m_surfacicFields; }
+
+  /**
+   * @brief Get the associatied SpatialPartition generated.
+   * @return The generated SpatialPartition
+   */
+  SpatialPartition const & getSpatialPartition() const { return m_spatialPartition; }
 
 protected:
-  /// Mesh to GEOSX field names mapping
-  std::map< string, string > m_fieldsMapping;
+  /// Mapping from volumic field source to GEOSX field.
+  std::map< string, string > m_volumicFields;
+
+  /// Mapping from surfacic field source to GEOSX field.
+  std::map< string, string > m_surfacicFields;
+
+  /// SpatialPartition associated with the mesh
+  SpatialPartition m_spatialPartition;
+
+private:
+  /**
+   * @brief Fill the cellBlockManager object .
+   * @param[inout] cellBlockManager the CellBlockManager that will receive the meshing information
+   * @param[in] partition The number of domains in each dimesion (X,Y,Z)
+   */
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition ) = 0;
+
+  void attachWellInfo( CellBlockManager & cellBlockManager );
+
 };
 }
 
-#endif /* GEOSX_MESH_GENERATORS_MESHGENERATORBASE_HPP */
+#endif /* GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP */

@@ -15,12 +15,12 @@
 /**
  * @file NormalOperator.hpp
  */
-#ifndef GEOSX_LINEARALGEBRA_NORMALOPERATOR_HPP_
-#define GEOSX_LINEARALGEBRA_NORMALOPERATOR_HPP_
+#ifndef GEOS_LINEARALGEBRA_NORMALOPERATOR_HPP_
+#define GEOS_LINEARALGEBRA_NORMALOPERATOR_HPP_
 
 #include "common/LinearOperator.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -113,6 +113,6 @@ private:
   Matrix const & m_matrix;
 };
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_NORMALOPERATOR_HPP_
+#endif //GEOS_LINEARALGEBRA_NORMALOPERATOR_HPP_

@@ -13,13 +13,13 @@
  */
 
 
-#ifndef GEOSX_EVENTS_EVENTMANAGER_HPP_
-#define GEOSX_EVENTS_EVENTMANAGER_HPP_
+#ifndef GEOS_EVENTS_EVENTMANAGER_HPP_
+#define GEOS_EVENTS_EVENTMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "EventBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;
@@ -95,6 +95,9 @@ public:
     static constexpr char const * cycleString() { return "cycle"; }
     static constexpr char const * currentSubEventString() { return "currentSubEvent"; }
 
+    static constexpr char const * timeOutputFormat() { return "timeOutputFormat"; }
+
+
     dataRepository::ViewKey time = { "time" };
     dataRepository::ViewKey dt = { "dt" };
     dataRepository::ViewKey cycle = { "cycle" };
@@ -112,7 +115,34 @@ public:
   /// @copydoc dataRepository::Group::getCatalog()
   static CatalogInterface::CatalogType & getCatalog();
 
+  /// enum class defining the format of the time output in the log
+  enum class TimeOutputFormat : integer
+  {
+    seconds,
+    minutes,
+    hours,
+    days,
+    years,
+    full
+  };
+
+  /// seconds in a minute
+  static constexpr integer MINUTE = 60;
+  /// seconds in a hour
+  static constexpr integer HOUR   = 60 * MINUTE;
+  /// seconds in a day
+  static constexpr integer DAY    = 24 * HOUR;
+  /// seconds in a year
+  static constexpr integer YEAR   = 365 * DAY;
+
 private:
+
+
+  /**
+   * @brief ouput time information to the log
+   *
+   */
+  void outputTime() const;
 
   /// Min time for a simulation
   real64 m_minTime;
@@ -134,9 +164,20 @@ private:
 
   /// Current subevent index
   integer m_currentSubEvent;
+
+  /// time output type
+  TimeOutputFormat m_timeOutputFormat;
 };
 
+/// valid strings fort the time output enum.
+ENUM_STRINGS( EventManager::TimeOutputFormat,
+              "seconds",
+              "minutes",
+              "hours",
+              "days",
+              "years",
+              "full" );
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_EVENTS_EVENTMANAGER_HPP_ */
+#endif /* GEOS_EVENTS_EVENTMANAGER_HPP_ */

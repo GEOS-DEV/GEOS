@@ -16,15 +16,15 @@
  * @file AcousticFirstOrderWaveEquationSEMKernel.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICFIRSTTORDERWAVEEQUATIONSEMKERNEL_HPP_
-#define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICFIRSTTORDERWAVEEQUATIONSEMKERNEL_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICFIRSTTORDERWAVEEQUATIONSEMKERNEL_HPP_
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICFIRSTTORDERWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "WaveSolverUtils.hpp"
 
 
 
-namespace geosx
+namespace geos
 {
 
 /// Namespace to contain the first order acoustic wave kernels.
@@ -66,6 +66,7 @@ struct PrecomputeSourceAndReceiverKernel
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
   launch( localIndex const size,
+          localIndex const regionIndex,
           localIndex const numNodesPerElem,
           localIndex const numFacesPerElem,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
@@ -80,18 +81,20 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView1d< localIndex > const sourceElem,
           arrayView2d< localIndex > const sourceNodeIds,
           arrayView2d< real64 > const sourceConstants,
+          arrayView1d< localIndex > const sourceRegion,
           arrayView2d< real64 const > const receiverCoordinates,
           arrayView1d< localIndex > const receiverIsLocal,
           arrayView1d< localIndex > const rcvElem,
           arrayView2d< localIndex > const receiverNodeIds,
           arrayView2d< real64 > const receiverConstants,
+          arrayView1d< localIndex > const receiverRegion,
           arrayView2d< real32 > const sourceValue,
           real64 const dt,
           real32 const timeSourceFrequency,
           localIndex const rickerOrder )
   {
 
-    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       real64 const center[3] = { elemCenter[k][0],
                                  elemCenter[k][1],
@@ -127,6 +130,7 @@ struct PrecomputeSourceAndReceiverKernel
 
             sourceIsAccessible[isrc] = 1;
             sourceElem[isrc] = k;
+            sourceRegion[isrc] = regionIndex;
             real64 Ntest[FE_TYPE::numNodes];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
@@ -174,6 +178,7 @@ struct PrecomputeSourceAndReceiverKernel
                                                                               coordsOnRefElem );
             receiverIsLocal[ircv] = 1;
             rcvElem[ircv] = k;
+            receiverRegion[ircv] = regionIndex;
 
             real64 Ntest[FE_TYPE::numNodes];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
@@ -221,7 +226,7 @@ struct MassMatrixKernel
           arrayView1d< real32 > const mass )
 
   {
-    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
 
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
@@ -282,7 +287,7 @@ struct DampingMatrixKernel
           arrayView1d< real32 const > const velocity,
           arrayView1d< real32 > const damping )
   {
-    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const f )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
     {
       // face on the domain boundary and not on free surface
       if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
@@ -302,7 +307,7 @@ struct DampingMatrixKernel
         {
           for( localIndex i = 0; i < 3; ++i )
           {
-            xLocal[a][i] = X( facesToNodes( k, a ), i );
+            xLocal[a][i] = X( facesToNodes( f, a ), i );
           }
         }
 
@@ -355,7 +360,7 @@ struct VelocityComputation
           arrayView2d< real32 > const velocity_y,
           arrayView2d< real32 > const velocity_z )
   {
-    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
@@ -443,6 +448,7 @@ struct PressureComputation
    * @tparam EXEC_POLICY the execution policy
    * @tparam ATOMIC_POLICY the atomic policy
    * @param[in] size the number of cells in the subRegion
+   * @param[in] regionIndex Index of the subregion
    * @param[in] size_node the number of nodes in the subRegion
    * @param[in] X coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
@@ -463,6 +469,7 @@ struct PressureComputation
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
+          localIndex const regionIndex,
           localIndex const size_node,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
@@ -475,6 +482,7 @@ struct PressureComputation
           arrayView2d< real32 const > const sourceValue,
           arrayView1d< localIndex const > const sourceIsAccessible,
           arrayView1d< localIndex const > const sourceElem,
+          arrayView1d< localIndex const > const sourceRegion,
           real64 const dt,
           integer const cycleNumber,
           arrayView1d< real32 > const p_np1 )
@@ -482,12 +490,12 @@ struct PressureComputation
   {
 
     //Pre-mult by the first factor for damping
-    forAll< EXEC_POLICY >( size_node, [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< EXEC_POLICY >( size_node, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       p_np1[a] *= 1.0-((dt/2)*(damping[a]/mass[a]));
     } );
 
-    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
@@ -552,7 +560,7 @@ struct PressureComputation
       {
         if( sourceIsAccessible[isrc] == 1 )
         {
-          if( sourceElem[isrc]==k )
+          if( sourceElem[isrc]==k && sourceRegion[isrc] == regionIndex )
           {
             for( localIndex i = 0; i < numNodesPerElem; ++i )
             {
@@ -566,7 +574,7 @@ struct PressureComputation
     } );
 
     //Pre-mult by the first factor for damping
-    forAll< EXEC_POLICY >( size_node, [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< EXEC_POLICY >( size_node, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       p_np1[a] /= 1.0+((dt/2)*(damping[a]/mass[a]));
     } );
@@ -579,6 +587,6 @@ struct PressureComputation
 
 } // namespace AcousticFirstOrderWaveEquationSEMKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_AcousticFirstOrderWaveEquationSEMKERNEL_HPP_
+#endif //GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICFIRSTTORDERWAVEEQUATIONSEMKERNEL_HPP_

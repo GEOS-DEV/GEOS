@@ -14,6 +14,8 @@ Wellbore Problems
    deviatedElasticWellbore/Example
 
    edpWellbore/Example
+
+   dpWellbore/Example
    
    mccWellbore/Example   
 
@@ -28,6 +30,8 @@ Wellbore Problems
    casedThermoElasticWellbore/Example
 
    thermoPoroElasticWellbore/Example
+
+   casedContactElasticWellbore/Example
 
 
 

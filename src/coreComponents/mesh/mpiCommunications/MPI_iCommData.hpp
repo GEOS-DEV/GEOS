@@ -12,14 +12,14 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MESH_MPICOMMUNICATIONS_MPI_ICOMMDATA_HPP_
-#define GEOSX_MESH_MPICOMMUNICATIONS_MPI_ICOMMDATA_HPP_
+#ifndef GEOS_MESH_MPICOMMUNICATIONS_MPI_ICOMMDATA_HPP_
+#define GEOS_MESH_MPICOMMUNICATIONS_MPI_ICOMMDATA_HPP_
 
 #include "CommID.hpp"
 
 #include "mesh/FieldIdentifiers.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -111,6 +111,6 @@ private:
   array1d< MPI_Status >  m_mpiSendBufferSizeStatus;
   array1d< MPI_Status >  m_mpiRecvBufferSizeStatus;
 };
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_MPICOMMUNICATIONS_MPI_ICOMMDATA_HPP_ */
+#endif /* GEOS_MESH_MPICOMMUNICATIONS_MPI_ICOMMDATA_HPP_ */

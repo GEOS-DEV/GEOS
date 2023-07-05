@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef GEOSX_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
-#define GEOSX_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
+#ifndef GEOS_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
+#define GEOS_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "CellElementStencilTPFA.hpp"
@@ -28,8 +28,40 @@
 #include "SurfaceElementStencil.hpp"
 #include "mesh/DomainPartition.hpp"
 
-namespace geosx
+namespace geos
 {
+
+/**
+ * @brief Upwinding scheme.
+ */
+enum class UpwindingScheme : integer
+{
+  PPU,    ///< PPU upwinding
+  C1PPU,  ///< C1-PPU upwinding from https://doi.org/10.1016/j.advwatres.2017.07.028
+  IHU, ///< IHU as in https://link.springer.com/content/pdf/10.1007/s10596-019-09835-6.pdf
+};
+
+/**
+ * @brief Strings for upwinding scheme.
+ */
+ENUM_STRINGS( UpwindingScheme,
+              "PPU",
+              "C1PPU",
+              "IHU");
+
+/**
+ * @struct UpwindingParameters
+ *
+ * Structure to store upwinding parameters, such as upwinding scheme and related tolerances etc.
+ */
+struct UpwindingParameters
+{
+  /// PPU or C1-PPU
+  UpwindingScheme upwindingScheme;
+
+  /// C1-PPU smoothing tolerance
+  //real64 epsC1PPU;
+};
 
 /**
  * @class FluxApproximationBase
@@ -143,8 +175,12 @@ public:
     /// @return The key for fractureStencil
     static constexpr char const * fractureStencilString() { return "fractureStencil"; }
 
-    /// @return The key for upwindSchemeName
-    static constexpr char const * upwindSchemeNameString() { return "upwindSchemeName"; }
+    /// @return The key for upwindingScheme
+    static constexpr char const * upwindingSchemeString() { return "upwindingScheme"; }
+
+    /// @return The key for epsC1PPU
+    //static constexpr char const * epsC1PPUString() { return "epsC1PPU"; }
+
   };
 
   /**
@@ -167,7 +203,7 @@ public:
    * @brief set the name of the field.
    * @param name name of the field to be set.
    */
-  void setFieldName( string const & name );
+  void addFieldName( string const & name );
 
   /**
    * @brief set the name of the coefficient.
@@ -175,8 +211,11 @@ public:
    */
   void setCoeffName( string const & name );
 
-
-  const string & upwindSchemeName() const;
+  /**
+   * @brief get the upwinding parameters.
+   * @return upwinding parameters structure.
+   */
+  UpwindingParameters const & upwindingParams() const { return m_upwindingParams; }
 
 protected:
 
@@ -247,7 +286,7 @@ protected:
 
 
   /// name of the primary solution field
-  string m_fieldName;
+  array1d< string > m_fieldNames;
 
   /// name of the coefficient field
   string m_coeffName;
@@ -261,8 +300,8 @@ protected:
   /// length scale of the mesh body
   real64 m_lengthScale;
 
-  /// upwind scheme
-  string m_upwindSchemeName;
+  /// upwinding parameters
+  UpwindingParameters m_upwindingParams;
 
 };
 
@@ -300,6 +339,6 @@ void FluxApproximationBase::forStencils( MeshLevel const & mesh, LAMBDA && lambd
   } );
 }
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
+#endif //GEOS_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_

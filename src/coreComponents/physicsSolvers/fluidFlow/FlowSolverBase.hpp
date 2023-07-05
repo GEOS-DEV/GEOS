@@ -16,12 +16,12 @@
  * @file FlowSolverBase.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
+#define GEOS_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -122,6 +122,18 @@ protected:
                                           real64 const & dt,
                                           DomainPartition & domain );
 
+  /**
+   * @brief Utility function to save the converged state
+   * @param[in] subRegion the element subRegion
+   */
+  virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const;
+
+  /**
+   * @brief Helper function to compute/report the elements with small pore volumes
+   * @param[in] domain the domain partition
+   */
+  virtual void validatePoreVolumes( DomainPartition const & domain ) const;
+
   virtual void precomputeData( MeshLevel & mesh,
                                arrayView1d< string const > const & regionNames );
 
@@ -146,4 +158,4 @@ private:
 
 }
 
-#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
+#endif //GEOS_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_

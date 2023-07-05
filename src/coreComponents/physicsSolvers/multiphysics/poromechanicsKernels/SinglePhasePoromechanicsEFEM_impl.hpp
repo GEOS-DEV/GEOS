@@ -16,18 +16,18 @@
  * @file SinglePhasePoromechanicsEFEM_impl.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSEFEM_IMPL_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSEFEM_IMPL_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSEFEM_IMPL_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSEFEM_IMPL_HPP_
 
-#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "physicsSolvers/contact/ContactFields.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMKernelsHelper.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace poromechanicsEFEMKernels
@@ -106,15 +106,15 @@ SinglePhasePoromechanicsEFEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 kernelLaunch( localIndex const numElems,
               KERNEL_TYPE const & kernelComponent )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( numElems );
+  GEOS_UNUSED_VAR( numElems );
 
   // Define a RAJA reduction variable to get the maximum residual contribution.
   RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
 
   forAll< POLICY >( kernelComponent.m_fracturedElems.size(),
-                    [=] GEOSX_HOST_DEVICE ( localIndex const i )
+                    [=] GEOS_HOST_DEVICE ( localIndex const i )
   {
     localIndex k = kernelComponent.m_fracturedElems[i];
     typename KERNEL_TYPE::StackVariables stack;
@@ -135,8 +135,8 @@ kernelLaunch( localIndex const numElems,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SinglePhasePoromechanicsEFEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 setup( localIndex const k,
        StackVariables & stack ) const
@@ -175,12 +175,14 @@ setup( localIndex const k,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SinglePhasePoromechanicsEFEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 quadraturePointKernel( localIndex const k,
                        localIndex const q,
-                       StackVariables & stack ) const
+                       StackVariables & stack,
+                       FUNC && kernelOp ) const
 {
 
   localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
@@ -195,15 +197,15 @@ quadraturePointKernel( localIndex const k,
   constexpr int nUdof = numNodesPerElem*3;
 
   // Gauss contribution to Kww, Kwu and Kuw blocks
-  real64 Kww_gauss[3][3], Kwu_gauss[3][nUdof], Kuw_gauss[nUdof][3], Kwpm_gauss[3];
+  real64 Kww_gauss[3][3]{}, Kwu_gauss[3][nUdof]{}, Kuw_gauss[nUdof][3]{}, Kwpm_gauss[3]{};
 
   //  Compatibility, equilibrium and strain operators. The compatibility operator is constructed as
   //  a 3 x 6 because it is more convenient for construction purposes (reduces number of local var).
-  real64 compMatrix[3][6], strainMatrix[6][nUdof], eqMatrix[3][6];
-  real64 matBD[nUdof][6], matED[3][6];
+  real64 compMatrix[3][6]{}, strainMatrix[6][nUdof]{}, eqMatrix[3][6]{};
+  real64 matBD[nUdof][6]{}, matED[3][6]{};
   real64 const biotCoefficient = 1.0;
 
-  int Heaviside[ numNodesPerElem ];
+  int Heaviside[ numNodesPerElem ]{};
 
   // TODO: asking for the stiffness here will only work for elastic models.  most other models
   //       need to know the strain increment to compute the current stiffness value.
@@ -256,13 +258,15 @@ quadraturePointKernel( localIndex const k,
   // No neg coz the effective stress is total stress - porePressure
   // and all signs are flipped here.
   LvArray::tensorOps::scaledAdd< 3 >( stack.localKwpm, Kwpm_gauss, detJ*biotCoefficient );
+
+  kernelOp( eqMatrix, detJ );
 }
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 SinglePhasePoromechanicsEFEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 complete( localIndex const k,
           StackVariables & stack ) const
@@ -371,6 +375,6 @@ complete( localIndex const k,
 
 } // namespace poromechanicsEFEMKernels
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSEFEM_IMPL_HPP_
+#endif // GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSEFEM_IMPL_HPP_

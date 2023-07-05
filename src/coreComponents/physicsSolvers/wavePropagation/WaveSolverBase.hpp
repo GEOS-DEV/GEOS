@@ -17,25 +17,32 @@
  * @file WaveSolverBase.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERBASE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERBASE_HPP_
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERBASE_HPP_
 
 
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "common/lifoStorage.hpp"
+#if !defined( GEOS_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
+#endif
 
+
+#if !defined( GEOS_USE_HIP )
 #define SEM_FE_TYPES \
   finiteElement::Q1_Hexahedron_Lagrange_GaussLobatto, \
   finiteElement::Q2_Hexahedron_Lagrange_GaussLobatto, \
   finiteElement::Q3_Hexahedron_Lagrange_GaussLobatto, \
   finiteElement::Q4_Hexahedron_Lagrange_GaussLobatto, \
   finiteElement::Q5_Hexahedron_Lagrange_GaussLobatto
+#else
+#define SEM_FE_TYPES
+#endif
 
 #define SELECTED_FE_TYPES SEM_FE_TYPES
 
-namespace geosx
+namespace geos
 {
 
 class WaveSolverBase : public SolverBase
@@ -280,6 +287,6 @@ protected:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERBASE_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERBASE_HPP_ */

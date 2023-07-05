@@ -16,12 +16,12 @@
  * @file StabilizedCompositionalMultiphaseFVMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_STABILIZEDCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_STABILIZEDCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_STABILIZEDCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_STABILIZEDCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace stabilizedCompositionalMultiphaseFVMKernels
@@ -138,6 +138,7 @@ public:
     : Base( numPhases,
             rankOffset,
             hasCapPressure,
+            //0.0,                  // no C1-PPU
             stencilWrapper,
             dofNumberAccessor,
             compFlowAccessors,
@@ -160,7 +161,7 @@ public:
   {
 public:
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
       : Base::StackVariables( size, numElems )
     {}
@@ -183,7 +184,7 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
@@ -211,7 +212,7 @@ public:
                                            real64 const (&dPhaseFlux_dP)[2],
                                            real64 const (&dPhaseFlux_dC)[2][numComp] )
     {
-      GEOSX_UNUSED_VAR( k_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, er_up, esr_up, ei_up );
+      GEOS_UNUSED_VAR( k_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, er_up, esr_up, ei_up );
 
       /// stabilization flux and derivatives
       real64 stabFlux[numComp]{};
@@ -340,10 +341,10 @@ public:
                    arrayView1d< real64 > const & localRhs )
   {
     isothermalCompositionalMultiphaseBaseKernels::
-      internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
+      internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
-      integer constexpr NUM_DOF = NC()+1;
+      integer constexpr NUM_DOF = NC() + 1;
 
       ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
@@ -369,7 +370,7 @@ public:
 
 } // namespace stabilizedCompositionalMultiphaseFVMKernels
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_STABILIZEDCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_STABILIZEDCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP

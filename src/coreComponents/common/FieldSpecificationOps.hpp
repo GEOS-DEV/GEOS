@@ -16,14 +16,14 @@
  * @file FieldSpecificationOps.hpp
  */
 
-#ifndef GEOSX_COMMON_FIELDSPECIFICATIONOPS_HPP
-#define GEOSX_COMMON_FIELDSPECIFICATIONOPS_HPP
+#ifndef GEOS_COMMON_FIELDSPECIFICATIONOPS_HPP
+#define GEOS_COMMON_FIELDSPECIFICATIONOPS_HPP
 
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -39,7 +39,7 @@ struct OpEqual
    * @param[in] rhs input value
    */
   template< typename T, typename U >
-  GEOSX_HOST_DEVICE static inline
+  GEOS_HOST_DEVICE static inline
   void apply( T & lhs, U const & rhs )
   {
     lhs = static_cast< T >( rhs );
@@ -59,7 +59,7 @@ struct OpAdd
    * @param[in] rhs input value
    */
   template< typename T, typename U >
-  GEOSX_HOST_DEVICE static inline
+  GEOS_HOST_DEVICE static inline
   void apply( T & lhs, U const & rhs )
   {
     lhs += static_cast< T >( rhs );
@@ -87,14 +87,14 @@ struct FieldSpecificationOp
    * This function performs field[index] (+)= value.
    */
   template< typename T >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static inline typename std::enable_if< !traits::is_tensorT< T >, void >::type
   SpecifyFieldValue( arrayView1d< T > const & field,
                      localIndex const index,
                      integer const component,
                      real64 const value )
   {
-    GEOSX_UNUSED_VAR( component );
+    GEOS_UNUSED_VAR( component );
     OP::template apply( field( index ), value );
   }
 
@@ -111,7 +111,7 @@ struct FieldSpecificationOp
    * This function performs field[index][component] (+)= value.
    */
   template< typename T >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static inline typename std::enable_if< traits::is_tensorT< T >, void >::type
   SpecifyFieldValue( arrayView1d< T > const & field,
                      localIndex const index,
@@ -133,14 +133,14 @@ struct FieldSpecificationOp
    * This function performs value (+)= field[index].
    */
   template< typename T >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static inline typename std::enable_if< !traits::is_tensorT< T >, void >::type
   readFieldValue( arrayView1d< T const > const & field,
                   localIndex const index,
                   integer const component,
                   real64 & value )
   {
-    GEOSX_UNUSED_VAR( component );
+    GEOS_UNUSED_VAR( component );
     OP::template apply( value, field( index ) );
   }
 
@@ -156,7 +156,7 @@ struct FieldSpecificationOp
    * This function performs value (+)= field[index][component].
    */
   template< typename T >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static inline typename std::enable_if< traits::is_tensorT< T >, void >::type
   readFieldValue( arrayView1d< T const > const & field,
                   localIndex const index,
@@ -179,7 +179,7 @@ struct FieldSpecificationOp
    * This function performs field[index][component] (+)= value.
    */
   template< typename T, int USD >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static inline typename std::enable_if< !traits::is_tensorT< T >, void >::type
   SpecifyFieldValue( arrayView2d< T, USD > const & field,
                      localIndex const index,
@@ -213,7 +213,7 @@ struct FieldSpecificationOp
    * This function performs field[index][component] (+)= value for all values of field[index].
    */
   template< typename T, int USD >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static inline typename std::enable_if< traits::is_tensorT< T >, void >::type
   SpecifyFieldValue( arrayView2d< T, USD > const & field,
                      localIndex const index,
@@ -252,14 +252,14 @@ struct FieldSpecificationOp
    * This function performs value (+)= field[index][component].
    */
   template< typename T, int USD >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static inline typename std::enable_if< !traits::is_tensorT< T >, void >::type
   readFieldValue( arrayView2d< T const, USD > const & field,
                   localIndex const index,
                   integer const component,
                   real64 & value )
   {
-    GEOSX_ASSERT( component >= 0 );
+    GEOS_ASSERT( component >= 0 );
     OP::template apply( value, field( index, component ) );
   }
 
@@ -274,18 +274,18 @@ struct FieldSpecificationOp
    * @return type of the input field value.
    */
   template< typename T, int USD >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static inline typename std::enable_if< traits::is_tensorT< T >, void >::type
   readFieldValue( arrayView2d< T const, USD > const & field,
                   localIndex const index,
                   integer const component,
                   real64 & value )
   {
-    GEOSX_UNUSED_VAR( field );
-    GEOSX_UNUSED_VAR( index );
-    GEOSX_UNUSED_VAR( component );
-    GEOSX_UNUSED_VAR( value );
-    GEOSX_ERROR( "readFieldValue: unsupported operation" );
+    GEOS_UNUSED_VAR( field );
+    GEOS_UNUSED_VAR( index );
+    GEOS_UNUSED_VAR( component );
+    GEOS_UNUSED_VAR( value );
+    GEOS_ERROR( "readFieldValue: unsupported operation" );
   }
 
   /**
@@ -301,7 +301,7 @@ struct FieldSpecificationOp
    * This function performs field[index] (+)= value for all values of field[index].
    */
   template< typename T, int USD >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static inline typename std::enable_if< !traits::is_tensorT< T >, void >::type
   SpecifyFieldValue( arrayView3d< T, USD > const & field,
                      localIndex const index,
@@ -341,7 +341,7 @@ struct FieldSpecificationOp
    * This function performs field[index][component] (+)= value for all values of field[index].
    */
   template< typename T, int USD >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static inline typename std::enable_if< traits::is_tensorT< T >, void >::type
   SpecifyFieldValue( arrayView3d< T, USD > const & field,
                      localIndex const index,
@@ -383,18 +383,18 @@ struct FieldSpecificationOp
    * @param[out] value The value that is read from @p field.
    */
   template< typename T, int USD >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static inline void
   readFieldValue( arrayView3d< T const, USD > const & field,
                   localIndex const index,
                   integer const component,
                   real64 & value )
   {
-    GEOSX_UNUSED_VAR( field );
-    GEOSX_UNUSED_VAR( index );
-    GEOSX_UNUSED_VAR( component );
-    GEOSX_UNUSED_VAR( value );
-    GEOSX_ERROR( "readFieldValue: unsupported operation" );
+    GEOS_UNUSED_VAR( field );
+    GEOS_UNUSED_VAR( index );
+    GEOS_UNUSED_VAR( component );
+    GEOS_UNUSED_VAR( value );
+    GEOS_ERROR( "readFieldValue: unsupported operation" );
   }
 
   /**
@@ -410,7 +410,7 @@ struct FieldSpecificationOp
    * This function performs field[index] (+)= value for all values of field[index].
    */
   template< typename T, int USD >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static inline typename std::enable_if< !traits::is_tensorT< T >, void >::type
   SpecifyFieldValue( arrayView4d< T, USD > const & field,
                      localIndex const index,
@@ -456,7 +456,7 @@ struct FieldSpecificationOp
    * This function performs field[index][component] (+)= value for all values of field[index].
    */
   template< typename T, int USD >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static inline typename std::enable_if< traits::is_tensorT< T >, void >::type
   SpecifyFieldValue( arrayView4d< T, USD > const & field,
                      localIndex const index,
@@ -504,18 +504,18 @@ struct FieldSpecificationOp
    * @param[out] value The value that is read from @p field.
    */
   template< typename T, int USD >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static inline void
   readFieldValue( arrayView4d< T const, USD > const & field,
                   localIndex const index,
                   integer const component,
                   real64 & value )
   {
-    GEOSX_UNUSED_VAR( field );
-    GEOSX_UNUSED_VAR( index );
-    GEOSX_UNUSED_VAR( component );
-    GEOSX_UNUSED_VAR( value );
-    GEOSX_ERROR( "readFieldValue: unsupported operation" );
+    GEOS_UNUSED_VAR( field );
+    GEOS_UNUSED_VAR( index );
+    GEOS_UNUSED_VAR( component );
+    GEOS_UNUSED_VAR( value );
+    GEOS_ERROR( "readFieldValue: unsupported operation" );
   }
 
 };
@@ -549,7 +549,7 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
    * negate the rhs vector upon assembly. Thus, it sets the value to negative of the desired
    * update for the field. For a linear problem, this may lead to unexpected results.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static inline void
   SpecifyFieldValue( globalIndex const dof,
                      globalIndex const dofRankOffset,
@@ -608,8 +608,8 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
                                          globalIndex const dofRankOffset,
                                          arrayView1d< real64 const > const & values )
   {
-    GEOSX_ASSERT_EQ( dof.size(), values.size() );
-    forAll< POLICY >( dof.size(), [rhs, dof, dofRankOffset, values] GEOSX_HOST_DEVICE ( localIndex const a )
+    GEOS_ASSERT_EQ( dof.size(), values.size() );
+    forAll< POLICY >( dof.size(), [rhs, dof, dofRankOffset, values] GEOS_HOST_DEVICE ( localIndex const a )
     {
       globalIndex const localRow = dof[ a ] - dofRankOffset;
       if( localRow >= 0 && localRow < rhs.size() )
@@ -639,7 +639,7 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
    * @param[in] fieldValue unused.
    *
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static inline void
   SpecifyFieldValue( globalIndex const dof,
                      globalIndex const dofRankOffset,
@@ -648,10 +648,10 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
                      real64 const bcValue,
                      real64 const fieldValue )
   {
-    GEOSX_UNUSED_VAR( dof );
-    GEOSX_UNUSED_VAR( dofRankOffset );
-    GEOSX_UNUSED_VAR( matrix );
-    GEOSX_UNUSED_VAR( fieldValue );
+    GEOS_UNUSED_VAR( dof );
+    GEOS_UNUSED_VAR( dofRankOffset );
+    GEOS_UNUSED_VAR( matrix );
+    GEOS_UNUSED_VAR( fieldValue );
     rhs += bcValue;
   }
 
@@ -669,8 +669,8 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
                                          globalIndex const dofRankOffset,
                                          arrayView1d< real64 const > const & values )
   {
-    GEOSX_ASSERT_EQ( dof.size(), values.size() );
-    forAll< POLICY >( dof.size(), [rhs, dof, dofRankOffset, values] GEOSX_HOST_DEVICE ( localIndex const a )
+    GEOS_ASSERT_EQ( dof.size(), values.size() );
+    forAll< POLICY >( dof.size(), [rhs, dof, dofRankOffset, values] GEOS_HOST_DEVICE ( localIndex const a )
     {
       globalIndex const localRow = dof[ a ] - dofRankOffset;
       if( localRow >= 0 && localRow < rhs.size() )
@@ -680,6 +680,6 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
 
 };
 
-} //namespace geosx
+} //namespace geos
 
-#endif //GEOSX_COMMON_FIELDSPECIFICATIONOPS_HPP
+#endif //GEOS_COMMON_FIELDSPECIFICATIONOPS_HPP

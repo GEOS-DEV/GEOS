@@ -16,15 +16,15 @@
  * @file FunctionBase.hpp
  */
 
-#ifndef GEOSX_FUNCTIONS_FUNCTIONBASE_HPP_
-#define GEOSX_FUNCTIONS_FUNCTIONBASE_HPP_
+#ifndef GEOS_FUNCTIONS_FUNCTIONBASE_HPP_
+#define GEOS_FUNCTIONS_FUNCTIONBASE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/TypeDispatch.hpp"
 #include "dataRepository/Group.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace dataRepository
@@ -51,7 +51,7 @@ public:
   /// Maximum total number of independent variables (including components of multidimensional variables)
   static constexpr int MAX_VARS = 4;
 
-  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   FunctionBase( const string & name,
                 dataRepository::Group * const parent );
 
@@ -183,7 +183,7 @@ void FunctionBase::evaluateT( dataRepository::Group const & group,
       {
         using ArrayType = decltype( array );
         auto const view = dataRepository::Wrapper< ArrayType >::cast( wrapper ).reference().toViewConst();
-        view.move( LvArray::MemorySpace::host, false );
+        view.move( hostMemorySpace, false );
         for( int dim = 0; dim < ArrayType::NDIM; ++dim )
         {
           varStride[varIndex][dim] = view.strides()[dim];
@@ -195,10 +195,10 @@ void FunctionBase::evaluateT( dataRepository::Group const & group,
   }
 
   // Make sure the inputs do not exceed the maximum length
-  GEOSX_ERROR_IF_GT_MSG( totalVarSize, MAX_VARS, "Function input size exceeded" );
+  GEOS_ERROR_IF_GT_MSG( totalVarSize, MAX_VARS, "Function input size exceeded" );
 
   // Make sure the result / set size match
-  GEOSX_ERROR_IF_NE_MSG( result.size(), set.size(), "To apply a function to a set, the size of the result and set must match" );
+  GEOS_ERROR_IF_NE_MSG( result.size(), set.size(), "To apply a function to a set, the size of the result and set must match" );
 
   forAll< POLICY >( set.size(), [=]( localIndex const i )
   {
@@ -215,6 +215,6 @@ void FunctionBase::evaluateT( dataRepository::Group const & group,
     result[i] = static_cast< LEAF const * >( this )->evaluate( input );
   } );
 }
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FUNCTIONS_FUNCTIONBASE_HPP_ */
+#endif /* GEOS_FUNCTIONS_FUNCTIONBASE_HPP_ */
