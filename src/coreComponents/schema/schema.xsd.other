@@ -356,13 +356,13 @@
 	<xsd:complexType name="MeshType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
-			<xsd:element name="InternalWell" type="InternalWellType" />
 			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
 			<xsd:element name="VTKMesh" type="VTKMeshType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="InternalMeshType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="InternalWell" type="InternalWellType" />
 			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -374,6 +374,7 @@
 	<xsd:complexType name="PerforationType" />
 	<xsd:complexType name="InternalWellboreType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="InternalWell" type="InternalWellType" />
 			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
 		<!--nx => Number of elements in the x-direction within each mesh block-->
@@ -387,6 +388,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="VTKMeshType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="InternalWell" type="InternalWellType" />
 			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
 	</xsd:complexType>
