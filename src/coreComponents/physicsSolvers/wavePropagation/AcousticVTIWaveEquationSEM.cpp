@@ -351,7 +351,7 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
 }
 
-void AcousticVTIWaveEquationSEM::precomputeSurfaceFieldIndicator( real64 time, DomainPartition & domain )
+void AcousticVTIWaveEquationSEM::precomputeSurfaceFieldIndicator(DomainPartition & domain )
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   FunctionManager const & functionManager = FunctionManager::getInstance();
@@ -372,7 +372,7 @@ void AcousticVTIWaveEquationSEM::precomputeSurfaceFieldIndicator( real64 time, D
   arrayView1d< localIndex > const bottomSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::BottomSurfaceNodeIndicator >();
 
   // Lateral surfaces
-  fsManager.apply< FaceManager >( time,
+  fsManager.apply< FaceManager >( 0.0,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
                                   string( "LateralSurface" ),
                                   [&]( FieldSpecificationBase const & bc,

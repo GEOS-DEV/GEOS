@@ -161,11 +161,10 @@ private:
   virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
 
   /**
-   * @brief Compute the surface Field indicators from the xml
-   * @param time the time to apply the BC TODO: a priori useless...
+   * @brief Compute the lateral and bottom surface Field indicators of the boxed domain
    * @param domain the partition domain
    */
-  virtual void precomputeSurfaceFieldIndicator( real64 const time, DomainPartition & domain );
+  virtual void precomputeSurfaceFieldIndicator(DomainPartition & domain );
 
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml
