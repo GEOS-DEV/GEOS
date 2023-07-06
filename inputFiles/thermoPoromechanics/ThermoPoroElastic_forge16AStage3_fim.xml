@@ -16,8 +16,7 @@
       newtonTol="1e-6"/>
     <LinearSolverParameters
       solverType="gmres"
-      preconditionerType="mgr"
-      krylovAdaptiveTol="1"/>
+      preconditionerType="mgr"/>
    </SinglePhasePoromechanics>
 
    <SolidMechanicsLagrangianSSLE
@@ -45,17 +44,18 @@
       name="mesh1"
       elementTypes="{ C3D8 }"
       xCoords="{ 0, 200, 390, 1000 }"
-      yCoords="{ 0, 400, 570, 1000  }"
+      yCoords="{ 0, 400, 560, 1000  }"
       zCoords="{ 0, 500, 690, 1000 }"
       nx="{ 20, 95, 61 }"
-      ny="{ 40, 85, 43 }"
+      ny="{ 40, 80, 44 }"
       nz="{ 50, 95, 31 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Events
-      minTime="-1e11"
-      maxTime="7500">
+      minTime="0.0"
+      maxTime="8100"
+      timeOutputFormat="full">
 
     <SoloEvent
       name="singlePhaseThermoPoroelasticityPreEquilibrationStep"
@@ -71,7 +71,7 @@
     <PeriodicEvent
       name="outputs"
       beginTime="0.0"
-      timeFrequency="5.0"
+      timeFrequency="40.0"
       targetExactTimestep="0"
       target="/Outputs/thermoPoroVTKOutput"/>
     
@@ -94,30 +94,10 @@
     <PeriodicEvent
       name="solverApplications1"
       beginTime="0.0"
-      endTime="10.0"
-      forceDt="1.0"
+      endTime="8100.0"
+      forceDt="20.0"
       target="/Solvers/thermoPoroSolver"/>
 
-    <PeriodicEvent
-      name="solverApplications2"
-      beginTime="10.0"
-      endTime="100.0"
-      forceDt="5.0"
-      target="/Solvers/thermoPoroSolver"/>
-
-    <PeriodicEvent
-      name="solverApplications3"
-      beginTime="100.0"
-      endTime="1000.0"
-      forceDt="10.0"
-      target="/Solvers/thermoPoroSolver"/>
-
-    <PeriodicEvent
-      name="solverApplications4"
-      beginTime="1000.0"
-      endTime="7500.0"
-      forceDt="50.0"
-      target="/Solvers/thermoPoroSolver"/>
   </Events>
   
   <NumericalMethods>
@@ -170,11 +150,11 @@
     <ThermalCompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
-      defaultViscosity="1e-4"
+      defaultViscosity="1e-3"
       referencePressure="0.0"
       referenceTemperature="0.0"
       compressibility="1e-8"
-      referenceViscosity="1e-4"
+      referenceViscosity="1e-3"
       thermalExpansionCoeff="0.0"
       viscosibility="0.0"
       volumetricHeatCapacity="4.2e6"
@@ -188,7 +168,7 @@
     
     <SinglePhaseConstantThermalConductivity
       name="thermalCond"
-      thermalConductivityComponents="{ 2.5, 2.5, 2.5 }"/>    
+      thermalConductivityComponents="{ 4.0, 4.0, 4.0 }"/>    
   </Constitutive>
 
   <FieldSpecifications>
@@ -199,7 +179,7 @@
        component="0"
        setNames="{ all }"
        objectPath="ElementRegions/Domain/cb1"
-       fieldName="rockPerm_permeability"
+       fieldName="rockPerm_initialPermeability"
        scale="1"
        functionName="permxFunc"/>
 
@@ -209,7 +189,7 @@
        component="1"
        setNames="{ all }"
        objectPath="ElementRegions/Domain/cb1"
-       fieldName="rockPerm_permeability"
+       fieldName="rockPerm_initialPermeability"
        scale="1"
        functionName="permyFunc"/>
 
@@ -219,7 +199,7 @@
        component="2"
        setNames="{ all }"
        objectPath="ElementRegions/Domain/cb1"
-       fieldName="rockPerm_permeability"
+       fieldName="rockPerm_initialPermeability"
        scale="1"
        functionName="permzFunc"/>
      
@@ -305,14 +285,21 @@
       scale="-13.25"
       setNames="{ source }"
       functionName="timeFunction"/>
+
+    <FieldSpecification
+      name="sourceTemp"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="temperature"
+      scale="293"
+      setNames="{ source }"/>
     
   </FieldSpecifications>
 
   <Functions>
     <TableFunction
       name="timeFunction"
-      coordinates="{ 0.0, 359.9, 360.1, 719.9, 720.1, 1199.9, 1200.1, 1499.9, 1500.1, 2099.9, 2100.1, 4499.9, 4500.1, 6299.9, 6300.1, 6899.9, 6900.1, 7500 }"
-      values="{ 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0, 5.0, 5.0, 6.0, 6.0, 7.0, 7.0, 4.0, 4.0, 3.0, 3.0 }"/>
+      coordinates="{ 0.0, 359.9, 360.1, 719.9, 720.1, 1199.9, 1200.1, 1499.9, 1500.1, 2099.9, 2100.1, 4499.9, 4500.1, 6299.9, 6300.1, 6899.9, 6900.1, 7499.9, 7500.1, 7799.9, 7800.1, 8100 }"
+      values="{ 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0, 5.0, 5.0, 6.0, 6.0, 7.0, 7.0, 4.0, 4.0, 3.0, 3.0, 2.0, 2.0, 1.0, 1.0 }"/>
 
     <TableFunction
       name="PresFunction"
@@ -373,7 +360,7 @@
   <Outputs>
     <VTK
       name="thermoPoroVTKOutput"
-      plotFileRoot="thermoPoro_forge_fim"/>
+      plotFileRoot="thermoPoro_forge_fim_mu=1cp_presDFNPerm_sourceTemp"/>
 
     <Restart
       name="restartOutput"/>
@@ -382,8 +369,8 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{ 279.9, 469.9, 579.9 }"
-      xMax="{ 310.1, 490.1, 610.1 }"/>
+      xMin="{ 293.9, 474.9, 589.9 }"
+      xMax="{ 296.1, 485.1, 600.1 }"/>
   </Geometry>
 
 </Problem>
