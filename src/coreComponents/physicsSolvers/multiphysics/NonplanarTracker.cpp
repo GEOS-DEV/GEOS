@@ -162,6 +162,7 @@ void NonplanarTracker::buildBaseToPatchEdgeMap( meshLevel const & base, meshLeve
     {       
         arrayView1d< integer const > const baseGhostRank = baseElementSubRegion.ghostRank();  
         arrayView2d< const real64 > const & baseElemCenters  = baseElementSubRegion.getElementCenter();
+        arrayView2d< localIndex const > const edgeToNodes = edgeManager.nodeList();
         auto & cellToEdges = baseElementSubRegion.edgeList();
         forAll< serialPolicy >( baseElementSubRegion.size(), [&] ( localIndex const k ) 
         {
@@ -172,42 +173,68 @@ void NonplanarTracker::buildBaseToPatchEdgeMap( meshLevel const & base, meshLeve
                 LvArray::tensorOps::copy< 3 >( currBaseElemCenter, baseElemCenters[k] );
                 //build edgesToTriplet map
                 auto elementEdges = cellToEdges[k];
-                map<R1Tensor, localIndex> tripletToEdge;
+                map<vector<long>, localIndex> tripletToEdge;
                 //iterate over edges and find their associated triplet - build edge to triplet map
                 for(auto edge:elementEdges)
                 {
                     //check triplet associated with edge
                     //get edgeToNode at edge
-                    R1Tensor nodeA = edgeToNode[edge][0];
-                    R1Tensor nodeB = edgeToNode[edge][1];
-                    R1Tensor edgeMidPoint = (nodeA + nodeB)/2;
-                    R1Tensor diff = edgeMidPoint - currBaseElemCenter;
-                    //diff = (+- hx/2, +- hy/2, 0) or permutation
-                    diff = diff/{hx/2, hy/2, hz/2};
-                    tripletToEdge[diff] = edge;
+                    real64 edgeMidPoint[ 3 ];
+                    vector<long> edgeCoords(3);
+                    localIndex nodeA = edgeToNodes[edge][0];
+                    localIndex nodeB = edgeToNodes[edge][1];
+                    edgeMidPoint[0] = (patchNodePosition[nodeA][0]+patchNodePosition[nodeB][0])/2.0;
+                    edgeMidPoint[1] = (patchNodePosition[nodeA][1]+patchNodePosition[nodeB][1])/2.0;
+                    edgeMidPoint[2] = (patchNodePosition[nodeA][2]+patchNodePosition[nodeB][2])/2.0;
+                    LvArray::tensorOps::subtract< 3 >( edgeMidPoint, currBaseElemCenter );
+                    //this should turn the edge mid point coordinates to parent space -1, 1 or 0
+                    edgeCoords[0] = lround(edgeMidPoint[0]/(1e-12 + abs(edgeMidPoint[0])));
+                    edgeCoords[1] = lround(edgeMidPoint[1]/(1e-12 + abs(edgeMidPoint[1])));
+                    edgeCoords[2] = lround(edgeMidPoint[2]/(1e-12 + abs(edgeMidPoint[2])));
+                    //now, edgeCoords should be a permutation like {1,-1,0}
+                    tripletToEdge[edgeCoords] = edge;
                 }
                 for(auto patchElemGlobal:m_baseToPatchElementRelation[baseElementSubRegion.localToGlobalMap()[k]])
                 { 
                     //get nodes
-                    for(size_t i=0; i<NUM_NODES_PER_ELEM; ++i)
+                    for(size_t i=0; i<8; ++i)
                     {
                         localIndex currNode = patchElemsToNodes[patchSubRegion.globalToLocalMap()[patchElemGlobal]][i];
                         real64 currNodePosition[ 3 ]; 
                         LvArray::tensorOps::copy< 3 >( currNodePosition, patchNodePosition[currNode] );
                         //compare currNodePosition to baseElemCenters[k];
-                        R1Tensor nodalTriplet = {0,0,0};
-                        nodalTiplet[0] = currNodePosition[0]-baseElemCenter[0]/hx;
-                        nodalTiplet[1] = currNodePosition[1]-baseElemCenter[1]/hy;
-                        nodalTiplet[2] = currNodePosition[2]-baseElemCenter[2]/hz;
-                        if (tipletToEdge.contains(nodalTriplet))
+                        vector<real64> nodalTriplet(3);
+                        nodalTiplet[0] = (currNodePosition[0]-baseElemCenter[0])/(abs(currNodePosition[0]-baseElemCenter[0])+1e-12);
+                        nodalTiplet[1] = (currNodePosition[1]-baseElemCenter[1])/(abs(currNodePosition[1]-baseElemCenter[1])+1e-12);
+                        nodalTiplet[2] = (currNodePosition[2]-baseElemCenter[2])/(abs(currNodePosition[2]-baseElemCenter[2])+1e-12);
+                        //node is on an edge if triplet contains at least two 1s or -1s.
+                        if(abs(lround(nodalTriplet[0]))+abs(lround(nodalTriplet[1]))==2)
                         {
-                            //relate current node to edge tripletToEdge[nodalTriplet];
-                            //find position using triplet
-                            //position = if abs(nodalTriplet[0]) < 1 
-                            //position = (1+nodalTriplet[0]/hx)*(Nx);
-                            //same for nodalTriplet[1] por [2]
-                            //insert to edge in the position order of SortedArray
-                        }                                                                         
+                          //add node to edge of key {lround(nodalTriplet[0]),lround(nodalTriplet[1]),0}
+                          vector<long> thisTriplet = {lround(nodalTriplet[0]),lround(nodalTriplet[1]),0};
+                          localIndex edgeNum = tipletToEdge[thisTiplet];
+                          //on position lround(((nodalTriplet[2]+1.0)/2.0) * rz);
+                          localIndex position = lround(((nodalTriplet[2]+1.0)/2.0) * rz);
+                          m_baseEdgeToPatchNodeRelation[edgeNum][position] = currNode;
+                        }
+                        if(abs(lround(nodalTriplet[1]))+abs(lround(nodalTriplet[2]))==2)
+                        {
+                          //add node to edge of key {0,lround(nodalTriplet[1]),lround(nodalTriplet[2])}
+                          vector<long> thisTriplet = {0,lround(nodalTriplet[1]),lround(nodalTriplet[2])};
+                          localIndex edgeNum = tipletToEdge[thisTiplet];                          
+                          //on position lround(((nodalTriplet[0]+1.0)/2.0) * rx);
+                          localIndex position = lround(((nodalTriplet[0]+1.0)/2.0) * rx);
+                          m_baseEdgeToPatchNodeRelation[edgeNum][position] = currNode;
+                        }
+                        if(abs(lround(nodalTriplet[0]))+abs(lround(nodalTriplet[2]))==2 )
+                        {
+                          //add node to edge of key {lround(nodalTriplet[0]),0, lround(nodalTriplet[2])}
+                          vector<long> thisTriplet = {lround(nodalTriplet[0]),0,lround(nodalTriplet[2])};
+                          localIndex edgeNum = tipletToEdge[thisTiplet];                          
+                          //on position lround(((nodalTriplet[1]+1.0)/2.0) * ry);
+                          localIndex position = lround(((nodalTriplet[1]+1.0)/2.0) * ry);
+                          m_baseEdgeToPatchNodeRelation[edgeNum][position] = currNode;
+                        }                                                                        
                     }
                 }
             }      
