@@ -415,7 +415,7 @@ public:
                     real64 ( &B )[6] );
 
   /**
-   * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
+   * @brief computes the non-zero contributions of the d.o.f. indexed by q to the
    *   stiffness matrix R, i.e., the superposition matrix of first derivatives
    *   of the shape functions.
    * @param q The quadrature point index
@@ -449,8 +449,8 @@ public:
 
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexed by q to the
-   *   quasi-stiffness matrix R, i.e., the superposition matrix of first derivatives
-   *   of the shape functions. Warning, the matrix B is obtained by computeBxyMatrix above.
+   *   partial-stiffness matrix R, i.e., the superposition matrix of first derivatives in x and y
+   *   of the shape functions. Warning, the matrix B is obtained by computeBxyMatrix instead of usual one.
    * @param q The quadrature point index
    * @param X Array containing the coordinates of the support points.
    * @param func Callback function accepting three parameters: i, j and R_ij
@@ -461,22 +461,6 @@ public:
   computeStiffnessxyTerm( int q,
                         real64 const (&X)[numNodes][3],
                         FUNC && func );
-
-
-  /**
-   * @brief computes the non-zero contributions TODO:
-   * @param TODO:
-   * @param func Callback function accepting three parameters: i, j and R_ij
-   */  
-  template< typename FUNC >
-  GEOS_HOST_DEVICE
-  static void
-  computeGradPhiBGradPhi( int qa,
-                          int qb,
-                          int qc,
-                          real64 const (&B)[6],
-                          FUNC && func );
-
 
   /**
    * @brief computes the matrix B in the case of quasi-stiffness (e.g. for pseudo-acoustic case), defined as J^{-T}A_z J^{-1}/det(J), where J is the Jacobian matrix, and A_z is a zero matrix except on A_z(3,3) = 1.
@@ -498,8 +482,8 @@ public:
 
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexed by q to the
-   *   quasi-stiffness matrix R, i.e., the superposition matrix of first derivatives
-   *   of the shape functions. Warning, the matrix B is obtained by computeBzMatrix above.
+   *   partial-stiffness matrix R, i.e., the superposition matrix of first derivatives in z only
+   *   of the shape functions. Warning, the matrix B is obtained by computeBzMatrix instead of usual one.
    * @param q The quadrature point index
    * @param X Array containing the coordinates of the support points.
    * @param func Callback function accepting three parameters: i, j and R_ij
@@ -510,6 +494,23 @@ public:
   computeStiffnesszTerm( int q,
                         real64 const (&X)[numNodes][3],
                         FUNC && func );
+
+/**
+ * @brief Computes the "Grad(Phi)*B*Grad(Phi)" coefficient of the stiffness term. The matrix B must be provided and Phi denotes a basis function.
+ * @param qa The 1d quadrature point index in xi0 direction (0,1)
+ * @param qb The 1d quadrature point index in xi1 direction (0,1)
+ * @param qc The 1d quadrature point index in xi2 direction (0,1)
+ * @param B Array of the B matrix, in Voigt notation
+ * @param func Callback function accepting three parameters: i, j and R_ij
+ */
+  template< typename FUNC >
+  GEOS_HOST_DEVICE
+  static void
+  computeGradPhiBGradPhi( int qa,
+                          int qb,
+                          int qc,
+                          real64 const (&B)[6],
+                          FUNC && func );
 
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
@@ -967,16 +968,6 @@ computeDampingTerm( int q,
   return sqrt( LvArray::math::abs( LvArray::tensorOps::symDeterminant< 2 >( B ) ) )*GL_BASIS::weight( qa )*GL_BASIS::weight( qb );
 }
 
-/**
- * @brief computes the matrix B, defined as J^{-T}J^{-1}/det(J), where J is the Jacobian matrix,
- *   at the given Gauss-Lobatto point.
- * @param qa The 1d quadrature point index in xi0 direction (0,1)
- * @param qb The 1d quadrature point index in xi1 direction (0,1)
- * @param qc The 1d quadrature point index in xi2 direction (0,1)
- * @param X Array containing the coordinates of the support points.
- * @param J Array to store the Jacobian
- * @param B Array to store the matrix B, in Voigt notation
- */
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 inline
@@ -1004,16 +995,6 @@ computeBMatrix( int const qa,
   LvArray::tensorOps::symInvert< 3 >( B );
 }
 
-/**
- * @brief computes the matrix B in the case of quasi-stiffness (e.g. for pseudo-acoustic case), defined as J^{-T}A_z J^{-1}/det(J), where J is the Jacobian matrix, and A_z is a zero matrix except on A_z(3,3) = 1.
- *   at the given Gauss-Lobatto point.
- * @param qa The 1d quadrature point index in xi0 direction (0,1)
- * @param qb The 1d quadrature point index in xi1 direction (0,1)
- * @param qc The 1d quadrature point index in xi2 direction (0,1)
- * @param X Array containing the coordinates of the support points.
- * @param J Array to store the Jacobian
- * @param B Array to store the matrix B, in Voigt notation
- */
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
@@ -1041,16 +1022,6 @@ computeBzMatrix( int const qa,
   B[5] = detJ*(Jinv[0][2]*Jinv[1][2]);
 }
 
-/**
- * @brief computes the matrix B in the case of quasi-stiffness (e.g. for pseudo-acoustic case), defined as J^{-T}A_{xy} J^{-1}/det(J), where J is the Jacobian matrix, and A_{xy} is a zero matrix except on A_{xy}(1,1) = 1 and A_{xy}(2,2)=1.
- *   at the given Gauss-Lobatto point.
- * @param qa The 1d quadrature point index in xi0 direction (0,1)
- * @param qb The 1d quadrature point index in xi1 direction (0,1)
- * @param qc The 1d quadrature point index in xi2 direction (0,1)
- * @param X Array containing the coordinates of the support points.
- * @param J Array to store the Jacobian
- * @param B Array to store the matrix B, in Voigt notation
- */
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
@@ -1078,13 +1049,6 @@ computeBxyMatrix( int const qa,
   B[5] = detJ*(Jinv[0][0]*Jinv[1][0] + Jinv[0][1]*Jinv[1][1]);
 }
 
-/**
- * @brief Computes the "Grad(Phi)*B*Grad(Phi)" coefficient of the stiffness term. The matrix B (usually equal to J^{-T} J^{-1}/det(J)) must be provided and Phi denotes a basis function.
- * @param qa The 1d quadrature point index in xi0 direction (0,1)
- * @param qb The 1d quadrature point index in xi1 direction (0,1)
- * @param qc The 1d quadrature point index in xi2 direction (0,1)
- * @param B Array to store the matrix B, in Voigt notation
- */
 template< typename GL_BASIS >
 template< typename FUNC >
 GEOS_HOST_DEVICE
@@ -1173,11 +1137,6 @@ computeGradPhiBGradPhi( int qa,
   }
 }
 
-/**
- * @brief Computes partial-stiffness term with nabla_xy=[dx, dy, 0] at control point. Instead of the B matrix (=J^{-T} J^{-1}/det(J)), it uses B_xy=J^{-T} A_xy J^{-1}/det(J), computed by computeBxyMatrix. 
- * @param q Integer index of the control point
- * @param X Array containing the coordinates of the support points.
- */
 template< typename GL_BASIS >
 template< typename FUNC >
 GEOS_HOST_DEVICE
@@ -1196,11 +1155,6 @@ computeStiffnessxyTerm( int q,
   computeGradPhiBGradPhi(qa,qb,qc, B, func );
 }
 
-/**
- * @brief Computes partial-stiffness term with nabla_z=[0, 0, dz] at control point. Instead of the B matrix (=J^{-T} J^{-1}/det(J)), it uses B_z=J^{-T} A_z J^{-1}/det(J), computed by computeBzMatrix. 
- * @param q Integer index of the control point
- * @param X Array containing the coordinates of the support points.
- */
 template< typename GL_BASIS >
 template< typename FUNC >
 GEOS_HOST_DEVICE
@@ -1218,12 +1172,6 @@ computeStiffnesszTerm( int q,
   computeBzMatrix( qa, qb, qc, X, J, B ); // The only change!
   computeGradPhiBGradPhi(qa,qb,qc, B, func );
 }
-
-/**
- * @brief Computes the stiffness term at control point
- * @param q index of the control point
- * @param X Array containing the coordinates of the support points.
- */
 
 template< typename GL_BASIS >
 template< typename FUNC >

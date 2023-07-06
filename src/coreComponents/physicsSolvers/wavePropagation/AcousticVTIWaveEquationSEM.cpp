@@ -266,7 +266,7 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
   real64 const time = 0.0;
   applyFreeSurfaceBC( time, domain );
-  precomputeSurfaceFieldIndicator( time, domain );
+  precomputeSurfaceFieldIndicator( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
