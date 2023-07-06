@@ -130,8 +130,8 @@ public:
                                                   real64 ( & totalStress )[6],
                                                   DiscretizationOps & stiffness ) const
   {
-    real64 dTotalStress_dPressure[6];
-    real64 dTotalStress_dTemperature[6];
+    real64 dTotalStress_dPressure[6]{};
+    real64 dTotalStress_dTemperature[6]{};
 
     // Compute total stress increment and its derivative
     computeTotalStress( k,
@@ -145,24 +145,11 @@ public:
                         dTotalStress_dTemperature, // To pass something here
                         stiffness );
 
-    // Compute porosity
-    real64 const deltaPressure    = pressure - pressure_n;
-    real64 const deltaTemperature = temperature - temperature_n;
-
-    real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
-    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+    // Compute effective stress increment for the porosity
+    GEOS_UNUSED_VAR( pressure_n, temperature_n );
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
-
-    real64 const effectiveMeanStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
-
-    // TODO: rename this to meanStrainIncrement
-    real64 const totalMeanStressIncrement = effectiveMeanStressIncrement;// - biotCoefficient * deltaPressure - 3 *
-                                                                         // thermalExpansionCoefficient * bulkModulus * deltaTemperature;
-    GEOS_UNUSED_VAR( biotCoefficient, deltaPressure, thermalExpansionCoefficient, bulkModulus, deltaTemperature );
-
-    m_porosityUpdate.updateTotalMeanStressIncrement( k, q, totalMeanStressIncrement );
-
-    // The body force is calculated in the SolidMechanics kernel and the fluid contribution is neglected here
+    real64 const meanEffectiveStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
+    m_porosityUpdate.updateMeanEffectiveStressIncrement( k, q, meanEffectiveStressIncrement );
   }
 
   /**

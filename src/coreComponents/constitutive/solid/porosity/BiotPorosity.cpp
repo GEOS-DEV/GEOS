@@ -46,13 +46,9 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
 
   registerField( fields::porosity::thermalExpansionCoefficient{}, &m_thermalExpansionCoefficient );
 
-  registerWrapper( viewKeyStruct::meanStressIncrementString(), &m_meanStressIncrement_k ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "Volumetric stress increment at quadrature points" );
+  registerField( fields::porosity::meanEffectiveStressIncrement_k{}, &m_meanEffectiveStressIncrement_k );
 
-  registerWrapper( viewKeyStruct::averageMeanStressIncrementString(), &m_averageMeanStressIncrement_k ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "volumetric stress increment averaged over quadrature points" );
+  registerField( fields::porosity::averageMeanEffectiveStressIncrement_k{}, &m_averageMeanEffectiveStressIncrement_k );
 
   registerWrapper( viewKeyStruct::solidBulkModulusString(), &m_bulkModulus ).
     setApplyDefaultValue( 1e-6 ).
@@ -64,7 +60,7 @@ void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
 {
   PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_meanStressIncrement_k.resize( 0, numConstitutivePointsPerParentIndex );
+  m_meanEffectiveStressIncrement_k.resize( 0, numConstitutivePointsPerParentIndex );
 }
 
 void BiotPorosity::postProcessInput()
@@ -99,8 +95,8 @@ void BiotPorosity::initializeState() const
 void BiotPorosity::saveConvergedState() const
 {
   PorosityBase::saveConvergedState();
-  m_meanStressIncrement_k.zero();
-  m_averageMeanStressIncrement_k.zero();
+  m_meanEffectiveStressIncrement_k.zero();
+  m_averageMeanEffectiveStressIncrement_k.zero();
 }
 
 

@@ -45,11 +45,11 @@ public:
   localIndex numGauss() const { return m_newPorosity.size( 1 ); }
 
   PorosityBaseUpdates( arrayView2d< real64 > const & newPorosity,
-                       arrayView2d< real64 > const & porosity_n,
+                       arrayView2d< real64 const > const & porosity_n,
                        arrayView2d< real64 > const & dPorosity_dPressure,
                        arrayView2d< real64 > const & dPorosity_dTemperature,
-                       arrayView2d< real64 > const & initialPorosity,
-                       arrayView1d< real64 > const & referencePorosity ):
+                       arrayView2d< real64 const > const & initialPorosity,
+                       arrayView1d< real64 const > const & referencePorosity ):
     m_newPorosity( newPorosity ),
     m_porosity_n( porosity_n ),
     m_dPorosity_dPressure( dPorosity_dPressure ),
@@ -143,17 +143,24 @@ public:
   }
 
 protected:
-  arrayView2d< real64 > m_newPorosity;
 
-  arrayView2d< real64 > m_porosity_n;
+  /// New value of porosity
+  arrayView2d< real64 > const m_newPorosity;
 
-  arrayView2d< real64 > m_dPorosity_dPressure;
+  /// Value of porosity at the previous time step
+  arrayView2d< real64 const > const m_porosity_n;
 
-  arrayView2d< real64 > m_dPorosity_dTemperature;
+  /// Derivative of porosity wrt pressure
+  arrayView2d< real64 > const m_dPorosity_dPressure;
 
-  arrayView2d< real64 > m_initialPorosity;
+  /// Derivative of porosity wrt temperature
+  arrayView2d< real64 > const m_dPorosity_dTemperature;
 
-  arrayView1d< real64 > m_referencePorosity;
+  /// Initial porosity
+  arrayView2d< real64 const > const m_initialPorosity;
+
+  /// Reference porosity
+  arrayView1d< real64 const > const m_referencePorosity;
 };
 
 
@@ -258,9 +265,9 @@ public:
    * @brief Const/non-mutable accessor for the mean stress increment at the previous sequential iteration
    * @return Accessor
    */
-  virtual arrayView2d< real64 const > const getMeanStressIncrement_k() const
+  virtual arrayView2d< real64 const > const getMeanEffectiveStressIncrement_k() const
   {
-    GEOS_ERROR( "getMeanStressIncrement_k() not implemented for this model" );
+    GEOS_ERROR( "getMeanEffectiveStressIncrement_k() not implemented for this model" );
 
     array2d< real64 > out;
     return out.toViewConst();
@@ -270,9 +277,9 @@ public:
    * @brief Non-const accessor for the mean stress increment at the previous sequential iteration
    * @return Accessor
    */
-  virtual arrayView1d< real64 > const getAverageMeanStressIncrement_k()
+  virtual arrayView1d< real64 > const getAverageMeanEffectiveStressIncrement_k()
   {
-    GEOS_ERROR( "getAverageMeanStressIncrement_k() not implemented for this model" );
+    GEOS_ERROR( "getAverageMeanEffectiveStressIncrement_k() not implemented for this model" );
 
     array1d< real64 > out;
     return out.toView();

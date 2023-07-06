@@ -470,8 +470,8 @@ void SinglePhasePoromechanics::averageMeanStressIncrement( DomainPartition & dom
       string const solidName = subRegion.template getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       CoupledSolidBase & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
-      arrayView2d< real64 const > const meanStressIncrement_k = solid.getMeanStressIncrement_k();
-      arrayView1d< real64 > const averageMeanStressIncrement_k = solid.getAverageMeanStressIncrement_k();
+      arrayView2d< real64 const > const meanStressIncrement_k = solid.getMeanEffectiveStressIncrement_k();
+      arrayView1d< real64 > const averageMeanStressIncrement_k = solid.getAverageMeanEffectiveStressIncrement_k();
 
       finiteElement::FiniteElementBase & subRegionFE =
         subRegion.template getReference< finiteElement::FiniteElementBase >( solidMechanicsSolver()->getDiscretizationName() );

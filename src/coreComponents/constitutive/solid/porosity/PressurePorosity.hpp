@@ -31,11 +31,11 @@ class PressurePorosityUpdates : public PorosityBaseUpdates
 public:
 
   PressurePorosityUpdates( arrayView2d< real64 > const & newPorosity,
-                           arrayView2d< real64 > const & porosity_n,
+                           arrayView2d< real64 const > const & porosity_n,
                            arrayView2d< real64 > const & dPorosity_dPressure,
                            arrayView2d< real64 > const & dPorosity_dTemperature,
-                           arrayView2d< real64 > const & initialPorosity,
-                           arrayView1d< real64 > const & referencePorosity,
+                           arrayView2d< real64 const > const & initialPorosity,
+                           arrayView1d< real64 const > const & referencePorosity,
                            real64 const & referencePressure,
                            real64 const & compressibility ):
     PorosityBaseUpdates( newPorosity,
@@ -86,9 +86,11 @@ public:
 
 private:
 
-  real64 m_referencePressure;
+  /// Reference pressure used in the porosity model
+  real64 const m_referencePressure;
 
-  real64 m_compressibility;
+  /// Compressibility used in the porosity model
+  real64 const m_compressibility;
 };
 
 

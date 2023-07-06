@@ -183,18 +183,18 @@ public:
    * @brief Const/non-mutable accessor for the mean stress increment at the previous sequential iteration
    * @return Accessor
    */
-  arrayView2d< real64 const > const getMeanStressIncrement_k() const
+  arrayView2d< real64 const > const getMeanEffectiveStressIncrement_k() const
   {
-    return getBasePorosityModel().getMeanStressIncrement_k();
+    return getBasePorosityModel().getMeanEffectiveStressIncrement_k();
   }
 
   /**
    * @brief Non-const accessor for the mean stress increment at the previous sequential iteration
    * @return Accessor
    */
-  arrayView1d< real64 > const getAverageMeanStressIncrement_k()
+  arrayView1d< real64 > const getAverageMeanEffectiveStressIncrement_k()
   {
-    return getBasePorosityModel().getAverageMeanStressIncrement_k();
+    return getBasePorosityModel().getAverageMeanEffectiveStressIncrement_k();
   }
 
 
