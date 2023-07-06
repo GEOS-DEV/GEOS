@@ -572,8 +572,6 @@ void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
                                                 real64 const scalingFactor,
                                                 DomainPartition & domain )
 {
-  FlowSolverBase::saveIterationState( domain ); // save data at level k, useful for sequential simulations
-
   // here we apply the cell-centered update in the derived class
   // to avoid duplicating a synchronization point
 

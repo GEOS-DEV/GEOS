@@ -217,7 +217,7 @@ public:
    */
   template< typename POLICY,
             typename KERNEL_TYPE >
-  static real64
+  static void
   kernelLaunch( localIndex const numElems,
                 KERNEL_TYPE const & kernelComponent )
   {
@@ -232,7 +232,6 @@ public:
         kernelComponent.quadraturePointKernel( k, q, stack );
       }
     } );
-    return 0.0;
   }
 
 protected:
@@ -248,6 +247,7 @@ protected:
 
 /**
  * @class AverageOverQuadraturePoints1DKernelFactory
+ * @brief Class to create and launch the kernel
  */
 class AverageOverQuadraturePoints1DKernelFactory
 {

@@ -125,21 +125,17 @@ public:
 
     porosity = porosity_n
                + biotCoefficient * meanEffectiveStressIncrement_k / bulkModulus // change due to stress increment (at the previous
-                                                                                // sequential
-               // iteration)
+                                                                                // sequential iteration)
                + biotSkeletonModulusInverse * deltaPressureFromBeginningOfTimeStep // change due to pressure increment
-               - porosityThermalExpansion * deltaTemperatureFromBeginningOfTimeStep // change due to temperature increment
-               + fixedStressPressureCoefficient * deltaPressureFromLastIteration // fixed-stress pressure term
-               + fixedStressTemperatureCoefficient * deltaTemperatureFromLastIteration; // fixed-stress temperature term
-
+               - porosityThermalExpansion * deltaTemperatureFromBeginningOfTimeStep; // change due to temperature increment
     dPorosity_dPressure = biotSkeletonModulusInverse;
-    if( !isZero( deltaPressureFromLastIteration ) )
-    {
-      dPorosity_dPressure += fixedStressPressureCoefficient;
-    }
     dPorosity_dTemperature = -porosityThermalExpansion;
-    if( !isZero( deltaTemperatureFromLastIteration ) )
+
+    if( !isZero( meanEffectiveStressIncrement_k ) ) // TODO: find a better way to disable this at the first flow iteration
     {
+      porosity += fixedStressPressureCoefficient * deltaPressureFromLastIteration // fixed-stress pressure term
+                  + fixedStressTemperatureCoefficient * deltaTemperatureFromLastIteration; // fixed-stress temperature term
+      dPorosity_dPressure += fixedStressPressureCoefficient;
       dPorosity_dTemperature += fixedStressTemperatureCoefficient;
     }
   }

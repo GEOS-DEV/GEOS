@@ -396,7 +396,6 @@ void SinglePhasePoromechanics::mapSolutionBetweenSolvers( DomainPartition & doma
   /// After the flow solver
   if( solverType == static_cast< integer >( SolverType::Flow ) )
   {
-
     // save pressure and temperature at the end of this iteration
     flowSolver()->saveIterationState( domain );
 
