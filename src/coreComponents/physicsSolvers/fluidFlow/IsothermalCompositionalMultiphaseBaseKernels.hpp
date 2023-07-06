@@ -43,6 +43,19 @@ using namespace constitutive;
 
 static constexpr real64 minDensForDivision = 1e-10;
 
+enum class ElementBasedAssemblyKernelFlags
+{
+  SimpleAccumulation = 1 << 0, // 1
+  TotalMassEquation = 1 << 1, // 2
+  /// Add more flags like that if needed:
+  // Flag3 = 1 << 2, // 4
+  // Flag4 = 1 << 3, // 8
+  // Flag5 = 1 << 4, // 16
+  // Flag6 = 1 << 5, // 32
+  // Flag7 = 1 << 6, // 64
+  // Flag8 = 1 << 7  //128
+};
+
 /******************************** PropertyKernelBase ********************************/
 
 /**
@@ -531,7 +544,8 @@ public:
                               MultiFluidBase const & fluid,
                               CoupledSolidBase const & solid,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                              arrayView1d< real64 > const & localRhs )
+                              arrayView1d< real64 > const & localRhs,
+                              BitFlags< ElementBasedAssemblyKernelFlags > const kernelFlags )
     : m_numPhases( numPhases ),
     m_rankOffset( rankOffset ),
     m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
@@ -553,7 +567,8 @@ public:
     m_compDens( subRegion.getField< fields::flow::globalCompDensity >() ),
     m_compDens_n( subRegion.getField< fields::flow::globalCompDensity_n >() ),
     m_localMatrix( localMatrix ),
-    m_localRhs( localRhs )
+    m_localRhs( localRhs ),
+    m_kernelFlags( kernelFlags )
   {}
 
   /**
@@ -636,6 +651,12 @@ public:
                             StackVariables & stack,
                             FUNC && phaseAmountKernelOp = NoOpFunc{} ) const
   {
+    if( m_kernelFlags.hasFlag( ElementBasedAssemblyKernelFlags::SimpleAccumulation ) )
+    {
+      computeAccumulationSimple( ei, stack );
+      return;
+    }
+
     using Deriv = multifluid::DerivativeOffset;
 
     // construct the slices for variables accessed multiple times
@@ -795,12 +816,11 @@ public:
    */
   GEOS_HOST_DEVICE
   void complete( localIndex const GEOS_UNUSED_PARAM( ei ),
-                 StackVariables & stack,
-                 integer const useTotalMassEquation ) const
+                 StackVariables & stack ) const
   {
     using namespace compositionalMultiphaseUtilities;
 
-    if( useTotalMassEquation > 0 )
+    if( m_kernelFlags.hasFlag( ElementBasedAssemblyKernelFlags::TotalMassEquation ) )
     {
       // apply equation/variable change transformation to the component mass balance equations
       real64 work[numDof]{};
@@ -833,8 +853,6 @@ public:
   template< typename POLICY, typename KERNEL_TYPE >
   static void
   launch( localIndex const numElems,
-          integer const useTotalMassEquation,
-          integer const useSimpleAccumulation,
           KERNEL_TYPE const & kernelComponent )
   {
     GEOS_MARK_FUNCTION;
@@ -849,16 +867,9 @@ public:
       typename KERNEL_TYPE::StackVariables stack;
 
       kernelComponent.setup( ei, stack );
-      if( useSimpleAccumulation > 0 )
-      {
-        kernelComponent.computeAccumulationSimple( ei, stack );
-      }
-      else
-      {
-        kernelComponent.computeAccumulation( ei, stack );
-      }
+      kernelComponent.computeAccumulation( ei, stack );
       kernelComponent.computeVolumeBalance( ei, stack );
-      kernelComponent.complete( ei, stack, useTotalMassEquation );
+      kernelComponent.complete( ei, stack );
     } );
   }
 
@@ -911,6 +922,7 @@ protected:
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
 
+  BitFlags< ElementBasedAssemblyKernelFlags > const m_kernelFlags;
 };
 
 /**
@@ -951,10 +963,16 @@ public:
     {
       integer constexpr NUM_COMP = NC();
       integer constexpr NUM_DOF = NC()+1;
+
+      BitFlags< ElementBasedAssemblyKernelFlags > kernelFlags;
+      if( useTotalMassEquation )
+        kernelFlags.setFlag( ElementBasedAssemblyKernelFlags::TotalMassEquation );
+      if( useSimpleAccumulation )
+        kernelFlags.setFlag( ElementBasedAssemblyKernelFlags::SimpleAccumulation );
+
       ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
-      kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
-      ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template launch< POLICY >( subRegion.size(), useTotalMassEquation,
-                                                                                  useSimpleAccumulation, kernel );
+      kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs, kernelFlags );
+      ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template launch< POLICY >( subRegion.size(), kernel );
     } );
   }
 

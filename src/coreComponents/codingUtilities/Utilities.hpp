@@ -389,6 +389,22 @@ struct NoOpFunc
   operator()( Ts && ... ) const {}
 };
 
+template< typename FlagsEnum >
+struct BitFlags
+{
+  void setFlag( FlagsEnum flag )
+  {
+    m_FlagValue |= (integer)flag;
+  }
+
+  bool hasFlag( FlagsEnum flag ) const
+  {
+    return (m_FlagValue & (integer)flag) == (integer)flag;
+  }
+
+private:
+  integer m_FlagValue = 0;
+};
 
 } // namespace geos
 

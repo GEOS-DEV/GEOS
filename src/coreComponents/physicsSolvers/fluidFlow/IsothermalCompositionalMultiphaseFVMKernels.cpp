@@ -35,7 +35,6 @@ namespace isothermalCompositionalMultiphaseFVMKernels
 
 FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhases,
                                                           globalIndex const rankOffset,
-                                                          integer const hasCapPressure,
                                                           DofNumberAccessor const & dofNumberAccessor,
                                                           CompFlowAccessors const & compFlowAccessors,
                                                           MultiFluidAccessors const & multiFluidAccessors,
@@ -43,10 +42,10 @@ FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhase
                                                           PermeabilityAccessors const & permeabilityAccessors,
                                                           real64 const & dt,
                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                          arrayView1d< real64 > const & localRhs )
+                                                          arrayView1d< real64 > const & localRhs,
+                                                          BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags )
   : m_numPhases( numPhases ),
   m_rankOffset( rankOffset ),
-  m_hasCapPressure( hasCapPressure ),
   m_dt( dt ),
   m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
   m_permeability( permeabilityAccessors.get( fields::permeability::permeability {} ) ),
@@ -65,7 +64,8 @@ FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhase
   m_phaseCapPressure( capPressureAccessors.get( fields::cappres::phaseCapPressure {} ) ),
   m_dPhaseCapPressure_dPhaseVolFrac( capPressureAccessors.get( fields::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
   m_localMatrix( localMatrix ),
-  m_localRhs( localRhs )
+  m_localRhs( localRhs ),
+  m_kernelFlags( kernelFlags )
 {}
 
 /******************************** CFLFluxKernel ********************************/
