@@ -2058,6 +2058,11 @@ void CompositionalMultiphaseBase::saveConvergedState( ElementSubRegionBase & sub
   compDens_n.setValues< parallelDevicePolicy<> >( compDens );
 }
 
+void CompositionalMultiphaseBase::saveIterationState( DomainPartition & domain ) const
+{
+  FlowSolverBase::saveIterationState( domain );
+}
+
 void CompositionalMultiphaseBase::saveIterationState( ElementSubRegionBase & subRegion ) const
 {
   if( !subRegion.hasField< fields::flow::globalCompDensity_k >() )

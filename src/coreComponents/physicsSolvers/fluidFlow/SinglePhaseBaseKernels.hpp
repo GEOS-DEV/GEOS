@@ -497,7 +497,6 @@ public:
   {
     real64 const massNormalizer = LvArray::math::max( minNormalizer, m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
     real64 const valMass = LvArray::math::abs( m_localResidual[stack.localRow] ) / massNormalizer;
-    std::cout << valMass << " " << LvArray::math::abs( m_localResidual[stack.localRow] ) << " " << massNormalizer << std::endl;
     if( valMass > stack.localValue[0] )
     {
       stack.localValue[0] = valMass;
