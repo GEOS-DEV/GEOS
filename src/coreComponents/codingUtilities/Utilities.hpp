@@ -392,11 +392,13 @@ struct NoOpFunc
 template< typename FlagsEnum >
 struct BitFlags
 {
+  GEOS_HOST_DEVICE
   void setFlag( FlagsEnum flag )
   {
     m_FlagValue |= (integer)flag;
   }
 
+  GEOS_HOST_DEVICE
   bool hasFlag( FlagsEnum flag ) const
   {
     return (m_FlagValue & (integer)flag) == (integer)flag;
