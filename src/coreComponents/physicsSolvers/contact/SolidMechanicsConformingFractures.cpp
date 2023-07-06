@@ -77,6 +77,8 @@ void SolidMechanicsConformingFractures::registerDataOnMesh( Group & meshBodies )
 
     nodes.registerField< contact::oldFractureState >( getName() );
 
+    nodes.registerField< contact::dualGridNodalArea >( getName() );
+
     ElementRegionManager & elemManager = meshLevel.getElemManager();
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&] ( localIndex const,
                                                                                  SurfaceElementSubRegion & subRegion )
@@ -170,7 +172,6 @@ void SolidMechanicsConformingFractures::implicitStepComplete( real64 const & tim
         oldFractureState[kfe] = fractureState[kfe];
       } );
     } );
-
 
     /// ALEKS: you may want to sync some fields so I left this here as an example.
 
@@ -420,7 +421,122 @@ void LagrangianContactSolver::
                                                                 arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
+  FaceManager const & faceManager = mesh.getFaceManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+  string const & tracDofKey = dofManager.getKey( contact::traction::key() );
+  string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+
+  // nodal-based fields
+  arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+  arrayView1d< globalIndex const > const & tracDofNumber = nodeManager.getReference< globalIndex_array >( tracDofKey );
+
+  arrayView2d< real64 const > const & dispJump = nodeManager.getField< contact::dispJump >();
+  arrayView2d< real64 const > const & previousDispJump = nodeManager.getField< contact::oldDispJump >();
+  arrayView1d< real64 const > const & slidingTolerance = nodeManager.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );  
+  arrayView1d< real64 const > const & nodalArea = nodeManager.getField< contact::dualGridNodalArea >();
+
+  arrayView2d< real64 const > const & traction = nodeManager.getField< contact::traction >();
+  arrayView1d< integer const > const & fractureState = nodeManager.getField< contact::fractureState >();
+  globalIndex const rankOffset = dofManager.rankOffset();
+
+  // Get the coordinates for all nodes
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
+
+  elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                            [&]( localIndex const,
+                                                                 FaceElementSubRegion const & subRegion )
+  {
+    // Loop through all subregions of the face elements
+
+    // face-based fields
+    ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+    arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+    arrayView1d< real64 const > const & area = subRegion.getElementArea();
+    arrayView3d< real64 const > const &
+    rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
+    arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+    
+    constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+    {
+      using ContactType = TYPEOFREF( castedContact );
+      typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+
+      forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+      {
+        // Loop through all face elements in the subregion
+        if (ghostRank[kfe] < 0)
+        {
+          // Filter out ghost elements
+          localIndex const numNodePerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
+          globalIndex nodeDOF[3];
+          globalIndex elemDOF[3] = { tracDofNumber[kfe], tracDofNumber[kfe] + 1, tracDofNumber[kfe] + 2 };
+
+          real64 elemRHS[3] = {0.0, 0.0, 0.0};
+          real64 const Ja = area[kfe];
+
+          stackArray2d< real64, 2 * 3 * 4 * 3 > dRdU( 3, 2 * 3 * numNodesPerFace );
+          stackArray2d< real64, 3 * 3 > dRdT( 3, 3 );
+
+          switch( fractureState[kfe] )
+          {
+            case contact::FractureState::Stick:
+            {
+              for( localIndex i = 0; i < 3; ++i )
+              {
+                elemRHS[i] = +Ja * (dispJump[kfe][i] - (i == 0 ? 0 : previousDispJump[kfe][i]));
+              }
+
+              for( localIndex kf = 0; kf < 2; ++kf )
+              {
+                // Compute nodal contribution to contact works
+                array1d< real64 > nodalArea;
+                computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea ); // compute nodal area (dual mesh size)
   
+                for( localIndex nodeIndex = 0; nodeIndex < numNodesPerFace; ++nodeIndex )
+                {
+                  if (kf == 0)
+                  {
+                    // only save nodal area for the first time
+                    dualGridNodalArea[kf * 3 * numNodesPerFace + 3 * nodeIndex + i] += nodalArea[nodeIndex]; 
+                  }
+
+                  for( localIndex i = 0; i < 3; ++i )
+                  {
+                    nodeDOF[kf * 3 * numNodesPerFace + 3 * nodeIndex + i] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], nodeIndex )] + i;
+
+                    dRdU( 0, kf * 3 * numNodesPerFace + 3 * nodeIndex + i ) = -nodalArea[nodeIndex] * rotationMatrix( kfe, i, 0 ) * pow( -1, kf );
+                    dRdU( 1, kf * 3 * numNodesPerFace + 3 * nodeIndex + i ) = -nodalArea[nodeIndex] * rotationMatrix( kfe, i, 1 ) * pow( -1, kf );
+                    dRdU( 2, kf * 3 * numNodesPerFace + 3 * nodeIndex + i ) = -nodalArea[nodeIndex] * rotationMatrix( kfe, i, 2 ) * pow( -1, kf );
+                  }
+                }
+              }
+              break;
+            }
+          }
+          case contact::FractureState::Slip:
+          case contact::FractureState::NewSlip:
+          {
+
+
+
+          }
+
+
+        }
+
+
+      });
+
+    });
+
+  });
+
+
+
+
 }
 
 
@@ -452,6 +568,7 @@ void LagrangianContactSolver::
                                                             [&]( localIndex const,
                                                                  FaceElementSubRegion const & subRegion )
   {
+
     arrayView1d< globalIndex const > const & tracDofNumber = subRegion.getReference< globalIndex_array >( tracDofKey );
     arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( contact::traction::key() );
     arrayView3d< real64 const > const & rotationMatrix = subRegion.getReference< array3d< real64 > >( contact::rotationMatrixString() );

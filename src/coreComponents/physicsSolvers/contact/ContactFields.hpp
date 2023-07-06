@@ -122,6 +122,13 @@ DECLARE_FIELD( oldFractureState,
                NO_WRITE,
                "Fracture state at the previous timestep." );
 
+DECLARE_FIELD( dualGridNodalArea,
+               "dualGridNodalArea",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Nodal area associated with dual grid." );
 
 ENUM_STRINGS( FractureState::State, "stick", "new_slip", "slip", "open" );
 
