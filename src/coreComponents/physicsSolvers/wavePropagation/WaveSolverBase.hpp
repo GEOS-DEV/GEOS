@@ -285,6 +285,9 @@ protected:
     R1Tensor32 waveSpeedMaxXYZPML;
   };
 
+  ///  A set of target nodes IDs that will be handeled by the current solver
+  array1d< localIndex > solverTargetNodesSet;
+
 };
 
 } /* namespace geos */

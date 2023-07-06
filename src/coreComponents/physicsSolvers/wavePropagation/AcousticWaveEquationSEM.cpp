@@ -278,6 +278,20 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     {
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
+      array1d< bool > nodeInCurRegion( nodeManager.size() );
+      nodeInCurRegion.setValues< parallelHostPolicy >( false );
+      for( localIndex k = 0; k < elementSubRegion.size(); ++k )
+      {
+        for( localIndex i = 0; i < elementSubRegion.numNodesPerElement( k ); ++i )
+        {
+          if( !nodeInCurRegion( elemsToNodes[k][i] ) )
+          {
+            solverTargetNodesSet.emplace_back( elemsToNodes[k][i] );
+            nodeInCurRegion( elemsToNodes[k][i] ) = true;
+          }
+        }
+      }
+
       arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
 
@@ -961,15 +975,16 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     if( !usePML )
     {
       GEOS_MARK_SCOPE ( updateP );
-      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+      forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
       {
+        localIndex a = solverTargetNodesSet[i];
         if( freeSurfaceNodeIndicatorA[a] != 1 )
         {
           p_np1[a] = p_n[a];
           p_np1[a] *= 2.0*mass[a];
           p_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
           p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
-          if (std::abs(mass[a]) > epsilonLoc) p_np1[a] /= mass[a]+0.5*dt*damping[a];
+          p_np1[a] /= mass[a]+0.5*dt*damping[a];
         }
       } );
     }

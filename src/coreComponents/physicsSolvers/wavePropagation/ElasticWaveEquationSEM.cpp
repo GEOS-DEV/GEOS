@@ -550,6 +550,20 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     {
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
+      array1d< bool > nodeInCurRegion( nodeManager.size() );
+      nodeInCurRegion.setValues< parallelHostPolicy >( false );
+      for( localIndex k = 0; k < elementSubRegion.size(); ++k )
+      {
+        for( localIndex i = 0; i < elementSubRegion.numNodesPerElement( k ); ++i )
+        {
+          if( !nodeInCurRegion( elemsToNodes[k][i] ) )
+          {
+            solverTargetNodesSet.emplace_back( elemsToNodes[k][i] );
+            nodeInCurRegion( elemsToNodes[k][i] ) = true;
+          }
+        }
+      }
+
       arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
       arrayView1d< real32 > const density = elementSubRegion.getField< fields::MediumDensity >();
       arrayView1d< real32 > const velocityVp = elementSubRegion.getField< fields::MediumVelocityVp >();
@@ -754,8 +768,9 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
 
     real64 const dt2 = dt*dt;
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+    forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
+      localIndex a = solverTargetNodesSet[i];
       if( freeSurfaceNodeIndicator[a] != 1 )
       {
         // std::cout << mass[a]  << ' ' <<  mass[a]+0.5*dt*dampingx[a] <<  mass[a]+0.5*dt*dampingz[a] << std::endl;
@@ -763,17 +778,17 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
         ux_np1[a] *= 2.0*mass[a];
         ux_np1[a] -= (mass[a]-0.5*dt*dampingx[a])*ux_nm1[a];
         ux_np1[a] += dt2*(rhsx[a]-stiffnessVectorx[a]);
-        if (std::abs(mass[a]) > epsilonLoc) ux_np1[a] /= mass[a]+0.5*dt*dampingx[a];
+        ux_np1[a] /= mass[a]+0.5*dt*dampingx[a];
         uy_np1[a] = uy_n[a];
         uy_np1[a] *= 2.0*mass[a];
         uy_np1[a] -= (mass[a]-0.5*dt*dampingy[a])*uy_nm1[a];
         uy_np1[a] += dt2*(rhsy[a]-stiffnessVectory[a]);
-        if (std::abs(mass[a]) > epsilonLoc) uy_np1[a] /= mass[a]+0.5*dt*dampingy[a];
+        uy_np1[a] /= mass[a]+0.5*dt*dampingy[a];
         uz_np1[a] = uz_n[a];
         uz_np1[a] *= 2.0*mass[a];
         uz_np1[a] -= (mass[a]-0.5*dt*dampingz[a])*uz_nm1[a];
         uz_np1[a] += dt2*(rhsz[a]-stiffnessVectorz[a]);
-        if (std::abs(mass[a]) > epsilonLoc) uz_np1[a] /= mass[a]+0.5*dt*dampingz[a];
+        uz_np1[a] /= mass[a]+0.5*dt*dampingz[a];
       }
     } );
 
