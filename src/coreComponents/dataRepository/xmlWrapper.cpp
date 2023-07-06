@@ -96,7 +96,7 @@ void addNodeFileInfo( xmlNode targetNode, string const & filePath )
  * @brief Returns true if the addNodeFileInfo() command has been called of the specified node.
  */
 bool xmlDocument::hasNodeFileInfo() const
-{ return !first_child().attribute( filePathString ).empty(); }
+{ return !getFirstChild().attribute( filePathString ).empty(); }
 
 void xmlDocument::addIncludedXML( xmlNode & targetNode, int const level )
 {
@@ -124,8 +124,8 @@ void xmlDocument::addIncludedXML( xmlNode & targetNode, int const level )
       }();
 
       xmlDocument includedXmlDocument;
-      xmlResult const result = includedXmlDocument.load_file( includedFilePath.c_str(),
-                                                              hasNodeFileInfo() );
+      xmlResult const result = includedXmlDocument.loadFile( includedFilePath.c_str(),
+                                                             hasNodeFileInfo() );
       GEOS_THROW_IF( !result, GEOS_FMT( "Errors found while parsing included XML file {}\n"
                                         "Description: {}\nOffset: {}",
                                         includedFilePath, result.description(), result.offset ),
@@ -136,7 +136,7 @@ void xmlDocument::addIncludedXML( xmlNode & targetNode, int const level )
       // Currently, schema only allows <Included> tags at the top level (inside <Problem>).
       // We then proceed to merge each nested node from included file with the one in main.
 
-      xmlNode includedRootNode = includedXmlDocument.first_child();
+      xmlNode includedRootNode = includedXmlDocument.getFirstChild();
       GEOS_THROW_IF_NE_MSG( string( includedRootNode.name() ), string( targetNode.name() ),
                             "Included document root does not match the including XML node", InputError );
 
@@ -177,7 +177,7 @@ string buildMultipleInputXML( string_array const & inputFileList,
   if( MpiWrapper::commRank() == 0 )
   {
     xmlWrapper::xmlDocument compositeTree;
-    xmlWrapper::xmlNode compositeRoot = compositeTree.append_child( dataRepository::keys::ProblemManager );
+    xmlWrapper::xmlNode compositeRoot = compositeTree.appendChild( dataRepository::keys::ProblemManager );
     xmlWrapper::xmlNode includedRoot = compositeRoot.append_child( includedListTag );
 
     for( auto & fileName: inputFileList )
@@ -186,7 +186,7 @@ string buildMultipleInputXML( string_array const & inputFileList,
       fileNode.append_attribute( "name" ) = fileName.c_str();
     }
 
-    compositeTree.save_file( inputFileName.c_str() );
+    compositeTree.saveFile( inputFileName.c_str() );
   }
 
   // Everybody else has to wait before attempting to read
@@ -207,14 +207,13 @@ constexpr size_t xmlDocument::npos;
 size_t documentId=0;
 
 xmlDocument::xmlDocument():
-  pugi::xml_document(),
+  pugiDocument(),
   m_rootFilePath( "CodeIncludedXML" + std::to_string( documentId++ ) )
 {}
 
-xmlResult xmlDocument::load_string( const pugi::char_t * contents, bool loadNodeFileInfo,
-                                    unsigned int options )
+xmlResult xmlDocument::loadString( const pugi::char_t * contents, bool loadNodeFileInfo )
 {
-  xmlResult result = pugi::xml_document::load_string( contents, options );
+  xmlResult result = pugiDocument.load_string( contents, pugi::parse_default );
 
   // keeping a copy of original buffer to allow line retrieval
   if( loadNodeFileInfo )
@@ -222,15 +221,14 @@ xmlResult xmlDocument::load_string( const pugi::char_t * contents, bool loadNode
     m_originalBuffers.clear();
     m_originalBuffers[m_rootFilePath] = string( contents );
 
-    addNodeFileInfo( first_child(), m_rootFilePath );
+    addNodeFileInfo( getFirstChild(), m_rootFilePath );
   }
 
   return result;
 }
-xmlResult xmlDocument::load_file( const char * path, bool loadNodeFileInfo,
-                                  unsigned int options, pugi::xml_encoding encoding )
+xmlResult xmlDocument::loadFile( const char * path, bool loadNodeFileInfo )
 {
-  xmlResult result = pugi::xml_document::load_file( path, options, encoding );
+  xmlResult result = pugiDocument.load_file( path, pugi::parse_default, pugi::encoding_auto );
   m_rootFilePath = getAbsolutePath( path );
 
   // keeping a copy of original buffer to allow line retrieval
@@ -243,15 +241,14 @@ xmlResult xmlDocument::load_file( const char * path, bool loadNodeFileInfo,
     m_originalBuffers.clear();
     m_originalBuffers[m_rootFilePath] = string( buffer.str() );
 
-    addNodeFileInfo( first_child(), getAbsolutePath( m_rootFilePath ) );
+    addNodeFileInfo( getFirstChild(), getAbsolutePath( m_rootFilePath ) );
   }
 
   return result;
 }
-xmlResult xmlDocument::load_buffer( const void * contents, size_t size, bool loadNodeFileInfo,
-                                    unsigned int options, pugi::xml_encoding encoding )
+xmlResult xmlDocument::loadBuffer( const void * contents, size_t size, bool loadNodeFileInfo )
 {
-  xmlResult result = pugi::xml_document::load_buffer( contents, size, options, encoding );
+  xmlResult result = pugiDocument.load_buffer( contents, size, pugi::parse_default, pugi::encoding_auto );
 
   //keeping a copy of original buffer
   if( loadNodeFileInfo )
@@ -259,14 +256,29 @@ xmlResult xmlDocument::load_buffer( const void * contents, size_t size, bool loa
     m_originalBuffers.clear();
     m_originalBuffers[m_rootFilePath] = string( ( char const * )contents, size );
 
-    addNodeFileInfo( first_child(), m_rootFilePath );
+    addNodeFileInfo( getFirstChild(), m_rootFilePath );
   }
 
   return result;
 }
 
+xmlNode xmlDocument::appendChild( const char * name )
+{ return pugiDocument.append_child( name ); }
+
+xmlNode xmlDocument::appendChild( xmlTypes type )
+{ return pugiDocument.append_child( type ); }
+
+bool xmlDocument::saveFile( const char * path ) const
+{ return pugiDocument.save_file( path ); }
+
 string const & xmlDocument::getFilePath() const
 { return m_rootFilePath; }
+
+xmlNode xmlDocument::getFirstChild() const
+{ return pugiDocument.first_child(); }
+
+xmlNode xmlDocument::getChild( char const * name ) const
+{ return pugiDocument.child( name ); }
 
 string const & xmlDocument::getOriginalBuffer() const
 { return m_originalBuffers.find( m_rootFilePath )->second; }

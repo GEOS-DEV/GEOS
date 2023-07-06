@@ -167,7 +167,7 @@ TEST( testXML, testXMLFileLines )
     problemManager.parseCommandLineInput();
     Group & commandLine = problemManager.getGroup( problemManager.groupKeys.commandLine );
     string const & inputFileName = commandLine.getReference< string >( problemManager.viewKeys.inputFileName );
-    xmlDoc.load_file( inputFileName.c_str(), true );
+    xmlDoc.loadFile( inputFileName.c_str(), true );
     problemManager.parseXMLDocument( xmlDoc );
   }
 
@@ -178,7 +178,7 @@ TEST( testXML, testXMLFileLines )
   }
 
   std::set< string > expectedElements;
-  getElementsRecursive( xmlDoc, xmlDoc.root().child( "Problem" ), expectedElements );
+  getElementsRecursive( xmlDoc, xmlDoc.getFirstChild(), expectedElements );
 
   std::set< string > verifiedElements;
   problemManager.forAllDataContext< DataFileContext >( [&]( DataFileContext const & ctx )
