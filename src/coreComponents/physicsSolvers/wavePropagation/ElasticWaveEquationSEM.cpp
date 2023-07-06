@@ -558,7 +558,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
         {
           if( !nodeInCurRegion( elemsToNodes[k][i] ) )
           {
-            solverTargetNodesSet.emplace_back( elemsToNodes[k][i] );
+            m_solverTargetNodesSet.emplace_back( elemsToNodes[k][i] );
             nodeInCurRegion( elemsToNodes[k][i] ) = true;
           }
         }
@@ -768,9 +768,9 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
 
     real64 const dt2 = dt*dt;
-    forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+    forAll< EXEC_POLICY >( m_solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
-      localIndex a = solverTargetNodesSet[i];
+      localIndex a = m_solverTargetNodesSet[i];
       if( freeSurfaceNodeIndicator[a] != 1 )
       {
         // std::cout << mass[a]  << ' ' <<  mass[a]+0.5*dt*dampingx[a] <<  mass[a]+0.5*dt*dampingz[a] << std::endl;

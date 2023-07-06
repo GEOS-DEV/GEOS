@@ -286,7 +286,7 @@ protected:
   };
 
   ///  A set of target nodes IDs that will be handeled by the current solver
-  array1d< localIndex > solverTargetNodesSet;
+  array1d< localIndex > m_solverTargetNodesSet;
 
 };
 

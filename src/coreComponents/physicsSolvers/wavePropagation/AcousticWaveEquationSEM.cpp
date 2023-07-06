@@ -286,7 +286,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
         {
           if( !nodeInCurRegion( elemsToNodes[k][i] ) )
           {
-            solverTargetNodesSet.emplace_back( elemsToNodes[k][i] );
+            m_solverTargetNodesSet.emplace_back( elemsToNodes[k][i] );
             nodeInCurRegion( elemsToNodes[k][i] ) = true;
           }
         }
@@ -975,9 +975,9 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     if( !usePML )
     {
       GEOS_MARK_SCOPE ( updateP );
-      forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+      forAll< EXEC_POLICY >( m_solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
       {
-        localIndex a = solverTargetNodesSet[i];
+        localIndex a = m_solverTargetNodesSet[i];
         if( freeSurfaceNodeIndicatorA[a] != 1 )
         {
           p_np1[a] = p_n[a];

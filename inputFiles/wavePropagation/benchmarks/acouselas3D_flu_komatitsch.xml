@@ -59,15 +59,15 @@
       useGlobalIds="0"/>
   </Mesh> 
 
+  <!-- read from the Mesh instead -->
   <FieldSpecifications>
-
   </FieldSpecifications>
 
   <Outputs>
     <VTK name="vtkOutput"/>
   </Outputs>
 
-  <Events maxTime="0.2">
+  <Events maxTime="3.0">
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solidSolverApplications"
