@@ -352,6 +352,7 @@ public:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
+  GEOS_HOST_DEVICE
   integer useTotalMassEquation() const { return m_useTotalMassEquation; }
 
 protected:

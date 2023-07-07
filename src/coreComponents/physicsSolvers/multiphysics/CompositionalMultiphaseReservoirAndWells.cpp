@@ -82,6 +82,7 @@ CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
 ~CompositionalMultiphaseReservoirAndWells()
 {}
 
+GEOS_HOST_DEVICE
 template<>
 CompositionalMultiphaseBase const *
 CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase >::
