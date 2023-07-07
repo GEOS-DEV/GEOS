@@ -109,9 +109,9 @@ int WrapperBase::setTotalviewDisplay() const
 void WrapperBase::createDataContext( xmlWrapper::xmlNode const & targetNode,
                                      xmlWrapper::xmlNodePos const & nodePos )
 {
-  xmlWrapper::xmlAttribute att = targetNode.getAttribute( m_name.c_str() );
+  xmlWrapper::xmlAttribute att = targetNode.attribute( m_name.c_str() );
   xmlWrapper::xmlAttributePos attPos = nodePos.getAttributeLine( m_name );
-  if( nodePos.isFound() && attPos.isFound() && !att.isEmpty() )
+  if( nodePos.isFound() && attPos.isFound() && !att.empty() )
   {
     m_dataContext = std::make_unique< DataFileContext >( targetNode, att, attPos );
   }
@@ -121,8 +121,8 @@ void WrapperBase::processInputException( std::exception const & ex,
                                          xmlWrapper::xmlNode const & targetNode,
                                          xmlWrapper::xmlNodePos const & nodePos ) const
 {
-  xmlWrapper::xmlAttribute const & attribute = targetNode.getAttribute( getName().c_str() );
-  string const inputStr = string( attribute.getValue() );
+  xmlWrapper::xmlAttribute const & attribute = targetNode.attribute( getName().c_str() );
+  string const inputStr = string( attribute.value() );
   xmlWrapper::xmlAttributePos const attPos = nodePos.getAttributeLine( getName() );
   std::ostringstream oss;
   string const exStr = ex.what();
@@ -136,7 +136,7 @@ void WrapperBase::processInputException( std::exception const & ex,
   }
   else
   {
-    oss << targetNode.path() << " (name=" << targetNode.getAttribute( "name" ).getValue() << ")/" << getName();
+    oss << targetNode.path() << " (name=" << targetNode.attribute( "name" ).value() << ")/" << getName();
   }
   oss << "\n***** Input value: '" << inputStr << '\'';
   oss << ( exStr[0]=='\n' ? exStr : "'\n" + exStr );

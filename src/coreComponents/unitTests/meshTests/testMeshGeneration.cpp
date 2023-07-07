@@ -112,7 +112,7 @@ protected:
     meshManager.generateMeshLevels( domain );
 
     ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
-    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.getChild( elementManager.getName().c_str() );
+    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
     elementManager.processInputFileRecursive( xmlDocument, topLevelNode );
     elementManager.postProcessInputRecursive();
 

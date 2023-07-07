@@ -73,7 +73,6 @@ template void stringToInputVariable( Tensor< real32, 3 > & target, string const 
 template void stringToInputVariable( Tensor< real64, 3 > & target, string const & inputValue );
 template void stringToInputVariable( Tensor< real64, 6 > & target, string const & inputValue );
 
-
 /**
  * @brief Adds the filePath and character offset info on the node in filePathString
  * and charOffsetString attributes. This function allow to keep track of the source
@@ -85,8 +84,8 @@ void addNodeFileInfo( xmlNode targetNode, string const & filePath )
 {
   // we keep the file path and the character offset on each node so we keep track of these
   // informations, even if the nodes are manipulated within the xml hierarchy.
-  targetNode.appendAttribute( filePathString ).set_value( filePath.c_str() );
-  targetNode.appendAttribute( charOffsetString ).set_value( targetNode.offset_debug() );
+  targetNode.append_attribute( filePathString ).set_value( filePath.c_str() );
+  targetNode.append_attribute( charOffsetString ).set_value( targetNode.offset_debug() );
 
   for( xmlNode subNode : targetNode.children() )
   {
@@ -97,13 +96,13 @@ void addNodeFileInfo( xmlNode targetNode, string const & filePath )
  * @brief Returns true if the addNodeFileInfo() command has been called of the specified node.
  */
 bool xmlDocument::hasNodeFileInfo() const
-{ return !getFirstChild().getAttribute( filePathString ).empty(); }
+{ return !getFirstChild().attribute( filePathString ).empty(); }
 
 void xmlDocument::addIncludedXML( xmlNode & targetNode, int const level )
 {
   GEOS_THROW_IF( level > 100, "XML include level limit reached, please check input for include loops", InputError );
 
-  string const currentFilePath = targetNode.getAttribute( filePathString ).value();
+  string const currentFilePath = targetNode.attribute( filePathString ).value();
 
   // Schema currently allows a single unique <Included>, but a non-validating file may include multiple
   for( xmlNode includedNode : targetNode.children( includedListTag ) )
@@ -116,7 +115,7 @@ void xmlDocument::addIncludedXML( xmlNode & targetNode, int const level )
         GEOS_THROW_IF_NE_MSG( string( fileNode.name() ), includedFileTag,
                               GEOS_FMT( "<{}> must only contain <{}> tags", includedListTag, includedFileTag ),
                               InputError );
-        xmlAttribute const nameAttr = fileNode.getAttribute( "name" );
+        xmlAttribute const nameAttr = fileNode.attribute( "name" );
         string const fileName = nameAttr.value();
         GEOS_THROW_IF( !nameAttr || fileName.empty(),
                        GEOS_FMT( "<{}> tag must have a non-empty 'name' attribute", includedFileTag ),
@@ -178,12 +177,12 @@ string buildMultipleInputXML( string_array const & inputFileList,
   {
     xmlWrapper::xmlDocument compositeTree;
     xmlWrapper::xmlNode compositeRoot = compositeTree.appendChild( dataRepository::keys::ProblemManager );
-    xmlWrapper::xmlNode includedRoot = compositeRoot.appendChild( includedListTag );
+    xmlWrapper::xmlNode includedRoot = compositeRoot.append_child( includedListTag );
 
     for( auto & fileName: inputFileList )
     {
-      xmlWrapper::xmlNode fileNode = includedRoot.appendChild( includedFileTag );
-      fileNode.appendAttribute( "name" ) = fileName.c_str();
+      xmlWrapper::xmlNode fileNode = includedRoot.append_child( includedFileTag );
+      fileNode.append_attribute( "name" ) = fileName.c_str();
     }
 
     compositeTree.saveFile( inputFileName );
@@ -265,7 +264,7 @@ xmlResult xmlDocument::loadBuffer( const void * contents, size_t size, bool load
 xmlNode xmlDocument::appendChild( string const & name )
 { return pugiDocument.append_child( name.c_str() ); }
 
-xmlNode xmlDocument::appendChild( xmlNodeType type )
+xmlNode xmlDocument::appendChild( xmlTypes type )
 { return pugiDocument.append_child( type ); }
 
 bool xmlDocument::saveFile( string const & path ) const
@@ -276,8 +275,6 @@ string const & xmlDocument::getFilePath() const
 
 xmlNode xmlDocument::getFirstChild() const
 { return pugiDocument.first_child(); }
-xmlNode xmlDocument::getRoot() const
-{ return pugiDocument.root(); }
 
 xmlNode xmlDocument::getChild( string const & name ) const
 { return pugiDocument.child( name.c_str() ); }
@@ -299,8 +296,8 @@ xmlNodePos xmlDocument::getNodePosition( xmlNode const & node ) const
   size_t line = npos;
   size_t offsetInLine = npos;
   size_t offset = npos;
-  xmlAttribute filePathAtt = node.getAttribute( filePathString );
-  xmlAttribute charOffsetAtt = node.getAttribute( charOffsetString );
+  xmlAttribute filePathAtt = node.attribute( filePathString );
+  xmlAttribute charOffsetAtt = node.attribute( charOffsetString );
   string filePath;
 
   if( filePathAtt && charOffsetAtt )

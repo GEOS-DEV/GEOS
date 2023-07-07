@@ -41,10 +41,10 @@ std::ostream & operator<<( std::ostream & os, DataContext const & sc )
  */
 string getNodeName( xmlWrapper::xmlNode const & node )
 {
-  xmlWrapper::xmlAttribute const nameAtt = node.getAttribute( "name" );
+  xmlWrapper::xmlAttribute const nameAtt = node.attribute( "name" );
   if( !nameAtt.empty() )
   {
-    return string( node.getAttribute( "name" ).value() );
+    return string( node.attribute( "name" ).value() );
   }
   else
   {

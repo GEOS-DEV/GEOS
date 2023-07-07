@@ -205,14 +205,14 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   DomainPartition & domain = problemManager.getDomainPartition();
 
   constitutive::ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
-  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.getChild( constitutiveManager.getName().c_str());
+  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
   constitutiveManager.processInputFileRecursive( xmlDocument, topLevelNode );
 
   MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
 
   ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
-  topLevelNode = xmlProblemNode.getChild( elementManager.getName().c_str());
+  topLevelNode = xmlProblemNode.child( elementManager.getName().c_str());
   elementManager.processInputFileRecursive( xmlDocument, topLevelNode );
 
   problemManager.problemSetup();

@@ -25,14 +25,14 @@ VTKPVDWriter::VTKPVDWriter( string fileName ):
 {
   // Declaration of XML version
   auto declarationNode = m_pvdFile.appendChild( pugi::node_declaration );
-  declarationNode.appendAttribute( "version" ) = "1.0";
+  declarationNode.append_attribute( "version" ) = "1.0";
 
   // Declaration of the node VTKFile
   auto vtkFileNode = m_pvdFile.appendChild( "VTKFile" );
-  vtkFileNode.appendAttribute( "type" ) = "Collection";
-  vtkFileNode.appendAttribute( "version" ) = "0.1";
+  vtkFileNode.append_attribute( "type" ) = "Collection";
+  vtkFileNode.append_attribute( "version" ) = "0.1";
 
-  vtkFileNode.appendChild( "Collection" );
+  vtkFileNode.append_child( "Collection" );
 }
 
 void VTKPVDWriter::setFileName( string fileName )
@@ -47,15 +47,15 @@ void VTKPVDWriter::save() const
 
 void VTKPVDWriter::addData( real64 time, string const & filePath ) const
 {
-  auto collectionNode = m_pvdFile.getChild( "VTKFile" ).getChild( "Collection" );
-  auto dataSetNode = collectionNode.appendChild( "DataSet" );
-  dataSetNode.appendAttribute( "timestep" ) = time;
-  dataSetNode.appendAttribute( "file" ) = filePath.c_str();
+  auto collectionNode = m_pvdFile.getChild( "VTKFile" ).child( "Collection" );
+  auto dataSetNode = collectionNode.append_child( "DataSet" );
+  dataSetNode.append_attribute( "timestep" ) = time;
+  dataSetNode.append_attribute( "file" ) = filePath.c_str();
 }
 
 void VTKPVDWriter::reinitData() const
 {
-  auto collectionNode = m_pvdFile.getChild( "VTKFile" ).getChild( "Collection" );
+  auto collectionNode = m_pvdFile.getChild( "VTKFile" ).child( "Collection" );
 
   while( collectionNode.remove_child( "DataSet" ) )
   {}

@@ -76,22 +76,22 @@ void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
 {
   string const advanced_match_string = ".*[\\[\\]`$].*|";
 
-  xmlWrapper::xmlNode newNode = schemaRoot.appendChild( "xsd:simpleType" );
-  newNode.appendAttribute( "name" ) = name.c_str();
-  xmlWrapper::xmlNode restrictionNode = newNode.appendChild( "xsd:restriction" );
-  restrictionNode.appendAttribute( "base" ) = "xsd:string";
-  xmlWrapper::xmlNode patternNode = restrictionNode.appendChild( "xsd:pattern" );
+  xmlWrapper::xmlNode newNode = schemaRoot.append_child( "xsd:simpleType" );
+  newNode.append_attribute( "name" ) = name.c_str();
+  xmlWrapper::xmlNode restrictionNode = newNode.append_child( "xsd:restriction" );
+  restrictionNode.append_attribute( "base" ) = "xsd:string";
+  xmlWrapper::xmlNode patternNode = restrictionNode.append_child( "xsd:pattern" );
 
   // Handle the default regex
   if( regex.empty() )
   {
     GEOS_WARNING( "schema regex not defined for " << name );
-    patternNode.appendAttribute( "value" ) = "(?s).*";
+    patternNode.append_attribute( "value" ) = "(?s).*";
   }
   else
   {
     string const patternString = advanced_match_string + regex;
-    patternNode.appendAttribute( "value" ) = patternString.c_str();
+    patternNode.append_attribute( "value" ) = patternString.c_str();
   }
 }
 
@@ -122,38 +122,38 @@ void SchemaConstruction( Group & group,
     if( schemaParent.find_child_by_attribute( "xsd:element", "name", targetName.c_str()).empty())
     {
       // Add the entries to the current and root nodes
-      xmlWrapper::xmlNode targetIncludeNode = schemaParent.appendChild( "xsd:element" );
-      targetIncludeNode.appendAttribute( "name" ) = targetName.c_str();
-      targetIncludeNode.appendAttribute( "type" ) = typeName.c_str();
+      xmlWrapper::xmlNode targetIncludeNode = schemaParent.append_child( "xsd:element" );
+      targetIncludeNode.append_attribute( "name" ) = targetName.c_str();
+      targetIncludeNode.append_attribute( "type" ) = typeName.c_str();
 
       // Add occurence conditions
       if((schemaType == InputFlags::REQUIRED_NONUNIQUE) || (schemaType == InputFlags::REQUIRED))
       {
-        targetIncludeNode.appendAttribute( "minOccurs" ) = "1";
+        targetIncludeNode.append_attribute( "minOccurs" ) = "1";
       }
       if((schemaType == InputFlags::OPTIONAL) || (schemaType == InputFlags::REQUIRED))
       {
-        targetIncludeNode.appendAttribute( "maxOccurs" ) = "1";
+        targetIncludeNode.append_attribute( "maxOccurs" ) = "1";
       }
 
       // Insert a new type into the root node if not present
       xmlWrapper::xmlNode targetTypeDefNode = schemaRoot.find_child_by_attribute( "xsd:complexType", "name", typeName.c_str());
       if( targetTypeDefNode.empty())
       {
-        targetTypeDefNode = schemaRoot.appendChild( "xsd:complexType" );
-        targetTypeDefNode.appendAttribute( "name" ) = typeName.c_str();
+        targetTypeDefNode = schemaRoot.append_child( "xsd:complexType" );
+        targetTypeDefNode.append_attribute( "name" ) = typeName.c_str();
       }
 
       // Add subgroups
       if( group.numSubGroups() > 0 )
       {
         // Children are defined in a choice node
-        xmlWrapper::xmlNode targetChoiceNode = targetTypeDefNode.getChild( "xsd:choice" );
+        xmlWrapper::xmlNode targetChoiceNode = targetTypeDefNode.child( "xsd:choice" );
         if( targetChoiceNode.empty() )
         {
           targetChoiceNode = targetTypeDefNode.prepend_child( "xsd:choice" );
-          targetChoiceNode.appendAttribute( "minOccurs" ) = "0";
-          targetChoiceNode.appendAttribute( "maxOccurs" ) = "unbounded";
+          targetChoiceNode.append_attribute( "minOccurs" ) = "0";
+          targetChoiceNode.append_attribute( "maxOccurs" ) = "unbounded";
         }
 
         // Get a list of the subgroup names in alphabetic order
@@ -175,13 +175,13 @@ void SchemaConstruction( Group & group,
           {
             // Enforce uniqueness of element names
             // Note: this must be done at the parent element level
-            xmlWrapper::xmlNode uniqueNameNode = targetIncludeNode.appendChild( "xsd:unique" );
+            xmlWrapper::xmlNode uniqueNameNode = targetIncludeNode.append_child( "xsd:unique" );
             string uniqueNameNodeStr = targetName + subName + "UniqueName";
-            uniqueNameNode.appendAttribute( "name" ) = uniqueNameNodeStr.c_str();
-            xmlWrapper::xmlNode uniqueNameSelector = uniqueNameNode.appendChild( "xsd:selector" );
-            uniqueNameSelector.appendAttribute( "xpath" ) = subName.c_str();
-            xmlWrapper::xmlNode uniqueNameField = uniqueNameNode.appendChild( "xsd:field" );
-            uniqueNameField.appendAttribute( "xpath" ) = "@name";
+            uniqueNameNode.append_attribute( "name" ) = uniqueNameNodeStr.c_str();
+            xmlWrapper::xmlNode uniqueNameSelector = uniqueNameNode.append_child( "xsd:selector" );
+            uniqueNameSelector.append_attribute( "xpath" ) = subName.c_str();
+            xmlWrapper::xmlNode uniqueNameField = uniqueNameNode.append_child( "xsd:field" );
+            uniqueNameField.append_attribute( "xpath" ) = "@name";
           }
 
           SchemaConstruction( subGroup, schemaRoot, targetChoiceNode, documentationType );
@@ -232,14 +232,14 @@ void SchemaConstruction( Group & group,
               commentString += " => " + stringutilities::join( registrars.begin(), registrars.end(), ", " );
             }
 
-            xmlWrapper::xmlNode commentNode = targetTypeDefNode.appendChild( xmlWrapper::xmlNodeType::node_comment );
+            xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child( xmlWrapper::xmlTypes::node_comment );
             commentNode.set_value( commentString.c_str());
 
 
             // Write the valid schema attributes
             // Basic attributes
-            xmlWrapper::xmlNode attributeNode = targetTypeDefNode.appendChild( "xsd:attribute" );
-            attributeNode.appendAttribute( "name" ) = attributeName.c_str();
+            xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child( "xsd:attribute" );
+            attributeNode.append_attribute( "name" ) = attributeName.c_str();
 
             string const wrappedTypeName = rtTypes::typeNames( wrapper.getTypeId() );
             string const sanitizedName = std::regex_replace( wrappedTypeName, std::regex( "::" ), "_" );
@@ -248,7 +248,7 @@ void SchemaConstruction( Group & group,
             string const xmlSafeName = std::regex_replace( sanitizedName, std::regex( "std_(__cxx11_basic_)?string(<\\s*char,\\s*std_char_traits<char>,\\s*std_allocator<char>\\s*>)?" ), "string" );
             GEOS_LOG_VAR( wrappedTypeName );
             GEOS_LOG_VAR( xmlSafeName );
-            attributeNode.appendAttribute( "type" ) = xmlSafeName.c_str();
+            attributeNode.append_attribute( "type" ) = xmlSafeName.c_str();
 
             // Check if the attribute has a previously unseen non-simple type with a custom validation regex
             if( schemaRoot.find_child_by_attribute( "xsd:simpleType", "name", xmlSafeName.c_str() ).empty() )
@@ -271,12 +271,12 @@ void SchemaConstruction( Group & group,
             {
               if( wrapper.hasDefaultValue() )
               {
-                attributeNode.appendAttribute( "default" ) = wrapper.getDefaultValueString().c_str();
+                attributeNode.append_attribute( "default" ) = wrapper.getDefaultValueString().c_str();
               }
             }
             else if( documentationType == 0 )
             {
-              attributeNode.appendAttribute( "use" ) = "required";
+              attributeNode.append_attribute( "use" ) = "required";
             }
           }
         }
@@ -288,13 +288,13 @@ void SchemaConstruction( Group & group,
         // Only add this attribute if not present
         if( targetTypeDefNode.find_child_by_attribute( "xsd:attribute", "name", "name" ).empty())
         {
-          xmlWrapper::xmlNode commentNode = targetTypeDefNode.appendChild( xmlWrapper::xmlNodeType::node_comment );
+          xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child( xmlWrapper::xmlTypes::node_comment );
           commentNode.set_value( "name => A name is required for any non-unique nodes" );
 
-          xmlWrapper::xmlNode attributeNode = targetTypeDefNode.appendChild( "xsd:attribute" );
-          attributeNode.appendAttribute( "name" ) = "name";
-          attributeNode.appendAttribute( "type" ) = "string";
-          attributeNode.appendAttribute( "use" ) = "required";
+          xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child( "xsd:attribute" );
+          attributeNode.append_attribute( "name" ) = "name";
+          attributeNode.append_attribute( "type" ) = "string";
+          attributeNode.append_attribute( "use" ) = "required";
         }
       }
     }
