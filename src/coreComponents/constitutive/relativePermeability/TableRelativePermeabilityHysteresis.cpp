@@ -81,9 +81,8 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
                    &m_imbibitionNonWettingRelPermTableName ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "" ).
-    setDescription(
-    "Imbibition relative permeability table name for the non-wetting phase.\n"
-    "To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves" );
+    setDescription( "Imbibition relative permeability table name for the non-wetting phase.\n"
+                    "To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves" );
 
   // hysteresis input parameters
   registerWrapper( viewKeyStruct::phaseHasHysteresisString(), &m_phaseHasHysteresis ).
@@ -252,10 +251,8 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateWettingRelPer
          drainagePhaseMaxVolFraction,
          drainagePhaseRelPermMinEndPoint,
          drainagePhaseRelPermMaxEndPoint;
-  GEOS_THROW_IF( m_drainageWettingNonWettingRelPermTableNames.size() == 2,
-                 "There should be exactly two name for drainageWettingNonWettingRelpermTableNames",
-                 InputError );
-  string tableName = ( numPhases == 2 ) ?   m_drainageWettingNonWettingRelPermTableNames[0] : m_drainageWettingIntermediateRelPermTableNames[0];
+
+  string const tableName = ( numPhases == 2 ) ?   m_drainageWettingNonWettingRelPermTableNames[0] : m_drainageWettingIntermediateRelPermTableNames[0];
   checkExistenceAndValidateRelPermTable( tableName, // input
                                          drainagePhaseMinVolFraction, // output
                                          drainagePhaseMaxVolFraction,
@@ -321,14 +318,10 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateNonWettingRel
          drainagePhaseMaxVolFraction,
          drainagePhaseRelPermMinEndPoint,
          drainagePhaseRelPermMaxEndPoint;
+
   // Step 1: Read the drainage for the non wetting phase
-  GEOS_THROW_IF( m_drainageWettingNonWettingRelPermTableNames.size() == 2,
-                 "There should be exactly two name for drainageWettingNonWettingRelpermTableNames",
-                 InputError );
-
-
-  string tableName = ( numPhases == 2 ) ? m_drainageWettingNonWettingRelPermTableNames[1] :
-                     m_drainageNonWettingIntermediateRelPermTableNames[0];
+  string const tableName = ( numPhases == 2 ) ? m_drainageWettingNonWettingRelPermTableNames[1] :
+                           m_drainageNonWettingIntermediateRelPermTableNames[0];
   checkExistenceAndValidateRelPermTable( tableName,       // input
                                          drainagePhaseMinVolFraction,      // output
                                          drainagePhaseMaxVolFraction,
