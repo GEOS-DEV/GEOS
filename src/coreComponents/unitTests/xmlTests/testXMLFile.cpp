@@ -61,7 +61,7 @@ void getElementsRecursive( xmlDocument const & document, xmlNode const & targetN
   // The Group name will be the name attribute value, or the node tag name if the name attribute
   // doesn't exist.
   string const groupName = [&]() {
-    xmlAttribute nameAtt = targetNode.attribute( "name" );
+    xmlAttribute nameAtt = targetNode.getAttribute( "name" );
     return nameAtt ? string( nameAtt.value() ) : string( targetNode.name() );
   }();
 

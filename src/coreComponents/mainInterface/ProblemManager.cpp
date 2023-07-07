@@ -284,12 +284,12 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
                                           xmlWrapper::xmlNode schemaParent,
                                           integer documentationType )
 {
-  xmlWrapper::xmlNode targetChoiceNode = schemaParent.child( "xsd:choice" );
-  if( targetChoiceNode.empty() )
+  xmlWrapper::xmlNode targetChoiceNode = schemaParent.getChild( "xsd:choice" );
+  if( targetChoiceNode.isEmpty() )
   {
     targetChoiceNode = schemaParent.prepend_child( "xsd:choice" );
-    targetChoiceNode.append_attribute( "minOccurs" ) = "0";
-    targetChoiceNode.append_attribute( "maxOccurs" ) = "unbounded";
+    targetChoiceNode.appendAttribute( "minOccurs" ) = "0";
+    targetChoiceNode.appendAttribute( "maxOccurs" ) = "unbounded";
   }
 
   // These objects are handled differently during the xml read step,
@@ -417,21 +417,21 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
   {
     DomainPartition & domain = getDomainPartition();
     ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( groupKeys.constitutiveManager );
-    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
+    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.getChild( constitutiveManager.getName().c_str());
     constitutiveManager.processInputFileRecursive( xmlDocument, topLevelNode );
 
     // Open mesh levels
     MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
     meshManager.generateMeshLevels( domain );
     Group & meshBodies = domain.getMeshBodies();
-    xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.child( MeshLevel::groupStructKeys::elemManagerString() );
+    xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.getChild( MeshLevel::groupStructKeys::elemManagerString() );
 
     for( xmlWrapper::xmlNode regionNode : elementRegionsNode.children() )
     {
-      string const regionName = regionNode.attribute( "name" ).value();
+      string const regionName = regionNode.attrgetAttributeibute( "name" ).value();
       string const
       regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( meshBodies,
-                                                                  regionNode.attribute( "meshBody" ).value() );
+                                                                  regionNode.getAttribute( "meshBody" ).value() );
 
       MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
       meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )

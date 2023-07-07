@@ -142,7 +142,7 @@ void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
   // Handle the case where the node was imported from a different input file
   // Set the path prefix to make sure all relative Path variables are interpreted correctly
   string const oldPrefix = Path::pathPrefix();
-  xmlWrapper::xmlAttribute filePath = targetNode.attribute( xmlWrapper::filePathString );
+  xmlWrapper::xmlAttribute filePath = targetNode.getAttribute( xmlWrapper::filePathString );
   if( filePath )
   {
     Path::pathPrefix() = getAbsolutePath( splitPath( filePath.value() ).first );
@@ -153,7 +153,7 @@ void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
   for( xmlWrapper::xmlNode childNode : targetNode.children() )
   {
     // Get the child tag and name
-    string childName = childNode.attribute( "name" ).value();
+    string childName = childNode.getAttribute( "name" ).value();
     if( childName.empty() )
     {
       childName = childNode.name();
@@ -210,14 +210,14 @@ void Group::processInputFile( xmlWrapper::xmlDocument const & xmlDocument,
 
   for( xmlWrapper::xmlAttribute attribute : targetNode.attributes() )
   {
-    string const attributeName = attribute.name();
+    string const attributeName = attribute.getName();
     if( !xmlWrapper::isFileMetadataAttribute( attributeName ) )
     {
       GEOS_THROW_IF( processedAttributes.count( attributeName ) == 0,
                      GEOS_FMT( "XML Node at '{}' with name={} contains unused attribute '{}'.\n"
                                "Valid attributes are:\n{}\nFor more details, please refer to documentation at:\n"
                                "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
-                               targetNode.path(), m_dataContext->toString(), attributeName,
+                               targetNode.getPath(), m_dataContext->toString(), attributeName,
                                dumpInputOptions() ),
                      InputError );
     }

@@ -27,14 +27,14 @@ VTKVTMWriter::VTKVTMWriter( string filePath )
 {
   // Declaration of XML version
   auto declarationNode = m_document.appendChild( pugi::node_declaration );
-  declarationNode.append_attribute( "version" ) = "1.0";
+  declarationNode.appendAttribute( "version" ) = "1.0";
 
   // Declaration of the node VTKFile
   auto vtkFileNode = m_document.appendChild( "VTKFile" );
-  vtkFileNode.append_attribute( "type" ) = "vtkMultiBlockDataSet";
-  vtkFileNode.append_attribute( "version" ) = "1.0";
+  vtkFileNode.appendAttribute( "type" ) = "vtkMultiBlockDataSet";
+  vtkFileNode.appendAttribute( "version" ) = "1.0";
 
-  m_blockRoot = vtkFileNode.append_child( "vtkMultiBlockDataSet" );
+  m_blockRoot = vtkFileNode.appendChild( "vtkMultiBlockDataSet" );
 }
 
 void VTKVTMWriter::write() const
@@ -56,13 +56,13 @@ void VTKVTMWriter::addDataSet( std::vector< string > const & blockPath,
     }
     else
     {
-      node = node.append_child( "Block" );
-      node.append_attribute( "name" ) = blockName.c_str();
+      node = node.appendChild( "Block" );
+      node.appendAttribute( "name" ) = blockName.c_str();
     }
   }
-  node = node.append_child( "DataSet" );
-  node.append_attribute( "name" ) = dataSetName.c_str();
-  node.append_attribute( "file" ) = filePath.c_str();
+  node = node.appendChild( "DataSet" );
+  node.appendAttribute( "name" ) = dataSetName.c_str();
+  node.appendAttribute( "file" ) = filePath.c_str();
 }
 
 } // namespace vtk

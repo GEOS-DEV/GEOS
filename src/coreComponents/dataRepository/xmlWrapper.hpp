@@ -50,18 +50,160 @@ namespace xmlWrapper
 /// Alias for the type of the result from an xml parse attempt.
 using xmlResult = pugi::xml_parse_result;
 
-/// Alias for the type of an xml node.
-/// An xmlNode behave as a pointer object: passing it by value to a function which modify it
-/// will modify the original xmlNode object.
-using xmlNode = pugi::xml_node;
+/// Alias for the type variant of an xml node.
+using xmlNodeType = pugi::xml_node_type;
 
-/// Alias for the type of an xml attribute.
+/// Wrapper class for the type of an xml attribute.
 /// An xmlAttribute behave as a pointer object: passing it by value to a function which modify it
 /// will modify the original xmlAttribute object.
-using xmlAttribute = pugi::xml_attribute;
+class xmlAttribute
+{
+public:
+  /**
+   * @brief Construct a new empty xml Attribute object
+   */
+  inline xmlAttribute();
 
-/// Alias for the type variant of an xml node.
-using xmlTypes = pugi::xml_node_type;
+  /**
+   * @param r another xmlAttribute object
+   * @return true if the referenced underlying attribute object is the same one, false otherwise.
+   */
+  inline bool operator==( const xmlAttribute & r ) const;
+  /**
+   * @param r another xmlAttribute object
+   * @return true if the referenced underlying attribute object is a different one, false otherwise.
+   */
+  inline bool operator!=( const xmlAttribute & r ) const;
+  /**
+   * @return the same result as isEmpty()
+   */
+  inline operator bool() const;
+
+  /**
+   * @return true if the attribute is empty, false otherwise
+   */
+  inline bool isEmpty() const;
+
+  /**
+   * @return the attribute name, or "" if empty.
+   * @todo c++17: change return type to string_view
+   */
+  inline string getName() const;
+  /**
+   * @brief Set the tag name of the node
+   * @param name the new name
+   */
+  inline void setName( const string & name );
+
+  /**
+   * @return the attribute value, or "" if empty.
+   * @todo c++17: change return type to string_view
+   */
+  inline string getValue() const;
+  /**
+   * @brief Set the value of the node
+   * @param value the new value
+   */
+  inline void setValue( const string & value );
+
+  /**
+   * @return the next attribute in the containing node, or an empty one if there is none
+   */
+  inline xmlAttribute nextAttribute() const;
+  /**
+   * @return the next attribute in the containing node, or an empty one if there is none
+   */
+  inline xmlAttribute previousAttribute() const;
+
+private:
+  pugi::xml_attribute pugiAtt;
+
+  /**
+   * @brief Construct a new reference to the same attribute object
+   */
+  inline explicit xmlAttribute( pugi::xml_attribute const & attribute );
+};
+
+/// Wrapper class for the type of an xml node.
+/// An xmlNode behave as a pointer object: passing it by value to a function which modify it
+/// will modify the original xmlNode object.
+class xmlNode
+{
+public:
+  /**
+   * @brief Construct a new empty xml Node object
+   */
+  inline xmlNode();
+
+  /**
+   * @param r another xmlNode object
+   * @return true if the referenced underlying node object is the same one, false otherwise.
+   */
+  inline bool operator==( const xmlNode & r ) const;
+  /**
+   * @param r another xmlNode object
+   * @return true if the referenced underlying node object is a different one, false otherwise.
+   */
+  inline bool operator!=( const xmlNode & r ) const;
+  /**
+   * @return the same result as isEmpty()
+   */
+  inline operator bool() const;
+
+  /**
+   * @return true if the node is empty, false otherwise
+   */
+  inline bool isEmpty() const;
+
+  /**
+   * @return the node tag name, or "" if empty.
+   * @todo c++17: change return type to string_view
+   */
+  inline string getName() const;
+  /**
+   * @brief Set the tag name of the node
+   * @param name the new name
+   */
+  inline void setName( const string & name );
+
+  /**
+   * @return the node value, or "" if empty.
+   * @todo c++17: change return type to string_view
+   */
+  inline string getValue() const;
+  /**
+   * @brief Set the value of the node
+   * @param value the new value
+   */
+  inline void setValue( const string & value );
+
+  inline xmlNode getParent() const;
+  inline xmlNode getChild( string const & name ) const;
+  inline xmlAttribute getAttribute( string const & name ) const;
+
+  inline xmlAttribute appendAttribute( string const & name );
+  inline xmlNode appendChild( xmlNodeType type = node_element );
+  inline xmlNode appendChild( string const & name );
+  inline bool removeAttribute( const xmlAttribute & att );
+  inline bool removeAttribute( string const & name );
+  inline bool removeChild( const xmlNode & node );
+  inline bool removeChild( string const & name );
+
+  inline xmlNodeType getType() const;
+  inline string getPath( char delimiter = '/' ) const;
+  /**
+   * @return the character offset where this node is in the xmlDocument
+   */
+  inline ptrdiff_t getOffset() const;
+
+private:
+  pugi::xml_node pugiNode;
+
+  /**
+   * @brief Construct a new reference to the same node object
+   */
+  inline explicit xmlNode( pugi::xml_node const & node );
+};
 
 class xmlDocument;
 
@@ -152,6 +294,10 @@ public:
    */
   xmlNode getFirstChild() const;
   /**
+   * @return the DOM parent node of this document (which, typically in GEOS, contains the <Problem/> node and the declaration node)
+   */
+  xmlNode getRoot() const;
+  /**
    * @return a child with the specified name
    * @param name the tag name of the node to find
    */
@@ -231,7 +377,7 @@ public:
    * As an exemple, node_declaration is useful to add the "<?xml ?>" node.
    * @return the added node
    */
-  xmlNode appendChild( xmlTypes type = xmlTypes::node_element );
+  xmlNode appendChild( xmlNodeType type = xmlNodeType::node_element );
 
   /**
    * @brief Save the XML to a file
@@ -432,7 +578,7 @@ readAttributeAsType( T & rval,
                      xmlNode const & targetNode,
                      T_DEF const & defVal )
 {
-  xmlAttribute const xmlatt = targetNode.attribute( name.c_str() );
+  xmlAttribute const xmlatt = targetNode.getAttribute( name.c_str() );
   if( !xmlatt.empty() )
   {
     // parse the string/attribute into a value
@@ -463,7 +609,7 @@ readAttributeAsType( T & rval,
                      xmlNode const & targetNode,
                      bool const required )
 {
-  xmlAttribute const xmlatt = targetNode.attribute( name.c_str() );
+  xmlAttribute const xmlatt = targetNode.getAttribute( name.c_str() );
 
   bool const success = !(xmlatt.empty() && required);
 
@@ -514,7 +660,100 @@ readAttributeAsType( T & rval,
 
 ///@}
 
-}
+inline xmlAttribute::xmlAttribute()
+{}
+inline xmlAttribute::xmlAttribute( pugi::xml_attribute const & attribute ):
+  pugiAtt( attribute.internal_object() )
+{}
+
+inline bool xmlAttribute::operator==( const xmlAttribute & r ) const
+{ return pugiAtt.operator==(); }
+inline bool xmlAttribute::operator!=( const xmlAttribute & r ) const
+{ return pugiAtt.operator!=(); }
+inline bool xmlAttribute::operator bool() const
+{ return bool(pugiAtt); }
+
+inline bool xmlAttribute::isEmpty() const
+{ return pugiAtt.empty(); }
+
+inline string xmlAttribute::getName() const
+{ return pugiAtt.name(); }
+inline void xmlAttribute::setName( const string & name )
+{ pugiAtt.set_name( name ); }
+
+inline string xmlAttribute::getValue() const
+{ return pugiAtt.value(); }
+inline void xmlAttribute::setValue( const string & value )
+{ pugiAtt.set_value( value ); }
+
+inline xmlAttribute xmlAttribute::next_attribute()
+{ xmlAttribute( pugiAtt.next_attribute() ); }
+inline xmlAttribute xmlAttribute::previous_attribute()
+{ xmlAttribute( pugiAtt.previous_attribute() ); }
+
+
+inline xmlNode::xmlNode():
+  pugiNode()
+{}
+inline xmlNode::xmlNode( pugi::xml_node const & node ):
+  pugiNode( node.internal_object() )
+{}
+
+inline bool xmlNode::operator==( const xmlNode & r ) const
+{ return pugiNode.operator==(); }
+inline bool xmlNode::operator!=( const xmlNode & r ) const
+{ return pugiNode.operator!=(); }
+inline bool xmlAttribute::operator bool() const
+{ return bool(pugiNode); }
+
+inline bool xmlNode::isEmpty() const
+{ return pugiNode.empty(); }
+
+inline string xmlNode::getName() const
+{ return pugiNode.name(); }
+inline void xmlNode::setName( const string & name )
+{ pugiNode.set_name( name ); }
+
+inline void xmlNode::setValue( const string & value )
+{ pugiNode.set_value( value ); }
+inline string xmlNode::getValue() const
+{ return pugiNode.value(); }
+
+inline iterator xmlNode::begin() const
+{ return pugiNode.begin(); }
+inline iterator xmlNode::end() const
+{ return pugiNode.end(); }
+inline xmlNode xmlNode::getParent() const
+{ return xmlNode( pugiNode.parent()); }
+inline xmlNode xmlNode::getChild( string const & name ) const
+{ return xmlNode( pugiNode.child( name )); }
+inline xmlAttribute xmlNode::getAttribute( string const & name ) const
+{ return xmlAttribute( pugiNode.attribute( name )); }
+
+inline xmlAttribute xmlNode::appendAttribute( string const & name )
+{ return xmlAttribute( pugiNode.append_attribute( name )); }
+inline xmlNode xmlNode::appendChild( xmlNodeType type = node_element )
+{ return xmlNode( pugiNode.append_child()); }
+inline xmlNode xmlNode::appendChild( string const & name )
+{ return xmlNode( pugiNode.append_child( name )); }
+inline bool xmlNode::removeAttribute( const xmlAttribute & att )
+{ return pugiNode.remove_attribute( att ); }
+inline bool xmlNode::removeAttribute( string const & name )
+{ return pugiNode.remove_attribute( name ); }
+inline bool xmlNode::removeChild( const xmlNode & node )
+{ return pugiNode.remove_child( node ); }
+inline bool xmlNode::removeChild( string const & name )
+{ return pugiNode.remove_child( name ); }
+
+inline xmlNodeType xmlNode::getType() const
+{ return pugiNode.getType(); }
+inline string xmlNode::getPath( char delimiter = '/' ) const
+{ return pugiNode.getPath( delimiter ); }
+inline ptrdiff_t xmlNode::getOffset() const
+{ return pugiNode.getOffset(); }
+
+
+} /* namespace xmlWrapper */
 
 } /* namespace geos */
 

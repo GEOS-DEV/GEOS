@@ -97,12 +97,12 @@ void ElementRegionManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
                                                 xmlWrapper::xmlNode schemaParent,
                                                 integer documentationType )
 {
-  xmlWrapper::xmlNode targetChoiceNode = schemaParent.child( "xsd:choice" );
+  xmlWrapper::xmlNode targetChoiceNode = schemaParent.getChild( "xsd:choice" );
   if( targetChoiceNode.empty() )
   {
     targetChoiceNode = schemaParent.prepend_child( "xsd:choice" );
-    targetChoiceNode.append_attribute( "minOccurs" ) = "0";
-    targetChoiceNode.append_attribute( "maxOccurs" ) = "unbounded";
+    targetChoiceNode.appendAttribute( "minOccurs" ) = "0";
+    targetChoiceNode.appendAttribute( "maxOccurs" ) = "unbounded";
   }
 
   std::set< string > names;
