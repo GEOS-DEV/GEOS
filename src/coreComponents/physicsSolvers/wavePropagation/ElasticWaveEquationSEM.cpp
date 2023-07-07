@@ -599,7 +599,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     } );
   } );
   
-  // std::cout << "\t[ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] size=" << m_solverTargetNodesSet.size() << std::endl;
+  std::cout << "\t[ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] m_solverTargetNodesSet.size()=" << m_solverTargetNodesSet.size() << std::endl;
 }
 
 

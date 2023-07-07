@@ -39,12 +39,23 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
   auto acousNodesSet = acousticSolver()->getSolverNodesSet();
   auto elasNodesSet = elasticSolver()->getSolverNodesSet();
 
+  if (false)  // debug
+  {
+    std::cout << "acoustic nodes" << std::endl;
+    for (auto val : acousNodesSet) std::cout << val << ' ';
+    std::cout << std::endl;
+    std::cout << "elastic nodes" << std::endl;
+    for (auto val : elasNodesSet) std::cout << val << ' ';
+    std::cout << std::endl;
+  }
+
   for (auto val : acousNodesSet)
   {
     if (elasNodesSet.contains(val)) m_interfaceNodesSet.insert(val);
   }
 
-  // std::cout << "\t[AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] size=" << m_solverTargetNodesSet.size() << std::endl;
+  std::cout << "\t[AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] "
+  << "m_interfaceNodesSet.size()=" << m_interfaceNodesSet.size() << std::endl;
   GEOS_THROW_IF( m_interfaceNodesSet.size() == 0, "Failed to compute interface: check xml input (solver order)", std::runtime_error );
 }
 
