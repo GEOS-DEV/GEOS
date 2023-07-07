@@ -42,7 +42,7 @@ void VTKPVDWriter::setFileName( string fileName )
 
 void VTKPVDWriter::save() const
 {
-  m_pvdFile.saveFile( m_fileName.c_str() );
+  m_pvdFile.saveFile( m_fileName );
 }
 
 void VTKPVDWriter::addData( real64 time, string const & filePath ) const

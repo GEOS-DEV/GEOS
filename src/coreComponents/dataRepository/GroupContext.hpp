@@ -82,7 +82,7 @@ public:
    */
   virtual string toString() const;
 
-protected:
+private:
 
   string const m_typeName;
 

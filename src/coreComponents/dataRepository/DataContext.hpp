@@ -154,7 +154,7 @@ public:
   size_t getOffset() const
   { return m_offset; }
 
-protected:
+private:
 
   /// @see getTypeName()
   string const m_typeName;

@@ -52,7 +52,7 @@ void ConvertDocumentationToSchema( string const & fname,
   </xsd:schema>";
 
   xmlWrapper::xmlDocument schemaTree;
-  schemaTree.loadString( schemaBase.c_str() );
+  schemaTree.loadString( schemaBase );
   xmlWrapper::xmlNode schemaRoot = schemaTree.getChild( "xsd:schema" );
 
   // Build the simple schema types
@@ -65,7 +65,7 @@ void ConvertDocumentationToSchema( string const & fname,
 
   // Write the schema to file
   GEOS_LOG_RANK_0( "  Saving file" );
-  schemaTree.saveFile( fname.c_str());
+  schemaTree.saveFile( fname );
 
   GEOS_LOG_RANK_0( "  Done!" );
 }

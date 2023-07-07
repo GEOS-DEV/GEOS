@@ -155,7 +155,7 @@ public:
    * @return a child with the specified name
    * @param name the tag name of the node to find
    */
-  xmlNode getChild( const char * name ) const;
+  xmlNode getChild( string const & name ) const;
   /**
    * @return the original file buffer loaded during the last load_X() call on this object.
    */
@@ -193,7 +193,7 @@ public:
    * @param options the parsing options
    * @return an xmlResult object representing the parsing resulting status.
    */
-  xmlResult loadString( const pugi::char_t * contents, bool loadNodeFileInfo = false );
+  xmlResult loadString( string const & contents, bool loadNodeFileInfo = false );
 
   /**
    * @brief Load document from file. Free any previously loaded xml tree.
@@ -204,7 +204,7 @@ public:
    * @param encoding the encoding options
    * @return an xmlResult object representing the parsing resulting status.
    */
-  xmlResult loadFile( const char * path, bool loadNodeFileInfo = false );
+  xmlResult loadFile( string const & path, bool loadNodeFileInfo = false );
 
   /**
    * @brief Load document from buffer. Copies/converts the buffer, so it may be deleted or changed
@@ -224,7 +224,7 @@ public:
    * @param name the tag name of the node to add
    * @return the added node
    */
-  xmlNode appendChild( const char * name );
+  xmlNode appendChild( string const & name );
   /**
    * @brief Add a root element to the document
    * @param type the type of the node to add to the root of the document.
@@ -239,7 +239,7 @@ public:
    * @return true if the file has successfuly been saved
    * @return false otherwise
    */
-  bool saveFile( const char * path ) const;
+  bool saveFile( string const & path ) const;
 
   /**
    * @brief Function to add xml nodes from included files.

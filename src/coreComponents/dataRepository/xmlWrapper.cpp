@@ -124,8 +124,7 @@ void xmlDocument::addIncludedXML( xmlNode & targetNode, int const level )
       }();
 
       xmlDocument includedXmlDocument;
-      xmlResult const result = includedXmlDocument.loadFile( includedFilePath.c_str(),
-                                                             hasNodeFileInfo() );
+      xmlResult const result = includedXmlDocument.loadFile( includedFilePath, hasNodeFileInfo() );
       GEOS_THROW_IF( !result, GEOS_FMT( "Errors found while parsing included XML file {}\n"
                                         "Description: {}\nOffset: {}",
                                         includedFilePath, result.description(), result.offset ),
@@ -186,7 +185,7 @@ string buildMultipleInputXML( string_array const & inputFileList,
       fileNode.append_attribute( "name" ) = fileName.c_str();
     }
 
-    compositeTree.saveFile( inputFileName.c_str() );
+    compositeTree.saveFile( inputFileName );
   }
 
   // Everybody else has to wait before attempting to read
@@ -211,24 +210,24 @@ xmlDocument::xmlDocument():
   m_rootFilePath( "CodeIncludedXML" + std::to_string( documentId++ ) )
 {}
 
-xmlResult xmlDocument::loadString( const pugi::char_t * contents, bool loadNodeFileInfo )
+xmlResult xmlDocument::loadString( string const & contents, bool loadNodeFileInfo )
 {
-  xmlResult result = pugiDocument.load_string( contents, pugi::parse_default );
+  xmlResult result = pugiDocument.load_string( contents.c_str(), pugi::parse_default );
 
   // keeping a copy of original buffer to allow line retrieval
   if( loadNodeFileInfo )
   {
     m_originalBuffers.clear();
-    m_originalBuffers[m_rootFilePath] = string( contents );
+    m_originalBuffers[m_rootFilePath] = contents;
 
     addNodeFileInfo( getFirstChild(), m_rootFilePath );
   }
 
   return result;
 }
-xmlResult xmlDocument::loadFile( const char * path, bool loadNodeFileInfo )
+xmlResult xmlDocument::loadFile( string const & path, bool loadNodeFileInfo )
 {
-  xmlResult result = pugiDocument.load_file( path, pugi::parse_default, pugi::encoding_auto );
+  xmlResult result = pugiDocument.load_file( path.c_str(), pugi::parse_default, pugi::encoding_auto );
   m_rootFilePath = getAbsolutePath( path );
 
   // keeping a copy of original buffer to allow line retrieval
@@ -262,14 +261,14 @@ xmlResult xmlDocument::loadBuffer( const void * contents, size_t size, bool load
   return result;
 }
 
-xmlNode xmlDocument::appendChild( const char * name )
-{ return pugiDocument.append_child( name ); }
+xmlNode xmlDocument::appendChild( string const & name )
+{ return pugiDocument.append_child( name.c_str() ); }
 
 xmlNode xmlDocument::appendChild( xmlTypes type )
 { return pugiDocument.append_child( type ); }
 
-bool xmlDocument::saveFile( const char * path ) const
-{ return pugiDocument.save_file( path ); }
+bool xmlDocument::saveFile( string const & path ) const
+{ return pugiDocument.save_file( path.c_str() ); }
 
 string const & xmlDocument::getFilePath() const
 { return m_rootFilePath; }
@@ -277,8 +276,8 @@ string const & xmlDocument::getFilePath() const
 xmlNode xmlDocument::getFirstChild() const
 { return pugiDocument.first_child(); }
 
-xmlNode xmlDocument::getChild( char const * name ) const
-{ return pugiDocument.child( name ); }
+xmlNode xmlDocument::getChild( string const & name ) const
+{ return pugiDocument.child( name.c_str() ); }
 
 string const & xmlDocument::getOriginalBuffer() const
 { return m_originalBuffers.find( m_rootFilePath )->second; }

@@ -385,7 +385,7 @@ void ProblemManager::parseInputFile()
 
   // Load preprocessed xml file
   xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult const xmlResult = xmlDocument.loadFile( inputFileName.c_str(), true );
+  xmlWrapper::xmlResult const xmlResult = xmlDocument.loadFile( inputFileName, true );
   GEOS_THROW_IF( !xmlResult, GEOS_FMT( "Errors found while parsing XML file {}\nDescription: {}\nOffset: {}",
                                        inputFileName, xmlResult.description(), xmlResult.offset ), InputError );
 
