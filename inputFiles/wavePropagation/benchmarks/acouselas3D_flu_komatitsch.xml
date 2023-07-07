@@ -2,11 +2,6 @@
 
 <Problem>
   <Solvers>
-    <AcousticElasticSEM
-      name="acousticelasticSolver"
-      acousticSolverName="acousticSolver"
-      elasticSolverName="elasticSolver"
-      targetRegions="{ Solid, Fluid }"/>
     <AcousticSEM
       name="acousticSolver"
       cflFactor="0.25"
@@ -24,6 +19,12 @@
       timeSourceFrequency="0"
       receiverCoordinates="{ }"
       discretization="FE1"/>
+    <!-- NOTE: the coupled solver must be declared at the end (for interface computations) -->
+    <AcousticElasticSEM
+      name="acousticelasticSolver"
+      acousticSolverName="acousticSolver"
+      elasticSolverName="elasticSolver"
+      targetRegions="{ Solid, Fluid }"/>
   </Solvers>
 
   <NumericalMethods>

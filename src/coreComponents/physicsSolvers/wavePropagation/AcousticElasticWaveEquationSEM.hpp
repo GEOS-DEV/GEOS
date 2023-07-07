@@ -32,10 +32,12 @@ class AcousticElasticWaveEquationSEM : public CoupledSolver< AcousticWaveEquatio
 public:
   using Base = CoupledSolver< AcousticWaveEquationSEM, ElasticWaveEquationSEM >;
   using Base::m_solvers;
-  // using Base::m_dofManager;
-  // using Base::m_localMatrix;
-  // using Base::m_rhs;
-  // using Base::m_solution;
+  /*
+  using Base::m_dofManager;
+  using Base::m_localMatrix;
+  using Base::m_rhs;
+  using Base::m_solution;
+  */
 
   enum class SolverType : integer
   {
@@ -80,6 +82,12 @@ public:
   {
     return std::get< toUnderlying( SolverType::ElasticWaveEquationSEM ) >( m_solvers );
   }
+
+protected:
+
+  virtual void initializePostInitialConditionsPreSubGroups() override;
+
+  SortedArray< localIndex > m_interfaceNodesSet;
 };
 
 } /* namespace geos */

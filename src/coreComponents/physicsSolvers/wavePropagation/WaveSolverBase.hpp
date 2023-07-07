@@ -122,6 +122,8 @@ public:
    */
   void reinit() override final;
 
+  SortedArray< localIndex > const & getSolverNodesSet() { return m_solverTargetNodesSet; }
+
 protected:
 
   virtual void postProcessInput() override;
@@ -285,9 +287,8 @@ protected:
     R1Tensor32 waveSpeedMaxXYZPML;
   };
 
-  ///  A set of target nodes IDs that will be handeled by the current solver
-  array1d< localIndex > m_solverTargetNodesSet;
-
+  /// A set of target nodes IDs that will be handled by the current solver
+  SortedArray< localIndex > m_solverTargetNodesSet;
 };
 
 } /* namespace geos */

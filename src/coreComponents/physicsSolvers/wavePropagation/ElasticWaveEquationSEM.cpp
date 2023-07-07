@@ -550,17 +550,11 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     {
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
-      array1d< bool > nodeInCurRegion( nodeManager.size() );
-      nodeInCurRegion.setValues< parallelHostPolicy >( false );
       for( localIndex k = 0; k < elementSubRegion.size(); ++k )
       {
         for( localIndex i = 0; i < elementSubRegion.numNodesPerElement( k ); ++i )
         {
-          if( !nodeInCurRegion( elemsToNodes[k][i] ) )
-          {
-            m_solverTargetNodesSet.emplace_back( elemsToNodes[k][i] );
-            nodeInCurRegion( elemsToNodes[k][i] ) = true;
-          }
+            m_solverTargetNodesSet.insert( elemsToNodes[k][i] );
         }
       }
 
@@ -604,7 +598,8 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       } );
     } );
   } );
-
+  
+  // std::cout << "\t[ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] size=" << m_solverTargetNodesSet.size() << std::endl;
 }
 
 

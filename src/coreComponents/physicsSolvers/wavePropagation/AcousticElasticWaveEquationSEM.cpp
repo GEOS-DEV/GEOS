@@ -29,7 +29,23 @@ AcousticElasticWaveEquationSEM::AcousticElasticWaveEquationSEM( const string & n
                                                                 Group * const parent )
   : Base( name, parent )
 {
-  std::cout << "[AcousticElasticWaveEquationSEM] ctor" << std::endl;
+  // std::cout << "\t[AcousticElasticWaveEquationSEM::AcousticElasticWaveEquationSEM]" << std::endl;
+}
+
+void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
+{
+  SolverBase::initializePostInitialConditionsPreSubGroups();
+
+  auto acousNodesSet = acousticSolver()->getSolverNodesSet();
+  auto elasNodesSet = elasticSolver()->getSolverNodesSet();
+
+  for (auto val : acousNodesSet)
+  {
+    if (elasNodesSet.contains(val)) m_interfaceNodesSet.insert(val);
+  }
+
+  // std::cout << "\t[AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] size=" << m_solverTargetNodesSet.size() << std::endl;
+  GEOS_THROW_IF( m_interfaceNodesSet.size() == 0, "Failed to compute interface: check xml input (solver order)", std::runtime_error );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, AcousticElasticWaveEquationSEM, string const &, Group * const )
