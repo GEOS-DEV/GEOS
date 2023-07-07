@@ -247,7 +247,7 @@ set( constitutive_sources
      thermalConductivity/SinglePhaseThermalConductivityBase.cpp
    )
 
-set( dependencyList ${parallelDeps} events dataRepository functions denseLinearAlgebra )
+set( dependencyList ${parallelDeps} events dataRepository functions )
 
 if( ENABLE_PVTPackage )
     set( constitutive_headers

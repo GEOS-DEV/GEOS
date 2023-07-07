@@ -24,7 +24,7 @@ set( events_sources
      tasks/TasksManager.cpp
    )
 
-set( dependencyList ${parallelDeps} common fileIO dataRepository )
+set( dependencyList ${parallelDeps} common dataRepository )
 
 blt_add_library( NAME       events
                  SOURCES    ${events_sources}

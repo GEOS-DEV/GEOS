@@ -1,5 +1,5 @@
 set( subdirs
-     math
+    #  math
      common
      codingUtilities
      dataRepository
@@ -7,17 +7,17 @@ set( subdirs
      functions
      constitutive
      mesh
-     denseLinearAlgebra
-     linearAlgebra
-     fieldSpecification
-     finiteElement
-     finiteVolume
-     discretizationMethods
-     fileIO
-     physicsSolvers
+     denseLinearAlgebra # Commenting out denseLinearAlgebra will cause this to work
+    #  linearAlgebra
+    #  fieldSpecification
+    #  finiteElement
+    #  finiteVolume
+    #  discretizationMethods
+    #  fileIO
+    #  physicsSolvers
      events
      mainInterface
-     python
+    #  python
    )
 
 set( parallelDeps "" )

@@ -128,7 +128,7 @@ set( mesh_sources
      utilities/ComputationalGeometry.cpp
      )
 
-set( dependencyList ${parallelDeps} schema dataRepository constitutive finiteElement parmetis metis )
+set( dependencyList ${parallelDeps} schema dataRepository constitutive parmetis metis )
 
 if( ENABLE_VTK )
     message(STATUS "Adding VTKMeshGenerator sources and headers")

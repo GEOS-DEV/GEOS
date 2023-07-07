@@ -6,19 +6,21 @@ set( mainInterface_headers
      ProblemManager.hpp
      initialization.hpp
      version.hpp
+     reproducer.hpp
    )
 
 #
 # Specify all sources
 #
 set( mainInterface_sources
-     GeosxState.cpp
-     ProblemManager.cpp
-     initialization.cpp
-     version.cpp
+    #  GeosxState.cpp
+    #  ProblemManager.cpp
+    #  initialization.cpp
+    #  version.cpp
+     reproducer.cpp
    )
 
-set( dependencyList ${parallelDeps} physicsSolvers discretizationMethods fieldSpecification linearAlgebra dataRepository events fileIO optionparser )
+set( dependencyList ${parallelDeps} dataRepository optionparser )
 
 blt_add_library( NAME       mainInterface
                  SOURCES    ${mainInterface_sources}

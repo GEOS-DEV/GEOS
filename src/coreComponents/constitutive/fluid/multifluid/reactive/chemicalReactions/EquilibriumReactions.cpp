@@ -189,7 +189,8 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
                                        matrix,
                                        rhs );
 
-    real64 const residualNorm = BlasLapackLA::vectorNorm2( rhs.toSliceConst() );
+    // real64 const residualNorm = BlasLapackLA::vectorNorm2( rhs.toSliceConst() );
+    real64 const residualNorm = 0;
 
     if( residualNorm < m_newtonTol && iteration >= 1 )
     {
@@ -197,7 +198,7 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
       break;
     }
 
-    BlasLapackLA::solveLinearSystem( matrix, rhs, solution );
+    // BlasLapackLA::solveLinearSystem( matrix, rhs, solution );
 
     updatePrimarySpeciesConcentrations( solution, primarySpeciesConcentration );
   }
