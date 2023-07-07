@@ -253,21 +253,6 @@ public:
     getMeshBodies().forSubGroupsIndex< MeshBody >( std::forward< FUNCTION >( function ) );
   }
 
-
-  /**
-   * @brief Get the metis neighbors indices.  @see DomainPartition#m_metisNeighborList
-   * @return Container of global indices.
-   */
-  std::set< int > & getMetisNeighborList()
-  { return m_metisNeighborList; }
-
-  /**
-   * @brief Get the metis neighbors indices, const version. @see DomainPartition#m_metisNeighborList
-   * @return Container of global indices.
-   */
-  std::set< int > const & getMetisNeighborList() const
-  { return m_metisNeighborList; }
-
   /**
    * @brief Get the neighbor communicators. @see DomainPartition#m_neighbors.
    * @return Container of communicators.
@@ -284,10 +269,6 @@ public:
 
 private:
 
-  /**
-   * @brief Contains the global indices of the metis neighbors in case `metis` is used. Empty otherwise.
-   */
-  std::set< int > m_metisNeighborList;
   /**
    * @brief Contains all the communicators from this DomainPartition to its neighbors.
    */
