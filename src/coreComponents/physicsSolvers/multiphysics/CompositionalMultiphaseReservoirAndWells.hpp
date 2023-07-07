@@ -76,6 +76,7 @@ protected:
 
 private:
 
+  GEOS_HOST_DEVICE
   CompositionalMultiphaseBase const * flowSolver() const;
 
   void setMGRStrategy();
