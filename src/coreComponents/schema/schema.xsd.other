@@ -2226,24 +2226,14 @@
 	<xsd:complexType name="TableRelativePermeabilityHysteresisType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => Derivative of phase relative permeability with respect to phase volume fraction-->
 		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="real64_array4d" />
-		<!--drainagePhaseMaxVolumeFraction => (no description available)-->
-		<xsd:attribute name="drainagePhaseMaxVolumeFraction" type="real64_array" />
-		<!--drainagePhaseMinVolumeFraction => (no description available)-->
-		<xsd:attribute name="drainagePhaseMinVolumeFraction" type="real64_array" />
-		<!--drainagePhaseRelPermEndPoint => (no description available)-->
-		<xsd:attribute name="drainagePhaseRelPermEndPoint" type="real64_array" />
 		<!--drainageRelPermWrappers => (no description available)-->
 		<xsd:attribute name="drainageRelPermWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;" />
-		<!--imbibitionPhaseMaxVolumeFraction => (no description available)-->
-		<xsd:attribute name="imbibitionPhaseMaxVolumeFraction" type="real64_array" />
-		<!--imbibitionPhaseMinVolumeFraction => (no description available)-->
-		<xsd:attribute name="imbibitionPhaseMinVolumeFraction" type="real64_array" />
-		<!--imbibitionPhaseRelPermEndPoint => (no description available)-->
-		<xsd:attribute name="imbibitionPhaseRelPermEndPoint" type="real64_array" />
 		<!--imbibitionRelPermWrappers => (no description available)-->
 		<xsd:attribute name="imbibitionRelPermWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--landParameter => (no description available)-->
 		<xsd:attribute name="landParameter" type="real64_array" />
+		<!--nonWettingCurve => (no description available)-->
+		<xsd:attribute name="nonWettingCurve" type="geos_constitutive_KilloughHysteresis_HysteresisCurve" />
 		<!--phaseHasHysteresis => (no description available)-->
 		<xsd:attribute name="phaseHasHysteresis" type="integer_array" />
 		<!--phaseMaxHistoricalVolFraction => Phase max historical phase volume fraction-->
@@ -2260,6 +2250,8 @@
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
 		<xsd:attribute name="phaseTypes" type="integer_array" />
+		<!--wettingCurve => (no description available)-->
+		<xsd:attribute name="wettingCurve" type="geos_constitutive_KilloughHysteresis_HysteresisCurve" />
 	</xsd:complexType>
 	<xsd:complexType name="ThermalCompressibleSinglePhaseFluidType">
 		<!--dDensity_dPressure => Derivative of density with respect to pressure-->
