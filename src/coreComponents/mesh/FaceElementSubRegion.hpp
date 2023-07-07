@@ -260,6 +260,12 @@ public:
   arrayView2d< real64 const > detJ() const
   { return m_detJ; }
 
+  array1d< globalIndex > m_missingNodes;
+
+  void setMissingNodes( NodeManager const & nodeManager );
+
+  std::vector< ArrayOfArrays< globalIndex > > m_otherDuplicatedNodes;
+
 private:
 
   /**
@@ -281,8 +287,6 @@ private:
 
   /// Element-to-face relation
   FaceMapType m_toFacesRelation;
-
-  std::vector< ArrayOfArrays< globalIndex > > m_otherDuplicatedNodes;
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   /// Separation coefficient

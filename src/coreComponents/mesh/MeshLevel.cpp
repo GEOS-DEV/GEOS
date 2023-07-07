@@ -382,34 +382,36 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
 //    }
 //  };
 
-//  auto const addDuplicatedFractureNodes = [&]( localIndex const er,
-//                                               localIndex const esr,
-//                                               FaceElementSubRegion const & subRegion )
-//  {
-//    for( localIndex const & ln: nodeAdjacencySet)
-//    {
-//      globalIndex const & gn = nodeManager.localToGlobalMap()[ln];
-//      for( int i = 0; i < subRegion.m_duplicatedNodes.size(); ++i )
-//      {
-//        std::set< globalIndex > const gns( subRegion.m_duplicatedNodes[i].begin(), subRegion.m_duplicatedNodes[i].end() );
-//        if( gns.find( gn ) != gns.cend() )
-//        {
-//          for( globalIndex const & n: gns )
-//          {
-//            auto it = nodeManager.globalToLocalMap().find( n );
-//            if( it != nodeManager.globalToLocalMap().cend() )
-//            {
-//              if( nodeAdjacencySet.find( it->second ) == nodeAdjacencySet.cend() )
-//              {
-//                GEOS_LOG_RANK( "Inserting duplicated node loc " << it->second << " glob " << it->first );
-//                nodeAdjacencySet.insert( it->second );
-//              }
-//            }
-//          }
-//        }
-//      }
-//    }
-//  };
+  auto const addDuplicatedFractureNodes = [&]( localIndex const er,
+                                               localIndex const esr,
+                                               FaceElementSubRegion const & subRegion )
+  {
+    std::set< globalIndex > newNodes;
+    for( localIndex const & ln: nodeAdjacencySet )
+    {
+      globalIndex const & gn = nodeManager.localToGlobalMap()[ln];
+      for( int i = 0; i < subRegion.m_duplicatedNodes.size(); ++i )
+      {
+        std::set< globalIndex > const gns( subRegion.m_duplicatedNodes[i].begin(), subRegion.m_duplicatedNodes[i].end() );
+        if( gns.find( gn ) != gns.cend() )
+        {
+          for( globalIndex const & n: gns )
+          {
+            auto it = nodeManager.globalToLocalMap().find( n );
+            if( it != nodeManager.globalToLocalMap().cend() )
+            {
+              if( nodeAdjacencySet.find( it->second ) == nodeAdjacencySet.cend() )
+              {
+                GEOS_LOG_RANK( "Inserting duplicated node loc " << it->second << " glob " << it->first );
+                newNodes.insert( it->second );
+              }
+            }
+          }
+        }
+      }
+    }
+    nodeAdjacencySet.insert( newNodes.cbegin(), newNodes.cend() );
+  };
 
   for( localIndex a=0; a<elemManager.numRegions(); ++a )
   {
@@ -448,11 +450,11 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
         addFractureSupport( er, esr, subRegion );
       } );
 
-//      elemRegion.forElementSubRegionsIndex< FaceElementSubRegion >( [&]( localIndex const esr,
-//                                                                         FaceElementSubRegion const & subRegion )
-//      {
-//        addDuplicatedFractureNodes( er, esr, subRegion );
-//      } );
+      elemRegion.forElementSubRegionsIndex< FaceElementSubRegion >( [&]( localIndex const esr,
+                                                                         FaceElementSubRegion const & subRegion )
+      {
+        addDuplicatedFractureNodes( er, esr, subRegion );
+      } );
     }
   }
 

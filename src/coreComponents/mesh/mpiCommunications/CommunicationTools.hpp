@@ -83,7 +83,8 @@ public:
 
   void findMatchedPartitionBoundaryObjects( ObjectManagerBase & group,
                                             std::vector< NeighborCommunicator > & allNeighbors,
-                                            std::set< std::set< globalIndex > > const & m = {} );
+                                            std::set< std::set< globalIndex > > const & m = {},
+                                            std::set< globalIndex > const & requested = {} );
 
   void synchronizeFields( FieldIdentifiers const & fieldsToBeSync,
                           MeshLevel & mesh,

@@ -174,6 +174,12 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
           }
         }
 	    } );
+//    meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >(
+//      [&]( FaceElementSubRegion & subRegion )
+//      {
+//        subRegion.setMissingNodes( meshLevel.getNodeManager() );
+//        GEOS_LOG_RANK( "missing nodes are: {" << stringutilities::join( subRegion.m_missingNodes, ", " ) << "}." );
+//      } );
 
     NodeManager & nodeManager = meshLevel.getNodeManager();
     FaceManager & faceManager = meshLevel.getFaceManager();
@@ -193,6 +199,14 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
                                                            nodeManager,
                                                            m_neighbors );
 
+    std::set< globalIndex > requestedNodes;
+    meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >(
+      [&]( FaceElementSubRegion const & subRegion )
+      {
+        requestedNodes.insert( subRegion.m_missingNodes.begin(), subRegion.m_missingNodes.end() );
+        GEOS_LOG_RANK( "m_otherDuplicatedNodes = " << subRegion.m_otherDuplicatedNodes.size() ); // values are zero for all ranks.
+      } );
+
     CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
                                                                            m_neighbors );
 
@@ -201,7 +215,8 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
 
     CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
                                                                            m_neighbors,
-                                                                           duplicatedNodes );
+                                                                           duplicatedNodes,
+                                                                           requestedNodes );
   } );
 }
 
