@@ -36,7 +36,7 @@ public:
   using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
 
   AcousticVTIWaveEquationSEM( const std::string & name,
-                           Group * const parent );
+                              Group * const parent );
 
   virtual ~AcousticVTIWaveEquationSEM() override;
 
@@ -67,14 +67,14 @@ public:
                                       real64 const & dt,
                                       integer const cycleNumber,
                                       DomainPartition & domain,
-                                      bool const computeGradient) override;
+                                      bool const computeGradient ) override;
 
 
-  virtual real64 explicitStepBackward( real64 const & GEOS_UNUSED_PARAM(time_n),
-                                       real64 const & GEOS_UNUSED_PARAM(dt),
-                                       integer const GEOS_UNUSED_PARAM(cycleNumber),
-                                       DomainPartition & GEOS_UNUSED_PARAM(domain),
-                                       bool const GEOS_UNUSED_PARAM(computeGradient) ) override;
+  virtual real64 explicitStepBackward( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                       real64 const & GEOS_UNUSED_PARAM( dt ),
+                                       integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                       DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                       bool const GEOS_UNUSED_PARAM( computeGradient ) ) override;
 
   /**@}*/
 
@@ -143,7 +143,7 @@ public:
    * @param time the time to apply the BC
    * @param domain the partition domain
    */
-  virtual void applyPML( real64 const GEOS_UNUSED_PARAM(time), DomainPartition & GEOS_UNUSED_PARAM(domain) ) override;
+  virtual void applyPML( real64 const GEOS_UNUSED_PARAM( time ), DomainPartition & GEOS_UNUSED_PARAM( domain ) ) override;
 
 protected:
 
@@ -164,7 +164,7 @@ private:
    * @brief Compute the lateral and bottom surface Field indicators of the boxed domain
    * @param domain the partition domain
    */
-  virtual void precomputeSurfaceFieldIndicator(DomainPartition & domain );
+  virtual void precomputeSurfaceFieldIndicator( DomainPartition & domain );
 
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml

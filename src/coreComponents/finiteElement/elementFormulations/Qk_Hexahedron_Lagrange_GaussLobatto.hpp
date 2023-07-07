@@ -430,7 +430,8 @@ public:
                         FUNC && func );
 
   /**
-   * @brief computes the matrix B in the case of quasi-stiffness (e.g. for pseudo-acoustic case), defined as J^{-T}A_xy J^{-1}/det(J), where J is the Jacobian matrix, and A_xy is a zero matrix except on A_xy(1,1) = 1 and A_xy(2,2) = 1.
+   * @brief computes the matrix B in the case of quasi-stiffness (e.g. for pseudo-acoustic case), defined as J^{-T}A_xy J^{-1}/det(J), where
+   * J is the Jacobian matrix, and A_xy is a zero matrix except on A_xy(1,1) = 1 and A_xy(2,2) = 1.
    * @param qa The 1d quadrature point index in xi0 direction (0,1)
    * @param qb The 1d quadrature point index in xi1 direction (0,1)
    * @param qc The 1d quadrature point index in xi2 direction (0,1)
@@ -441,11 +442,11 @@ public:
   GEOS_HOST_DEVICE
   static void
     computeBxyMatrix( int const qa,
-                    int const qb,
-                    int const qc,
-                    real64 const (&X)[numNodes][3],
-                    real64 ( &J )[3][3],
-                    real64 ( &B )[6] );
+                      int const qb,
+                      int const qc,
+                      real64 const (&X)[numNodes][3],
+                      real64 ( &J )[3][3],
+                      real64 ( &B )[6] );
 
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexed by q to the
@@ -459,11 +460,12 @@ public:
   GEOS_HOST_DEVICE
   static void
   computeStiffnessxyTerm( int q,
-                        real64 const (&X)[numNodes][3],
-                        FUNC && func );
+                          real64 const (&X)[numNodes][3],
+                          FUNC && func );
 
   /**
-   * @brief computes the matrix B in the case of quasi-stiffness (e.g. for pseudo-acoustic case), defined as J^{-T}A_z J^{-1}/det(J), where J is the Jacobian matrix, and A_z is a zero matrix except on A_z(3,3) = 1.
+   * @brief computes the matrix B in the case of quasi-stiffness (e.g. for pseudo-acoustic case), defined as J^{-T}A_z J^{-1}/det(J), where
+   * J is the Jacobian matrix, and A_z is a zero matrix except on A_z(3,3) = 1.
    * @param qa The 1d quadrature point index in xi0 direction (0,1)
    * @param qb The 1d quadrature point index in xi1 direction (0,1)
    * @param qc The 1d quadrature point index in xi2 direction (0,1)
@@ -473,12 +475,12 @@ public:
    */
   GEOS_HOST_DEVICE
   static void
-  computeBzMatrix( int const qa,
-                    int const qb,
-                    int const qc,
-                    real64 const (&X)[numNodes][3],
-                    real64 ( &J )[3][3],
-                    real64 ( &B )[6] );
+    computeBzMatrix( int const qa,
+                     int const qb,
+                     int const qc,
+                     real64 const (&X)[numNodes][3],
+                     real64 ( &J )[3][3],
+                     real64 ( &B )[6] );
 
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexed by q to the
@@ -492,11 +494,12 @@ public:
   GEOS_HOST_DEVICE
   static void
   computeStiffnesszTerm( int q,
-                        real64 const (&X)[numNodes][3],
-                        FUNC && func );
+                         real64 const (&X)[numNodes][3],
+                         FUNC && func );
 
 /**
- * @brief Computes the "Grad(Phi)*B*Grad(Phi)" coefficient of the stiffness term. The matrix B must be provided and Phi denotes a basis function.
+ * @brief Computes the "Grad(Phi)*B*Grad(Phi)" coefficient of the stiffness term. The matrix B must be provided and Phi denotes a basis
+ * function.
  * @param qa The 1d quadrature point index in xi0 direction (0,1)
  * @param qb The 1d quadrature point index in xi1 direction (0,1)
  * @param qc The 1d quadrature point index in xi2 direction (0,1)
@@ -1001,17 +1004,17 @@ GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 computeBzMatrix( int const qa,
-                int const qb,
-                int const qc,
-                real64 const (&X)[numNodes][3],
-                real64 (& J)[3][3],
-                real64 (& B)[6] )
+                 int const qb,
+                 int const qc,
+                 real64 const (&X)[numNodes][3],
+                 real64 (& J)[3][3],
+                 real64 (& B)[6] )
 {
   jacobianTransformation( qa, qb, qc, X, J );
   real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
 
   real64 Jinv[3][3] = {{0}};
-  LvArray::tensorOps::invert< 3 >(Jinv, J);
+  LvArray::tensorOps::invert< 3 >( Jinv, J );
 
   // compute det(J)*J^{-1}Az*J^{-T}, using Voigt notation for B
   B[0] = detJ*(Jinv[0][2]*Jinv[0][2]);
@@ -1028,17 +1031,17 @@ GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 computeBxyMatrix( int const qa,
-                int const qb,
-                int const qc,
-                real64 const (&X)[numNodes][3],
-                real64 (& J)[3][3],
-                real64 (& B)[6] )
+                  int const qb,
+                  int const qc,
+                  real64 const (&X)[numNodes][3],
+                  real64 (& J)[3][3],
+                  real64 (& B)[6] )
 {
   jacobianTransformation( qa, qb, qc, X, J );
   real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
 
   real64 Jinv[3][3] = {{0}};
-  LvArray::tensorOps::invert< 3 >(Jinv, J);
+  LvArray::tensorOps::invert< 3 >( Jinv, J );
 
   // compute det(J)*J^{-1}Axy*J^{-T}, using Voigt notation for B
   B[0] = detJ*(Jinv[0][0]*Jinv[0][0] + Jinv[0][1]*Jinv[0][1]);
@@ -1144,15 +1147,15 @@ GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 computeStiffnessxyTerm( int q,
-                      real64 const (&X)[numNodes][3],
-                      FUNC && func )
+                        real64 const (&X)[numNodes][3],
+                        FUNC && func )
 {
   real64 B[6] = {0};
   real64 J[3][3] = {{0}};
   int qa, qb, qc;
   GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
   computeBxyMatrix( qa, qb, qc, X, J, B ); // The only change!
-  computeGradPhiBGradPhi(qa,qb,qc, B, func );
+  computeGradPhiBGradPhi( qa, qb, qc, B, func );
 }
 
 template< typename GL_BASIS >
@@ -1162,15 +1165,15 @@ GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 computeStiffnesszTerm( int q,
-                      real64 const (&X)[numNodes][3],
-                      FUNC && func )
+                       real64 const (&X)[numNodes][3],
+                       FUNC && func )
 {
   real64 B[6] = {0};
   real64 J[3][3] = {{0}};
   int qa, qb, qc;
   GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
   computeBzMatrix( qa, qb, qc, X, J, B ); // The only change!
-  computeGradPhiBGradPhi(qa,qb,qc, B, func );
+  computeGradPhiBGradPhi( qa, qb, qc, B, func );
 }
 
 template< typename GL_BASIS >

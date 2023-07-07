@@ -35,7 +35,7 @@ namespace geos
 using namespace dataRepository;
 
 AcousticVTIWaveEquationSEM::AcousticVTIWaveEquationSEM( const std::string & name,
-                                                  Group * const parent ):
+                                                        Group * const parent ):
   WaveSolverBase( name,
                   parent )
 {
@@ -144,7 +144,7 @@ void AcousticVTIWaveEquationSEM::postProcessInput()
 }
 
 void AcousticVTIWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                                  arrayView1d< string const > const & regionNames )
 {
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
@@ -190,8 +190,8 @@ void AcousticVTIWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & me
                                                                                         CellElementSubRegion & elementSubRegion )
   {
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
-                    "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
-                    InputError );
+                   "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
+                   InputError );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
@@ -351,7 +351,7 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
 }
 
-void AcousticVTIWaveEquationSEM::precomputeSurfaceFieldIndicator(DomainPartition & domain )
+void AcousticVTIWaveEquationSEM::precomputeSurfaceFieldIndicator( DomainPartition & domain )
 {
   real64 const time = 0.0;
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -528,10 +528,10 @@ bool AcousticVTIWaveEquationSEM::dirExists( const std::string & dirName )
 }
 
 real64 AcousticVTIWaveEquationSEM::explicitStepForward( real64 const & time_n,
-                                                     real64 const & dt,
-                                                     integer cycleNumber,
-                                                     DomainPartition & domain,
-                                                     bool computeGradient )
+                                                        real64 const & dt,
+                                                        integer cycleNumber,
+                                                        DomainPartition & domain,
+                                                        bool computeGradient )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
 
@@ -575,27 +575,27 @@ void AcousticVTIWaveEquationSEM::initializePML()
   return;
 }
 
-void AcousticVTIWaveEquationSEM::applyPML( real64 const GEOS_UNUSED_PARAM(time), 
-                                        DomainPartition & GEOS_UNUSED_PARAM(domain))
+void AcousticVTIWaveEquationSEM::applyPML( real64 const GEOS_UNUSED_PARAM( time ),
+                                           DomainPartition & GEOS_UNUSED_PARAM( domain ))
 {
   GEOS_ERROR( "This option is not supported yet" );
   return;
 }
 
-real64 AcousticVTIWaveEquationSEM::explicitStepBackward( real64 const & GEOS_UNUSED_PARAM(time_n),
-                                                     real64 const & GEOS_UNUSED_PARAM(dt),
-                                                     integer GEOS_UNUSED_PARAM(cycleNumber),
-                                                     DomainPartition & GEOS_UNUSED_PARAM(domain),
-                                                     bool GEOS_UNUSED_PARAM(computeGradient) )
+real64 AcousticVTIWaveEquationSEM::explicitStepBackward( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                                         real64 const & GEOS_UNUSED_PARAM( dt ),
+                                                         integer GEOS_UNUSED_PARAM( cycleNumber ),
+                                                         DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                                         bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
   GEOS_ERROR( "This option is not supported yet" );
   return -1;
 }
 
 real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
-                                                      real64 const & dt,
-                                                      integer cycleNumber,
-                                                      DomainPartition & domain )
+                                                         real64 const & dt,
+                                                         integer cycleNumber,
+                                                         DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -660,7 +660,7 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
         q_np1[a] += stiffnessVector_q[a];
         q_np1[a] += rhs[a];
 
-        if(lateralSurfaceNodeIndicator[a] != 1 && bottomSurfaceNodeIndicator[a] != 1)
+        if( lateralSurfaceNodeIndicator[a] != 1 && bottomSurfaceNodeIndicator[a] != 1 )
         {
           // Interior node, no boundary terms
           p_np1[a] /= mass[a]/dt2;
@@ -682,9 +682,9 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
           real32 coef_qq = mass[a]/dt2;
           coef_qq += damping_q[a]/2/dt;
           real32 coef_qp = damping_qp[a]/dt/2;
-          
+
           real32 det_pq = 1/(coef_pp * coef_qq - coef_pq*coef_qp);
-          
+
           real32 aux_p_np1 = p_np1[a];
           p_np1[a] = det_pq*(coef_qq*p_np1[a] - coef_pq*q_np1[a]);
           q_np1[a] = det_pq*(coef_pp*q_np1[a] - coef_qp*aux_p_np1);
@@ -722,10 +722,10 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 }
 
 void AcousticVTIWaveEquationSEM::cleanup( real64 const time_n,
-                                       integer const cycleNumber,
-                                       integer const eventCounter,
-                                       real64 const eventProgress,
-                                       DomainPartition & domain )
+                                          integer const cycleNumber,
+                                          integer const eventCounter,
+                                          real64 const eventProgress,
+                                          DomainPartition & domain )
 {
   // call the base class cleanup (for reporting purposes)
   SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
@@ -744,10 +744,10 @@ void AcousticVTIWaveEquationSEM::cleanup( real64 const time_n,
 }
 
 void AcousticVTIWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
-                                                      real64 const dt,
-                                                      arrayView1d< real32 const > const var_np1,
-                                                      arrayView1d< real32 const > const var_n,
-                                                      arrayView2d< real32 > varAtReceivers )
+                                                         real64 const dt,
+                                                         arrayView1d< real32 const > const var_np1,
+                                                         arrayView1d< real32 const > const var_n,
+                                                         arrayView2d< real32 > varAtReceivers )
 {
 
   /*

@@ -286,7 +286,7 @@ struct DampingMatrixKernel
           arrayView1d< real32 > const damping_p,
           arrayView1d< real32 > const damping_q,
           arrayView1d< real32 > const damping_pq,
-          arrayView1d< real32 > const damping_qp)
+          arrayView1d< real32 > const damping_qp )
   {
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
     {
@@ -304,19 +304,19 @@ struct DampingMatrixKernel
         // VTI coefficients
         real32 vti_p_xy= 0, vti_p_z = 0, vti_pq_z = 0;
         real32 vti_q_xy= 0, vti_q_z = 0, vti_qp_xy= 0;
-        if(lateralSurfaceFaceIndicator[f] == 1)
+        if( lateralSurfaceFaceIndicator[f] == 1 )
         {
           // ABC coefficients updated to fit horizontal velocity
-          alpha /= sqrt(1+2*epsilon[k]);
+          alpha /= sqrt( 1+2*epsilon[k] );
 
           vti_p_xy  = (1+2*epsilon[k]);
           vti_q_xy  = -(vti_f[k]-1);
           vti_qp_xy = (vti_f[k]+2*delta[k]);
         }
-        if(bottomSurfaceFaceIndicator[f] == 1)
+        if( bottomSurfaceFaceIndicator[f] == 1 )
         {
           // ABC coefficients updated to fit horizontal velocity
-          alpha /= sqrt(1+2*delta[k]);
+          alpha /= sqrt( 1+2*delta[k] );
           vti_p_z  = -(vti_f[k]-1);
           vti_pq_z = vti_f[k];
           vti_q_z  = 1;
@@ -497,7 +497,7 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    // Pseudo Stiffness xy 
+    // Pseudo Stiffness xy
     m_finiteElementSpace.template computeStiffnessxyTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
       real32 const localIncrement_p = val*(-1-2*m_epsilon[k])*m_p_n[m_elemsToNodes[k][j]];
@@ -507,7 +507,7 @@ public:
     } );
 
     // Pseudo-Stiffness z
-    
+
     m_finiteElementSpace.template computeStiffnesszTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
       real32 const localIncrement_p = val*((m_vti_f[k]-1)*m_p_n[m_elemsToNodes[k][j]] - m_vti_f[k]*m_q_n[m_elemsToNodes[k][j]]);
@@ -553,7 +553,7 @@ protected:
 
 /// The factory used to construct a ExplicitAcousticWaveEquation kernel.
 using ExplicitAcousticVTISEMFactory = finiteElement::KernelFactory< ExplicitAcousticSEM,
-                                                                 real64 >;
+                                                                    real64 >;
 
 } // namespace acousticVTIWaveEquationSEMKernels
 
