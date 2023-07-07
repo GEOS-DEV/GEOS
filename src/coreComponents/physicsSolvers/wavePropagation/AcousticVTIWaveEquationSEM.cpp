@@ -40,45 +40,10 @@ AcousticVTIWaveEquationSEM::AcousticVTIWaveEquationSEM( const std::string & name
                   parent )
 {
 
-  registerWrapper( viewKeyStruct::sourceNodeIdsString(), &m_sourceNodeIds ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Indices of the nodes (in the right order) for each source point" );
-
-  registerWrapper( viewKeyStruct::sourceConstantsString(), &m_sourceConstants ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Constant part of the source for the nodes listed in m_sourceNodeIds" );
-
-  registerWrapper( viewKeyStruct::sourceIsAccessibleString(), &m_sourceIsAccessible ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Flag that indicates whether the source is accessible to this MPI rank" );
-
-  registerWrapper( viewKeyStruct::receiverNodeIdsString(), &m_receiverNodeIds ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Indices of the nodes (in the right order) for each receiver point" );
-
-  registerWrapper( viewKeyStruct::receiverConstantsString(), &m_receiverConstants ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Constant part of the receiver for the nodes listed in m_receiverNodeIds" );
-
-  registerWrapper( viewKeyStruct::receiverIsLocalString(), &m_receiverIsLocal ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Flag that indicates whether the receiver is local to this MPI rank" );
-
   registerWrapper( viewKeyStruct::pressureNp1AtReceiversString(), &m_pressureNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Pressure value at each receiver for each timestep" );
-}
-
-AcousticVTIWaveEquationSEM::~AcousticVTIWaveEquationSEM()
-{
-  // TODO Auto-generated destructor stub
 }
 
 void AcousticVTIWaveEquationSEM::initializePreSubGroups()
@@ -375,7 +340,7 @@ void AcousticVTIWaveEquationSEM::precomputeSurfaceFieldIndicator( DomainPartitio
   // Lateral surfaces
   fsManager.apply< FaceManager >( time,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
-                                  string( "LateralSurface" ),
+                                  viewKeyStruct::lateralSurfaceString(),
                                   [&]( FieldSpecificationBase const & bc,
                                        string const &,
                                        SortedArrayView< localIndex const > const & targetSet,
@@ -386,8 +351,6 @@ void AcousticVTIWaveEquationSEM::precomputeSurfaceFieldIndicator( DomainPartitio
 
     if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
     {
-//      real64 const value = bc.getScale();
-
       for( localIndex i = 0; i < targetSet.size(); ++i )
       {
         localIndex const kf = targetSet[ i ];
@@ -410,7 +373,7 @@ void AcousticVTIWaveEquationSEM::precomputeSurfaceFieldIndicator( DomainPartitio
   // For the Bottom surface
   fsManager.apply< FaceManager >( time,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
-                                  string( "BottomSurface" ),
+                                  viewKeyStruct::bottomSurfaceString(),
                                   [&]( FieldSpecificationBase const & bc,
                                        string const &,
                                        SortedArrayView< localIndex const > const & targetSet,
@@ -421,8 +384,6 @@ void AcousticVTIWaveEquationSEM::precomputeSurfaceFieldIndicator( DomainPartitio
 
     if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
     {
-//      real64 const value = bc.getScale();
-
       for( localIndex i = 0; i < targetSet.size(); ++i )
       {
         localIndex const kf = targetSet[ i ];
@@ -467,12 +428,9 @@ void AcousticVTIWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartitio
   /// array of indicators: 1 if a node is on on free surface; 0 otherwise
   arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::FreeSurfaceNodeIndicator >();
 
-  //freeSurfaceFaceIndicator.zero();
-  //freeSurfaceNodeIndicator.zero();
-
   fsManager.apply< FaceManager >( time,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
-                                  string( "FreeSurface" ),
+                                  WaveSolverBase::viewKeyStruct::freeSurfaceString(),
                                   [&]( FieldSpecificationBase const & bc,
                                        string const &,
                                        SortedArrayView< localIndex const > const & targetSet,
@@ -503,7 +461,6 @@ void AcousticVTIWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartitio
           q_np1[dof] = value;
           q_n[dof]   = value;
           q_nm1[dof] = value;
-
         }
       }
     }
@@ -512,19 +469,6 @@ void AcousticVTIWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartitio
       GEOS_ERROR( "This option is not supported yet" );
     }
   } );
-}
-
-
-/**
- * Checks if a directory exists.
- *
- * @param dirName Directory name to check existence of.
- * @return true is dirName exists and is a directory.
- */
-bool AcousticVTIWaveEquationSEM::dirExists( const std::string & dirName )
-{
-  struct stat buffer;
-  return stat( dirName.c_str(), &buffer ) == 0;
 }
 
 real64 AcousticVTIWaveEquationSEM::explicitStepForward( real64 const & time_n,

@@ -14,11 +14,11 @@
 
 
 /**
- * @file AcousticFirstOrderWaveEquationSEM.hpp
+ * @file WaveSolverBaseFields.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION__HPP_WAVESOLVERBASEFIELDS
-#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION__HPP_WAVESOLVERBASEFIELDS
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERBASEFIELDS_HPP_
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERBASEFIELDS_HPP_
 
 #include "common/DataLayouts.hpp"
 #include "mesh/MeshFields.hpp"
@@ -31,86 +31,6 @@ namespace fields
 
 namespace wavesolverfields
 {
-
-DECLARE_FIELD( Pressure_p_nm1,
-               "pressure_nm1",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Scalar pressure at time n-1." );
-
-DECLARE_FIELD( Pressure_p_n,
-               "pressure_n",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Scalar pressure at time n." );
-
-DECLARE_FIELD( Pressure_p_np1,
-               "pressure_np1",
-               array1d< real32 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Scalar pressure at time n+1." );
-
-DECLARE_FIELD( Pressure_q_nm1,
-               "pressure_q_nm1",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Scalar auxiliary pressure q at time n-1." );
-
-DECLARE_FIELD( Pressure_q_n,
-               "pressure_q_n",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Scalar auxiliary pressure q at time n." );
-
-DECLARE_FIELD( Pressure_q_np1,
-               "pressure_q_np1",
-               array1d< real32 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Scalar auxiliary pressure q at time n+1." );
-
-DECLARE_FIELD( DampingVector_p,
-               "dampingVector_p",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal of the Damping Matrix for p terms in p equation." );
-
-DECLARE_FIELD( DampingVector_pq,
-               "dampingVector_pq",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal of the Damping Matrix for q terms in p equation." );
-
-DECLARE_FIELD( DampingVector_q,
-               "dampingVector_q",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal of the Damping Matrix for q terms in q equation." );
-
-DECLARE_FIELD( DampingVector_qp,
-               "dampingVector_qp",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal of the Damping Matrix for p terms in q equation." );
 
 DECLARE_FIELD( Delta,
                "delta",
@@ -160,6 +80,54 @@ DECLARE_FIELD( Pressure_np1,
                WRITE_AND_READ,
                "Scalar pressure at time n+1." );
 
+DECLARE_FIELD( Pressure_p_nm1,
+               "pressure_p_nm1",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Scalar pressure at time n-1." );
+
+DECLARE_FIELD( Pressure_p_n,
+               "pressure_p_n",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Scalar pressure at time n." );
+
+DECLARE_FIELD( Pressure_p_np1,
+               "pressure_p_np1",
+               array1d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Scalar pressure at time n+1." );
+
+DECLARE_FIELD( Pressure_q_nm1,
+               "pressure_q_nm1",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Scalar auxiliary pressure q at time n-1." );
+
+DECLARE_FIELD( Pressure_q_n,
+               "pressure_q_n",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Scalar auxiliary pressure q at time n." );
+
+DECLARE_FIELD( Pressure_q_np1,
+               "pressure_q_np1",
+               array1d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Scalar auxiliary pressure q at time n+1." );
+
 DECLARE_FIELD( Velocity_x,
                "velocity_x",
                array2d< real32 >,
@@ -207,6 +175,38 @@ DECLARE_FIELD( DampingVector,
                NOPLOT,
                WRITE_AND_READ,
                "Diagonal of the Damping Matrix." );
+
+DECLARE_FIELD( DampingVector_p,
+               "dampingVector_p",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal of the Damping Matrix for p terms in p equation." );
+
+DECLARE_FIELD( DampingVector_pq,
+               "dampingVector_pq",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal of the Damping Matrix for q terms in p equation." );
+
+DECLARE_FIELD( DampingVector_q,
+               "dampingVector_q",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal of the Damping Matrix for q terms in q equation." );
+
+DECLARE_FIELD( DampingVector_qp,
+               "dampingVector_qp",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal of the Damping Matrix for p terms in q equation." );
 
 DECLARE_FIELD( MediumVelocity,
                "mediumVelocity",

@@ -17,13 +17,13 @@
  * @file AcousticVTIWaveEquationSEM.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_AcousticVTIWaveEquationSEM_HPP_
-#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_AcousticVTIWaveEquationSEM_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIWAVEEQUATIONSEM_HPP_
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIWAVEEQUATIONSEM_HPP_
 
-#include "WaveSolverBase.hpp"
-#include "WaveSolverBaseFields.hpp"
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
+#include "WaveSolverBase.hpp"
+#include "WaveSolverBaseFields.hpp"
 
 namespace geos
 {
@@ -38,24 +38,11 @@ public:
   AcousticVTIWaveEquationSEM( const std::string & name,
                               Group * const parent );
 
-  virtual ~AcousticVTIWaveEquationSEM() override;
-
-  AcousticVTIWaveEquationSEM() = delete;
-  AcousticVTIWaveEquationSEM( AcousticVTIWaveEquationSEM const & ) = delete;
-  AcousticVTIWaveEquationSEM( AcousticVTIWaveEquationSEM && ) = default;
-
-  AcousticVTIWaveEquationSEM & operator=( AcousticVTIWaveEquationSEM const & ) = delete;
-  AcousticVTIWaveEquationSEM & operator=( AcousticVTIWaveEquationSEM && ) = delete;
-
-
   static string catalogName() { return "AcousticVTISEM"; }
-
-  bool dirExists( const std::string & dirName );
 
   virtual void initializePreSubGroups() override;
 
   virtual void registerDataOnMesh( Group & meshBodies ) override final;
-
 
   /**
    * @defgroup Solver Interface Functions
@@ -107,16 +94,9 @@ public:
 
   struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
-    static constexpr char const * sourceNodeIdsString() { return "sourceNodeIds"; }
-    static constexpr char const * sourceConstantsString() { return "sourceConstants"; }
-    static constexpr char const * sourceIsAccessibleString() { return "sourceIsAccessible"; }
-
-    static constexpr char const * receiverNodeIdsString() { return "receiverNodeIds"; }
-    static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
-    static constexpr char const * receiverIsLocalString() { return "receiverIsLocal"; }
-
     static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }
-
+    static constexpr char const * lateralSurfaceString() { return "LateralSurface"; }
+    static constexpr char const * bottomSurfaceString() { return "BottomSurface"; }
   } waveEquationViewKeys;
 
 

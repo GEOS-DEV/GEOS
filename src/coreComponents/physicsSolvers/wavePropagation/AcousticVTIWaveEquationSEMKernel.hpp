@@ -19,10 +19,10 @@
 #ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIWAVEEQUATIONSEMKERNEL_HPP_
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIWAVEEQUATIONSEMKERNEL_HPP_
 
-#include "finiteElement/kernelInterface/KernelBase.hpp"
-#include "WaveSolverUtils.hpp"
-#include "WaveSolverBaseFields.hpp"
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
+#include "finiteElement/kernelInterface/KernelBase.hpp"
+#include "WaveSolverBaseFields.hpp"
+#include "WaveSolverUtils.hpp"
 
 
 namespace geos
@@ -43,7 +43,9 @@ struct PrecomputeSourceAndReceiverKernel
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
    * @param[in] numNodesPerElem number of nodes per element
+   * @param[in] numFacesPerElem number of faces per element
    * @param[in] X coordinates of the nodes
+   * @param[in] elemGhostRank the ghost ranks
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] elemsToFaces map from element to faces
    * @param[in] facesToNodes map from faces to nodes
@@ -56,6 +58,10 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[out] receiverIsLocal flag indicating whether the receiver is local or not
    * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
    * @param[out] receiverNodeConstants constant part of the receiver term
+   * @param[out] sourceValue the value of the source
+   * @param[in] dt the time step size
+   * @param[in] timeSourceFrequency the time frequency of the source
+   * @param[in] rickerOrder the order of the ricker
    */
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
@@ -196,7 +202,6 @@ struct MassMatrixKernel
    * @tparam EXEC_POLICY the execution policy
    * @tparam ATOMIC_POLICY the atomic policy
    * @param[in] size the number of cells in the subRegion
-   * @param[in] numFacesPerElem number of faces per element
    * @param[in] X coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] velocity cell-wise velocity
@@ -263,7 +268,7 @@ struct DampingMatrixKernel
    * @param[in] velocity cell-wise velocity
    * @param[in] epsilon cell-wise Thomsen epsilon parameter
    * @param[in] delta cell-wise Thomsen delta parameter
-   * @param[in] f cell-wise f parameter in Fletcher's equation
+   * @param[in] vti_f cell-wise f parameter in Fletcher's equation
    * @param[out] damping_p diagonal of the damping matrix for quantities in p in p-equation
    * @param[out] damping_q diagonal of the damping matrix for quantities in q in q-equation
    * @param[out] damping_pq diagonal of the damping matrix for quantities in q in p-equation
@@ -378,11 +383,11 @@ struct DampingMatrixKernel
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class ExplicitAcousticSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                              CONSTITUTIVE_TYPE,
-                                                              FE_TYPE,
-                                                              1,
-                                                              1 >
+class ExplicitAcousticVTISEM : public finiteElement::KernelBase< SUBREGION_TYPE,
+                                                                 CONSTITUTIVE_TYPE,
+                                                                 FE_TYPE,
+                                                                 1,
+                                                                 1 >
 {
 public:
 
@@ -416,14 +421,14 @@ public:
    * @param dt The time interval for the step.
    *   elements to be processed during this kernel launch.
    */
-  ExplicitAcousticSEM( NodeManager & nodeManager,
-                       EdgeManager const & edgeManager,
-                       FaceManager const & faceManager,
-                       localIndex const targetRegionIndex,
-                       SUBREGION_TYPE const & elementSubRegion,
-                       FE_TYPE const & finiteElementSpace,
-                       CONSTITUTIVE_TYPE & inputConstitutiveType,
-                       real64 const dt ):
+  ExplicitAcousticVTISEM( NodeManager & nodeManager,
+                          EdgeManager const & edgeManager,
+                          FaceManager const & faceManager,
+                          localIndex const targetRegionIndex,
+                          SUBREGION_TYPE const & elementSubRegion,
+                          FE_TYPE const & finiteElementSpace,
+                          CONSTITUTIVE_TYPE & inputConstitutiveType,
+                          real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
@@ -446,7 +451,7 @@ public:
   /**
    * @copydoc geos::finiteElement::KernelBase::StackVariables
    *
-   * ### ExplicitAcousticSEM Description
+   * ### ExplicitAcousticVTISEM Description
    * Adds a stack arrays for the nodal force, primary displacement variable, etc.
    */
   struct StackVariables : Base::StackVariables
@@ -487,7 +492,7 @@ public:
   /**
    * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
    *
-   * ### ExplicitAcousticSEM Description
+   * ### ExplicitAcousticVTISEM Description
    * Calculates stiffness vector
    *
    */
@@ -552,7 +557,7 @@ protected:
 
 
 /// The factory used to construct a ExplicitAcousticWaveEquation kernel.
-using ExplicitAcousticVTISEMFactory = finiteElement::KernelFactory< ExplicitAcousticSEM,
+using ExplicitAcousticVTISEMFactory = finiteElement::KernelFactory< ExplicitAcousticVTISEM,
                                                                     real64 >;
 
 } // namespace acousticVTIWaveEquationSEMKernels
