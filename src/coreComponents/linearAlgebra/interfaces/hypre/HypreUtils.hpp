@@ -530,17 +530,6 @@ enum class MGRCoarseGridMethod : HYPRE_Int
                          //!< inverse
 };
 
-// /**
-//  * @enum MGRFRelaxationMethod
-//  * @brief This enum class specifies the F-relaxation strategy.
-//  */
-// enum class MGRFRelaxationMethod : HYPRE_Int
-// {
-// singleLevel = 0, //!< single-level relaxation
-// multilevel = 1,  //!< multilevel relaxation
-// amgVCycle = 2    //!< multilevel relaxation
-// };
-
 /**
  * @enum MGRFRelaxationType
  * @brief This enum class specifies the F-relaxation type.

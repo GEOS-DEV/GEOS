@@ -83,7 +83,11 @@ public:
     setupLabels();
 
     // Level 0
-    m_levelFRelaxType[0]       = MGRFRelaxationType::gsElimWInverse; // gaussian elimination for the well block
+#if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_CPU
+    m_levelFRelaxType[0]          = MGRFRelaxationType::gsElimWInverse;
+#else
+    GEOS_ERROR( "General support for Gaussian elimination on GPU not available yet" );
+#endif
     m_levelFRelaxIters[0]         = 1;
     m_levelInterpType[0]       = MGRInterpolationType::blockJacobi;
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
