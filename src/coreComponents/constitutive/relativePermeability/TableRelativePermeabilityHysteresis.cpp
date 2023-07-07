@@ -35,9 +35,9 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
                                                                           Group * const parent )
   : RelativePermeabilityBase( name, parent )
 {
-  ///scalar and strings
+  // scalar and strings
 
-  //drainage table names
+  // drainage table names
   registerWrapper( viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString(),
                    &m_drainageWettingNonWettingRelPermTableNames ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -53,32 +53,29 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
   registerWrapper( viewKeyStruct::drainageWettingIntermediateRelPermTableNamesString(),
                    &m_drainageWettingIntermediateRelPermTableNames ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription(
-    "List of drainage relative permeability tables for the pair (wetting phase, intermediate phase)\n"
-    "The expected format is \"{ wettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }\", in that order\n"
-    "Note that this input is only used for three-phase flow.\n"
-    "If you want to do a two-phase simulation, please use instead " +
-    string( viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString() ) +
-    " to specify the table names" );
+    setDescription( "List of drainage relative permeability tables for the pair (wetting phase, intermediate phase)\n"
+                    "The expected format is \"{ wettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }\", in that order\n"
+                    "Note that this input is only used for three-phase flow.\n"
+                    "If you want to do a two-phase simulation, please use instead " +
+                    string( viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString() ) +
+                    " to specify the table names" );
 
   registerWrapper( viewKeyStruct::drainageNonWettingIntermediateRelPermTableNamesString(),
                    &m_drainageNonWettingIntermediateRelPermTableNames ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription(
-    "List of drainage relative permeability tables for the pair (non-wetting phase, intermediate phase)\n"
-    "The expected format is \"{ nonWettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }\", in that order\n"
-    "Note that this input is only used for three-phase flow.\n"
-    "If you want to do a two-phase simulation, please use instead " +
-    string( viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString() ) +
-    " to specify the table names" );
+    setDescription( "List of drainage relative permeability tables for the pair (non-wetting phase, intermediate phase)\n"
+                    "The expected format is \"{ nonWettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }\", in that order\n"
+                    "Note that this input is only used for three-phase flow.\n"
+                    "If you want to do a two-phase simulation, please use instead " +
+                    string( viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString() ) +
+                    " to specify the table names" );
 
-  //imbibition table names
+  // imbibition table names
   registerWrapper( viewKeyStruct::imbibitionWettingRelPermTableNameString(), &m_imbibitionWettingRelPermTableName ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "" ).
-    setDescription(
-    "Imbibition relative permeability table name for the wetting phase.\n"
-    "To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves" );
+    setDescription( "Imbibition relative permeability table name for the wetting phase.\n"
+                    "To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves" );
 
   registerWrapper( viewKeyStruct::imbibitionNonWettingRelPermTableNameString(),
                    &m_imbibitionNonWettingRelPermTableName ).
@@ -88,36 +85,32 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
     "Imbibition relative permeability table name for the non-wetting phase.\n"
     "To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves" );
 
-  //hysteresis input parameters
+  // hysteresis input parameters
   registerWrapper( viewKeyStruct::phaseHasHysteresisString(), &m_phaseHasHysteresis ).
-    setInputFlag( InputFlags::FALSE ).                                                                                  // will be deduced
-    // from tables
+    setInputFlag( InputFlags::FALSE ). // will be deduced from tables
     setSizedFromParent( 0 );
 
   registerWrapper( viewKeyStruct::landParameterString(), &m_landParam ).
-    setInputFlag( InputFlags::FALSE ).         // will be deduced from tables
+    setInputFlag( InputFlags::FALSE ). // will be deduced from tables
     setSizedFromParent( 0 );
 
-  //Forwarded to KilloughHysteresis
+  // forwarded to KilloughHysteresis
   registerWrapper( KilloughHysteresis::viewKeyStruct::jerauldParameterAString(), &m_jerauldParam_a ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.1 ).
-    setDescription(
-    "First parameter (modification parameter) introduced by Jerauld in the Land trapping model (see RTD documentation)." );
+    setDescription( "First parameter (modification parameter) introduced by Jerauld in the Land trapping model (see RTD documentation)." );
 
   registerWrapper( KilloughHysteresis::viewKeyStruct::jerauldParameterBString(), &m_jerauldParam_b ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.0 ).
-    setDescription(
-    "Second parameter (modification parameter) introduced by Jerauld in the Land trapping model (see RTD documentation)." );
+    setDescription( "Second parameter (modification parameter) introduced by Jerauld in the Land trapping model (see RTD documentation)." );
 
   registerWrapper( KilloughHysteresis::viewKeyStruct::killoughCurvatureParameterString(), &m_killoughCurvatureParamRelPerm ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0 ).
-    setDescription(
-    "Curvature parameter introduced by Killough for wetting-phase hysteresis (see RTD documentation)." );
+    setDescription( "Curvature parameter introduced by Killough for wetting-phase hysteresis (see RTD documentation)." );
 
-  ///structs
+  // structs
   registerWrapper( viewKeyStruct::drainageRelPermKernelWrappersString(),
                    &m_drainageRelPermKernelWrappers ).
     setSizedFromParent( 0 ).
@@ -130,16 +123,16 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
 
   // Killough data
   registerWrapper( viewKeyStruct::wettingCurveString(), &m_wettingCurve ).
-    setInputFlag( InputFlags::FALSE ).         // will be deduced from tables
+    setInputFlag( InputFlags::FALSE ). // will be deduced from tables
     setSizedFromParent( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
 
   registerWrapper( viewKeyStruct::nonWettingCurveString(), &m_nonWettingCurve ).
-    setInputFlag( InputFlags::FALSE ).         // will be deduced from tables
+    setInputFlag( InputFlags::FALSE ). // will be deduced from tables
     setSizedFromParent( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
 
-  ///register fields
+  // register fields
   registerField( fields::relperm::phaseMaxHistoricalVolFraction{},
                  &m_phaseMaxHistoricalVolFraction );
   registerField( fields::relperm::phaseMinHistoricalVolFraction{},
@@ -263,23 +256,23 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateWettingRelPer
                  "There should be exactly two name for drainageWettingNonWettingRelpermTableNames",
                  InputError );
   string tableName = ( numPhases == 2 ) ?   m_drainageWettingNonWettingRelPermTableNames[0] : m_drainageWettingIntermediateRelPermTableNames[0];
-  checkExistenceAndValidateRelPermTable( tableName,    // input
-                                         drainagePhaseMinVolFraction,    // output
+  checkExistenceAndValidateRelPermTable( tableName, // input
+                                         drainagePhaseMinVolFraction, // output
                                          drainagePhaseMaxVolFraction,
                                          drainagePhaseRelPermMinEndPoint,
                                          drainagePhaseRelPermMaxEndPoint );
 
 
-  //imbibition if provided
-  real64 imbibitionPhaseMinVolFraction,    // output
+  // imbibition if provided
+  real64 imbibitionPhaseMinVolFraction, // output
          imbibitionPhaseMaxVolFraction,
          imbibitionPhaseRelPermMinEndPoint,
          imbibitionPhaseRelPermMaxEndPoint;
 
   if( m_phaseHasHysteresis[IPT::WETTING] )
   {
-    checkExistenceAndValidateRelPermTable( m_imbibitionWettingRelPermTableName,    // input
-                                           imbibitionPhaseMinVolFraction,    // output
+    checkExistenceAndValidateRelPermTable( m_imbibitionWettingRelPermTableName, // input
+                                           imbibitionPhaseMinVolFraction, // output
                                            imbibitionPhaseMaxVolFraction,
                                            imbibitionPhaseRelPermMinEndPoint,
                                            imbibitionPhaseRelPermMaxEndPoint );
@@ -323,8 +316,8 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateNonWettingRel
   integer ipWetting = -1, ipNonWetting = -1;
   std::tie( ipWetting, ipNonWetting ) = RelativePermeabilityBase::phaseIndex( m_phaseOrder );
 
-  //treat drainage
-  real64 drainagePhaseMinVolFraction,   // output
+  // treat drainage
+  real64 drainagePhaseMinVolFraction, // output
          drainagePhaseMaxVolFraction,
          drainagePhaseRelPermMinEndPoint,
          drainagePhaseRelPermMaxEndPoint;
@@ -395,14 +388,13 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateIntermediateR
 
   if( m_phaseNames.size() == 3 )
   {
-
-    real64 drainagePhaseMinVolFraction,     //
+    real64 drainagePhaseMinVolFraction,
            drainagePhaseMaxVolFraction,
            drainagePhaseRelPermMinEndPoint,
            drainagePhaseRelPermMaxEndPoint;
 
 
-    //intermediate drainage from wetting
+    // intermediate drainage from wetting
     checkExistenceAndValidateRelPermTable( m_drainageWettingIntermediateRelPermTableNames[1],    // input
                                            drainagePhaseMinVolFraction,    // output
                                            drainagePhaseMaxVolFraction,

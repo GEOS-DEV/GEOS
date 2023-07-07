@@ -19,8 +19,6 @@
 #ifndef GEOS_CONSTITUTIVE_RELATIVEPERMEABILITY_KILLOUGHHYSTERESIS_HPP
 #define GEOS_CONSTITUTIVE_RELATIVEPERMEABILITY_KILLOUGHHYSTERESIS_HPP
 
-#include "Layouts.hpp"
-#include "constitutive/capillaryPressure/Layouts.hpp"
 
 #include "constitutive/ConstitutiveBase.hpp"
 #include "functions/TableFunction.hpp"
@@ -60,8 +58,8 @@ public:
    * @brief  struct to represent hysteresis curves (relperm or capillary pressure)
    * The struct is used to identify wetting or non wetting curves, and store key points as pairs of
    * saturation and value, where this value is either the relperm value (S,kr) or capillary pressure value (S,pc).
-   * This way we can tell wetting curve from non wetting by the ordering of drainage/imbibition key values.
-   * Indeed if critcal saturation for (Scri) imbibition comes at lower saturation than (Scrd) drainage then
+   * This way we can distinguish the wetting curve from the non wetting by the ordering of drainage/imbibition key values.
+   * Indeed if the critical saturation for (Scri) imbibition comes at lower saturation than (Scrd) drainage then
    * it is wetting curve, on the opposite if critical saturation (Scrd) drainage comes before imbibition
    * this is a non-wetting hysteresis. This is completed by an extremum
    * point (Sextr) that is either the connate wetting saturation Swc or the maximum non wetting saturation Sgmax.
@@ -79,7 +77,7 @@ public:
    *                   Scrd     Scri             Sextr     Sextr        Scri            Scrd
    *        Fig. Left non wetting hysteresis for quadratic relperm / Right wetting hysteresis for quadratic relperm
    *
-   * @param  m_extremumPhaseVolFraction represents either Swc or Sgmax depending if a wetting curve or nonwetting is described
+   * @param m_extremumPhaseVolFraction represents either Swc or Sgmax depending if a wetting curve or nonwetting is described
    * @param m_criticalImbibitionPhaseVolFraction represents in wetting case the imibibition max and in non-wetting the imbibition residual
    * @param m_criticalDrainagePhaseVolFraction represents in wetting case the drainage max and in non-wetting the drainage residual
    * @param m_extremumValue represents the associate relperm or capillary pressure value
@@ -100,15 +98,24 @@ public:
 
     HysteresisCurve() = default;
 
+    /**
+     * @brief Constructor for the class
+     * @param m_extremumPhaseVolFraction represents either Swc or Sgmax depending if a wetting curve or nonwetting is described
+     * @param m_extremumValue represents the associate relperm or capillary pressure value
+     * @param m_criticalImbibitionPhaseVolFraction represents in wetting case the imibibition max and in non-wetting the imbibition residual
+     * @param m_criticalImbibitionValue represents the associate relperm or capillary pressure value
+     * @param m_criticalDrainagePhaseVolFraction represents in wetting case the drainage max and in non-wetting the drainage residual
+     * @param m_criticalDrainageValue represents the associate relperm or capillary pressure value
+     */
     HysteresisCurve( real64 const & extremumPhaseVoFraction,
-                     real64 const & extermumValue,
+                     real64 const & extremumValue,
                      real64 const & criticalImbibitionPhaseVolFraction,
                      real64 const & criticalImbibitionValue,
                      real64 const & criticalDrainagePhaseVolFraction,
                      real64 const & criticalDrainageValue )
     {
       setPoints( extremumPhaseVoFraction,
-                 extermumValue,
+                 extremumValue,
                  criticalImbibitionPhaseVolFraction,
                  criticalImbibitionValue,
                  criticalDrainagePhaseVolFraction,
@@ -120,8 +127,17 @@ public:
 
     }
 
+    /**
+     * @brief Helper function to set the key data members of the class
+     * @param m_extremumPhaseVolFraction represents either Swc or Sgmax depending if a wetting curve or nonwetting is described
+     * @param m_extremumValue represents the associate relperm or capillary pressure value
+     * @param m_criticalImbibitionPhaseVolFraction represents in wetting case the imibibition max and in non-wetting the imbibition residual
+     * @param m_criticalImbibitionValue represents the associate relperm or capillary pressure value
+     * @param m_criticalDrainagePhaseVolFraction represents in wetting case the drainage max and in non-wetting the drainage residual
+     * @param m_criticalDrainageValue represents the associate relperm or capillary pressure value
+     */
     void setPoints( real64 const & extremumPhaseVoFraction,
-                    real64 const & extermumValue,
+                    real64 const & extremumValue,
                     real64 const & criticalImbibitionPhaseVolFraction,
                     real64 const & criticalImbibitionValue,
                     real64 const & criticalDrainagePhaseVolFraction,
@@ -131,94 +147,116 @@ public:
       m_criticalImbibitionPhaseVolFraction = criticalImbibitionPhaseVolFraction;
       m_criticalDrainagePhaseVolFraction = criticalDrainagePhaseVolFraction;
 
-      m_extremumValue = extermumValue;
+      m_extremumValue = extremumValue;
       m_criticalImbibitionValue = criticalImbibitionValue;
       m_criticalDrainageValue = criticalDrainageValue;
     }
 
+    /**
+     * @brief Helper function to know if we are dealing with the wetting phase or not
+     * @return true if the phase is wetting, false otherwise
+     */
     GEOS_HOST_DEVICE
     inline bool isWetting() const
     {
       return m_isWetting;
     }
 
-
+    /**
+     * @brief Helper function to know if the class has been initialized or not
+     * @return true if the phase has been initialized, false otherwise
+     */
     bool isInitialized() const
     {
-      return (m_extremumPhaseVolFraction <= 0.0) && (m_criticalImbibitionPhaseVolFraction <= 0.0) && (m_criticalDrainagePhaseVolFraction <= 0.0);
+      return (m_extremumPhaseVolFraction <= 0.0) &&
+             (m_criticalImbibitionPhaseVolFraction <= 0.0) &&
+             (m_criticalDrainagePhaseVolFraction <= 0.0);
     }
 
   };
 
   static std::string catalogName() { return "KilloughHysteresis"; }
 
+  /**
+   * @brief Validate the parameters of the class
+   * @param jerauldParam_a the parameter Jerauld "a"
+   * @param jerauldParam_b the parameter Jerauld "b"
+   * @param killoughCurvatureParamRelPerm the curvature parameter
+   */
   static void postProcessInput( real64 const & jerauldParam_a,
                                 real64 const & jerauldParam_b,
                                 real64 const & killoughCurvatureParamRelPerm );
 
+  /**
+   * @brief Compute the Land coefficient for this curve
+   * @param hystereticCurve a hysteretic curve
+   * @param landCoefficient the Land coefficient
+   */
   GEOS_HOST_DEVICE
-  static void computeLandCoefficient( HysteresisCurve const & hcruve, real64 & landParam );
+  static void computeLandCoefficient( HysteresisCurve const & hystereticCurve,
+                                      real64 & landCoefficient );
+
   /**
    * @brief Function computing the trapped critical phase volume fraction
-   * @param[in] hcurve the hysteresis curve to be used and dispatched on
+   * @param[in] hystereticCurve the hysteresis curve to be used and dispatched on
    * @param[in] Shy the max historical phase volume fraction
-   * @param[in] landParam Land trapping parameter
+   * @param[in] landCoefficient Land trapping parameter
    * @param[in] jerauldParam_a jerauld expononent
    * @param[in] jerauldParam_b jerauld expononent
    * @param[out] Scrt the trapped critical phase volume fraction
    */
   GEOS_HOST_DEVICE
-  static void computeTrappedCriticalPhaseVolFraction( HysteresisCurve const & hcurve,
+  static void computeTrappedCriticalPhaseVolFraction( HysteresisCurve const & hystereticCurve,
                                                       real64 const & Shy,
-                                                      real64 const & landParam,
+                                                      real64 const & landCoefficient,
                                                       real64 const & jerauldParam_a,
                                                       real64 const & jerauldParam_b,
                                                       real64 & Scrt );
 
   struct viewKeyStruct
   {
+    /// the Jerauld parameter A
     static constexpr char const * jerauldParameterAString() { return "jerauldParameterA"; }
+    /// the Jerauld parameter B
     static constexpr char const * jerauldParameterBString() { return "jerauldParameterB"; }
-
+    /// the curvature parameter
     static constexpr char const * killoughCurvatureParameterString() { return "killoughCurvatureParameter"; }
   };
 
 };
 
-
-/**
- * @brief Compute the Land coefficient for the wetting and non-wetting phases
- */
 GEOS_HOST_DEVICE
-inline void KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::HysteresisCurve const & hcurve,
-                                                        real64 & landParam )
+inline void
+KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::HysteresisCurve const & hystereticCurve,
+                                            real64 & landCoefficient )
 {
 
   // Note: for simplicity, the notations are taken from IX documentation (although this breaks our phaseVolFrac naming convention)
 
   // Step 1: Land parameter for the wetting phase
-  if( hcurve.isWetting() )
+  if( hystereticCurve.isWetting() )
   {
-    real64 const Scrd = hcurve.m_extremumPhaseVolFraction;
-    real64 const Smxd = hcurve.m_criticalDrainagePhaseVolFraction;
-    real64 const Smxi = hcurve.m_criticalImbibitionPhaseVolFraction;
+    real64 const Scrd = hystereticCurve.m_extremumPhaseVolFraction;
+    real64 const Smxd = hystereticCurve.m_criticalDrainagePhaseVolFraction;
+    real64 const Smxi = hystereticCurve.m_criticalImbibitionPhaseVolFraction;
     real64 const Swc = Scrd;
+
     GEOS_ERROR_IF(  (Smxi - Smxd) > 0,
-                    GEOS_FMT( "{}: For wetting phase hysteresis, imbibition end-point saturation Smxi( {} ) must be smaller than the drainage saturation end-point Smxd( {} ).\n"
-                              "Crossing relative permeability curves.\n",
+                    GEOS_FMT( "{}: For wetting phase hysteresis, imbibition end-point saturation Smxi( {} ) must be smaller "
+                              "than the drainage saturation end-point Smxd( {} ).\n Crossing relative permeability curves.\n",
                               catalogName(),
                               Smxi,
                               Smxd ));
 
-    landParam = ( Smxd - Swc ) / LvArray::math::max( KilloughHysteresis::minScriMinusScrd, ( Smxd - Smxi ) ) - 1.0;
+    landCoefficient = ( Smxd - Swc ) / LvArray::math::max( KilloughHysteresis::minScriMinusScrd, ( Smxd - Smxi ) ) - 1.0;
   }
   else
   // Step 2: Land parameter for the non-wetting phase
-
   {
-    real64 const Smx =  hcurve.m_extremumPhaseVolFraction;
-    real64 const Scrd = hcurve.m_criticalDrainagePhaseVolFraction;
-    real64 const Scri = hcurve.m_criticalImbibitionPhaseVolFraction;
+    real64 const Smx =  hystereticCurve.m_extremumPhaseVolFraction;
+    real64 const Scrd = hystereticCurve.m_criticalDrainagePhaseVolFraction;
+    real64 const Scri = hystereticCurve.m_criticalImbibitionPhaseVolFraction;
+
     GEOS_ERROR_IF( (Scrd - Scri) > 0,
                    GEOS_FMT( "{}: For non-wetting phase hysteresis, drainage trapped saturation Scrd( {} ) must be smaller than the imbibition saturation Scri( {} ).\n"
                              "Crossing relative permeability curves.\n",
@@ -226,53 +264,46 @@ inline void KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::Hyst
                              Scrd,
                              Scri ));
 
-    landParam = ( Smx - Scrd ) / LvArray::math::max( KilloughHysteresis::minScriMinusScrd, ( Scri - Scrd ) ) - 1.0;
+    landCoefficient = ( Smx - Scrd ) / LvArray::math::max( KilloughHysteresis::minScriMinusScrd, ( Scri - Scrd ) ) - 1.0;
   }
 }
 
-/**
- * @brief Compute critical saturation (i.e. trapped) of the wetting and non-wetting phases
- */
-
 GEOS_HOST_DEVICE
 inline void
-KilloughHysteresis::
-  computeTrappedCriticalPhaseVolFraction( HysteresisCurve const & hcurve,
-                                          real64 const & Shy,
-                                          real64 const & landParam,
-                                          real64 const & jerauldParam_a,
-                                          real64 const & jerauldParam_b,
-                                          real64 & Scrt )
+KilloughHysteresis::computeTrappedCriticalPhaseVolFraction( HysteresisCurve const & hystereticCurve,
+                                                            real64 const & Shy,
+                                                            real64 const & landCoefficient,
+                                                            real64 const & jerauldParam_a,
+                                                            real64 const & jerauldParam_b,
+                                                            real64 & Scrt )
 {
 
-  if( hcurve.isWetting())
+  if( hystereticCurve.isWetting())
   {
-    //unpack values
-    real64 const Smxd = hcurve.m_criticalDrainagePhaseVolFraction;
-    real64 const Swc = hcurve.m_extremumPhaseVolFraction;
+    // unpack values
+    real64 const Smxd = hystereticCurve.m_criticalDrainagePhaseVolFraction;
+    real64 const Swc = hystereticCurve.m_extremumPhaseVolFraction;
 
     real64 const A = 1 + jerauldParam_a * (Shy - Swc);
     real64 const numerator = Shy - Smxd;
-    real64 const denom = A + landParam * pow((Smxd - Shy) / (Smxd - Swc), 1 + jerauldParam_b / landParam );
+    real64 const denom = A + landCoefficient * pow((Smxd - Shy) / (Smxd - Swc), 1 + jerauldParam_b / landCoefficient );
     Scrt = Smxd + numerator / denom;
   }
   else
   {
-    //unpack values
-    real64 const Scrd = hcurve.m_criticalDrainagePhaseVolFraction;
-    real64 const Smx = hcurve.m_extremumPhaseVolFraction;
+    // unpack values
+    real64 const Scrd = hystereticCurve.m_criticalDrainagePhaseVolFraction;
+    real64 const Smx = hystereticCurve.m_extremumPhaseVolFraction;
 
     real64 const A = 1 + jerauldParam_a * (Smx - Shy);
     real64 const numerator = Shy - Scrd;
-    real64 const denom = A + landParam * pow((Shy - Scrd) / (Smx - Scrd), 1 + jerauldParam_b / landParam );
-    Scrt = LvArray::math::max( 0.0,
-                               Scrd + numerator / denom );                       // trapped critical saturation from equation 2.162
+    real64 const denom = A + landCoefficient * pow((Shy - Scrd) / (Smx - Scrd), 1 + jerauldParam_b / landCoefficient );
+    Scrt = LvArray::math::max( 0.0, Scrd + numerator / denom ); // trapped critical saturation from equation 2.162
   }
-
 }
 
-}
+} // end namespace constitutive
 
-}
+} // end namespace geos
 
 #endif //GEOS_CONSTITUTIVE_RELATIVEPERMEABILITY_KILLOUGHHYSTERESIS_HPP

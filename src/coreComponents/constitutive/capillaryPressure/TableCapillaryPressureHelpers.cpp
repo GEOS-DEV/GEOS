@@ -73,9 +73,9 @@ TableCapillaryPressureHelpers::validateCapillaryPressureTable( TableFunction con
 
 
 void
-TableCapillaryPressureHelpers::validateCapillaryPressureTable( const geos::TableFunction & capPresTable,
-                                                               const geos::string & fullConstitutiveName,
-                                                               const bool capPresMustBeIncreasing,
+TableCapillaryPressureHelpers::validateCapillaryPressureTable( geos::TableFunction const & capPresTable,
+                                                               geos::string const & fullConstitutiveName,
+                                                               bool const capPresMustBeIncreasing,
                                                                geos::real64 & phaseMax, geos::real64 & phaseMin )
 {
 

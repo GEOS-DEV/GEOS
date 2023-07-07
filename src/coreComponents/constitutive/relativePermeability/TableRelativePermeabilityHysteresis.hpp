@@ -19,9 +19,8 @@
 #ifndef GEOS_CONSTITUTIVE_TABLERELATIVEPERMEABILITYHYSTERESIS_HPP
 #define GEOS_CONSTITUTIVE_TABLERELATIVEPERMEABILITYHYSTERESIS_HPP
 
-///helper model class with data struct for curves and computing recipe for trapped and Land Coeff
-#include "constitutive/relativePermeability/KilloughHysteresis.hpp"
 
+#include "constitutive/relativePermeability/KilloughHysteresis.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityInterpolators.hpp"
 #include "functions/TableFunction.hpp"
@@ -86,17 +85,13 @@ public:
      * phase flow)
      * @param[in] imbibitionRelPermKernelWrappers kernel wrappers storing the imbibition relperms (see below for the distinction between 2
      * and 3 phase flow)
+     * @param[in] phaseHasHysteresis flag indicating whether a phase has hysteresis or not
+     * @param[in] landParam Land trapping parameter
      * @param[in] jerauldParam_a first (modification) parameter proposed by Jerauld
      * @param[in] jerauldParam_b second (exponent) parameter proposed by Jerauld
      * @param[in] killoughCurvatureParam curvature parameter proposed by Killough
-     * @param[in] phaseHasHysteresis flag indicating whether a phase has hysteresis or not
-     * @param[in] landParam Land trapping parameter
-     * @param[in] drainageMinPhaseVolFraction drainage minimum volume fraction for each phase
-     * @param[in] imbibitionMinPhaseVolFraction imbibition minimum volume fraction for the wetting and non-wetting phase
-     * @param[in] drainageMaxPhaseVolFraction drainage maximum volume fraction for each phase
-     * @param[in] imbibitionMaxPhaseVolFraction imbibition maximum volume fraction for the wetting and non-wetting phase
-     * @param[in] drainageRelPermEndPoint drainage end-point relperm for each phase
-     * @param[in] imbibitionRelPermEndPoint imbibition end-point relperm for the wetting and non-wetting phase
+     * @param[in] wettingCurve the wetting-phase hysteretic curve
+     * @param[in] nonWettingCurve the non-wetting-phase hysteretic curve
      * @param[in] phaseTypes the phase types
      * @param[in] phaseOrder the phase order
      * @param[in] phaseMinHistoricalPhaseVolFraction minimum historical saturation for each phase
@@ -140,17 +135,9 @@ public:
     /**
      * @brief Function updating the relperm (and derivative) for the wetting phase in imbibition using Killough's method
      * @param[in] drainageRelPermKernelWrapper kernel wrapper storing the drainage relperm table for the wetting phase
-     * @param[in] imbibitionRelPermKernelWrapper kernel wrapper storing the imbibition relperm table for the wetting phase
-     * @param[in] jerauldParam_a first (modification) parameter proposed by Jerauld
-     * @param[in] jerauldParam_b second (exponent) parameter proposed by Jerauld
-     * @param[in] landParam Land trapping parameter
      * @param[in] phaseVolFraction volume fraction for this phase
      * @param[in] phaseMinHistoricalVolFraction min historical volume fraction for this phase
-     * @param[in] imbibitionPhaseMinWettingVolFraction imbibition minimum volume fraction for this phase
-     * @param[in] drainagePhaseMaxVolFraction drainage maximum volume fraction for this phase
-     * @param[in] imbibitionPhaseMaxVolFraction imbibition maximum volume fraction for this phase
-     * @param[in] drainageRelPermEndPoint drainage end-point relperm for this phase
-     * @param[in] imbibitionRelPermEndPoint imbibition end-point relperm for this phase
+     * @param[out] phaseTrappedVolFrac trapped saturation for each phase
      * @param[out] phaseRelPerm relative permeability of the wetting phase
      * @param[out] dPhaseRelPerm_dPhaseVolFrac derivative of the relative permeability wrt phase volume fraction for the wetting phase
      */
@@ -165,16 +152,9 @@ public:
     /**
      * @brief Function updating the relperm (and derivative) for the non-wetting phase in imbibition using Killough's method
      * @param[in] drainageRelPermKernelWrapper kernel wrapper storing the drainage relperm table for the non-wetting phase
-     * @param[in] imbibitionRelPermKernelWrapper kernel wrapper storing the imbibition relperm table for the non-wetting phase
-     * @param[in] jerauldParam_a first (modification) parameter proposed by Jerauld
-     * @param[in] jerauldParam_b second (exponent) parameter proposed by Jerauld
-     * @param[in] landParam Land trapping coefficient
      * @param[in] phaseVolFraction volume fraction for this phase
      * @param[in] phaseMaxHistoricalVolFraction max historical volume fraction for this phase
-     * @param[in] drainageMinPhaseVolFraction min drainage volume fraction for this phase
-     * @param[in] imbibitionMinPhaseVolFraction min imbibition volume fraction for this phase
-     * @param[in] drainageMaxPhaseVolFraction max drainage volume fraction for this phase
-     * @param[in] drainageRelPermEndPoint drainage end-point relperm for this phase
+     * @param[out] phaseTrappedVolFrac trapped saturation for each phase
      * @param[out] phaseRelPerm relative permeability of the non-wetting phase
      * @param[out] dPhaseRelPerm_dPhaseVolFrac derivative of the relative permeability wrt phase volume fraction for the non-wetting phase
      */
@@ -188,13 +168,14 @@ public:
 
     /**
      * @brief Function updating all the phase relperms (and derivatives) for two-phase flow
-     * @param[in] ipWetting
-     * @param[in] ipNonWetting
-     * @param[in] phaseVolFraction
-     * @param[in] phaseMaxHistoricalVolFraction
-     * @param[in] phaseMinHistoricalVolFraction
-     * @param[out] phaseRelPerm
-     * @param[out] dPhaseRelPerm_dPhaseVolFrac
+     * @param[in] ipWetting the index of the wetting phase
+     * @param[in] ipNonWetting the index of the non-wetting phase
+     * @param[in] phaseVolFraction the phase volume fraction
+     * @param[in] phaseMaxHistoricalVolFraction the phase max historical volume fraction
+     * @param[in] phaseMinHistoricalVolFraction the phase min historical volume fraction
+     * @param[out] phaseTrappedVolFrac trapped saturation for each phase
+     * @param[out] phaseRelPerm the phase relative permeability
+     * @param[out] dPhaseRelPerm_dPhaseVolFrac the derivative of the phase relative permeability wrt phase vol fraction
      * @detail depending of the flow direction for a given phase, this function updates the phase relative permeability
      *         using computeDrainageRelPerm (in drainage) or using one of the imbibition update functions implementing Killough's method
      */
@@ -280,13 +261,19 @@ private:
     /// Trapping parameter from the Land model (typically called C)
     arrayView1d< real64 const > m_landParam;
 
+    /// Parameter a introduced by Jerauld in the Land model
     real64 const & m_jerauldParam_a;
 
+    /// Parameter b introduced by Jerauld in the Land model
     real64 const & m_jerauldParam_b;
 
+    /// Curvature parameter introduced for wetting phase hysteresis in Killough
     real64 const & m_killoughCurvatureParamRelPerm;
 
+    /// The wetting phase hysteretic curve
     KilloughHysteresis::HysteresisCurve const & m_wettingCurve;
+
+    /// The non-wetting phase hysteretic curve
     KilloughHysteresis::HysteresisCurve const & m_nonWettingCurve;
 
     /// Minimum historical phase volume fraction for each phase
@@ -307,17 +294,17 @@ private:
 
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
-    ///Land Coeff
+    /// Land coefficient
     static constexpr char const * landParameterString() { return "landParameter"; }
 
-    ///and packed curves data struct
+    /// Hysteretic curves
     static constexpr char const * wettingCurveString() { return "wettingCurve"; };
     static constexpr char const * nonWettingCurveString() { return "nonWettingCurve"; };
 
-    ///flag
+    /// Flag to determine whether a phase has hysteresis or not
     static constexpr char const * phaseHasHysteresisString() { return "phaseHasHysteresis"; }
 
-    ///tables and assoc. wrappers
+    /// Tables and associated wrappers
     static constexpr char const * drainageRelPermKernelWrappersString() { return "drainageRelPermWrappers"; }
     static constexpr char const * imbibitionRelPermKernelWrappersString() { return "imbibitionRelPermWrappers"; }
 
@@ -450,7 +437,10 @@ private:
   /// Maximum historical phase volume fraction for each phase
   array2d< real64, compflow::LAYOUT_PHASE > m_phaseMaxHistoricalVolFraction;
 
+  /// The wetting phase hysteretic curve
   KilloughHysteresis::HysteresisCurve m_wettingCurve;
+
+  /// The non-wetting phase hysteretic curve
   KilloughHysteresis::HysteresisCurve m_nonWettingCurve;
 
 };

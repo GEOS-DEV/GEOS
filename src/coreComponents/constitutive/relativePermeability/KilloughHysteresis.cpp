@@ -28,7 +28,8 @@ namespace constitutive
 {
 
 
-void KilloughHysteresis::postProcessInput( real64 const & jerauldParam_a, real64 const & jerauldParam_b,
+void KilloughHysteresis::postProcessInput( real64 const & jerauldParam_a,
+                                           real64 const & jerauldParam_b,
                                            real64 const & killoughCurvatureParamRelPerm )
 {
   GEOS_THROW_IF( jerauldParam_a < 0,
@@ -53,5 +54,6 @@ void KilloughHysteresis::postProcessInput( real64 const & jerauldParam_a, real64
 
 
 
-}//end namespace
-}//end namespace
+} //end namespace
+
+} //end namespace
