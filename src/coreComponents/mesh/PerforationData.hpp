@@ -265,6 +265,9 @@ private:
   /// Well transmissibility at the perforations
   array1d< real64 > m_wellTransmissibility;
 
+  /// Well skin at the perforations
+  array1d< real64 > m_wellSkin;
+
 };
 
 } //namespace geos
