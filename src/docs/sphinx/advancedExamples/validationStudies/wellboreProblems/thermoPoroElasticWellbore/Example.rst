@@ -19,13 +19,13 @@ This example uses the thermal option of the ``SinglePhasePoromechanics`` solver 
 
    Sketch of a thermoporoelastic wellbore 
 
-Analytical solutions to this problem were first derived by `(Wang and Papamichos 1994) <https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/94WR01774>`__ using a one-way coupling simplification. They are also reformulated for the full coupling assumption in the book of `(Cheng 2016) <https://link.springer.com/book/10.1007/978-3-319-25202-5>`__. These solutions will be considered to validate GEOSX results.
+Analytical solutions to this problem were first derived by `(Wang and Papamichos 1994) <https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/94WR01774>`__ using a one-way coupling simplification. They are also reformulated for the full coupling assumption in the book of `(Cheng 2016) <https://link.springer.com/book/10.1007/978-3-319-25202-5>`__. These solutions will be considered to validate GEOS results.
 
 
 **Input file**
 
 This benchmark example uses no external input files and everything required is
-contained within two GEOSX xml files that are located at:
+contained within two GEOS xml files that are located at:
 
 .. code-block:: console
 
@@ -206,7 +206,7 @@ Also, periodic events are required to trigger the collection of this data during
 Results and benchmark
 ---------------------------------
 
-A good agreement between the GEOSX results and analytical results for temperature and pore pressure distribution around the wellbore is shown in the figures below:
+A good agreement between the GEOS results and analytical results for temperature and pore pressure distribution around the wellbore is shown in the figures below:
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/thermoPoroElasticWellbore/THM_wellbore_temperature_pressure.py
 
@@ -230,7 +230,7 @@ and the validation for the radial displacement around the cased wellbore is show
 
    Validation of the radial displacement.
 
-The validations of the total radial and hoop stress (tangent stress) components computed by GEOSX against reference results are shown in the figure below:
+The validations of the total radial and hoop stress (tangent stress) components computed by GEOS against reference results are shown in the figure below:
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/thermoPoroElasticWellbore/THM_wellbore_stress.py
 
@@ -249,4 +249,4 @@ To go further
 **Feedback on this example**
 
 This concludes the cased wellbore example.
-For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
+For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOS-DEV/GEOS/issues>`_.

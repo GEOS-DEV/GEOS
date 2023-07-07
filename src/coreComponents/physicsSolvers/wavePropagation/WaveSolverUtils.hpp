@@ -17,18 +17,18 @@
  * @file WaveSolverUtils.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
-#define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
 
 #include "WaveSolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 struct WaveSolverUtils
 {
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static real32 evaluateRicker( real64 const & time_n, real32 const & f0, localIndex order )
   {
     real32 const o_tpeak = 1.0/f0;
@@ -59,7 +59,7 @@ struct WaveSolverUtils
       }
       break;
       default:
-        GEOSX_ERROR( "This option is not supported yet, rickerOrder must be 0, 1 or 2" );
+        GEOS_ERROR( "This option is not supported yet, rickerOrder must be 0, 1 or 2" );
     }
 
     return pulse;
@@ -85,7 +85,7 @@ struct WaveSolverUtils
 
     if( nsamplesSeismoTrace > 0 )
     {
-      forAll< WaveSolverBase::EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
+      forAll< WaveSolverBase::EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const ircv )
       {
         if( receiverIsLocal[ircv] == 1 )
         {
@@ -116,7 +116,7 @@ struct WaveSolverUtils
             // Note: this "manual" output to file is temporary
             //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
             // TODO: remove saveSeismo and replace with TimeHistory
-            std::ofstream f( GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ), std::ios::app );
+            std::ofstream f( GEOS_FMT( "seismoTraceReceiver{:03}.txt", ircv ), std::ios::app );
             for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
             {
               f << iSample << " " << varAtReceivers[iSample][ircv] << std::endl;
@@ -130,9 +130,11 @@ struct WaveSolverUtils
 
   static void compute2dVariableSeismoTrace( real64 const time_n,
                                             real64 const dt,
+                                            localIndex const regionIndex,
+                                            arrayView1d< localIndex const > const receiverRegion,
                                             real64 const timeSeismo,
                                             localIndex iSeismo,
-                                            arrayView1d< localIndex const > const sourceElem,
+                                            arrayView1d< localIndex const > const rcvElem,
                                             arrayView2d< real64 const > const receiverConstants,
                                             arrayView1d< localIndex const > const receiverIsLocal,
                                             localIndex const nsamplesSeismoTrace,
@@ -148,20 +150,23 @@ struct WaveSolverUtils
 
     if( nsamplesSeismoTrace > 0 )
     {
-      forAll< WaveSolverBase::EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
+      forAll< WaveSolverBase::EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const ircv )
       {
         if( receiverIsLocal[ircv] == 1 )
         {
-          varAtReceivers[iSeismo][ircv] = 0.0;
-          real32 vtmp_np1 = 0.0;
-          real32 vtmp_n = 0.0;
-          for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
+          if( receiverRegion[ircv] == regionIndex )
           {
-            vtmp_np1 += var_np1[sourceElem[ircv]][inode] * receiverConstants[ircv][inode];
-            vtmp_n += var_n[sourceElem[ircv]][inode] * receiverConstants[ircv][inode];
+            varAtReceivers[iSeismo][ircv] = 0.0;
+            real32 vtmp_np1 = 0.0;
+            real32 vtmp_n = 0.0;
+            for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
+            {
+              vtmp_np1 += var_np1[rcvElem[ircv]][inode] * receiverConstants[ircv][inode];
+              vtmp_n += var_n[rcvElem[ircv]][inode] * receiverConstants[ircv][inode];
+            }
+            // linear interpolation between the pressure value at time_n and time_(n+1)
+            varAtReceivers[iSeismo][ircv] = a1*vtmp_n + a2*vtmp_np1;
           }
-          // linear interpolation between the pressure value at time_n and time_(n+1)
-          varAtReceivers[iSeismo][ircv] = a1*vtmp_n + a2*vtmp_np1;
         }
       } );
     }
@@ -170,28 +175,29 @@ struct WaveSolverUtils
     // Output will then only be done via the previous code.
     if( iSeismo == nsamplesSeismoTrace - 1 )
     {
-      forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
+      if( outputSeismoTrace == 1 )
       {
-        if( outputSeismoTrace == 1 )
+        forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
         {
           if( receiverIsLocal[ircv] == 1 )
           {
             // Note: this "manual" output to file is temporary
             //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
             // TODO: remove saveSeismo and replace with TimeHistory
-            std::ofstream f( GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ), std::ios::app );
-            for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
+            if( receiverRegion[ircv] == regionIndex )
             {
-              f << iSample << " " << varAtReceivers[iSample][ircv] << std::endl;
+              std::ofstream f( GEOS_FMT( "seismoTraceReceiver{:03}.txt", ircv ), std::ios::app );
+              for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
+              {
+                f << iSample << " " << varAtReceivers[iSample][ircv] << std::endl;
+              }
+              f.close();
             }
-            f.close();
           }
-        }
-      } );
+        } );
+      }
     }
-
   }
-
 
   /**
    * @brief Check if the source point is inside an element or not
@@ -208,7 +214,7 @@ struct WaveSolverUtils
    * @return true if coords is inside the element
    */
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static bool
   locateSourceElement( real64 const numFacesPerElem,
                        real64 const (&elemCenter)[3],
@@ -261,7 +267,7 @@ struct WaveSolverUtils
  * @param[out] coordsOnRefElem to contain the coordinate computed in the reference element
  */
   template< typename FE_TYPE >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
                                         arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const elemsToNodes,
@@ -291,6 +297,6 @@ struct WaveSolverUtils
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_ */

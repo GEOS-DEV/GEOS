@@ -19,7 +19,7 @@
 #include "KilloughHysteresis.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -31,23 +31,23 @@ namespace constitutive
 void KilloughHysteresis::postProcessInput( real64 const & jerauldParam_a, real64 const & jerauldParam_b,
                                            real64 const & killoughCurvatureParamRelPerm )
 {
-  GEOSX_THROW_IF( jerauldParam_a < 0,
-                  GEOSX_FMT( "{}: the parameter {} must be positive",
-                             catalogName(),
-                             viewKeyStruct::jerauldParameterAString() ),
-                  InputError );
+  GEOS_THROW_IF( jerauldParam_a < 0,
+                 GEOS_FMT( "{}: the parameter {} must be positive",
+                           catalogName(),
+                           viewKeyStruct::jerauldParameterAString() ),
+                 InputError );
 
-  GEOSX_THROW_IF( jerauldParam_b < 0,
-                  GEOSX_FMT( "{}: the paramater {} must be postitive",
-                             catalogName(),
-                             viewKeyStruct::jerauldParameterBString() ),
-                  InputError );
+  GEOS_THROW_IF( jerauldParam_b < 0,
+                 GEOS_FMT( "{}: the paramater {} must be postitive",
+                           catalogName(),
+                           viewKeyStruct::jerauldParameterBString() ),
+                 InputError );
 
-  GEOSX_THROW_IF( killoughCurvatureParamRelPerm < 0,
-                  GEOSX_FMT( "{}: the paramater {} must be postitive",
-                             catalogName(),
-                             viewKeyStruct::killoughCurvatureParameterString() ),
-                  InputError );
+  GEOS_THROW_IF( killoughCurvatureParamRelPerm < 0,
+                 GEOS_FMT( "{}: the paramater {} must be postitive",
+                           catalogName(),
+                           viewKeyStruct::killoughCurvatureParameterString() ),
+                 InputError );
 
 }
 

@@ -20,7 +20,7 @@
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -69,8 +69,8 @@ ContactBase::~ContactBase()
 void ContactBase::postProcessInput()
 {
 
-  GEOSX_THROW_IF( m_apertureTableName.empty(),
-                  getCatalogName() << " " << getName() << ": the aperture table name " << m_apertureTableName << " is empty", InputError );
+  GEOS_THROW_IF( m_apertureTableName.empty(),
+                 getCatalogName() << " " << getName() << ": the aperture table name " << m_apertureTableName << " is empty", InputError );
 
 }
 
@@ -85,9 +85,9 @@ void ContactBase::allocateConstitutiveData( Group & parent,
 
   FunctionManager & functionManager = FunctionManager::getInstance();
 
-  GEOSX_THROW_IF( !functionManager.hasGroup( m_apertureTableName ),
-                  getCatalogName() << " " << getName() << ": the aperture table named " << m_apertureTableName << " could not be found",
-                  InputError );
+  GEOS_THROW_IF( !functionManager.hasGroup( m_apertureTableName ),
+                 getCatalogName() << " " << getName() << ": the aperture table named " << m_apertureTableName << " could not be found",
+                 InputError );
 
   TableFunction & apertureTable = functionManager.getGroup< TableFunction >( m_apertureTableName );
   validateApertureTable( apertureTable );
@@ -100,11 +100,21 @@ void ContactBase::allocateConstitutiveData( Group & parent,
   real64 const slope = ( hydraulicApertureValues[n] - hydraulicApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
   real64 const apertureTransition = ( hydraulicApertureValues[n] - slope * apertureValues[n] ) / ( 1.0 - slope );
 
-  coords.emplaceBack( 0, apertureTransition );
-  hydraulicApertureValues.emplace_back( apertureTransition );
-  coords.emplaceBack( 0, apertureTransition*10e9 );
-  hydraulicApertureValues.emplace_back( apertureTransition*10e9 );
-  apertureTable.reInitializeFunction();
+  // if the aperture transition is larger than the last coordinates, we enlarge the table
+  // this check is necessary to ensure that the coordinates are strictly increasing
+  if( apertureTransition > apertureValues[apertureValues.size()-1] )
+  {
+    coords.emplaceBack( 0, apertureTransition );
+    hydraulicApertureValues.emplace_back( apertureTransition );
+    // if the aperture transition is larger than 0, we keep enlarging the table
+    // this check is necessary to ensure that the coordinates are strictly increasing
+    if( apertureTransition > 0 )
+    {
+      coords.emplaceBack( 0, apertureTransition*10e9 );
+      hydraulicApertureValues.emplace_back( apertureTransition*10e9 );
+      apertureTable.reInitializeFunction();
+    }
+  }
 
   m_apertureTable = &apertureTable;
 }
@@ -115,27 +125,27 @@ void ContactBase::validateApertureTable( TableFunction const & apertureTable ) c
   ArrayOfArraysView< real64 const > const coords = apertureTable.getCoordinates();
   arrayView1d< real64 const > const & hydraulicApertureValues = apertureTable.getValues();
 
-  GEOSX_THROW_IF( coords.size() > 1,
-                  getCatalogName() << " " << getName() << ": Aperture limiter table cannot be greater than a 1D table.",
-                  InputError );
+  GEOS_THROW_IF( coords.size() > 1,
+                 getCatalogName() << " " << getName() << ": Aperture limiter table cannot be greater than a 1D table.",
+                 InputError );
 
   arraySlice1d< real64 const > apertureValues = coords[0];
   localIndex const size = apertureValues.size();
 
-  GEOSX_THROW_IF( coords( 0, size-1 ) > 0.0 || coords( 0, size-1 ) < 0.0,
-                  getCatalogName() << " " << getName() << ": Invalid aperture limiter table. Last coordinate must be zero!",
-                  InputError );
+  GEOS_THROW_IF( coords( 0, size-1 ) > 0.0 || coords( 0, size-1 ) < 0.0,
+                 getCatalogName() << " " << getName() << ": Invalid aperture limiter table. Last coordinate must be zero!",
+                 InputError );
 
-  GEOSX_THROW_IF( apertureValues.size() < 2,
-                  getCatalogName() << " " << getName() << ": Invalid aperture limiter table. Must have more than two points specified",
-                  InputError );
+  GEOS_THROW_IF( apertureValues.size() < 2,
+                 getCatalogName() << " " << getName() << ": Invalid aperture limiter table. Must have more than two points specified",
+                 InputError );
 
   localIndex const n = apertureValues.size()-1;
   real64 const slope = ( hydraulicApertureValues[n] - hydraulicApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
 
-  GEOSX_THROW_IF( slope >= 1.0,
-                  getCatalogName() << " " << getName() << ": Invalid aperture table. The slope of the last two points >= 1 is invalid.",
-                  InputError );
+  GEOS_THROW_IF( slope >= 1.0,
+                 getCatalogName() << " " << getName() << ": Invalid aperture table. The slope of the last two points >= 1 is invalid.",
+                 InputError );
 }
 
 
@@ -150,4 +160,4 @@ ContactBaseUpdates ContactBase::createKernelWrapper() const
 
 } /* end namespace constitutive */
 
-} /* end namespace geosx */
+} /* end namespace geos */

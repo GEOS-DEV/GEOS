@@ -16,8 +16,8 @@
  * @file KilloughHysteresis.hpp
  */
 
-#ifndef GEOSX_KILLOUGHHYSTERESIS_HPP
-#define GEOSX_KILLOUGHHYSTERESIS_HPP
+#ifndef GEOS_CONSTITUTIVE_RELATIVEPERMEABILITY_KILLOUGHHYSTERESIS_HPP
+#define GEOS_CONSTITUTIVE_RELATIVEPERMEABILITY_KILLOUGHHYSTERESIS_HPP
 
 #include "Layouts.hpp"
 #include "constitutive/capillaryPressure/Layouts.hpp"
@@ -26,7 +26,7 @@
 #include "functions/TableFunction.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -136,7 +136,7 @@ public:
       m_criticalDrainageValue = criticalDrainageValue;
     }
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     inline bool isWetting() const
     {
       return m_isWetting;
@@ -156,7 +156,7 @@ public:
                                 real64 const & jerauldParam_b,
                                 real64 const & killoughCurvatureParamRelPerm );
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void computeLandCoefficient( HysteresisCurve const & hcruve, real64 & landParam );
   /**
    * @brief Function computing the trapped critical phase volume fraction
@@ -167,7 +167,7 @@ public:
    * @param[in] jerauldParam_b jerauld expononent
    * @param[out] Scrt the trapped critical phase volume fraction
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void computeTrappedCriticalPhaseVolFraction( HysteresisCurve const & hcurve,
                                                       real64 const & Shy,
                                                       real64 const & landParam,
@@ -189,7 +189,7 @@ public:
 /**
  * @brief Compute the Land coefficient for the wetting and non-wetting phases
  */
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::HysteresisCurve const & hcurve,
                                                         real64 & landParam )
 {
@@ -203,12 +203,12 @@ inline void KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::Hyst
     real64 const Smxd = hcurve.m_criticalDrainagePhaseVolFraction;
     real64 const Smxi = hcurve.m_criticalImbibitionPhaseVolFraction;
     real64 const Swc = Scrd;
-    GEOSX_ERROR_IF(  (Smxi - Smxd) > 0,
-                     GEOSX_FMT( "{}: For wetting phase hysteresis, imbibition end-point saturation Smxi( {} ) must be smaller than the drainage saturation end-point Smxd( {} ).\n"
-                                "Crossing relative permeability curves.\n",
-                                catalogName(),
-                                Smxi,
-                                Smxd ));
+    GEOS_ERROR_IF(  (Smxi - Smxd) > 0,
+                    GEOS_FMT( "{}: For wetting phase hysteresis, imbibition end-point saturation Smxi( {} ) must be smaller than the drainage saturation end-point Smxd( {} ).\n"
+                              "Crossing relative permeability curves.\n",
+                              catalogName(),
+                              Smxi,
+                              Smxd ));
 
     landParam = ( Smxd - Swc ) / LvArray::math::max( KilloughHysteresis::minScriMinusScrd, ( Smxd - Smxi ) ) - 1.0;
   }
@@ -219,12 +219,12 @@ inline void KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::Hyst
     real64 const Smx =  hcurve.m_extremumPhaseVolFraction;
     real64 const Scrd = hcurve.m_criticalDrainagePhaseVolFraction;
     real64 const Scri = hcurve.m_criticalImbibitionPhaseVolFraction;
-    GEOSX_ERROR_IF( (Scrd - Scri) > 0,
-                    GEOSX_FMT( "{}: For non-wetting phase hysteresis, drainage trapped saturation Scrd( {} ) must be smaller than the imbibition saturation Scri( {} ).\n"
-                               "Crossing relative permeability curves.\n",
-                               catalogName(),
-                               Scrd,
-                               Scri ));
+    GEOS_ERROR_IF( (Scrd - Scri) > 0,
+                   GEOS_FMT( "{}: For non-wetting phase hysteresis, drainage trapped saturation Scrd( {} ) must be smaller than the imbibition saturation Scri( {} ).\n"
+                             "Crossing relative permeability curves.\n",
+                             catalogName(),
+                             Scrd,
+                             Scri ));
 
     landParam = ( Smx - Scrd ) / LvArray::math::max( KilloughHysteresis::minScriMinusScrd, ( Scri - Scrd ) ) - 1.0;
   }
@@ -234,7 +234,7 @@ inline void KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::Hyst
  * @brief Compute critical saturation (i.e. trapped) of the wetting and non-wetting phases
  */
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 KilloughHysteresis::
   computeTrappedCriticalPhaseVolFraction( HysteresisCurve const & hcurve,
@@ -275,4 +275,4 @@ KilloughHysteresis::
 
 }
 
-#endif //GEOSX_KILLOUGHHYSTERESIS_HPP
+#endif //GEOS_CONSTITUTIVE_RELATIVEPERMEABILITY_KILLOUGHHYSTERESIS_HPP

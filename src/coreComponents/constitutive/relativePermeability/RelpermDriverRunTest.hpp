@@ -12,15 +12,15 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_RELPERMDRIVERRUNTEST_HPP_
-#define GEOSX_RELPERMDRIVERRUNTEST_HPP_
+#ifndef GEOS_RELPERMDRIVERRUNTEST_HPP_
+#define GEOS_RELPERMDRIVERRUNTEST_HPP_
 
 #include "constitutive/relativePermeability/RelpermDriver.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "constitutive/relativePermeability/Layouts.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 using namespace constitutive;
@@ -105,12 +105,12 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
     if( phaseHasHysteresis[ipNonWetting] )
     {
       phaseMaxHistoricalVolFraction[0][ipNonWetting] = nonWettingCurve.m_extremumPhaseVolFraction;
-      GEOSX_LOG( GEOSX_FMT( "New max non-wetting phase historical phase volume fraction: {}", phaseMaxHistoricalVolFraction[0][ipNonWetting] ) );
+      GEOS_LOG( GEOS_FMT( "New max non-wetting phase historical phase volume fraction: {}", phaseMaxHistoricalVolFraction[0][ipNonWetting] ) );
     }
     if( phaseHasHysteresis[ipWetting] )
     {
       phaseMinHistoricalVolFraction[0][ipWetting] = wettingCurve.m_extremumPhaseVolFraction;
-      GEOSX_LOG( GEOSX_FMT( "New min wetting phase historical phase volume fraction: {}", phaseMinHistoricalVolFraction[0][ipWetting] ) );
+      GEOS_LOG( GEOS_FMT( "New min wetting phase historical phase volume fraction: {}", phaseMinHistoricalVolFraction[0][ipWetting] ) );
     }
 
   }
@@ -119,7 +119,7 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
 
   forAll< parallelDevicePolicy<> >( saturation.size( 0 ),
                                     [numPhases, kernelWrapper, saturation, table,
-                                     offset] GEOSX_HOST_DEVICE ( integer const n )
+                                     offset] GEOS_HOST_DEVICE ( integer const n )
   {
     // nw phase set max to snw_max to get the imbibition bounding curve
     kernelWrapper.update( 0, 0, saturation[n] );
@@ -136,13 +136,14 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
   {
     if( phaseHasHysteresis[ipNonWetting] )
     {
+
       phaseMaxHistoricalVolFraction[0][ipNonWetting] = nonWettingCurve.m_criticalDrainagePhaseVolFraction;
-      GEOSX_LOG( GEOSX_FMT( "New max non-wetting phase historical phase volume fraction: {}", phaseMaxHistoricalVolFraction[0][ipNonWetting] ) );
+      GEOS_LOG( GEOS_FMT( "New max non-wetting phase historical phase volume fraction: {}", phaseMaxHistoricalVolFraction[0][ipNonWetting] ) );
     }
     if( phaseHasHysteresis[ipWetting] )
     {
       phaseMinHistoricalVolFraction[0][ipWetting] = wettingCurve.m_criticalDrainagePhaseVolFraction;
-      GEOSX_LOG( GEOSX_FMT( "New min wetting phase historical phase volume fraction: {}", phaseMinHistoricalVolFraction[0][ipWetting] ) );
+      GEOS_LOG( GEOS_FMT( "New min wetting phase historical phase volume fraction: {}", phaseMinHistoricalVolFraction[0][ipWetting] ) );
     }
   }
 
@@ -150,7 +151,7 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
 
   forAll< parallelDevicePolicy<> >( saturation.size( 0 ),
                                     [numPhases, kernelWrapper, saturation, table,
-                                     offset] GEOSX_HOST_DEVICE ( integer const n )
+                                     offset] GEOS_HOST_DEVICE ( integer const n )
   {
     // nw phase set max to snw_max to get the imbibition bounding curve
 
@@ -228,7 +229,7 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
 
   forAll< parallelDevicePolicy<> >( saturation.size( 0 ),
                                     [numPhases, kernelWrapper, saturation, table,
-                                     offset] GEOSX_HOST_DEVICE ( integer const n )
+                                     offset] GEOS_HOST_DEVICE ( integer const n )
   {
     kernelWrapper.update( 0, 0, saturation[n] );
     for( integer p = 0; p < numPhases; ++p )
@@ -243,4 +244,4 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
 }
 
 
-#endif //GEOSX_RELPERMDRIVERRUNTEST_HPP_
+#endif //GEOS_RELPERMDRIVERRUNTEST_HPP_

@@ -14,8 +14,8 @@
 
 /** @file */
 
-#ifndef GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_
-#define GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_
+#ifndef GEOS_DATAREPOSITORY_WRAPPERBASE_HPP_
+#define GEOS_DATAREPOSITORY_WRAPPERBASE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -39,7 +39,7 @@ class Node;
 }
 
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -612,6 +612,13 @@ protected:
 
   /// @endcond
 
+  /**
+   * @brief Helper method to process an exception that has been thrown during xml parsing.
+   * @param ex The caught exception.
+   * @param targetNode The node from which this Group is interpreted.
+   */
+  void processInputException( std::exception const & ex, xmlWrapper::xmlNode const & targetNode ) const;
+
 protected:
 
   /// Name of the object that is being wrapped
@@ -709,6 +716,6 @@ private:
 };
 
 } /// namespace dataRepository
-} /// namespace geosx
+} /// namespace geos
 
-#endif /* GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_WRAPPERBASE_HPP_ */

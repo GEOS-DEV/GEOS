@@ -16,12 +16,12 @@
  * @file RelativePermeabilityInterpolators.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_RELATIVEPERMEABILITYINTERPOLATORS_HPP
-#define GEOSX_CONSTITUTIVE_RELATIVEPERMEABILITYINTERPOLATORS_HPP
+#ifndef GEOS_CONSTITUTIVE_RELATIVEPERMEABILITYINTERPOLATORS_HPP
+#define GEOS_CONSTITUTIVE_RELATIVEPERMEABILITYINTERPOLATORS_HPP
 
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -48,8 +48,8 @@ struct Baker
    * The interpolation is based on the modified Baker method, also used as default in Eclipse
    * Reference: Eclipse technical description and PetroWiki
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   static void
   compute( real64 const & shiftedWaterVolFrac,
            real64 const & gasVolFrac,
@@ -114,6 +114,6 @@ struct Baker
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_RELATIVEPERMEABILITYINTERPOLATORS_HPP
+#endif //GEOS_CONSTITUTIVE_RELATIVEPERMEABILITYINTERPOLATORS_HPP

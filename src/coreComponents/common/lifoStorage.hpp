@@ -26,11 +26,11 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/TimingMacros.hpp"
 
-#define LIFO_MARK_FUNCTION if( std::getenv( "LIFO_TRACE_ON" ) != NULL ) { GEOSX_MARK_FUNCTION; }
-#define LIFO_MARK_SCOPE( a )  if( std::getenv( "LIFO_TRACE_ON" ) != NULL ) { GEOSX_MARK_SCOPE( a ); }
+#define LIFO_MARK_FUNCTION if( std::getenv( "LIFO_TRACE_ON" ) != NULL ) { GEOS_MARK_FUNCTION; }
+#define LIFO_MARK_SCOPE( a )  if( std::getenv( "LIFO_TRACE_ON" ) != NULL ) { GEOS_MARK_SCOPE( a ); }
 
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -175,7 +175,7 @@ public:
    * @param space          Space used to store que queue.
    */
   fixedSizeDequeAndMutexes( int maxEntries, int valuesPerEntry, LvArray::MemorySpace space ): fixedSizeDeque< T, int >( maxEntries, valuesPerEntry, space,
-#ifdef GEOSX_USE_CUDA
+#ifdef GEOS_USE_CUDA
                                                                                                                         camp::resources::Resource{ camp::resources::Cuda{} }
 #else
                                                                                                                         camp::resources::Resource{ camp::resources::Host{} }
@@ -304,7 +304,7 @@ private:
   size_t m_bufferSize;
   /// name used to store data on disk
   std::string m_name;
-#ifdef GEOSX_USE_CUDA
+#ifdef GEOS_USE_CUDA
   /// ueue of data stored on device
   fixedSizeDequeAndMutexes< T > m_deviceDeque;
 #endif
@@ -316,13 +316,13 @@ private:
   /// counter of buffer stored on disk
   int m_bufferOnDiskCount;
 
-#ifdef GEOSX_USE_CUDA
+#ifdef GEOS_USE_CUDA
   // Events associated to ith  copies to device buffer
   std::vector< camp::resources::Event > m_pushToDeviceEvents;
 #endif
   // Futures associated to push to host in case we have no device buffers
   std::vector< std::future< void > > m_pushToHostFutures;
-#ifdef GEOSX_USE_CUDA
+#ifdef GEOS_USE_CUDA
   // Events associated to ith  copies from device buffer
   std::vector< camp::resources::Event > m_popFromDeviceEvents;
 #endif
@@ -357,12 +357,12 @@ public:
     m_maxNumberOfBuffers( maxNumberOfBuffers ),
     m_bufferSize( elemCnt*sizeof( T ) ),
     m_name( name ),
-#ifdef GEOSX_USE_CUDA
+#ifdef GEOS_USE_CUDA
     m_deviceDeque( numberOfBuffersToStoreOnDevice, elemCnt, LvArray::MemorySpace::cuda ),
 #endif
     m_hostDeque( numberOfBuffersToStoreOnHost, elemCnt, LvArray::MemorySpace::host ),
     m_bufferCount( 0 ), m_bufferOnDiskCount( 0 ),
-#ifdef GEOSX_USE_CUDA
+#ifdef GEOS_USE_CUDA
     m_pushToDeviceEvents( (numberOfBuffersToStoreOnDevice > 0)?maxNumberOfBuffers:0 ),
     m_pushToHostFutures( (numberOfBuffersToStoreOnDevice > 0)?0:maxNumberOfBuffers ),
     m_popFromDeviceEvents( (numberOfBuffersToStoreOnDevice > 0)?maxNumberOfBuffers:0 ),
@@ -372,8 +372,8 @@ public:
     m_popFromHostFutures( maxNumberOfBuffers )
 #endif
   {
-#ifndef GEOSX_USE_CUDA
-    GEOSX_UNUSED_VAR( numberOfBuffersToStoreOnDevice );
+#ifndef GEOS_USE_CUDA
+    GEOS_UNUSED_VAR( numberOfBuffersToStoreOnDevice );
 #endif
     m_worker[0] = std::thread( &lifoStorage< T >::wait_and_consume_tasks, this, 0 );
     m_worker[1] = std::thread( &lifoStorage< T >::wait_and_consume_tasks, this, 1 );
@@ -411,17 +411,17 @@ public:
     //To be sure 2 pushes are not mixed
     pushWait();
     int id = m_bufferCount++;
-    GEOSX_ERROR_IF( m_hostDeque.capacity() == 0,
-                    "Cannot save on a Lifo without host storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
+    GEOS_ERROR_IF( m_hostDeque.capacity() == 0,
+                   "Cannot save on a Lifo without host storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
 
-#ifdef GEOSX_USE_CUDA
+#ifdef GEOS_USE_CUDA
     if( m_deviceDeque.capacity() > 0 )
     {
       m_pushToDeviceEvents[id] = m_deviceDeque.emplaceFront( array );
 
       if( m_maxNumberOfBuffers - id > (int)m_deviceDeque.capacity() )
       {
-        LIFO_MARK_SCOPE( geosx::lifoStorage< T >::pushAddTasks );
+        LIFO_MARK_SCOPE( geos::lifoStorage< T >::pushAddTasks );
         // This buffer will go to host memory, and maybe on disk
         std::packaged_task< void() > task( std::bind( &lifoStorage< T >::deviceToHost, this, id ) );
         {
@@ -439,7 +439,7 @@ public:
 
         if( m_maxNumberOfBuffers - pushId > (int)m_hostDeque.capacity() )
         {
-          LIFO_MARK_SCOPE( geosx::lifoStorage< T >::pushAddTasks );
+          LIFO_MARK_SCOPE( geos::lifoStorage< T >::pushAddTasks );
           // This buffer will go to host memory, and maybe on disk
           std::packaged_task< void() > t2( std::bind( &lifoStorage< T >::hostToDisk, this, pushId ) );
           {
@@ -468,7 +468,7 @@ public:
 
     if( m_bufferCount > 0 )
     {
-#ifdef GEOSX_USE_CUDA
+#ifdef GEOS_USE_CUDA
       if( m_deviceDeque.capacity() > 0 )
       {
         m_pushToDeviceEvents[m_bufferCount-1].wait();
@@ -506,14 +506,14 @@ public:
     // Ensure last pop is finished
     popWait();
     int id = --m_bufferCount;
-#ifdef GEOSX_USE_CUDA
+#ifdef GEOS_USE_CUDA
     if( m_deviceDeque.capacity() > 0 )
     {
       m_popFromDeviceEvents[id] = m_deviceDeque.popFront( array );
 
       if( id >= (int)m_deviceDeque.capacity() )
       {
-        LIFO_MARK_SCOPE( geosx::lifoStorage< T >::popAddTasks );
+        LIFO_MARK_SCOPE( geos::lifoStorage< T >::popAddTasks );
         // Trigger pull one buffer from host, and maybe from disk
         std::packaged_task< void() > task( std::bind( &lifoStorage< T >::hostToDevice, this, id - m_deviceDeque.capacity() ) );
         {
@@ -531,7 +531,7 @@ public:
 
         if( popId >= (int)m_hostDeque.capacity() )
         {
-          LIFO_MARK_SCOPE( geosx::lifoStorage< T >::popAddTasks );
+          LIFO_MARK_SCOPE( geos::lifoStorage< T >::popAddTasks );
           // Trigger pull one buffer from host, and maybe from disk
           std::packaged_task< void() > task2( std::bind( &lifoStorage< T >::diskToHost, this, popId  - m_hostDeque.capacity() ) );
           {
@@ -558,10 +558,10 @@ public:
     LIFO_MARK_FUNCTION;
     if( m_bufferCount < m_maxNumberOfBuffers )
     {
-#ifdef GEOSX_USE_CUDA
+#ifdef GEOS_USE_CUDA
       if( m_deviceDeque.capacity() > 0 )
       {
-#ifdef GEOSX_USE_CUDA
+#ifdef GEOS_USE_CUDA
         cudaEventSynchronize( m_popFromDeviceEvents[m_bufferCount].get< camp::resources::CudaEvent >().getCudaEvent_t() );
 #endif
       }
@@ -593,7 +593,7 @@ private:
    *
    * @param ID of the buffer to copy on host.
    */
-#ifdef GEOSX_USE_CUDA
+#ifdef GEOS_USE_CUDA
   void deviceToHost( int id )
   {
     LIFO_MARK_FUNCTION;
@@ -635,7 +635,7 @@ private:
    *
    * @param id ID of the buffer to load from host memory.
    */
-#ifdef GEOSX_USE_CUDA
+#ifdef GEOS_USE_CUDA
   void hostToDevice( int id )
   {
     LIFO_MARK_FUNCTION;
@@ -693,18 +693,18 @@ private:
   void writeOnDisk( const T * d, int id )
   {
     LIFO_MARK_FUNCTION;
-    std::string fileName = GEOSX_FMT( "{}_{:08}.dat", m_name, id );
+    std::string fileName = GEOS_FMT( "{}_{:08}.dat", m_name, id );
     int lastDirSeparator = fileName.find_last_of( "/\\" );
     std::string dirName = fileName.substr( 0, lastDirSeparator );
     if( string::npos != (size_t)lastDirSeparator && !dirExists( dirName ))
       makeDirsForPath( dirName );
 
     std::ofstream wf( fileName, std::ios::out | std::ios::binary );
-    GEOSX_ERROR_IF( !wf || wf.fail() || !wf.is_open(),
-                    "Could not open file "<< fileName << " for writting" );
+    GEOS_ERROR_IF( !wf || wf.fail() || !wf.is_open(),
+                   "Could not open file "<< fileName << " for writting" );
     wf.write( (const char *)d, m_bufferSize );
-    GEOSX_ERROR_IF( wf.bad() || wf.fail(),
-                    "An error occured while writting "<< fileName );
+    GEOS_ERROR_IF( wf.bad() || wf.fail(),
+                   "An error occured while writting "<< fileName );
     wf.close();
   }
 
@@ -717,10 +717,10 @@ private:
   void readOnDisk( T * d, int id )
   {
     LIFO_MARK_FUNCTION;
-    std::string fileName = GEOSX_FMT( "{}_{:08}.dat", m_name, id );
+    std::string fileName = GEOS_FMT( "{}_{:08}.dat", m_name, id );
     std::ifstream wf( fileName, std::ios::in | std::ios::binary );
-    GEOSX_ERROR_IF( !wf,
-                    "Could not open file "<< fileName << " for reading" );
+    GEOS_ERROR_IF( !wf,
+                   "Could not open file "<< fileName << " for reading" );
     wf.read( (char *)d, m_bufferSize );
     wf.close();
     remove( fileName.c_str() );

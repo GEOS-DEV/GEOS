@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_VTKFACEBLOCKUTILITIES_HPP
-#define GEOSX_VTKFACEBLOCKUTILITIES_HPP
+#ifndef GEOS_VTKFACEBLOCKUTILITIES_HPP
+#define GEOS_VTKFACEBLOCKUTILITIES_HPP
 
 #include "common/DataTypes.hpp"
 #include "CellBlockManager.hpp"
@@ -21,7 +21,7 @@
 #include <vtkDataSet.h>
 #include <vtkSmartPointer.h>
 
-namespace geosx
+namespace geos
 {
 
 /**

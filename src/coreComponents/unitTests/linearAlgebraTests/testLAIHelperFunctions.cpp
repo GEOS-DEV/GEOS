@@ -29,25 +29,27 @@
 
 #include <gtest/gtest.h>
 
-using namespace geosx;
+using namespace geos;
 
 char const * xmlInput =
-  "<Problem>"
-  "  <Mesh>"
-  "    <InternalMesh name=\"mesh1\""
-  "                  elementTypes=\"{C3D8}\""
-  "                  xCoords=\"{0, 1}\""
-  "                  yCoords=\"{0, 1}\""
-  "                  zCoords=\"{0, 1}\""
-  "                  nx=\"{6}\""
-  "                  ny=\"{9}\""
-  "                  nz=\"{5}\""
-  "                  cellBlockNames=\"{block1}\"/>"
-  "  </Mesh>"
-  "  <ElementRegions>"
-  "    <CellElementRegion name=\"region1\" cellBlocks=\"{block1}\" materialList=\"{dummy}\" />"
-  "  </ElementRegions>"
-  "</Problem>";
+  R"xml(
+  <Problem>
+    <Mesh>
+      <InternalMesh name="mesh1"
+                    elementTypes="{C3D8}"
+                    xCoords="{0, 1}"
+                    yCoords="{0, 1}"
+                    zCoords="{0, 1}"
+                    nx="{6}"
+                    ny="{9}"
+                    nz="{5}"
+                    cellBlockNames="{block1}"/>
+    </Mesh>
+    <ElementRegions>
+      <CellElementRegion name="region1" cellBlocks="{block1}" materialList="{dummy}"/>
+    </ElementRegions>
+  </Problem>
+  )xml";
 
 template< typename LAI >
 class LAIHelperFunctionsTest : public ::testing::Test
@@ -60,7 +62,7 @@ protected:
     Base(),
     state( std::make_unique< CommandLineOptions >() )
   {
-    geosx::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
+    geos::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
     mesh = &state.getProblemManager().getDomainPartition().getMeshBody( 0 ).getBaseDiscretization();
   }
 
@@ -77,7 +79,7 @@ void assembleGlobalIndexVector( arrayView1d< globalIndex const > const & localTo
                                 integer const numDofPerPoint,
                                 arrayView1d< real64 > const & values )
 {
-  forAll< parallelDevicePolicy<> >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  forAll< geos::parallelDevicePolicy<> >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     if( dofNumber[k] >= 0 && ghostRank[k] < 0 )
     {
@@ -217,8 +219,8 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, LAIHelperFunctionsTest, PetscInterface, )
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-  geosx::basicSetup( argc, argv );
+  geos::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
-  geosx::basicCleanup();
+  geos::basicCleanup();
   return result;
 }

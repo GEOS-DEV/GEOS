@@ -16,13 +16,13 @@
  * @file MeshBody.hpp
  */
 
-#ifndef GEOSX_MESH_MESHBODY_HPP_
-#define GEOSX_MESH_MESHBODY_HPP_
+#ifndef GEOS_MESH_MESHBODY_HPP_
+#define GEOS_MESH_MESHBODY_HPP_
 
 #include "MeshLevel.hpp"
+#include "dataRepository/KeyNames.hpp"
 
-
-namespace geosx
+namespace geos
 {
 
 class MeshLevel;
@@ -167,6 +167,23 @@ public:
   }
 
   /**
+   * @brief Get the Abstract representation of the CellBlockManager attached to the MeshBody.
+   * @return The CellBlockManager.
+   */
+  CellBlockManagerABC const & getCellBlockManager() const
+  {
+    return this->getGroup< CellBlockManagerABC >( dataRepository::keys::cellManager );
+  }
+
+  /**
+   * @brief De register the CellBlockManager from this meshBody
+   */
+  void deregisterCellBlockManager()
+  {
+    this->deregisterGroup( dataRepository::keys::cellManager );
+  }
+
+  /**
    * @brief Data repository keys
    */
   struct viewKeysStruct
@@ -196,6 +213,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_MESHBODY_HPP_ */
+#endif /* GEOS_MESH_MESHBODY_HPP_ */

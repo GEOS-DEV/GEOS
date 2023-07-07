@@ -21,12 +21,11 @@
 #include "mesh/generators/VTKFaceBlockUtilities.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
-#include "mesh/MeshBody.hpp"
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
 #include "common/MpiWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -73,49 +72,43 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
                     " If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available" );
 }
 
-void VTKMeshGenerator::generateMesh( DomainPartition & domain )
+void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & )
 {
   // TODO refactor void MeshGeneratorBase::generateMesh( DomainPartition & domain )
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   MPI_Comm const comm = MPI_COMM_GEOSX;
   vtkSmartPointer< vtkMultiProcessController > controller = vtk::getController();
   vtkMultiProcessController::SetGlobalController( controller );
 
-  GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': reading mesh from {}", catalogName(), getName(), m_filePath ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': reading mesh from {}", catalogName(), getName(), m_filePath ) );
   {
-    GEOSX_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
+    GEOS_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
     vtkSmartPointer< vtkDataSet > loadedMesh = vtk::loadMesh( m_filePath, m_mainBlockName );
-    GEOSX_LOG_LEVEL_RANK_0( 2, "  redistributing mesh..." );
-    m_vtkMesh = vtk::redistributeMesh( *loadedMesh, comm, m_partitionMethod, m_partitionRefinement, m_useGlobalIds );
-    GEOSX_LOG_LEVEL_RANK_0( 2, "  finding neighbor ranks..." );
+    GEOS_LOG_LEVEL_RANK_0( 2, "  redistributing mesh..." );
+    m_vtkMesh = vtk::redistributeMesh( loadedMesh, comm, m_partitionMethod, m_partitionRefinement, m_useGlobalIds );
+    GEOS_LOG_LEVEL_RANK_0( 2, "  finding neighbor ranks..." );
     std::vector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, comm );
     std::vector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
-    domain.getMetisNeighborList().insert( neighbors.begin(), neighbors.end() );
-    GEOSX_LOG_LEVEL_RANK_0( 2, "  done!" );
+    m_spatialPartition.setMetisNeighborList( std::move( neighbors ) );
+    GEOS_LOG_LEVEL_RANK_0( 2, "  done!" );
   }
+  GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': generating GEOSX mesh data structure", catalogName(), getName() ) );
 
-  GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': generating GEOSX mesh data structure", catalogName(), getName() ) );
 
-  MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( this->getName() );
-  meshBody.createMeshLevel( 0 );
-
-  CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
-
-  GEOSX_LOG_LEVEL_RANK_0( 2, "  preprocessing..." );
+  GEOS_LOG_LEVEL_RANK_0( 2, "  preprocessing..." );
   m_cellMap = vtk::buildCellMap( *m_vtkMesh, m_attributeName );
 
-  GEOSX_LOG_LEVEL_RANK_0( 2, "  writing nodes..." );
-  real64 const globalLength = writeNodes( getLogLevel(), *m_vtkMesh, m_nodesetNames, cellBlockManager, this->m_translate, this->m_scale );
-  meshBody.setGlobalLengthScale( globalLength );
+  GEOS_LOG_LEVEL_RANK_0( 2, "  writing nodes..." );
+  cellBlockManager.setGlobalLength( writeNodes( getLogLevel(), *m_vtkMesh, m_nodesetNames, cellBlockManager, this->m_translate, this->m_scale ) );
 
-  GEOSX_LOG_LEVEL_RANK_0( 2, "  writing cells..." );
+  GEOS_LOG_LEVEL_RANK_0( 2, "  writing cells..." );
   writeCells( getLogLevel(), *m_vtkMesh, m_cellMap, cellBlockManager );
 
-  GEOSX_LOG_LEVEL_RANK_0( 2, "  writing surfaces..." );
+  GEOS_LOG_LEVEL_RANK_0( 2, "  writing surfaces..." );
   writeSurfaces( getLogLevel(), *m_vtkMesh, m_cellMap, cellBlockManager );
 
-  GEOSX_LOG_LEVEL_RANK_0( 2, "  building connectivity maps..." );
+  GEOS_LOG_LEVEL_RANK_0( 2, "  building connectivity maps..." );
   cellBlockManager.buildMaps();
 
   for( string const & faceBlockName: m_faceBlockNames )
@@ -123,7 +116,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
     m_faceBlockMeshes[faceBlockName] = importFractureNetwork( m_filePath, faceBlockName, m_vtkMesh, cellBlockManager );
   }
 
-  GEOSX_LOG_LEVEL_RANK_0( 2, "  done!" );
+  GEOS_LOG_LEVEL_RANK_0( 2, "  done!" );
   vtk::printMeshStatistics( *m_vtkMesh, m_cellMap, comm );
 }
 
@@ -157,7 +150,7 @@ void VTKMeshGenerator::importVolumicFieldOnArray( string const & cellBlockName,
     }
   }
 
-  GEOSX_ERROR( "Could not import field \"" << meshFieldName << "\" from cell block \"" << cellBlockName << "\"." );
+  GEOS_ERROR( "Could not import field \"" << meshFieldName << "\" from cell block \"" << cellBlockName << "\"." );
 }
 
 
@@ -180,7 +173,7 @@ void VTKMeshGenerator::importSurfacicFieldOnArray( string const & faceBlockName,
     }
   }
 
-  GEOSX_ERROR( "Could not import field \"" << meshFieldName << "\" from face block \"" << faceBlockName << "\"." );
+  GEOS_ERROR( "Could not import field \"" << meshFieldName << "\" from face block \"" << faceBlockName << "\"." );
 }
 
 
@@ -190,7 +183,7 @@ void VTKMeshGenerator::importFieldOnArray( Block block,
                                            bool isMaterialField,
                                            dataRepository::WrapperBase & wrapper ) const
 {
-  GEOSX_ASSERT_MSG( m_vtkMesh, "Must call generateMesh() before importFields()" );
+  GEOS_ASSERT_MSG( m_vtkMesh, "Must call generateMesh() before importFields()" );
 
   switch( block )
   {
@@ -211,4 +204,4 @@ void VTKMeshGenerator::freeResources()
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, VTKMeshGenerator, string const &, Group * const )
 
-} // namespace geosx
+} // namespace geos

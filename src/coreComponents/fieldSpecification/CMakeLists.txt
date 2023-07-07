@@ -3,7 +3,7 @@
 #
 set( fieldSpecification_headers
      DirichletBoundaryCondition.hpp
-     EquilibriumInitialCondition.hpp     
+     EquilibriumInitialCondition.hpp
      FieldSpecificationBase.hpp
      FieldSpecificationManager.hpp
      SourceFluxBoundaryCondition.hpp
@@ -17,7 +17,7 @@ set( fieldSpecification_headers
 #
 set( fieldSpecification_sources
      DirichletBoundaryCondition.cpp
-     EquilibriumInitialCondition.cpp          
+     EquilibriumInitialCondition.cpp
      FieldSpecificationBase.cpp
      FieldSpecificationManager.cpp
      SourceFluxBoundaryCondition.cpp
@@ -26,11 +26,7 @@ set( fieldSpecification_sources
      PerfectlyMatchedLayer.cpp
    )
 
-set( dependencyList functions linearAlgebra )
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
+set( dependencyList ${parallelDeps} functions linearAlgebra )
 
 blt_add_library( NAME       fieldSpecification
                  SOURCES    ${fieldSpecification_sources}

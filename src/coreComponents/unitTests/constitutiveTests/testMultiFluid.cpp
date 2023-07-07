@@ -15,9 +15,9 @@
 // Source includes
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
-#include "constitutive/fluid/MultiFluidFields.hpp"
-#include "constitutive/fluid/multiFluidSelector.hpp"
-#include "constitutive/fluid/MultiFluidUtils.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 #include "mainInterface/initialization.hpp"
 #include "functions/FunctionManager.hpp"
@@ -27,12 +27,12 @@
 #include <gtest/gtest.h>
 #include <conduit.hpp>
 
-using namespace geosx;
-using namespace geosx::testing;
-using namespace geosx::constitutive;
-using namespace geosx::constitutive::multifluid;
-using namespace geosx::dataRepository;
-using namespace geosx::constitutive::PVTProps;
+using namespace geos;
+using namespace geos::testing;
+using namespace geos::constitutive;
+using namespace geos::constitutive::multifluid;
+using namespace geos::dataRepository;
+using namespace geos::constitutive::PVTProps;
 
 /// Black-oil tables written into temporary files during testing
 
@@ -1163,11 +1163,11 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::GeosxState state( geosx::basicSetup( argc, argv ) );
+  geos::GeosxState state( geos::basicSetup( argc, argv ) );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::basicCleanup();
+  geos::basicCleanup();
 
   return result;
 }

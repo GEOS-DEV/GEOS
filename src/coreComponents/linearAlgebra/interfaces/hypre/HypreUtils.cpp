@@ -23,7 +23,7 @@
 #include <_hypre_parcsr_mv.h>
 #include <_hypre_parcsr_ls.h>
 
-namespace geosx
+namespace geos
 {
 
 namespace hypre
@@ -58,13 +58,27 @@ HYPRE_Int SuperLUDistSolve( HYPRE_Solver solver,
                             HYPRE_ParVector b,
                             HYPRE_ParVector x )
 {
-  GEOSX_UNUSED_VAR( A );
+  GEOS_UNUSED_VAR( A );
+#if defined(GEOSX_USE_SUPERLU_DIST)
   return hypre_SLUDistSolve( solver, b, x );
+#else
+  GEOS_UNUSED_VAR( solver );
+  GEOS_UNUSED_VAR( b );
+  GEOS_UNUSED_VAR( x );
+  GEOS_ERROR( "GEOSX is configured without support for SuperLU_dist." );
+  return -1;
+#endif
 }
 
 HYPRE_Int SuperLUDistDestroy( HYPRE_Solver solver )
 {
+#if defined(GEOSX_USE_SUPERLU_DIST)
   return hypre_SLUDistDestroy( solver );
+#else
+  GEOS_UNUSED_VAR( solver );
+  GEOS_ERROR( "GEOSX is configured without support for SuperLU_dist." );
+  return -1;
+#endif
 }
 
 /**
@@ -116,7 +130,7 @@ HYPRE_Int relaxationSetup( HYPRE_Solver solver,
                            HYPRE_ParVector b,
                            HYPRE_ParVector x )
 {
-  GEOSX_UNUSED_VAR( b, x );
+  GEOS_UNUSED_VAR( b, x );
 
   // Refer to RelaxationData doxygen above for explanation of reinterpret_cast
   RelaxationData * const data = reinterpret_cast< RelaxationData * >( solver );
@@ -160,4 +174,4 @@ HYPRE_Int relaxationDestroy( HYPRE_Solver solver )
 
 } // namespace hypre
 
-} // namespace geosx
+} // namespace geos

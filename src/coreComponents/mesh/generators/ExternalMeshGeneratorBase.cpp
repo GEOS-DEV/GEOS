@@ -14,7 +14,7 @@
 
 #include "ExternalMeshGeneratorBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -64,9 +64,9 @@ void ExternalMeshGeneratorBase::postProcessInput()
                                                   string const & fromKey,
                                                   string const & toKey )
   {
-    GEOSX_THROW_IF_NE_MSG( from.size(), to.size(),
-                           "Mesh '" << meshName << "': attributes '" << fromKey << "' and '" << toKey << "' must contain the same number of values.",
-                           InputError );
+    GEOS_THROW_IF_NE_MSG( from.size(), to.size(),
+                          "Mesh '" << meshName << "': attributes '" << fromKey << "' and '" << toKey << "' must contain the same number of values.",
+                          InputError );
   };
   checkSizes( m_volumicFieldsToImport, m_volumicFieldsInGEOSX, viewKeyStruct::volumicFieldsToImportString(), viewKeyStruct::volumicFieldsInGEOSXString() );
   checkSizes( m_surfacicFieldsToImport, m_surfacicFieldsInGEOSX, viewKeyStruct::surfacicFieldsToImportString(), viewKeyStruct::surfacicFieldsInGEOSXString() );
@@ -76,9 +76,9 @@ void ExternalMeshGeneratorBase::postProcessInput()
     std::set< string > const tmp{ v.begin(), v.end() };
     bool const hasDuplicates = tmp.size() != LvArray::integerConversion< std::size_t >( v.size() );
 
-    GEOSX_THROW_IF( hasDuplicates,
-                    "Mesh '" << meshName << "': '" << stringutilities::join( v, ", " ) << "' already present in list of fields to import.",
-                    InputError );
+    GEOS_THROW_IF( hasDuplicates,
+                   "Mesh '" << meshName << "': '" << stringutilities::join( v, ", " ) << "' already present in list of fields to import.",
+                   InputError );
   };
   checkDuplicates( m_volumicFieldsInGEOSX );
   checkDuplicates( m_surfacicFieldsInGEOSX );
@@ -99,4 +99,4 @@ void ExternalMeshGeneratorBase::postProcessInput()
   MeshGeneratorBase::m_surfacicFields = buildMapping( m_surfacicFieldsToImport.toViewConst(), m_surfacicFieldsInGEOSX.toViewConst() );
 }
 
-} // namespace geosx
+} // namespace geos

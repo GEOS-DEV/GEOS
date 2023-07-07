@@ -16,8 +16,8 @@
  * @file VTKUtilities.hpp
  */
 
-#ifndef GEOSX_MESH_GENERATORS_VTKUTILITIES_HPP
-#define GEOSX_MESH_GENERATORS_VTKUTILITIES_HPP
+#ifndef GEOS_MESH_GENERATORS_VTKUTILITIES_HPP
+#define GEOS_MESH_GENERATORS_VTKUTILITIES_HPP
 
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
@@ -32,7 +32,7 @@
 #include <numeric>
 #include <unordered_set>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -95,7 +95,7 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes );
  * @return the vtk grid redistributed
  */
 vtkSmartPointer< vtkDataSet >
-redistributeMesh( vtkDataSet & loadedMesh,
+redistributeMesh( vtkSmartPointer< vtkDataSet > loadedMesh,
                   MPI_Comm const comm,
                   PartitionMethod const method,
                   int const partitionRefinement,
@@ -203,8 +203,8 @@ real64 writeNodes( integer const logLevel,
                    vtkDataSet & mesh,
                    string_array & nodesetNames,
                    CellBlockManager & cellBlockManager,
-                   const geosx::R1Tensor & translate,
-                   const geosx::R1Tensor & scale );
+                   const geos::R1Tensor & translate,
+                   const geos::R1Tensor & scale );
 
 /**
  * @brief Build all the cell blocks.
@@ -215,7 +215,7 @@ real64 writeNodes( integer const logLevel,
  */
 void writeCells( integer const logLevel,
                  vtkDataSet & mesh,
-                 const geosx::vtk::CellMapType & cellMap,
+                 const geos::vtk::CellMapType & cellMap,
                  CellBlockManager & cellBlockManager );
 
 /**
@@ -229,9 +229,9 @@ void writeCells( integer const logLevel,
  */
 void writeSurfaces( integer const logLevel,
                     vtkDataSet & mesh,
-                    const geosx::vtk::CellMapType & cellMap,
+                    const geos::vtk::CellMapType & cellMap,
                     CellBlockManager & cellBlockManager );
 
-} // namespace geosx
+} // namespace geos
 
-#endif /* GEOSX_MESH_GENERATORS_VTKUTILITIES_HPP */
+#endif /* GEOS_MESH_GENERATORS_VTKUTILITIES_HPP */
