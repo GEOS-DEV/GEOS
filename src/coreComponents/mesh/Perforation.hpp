@@ -97,6 +97,12 @@ public:
    */
   real64 getWellTransmissibility() const { return m_wellTransmissibility; }
 
+  /**
+   * @brief Get the well skin at the perforation.
+   * @return the well skin
+   */
+  real64 getWellSkin() const { return m_wellSkin; }
+
   ///@}
 
   /**
@@ -109,6 +115,8 @@ public:
     static constexpr char const * distanceFromHeadString() { return "distanceFromHead"; }
     /// @return String key for the well transmissibility at this perforation
     static constexpr char const * wellTransmissibilityString() { return "transmissibility"; }
+    /// @return String key for the well skin at this perforation
+    static constexpr char const * wellSkinString() { return "skin"; }
     /// ViewKey for the linear distance from well head
     dataRepository::ViewKey distanceFromHead  = { distanceFromHeadString() };
     /// ViewKey for the well transmissibility at this perforation
@@ -129,6 +137,8 @@ private:
   /// Well transmissibility at this perforation
   real64 m_wellTransmissibility;
 
+  /// Well skin at this perforation
+  real64 m_wellSkin;
 };
 
 } //namespace geos
