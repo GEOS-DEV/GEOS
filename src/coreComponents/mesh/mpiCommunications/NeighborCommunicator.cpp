@@ -267,23 +267,6 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOS_UNUSED_PARAM( c
     {
       seedNodeList.emplace_back( i );
     }
-//
-//    {
-//      std::string msg;
-//      for( localIndex const & ln: matchedPartitionBoundary)
-//      {
-//        msg += std::to_string(ln) + ",";
-//      }
-//      GEOS_LOG_RANK("matchedPartitionBoundary = " << msg);
-//    }
-//    {
-//      std::string msg;
-//      for( localIndex const & ln: secondLevelMatches)
-//      {
-//        msg += std::to_string(ln) + ",";
-//      }
-//      GEOS_LOG_RANK("secondLevelMatches = " << msg);
-//    }
 
 //    mesh.generateAdjacencyLists( nodeManager.getNeighborData( m_neighborRank ).matchedPartitionBoundary(),
     mesh.generateAdjacencyLists( seedNodeList.toViewConst(),
