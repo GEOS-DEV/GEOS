@@ -159,7 +159,7 @@ public:
    * @brief Set the well skin at the perforations.
    * @param perfSkin list of well skin at all the perforations on the well
    */
-  void setPerfSkin( arrayView1d< real64 const > perfSkin ) { m_perfTransmissibility = perfSkin; }
+  void setPerfSkin( arrayView1d< real64 const > perfSkin ) { m_perfSkin = perfSkin; }
 
   arrayView1d< globalIndex const > getPerfElemIndex() const override final { return m_perfElemId; }
 

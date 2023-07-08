@@ -2595,6 +2595,8 @@
 		<xsd:attribute name="reservoirElementSubregion" type="integer_array" />
 		<!--wellElementIndex => For each perforation, index of the well element-->
 		<xsd:attribute name="wellElementIndex" type="integer_array" />
+		<!--wellSkin => For each perforation, well skin-->
+		<xsd:attribute name="wellSkin" type="real64_array" />
 		<!--wellTransmissibility => For each perforation, well transmissibility-->
 		<xsd:attribute name="wellTransmissibility" type="real64_array" />
 	</xsd:complexType>
