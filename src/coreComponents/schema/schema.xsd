@@ -1419,6 +1419,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 	<xsd:complexType name="PerforationType">
 		<!--distanceFromHead => Linear distance from well head to the perforation-->
 		<xsd:attribute name="distanceFromHead" type="real64" use="required" />
+		<!--skin => Perforation skin factor-->
+		<xsd:attribute name="skin" type="real64" default="0" />
 		<!--transmissibility => Perforation transmissibility-->
 		<xsd:attribute name="transmissibility" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->

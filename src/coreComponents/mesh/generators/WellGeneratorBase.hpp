@@ -198,7 +198,7 @@ public:
    * @brief Get the skin at a perforation.
    * @return the skin at a perforation
    */
-  virtual arrayView1d< real64 const > getPerforationSkin() const = 0;
+  virtual arrayView1d< real64 const > getPerfSkin() const = 0;
 
   /**
    * @brief Get the global indices of the well elements connected to each perforation.

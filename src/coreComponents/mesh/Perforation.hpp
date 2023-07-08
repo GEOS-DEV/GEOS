@@ -24,123 +24,121 @@
 namespace geos
 {
 
-/**
- * @class Perforation
- *
- * This class describes a perforation with its location, well transmissibility  and corresponding well element
- */
-class Perforation : public dataRepository::Group
-{
-public:
-
   /**
-   * @name Constructor / Destructor
+   * @class Perforation
+   *
+   * This class describes a perforation with its location, well transmissibility  and corresponding well element
    */
-  ///@{
-
-  /**
-   * @brief Constructor for Perforation Objects.
-   * @param[in] name the name of this instantiation of Perforation in the repository
-   * @param[in] parent the parent group of this instantiation of Perforation
-   */
-  explicit Perforation( string const & name, dataRepository::Group * const parent );
-
-  /**
-   * @brief Default destructor.
-   */
-  ~Perforation() override;
-
-  /**
-   * @brief Deleted default constructor.
-   */
-  Perforation() = delete;
-
-  /**
-   * @brief Deleted copy constructor.
-   */
-  Perforation( Perforation const & ) = delete;
-
-  /**
-   * @brief Deleted move constructor.
-   */
-  Perforation( Perforation && ) = delete;
-
-  /**
-   * @brief Deleted assignment operator.
-   * @return a reference to a perforation object
-   */
-  Perforation & operator=( Perforation const & ) = delete;
-
-  /**
-   * @brief Deleted move operator.
-   * @return a reference to a perforation object
-   */
-  Perforation & operator=( Perforation && ) = delete;
-
-  ///@}
-
-  /**
-   * @name Getters
-   */
-  ///@{
-
-  /**
-   * @brief Get the linear distance between the well head and the perforation.
-   * @return the distance between the well head and the perforation
-   */
-  real64 const & getDistanceFromWellHead() const { return m_distanceFromHead; }
-
-
-  /**
-   * @brief Get the well Peaceman index at the perforation.
-   * @return the well transmissibility
-   */
-  real64 getWellTransmissibility() const { return m_wellTransmissibility; }
-
-  /**
-   * @brief Get the well skin at the perforation.
-   * @return the well skin
-   */
-  real64 getWellSkin() const { return m_wellSkin; }
-
-  ///@}
-
-  /**
-   * @brief Struct to serve as a container for variable strings and keys.
-   * @struct viewKeyStruct
-   */
-  struct viewKeyStruct
+  class Perforation : public dataRepository::Group
   {
-    /// @return String key for the linear distance from well head
-    static constexpr char const * distanceFromHeadString() { return "distanceFromHead"; }
-    /// @return String key for the well transmissibility at this perforation
-    static constexpr char const * wellTransmissibilityString() { return "transmissibility"; }
-    /// @return String key for the well skin at this perforation
-    static constexpr char const * wellSkinString() { return "skin"; }
-    /// ViewKey for the linear distance from well head
-    dataRepository::ViewKey distanceFromHead  = { distanceFromHeadString() };
-    /// ViewKey for the well transmissibility at this perforation
-    dataRepository::ViewKey wellTransmissibility = { wellTransmissibilityString() };
-  }
-  /// ViewKey struct for the Perforation class
-  viewKeysPerforation;
+  public:
+    /**
+     * @name Constructor / Destructor
+     */
+    ///@{
 
-protected:
+    /**
+     * @brief Constructor for Perforation Objects.
+     * @param[in] name the name of this instantiation of Perforation in the repository
+     * @param[in] parent the parent group of this instantiation of Perforation
+     */
+    explicit Perforation(string const &name, dataRepository::Group *const parent);
 
-  void postProcessInput() override;
+    /**
+     * @brief Default destructor.
+     */
+    ~Perforation() override;
 
-private:
+    /**
+     * @brief Deleted default constructor.
+     */
+    Perforation() = delete;
 
-  /// Linear distance from well head
-  real64 m_distanceFromHead;
+    /**
+     * @brief Deleted copy constructor.
+     */
+    Perforation(Perforation const &) = delete;
 
-  /// Well transmissibility at this perforation
-  real64 m_wellTransmissibility;
+    /**
+     * @brief Deleted move constructor.
+     */
+    Perforation(Perforation &&) = delete;
 
-  /// Well skin at this perforation
-  real64 m_wellSkin;
-};
+    /**
+     * @brief Deleted assignment operator.
+     * @return a reference to a perforation object
+     */
+    Perforation &operator=(Perforation const &) = delete;
 
-} //namespace geos
+    /**
+     * @brief Deleted move operator.
+     * @return a reference to a perforation object
+     */
+    Perforation &operator=(Perforation &&) = delete;
 
-#endif //GEOS_MESH_PERFORATION_HPP
+    ///@}
+
+    /**
+     * @name Getters
+     */
+    ///@{
+
+    /**
+     * @brief Get the linear distance between the well head and the perforation.
+     * @return the distance between the well head and the perforation
+     */
+    real64 const &getDistanceFromWellHead() const { return m_distanceFromHead; }
+
+    /**
+     * @brief Get the well Peaceman index at the perforation.
+     * @return the well transmissibility
+     */
+    real64 getWellTransmissibility() const { return m_wellTransmissibility; }
+
+    /**
+     * @brief Get the well skin at the perforation.
+     * @return the well skin
+     */
+    real64 getWellSkin() const { return m_wellSkin; }
+
+    ///@}
+
+    /**
+     * @brief Struct to serve as a container for variable strings and keys.
+     * @struct viewKeyStruct
+     */
+    struct viewKeyStruct
+    {
+      /// @return String key for the linear distance from well head
+      static constexpr char const *distanceFromHeadString() { return "distanceFromHead"; }
+      /// @return String key for the well transmissibility at this perforation
+      static constexpr char const *wellTransmissibilityString() { return "transmissibility"; }
+      /// @return String key for the well skin at this perforation
+      static constexpr char const *wellSkinString() { return "skin"; }
+      /// ViewKey for the linear distance from well head
+      dataRepository::ViewKey distanceFromHead = {distanceFromHeadString()};
+      /// ViewKey for the well transmissibility at this perforation
+      dataRepository::ViewKey wellTransmissibility = {wellTransmissibilityString()};
+      /// ViewKey for the well transmissibility at this perforation
+      dataRepository::ViewKey wellSkin = { wellSkinString() };
+    }
+    /// ViewKey struct for the Perforation class
+    viewKeysPerforation;
+
+  protected:
+    void postProcessInput() override;
+
+  private:
+    /// Linear distance from well head
+    real64 m_distanceFromHead;
+
+    /// Well transmissibility at this perforation
+    real64 m_wellTransmissibility;
+
+    /// Well skin at this perforation
+    real64 m_wellSkin;
+  };
+
+} // namespace geos
+
+#endif // GEOS_MESH_PERFORATION_HPP
