@@ -172,8 +172,6 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
 
   m_duplicatedNodes = faceBlock.getDuplicatedNodes();
 
-  m_2dElemTo2dNodes = faceBlock.get2dElemTo2dNodes();
-
   // TODO We still need to be able to import fields on the FaceElementSubRegion.
 }
 

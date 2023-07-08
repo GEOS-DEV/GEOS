@@ -107,14 +107,4 @@ void FaceBlock::setDuplicatedNodes( ArrayOfArrays< globalIndex > && duplicatedNo
   m_duplicatedNodes = duplicatedNodes;
 }
 
-void FaceBlock::set2dElemTo2dNodes( ArrayOfArrays< localIndex > && elem2dTo2dNodes )
-{
-  m_2dElemTo2dNodes = elem2dTo2dNodes;
-}
-
-ArrayOfArrays< localIndex > FaceBlock::get2dElemTo2dNodes() const
-{
-  return m_2dElemTo2dNodes;
-}
-
 }
