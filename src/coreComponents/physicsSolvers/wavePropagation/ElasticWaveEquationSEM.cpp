@@ -552,7 +552,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       for( localIndex k = 0; k < elementSubRegion.size(); ++k )
       {
-        for( localIndex i = 0; i < elementSubRegion.numNodesPerElement( k ); ++i )
+        for( localIndex i = 0; i < elemsToNodes.size( 1 ); ++i )
         {
             m_solverTargetNodesSet.insert( elemsToNodes[k][i] );
         }
