@@ -450,11 +450,9 @@ void LagrangianContactSolver::
                                                                  FaceElementSubRegion const & subRegion )
   {
     // Loop through all subregions of the face elements
-
     // face-based fields
     ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
     arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-    arrayView1d< real64 const > const & area = subRegion.getElementArea();
     arrayView3d< real64 const > const &
     rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
     arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
@@ -471,63 +469,80 @@ void LagrangianContactSolver::
         {
           // Filter out ghost elements
           localIndex const numNodePerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
-          globalIndex nodeDOF[3];
-          globalIndex elemDOF[3] = { tracDofNumber[kfe], tracDofNumber[kfe] + 1, tracDofNumber[kfe] + 2 };
+          globalIndex nodeDOF[2 * 3 * numNodePerFace]; // displacement DOF for the node 
+          globalIndex elemDOF[3 * numNodePerFace]; // displacement DOF for the traction node
 
-          real64 elemRHS[3] = {0.0, 0.0, 0.0};
-          real64 const Ja = area[kfe];
+          stackArray1d< real64, 3 * numNodePerFace > elemRHS( 3 * numNodePerFace );
+          stackArray2d< real64, 2 * 3 * numNodePerFace * 3 * numNodePerFace> dRdU( 3 * numNodePerFace, 2 * 3 * numNodePerFace );
+          stackArray2d< real64, 3 * numNodePerFace * 3 * numNodePerFace > dRdT( 3 * numNodePerFace, 3 * numNodePerFace );
+          array1d< real64 > nodalArea;
 
-          stackArray2d< real64, 2 * 3 * 4 * 3 > dRdU( 3, 2 * 3 * numNodesPerFace );
-          stackArray2d< real64, 3 * 3 > dRdT( 3, 3 );
-
-          switch( fractureState[kfe] )
+          for( localIndex faceSide = 0; faceSide < 2; ++faceSide )
           {
-            case contact::FractureState::Stick:
+            // consider both sides of the face element
+            // Compute nodal contribution to contact works
+            computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][faceSide], nodalArea ); // compute nodal area (dual mesh size)
+            
+            for ( localIndex lagIndex = 0; lagIndex < numNodePerFace; ++lagIndex )
             {
-              for( localIndex i = 0; i < 3; ++i )
+              // loop through all nodes on the face element; operations for each node are duplicated for nodes living on the other side of the face element
+              localIndex const nodeIndex = faceToNodeMap( elemsToFaces[kfe][faceSide], lagIndex ); // global index of the node
+              //globalIndex elemDOF[3] = { tracDofNumber[nodeIndex], tracDofNumber[nodeIndex] + 1, tracDofNumber[nodeIndex] + 2 }; // traction DOF for the node
+              
+              switch( fractureState[nodeIndex] )
               {
-                elemRHS[i] = +Ja * (dispJump[kfe][i] - (i == 0 ? 0 : previousDispJump[kfe][i]));
-              }
-
-              for( localIndex kf = 0; kf < 2; ++kf )
-              {
-                // Compute nodal contribution to contact works
-                array1d< real64 > nodalArea;
-                computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea ); // compute nodal area (dual mesh size)
-  
-                for( localIndex nodeIndex = 0; nodeIndex < numNodesPerFace; ++nodeIndex )
+                case contact::FractureState::Stick:
                 {
-                  if (kf == 0)
-                  {
-                    // only save nodal area for the first time
-                    dualGridNodalArea[kf * 3 * numNodesPerFace + 3 * nodeIndex + i] += nodalArea[nodeIndex]; 
-                  }
-
+                  // Node is in stick state
                   for( localIndex i = 0; i < 3; ++i )
                   {
-                    nodeDOF[kf * 3 * numNodesPerFace + 3 * nodeIndex + i] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], nodeIndex )] + i;
+                    if (faceSide == 0)
+                    {
+                      elemDOF[3 * numNodePerFace + i] = tracDofNumber[nodeIndex] + i;
+                      elemRHS[3 * numNodePerFace + i] = +nodalArea[lagIndex] * (dispJump[nodeIndex][i] - (i == 0 ? 0 : previousDispJump[nodeIndex][i]));
+                    }
 
-                    dRdU( 0, kf * 3 * numNodesPerFace + 3 * nodeIndex + i ) = -nodalArea[nodeIndex] * rotationMatrix( kfe, i, 0 ) * pow( -1, kf );
-                    dRdU( 1, kf * 3 * numNodesPerFace + 3 * nodeIndex + i ) = -nodalArea[nodeIndex] * rotationMatrix( kfe, i, 1 ) * pow( -1, kf );
-                    dRdU( 2, kf * 3 * numNodesPerFace + 3 * nodeIndex + i ) = -nodalArea[nodeIndex] * rotationMatrix( kfe, i, 2 ) * pow( -1, kf );
-                  }
+                    nodeDOF[faceSide * 3 * numNodePerFace + 3 * lagIndex + i] = dispDofNumber[nodeIndex] + i;
+                    dRdU( 3 * numNodePerFace, faceSide * 3 * numNodePerFace + 3 * lagIndex + i ) = -nodalArea[lagIndex] * rotationMatrix( kfe, i, 0 ) * pow( -1, faceSide ); 
+                    dRdU( 3 * numNodePerFace + 1, faceSide * 3 * numNodePerFace + 3 * lagIndex + i ) = -nodalArea[lagIndex] * rotationMatrix( kfe, i, 1 ) * pow( -1, faceSide );
+                    dRdU( 3 * numNodePerFace + 2, faceSide * 3 * numNodePerFace + 3 * lagIndex + i ) = -nodalArea[lagIndex] * rotationMatrix( kfe, i, 2 ) * pow( -1, faceSide );
+                  }                 
                 }
+                break;
+                case contact::Fracture::Slip:
+                case contact::Fracture::NewSlip:
+                {
+                  // Node is in slip state
+
+
+
+
+
+
+
+
+                }
+                break;
+                case contact::Fracture::open:
+                {
+                  // Node is in open state
+                  for( localIndex i = 0; i < 3; ++i )
+                  {
+                    if (faceSide == 0)
+                    {
+                      elemRHS[3 * numNodePerFace + i] = +nodalArea[lagIndex] * (dispJump[nodeIndex][i] - (i == 0 ? 0 : previousDispJump[nodeIndex][i]));
+                    }
+
+                    dRdT( i, i ) = nodalArea[lagIndex];
+                  }
+
+                }
+                break;
+
               }
-              break;
             }
           }
-          case contact::FractureState::Slip:
-          case contact::FractureState::NewSlip:
-          {
-
-
-
-          }
-
-
         }
-
-
       });
 
     });
