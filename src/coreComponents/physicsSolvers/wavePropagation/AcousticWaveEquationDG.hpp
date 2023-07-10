@@ -78,7 +78,8 @@ public:
    * @param var_n the field values at time_n
    * @param varAtReceivers the array holding the trace values, where the output is written
    */
-  virtual void compute2dVariableAllSeismoTraces( real64 const time_n,
+  virtual void compute2dVariableAllSeismoTraces( localIndex regionIndex,
+                                                 real64 const time_n,
                                                  real64 const dt,
                                                  arrayView2d< real32 const > const var_np1,
                                                  arrayView2d< real32 const > const var_n,
@@ -102,6 +103,7 @@ public:
 
     static constexpr char const * sourceElemString() { return "sourceElem"; }
     static constexpr char const * receiverElemString() { return "rcvElem"; }
+    static constexpr char const * receiverRegionString() { return "receiverRegion"; }
 
   } waveEquationViewKeys;
 
@@ -157,6 +159,9 @@ private:
 
   /// Array containing the elements which contain a receiver
   array1d< localIndex > m_rcvElem;
+
+  /// Array containing the elements which contain the region which the receiver belongs
+  array1d< localIndex > m_receiverRegion;
 
 };
 

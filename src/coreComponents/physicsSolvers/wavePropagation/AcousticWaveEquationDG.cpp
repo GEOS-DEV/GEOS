@@ -55,6 +55,11 @@ AcousticWaveEquationDG::AcousticWaveEquationDG( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Element containing the receivers" );
 
+  registerWrapper( viewKeyStruct::receiverRegionString(), &m_receiverRegion ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Region containing the receivers" );
+
 }
 
 AcousticWaveEquationDG::~AcousticWaveEquationDG()
@@ -121,7 +126,7 @@ void AcousticWaveEquationDG::postProcessInput()
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
   m_sourceElem.resize( numSourcesGlobal );
   m_rcvElem.resize( numReceiversGlobal );
-
+  m_receiverRegion.resize( numReceiversGlobal );
 
 }
 
@@ -330,7 +335,7 @@ real64 AcousticWaveEquationDG::explicitStepInternal( real64 const & time_n,
 
     //arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
-    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const regionIndex,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< wavesolverfields::MediumVelocity >();
@@ -347,7 +352,7 @@ real64 AcousticWaveEquationDG::explicitStepInternal( real64 const & time_n,
 
       // compute the seismic traces since last step.
       arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
-      compute2dVariableAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
+      compute2dVariableAllSeismoTraces( time_n, regionIndex, dt, p_np1, p_n, pReceivers );
 
 
     } );
@@ -380,7 +385,7 @@ void AcousticWaveEquationDG::cleanup( real64 const time_n, integer const, intege
                                                                 arrayView1d< string const > const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
-    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const regionIndex,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
 
@@ -388,7 +393,7 @@ void AcousticWaveEquationDG::cleanup( real64 const time_n, integer const, intege
       arrayView2d< real32 const > const p_n = elementSubRegion.getField< wavesolverfields::PressureDG_n >();
 
       arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
-      compute2dVariableAllSeismoTraces( time_n, 0, p_np1, p_n, pReceivers );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0, p_np1, p_n, pReceivers );
 
     } );
   } );
@@ -400,7 +405,8 @@ void AcousticWaveEquationDG::cleanup( real64 const time_n, integer const, intege
   }
 }
 
-void AcousticWaveEquationDG::compute2dVariableAllSeismoTraces( real64 const time_n,
+void AcousticWaveEquationDG::compute2dVariableAllSeismoTraces( localIndex const regionIndex,
+                                                               real64 const time_n,
                                                                real64 const dt,
                                                                arrayView2d< real32 const > const var_np1,
                                                                arrayView2d< real32 const > const var_n,
@@ -411,7 +417,7 @@ void AcousticWaveEquationDG::compute2dVariableAllSeismoTraces( real64 const time
        (timeSeismo = m_dtSeismoTrace*indexSeismoTrace) <= (time_n + epsilonLoc) && indexSeismoTrace < m_nsamplesSeismoTrace;
        indexSeismoTrace++ )
   {
-    WaveSolverUtils::compute2dVariableSeismoTrace( time_n, dt, timeSeismo, indexSeismoTrace, m_rcvElem, m_receiverConstants, m_receiverIsLocal, m_nsamplesSeismoTrace,
+    WaveSolverUtils::compute2dVariableSeismoTrace( time_n, dt, regionIndex, m_receiverRegion, timeSeismo, indexSeismoTrace, m_rcvElem, m_receiverConstants, m_receiverIsLocal, m_nsamplesSeismoTrace,
                                                    m_outputSeismoTrace,
                                                    var_np1, var_n, varAtReceivers );
   }
