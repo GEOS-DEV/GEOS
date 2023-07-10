@@ -73,25 +73,25 @@ public:
     // Level 0
     m_levelFRelaxType[0]          = MGRFRelaxationType::jacobi;
     m_levelFRelaxIters[0]         = 1;
-    m_levelInterpType[0]       = MGRInterpolationType::jacobi;
-    m_levelRestrictType[0]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
+    m_levelInterpType[0]          = MGRInterpolationType::jacobi;
+    m_levelRestrictType[0]        = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[0]    = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
 
     // Level 1
     m_levelFRelaxType[1]          = MGRFRelaxationType::jacobi;
     m_levelFRelaxIters[1]         = 1;
-    m_levelInterpType[1]       = MGRInterpolationType::jacobi;
-    m_levelRestrictType[1]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::cprLikeBlockDiag;
+    m_levelInterpType[1]          = MGRInterpolationType::jacobi;
+    m_levelRestrictType[1]        = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[1]    = MGRCoarseGridMethod::cprLikeBlockDiag;
     m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::none;
 
     // Level 2
     m_levelFRelaxType[2]          = MGRFRelaxationType::jacobi;
     m_levelFRelaxIters[2]         = 1;
-    m_levelInterpType[2]       = MGRInterpolationType::jacobi;
-    m_levelRestrictType[2]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[2] = MGRCoarseGridMethod::galerkin;
+    m_levelInterpType[2]          = MGRInterpolationType::jacobi;
+    m_levelRestrictType[2]        = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[2]    = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[2]  = MGRGlobalSmootherType::blockGaussSeidel;
     m_levelGlobalSmootherIters[2] = 1;
   }

@@ -64,11 +64,11 @@ public:
 #else
     GEOS_ERROR( "General support for Gaussian elimination on GPU not available yet" );
 #endif
-    m_levelFRelaxIters[0]         = 1;
-    m_levelInterpType[0]       = MGRInterpolationType::blockJacobi;
-    m_levelRestrictType[0]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
-    m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
+    m_levelFRelaxIters[0]        = 1;
+    m_levelInterpType[0]         = MGRInterpolationType::blockJacobi;
+    m_levelRestrictType[0]       = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[0]   = MGRCoarseGridMethod::galerkin;
+    m_levelGlobalSmootherType[0] = MGRGlobalSmootherType::none;
   }
 
   /**

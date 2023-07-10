@@ -67,17 +67,17 @@ public:
     // Level 0
     m_levelFRelaxType[0]          = MGRFRelaxationType::amgVCycle;
     m_levelFRelaxIters[0]         = 1;
-    m_levelInterpType[0]       = MGRInterpolationType::jacobi;
-    m_levelRestrictType[0]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::nonGalerkin;
+    m_levelInterpType[0]          = MGRInterpolationType::jacobi;
+    m_levelRestrictType[0]        = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[0]    = MGRCoarseGridMethod::nonGalerkin;
     m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
 
     // Level 1
     m_levelFRelaxType[1]          = MGRFRelaxationType::l1jacobi;
     m_levelFRelaxIters[1]         = 1;
-    m_levelInterpType[1]       = MGRInterpolationType::jacobi;
-    m_levelRestrictType[1]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::galerkin;
+    m_levelInterpType[1]          = MGRInterpolationType::jacobi;
+    m_levelRestrictType[1]        = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[1]    = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::none;
   }
 

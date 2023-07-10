@@ -83,12 +83,12 @@ public:
     setupLabels();
 
     // Level 0
-    m_levelFRelaxType[0]          = MGRFRelaxationType::amgVCycle;
-    m_levelFRelaxIters[0]         = 1;
-    m_levelInterpType[0]       = MGRInterpolationType::jacobi;
-    m_levelRestrictType[0]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::nonGalerkin;
-    m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
+    m_levelFRelaxType[0]         = MGRFRelaxationType::amgVCycle;
+    m_levelFRelaxIters[0]        = 1;
+    m_levelInterpType[0]         = MGRInterpolationType::jacobi;
+    m_levelRestrictType[0]       = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[0]   = MGRCoarseGridMethod::nonGalerkin;
+    m_levelGlobalSmootherType[0] = MGRGlobalSmootherType::none;
 
     // Level 1
 #if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_CPU
@@ -96,26 +96,26 @@ public:
 #else
     GEOS_ERROR( "General support for Gaussian elimination on GPU not available yet" );
 #endif
-    m_levelFRelaxIters[1]         = 1;
-    m_levelInterpType[1]       = MGRInterpolationType::blockJacobi;
-    m_levelRestrictType[1]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::galerkin;
-    m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
+    m_levelFRelaxIters[1]        = 1;
+    m_levelInterpType[1]         = MGRInterpolationType::blockJacobi;
+    m_levelRestrictType[1]       = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[1]   = MGRCoarseGridMethod::galerkin;
+    m_levelGlobalSmootherType[0] = MGRGlobalSmootherType::none;
 
     // Level 2
-    m_levelFRelaxType[2]          = MGRFRelaxationType::jacobi; //default, i.e. Jacobi
-    m_levelFRelaxIters[2]         = 1;
-    m_levelInterpType[2]       = MGRInterpolationType::jacobi;
-    m_levelRestrictType[2]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[2] = MGRCoarseGridMethod::galerkin;
-    m_levelGlobalSmootherType[2]  = MGRGlobalSmootherType::none;
+    m_levelFRelaxType[2]         = MGRFRelaxationType::jacobi; //default, i.e. Jacobi
+    m_levelFRelaxIters[2]        = 1;
+    m_levelInterpType[2]         = MGRInterpolationType::jacobi;
+    m_levelRestrictType[2]       = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[2]   = MGRCoarseGridMethod::galerkin;
+    m_levelGlobalSmootherType[2] = MGRGlobalSmootherType::none;
 
     // Level 3
     m_levelFRelaxType[2]          = MGRFRelaxationType::jacobi; //default, i.e. Jacobi
     m_levelFRelaxIters[2]         = 1;
-    m_levelInterpType[3]       = MGRInterpolationType::injection;
-    m_levelRestrictType[3]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[3] = MGRCoarseGridMethod::cprLikeBlockDiag;
+    m_levelInterpType[3]          = MGRInterpolationType::injection;
+    m_levelRestrictType[3]        = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[3]    = MGRCoarseGridMethod::cprLikeBlockDiag;
     m_levelGlobalSmootherType[3]  = MGRGlobalSmootherType::ilu0;
     m_levelGlobalSmootherIters[3] = 1;
   }

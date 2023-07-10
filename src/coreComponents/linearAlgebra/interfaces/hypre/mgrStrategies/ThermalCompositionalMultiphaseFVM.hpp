@@ -66,23 +66,19 @@ public:
 
     setupLabels();
 
-#if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP
-    m_levelFRelaxType[0]          = MGRFRelaxationType::l1jacobi;
-#else
     m_levelFRelaxType[0]          = MGRFRelaxationType::jacobi;
-#endif
     m_levelFRelaxIters[0]         = 1;
-    m_levelInterpType[0]       = MGRInterpolationType::jacobi; // Diagonal scaling (Jacobi)
-    m_levelRestrictType[0]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin; // Standard Galerkin
+    m_levelInterpType[0]          = MGRInterpolationType::jacobi; // Diagonal scaling (Jacobi)
+    m_levelRestrictType[0]        = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[0]    = MGRCoarseGridMethod::galerkin; // Standard Galerkin
     m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::blockGaussSeidel;
     m_levelGlobalSmootherIters[0] = 1;
 
     m_levelFRelaxType[1]          = MGRFRelaxationType::jacobi;
     m_levelFRelaxIters[1]         = 1;
-    m_levelInterpType[1]       = MGRInterpolationType::injection; // Injection
-    m_levelRestrictType[1]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::cprLikeBlockDiag; // Non-Galerkin Quasi-IMPES CPR
+    m_levelInterpType[1]          = MGRInterpolationType::injection; // Injection
+    m_levelRestrictType[1]        = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[1]    = MGRCoarseGridMethod::cprLikeBlockDiag; // Non-Galerkin Quasi-IMPES CPR
     m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::ilu0;
     m_levelGlobalSmootherIters[1] = 1;
   }
