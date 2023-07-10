@@ -7,9 +7,9 @@
       cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Fluid }"
-      sourceCoordinates="{ { 1500, 2400, 2900 } }"
+      sourceCoordinates="{ { 1500, 1, 2900 } }"
       timeSourceFrequency="5"
-      receiverCoordinates="{ { 3752.29351, 2400, 2933.3333 } }"
+      receiverCoordinates="{ { 3752.29351, 1, 2933.3333 } }"
       rickerOrder="3"/>
     <ElasticSEM
       name="elasticSolver"
