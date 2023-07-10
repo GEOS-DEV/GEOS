@@ -105,6 +105,7 @@ public:
 
     static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }
     static constexpr char const * computePODmatrixString() { return "computePODmatrix"; }
+    static constexpr char const * computeSourceValueString() { return "computeSourceValue"; }
     static constexpr char const * computeStiffnessPODString() { return "computeStiffnessPOD"; }
     static constexpr char const * invPODIsIdentityString() { return "invPODIsIdentity"; }
     static constexpr char const * stiffnessPOD_fString() { return "stiffnessPOD_f"; }
@@ -172,6 +173,9 @@ private:
   /// Whether or not to compute the POD matrices
   int m_computePODmatrix;
 
+  /// Whether or not to compute the source and receivers
+  int m_computeSourceValue;
+  
   /// Whether or not to compute the stiffness POD matrix
   int m_computeStiffnessPOD;
 

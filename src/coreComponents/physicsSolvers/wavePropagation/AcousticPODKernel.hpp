@@ -53,7 +53,7 @@ struct PrecomputeStiffnessPOD
           arrayView1d< localIndex const > const nodesGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes )
   {
-    std::cout<<"Stiffness"<<std::endl;
+    GEOS_LOG_RANK_0("Computing stiffness POD...");
     array1d< real64 > phim;
     array1d< real64 > phin;
     phim.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
@@ -68,9 +68,7 @@ struct PrecomputeStiffnessPOD
       for( localIndex n=0; n<m+1; ++n )
       {
         LvArray::memcpy(phin.toSlice(), phi[n].toSliceConst());
-	
-        //std::cout<<"("<<m<<","<<n<<")"<<std::endl;
-
+        
         forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
         {
 	  constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
@@ -148,6 +146,7 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView1d< localIndex > const sourceIsAccessible,
           arrayView2d< localIndex > const sourceNodeIds,
           arrayView2d< real64 > const sourceConstants,
+	  localIndex const computeSourceValue,
           arrayView2d< real64 const > const phi,
           arrayView2d< real64 const > const receiverCoordinates,
           arrayView1d< localIndex > const receiverIsLocal,
@@ -212,11 +211,14 @@ struct PrecomputeSourceAndReceiverKernel
                     sourceConstants[isrc][m] += phimV[sourceNodeIds[isrc][a]] * Ntest[a];
                   }
 
-                  for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
-                  {
-                    real64 const time = cycle*dt;
-                    sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder );
-                  }
+		  if( computeSourceValue )
+		  {
+		    for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
+		    {
+		      real64 const time = cycle*dt;
+		      sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder );
+		    }
+		  }
                 }
               }
             } // end loop over all sources
@@ -254,7 +256,7 @@ struct PrecomputeSourceAndReceiverKernel
 										  X,
 										  coordsOnRefElem );
 
-		if( m == sizePhi -1)
+		if( m == sizePhi-1)
 		{
 		  receiverIsLocal[ircv] = 1;
 		}
@@ -304,7 +306,7 @@ struct MassMatrixKernel
           arrayView1d< localIndex const > const nodesGhostRank )
 
   {
-    std::cout<<"Mass"<<std::endl;
+    GEOS_LOG_RANK_0("Computing mass POD...");
     array1d< real64 > phim;
     array1d< real64 > phin;
     phim.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
@@ -319,9 +321,7 @@ struct MassMatrixKernel
       for( localIndex n=0; n<m+1; ++n )
       {
         LvArray::memcpy(phin.toSlice(), phi[n].toSliceConst());
-	
-        //std::cout<<"("<<m<<","<<n<<")"<<std::endl;
-
+        
         forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
             {
        		    
@@ -440,7 +440,7 @@ struct DampingMatrixKernel
           arrayView2d< real64 const > const phi,
           arrayView1d< localIndex const > const nodesGhostRank )
   {
-    std::cout<<"Damping"<<std::endl;
+    GEOS_LOG_RANK_0("Computing damping POD...");
     array1d< real64 > phim;
     array1d< real64 > phin;
     phim.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
@@ -455,8 +455,6 @@ struct DampingMatrixKernel
       for( localIndex n=0; n<m+1; ++n )
       {
         LvArray::memcpy(phin.toSlice(), phi[n].toSliceConst());
-
-        //std::cout<<"("<<m<<","<<n<<")"<<std::endl;
 
         forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
         {

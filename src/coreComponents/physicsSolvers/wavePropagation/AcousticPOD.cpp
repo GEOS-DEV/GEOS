@@ -48,6 +48,11 @@ AcousticPOD::AcousticPOD( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Bool for POD matrices computation" );
 
+  registerWrapper( viewKeyStruct::computeSourceValueString(), &m_computeSourceValue ).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( 1 ).
+    setDescription( "Bool for POD source and receivers computation" );
+  
   registerWrapper( viewKeyStruct::computeStiffnessPODString(), &m_computeStiffnessPOD ).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 1 ).
@@ -228,6 +233,9 @@ void AcousticPOD::postProcessInput()
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
         arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
 
+	arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
+	grad.zero();
+	
         finiteElement::FiniteElementBase const &
         fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
         finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
@@ -274,8 +282,6 @@ void AcousticPOD::postProcessInput()
         m_stiffnessPOD_f.zero();
         m_massPOD_f.zero();
         m_dampingPOD_f.zero();
-	m_a_dt2.resize( phi.size( 0 ), m_nsamplesWaveField);
-	m_a_dt2.zero();
       }
       else
       {
@@ -297,6 +303,11 @@ void AcousticPOD::postProcessInput()
       m_a_np1.zero();
       m_rhsPOD.zero();
 
+      if(m_invPODIsIdentity == 0)
+      {
+	m_invAPOD.resize( phi.size( 0 ), phi.size( 0 ));
+	m_invAPOD.zero();
+      }
       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const
       X = nodeManager.referencePosition().toViewConst();
 
@@ -426,13 +437,16 @@ void AcousticPOD::postProcessInput()
                                                                      nodesGhostRank );
             }
 
-            acousticPODKernels::PrecomputeStiffnessPOD::launch< EXEC_POLICY, ATOMIC_POLICY, FE_TYPE >( elementSubRegion.size(),
-                                                                                                       X,
-                                                                                                       stiffnessPOD,
-                                                                                                       phi,
-                                                                                                       nodesGhostRank,
-                                                                                                       elemsToNodes );
-          } );
+	    if( m_computeStiffnessPOD )
+            {
+	      acousticPODKernels::PrecomputeStiffnessPOD::launch< EXEC_POLICY, ATOMIC_POLICY, FE_TYPE >( elementSubRegion.size(),
+													 X,
+													 stiffnessPOD,
+													 phi,
+													 nodesGhostRank,
+													 elemsToNodes );
+	    }
+	  } );
 	  dampingPOD.move( MemorySpace::host, true );
           MpiWrapper::allReduce( dampingPOD.data(),
                                  dampingPOD.data(),
@@ -486,6 +500,7 @@ void AcousticPOD::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
 
   arrayView2d< real64 > const sourceConstantsPOD = m_sourceConstantsPOD.toView();
   arrayView1d< localIndex > const sourceIsAccessible = m_sourceIsAccessible.toView();
+  localIndex const computeSourceValue = m_computeSourceValue;
   sourceNodeIds.setValues< EXEC_POLICY >( -1 );
   sourceConstantsPOD.zero();
   sourceIsAccessible.zero();
@@ -504,7 +519,10 @@ void AcousticPOD::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
   real32 const timeSourceFrequency = this->m_timeSourceFrequency;
   localIndex const rickerOrder = this->m_rickerOrder;
   arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
-  sourceValue.zero();
+  if( computeSourceValue )
+  {
+    sourceValue.zero();
+  }
   
   real64 dt = 0;
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
@@ -555,6 +573,7 @@ void AcousticPOD::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
         sourceIsAccessible,
         sourceNodeIds,
         sourceConstantsPOD,
+	computeSourceValue,
         phi,
         receiverCoordinates,
         receiverIsLocal,
@@ -574,13 +593,15 @@ void AcousticPOD::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
                          MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                          MPI_COMM_GEOSX );
 
-  sourceValue.move( MemorySpace::host, true );
-  MpiWrapper::allReduce( sourceValue.data(),
-                         sourceValue.data(),
-                         sourceValue.size( 0 )*sourceValue.size( 1 ),
-                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                         MPI_COMM_GEOSX );
-
+  if( computeSourceValue )
+  {
+    sourceValue.move( MemorySpace::host, true );
+    MpiWrapper::allReduce( sourceValue.data(),
+			   sourceValue.data(),
+			   sourceValue.size( 0 )*sourceValue.size( 1 ),
+			   MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+			   MPI_COMM_GEOSX );
+  }
 }
 
 void AcousticPOD::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs )
@@ -597,7 +618,6 @@ void AcousticPOD::addSourceToRightHandSide( integer const & cycleNumber, arrayVi
       for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
       {
         real32 const localIncrement = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
-	//printf("localInc = %f",localIncrement);
         RAJA::atomicAdd< ATOMIC_POLICY >( &rhs[inode], localIncrement );
       }
     } );
@@ -618,7 +638,7 @@ void AcousticPOD::initializePostInitialConditionsPreSubGroups()
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    if( m_computePODmatrix )
+    if(m_computePODmatrix)
     {
       precomputeSourceAndReceiverTerm( mesh, regionNames );
     }
@@ -682,6 +702,13 @@ void AcousticPOD::applyFreeSurfaceBC( real64 time, DomainPartition & domain )
 }
 
 
+/**                                                                                                                                                                   * Checks if a directory exists.                                                                                                                                      *                                                                                                                                                                    * @param dirName Directory name to check existence of.                                                                                                               * @return true is dirName exists and is a directory.                                                                                                                 */
+bool dirExistsPOD( const std::string & dirName )
+{
+  struct stat buffer;
+  return stat( dirName.c_str(), &buffer ) == 0;
+}
+
 
 real64 AcousticPOD::explicitStepForward( real64 const & time_n,
                                          real64 const & dt,
@@ -693,22 +720,54 @@ real64 AcousticPOD::explicitStepForward( real64 const & time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
-                                        MeshLevel &,
+                                        MeshLevel & mesh,
                                         arrayView1d< string const > const & GEOS_UNUSED_PARAM ( regionNames ) )
   {
     arrayView1d< real32 > const a_nm1 = m_a_nm1.toView();
     arrayView1d< real32 > const a_n = m_a_n.toView();
     arrayView1d< real32 > const a_np1 = m_a_np1.toView();
-    localIndex const indexWaveField = m_indexWaveField;
-
+    
     if( computeGradient )
     {
-      arrayView2d< real32 > const a_dt2 =  m_a_dt2.toView();
-      forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
-        {
-          a_dt2[m][indexWaveField] = (a_np1[m] - 2*a_n[m] + a_nm1[m])/(dt*dt);
-        } );
-      m_indexWaveField += 1;
+      NodeManager & nodeManager = mesh.getNodeManager();
+      arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
+      arrayView2d< real64 const > const phi = nodeManager.getField< fields::Phi >();
+
+      array1d< real64 > phim;
+      phim.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
+      arrayView1d< real64 > phimV = phim.toView();
+      for( localIndex m=0; m<phi.size( 0 ); ++m )
+      {
+	LvArray::memcpy(phim.toSlice(), phi[m].toSliceConst());
+	
+	forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const nodeIdx )
+	  {
+	    if(m==0)
+	    {
+	      p_dt2[nodeIdx] = 0;
+	    }
+	    p_dt2[nodeIdx] += (a_np1[m] - 2*a_n[m] + a_nm1[m]) * phimV[nodeIdx] / (dt*dt);
+	  } );
+      }
+      GEOS_MARK_SCOPE ( DirectWrite );
+      p_dt2.move( MemorySpace::host, false );
+      int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+      std::string fileName = GEOS_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
+      int lastDirSeparator = fileName.find_last_of( "/\\" );
+      std::string dirName = fileName.substr( 0, lastDirSeparator );
+      if( string::npos != (size_t)lastDirSeparator && !dirExistsPOD( dirName ))
+	makeDirsForPath( dirName );
+      
+      std::ofstream wf( fileName, std::ios::out | std::ios::binary );
+      GEOS_THROW_IF( !wf,
+		     "Could not open file "<< fileName << " for writting",
+		     InputError );
+      wf.write( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
+      wf.close( );
+      GEOS_THROW_IF( !wf.good(),
+		     "An error occured while writting "<< fileName,
+		     InputError );
+    
     }
     forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
       {
@@ -743,10 +802,26 @@ real64 AcousticPOD::explicitStepBackward( real64 const & time_n,
 
       arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVector >();
       arrayView2d< real64 const > const phi = nodeManager.getField< fields::Phi >();
-      arrayView2d< real32 const > const a_dt2 = m_a_dt2.toView();
 
       ElementRegionManager & elemManager = mesh.getElemManager();
 
+      arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
+
+      GEOS_MARK_SCOPE ( DirectRead );
+      
+      int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+      std::string fileName = GEOS_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
+      std::ifstream wf( fileName, std::ios::in | std::ios::binary );
+      GEOS_THROW_IF( !wf,
+		     "Could not open file "<< fileName << " for reading",
+		     InputError );
+      
+      p_dt2.move( MemorySpace::host, true );
+      wf.read( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
+      wf.close( );
+      remove( fileName.c_str() );
+
+      
       elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                   CellElementSubRegion & elementSubRegion )
       {
@@ -755,26 +830,23 @@ real64 AcousticPOD::explicitStepBackward( real64 const & time_n,
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
         constexpr localIndex numNodesPerElem = 8;
 
-	localIndex const indexWaveField = m_indexWaveField;
         array1d< real64 > phim;
         phim.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
 	arrayView1d< real64 > phimV = phim.toView();
+	GEOS_MARK_SCOPE ( updatePartialGradient );
 	for( localIndex m=0; m<phi.size( 0 ); ++m )
 	{
-	  //std::cout<<m<<" "<<indexWaveField-1<<" : "<<a_dt2[m][indexWaveField-1]<<std::endl;
 	  LvArray::memcpy(phim.toSlice(), phi[m].toSliceConst());
-          GEOS_MARK_SCOPE ( updatePartialGradient );
           forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const eltIdx )
             {
               for( localIndex i = 0; i < numNodesPerElem; ++i )
               {
                 localIndex nodeIdx = elemsToNodes[eltIdx][i];
-                grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/8.0 * (a_dt2[m][indexWaveField-1] * phimV[nodeIdx] * a_n[m] * phimV[nodeIdx]);
-              }
+                grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/8.0 * (p_dt2[nodeIdx] * a_n[m] * phimV[nodeIdx]);
+	      }
             } );
-        }
+	}
       } );
-      m_indexWaveField -= 1;
     }
 
     forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
@@ -840,11 +912,11 @@ real64 AcousticPOD::explicitStepInternal( real64 const & time_n,
         arrayView2d< real32 const > const invA = m_invAPOD.toViewConst();
         array1d< real32 > b( a_n.size());
 	arrayView1d< real32 > bV = b.toView();
-
+	
         forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
         {
           bV[m] = dt2 * rhs[m];
-          for( localIndex n = 0; n < a_n.size(); ++n )
+	  for( localIndex n = 0; n < a_n.size(); ++n )
           {
             bV[m] += (2 * mass[m][n] - dt2 * stiffness[m][n]) * a_n[n];
             bV[m] -= (mass[m][n] - dt * 0.5 * damping[m][n]) * a_nm1[n];
@@ -887,8 +959,8 @@ real64 AcousticPOD::explicitStepInternal( real64 const & time_n,
         arrayView2d< real32 const > const invA = m_invAPOD.toViewConst();
         array1d< real32 > b( a_n.size());
 	arrayView1d< real32 > bV = b.toView();
-	
-        for( localIndex m = 0; m < a_n.size(); ++m )
+
+	forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
         {
           bV[m] = dt2 * rhs[m];
           for( localIndex n = 0; n < a_n.size(); ++n )
@@ -897,15 +969,16 @@ real64 AcousticPOD::explicitStepInternal( real64 const & time_n,
             bV[m] -= (mass[m][n] - dt * 0.5 * damping[m][n]) * a_nm1[n];
           }
           rhs[m] = 0.0;
-        }
+        } );
+
         forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
+        {
+          a_np1[m] = 0.0;
+          for( localIndex n = 0; n < a_n.size(); ++n )
           {
-            a_np1[m] = 0.0;
-            for( localIndex n = 0; n < a_n.size(); ++n )
-            {
-              a_np1[m] += invA[m][n] * bV[n];
-            }
-          } );
+            a_np1[m] += invA[m][n] * bV[n];
+          }
+        } );
       }
     }
 

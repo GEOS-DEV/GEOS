@@ -768,16 +768,17 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
       arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
 
-      if( NULL == std::getenv( "DISABLE_LIFO" ) )
+      if( NULL != std::getenv( "DISABLE_LIFO" ) )
       {
         m_lifo->pushWait();
       }
       forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const nodeIdx )
       {
         p_dt2[nodeIdx] = (p_np1[nodeIdx] - 2*p_n[nodeIdx] + p_nm1[nodeIdx])/(dt*dt);
+	//p_dt2[nodeIdx] = (p_np1[nodeIdx])/(dt*dt);
       } );
 
-      if( NULL == std::getenv( "DISABLE_LIFO" ) )
+      if( NULL != std::getenv( "DISABLE_LIFO" ) )
       {
         // Need to tell LvArray data is on GPU to avoir HtoD copy
         p_dt2.move( MemorySpace::cuda, false );
@@ -852,7 +853,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
 
       arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
 
-      if( NULL == std::getenv( "DISABLE_LIFO" ) )
+      if( NULL != std::getenv( "DISABLE_LIFO" ) )
       {
         m_lifo->pop( p_dt2 );
       }
@@ -893,7 +894,8 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
             {
               localIndex nodeIdx = elemsToNodes[eltIdx][i];
               grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/8.0 * (p_dt2[nodeIdx] * p_n[nodeIdx]);
-            }
+	      //grad[eltIdx] += (p_dt2[nodeIdx]);
+	    }
           }
         } );
       } );
