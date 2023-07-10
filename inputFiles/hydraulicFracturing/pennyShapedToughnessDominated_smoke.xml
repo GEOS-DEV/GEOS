@@ -16,7 +16,7 @@
       logLevel="1"
       targetRegions="{ Fracture }"
       contactRelationName="fractureContact"
-      maxNumResolves="5"
+      maxNumResolves="1"
       initialDt="0.01">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
