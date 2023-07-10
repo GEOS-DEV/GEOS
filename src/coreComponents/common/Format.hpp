@@ -15,6 +15,8 @@
 #ifndef GEOS_COMMON_FORMAT_HPP_
 #define GEOS_COMMON_FORMAT_HPP_
 
+#include <type_traits>
+
 #if __cplusplus < 202002L
 #define GEOSX_USE_FMT
 #endif
@@ -28,6 +30,42 @@
 #else // use C++20's <format>
 #include <format>
 #define GEOS_FMT_NS std
+#endif
+
+#ifdef GEOSX_USE_FMT
+/**
+ * @brief fmtlib formatter for enum classes.
+ * @tparam T The type of the object being formatted. This should be an
+ *           enum class.
+ */
+template< typename T >
+struct fmt::formatter< T, std::enable_if_t< std::is_enum< T >::value > >
+{
+  /**
+   * @brief Parser for the fmtlib formatting library.
+   * @param ctx The context provided by the fmtlib library, which includes
+   *            the format string.
+   * @return An iterator pointing to the end of the format string.
+   */
+  template< typename ParseContext >
+  constexpr auto parse( ParseContext & ctx )
+  {
+    return ctx.end();
+  }
+
+  /**
+   * @brief Formatter for the fmtlib formatting library.
+   * @param value The enum class object to format.
+   * @param ctx   The context provided by the fmtlib library, which includes
+   *              the output iterator where the formatted string should be written.
+   * @return An iterator pointing to the end of the formatted string.
+   */
+  template< typename FormatContext >
+  auto format( const T & value, FormatContext & ctx )
+  {
+    return fmt::format_to( ctx.out(), "{}", static_cast< std::underlying_type_t< T > >( value ) );
+  }
+};
 #endif
 
 /**
