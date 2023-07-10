@@ -252,6 +252,9 @@ protected:
                               DofManager const & dofManager,
                               SparsityPatternView< globalIndex > const & pattern ) const = 0;
 
+  /// Flag to determine whether the well transmissibility needs to be computed
+  bool m_isWellTransmissibilityComputed;
+
 private:
 
   /**
@@ -309,7 +312,7 @@ private:
           arrayView1d< localIndex const > const resElemIndex =
             perforationData.getField< fields::perforation::reservoirElementIndex >();
 
-          forAll< serialPolicy >( perforationData.size(), [=] GEOS_HOST_DEVICE ( localIndex const iperf )
+          forAll< serialPolicy >( perforationData.size(), [=] ( localIndex const iperf )
           {
             GEOS_LOG_RANK( GEOS_FMT( "Perforation at ({},{},{}); perforated element center: ({},{},{}); transmissibility: {} Pa.s.rm^3/s/Pa",
                                      perfLocation[iperf][0], perfLocation[iperf][1], perfLocation[iperf][2],
@@ -322,9 +325,6 @@ private:
       } );
     } );
   }
-
-  /// Flag to determine whether the well transmissibility needs to be computed
-  bool m_isWellTransmissibilityComputed;
 
 };
 
