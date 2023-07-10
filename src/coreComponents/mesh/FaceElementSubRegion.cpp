@@ -170,7 +170,7 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
     m_newFaceElements.insert( i );
   }
 
-  m_duplicatedNodes = faceBlock.getDuplicatedNodes();
+  m_collocatedNodes = faceBlock.getCollocatedNodes();
 
   // TODO We still need to be able to import fields on the FaceElementSubRegion.
 }
@@ -301,8 +301,8 @@ localIndex FaceElementSubRegion::packUpDownMapsImpl( buffer_unit_type * & buffer
                                                packList,
                                                m_2dElemToElems.getElementRegionManager() );
 
-  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::duplicatedNodesString() ) );
-  packedSize += bufferOps::Pack< DO_PACKING >( buffer, m_duplicatedNodes );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::collocatedNodesString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, m_collocatedNodes );
 //
 //  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( "missingNodes" ) );
 //  packedSize += bufferOps::Pack< DO_PACKING >( buffer, m_missingNodes );
@@ -363,11 +363,11 @@ localIndex FaceElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & bu
                                      m_2dElemToElems.getElementRegionManager(),
                                      overwriteUpMaps );
 
-  string duplicatedNodesString;
-  unPackedSize += bufferOps::Unpack( buffer, duplicatedNodesString );
-  GEOS_ERROR_IF_NE( duplicatedNodesString, viewKeyStruct::duplicatedNodesString() );
-  m_otherDuplicatedNodes.push_back( ArrayOfArrays< globalIndex >{} );
-  unPackedSize += bufferOps::Unpack( buffer, m_otherDuplicatedNodes.back() );
+  string collocatedNodesString;
+  unPackedSize += bufferOps::Unpack( buffer, collocatedNodesString );
+  GEOS_ERROR_IF_NE( collocatedNodesString, viewKeyStruct::collocatedNodesString() );
+  m_otherCollocatedNodes.push_back( ArrayOfArrays< globalIndex >{} );
+  unPackedSize += bufferOps::Unpack( buffer, m_otherCollocatedNodes.back() );
 
   return unPackedSize;
 }
@@ -396,25 +396,25 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
   // Here I can fix the other mappings which are not properly defined...
   localIndex const num2dElems = this->size();
 
-  std::map< globalIndex, globalIndex > referenceDuplicatedNodes;  // Take the minimum duplicated node for each bucket.
+  std::map< globalIndex, globalIndex > referenceCollocatedNodes;  // Take the minimum duplicated node for each bucket.
   {
-    std::set< std::set< globalIndex > > mergedDuplicatedNodes;
-    m_otherDuplicatedNodes.push_back( m_duplicatedNodes );
-    for( ArrayOfArrays< globalIndex > const & dns: m_otherDuplicatedNodes )
+    std::set< std::set< globalIndex > > mergedCollocatedNodes;
+    m_otherCollocatedNodes.push_back( m_collocatedNodes );
+    for( ArrayOfArrays< globalIndex > const & dns: m_otherCollocatedNodes )
     {
       for( int i = 0; i < dns.size(); ++i )
       {
         std::set< globalIndex > tmp( dns[i].begin(), dns[i].end() );
-        mergedDuplicatedNodes.insert( tmp );
+        mergedCollocatedNodes.insert( tmp );
       }
     }
 
-    for( std::set< globalIndex > const & duplicatedNodes: mergedDuplicatedNodes )
+    for( std::set< globalIndex > const & collocatedNodes: mergedCollocatedNodes )
     {
-      globalIndex const & ref = *std::min_element( duplicatedNodes.cbegin(), duplicatedNodes.cend() );
-      for( globalIndex const & n: duplicatedNodes )
+      globalIndex const & ref = *std::min_element( collocatedNodes.cbegin(), collocatedNodes.cend() );
+      for( globalIndex const & n: collocatedNodes )
       {
-        referenceDuplicatedNodes[n] = ref;
+        referenceCollocatedNodes[n] = ref;
       }
     }
   }
@@ -451,7 +451,7 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
   {
     std::pair< globalIndex, globalIndex > const & nodes = p.first;
     localIndex const & edge = p.second;
-    std::pair< globalIndex, globalIndex > const edgeHash = std::minmax( referenceDuplicatedNodes.at( nodes.first ), referenceDuplicatedNodes.at( nodes.second ) );
+    std::pair< globalIndex, globalIndex > const edgeHash = std::minmax( referenceCollocatedNodes.at( nodes.first ), referenceCollocatedNodes.at( nodes.second ) );
     uniqueEdgeIds[edgeHash].insert( edge );
   }
 
@@ -587,8 +587,8 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
         std::set< globalIndex > nodesOfFace;  // Signature of the face nodes.
         for( localIndex const & n: faceToNodes[face] )
         {
-          auto const it = referenceDuplicatedNodes.find( nodeManager.localToGlobalMap()[n] );
-          if( it != referenceDuplicatedNodes.cend() )
+          auto const it = referenceCollocatedNodes.find( nodeManager.localToGlobalMap()[n] );
+          if( it != referenceCollocatedNodes.cend() )
           {
             nodesOfFace.insert( it->second );
           }
@@ -635,8 +635,8 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
     for( localIndex const & n: m_toNodesRelation[e2d] )
     {
       globalIndex const & gn = nodeManager.localToGlobalMap()[ n ];
-      auto const it = referenceDuplicatedNodes.find( gn );
-      if( it == referenceDuplicatedNodes.cend() )
+      auto const it = referenceCollocatedNodes.find( gn );
+      if( it == referenceCollocatedNodes.cend() )
       {
         GEOS_LOG_RANK( "Could not find node " << gn << " in the duplicated nodes dict." );
       }
@@ -709,9 +709,9 @@ void FaceElementSubRegion::setMissingNodes( NodeManager const & nodeManager )
   auto const & g2l = nodeManager.globalToLocalMap();
   std::set< globalIndex > missingNodes;
 
-  for( int i = 0; i < m_duplicatedNodes.size(); ++i )
+  for( int i = 0; i < m_collocatedNodes.size(); ++i )
   {
-    auto const & nodes = m_duplicatedNodes[i];
+    auto const & nodes = m_collocatedNodes[i];
     for( globalIndex const & n: nodes )
     {
       auto const it = g2l.find( n );

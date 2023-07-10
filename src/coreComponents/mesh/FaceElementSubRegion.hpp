@@ -142,8 +142,8 @@ public:
     static constexpr char const * fractureConnectorEdgesToEdgesString() { return "fractureConnectorsToEdges"; }
     /// @return String key to the map of fracture connector local indices face element local indices.
     static constexpr char const * fractureConnectorsEdgesToFaceElementsIndexString() { return "fractureConnectorsToElementIndex"; }
-    /// @return String key to duplicated nodes.
-    static constexpr char const * duplicatedNodesString() { return "duplicatedNodes"; }
+    /// @return String key to collocated nodes.
+    static constexpr char const * collocatedNodesString() { return "collocatedNodes"; }
 
 #if GEOSX_USE_SEPARATION_COEFFICIENT
     /// Separation coefficient string.
@@ -229,10 +229,13 @@ public:
   ArrayOfArrays< localIndex > m_2dFaceTo2dElems;
 
   /**
-   * @brief An iterable of the duplicated nodes.
-   * Each array/bucket containing all the global indices of the nodes which are duplicated of each others.
+   * @brief Each bucket (array) contains all the global indices of the nodes which are duplicated of each others.
+   * @returnAn iterable of the collocated nodes buckets.
    */
-  ArrayOfArrays< globalIndex > m_duplicatedNodes;
+  ArrayOfArraysView< globalIndex const > getCollocatedNodes() const
+  {
+    return m_collocatedNodes.toViewConst();
+  }
 
   /**
    * @brief @return The array of shape function derivatives.
@@ -262,7 +265,7 @@ public:
 
   void setMissingNodes( NodeManager const & nodeManager );
 
-  std::vector< ArrayOfArrays< globalIndex > > m_otherDuplicatedNodes;
+  std::vector< ArrayOfArrays< globalIndex > > m_otherCollocatedNodes;
 
 private:
 
@@ -285,6 +288,9 @@ private:
 
   /// Element-to-face relation
   FaceMapType m_toFacesRelation;
+
+  /// Each sub-array contains all the global indices of the nodes that are collocated.
+  ArrayOfArrays< globalIndex > m_collocatedNodes;
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   /// Separation coefficient

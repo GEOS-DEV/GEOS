@@ -271,9 +271,9 @@ buildElemToNodesImpl( AllMeshes & input,
     if( fracture->GetNumberOfCells() == 0 )
     { continue; }
 
-    vtkIdTypeArray const * duplicatedNodes = vtkIdTypeArray::FastDownCast( fracture->GetPointData()->GetArray( "duplicated_nodes" ) );
-    GEOS_ERROR_IF( duplicatedNodes == nullptr, "Could not find valid field for fracture [1]." );
-    int const numComponents = duplicatedNodes->GetNumberOfComponents();
+    vtkIdTypeArray const * collocatedNodes = vtkIdTypeArray::FastDownCast( fracture->GetPointData()->GetArray( "duplicated_nodes" ) );
+    GEOS_ERROR_IF( collocatedNodes == nullptr, "Could not find valid field for fracture [1]." );
+    int const numComponents = collocatedNodes->GetNumberOfComponents();
 
     forAll< parallelHostPolicy >( fracture->GetNumberOfCells(), [&, nodeCounts = nodeCounts.toView(), fracture = fracture.Get()] ( localIndex const cellIdx )
     {
@@ -284,7 +284,7 @@ buildElemToNodesImpl( AllMeshes & input,
       {
         for( int j = 0; j < numComponents; ++j )
         {
-          if ( duplicatedNodes->GetTypedComponent( pointId, j ) > -1 )
+          if ( collocatedNodes->GetTypedComponent( pointId, j ) > -1 )
           {
             nodeCounts[cellIdx + offset]++;
           }
@@ -320,11 +320,10 @@ buildElemToNodesImpl( AllMeshes & input,
     if( fracture->GetNumberOfCells() == 0 )
     { continue; }  // Maybe check on num2dCells?
 
-    vtkIdTypeArray const
-      * duplicatedNodes = vtkIdTypeArray::FastDownCast( fracture->GetPointData()->GetArray( "duplicated_nodes" ) );
-    vtkIdType const numTuples = duplicatedNodes->GetNumberOfTuples();
-    int const numComponents = duplicatedNodes->GetNumberOfComponents();
-    GEOS_ERROR_IF( duplicatedNodes == nullptr, "Could not find valid field [2]." );
+    vtkIdTypeArray const * collocatedNodes = vtkIdTypeArray::FastDownCast( fracture->GetPointData()->GetArray( "duplicated_nodes" ) );
+    vtkIdType const numTuples = collocatedNodes->GetNumberOfTuples();
+    int const numComponents = collocatedNodes->GetNumberOfComponents();
+    GEOS_ERROR_IF( collocatedNodes == nullptr, "Could not find valid field [2]." );
     for( vtkIdType i = 0; i < fracture->GetNumberOfCells(); ++i )
     {
       vtkCell * cell = fracture->GetCell( i );
@@ -333,7 +332,7 @@ buildElemToNodesImpl( AllMeshes & input,
       {
         for( int j = 0; j < numComponents; ++j )
         {
-          vtkIdType const tmp = duplicatedNodes->GetTypedComponent( pointId, j );
+          vtkIdType const tmp = collocatedNodes->GetTypedComponent( pointId, j );
           if( tmp > -1 )
           {
             elemToNodes.emplaceBack( offset + i, tmp );

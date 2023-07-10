@@ -412,16 +412,16 @@ CommunicationTools::
         }
       }
       std::set< globalIndex > const candidates( neighborPartitionBoundaryObjects[i].begin(), neighborPartitionBoundaryObjects[i].end() );
-      for( std::set< globalIndex > const & duplicatedNodes: m )
+      for( std::set< globalIndex > const & collocatedNodes: m )
       {
         std::vector< globalIndex > intersection;
-        std::set_intersection( duplicatedNodes.cbegin(), duplicatedNodes.cend(),
+        std::set_intersection( collocatedNodes.cbegin(), collocatedNodes.cend(),
                                candidates.cbegin(), candidates.cend(),
                                std::back_inserter( intersection ) );
         auto const & g2l = objectManager.globalToLocalMap();
         if( intersection.empty() )
         { continue; }
-        for( globalIndex const & gi: duplicatedNodes )
+        for( globalIndex const & gi: collocatedNodes )
         {
           auto it = g2l.find( gi );
           if( it != g2l.cend() )

@@ -119,32 +119,32 @@ private:
 /**
  * @brief Convenience wrapper around the raw vtk information.
  */
-class DuplicatedNodes
+class CollocatedNodes
 {
 public:
-  DuplicatedNodes( string const & faceBlockName,
+  CollocatedNodes( string const & faceBlockName,
                    vtkSmartPointer< vtkDataSet > faceMesh )
   {
     // Field data key for duplicated nodes.
     constexpr char key[] = "duplicated_nodes";
 
-    vtkIdTypeArray const * duplicatedNodes = vtkIdTypeArray::FastDownCast( faceMesh->GetPointData()->GetArray( key ) );
+    vtkIdTypeArray const * collocatedNodes = vtkIdTypeArray::FastDownCast( faceMesh->GetPointData()->GetArray( key ) );
     {
       // Depending on the parallel split, the vtk face mesh may be empty on a rank.
       // In that case, vtk will not provide any field for the emtpy mesh.
       // Therefore, not finding the duplicated nodes field on a rank cannot be interpreted as a globally missing field.
       // Converting the address into an integer and exchanging it through the MPI ranks let us find out
       // if the field is globally missing or not.
-      std::uintptr_t const address = MpiWrapper::max( reinterpret_cast<std::uintptr_t>(duplicatedNodes) );
+      std::uintptr_t const address = MpiWrapper::max( reinterpret_cast<std::uintptr_t>(collocatedNodes) );
       if( address == 0 )
       {
-        GEOS_ERROR_IF( duplicatedNodes == nullptr, "Could not find valid field \"" << key << "\" for fracture \"" << faceBlockName << "\"." );
+        GEOS_ERROR_IF( collocatedNodes == nullptr, "Could not find valid field \"" << key << "\" for fracture \"" << faceBlockName << "\"." );
       }
     }
 
-    if( duplicatedNodes )
+    if( collocatedNodes )
     {
-      init( duplicatedNodes );
+      init( collocatedNodes );
     }
   }
 
@@ -155,7 +155,7 @@ public:
    */
   std::vector< vtkIdType > const & operator[]( std::size_t i ) const
   {
-    return m_duplicatedNodes[i];
+    return m_collocatedNodes[i];
   }
 
   /**
@@ -165,40 +165,40 @@ public:
    */
   std::size_t size() const
   {
-    return m_duplicatedNodes.size();
+    return m_collocatedNodes.size();
   }
 
 private:
 
   /**
    * @brief Populate the mapping.
-   * @param duplicatedNodes The pointer to the vtk data array. Guaranteed not to be null.
+   * @param collocatedNodes The pointer to the vtk data array. Guaranteed not to be null.
    */
-  void init( vtkIdTypeArray const * duplicatedNodes )
+  void init( vtkIdTypeArray const * collocatedNodes )
   {
-    vtkIdType const numTuples = duplicatedNodes->GetNumberOfTuples();
-    int const numComponents = duplicatedNodes->GetNumberOfComponents();
-    m_duplicatedNodes.resize( numTuples );
+    vtkIdType const numTuples = collocatedNodes->GetNumberOfTuples();
+    int const numComponents = collocatedNodes->GetNumberOfComponents();
+    m_collocatedNodes.resize( numTuples );
     for( vtkIdType i = 0; i < numTuples; ++i )
     {
-      m_duplicatedNodes[i].reserve( numComponents );
+      m_collocatedNodes[i].reserve( numComponents );
     }
 
     for( vtkIdType i = 0; i < numTuples; ++i )
     {
       for( int j = 0; j < numComponents; ++j )
       {
-        vtkIdType const tmp = duplicatedNodes->GetTypedComponent( i, j );
+        vtkIdType const tmp = collocatedNodes->GetTypedComponent( i, j );
         if( tmp > -1 )
         {
-          m_duplicatedNodes[i].emplace_back( tmp );
+          m_collocatedNodes[i].emplace_back( tmp );
         }
       }
     }
   }
 
   /// For each node of the face block, lists all the duplicated nodes in the main 3d mesh.
-  std::vector< std::vector< vtkIdType > > m_duplicatedNodes;
+  std::vector< std::vector< vtkIdType > > m_collocatedNodes;
 };
 
 
@@ -207,7 +207,7 @@ private:
  * @param dn The duplicated nodes informations.
  * @return An iterable of arrays. Each array containing the global indices of the nodes which are duplicated of each others.
  */
-ArrayOfArrays< globalIndex > buildDuplicatedNodesMap( DuplicatedNodes const & dn )
+ArrayOfArrays< globalIndex > buildCollocatedNodesMap( CollocatedNodes const & dn )
 {
   ArrayOfArrays< globalIndex > result;
 
@@ -292,7 +292,7 @@ ArrayOfArrays< localIndex > computeFace2dToElems2d( vtkPolyData * edges,
 /**
  * @brief For each 2d face (a segment in 3d), returns one single overlapping 3d edge (and not 2).
  * @param edges The edges as computed by vtk.
- * @param duplicatedNodes The duplicated nodes information.
+ * @param collocatedNodes The collocated nodes information.
  * @param nodeToEdges The node to edges mapping.
  * @return The 2d face to 3d edge mapping.
  *
@@ -300,7 +300,7 @@ ArrayOfArrays< localIndex > computeFace2dToElems2d( vtkPolyData * edges,
  */
 array1d< localIndex > computeFace2dToEdge( vtkSmartPointer< vtkDataSet > mesh,
                                            vtkPolyData * edges,
-                                           DuplicatedNodes const & duplicatedNodes,
+                                           CollocatedNodes const & collocatedNodes,
                                            ArrayOfArraysView< localIndex const > nodeToEdges )
 {
   vtkIdTypeArray const * globalPtIds = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
@@ -327,7 +327,7 @@ array1d< localIndex > computeFace2dToEdge( vtkSmartPointer< vtkDataSet > mesh,
     vtkCell * edge = edges->GetCell( i );
     for( int j = 0; j < edge->GetNumberOfPoints(); ++j )
     {
-      for( auto const & d: duplicatedNodes[ edge->GetPointId( j ) ] )
+      for( auto const & d: collocatedNodes[ edge->GetPointId( j ) ] )
       {
         allDuplicatedNodesOfEdge.emplace_back( d );
       }
@@ -414,14 +414,14 @@ struct Elem2dTo3dInfo
  * @brief Computes the mappings that link the 2d elements to their 3d element and faces neighbors.
  * @param faceMesh The face mesh.
  * @param mesh The 3d mesh.
- * @param duplicatedNodes The duplicated nodes information.
+ * @param collocatedNodes The collocated nodes information.
  * @param faceToNodes The (3d) face to nodes mapping.
  * @param elemToFaces The element to faces information.
  * @return All the information gathered into a single instance.
  */
 Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMesh,
                                               vtkSmartPointer< vtkDataSet > mesh,
-                                              DuplicatedNodes const & duplicatedNodes,
+                                              CollocatedNodes const & collocatedNodes,
                                               ArrayOfArraysView< localIndex const > faceToNodes,
                                               geos::internal::ElementToFace const & elemToFaces )
 {
@@ -464,9 +464,9 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
   std::map< vtkIdType, std::set< vtkIdType > > nodesToCells;
   { // scope reduction
     std::set< vtkIdType > allDuplicatedNodes;
-    for( std::size_t i = 0; i < duplicatedNodes.size(); ++i )
+    for( std::size_t i = 0; i < collocatedNodes.size(); ++i )
     {
-      std::vector< vtkIdType > const & ns = duplicatedNodes[ i ];
+      std::vector< vtkIdType > const & ns = collocatedNodes[ i ];
       allDuplicatedNodes.insert( ns.cbegin(), ns.cend() );
     }
 
@@ -498,7 +498,7 @@ Elem2dTo3dInfo computeElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > face
     std::set< vtkIdType > duplicatedPointOfElem2d;
     for( vtkIdType j = 0; j < pointIds->GetNumberOfIds(); ++j )
     {
-      std::vector< vtkIdType > const & ns = duplicatedNodes[ pointIds->GetId( j ) ];
+      std::vector< vtkIdType > const & ns = collocatedNodes[ pointIds->GetId( j ) ];
       duplicatedPointOfElem2d.insert( ns.cbegin(), ns.cend() );
     }
 
@@ -616,7 +616,7 @@ void importFractureNetwork( string const & faceBlockName,
   geos::internal::ElementToFace const elemToFaces( cellBlockManager.getCellBlocks() );
   ArrayOfArrays< localIndex > const nodeToEdges = cellBlockManager.getNodeToEdges();
 
-  DuplicatedNodes const duplicatedNodes( faceBlockName, faceMesh );
+  CollocatedNodes const collocatedNodes( faceBlockName, faceMesh );
   // Add the appropriate validations (only 2d cells...)
 
   auto edgesExtractor = vtkSmartPointer< vtkExtractEdges >::New();
@@ -628,11 +628,11 @@ void importFractureNetwork( string const & faceBlockName,
   vtkIdType const num2dFaces = edges->GetNumberOfCells();
   vtkIdType const num2dElements = faceMesh->GetNumberOfCells();
   // Now let's build the elem2dTo* mappings.
-  Elem2dTo3dInfo elem2dTo3d = computeElem2dTo3dElemAndFaces( faceMesh, mesh, duplicatedNodes, faceToNodes.toViewConst(), elemToFaces );
+  Elem2dTo3dInfo elem2dTo3d = computeElem2dTo3dElemAndFaces( faceMesh, mesh, collocatedNodes, faceToNodes.toViewConst(), elemToFaces );
   ArrayOfArrays< localIndex > elem2dToNodes = computeElem2dToNodes( num2dElements, faceToNodes.toViewConst(), elem2dTo3d.elem2dToFaces.toViewConst() );
 
   ArrayOfArrays< localIndex > face2dToElems2d = computeFace2dToElems2d( edges, faceMesh );
-  array1d< localIndex > face2dToEdge = computeFace2dToEdge( mesh, edges, duplicatedNodes, nodeToEdges.toViewConst() );
+  array1d< localIndex > face2dToEdge = computeFace2dToEdge( mesh, edges, collocatedNodes, nodeToEdges.toViewConst() );
   ArrayOfArrays< localIndex > const elem2dToFace2d = computeElem2dToFace2d( num2dElements, face2dToElems2d.toViewConst() );
   ArrayOfArrays< localIndex > elem2DToEdges = computeElem2dToEdges( num2dElements, face2dToEdge.toViewConst(), elem2dToFace2d.toViewConst() );
 
@@ -651,7 +651,7 @@ void importFractureNetwork( string const & faceBlockName,
 
   faceBlock.setLocalToGlobalMap( computeLocalToGlobal( faceMesh, mesh ) );
 
-  faceBlock.setDuplicatedNodes( buildDuplicatedNodesMap( duplicatedNodes ) );
+  faceBlock.setCollocatedNodes( buildCollocatedNodesMap( collocatedNodes ) );
 }
 
 } // end of namespace

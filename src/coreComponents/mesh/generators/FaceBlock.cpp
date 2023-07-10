@@ -97,14 +97,14 @@ void FaceBlock::set2dElemToElems( ToCellRelation< ArrayOfArrays< localIndex > > 
   m_2dElemToElems = _2dElemToElems;
 }
 
-ArrayOfArrays< globalIndex > FaceBlock::getDuplicatedNodes() const
+ArrayOfArrays< globalIndex > FaceBlock::getCollocatedNodes() const
 {
-  return m_duplicatedNodes;
+  return m_collocatedNodes;
 }
 
-void FaceBlock::setDuplicatedNodes( ArrayOfArrays< globalIndex > && duplicatedNodes )
+void FaceBlock::setCollocatedNodes( ArrayOfArrays< globalIndex > && collocatedNodes )
 {
-  m_duplicatedNodes = duplicatedNodes;
+  m_collocatedNodes = collocatedNodes;
 }
 
 }

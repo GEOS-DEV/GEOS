@@ -160,18 +160,15 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
   {
     MeshLevel & meshLevel = meshBody.getBaseDiscretization();
 
-    std::set< std::set< globalIndex > > duplicatedNodes;
+    std::set< std::set< globalIndex > > collocatedNodes;
     meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >(
       [&]( FaceElementSubRegion const & subRegion )
       {
-        for( int i = 0; i < subRegion.m_duplicatedNodes.size(); ++i )
+        ArrayOfArraysView< globalIndex const > collNodes = subRegion.getCollocatedNodes();
+        for( int i = 0; i < collNodes.size(); ++i )
         {
-          auto const & nodes = subRegion.m_duplicatedNodes[i];
-          for( globalIndex const & n: nodes )
-          {
-            std::set< globalIndex > tmp( nodes.begin(), nodes.end() );
-            duplicatedNodes.insert( tmp );
-          }
+          std::set< globalIndex > const tmp( collNodes[i].begin(), collNodes[i].end() );
+          collocatedNodes.insert( tmp );
         }
 	    } );
 
@@ -205,7 +202,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
       [&]( FaceElementSubRegion const & subRegion )
       {
         requestedNodes.insert( subRegion.m_missingNodes.begin(), subRegion.m_missingNodes.end() );
-        GEOS_LOG_RANK( "m_otherDuplicatedNodes = " << subRegion.m_otherDuplicatedNodes.size() ); // values are zero for all ranks.
+        GEOS_LOG_RANK( "m_otherCollocatedNodes = " << subRegion.m_otherCollocatedNodes.size() ); // values are zero for all ranks.
       } );
 
     CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
@@ -216,7 +213,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
 
     CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
                                                                            m_neighbors,
-                                                                           duplicatedNodes,
+                                                                           collocatedNodes,
                                                                            requestedNodes );
   } );
 }
