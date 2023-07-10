@@ -85,14 +85,14 @@ public:
     m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
 
-    m_levelFRelaxType[1]       = MGRFRelaxationType::jacobi; //default, i.e. Jacobi
+    m_levelFRelaxType[1]       = MGRFRelaxationType::jacobi;
     m_levelFRelaxIters[1]         = 1;
     m_levelInterpType[1]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::none;
 
-    m_levelFRelaxType[2]       = MGRFRelaxationType::jacobi; //default, i.e. Jacobi
+    m_levelFRelaxType[2]       = MGRFRelaxationType::jacobi;
     m_levelFRelaxIters[2]         = 1;
     m_levelInterpType[2]       = MGRInterpolationType::injection;
     m_levelRestrictType[2]     = MGRRestrictionType::injection;

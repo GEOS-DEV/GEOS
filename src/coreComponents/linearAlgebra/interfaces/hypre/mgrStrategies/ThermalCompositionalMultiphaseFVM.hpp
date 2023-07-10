@@ -78,11 +78,7 @@ public:
     m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::blockGaussSeidel;
     m_levelGlobalSmootherIters[0] = 1;
 
-#if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP
-    m_levelFRelaxType[1]          = MGRFRelaxationType::l1jacobi;
-#else
     m_levelFRelaxType[1]          = MGRFRelaxationType::jacobi;
-#endif
     m_levelFRelaxIters[1]         = 1;
     m_levelInterpType[1]       = MGRInterpolationType::injection; // Injection
     m_levelRestrictType[1]     = MGRRestrictionType::injection;

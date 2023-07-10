@@ -95,7 +95,7 @@ public:
     m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
 
     // Level 1
-    m_levelFRelaxType[1]       = MGRFRelaxationType::jacobi; //default, i.e. Jacobi
+    m_levelFRelaxType[1]       = MGRFRelaxationType::jacobi;
     m_levelFRelaxIters[1]         = 1;
     m_levelInterpType[1]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
@@ -103,7 +103,7 @@ public:
     m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::none;
 
     // Level 2
-    m_levelFRelaxType[2]       = MGRFRelaxationType::jacobi; //default, i.e. Jacobi
+    m_levelFRelaxType[2]       = MGRFRelaxationType::jacobi;
     m_levelFRelaxIters[2]         = 1;
     m_levelInterpType[2]       = MGRInterpolationType::injection;
     m_levelRestrictType[2]     = MGRRestrictionType::injection;
@@ -111,7 +111,7 @@ public:
     m_levelGlobalSmootherType[2]  = MGRGlobalSmootherType::none;
 
     // Level 3
-    m_levelFRelaxType[3]       = MGRFRelaxationType::jacobi; //default, i.e. Jacobi
+    m_levelFRelaxType[3]       = MGRFRelaxationType::jacobi;
     m_levelFRelaxIters[3]         = 1;
     m_levelInterpType[3]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[3]     = MGRRestrictionType::injection;

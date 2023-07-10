@@ -65,11 +65,7 @@ public:
 
     setupLabels();
 
-#if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP // Why a different relaxation type for CPU and GPU?
-    m_levelFRelaxType[0]          = MGRFRelaxationType::l1jacobi;
-#else
     m_levelFRelaxType[0]          = MGRFRelaxationType::jacobi;
-#endif
     m_levelFRelaxIters[0]         = 1;
     m_levelInterpType[0]       = MGRInterpolationType::injection;
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
