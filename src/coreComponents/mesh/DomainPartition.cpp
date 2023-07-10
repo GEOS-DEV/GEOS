@@ -174,12 +174,13 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
           }
         }
 	    } );
-//    meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >(
-//      [&]( FaceElementSubRegion & subRegion )
-//      {
-//        subRegion.setMissingNodes( meshLevel.getNodeManager() );
+
+    meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >(
+      [&]( FaceElementSubRegion & subRegion )
+      {
+        subRegion.setMissingNodes( meshLevel.getNodeManager() );
 //        GEOS_LOG_RANK( "missing nodes are: {" << stringutilities::join( subRegion.m_missingNodes, ", " ) << "}." );
-//      } );
+      } );
 
     NodeManager & nodeManager = meshLevel.getNodeManager();
     FaceManager & faceManager = meshLevel.getFaceManager();
