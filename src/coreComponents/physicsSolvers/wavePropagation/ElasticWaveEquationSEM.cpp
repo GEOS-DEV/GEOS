@@ -548,13 +548,17 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
+      finiteElement::FiniteElementBase const &
+      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
-      for( localIndex k = 0; k < elementSubRegion.size(); ++k )
+
+      auto numQuadraturePointsPerElem = fe.getNumQuadraturePoints();
+      for( localIndex e = 0; e < elementSubRegion.size(); ++e )
       {
-        for( localIndex i = 0; i < elemsToNodes.size( 1 ); ++i )
+        for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
         {
-            m_solverTargetNodesSet.insert( elemsToNodes[k][i] );
+          m_solverTargetNodesSet.insert( elemsToNodes[e][q] );
         }
       }
 
@@ -562,9 +566,6 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       arrayView1d< real32 > const density = elementSubRegion.getField< fields::MediumDensity >();
       arrayView1d< real32 > const velocityVp = elementSubRegion.getField< fields::MediumVelocityVp >();
       arrayView1d< real32 > const velocityVs = elementSubRegion.getField< fields::MediumVelocityVs >();
-
-      finiteElement::FiniteElementBase const &
-      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe,
                                                                                [&]
