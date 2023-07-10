@@ -40,7 +40,7 @@ using namespace geos::testing;
 CommandLineOptions g_commandLineOptions;
 
 char const * PreXmlInput =
-  R"(
+  R"xml(
   <Problem>
     <Solvers gravityVector="{ 0.0, 0.0, -9.81 }">
       <SinglePhaseReservoir name="reservoirSystem"
@@ -83,10 +83,10 @@ char const * PreXmlInput =
                     nx="{3}"
                     ny="{1}"
                     nz="{1}"
-                    cellBlockNames="{cb1}">)";
+                    cellBlockNames="{cb1}">)xml";
 
 char const * PostXmlInput =
-  R"(
+  R"xml(
       </InternalMesh>
     </Mesh>
     <NumericalMethods>
@@ -133,7 +133,7 @@ char const * PostXmlInput =
                           scale="5e6"/>
     </FieldSpecifications>
   </Problem>
-  )";
+  )xml";
 
 template< typename LAMBDA >
 void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & solver,

@@ -40,6 +40,8 @@
 #include <vtkNew.h>
 #include <vtkPartitionedDataSet.h>
 #include <vtkPointData.h>
+#include <vtkPolyData.h>
+#include <vtkPolyDataReader.h>
 #include <vtkRectilinearGrid.h>
 #include <vtkRectilinearGridReader.h>
 #include <vtkRedistributeDataSetFilter.h>
@@ -48,19 +50,17 @@
 #include <vtkStructuredPoints.h>
 #include <vtkStructuredPointsReader.h>
 #include <vtkUnstructuredGridReader.h>
-#include <vtkPolyData.h>
-#include <vtkPolyDataReader.h>
 #include <vtkXMLImageDataReader.h>
 #include <vtkXMLMultiBlockDataReader.h>
 #include <vtkXMLPImageDataReader.h>
+#include <vtkXMLPolyDataReader.h>
+#include <vtkXMLPPolyDataReader.h>
 #include <vtkXMLPRectilinearGridReader.h>
 #include <vtkXMLPStructuredGridReader.h>
 #include <vtkXMLPUnstructuredGridReader.h>
 #include <vtkXMLRectilinearGridReader.h>
 #include <vtkXMLStructuredGridReader.h>
 #include <vtkXMLUnstructuredGridReader.h>
-#include <vtkXMLPolyDataReader.h>
-#include <vtkXMLPPolyDataReader.h>
 
 #ifdef GEOSX_USE_MPI
 #include <vtkMPIController.h>
@@ -482,7 +482,7 @@ loadMesh( Path const & filePath,
     case VTKMeshExtension::pvtp: return parallelRead( vtkSmartPointer< vtkXMLPPolyDataReader >::New() );
     default:
     {
-      GEOS_ERROR( extension << " is not a recognized extension for VTKMesh. Please use .vtk, .vtu, .vtr, .vts, .vti, .pvtu, .pvtr, .pvts or .ptvi." );
+      GEOS_ERROR( extension << " is not a recognized extension for VTKMesh. Please use " << EnumStrings< VTKMeshExtension >::get() );
       break;
     }
   }

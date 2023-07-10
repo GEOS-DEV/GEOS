@@ -56,11 +56,11 @@ void VTKWellGenerator::fillPolylineDataStructure( )
     vtkPoints * points = polyData->GetPoints();
     m_polyNodeCoords.resize( points->GetNumberOfPoints(), 3 );
     globalIndex ipoint = 0;
-    for( vtkIdType c = 0; c < points->GetNumberOfPoints(); ++c )
+    for( vtkIdType c = 0; c < points->GetNumberOfPoints(); ++c, ++ipoint )
     {
       real64 point[3];
       points->GetPoint( c, point );
-      LvArray::tensorOps::copy< 3 >( m_polyNodeCoords[ipoint++], point );
+      LvArray::tensorOps::copy< 3 >( m_polyNodeCoords[ipoint], point );
     }
 
     // load edges

@@ -62,7 +62,7 @@ public:
   ///@}
 
 
-protected:
+private:
 
   ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct
@@ -77,8 +77,6 @@ protected:
    */
   void fillPolylineDataStructure( ) override;
 
-
-private:
 
   /// Path to the mesh file
   Path m_filePath;
