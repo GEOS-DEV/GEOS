@@ -143,6 +143,7 @@ def main():
 	plt.ylabel('Hoop stress [Pa]')
 	plt.xlabel('Radial coordinate [m]')
 	plt.xlim(0.15,0.4)
+	plt.ylim(-1e7,3.5e7)
 	plt.legend(loc='upper right')
 
 	plt.savefig('stress.png')
