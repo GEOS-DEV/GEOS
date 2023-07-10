@@ -20,8 +20,6 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/GeosxState.hpp"
 
-// System includes
-#include <chrono>
 
 using namespace geos;
 
@@ -30,7 +28,7 @@ int main( int argc, char *argv[] )
 {
   try
   {
-    std::chrono::system_clock::time_point const startTime = std::chrono::system_clock::now();
+    std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 
     std::unique_ptr< CommandLineOptions > commandLineOptions = basicSetup( argc, argv, true );
 
@@ -55,8 +53,8 @@ int main( int argc, char *argv[] )
 
     basicCleanup();
 
-    std::chrono::system_clock::time_point const endTime = std::chrono::system_clock::now();
-    std::chrono::system_clock::duration const totalTime = endTime - startTime;
+    std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
+    std::chrono::system_clock::duration totalTime = endTime - startTime;
 
     GEOS_LOG_RANK_0( GEOS_FMT( "Finished at {:%Y-%m-%d %H:%M:%S}", endTime ) );
     GEOS_LOG_RANK_0( GEOS_FMT( "total time            {:%H:%M:%S}", totalTime ) );
