@@ -99,35 +99,6 @@ public:
     HysteresisCurve() = default;
 
     /**
-     * @brief Constructor for the class
-     * @param m_extremumPhaseVolFraction represents either Swc or Sgmax depending if a wetting curve or nonwetting is described
-     * @param m_extremumValue represents the associate relperm or capillary pressure value
-     * @param m_criticalImbibitionPhaseVolFraction represents in wetting case the imibibition max and in non-wetting the imbibition residual
-     * @param m_criticalImbibitionValue represents the associate relperm or capillary pressure value
-     * @param m_criticalDrainagePhaseVolFraction represents in wetting case the drainage max and in non-wetting the drainage residual
-     * @param m_criticalDrainageValue represents the associate relperm or capillary pressure value
-     */
-    HysteresisCurve( real64 const & extremumPhaseVoFraction,
-                     real64 const & extremumValue,
-                     real64 const & criticalImbibitionPhaseVolFraction,
-                     real64 const & criticalImbibitionValue,
-                     real64 const & criticalDrainagePhaseVolFraction,
-                     real64 const & criticalDrainageValue )
-    {
-      setPoints( extremumPhaseVoFraction,
-                 extremumValue,
-                 criticalImbibitionPhaseVolFraction,
-                 criticalImbibitionValue,
-                 criticalDrainagePhaseVolFraction,
-                 criticalDrainageValue );
-
-      m_isWetting =  ((m_criticalDrainagePhaseVolFraction > m_extremumPhaseVolFraction) ?
-                      PhaseWettability::WETTING :
-                      PhaseWettability::NONWETTING) == PhaseWettability::WETTING;
-
-    }
-
-    /**
      * @brief Helper function to set the key data members of the class
      * @param m_extremumPhaseVolFraction represents either Swc or Sgmax depending if a wetting curve or nonwetting is described
      * @param m_extremumValue represents the associate relperm or capillary pressure value
@@ -150,6 +121,10 @@ public:
       m_extremumValue = extremumValue;
       m_criticalImbibitionValue = criticalImbibitionValue;
       m_criticalDrainageValue = criticalDrainageValue;
+
+      m_isWetting =  ((m_criticalDrainagePhaseVolFraction > m_extremumPhaseVolFraction) ?
+                      PhaseWettability::WETTING :
+                      PhaseWettability::NONWETTING) == PhaseWettability::WETTING;
     }
 
     /**
