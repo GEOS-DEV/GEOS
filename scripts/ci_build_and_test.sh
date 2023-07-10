@@ -6,7 +6,7 @@ env
 # Optional BUILD_AND_TEST_ARGS to pass arguments to build_test_helper.sh script.
 #
 # We extract the location of the GEOSX_TPL from the container...
-GEOSX_TPL_DIR=$(docker run --rm ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} /bin/bash -c 'echo ${GEOSX_TPL_DIR}')
+GEOSX_TPL_DIR=$(docker run --rm ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} /bin/bash -c 'echo ${GEOSX_TPL_DIR}' | tail -1)
 # ... so we can install GEOSX alongside. This is assumed for bundling the binaries, so consider modifying with care.
 GEOSX_DIR=${GEOSX_TPL_DIR}/../GEOSX-INSTALL
 # We need to get the build directory
