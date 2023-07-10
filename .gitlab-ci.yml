@@ -34,7 +34,7 @@ stages:
     - module load python/2
 
     # GEOS requires CMake >=3.23
-    - module load cmake/3.23
+    - module load cmake/3.23.1
 
     # CONFIGURE
     - echo "~~~~~~~~~~ START - configure ~~~~~~~~~~~"
