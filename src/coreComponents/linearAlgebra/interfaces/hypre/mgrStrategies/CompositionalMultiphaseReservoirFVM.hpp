@@ -120,11 +120,6 @@ public:
 
     setReduction( precond, mgrData );
 
-    // I assumed this is related to the fill in generated while eliminating
-    // the volume constraint. Is it still needed now that the sparsity
-    // pattern has been fixed?
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 )); // Low tolerance to remove only zeros
-
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
     setPressureAMG( mgrData.coarseSolver );
   }

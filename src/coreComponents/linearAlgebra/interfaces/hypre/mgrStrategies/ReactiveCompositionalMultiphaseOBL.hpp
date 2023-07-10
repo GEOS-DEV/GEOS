@@ -85,8 +85,6 @@ public:
   {
     setReduction( precond, mgrData );
 
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 )); // truncate intermediate/coarse grids (NEEDED?)
-
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
     setPressureAMG( mgrData.coarseSolver );
   }
