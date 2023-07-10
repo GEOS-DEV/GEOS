@@ -345,6 +345,8 @@ CommunicationTools::
 
   array1d< globalIndex > const globalPartitionBoundaryObjectsIndices = objectManager.constructGlobalListOfBoundaryObjects();
 
+  std::map< int, array1d< globalIndex > > requestedMatchesMap;  // The key is the neighbor MPI rank.
+
   // send the size of the partitionBoundaryObjects to neighbors
   {
     array1d< array1d< globalIndex > > neighborPartitionBoundaryObjects( allNeighbors.size() );
@@ -383,7 +385,7 @@ CommunicationTools::
       array1d< localIndex > & matchedPartitionBoundaryObjects = objectManager.getNeighborData( neighbor.neighborRank() ).matchedPartitionBoundary();
       array1d< localIndex > & secondLevelMatches = objectManager.getNeighborData( neighbor.neighborRank() ).secondLevelMatches();
       // TODO It's surely wrong to attach requestedMatches here. Same may be true for the secondLevelMatches.
-      array1d< globalIndex > & requestedMatches = objectManager.getNeighborData( neighbor.neighborRank() ).requestedMatches();
+      array1d< globalIndex > & requestedMatches = requestedMatchesMap[neighbor.neighborRank()];
 
       localIndex localCounter = 0;
       localIndex neighborCounter = 0;
@@ -459,8 +461,6 @@ CommunicationTools::
 
   // Managing the requests
   {
-    array1d< array1d< globalIndex > > requestedNodes( allNeighbors.size() );
-
     MPI_iCommData commData( getCommID() );
     int const commID = commData.commID();
     integer const numNeighbors = LvArray::integerConversion< integer >( allNeighbors.size() );
@@ -468,7 +468,7 @@ CommunicationTools::
     for( integer i = 0; i < numNeighbors; ++i )
     {
       NeighborCommunicator & neighbor = allNeighbors[i];
-      array1d< globalIndex > & requestedMatches = objectManager.getNeighborData( neighbor.neighborRank() ).m_requestedMatches;
+      array1d< globalIndex > & requestedMatches = requestedMatchesMap.at( neighbor.neighborRank() );
       allNeighbors[i].mpiISendReceiveSizes( requestedMatches,
                                             commData.mpiSendBufferSizeRequest( i ),
                                             commData.mpiRecvBufferSizeRequest( i ),
@@ -484,7 +484,7 @@ CommunicationTools::
     for( integer i = 0; i < numNeighbors; ++i )
     {
       NeighborCommunicator & neighbor = allNeighbors[i];
-      array1d< globalIndex > requestedMatches = objectManager.getNeighborData( neighbor.neighborRank() ).m_requestedMatches;
+      array1d< globalIndex > & requestedMatches = requestedMatchesMap.at( neighbor.neighborRank() );
       allNeighbors[i].mpiISendReceiveData( requestedMatches,
                                            commData.mpiSendBufferRequest( i ),
                                            neighborRequestedNodes[i],
