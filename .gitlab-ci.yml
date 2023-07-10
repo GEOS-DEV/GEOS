@@ -33,6 +33,9 @@ stages:
     # geosxats needs python2 to run
     - module load python/2
 
+    # GEOS requires CMake >=3.23
+    - module load cmake/3.23
+
     # CONFIGURE
     - echo "~~~~~~~~~~ START - configure ~~~~~~~~~~~"
     - config_code=0
