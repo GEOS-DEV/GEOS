@@ -31,7 +31,7 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        order="3"
+        order="5"
         formulation="SEM"/>
     </FiniteElements>
   </NumericalMethods>
