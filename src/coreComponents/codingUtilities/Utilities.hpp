@@ -200,7 +200,10 @@ VAL findOption( mapBase< KEY, VAL, SORTED > const & map,
   auto const iter = map.find( option );
   GEOS_THROW_IF( iter == map.end(),
                  GEOS_FMT( "{}: unsupported option '{}' for {}.\nSupported options are: {}",
-                           contextName, option, optionName, stringutilities::join( mapKeys( map ), ", " ) ),
+                           contextName,
+                           const_cast< typename std::remove_const< KEY & >::type >( option ),
+                           optionName,
+                           stringutilities::join( mapKeys( map ), ", " ) ),
                  InputError );
   return iter->second;
 }

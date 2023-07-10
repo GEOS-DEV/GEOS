@@ -33,7 +33,7 @@
 /* #undef GEOSX_USE_OPENMP */
 
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
-/* #undef GEOS_USE_CUDA */
+#define GEOS_USE_CUDA
 
 /// Enables use of CUDA NVToolsExt (CMake option ENABLE_CUDA_NVTOOLSEXT)
 /* #undef GEOS_USE_CUDA_NVTOOLSEXT */
@@ -126,10 +126,10 @@
 #define GEOSX_BLOCK_SIZE 64
 
 /// Version information for HDF5
-#define HDF5_VERSION 1.14.1
+#define HDF5_VERSION 1.12.1
 
 /// Version information for Conduit
-#define Conduit_VERSION 0.8.7
+#define Conduit_VERSION 0.8.2
 
 /// Version information for RAJA
 #define RAJA_VERSION 2022.10.5
@@ -162,7 +162,7 @@
 #define suitesparse_VERSION 5.7.9
 
 /// Version information for VTK
-/* #undef VTK_VERSION */
+#define VTK_VERSION 9.2.6
 
 /// Version information for fmt
 #define fmt_VERSION 10.0.0
