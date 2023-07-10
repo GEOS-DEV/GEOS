@@ -50,11 +50,11 @@ public:
 };
 
 // Class specialization for a POROMECHANICS_SOLVER set to MultiphasePoromechanics
-// template<> class HydrofractureSolverCatalogNames< MultiphasePoromechanics >
-// {
-// public:
-//   static string name() { return "MultiphaseHydrofracture"; }
-// };
+template<> class HydrofractureSolverCatalogNames< MultiphasePoromechanics >
+{
+public:
+  static string name() { return "MultiphaseHydrofracture"; }
+};
 }
 
 // provide a definition for catalogName()
