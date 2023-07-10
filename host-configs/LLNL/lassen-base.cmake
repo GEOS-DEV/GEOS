@@ -76,4 +76,6 @@ set(Python3_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/lassen-gcc-python/
 # ATS
 set(ATS_ARGUMENTS "--ats jsrun_omp --ats jsrun_bind=packed"  CACHE STRING "")
 
+set( GEOS_KERNEL_SPEC ${CMAKE_CURRENT_LIST_DIR}/default-kernels.json CACHE PATH "")
+
 include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)

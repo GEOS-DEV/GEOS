@@ -21,6 +21,7 @@
 
 #include "common/DataLayouts.hpp"
 #include "mesh/MeshFields.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 namespace geos
 {

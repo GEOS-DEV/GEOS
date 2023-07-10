@@ -23,18 +23,19 @@ set( physicsSolvers_headers
      fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp
      fluidFlow/ThermalCompositionalMultiphaseBaseKernels.hpp
      fluidFlow/CompositionalMultiphaseFVM.hpp
-     fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp 
-     fluidFlow/IsothermalCompositionalMultiphaseFVMKernelUtilities.hpp    
+     fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp
+     fluidFlow/IsothermalCompositionalMultiphaseFVMKernelUtilities.hpp
      fluidFlow/ThermalCompositionalMultiphaseFVMKernels.hpp
      fluidFlow/CompositionalMultiphaseHybridFVM.hpp
      fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
+     fluidFlow/CompositionalMultiphaseHybridFVMKernels_impl.hpp
      fluidFlow/CompositionalMultiphaseUtilities.hpp
      fluidFlow/ReactiveCompositionalMultiphaseOBL.hpp
      fluidFlow/ReactiveCompositionalMultiphaseOBLFields.hpp
      fluidFlow/ReactiveCompositionalMultiphaseOBLKernels.hpp
      fluidFlow/FlowSolverBase.hpp
      fluidFlow/FlowSolverBaseFields.hpp
-     fluidFlow/FlowSolverBaseKernels.hpp     
+     fluidFlow/FlowSolverBaseKernels.hpp
      fluidFlow/FluxKernelsHelper.hpp
      fluidFlow/HybridFVMHelperKernels.hpp
      fluidFlow/proppantTransport/ProppantTransport.hpp
@@ -81,11 +82,11 @@ set( physicsSolvers_headers
      multiphysics/poromechanicsKernels/PoromechanicsBase.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp
-     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp     
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp
-     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEmbeddedFractures.hpp     
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEmbeddedFractures.hpp
      multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics.hpp
      multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics_impl.hpp
      multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp
@@ -149,14 +150,25 @@ set( physicsSolvers_sources
      contact/ContactSolverBase.cpp
      contact/LagrangianContactSolver.cpp
      contact/SolidMechanicsEmbeddedFractures.cpp
+     fluidFlow/FlowSolverBase.cpp
      fluidFlow/CompositionalMultiphaseBase.cpp
      fluidFlow/CompositionalMultiphaseFVM.cpp
      fluidFlow/CompositionalMultiphaseStatistics.cpp
      fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.cpp
      fluidFlow/CompositionalMultiphaseHybridFVM.cpp
-     fluidFlow/CompositionalMultiphaseHybridFVMKernels.cpp
+     fluidFlow/CompositionalMultiphaseFVM_applyAquiferBC.cpp
+     fluidFlow/CompositionalMultiphaseFVM_applyBoundaryConditions.cpp
+     fluidFlow/CompositionalMultiphaseFVM_applyFaceDirichletBC.cpp
+     fluidFlow/CompositionalMultiphaseFVM_applySystemSolution.cpp
+     fluidFlow/CompositionalMultiphaseFVM_assembleFluxTerms.cpp
+     fluidFlow/CompositionalMultiphaseFVM_assembleStabilizedFluxTerms.cpp
+     fluidFlow/CompositionalMultiphaseFVM_calculateResidualNorm.cpp
+     fluidFlow/CompositionalMultiphaseFVM_checkSystemSolution.cpp
+     fluidFlow/CompositionalMultiphaseFVM_initalizePreSubGroups.cpp
+     fluidFlow/CompositionalMultiphaseFVM_scalingForSystemSolution.cpp
+     fluidFlow/CompositionalMultiphaseFVM_setupDofs.cpp
+     fluidFlow/CompositionalMultiphaseFVM_updatePhaseMobility.cpp
      fluidFlow/ReactiveCompositionalMultiphaseOBL.cpp
-     fluidFlow/FlowSolverBase.cpp
      fluidFlow/proppantTransport/ProppantTransport.cpp
      fluidFlow/proppantTransport/ProppantTransportKernels.cpp
      fluidFlow/SinglePhaseBase.cpp
@@ -198,11 +210,82 @@ set( physicsSolvers_sources
      wavePropagation/ElasticWaveEquationSEM.cpp
      wavePropagation/ElasticFirstOrderWaveEquationSEM.cpp
      wavePropagation/AcousticFirstOrderWaveEquationSEM.cpp
-
    )
 
-  include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
-  include( multiphysics/poromechanicsKernels/PoromechanicsKernels.cmake)
+  file( READ ${GEOS_KERNEL_SPEC} kernelSpecs )
+
+  generateKernels( TEMPLATE "solidMechanics/kernels/SolidMechanicsKernels.cpp.template"
+                   JSON kernelSpecs
+                   KEY "SolidMechanicsKernels"
+                   RESULT solidMechanicsKernelFiles )
+  list(APPEND physicsSolvers_sources ${solidMechanicsKernelFiles})
+
+  generateKernels( TEMPLATE "solidMechanics/kernels/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template"
+                   JSON kernelSpecs
+                   KEY "SolidMechanicsFixedStressThermPoroElasticKernels"
+                   RESULT SolidMechanicsFixedStressThermPoroElasticKernelFiles )
+  list(APPEND physicsSolvers_sources ${SolidMechanicsFixedStressThermPoroElasticKernelFiles})
+
+  generateKernels( TEMPLATE "multiphysics/poromechanicsKernels/PoromechanicsKernels.cpp.template"
+                   JSON kernelSpecs
+                   KEY "PoromechanicsKernels"
+                   RESULT PoromechanicsKernelFiles )
+  list(APPEND physicsSolvers_sources ${PoromechanicsKernelFiles})
+
+  generateKernels( TEMPLATE "multiphysics/poromechanicsKernels/PoromechanicsEFEMKernels.cpp.template"
+                   JSON kernelSpecs
+                   KEY "PoromechanicsEFEMKernels"
+                   RESULT PoromechanicsEFEMKernelFiles )
+  list(APPEND physicsSolvers_sources ${PoromechanicsEFEMKernelFiles})
+
+  generateKernels( TEMPLATE "multiphysics/poromechanicsKernels/ThermoPoromechanicsKernels.cpp.template"
+                   JSON kernelSpecs
+                   KEY "ThermoPoromechanicsKernels"
+                   RESULT ThermoPoromechanicsKernelFiles )
+  list(APPEND physicsSolvers_sources ${ThermoPoromechanicsKernelFiles})
+
+  generateKernels( TEMPLATE "fluidFlow/SinglePhaseHybridFVMKernels.cpp.template"
+                   JSON kernelSpecs
+                   KEY "SinglePhaseHybridFVMKernels"
+                   RESULT SinglePhaseHybridFVMKernelFiles )
+  list(APPEND physicsSolvers_sources ${SinglePhaseHybridFVMKernelFiles})
+
+  generateKernels( TEMPLATE "fluidFlow/CompositionalMultiphaseHybridFVMKernels_upwinding.cpp.template"
+                   JSON kernelSpecs
+                   KEY "CompositionalMultiphaseHybridFVMKernels_upwinding"
+                   RESULT CompositionalMultiphaseHybridFVMKernels_upwinding )
+  list(APPEND physicsSolvers_sources ${CompositionalMultiphaseHybridFVMKernels_upwinding})
+
+  generateKernels( TEMPLATE "fluidFlow/CompositionalMultiphaseHybridFVMKernels_assembly.cpp.template"
+                   JSON kernelSpecs
+                   KEY "CompositionalMultiphaseHybridFVMKernels_assembly"
+                   RESULT CompositionalMultiphaseHybridFVMKernels_assembly )
+  list(APPEND physicsSolvers_sources ${CompositionalMultiphaseHybridFVMKernels_assembly})
+
+  generateKernels( TEMPLATE "fluidFlow/CompositionalMultiphaseHybridFVMKernels_flux.cpp.template"
+                   JSON kernelSpecs
+                   KEY "CompositionalMultiphaseHybridFVMKernels_flux"
+                   RESULT CompositionalMultiphaseHybridFVMKernels_flux )
+  list(APPEND physicsSolvers_sources ${CompositionalMultiphaseHybridFVMKernels_flux})
+
+  generateKernels( TEMPLATE "fluidFlow/ReactiveCompositionalMultiphaseOBLKernels.cpp.template"
+                   JSON kernelSpecs
+                   KEY "ReactiveCompositionalMultiphaseOBLKernels"
+                   RESULT ReactiveCompositionalMultiphaseKernelFiles )
+  list(APPEND physicsSolvers_sources ${ReactiveCompositionalMultiphaseKernelFiles})
+
+  generateKernels( TEMPLATE "fluidFlow/CompositionalMultiphaseFVMKernel_isothermal.cpp.template"
+                   JSON kernelSpecs
+                   KEY "IsothermalCompositionalMultiphaseFVM_DirichletFaceBasedAssemblyKernels"
+                   RESULT CompositionalMultiphaseFVMKernelFiles_isothermal )
+  list(APPEND physicsSolvers_sources ${CompositionalMultiphaseFVMKernelFiles_isothermal})
+
+  generateKernels( TEMPLATE "fluidFlow/CompositionalMultiphaseFVMKernel_thermal.cpp.template"
+                   JSON kernelSpecs
+                   KEY "ThermalCompositionalMultiphaseFVM_DirichletFaceBasedAssemblyKernels"
+                   RESULT CompositionalMultiphaseFVMKernelFiles_thermal )
+  list(APPEND physicsSolvers_sources ${CompositionalMultiphaseFVMKernelFiles_thermal})
+
 
 set( dependencyList ${parallelDeps} constitutive mesh linearAlgebra discretizationMethods events )
 if( ENABLE_PYGEOSX )

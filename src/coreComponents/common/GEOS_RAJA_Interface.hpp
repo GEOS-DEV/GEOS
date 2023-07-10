@@ -32,7 +32,7 @@ namespace geos
 
 auto const hostMemorySpace = LvArray::MemorySpace::host;
 
-using serialPolicy = RAJA::loop_exec;
+using serialPolicy = RAJA::seq_exec;
 using serialAtomic = RAJA::seq_atomic;
 using serialReduce = RAJA::seq_reduce;
 
@@ -45,7 +45,7 @@ auto const parallelHostMemorySpace = hostMemorySpace;
 
 using parallelHostPolicy = RAJA::omp_parallel_for_exec;
 using parallelHostReduce = RAJA::omp_reduce;
-using parallelHostAtomic = RAJA::builtin_atomic;
+using parallelHostAtomic = RAJA::omp_atomic;
 
 // issues with Raja::resources::Omp on lassen
 using parallelHostStream = serialStream;
