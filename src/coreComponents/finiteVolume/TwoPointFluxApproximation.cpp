@@ -1101,6 +1101,7 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
   {
     regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
   }
+  SortedArrayView< localIndex const > const regionFilterView = regionFilter.toViewConst();
 
   // Step 1: count individual aquifers
 
@@ -1144,7 +1145,7 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
         }
 
         // Filter out elements not in target regions
-        if( !regionFilter.contains( elemRegionList[iface][ke] ))
+        if( !regionFilterView.contains( elemRegionList[iface][ke] ))
         {
           continue;
         }
@@ -1211,7 +1212,7 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
         }
 
         // Filter out elements not in target regions
-        if( !regionFilter.contains( elemRegionList[iface][ke] ))
+        if( !regionFilterView.contains( elemRegionList[iface][ke] ))
         {
           continue;
         }
