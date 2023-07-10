@@ -237,6 +237,8 @@ public:
 
   virtual void saveConvergedState() const override final;
 
+  virtual void ignoreConvergedState() const override final;
+
   virtual arrayView1d< real64 const > const getBiotCoefficient() const override final
   {
     return m_biotCoefficient.toViewConst();

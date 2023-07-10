@@ -97,7 +97,9 @@ public:
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
 
-  virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override;
+  virtual void implicitStepSetup( real64 const & time_n,
+                                  real64 const & dt,
+                                  DomainPartition & domain ) override;
 
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,

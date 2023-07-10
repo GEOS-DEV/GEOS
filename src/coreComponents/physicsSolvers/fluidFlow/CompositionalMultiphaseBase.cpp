@@ -2002,9 +2002,13 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
       // Step 3: save the converged solid state
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
       CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
-      if( !m_keepFlowVariablesConstantDuringInitStep )
+      if( m_keepFlowVariablesConstantDuringInitStep )
       {
-        porousMaterial.saveConvergedState();
+        porousMaterial.ignoreConvergedState(); // newPorosity <- porosity_n
+      }
+      else
+      {
+        porousMaterial.saveConvergedState(); // porosity_n <- porosity
       }
 
       // Step 4: save converged state for the relperm model to handle hysteresis

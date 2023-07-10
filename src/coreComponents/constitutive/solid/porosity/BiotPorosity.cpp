@@ -99,6 +99,13 @@ void BiotPorosity::saveConvergedState() const
   m_averageMeanEffectiveStressIncrement_k.zero();
 }
 
+void BiotPorosity::ignoreConvergedState() const
+{
+  PorosityBase::ignoreConvergedState();
+  m_meanEffectiveStressIncrement_k.zero();
+  m_averageMeanEffectiveStressIncrement_k.zero();
+}
+
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BiotPorosity, string const &, Group * const )
 } /* namespace constitutive */

@@ -80,7 +80,7 @@ public:
   }
 
   /**
-   * @brief Helper to save point stress back to m_newPorosity array
+   * @brief Helper to save porosity back to m_newPorosity array
    *
    * This is mostly defined for improving code readability.
    *
@@ -247,6 +247,10 @@ public:
 
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const override;
+
+  /// Ignore the porosity update and return to the state of the system
+  /// This is useful after the initialization step
+  virtual void ignoreConvergedState() const;
 
   /**
    * @brief Initialize newPorosity and porosity_n.

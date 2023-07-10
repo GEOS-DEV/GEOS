@@ -346,10 +346,12 @@ void MultiphasePoromechanics::initializePreSubGroups()
   } );
 }
 
-void MultiphasePoromechanics::resetStateToBeginningOfStep( DomainPartition & domain )
+void MultiphasePoromechanics::implicitStepSetup( real64 const & time_n,
+                                                 real64 const & dt,
+                                                 DomainPartition & domain )
 {
-  Base::resetStateToBeginningOfStep( domain );
   flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
+  Base::implicitStepSetup( time_n, dt, domain );
 }
 
 void MultiphasePoromechanics::updateStabilizationParameters( DomainPartition & domain ) const

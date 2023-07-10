@@ -218,6 +218,14 @@ public:
   }
 
   /**
+   * @brief ignore the porosity update (after initialization step)
+   */
+  virtual void ignoreConvergedState() const
+  {
+    getBasePorosityModel().ignoreConvergedState();
+  }
+
+  /**
    * @brief get a constant reference to the solid internal energy model
    * return a constant SolidInternalEnergy reference to the solid internal energy model
    */

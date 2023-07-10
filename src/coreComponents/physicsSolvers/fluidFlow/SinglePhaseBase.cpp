@@ -709,9 +709,13 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
 
       CoupledSolidBase const & porousSolid =
         getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
-      if( !m_keepFlowVariablesConstantDuringInitStep )
+      if( m_keepFlowVariablesConstantDuringInitStep )
       {
-        porousSolid.saveConvergedState();
+        porousSolid.ignoreConvergedState(); // newPorosity <- porosity_n
+      }
+      else
+      {
+        porousSolid.saveConvergedState(); // porosity_n <- porosity
       }
 
       if( m_isThermal )

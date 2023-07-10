@@ -28,8 +28,7 @@
 namespace geos
 {
 
-class MultiphasePoromechanics : public CoupledSolver< CompositionalMultiphaseBase,
-                                                      SolidMechanicsLagrangianFEM >
+class MultiphasePoromechanics : public CoupledSolver< CompositionalMultiphaseBase, SolidMechanicsLagrangianFEM >
 {
 public:
 
@@ -99,7 +98,9 @@ public:
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
 
-  virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override;
+  virtual void implicitStepSetup( real64 const & time_n,
+                                  real64 const & dt,
+                                  DomainPartition & domain ) override;
 
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
