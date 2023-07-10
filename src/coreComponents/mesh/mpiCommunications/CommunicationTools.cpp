@@ -383,8 +383,7 @@ CommunicationTools::
     {
       NeighborCommunicator & neighbor = allNeighbors[i];
       array1d< localIndex > & matchedPartitionBoundaryObjects = objectManager.getNeighborData( neighbor.neighborRank() ).matchedPartitionBoundary();
-      array1d< localIndex > & secondLevelMatches = objectManager.getNeighborData( neighbor.neighborRank() ).secondLevelMatches();
-      // TODO It's surely wrong to attach requestedMatches here. Same may be true for the secondLevelMatches.
+      array1d< localIndex > secondLevelMatches;
       array1d< globalIndex > & requestedMatches = requestedMatchesMap[neighbor.neighborRank()];
 
       localIndex localCounter = 0;
