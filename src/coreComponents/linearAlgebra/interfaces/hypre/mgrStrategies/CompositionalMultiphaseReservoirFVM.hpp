@@ -125,18 +125,6 @@ public:
     // pattern has been fixed?
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 )); // Low tolerance to remove only zeros
 
-    // NOT NEEDE ANYMORE -> fix the GPU vs CPU issue
-    // Note: uncomment HYPRE_MGRSetLevelFRelaxMethod and comment HYPRE_MGRSetRelaxType breaks the recipe, this requires further
-    // investigation
-    //GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, toUnderlyingPtr( m_levelFRelaxMethod ) ) );
-    // GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxType( precond.ptr, toUnderlyingPtr( m_levelFRelaxType ) ));
-    // GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetNumRelaxSweeps( precond.ptr, 1 ));
-
-    // do we use l1jacobi on all levels, including level 0, if using CUDA?
-#if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) ); // l1-Jacobi
-#endif
-
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
     setPressureAMG( mgrData.coarseSolver );
   }
