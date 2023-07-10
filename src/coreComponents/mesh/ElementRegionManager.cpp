@@ -191,7 +191,7 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
 
     globalIndex const numWellElemsGlobal = MpiWrapper::sum( subRegion.size() );
 
-    GEOS_ERROR_IF( numWellElemsGlobal != lineBlock.getNumElements(),
+    GEOS_ERROR_IF( numWellElemsGlobal != lineBlock.numElements(),
                    "Invalid partitioning in well " << lineBlock.getDataContext() <<
                    ", subregion " << subRegion.getDataContext() );
 
