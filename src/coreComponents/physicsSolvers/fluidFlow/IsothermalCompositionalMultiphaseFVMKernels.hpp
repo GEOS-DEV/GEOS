@@ -452,7 +452,7 @@ public:
    */
   FaceBasedAssemblyKernel( integer const numPhases,
                            globalIndex const rankOffset,
-                           //real64 const epsC1PPU,
+                           real64 const epsC1PPU,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
                            CompFlowAccessors const & compFlowAccessors,
@@ -477,8 +477,8 @@ public:
     m_stencilWrapper( stencilWrapper ),
     m_seri( stencilWrapper.getElementRegionIndices() ),
     m_sesri( stencilWrapper.getElementSubRegionIndices() ),
-    m_sei( stencilWrapper.getElementIndices() )//,
-    //m_epsC1PPU( epsC1PPU )
+    m_sei( stencilWrapper.getElementIndices() ),
+    m_epsC1PPU( epsC1PPU )
   { }
 
   /**
@@ -634,7 +634,7 @@ public:
               ( m_numPhases,
               ip,
               m_kernelFlags.hasFlag( FaceBasedAssemblyKernelFlags::CapPressure ),
-              //m_epsC1PPU,
+              m_epsC1PPU,
               seri, sesri, sei,
               trans,
               dTrans_dPres,
@@ -810,7 +810,7 @@ protected:
   typename STENCILWRAPPER::IndexContainerViewConstType const m_sei;
 
   /// Tolerance for C1-PPU smoothing
-  //real64 const m_epsC1PPU;
+  real64 const m_epsC1PPU;
 };
 
 /**
@@ -866,8 +866,7 @@ public:
         kernelFlags.setFlag( FaceBasedAssemblyKernelFlags::CapPressure );
       if( useTotalMassEquation )
         kernelFlags.setFlag( FaceBasedAssemblyKernelFlags::TotalMassEquation );
-      if( upwindingParams.upwindingScheme == UpwindingScheme::C1PPU &&
-          isothermalCompositionalMultiphaseFVMKernelUtilities::epsC1PPU > 0 ) //upwindingParams.epsC1PPU > 0
+      if( upwindingParams.upwindingScheme == UpwindingScheme::C1PPU && upwindingParams.epsC1PPU > 0 )
         kernelFlags.setFlag( FaceBasedAssemblyKernelFlags::C1PPU );
 
       using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
@@ -876,7 +875,7 @@ public:
       typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
       typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
-      kernelType kernel( numPhases, rankOffset, /*upwindingParams.epsC1PPU,*/ stencilWrapper, dofNumberAccessor,
+      kernelType kernel( numPhases, rankOffset, upwindingParams.epsC1PPU, stencilWrapper, dofNumberAccessor,
                          compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
                          dt, localMatrix, localRhs, kernelFlags );
       kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
@@ -978,7 +977,7 @@ public:
                                     BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags )
     : Base( numPhases,
             rankOffset,
-            //0.0,                   // no C1-PPU
+            0.0, // no C1-PPU
             stencilWrapper,
             dofNumberAccessor,
             compFlowAccessors,

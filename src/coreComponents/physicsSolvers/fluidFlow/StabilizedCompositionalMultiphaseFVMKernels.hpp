@@ -136,7 +136,7 @@ public:
                            BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags )
     : Base( numPhases,
             rankOffset,
-            //0.0,                  // no C1-PPU
+            0.0, // no C1-PPU
             stencilWrapper,
             dofNumberAccessor,
             compFlowAccessors,
