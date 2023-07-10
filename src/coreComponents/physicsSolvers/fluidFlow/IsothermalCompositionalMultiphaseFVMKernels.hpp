@@ -628,50 +628,50 @@ public:
 
           localIndex k_up = -1;
 
-          if(m_kernelFlags.hasFlag(FaceBasedAssemblyKernelFlags::C1PPU))
+          if( m_kernelFlags.hasFlag( FaceBasedAssemblyKernelFlags::C1PPU ))
           {
             isothermalCompositionalMultiphaseFVMKernelUtilities::C1PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
               ( m_numPhases,
-                ip,
-                m_kernelFlags.hasFlag( FaceBasedAssemblyKernelFlags::CapPressure ),
-                //m_epsC1PPU,
-                seri, sesri, sei,
-                trans,
-                dTrans_dPres,
-                m_pres,
-                m_gravCoef,
-                m_phaseMob, m_dPhaseMob,
-                m_dPhaseVolFrac,
-                m_dCompFrac_dCompDens,
-                m_phaseMassDens, m_dPhaseMassDens,
-                m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
-                k_up,
-                potGrad,
-                phaseFlux,
-                dPhaseFlux_dP,
-                dPhaseFlux_dC );
+              ip,
+              m_kernelFlags.hasFlag( FaceBasedAssemblyKernelFlags::CapPressure ),
+              //m_epsC1PPU,
+              seri, sesri, sei,
+              trans,
+              dTrans_dPres,
+              m_pres,
+              m_gravCoef,
+              m_phaseMob, m_dPhaseMob,
+              m_dPhaseVolFrac,
+              m_dCompFrac_dCompDens,
+              m_phaseMassDens, m_dPhaseMassDens,
+              m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
+              k_up,
+              potGrad,
+              phaseFlux,
+              dPhaseFlux_dP,
+              dPhaseFlux_dC );
           }
           else
           {
             isothermalCompositionalMultiphaseFVMKernelUtilities::PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
               ( m_numPhases,
-                ip,
-                m_kernelFlags.hasFlag( FaceBasedAssemblyKernelFlags::CapPressure ),
-                seri, sesri, sei,
-                trans,
-                dTrans_dPres,
-                m_pres,
-                m_gravCoef,
-                m_phaseMob, m_dPhaseMob,
-                m_dPhaseVolFrac,
-                m_dCompFrac_dCompDens,
-                m_phaseMassDens, m_dPhaseMassDens,
-                m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
-                k_up,
-                potGrad,
-                phaseFlux,
-                dPhaseFlux_dP,
-                dPhaseFlux_dC );
+              ip,
+              m_kernelFlags.hasFlag( FaceBasedAssemblyKernelFlags::CapPressure ),
+              seri, sesri, sei,
+              trans,
+              dTrans_dPres,
+              m_pres,
+              m_gravCoef,
+              m_phaseMob, m_dPhaseMob,
+              m_dPhaseVolFrac,
+              m_dCompFrac_dCompDens,
+              m_phaseMassDens, m_dPhaseMassDens,
+              m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
+              k_up,
+              potGrad,
+              phaseFlux,
+              dPhaseFlux_dP,
+              dPhaseFlux_dC );
           }
 
           isothermalCompositionalMultiphaseFVMKernelUtilities::
@@ -866,8 +866,8 @@ public:
         kernelFlags.setFlag( FaceBasedAssemblyKernelFlags::CapPressure );
       if( useTotalMassEquation )
         kernelFlags.setFlag( FaceBasedAssemblyKernelFlags::TotalMassEquation );
-      if ( upwindingParams.upwindingScheme == UpwindingScheme::C1PPU &&
-        isothermalCompositionalMultiphaseFVMKernelUtilities::epsC1PPU > 0 ) //upwindingParams.epsC1PPU > 0
+      if( upwindingParams.upwindingScheme == UpwindingScheme::C1PPU &&
+          isothermalCompositionalMultiphaseFVMKernelUtilities::epsC1PPU > 0 ) //upwindingParams.epsC1PPU > 0
         kernelFlags.setFlag( FaceBasedAssemblyKernelFlags::C1PPU );
 
       using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;

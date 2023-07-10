@@ -373,7 +373,7 @@ public:
 
         // Step 2.1: compute derivative of capillary pressure wrt temperature
         real64 dCapPressure_dT = 0.0;
-        if( m_kernelFlags.hasFlag( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::CapPressure ) )
+        if( AbstractBase::m_kernelFlags.hasFlag( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::CapPressure ) )
         {
           for( integer jp = 0; jp < m_numPhases; ++jp )
           {
