@@ -141,21 +141,21 @@ stages:
 # quartz job
 quartz_clang_14_build:
   variables:
-    HOST_CONFIG: "quartz-clang@14.cmake"
+    HOST_CONFIG: "quartz-clang-14.cmake"
   extends: [.build_on_quartz]
 
 ####
 # tioga job
-tioga_clang_14_build:
+tioga_cce_15_build:
   variables:
-    HOST_CONFIG: "tioga-cce@15.0.0.cmake"
+    HOST_CONFIG: "tioga-cce-15.cmake"
   extends: [.build_on_tioga]
 
 ####
 # lassen job
-lassen_clang_upstream_build:
+lassen_clang_10_cuda_11_build:
   variables:
-    HOST_CONFIG: "lassen-clang@upstream.cmake"
+    HOST_CONFIG: "lassen-clang-10-cuda-11.cmake"
   extends: [.build_on_lassen]
 
 ####
