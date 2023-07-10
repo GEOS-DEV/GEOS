@@ -57,8 +57,9 @@ enum class FaceBasedAssemblyKernelFlags
   CapPressure = 1 << 0, // 1
   /// Flag indicating whether total mass equation is formed or not
   TotalMassEquation = 1 << 1, // 2
+  /// Flag indicating whether C1-PPU is used or not
+  C1PPU = 1 << 2, // 4
   /// Add more flags like that if needed:
-  // Flag3 = 1 << 2, // 4
   // Flag4 = 1 << 3, // 8
   // Flag5 = 1 << 4, // 16
   // Flag6 = 1 << 5, // 32
@@ -408,7 +409,7 @@ protected:
  * @tparam STENCILWRAPPER the type of the stencil wrapper
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER, typename PHASE_FLUX_COMPUTE = isothermalCompositionalMultiphaseFVMKernelUtilities::PPUPhaseFlux >
+template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
 class FaceBasedAssemblyKernel : public FaceBasedAssemblyKernelBase
 {
 public:
@@ -627,26 +628,51 @@ public:
 
           localIndex k_up = -1;
 
-          PHASE_FLUX_COMPUTE::template compute< numComp, numFluxSupportPoints >
-            ( m_numPhases,
-            ip,
-            m_kernelFlags.hasFlag( FaceBasedAssemblyKernelFlags::CapPressure ),
-            //m_epsC1PPU,
-            seri, sesri, sei,
-            trans,
-            dTrans_dPres,
-            m_pres,
-            m_gravCoef,
-            m_phaseMob, m_dPhaseMob,
-            m_dPhaseVolFrac,
-            m_dCompFrac_dCompDens,
-            m_phaseMassDens, m_dPhaseMassDens,
-            m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
-            k_up,
-            potGrad,
-            phaseFlux,
-            dPhaseFlux_dP,
-            dPhaseFlux_dC );
+          if(m_kernelFlags.hasFlag(FaceBasedAssemblyKernelFlags::C1PPU))
+          {
+            isothermalCompositionalMultiphaseFVMKernelUtilities::C1PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
+              ( m_numPhases,
+                ip,
+                m_kernelFlags.hasFlag( FaceBasedAssemblyKernelFlags::CapPressure ),
+                //m_epsC1PPU,
+                seri, sesri, sei,
+                trans,
+                dTrans_dPres,
+                m_pres,
+                m_gravCoef,
+                m_phaseMob, m_dPhaseMob,
+                m_dPhaseVolFrac,
+                m_dCompFrac_dCompDens,
+                m_phaseMassDens, m_dPhaseMassDens,
+                m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
+                k_up,
+                potGrad,
+                phaseFlux,
+                dPhaseFlux_dP,
+                dPhaseFlux_dC );
+          }
+          else
+          {
+            isothermalCompositionalMultiphaseFVMKernelUtilities::PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
+              ( m_numPhases,
+                ip,
+                m_kernelFlags.hasFlag( FaceBasedAssemblyKernelFlags::CapPressure ),
+                seri, sesri, sei,
+                trans,
+                dTrans_dPres,
+                m_pres,
+                m_gravCoef,
+                m_phaseMob, m_dPhaseMob,
+                m_dPhaseVolFrac,
+                m_dCompFrac_dCompDens,
+                m_phaseMassDens, m_dPhaseMassDens,
+                m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
+                k_up,
+                potGrad,
+                phaseFlux,
+                dPhaseFlux_dP,
+                dPhaseFlux_dC );
+          }
 
           isothermalCompositionalMultiphaseFVMKernelUtilities::
             PhaseComponentFlux::compute< numComp, numFluxSupportPoints >
@@ -840,34 +866,20 @@ public:
         kernelFlags.setFlag( FaceBasedAssemblyKernelFlags::CapPressure );
       if( useTotalMassEquation )
         kernelFlags.setFlag( FaceBasedAssemblyKernelFlags::TotalMassEquation );
+      if ( upwindingParams.upwindingScheme == UpwindingScheme::C1PPU &&
+        isothermalCompositionalMultiphaseFVMKernelUtilities::epsC1PPU > 0 ) //upwindingParams.epsC1PPU > 0
+        kernelFlags.setFlag( FaceBasedAssemblyKernelFlags::C1PPU );
 
-      if( upwindingParams.upwindingScheme == UpwindingScheme::C1PPU &&
-          isothermalCompositionalMultiphaseFVMKernelUtilities::epsC1PPU > 0 ) //upwindingParams.epsC1PPU > 0
-      {
-        using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER, isothermalCompositionalMultiphaseFVMKernelUtilities::C1PPUPhaseFlux >;
-        typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-        typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-        typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-        typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+      using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+      typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
+      typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+      typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+      typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
-        kernelType kernel( numPhases, rankOffset, /*upwindingParams.epsC1PPU,*/ stencilWrapper, dofNumberAccessor,
-                           compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
-                           dt, localMatrix, localRhs, kernelFlags );
-        kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
-      }
-      else
-      {
-        using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
-        typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-        typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-        typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-        typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-
-        kernelType kernel( numPhases, rankOffset, /*upwindingParams.epsC1PPU,*/ stencilWrapper, dofNumberAccessor,
-                           compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
-                           dt, localMatrix, localRhs, kernelFlags );
-        kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
-      }
+      kernelType kernel( numPhases, rankOffset, /*upwindingParams.epsC1PPU,*/ stencilWrapper, dofNumberAccessor,
+                         compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
+                         dt, localMatrix, localRhs, kernelFlags );
+      kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }
 };
@@ -1264,7 +1276,7 @@ public:
     using namespace compositionalMultiphaseUtilities;
     using Order = BoundaryStencil::Order;
 
-    if( m_kernelFlags.hasFlag( FaceBasedAssemblyKernelFlags::TotalMassEquation ) )
+    if( AbstractBase::m_kernelFlags.hasFlag( FaceBasedAssemblyKernelFlags::TotalMassEquation ) )
     {
       // Apply equation/variable change transformation(s)
       real64 work[numDof]{};
