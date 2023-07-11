@@ -121,33 +121,33 @@ public:
    * @param[in] kernelFlags flags packed together
    */
   FaceBasedAssemblyKernel( //integer const numPhases,
-                           globalIndex const rankOffset,
-                           STENCILWRAPPER const & stencilWrapper,
-                           DofNumberAccessor const & dofNumberAccessor,
-                           CompFlowAccessors const & compFlowAccessors,
-                           StabCompFlowAccessors const & stabCompFlowAccessors,
-                           MultiFluidAccessors const & multiFluidAccessors,
-                           StabMultiFluidAccessors const & stabMultiFluidAccessors,
-                           CapPressureAccessors const & capPressureAccessors,
-                           PermeabilityAccessors const & permeabilityAccessors,
-                           RelPermAccessors const & relPermAccessors,
-                           real64 const & dt,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs,
-                           BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags )
+    globalIndex const rankOffset,
+    STENCILWRAPPER const & stencilWrapper,
+    DofNumberAccessor const & dofNumberAccessor,
+    CompFlowAccessors const & compFlowAccessors,
+    StabCompFlowAccessors const & stabCompFlowAccessors,
+    MultiFluidAccessors const & multiFluidAccessors,
+    StabMultiFluidAccessors const & stabMultiFluidAccessors,
+    CapPressureAccessors const & capPressureAccessors,
+    PermeabilityAccessors const & permeabilityAccessors,
+    RelPermAccessors const & relPermAccessors,
+    real64 const & dt,
+    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+    arrayView1d< real64 > const & localRhs,
+    BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags )
     : Base( //numPhases,
-            rankOffset,
-            0.0, // no C1-PPU
-            stencilWrapper,
-            dofNumberAccessor,
-            compFlowAccessors,
-            multiFluidAccessors,
-            capPressureAccessors,
-            permeabilityAccessors,
-            dt,
-            localMatrix,
-            localRhs,
-            kernelFlags ),
+      rankOffset,
+      0.0,       // no C1-PPU
+      stencilWrapper,
+      dofNumberAccessor,
+      compFlowAccessors,
+      multiFluidAccessors,
+      capPressureAccessors,
+      permeabilityAccessors,
+      dt,
+      localMatrix,
+      localRhs,
+      kernelFlags ),
     m_pres_n( stabCompFlowAccessors.get( fields::flow::pressure_n {} ) ),
     m_phaseDens_n( stabMultiFluidAccessors.get( fields::multifluid::phaseDensity_n {} ) ),
     m_phaseCompFrac_n( stabMultiFluidAccessors.get( fields::multifluid::phaseCompFraction_n {} ) ),
@@ -355,7 +355,7 @@ public:
       if( useTotalMassEquation )
         kernelFlags.setFlag( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::TotalMassEquation );
 
-      if(numPhases==2)
+      if( numPhases==2 )
       {
         using KERNEL_TYPE = FaceBasedAssemblyKernel< 2, NUM_COMP, NUM_DOF, STENCILWRAPPER >;
         typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );

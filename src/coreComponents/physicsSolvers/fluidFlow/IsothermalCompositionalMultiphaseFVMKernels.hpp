@@ -334,16 +334,16 @@ public:
    * @param[in] kernelFlags flags packed all together
    */
   FaceBasedAssemblyKernelBase( //integer const numPhases,
-                               globalIndex const rankOffset,
-                               DofNumberAccessor const & dofNumberAccessor,
-                               CompFlowAccessors const & compFlowAccessors,
-                               MultiFluidAccessors const & multiFluidAccessors,
-                               CapPressureAccessors const & capPressureAccessors,
-                               PermeabilityAccessors const & permeabilityAccessors,
-                               real64 const & dt,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs,
-                               BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags );
+    globalIndex const rankOffset,
+    DofNumberAccessor const & dofNumberAccessor,
+    CompFlowAccessors const & compFlowAccessors,
+    MultiFluidAccessors const & multiFluidAccessors,
+    CapPressureAccessors const & capPressureAccessors,
+    PermeabilityAccessors const & permeabilityAccessors,
+    real64 const & dt,
+    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+    arrayView1d< real64 > const & localRhs,
+    BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags );
 
 protected:
 
@@ -454,29 +454,29 @@ public:
    * @param[in] kernelFlags flags packed together
    */
   FaceBasedAssemblyKernel( //integer const numPhases,
-                           globalIndex const rankOffset,
-                           real64 const epsC1PPU,
-                           STENCILWRAPPER const & stencilWrapper,
-                           DofNumberAccessor const & dofNumberAccessor,
-                           CompFlowAccessors const & compFlowAccessors,
-                           MultiFluidAccessors const & multiFluidAccessors,
-                           CapPressureAccessors const & capPressureAccessors,
-                           PermeabilityAccessors const & permeabilityAccessors,
-                           real64 const & dt,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs,
-                           BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags )
+    globalIndex const rankOffset,
+    real64 const epsC1PPU,
+    STENCILWRAPPER const & stencilWrapper,
+    DofNumberAccessor const & dofNumberAccessor,
+    CompFlowAccessors const & compFlowAccessors,
+    MultiFluidAccessors const & multiFluidAccessors,
+    CapPressureAccessors const & capPressureAccessors,
+    PermeabilityAccessors const & permeabilityAccessors,
+    real64 const & dt,
+    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+    arrayView1d< real64 > const & localRhs,
+    BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags )
     : FaceBasedAssemblyKernelBase( //numPhases,
-                                   rankOffset,
-                                   dofNumberAccessor,
-                                   compFlowAccessors,
-                                   multiFluidAccessors,
-                                   capPressureAccessors,
-                                   permeabilityAccessors,
-                                   dt,
-                                   localMatrix,
-                                   localRhs,
-                                   kernelFlags ),
+      rankOffset,
+      dofNumberAccessor,
+      compFlowAccessors,
+      multiFluidAccessors,
+      capPressureAccessors,
+      permeabilityAccessors,
+      dt,
+      localMatrix,
+      localRhs,
+      kernelFlags ),
     m_stencilWrapper( stencilWrapper ),
     m_seri( stencilWrapper.getElementRegionIndices() ),
     m_sesri( stencilWrapper.getElementSubRegionIndices() ),
@@ -635,7 +635,7 @@ public:
           {
             isothermalCompositionalMultiphaseFVMKernelUtilities::C1PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
               ( numPhase,
-                ip,
+              ip,
               m_kernelFlags.hasFlag( FaceBasedAssemblyKernelFlags::CapPressure ),
               m_epsC1PPU,
               seri, sesri, sei,
@@ -658,7 +658,7 @@ public:
           {
             isothermalCompositionalMultiphaseFVMKernelUtilities::PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
               ( numPhase,
-                ip,
+              ip,
               m_kernelFlags.hasFlag( FaceBasedAssemblyKernelFlags::CapPressure ),
               seri, sesri, sei,
               trans,
@@ -913,7 +913,7 @@ public:
  */
 template< integer NUM_PHASE, integer NUM_COMP, integer NUM_DOF, typename FLUIDWRAPPER >
 class DirichletFaceBasedAssemblyKernel : public FaceBasedAssemblyKernel< NUM_PHASE,
-  NUM_COMP,
+                                                                         NUM_COMP,
                                                                          NUM_DOF,
                                                                          BoundaryStencilWrapper >
 {
@@ -983,32 +983,32 @@ public:
    * @param[in] kernelFlags flags packed together
    */
   DirichletFaceBasedAssemblyKernel( //integer const numPhases,
-                                    globalIndex const rankOffset,
-                                    FaceManager const & faceManager,
-                                    BoundaryStencilWrapper const & stencilWrapper,
-                                    FLUIDWRAPPER const & fluidWrapper,
-                                    DofNumberAccessor const & dofNumberAccessor,
-                                    CompFlowAccessors const & compFlowAccessors,
-                                    MultiFluidAccessors const & multiFluidAccessors,
-                                    CapPressureAccessors const & capPressureAccessors,
-                                    PermeabilityAccessors const & permeabilityAccessors,
-                                    real64 const & dt,
-                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                    arrayView1d< real64 > const & localRhs,
-                                    BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags )
+    globalIndex const rankOffset,
+    FaceManager const & faceManager,
+    BoundaryStencilWrapper const & stencilWrapper,
+    FLUIDWRAPPER const & fluidWrapper,
+    DofNumberAccessor const & dofNumberAccessor,
+    CompFlowAccessors const & compFlowAccessors,
+    MultiFluidAccessors const & multiFluidAccessors,
+    CapPressureAccessors const & capPressureAccessors,
+    PermeabilityAccessors const & permeabilityAccessors,
+    real64 const & dt,
+    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+    arrayView1d< real64 > const & localRhs,
+    BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags )
     : Base( //numPhases,
-            rankOffset,
-            0.0, // no C1-PPU
-            stencilWrapper,
-            dofNumberAccessor,
-            compFlowAccessors,
-            multiFluidAccessors,
-            capPressureAccessors,
-            permeabilityAccessors,
-            dt,
-            localMatrix,
-            localRhs,
-            kernelFlags ),
+      rankOffset,
+      0.0,       // no C1-PPU
+      stencilWrapper,
+      dofNumberAccessor,
+      compFlowAccessors,
+      multiFluidAccessors,
+      capPressureAccessors,
+      permeabilityAccessors,
+      dt,
+      localMatrix,
+      localRhs,
+      kernelFlags ),
     m_facePres( faceManager.getField< fields::flow::facePressure >() ),
     m_faceTemp( faceManager.getField< fields::flow::faceTemperature >() ),
     m_faceCompFrac( faceManager.getField< fields::flow::faceGlobalCompFraction >() ),
@@ -1403,7 +1403,7 @@ public:
         if( useTotalMassEquation )
           kernelFlags.setFlag( FaceBasedAssemblyKernelFlags::TotalMassEquation );
 
-        if(numPhases == 2)
+        if( numPhases == 2 )
         {
           using kernelType = DirichletFaceBasedAssemblyKernel< 2, NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
           typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );

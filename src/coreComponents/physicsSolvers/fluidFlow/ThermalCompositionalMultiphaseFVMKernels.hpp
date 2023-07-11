@@ -242,33 +242,33 @@ public:
    * @param[in] kernelFlags flags packed all together
    */
   FaceBasedAssemblyKernel( //integer const numPhases,
-                           globalIndex const rankOffset,
-                           STENCILWRAPPER const & stencilWrapper,
-                           DofNumberAccessor const & dofNumberAccessor,
-                           CompFlowAccessors const & compFlowAccessors,
-                           ThermalCompFlowAccessors const & thermalCompFlowAccessors,
-                           MultiFluidAccessors const & multiFluidAccessors,
-                           ThermalMultiFluidAccessors const & thermalMultiFluidAccessors,
-                           CapPressureAccessors const & capPressureAccessors,
-                           PermeabilityAccessors const & permeabilityAccessors,
-                           ThermalConductivityAccessors const & thermalConductivityAccessors,
-                           real64 const & dt,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs,
-                           BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags )
+    globalIndex const rankOffset,
+    STENCILWRAPPER const & stencilWrapper,
+    DofNumberAccessor const & dofNumberAccessor,
+    CompFlowAccessors const & compFlowAccessors,
+    ThermalCompFlowAccessors const & thermalCompFlowAccessors,
+    MultiFluidAccessors const & multiFluidAccessors,
+    ThermalMultiFluidAccessors const & thermalMultiFluidAccessors,
+    CapPressureAccessors const & capPressureAccessors,
+    PermeabilityAccessors const & permeabilityAccessors,
+    ThermalConductivityAccessors const & thermalConductivityAccessors,
+    real64 const & dt,
+    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+    arrayView1d< real64 > const & localRhs,
+    BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags )
     : Base( //numPhases,
-            rankOffset,
-            0.0, // no C1-PPU
-            stencilWrapper,
-            dofNumberAccessor,
-            compFlowAccessors,
-            multiFluidAccessors,
-            capPressureAccessors,
-            permeabilityAccessors,
-            dt,
-            localMatrix,
-            localRhs,
-            kernelFlags ),
+      rankOffset,
+      0.0,       // no C1-PPU
+      stencilWrapper,
+      dofNumberAccessor,
+      compFlowAccessors,
+      multiFluidAccessors,
+      capPressureAccessors,
+      permeabilityAccessors,
+      dt,
+      localMatrix,
+      localRhs,
+      kernelFlags ),
     m_temp( thermalCompFlowAccessors.get( fields::flow::temperature {} ) ),
     m_phaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::phaseEnthalpy {} ) ),
     m_dPhaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::dPhaseEnthalpy {} ) ),
@@ -655,7 +655,7 @@ public:
       if( useTotalMassEquation )
         kernelFlags.setFlag( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::TotalMassEquation );
 
-      if(numPhases == 2)
+      if( numPhases == 2 )
       {
         using KernelType = FaceBasedAssemblyKernel< 2, NUM_COMP, NUM_DOF, STENCILWRAPPER >;
         typename KernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
@@ -705,7 +705,7 @@ public:
  */
 template< integer NUM_PHASE, integer NUM_COMP, integer NUM_DOF, typename FLUIDWRAPPER >
 class DirichletFaceBasedAssemblyKernel : public isothermalCompositionalMultiphaseFVMKernels::DirichletFaceBasedAssemblyKernel< NUM_PHASE,
-  NUM_COMP,
+                                                                                                                               NUM_COMP,
                                                                                                                                NUM_DOF,
                                                                                                                                FLUIDWRAPPER >
 {
@@ -788,36 +788,36 @@ public:
    * @param[in] kernelFlags flags packed together
    */
   DirichletFaceBasedAssemblyKernel( //integer const numPhases,
-                                    globalIndex const rankOffset,
-                                    FaceManager const & faceManager,
-                                    BoundaryStencilWrapper const & stencilWrapper,
-                                    FLUIDWRAPPER const & fluidWrapper,
-                                    DofNumberAccessor const & dofNumberAccessor,
-                                    CompFlowAccessors const & compFlowAccessors,
-                                    ThermalCompFlowAccessors const & thermalCompFlowAccessors,
-                                    MultiFluidAccessors const & multiFluidAccessors,
-                                    ThermalMultiFluidAccessors const & thermalMultiFluidAccessors,
-                                    CapPressureAccessors const & capPressureAccessors,
-                                    PermeabilityAccessors const & permeabilityAccessors,
-                                    ThermalConductivityAccessors const & thermalConductivityAccessors,
-                                    real64 const & dt,
-                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                    arrayView1d< real64 > const & localRhs,
-                                    BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags )
+    globalIndex const rankOffset,
+    FaceManager const & faceManager,
+    BoundaryStencilWrapper const & stencilWrapper,
+    FLUIDWRAPPER const & fluidWrapper,
+    DofNumberAccessor const & dofNumberAccessor,
+    CompFlowAccessors const & compFlowAccessors,
+    ThermalCompFlowAccessors const & thermalCompFlowAccessors,
+    MultiFluidAccessors const & multiFluidAccessors,
+    ThermalMultiFluidAccessors const & thermalMultiFluidAccessors,
+    CapPressureAccessors const & capPressureAccessors,
+    PermeabilityAccessors const & permeabilityAccessors,
+    ThermalConductivityAccessors const & thermalConductivityAccessors,
+    real64 const & dt,
+    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+    arrayView1d< real64 > const & localRhs,
+    BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags )
     : Base( //numPhases,
-            rankOffset,
-            faceManager,
-            stencilWrapper,
-            fluidWrapper,
-            dofNumberAccessor,
-            compFlowAccessors,
-            multiFluidAccessors,
-            capPressureAccessors,
-            permeabilityAccessors,
-            dt,
-            localMatrix,
-            localRhs,
-            kernelFlags ),
+      rankOffset,
+      faceManager,
+      stencilWrapper,
+      fluidWrapper,
+      dofNumberAccessor,
+      compFlowAccessors,
+      multiFluidAccessors,
+      capPressureAccessors,
+      permeabilityAccessors,
+      dt,
+      localMatrix,
+      localRhs,
+      kernelFlags ),
     m_temp( thermalCompFlowAccessors.get( fields::flow::temperature {} ) ),
     m_phaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::phaseEnthalpy {} ) ),
     m_dPhaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::dPhaseEnthalpy {} ) ),
@@ -1127,7 +1127,7 @@ public:
         if( useTotalMassEquation )
           kernelFlags.setFlag( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::TotalMassEquation );
 
-        if(numPhases == 2)
+        if( numPhases == 2 )
         {
           using KernelType = DirichletFaceBasedAssemblyKernel< 2, NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
           typename KernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
