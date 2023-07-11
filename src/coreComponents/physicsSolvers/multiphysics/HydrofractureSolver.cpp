@@ -25,7 +25,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
-
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geos
 {
@@ -43,7 +43,7 @@ template< typename POROMECHANICS_SOLVER > class
   HydrofractureSolverCatalogNames {};
 
 // Class specialization for a POROMECHANICS_SOLVER set to SinglePhasePoromechanics
-template<> class HydrofractureSolverCatalogNames< SinglePhasePoromechanics >
+template<> class HydrofractureSolverCatalogNames< SinglePhasePoromechanics< SinglePhaseBase > >
 {
 public:
   static string name() { return "Hydrofracture"; }
@@ -892,7 +892,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setUpDflux_dApertureMatrix( Do
 
 namespace
 {
-typedef HydrofractureSolver< SinglePhasePoromechanics > SinglePhaseHydrofracture;
+typedef HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseBase > > SinglePhaseHydrofracture;
 // typedef HydrofractureSolver< MultiphasePoromechanics > MultiphaseHydrofracture;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseHydrofracture, string const &, Group * const )
 // REGISTER_CATALOG_ENTRY( SolverBase, MultiphaseHydrofracture, string const &, Group * const )

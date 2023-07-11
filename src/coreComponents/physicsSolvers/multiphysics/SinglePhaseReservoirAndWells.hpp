@@ -37,6 +37,9 @@ public:
   using Base::m_solvers;
   using Base::m_linearSolverParameters;
 
+  /// String used to form the solverName used to register solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "reservoirandwells"; }
+
   /**
    * @brief main constructor for ManagedGroup Objects
    * @param name the name of this instantiation of ManagedGroup in the repository
@@ -67,6 +70,25 @@ public:
                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                       arrayView1d< real64 > const & localRhs ) override;
 
+  void
+  assembleFluxTerms( real64 const time_n,
+                     real64 const dt,
+                     DomainPartition const & domain,
+                     DofManager const & dofManager,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs ) const
+  { flowSolver()->assembleFluxTerms( time_n, dt, domain, dofManager, localMatrix, localRhs ); }
+
+  void keepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
+  { flowSolver()->keepFlowVariablesConstantDuringInitStep( keepFlowVariablesConstantDuringInitStep ); }
+
+  void updateFluidState( ObjectManagerBase & subRegion ) const
+  { flowSolver()->updateFluidState( subRegion ); }
+  void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const
+  { flowSolver()->updatePorosityAndPermeability( subRegion ); }
+  void updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
+  { flowSolver()->updateSolidInternalEnergyModel( dataGroup ); }
+
 protected:
 
   virtual void initializePreSubGroups() override;
@@ -75,7 +97,7 @@ protected:
 
 private:
 
-  SinglePhaseBase const * flowSolver() const;
+  SinglePhaseBase * flowSolver() const;
 
   void setMGRStrategy();
 
