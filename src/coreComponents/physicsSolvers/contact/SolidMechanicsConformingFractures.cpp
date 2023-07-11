@@ -47,9 +47,7 @@ SolidMechanicsConformingFractures::SolidMechanicsConformingFractures( const stri
 
 void SolidMechanicsConformingFractures::registerDataOnMesh( Group & meshBodies )
 {
-  // Matteo: Do we need element-based fields added inside?
-  ContactSolverBase::registerDataOnMesh( meshBodies );
-
+  // ContactSolverBase::registerDataOnMesh( meshBodies );
   using namespace fields::contact;
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
@@ -77,7 +75,22 @@ void SolidMechanicsConformingFractures::registerDataOnMesh( Group & meshBodies )
 
     nodes.registerField< contact::oldFractureState >( getName() );
 
-    nodes.registerField< contact::dualGridNodalArea >( getName() );
+    //nodes.registerField< contact::dualGridNodalArea >( getName() );
+
+    nodes.registerWrapper< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() ).
+      setPlotLevel( PlotLevel::NOPLOT ).
+      setRegisteringObjects( this->getName()).
+      setDescription( "An array that holds the normal traction tolerance." );
+
+    nodes.registerWrapper< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() ).
+      setPlotLevel( PlotLevel::NOPLOT ).
+      setRegisteringObjects( this->getName()).
+      setDescription( "An array that holds the normal displacement tolerance." );
+
+    nodes.registerWrapper< array1d< real64 > >( viewKeyStruct::slidingToleranceString() ).
+      setPlotLevel( PlotLevel::NOPLOT ).
+      setRegisteringObjects( this->getName()).
+      setDescription( "An array that holds the sliding tolerance." );
 
     ElementRegionManager & elemManager = meshLevel.getElemManager();
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&] ( localIndex const,
@@ -91,7 +104,6 @@ void SolidMechanicsConformingFractures::registerDataOnMesh( Group & meshBodies )
         reference().resizeDimension< 1, 2 >( 3, 3 );
 
     } );
-
   } );
 }
 
@@ -136,7 +148,6 @@ void SolidMechanicsConformingFractures::implicitStepSetup( real64 const & time_n
                                                            DomainPartition & domain )
 {
   computeRotationMatrices( domain );
-  //computeTolerance( domain );
   computeNodalDisplacementJump( domain );
 
   m_solidSolver->implicitStepSetup( time_n, dt, domain );
@@ -216,7 +227,6 @@ void SolidMechanicsConformingFractures::resetStateToBeginningOfStep( DomainParti
                                                                 arrayView1d< string const > const & )
   {
     NodeManager & nodes = meshLevel.getNodeManager();
-
     arrayView2d< real64 > const & traction = nodes.getField< contact::traction >();
     arrayView2d< real64 > const & deltaTraction = nodes.getField< contact::deltaTraction >();
     arrayView2d< real64 > const & dispJump = nodes.getField< contact::dispJump >();
@@ -413,7 +423,6 @@ void SolidMechanicsConformingFractures::assembleNodalLagrangeMultiplierContact( 
                                                                                 arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -447,7 +456,7 @@ void LagrangianContactSolver::
   arrayView2d< real64 const > const & dispJump = nodeManager.getField< contact::dispJump >();
   arrayView2d< real64 const > const & previousDispJump = nodeManager.getField< contact::oldDispJump >();
   arrayView1d< real64 const > const & slidingTolerance = nodeManager.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );  
-  arrayView1d< real64 const > const & nodalArea = nodeManager.getField< contact::dualGridNodalArea >();
+  //arrayView1d< real64 const > const & nodalArea = nodeManager.getField< contact::dualGridNodalArea >();
 
   arrayView2d< real64 const > const & traction = nodeManager.getField< contact::traction >();
   arrayView1d< integer const > const & fractureState = nodeManager.getField< contact::fractureState >();
@@ -794,8 +803,6 @@ void LagrangianContactSolver::
   });
 }
 
-
-
 real64 SolidMechanicsConformingFractures::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time ),
                                                                  real64 const & GEOS_UNUSED_PARAM( dt ),
                                                                  DomainPartition const & domain,
@@ -819,7 +826,7 @@ real64 SolidMechanicsConformingFractures::calculateResidualNorm( real64 const & 
 
     arrayView1d< integer const > const & elemGhostRank = nodeManager.ghostRank();
     RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum0( 0.0 );
-    // Compute the norm of the residuals associated with displacement
+    // 1. Compute the norm of the residuals associated with displacement
     forAll< parallelDevicePolicy<> >( nodeManager.size(),
                                       [localRhs, localSum0, dispDofNumber, rankOffset, elemGhostRank] GEOS_HOST_DEVICE ( localIndex const k )
     {
@@ -836,7 +843,7 @@ real64 SolidMechanicsConformingFractures::calculateResidualNorm( real64 const & 
 
     string const & tracDofKey = dofManager.getKey( contact::traction::key() );
     arrayView1d< globalIndex const > const & tracDofNumber = nodeManager.getReference< globalIndex_array >( tracDofKey );
-    // Compute the norm of the residuals associated with traction
+    // 2. Compute the norm of the residuals associated with traction
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames,
                                                                         [&]( localIndex const, FaceElementSubRegion const & subRegion )
     {
@@ -1101,9 +1108,9 @@ bool SolidMechanicsConformingFractures::updateConfiguration( DomainPartition & d
     arrayView1d< integer > const & fractureState = nodeManager.getField< contact::fractureState >();
 
     arrayView1d< real64 const > const & normalTractionTolerance =
-    nodeManager.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() ); // TODO: undefined 
+    nodeManager.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() ); 
     arrayView1d< real64 const > const & normalDisplacementTolerance =
-    nodeManager.getReference< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() ); // TODO: undefined
+    nodeManager.getReference< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() );
     ElementRegionManager & elemManager = mesh.getElemManager(); 
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,

@@ -137,7 +137,11 @@ protected:
 
 private:
 
-  //void computeFaceDisplacementJump( DomainPartition & domain ) const;
+  localIndex m_contactRelationFullIndex;
+
+  real64 const m_slidingCheckTolerance = 0.05;
+
+  real64 m_initialResidual[3] = {0.0, 0.0, 0.0};
 
   void computeNodalDisplacementJump( DomainPartition & domain ) const;
   
@@ -155,6 +159,9 @@ private:
     constexpr static char const * rotationMatrixString() { return "rotationMatrix"; }
     constexpr static char const * contactEnforcementMethodString() { return "contactEnforcementMethod"; }
 
+    constexpr static char const * normalDisplacementToleranceString() { return "normalDisplacementTolerance"; }
+    constexpr static char const * normalTractionToleranceString() { return "normalTractionTolerance"; }
+    constexpr static char const * slidingToleranceString() { return "slidingTolerance"; }
   };
 
   ContactEnforcementMethod m_contactEnforcementMethod;
