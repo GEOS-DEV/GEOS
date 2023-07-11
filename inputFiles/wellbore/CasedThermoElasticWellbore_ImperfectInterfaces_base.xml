@@ -2,6 +2,7 @@
 
 <Problem>
   <Solvers>
+    <!-- SPHINX_ContactTHMSolver -->
     <SinglePhasePoromechanicsConformingFractures
       name="fractureThermoPoroElasticSolver"
       targetRegions="{ casing, cement, rock, Fracture }"
@@ -18,6 +19,7 @@
         directParallel="0"
         solverType="direct"/>
     </SinglePhasePoromechanicsConformingFractures>
+    <!-- SPHINX_ContactTHMSolveEndr -->
 
     <SinglePhasePoromechanics
       name="thermoElasticSolver"
@@ -99,9 +101,8 @@
     </FiniteVolume>
   </NumericalMethods>
 
-
-<!-- SPHINX_SurfaceElementRegion -->   
   <ElementRegions>
+    <!-- SPHINX_SurfaceElementRegion -->   
     <SurfaceElementRegion
       name="Fracture"
       faceBlock="faceElementSubRegion"
@@ -126,6 +127,21 @@
   </ElementRegions>
 
   <Constitutive>
+    <Coulomb
+      name="fractureContact"
+      cohesion="0"
+      frictionCoefficient="0.5"
+      penaltyStiffness="1.0e8"
+      apertureTableName="apertureTable"/>
+
+    <!-- SPHINX_ContactFlowProperties -->
+    <CompressibleSolidParallelPlatesPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
+
     <NullModel
       name="nullSolid"/>
 
@@ -137,20 +153,7 @@
 
     <ParallelPlatesPermeability
       name="fracturePerm"/>
-
-    <Coulomb
-      name="fractureContact"
-      cohesion="0"
-      frictionCoefficient="0.5"
-      penaltyStiffness="1.0e8"
-      apertureTableName="apertureTable"/>
-
-    <CompressibleSolidParallelPlatesPermeability
-      name="fractureFilling"
-      solidModelName="nullSolid"
-      porosityModelName="fracturePorosity"
-      permeabilityModelName="fracturePerm"
-      solidInternalEnergyModelName="rockInternalEnergy"/>
+    <!-- SPHINX_ContactFlowPropertiesEnd -->
 
     <PorousElasticIsotropic
       name="casing"
@@ -224,7 +227,7 @@
       permeabilityComponents="{ 1.0e-100, 1.0e-100, 1.0e-100 }"/>
     <!-- SPHINX_PermeabilityPropertiesEnd -->
 
-    <!-- SPHINX_ThermalProperties -->
+    
     <SinglePhaseConstantThermalConductivity
       name="casingThermalCond"
       thermalConductivityComponents="{ 15, 15, 15 }"/>
@@ -237,10 +240,11 @@
       name="rockThermalCond"
       thermalConductivityComponents="{ 1.66, 1.66, 1.66 }"/>
 
+    <!-- SPHINX_ContactThermalProperties -->
     <SinglePhaseConstantThermalConductivity
       name="contactThermalCond"
       thermalConductivityComponents="{ 1.0, 1.0, 1.0 }"/>
-    <!-- SPHINX_ThermalPropertiesEnd -->
+    <!-- SPHINX_ContactThermalPropertiesEnd -->
 
     <!-- SPHINX_FluidProperties -->
     <ThermalCompressibleSinglePhaseFluid
@@ -282,6 +286,7 @@
   </Constitutive>
 
   <FieldSpecifications>
+   <!-- SPHINX_ContactBoundaryConditions -->
    <FieldSpecification
       name="frac"
       initialCondition="1"
@@ -297,7 +302,7 @@
       objectPath="faceManager"
       fieldName="isFaceSeparable"
       scale="1"/>
-    <!-- SPHINX_BoundaryConditionsEnd -->
+    <!-- SPHINX_ContactBoundaryConditionsEnd -->
 
     <!-- SPHINX_FixedFarFieldBC -->
     <FieldSpecification
