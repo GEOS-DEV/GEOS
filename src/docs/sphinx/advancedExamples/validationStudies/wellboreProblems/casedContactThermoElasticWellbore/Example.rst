@@ -132,7 +132,7 @@ and the radial displacement around the wellbore is shown below:
 
    The displacement field.
 
-The total radial and hoop stress (tangent stress) components computed by GEOS and reference results are shown in the figure below:
+The total radial and hoop stress (tangent stress) components computed by GEOS and the reference results are shown in the figure below:
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/casedContactThermoElasticWellbore/thermoElastic_casedContactWellbore_stress.py
 
@@ -145,6 +145,7 @@ The total radial and hoop stress (tangent stress) components computed by GEOS an
    The stress field.
 
 We can observe a good agreement between GEOS results and the analytical results.
+
 ------------------------------------------------------------------
 To go further
 ------------------------------------------------------------------
