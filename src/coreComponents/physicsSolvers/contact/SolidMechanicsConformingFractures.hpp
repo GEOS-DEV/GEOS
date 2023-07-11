@@ -139,6 +139,8 @@ private:
 
   void computeFaceDisplacementJump( DomainPartition & domain ) const;
 
+  void computeNodalDisplacementJump( DomainPartition & domain ) const;
+  
   void computeRotationMatrices( DomainPartition & domain ) const;
 
   void computeFaceNodalArea( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,

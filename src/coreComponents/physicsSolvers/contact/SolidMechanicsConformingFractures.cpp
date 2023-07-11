@@ -173,17 +173,6 @@ void SolidMechanicsConformingFractures::implicitStepComplete( real64 const & tim
       } );
     } );
 
-    /// ALEKS: you may want to sync some fields so I left this here as an example.
-
-    // Need a synchronization of deltaTraction as will be used in AssembleStabilization
-    // FieldIdentifiers fieldsToBeSync;
-    // fieldsToBeSync.addElementFields( { contact::deltaTraction::key() },
-    //                                  { getFractureRegionName() } );
-
-    // CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
-    //                                                      mesh,
-    //                                                      domain.getNeighbors(),
-    //                                                      true );
 
   } );
 
@@ -227,6 +216,71 @@ void SolidMechanicsConformingFractures::resetStateToBeginningOfStep( DomainParti
           dispJump[kn][i] = oldDispJump[kn][i];
         }
         fractureState[kn] = oldFractureState[kn];
+    } );
+  } );
+}
+
+void SolidMechanicsConformingFractures::computeNodalDisplacementJump( DomainPartition & domain ) const
+{
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & meshLevel,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    NodeManager const & nodeManager = meshLevel.getNodeManager();
+    FaceManager & faceManager = meshLevel.getFaceManager();
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
+
+    // Get the coordinates for all nodes
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
+    ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u =
+      nodeManager.getField< solidMechanics::totalDisplacement >();
+
+    // Get node-based fields
+    arrayView2d< real64 > const & dispJump = nodeManager.getField< contact::dispJump >();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   FaceElementSubRegion & subRegion )
+    {
+      arrayView3d< real64 > const &
+      rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
+      arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+      arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
+      arrayView1d< real64 const > const & ghostRank = subRegion.ghostRank();
+
+      forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+      {
+        // Contact constraints
+        if (ghostRank[ kfe ] < 0)
+        {
+          localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
+          array1d< real64 > nodalArea0, nodalArea1;
+          computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][0], nodalArea0 );
+          computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][1], nodalArea1 );
+
+          real64 globalJumpTemp[ 3 ] = { 0 };
+
+          for( localIndex lagIndex = 0; lagIndex < numNodesPerFace; ++lagIndex )
+          {
+            for( localIndex faceSide = 0; faceSide < 2; ++faceSide )
+            {
+              // Get the node index for the current node at the both side of the face
+              localIndex const nodeIndex = faceToNodeMap( elemsToFaces[kfe][faceSide], lagIndex ); // global index of the node
+              for( localIndex i = 0; i < 3; ++i )
+              {
+                globalJumpTemp[ i ] +=
+                    -u[faceToNodeMap( elemsToFaces[kfe][0], a )][i] * nodalArea0[a]
+                    +u[faceToNodeMap( elemsToFaces[kfe][1], a )][i] * nodalArea1[a];
+              }
+              
+              real64 dispJumpTemp[ 3 ];
+              LvArray::tensorOps::Ri_eq_AjiBj< 3, 3 >( dispJumpTemp, rotationMatrix[ kfe ], globalJumpTemp );
+              LvArray::tensorOps::copy< 3 >( dispJump[ nodeIndex ], dispJumpTemp );
+            }
+          }
+        }
+      } );
     } );
   } );
 }
@@ -641,16 +695,9 @@ void LagrangianContactSolver::
           }
         }
       });
-
     });
-
   });
-
-
-
-
 }
-
 
 void LagrangianContactSolver::
   assembleForceResidualDerivativeWrtTraction( MeshLevel const & mesh,
@@ -664,25 +711,23 @@ void LagrangianContactSolver::
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
   ElementRegionManager const & elemManager = mesh.getElemManager();
-
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   string const & tracDofKey = dofManager.getKey( contact::traction::key() );
   string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
-
-  arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
   globalIndex const rankOffset = dofManager.rankOffset();
 
   // Get the coordinates for all nodes
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
-
+  // nodal-based fields
+  arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+  arrayView1d< globalIndex const > const & tracDofNumber = nodeManager.getReference< globalIndex_array >( tracDofKey );
+  arrayView2d< real64 const > const & traction = nodeManager.getReference< array2d< real64 > >( contact::traction::key() );
+  
   elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
                                                             [&]( localIndex const,
                                                                  FaceElementSubRegion const & subRegion )
   {
-
-    arrayView1d< globalIndex const > const & tracDofNumber = subRegion.getReference< globalIndex_array >( tracDofKey );
-    arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( contact::traction::key() );
     arrayView3d< real64 const > const & rotationMatrix = subRegion.getReference< array3d< real64 > >( contact::rotationMatrixString() );
     arrayView2d< real64 const > const & elemsToFaces = subRegion.faceList();
 
@@ -691,22 +736,105 @@ void LagrangianContactSolver::
 
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
     {
-      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces( elemsToFaces[kfe][0]  ) );
-      localIndex const numQuadraturePointsPerElem = numNodesPerFace == 3 ? 1 : 4;
+      if ( ghostRank[kfe] < 0)
+      {
+        localIndex const numNodePerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
+        localIndex const numQuadraturePointsPerElem = numNodePerFace==3 ? 1 : 4;
 
-      globalIndex rowDOF[12];
-      real64 nodeRHS[12];
-      stackArray2d< real64, 3*4*3 > dRdT(  3*numNodesPerFace, 3 );
-      localIndex colDOF[3] = { tracDofNumber[kfe], tracDofNumber[kfe] + 1, tracDofNumber[kfe] + 2 };
+        globalIndex rowDOF[3 * numNodePerFace];
+        real64 nodeRHS[3 * numNodePerFace];
 
-      localIndex const * const permutation = ( numNodesPerFace == 3 ) ? TriangularPermutation : QuadrilateralPermutation;
-      real64 xLocal[2][4][3];
-      // for( localIndex kf = 0; kf )
+        stackArray2d< real64, 3*numNodePerFace*3 > dRdT( 3*numNodePerFace, 3 );
+        globalIndex colDOF[3];
 
+        for ( localIndex lagIndex = 0; lagIndex < numNodePerFace; ++lagIndex )
+        {
+          // loop through all nodes on the face element; operations for each node are duplicated for nodes living on the other side of the face element
+          // globalIndex elemDOF[3] = { tracDofNumber[nodeIndex], tracDofNumber[nodeIndex] + 1, tracDofNumber[nodeIndex] + 2 }; // traction DOF for the node
+          
+          localIndex const * const permutation = ( numNodePerFace == 3 ) ? TriangularPermutation : QuadrilateralPermutation;
+          real64 xLocal[2][numNodePerFace][3];
+
+          for( localIndex faceSide = 0; faceSide < 2; ++faceSide )
+          {
+            localIndex const nodeIndex = faceToNodeMap( elemsToFaces[kfe][faceSide], lagIndex ); // global index of the node
+            for( localIndex i = 0; i < 3; ++i )
+            {
+              if (faceSide == 0)
+              {
+                colDOF[i] = tracDofNumber[nodeIndex] + i;
+              }
+              xLocal[faceSide][lagIndex][i] = nodePosition[ nodeIndex ][i];
+            }
+
+            for( localIndex j = 0; j < 3; ++j )
+            {
+              xLocal[faceSide][a][j] = nodePosition[ faceToNodeMap( faceIndex, permutation[a] ) ][j];
+            }
+          }
+        }
+
+        real64 N[4];
+        for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+        {
+          if( numNodePerFace==3 )
+          {
+            using NT = real64[3];
+            H1_TriangleFace_Lagrange1_Gauss1::calcN( q, reinterpret_cast< NT & >(N) );
+          }
+          else if( numNodePerFace==4 )
+          {
+            H1_QuadrilateralFace_Lagrange1_GaussLegendre2::calcN( q, N );
+          }
+
+          constexpr int normalSign[2] = { 1, -1 };
+          for( localIndex faceSide = 0; faceSide < 2; ++faceSide )
+          {
+            using xLocalTriangle = real64[3][3];
+            real64 const detJxW = numNodePerFace==3 ?
+                                  H1_TriangleFace_Lagrange1_Gauss1::transformedQuadratureWeight( q, reinterpret_cast< xLocalTriangle & >( xLocal[faceSide] ) ) :
+                                  H1_QuadrilateralFace_Lagrange1_GaussLegendre2::transformedQuadratureWeight( q, xLocal[faceSide] );
+
+            for( localIndex lagIndex = 0; lagIndex < numNodePerFace; ++lagIndex )
+            {
+              localIndex const nodeIndex = faceToNodeMap( elemsToFaces[kfe][faceSide], lagIndex ); // global index of the node
+              real64 const NaDetJxQ = N[permutation[a]] * detJxW;
+              real64 const localNodalForce[ 3 ] = { traction( nodeIndex, 0 ) * NaDetJxQ,
+                                                    traction( nodeIndex, 1 ) * NaDetJxQ,
+                                                    traction( nodeIndex, 2 ) * NaDetJxQ };
+              real64 globalNodalForce[ 3 ];
+              LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( globalNodalForce, rotationMatrix[ kfe ], localNodalForce );
+
+              for( localIndex i = 0; i < 3; ++i )
+              {
+                rowDOF[3*lagIndex+i] = dispDofNumber[ nodeIndex ] + i;
+                nodeRHS[3*lagIndex+i] = +globalNodalForce[i] * normalSign[ faceSide ];
+
+                // Opposite sign w.r.t. to the same formulation as above
+                dRdT( 3*lagIndex+i, 0 ) = rotationMatrix( kfe, i, 0 ) * normalSign[ faceSide ] * NaDetJxQ;
+                dRdT( 3*lagIndex+i, 1 ) = rotationMatrix( kfe, i, 1 ) * normalSign[ faceSide ] * NaDetJxQ;
+                dRdT( 3*lagIndex+i, 2 ) = rotationMatrix( kfe, i, 2 ) * normalSign[ faceSide ] * NaDetJxQ;
+              }
+            }
+
+            for( localIndex idof = 0; idof < numNodesPerFace * 3; ++idof )
+            {
+              localIndex const localRow = LvArray::integerConversion< localIndex >( rowDOF[idof] - rankOffset );
+
+              if( localRow >= 0 && localRow < localMatrix.numRows() )
+              {
+                localMatrix.addToRow< parallelHostAtomic >( localRow,
+                                                            colDOF,
+                                                            dRdT[idof].dataIfContiguous(),
+                                                            3 );
+                RAJA::atomicAdd( parallelHostAtomic{}, &localRhs[localRow], nodeRHS[idof] );
+              }
+            }
+          }
+        }
+      }
     });
-  
-  }
-  
+  });
 }
 
 
