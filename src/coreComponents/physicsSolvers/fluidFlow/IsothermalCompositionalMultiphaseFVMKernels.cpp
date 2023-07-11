@@ -33,7 +33,7 @@ namespace isothermalCompositionalMultiphaseFVMKernels
 
 /******************************** FaceBasedAssemblyKernel ********************************/
 
-FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhases,
+FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( //integer const numPhases,
                                                           globalIndex const rankOffset,
                                                           DofNumberAccessor const & dofNumberAccessor,
                                                           CompFlowAccessors const & compFlowAccessors,
@@ -44,7 +44,7 @@ FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhase
                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                           arrayView1d< real64 > const & localRhs,
                                                           BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags )
-  : m_numPhases( numPhases ),
+  : //m_numPhases( numPhases ),
   m_rankOffset( rankOffset ),
   m_dt( dt ),
   m_dofNumber( dofNumberAccessor.toNestedViewConst() ),

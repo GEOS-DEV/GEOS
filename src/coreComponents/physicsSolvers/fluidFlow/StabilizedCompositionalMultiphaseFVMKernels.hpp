@@ -39,8 +39,8 @@ using namespace constitutive;
  * @tparam STENCILWRAPPER the type of the stencil wrapper
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
-class FaceBasedAssemblyKernel : public isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >
+template< integer NUM_PHASE, integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
+class FaceBasedAssemblyKernel : public isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_PHASE, NUM_COMP, NUM_DOF, STENCILWRAPPER >
 {
 public:
 
@@ -74,7 +74,7 @@ public:
     StencilMaterialAccessors< RelativePermeabilityBase, fields::relperm::phaseRelPerm_n >;
 
   using AbstractBase::m_dt;
-  using AbstractBase::m_numPhases;
+  //using AbstractBase::m_numPhases;
   using AbstractBase::m_kernelFlags;
   using AbstractBase::m_rankOffset;
   using AbstractBase::m_ghostRank;
@@ -88,7 +88,8 @@ public:
   using AbstractBase::m_dPhaseCapPressure_dPhaseVolFrac;
   using AbstractBase::m_pres;
 
-  using Base = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+  using Base = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_PHASE, NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+  using Base::numPhase;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -119,7 +120,7 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    * @param[in] kernelFlags flags packed together
    */
-  FaceBasedAssemblyKernel( integer const numPhases,
+  FaceBasedAssemblyKernel( //integer const numPhases,
                            globalIndex const rankOffset,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
@@ -134,7 +135,7 @@ public:
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs,
                            BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags )
-    : Base( numPhases,
+    : Base( //numPhases,
             rankOffset,
             0.0, // no C1-PPU
             stencilWrapper,
@@ -348,26 +349,46 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using KERNEL_TYPE = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
-      typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::StabCompFlowAccessors stabCompFlowAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::StabMultiFluidAccessors stabMultiFluidAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::RelPermAccessors relPermAccessors( elemManager, solverName );
-
       BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags;
       if( hasCapPressure )
         kernelFlags.setFlag( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::CapPressure );
       if( useTotalMassEquation )
         kernelFlags.setFlag( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::TotalMassEquation );
 
-      KERNEL_TYPE kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
-                          compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors, stabMultiFluidAccessors,
-                          capPressureAccessors, permeabilityAccessors, relPermAccessors,
-                          dt, localMatrix, localRhs, kernelFlags );
-      KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
+      if(numPhases==2)
+      {
+        using KERNEL_TYPE = FaceBasedAssemblyKernel< 2, NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+        typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
+        typename KERNEL_TYPE::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+        typename KERNEL_TYPE::StabCompFlowAccessors stabCompFlowAccessors( elemManager, solverName );
+        typename KERNEL_TYPE::StabMultiFluidAccessors stabMultiFluidAccessors( elemManager, solverName );
+        typename KERNEL_TYPE::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+        typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+        typename KERNEL_TYPE::RelPermAccessors relPermAccessors( elemManager, solverName );
+
+        KERNEL_TYPE kernel( /*numPhases,*/ rankOffset, stencilWrapper, dofNumberAccessor,
+                            compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors, stabMultiFluidAccessors,
+                            capPressureAccessors, permeabilityAccessors, relPermAccessors,
+                            dt, localMatrix, localRhs, kernelFlags );
+        KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
+      }
+      else
+      {
+        using KERNEL_TYPE = FaceBasedAssemblyKernel< 3, NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+        typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
+        typename KERNEL_TYPE::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+        typename KERNEL_TYPE::StabCompFlowAccessors stabCompFlowAccessors( elemManager, solverName );
+        typename KERNEL_TYPE::StabMultiFluidAccessors stabMultiFluidAccessors( elemManager, solverName );
+        typename KERNEL_TYPE::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+        typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+        typename KERNEL_TYPE::RelPermAccessors relPermAccessors( elemManager, solverName );
+
+        KERNEL_TYPE kernel( /*numPhases,*/ rankOffset, stencilWrapper, dofNumberAccessor,
+                            compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors, stabMultiFluidAccessors,
+                            capPressureAccessors, permeabilityAccessors, relPermAccessors,
+                            dt, localMatrix, localRhs, kernelFlags );
+        KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
+      }
     } );
   }
 };

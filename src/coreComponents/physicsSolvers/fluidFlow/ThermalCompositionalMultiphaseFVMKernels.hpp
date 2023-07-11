@@ -160,8 +160,8 @@ public:
  * @tparam STENCILWRAPPER the type of the stencil wrapper
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
-class FaceBasedAssemblyKernel : public isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >
+template< integer NUM_PHASE, integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
+class FaceBasedAssemblyKernel : public isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_PHASE, NUM_COMP, NUM_DOF, STENCILWRAPPER >
 {
 public:
 
@@ -182,7 +182,7 @@ public:
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
 
   using AbstractBase::m_dt;
-  using AbstractBase::m_numPhases;
+  //using AbstractBase::m_numPhases;
   using AbstractBase::m_kernelFlags;
   using AbstractBase::m_rankOffset;
   using AbstractBase::m_dofNumber;
@@ -196,7 +196,8 @@ public:
   using AbstractBase::m_dCompFrac_dCompDens;
   using AbstractBase::m_dPhaseCapPressure_dPhaseVolFrac;
 
-  using Base = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+  using Base = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_PHASE, NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+  using Base::numPhase;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -240,7 +241,7 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    * @param[in] kernelFlags flags packed all together
    */
-  FaceBasedAssemblyKernel( integer const numPhases,
+  FaceBasedAssemblyKernel( //integer const numPhases,
                            globalIndex const rankOffset,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
@@ -255,7 +256,7 @@ public:
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs,
                            BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags )
-    : Base( numPhases,
+    : Base( //numPhases,
             rankOffset,
             0.0, // no C1-PPU
             stencilWrapper,
@@ -375,7 +376,7 @@ public:
         real64 dCapPressure_dT = 0.0;
         if( AbstractBase::m_kernelFlags.hasFlag( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::CapPressure ) )
         {
-          for( integer jp = 0; jp < m_numPhases; ++jp )
+          for( integer jp = 0; jp < numPhase; ++jp )
           {
             real64 const dCapPressure_dS = m_dPhaseCapPressure_dPhaseVolFrac[er][esr][ei][0][ip][jp];
             dCapPressure_dT += dCapPressure_dS * m_dPhaseVolFrac[er][esr][ei][jp][Deriv::dT];
@@ -648,26 +649,46 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using KernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
-      typename KernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-      typename KernelType::ThermalCompFlowAccessors thermalCompFlowAccessors( elemManager, solverName );
-      typename KernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-      typename KernelType::ThermalMultiFluidAccessors thermalMultiFluidAccessors( elemManager, solverName );
-      typename KernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-      typename KernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-      typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
-
       BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags;
       if( hasCapPressure )
         kernelFlags.setFlag( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::CapPressure );
       if( useTotalMassEquation )
         kernelFlags.setFlag( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::TotalMassEquation );
 
-      KernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
-                         compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
-                         capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
-                         dt, localMatrix, localRhs, kernelFlags );
-      KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+      if(numPhases == 2)
+      {
+        using KernelType = FaceBasedAssemblyKernel< 2, NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+        typename KernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
+        typename KernelType::ThermalCompFlowAccessors thermalCompFlowAccessors( elemManager, solverName );
+        typename KernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+        typename KernelType::ThermalMultiFluidAccessors thermalMultiFluidAccessors( elemManager, solverName );
+        typename KernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+        typename KernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+        typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
+
+        KernelType kernel( /*numPhases,*/ rankOffset, stencilWrapper, dofNumberAccessor,
+                           compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
+                           capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
+                           dt, localMatrix, localRhs, kernelFlags );
+        KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+      }
+      else
+      {
+        using KernelType = FaceBasedAssemblyKernel< 3, NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+        typename KernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
+        typename KernelType::ThermalCompFlowAccessors thermalCompFlowAccessors( elemManager, solverName );
+        typename KernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+        typename KernelType::ThermalMultiFluidAccessors thermalMultiFluidAccessors( elemManager, solverName );
+        typename KernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+        typename KernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+        typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
+
+        KernelType kernel( /*numPhases,*/ rankOffset, stencilWrapper, dofNumberAccessor,
+                           compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
+                           capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
+                           dt, localMatrix, localRhs, kernelFlags );
+        KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+      }
     } );
   }
 };
@@ -682,8 +703,9 @@ public:
  * @tparam FLUIDWRAPPER the type of the fluid wrapper
  * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
  */
-template< integer NUM_COMP, integer NUM_DOF, typename FLUIDWRAPPER >
-class DirichletFaceBasedAssemblyKernel : public isothermalCompositionalMultiphaseFVMKernels::DirichletFaceBasedAssemblyKernel< NUM_COMP,
+template< integer NUM_PHASE, integer NUM_COMP, integer NUM_DOF, typename FLUIDWRAPPER >
+class DirichletFaceBasedAssemblyKernel : public isothermalCompositionalMultiphaseFVMKernels::DirichletFaceBasedAssemblyKernel< NUM_PHASE,
+  NUM_COMP,
                                                                                                                                NUM_DOF,
                                                                                                                                FLUIDWRAPPER >
 {
@@ -706,7 +728,7 @@ public:
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
 
   using AbstractBase::m_dt;
-  using AbstractBase::m_numPhases;
+  //using AbstractBase::m_numPhases;
   using AbstractBase::m_kernelFlags;
   using AbstractBase::m_rankOffset;
   using AbstractBase::m_dofNumber;
@@ -719,7 +741,8 @@ public:
   using AbstractBase::m_dCompFrac_dCompDens;
   using AbstractBase::m_dPhaseCapPressure_dPhaseVolFrac;
 
-  using Base = isothermalCompositionalMultiphaseFVMKernels::DirichletFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, FLUIDWRAPPER >;
+  using Base = isothermalCompositionalMultiphaseFVMKernels::DirichletFaceBasedAssemblyKernel< NUM_PHASE, NUM_COMP, NUM_DOF, FLUIDWRAPPER >;
+  using Base::numPhase;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -764,7 +787,7 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    * @param[in] kernelFlags flags packed together
    */
-  DirichletFaceBasedAssemblyKernel( integer const numPhases,
+  DirichletFaceBasedAssemblyKernel( //integer const numPhases,
                                     globalIndex const rankOffset,
                                     FaceManager const & faceManager,
                                     BoundaryStencilWrapper const & stencilWrapper,
@@ -781,7 +804,7 @@ public:
                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                     arrayView1d< real64 > const & localRhs,
                                     BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags )
-    : Base( numPhases,
+    : Base( //numPhases,
             rankOffset,
             faceManager,
             stencilWrapper,
@@ -1099,25 +1122,45 @@ public:
           elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
         dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-        using KernelType = DirichletFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
-        typename KernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-        typename KernelType::ThermalCompFlowAccessors thermalCompFlowAccessors( elemManager, solverName );
-        typename KernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-        typename KernelType::ThermalMultiFluidAccessors thermalMultiFluidAccessors( elemManager, solverName );
-        typename KernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-        typename KernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-        typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
-
         // for now, we neglect capillary pressure in the kernel
         BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags;
         if( useTotalMassEquation )
           kernelFlags.setFlag( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::TotalMassEquation );
 
-        KernelType kernel( numPhases, rankOffset, faceManager, stencilWrapper, fluidWrapper,
-                           dofNumberAccessor, compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
-                           capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
-                           dt, localMatrix, localRhs, kernelFlags );
-        KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+        if(numPhases == 2)
+        {
+          using KernelType = DirichletFaceBasedAssemblyKernel< 2, NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
+          typename KernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
+          typename KernelType::ThermalCompFlowAccessors thermalCompFlowAccessors( elemManager, solverName );
+          typename KernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+          typename KernelType::ThermalMultiFluidAccessors thermalMultiFluidAccessors( elemManager, solverName );
+          typename KernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+          typename KernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+          typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
+
+          KernelType kernel( /*numPhases,*/ rankOffset, faceManager, stencilWrapper, fluidWrapper,
+                             dofNumberAccessor, compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
+                             capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
+                             dt, localMatrix, localRhs, kernelFlags );
+          KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+        }
+        else
+        {
+          using KernelType = DirichletFaceBasedAssemblyKernel< 3, NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
+          typename KernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
+          typename KernelType::ThermalCompFlowAccessors thermalCompFlowAccessors( elemManager, solverName );
+          typename KernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+          typename KernelType::ThermalMultiFluidAccessors thermalMultiFluidAccessors( elemManager, solverName );
+          typename KernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+          typename KernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+          typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
+
+          KernelType kernel( /*numPhases,*/ rankOffset, faceManager, stencilWrapper, fluidWrapper,
+                             dofNumberAccessor, compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
+                             capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
+                             dt, localMatrix, localRhs, kernelFlags );
+          KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+        }
       } );
     } );
   }
