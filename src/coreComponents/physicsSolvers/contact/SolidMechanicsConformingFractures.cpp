@@ -1088,14 +1088,105 @@ bool SolidMechanicsConformingFractures::updateConfiguration( DomainPartition & d
   GEOS_MARK_FUNCTION;
 
   using namespace fields::contact;
-
   int hasConfigurationConverged = true;
 
-  // forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-  //                                                               MeshLevel & meshLevel,
-  //                                                               arrayView1d< string const > const & regionNames )
-  // {} );
-  // Need to synchronize the fracture state due to the use will be made of in AssemblyStabilization
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    // node-based fields
+    NodeManager const & nodeManager = mesh.getNodeManager();
+    arrayView2d< real64 const > const & traction = nodeManager.getField< contact::traction >();
+    arrayView2d< real64 const > const & dispJump = nodeManager.getField< contact::dispJump >();
+    arrayView1d< integer > const & fractureState = nodeManager.getField< contact::fractureState >();
+
+    arrayView1d< real64 const > const & normalTractionTolerance =
+    nodeManager.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() ); // TODO: undefined 
+    arrayView1d< real64 const > const & normalDisplacementTolerance =
+    nodeManager.getReference< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() ); // TODO: undefined
+    ElementRegionManager & elemManager = mesh.getElemManager(); 
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                FaceElementSubRegion & subRegion )
+    {
+      // face-based fields
+      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+      RAJA::ReduceMin< parallelHostReduce, integer > checkActiveSetSub( 1 );
+      constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+      {
+        using ContactType = TYPEOFREF( castedContact );
+        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+
+        forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+        {
+          if( ghostRank[kfe] < 0 )
+          {
+            localIndex const numNodePerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
+            array1d< real64 > nodalArea;
+
+            for ( localIndex lagIndex = 0; lagIndex < numNodePerFace; ++lagIndex )
+            {
+              for( localIndex faceSide = 0; faceSide < 2; ++faceSide )
+              {
+                localIndex const nodeIndex = faceToNodeMap( elemsToFaces[kfe][faceSide], lagIndex ); // global index of the node
+                integer const originalFractureState = fractureState[nodeIndex];
+                if( originalFractureState == contact::FractureState::Open )
+                {
+                  if( dispJump[nodeIndex][0] > -normalDisplacementTolerance[nodeIndex] )
+                  {
+                    fractureState[nodeIndex] = contact::FractureState::Open;
+                  }
+                  else
+                  {
+                    fractureState[nodeIndex] = contact::FractureState::Stick;
+                  }
+                }
+                else if( traction[nodeIndex][0] > normalTractionTolerance[nodeIndex] )
+                {
+                  fractureState[nodeIndex] = contact::FractureState::Open;
+                }
+                else
+                {
+                  real64 currentTau = sqrt( traction[nodeIndex][1]*traction[nodeIndex][1] + traction[nodeIndex][2]*traction[nodeIndex][2] );
+
+                  real64 dLimitTangentialTractionNorm_dTraction = 0.0;
+                  real64 const limitTau =
+                    contactWrapper.computeLimitTangentialTractionNorm( traction[nodeIndex][0],
+                                                                      dLimitTangentialTractionNorm_dTraction );
+
+                  if( originalFractureState == contact::FractureState::Stick && currentTau >= limitTau )
+                  {
+                    currentTau *= (1.0 - m_slidingCheckTolerance);
+                  }
+                  else if( originalFractureState != contact::FractureState::Stick && currentTau <= limitTau )
+                  {
+                    currentTau *= (1.0 + m_slidingCheckTolerance);
+                  }
+                  if( currentTau > limitTau )
+                  {
+                    if( originalFractureState == contact::FractureState::Stick )
+                    {
+                      fractureState[nodeIndex] = contact::FractureState::NewSlip;
+                    }
+                    else
+                    {
+                      fractureState[nodeIndex] = contact::FractureState::Slip;
+                    }
+                  }
+                  else
+                  {
+                    fractureState[nodeIndex] = contact::FractureState::Stick;
+                  }
+                }
+                checkActiveSetSub.min( compareFractureStates( originalFractureState, fractureState[kfe] ) );
+              }
+            }
+          }
+        }
+      } );
+    } );
+  } );
+
   synchronizeFractureState( domain );
 
   // Compute if globally the fracture state has changed
