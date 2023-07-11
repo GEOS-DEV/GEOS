@@ -137,7 +137,7 @@ protected:
 
 private:
 
-  void computeFaceDisplacementJump( DomainPartition & domain ) const;
+  //void computeFaceDisplacementJump( DomainPartition & domain ) const;
 
   void computeNodalDisplacementJump( DomainPartition & domain ) const;
   

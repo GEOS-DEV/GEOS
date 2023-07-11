@@ -137,7 +137,7 @@ void SolidMechanicsConformingFractures::implicitStepSetup( real64 const & time_n
 {
   computeRotationMatrices( domain );
   //computeTolerance( domain );
-  computeFaceDisplacementJump( domain );
+  computeNodalDisplacementJump( domain );
 
   m_solidSolver->implicitStepSetup( time_n, dt, domain );
 }
@@ -155,26 +155,43 @@ void SolidMechanicsConformingFractures::implicitStepComplete( real64 const & tim
                                                                 MeshLevel & meshLevel,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    GEOS_UNUSED_VAR( regionNames );
-    meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    NodeManager const & nodeManager = meshLevel.getNodeManager();
+    FaceManager const & faceManager = meshLevel.getFaceManager();
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
+    // node-based fields
+    arrayView2d< real64 const > const & dispJump = nodeManager.getField< contact::dispJump >();
+    arrayView2d< real64 > const & oldDispJump = nodeManager.getField< contact::oldDispJump >();
+    arrayView1d< integer const > const & fractureState = nodeManager.getField< contact::fractureState >();
+    arrayView1d< integer > const & oldFractureState = nodeManager.getField< contact::oldFractureState >();
+ 
+    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   FaceElementSubRegion & subRegion )
     {
-      arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
-      arrayView2d< real64 > const & oldDispJump = subRegion.getField< contact::oldDispJump >();
-      arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
-      arrayView1d< integer > const & oldFractureState = subRegion.getField< contact::oldFractureState >();
-
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
-        for( localIndex i = 0; i < 3; ++i )
+        localIndex const numNodePerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
+        for ( localIndex lagIndex = 0; lagIndex < numNodePerFace; ++lagIndex )
         {
-          oldDispJump[kfe][i] = dispJump[kfe][i];
+          for( localIndex faceSide = 0; faceSide < 2; ++faceSide )
+          {
+            localIndex const nodeIndex = faceToNodeMap( elemsToFaces[kfe][faceSide], lagIndex ); // global index of the node
+            for( localIndex i = 0; i < 3; ++i )
+            {
+              oldDispJump[nodeIndex][i] = dispJump[nodeIndex][i];
+            }
+            oldFractureState[nodeIndex] = fractureState[nodeIndex];
+          }
         }
-        oldFractureState[kfe] = fractureState[kfe];
       } );
     } );
-
-
   } );
+    // Need a synchronization of deltaTraction as will be used in AssembleStabilization
+    FieldIdentifiers fieldsToBeSync;
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                         mesh,
+                                                         domain.getNeighbors(),
+                                                         true );
 
   GEOS_LOG_LEVEL_RANK_0( 1, " ***** ImplicitStepComplete *****" );
 }
@@ -281,66 +298,6 @@ void SolidMechanicsConformingFractures::computeNodalDisplacementJump( DomainPart
           }
         }
       } );
-    } );
-  } );
-}
-
-void SolidMechanicsConformingFractures::computeFaceDisplacementJump( DomainPartition & domain ) const
-{
-  // TODO: rewrite for node-based dispJump
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & meshLevel,
-                                                                arrayView1d< string const > const & regionNames )
-  {
-    NodeManager const & nodeManager = meshLevel.getNodeManager();
-    FaceManager & faceManager = meshLevel.getFaceManager();
-    ElementRegionManager & elemManager = meshLevel.getElemManager();
-
-    // Get the coordinates for all nodes
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
-
-    ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
-
-    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u =
-      nodeManager.getField< solidMechanics::totalDisplacement >();
-
-    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
-                                                              [&]( localIndex const,
-                                                                   FaceElementSubRegion & subRegion )
-    {
-      if( subRegion.hasField< contact::traction >() )
-      {
-        arrayView3d< real64 > const &
-        rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
-        arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
-        arrayView2d< real64 > const & dispJump = subRegion.getField< contact::dispJump >();
-        arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
-
-        forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
-        {
-          // Contact constraints
-          localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
-
-          array1d< real64 > nodalArea0, nodalArea1;
-          computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][0], nodalArea0 );
-          computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][1], nodalArea1 );
-
-          real64 globalJumpTemp[ 3 ] = { 0 };
-          for( localIndex a = 0; a < numNodesPerFace; ++a )
-          {
-            for( localIndex i = 0; i < 3; ++i )
-            {
-              globalJumpTemp[ i ] +=
-                ( -u[faceToNodeMap( elemsToFaces[kfe][0], a )][i] * nodalArea0[a]
-                  +u[faceToNodeMap( elemsToFaces[kfe][1], a )][i] * nodalArea1[a] ) / area[kfe];
-            }
-          }
-
-          real64 dispJumpTemp[ 3 ];
-          LvArray::tensorOps::Ri_eq_AjiBj< 3, 3 >( dispJumpTemp, rotationMatrix[ kfe ], globalJumpTemp );
-          LvArray::tensorOps::copy< 3 >( dispJump[ kfe ], dispJumpTemp );
-        } );
-      }
     } );
   } );
 }
@@ -846,10 +803,123 @@ real64 SolidMechanicsConformingFractures::calculateResidualNorm( real64 const & 
                                                                  arrayView1d< real64 const > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
-  GEOS_UNUSED_VAR(domain);
-  GEOS_UNUSED_VAR(dofManager);
-  GEOS_UNUSED_VAR(localRhs);
-  return 0.0;
+  real64 momentumR2 = 0.0;
+  real64 contactR2 = 0.0;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    NodeManager const & nodeManager = mesh.getNodeManager();
+    arrayView1d< globalIndex const > const & dispDofNumber =
+      nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( solidMechanics::totalDisplacement::key() ) );
+
+    string const & dofKey = dofManager.getKey( contact::traction::key() );
+    globalIndex const rankOffset = dofManager.rankOffset();
+
+    arrayView1d< integer const > const & elemGhostRank = nodeManager.ghostRank();
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum0( 0.0 );
+    // Compute the norm of the residuals associated with displacement
+    forAll< parallelDevicePolicy<> >( nodeManager.size(),
+                                      [localRhs, localSum0, dispDofNumber, rankOffset, elemGhostRank] GEOS_HOST_DEVICE ( localIndex const k )
+    {
+      if( elemGhostRank[k] < 0 )
+      {
+        localIndex const localRow = LvArray::integerConversion< localIndex >( dispDofNumber[k] - rankOffset );
+        for( localIndex dim = 0; dim < 3; ++dim )
+        {
+          localSum0 += localRhs[localRow + dim] * localRhs[localRow + dim];
+        }
+      }
+    } );
+    momentumR2 += localSum0.get();
+
+    string const & tracDofKey = dofManager.getKey( contact::traction::key() );
+    arrayView1d< globalIndex const > const & tracDofNumber = nodeManager.getReference< globalIndex_array >( tracDofKey );
+    // Compute the norm of the residuals associated with traction
+    mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                                        [&]( localIndex const, FaceElementSubRegion const & subRegion )
+    {
+      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+      RAJA::ReduceSum< parallelHostReduce, real64 > localSum( 0.0 );
+      forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const k )
+      {
+        if( ghostRank[k] < 0 )
+        {
+          localIndex const numNodePerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
+          for ( localIndex lagIndex = 0; lagIndex < numNodePerFace; ++lagIndex )
+          {
+            for( localIndex faceSide = 0; faceSide < 2; ++faceSide )
+            {
+              localIndex const nodeIndex = faceToNodeMap( elemsToFaces[kfe][faceSide], lagIndex );
+              localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[k] - rankOffset );
+              for( localIndex dim = 0; dim < 3; ++dim )
+              {
+                localSum += localRhs[localRow + dim] * localRhs[localRow + dim];
+              }
+            }
+          }
+        }
+      } );
+      contactR2 += localSum.get();
+    } );
+  } );
+
+  real64 localR2[2] = { momentumR2, contactR2 };
+  real64 globalResidualNorm[3]{};
+
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+  int const size = MpiWrapper::commSize( MPI_COMM_GEOSX );
+  array1d< real64 > globalR2( 2 * size );
+  globalR2.zero();
+
+  // Everything is done on rank 0
+  MpiWrapper::gather( localR2,
+                      2,
+                      globalR2.data(),
+                      2,
+                      0,
+                      MPI_COMM_GEOSX );
+
+  if( rank==0 )
+  {
+    globalResidualNorm[0] = 0.0;
+    globalResidualNorm[1] = 0.0;
+    for( int r=0; r<size; ++r )
+    {
+      // sum across all ranks
+      globalResidualNorm[0] += globalR2[2 * r + 0];
+      globalResidualNorm[1] += globalR2[2 * r + 1];
+    }
+    globalResidualNorm[2] = globalResidualNorm[0] + globalResidualNorm[1];
+    globalResidualNorm[0] = sqrt( globalResidualNorm[0] );
+    globalResidualNorm[1] = sqrt( globalResidualNorm[1] );
+    globalResidualNorm[2] = sqrt( globalResidualNorm[2] );
+  }
+
+  MpiWrapper::bcast( globalResidualNorm, 3, 0, MPI_COMM_GEOSX );
+
+  if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+  {
+    m_initialResidual[0] = globalResidualNorm[0];
+    m_initialResidual[1] = globalResidualNorm[1];
+    m_initialResidual[2] = globalResidualNorm[2];
+    globalResidualNorm[0] = 1.0;
+    globalResidualNorm[1] = 1.0;
+    globalResidualNorm[2] = 1.0;
+  }
+  else
+  {
+    globalResidualNorm[0] /= (m_initialResidual[0]+1.0);
+    globalResidualNorm[1] /= (m_initialResidual[1]+1.0);
+    // Add 0 just to match Matlab code results
+    globalResidualNorm[2] /= (m_initialResidual[2]+1.0);
+  }
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( Rdisplacement, Rtraction, Rtotal ) = ( {:15.6e}, {:15.6e}, {:15.6e} );",
+                                      globalResidualNorm[0],
+                                      globalResidualNorm[1],
+                                      globalResidualNorm[2] ) );
+  return globalResidualNorm[2];
 }
 
 void SolidMechanicsConformingFractures::computeRotationMatrices( DomainPartition & domain ) const
@@ -985,7 +1055,7 @@ void SolidMechanicsConformingFractures::applySystemSolution( DofManager const & 
 
 void SolidMechanicsConformingFractures::updateState( DomainPartition & domain )
 {
-  computeFaceDisplacementJump( domain );
+  computeNodalDisplacementJump( domain );
 }
 
 bool SolidMechanicsConformingFractures::resetConfigurationToDefault( DomainPartition & domain ) const
