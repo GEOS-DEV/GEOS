@@ -42,7 +42,7 @@ struct WaveSolverUtils
     real32 const alpha = -pow(f0 * pi, 2);
     real32 const time_d = time_n - o_tpeak;
     real32 const gaussian = exp(alpha * pow(time_d, 2));
-    int const sgn = pow(-1, order + 1);
+    localIndex const sgn = pow(-1, order + 1);
 
     switch( order )
     {

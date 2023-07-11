@@ -31,7 +31,7 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        order="3"
+        order="1"
         formulation="SEM"/>
     </FiniteElements>
   </NumericalMethods>
@@ -57,7 +57,8 @@
       fieldsToImport="{ mediumVelocity,mediumVelocityVp,mediumVelocityVs,mediumDensity }"    
       fieldNamesInGEOSX="{ mediumVelocity,mediumVelocityVp,mediumVelocityVs,mediumDensity }"
       file="acouselas3D_flu_komatitsch.vtu"
-      useGlobalIds="0"/>
+      useGlobalIds="0"
+      logLevel="1"/>
   </Mesh> 
 
   <!-- read from the Mesh instead -->
@@ -68,7 +69,7 @@
     <VTK name="vtkOutput"/>
   </Outputs>
 
-  <Events maxTime="3.0">
+  <Events maxTime="1e-2">
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solidSolverApplications"

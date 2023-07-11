@@ -711,6 +711,8 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 {
   GEOS_MARK_FUNCTION;
 
+  // std::cout << "\t[ElasticWaveEquationSEM::explicitStepInternal] start" << std::endl;
+
   GEOS_UNUSED_VAR( time_n, dt, cycleNumber );
 
   GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
@@ -831,8 +833,10 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     }
 
   } );
-  return dt;
 
+  // std::cout << "\t[ElasticWaveEquationSEM::explicitStepInternal] end" << std::endl;
+
+  return dt;
 }
 
 void ElasticWaveEquationSEM::cleanup( real64 const time_n,
