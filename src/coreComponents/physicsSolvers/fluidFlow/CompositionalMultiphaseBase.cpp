@@ -2069,6 +2069,8 @@ void CompositionalMultiphaseBase::saveIterationState( DomainPartition & domain )
 
 void CompositionalMultiphaseBase::saveIterationState( ElementSubRegionBase & subRegion ) const
 {
+  FlowSolverBase::saveIterationState( subRegion );
+
   if( !subRegion.hasField< fields::flow::globalCompDensity_k >() )
   {
     return;

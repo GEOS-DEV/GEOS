@@ -53,7 +53,7 @@ DECLARE_FIELD( pressure_k,
                array1d< real64 >,
                0,
                NOPLOT,
-               WRITE_AND_READ,
+               NO_WRITE,
                "Pressure at the previous sequential iteration" );
 
 DECLARE_FIELD( initialPressure,
@@ -117,7 +117,7 @@ DECLARE_FIELD( temperature_k,
                array1d< real64 >,
                0,
                LEVEL_0,
-               WRITE_AND_READ,
+               NO_WRITE,
                "Temperature at the previous sequential iteration" );
 
 DECLARE_FIELD( initialTemperature,
