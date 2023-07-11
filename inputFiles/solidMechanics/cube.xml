@@ -14,7 +14,7 @@
       <LinearSolverParameters
         directParallel="0"
         logLevel="200"
-        krylovTol="1.0e-20"
+        krylovTol="1.0e-200"
         krylovMaxIter="1000"/>
     </MatrixFreeSolidMechanicsFEM>
 

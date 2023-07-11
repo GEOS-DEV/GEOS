@@ -140,7 +140,7 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
   dst.close();
 }
 
-void MatrixFreeSolidMechanicsFEMOperator::computeDiagonal( ParallelVector & diagonal ) const
+void MatrixFreeSolidMechanicsFEMOperator::computeDiagonal( ParallelVector & GEOS_UNUSED_PARAM(diagonal) ) const
 {
   GEOS_ERROR( "computeDiagonal: operation not yet implemented" );
 }
@@ -227,7 +227,7 @@ MatrixFreeSolidMechanicsFEM::~MatrixFreeSolidMechanicsFEM()
 
 real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
                                                 real64 const & dt,
-                                                const int cycleNumber,
+                                                const int GEOS_UNUSED_PARAM(cycleNumber),
                                                 DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
@@ -332,7 +332,7 @@ void MatrixFreeSolidMechanicsFEM::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & meshLevel,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    arrayView1d< string const > const & GEOS_UNUSED_PARAM(regionNames) )
   {
     NodeManager & nodes = meshLevel.getNodeManager();
 
@@ -372,7 +372,7 @@ MatrixFreeSolidMechanicsFEM::applySystemSolution( DofManager const & dofManager,
                                
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
+                                                                MeshLevel & GEOS_UNUSED_PARAM(mesh),
                                                                 arrayView1d< string const > const & )
   {
     // auto const & disp = mesh.getNodeManager().getField<fields::solidMechanics::totalDisplacement>();

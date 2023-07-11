@@ -71,14 +71,14 @@ void loop3D( StackVariables & stack,
              localIndex loop_bound_3,
              Lambda3D && lambda )
 {
-  #pragma unroll
+  GEOS_PRAGMA_UNROLL
   for (localIndex ind_3 = 0; ind_3 < loop_bound_3; ind_3++)
   {
-    #pragma unroll
-    for (localIndex ind_2 = 0; ind_2 < loop_bound_2; ind_2++)
+    GEOS_PRAGMA_UNROLL
+      for (localIndex ind_2 = 0; ind_2 < loop_bound_2; ind_2++)
     {
-      #pragma unroll
-      for (localIndex ind_1 = 0; ind_1 < loop_bound_1; ind_1++)
+      GEOS_PRAGMA_UNROLL
+          for (localIndex ind_1 = 0; ind_1 < loop_bound_1; ind_1++)
       {
         lambda( ind_1, ind_2, ind_3 );
       }
@@ -113,11 +113,11 @@ void loop3D( StackVariables & stack,
   localIndex ind_1 = stack.tidx;
   if ( ind_1 < loop_bound_1 )
   {
-    #pragma unroll
-    for (localIndex ind_3 = 0; ind_3 < loop_bound_3; ind_3++)
+    GEOS_PRAGMA_UNROLL
+      for (localIndex ind_3 = 0; ind_3 < loop_bound_3; ind_3++)
     {
-      #pragma unroll
-      for (localIndex ind_2 = 0; ind_2 < loop_bound_2; ind_2++)
+      GEOS_PRAGMA_UNROLL
+          for (localIndex ind_2 = 0; ind_2 < loop_bound_2; ind_2++)
       {
         lambda( ind_1, ind_2, ind_3 );
       }

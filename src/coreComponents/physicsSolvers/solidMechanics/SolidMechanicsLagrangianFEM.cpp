@@ -397,8 +397,9 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 
             for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
             {
-              real64 J[3][3];
+              real64 J[3][3] = {{0}};
               real64 const detJW = FE_TYPE::invJacobianTransformation(q,xLocal,J);
+              FE_TYPE::calcN( q, N );
 
               for( localIndex a=0; a< numSupportPoints; ++a )
               {

@@ -50,9 +50,9 @@ inline real64 fieldLinearIndex( T const & field,
 } 
 
 template<>
-inline real64 fieldLinearIndex<arrayView1d<real64 const>>( arrayView1d<real64 const> const & field, 
+inline real64 fieldLinearIndex<arrayView1d<real64 const>>( arrayView1d<real64 const> const & GEOS_UNUSED_PARAM(field), 
                                                            localIndex const index0,
-                                                           localIndex const index1 )
+                                                           localIndex const GEOS_UNUSED_PARAM(index1) )
 {
   return index0;
 }
@@ -143,10 +143,10 @@ public:
       fsManager.apply<NodeManager>( m_time,
                        mesh,
                        m_fieldName,
-                       [&]( FieldSpecificationBase const & bc,
+                       [&]( FieldSpecificationBase const & GEOS_UNUSED_PARAM(bc),
                             string const &,
                             SortedArrayView< localIndex const > const & targetSet,
-                            dataRepository::Group & targetGroup,
+                            dataRepository::Group & GEOS_UNUSED_PARAM(targetGroup),
                             string const & GEOS_UNUSED_PARAM( fieldName ) )
       {
         totalSize += targetSet.size();

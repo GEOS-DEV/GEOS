@@ -42,8 +42,8 @@ SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::SmallStrainRe
                                                                                         CONSTITUTIVE_TYPE & inputConstitutiveType,
                                                                                         arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const inputSrc,
                                                                                         arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const inputDst,
-                                                                                        real64 const dt,
-                                                                                        string const elementListName ):
+                                                                                        real64 const GEOS_UNUSED_PARAM(dt),
+                                                                                        string const GEOS_UNUSED_PARAM(elementListName) ):
   Base( elementSubRegion,
         finiteElementSpace,
         inputConstitutiveType ),
@@ -65,12 +65,12 @@ GEOS_FORCE_INLINE
 void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( localIndex const k,
                                                                                StackVariables & stack ) const
 {
-  #pragma unroll
+  GEOS_PRAGMA_UNROLL
   for( localIndex a=0; a< numNodesPerElem; ++a )
   {
     localIndex const nodeIndex = m_elemsToNodes( k, a );
-    #pragma unroll
-    for( int i=0; i<numDofPerTrialSupportPoint; ++i )
+    GEOS_PRAGMA_UNROLL
+      for( int i=0; i<numDofPerTrialSupportPoint; ++i )
     {
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
       stack.xLocal[ a ][ i ] = m_X( nodeIndex, i );
@@ -100,7 +100,7 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   real64 stressLocal[ 6 ] = {0};
   m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
 
-  #pragma unroll
+  GEOS_PRAGMA_UNROLL
   for( localIndex c = 0; c < 6; ++c )
   {
     stressLocal[ c ] *= -detJ;
@@ -171,12 +171,12 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( l
                                                                                real64 (&xLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
                                                                                real64 (&varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const
 {
-  #pragma unroll
+  GEOS_PRAGMA_UNROLL
   for( localIndex a=0; a< numNodesPerElem; ++a )
   {
     localIndex const nodeIndex = m_elemsToNodes( k, a );
-    #pragma unroll
-    for( int i=0; i<numDofPerTrialSupportPoint; ++i )
+    GEOS_PRAGMA_UNROLL
+      for( int i=0; i<numDofPerTrialSupportPoint; ++i )
     {
       xLocal[ a ][ i ] = m_X( nodeIndex, i );
       varLocal[ a ][ i ] = m_input( nodeIndex, i );
@@ -208,7 +208,7 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 
   real64 stressLocal[ 6 ] = {0};
   m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, qa+2*qb+4*qc, strain, stressLocal );
-  #pragma unroll
+  GEOS_PRAGMA_UNROLL
   for( localIndex c = 0; c < 6; ++c )
   {
     stressLocal[ c ] *= -detJ;
@@ -240,14 +240,14 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 
   real64 gradVar[3][3] = {{0}};
 
-  #pragma unroll
+  GEOS_PRAGMA_UNROLL
   for( int i = 0; i < 3; ++i )
   {
-    #pragma unroll
-    for( int j = 0; j < 3; ++j )
+    GEOS_PRAGMA_UNROLL
+      for( int j = 0; j < 3; ++j )
     {
-      #pragma unroll
-      for( int kk = 0; kk < 3; ++kk )
+      GEOS_PRAGMA_UNROLL
+          for( int kk = 0; kk < 3; ++kk )
       {
         gradVar[i][j] = gradVar[i][j] + parentGradVar[i][kk] * invJ[kk][j];
       }
@@ -301,14 +301,14 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 //  FE_TYPE::template parentGradient< qa, qb, qc >( varLocal, parentGradVar);
   real64 gradVar[3][3] = {{0}};
 
-  #pragma unroll
+  GEOS_PRAGMA_UNROLL
   for( int i = 0; i < 3; ++i )
   {
-    #pragma unroll
-    for( int j = 0; j < 3; ++j )
+    GEOS_PRAGMA_UNROLL
+      for( int j = 0; j < 3; ++j )
     {
-      #pragma unroll
-      for( int kk = 0; kk < 3; ++kk )
+      GEOS_PRAGMA_UNROLL
+          for( int kk = 0; kk < 3; ++kk )
       {
         gradVar[i][j] = gradVar[i][j] + parentGradVar[i][kk] * invJ[kk][j];
       }
@@ -386,11 +386,11 @@ kernelLaunch( localIndex const numElems,
 
     kernelComponent.setup( k, stack );
 //    for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
-  #pragma unroll
+  GEOS_PRAGMA_UNROLL
     for( integer qa=0; qa<2; ++qa )
-  #pragma unroll
+  GEOS_PRAGMA_UNROLL
     for( integer qb=0; qb<2; ++qb )
-  #pragma unroll
+  GEOS_PRAGMA_UNROLL
     for( integer qc=0; qc<2; ++qc )
     {
       //  int qa, qb, qc;
