@@ -362,6 +362,9 @@ assembleCouplingTerms( real64 const time_n,
 
 }
 
+template class SinglePhaseReservoirAndWells< SinglePhaseBase >;
+template class SinglePhaseReservoirAndWells< SinglePhasePoromechanics< SinglePhaseBase > >;
+
 namespace
 {
 typedef SinglePhaseReservoirAndWells< SinglePhaseBase > SinglePhaseFlowAndWells;

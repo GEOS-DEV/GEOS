@@ -50,14 +50,13 @@ template< typename FLOW_SOLVER > class
 template<> class SinglePhaseCatalogNames< SinglePhaseBase >
 {
 public:
-  // TODO: find a way to use the catalog name here
   static string name() { return "SinglePhasePoromechanics"; }
 };
 // Class specialization for a FLOW_SOLVER set to SinglePhaseReservoirAndWells
 template<> class SinglePhaseCatalogNames< SinglePhaseReservoirAndWells< SinglePhaseBase > >
 {
 public:
-  static string name() { return SinglePhaseReservoirAndWells< SinglePhaseBase >::catalogName()+"Poromechanics"; }
+  static string name() { return SinglePhaseReservoirAndWells< SinglePhaseBase >::catalogName() + "Poromechanics"; }
 };
 }
 
@@ -438,13 +437,13 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::updateBulkDensity( ElementSubRegio
                                                subRegion );
 }
 
+template class SinglePhasePoromechanics< SinglePhaseBase >;
+template class SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase > >;
+
 namespace
 {
 typedef SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase > > SinglePhaseReservoirPoromechanics;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseReservoirPoromechanics, string const &, Group * const )
-}
-namespace
-{
 typedef SinglePhasePoromechanics< SinglePhaseBase > SinglePhasePoromechanics;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanics, string const &, Group * const )
 }
