@@ -222,7 +222,7 @@ DECLARE_FIELD( Pressure_prime_np1,
                "pressure_prime_np1",
                array1d< real32 >,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "Derivative of the pressure at time n+1." );
 
@@ -253,6 +253,15 @@ DECLARE_FIELD( Intermediary_pressure_3_n,
 //// End Additional vectors for Runge-kutta Nystrom(RKN) scheme
 
 /// Additional Vectors for Modified Equation
+
+DECLARE_FIELD( Pressure_n_tmp,
+               "pressure_n_tmp",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Scalar temporaly pressure at time n in Modified Equation Scheme." );
+
 
 DECLARE_FIELD( ForcingRHSSecondDerivative,
                "rhsSecondDerivative",

@@ -237,7 +237,7 @@ struct PrecomputeSourceAndReceiverKernelForModifiedEquation
           localIndex const rickerOrder )
   {
 
-    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       real64 const center[3] = { elemCenter[k][0],
                                  elemCenter[k][1],
@@ -1059,9 +1059,9 @@ public:
     m_dt( dt ),
     m_c( coefs_c )
   {
-    GEOSX_UNUSED_VAR( edgeManager );
-    GEOSX_UNUSED_VAR( faceManager );
-    GEOSX_UNUSED_VAR( targetRegionIndex );
+    GEOS_UNUSED_VAR( edgeManager );
+    GEOS_UNUSED_VAR( faceManager );
+    GEOS_UNUSED_VAR( targetRegionIndex );
   }
 
   //*****************************************************************************
@@ -1074,7 +1074,7 @@ public:
   struct StackVariables : Base::StackVariables
   {
 public:
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       xLocal()
     {}
@@ -1090,8 +1090,8 @@ public:
    *
    * Copies the primary variable, and position into the local stack array.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -1113,8 +1113,8 @@ public:
    * Calculates stiffness vector
    *
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const
@@ -1229,9 +1229,9 @@ public:
     m_K1_n( nodeManager.getField< fields::Intermediary_pressure_1_n >() )
   {
     m_dt2 = dt*dt ;
-    GEOSX_UNUSED_VAR( edgeManager );
-    GEOSX_UNUSED_VAR( faceManager );
-    GEOSX_UNUSED_VAR( targetRegionIndex );
+    GEOS_UNUSED_VAR( edgeManager );
+    GEOS_UNUSED_VAR( faceManager );
+    GEOS_UNUSED_VAR( targetRegionIndex );
   }
 
   //*****************************************************************************
@@ -1244,7 +1244,7 @@ public:
   struct StackVariables : Base::StackVariables
   {
 public:
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       xLocal()
     {}
@@ -1260,8 +1260,8 @@ public:
    *
    * Copies the primary variable, and position into the local stack array.
    */       
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -1283,8 +1283,8 @@ public:
    * Calculates stiffness vector
    *
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const
@@ -1411,9 +1411,9 @@ public:
     m_K2_n( nodeManager.getField< fields::Intermediary_pressure_2_n >() )
   {
     m_dt2 = dt*dt ;
-    GEOSX_UNUSED_VAR( edgeManager );
-    GEOSX_UNUSED_VAR( faceManager );
-    GEOSX_UNUSED_VAR( targetRegionIndex );
+    GEOS_UNUSED_VAR( edgeManager );
+    GEOS_UNUSED_VAR( faceManager );
+    GEOS_UNUSED_VAR( targetRegionIndex );
   }
 
   //*****************************************************************************
@@ -1426,7 +1426,7 @@ public:
   struct StackVariables : Base::StackVariables
   {
 public:
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       xLocal()
     {}
@@ -1442,8 +1442,8 @@ public:
    *
    * Copies the primary variable, and position into the local stack array.
    */       
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -1465,8 +1465,8 @@ public:
    * Calculates stiffness vector
    *
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const

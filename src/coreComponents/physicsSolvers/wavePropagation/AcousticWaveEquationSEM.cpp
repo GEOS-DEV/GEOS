@@ -78,7 +78,8 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     // register for modified equation the secondDerivative of the source
     if(m_useModeq)
       {
-	nodeManager.registerField< fields::ForcingRHSSecondDerivative >( this->getName() );
+	nodeManager.registerField< fields::Pressure_n_tmp,
+				   fields::ForcingRHSSecondDerivative >( this->getName() ); 
       }
     // register variable for RKN method
     if( m_useRKN )
@@ -134,10 +135,15 @@ void AcousticWaveEquationSEM::postProcessInput()
 
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
 
-  m_sourceValue.resize( nsamples, numSourcesGlobal );
+  // m_sourceValue.resize( nsamples, numSourcesGlobal );
+
+  //localIndex const nsamples = int( (maxTime-minTime) /dt) + 1;
+
+  //localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   if(m_useModeq)
     {
-      m_sourceValueSecondDerivativeRicker.resize( nsamples, numSourcesGlobal );
+      //m_sourceValueSecondDerivativeRicker.resize( nsamples, numSourcesGlobal );
+      m_sourceValueSecondDerivativeRicker.resize( m_sourceValue.size(0), m_sourceValue.size(1) );
     }
   if(m_useRKN)
     {
@@ -952,15 +958,14 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 	
       });
     }
-    else if(m_useModeq)
+    /*else if(m_useModeq)
       {
-	  forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-      {
-	p_n[a]   = p_np1[a];
-	
-      } );
-	
-      }
+	forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+	{
+	  p_n[a]   = p_np1[a];
+	  
+	} );
+	}*/
     else{
       forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
@@ -1099,7 +1104,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     
     bool const usePML = m_usePML;
 
-    if(!useRKN && useModeq)
+    if(!useRKN || useModeq)
       {
 	
 	auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
@@ -1124,7 +1129,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 	arrayView1d< real32 > const rhsSecondDerivative = nodeManager.getField< fields::ForcingRHSSecondDerivative >();
 	addSourceToRightHandSide( cycleForSource, rhs, rhsSecondDerivative );
       }
-    else
+    else 
       {
 	addSourceToRightHandSide( cycleForSource, rhs );
       }
@@ -1136,36 +1141,22 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     {
       
       GEOS_MARK_SCOPE ( updateP );
-      if(!useRKN)
-	{
-	  forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-	  {
-	    if( freeSurfaceNodeIndicator[a] != 1 )
-	      {
-		
-		p_np1[a] = p_n[a];
-		p_np1[a] *= 2.0*mass[a];
-		p_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
-		//p_np1[a] -= (mass[a])*p_nm1[a];
-		p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
-	       	p_np1[a] /= mass[a]+0.5*dt*damping[a];
-		//p_np1[a] /= mass[a];
-          }
-	  });
-	}
-      else if (useModeq)
+      if (useModeq)
 	{
 	  arrayView1d< real32 > const rhsSecondDerivative = nodeManager.getField< fields::ForcingRHSSecondDerivative >();
+	  arrayView1d< real32 > const tmp_p_n = nodeManager.getField< fields::Pressure_n_tmp >();
+	  //pressure_n_tmp
 	  forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
 	  {
 	    if( freeSurfaceNodeIndicator[a] != 1 )
 	      {
 		stiffnessVector[a] = (rhs[a]- stiffnessVector[a])/mass[a];
-		p_np1[a] = 2*p_n[a]-p_nm1[a] + dt2*stiffnessVector[a] + (dt4/12*rhsSecondDerivative[a])/mass[a];
-		p_nm1[a]=p_n[a];
-		p_n[a]=stiffnessVector[a];
-		stiffnessVector[a]=0;
+		p_np1[a] = 2*p_n[a]-p_nm1[a] + dt2*stiffnessVector[a] + ((dt4/12)*rhsSecondDerivative[a])/mass[a];
 	      }
+	    tmp_p_n[a]=p_n[a];
+	    p_n[a]=stiffnessVector[a];
+	    stiffnessVector[a]=0.0;
+	    rhsSecondDerivative[a] = 0.0;
 	  });
 	   
 	auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
@@ -1183,13 +1174,31 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 	  {
 	    if( freeSurfaceNodeIndicator[a] != 1 )
 	      {
-		p_np1[a]-= (dt4/12*stiffnessVector[a])/mass[a];
+		p_np1[a]-= ((dt4/12)*stiffnessVector[a])/mass[a];
 	      }
+	    p_n[a] = tmp_p_n[a];
 	  });
 	
 	}
       
-      else{
+      else if(!useRKN)
+	{
+	  forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+	  {
+	    if( freeSurfaceNodeIndicator[a] != 1 )
+	      {
+		
+		p_np1[a] = p_n[a];
+		p_np1[a] *= 2.0*mass[a];
+		//p_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
+		p_np1[a] -= (mass[a])*p_nm1[a];
+		p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
+	       	//p_np1[a] /= mass[a]+0.5*dt*damping[a];
+		p_np1[a] /= mass[a];
+          }
+	  });
+	}
+      else {
 	arrayView1d< real32 > const pprime_n = nodeManager.getField< fields::Pressure_prime_n >();
 	arrayView1d< real32 > const pprime_np1 = nodeManager.getField< fields::Pressure_prime_np1 >();
 	arrayView1d< real32 > const K1_n = nodeManager.getField< fields::Intermediary_pressure_1_n >();
@@ -1222,7 +1231,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 		{
 		  if(m_timeSchemeOrder==2)
 		    {
-		      K1_n[a] = (rhs[a] - stiffnessVector[a]-damping[a]*pprime_n[a])/mass[a];
+		      K1_n[a] = (rhs[a] - stiffnessVector[a]-damping[a]*pprime_n[a]*0)/mass[a];
 		      p_np1[a]=p_n[a] + dt*pprime_n[a] + 0.5*dt2*K1_n[a];
 		      pprime_np1[a]= pprime_n[a] + dt*K1_n[a];
 		    }
