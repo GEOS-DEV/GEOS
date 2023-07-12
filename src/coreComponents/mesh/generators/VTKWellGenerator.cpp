@@ -63,6 +63,12 @@ void VTKWellGenerator::fillPolylineDataStructure( )
       LvArray::tensorOps::copy< 3 >( m_polyNodeCoords[ipoint], point );
     }
 
+    GEOS_ERROR_IF( polyData->GetLines()->GetNumberOfCells() == 0, GEOS_FMT( "{}: Warning! Your VTK file {} doesn't contain any well",
+                                                                            this->getName(), m_filePath ));
+
+    GEOS_LOG_RANK_0_IF( polyData->GetLines()->GetNumberOfCells() > 1, GEOS_FMT( "{}: Warning! Your VTK file {} contains multiple wells. Only the first one will be read",
+                                                                                this->getName(), m_filePath ));
+
     // load edges
     polyData->GetLines()->InitTraversal();
     vtkNew< vtkIdList > idList;
