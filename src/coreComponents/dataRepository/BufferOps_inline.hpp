@@ -160,7 +160,7 @@ localIndex Pack( buffer_unit_type * & buffer,
 
 template< bool DO_PACKING, typename T >
 localIndex PackData( buffer_unit_type * & buffer,
-                 ArrayOfSets< T > const & var )
+                     ArrayOfSets< T > const & var )
 {
   localIndex sizeOfPackedChars = 0;
   for( localIndex a=0; a<var.size(); ++a )
@@ -272,7 +272,7 @@ template< bool DO_PACKING, typename T, typename INDEX_TYPE >
 typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
 PackPointerData( buffer_unit_type * & buffer,
                  T const * const GEOS_RESTRICT var,
-                INDEX_TYPE const length )
+                 INDEX_TYPE const length )
 
 {
   localIndex sizeOfPackedChars = 0;

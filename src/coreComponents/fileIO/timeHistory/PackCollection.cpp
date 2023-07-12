@@ -130,11 +130,11 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   Group const * targetGrp = this->getTargetObject( domain, m_objectPath );
   WrapperBase const & targetField = targetGrp->getWrapperBase( m_fieldName );
   GEOS_ERROR_IF( !( (!m_targetIsMeshObject && collectAll) ? targetField.isPackable( ) : targetField.isPackableByIndex()),
-                  GEOS_FMT( "The object targeted for collection ({}: {}, {}: {}) must be packable in its last modified memory space!",
-                            viewKeysStruct::objectPathString(),
-                            m_objectPath,
-                            viewKeysStruct::fieldNameString(),
-                            m_fieldName ) );
+                 GEOS_FMT( "The object targeted for collection ({}: {}, {}: {}) must be packable in its last modified memory space!",
+                           viewKeysStruct::objectPathString(),
+                           m_objectPath,
+                           viewKeysStruct::fieldNameString(),
+                           m_fieldName ) );
 
   // In the wake of previous trick about `m_setNames`, another small trick not to compute the real set names if they are not needed.
   // This is questionable but lets me define `setNames` as `const` variable.

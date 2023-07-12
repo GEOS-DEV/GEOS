@@ -277,8 +277,8 @@ PackPointer( buffer_unit_type * & buffer,
 template< bool DO_PACKING, typename T, typename INDEX_TYPE >
 typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
 PackPointerData( buffer_unit_type * & buffer,
-             T const * const GEOS_RESTRICT var,
-             INDEX_TYPE const length );
+                 T const * const GEOS_RESTRICT var,
+                 INDEX_TYPE const length );
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, typename INDEX_TYPE >
@@ -307,8 +307,8 @@ PackArray( buffer_unit_type * & buffer,
 template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_indices >
 typename std::enable_if< is_host_packable< T >, localIndex >::type
 PackDataByIndex( buffer_unit_type * & buffer,
-             ArrayView< T, NDIM, USD > const & var,
-             const T_indices & indices );
+                 ArrayView< T, NDIM, USD > const & var,
+                 const T_indices & indices );
 
 template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_indices >
 typename std::enable_if< is_host_packable< T >, localIndex >::type
@@ -319,8 +319,8 @@ PackByIndex( buffer_unit_type * & buffer,
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, typename T_indices >
 localIndex PackDataByIndex( buffer_unit_type * & buffer,
-                        ArrayOfArrays< T > const & var,
-                        T_indices const & indices );
+                            ArrayOfArrays< T > const & var,
+                            T_indices const & indices );
 
 template< bool DO_PACKING, typename T, typename T_indices >
 localIndex PackByIndex( buffer_unit_type * & buffer,
@@ -331,8 +331,8 @@ localIndex PackByIndex( buffer_unit_type * & buffer,
 template< bool DO_PACKING, typename MAP_TYPE, typename T_INDICES >
 typename std::enable_if< is_host_packable_map_by_index< MAP_TYPE >, localIndex >::type
 PackDataByIndex( buffer_unit_type * & buffer,
-             MAP_TYPE const & var,
-             T_INDICES const & indices );
+                 MAP_TYPE const & var,
+                 T_INDICES const & indices );
 
 template< bool DO_PACKING, typename MAP_TYPE, typename T_INDICES >
 typename std::enable_if< is_host_packable_map_by_index< MAP_TYPE >, localIndex >::type

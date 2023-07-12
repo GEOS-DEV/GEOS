@@ -785,7 +785,8 @@ private:
     if( reference().getPreviousSpace() == LvArray::MemorySpace::host )
     {
       // a type with the mem-space functions, that is not packable on device (e.g. array<string> ), should never be moved to device,
-      //  so it should always have previousSpace == host and checkTouch == true, and we can then host-pack it if possible (should always be possible)
+      //  so it should always have previousSpace == host and checkTouch == true, and we can then host-pack it if possible (should always be
+      // possible)
       // if the value *is* device-packable, but we have modified it on host, we have to host-pack
       return bufferOps::is_host_packable< U >;
     }

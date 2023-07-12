@@ -68,7 +68,7 @@ struct MultiFluidVarSlice
 };
 
 template< typename T, int DIM, int USD, int USD_DC >
-GEOS_HOST_DEVICE MultiFluidVarSlice<T,DIM,USD,USD_DC>::MultiFluidVarSlice( const MultiFluidVarSlice & ) = default;
+GEOS_HOST_DEVICE MultiFluidVarSlice< T, DIM, USD, USD_DC >::MultiFluidVarSlice( const MultiFluidVarSlice & ) = default;
 
 /**
  * @brief Struct holding views into fluid data, used to simplify parameter passing in kernel wrapper constructors.
@@ -80,7 +80,6 @@ template< typename T, int NDIM, int USD, int USD_DC >
 struct MultiFluidVarView
 {
   GEOS_HOST_DEVICE MultiFluidVarView();
-  GEOS_HOST_DEVICE MultiFluidVarView( const MultiFluidVarView & );
 
   GEOS_HOST_DEVICE
   MultiFluidVarView ( MultiFluidVarView const & src ):
@@ -98,13 +97,6 @@ struct MultiFluidVarView
   ArrayView< T, NDIM, USD > value;        ///< View into property values
   ArrayView< T, NDIM + 1, USD_DC > derivs; ///< View into property derivatives w.r.t. pressure, temperature, compositions
 
-  GEOS_HOST_DEVICE
-  MultiFluidVarView( ArrayView< T, NDIM, USD > inputValue,
-                     ArrayView< T, NDIM + 1, USD_DC > inputDerivs ):
-    value( inputValue ),
-    derivs( inputDerivs )
-  {}
-
 
   using SliceType = MultiFluidVarSlice< T, NDIM - 2, USD - 2, USD_DC - 2 >;
 
@@ -116,10 +108,7 @@ struct MultiFluidVarView
 };
 
 template< typename T, int NDIM, int USD, int USD_DC >
-GEOS_HOST_DEVICE MultiFluidVarView<T,NDIM,USD,USD_DC>::MultiFluidVarView() = default;
-
-template< typename T, int NDIM, int USD, int USD_DC >
-GEOS_HOST_DEVICE MultiFluidVarView<T,NDIM,USD,USD_DC>::MultiFluidVarView( const MultiFluidVarView & ) = default;
+GEOS_HOST_DEVICE MultiFluidVarView< T, NDIM, USD, USD_DC >::MultiFluidVarView() = default;
 
 /**
  * @brief Struct holding views into fluid data, used to simplify parameter passing in kernel wrapper constructors.
