@@ -816,7 +816,8 @@ RelativePermeabilityBase & makeTableRelPermThreePhase( string const & name, Grou
 
   auto & relPerm = parent.registerGroup< TableRelativePermeability >( name );
 
-  relPerm.setFlagToStoneII();
+  auto & interpolatorFlag  = relPerm.getReference< ThreePhaseInterpolator >( TableRelativePermeability::viewKeyStruct::flagInterpolatorString() );
+  interpolatorFlag = ThreePhaseInterpolator::STONEII;
 
   auto & phaseNames = relPerm.getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString() );
   phaseNames.resize( 3 );

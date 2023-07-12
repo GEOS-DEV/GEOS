@@ -75,8 +75,9 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
 
   registerWrapper( viewKeyStruct::flagInterpolatorString(), &m_flagInterpolator ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( 0 ).
-    setDescription( "Flag wheter choose Baker(0) or StoneII (else) interpolation (temp)." );
+    setApplyDefaultValue( ThreePhaseInterpolator::BAKER ).
+    setDescription( "Type of Three phase interpolator."
+                    "Valid options \n* " + EnumStrings< ThreePhaseInterpolator >::concat( "\n* " ) );
 }
 
 void TableRelativePermeability::postProcessInput()
@@ -266,7 +267,7 @@ TableRelativePermeability::KernelWrapper::
                  real64 const & waterPhaseMaxVolumeFraction,
                  arrayView1d< integer const > const & phaseTypes,
                  arrayView1d< integer const > const & phaseOrder,
-                 integer const & flagInterpolator,
+                 ThreePhaseInterpolator const & flagInterpolator,
                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
                  arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac )

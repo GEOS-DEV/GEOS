@@ -31,6 +31,8 @@ namespace geos
 namespace constitutive
 {
 
+
+
 class TableRelativePermeabilityHysteresis : public RelativePermeabilityBase
 {
 public:
@@ -128,7 +130,7 @@ public:
                    arrayView1d< real64 const > const & imbibitionRelPermEndPoint,
                    arrayView1d< integer const > const & phaseTypes,
                    arrayView1d< integer const > const & phaseOrder,
-                   integer const & flagInterpolator,
+                   ThreePhaseInterpolator const & flagInterpolator,
                    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
                    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
                    arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac,
@@ -365,7 +367,7 @@ private:
 
     array1d< real64 > const m_waterOilRelPermMaxValue;
 
-    integer const m_flagInterpolator;
+    ThreePhaseInterpolator const m_flagInterpolator;
 
   };
 
@@ -435,6 +437,7 @@ private:
     { return "imbibitionNonWettingRelPermTableName"; }
 
     static constexpr char const * waterOilMaxRelPermString() { return "waterOilMaxRelPerm"; }
+
     static constexpr char const * flagInterpolatorString() { return "flagInterpolator"; }
   };
 
@@ -563,7 +566,7 @@ private:
 
   array1d< real64 > m_waterOilMaxRelPerm;
 
-  integer m_flagInterpolator;
+  ThreePhaseInterpolator m_flagInterpolator;
 
 };
 
@@ -968,7 +971,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   // use saturation-weighted interpolation
   real64 const shiftedWettingVolFrac = ( phaseVolFraction[ipWetting] - m_drainagePhaseMinVolFraction[ipWetting] );
 
-  if( m_flagInterpolator == 0 )
+  if( m_flagInterpolator == ThreePhaseInterpolator::BAKER )
   {
     relpermInterpolators::Baker::compute( shiftedWettingVolFrac,
                                           phaseVolFraction[ipNonWetting],
@@ -981,7 +984,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                           dPhaseRelPerm_dPhaseVolFrac[ipInter] );
 
   }
-  else
+  else// if( m_flagInterpolator == ThreePhaseInterpolator::STONEII )
   {
     relpermInterpolators::Stone2::compute( shiftedWettingVolFrac,
                                            phaseVolFraction[ipNonWetting],

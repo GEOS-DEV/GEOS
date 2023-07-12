@@ -60,10 +60,6 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  void setFlagToStoneII()
-  {
-    m_flagInterpolator = 1;
-  }
 
   /// Type of kernel wrapper for in-kernel update
   class KernelWrapper final : public RelativePermeabilityBaseUpdate
@@ -75,7 +71,7 @@ public:
                    real64 const & waterOilPhaseMaxVolumeFraction,
                    arrayView1d< integer const > const & phaseTypes,
                    arrayView1d< integer const > const & phaseOrder,
-                   integer const & flagInterpolator,
+                   ThreePhaseInterpolator const & flagInterpolator,
                    arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
                    arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
                    arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac );
@@ -125,7 +121,7 @@ private:
 
     real64 const m_waterOilRelPermMaxValue;
 
-    integer const m_flagInterpolator;
+    ThreePhaseInterpolator const m_flagInterpolator;
   };
 
   /**
@@ -183,7 +179,7 @@ private:
 
   real64 m_waterOilMaxRelPerm;
 
-  integer m_flagInterpolator;
+  ThreePhaseInterpolator m_flagInterpolator;
 
 };
 
@@ -258,8 +254,7 @@ TableRelativePermeability::KernelWrapper::
   // use saturation-weighted interpolation
   real64 const shiftedWettingVolFrac = (phaseVolFraction[ipWetting] - m_phaseMinVolumeFraction[ipWetting]);
 
-  // TODO: add template to choose the interpolator from the XML file
-  if( m_flagInterpolator == 0 )
+  if( m_flagInterpolator == ThreePhaseInterpolator::BAKER )
   {
     relpermInterpolators::Baker::compute( shiftedWettingVolFrac,
                                           phaseVolFraction[ipNonWetting],
@@ -272,7 +267,7 @@ TableRelativePermeability::KernelWrapper::
                                           dPhaseRelPerm_dPhaseVolFrac[ipInter] );
 
   }
-  else
+  else// if( m_flagInterpolator == ThreePhaseInterpolator::STONEII )
   {
     relpermInterpolators::Stone2::compute( shiftedWettingVolFrac,
                                            phaseVolFraction[ipNonWetting],

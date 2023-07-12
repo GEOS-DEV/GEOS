@@ -147,6 +147,13 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
     setInputFlag( InputFlags::FALSE ). // will be deduced from tables
     setSizedFromParent( 0 );
 
+
+  registerWrapper( viewKeyStruct::flagInterpolatorString(), &m_flagInterpolator ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( ThreePhaseInterpolator::BAKER ).
+    setDescription( "Type of Three phase interpolator."
+                    "Valid options \n* " + EnumStrings< ThreePhaseInterpolator >::concat( "\n* " ) );
+
 }
 
 void TableRelativePermeabilityHysteresis::postProcessInput()
@@ -647,7 +654,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                  arrayView1d< real64 const > const & imbibitionPhaseRelPermEndPoint,
                  arrayView1d< integer const > const & phaseTypes,
                  arrayView1d< integer const > const & phaseOrder,
-                 integer const & flagInterpolator,
+                 ThreePhaseInterpolator const & flagInterpolator,
                  arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
                  arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac,
