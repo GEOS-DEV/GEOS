@@ -13,7 +13,7 @@ class Essl(BundlePackage):
 
     homepage = "https://www.ibm.com/systems/power/software/essl/"
 
-    version("6.3.0.1")
+    version("6.3.0.2")
 
     provides("blas")
     provides("lapack")
@@ -33,7 +33,7 @@ class Essl(BundlePackage):
         all_libs += find_libraries(xl_libs_shared, root=xl_root, shared=True)
         all_libs += find_libraries(xl_libs_static, root=xl_root, shared=False)
 
-        cuda_toolkit_root = "/usr/tce/packages/cuda/cuda-11.2.0/lib64"
+        cuda_toolkit_root = "/usr/tce/packages/cuda/cuda-11.8.0/lib64"
         cuda_libs = ["libcublas", "libcudart", "libcublasLt"]
         all_libs += find_libraries(cuda_libs, root=cuda_toolkit_root, shared=True)
 
@@ -54,7 +54,7 @@ class Essl(BundlePackage):
         all_libs += find_libraries(xl_libs_shared, root=xl_root, shared=True)
         all_libs += find_libraries(xl_libs_static, root=xl_root, shared=False)
 
-        cuda_toolkit_root = "/usr/tce/packages/cuda/cuda-11.2.0/lib64"
+        cuda_toolkit_root = "/usr/tce/packages/cuda/cuda-11.8.0/lib64"
         cuda_libs = ["libcublas", "libcudart", "libcublasLt"]
         all_libs += find_libraries(cuda_libs, root=cuda_toolkit_root, shared=True)
 

@@ -92,13 +92,13 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # Performance portability
     #
-    depends_on('raja@2022.03.0+openmp~examples~exercises')
+    depends_on('raja@test +openmp~examples~exercises')
 
     depends_on('umpire@2022.03.0+c+openmp~examples+fortran')
 
-    depends_on('chai@2022.03.0+raja+openmp~benchmarks~examples')
+    depends_on('chai@test +raja+openmp~benchmarks~examples')
 
-    depends_on('camp@2022.03.2')
+    #depends_on('camp@2022.03.2')
 
     with when('+cuda'):
         for sm_ in CudaPackage.cuda_arch_values:
@@ -122,8 +122,8 @@ class Geosx(CMakePackage, CudaPackage):
 
     depends_on('pugixml')
 
-    depends_on('fmt@8.0.1 cxxstd=14')
-    depends_on('vtk@9.1.0', when='+vtk')
+    depends_on('fmt@10.0.0 cxxstd=14')
+    depends_on('vtk@9.2.6', when='+vtk')
 
     depends_on('fesapi', when='+fesapi')
 
@@ -294,6 +294,12 @@ class Geosx(CMakePackage, CudaPackage):
                 cfg.write(cmake_cache_entry("CMAKE_EXE_LINKER_FLAGS", "-Wl,--no-toc-optimize"))
 
             cfg.write("#{0}\n".format("-" * 80))
+            cfg.write("# CMake Standard\n")
+            cfg.write("#{0}\n\n".format("-" * 80))
+
+            cfg.write(cmake_cache_string("BLT_CXX_STD", "c++17"))
+
+            cfg.write("#{0}\n".format("-" * 80))
             cfg.write("# MPI\n")
             cfg.write("#{0}\n\n".format("-" * 80))
 
@@ -321,7 +327,7 @@ class Geosx(CMakePackage, CudaPackage):
             cfg.write('#{0}\n\n'.format('-' * 80))
             if '+cuda' in spec:
                 cfg.write(cmake_cache_option('ENABLE_CUDA', True))
-                cfg.write(cmake_cache_entry('CMAKE_CUDA_STANDARD', 14))
+                cfg.write(cmake_cache_entry('CMAKE_CUDA_STANDARD', 17))
 
                 cudatoolkitdir = spec['cuda'].prefix
                 cfg.write(cmake_cache_entry('CUDA_TOOLKIT_ROOT_DIR', cudatoolkitdir))

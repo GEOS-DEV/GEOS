@@ -20,6 +20,7 @@ class Vtk(CMakePackage):
 
     maintainers = ['chuckatkins', 'danlipsa']
 
+    version("9.2.6", sha256="06fc8d49c4e56f498c40fcb38a563ed8d4ec31358d0101e8988f0bb4d539dd12")
     version('9.1.0', sha256='8fed42f4f8f1eb8083107b68eaa9ad71da07110161a3116ad807f43e5ca5ce96')
     version('9.0.3', sha256='bc3eb9625b2b8dbfecb6052a2ab091fc91405de4333b0ec68f3323815154ed8a')
     version('9.0.1', sha256='1b39a5e191c282861e7af4101eaa8585969a2de05f5646c9199a161213a622c7')
@@ -40,7 +41,7 @@ class Vtk(CMakePackage):
     patch('VTK-9.1.0-disable_traits.patch', when='@9.1.0')
     patch('VTK-9.1.0-duplicate-points-fix.patch', when='@9.1.0')
     patch('VTK-9.1.0-cmake-fix.patch', when='@9.1.0')
-    patch('vtkXMLReader-fpe.patch', when='@9.1.0')
+    patch('vtkXMLReader-fpe.patch', when='@9.1.0:')
 
     extends('python', when='+python')
 
@@ -65,6 +66,7 @@ class Vtk(CMakePackage):
             mpi_args = [
                 self.define('CMAKE_C_COMPILER', spec['mpi'].mpicc),
                 self.define('CMAKE_CXX_COMPILER', spec['mpi'].mpicxx),
+                self.define('CMAKE_CXX_FLAGS', self.spec.compiler_flags["cxxflags"]),
                 '-DVTK_USE_MPI=ON',
                 '-DVTK_MODULE_ENABLE_VTK_IOParallelXML=YES',
                 '-DVTK_MODULE_ENABLE_VTK_FiltersParallelDIY2=YES'
@@ -73,6 +75,7 @@ class Vtk(CMakePackage):
             mpi_args = [
                 self.define('CMAKE_C_COMPILER', self.compiler.cc),
                 self.define('CMAKE_CXX_COMPILER', self.compiler.cxx),
+                self.define('CMAKE_CXX_FLAGS', self.spec.compiler_flags["cxxflags"]),
                 '-DVTK_USE_MPI=OFF',
                 '-DVTK_MODULE_ENABLE_VTK_IOParallelXML=NO',
                 '-DVTK_MODULE_ENABLE_VTK_FiltersParallelDIY2=NO',
