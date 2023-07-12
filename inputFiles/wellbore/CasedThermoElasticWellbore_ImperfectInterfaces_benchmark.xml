@@ -14,7 +14,7 @@
       theta="{ 0, 90 }"
       zCoords="{ 0, 0.1 }"
       nr="{ 5, 5, 5 }"
-      nt="{ 10 }"
+      nt="{ 40 }"
       nz="{ 1 }"
       trajectory="{ { 0.0, 0.0, 0.0 },
                     { 0.0, 0.0, 0.1 } }"
@@ -45,79 +45,79 @@
   <!-- SPHINX_CementSheathInterfacesEnd -->
 
   <Events
-    maxTime="1e5">
+    maxTime="1.1e5">
 
     <PeriodicEvent
       name="stressHistoryCollection_casing"
-      endTime="1e5"
+      endTime="1.1e5"
       forceDt="1e4"
       target="/Tasks/stressCollection_casing"/>
     <PeriodicEvent
       name="stressHistoryCollection_cement"
-      endTime="1e5"
+      endTime="1.1e5"
       forceDt="1e4"
       target="/Tasks/stressCollection_cement"/>
     <PeriodicEvent
       name="stressHistoryCollection_rock"
-      endTime="1e5"
+      endTime="1.1e5"
       forceDt="1e4"
       target="/Tasks/stressCollection_rock"/>
     <PeriodicEvent
       name="stressTimeHistoryOutput_casing"
-      endTime="1e5"
+      endTime="1.1e5"
       forceDt="1e4"
       target="/Outputs/stressHistoryOutput_casing"/>
     <PeriodicEvent
       name="stressTimeHistoryOutput_cement"
-      endTime="1e5"
+      endTime="1.1e5"
       forceDt="1e4"
       target="/Outputs/stressHistoryOutput_cement"/>
     <PeriodicEvent
       name="stressTimeHistoryOutput_rock"
-      endTime="1e5"
+      endTime="1.1e5"
       forceDt="1e4"
       target="/Outputs/stressHistoryOutput_rock"/>
 
     <PeriodicEvent
       name="temperatureHistoryCollection_casing"
-      endTime="1e5"
+      endTime="1.1e5"
       forceDt="1e4"
       target="/Tasks/temperatureCollection_casing"/>
     <PeriodicEvent
       name="temperatureHistoryCollection_cement"
-      endTime="1e5"
+      endTime="1.1e5"
       forceDt="1e4"
       target="/Tasks/temperatureCollection_cement"/>
     <PeriodicEvent
       name="temperatureHistoryCollection_rock"
-      endTime="1e5"
+      endTime="1.1e5"
       forceDt="1e4"
       target="/Tasks/temperatureCollection_rock"/>
     <PeriodicEvent
       name="temperatureTimeHistoryOutput_casing"
-      endTime="1e5"
+      endTime="1.1e5"
       forceDt="1e4"
       target="/Outputs/temperatureHistoryOutput_casing"/>
     <PeriodicEvent
       name="temperatureTimeHistoryOutput_cement"
-      endTime="1e5"
+      endTime="1.1e5"
       forceDt="1e4"
       target="/Outputs/temperatureHistoryOutput_cement"/>
     <PeriodicEvent
       name="temperatureTimeHistoryOutput_rock"
-      endTime="1e5"
+      endTime="1.1e5"
       forceDt="1e4"
       target="/Outputs/temperatureHistoryOutput_rock"/>
 
     <!-- SPHINX_DisplacementPeriodicEvent -->
     <PeriodicEvent
       name="displacementHistoryCollection"
-      endTime="1e5"
+      endTime="1.1e5"
       forceDt="1e4"
       target="/Tasks/displacementCollection"/>
     <PeriodicEvent
       name="displacementTimeHistoryOutput"
-      endTime="1e5"
+      endTime="1.1e5"
       forceDt="1e4"
       target="/Outputs/displacementHistoryOutput"/>
     <!-- SPHINX_DisplacementPeriodicEventEnd -->
