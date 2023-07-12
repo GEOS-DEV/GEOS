@@ -31,11 +31,11 @@ class ProppantPorosityUpdates : public PorosityBaseUpdates
 public:
 
   ProppantPorosityUpdates( arrayView2d< real64 > const & newPorosity,
-                           arrayView2d< real64 > const & porosity_n,
+                           arrayView2d< real64 const > const & porosity_n,
                            arrayView2d< real64 > const & dPorosity_dPressure,
                            arrayView2d< real64 > const & dPorosity_dTemperature,
-                           arrayView2d< real64 > const & initialPorosity,
-                           arrayView1d< real64 > const & referencePorosity,
+                           arrayView2d< real64 const > const & initialPorosity,
+                           arrayView1d< real64 const > const & referencePorosity,
                            real64 const & maxProppantConcentration ):
     PorosityBaseUpdates( newPorosity,
                          porosity_n,
@@ -64,7 +64,7 @@ public:
 
 private:
 
-  real64 m_maxProppantConcentration;
+  real64 const m_maxProppantConcentration;
 
 };
 

@@ -633,7 +633,7 @@ vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mes
   }
   else
   {
-    GEOS_LOG_RANK( "Generating global Ids from VTK mesh" );
+    GEOS_LOG_RANK_0( "Generating global Ids from VTK mesh" );
     output = generateGlobalIDs( mesh );
   }
 
