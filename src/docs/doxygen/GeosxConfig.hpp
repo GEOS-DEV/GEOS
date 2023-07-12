@@ -162,7 +162,7 @@
 #define suitesparse_VERSION 5.7.9
 
 /// Version information for VTK
-#define VTK_VERSION 9.1.0
+#define VTK_VERSION 9.2.6
 
 /// Version information for fmt
 #define fmt_VERSION 8.0.1
