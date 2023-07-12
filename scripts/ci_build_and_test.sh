@@ -8,7 +8,7 @@ env
 # We extract the location of the GEOSX_TPL from the container...
 GEOSX_TPL_DIR=$(docker run --rm ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} /bin/bash -c 'echo ${GEOSX_TPL_DIR}' | tail -1)
 # ... so we can install GEOSX alongside. This is assumed for bundling the binaries, so consider modifying with care.
-GEOSX_DIR=${GEOSX_TPL_DIR}/../GEOSX-INSTALL
+GEOSX_DIR=${GEOSX_TPL_DIR}/../GEOSX-${GITHUB_SHA:0:7}
 # We need to get the build directory
 BUILD_DIR=${GITHUB_WORKSPACE}
 # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
