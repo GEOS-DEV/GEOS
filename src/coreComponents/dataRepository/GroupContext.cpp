@@ -34,21 +34,29 @@ GroupContext::GroupContext( Group & group ):
 
 string GroupContext::toString() const
 {
-  string path;
-  bool foundNearestLine = false;
-  for( Group const * parentGroup = &m_group; parentGroup->hasParent(); parentGroup = &parentGroup->getParent() )
+  std::vector< string > parents;
+  Group const * parentGroup = &m_group;
+  // add all parent names in a path string, until we get some input file info to show
+  bool foundNearestLineInfo = false;
+  for(; parentGroup->hasParent(); parentGroup = &parentGroup->getParent() )
   {
-    if( !foundNearestLine )
+    ToStringInfo const info = parentGroup->getDataContext().getToStringInfo();
+    if( !foundNearestLineInfo || info.hasInputFileInfo() )
     {
-      path.insert( 0, '/' + parentGroup->getDataContext().getTargetNameInPath( foundNearestLine ) );
+      // avoiding spaces here is intended as we don't want any line return within the path.
+      parents.push_back( GEOS_FMT( "{}({},l.{})",
+                                   info.m_targetName, info.m_filePath, info.m_line ) );
     }
     else
     {
-      path.insert( 0, '/' + parentGroup->getName() );
+      parents.push_back( GEOS_FMT( "/{}", info.m_targetName ) );
     }
   }
-  return path;
+  return stringutilities::join( parents.rbegin(), parents.rend(), '/' );
 }
+
+DataContext::ToStringInfo GroupContext::getToStringInfo() const
+{ return ToStringInfo( m_targetName ); }
 
 
 WrapperContext::WrapperContext( WrapperBase & wrapper ):
@@ -58,7 +66,15 @@ WrapperContext::WrapperContext( WrapperBase & wrapper ):
 
 string WrapperContext::toString() const
 {
-  return m_group.getDataContext().toString( m_typeName );
+  ToStringInfo const info = m_group.getDataContext().getToStringInfo();
+  if( info.hasInputFileInfo())
+  {
+    return GEOS_FMT( "{}, attribute {}", m_group.getDataContext().toString(), m_typeName );
+  }
+  else
+  {
+    return GEOS_FMT( "{}->{}", m_group.getDataContext().toString(), m_typeName );
+  }
 }
 
 

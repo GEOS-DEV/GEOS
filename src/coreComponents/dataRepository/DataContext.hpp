@@ -54,35 +54,57 @@ public:
    * object comes from.
    */
   virtual string toString() const = 0;
-  /**
-   * @return The result of toString() properly suffixed by the name of a contained object.
-   */
-  virtual string toString( string const & innerObjectName ) const
-  { return toString() + '/' + innerObjectName; }
 
   /**
    * @return Get the target object name
    */
   string getTargetName() const
   { return m_targetName; }
-
-  /**
-   * @return the target name formatted in such a way that it can be inserted in a hierarchy path.
-   * @param foundNearestLine reference to a boolean that is set to true if the file line of the
-   * data context could be determined, otherwise it is set to false.
-   */
-  virtual string getTargetNameInPath( bool & fileLineFound ) const
-  { fileLineFound = false; return m_targetName; }
-
   /**
    * @brief Insert contextual information in the provided stream.
    */
-  friend std::ostream & operator<<( std::ostream & os, const DataContext & dt );
+  friend std::ostream & operator<<( std::ostream & os, const DataContext & ctx );
 
 protected:
+  // GroupContext & WrapperContext are friend class to be able to access to the protected method on other instances.
+  friend class GroupContext;
+  friend class WrapperContext;
 
   /// @see getObjectName()
   string const m_targetName;
+
+  /// This struct exposes the raw data of a DataContext instance that toString() need in order to format it.
+  /// This struct lifetime depends on that of the source DataContext. The DataContext is considered constant.
+  struct ToStringInfo
+  {
+    string_view m_targetName;
+    string_view m_filePath;
+    size_t m_line;
+
+    /**
+     * @brief Construct a new ToStringInfo object from a DataContext that has input file info.
+     * @param targetName the target name
+     * @param filePath the input file path where the target is declared.
+     * @param line the line in the file where the target is declared.
+     */
+    ToStringInfo( string_view targetName, string_view filePath, int line );
+    /**
+     * @brief Construct a new ToStringInfo object from a DataContext that has no input file info.
+     * @param targetName the target name.
+     */
+    ToStringInfo( string_view targetName );
+    /**
+     * @return true if a location has been found to declare the target in an input file.
+     */
+    bool hasInputFileInfo() const;
+  };
+
+  /**
+   * @brief This method exposes the raw data of a DataContext, in order to access and format it
+   * (notably in toString() implementations that need to access other DataContext instances).
+   * @return a ToStringInfo struct that contains the raw data contained in this DataContext instance.
+   */
+  virtual ToStringInfo getToStringInfo() const = 0;
 
 };
 
@@ -111,16 +133,6 @@ public:
    * @return the target object name followed by the the file and line declaring it.
    */
   virtual string toString() const;
-  /**
-   * @copydoc DataContext::toString()
-   */
-  string toString( string const & innerObjectName ) const override
-  { return toString() + ", attribute " + innerObjectName; }
-
-  /**
-   * @copydoc DataContext::getTargetNameInPath( bool & foundNearestLine ) const
-   */
-  virtual string getTargetNameInPath( bool & foundNearestLine ) const override;
 
   /**
    * @return the type name in the source file (XML node tag name / attribute name).
@@ -166,6 +178,11 @@ private:
   size_t const m_offsetInLine;
   /// @see getOffset()
   size_t const m_offset;
+
+  /**
+   * @copydoc DataContext::getToStringInfo()
+   */
+  ToStringInfo getToStringInfo() const override;
 
 };
 

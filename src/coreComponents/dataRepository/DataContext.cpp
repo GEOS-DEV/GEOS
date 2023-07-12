@@ -28,11 +28,24 @@ DataContext::DataContext( string const & targetName ):
   m_targetName( targetName )
 {}
 
-std::ostream & operator<<( std::ostream & os, DataContext const & sc )
+std::ostream & operator<<( std::ostream & os, DataContext const & ctx )
 {
-  os << sc.toString();
+  os << ctx.toString();
   return os;
 }
+
+DataContext::ToStringInfo::ToStringInfo( string_view targetName, string_view filePath, int line ):
+  m_targetName( targetName ),
+  m_filePath( filePath ),
+  m_line( line )
+{}
+DataContext::ToStringInfo::ToStringInfo( string_view targetName ):
+  m_targetName( targetName ),
+  m_filePath(),
+  m_line( xmlWrapper::xmlDocument::npos )
+{}
+bool DataContext::ToStringInfo::hasInputFileInfo() const
+{ return !m_filePath.empty() && m_line != xmlWrapper::xmlDocument::npos; }
 
 
 /**
@@ -75,34 +88,24 @@ DataFileContext::DataFileContext( xmlWrapper::xmlNode const & targetNode,
 
 string DataFileContext::toString() const
 {
-  std::ostringstream oss;
-  oss << m_targetName;
   if( m_line != xmlWrapper::xmlDocument::npos )
   {
-    oss << " (" << splitPath( m_filePath ).second << ", l." << m_line << ")";
+    return GEOS_FMT( "{} ({}, l.{})", m_targetName, splitPath( m_filePath ).second, m_line );
   }
   else if( m_offset != xmlWrapper::xmlDocument::npos )
   {
-    oss << " (" << splitPath( m_filePath ).second <<  ", offset " << m_offset << ")";
+    return GEOS_FMT( "{} ({}, offset {})", m_targetName, splitPath( m_filePath ).second, m_offset );
   }
   else
   {
-    oss << " (Source file not found)";
+    return GEOS_FMT( "{} (Source file not found)", m_targetName );
   }
-  return oss.str();
 }
 
-string DataFileContext::getTargetNameInPath( bool & foundNearestLine ) const
-{
-  std::ostringstream oss;
-  oss << m_targetName;
-  foundNearestLine = ( m_line != xmlWrapper::xmlDocument::npos );
-  if( foundNearestLine )
-  {
-    oss << "(" << splitPath( m_filePath ).second << ",l." << m_line << ")";
-  }
-  return oss.str();
-}
+DataContext::ToStringInfo DataFileContext::getToStringInfo() const
+{ return ToStringInfo( m_targetName, m_filePath, m_line ); }
+
+
 
 } /* namespace dataRepository */
 } /* namespace geos */

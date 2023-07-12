@@ -46,11 +46,6 @@ public:
    */
   Group & getGroup() const;
 
-  /**
-   * @return the group path with the file & line of the first parent for which this information exists.
-   */
-  virtual string toString() const;
-
 protected:
 
   /**
@@ -63,6 +58,16 @@ protected:
   /// The reference to the Group related to this GroupContext.
   Group & m_group;
 
+private:
+
+  /**
+   * @return the group path with the file & line of the first parent for which this information exists.
+   */
+  string toString() const override;
+  /**
+   * @copydoc DataContext::getToStringInfo()
+   */
+  ToStringInfo getToStringInfo() const override;
 };
 
 /// Dedicated implementation of GroupContext for Wrapper.
@@ -77,14 +82,14 @@ public:
    */
   WrapperContext( WrapperBase & wrapper );
 
-  /**
-   * @return the parent group DataContext followed by the wrapper name.
-   */
-  virtual string toString() const;
-
 private:
 
   string const m_typeName;
+
+  /**
+   * @return the parent group DataContext followed by the wrapper name.
+   */
+  string toString() const override;
 
 };
 
