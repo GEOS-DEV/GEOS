@@ -32,5 +32,5 @@ docker run \
   -e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU} \
   -e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON} \
   ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} \
-  ${BUILD_DIR_MOUNT_POINT}/scripts/travis_build_and_test.sh ${BUILD_AND_TEST_ARGS};
+  ${BUILD_DIR_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh ${BUILD_AND_TEST_ARGS};
 
