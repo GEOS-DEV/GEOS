@@ -65,6 +65,7 @@ set( mesh_headers
      simpleGeometricObjects/SimpleGeometricObjectBase.hpp
      simpleGeometricObjects/PlanarGeometricObject.hpp
      simpleGeometricObjects/ThickPlane.hpp
+     utilities/AverageOverQuadraturePointsKernel.hpp     
      utilities/CIcomputationKernel.hpp
      utilities/ComputationalGeometry.hpp
      utilities/MeshMapUtilities.hpp

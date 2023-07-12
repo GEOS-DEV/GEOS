@@ -40,13 +40,15 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default thermal expansion coefficient" );
 
-  registerField( fields::porosity::biotCoefficient{}, &m_biotCoefficient );
+  registerField( fields::porosity::biotCoefficient{}, &m_biotCoefficient ).
+    setApplyDefaultValue( 1.0 ); // this is useful for sequential simulations, for the first flow solve
+  // ultimately, we want to be able to load the biotCoefficient from input directly, and this won't be necessary anymore
 
   registerField( fields::porosity::thermalExpansionCoefficient{}, &m_thermalExpansionCoefficient );
 
-  registerWrapper( viewKeyStruct::meanStressIncrementString(), &m_meanStressIncrement ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "Volumetric stress increment" );
+  registerField( fields::porosity::meanEffectiveStressIncrement_k{}, &m_meanEffectiveStressIncrement_k );
+
+  registerField( fields::porosity::averageMeanEffectiveStressIncrement_k{}, &m_averageMeanEffectiveStressIncrement_k );
 
   registerWrapper( viewKeyStruct::solidBulkModulusString(), &m_bulkModulus ).
     setApplyDefaultValue( 1e-6 ).
@@ -58,7 +60,7 @@ void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
 {
   PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_meanStressIncrement.resize( 0, numConstitutivePointsPerParentIndex );
+  m_meanEffectiveStressIncrement_k.resize( 0, numConstitutivePointsPerParentIndex );
 }
 
 void BiotPorosity::postProcessInput()
@@ -88,6 +90,20 @@ void BiotPorosity::initializeState() const
       initialPorosity[k][q] = referencePorosity[k];
     }
   } );
+}
+
+void BiotPorosity::saveConvergedState() const
+{
+  PorosityBase::saveConvergedState();
+  m_meanEffectiveStressIncrement_k.zero();
+  m_averageMeanEffectiveStressIncrement_k.zero();
+}
+
+void BiotPorosity::ignoreConvergedState() const
+{
+  PorosityBase::ignoreConvergedState();
+  m_meanEffectiveStressIncrement_k.zero();
+  m_averageMeanEffectiveStressIncrement_k.zero();
 }
 
 

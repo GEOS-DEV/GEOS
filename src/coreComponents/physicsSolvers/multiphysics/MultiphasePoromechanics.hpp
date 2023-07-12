@@ -28,14 +28,11 @@
 namespace geos
 {
 
-// Note that in the current implementation, the order of the templates in CoupledSolver< ... > matters a lot
-// Changing the order of these templates can break a lot of things (labels in MGR for instance) and must be done carefully
-class MultiphasePoromechanics : public CoupledSolver< SolidMechanicsLagrangianFEM,
-                                                      CompositionalMultiphaseBase >
+class MultiphasePoromechanics : public CoupledSolver< CompositionalMultiphaseBase, SolidMechanicsLagrangianFEM >
 {
 public:
 
-  using Base = CoupledSolver< SolidMechanicsLagrangianFEM, CompositionalMultiphaseBase >;
+  using Base = CoupledSolver< CompositionalMultiphaseBase, SolidMechanicsLagrangianFEM >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -44,8 +41,8 @@ public:
 
   enum class SolverType : integer
   {
-    SolidMechanics = 0,
-    Flow = 1
+    Flow = 0,
+    SolidMechanics = 1
   };
 
   /// String used to form the solverName used to register solvers in CoupledSolver
@@ -97,6 +94,13 @@ public:
 
   virtual void setupCoupling( DomainPartition const & domain,
                               DofManager & dofManager ) const override;
+
+  virtual void setupDofs( DomainPartition const & domain,
+                          DofManager & dofManager ) const override;
+
+  virtual void implicitStepSetup( real64 const & time_n,
+                                  real64 const & dt,
+                                  DomainPartition & domain ) override;
 
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
@@ -167,6 +171,12 @@ private:
    * @param[in] subRegion the element subRegion
    */
   void updateBulkDensity( ElementSubRegionBase & subRegion );
+
+  /**
+   * @brief Helper function to average the mean stress increment over quadrature points
+   * @param[in] domain the domain partition
+   */
+  void averageMeanStressIncrement( DomainPartition & domain );
 
   template< typename CONSTITUTIVE_BASE,
             typename KERNEL_WRAPPER,

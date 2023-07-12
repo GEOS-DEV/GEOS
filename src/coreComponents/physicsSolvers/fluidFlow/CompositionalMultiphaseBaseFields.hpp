@@ -53,7 +53,15 @@ DECLARE_FIELD( globalCompDensity_n,
                0,
                NOPLOT,
                NO_WRITE,
-               "Global component density updates at the previous converged time step " );
+               "Global component density updates at the previous converged time step" );
+
+DECLARE_FIELD( globalCompDensity_k,
+               "globalCompDensity_k",
+               array2dLayoutComp,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Global component density updates at the previous sequential iteration" );
 
 DECLARE_FIELD( globalCompFraction,
                "globalCompFraction",
