@@ -94,6 +94,24 @@ DECLARE_FIELD( thermalExpansionCoefficient,
                WRITE_AND_READ,
                "Thermal expansion coefficient" );
 
+DECLARE_FIELD( meanEffectiveStressIncrement_k,
+               "meanEffectiveStressIncrement_k",
+               array2d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Mean effective stress increment at quadrature points at the previous sequential iteration" );
+
+DECLARE_FIELD( averageMeanEffectiveStressIncrement_k,
+               "averageMeanEffectiveStressIncrement_k",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Mean effective stress increment averaged over quadrature points at the previous sequential iteration" );
+
+
+
 }
 
 }

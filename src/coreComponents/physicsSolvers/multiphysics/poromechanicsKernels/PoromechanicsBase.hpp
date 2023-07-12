@@ -299,6 +299,7 @@ protected:
 
 };
 
+
 } // namespace poromechanicsKernels
 
 } // namespace geos
