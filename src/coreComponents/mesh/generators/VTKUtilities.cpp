@@ -640,6 +640,115 @@ vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mes
   return output;
 }
 
+/**
+ * @brief This function tries to make sure that no MPI rank is empty
+ *
+ * @param[in] mesh a vtk grid
+ * @param[in] comm the MPI communicator
+ * @return the vtk grid redistributed
+ */
+vtkSmartPointer< vtkDataSet >
+ensureNoEmptyRank( vtkDataSet & mesh,
+                   MPI_Comm const comm )
+{
+  // step 1: figure out who is a donor and who is a recipient
+  globalIndex const numElems = mesh.GetNumberOfCells();
+  globalIndex const numProcs = MpiWrapper::commSize( comm );
+
+  array1d< globalIndex > elemCounts( numProcs );
+  MpiWrapper::allGather( numElems, elemCounts, comm );
+
+  SortedArray< globalIndex > recipientRanks;
+  array1d< globalIndex > donorRanks;
+  array1d< globalIndex > donorNumElems;
+  recipientRanks.reserve( numProcs );
+  donorRanks.reserve( numProcs );
+  donorNumElems.reserve( numProcs );
+
+  for( globalIndex iRank = 0; iRank < numProcs; ++iRank )
+  {
+    if( elemCounts[iRank] == 0 )
+    {
+      recipientRanks.insert( iRank );
+    }
+    else if( elemCounts[iRank] > 1 ) // need at least two elems to be a donor
+    {
+      donorRanks.emplace_back( iRank );
+      donorNumElems.emplace_back( elemCounts[iRank] );
+    }
+  }
+
+  // step 2: at this point, we need to determine the donors and which cells they donate
+
+  // First we sort the donor in order of the number of elems they contain
+  std::stable_sort( donorRanks.begin(), donorRanks.end(),
+                    [&donorNumElems] ( auto & i1, auto & i2 )
+  { return donorNumElems[i1] < donorNumElems[i2]; } );
+
+  // Then, if my position is "i" in the donorRanks array, I will send half of my elems to the i-th recipient
+  globalIndex const myRank = MpiWrapper::commRank();
+  auto const myPosition =
+    LvArray::sortedArrayManipulation::find( donorRanks.begin(), donorRanks.size(), myRank );
+  bool const isDonor = myPosition != donorRanks.size();
+
+  // step 3: my rank was selected to donate cells, let's proceed
+  // we need to make a distinction between two configurations
+
+  array1d< globalIndex > newParts( numElems );
+  newParts.setValues< parallelHostPolicy >( myRank );
+
+  // step 3.1: donorRanks.size() >= recipientRanks.size()
+  // we use a strategy that preserves load balancing
+  if( isDonor && donorRanks.size() >= recipientRanks.size() )
+  {
+    if( myPosition < recipientRanks.size() )
+    {
+      globalIndex const recipientRank = recipientRanks[myPosition];
+      for( globalIndex iElem = std::floor( numElems/2.0 ); iElem < numElems; ++iElem )
+      {
+        newParts[iElem] = recipientRank; // I donate half of my cells
+      }
+    }
+  }
+  // step 3.2: donorRanks.size() < recipientRanks.size()
+  // this is the unhappy path: we don't care anymore about load balancing at this stage
+  // we just want to simulation to run and count on ParMetis/PTScotch to restore load balancing
+  else if( isDonor && donorRanks.size() < recipientRanks.size() )
+  {
+    globalIndex firstRecipientPosition = 0;
+    for( globalIndex iRank = 0; iRank < myPosition; ++iRank )
+    {
+      firstRecipientPosition += elemCounts[iRank] - 1;
+    }
+    if( firstRecipientPosition < recipientRanks.size() )
+    {
+      bool const isLastDonor = myPosition == donorRanks.size() - 1;
+      globalIndex const lastRecipientPosition = firstRecipientPosition + numElems - 2;
+      GEOS_THROW_IF( isLastDonor && ( lastRecipientPosition < recipientRanks.size() - 1 ),
+                     "The current implementation is unable to guarantee that all ranks have at least one element",
+                     std::runtime_error );
+
+      for( globalIndex iElem = 1; iElem < numElems; ++iElem ) // I only keep my first element
+      {
+        // this is the brute force approach
+        // each donor donates all its elems except the first one
+        globalIndex const recipientPosition = firstRecipientPosition + iElem - 1;
+        if( recipientPosition < recipientRanks.size() )
+        {
+          newParts[iElem] = recipientRanks[recipientPosition];
+        }
+      }
+    }
+  }
+
+  GEOS_LOG_RANK_0_IF( donorRanks.size() < recipientRanks.size(),
+                      "\nWarning! We strongly encourage the use of partitionRefinement > 5 for this number of MPI ranks \n" );
+
+  vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( mesh, numProcs, newParts.toViewConst() );
+  return vtk::redistribute( *splitMesh, MPI_COMM_GEOSX );
+}
+
+
 vtkSmartPointer< vtkDataSet >
 redistributeMesh( vtkSmartPointer< vtkDataSet > loadedMesh,
                   MPI_Comm const comm,
@@ -658,6 +767,14 @@ redistributeMesh( vtkSmartPointer< vtkDataSet > loadedMesh,
   {
     // Redistribute the mesh over all ranks using simple octree partitions
     mesh = redistributeByKdTree( *mesh );
+  }
+
+  // Check if a rank does not have a cell after the redistribution
+  // If this is the case, we need a fix otherwise the next redistribution will fail
+  // We expect this function to only be called in some pathological cases
+  if( MpiWrapper::min( mesh->GetNumberOfCells(), comm ) == 0 )
+  {
+    mesh = ensureNoEmptyRank( *mesh, comm );
   }
 
   // Redistribute the mesh again using higher-quality graph partitioner
