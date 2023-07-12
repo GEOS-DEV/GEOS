@@ -75,34 +75,34 @@ def main():
 		# Plot radial stress
 		plt.subplot(1,2,1)
 		plt.plot( rCoord,
-				  stress_rr_total[9, :],        
+				  stress_rr_total[10, :],        
 				  'r+')
 
 		plt.plot( rCoord,
-				  stress_rr_total[99, :],        
+				  stress_rr_total[100, :],        
 				  'b+')
 
 		# Plot tangent stress
 		plt.subplot(1,2,2)
 		if (hasLabel):
 			plt.plot( rCoord,
-					  stress_tt_total[9, :],        
+					  stress_tt_total[10, :],        
 					  'r+',
 					  label='GEOS: t = 1e4 (s)')
 
 			plt.plot( rCoord,
-					  stress_tt_total[99, :],        
+					  stress_tt_total[100, :],        
 					  'b+',
 					  label='GEOS: t = 1e5 (s)')
 
 			hasLabel = False
 		else:
 			plt.plot( rCoord,
-					  stress_tt_total[9, :],        
+					  stress_tt_total[10, :],        
 					  'r+')
 
 			plt.plot( rCoord,
-					  stress_tt_total[99, :],        
+					  stress_tt_total[100, :],        
 					  'b+')
 		
 	# Reference results
@@ -115,35 +115,35 @@ def main():
 	plt.plot( stress_radial_analytic_1e4s[:,0],
 		      stress_radial_analytic_1e4s[:,1],        
 		      'r-',
-		      label='Analytic, no debonding: t = 1e4 (s)')
+		      label='Analytic: t = 1e4 (s)')
 
 	plt.plot( stress_radial_analytic_1e5s[:,0],
 		      stress_radial_analytic_1e5s[:,1],        
 		      'b-',
-		      label='Analytic, no debonding: t = 1e5 (s)')
+		      label='Analytic: t = 1e5 (s)')
 
 	plt.grid()
 	plt.ylabel('Radial stress [Pa]')
 	plt.xlabel('Radial coordinate [m]')
 	plt.xlim(0.15,0.4)
-	
+	plt.ylim(-2.0,5.5)
 
 	plt.subplot(1,2,2)
 	plt.plot( stress_tangent_analytic_1e4s[:,0],
 		      stress_tangent_analytic_1e4s[:,1],        
 		      'r-',
-		      label='Analytic, no debonding: t = 1e4 (s)')
+		      label='Analytic: t = 1e4 (s)')
 
 	plt.plot( stress_tangent_analytic_1e5s[:,0],
 		      stress_tangent_analytic_1e5s[:,1],        
 		      'b-',
-		      label='Analytic, no debonding: t = 1e5 (s)')
+		      label='Analytic: t = 1e5 (s)')
 
 	plt.grid()
-	plt.ylabel('Hoop stress [Pa]')
+	plt.ylabel('Tangent stress [Pa]')
 	plt.xlabel('Radial coordinate [m]')
 	plt.xlim(0.15,0.4)
-	plt.ylim(-1e7,3.5e7)
+	plt.ylim(-10e6,30e6)
 	plt.legend(loc='upper right')
 
 	plt.savefig('stress.png')
