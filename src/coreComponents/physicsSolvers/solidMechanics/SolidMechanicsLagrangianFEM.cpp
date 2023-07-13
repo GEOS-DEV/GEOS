@@ -654,6 +654,8 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
 
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
 
+  integer isDisplacementBCApplied[3]{};
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & )
@@ -677,8 +679,48 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
                                                                      dofManager.rankOffset(),
                                                                      localMatrix,
                                                                      localRhs );
+
+      if( targetSet.size() > 0 && bc.getComponent() == 0 )
+      {
+        isDisplacementBCApplied[0] = 1;
+      }
+      else if( targetSet.size() > 0 && bc.getComponent() == 1 )
+      {
+        isDisplacementBCApplied[1] = 1;
+      }
+      else if( targetSet.size() > 0 && bc.getComponent() == 2 )
+      {
+        isDisplacementBCApplied[2] = 1;
+      }
+
     } );
   } );
+
+  // if the log level is 0, we don't need the reduction below (hence this early check)
+  if( getLogLevel() >= 1 )
+  {
+    integer isDisplacementBCAppliedGlobal[3]{};
+    MpiWrapper::allReduce( isDisplacementBCApplied,
+                           isDisplacementBCAppliedGlobal,
+                           3,
+                           MpiWrapper::getMpiOp( MpiWrapper::Reduction::Max ),
+                           MPI_COMM_GEOSX );
+
+    char const bcLogMessage[] =
+      "\nWarning!"
+      "\n{} `{}`: There is no displacement boundary condition applied to this problem in the {} direction. \n"
+      "The problem may be ill-posed.\n";
+    GEOS_LOG_RANK_0_IF( isDisplacementBCApplied[0] == 0, // target set is empty
+                        GEOS_FMT( bcLogMessage,
+                                  catalogName(), getName(), 'x' ) );
+    GEOS_LOG_RANK_0_IF( isDisplacementBCApplied[1] == 0, // target set is empty
+                        GEOS_FMT( bcLogMessage,
+                                  catalogName(), getName(), 'y' ) );
+    GEOS_LOG_RANK_0_IF( isDisplacementBCApplied[2] == 0, // target set is empty
+                        GEOS_FMT( bcLogMessage,
+                                  catalogName(), getName(), 'z' ) );
+  }
+
 }
 
 void SolidMechanicsLagrangianFEM::applyTractionBC( real64 const time,
