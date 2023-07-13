@@ -120,6 +120,8 @@ void DieterichSeismicityRate::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< inducedSeismicity::normalStressRate >( getName() );
       subRegion.registerField< inducedSeismicity::shearStress >( getName() );
       subRegion.registerField< inducedSeismicity::shearStressRate >( getName() );
+
+      subRegion.registerField< inducedSeismicity::seismicityRate >( getName() );
     } );
    } );
 }
@@ -235,7 +237,6 @@ void DieterichSeismicityRate::initializePreSubGroups()
     {
       arrayView1d< real64 > const tempTa = subRegion.getField< inducedSeismicity::t_a >();
       tempTa.setValues< parallelHostPolicy >( m_directEffect*m_initialSigma/m_bStressRate );
-
       arrayView1d< real64 > const tempASig = subRegion.getField< inducedSeismicity::aSigma >();
       tempASig.setValues< parallelHostPolicy >( m_directEffect*m_initialSigma );
     
@@ -254,6 +255,9 @@ void DieterichSeismicityRate::initializePreSubGroups()
       tempTau.setValues< parallelHostPolicy >( 0.0 );
       arrayView1d< real64 > const tempTauDot = subRegion.getField< inducedSeismicity::shearStressRate >();
       tempTauDot.setValues< parallelHostPolicy >( 0.0 );
+      
+      arrayView1d< real64 > const tempR = subRegion.getField< inducedSeismicity::seismicityRate >();
+      tempR.setValues< parallelHostPolicy >( 1.0 );
     } );
   } );
 }
