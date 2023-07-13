@@ -217,7 +217,7 @@ void DieterichSeismicityRate::initializePreSubGroups()
   // 1. Validate various models against each other (must have same phases and components)
   // validateConstitutiveModels( domain );
 
-  // 2. Set the value of temperature
+  // 2. Set the value of field variables
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
@@ -227,8 +227,25 @@ void DieterichSeismicityRate::initializePreSubGroups()
     arrayView1d< real64 > const tempTa = nodes.getField< inducedSeismicity::t_a >();
     tempTa.setValues< parallelHostPolicy >( m_directEffect*m_initialSigma/m_bStressRate );
 
-    arrayView1d< real64 > const tempAsig = nodes.getField< inducedSeismicity::aSigma >();
-    tempAsig.setValues< parallelHostPolicy >( m_directEffect*m_initialSigma );
+    arrayView1d< real64 > const tempASig = nodes.getField< inducedSeismicity::aSigma >();
+    tempASig.setValues< parallelHostPolicy >( m_directEffect*m_initialSigma );
+    
+    // Hard coded stressing histories for now
+    arrayView1d< real64 > const tempP = nodes.getField< inducedSeismicity::pressure >();
+        tempP.setValues< parallelHostPolicy >( 0.0 );
+    arrayView1d< real64 > const tempPDot = nodes.getField< inducedSeismicity::pressureRate >();
+        tempPDot.setValues< parallelHostPolicy >( 0.0 );
+
+    arrayView1d< real64 > const tempSig = nodes.getField< inducedSeismicity::normalStress >();
+        tempSig.setValues< parallelHostPolicy >( 100e6 );
+    arrayView1d< real64 > const tempSigDot = nodes.getField< inducedSeismicity::normalStressRate >();
+        tempSigDot.setValues< parallelHostPolicy >( 0.0 );
+
+    arrayView1d< real64 > const tempTau = nodes.getField< inducedSeismicity::shearStress >();
+        tempTau.setValues< parallelHostPolicy >( 0.0 );
+    arrayView1d< real64 > const tempTauDot = nodes.getField< inducedSeismicity::shearStressRate >();
+        tempTauDot.setValues< parallelHostPolicy >( 0.0 );
+
   } );
 }
 
