@@ -339,7 +339,6 @@ void NeighborCommunicator::unpackGhosts( MeshLevel & mesh,
   waitAllDeviceEvents( events );
 
   GEOS_ERROR_IF_NE( receiveBuff.size(), unpackedSize );
-
 }
 
 void NeighborCommunicator::prepareAndSendSyncLists( MeshLevel const & mesh,

@@ -26,6 +26,79 @@ constexpr int nsdof = 3;
 namespace geos
 {
 
+// inline bool isEqual( const real64& val1, const real64& val2, const real64& tolfac=0.0 )
+// {
+//   realT tol = 0.0;
+//   if( tolfac > 1.0e-15 )
+//     tol = fabs(tolfac) * (fabs(val1)+fabs(val2))*0.5;
+//   return val1<=(val2+tol) && val1>=(val2-tol);
+// }
+
+// CC: Taken from old geos
+// Planar Sorter
+// Sorts pairs of local and global indexes by the positions of their corresponding node points in a plane.
+class PlanarSorter {
+
+public:
+	PlanarSorter(const arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >& refPos, int dim) :
+               dimension(dim), 
+               refPositions(refPos) {};
+
+	// sort operator for pairs containing local indexes (sort based on 1st element in pair)
+	bool operator()(const std::pair<localIndex, localIndex>& lhs,
+	                const std::pair<localIndex, localIndex>& rhs) 
+  {
+		bool rv = false;
+		int a = 0;
+		int b = 2;
+		if (dimension == 0)
+			a = 1;
+		if (dimension == 2)
+			b = 1;
+
+		const arraySlice1d<real64 const>& lhsVect = refPositions[lhs.first];
+		const arraySlice1d<real64 const>& rhsVect = refPositions[rhs.first];
+
+		if (lhsVect[a] < rhsVect[a]) {
+			rv = true;
+		} else if (isEqual(lhsVect[a], rhsVect[a])
+				&& (lhsVect[b] < rhsVect[b])) {
+			rv = true;
+		};
+
+		return rv;
+	};
+
+	// sort operator for local indexes
+	bool operator()(const localIndex& lhs, 
+                  const localIndex& rhs)
+  {
+		bool rv = false;
+		int a = 0;
+		int b = 2;
+		if (dimension == 0)
+			a = 1;
+		if (dimension == 2)
+			b = 1;
+
+		const arraySlice1d<real64 const>& lhsVect = refPositions[lhs];
+		const arraySlice1d<real64 const>& rhsVect = refPositions[rhs];
+
+		if (lhsVect[a] < rhsVect[a]) {
+			rv = true;
+		} else if (isEqual(lhsVect[a], rhsVect[a])
+				&& (lhsVect[b] < rhsVect[b])) {
+			rv = true;
+		};
+
+		return rv;
+	};
+
+private:
+	int dimension;
+	const arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >& refPositions;
+};
+
 /**
  * @brief Concrete (cartesian?) partitioning.
  */
@@ -102,6 +175,10 @@ public:
                                 MPI_iCommData & commData,
                                 std::vector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor );
 
+  void setPeriodicDomainBoundaryObjects(  MeshBody & grid,
+                                          NodeManager & nodeManager,
+                                          EdgeManager & edgeManager,
+                                          FaceManager & faceManager );
 
   /// number of partitions
   array1d< int > m_Partitions;

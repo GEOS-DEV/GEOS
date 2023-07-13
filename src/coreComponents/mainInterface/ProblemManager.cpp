@@ -150,6 +150,7 @@ Group * ProblemManager::createChild( string const & GEOS_UNUSED_PARAM( childKey 
 void ProblemManager::problemSetup()
 {
   GEOS_MARK_FUNCTION;
+
   postProcessInputRecursive();
 
   generateMesh();
