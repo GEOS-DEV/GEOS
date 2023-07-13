@@ -26,6 +26,7 @@ namespace constitutive
 
 CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
   ElasticIsotropic( name, parent ),
+  m_strengthScale(),
   m_damage(),
   m_jacobian(),
   m_lengthScale(),
@@ -52,6 +53,11 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
     setDescription( "Crack speed" );
 
   // register fields
+  registerWrapper( viewKeyStruct::strengthScaleString(), &m_strengthScale ).
+    setApplyDefaultValue( 1.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0).
+    setDescription( "Strength scale" );
+
   registerWrapper( viewKeyStruct::damageString(), &m_damage ).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
@@ -78,6 +84,7 @@ void CeramicDamage::allocateConstitutiveData( dataRepository::Group & parent,
 {
   ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
+  m_strengthScale.resize(1, numConstitutivePointsPerParentIndex);
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
   m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
 }

@@ -849,6 +849,25 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::forceContactString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::surfaceNormalString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::materialPositionString() ).resize( numNodes, m_numVelocityFields, 3 );
+
+  // Load strength scale into constitutive model (for ceramic)
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    // Get constitutive model reference
+    string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    SolidBase & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
+    if( solidModel.hasWrapper( "strengthScale" ) )
+    {
+      arrayView1d< real64 > const particleStrengthScale = subRegion.getParticleStrengthScale();
+      arrayView2d< real64 > const constitutiveStrengthScale = solidModel.getReference< array2d< real64 > >( "strengthScale" );
+      SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        constitutiveStrengthScale[p][0] = particleStrengthScale[p];
+      } );
+    }
+  } );
 }
 
 real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
@@ -3168,6 +3187,7 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
     {
       arrayView1d< real64 > const particleDamage = subRegion.getParticleDamage();
       arrayView2d< real64 const > const constitutiveDamage = solidModel.getReference< array2d< real64 > >( "damage" );
+      // arrayView2d< real64 const > const constitutiveStrengthScale = solidModel.getReference< array2d< real64 > >( "strengthScale" ); // CC: debug
       SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
