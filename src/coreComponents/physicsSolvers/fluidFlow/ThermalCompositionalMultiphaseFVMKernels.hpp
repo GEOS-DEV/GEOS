@@ -253,7 +253,6 @@ public:
                            PermeabilityAccessors const & permeabilityAccessors,
                            ThermalConductivityAccessors const & thermalConductivityAccessors,
                            real64 const & dt,
-                           string const & upwindSchemeName,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs )
     : Base( numPhases,
@@ -267,7 +266,6 @@ public:
             capPressureAccessors,
             permeabilityAccessors,
             dt,
-            upwindSchemeName,
             localMatrix,
             localRhs ),
     m_temp( thermalCompFlowAccessors.get( fields::flow::temperature {} ) ),
@@ -636,7 +634,6 @@ public:
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
                    real64 const & dt,
-                   string const & upwindSchemeName,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
@@ -662,7 +659,7 @@ public:
       KernelType kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
                          compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
                          capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
-                         dt, upwindSchemeName, localMatrix, localRhs );
+                         dt, localMatrix, localRhs );
       KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }
@@ -775,7 +772,6 @@ public:
                                     PermeabilityAccessors const & permeabilityAccessors,
                                     ThermalConductivityAccessors const & thermalConductivityAccessors,
                                     real64 const & dt,
-                                    string const & upwindSchemeName,
                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                     arrayView1d< real64 > const & localRhs )
     : Base( numPhases,
@@ -790,7 +786,6 @@ public:
             capPressureAccessors,
             permeabilityAccessors,
             dt,
-            upwindSchemeName,
             localMatrix,
             localRhs ),
     m_temp( thermalCompFlowAccessors.get( fields::flow::temperature {} ) ),
@@ -1078,7 +1073,6 @@ public:
                    STENCILWRAPPER const & stencilWrapper,
                    MultiFluidBase & fluidBase,
                    real64 const & dt,
-                   string const & upwindSchemeName,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
@@ -1112,7 +1106,7 @@ public:
         KernelType kernel( numPhases, rankOffset, hasCapPressure, faceManager, stencilWrapper, fluidWrapper,
                            dofNumberAccessor, compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
                            capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
-                           dt, upwindSchemeName, localMatrix, localRhs );
+                           dt, localMatrix, localRhs );
         KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
       } );
     } );

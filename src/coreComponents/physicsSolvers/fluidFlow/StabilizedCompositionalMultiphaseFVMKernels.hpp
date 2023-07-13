@@ -132,7 +132,6 @@ public:
                            PermeabilityAccessors const & permeabilityAccessors,
                            RelPermAccessors const & relPermAccessors,
                            real64 const & dt,
-                           string const & upwindSchemeName,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs )
     : Base( numPhases,
@@ -146,7 +145,6 @@ public:
             capPressureAccessors,
             permeabilityAccessors,
             dt,
-            upwindSchemeName,
             localMatrix,
             localRhs ),
     m_pres_n( stabCompFlowAccessors.get( fields::flow::pressure_n {} ) ),
@@ -336,7 +334,6 @@ public:
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
                    real64 const & dt,
-                   string const & upwindSchemeName,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
@@ -362,7 +359,7 @@ public:
       KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
                           compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors, stabMultiFluidAccessors,
                           capPressureAccessors, permeabilityAccessors, relPermAccessors,
-                          dt, upwindSchemeName, localMatrix, localRhs );
+                          dt, localMatrix, localRhs );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }

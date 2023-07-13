@@ -133,7 +133,6 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      mesh.getElemManager(),
                                                      stencilWrapper,
                                                      dt,
-                                                     fluxApprox.upwindSchemeName(),
                                                      localMatrix.toViewConstSizes(),
                                                      localRhs.toView() );
       }
@@ -151,7 +150,6 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      mesh.getElemManager(),
                                                      stencilWrapper,
                                                      dt,
-                                                     fluxApprox.upwindSchemeName(),
                                                      localMatrix.toViewConstSizes(),
                                                      localRhs.toView());
       }
@@ -198,7 +196,6 @@ void CompositionalMultiphaseFVM::assembleStabilizedFluxTerms( real64 const dt,
                                                    mesh.getElemManager(),
                                                    stencilWrapper,
                                                    dt,
-                                                   fluxApprox.upwindSchemeName(),
                                                    localMatrix.toViewConstSizes(),
                                                    localRhs.toView() );
 
@@ -769,7 +766,6 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
                                                      stencilWrapper,
                                                      multiFluidBase,
                                                      dt,
-                                                     fluxApprox.upwindSchemeName(),
                                                      localMatrix,
                                                      localRhs );
       }
@@ -787,7 +783,6 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
                                                      stencilWrapper,
                                                      multiFluidBase,
                                                      dt,
-                                                     fluxApprox.upwindSchemeName(),
                                                      localMatrix,
                                                      localRhs );
       }

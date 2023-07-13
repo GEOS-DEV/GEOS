@@ -47,7 +47,7 @@ enum class UpwindingScheme : integer
 ENUM_STRINGS( UpwindingScheme,
               "PPU",
               "C1PPU",
-              "IHU");
+              "IHU" );
 
 /**
  * @struct UpwindingParameters

@@ -624,6 +624,7 @@ public:
             m_gravCoef,
             m_phaseMob, m_dPhaseMob,
             m_dPhaseVolFrac,
+            m_phaseCompFrac, m_dPhaseCompFrac,
             m_dCompFrac_dCompDens,
             m_phaseMassDens, m_dPhaseMassDens,
             m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
@@ -631,17 +632,11 @@ public:
             potGrad,
             phaseFlux,
             dPhaseFlux_dP,
-            dPhaseFlux_dC );
+            dPhaseFlux_dC,
+            compFlux,
+            dCompFlux_dP,
+            dCompFlux_dC );
 
-          isothermalCompositionalMultiphaseFVMKernelUtilities::
-            PhaseComponentFlux::compute< numComp, numFluxSupportPoints >
-            ( ip,
-            k_up,
-            seri, sesri, sei,
-            m_phaseCompFrac, m_dPhaseCompFrac,
-            m_dCompFrac_dCompDens,
-            phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC,
-            compFlux, dCompFlux_dP, dCompFlux_dC );
 
           // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
           // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
@@ -680,23 +675,23 @@ public:
       }                               // loop over k[1]
     }                           // loop over k[0]
 
-  }
+   }
 
 
-  *//**
-   * @brief Compute the local flux contributions to the residual and Jacobian base on fractional flux formulation
-   * @tparam FUNC the type of the function that can be used to customize the computation of the phase fluxes
-   * @tparam UpwindSchemeType the template class describing upwind scheme chosen
-   * @param[in] iconn the connection index
-   * @param[inout] stack the stack variables
-   * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
-   *//*
-  template< typename FUNC = NoOpFunc, class UpwindSchemeType >
-  GEOSX_HOST_DEVICE
-  void computeFractionalFlowFlux( localIndex const iconn,
+ *//**
+ * @brief Compute the local flux contributions to the residual and Jacobian base on fractional flux formulation
+ * @tparam FUNC the type of the function that can be used to customize the computation of the phase fluxes
+ * @tparam UpwindSchemeType the template class describing upwind scheme chosen
+ * @param[in] iconn the connection index
+ * @param[inout] stack the stack variables
+ * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
+ *//*
+   template< typename FUNC = NoOpFunc, class UpwindSchemeType >
+   GEOSX_HOST_DEVICE
+   void computeFractionalFlowFlux( localIndex const iconn,
                                   StackVariables & stack,
                                   FUNC && compFluxKernelOp = NoOpFunc{} ) const
-  {
+   {
 
 
     // first, compute the transmissibilities at this face
@@ -733,7 +728,6 @@ public:
         real64 const dTrans_dPres[numFluxSupportPoints] = {stack.dTrans_dPres[connectionIndex][0],
                                                            stack.dTrans_dPres[connectionIndex][1]};
 
-        //***** calculation of flux *****
         // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
         for( integer ip = 0; ip < m_numPhases; ++ip )
         {
@@ -1043,7 +1037,7 @@ public:
 
 
 
-        }    */                                     // loop over phases
+        }    */// loop over phases
 
         /// populate local flux vector and derivatives
         for( integer ic = 0; ic < numComp; ++ic )
@@ -1227,6 +1221,21 @@ public:
                            dt, localMatrix, localRhs );
         kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
       }
+      else if( upwindingParams.upwindingScheme == UpwindingScheme::IHU )
+      {
+        using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER, isothermalCompositionalMultiphaseFVMKernelUtilities::IHUPhaseFlux >;
+        typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
+        typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+        typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+        typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+
+        kernelType kernel( numPhases, rankOffset, hasCapPressure, /*upwindingParams.epsC1PPU,*/ stencilWrapper, dofNumberAccessor,
+                           compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
+                           dt, localMatrix, localRhs );
+        kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+
+
+      }
       else
       {
         using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
@@ -1240,6 +1249,9 @@ public:
                            dt, localMatrix, localRhs );
         kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
       }
+
+
+
     } );
   }
 };

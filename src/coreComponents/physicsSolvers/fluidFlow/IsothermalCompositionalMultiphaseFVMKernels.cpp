@@ -42,14 +42,12 @@ FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhase
                                                           CapPressureAccessors const & capPressureAccessors,
                                                           PermeabilityAccessors const & permeabilityAccessors,
                                                           real64 const & dt,
-                                                          string const & upwindSchemeName,
                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                           arrayView1d< real64 > const & localRhs )
   : m_numPhases( numPhases ),
   m_rankOffset( rankOffset ),
   m_hasCapPressure( hasCapPressure ),
   m_dt( dt ),
-  m_upwindSchemeName( upwindSchemeName ),
   m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
   m_permeability( permeabilityAccessors.get( fields::permeability::permeability {} ) ),
   m_dPerm_dPres( permeabilityAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
@@ -69,8 +67,6 @@ FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhase
   m_localMatrix( localMatrix ),
   m_localRhs( localRhs )
 {}
-
-const string & FaceBasedAssemblyKernelBase::upwindSchemeName() const { return m_upwindSchemeName; }
 
 /******************************** CFLFluxKernel ********************************/
 
