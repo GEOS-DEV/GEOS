@@ -101,20 +101,27 @@ void DieterichSeismicityRate::registerDataOnMesh( Group & meshBodies )
 {
   SeismicityRateBase::registerDataOnMesh( meshBodies );
 
-  meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & regionNames )
   {
-    NodeManager & nodes = meshBody.getBaseDiscretization().getNodeManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
 
-    nodes.registerField< inducedSeismicity::t_a >( getName() );   
-    nodes.registerField< inducedSeismicity::aSigma >( getName() );   
-    nodes.registerField< inducedSeismicity::pressure >( getName() );   
-    nodes.registerField< inducedSeismicity::pressureRate >( getName() );   
-    nodes.registerField< inducedSeismicity::normalStress >( getName() );   
-    nodes.registerField< inducedSeismicity::normalStressRate >( getName() );   
-    nodes.registerField< inducedSeismicity::shearStress >( getName() );   
-    nodes.registerField< inducedSeismicity::shearStressRate >( getName() );   
+    elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   ElementSubRegionBase & subRegion )
+    {
+      subRegion.registerField< inducedSeismicity::t_a >( getName() );
+      subRegion.registerField< inducedSeismicity::aSigma >( getName() );
 
-  } );
+      subRegion.registerField< inducedSeismicity::pressure >( getName() );
+      subRegion.registerField< inducedSeismicity::pressureRate >( getName() );
+      subRegion.registerField< inducedSeismicity::normalStress >( getName() );
+      subRegion.registerField< inducedSeismicity::normalStressRate >( getName() );
+      subRegion.registerField< inducedSeismicity::shearStress >( getName() );
+      subRegion.registerField< inducedSeismicity::shearStressRate >( getName() );
+    } );
+   } );
 }
 //END_SPHINX_INCLUDE_REGISTERDATAONMESH
 
@@ -217,35 +224,37 @@ void DieterichSeismicityRate::initializePreSubGroups()
   // 1. Validate various models against each other (must have same phases and components)
   // validateConstitutiveModels( domain );
 
-  // 2. Set the value of field variables
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
+
   {
-    NodeManager & nodes = mesh.getNodeManager();
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
+    {
+      arrayView1d< real64 > const tempTa = subRegion.getField< inducedSeismicity::t_a >();
+      tempTa.setValues< parallelHostPolicy >( m_directEffect*m_initialSigma/m_bStressRate );
 
-    arrayView1d< real64 > const tempTa = nodes.getField< inducedSeismicity::t_a >();
-    tempTa.setValues< parallelHostPolicy >( m_directEffect*m_initialSigma/m_bStressRate );
-
-    arrayView1d< real64 > const tempASig = nodes.getField< inducedSeismicity::aSigma >();
-    tempASig.setValues< parallelHostPolicy >( m_directEffect*m_initialSigma );
+      arrayView1d< real64 > const tempASig = subRegion.getField< inducedSeismicity::aSigma >();
+      tempASig.setValues< parallelHostPolicy >( m_directEffect*m_initialSigma );
     
-    // Hard coded stressing histories for now
-    arrayView1d< real64 > const tempP = nodes.getField< inducedSeismicity::pressure >();
-        tempP.setValues< parallelHostPolicy >( 0.0 );
-    arrayView1d< real64 > const tempPDot = nodes.getField< inducedSeismicity::pressureRate >();
-        tempPDot.setValues< parallelHostPolicy >( 0.0 );
+      // Hard coded stressing histories for now
+      arrayView1d< real64 > const tempP = subRegion.getField< inducedSeismicity::pressure >();
+      tempP.setValues< parallelHostPolicy >( 0.0 );
+      arrayView1d< real64 > const tempPDot = subRegion.getField< inducedSeismicity::pressureRate >();
+      tempPDot.setValues< parallelHostPolicy >( 0.0 );
 
-    arrayView1d< real64 > const tempSig = nodes.getField< inducedSeismicity::normalStress >();
-        tempSig.setValues< parallelHostPolicy >( 100e6 );
-    arrayView1d< real64 > const tempSigDot = nodes.getField< inducedSeismicity::normalStressRate >();
-        tempSigDot.setValues< parallelHostPolicy >( 0.0 );
+      arrayView1d< real64 > const tempSig = subRegion.getField< inducedSeismicity::normalStress >();
+      tempSig.setValues< parallelHostPolicy >( 100e6 );
+      arrayView1d< real64 > const tempSigDot = subRegion.getField< inducedSeismicity::normalStressRate >();
+      tempSigDot.setValues< parallelHostPolicy >( 0.0 );
 
-    arrayView1d< real64 > const tempTau = nodes.getField< inducedSeismicity::shearStress >();
-        tempTau.setValues< parallelHostPolicy >( 0.0 );
-    arrayView1d< real64 > const tempTauDot = nodes.getField< inducedSeismicity::shearStressRate >();
-        tempTauDot.setValues< parallelHostPolicy >( 0.0 );
-
+      arrayView1d< real64 > const tempTau = subRegion.getField< inducedSeismicity::shearStress >();
+      tempTau.setValues< parallelHostPolicy >( 0.0 );
+      arrayView1d< real64 > const tempTauDot = subRegion.getField< inducedSeismicity::shearStressRate >();
+      tempTauDot.setValues< parallelHostPolicy >( 0.0 );
+    } );
   } );
 }
 
