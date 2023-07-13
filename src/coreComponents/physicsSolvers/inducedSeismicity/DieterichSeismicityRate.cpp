@@ -77,11 +77,21 @@ using namespace fields;
 //START_SPHINX_INCLUDE_CONSTRUCTOR
 DieterichSeismicityRate::DieterichSeismicityRate( const string & name,
                                                   Group * const parent ):
-  SeismicityRateBase( name, parent ), m_directEffect(0.01)
+  SeismicityRateBase( name, parent ), 
+  m_directEffect(0.01),
+  m_stressRate(3.171e-5),
+  m_initialSigma(100e6)
   {
   this->registerWrapper( viewKeyStruct::directEffect(), &m_directEffect ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Rate-and-state direct effect parameter" );
+  this->registerWrapper( viewKeyStruct::stressRate(), &m_stressRate ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Background stressing rate" );
+  this->registerWrapper( viewKeyStruct::initialSigma(), &m_initialSigma ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Initial effective normal stress" );
+
   }
 //END_SPHINX_INCLUDE_CONSTRUCTOR
 
