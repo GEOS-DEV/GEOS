@@ -166,7 +166,7 @@ void SolidMechanicsConformingFractures::implicitStepComplete( real64 const & tim
                                                                 MeshLevel & meshLevel,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    NodeManager const & nodeManager = meshLevel.getNodeManager();
+    NodeManager & nodeManager = meshLevel.getNodeManager();
     FaceManager const & faceManager = meshLevel.getFaceManager();
     ElementRegionManager & elemManager = meshLevel.getElemManager();
     // node-based fields
@@ -174,15 +174,17 @@ void SolidMechanicsConformingFractures::implicitStepComplete( real64 const & tim
     arrayView2d< real64 > const & oldDispJump = nodeManager.getField< contact::oldDispJump >();
     arrayView1d< integer const > const & fractureState = nodeManager.getField< contact::fractureState >();
     arrayView1d< integer > const & oldFractureState = nodeManager.getField< contact::oldFractureState >();
- 
+
+    ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
                                                               [&]( localIndex const,
                                                                    FaceElementSubRegion & subRegion )
     {
+      arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
-        localIndex const numNodePerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
-        for ( localIndex lagIndex = 0; lagIndex < numNodePerFace; ++lagIndex )
+        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
+        for ( localIndex lagIndex = 0; lagIndex < numNodesPerFace; ++lagIndex )
         {
           for( localIndex faceSide = 0; faceSide < 2; ++faceSide )
           {
@@ -196,13 +198,13 @@ void SolidMechanicsConformingFractures::implicitStepComplete( real64 const & tim
         }
       } );
     } );
-  } );
     // Need a synchronization of deltaTraction as will be used in AssembleStabilization
     FieldIdentifiers fieldsToBeSync;
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
-                                                         mesh,
-                                                         domain.getNeighbors(),
-                                                         true );
+                                                          meshLevel,
+                                                          domain.getNeighbors(),
+                                                          true );
+  } );
 
   GEOS_LOG_LEVEL_RANK_0( 1, " ***** ImplicitStepComplete *****" );
 }
@@ -253,7 +255,7 @@ void SolidMechanicsConformingFractures::computeNodalDisplacementJump( DomainPart
                                                                 MeshLevel & meshLevel,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    NodeManager const & nodeManager = meshLevel.getNodeManager();
+    NodeManager & nodeManager = meshLevel.getNodeManager();
     FaceManager & faceManager = meshLevel.getFaceManager();
     ElementRegionManager & elemManager = meshLevel.getElemManager();
 
@@ -274,7 +276,7 @@ void SolidMechanicsConformingFractures::computeNodalDisplacementJump( DomainPart
       rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
       arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
-      arrayView1d< real64 const > const & ghostRank = subRegion.ghostRank();
+      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
 
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
@@ -297,8 +299,8 @@ void SolidMechanicsConformingFractures::computeNodalDisplacementJump( DomainPart
               for( localIndex i = 0; i < 3; ++i )
               {
                 globalJumpTemp[ i ] +=
-                    -u[faceToNodeMap( elemsToFaces[kfe][0], a )][i] * nodalArea0[a]
-                    +u[faceToNodeMap( elemsToFaces[kfe][1], a )][i] * nodalArea1[a];
+                    -u[faceToNodeMap( elemsToFaces[kfe][0], lagIndex )][i] * nodalArea0[lagIndex]
+                    +u[faceToNodeMap( elemsToFaces[kfe][1], lagIndex )][i] * nodalArea1[lagIndex];
               }
               
               real64 dispJumpTemp[ 3 ];
@@ -433,7 +435,7 @@ void SolidMechanicsConformingFractures::assembleNodalLagrangeMultiplierContact( 
 
 }
 
-void LagrangianContactSolver::
+void SolidMechanicsConformingFractures::
   assembleTractionResidualDerivativeWrtDisplacementAndTraction( MeshLevel const & mesh,
                                                                 arrayView1d< string const > const & regionNames,
                                                                 DofManager const & dofManager,
@@ -488,10 +490,10 @@ void LagrangianContactSolver::
         if (ghostRank[kfe] < 0)
         {
           // Filter out ghost elements
-          localIndex const numNodePerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
+          localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
           array1d< real64 > nodalArea;
 
-          for ( localIndex lagIndex = 0; lagIndex < numNodePerFace; ++lagIndex )
+          for ( localIndex lagIndex = 0; lagIndex < numNodesPerFace; ++lagIndex )
           {
             // loop through all nodes on the face element; operations for each node are duplicated for nodes living on the other side of the face element
             //globalIndex elemDOF[3] = { tracDofNumber[nodeIndex], tracDofNumber[nodeIndex] + 1, tracDofNumber[nodeIndex] + 2 }; // traction DOF for the node
@@ -528,8 +530,8 @@ void LagrangianContactSolver::
                   }
                   break;                
                 }
-                case contact::Fracture::Slip:
-                case contact::Fracture::NewSlip:
+                case contact::FractureState::Slip:
+                case contact::FractureState::NewSlip:
                 {
                   // Node is in slip state
                   if (faceSide == 0)
@@ -551,6 +553,7 @@ void LagrangianContactSolver::
                   if(!( ( m_nonlinearSolverParameters.m_numNewtonIterations == 0 ) && ( fractureState[nodeIndex] == contact::FractureState::NewSlip ) )
                     && slidingNorm > slidingTolerance[nodeIndex] )
                   {
+                    real64 dUdgT[ 3 ];
                     if (faceSide == 0)
                     {
                       for( localIndex i = 1; i < 3; ++i )
@@ -558,7 +561,6 @@ void LagrangianContactSolver::
                         elemRHS[i] = +nodalArea[lagIndex] * ( traction[nodeIndex][i] - limitTau * sliding[ i-1 ] / slidingNorm );
                       }
                       // A symmetric 2x2 matrix.
-                      real64 dUdgT[ 3 ];
                       dUdgT[ 0 ] = (slidingNorm * slidingNorm - sliding[ 0 ] * sliding[ 0 ]) * limitTau / std::pow( slidingNorm, 3 );
                       dUdgT[ 1 ] = (slidingNorm * slidingNorm - sliding[ 1 ] * sliding[ 1 ]) * limitTau / std::pow( slidingNorm, 3 );
                       dUdgT[ 2 ] = -sliding[ 0 ] * sliding[ 1 ] * limitTau / std::pow( slidingNorm, 3 );
@@ -579,8 +581,8 @@ void LagrangianContactSolver::
                           real64 localRowE[ 2 ];
                           LvArray::tensorOps::Ri_eq_symAijBj< 2 >( localRowE, dUdgT, localRowB );
 
-                          dRdU( 1, i ) = nodalArea[lagIndex] * localRowE[ 0 ] * pow( -1, faceSide );
-                          dRdU( 2, i ) = nodalArea[lagIndex] * localRowE[ 1 ] * pow( -1, faceSide );
+                          dRdU( 1, i ) = nodalArea[a] * localRowE[ 0 ] * pow( -1, faceSide );
+                          dRdU( 2, i ) = nodalArea[a] * localRowE[ 1 ] * pow( -1, faceSide );
                         }
                       }
                     }
@@ -620,7 +622,7 @@ void LagrangianContactSolver::
                   }
                   break;
                 }
-                case contact::Fracture::open:
+                case contact::FractureState::Open:
                 {
                   // Node is in open state
                   for( localIndex i = 0; i < 3; ++i )
@@ -665,7 +667,7 @@ void LagrangianContactSolver::
   });
 }
 
-void LagrangianContactSolver::
+void SolidMechanicsConformingFractures::
   assembleForceResidualDerivativeWrtTraction( MeshLevel const & mesh,
                                               arrayView1d< string const > const & regionNames,
                                               DofManager const & dofManager,
@@ -694,33 +696,36 @@ void LagrangianContactSolver::
                                                             [&]( localIndex const,
                                                                  FaceElementSubRegion const & subRegion )
   {
-    arrayView3d< real64 const > const & rotationMatrix = subRegion.getReference< array3d< real64 > >( contact::rotationMatrixString() );
-    arrayView2d< real64 const > const & elemsToFaces = subRegion.faceList();
+    arrayView3d< real64 const > const &
+    rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
+    arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+    arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
 
     constexpr localIndex TriangularPermutation[3] = { 0, 1, 2 };
     constexpr localIndex QuadrilateralPermutation[4] = { 0, 1, 3, 2 };
 
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
     {
-      if ( ghostRank[kfe] < 0)
+      if ( ghostRank[kfe] < 0 )
       {
-        localIndex const numNodePerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
-        localIndex const numQuadraturePointsPerElem = numNodePerFace==3 ? 1 : 4;
+        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
+        localIndex const numQuadraturePointsPerElem = numNodesPerFace==3 ? 1 : 4;
 
-        globalIndex rowDOF[3 * numNodePerFace];
-        real64 nodeRHS[3 * numNodePerFace];
+        std::vector<globalIndex> rowDOF(3 * numNodesPerFace);
+        std::vector<real64> nodeRHS(3 * numNodesPerFace);
 
-        stackArray2d< real64, 3*numNodePerFace*3 > dRdT( 3*numNodePerFace, 3 );
+        stackArray2d< real64, 3*4*3 > dRdT( 3*4, 3 );
         globalIndex colDOF[3];
+      
+        localIndex const * const permutation = ( numNodesPerFace == 3 ) ? TriangularPermutation : QuadrilateralPermutation;
+        real64 xLocal[2][4][3]; // TODO: this is a hack to get around the fact that the code below assumes 4 or less quadrature points
+                                //      this should be fixed when dealing with arbitrary number of quadrature points
 
-        for ( localIndex lagIndex = 0; lagIndex < numNodePerFace; ++lagIndex )
+        for ( localIndex lagIndex = 0; lagIndex < numNodesPerFace; ++lagIndex )
         {
           // loop through all nodes on the face element; operations for each node are duplicated for nodes living on the other side of the face element
           // globalIndex elemDOF[3] = { tracDofNumber[nodeIndex], tracDofNumber[nodeIndex] + 1, tracDofNumber[nodeIndex] + 2 }; // traction DOF for the node
-          
-          localIndex const * const permutation = ( numNodePerFace == 3 ) ? TriangularPermutation : QuadrilateralPermutation;
-          real64 xLocal[2][numNodePerFace][3];
-
+      
           for( localIndex faceSide = 0; faceSide < 2; ++faceSide )
           {
             localIndex const nodeIndex = faceToNodeMap( elemsToFaces[kfe][faceSide], lagIndex ); // global index of the node
@@ -732,23 +737,18 @@ void LagrangianContactSolver::
               }
               xLocal[faceSide][lagIndex][i] = nodePosition[ nodeIndex ][i];
             }
-
-            for( localIndex j = 0; j < 3; ++j )
-            {
-              xLocal[faceSide][a][j] = nodePosition[ faceToNodeMap( faceIndex, permutation[a] ) ][j];
-            }
           }
         }
 
         real64 N[4];
         for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
         {
-          if( numNodePerFace==3 )
+          if( numNodesPerFace==3 )
           {
             using NT = real64[3];
             H1_TriangleFace_Lagrange1_Gauss1::calcN( q, reinterpret_cast< NT & >(N) );
           }
-          else if( numNodePerFace==4 )
+          else if( numNodesPerFace==4 )
           {
             H1_QuadrilateralFace_Lagrange1_GaussLegendre2::calcN( q, N );
           }
@@ -757,14 +757,14 @@ void LagrangianContactSolver::
           for( localIndex faceSide = 0; faceSide < 2; ++faceSide )
           {
             using xLocalTriangle = real64[3][3];
-            real64 const detJxW = numNodePerFace==3 ?
+            real64 const detJxW = numNodesPerFace==3 ?
                                   H1_TriangleFace_Lagrange1_Gauss1::transformedQuadratureWeight( q, reinterpret_cast< xLocalTriangle & >( xLocal[faceSide] ) ) :
                                   H1_QuadrilateralFace_Lagrange1_GaussLegendre2::transformedQuadratureWeight( q, xLocal[faceSide] );
 
-            for( localIndex lagIndex = 0; lagIndex < numNodePerFace; ++lagIndex )
+            for( localIndex lagIndex = 0; lagIndex < numNodesPerFace; ++lagIndex )
             {
               localIndex const nodeIndex = faceToNodeMap( elemsToFaces[kfe][faceSide], lagIndex ); // global index of the node
-              real64 const NaDetJxQ = N[permutation[a]] * detJxW;
+              real64 const NaDetJxQ = N[permutation[lagIndex]] * detJxW;
               real64 const localNodalForce[ 3 ] = { traction( nodeIndex, 0 ) * NaDetJxQ,
                                                     traction( nodeIndex, 1 ) * NaDetJxQ,
                                                     traction( nodeIndex, 2 ) * NaDetJxQ };
@@ -818,8 +818,10 @@ real64 SolidMechanicsConformingFractures::calculateResidualNorm( real64 const & 
                                                                 arrayView1d< string const > const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
+    FaceManager const & faceManager = mesh.getFaceManager();
     arrayView1d< globalIndex const > const & dispDofNumber =
       nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( solidMechanics::totalDisplacement::key() ) );
+    ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
     string const & dofKey = dofManager.getKey( contact::traction::key() );
     globalIndex const rankOffset = dofManager.rankOffset();
@@ -847,19 +849,20 @@ real64 SolidMechanicsConformingFractures::calculateResidualNorm( real64 const & 
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames,
                                                                         [&]( localIndex const, FaceElementSubRegion const & subRegion )
     {
+      arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       RAJA::ReduceSum< parallelHostReduce, real64 > localSum( 0.0 );
-      forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const k )
+      forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
-        if( ghostRank[k] < 0 )
+        if( ghostRank[kfe] < 0 )
         {
-          localIndex const numNodePerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
-          for ( localIndex lagIndex = 0; lagIndex < numNodePerFace; ++lagIndex )
+          localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
+          for ( localIndex lagIndex = 0; lagIndex < numNodesPerFace; ++lagIndex )
           {
             for( localIndex faceSide = 0; faceSide < 2; ++faceSide )
             {
               localIndex const nodeIndex = faceToNodeMap( elemsToFaces[kfe][faceSide], lagIndex );
-              localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[k] - rankOffset );
+              localIndex const localRow = LvArray::integerConversion< localIndex >( tracDofNumber[kfe] - rankOffset );
               for( localIndex dim = 0; dim < 3; ++dim )
               {
                 localSum += localRhs[localRow + dim] * localRhs[localRow + dim];
@@ -1093,7 +1096,6 @@ bool SolidMechanicsConformingFractures::resetConfigurationToDefault( DomainParti
 bool SolidMechanicsConformingFractures::updateConfiguration( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
   using namespace fields::contact;
   int hasConfigurationConverged = true;
 
@@ -1102,7 +1104,11 @@ bool SolidMechanicsConformingFractures::updateConfiguration( DomainPartition & d
                                                                 arrayView1d< string const > const & regionNames )
   {
     // node-based fields
-    NodeManager const & nodeManager = mesh.getNodeManager();
+    NodeManager & nodeManager = mesh.getNodeManager();
+    FaceManager const & faceManager = mesh.getFaceManager();
+    ElementRegionManager & elemManager = mesh.getElemManager(); 
+
+    ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
     arrayView2d< real64 const > const & traction = nodeManager.getField< contact::traction >();
     arrayView2d< real64 const > const & dispJump = nodeManager.getField< contact::dispJump >();
     arrayView1d< integer > const & fractureState = nodeManager.getField< contact::fractureState >();
@@ -1111,12 +1117,13 @@ bool SolidMechanicsConformingFractures::updateConfiguration( DomainPartition & d
     nodeManager.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() ); 
     arrayView1d< real64 const > const & normalDisplacementTolerance =
     nodeManager.getReference< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() );
-    ElementRegionManager & elemManager = mesh.getElemManager(); 
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 FaceElementSubRegion & subRegion )
     {
       // face-based fields
+      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+      arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       RAJA::ReduceMin< parallelHostReduce, integer > checkActiveSetSub( 1 );
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
@@ -1128,10 +1135,10 @@ bool SolidMechanicsConformingFractures::updateConfiguration( DomainPartition & d
         {
           if( ghostRank[kfe] < 0 )
           {
-            localIndex const numNodePerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
+            localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
             array1d< real64 > nodalArea;
 
-            for ( localIndex lagIndex = 0; lagIndex < numNodePerFace; ++lagIndex )
+            for ( localIndex lagIndex = 0; lagIndex < numNodesPerFace; ++lagIndex )
             {
               for( localIndex faceSide = 0; faceSide < 2; ++faceSide )
               {
@@ -1189,13 +1196,12 @@ bool SolidMechanicsConformingFractures::updateConfiguration( DomainPartition & d
               }
             }
           }
-        }
+        } );
       } );
     } );
   } );
 
   synchronizeFractureState( domain );
-
   // Compute if globally the fracture state has changed
   int hasConfigurationConvergedGlobally;
   MpiWrapper::allReduce( &hasConfigurationConverged,
