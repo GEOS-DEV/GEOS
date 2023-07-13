@@ -33,13 +33,21 @@ namespace fields
 namespace inducedSeismicity
 {
 
-DECLARE_FIELD( directEffect,
-               "directEffect",
+DECLARE_FIELD( t_a,
+               "t_a",
                array1d< real64 >,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "direct effect parameter on the nodes" );
+               "Dieterich constitutive relaxation time of seismicity rate" );
+
+DECLARE_FIELD( aSigma,
+               "aSigma",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Product of direct effect parameter a and initial normal stress" );
 
 }
 
