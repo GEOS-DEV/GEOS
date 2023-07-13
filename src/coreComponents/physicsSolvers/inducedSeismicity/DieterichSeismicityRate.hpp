@@ -69,6 +69,14 @@ public:
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override;
 
+  struct viewKeyStruct : public SeismicityRateBase::viewKeyStruct
+  {
+    static constexpr char const * directEffect() { return "directEffect"; }
+  };
+
+private:
+  real64 m_directEffect;
+
 //END_SPHINX_INCLUDE_SOLVERINTERFACE
 
   /**@}*/
