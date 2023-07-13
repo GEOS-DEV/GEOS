@@ -69,7 +69,8 @@ public:
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point.
    */
-  CeramicDamageUpdates( arrayView2d< real64 > const & damage,
+  CeramicDamageUpdates( arrayView2d< real64 > const & strengthScale,
+                        arrayView2d< real64 > const & damage,
                         arrayView2d< real64 > const & jacobian,
                         arrayView1d< real64 > const & lengthScale,
                         real64 const & tensileStrength,
@@ -83,6 +84,7 @@ public:
                         arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                         bool const & disableInelasticity ):
     ElasticIsotropicUpdates( bulkModulus, shearModulus, thermalExpansionCoefficient, newStress, oldStress, disableInelasticity ),
+    m_strengthScale( strengthScale ),
     m_damage( damage ),
     m_jacobian( jacobian ),
     m_lengthScale( lengthScale ),
@@ -143,7 +145,8 @@ public:
                                 real64 ( &stress )[6] ) const;
 
   GEOS_HOST_DEVICE
-  real64 getStrength( const real64 damage,      // damage
+  real64 getStrength( const real64 scale,       // scale,
+                      const real64 damage,      // damage
                       const real64 pressure,    // pressure
                       const real64 J2,          // J2 invariant of stress
                       const real64 J3,          // J3 invariant of stress
@@ -159,6 +162,9 @@ public:
   }
 
 private:
+  /// A reference to the ArrayView holding the strength scale.
+  arrayView2d< real64 > const m_strengthScale;
+
   /// A reference to the ArrayView holding the damage for each quadrature point.
   arrayView2d< real64 > const m_damage;
 
@@ -254,6 +260,22 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
                                                     real64 const dt,
                                                     real64 ( & stress )[6] ) const
 {
+
+  // Scaled strengths
+  real64 gamma = m_compressiveStrength / m_tensileStrength; // TXC/TXE
+
+  real64 Yt = m_strengthScale[k][q] * m_tensileStrength;
+  real64 Yc = m_strengthScale[k][q] * m_compressiveStrength;
+
+  real64 Ycmax = m_maximumStrength;
+  real64 Ytmax = Ycmax / gamma;
+
+  Yt = std::min(Yt, 0.999*Ytmax);
+  Yc = std::min(Yc, 0.999*Ycmax);
+
+  // CC: debug
+  // GEOS_LOG_RANK(k << ", " << q << ", " << m_strengthScale[k][q] << ", Yt=" << Yt << ", Yc=" << Yc);
+
   // get failure time
   real64 tFail = m_lengthScale[k] / m_crackSpeed;
 
@@ -265,11 +287,11 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 mu = 0.5773502691896258;
 
   // Intermediate strength parameter
-  real64 Yt0 = fmax( 0.5 * m_tensileStrength, fmin( 2.0 * m_tensileStrength, (3.0 * m_compressiveStrength * m_tensileStrength) / (2.0 * m_compressiveStrength + m_tensileStrength) ) );
-  Yt0 = fmin( Yt0, ( 3.0 * m_compressiveStrength - m_compressiveStrength * mu ) / ( 3 + mu ) );
+  real64 Yt0 = fmax( 0.5 * Yt, fmin( 2.0 * Yt, (3.0 * Yc * Yt) / (2.0 * Yc + Yt) ) );
+  Yt0 = fmin( Yt0, ( 3.0 * Yc - Yc * mu ) / ( 3 + mu ) );
 
   // Compute the vertex pressure (should be pmin0 < 0) for the undamaged yield surface.
-  real64 pmin0 = -( 2.0 * m_compressiveStrength * Yt0 ) / ( 3.0 * ( m_compressiveStrength - Yt0 ) );
+  real64 pmin0 = -( 2.0 * Yc * Yt0 ) / ( 3.0 * ( Yc - Yt0 ) );
   pmin0 = fmin( pmin0, -1.0e-12 );
   real64 pmin = ( 1.0 - m_damage[k][q] ) * pmin0;
 
@@ -305,7 +327,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
                                        vonMises,
                                        deviator );
 
-    real64 brittleDuctileTransitionPressure = m_maximumStrength / mu;
+    real64 brittleDuctileTransitionPressure = Ycmax / mu;
     real64 J2 = vonMises * vonMises / 3.0;
     real64 J3 = vonMises * vonMises * vonMises *
                 ( deviator[0] * deviator[1] * deviator[2] +
@@ -315,7 +337,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
                   deviator[2] * deviator[5] * deviator[5] );
 
     // Find the strength
-    real64 strength = CeramicDamageUpdates::getStrength( m_damage[k][q], pressure, J2, J3, mu, Yt0 );
+    real64 strength = CeramicDamageUpdates::getStrength( m_strengthScale[k][q], m_damage[k][q], pressure, J2, J3, mu, Yt0 );
 
     // Increment damage and get new associated yield surface
     real64 newDeviatorMagnitude = vonMises;
@@ -324,7 +346,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
       if( pressure <= brittleDuctileTransitionPressure )
       {
         m_damage[k][q] = fmin( m_damage[k][q] + dt / tFail, 1.0 );
-        strength = CeramicDamageUpdates::getStrength( m_damage[k][q], pressure, J2, J3, mu, Yt0 );
+        strength = CeramicDamageUpdates::getStrength( m_strengthScale[k][q], m_damage[k][q], pressure, J2, J3, mu, Yt0 );
       }
       newDeviatorMagnitude = strength;
     }
@@ -339,7 +361,8 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-real64 CeramicDamageUpdates::getStrength( const real64 damage,     // damage
+real64 CeramicDamageUpdates::getStrength( const real64 scale,      // strength scale
+                                          const real64 damage,     // damage
                                           const real64 pressure,   // pressure
                                           const real64 J2,         // J2 invariant of stress
                                           const real64 J3,         // J3 invariant of stress
@@ -349,20 +372,36 @@ real64 CeramicDamageUpdates::getStrength( const real64 damage,     // damage
   auto ceramicY10 = [&]( const real64 pLocal,   // pressure
                          const real64 dLocal,   // damage,
                          const real64 muLocal,  // friction slope
-                         const real64 Yt0Local, // strength parameter
-                         real64 & f )      // OUTPUT: Yield surface
+                         const real64 Yt0Local, // tensile strength parameter
+                         const real64 YcLocal,  // compressive strength parameter
+                         real64 & f )           // OUTPUT: Yield surface
   {
-    f =
-      (((3.0 + dLocal * (-3.0 + muLocal)) * m_compressiveStrength + (-3.0 + dLocal * (3.0 + muLocal)) * Yt0Local) *
-       (pLocal - (2.0 * (dLocal - 1.0) * m_compressiveStrength * Yt0Local) / (3.0 * (m_compressiveStrength - Yt0Local)))) / (m_compressiveStrength + Yt0Local);
+    f = (((3.0 + dLocal * (-3.0 + muLocal)) * YcLocal + 
+          (-3.0 + dLocal * (3.0 + muLocal)) * Yt0Local) * (pLocal - 
+          (2.0 * (dLocal - 1.0) * YcLocal * Yt0Local) / 
+          (3.0 * (YcLocal - Yt0Local)))) / 
+          (YcLocal + Yt0Local);
   };
 
+  // Maybe this should be broken into another function because it is also used in smallStrainUpdateHelper
+  // Scaled strengths
+  real64 gamma = m_compressiveStrength / m_tensileStrength; // TXC/TXE
+
+  real64 Yt = scale * m_tensileStrength;
+  real64 Yc = scale * m_compressiveStrength;
+
+  real64 Ycmax = m_maximumStrength;
+  real64 Ytmax = Ycmax / gamma;
+
+  Yt = std::min(Yt, 0.999*Ytmax);
+  Yc = std::min(Yc, 0.999*Ycmax);
+
   // Bounding pressure values
-  real64 p1 = m_compressiveStrength / 3.0;
-  real64 p2 = m_maximumStrength / mu;
+  real64 p1 = Yc / 3.0;
+  real64 p2 = Ycmax / mu;
 
   // Get the scaling associated with p1
-  real64 dfdp1 = ((3.0 + damage * (-3.0 + mu)) * m_compressiveStrength + (-3.0 + damage * (3.0 + mu)) * Yt0) / (m_compressiveStrength + Yt0);
+  real64 dfdp1 = ((3.0 + damage * (-3.0 + mu)) * Yc + (-3.0 + damage * (3.0 + mu)) * Yt0) / (Yc + Yt0);
   real64 gamma1 = 1.0;
   if( J2 > 1e-32 )
   {
@@ -381,22 +420,22 @@ real64 CeramicDamageUpdates::getStrength( const real64 damage,     // damage
   if( pressure < p1 )
   {
     real64 f;
-    ceramicY10( pressure, damage, mu, Yt0, f );
+    ceramicY10( pressure, damage, mu, Yt0, Yc, f );
     return( f / gamma1 );
   }
   else if( pressure < p2 )
   {
     real64 f, m1, f1, y1, y2;
     m1 = dfdp1 / gamma1;
-    ceramicY10( p1, damage, mu, Yt0, f1 );
+    ceramicY10( p1, damage, mu, Yt0, Yc, f1 );
     y1 = f1 / gamma1;
-    y2 = m_maximumStrength;
+    y2 = Ycmax;
     f = pow((pressure - p2) / (p1 - p2), m1 * (p1 - p2) / (y1 - y2)) * (y1 - y2) + y2;
     return( f );
   }
   else
   {
-    return( m_maximumStrength );
+    return( Ycmax );
   }
 }
 
@@ -454,6 +493,9 @@ public:
    */
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
+    /// string/key for strengt scale value
+    static constexpr char const * strengthScaleString() { return "strengthScale"; }
+
     /// string/key for quadrature point damage value
     static constexpr char const * damageString() { return "damage"; }
 
@@ -482,7 +524,8 @@ public:
    */
   CeramicDamageUpdates createKernelUpdates() const
   {
-    return CeramicDamageUpdates( m_damage,
+    return CeramicDamageUpdates( m_strengthScale,
+                                 m_damage,
                                  m_jacobian,
                                  m_lengthScale,
                                  m_tensileStrength,
@@ -508,6 +551,7 @@ public:
   UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
   {
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
+                          m_strengthScale,
                           m_damage,
                           m_jacobian,
                           m_lengthScale,
@@ -526,6 +570,9 @@ public:
 
 protected:
   virtual void postProcessInput() override;
+
+  /// State variable: The strength scale values
+  array2d< real64 > m_strengthScale;
 
   /// State variable: The damage values for each quadrature point
   array2d< real64 > m_damage;
