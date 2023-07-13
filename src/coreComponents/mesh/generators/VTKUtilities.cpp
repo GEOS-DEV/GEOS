@@ -651,21 +651,21 @@ vtkSmartPointer< vtkDataSet >
 ensureNoEmptyRank( vtkDataSet & mesh,
                    MPI_Comm const comm )
 {
-  // step 1: figure out who is a donor and who is a recipient
-  globalIndex const numElems = mesh.GetNumberOfCells();
-  globalIndex const numProcs = MpiWrapper::commSize( comm );
+  GEOS_MARK_FUNCTION;
 
-  array1d< globalIndex > elemCounts( numProcs );
+  // step 1: figure out who is a donor and who is a recipient
+  localIndex const numElems = LvArray::integerConversion< localIndex >( mesh.GetNumberOfCells() );
+  integer const numProcs = MpiWrapper::commSize( comm );
+
+  array1d< localIndex > elemCounts( numProcs );
   MpiWrapper::allGather( numElems, elemCounts, comm );
 
-  SortedArray< globalIndex > recipientRanks;
-  array1d< globalIndex > donorRanks;
-  array1d< globalIndex > donorNumElems;
+  SortedArray< integer > recipientRanks;
+  array1d< integer > donorRanks;
   recipientRanks.reserve( numProcs );
   donorRanks.reserve( numProcs );
-  donorNumElems.reserve( numProcs );
 
-  for( globalIndex iRank = 0; iRank < numProcs; ++iRank )
+  for( integer iRank = 0; iRank < numProcs; ++iRank )
   {
     if( elemCounts[iRank] == 0 )
     {
@@ -674,7 +674,6 @@ ensureNoEmptyRank( vtkDataSet & mesh,
     else if( elemCounts[iRank] > 1 ) // need at least two elems to be a donor
     {
       donorRanks.emplace_back( iRank );
-      donorNumElems.emplace_back( elemCounts[iRank] );
     }
   }
 
@@ -682,11 +681,11 @@ ensureNoEmptyRank( vtkDataSet & mesh,
 
   // First we sort the donor in order of the number of elems they contain
   std::stable_sort( donorRanks.begin(), donorRanks.end(),
-                    [&donorNumElems] ( auto & i1, auto & i2 )
-  { return donorNumElems[i1] < donorNumElems[i2]; } );
+                    [&elemCounts] ( auto i1, auto i2 )
+  { return elemCounts[i1] < elemCounts[i2]; } );
 
   // Then, if my position is "i" in the donorRanks array, I will send half of my elems to the i-th recipient
-  globalIndex const myRank = MpiWrapper::commRank();
+  integer const myRank = MpiWrapper::commRank();
   auto const myPosition =
     LvArray::sortedArrayManipulation::find( donorRanks.begin(), donorRanks.size(), myRank );
   bool const isDonor = myPosition != donorRanks.size();
@@ -694,7 +693,7 @@ ensureNoEmptyRank( vtkDataSet & mesh,
   // step 3: my rank was selected to donate cells, let's proceed
   // we need to make a distinction between two configurations
 
-  array1d< globalIndex > newParts( numElems );
+  array1d< localIndex > newParts( numElems );
   newParts.setValues< parallelHostPolicy >( myRank );
 
   // step 3.1: donorRanks.size() >= recipientRanks.size()
@@ -703,8 +702,8 @@ ensureNoEmptyRank( vtkDataSet & mesh,
   {
     if( myPosition < recipientRanks.size() )
     {
-      globalIndex const recipientRank = recipientRanks[myPosition];
-      for( globalIndex iElem = std::floor( numElems/2.0 ); iElem < numElems; ++iElem )
+      integer const recipientRank = recipientRanks[myPosition];
+      for( localIndex iElem = numElems/2; iElem < numElems; ++iElem )
       {
         newParts[iElem] = recipientRank; // I donate half of my cells
       }
@@ -712,27 +711,27 @@ ensureNoEmptyRank( vtkDataSet & mesh,
   }
   // step 3.2: donorRanks.size() < recipientRanks.size()
   // this is the unhappy path: we don't care anymore about load balancing at this stage
-  // we just want to simulation to run and count on ParMetis/PTScotch to restore load balancing
+  // we just want the simulation to run and count on ParMetis/PTScotch to restore load balancing
   else if( isDonor && donorRanks.size() < recipientRanks.size() )
   {
-    globalIndex firstRecipientPosition = 0;
-    for( globalIndex iRank = 0; iRank < myPosition; ++iRank )
+    localIndex firstRecipientPosition = 0;
+    for( integer iRank = 0; iRank < myPosition; ++iRank )
     {
       firstRecipientPosition += elemCounts[iRank] - 1;
     }
     if( firstRecipientPosition < recipientRanks.size() )
     {
       bool const isLastDonor = myPosition == donorRanks.size() - 1;
-      globalIndex const lastRecipientPosition = firstRecipientPosition + numElems - 2;
-      GEOS_THROW_IF( isLastDonor && ( lastRecipientPosition < recipientRanks.size() - 1 ),
+      localIndex const lastRecipientPosition = firstRecipientPosition + numElems - 1;
+      GEOS_THROW_IF( isLastDonor && ( lastRecipientPosition < recipientRanks.size() ),
                      "The current implementation is unable to guarantee that all ranks have at least one element",
                      std::runtime_error );
 
-      for( globalIndex iElem = 1; iElem < numElems; ++iElem ) // I only keep my first element
+      for( localIndex iElem = 1; iElem < numElems; ++iElem ) // I only keep my first element
       {
         // this is the brute force approach
         // each donor donates all its elems except the first one
-        globalIndex const recipientPosition = firstRecipientPosition + iElem - 1;
+        localIndex const recipientPosition = firstRecipientPosition + iElem - 1;
         if( recipientPosition < recipientRanks.size() )
         {
           newParts[iElem] = recipientRanks[recipientPosition];
