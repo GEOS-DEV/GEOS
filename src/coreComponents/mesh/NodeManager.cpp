@@ -26,6 +26,8 @@
 #include "mesh/ToElementRelation.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 
+#include "common/MpiWrapper.hpp"
+
 namespace geos
 {
 
