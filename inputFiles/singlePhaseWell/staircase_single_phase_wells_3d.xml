@@ -27,10 +27,10 @@
       <WellControls
         name="wellControls1"
         type="producer"
-        control="BHP"
+        control="totalVolRate"
         referenceElevation="12"
-        targetBHP="5e5"
-        targetTotalRate="1e-4"/>
+        targetBHP="5e4"
+        targetTotalRate="1e-7"/>
       <WellControls
         name="wellControls2"
         type="injector"
