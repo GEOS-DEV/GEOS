@@ -25,15 +25,13 @@
 namespace geos
 {
 
-// Note that in the current implementation, the order of the templates in CoupledSolver< ... > matters a lot
-// Changing the order of these templates can break a lot of things (labels in MGR for instance) and must be done carefully
 template< typename FLOW_SOLVER >
-class SinglePhasePoromechanics : public CoupledSolver< SolidMechanicsLagrangianFEM,
-                                                       FLOW_SOLVER >
+class SinglePhasePoromechanics : public CoupledSolver< FLOW_SOLVER,
+                                                       SolidMechanicsLagrangianFEM >
 {
 public:
 
-  using Base = CoupledSolver< SolidMechanicsLagrangianFEM, FLOW_SOLVER >;
+  using Base = CoupledSolver< FLOW_SOLVER, SolidMechanicsLagrangianFEM >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -42,8 +40,8 @@ public:
 
   enum class SolverType : integer
   {
-    SolidMechanics = 0,
-    Flow = 1
+    Flow = 0,
+    SolidMechanics = 1
   };
 
   /// String used to form the solverName used to register solvers in CoupledSolver
@@ -95,6 +93,13 @@ public:
 
   virtual void setupCoupling( DomainPartition const & domain,
                               DofManager & dofManager ) const override;
+
+  virtual void setupDofs( DomainPartition const & domain,
+                          DofManager & dofManager ) const override;
+
+  virtual void implicitStepSetup( real64 const & time_n,
+                                  real64 const & dt,
+                                  DomainPartition & domain ) override;
 
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
@@ -157,6 +162,12 @@ private:
    * @param[in] subRegion the element subRegion
    */
   void updateBulkDensity( ElementSubRegionBase & subRegion );
+
+  /**
+   * @brief Helper function to average the mean stress increment
+   * @param[in] domain the domain partition
+   */
+  void averageMeanStressIncrement( DomainPartition & domain );
 
   void createPreconditioner();
 

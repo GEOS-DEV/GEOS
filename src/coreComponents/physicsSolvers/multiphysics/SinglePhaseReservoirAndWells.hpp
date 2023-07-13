@@ -89,7 +89,11 @@ public:
   void updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
   { flowSolver()->updateSolidInternalEnergyModel( dataGroup ); }
 
-  integer& isThermal() { return flowSolver()->isThermal(); }
+  integer & isThermal() { return flowSolver()->isThermal(); }
+
+  void enableFixedStressPoromechanicsUpdate() { flowSolver()->enableFixedStressPoromechanicsUpdate(); }
+
+  void saveIterationState( DomainPartition & domain ) const { flowSolver()->saveIterationState( domain ); }
 
 protected:
 
