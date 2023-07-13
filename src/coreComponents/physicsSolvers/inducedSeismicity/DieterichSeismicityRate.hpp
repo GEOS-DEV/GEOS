@@ -15,7 +15,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_INDUCED_SEISMICITY_DIETERICH_SEISMICITY_RATE_HPP_
 #define GEOS_PHYSICSSOLVERS_INDUCED_SEISMICITY_DIETERICH_SEISMICITY_RATE_HPP_
 
-#include "physicsSolvers/simplePDE/SeismicityRateBase.hpp"  // a base class shared by all Laplace solvers
+#include "physicsSolvers/inducedSeismicity/SeismicityRateBase.hpp"  // a base class shared by all Laplace solvers
 
 namespace geos
 {
