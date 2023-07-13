@@ -76,8 +76,12 @@ using namespace dataRepository;
 //START_SPHINX_INCLUDE_CONSTRUCTOR
 DieterichSeismicityRate::DieterichSeismicityRate( const string & name,
                                                   Group * const parent ):
-  SeismicityRateBase( name, parent )
-{}
+  SeismicityRateBase( name, parent ), m_directEffect(0.01)
+  {
+  this->registerWrapper( viewKeyStruct::directEffect(), &m_directEffect ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Rate-and-state direct effect parameter" );
+  }
 //END_SPHINX_INCLUDE_CONSTRUCTOR
 
 DieterichSeismicityRate::~DieterichSeismicityRate()
