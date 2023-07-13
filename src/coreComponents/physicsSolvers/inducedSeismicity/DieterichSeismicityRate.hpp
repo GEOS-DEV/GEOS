@@ -75,10 +75,15 @@ public:
   struct viewKeyStruct : public SeismicityRateBase::viewKeyStruct
   {
     static constexpr char const * directEffect() { return "directEffect"; }
+    static constexpr char const * stressRate() { return "stressRate"; }
+    static constexpr char const * initialSigma() { return "initialSigma"; }
   };
 
 private:
   real64 m_directEffect;
+  real64 m_stressRate;
+  real64 m_initialSigma;
+
 
 //END_SPHINX_INCLUDE_SOLVERINTERFACE
 
