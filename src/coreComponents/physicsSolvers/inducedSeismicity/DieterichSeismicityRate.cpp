@@ -30,6 +30,7 @@ namespace keys
 }
 
 using namespace dataRepository;
+using namespace fields;
 
 /*----------------------------------------------------------------------------------
  * LaplaceFEM: Solving Laplace's partial differential equation with finite elements
@@ -93,6 +94,13 @@ DieterichSeismicityRate::~DieterichSeismicityRate()
 void DieterichSeismicityRate::registerDataOnMesh( Group & meshBodies )
 {
   SeismicityRateBase::registerDataOnMesh( meshBodies );
+
+  meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
+  {
+    NodeManager & nodes = meshBody.getBaseDiscretization().getNodeManager();
+
+    nodes.registerField< inducedSeismicity::directEffect >( getName() );   
+  } );
 }
 //END_SPHINX_INCLUDE_REGISTERDATAONMESH
 

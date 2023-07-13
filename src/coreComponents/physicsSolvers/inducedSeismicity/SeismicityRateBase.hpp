@@ -19,6 +19,8 @@
 #include "physicsSolvers/SolverBase.hpp"  // an abstraction class shared by all physics solvers
 #include "fieldSpecification/FieldSpecificationManager.hpp" // a manager that can access and set values on the discretized domain
 
+#include "physicsSolvers/inducedSeismicity/inducedSeismicityFields.hpp"
+
 namespace geos
 {
 

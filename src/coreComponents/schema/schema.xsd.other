@@ -2723,6 +2723,8 @@
 		</xsd:choice>
 		<!--ReferencePosition => (no description available)-->
 		<xsd:attribute name="ReferencePosition" type="real64_array2d" />
+		<!--directEffect => direct effect parameter on the nodes => DieterichSeismicityRate-->
+		<xsd:attribute name="directEffect" type="real64_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
