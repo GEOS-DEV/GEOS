@@ -89,6 +89,13 @@ DieterichSeismicityRate::~DieterichSeismicityRate()
   // TODO Auto-generated destructor stub
 }
 
+//START_SPHINX_INCLUDE_REGISTERDATAONMESH
+void DieterichSeismicityRate::registerDataOnMesh( Group & meshBodies )
+{
+  SeismicityRateBase::registerDataOnMesh( meshBodies );
+}
+//END_SPHINX_INCLUDE_REGISTERDATAONMESH
+
 /* SETUP SYSTEM
    Setting up the system using the base class method
  */
