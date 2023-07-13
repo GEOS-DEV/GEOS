@@ -44,6 +44,9 @@ public:
   /// this C++ classes. This is important.
   static string catalogName() { return "DieterichSeismicityRate"; }
 
+  /// This method ties properties with their supporting mesh
+  virtual void registerDataOnMesh( Group & meshBodies ) override; 
+
 //END_SPHINX_INCLUDE_BEGINCLASS
 // /**
 //  * @defgroup Solver Interface Functions

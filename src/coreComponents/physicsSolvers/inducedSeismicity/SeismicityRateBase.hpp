@@ -42,7 +42,7 @@ public:
 //START_SPHINX_INCLUDE_REGISTERDATAONMESH
 
   /// This method ties properties with their supporting mesh
-  virtual void registerDataOnMesh( Group & meshBodies ) override final;
+  virtual void registerDataOnMesh( Group & meshBodies ) override; 
 
 //END_SPHINX_INCLUDE_REGISTERDATAONMESH
 
