@@ -72,16 +72,18 @@ public:
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override;
 
+  virtual void initializePreSubGroups() override;
+
   struct viewKeyStruct : public SeismicityRateBase::viewKeyStruct
   {
     static constexpr char const * directEffect() { return "directEffect"; }
-    static constexpr char const * stressRate() { return "stressRate"; }
+    static constexpr char const * bStressRate() { return "bStressRate"; }
     static constexpr char const * initialSigma() { return "initialSigma"; }
   };
 
 private:
   real64 m_directEffect;
-  real64 m_stressRate;
+  real64 m_bStressRate;
   real64 m_initialSigma;
 
 

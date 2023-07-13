@@ -79,13 +79,13 @@ DieterichSeismicityRate::DieterichSeismicityRate( const string & name,
                                                   Group * const parent ):
   SeismicityRateBase( name, parent ), 
   m_directEffect(0.01),
-  m_stressRate(3.171e-5),
+  m_bStressRate(3.171e-5),
   m_initialSigma(100e6)
   {
   this->registerWrapper( viewKeyStruct::directEffect(), &m_directEffect ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Rate-and-state direct effect parameter" );
-  this->registerWrapper( viewKeyStruct::stressRate(), &m_stressRate ).
+  this->registerWrapper( viewKeyStruct::bStressRate(), &m_bStressRate ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Background stressing rate" );
   this->registerWrapper( viewKeyStruct::initialSigma(), &m_initialSigma ).
@@ -204,6 +204,30 @@ void DieterichSeismicityRate::assembleSystem( real64 const GEOS_UNUSED_PARAM( ti
 
 }
 //END_SPHINX_INCLUDE_ASSEMBLY
+
+void DieterichSeismicityRate::initializePreSubGroups()
+{
+  SolverBase::initializePreSubGroups();
+
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  // 1. Validate various models against each other (must have same phases and components)
+  // validateConstitutiveModels( domain );
+
+  // 2. Set the value of temperature
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+  {
+    NodeManager & nodes = mesh.getNodeManager();
+
+    arrayView1d< real64 > const tempTa = nodes.getField< inducedSeismicity::t_a >();
+    tempTa.setValues< parallelHostPolicy >( m_directEffect*m_initialSigma/m_bStressRate );
+
+    arrayView1d< real64 > const tempAsig = nodes.getField< inducedSeismicity::aSigma >();
+    tempAsig.setValues< parallelHostPolicy >( m_directEffect*m_initialSigma );
+  } );
+}
 
 //START_SPHINX_INCLUDE_REGISTER
 REGISTER_CATALOG_ENTRY( SolverBase, DieterichSeismicityRate, string const &, Group * const )
