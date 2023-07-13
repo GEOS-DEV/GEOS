@@ -88,10 +88,6 @@ DieterichSeismicityRate::DieterichSeismicityRate( const string & name,
   this->registerWrapper( viewKeyStruct::bStressRate(), &m_bStressRate ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Background stressing rate" );
-  this->registerWrapper( viewKeyStruct::initialSigma(), &m_initialSigma ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Initial effective normal stress" );
-
   }
 //END_SPHINX_INCLUDE_CONSTRUCTOR
 
@@ -111,6 +107,13 @@ void DieterichSeismicityRate::registerDataOnMesh( Group & meshBodies )
 
     nodes.registerField< inducedSeismicity::t_a >( getName() );   
     nodes.registerField< inducedSeismicity::aSigma >( getName() );   
+    nodes.registerField< inducedSeismicity::pressure >( getName() );   
+    nodes.registerField< inducedSeismicity::pressureRate >( getName() );   
+    nodes.registerField< inducedSeismicity::normalStress >( getName() );   
+    nodes.registerField< inducedSeismicity::normalStressRate >( getName() );   
+    nodes.registerField< inducedSeismicity::shearStress >( getName() );   
+    nodes.registerField< inducedSeismicity::shearStressRate >( getName() );   
+
   } );
 }
 //END_SPHINX_INCLUDE_REGISTERDATAONMESH

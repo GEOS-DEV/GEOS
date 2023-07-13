@@ -49,6 +49,54 @@ DECLARE_FIELD( aSigma,
                WRITE_AND_READ,
                "Product of direct effect parameter a and initial normal stress" );
 
+DECLARE_FIELD( pressure,
+               "pressure",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Pore pressure");
+
+DECLARE_FIELD( pressureRate,
+               "pressureRate",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Pore pressure rate");
+
+DECLARE_FIELD( normalStress,
+               "normalStress",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Normal stress acting on the fault");
+
+DECLARE_FIELD( normalStressRate,
+               "normalStressRate",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Normal stress rate acting on the fault");
+
+DECLARE_FIELD( shearStress,
+               "shearStress",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Shear stress acting on the fault");
+
+DECLARE_FIELD( shearStressRate,
+               "shearStressRate",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Shear stress rate acting on the fault");
+
 }
 
 }
