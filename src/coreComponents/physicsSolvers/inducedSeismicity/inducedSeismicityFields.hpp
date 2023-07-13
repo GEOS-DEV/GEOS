@@ -97,6 +97,14 @@ DECLARE_FIELD( shearStressRate,
                WRITE_AND_READ,
                "Shear stress rate acting on the fault");
 
+DECLARE_FIELD( seismicityRate,
+               "seismicityRate",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Seismicity rate");
+
 }
 
 }
