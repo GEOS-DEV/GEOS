@@ -78,7 +78,6 @@ public:
   {
     static constexpr char const * directEffect() { return "directEffect"; }
     static constexpr char const * bStressRate() { return "bStressRate"; }
-    static constexpr char const * initialSigma() { return "initialSigma"; }
   };
 
 private:
