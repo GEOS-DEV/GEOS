@@ -99,7 +99,8 @@ void DieterichSeismicityRate::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodes = meshBody.getBaseDiscretization().getNodeManager();
 
-    nodes.registerField< inducedSeismicity::directEffect >( getName() );   
+    nodes.registerField< inducedSeismicity::t_a >( getName() );   
+    nodes.registerField< inducedSeismicity::aSigma >( getName() );   
   } );
 }
 //END_SPHINX_INCLUDE_REGISTERDATAONMESH
