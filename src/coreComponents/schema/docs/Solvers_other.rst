@@ -9,6 +9,7 @@ CompositionalMultiphaseFVM                  node :ref:`DATASTRUCTURE_Composition
 CompositionalMultiphaseHybridFVM            node :ref:`DATASTRUCTURE_CompositionalMultiphaseHybridFVM`            
 CompositionalMultiphaseReservoir            node :ref:`DATASTRUCTURE_CompositionalMultiphaseReservoir`            
 CompositionalMultiphaseWell                 node :ref:`DATASTRUCTURE_CompositionalMultiphaseWell`                 
+DieterichSeismicityRate                     node :ref:`DATASTRUCTURE_DieterichSeismicityRate`                     
 ElasticFirstOrderSEM                        node :ref:`DATASTRUCTURE_ElasticFirstOrderSEM`                        
 ElasticSEM                                  node :ref:`DATASTRUCTURE_ElasticSEM`                                  
 EmbeddedSurfaceGenerator                    node :ref:`DATASTRUCTURE_EmbeddedSurfaceGenerator`                    

@@ -112,7 +112,7 @@ void DieterichSeismicityRate::setupSystem( DomainPartition & domain,
                                                     8*8*3 );
 
     finiteElement::fillSparsity< CellElementSubRegion,
-                                 LaplaceFEMKernel >( mesh,
+                                 DieterichSeismicityRateKernel >( mesh,
                                                      regionNames,
                                                      this->getDiscretizationName(),
                                                      dofIndex,
@@ -158,7 +158,7 @@ void DieterichSeismicityRate::assembleSystem( real64 const GEOS_UNUSED_PARAM( ti
     arrayView1d< globalIndex const > const &
     dofIndex =  nodeManager.getReference< array1d< globalIndex > >( dofKey );
 
-    LaplaceFEMKernelFactory kernelFactory( dofIndex, dofManager.rankOffset(), localMatrix, localRhs, m_fieldName );
+    DieterichSeismicityRateKernelFactory kernelFactory( dofIndex, dofManager.rankOffset(), localMatrix, localRhs, m_fieldName );
 
     string const dummyString = "dummy";
     finiteElement::

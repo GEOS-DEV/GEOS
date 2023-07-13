@@ -302,6 +302,13 @@ Element: DelftEgg
 .. include:: ../../coreComponents/schema/docs/DelftEgg.rst
 
 
+.. _XML_DieterichSeismicityRate:
+
+Element: DieterichSeismicityRate
+================================
+.. include:: ../../coreComponents/schema/docs/DieterichSeismicityRate.rst
+
+
 .. _XML_Dirichlet:
 
 Element: Dirichlet
@@ -1536,6 +1543,13 @@ Datastructure: DeadOilFluid
 Datastructure: DelftEgg
 =======================
 .. include:: ../../coreComponents/schema/docs/DelftEgg_other.rst
+
+
+.. _DATASTRUCTURE_DieterichSeismicityRate:
+
+Datastructure: DieterichSeismicityRate
+======================================
+.. include:: ../../coreComponents/schema/docs/DieterichSeismicityRate_other.rst
 
 
 .. _DATASTRUCTURE_Dirichlet:
