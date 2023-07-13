@@ -2723,8 +2723,6 @@
 		</xsd:choice>
 		<!--ReferencePosition => (no description available)-->
 		<xsd:attribute name="ReferencePosition" type="real64_array2d" />
-		<!--aSigma => Product of direct effect parameter a and initial normal stress => DieterichSeismicityRate-->
-		<xsd:attribute name="aSigma" type="real64_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
@@ -2745,21 +2743,7 @@
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-		<!--normalStress => Normal stress acting on the fault => DieterichSeismicityRate-->
-		<xsd:attribute name="normalStress" type="real64_array" />
-		<!--normalStressRate => Normal stress rate acting on the fault => DieterichSeismicityRate-->
-		<xsd:attribute name="normalStressRate" type="real64_array" />
-		<!--pressure => Pore pressure => DieterichSeismicityRate-->
-		<xsd:attribute name="pressure" type="real64_array" />
-		<!--pressureRate => Pore pressure rate => DieterichSeismicityRate-->
-		<xsd:attribute name="pressureRate" type="real64_array" />
 		<!--primaryField => Primary field variable-->
 		<xsd:attribute name="primaryField" type="real64_array" />
-		<!--shearStress => Shear stress acting on the fault => DieterichSeismicityRate-->
-		<xsd:attribute name="shearStress" type="real64_array" />
-		<!--shearStressRate => Shear stress rate acting on the fault => DieterichSeismicityRate-->
-		<xsd:attribute name="shearStressRate" type="real64_array" />
-		<!--t_a => Dieterich constitutive relaxation time of seismicity rate => DieterichSeismicityRate-->
-		<xsd:attribute name="t_a" type="real64_array" />
 	</xsd:complexType>
 </xsd:schema>
