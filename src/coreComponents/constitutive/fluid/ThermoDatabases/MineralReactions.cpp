@@ -62,11 +62,11 @@ void MineralReactions::ReadMineralReactions( const string_array & basisSpeciesNa
   }
 
   string mineralName;
-  real64 MW;
-  real64 density;
-  real64 logK;
-  real64 E;
-  real64 rateConst;
+  real64 MW{};
+  real64 density{};
+  real64 logK{};
+  real64 E{};
+  real64 rateConst{};
   array1d< real64 > stochs;
   array1d< localIndex > basisSpeciesIndices;
   array1d< string > speciesNames;
