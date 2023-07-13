@@ -341,6 +341,14 @@ CommunicationTools::
   findMatchedPartitionBoundaryObjects( ObjectManagerBase & objectManager,
                                        std::vector< NeighborCommunicator > & allNeighbors )
 {
+  // //CC : debugging
+  // string msg = "";
+  // for( integer i = 0; i < LvArray::integerConversion< integer >( allNeighbors.size() ); ++i )
+  // {
+  //   msg += std::to_string(allNeighbors[i].neighborRank()) + ", ";
+  // }
+  // GEOS_LOG_RANK(msg);
+
   GEOS_MARK_FUNCTION;
   arrayView1d< integer > const & domainBoundaryIndicator = objectManager.getDomainBoundaryIndicator();
 
@@ -348,7 +356,9 @@ CommunicationTools::
 
 
   // send the size of the partitionBoundaryObjects to neighbors
+
   {
+    // GEOS_LOG_RANK("Send size of globalPartitionBoundaryObjectsIndices");
     array1d< array1d< globalIndex > > neighborPartitionBoundaryObjects( allNeighbors.size() );
 
     MPI_iCommData commData( getCommID() );
@@ -508,7 +518,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
   {
     int const neighborRank = neighbor.neighborRank();
 
-    /// Receive the lists of ghosts we mistakenly though were owned by this neighbor.
+    /// Receive the lists of ghosts we mistakenly thought were owned by this neighbor.
     array1d< std::pair< globalIndex, int > > ghostsFromSecondNeighbor;
     MpiWrapper::recv( ghostsFromSecondNeighbor,
                       neighborRank,
@@ -623,6 +633,7 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
                                       std::vector< NeighborCommunicator > & neighbors,
                                       bool const unorderedComms )
 {
+
   GEOS_MARK_FUNCTION;
   MPI_iCommData commData( getCommID() );
   commData.resize( neighbors.size() );
@@ -644,12 +655,14 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
 
     return commData.mpiRecvBufferSizeRequest( idx );
   };
+
   auto postRecv = [&] ( int idx )
   {
     neighbors[idx].postRecv( commData.commID(),
                              commData.mpiRecvBufferRequest( idx ) );
     return commData.mpiRecvBufferRequest( idx );
   };
+
   auto unpackGhosts = [&] ( int idx )
   {
     neighbors[idx].unpackGhosts( meshLevel, commData.commID() );

@@ -356,6 +356,14 @@ public:
 
   // void resizeMappingArrays( ParticleManager & particleManager );
 
+  void correctGhostParticleCentersAcrossPeriodicBoundaries(ParticleManager & particleManager,
+                                                           SpatialPartition & partition);
+
+  void correctParticleCentersAcrossPeriodicBoundaries(ParticleManager & particleManager,
+                                                      SpatialPartition & partition);
+
+  real64 Mod(real64 num, real64 denom);
+
   void GEOS_DEVICE mapNodesAndComputeShapeFunctions(arrayView3d< int const > const ijkMap,
                                                     const real64 xLocalMin[3],
                                                     const real64 hEl[3],

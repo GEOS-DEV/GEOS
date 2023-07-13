@@ -150,6 +150,10 @@ void ParticleSubRegionBase::setActiveParticleIndices()
 {
   m_activeParticleIndices.move( LvArray::MemorySpace::host ); // TODO: Is this needed?
   m_activeParticleIndices.clear();
+
+  m_inactiveParticleIndices.move( LvArray::MemorySpace::host ); // TODO: Is this needed?
+  m_inactiveParticleIndices.clear();
+
   arrayView1d< int const > const particleRank = m_particleRank.toViewConst();
   forAll< serialPolicy >( this->size(), [&, particleRank] GEOS_HOST ( localIndex const p ) // This must be on host since we're dealing with
                                                                                            // a sorted array. Parallelize with atomics?
@@ -157,6 +161,10 @@ void ParticleSubRegionBase::setActiveParticleIndices()
       if( particleRank[p] == MpiWrapper::commRank( MPI_COMM_GEOSX ) )
       {
         m_activeParticleIndices.insert( p );
+      }
+      else
+      {
+        m_inactiveParticleIndices.insert( p );
       }
     } );
 }
