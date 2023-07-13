@@ -38,7 +38,7 @@ public:
   using Base::m_linearSolverParameters;
 
   /// String used to form the solverName used to register solvers in CoupledSolver
-  static string coupledSolverAttributePrefix() { return "reservoirandwells"; }
+  static string coupledSolverAttributePrefix() { return "reservoirAndWells"; }
 
   /**
    * @brief main constructor for ManagedGroup Objects
@@ -88,6 +88,8 @@ public:
   { flowSolver()->updatePorosityAndPermeability( subRegion ); }
   void updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
   { flowSolver()->updateSolidInternalEnergyModel( dataGroup ); }
+
+  integer& isThermal() { return flowSolver()->isThermal(); }
 
 protected:
 

@@ -23,6 +23,7 @@
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
 
 namespace geos
 {
@@ -40,13 +41,19 @@ template< typename POROMECHANICS_SOLVER > class
 template<> class PoromechanicsCatalogNames< SinglePhasePoromechanics< SinglePhaseBase > >
 {
 public:
-  static string name() { return "SinglePhasePoromechanicsInitialization"; }
+  static string name() { return SinglePhasePoromechanics< SinglePhaseBase >::catalogName() + "Initialization"; }
+};
+// Class specialization for a POROMECHANICS_SOLVER set to SinglePhasePoromechanics
+template<> class PoromechanicsCatalogNames< SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase > > >
+{
+public:
+  static string name() { return SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase > >::catalogName() + "Initialization"; }
 };
 // Class specialization for a POROMECHANICS_SOLVER set to MultiphasePoromechanics
 template<> class PoromechanicsCatalogNames< MultiphasePoromechanics >
 {
 public:
-  static string name() { return "MultiphasePoromechanicsInitialization"; }
+  static string name() { return MultiphasePoromechanics::catalogName() + "Initialization"; }
 };
 
 }
@@ -129,8 +136,10 @@ namespace
 {
 typedef PoromechanicsInitialization< MultiphasePoromechanics > MultiphasePoromechanicsInitialization;
 typedef PoromechanicsInitialization< SinglePhasePoromechanics< SinglePhaseBase > > SinglePhasePoromechanicsInitialization;
+typedef PoromechanicsInitialization< SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase > > > SinglePhaseReservoirPoromechanicsInitialization;
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphasePoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsInitialization, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( TaskBase, SinglePhaseReservoirPoromechanicsInitialization, string const &, Group * const )
 }
 
 } /* namespace geos */

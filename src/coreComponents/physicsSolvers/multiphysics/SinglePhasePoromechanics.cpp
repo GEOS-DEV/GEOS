@@ -154,6 +154,10 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::initializePreSubGroups()
                                                                        [&]( localIndex const,
                                                                             ElementSubRegionBase & subRegion )
     {
+      // skip the wells
+      if( subRegion.getCatalogName() == "WellElementSubRegion" )
+        return;
+
       string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       porousName = this->template getConstitutiveName< CoupledSolidBase >( subRegion );
       GEOS_THROW_IF( porousName.empty(),
@@ -199,7 +203,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::initializePostInitialConditionsPre
 {
   SolverBase::initializePostInitialConditionsPreSubGroups();
 
-  integer & isFlowThermal = flowSolver()->template getReference< integer >( FlowSolverBase::viewKeyStruct::isThermalString() );
+  integer & isFlowThermal = flowSolver()->isThermal();
   GEOS_LOG_RANK_0_IF( m_isThermal && !isFlowThermal,
                       GEOS_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
                                 catalogName(), this->getName(), FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getName() ) );
