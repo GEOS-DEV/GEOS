@@ -612,13 +612,20 @@ void ProblemManager::generateMesh()
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
-
     meshBody.deregisterCellBlockManager();
 
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
     {
       FaceManager & faceManager = meshLevel.getFaceManager();
       EdgeManager & edgeManager = meshLevel.getEdgeManager();
+      NodeManager const & nodeManager = meshLevel.getNodeManager();
+
+      meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+      {
+//         subRegion.setupRelatedObjectsInRelations( meshLevel );
+         subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+//         subRegion.setMaxGlobalIndex();
+      } );
 
       faceManager.setIsExternal();
       edgeManager.setIsExternal( faceManager );
@@ -756,9 +763,15 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   nodeManager.setDomainBoundaryObjects( faceManager, edgeManager, elemManager );
   meshLevel.generateSets();
 
-
   elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
   {
+    if ( dynamicCast< FaceElementSubRegion * >( &subRegion ) )
+    {
+      subRegion.setupRelatedObjectsInRelations( meshLevel );
+      subRegion.setMaxGlobalIndex();
+      return;
+    }
+
     subRegion.setupRelatedObjectsInRelations( meshLevel );
     if( isbaseMeshLevel )
     {

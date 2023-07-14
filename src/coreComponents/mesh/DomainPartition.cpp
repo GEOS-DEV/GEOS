@@ -202,7 +202,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
       [&]( FaceElementSubRegion const & subRegion )
       {
         requestedNodes.insert( subRegion.m_missingNodes.begin(), subRegion.m_missingNodes.end() );
-        GEOS_LOG_RANK( "m_otherCollocatedNodes = " << subRegion.m_otherCollocatedNodes.size() ); // values are zero for all ranks.
+//        GEOS_LOG_RANK( "m_otherCollocatedNodes = " << subRegion.m_otherCollocatedNodes.size() ); // values are zero for all ranks.
       } );
 
     CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,

@@ -107,4 +107,14 @@ void FaceBlock::setCollocatedNodes( ArrayOfArrays< globalIndex > && collocatedNo
   m_collocatedNodes = collocatedNodes;
 }
 
+ArrayOfArrays< globalIndex > FaceBlock::getCollocatedNodesOf2dElems() const
+{
+  return m_collocatedNodesOf2dElems;
+}
+
+void FaceBlock::setCollocatedNodesOf2dElems( ArrayOfArrays< geos::globalIndex > && collocatedNodes )
+{
+  m_collocatedNodesOf2dElems = collocatedNodes;
+}
+
 }

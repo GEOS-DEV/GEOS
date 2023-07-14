@@ -336,14 +336,114 @@ CommunicationTools::assignNewGlobalIndices( ElementRegionManager & elementManage
 void
 CommunicationTools::
   findMatchedPartitionBoundaryObjects( ObjectManagerBase & objectManager,
-                                       std::vector< NeighborCommunicator > & allNeighbors,
-                                       std::set< std::set< globalIndex > > const & m,
-                                       std::set< globalIndex > const & requested )
+                                       std::vector< NeighborCommunicator > & allNeighbors )
 {
   GEOS_MARK_FUNCTION;
   arrayView1d< integer > const & domainBoundaryIndicator = objectManager.getDomainBoundaryIndicator();
 
   array1d< globalIndex > const globalPartitionBoundaryObjectsIndices = objectManager.constructGlobalListOfBoundaryObjects();
+
+  // send the size of the partitionBoundaryObjects to neighbors
+  {
+    array1d< array1d< globalIndex > > neighborPartitionBoundaryObjects( allNeighbors.size() );
+
+    MPI_iCommData commData( getCommID() );
+    int const commID = commData.commID();
+    integer const numNeighbors = LvArray::integerConversion< integer >( allNeighbors.size() );
+    commData.resize( numNeighbors );
+    for( integer i = 0; i < numNeighbors; ++i )
+    {
+      allNeighbors[i].mpiISendReceiveSizes( globalPartitionBoundaryObjectsIndices,
+                                            commData.mpiSendBufferSizeRequest( i ),
+                                            commData.mpiRecvBufferSizeRequest( i ),
+                                            commID,
+                                            MPI_COMM_GEOSX );
+    }
+
+    MpiWrapper::waitAll( numNeighbors, commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
+    MpiWrapper::waitAll( numNeighbors, commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus() );
+
+    for( integer i = 0; i < numNeighbors; ++i )
+    {
+      allNeighbors[i].mpiISendReceiveData( globalPartitionBoundaryObjectsIndices,
+                                           commData.mpiSendBufferRequest( i ),
+                                           neighborPartitionBoundaryObjects[i],
+                                           commData.mpiRecvBufferRequest( i ),
+                                           commID,
+                                           MPI_COMM_GEOSX );
+    }
+    MpiWrapper::waitAll( numNeighbors, commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
+    MpiWrapper::waitAll( numNeighbors, commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus() );
+
+    for( integer i = 0; i < numNeighbors; ++i )
+    {
+      NeighborCommunicator & neighbor = allNeighbors[i];
+      array1d< localIndex > & matchedPartitionBoundaryObjects = objectManager.getNeighborData( neighbor.neighborRank() ).matchedPartitionBoundary();
+
+      localIndex localCounter = 0;
+      localIndex neighborCounter = 0;
+      while( localCounter < globalPartitionBoundaryObjectsIndices.size() &&
+             neighborCounter < neighborPartitionBoundaryObjects[i].size() )
+      {
+        globalIndex const & gi = globalPartitionBoundaryObjectsIndices[localCounter];
+        globalIndex const & gni = neighborPartitionBoundaryObjects[i][neighborCounter];
+
+        if( gi == gni )
+        {
+          localIndex const localMatchedIndex = objectManager.globalToLocalMap( gi );
+          matchedPartitionBoundaryObjects.emplace_back( localMatchedIndex );
+          domainBoundaryIndicator[ localMatchedIndex ] = 2;  // TODO check if useful.
+          ++localCounter;
+          ++neighborCounter;
+        }
+        else if( gi > gni )
+        {
+          ++neighborCounter;
+        }
+        else
+        {
+          ++localCounter;
+        }
+      }
+    }
+  }
+}
+
+
+std::map< int, array1d< globalIndex > > reorganizeRequestedNodes( std::map< int, array1d< globalIndex > > const & input )
+{
+  std::map< int, array1d< globalIndex > > output;
+
+  std::map< globalIndex, array1d< int > > tmp;
+  for( auto const & p: input )
+  {
+    for( globalIndex const & gi: p.second )
+    {
+      tmp[gi].emplace_back( p.first );
+    }
+    output[p.first];
+  }
+
+  for( auto const & p: tmp )
+  {
+    output[*std::min_element( p.second.begin(), p.second.end() )].emplace_back( p.first );
+  }
+
+  return output;
+}
+
+
+void
+CommunicationTools::
+  findMatchedPartitionBoundaryObjects( NodeManager & nodeManager,
+                                       std::vector< NeighborCommunicator > & allNeighbors,
+                                       std::set< std::set< globalIndex > > const & collocatedNodesBuckets,
+                                       std::set< globalIndex > const & requested )
+{
+  GEOS_MARK_FUNCTION;
+  arrayView1d< integer > const & domainBoundaryIndicator = nodeManager.getDomainBoundaryIndicator();
+
+  array1d< globalIndex > const globalPartitionBoundaryObjectsIndices = nodeManager.constructGlobalListOfBoundaryObjects();
 
   std::map< int, array1d< globalIndex > > requestedMatchesMap;  // The key is the neighbor MPI rank.
 
@@ -382,7 +482,7 @@ CommunicationTools::
     for( integer i = 0; i < numNeighbors; ++i )
     {
       NeighborCommunicator & neighbor = allNeighbors[i];
-      array1d< localIndex > & matchedPartitionBoundaryObjects = objectManager.getNeighborData( neighbor.neighborRank() ).matchedPartitionBoundary();
+      array1d< localIndex > & matchedPartitionBoundaryObjects = nodeManager.getNeighborData( neighbor.neighborRank() ).matchedPartitionBoundary();
       array1d< localIndex > secondLevelMatches;
       array1d< globalIndex > & requestedMatches = requestedMatchesMap[neighbor.neighborRank()];
 
@@ -396,7 +496,7 @@ CommunicationTools::
 
         if( gi == gni )
         {
-          localIndex const localMatchedIndex = objectManager.globalToLocalMap( gi );
+          localIndex const localMatchedIndex = nodeManager.globalToLocalMap( gi );
           matchedPartitionBoundaryObjects.emplace_back( localMatchedIndex );
           domainBoundaryIndicator[ localMatchedIndex ] = 2;  // TODO check if useful.
           ++localCounter;
@@ -412,16 +512,16 @@ CommunicationTools::
         }
       }
       std::set< globalIndex > const candidates( neighborPartitionBoundaryObjects[i].begin(), neighborPartitionBoundaryObjects[i].end() );
-      for( std::set< globalIndex > const & collocatedNodes: m )
+      for( std::set< globalIndex > const & collocatedNodes: collocatedNodesBuckets )
       {
         std::vector< globalIndex > intersection;
         std::set_intersection( collocatedNodes.cbegin(), collocatedNodes.cend(),
                                candidates.cbegin(), candidates.cend(),
                                std::back_inserter( intersection ) );
-        auto const & g2l = objectManager.globalToLocalMap();
+        auto const & g2l = nodeManager.globalToLocalMap();
         if( intersection.empty() )
         { continue; }
-        for( globalIndex const & gi: collocatedNodes )
+        for( globalIndex const & gi: collocatedNodes )  // TODO why not the intersection? Because I want all the nodes at the same location?
         {
           auto it = g2l.find( gi );
           if( it != g2l.cend() )
@@ -437,14 +537,17 @@ CommunicationTools::
         std::set_intersection( requested.cbegin(), requested.cend(),
                                candidates.cbegin(), candidates.cend(),
                                std::back_inserter( intersection ) );
+//        for( globalIndex const gn: requested )
+        auto const & g2l = nodeManager.globalToLocalMap();
+        arrayView1d< integer const > const ghostRank = nodeManager.ghostRank().toViewConst();
         for( globalIndex const gn: intersection )
         {
-          requestedMatches.emplace_back( gn );
+          requestedMatches.emplace_back( gn );  // TODO find a way to select the lowest rank that will send the node, not all of them...
         }
-        GEOS_LOG_RANK("Requests matching: {" << stringutilities::join(requestedMatches, ", ") << "}.");
+//        GEOS_LOG_RANK( "Requests matching: {" << stringutilities::join( requestedMatches, ", " ) << "}." );
       }
 
-      GEOS_LOG_RANK("Second level matches : loc {" << stringutilities::join(secondLevelMatches, ", ") << "}" );
+      GEOS_LOG_RANK( "Second level matches : loc {" << stringutilities::join( secondLevelMatches, ", " ) << "}" );
       // Looks like the duplicated nodes information is not shared among the ranks.
       // So it's not possible for a rank that touches a fracture to know it has to send its nodes.
 
@@ -458,6 +561,8 @@ CommunicationTools::
     }
   }
 
+  std::map< int, array1d< globalIndex > > const requestedMatchesFinal = reorganizeRequestedNodes( requestedMatchesMap );
+
   // Managing the requests
   {
     MPI_iCommData commData( getCommID() );
@@ -467,7 +572,7 @@ CommunicationTools::
     for( integer i = 0; i < numNeighbors; ++i )
     {
       NeighborCommunicator & neighbor = allNeighbors[i];
-      array1d< globalIndex > & requestedMatches = requestedMatchesMap.at( neighbor.neighborRank() );
+      array1d< globalIndex > const & requestedMatches = requestedMatchesFinal.at( neighbor.neighborRank() );
       allNeighbors[i].mpiISendReceiveSizes( requestedMatches,
                                             commData.mpiSendBufferSizeRequest( i ),
                                             commData.mpiRecvBufferSizeRequest( i ),
@@ -480,10 +585,11 @@ CommunicationTools::
 
     array1d< array1d< globalIndex > > neighborRequestedNodes( numNeighbors );
 
+    auto const & g2l = nodeManager.globalToLocalMap();
     for( integer i = 0; i < numNeighbors; ++i )
     {
       NeighborCommunicator & neighbor = allNeighbors[i];
-      array1d< globalIndex > & requestedMatches = requestedMatchesMap.at( neighbor.neighborRank() );
+      array1d< globalIndex > const & requestedMatches = requestedMatchesFinal.at( neighbor.neighborRank() );
       allNeighbors[i].mpiISendReceiveData( requestedMatches,
                                            commData.mpiSendBufferRequest( i ),
                                            neighborRequestedNodes[i],
@@ -496,21 +602,30 @@ CommunicationTools::
 
     for( integer i = 0; i < numNeighbors; ++i )
     {
+      std::set< globalIndex > notFound;
       NeighborCommunicator & neighbor = allNeighbors[i];
-      GEOS_LOG_RANK( "Requested nodes from rank " << neighbor.neighborRank() << " are {" << stringutilities::join( neighborRequestedNodes[i], ", " ) << "}." );
-      array1d< localIndex > & matchedPartitionBoundaryObjects = objectManager.getNeighborData( neighbor.neighborRank() ).matchedPartitionBoundary();
+      if( !neighborRequestedNodes[i].empty() )
+      {
+        GEOS_LOG_RANK( "Requested nodes from rank " << neighbor.neighborRank() << " are {" << stringutilities::join( neighborRequestedNodes[i], ", " ) << "}." );
+      }
+      array1d< localIndex > & matchedPartitionBoundaryObjects = nodeManager.getNeighborData( neighbor.neighborRank() ).matchedPartitionBoundary();
       for( globalIndex const & gi: neighborRequestedNodes[i] )
       {
-        localIndex const li = objectManager.globalToLocalMap( gi );
-        if( std::find( matchedPartitionBoundaryObjects.begin(), matchedPartitionBoundaryObjects.end(), li ) == matchedPartitionBoundaryObjects.end() )
+//        localIndex const li = objectManager.globalToLocalMap( gi );
+        auto const locIt = g2l.find( gi );
+//        if( std::find( matchedPartitionBoundaryObjects.begin(), matchedPartitionBoundaryObjects.end(), li ) == matchedPartitionBoundaryObjects.end() )
+        if( locIt != g2l.cend() )
         {
-          matchedPartitionBoundaryObjects.emplace_back( li );
+//          matchedPartitionBoundaryObjects.emplace_back( li );
+          matchedPartitionBoundaryObjects.emplace_back( locIt->second );
         }
         else
         {
-          GEOS_LOG_RANK("Hmmm, not found...");
+          notFound.insert( gi );
         }
       }
+      GEOS_ERROR_IF( !notFound.empty(),
+                     "Global nodes {" << stringutilities::join( notFound, ", " ) << "} requested by rank " << neighbor.neighborRank() << " were not found on this rank." );
     }
   }
 }

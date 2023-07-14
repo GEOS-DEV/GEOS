@@ -230,6 +230,51 @@ ArrayOfArrays< globalIndex > buildCollocatedNodesMap( CollocatedNodes const & dn
 }
 
 
+ArrayOfArrays< localIndex > compute2dElemTo2dNodes( vtkSmartPointer< vtkDataSet > faceMesh )
+{
+  vtkIdType const numCells = faceMesh->GetNumberOfCells();
+  std::vector< localIndex > sizes( numCells );
+  for( auto i = 0; i < numCells; ++i )
+  {
+    sizes[i] = faceMesh->GetCell( i )->GetNumberOfPoints();
+  }
+
+  ArrayOfArrays< localIndex > result;
+  result.resizeFromCapacities< geos::serialPolicy >( sizes.size(), sizes.data() );
+  for( auto i = 0; i < numCells; ++i )
+  {
+    vtkIdList * const pointIds = faceMesh->GetCell( i )->GetPointIds();
+    vtkIdType const numPoints = pointIds->GetNumberOfIds();
+    for( int j = 0; j < numPoints; ++j )
+    {
+      result.emplaceBack( i, pointIds->GetId( j ) );
+    }
+  }
+
+  return result;
+}
+
+
+ArrayOfArrays< globalIndex > buildCollocatedNodesOf2dElemsMap( ArrayOfArrays< localIndex > const & elem2dTo2dNodes,
+                                                               ArrayOfArrays< globalIndex > const & nodes2dToCollocatedNodes )
+{
+  ArrayOfArrays< globalIndex > result;
+  result.resize( elem2dTo2dNodes.size() );
+  for( localIndex e2d = 0; e2d < elem2dTo2dNodes.size(); ++e2d )
+  {
+    for( auto const & node: elem2dTo2dNodes[e2d] )
+    {
+      for( auto const collocatedNode: nodes2dToCollocatedNodes[node] )
+      {
+        result.emplaceBack( e2d, collocatedNode );
+      }
+    }
+  }
+
+  return result;
+}
+
+
 /**
  * @brief Some hash function for pairs of integers.
  */
@@ -650,8 +695,12 @@ void importFractureNetwork( string const & faceBlockName,
   faceBlock.set2dElemToElems( std::move( elem2dTo3d.elem2dToElem3d ) );
 
   faceBlock.setLocalToGlobalMap( computeLocalToGlobal( faceMesh, mesh ) );
+  // TODO there are build* functions and compute* functions.
+  ArrayOfArrays< globalIndex > cn = buildCollocatedNodesMap( collocatedNodes );
+  ArrayOfArrays< globalIndex > cne = buildCollocatedNodesOf2dElemsMap( compute2dElemTo2dNodes( faceMesh ), cn );
 
-  faceBlock.setCollocatedNodes( buildCollocatedNodesMap( collocatedNodes ) );
+  faceBlock.setCollocatedNodes( std::move( cn ) );
+  faceBlock.setCollocatedNodesOf2dElems( std::move( cne ) );
 }
 
 } // end of namespace

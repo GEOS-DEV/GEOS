@@ -377,7 +377,7 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
             {
               if( nodeAdjacencySet.find( it->second ) == nodeAdjacencySet.cend() )
               {
-                GEOS_LOG_RANK( "Inserting collocated node loc " << it->second << " glob " << it->first );
+//                GEOS_LOG_RANK( "Inserting collocated node loc " << it->second << " glob " << it->first );
                 newNodes.insert( it->second );
               }
             }

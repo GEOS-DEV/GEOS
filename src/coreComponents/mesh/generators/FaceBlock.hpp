@@ -113,6 +113,10 @@ public:
 
   void setCollocatedNodes( ArrayOfArrays< globalIndex > && collocatedNodes );
 
+  ArrayOfArrays< globalIndex > getCollocatedNodesOf2dElems() const override;
+
+  void setCollocatedNodesOf2dElems( ArrayOfArrays< globalIndex > && collocatedNodes );
+
 private:
 
   localIndex m_num2dElements;
@@ -129,6 +133,7 @@ private:
   array1d< globalIndex > m_localToGlobalMap;
 
   ArrayOfArrays< globalIndex > m_collocatedNodes;
+  ArrayOfArrays< globalIndex > m_collocatedNodesOf2dElems;
 };
 
 

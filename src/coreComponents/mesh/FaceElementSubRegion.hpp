@@ -145,6 +145,8 @@ public:
     /// @return String key to collocated nodes.
     static constexpr char const * collocatedNodesString() { return "collocatedNodes"; }
 
+    static constexpr char const * collocatedNodesOf2dElemString() { return "collocatedNodesOf2dElem"; }
+
 #if GEOSX_USE_SEPARATION_COEFFICIENT
     /// Separation coefficient string.
     constexpr static char const * separationCoeffString() { return "separationCoeff"; }
@@ -266,6 +268,8 @@ public:
   void setMissingNodes( NodeManager const & nodeManager );
 
   std::vector< ArrayOfArrays< globalIndex > > m_otherCollocatedNodes;
+
+  ArrayOfArrays< globalIndex > m_collocatedNodesOf2dElems;
 
 private:
 
