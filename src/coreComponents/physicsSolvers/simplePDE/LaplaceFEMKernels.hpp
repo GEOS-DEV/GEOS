@@ -27,6 +27,57 @@
 namespace geos
 {
 
+class isoparametricMesh
+{
+  m_X;
+  elementToNodes;
+};
+
+class isoparametricHexahedronMesh : public isoparametricMesh
+{
+  // ... 
+  constexpr static nVertex = 8;
+  // ...
+  // constructor
+
+  // 
+  HexadronCell getCell( localIndex k )
+  {
+    return ...;
+  }
+};
+
+class isoparametricWedgeMesh : public isoparametricMesh
+{
+  // ... 
+  constexpr static nVertex = 6;
+  // ...
+  WedgeCell getCell( localIndex k )
+  {
+    return ...;
+  }
+};
+
+// Factory selectign dynamically the appropriate isopametric mesh
+isoparametricMesh selectIsoparametricMesh( ElementType elemType, nodePoisitions, elemToNodees )
+{
+  if( elemType == ElementType::Hexahedron) )
+  {
+    return isoparametricHexahedronMesh( nodePositions, elementToNodes );
+  }
+  else if( elemType == ElementType::Wedge) )
+  {
+    eturn isoparametricWedgenMesh( nodePositions, elementToNodes );
+  }
+
+  }
+  else
+  {
+    GEOS_ERROR( "finiteElement::dispatchlowOrder3D() is not implemented for input of "<<LvArray::system::demangleType( &input ) );
+  }
+}
+
+
 //*****************************************************************************
 /**
  * @brief Implements kernels for solving Laplace's equation.
@@ -109,7 +160,8 @@ public:
           rankOffset,
           inputMatrix,
           inputRhs ),
-    m_X( nodeManager.referencePosition() ),
+    // m_X( nodeManager.referencePosition() ),
+    m_subregionMesh( selectIsoparametricMesh( elementSubRegion.getElementType(), nodeManager.referencePosition(), elementSubRegion.nodeList().toViewConst()) ),
     m_primaryField( nodeManager.template getReference< array1d< real64 > >( fieldName ))
   {}
 
