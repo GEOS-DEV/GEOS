@@ -63,8 +63,8 @@ public:
         g2l[g] = l;
       }
 
-      m_cbgl[c] = g2l;
-      m_cbglf[c] = cb.getElemToFacesConstView();
+		m_cbe[c] = g2l;
+		m_cbf[c] = cb.getElemToFacesConstView();
     }
   }
 
@@ -86,7 +86,7 @@ public:
   localIndex getElementIndexInCellBlock( vtkIdType const & ei ) const
   {
     localIndex const & cbi = getCellBlockIndex( ei );
-    return m_cbgl.at( cbi ).at( ei );
+    return m_cbe.at( cbi ).at( ei );
   }
 
   /**
@@ -97,8 +97,8 @@ public:
   auto operator[]( vtkIdType const & ei ) const
   {
     localIndex const & cbi = getCellBlockIndex( ei );
-    localIndex const & e = m_cbgl.at( cbi ).at( ei );
-    arrayView2d< localIndex const > const & e2f = m_cbglf.at( cbi );
+    localIndex const & e = m_cbe.at( cbi ).at( ei );
+    arrayView2d< localIndex const > const & e2f = m_cbf.at( cbi );
     return e2f[e];
   }
 
@@ -107,10 +107,10 @@ private:
   std::map< globalIndex, localIndex > m_elementToCellBlock;  // TODO use a vector.
 
   /// Cell block index to a mapping from global element index to the local (to the cell block?) element index.
-  std::map< localIndex , std::map< globalIndex, localIndex > > m_cbgl;
+  std::map< localIndex , std::map< globalIndex, localIndex > > m_cbe;
 
   /// Cell block index to a mapping from global element index to the faces indices.
-  std::map< localIndex , arrayView2d< localIndex const > > m_cbglf;
+  std::map< localIndex , arrayView2d< localIndex const > > m_cbf;
 };
 
 } // end of namespace internal
@@ -125,10 +125,7 @@ public:
   CollocatedNodes( string const & faceBlockName,
                    vtkSmartPointer< vtkDataSet > faceMesh )
   {
-    // Field data key for duplicated nodes.
-    constexpr char key[] = "duplicated_nodes";
-
-    vtkIdTypeArray const * collocatedNodes = vtkIdTypeArray::FastDownCast( faceMesh->GetPointData()->GetArray( key ) );
+    vtkIdTypeArray const * collocatedNodes = vtkIdTypeArray::FastDownCast( faceMesh->GetPointData()->GetArray( vtk::COLLOCATED_NODES.c_str() ) );
     {
       // Depending on the parallel split, the vtk face mesh may be empty on a rank.
       // In that case, vtk will not provide any field for the emtpy mesh.
@@ -138,7 +135,7 @@ public:
       std::uintptr_t const address = MpiWrapper::max( reinterpret_cast<std::uintptr_t>(collocatedNodes) );
       if( address == 0 )
       {
-        GEOS_ERROR_IF( collocatedNodes == nullptr, "Could not find valid field \"" << key << "\" for fracture \"" << faceBlockName << "\"." );
+        GEOS_ERROR_IF( collocatedNodes == nullptr, "Could not find valid field \"" << vtk::COLLOCATED_NODES << "\" for fracture \"" << faceBlockName << "\"." );
       }
     }
 
