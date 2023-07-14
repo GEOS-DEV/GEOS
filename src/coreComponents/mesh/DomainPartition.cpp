@@ -176,7 +176,6 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
       [&]( FaceElementSubRegion & subRegion )
       {
         subRegion.setMissingNodes( meshLevel.getNodeManager() );
-//        GEOS_LOG_RANK( "missing nodes are: {" << stringutilities::join( subRegion.m_missingNodes, ", " ) << "}." );
       } );
 
     NodeManager & nodeManager = meshLevel.getNodeManager();
@@ -202,7 +201,6 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
       [&]( FaceElementSubRegion const & subRegion )
       {
         requestedNodes.insert( subRegion.m_missingNodes.begin(), subRegion.m_missingNodes.end() );
-//        GEOS_LOG_RANK( "m_otherCollocatedNodes = " << subRegion.m_otherCollocatedNodes.size() ); // values are zero for all ranks.
       } );
 
     CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,

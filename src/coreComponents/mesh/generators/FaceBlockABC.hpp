@@ -150,13 +150,40 @@ public:
   virtual ArrayOfArrays< localIndex > get2dFaceTo2dElems() const = 0;
 
   /**
- * @brief Get local to global map.
- * @return The mapping relationship as an array.
- */
+   * @brief Get local to global map for the 2d elements.
+   * @return The mapping relationship as an array.
+   */
   virtual array1d< globalIndex > localToGlobalMap() const = 0;
 
+  /**
+   * @brief Returns the collocated nodes for each node of the @p FaceBlockABC.
+   * @return The bucket of collocated nodes, of first dimension being equal to the number of nodes of the @p FaceBlockABC.
+   * First dimension indices are local to the @p FaceBlockABC.
+   * Second dimension indices are the global indices of the nodes.
+   *
+   * @details Each node of the @p FaceBlockABC is pointing to other nodes which are collocated.
+   * Those other nodes are meant to be nodes of neighboring 3d cells.
+   * Each collocated node "bucket" contains unsorted nodes of potentially any size.
+   * Considering the simple example of a flat fracture, each bucket of collocated nodes will be of size 2.
+   * For the case where two flat fractures may intersect, at the intersection, the bucket will contain 4 nodes,
+   * while other buckets will contain 2 nodes as well.
+   */
   virtual ArrayOfArrays< globalIndex > getCollocatedNodes() const = 0;
 
+  /**
+   * @brief Returns the collocated nodes for each 2d element of the @p FaceBlockABC.
+   * @return The bucket of collocated nodes, of first dimension being equal to @p num2dElements.
+   * First dimension indices of the 2d element are local to the @p FaceBlockABC.
+   * Second dimension indices are the global indices of the nodes.
+   *
+   * @details Each node of the @p FaceBlockABC is pointing to other nodes which are collocated.
+   * Those other nodes are meant to be nodes of neighboring 3d cells.
+   * All the collocated nodes of all the nodes of all the nodes of each 2d element of the @p FaceBlockABC
+   * are gathered in the same bucket.
+   * Considering the simple example of a flat fracture made of quadrangles,
+   * each bucket will contain 8 collocated nodes.
+
+   */
   virtual ArrayOfArrays< globalIndex > getCollocatedNodesOf2dElems() const = 0;
 };
 

@@ -103,6 +103,10 @@ public:
    */
   void set2dElemToElems( ToCellRelation< ArrayOfArrays< localIndex > > && _2dElemToElems );
 
+  /**
+   * Defines the local to global map for the 2d elements.
+   * @param l2g The input mapping.
+   */
   void setLocalToGlobalMap( array1d< globalIndex > && l2g )
   { m_localToGlobalMap = l2g; }
 
@@ -111,10 +115,18 @@ public:
 
   ArrayOfArrays< globalIndex > getCollocatedNodes() const override;
 
+  /**
+   * Defines the collocated nodes bucket (node to nodes).
+   * @param collocatedNodes The input buckets.
+   */
   void setCollocatedNodes( ArrayOfArrays< globalIndex > && collocatedNodes );
 
   ArrayOfArrays< globalIndex > getCollocatedNodesOf2dElems() const override;
 
+  /**
+   * Defines the collocated nodes bucket (2d element to nodes).
+   * @param collocatedNodes The input buckets.
+   */
   void setCollocatedNodesOf2dElems( ArrayOfArrays< globalIndex > && collocatedNodes );
 
 private:

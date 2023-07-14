@@ -269,7 +269,7 @@ public:
 
   std::vector< ArrayOfArrays< globalIndex > > m_otherCollocatedNodes;
 
-  ArrayOfArrays< globalIndex > m_collocatedNodesOf2dElems;
+  ArrayOfArrays< globalIndex > m_collocatedNodesOf2dElems;  // TODO maybe we can exchange this properly?
 
 private:
 

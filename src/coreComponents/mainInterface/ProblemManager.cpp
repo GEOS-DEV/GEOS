@@ -622,9 +622,8 @@ void ProblemManager::generateMesh()
 
       meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
       {
-//         subRegion.setupRelatedObjectsInRelations( meshLevel );
+         // TODO comment
          subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
-//         subRegion.setMaxGlobalIndex();
       } );
 
       faceManager.setIsExternal();
@@ -765,15 +764,8 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
 
   elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
   {
-    if ( dynamicCast< FaceElementSubRegion * >( &subRegion ) )
-    {
-      subRegion.setupRelatedObjectsInRelations( meshLevel );
-      subRegion.setMaxGlobalIndex();
-      return;
-    }
-
     subRegion.setupRelatedObjectsInRelations( meshLevel );
-    if( isbaseMeshLevel )
+    if( isbaseMeshLevel && !dynamicCast< FaceElementSubRegion * >( &subRegion ) )
     {
       subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
     }

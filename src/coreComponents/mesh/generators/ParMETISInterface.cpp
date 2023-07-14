@@ -45,6 +45,9 @@ meshToDual( ArrayOfArraysView< idx_t const, idx_t > const & elemToNodes,
 {
   idx_t const numElems = elemToNodes.size();
 
+  // `parmetis` awaits the arrays to be allocated as two continuous arrays: one for value, the other for offsets.
+  // Our `ArrayOfArrays` allows to reserve some extra space for further element insertion,
+  // but this is not compatible with what `parmetis` requires.
   GEOS_ASSERT_EQ_MSG( std::accumulate( elemToNodes.getSizes(), elemToNodes.getSizes() + numElems, 0 ),
                       elemToNodes.valueCapacity(),
                       "Internal error. The element to nodes mapping must be strictly allocated for compatibility with a third party library." );
