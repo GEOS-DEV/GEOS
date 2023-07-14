@@ -98,7 +98,7 @@ where the Lagrangian contact solver is defined identically to the one in the exa
 Results and benchmark
 ---------------------------------
 
-The GEOS results of displacement jump across the casing-cement and cement-rock interfaces are shown in the figure below: 
+The GEOS results of displacement jump across the casing-cement and cement-rock interfaces at 1e5 seconds are shown in the figure below: 
 
 .. _CasedThermoElasticWellboreInterfacesThermalDebondingFig:
 .. figure:: thermalDebonding.png
@@ -106,7 +106,7 @@ The GEOS results of displacement jump across the casing-cement and cement-rock i
    :width: 600
    :figclass: align-center
 
-   Displacement jumps across the casing-cement and cement-rock interfaces
+   Displacement jumps across the casing-cement and cement-rock interfaces at 1e5 seconds.
 
 The GEOS results and analytical results for temperature distribution around the cased wellbore is shown in the figures below:
 
