@@ -56,6 +56,11 @@ public:
 // /**@{*/
 
 //START_SPHINX_INCLUDE_SOLVERINTERFACE
+  virtual real64 solverStep( real64 const & time_n,
+                             real64 const & dt,
+                             integer const cycleNumber,
+                             DomainPartition & domain ) override;
+
   virtual void
   setupSystem( DomainPartition & domain,
                DofManager & dofManager,
