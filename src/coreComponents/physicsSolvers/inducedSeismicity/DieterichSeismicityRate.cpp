@@ -127,6 +127,27 @@ void DieterichSeismicityRate::registerDataOnMesh( Group & meshBodies )
 }
 //END_SPHINX_INCLUDE_REGISTERDATAONMESH
 
+real64 DieterichSeismicityRate::solverStep( real64 const & time_n,
+                                  real64 const & dt,
+                                  const int cycleNumber,
+                                  DomainPartition & domain )
+{
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
+    {
+      arrayView1d< real64 > const tempR = subRegion.getField< inducedSeismicity::seismicityRate >();
+    } );
+  } );
+
+  return this->linearImplicitStep( time_n, dt, cycleNumber, domain );
+}
+
 /* SETUP SYSTEM
    Setting up the system using the base class method
  */
