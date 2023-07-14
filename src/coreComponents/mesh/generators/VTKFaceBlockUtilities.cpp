@@ -19,8 +19,6 @@
 #include "dataRepository/Group.hpp"
 
 #include <vtkCell.h>
-#include <vtkDataArray.h>
-#include <vtkFieldData.h>
 
 #include <vtkExtractEdges.h>
 #include <vtkGeometryFilter.h>
@@ -29,7 +27,7 @@
 
 #include <algorithm>
 
-namespace geos
+namespace geos::vtk
 {
 
 namespace internal
@@ -478,7 +476,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
                                             vtkSmartPointer< vtkDataSet > mesh,
                                             CollocatedNodes const & collocatedNodes,
                                             ArrayOfArraysView< localIndex const > faceToNodes,
-                                            geos::internal::ElementToFace const & elemToFaces )
+                                            vtk::internal::ElementToFace const & elemToFaces )
 {
   // First, we'll only consider the boundary cells,
   // since only boundary cells can be involved in this kind of computations.
@@ -683,7 +681,7 @@ void importFractureNetwork( string const & faceBlockName,
                             CellBlockManager & cellBlockManager )
 {
   ArrayOfArrays< localIndex > const faceToNodes = cellBlockManager.getFaceToNodes();
-  geos::internal::ElementToFace const elemToFaces( cellBlockManager.getCellBlocks() );
+  vtk::internal::ElementToFace const elemToFaces( cellBlockManager.getCellBlocks() );
   ArrayOfArrays< localIndex > const nodeToEdges = cellBlockManager.getNodeToEdges();
 
   CollocatedNodes const collocatedNodes( faceBlockName, faceMesh );

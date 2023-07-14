@@ -21,7 +21,7 @@
 #include <vtkDataSet.h>
 #include <vtkSmartPointer.h>
 
-namespace geos
+namespace geos::vtk
 {
 
 /**

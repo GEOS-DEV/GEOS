@@ -117,7 +117,7 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
 
   for( auto nameToMesh: m_faceBlockMeshes )
   {
-    importFractureNetwork( nameToMesh.first, nameToMesh.second, m_vtkMesh, cellBlockManager );
+    vtk::importFractureNetwork( nameToMesh.first, nameToMesh.second, m_vtkMesh, cellBlockManager );
   }
 
   GEOS_LOG_LEVEL_RANK_0( 2, "  done!" );
