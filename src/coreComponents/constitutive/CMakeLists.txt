@@ -253,12 +253,15 @@ if( ENABLE_PVTPackage )
     set( constitutive_headers
          ${constitutive_headers}
          fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp
-         )
+         fluid/multifluid/compositional/functions/LohrenzBrayClarkViscosity.hpp         
+         fluid/multifluid/compositional/functions/PVTCompositionalFunctionBase.hpp         
+       )
 
     set( constitutive_sources
          ${constitutive_sources}
          fluid/multifluid/compositional/CompositionalMultiphaseFluid.cpp
 	 fluid/multifluid/compositional/PVTDriverRunTestCompositionalMultiphaseFluid.cpp	 
+         fluid/multifluid/compositional/functions/LohrenzBrayClarkViscosity.cpp         
          )
 
     add_subdirectory( PVTPackage )

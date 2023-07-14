@@ -16,13 +16,13 @@
  * @file PhillipsBrineDensity.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_SINGLEFLUID_FUNCTIONS_BRINECO2DENSITY_HPP_
-#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_SINGLEFLUID_FUNCTIONS_BRINECO2DENSITY_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_BRINECO2DENSITY_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_BRINECO2DENSITY_HPP_
 
 #include "PVTFunctionBase.hpp"
+#include "PVTFunctionHelpers.hpp"
 
 #include "constitutive/fluid/multifluid/Layouts.hpp"
-#include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "functions/TableFunction.hpp"
 
 namespace geos
@@ -278,4 +278,4 @@ void PhillipsBrineDensityUpdate::compute( real64 const & pressure,
 
 } // end namespace geos
 
-#endif //GEOS_CONSTITUTIVE_FLUID_PVTFUNCTIONS_BRINECO2DENSITY_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_BRINECO2DENSITY_HPP_

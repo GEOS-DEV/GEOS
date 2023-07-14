@@ -20,8 +20,8 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_CO2SOLUBILITY_HPP_
 
 #include "FlashModelBase.hpp"
+#include "PVTFunctionHelpers.hpp"
 
-#include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 #include "functions/TableFunction.hpp"

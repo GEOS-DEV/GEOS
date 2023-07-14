@@ -243,7 +243,7 @@ void PVTDriver::compareWithBaseline()
       GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
       file >> value;
 
-      real64 const error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
+      real64 const error = fabs( m_table[row][col]-value ) / ( fabs( value )+1e-12 );
       GEOS_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
                                                                                          << " (row " << row+m_numColumns << " with header)"
                                                                                          << " and column " << col+1, std::runtime_error );

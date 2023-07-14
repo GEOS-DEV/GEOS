@@ -20,9 +20,9 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_FENGHOURCO2VISCOSITY_HPP_
 
 #include "PVTFunctionBase.hpp"
+#include "PVTFunctionHelpers.hpp"
 
 #include "constitutive/fluid/multifluid/Layouts.hpp"
-#include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "functions/TableFunction.hpp"
 
 namespace geos

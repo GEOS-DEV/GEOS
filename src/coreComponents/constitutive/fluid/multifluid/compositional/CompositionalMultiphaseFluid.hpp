@@ -23,12 +23,14 @@
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 
 #include "constitutive/PVTPackage/PVTPackage/source/pvt/pvt.hpp"
+#include "constitutive/fluid/multifluid/compositional/functions/LohrenzBrayClarkViscosity.hpp"
 
 namespace geos
 {
 namespace constitutive
 {
 
+template< typename VISCOSITY_MODEL >
 class CompositionalMultiphaseFluid : public MultiFluidBase
 {
 public:
@@ -41,7 +43,7 @@ public:
   deliverClone( string const & name,
                 Group * const parent ) const override;
 
-  static string catalogName() { return "CompositionalMultiphaseFluid"; }
+  static string catalogName() { return "CompositionalMultiphaseFluid"/*+VISCOSITY_MODEL::catalogName()*/; } // TODO: naming convention 
 
   virtual string getCatalogName() const override { return catalogName(); }
 
@@ -52,6 +54,7 @@ public:
     static constexpr char const * equationsOfStateString() { return "equationsOfState"; }
     static constexpr char const * componentCriticalPressureString() { return "componentCriticalPressure"; }
     static constexpr char const * componentCriticalTemperatureString() { return "componentCriticalTemperature"; }
+    static constexpr char const * componentCriticalVolumeString() { return "componentCriticalVolume"; }
     static constexpr char const * componentAcentricFactorString() { return "componentAcentricFactor"; }
     static constexpr char const * componentVolumeShiftString() { return "componentVolumeShift"; }
     static constexpr char const * componentBinaryCoeffString() { return "componentBinaryCoeff"; }
@@ -102,6 +105,7 @@ private:
     friend class CompositionalMultiphaseFluid;
 
     KernelWrapper( pvt::MultiphaseSystem & fluid,
+                   VISCOSITY_MODEL const & viscosity,
                    arrayView1d< pvt::PHASE_TYPE > const & phaseTypes,
                    arrayView1d< real64 const > const & componentMolarWeight,
                    bool const useMass,
@@ -115,6 +119,7 @@ private:
                    FluidProp::ViewType totalDensity );
 
     pvt::MultiphaseSystem & m_fluid;
+    typename VISCOSITY_MODEL::KernelWrapper m_viscosity;
 
     arrayView1d< pvt::PHASE_TYPE > m_phaseTypes;
   };
@@ -141,22 +146,29 @@ private:
   /// PVTPackage phase labels
   array1d< pvt::PHASE_TYPE > m_phaseTypes;
 
-  // names of equations of state to use for each phase
+  /// Names of equations of state to use for each phase
   string_array m_equationsOfState;
 
-  // standard EOS component input
+  /// Viscosity model kernel wrapper
+  std::unique_ptr< VISCOSITY_MODEL > m_viscosity;
+
+  /// Standard EOS component input
   array1d< real64 > m_componentCriticalPressure;
   array1d< real64 > m_componentCriticalTemperature;
+  array1d< real64 > m_componentCriticalVolume;
   array1d< real64 > m_componentAcentricFactor;
   array1d< real64 > m_componentVolumeShift;
   array2d< real64 > m_componentBinaryCoeff;
 
 };
 
+using CompositionalMultiphaseFluidLBC = CompositionalMultiphaseFluid< PVTProps::LohrenzBrayClarkViscosity >;
+
+template< typename VISCOSITY_MODEL >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-CompositionalMultiphaseFluid::KernelWrapper::
+CompositionalMultiphaseFluid< VISCOSITY_MODEL >::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -225,12 +237,22 @@ CompositionalMultiphaseFluid::KernelWrapper::
     phaseFrac[ip] = frac.value;
     phaseDens[ip] = dens.value;
     phaseMassDens[ip] = massDens.value;
-    phaseVisc[ip] = 0.001;   // TODO
+
     for( integer jc = 0; jc < numComp; ++jc )
     {
       phaseCompFrac[ip][jc] = comp.value[jc];
     }
+    phaseVisc[ip] = 0.001; // TODO
   }
+
+  // 3b. Compute viscosity
+  /*
+  m_viscosity.compute( pressure,
+                       temperature,
+                       phaseMassDens,
+                       phaseCompFrac,
+                       phaseVisc );
+  */
 
   // 4. if mass variables used instead of molar, perform the conversion
 
@@ -260,10 +282,11 @@ CompositionalMultiphaseFluid::KernelWrapper::
 #endif
 }
 
+template< typename VISCOSITY_MODEL >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-CompositionalMultiphaseFluid::KernelWrapper::
+CompositionalMultiphaseFluid< VISCOSITY_MODEL >::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -349,7 +372,6 @@ CompositionalMultiphaseFluid::KernelWrapper::
     phaseMassDensity.derivs[ip][Deriv::dP] = massDens.dP;
     phaseMassDensity.derivs[ip][Deriv::dT] = massDens.dT;
 
-    // TODO
     phaseViscosity.value[ip] = 0.001;
     phaseViscosity.derivs[ip][Deriv::dP] = 0.0;
     phaseViscosity.derivs[ip][Deriv::dT] = 0.0;
@@ -371,6 +393,12 @@ CompositionalMultiphaseFluid::KernelWrapper::
       }
     }
   }
+
+  m_viscosity.compute( pressure,
+                       temperature,
+                       phaseMassDensity,
+                       phaseCompFraction,
+                       phaseViscosity );
 
   // 4. if mass variables used instead of molar, perform the conversion
   if( m_useMass )
@@ -411,10 +439,11 @@ CompositionalMultiphaseFluid::KernelWrapper::
 #endif
 }
 
+template< typename VISCOSITY_MODEL >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-CompositionalMultiphaseFluid::KernelWrapper::
+CompositionalMultiphaseFluid< VISCOSITY_MODEL >::KernelWrapper::
   update( localIndex const k,
           localIndex const q,
           real64 const pressure,

@@ -232,4 +232,4 @@ initializePropertyTable( string_array const & inputParameters,
 } // namespace geos
 
 
-#endif
+#endif // GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_PVTFUNCTIONHELPERS_HPP_

@@ -41,7 +41,7 @@ void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
   ConstitutivePassThruHandler< DeadOilFluid,
                                BlackOilFluid,
 #ifdef GEOSX_USE_PVTPackage
-                               CompositionalMultiphaseFluid,
+                               CompositionalMultiphaseFluidLBC,
 #endif
                                CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,
@@ -58,7 +58,7 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
   ConstitutivePassThruHandler< DeadOilFluid,
                                BlackOilFluid,
 #ifdef GEOSX_USE_PVTPackage
-                               CompositionalMultiphaseFluid,
+                               CompositionalMultiphaseFluidLBC,
 #endif
                                CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,

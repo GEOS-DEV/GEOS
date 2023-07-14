@@ -21,5 +21,5 @@
 
 namespace geos
 {
-template void PVTDriver::runTest< constitutive::CompositionalMultiphaseFluid >( constitutive::CompositionalMultiphaseFluid &, arrayView2d< real64 > const & );
+template void PVTDriver::runTest< constitutive::CompositionalMultiphaseFluidLBC >( constitutive::CompositionalMultiphaseFluidLBC &, arrayView2d< real64 > const & );
 }
