@@ -423,6 +423,13 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
   // The objects in domain are handled separately for now
   {
     DomainPartition & domain = getDomainPartition();
+
+    // CC: debug
+    SpatialPartition & spatialPartition = domain.getPartition();
+    GEOS_LOG_RANK( spatialPartition.getName().c_str() );
+    xmlWrapper::xmlNode partitionNode = xmlProblemNode.child( spatialPartition.getName().c_str() );
+    spatialPartition.processInputFileRecursive( partitionNode );
+
     ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( groupKeys.constitutiveManager );
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
     constitutiveManager.processInputFileRecursive( topLevelNode );
@@ -486,7 +493,7 @@ void ProblemManager::postProcessInput()
   integer const & suppressPinned = commandLine.getReference< integer >( viewKeys.suppressPinned );
   setPreferPinned((suppressPinned == 0));
 
-  PartitionBase & partition = domain.getReference< PartitionBase >( keys::partitionManager );
+  PartitionBase & partition = domain.getPartition(); //Reference< PartitionBase >( keys::partitionManager ); // CC:
   bool repartition = false;
   integer xpar = 1;
   integer ypar = 1;

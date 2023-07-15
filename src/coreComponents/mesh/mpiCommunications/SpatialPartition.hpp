@@ -15,7 +15,7 @@
 #ifndef GEOS_MESH_MPICOMMUNICATIONS_SPATIALPARTITION_HPP_
 #define GEOS_MESH_MPICOMMUNICATIONS_SPATIALPARTITION_HPP_
 
-
+#include "dataRepository/Group.hpp"
 #include "PartitionBase.hpp"
 #include "mesh/DomainPartition.hpp"
 
@@ -105,7 +105,8 @@ private:
 class SpatialPartition : public PartitionBase
 {
 public:
-  SpatialPartition();
+  SpatialPartition(string const & name,
+                   Group * const parent );
 
   ~SpatialPartition() override;
 
@@ -179,6 +180,14 @@ public:
                                           NodeManager & nodeManager,
                                           EdgeManager & edgeManager,
                                           FaceManager & faceManager );
+
+  struct viewKeyStruct
+  {
+    static constexpr char const * periodicString() { return "periodic"; }
+    
+  } partitionViewKeys;
+
+  static string catalogName() { return "SpatialPartition"; }
 
   /// number of partitions
   array1d< int > m_Partitions;

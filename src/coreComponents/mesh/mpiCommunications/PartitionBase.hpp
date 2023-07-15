@@ -15,6 +15,7 @@
 #ifndef GEOS_MESH_MPICOMMUNICATIONS_PARTITIONBASE_HPP_
 #define GEOS_MESH_MPICOMMUNICATIONS_PARTITIONBASE_HPP_
 
+#include "dataRepository/Group.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "common/DataTypes.hpp"
 
@@ -24,7 +25,7 @@ namespace geos
 /**
  * @brief Base class for partitioning.
  */
-class PartitionBase
+class PartitionBase : public dataRepository::Group
 {
 public:
 
@@ -74,11 +75,28 @@ public:
   int numColor() const
   { return m_numColors; }
 
+  /**
+   * @brief Return the name of the MeshGenerator in object catalog.
+   * @return string that contains the catalog name of the Partition
+   */
+  static string catalogName() { return "Partition"; }
+
+  /// using alias for templated Catalog meshGenerator type
+  using CatalogInterface = dataRepository::CatalogInterface< PartitionBase, string const &, dataRepository::Group * const >;
+
+  /**
+   * @brief Accessor for the singleton Catalog object
+   * @return a static reference to the Catalog object
+   */
+  static CatalogInterface::CatalogType & getCatalog();
+
 protected:
   /**
    * @brief Preventing dummy default constructor.
    */
-  PartitionBase() = default;
+  // PartitionBase() = default;
+  PartitionBase(string const & name,
+                 Group * const parent );
 
   /**
    * @brief Builds from the size of partitions and the current rank of the partition
@@ -86,7 +104,9 @@ protected:
    * @param thisPartition The rank of the build partition.
    */
   PartitionBase( const unsigned int numPartitions,
-                 const unsigned int thisPartition );
+                 const unsigned int thisPartition,
+                 string const & name,
+                 Group * const parent  );
 
   /**
    * @brief Array of neighbor communicators.
