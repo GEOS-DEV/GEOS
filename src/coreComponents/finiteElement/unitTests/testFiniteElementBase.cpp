@@ -123,7 +123,7 @@ void test_capture()
     detJDimsView[1] = feBase.getDetJView().size( 1 );
   } );
 
-  forAll< serialPolicy >( 1, [ feBase, gradNDimsView, detJDimsView ]( int const  )
+  forAll< serialPolicy >( 1, [ feBase, gradNDimsView, detJDimsView ]( int const )
   {} );
 
   EXPECT_EQ( gradNDimsView[0], 0 );

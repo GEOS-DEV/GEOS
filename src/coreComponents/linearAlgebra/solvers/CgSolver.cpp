@@ -181,7 +181,7 @@ UnprecCgSolver< VECTOR >::UnprecCgSolver( LinearSolverParameters params,
   GEOS_ERROR_IF( !m_params.isSymmetric, "Cannot use CG solver with a non-symmetric system" );
 }
 
-template < typename Vector >
+template< typename Vector >
 void axpby( real64 alpha, const Vector & x, real64 beta, const Vector & y, Vector & res )
 {
   arrayView1d< real64 const > const localX = x.values();
@@ -199,10 +199,10 @@ void axpby( real64 alpha, const Vector & x, real64 beta, const Vector & y, Vecto
   res.close();
 }
 
-template < typename Vector >
+template< typename Vector >
 real64 dot( const Vector & x, const Vector & y )
 {
-  RAJA::ReduceSum< parallelDeviceReduce, real64 > vsum(0.0);
+  RAJA::ReduceSum< RAJA::cuda_reduce_atomic, real64 > vsum( 0.0 );
   arrayView1d< real64 const > const localX = x.values();
   arrayView1d< real64 const > const localY = y.values();
 
@@ -211,7 +211,7 @@ real64 dot( const Vector & x, const Vector & y )
   {
     vsum += localX[ i ] * localY[ i ];
   } );
-  return static_cast<real64>(vsum.get());
+  return static_cast< real64 >(vsum.get());
 }
 
 template< typename VECTOR >
@@ -290,7 +290,7 @@ void UnprecCgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
     // compute alpha
     // real64 const pAp = p.dot( Ap );
     real64 const pAp = dot( p, Ap );
-    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( pAp )
+    //GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( pAp )
     real64 const alpha = tau / pAp;
 
     // Update x = x + alpha*p

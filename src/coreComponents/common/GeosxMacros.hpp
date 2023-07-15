@@ -38,7 +38,6 @@
 #define GEOS_DEVICE __device__
 #define GEOS_HOST_DEVICE __host__ __device__
 #define GEOS_FORCE_INLINE __forceinline__
-#define GEOS_PRAGMA_UNROLL _Pragma("unroll")
 #else
 /// Marks a host-only function.
 #define GEOS_HOST
@@ -49,7 +48,6 @@
 /// Marks a function or lambda for inlining
 #define GEOS_FORCE_INLINE inline
 /// Compiler directive specifying to unroll the loop.
-#define GEOS_PRAGMA_UNROLL
 #endif
 
 #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
@@ -59,6 +57,16 @@
 
 ///@}
 
+
+#define GEOS_PRAGMA( PRAGMA_STRING ) _Pragma( #PRAGMA_STRING )
+
+#if defined(__GNUC__)
+#define GEOS_PRAGMA_UNROLL_DEPTH( NUMITER ) GEOS_PRAGMA( GCC unroll NUMITER )
+#else
+#define GEOS_PRAGMA_UNROLL_DEPTH( NUMITER ) GEOS_PRAGMA( unroll NUMITER )
+#endif
+
+#define GEOS_PRAGMA_UNROLL GEOS_PRAGMA_UNROLL_DEPTH( 16 )
 /**
  * @name Unused variable markers.
  *

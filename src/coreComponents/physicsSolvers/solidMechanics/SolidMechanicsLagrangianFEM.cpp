@@ -317,7 +317,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
     FaceManager const & faceManager = mesh.getFaceManager();
     EdgeManager const & edgeManager = mesh.getEdgeManager();
     arrayView1d< real64 > & mass = nodes.getField< solidMechanics::mass >();
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD> const  X = nodes.referencePosition();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodes.referencePosition();
     arrayView1d< integer const > const & nodeGhostRank = nodes.ghostRank();
 
     // to fill m_sendOrReceiveNodes and m_nonSendOrReceiveNodes, we first insert
@@ -391,14 +391,14 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
             {
               for( localIndex i=0; i<3; ++i )
               {
-                xLocal[a][i] = X( elemsToNodes(k,a), i );
+                xLocal[a][i] = X( elemsToNodes( k, a ), i );
               }
             }
 
             for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
             {
               real64 J[3][3] = {{0}};
-              real64 const detJW = FE_TYPE::invJacobianTransformation(q,xLocal,J);
+              real64 const detJW = FE_TYPE::invJacobianTransformation( q, xLocal, J );
               FE_TYPE::calcN( q, N );
 
               for( localIndex a=0; a< numSupportPoints; ++a )

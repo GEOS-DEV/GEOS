@@ -306,7 +306,7 @@ public:
   static void symmetricGradient( int const q,
                                  real64 const (&invJ)[3][3],
                                  real64 const (&var)[numNodes][3],
-                                 real64 ( &grad )[6] )
+                                 real64 ( & grad )[6] )
   {
     int qa, qb, qc;
     LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
@@ -343,12 +343,12 @@ public:
   static void gradient( int const q,
                         real64 const (&invJ)[3][3],
                         real64 const (&var)[numNodes][3],
-                        real64 ( &grad )[3][3] )
-{
-  int qa, qb, qc;
-  LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
-  gradient( qa, qb, qc, invJ, var, grad );
-}
+                        real64 ( & grad )[3][3] )
+  {
+    int qa, qb, qc;
+    LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+    gradient( qa, qb, qc, invJ, var, grad );
+  }
 
   GEOS_HOST_DEVICE
   static void gradient( int const qa,
@@ -505,7 +505,7 @@ private:
 
 
   template< int qa, int qb, int qc, int a, int b, int c, typename FUNC, typename ... PARAMS >
-  GEOS_HOST_DEVICE 
+  GEOS_HOST_DEVICE
   static void
   supportLoopImpl( FUNC && func,
                    PARAMS &&... params );
@@ -536,7 +536,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
 {
 
 /// Options for how to calculate the parent gradients.
-#define PARENT_GRADIENT_METHOD 3
+  #define PARENT_GRADIENT_METHOD 3
 #if PARENT_GRADIENT_METHOD == 1
   // This option calculates the basis values at the quadrature point for each
   // linear basis index.
@@ -606,12 +606,12 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
     int const qaa = ( a^qa ); // abs(a-qa)
 //    int const qaa = qxx[a][qa]; // abs(a-qa)
     GEOS_PRAGMA_UNROLL
-      for( int b=0; b<2; ++b )
+    for( int b=0; b<2; ++b )
     {
       int const qbb = ( b^qb );
       //int const qbb = qxx[b][qb];
       GEOS_PRAGMA_UNROLL
-          for( int c=0; c<2; ++c )
+      for( int c=0; c<2; ++c )
       {
         int const qcc = ( c^qc );
         //int const qcc = qxx[c][qc];
@@ -641,12 +641,12 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
     //int const qaa = ( a^qa ); // abs(a-qa)
     int const qaa = qxx[a][qa]; // abs(a-qa)
     GEOS_PRAGMA_UNROLL
-      for( int b=0; b<2; ++b )
+    for( int b=0; b<2; ++b )
     {
       //int const qbb = ( b^qb );
       int const qbb = qxx[b][qb];
       GEOS_PRAGMA_UNROLL
-          for( int c=0; c<2; ++c )
+      for( int c=0; c<2; ++c )
       {
         //int const qcc = ( c^qc );
         int const qcc = qxx[c][qc];
@@ -669,7 +669,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
 template< int qa, int qb, int qc, int a, int b, int c, typename FUNC, typename ... PARAMS >
 GEOS_HOST_DEVICE GEOS_FORCE_INLINE void
 H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoopImpl( FUNC && func,
-                 PARAMS &&... params )
+                                                         PARAMS &&... params )
 {
   constexpr static real64 psiProduct[3] = { 0.311004233964073108, 0.083333333333333333, 0.022329099369260226};
   constexpr static int dpsi[2] = { -1, 1 };
@@ -700,14 +700,14 @@ GEOS_HOST_DEVICE GEOS_FORCE_INLINE void
 H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( FUNC && func,
                                                      PARAMS &&... params )
 {
-  supportLoopImpl<qa,qb,qc,0,0,0>( std::forward<FUNC>(func), std::forward< PARAMS >( params )... );
-  supportLoopImpl<qa,qb,qc,0,0,1>( std::forward<FUNC>(func), std::forward< PARAMS >( params )... );
-  supportLoopImpl<qa,qb,qc,0,1,0>( std::forward<FUNC>(func), std::forward< PARAMS >( params )... );
-  supportLoopImpl<qa,qb,qc,0,1,1>( std::forward<FUNC>(func), std::forward< PARAMS >( params )... );
-  supportLoopImpl<qa,qb,qc,1,0,0>( std::forward<FUNC>(func), std::forward< PARAMS >( params )... );
-  supportLoopImpl<qa,qb,qc,1,0,1>( std::forward<FUNC>(func), std::forward< PARAMS >( params )... );
-  supportLoopImpl<qa,qb,qc,1,1,0>( std::forward<FUNC>(func), std::forward< PARAMS >( params )... );
-  supportLoopImpl<qa,qb,qc,1,1,1>( std::forward<FUNC>(func), std::forward< PARAMS >( params )... );
+  supportLoopImpl< qa, qb, qc, 0, 0, 0 >( std::forward< FUNC >( func ), std::forward< PARAMS >( params )... );
+  supportLoopImpl< qa, qb, qc, 0, 0, 1 >( std::forward< FUNC >( func ), std::forward< PARAMS >( params )... );
+  supportLoopImpl< qa, qb, qc, 0, 1, 0 >( std::forward< FUNC >( func ), std::forward< PARAMS >( params )... );
+  supportLoopImpl< qa, qb, qc, 0, 1, 1 >( std::forward< FUNC >( func ), std::forward< PARAMS >( params )... );
+  supportLoopImpl< qa, qb, qc, 1, 0, 0 >( std::forward< FUNC >( func ), std::forward< PARAMS >( params )... );
+  supportLoopImpl< qa, qb, qc, 1, 0, 1 >( std::forward< FUNC >( func ), std::forward< PARAMS >( params )... );
+  supportLoopImpl< qa, qb, qc, 1, 1, 0 >( std::forward< FUNC >( func ), std::forward< PARAMS >( params )... );
+  supportLoopImpl< qa, qb, qc, 1, 1, 1 >( std::forward< FUNC >( func ), std::forward< PARAMS >( params )... );
 }
 
 //*************************************************************************************************
@@ -730,8 +730,8 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64
 H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN( localIndex const qa,
-                                                  localIndex const qb,
-                                                  localIndex const qc,
+                                                   localIndex const qb,
+                                                   localIndex const qc,
                                                    real64 const (&X)[numNodes][3],
                                                    real64 (& gradN)[numNodes][3] )
 {
@@ -786,8 +786,8 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
     J[2][0] = J[2][0] + dNdXi[0] * Xnode[2];
     J[2][1] = J[2][1] + dNdXi[1] * Xnode[2];
     J[2][2] = J[2][2] + dNdXi[2] * Xnode[2];
-  }, 
-  X, J );
+  },
+               X, J );
 
 }
 
@@ -876,7 +876,7 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( int const qa,
                                                              real64 const (&var)[6],
                                                              real64 (& R)[numNodes][3] )
 {
-  real64 const fullVar[3][3] = 
+  real64 const fullVar[3][3] =
   {
     { invJ[0][0] * var[0] + invJ[1][0] * var[5] + invJ[2][0] * var[4],
       invJ[0][1] * var[0] + invJ[1][1] * var[5] + invJ[2][1] * var[4],
@@ -909,7 +909,7 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( real64 const (&invJ
                                                              real64 const (&var)[6],
                                                              real64 (& R)[numNodes][3] )
 {
-  real64 const fullVar[3][3] = 
+  real64 const fullVar[3][3] =
   {
     { invJ[0][0] * var[0] + invJ[1][0] * var[5] + invJ[2][0] * var[4],
       invJ[0][1] * var[0] + invJ[1][1] * var[5] + invJ[2][1] * var[4],
@@ -922,12 +922,12 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( real64 const (&invJ
       invJ[0][2] * var[4] + invJ[1][2] * var[3] + invJ[2][2] * var[2]}
   };
 
-  supportLoop< qa, qb, qc > (
-               [] GEOS_HOST_DEVICE
-                 ( real64 const (&dNdXi)[3],
-                 int const nodeIndex,
-                 real64 const (&var)[3][3],
-                 real64 (& R)[numNodes][3] )
+  supportLoop< qa, qb, qc >(
+    [] GEOS_HOST_DEVICE
+      ( real64 const (&dNdXi)[3],
+      int const nodeIndex,
+      real64 const (&var)[3][3],
+      real64 (& R)[numNodes][3] )
   {
     R[ nodeIndex ][ 0 ] = R[ nodeIndex ][ 0 ] + var[ 0 ][ 0 ] * dNdXi[ 0 ] + var[ 0 ][ 1 ] * dNdXi[ 1 ] + var[ 0 ][ 2 ] * dNdXi[ 2 ];
     R[ nodeIndex ][ 1 ] = R[ nodeIndex ][ 1 ] + var[ 1 ][ 0 ] * dNdXi[ 0 ] + var[ 1 ][ 1 ] * dNdXi[ 1 ] + var[ 1 ][ 2 ] * dNdXi[ 2 ];
@@ -947,15 +947,15 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const qa,
   real64 parentGrad[3][3] = {{0}};
 
   supportLoop( qa, qb, qc, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                                  int const nodeIndex,
-                                                  real64 const (&var)[numNodes][3],
-                                                  real64 (& grad)[3][3] )
+                                                 int const nodeIndex,
+                                                 real64 const (&var)[numNodes][3],
+                                                 real64 (& grad)[3][3] )
   {
     GEOS_PRAGMA_UNROLL
-      for( int i = 0; i < 3; ++i )
+    for( int i = 0; i < 3; ++i )
     {
       GEOS_PRAGMA_UNROLL
-          for( int k = 0; k < 3; ++k )
+      for( int k = 0; k < 3; ++k )
       {
         grad[k][i] = grad[k][i] + dNdXi[ i ] * var[ nodeIndex ][k];
       }
@@ -966,10 +966,10 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const qa,
   for( int i = 0; i < 3; ++i )
   {
     GEOS_PRAGMA_UNROLL
-      for( int j = 0; j < 3; ++j )
+    for( int j = 0; j < 3; ++j )
     {
       GEOS_PRAGMA_UNROLL
-          for( int k = 0; k < 3; ++k )
+      for( int k = 0; k < 3; ++k )
       {
         grad[i][j] = grad[i][j] + parentGrad[i][k] * invJ[k][j];
       }
@@ -985,21 +985,21 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::parentGradient2( int const qa,
                                                               int const qc,
                                                               real64 const (&var1)[numNodes][3],
                                                               real64 const (&var2)[numNodes][3],
-                                                              real64 ( &grad1 )[3][3],
-                                                              real64 ( &grad2 )[3][3] )
+                                                              real64 ( & grad1 )[3][3],
+                                                              real64 ( & grad2 )[3][3] )
 {
   supportLoop( qa, qb, qc, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                                  int const nodeIndex,
-                                                  real64 const (&var1)[numNodes][3],
-                                                  real64 const (&var2)[numNodes][3],
-                                                  real64 (& grad1)[3][3],
-                                                  real64 (& grad2)[3][3] )
+                                                 int const nodeIndex,
+                                                 real64 const (&var1)[numNodes][3],
+                                                 real64 const (&var2)[numNodes][3],
+                                                 real64 (& grad1)[3][3],
+                                                 real64 (& grad2)[3][3] )
   {
     GEOS_PRAGMA_UNROLL
-      for( int i = 0; i < 3; ++i )
+    for( int i = 0; i < 3; ++i )
     {
       GEOS_PRAGMA_UNROLL
-          for( int k = 0; k < 3; ++k )
+      for( int k = 0; k < 3; ++k )
       {
         grad1[k][i] = grad1[k][i] + dNdXi[ i ] * var1[ nodeIndex ][k];
         grad2[k][i] = grad2[k][i] + dNdXi[ i ] * var2[ nodeIndex ][k];
@@ -1013,15 +1013,15 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void H1_Hexahedron_Lagrange1_GaussLegendre2::parentGradient2( real64 const (&var1)[numNodes][3],
                                                               real64 const (&var2)[numNodes][3],
-                                                              real64 ( &grad1 )[3][3],
-                                                              real64 ( &grad2 )[3][3] )
+                                                              real64 ( & grad1 )[3][3],
+                                                              real64 ( & grad2 )[3][3] )
 {
-  supportLoop<qa,qb,qc>( [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                                  int const nodeIndex,
-                                                  real64 const (&var1)[numNodes][3],
-                                                  real64 const (&var2)[numNodes][3],
-                                                  real64 (& grad1)[3][3],
-                                                  real64 (& grad2)[3][3] )
+  supportLoop< qa, qb, qc >( [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
+                                                   int const nodeIndex,
+                                                   real64 const (&var1)[numNodes][3],
+                                                   real64 const (&var2)[numNodes][3],
+                                                   real64 (& grad1)[3][3],
+                                                   real64 (& grad2)[3][3] )
   {
     GEOS_PRAGMA_UNROLL
     for( int i = 0; i < 3; ++i )
@@ -1040,12 +1040,12 @@ template< int qa, int qb, int qc >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void H1_Hexahedron_Lagrange1_GaussLegendre2::parentGradient( real64 const (&var)[numNodes][3],
-                                                              real64 ( &grad )[3][3] )
+                                                             real64 ( & grad )[3][3] )
 {
-  supportLoop<qa,qb,qc>( [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                                  int const nodeIndex,
-                                                  real64 const (&var)[numNodes][3],
-                                                  real64 (& grad)[3][3] )
+  supportLoop< qa, qb, qc >( [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
+                                                   int const nodeIndex,
+                                                   real64 const (&var)[numNodes][3],
+                                                   real64 (& grad)[3][3] )
   {
     GEOS_PRAGMA_UNROLL
     for( int i = 0; i < 3; ++i )

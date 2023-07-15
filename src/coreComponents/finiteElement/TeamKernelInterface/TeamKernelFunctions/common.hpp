@@ -28,7 +28,7 @@ namespace geos
 
 /**
  * @brief A simple 3D tensor index structure.
- * 
+ *
  */
 struct TensorIndex
 {
@@ -38,9 +38,10 @@ struct TensorIndex
 /**
  * @brief The threading model used to compute on each element.
  * Specify how the computation is distributed over thread blocks.
- * 
+ *
  */
-enum class ThreadingModel {
+enum class ThreadingModel
+{
   Serial, //< Each thread treat one element ( or more when batch_size > 1 ).
   Distributed1D, //< Each element is treated by num_thread_1d threads.
   Distributed2D, //< Each element is treated by num_thread_1d^2 threads.
@@ -49,7 +50,7 @@ enum class ThreadingModel {
 
 /**
  * @brief 3D iterator over the "thread local" indices.
- * 
+ *
  * @tparam StackVariables The type of the stack variables.
  * @tparam Lambda3D The type of the body stored in a lambda function.
  * @param stack The stack variables.
@@ -57,12 +58,12 @@ enum class ThreadingModel {
  * @param loop_bound_2 The loop bound of the second index.
  * @param loop_bound_3 The loop bound of the third index.
  * @param lambda Thw body of the triple "for" loop.
- * 
+ *
  * @note Implementation for serial threading model.
  */
-template < typename StackVariables,
-           typename Lambda3D,
-           std::enable_if_t< StackVariables::threading_model == ThreadingModel::Serial, bool > = true >
+template< typename StackVariables,
+          typename Lambda3D,
+          std::enable_if_t< StackVariables::threading_model == ThreadingModel::Serial, bool > = true >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void loop3D( StackVariables & stack,
@@ -72,13 +73,13 @@ void loop3D( StackVariables & stack,
              Lambda3D && lambda )
 {
   GEOS_PRAGMA_UNROLL
-  for (localIndex ind_3 = 0; ind_3 < loop_bound_3; ind_3++)
+  for( localIndex ind_3 = 0; ind_3 < loop_bound_3; ind_3++ )
   {
     GEOS_PRAGMA_UNROLL
-      for (localIndex ind_2 = 0; ind_2 < loop_bound_2; ind_2++)
+    for( localIndex ind_2 = 0; ind_2 < loop_bound_2; ind_2++ )
     {
       GEOS_PRAGMA_UNROLL
-          for (localIndex ind_1 = 0; ind_1 < loop_bound_1; ind_1++)
+      for( localIndex ind_1 = 0; ind_1 < loop_bound_1; ind_1++ )
       {
         lambda( ind_1, ind_2, ind_3 );
       }
@@ -88,7 +89,7 @@ void loop3D( StackVariables & stack,
 
 /**
  * @brief 3D iterator over the "thread local" indices.
- * 
+ *
  * @tparam StackVariables The type of the stack variables.
  * @tparam Lambda3D The type of the body stored in a lambda function.
  * @param stack The stack variables.
@@ -96,12 +97,12 @@ void loop3D( StackVariables & stack,
  * @param loop_bound_2 The loop bound of the second index.
  * @param loop_bound_3 The loop bound of the third index.
  * @param lambda Thw body of the triple "for" loop.
- * 
+ *
  * @note Implementation for 1D distributed threading model.
  */
-template < typename StackVariables,
-           typename Lambda3D,
-           std::enable_if_t< StackVariables::threading_model == ThreadingModel::Distributed1D, bool > = true >
+template< typename StackVariables,
+          typename Lambda3D,
+          std::enable_if_t< StackVariables::threading_model == ThreadingModel::Distributed1D, bool > = true >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void loop3D( StackVariables & stack,
@@ -111,13 +112,13 @@ void loop3D( StackVariables & stack,
              Lambda3D && lambda )
 {
   localIndex ind_1 = stack.tidx;
-  if ( ind_1 < loop_bound_1 )
+  if( ind_1 < loop_bound_1 )
   {
     GEOS_PRAGMA_UNROLL
-      for (localIndex ind_3 = 0; ind_3 < loop_bound_3; ind_3++)
+    for( localIndex ind_3 = 0; ind_3 < loop_bound_3; ind_3++ )
     {
       GEOS_PRAGMA_UNROLL
-          for (localIndex ind_2 = 0; ind_2 < loop_bound_2; ind_2++)
+      for( localIndex ind_2 = 0; ind_2 < loop_bound_2; ind_2++ )
       {
         lambda( ind_1, ind_2, ind_3 );
       }
@@ -127,7 +128,7 @@ void loop3D( StackVariables & stack,
 
 /**
  * @brief 3D iterator over the "thread local" indices.
- * 
+ *
  * @tparam StackVariables The type of the stack variables.
  * @tparam Lambda3D The type of the body stored in a lambda function.
  * @param stack The stack variables.
@@ -135,12 +136,12 @@ void loop3D( StackVariables & stack,
  * @param loop_bound_2 The loop bound of the second index.
  * @param loop_bound_3 The loop bound of the third index.
  * @param lambda Thw body of the triple "for" loop.
- * 
+ *
  * @note Implementation for 2D distributed threading model.
  */
-template < typename StackVariables,
-           typename Lambda3D,
-           std::enable_if_t< StackVariables::threading_model == ThreadingModel::Distributed2D, bool > = true >
+template< typename StackVariables,
+          typename Lambda3D,
+          std::enable_if_t< StackVariables::threading_model == ThreadingModel::Distributed2D, bool > = true >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void loop3D( StackVariables & stack,
@@ -151,9 +152,9 @@ void loop3D( StackVariables & stack,
 {
   localIndex ind_1 = stack.tidx;
   localIndex ind_2 = stack.tidy;
-  if ( ( ind_2 < loop_bound_2 ) && ( ind_1 < loop_bound_1 ) )
+  if( ( ind_2 < loop_bound_2 ) && ( ind_1 < loop_bound_1 ) )
   {
-    for (localIndex ind_3 = 0; ind_3 < loop_bound_3; ind_3++)
+    for( localIndex ind_3 = 0; ind_3 < loop_bound_3; ind_3++ )
     {
       lambda( ind_1, ind_2, ind_3 );
     }
@@ -162,7 +163,7 @@ void loop3D( StackVariables & stack,
 
 /**
  * @brief 3D iterator over the "thread local" indices.
- * 
+ *
  * @tparam StackVariables The type of the stack variables.
  * @tparam Lambda3D The type of the body stored in a lambda function.
  * @param stack The stack variables.
@@ -170,12 +171,12 @@ void loop3D( StackVariables & stack,
  * @param loop_bound_2 The loop bound of the second index.
  * @param loop_bound_3 The loop bound of the third index.
  * @param lambda Thw body of the triple "for" loop.
- * 
+ *
  * @note Implementation for 3D distributed threading model.
  */
-template < typename StackVariables,
-           typename Lambda3D,
-           std::enable_if_t< StackVariables::threading_model == ThreadingModel::Distributed3D, bool > = true >
+template< typename StackVariables,
+          typename Lambda3D,
+          std::enable_if_t< StackVariables::threading_model == ThreadingModel::Distributed3D, bool > = true >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void loop3D( StackVariables & stack,
@@ -187,7 +188,7 @@ void loop3D( StackVariables & stack,
   localIndex ind_1 = stack.tidx;
   localIndex ind_2 = stack.tidy;
   localIndex ind_3 = stack.tidz;
-  if ( ( ind_3 < loop_bound_3 ) && ( ind_2 < loop_bound_2 ) && ( ind_1 < loop_bound_1 ) )
+  if( ( ind_3 < loop_bound_3 ) && ( ind_2 < loop_bound_2 ) && ( ind_1 < loop_bound_1 ) )
   {
     lambda( ind_1, ind_2, ind_3 );
   }

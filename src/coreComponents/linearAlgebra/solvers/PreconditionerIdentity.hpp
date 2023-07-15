@@ -62,7 +62,7 @@ class MatrixFreePreconditionerIdentity : public PreconditionerIdentity< LAI >
 {
 public:
   MatrixFreePreconditionerIdentity( DofManager & dofManager )
-  : m_dofManager( dofManager )
+    : m_dofManager( dofManager )
   { }
 
   virtual globalIndex numGlobalRows() const

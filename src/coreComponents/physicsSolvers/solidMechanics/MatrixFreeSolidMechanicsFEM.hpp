@@ -38,7 +38,8 @@ private:
 
 public:
   MatrixFreeSolidMechanicsFEMOperator( DomainPartition & domain, map< std::pair< string, string >, array1d< string > > const & meshTargets, DofManager & dofManager, string const & finiteElementName );
-  MatrixFreeSolidMechanicsFEMOperator( dataRepository::Group & meshBodies, map< std::pair< string, string >, array1d< string > > const & meshTargets, DofManager & dofManager, string const & finiteElementName );
+  MatrixFreeSolidMechanicsFEMOperator( dataRepository::Group & meshBodies, map< std::pair< string, string >, array1d< string > > const & meshTargets, DofManager & dofManager,
+                                       string const & finiteElementName );
 
   virtual void apply( ParallelVector const & src, ParallelVector & dst ) const;
 
@@ -85,7 +86,7 @@ public:
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
-    virtual void
+  virtual void
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,

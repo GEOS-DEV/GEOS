@@ -519,12 +519,12 @@ public:
                                  real64 ( &gradVar )[6] );
 
 
-  template< int NUM_SUPPORT_POINTS>
+  template< int NUM_SUPPORT_POINTS >
   GEOS_HOST_DEVICE
   static void symmetricGradient( int const q,
                                  real64 const (&invJ)[3][3],
                                  real64 const (&var)[NUM_SUPPORT_POINTS][3],
-                                 real64 ( &grad )[6] ){}
+                                 real64 ( & grad )[6] ){}
 
 
   /**
@@ -662,12 +662,12 @@ public:
                               real64 const (&var_detJxW)[3][3],
                               real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
-  template< int NUM_SUPPORT_POINTS>
+  template< int NUM_SUPPORT_POINTS >
   GEOS_HOST_DEVICE
   static void plusGradNajAij( int const q,
                               real64 const (&invJ)[3][3],
                               real64 const (&var)[6],
-                              real64 ( &R )[NUM_SUPPORT_POINTS][3] ){}
+                              real64 ( & R )[NUM_SUPPORT_POINTS][3] ){}
 
   /**
    * @brief Product of each shape function with a vector forcing term.

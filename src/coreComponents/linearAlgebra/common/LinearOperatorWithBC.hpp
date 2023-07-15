@@ -24,35 +24,35 @@ namespace geos
 
 template< typename T >
 GEOS_HOST_DEVICE
-inline real64 bcFieldValue( T const & field, 
-                            localIndex const index, 
+inline real64 bcFieldValue( T const & field,
+                            localIndex const index,
                             int const component )
 {
-  return field(index, component );
-} 
+  return field( index, component );
+}
 
 template<>
 GEOS_HOST_DEVICE
-inline real64 bcFieldValue<arrayView1d<real64 const>>( arrayView1d<real64 const> const & field, 
-                                                       localIndex const index, 
-                                                       int const )
+inline real64 bcFieldValue< arrayView1d< real64 const > >( arrayView1d< real64 const > const & field,
+                                                           localIndex const index,
+                                                           int const )
 {
   return field[index];
 }
 
 
 template< typename T >
-inline real64 fieldLinearIndex( T const & field, 
+inline real64 fieldLinearIndex( T const & field,
                                 localIndex const index0,
                                 localIndex const index1 )
 {
-  return field.linearIndex(index0, index1 );
-} 
+  return field.linearIndex( index0, index1 );
+}
 
 template<>
-inline real64 fieldLinearIndex<arrayView1d<real64 const>>( arrayView1d<real64 const> const & GEOS_UNUSED_PARAM(field), 
-                                                           localIndex const index0,
-                                                           localIndex const GEOS_UNUSED_PARAM(index1) )
+inline real64 fieldLinearIndex< arrayView1d< real64 const > >( arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( field ),
+                                                               localIndex const index0,
+                                                               localIndex const GEOS_UNUSED_PARAM( index1 ) )
 {
   return index0;
 }
@@ -60,11 +60,11 @@ inline real64 fieldLinearIndex<arrayView1d<real64 const>>( arrayView1d<real64 co
 
 /**
  * @brief Wrapper for a linear operator applying the boundary conditions in a matrix-free fashion.
- * 
+ *
  * @tparam Vector The type of vectors used.
  * @tparam PrimaryFieldType The type of the primary field.
  */
-template < typename Vector, typename PrimaryFieldType >
+template< typename Vector, typename PrimaryFieldType >
 class LinearOperatorWithBC : public LinearOperator< Vector >
 {
 public:
@@ -79,7 +79,7 @@ public:
   // {
   //   GEOS_HOST_DEVICE real64 operator()( localIndex const a )
   //   {
-  //     return 
+  //     return
   //   }
 
   //   int const component;
@@ -88,13 +88,13 @@ public:
 
   /**
    * @brief Construct a new linear operator with boundary conditions wrapping the given linear operator.
-   * 
-   * @param solver 
+   *
+   * @param solver
    * @param unconstrained_op The linear operator without boundary conditions.
-   * @param domain 
-   * @param dofManager 
-   * @param fieldName 
-   * @param time 
+   * @param domain
+   * @param dofManager
+   * @param fieldName
+   * @param time
    * @param diagPolicy The digonal policy to apply the boundary conditions.
    */
   LinearOperatorWithBC( SolverBase const & solver,
@@ -115,20 +115,20 @@ public:
     using POLICY = parallelDevicePolicy<>;
 
     // Compute the "diagonal"
-    switch (m_diagPolicy)
+    switch( m_diagPolicy )
     {
       case DiagPolicy::DiagonalOne:
-        {
-          m_diagonal.setValues< POLICY >( 1.0 );
-        }
-        break;
+      {
+        m_diagonal.setValues< POLICY >( 1.0 );
+      }
+      break;
       case DiagPolicy::DiagonalZero:
-        {
-          m_diagonal.zero();
-        }
-        break;
+      {
+        m_diagonal.zero();
+      }
+      break;
       case DiagPolicy::KeepDiagonal:
-        GEOS_ERROR("Not yet implemented.");
+        GEOS_ERROR( "Not yet implemented." );
         // TODO: compute diagonal
         break;
     }
@@ -137,23 +137,23 @@ public:
     FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
     globalIndex totalSize = 0;
     solver.forDiscretizationOnMeshTargets( m_domain.getMeshBodies(), [&]( string const &,
-                                                   MeshLevel & mesh,
-                                                   arrayView1d< string const > const & )
+                                                                          MeshLevel & mesh,
+                                                                          arrayView1d< string const > const & )
     {
-      fsManager.apply<NodeManager>( m_time,
-                       mesh,
-                       m_fieldName,
-                       [&]( FieldSpecificationBase const & GEOS_UNUSED_PARAM(bc),
-                            string const &,
-                            SortedArrayView< localIndex const > const & targetSet,
-                            dataRepository::Group & GEOS_UNUSED_PARAM(targetGroup),
-                            string const & GEOS_UNUSED_PARAM( fieldName ) )
+      fsManager.apply< NodeManager >( m_time,
+                                      mesh,
+                                      m_fieldName,
+                                      [&]( FieldSpecificationBase const & GEOS_UNUSED_PARAM( bc ),
+                                           string const &,
+                                           SortedArrayView< localIndex const > const & targetSet,
+                                           dataRepository::Group & GEOS_UNUSED_PARAM( targetGroup ),
+                                           string const & GEOS_UNUSED_PARAM( fieldName ) )
       {
         totalSize += targetSet.size();
       } );
     } );
 
-    
+
     // NOTE: we're not checking for duplicates.
     m_constrainedIndices.reserve( totalSize );
     m_constrainedDofIndices.reserve( totalSize );
@@ -168,49 +168,50 @@ public:
 
   /**
    * @brief Compute the boundary condition.
-   * 
-   * @param solver 
-   * @param fsManager 
+   *
+   * @param solver
+   * @param fsManager
    */
   void setupBoundaryConditions( SolverBase const & solver,
                                 FieldSpecificationManager const & fsManager )
   {
     solver.forDiscretizationOnMeshTargets( m_domain.getMeshBodies(), [&]( string const &,
-                                                   MeshLevel & mesh,
-                                                   arrayView1d< string const > const & )
+                                                                          MeshLevel & mesh,
+                                                                          arrayView1d< string const > const & )
     {
       auto const & nodeManager = mesh.getNodeManager();
       auto const & field = nodeManager.getReference< PrimaryFieldType >( m_fieldName ).toViewConst();
 
-      fsManager.apply<NodeManager>( m_time,
-                       mesh,
-                       m_fieldName,
-                       [&]( FieldSpecificationBase const & bc,
-                            string const &,
-                            SortedArrayView< localIndex const > const & targetSet,
-                            dataRepository::Group & targetGroup,
-                            string const & fieldName )
+      fsManager.apply< NodeManager >( m_time,
+                                      mesh,
+                                      m_fieldName,
+                                      [&]( FieldSpecificationBase const & bc,
+                                           string const &,
+                                           SortedArrayView< localIndex const > const & targetSet,
+                                           dataRepository::Group & targetGroup,
+                                           string const & fieldName )
       {
         array1d< localIndex > indexArray( targetSet.size() );
         int count = 0;
         for( localIndex const index : targetSet )
         {
-          indexArray[ count++ ] = fieldLinearIndex( field, index, bc.getComponent() ) ;
+          indexArray[ count++ ] = fieldLinearIndex( field, index, bc.getComponent() );
         }
 
 
         array1d< globalIndex > dofArray( targetSet.size() );
-        dofArray.setName("dofArray");
+        dofArray.setName( "dofArray" );
         arrayView1d< globalIndex > const & dof = dofArray.toView();
 
         array1d< real64 > rhsContributionArray( targetSet.size() );
-        rhsContributionArray.setName("rhsContributionArray");
-        arrayView1d< real64 > const & rhsContribution = rhsContributionArray.toView(); 
+        rhsContributionArray.setName( "rhsContributionArray" );
+        arrayView1d< real64 > const & rhsContribution = rhsContributionArray.toView();
         arrayView1d< globalIndex const > const & dofMap = targetGroup.getReference< array1d< globalIndex > >( m_dofManager.getKey( fieldName ) );
         int const component = bc.getComponent();
         int const rankOffset = m_dofManager.rankOffset();
-        // we need to write a new variant of this function that calculates the rhs contribution to the original array2d instead of the dof vector.
-        bc.computeRhsContribution< FieldSpecificationEqual, 
+        // we need to write a new variant of this function that calculates the rhs contribution to the original array2d instead of the dof
+        // vector.
+        bc.computeRhsContribution< FieldSpecificationEqual,
                                    parallelDevicePolicy<> >( targetSet,
                                                              m_time,
                                                              1.0, // TODO: double check
@@ -220,11 +221,11 @@ public:
                                                              m_diagonal.toViewConst(),
                                                              dof,
                                                              rhsContribution,
-                                                             [=] GEOS_HOST_DEVICE (localIndex const a)->real64
-                                                             {
-                                                               return bcFieldValue( field, a, component );
-                                                             } );
-                                                             //field );
+                                                             [=] GEOS_HOST_DEVICE ( localIndex const a )->real64
+        {
+          return bcFieldValue( field, a, component );
+        } );
+        //field );
 
         dof.move( LvArray::MemorySpace::host, false );
         rhsContribution.move( LvArray::MemorySpace::host, false );
@@ -232,7 +233,7 @@ public:
         m_constrainedDofIndices.insert( m_constrainedDofIndices.size(), dofArray.begin(), dofArray.end() );
         m_rhsContributions.insert( m_rhsContributions.size(), rhsContribution.begin(), rhsContribution.end() );
         m_constrainedIndices.insert( m_constrainedIndices.size(), indexArray.begin(), indexArray.end() );
-        
+
       } );
     } );
   }
@@ -240,7 +241,7 @@ public:
   /**
    * @brief Compute the contributions of the boundary conditions on the right hand side and the
    * initial guess.
-   * 
+   *
    * @param rhs The right hand side vector.
    * @param solution The initial guess vector.
    */
@@ -272,7 +273,7 @@ public:
 
     // Bottom contribution to rhs
     tmpRhs = rhs;
-    
+
     // std::cout<<"LinearOperatorWithBC::computeConstrainedRHS - srcWithBC"<<std::endl;
     // std::cout<<srcWithBC<<std::endl;
     m_unconstrained_op.apply( srcWithBC, rhs );
@@ -289,7 +290,7 @@ public:
                       [ localRhs, localBCIndices, localRhsContributions ] GEOS_HOST_DEVICE
                         ( localIndex const i )
     {
-      localIndex const idx = localBCIndices[ i ]; 
+      localIndex const idx = localBCIndices[ i ];
       localRhs[ idx ] = localRhsContributions [ i ];
     } );
     rhs.close();
@@ -297,7 +298,7 @@ public:
 
   /**
    * @brief Apply the linear operator with the boundary conditions.
-   * 
+   *
    * @param src The input vector.
    * @param dst The output vector.
    */
@@ -322,7 +323,7 @@ public:
     {
       localSrcWithBC[ localBCIndices[ i ] ] = 0.0;
     } );
-    
+
     srcWithBC.close();
 
 //    std::cout << "srcWithBC: " << srcWithBC << std::endl;
@@ -333,29 +334,29 @@ public:
 
 //    std::cout << "localSrc: " << localSrc << std::endl;
     arrayView1d< real64 > const localDst = dst.open();
-    switch (m_diagPolicy)
+    switch( m_diagPolicy )
     {
       case DiagPolicy::DiagonalOne:
+      {
+        forAll< POLICY >( m_constrainedDofIndices.size(), [ localSrc, localDst, localBCIndices ] GEOS_HOST_DEVICE ( localIndex const i )
         {
-          forAll< POLICY >( m_constrainedDofIndices.size(), [ localSrc, localDst, localBCIndices ] GEOS_HOST_DEVICE ( localIndex const i )
-          {
-            localIndex const idx = localBCIndices[ i ];
-            localDst[ idx ] = localSrc [ idx ];
-          } );
+          localIndex const idx = localBCIndices[ i ];
+          localDst[ idx ] = localSrc [ idx ];
+        } );
 //          std::cout << "localDst: " << localDst << std::endl;
-        }
-        break;
+      }
+      break;
       case DiagPolicy::DiagonalZero:
+      {
+        forAll< POLICY >( m_constrainedDofIndices.size(), [ localDst, localBCIndices ] GEOS_HOST_DEVICE ( localIndex const i )
         {
-          forAll< POLICY >( m_constrainedDofIndices.size(), [ localDst, localBCIndices ] GEOS_HOST_DEVICE ( localIndex const i )
-          {
-            localIndex const idx = localBCIndices[ i ];
-            localDst[ idx ] = 0.0;
-          } );
-        }
-        break;
+          localIndex const idx = localBCIndices[ i ];
+          localDst[ idx ] = 0.0;
+        } );
+      }
+      break;
       case DiagPolicy::KeepDiagonal:
-        GEOS_ERROR("Not yet implemented.");
+        GEOS_ERROR( "Not yet implemented." );
         // TODO: set dst to diag * xBC
         break;
     }
@@ -394,8 +395,8 @@ private:
   string m_fieldName;
   real64 const m_time;
   DiagPolicy m_diagPolicy;
-  array1d<localIndex> m_constrainedIndices;
-  array1d<real64> m_rhsContributions;
+  array1d< localIndex > m_constrainedIndices;
+  array1d< real64 > m_rhsContributions;
   array1d< localIndex > m_constrainedDofIndices;
 
   mutable ParallelVector srcWithBC;

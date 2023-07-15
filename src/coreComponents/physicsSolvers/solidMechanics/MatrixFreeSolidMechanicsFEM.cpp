@@ -48,10 +48,10 @@ MatrixFreeSolidMechanicsFEMOperator::
                                        map< std::pair< string, string >, array1d< string > > const & meshTargets,
                                        DofManager & dofManager,
                                        string const & finiteElementName ):
-    m_meshBodies( domain.getMeshBodies() ),
-    m_meshTargets( meshTargets ),
-    m_dofManager( dofManager ),
-    m_finiteElementName( finiteElementName )
+  m_meshBodies( domain.getMeshBodies() ),
+  m_meshTargets( meshTargets ),
+  m_dofManager( dofManager ),
+  m_finiteElementName( finiteElementName )
 { }
 
 MatrixFreeSolidMechanicsFEMOperator::
@@ -59,10 +59,10 @@ MatrixFreeSolidMechanicsFEMOperator::
                                        map< std::pair< string, string >, array1d< string > > const & meshTargets,
                                        DofManager & dofManager,
                                        string const & finiteElementName ):
-    m_meshBodies( meshBodies ),
-    m_meshTargets( meshTargets ),
-    m_dofManager( dofManager ),
-    m_finiteElementName( finiteElementName )
+  m_meshBodies( meshBodies ),
+  m_meshTargets( meshTargets ),
+  m_dofManager( dofManager ),
+  m_finiteElementName( finiteElementName )
 { }
 
 void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, ParallelVector & dst ) const
@@ -78,11 +78,11 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
     localDst[ i ] = 0.0;
   } );
 
-    // {
-    // std::cout<<"MatrixFreeSolidMechanicsFEMOperator::apply - bp1"<<std::endl;
-    // LvArray::print< parallelDevicePolicy< 32 > >( localSrc );
-    // std::cout<<"MatrixFreeSolidMechanicsFEMOperator::apply - bp2"<<std::endl;
-    // }
+  // {
+  // std::cout<<"MatrixFreeSolidMechanicsFEMOperator::apply - bp1"<<std::endl;
+  // LvArray::print< parallelDevicePolicy< 32 > >( localSrc );
+  // std::cout<<"MatrixFreeSolidMechanicsFEMOperator::apply - bp2"<<std::endl;
+  // }
 
 
 
@@ -99,13 +99,13 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
       meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( MeshBody::groupStructKeys::baseDiscretizationString() );
     }
     MeshLevel & mesh = *meshLevelPtr;
-      
-    auto const & totalDisplacement = mesh.getNodeManager().getField<fields::solidMechanics::totalDisplacement>();
+
+    auto const & totalDisplacement = mesh.getNodeManager().getField< fields::solidMechanics::totalDisplacement >();
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > localSrc2d( totalDisplacement.dimsArray(), totalDisplacement.stridesArray(), 0, localSrc.dataBuffer() );
     arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > localDst2d( totalDisplacement.dimsArray(), totalDisplacement.stridesArray(), 0, localDst.dataBuffer() );
 
 #if 0
-    TeamSolidMechanicsFEMKernelFactory kernelFactory( localSrc2d, localDst2d );  
+    TeamSolidMechanicsFEMKernelFactory kernelFactory( localSrc2d, localDst2d );
     finiteElement::
       regionBasedKernelApplication< team_launch_policy,
                                     constitutive::SolidBase,
@@ -115,19 +115,19 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
                                                             "solidMaterialNames",
                                                             kernelFactory );
 #else
-    auto kernelFactory = solidMechanicsLagrangianFEMKernels::SmallStrainResidualFactory( localSrc2d, 
+    auto kernelFactory = solidMechanicsLagrangianFEMKernels::SmallStrainResidualFactory( localSrc2d,
                                                                                          localDst2d,
-                                                                                         0, 
+                                                                                         0,
                                                                                          "" );
 
     finiteElement::
-    regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                  constitutive::ElasticIsotropic,
-                                  CellElementSubRegion >( mesh,
-                                                          regionNames,
-                                                          m_finiteElementName,
-                                                          "solidMaterialNames",
-                                                          kernelFactory );
+      regionBasedKernelApplication< parallelDeviceAsyncPolicy< 32 >,
+                                    constitutive::ElasticIsotropic,
+                                    CellElementSubRegion >( mesh,
+                                                            regionNames,
+                                                            m_finiteElementName,
+                                                            "solidMaterialNames",
+                                                            kernelFactory );
 #endif
   }
 
@@ -140,7 +140,7 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
   dst.close();
 }
 
-void MatrixFreeSolidMechanicsFEMOperator::computeDiagonal( ParallelVector & GEOS_UNUSED_PARAM(diagonal) ) const
+void MatrixFreeSolidMechanicsFEMOperator::computeDiagonal( ParallelVector & GEOS_UNUSED_PARAM( diagonal ) ) const
 {
   GEOS_ERROR( "computeDiagonal: operation not yet implemented" );
 }
@@ -203,8 +203,10 @@ MPI_Comm MatrixFreeSolidMechanicsFEMOperator::comm() const
 /* CONSTRUCTOR
    First, let us inspect the constructor of a "MatrixFreeSolidMechanicsFEM" object.
    This constructor does three important things:
-   1 - It constructs an instance of the MatrixFreeSolidMechanicsFEM class (here: using the SolverBase constructor and passing through the arguments).
-   2 - It sets some default values for the MatrixFreeSolidMechanicsFEM-specific private variables (here: m_fieldName and m_timeIntegrationOption).
+   1 - It constructs an instance of the MatrixFreeSolidMechanicsFEM class (here: using the SolverBase constructor and passing through the
+      arguments).
+   2 - It sets some default values for the MatrixFreeSolidMechanicsFEM-specific private variables (here: m_fieldName and
+      m_timeIntegrationOption).
    3 - It creates and activates a "registerWrapper" for each private variable.
    This is where the private variables are declared either as REQUIRED or OPTIONAL.
    An error is thrown if a REQUIRED variable is not specified in the XML file,
@@ -214,7 +216,7 @@ MPI_Comm MatrixFreeSolidMechanicsFEMOperator::comm() const
 
 //START_SPHINX_INCLUDE_CONSTRUCTOR
 MatrixFreeSolidMechanicsFEM::MatrixFreeSolidMechanicsFEM( const string & name,
-                        Group * const parent ):
+                                                          Group * const parent ):
   SolverBase( name, parent ),
   m_fieldName( "totalDisplacement" )
 {}
@@ -227,7 +229,7 @@ MatrixFreeSolidMechanicsFEM::~MatrixFreeSolidMechanicsFEM()
 
 real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
                                                 real64 const & dt,
-                                                const int GEOS_UNUSED_PARAM(cycleNumber),
+                                                const int GEOS_UNUSED_PARAM( cycleNumber ),
                                                 DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
@@ -283,7 +285,7 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
 
   // CgSolver< ParallelVector > solver( params, constrained_solid_mechanics, identity );
   UnprecCgSolver< ParallelVector > solver( params, constrained_solid_mechanics );
-  
+
 //   std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp7"<<std::endl;
 
   solver.solve( m_rhs, m_solution );
@@ -332,13 +334,13 @@ void MatrixFreeSolidMechanicsFEM::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & meshLevel,
-                                                    arrayView1d< string const > const & GEOS_UNUSED_PARAM(regionNames) )
+                                                    arrayView1d< string const > const & GEOS_UNUSED_PARAM( regionNames ) )
   {
     NodeManager & nodes = meshLevel.getNodeManager();
 
     nodes.registerField< fields::solidMechanics::totalDisplacement >( getName() ).
       reference().resizeDimension< 1 >( 3 );
-  });
+  } );
 
 }
 
@@ -369,10 +371,10 @@ MatrixFreeSolidMechanicsFEM::applySystemSolution( DofManager const & dofManager,
                                fields::solidMechanics::totalDisplacement::key(),
                                fields::solidMechanics::totalDisplacement::key(),
                                scalingFactor );
-                               
+
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & GEOS_UNUSED_PARAM(mesh),
+                                                                MeshLevel & GEOS_UNUSED_PARAM( mesh ),
                                                                 arrayView1d< string const > const & )
   {
     // auto const & disp = mesh.getNodeManager().getField<fields::solidMechanics::totalDisplacement>();

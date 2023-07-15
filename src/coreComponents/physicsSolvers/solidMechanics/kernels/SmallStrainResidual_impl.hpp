@@ -42,8 +42,8 @@ SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::SmallStrainRe
                                                                                         CONSTITUTIVE_TYPE & inputConstitutiveType,
                                                                                         arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const inputSrc,
                                                                                         arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const inputDst,
-                                                                                        real64 const GEOS_UNUSED_PARAM(dt),
-                                                                                        string const GEOS_UNUSED_PARAM(elementListName) ):
+                                                                                        real64 const GEOS_UNUSED_PARAM( dt ),
+                                                                                        string const GEOS_UNUSED_PARAM( elementListName ) ):
   Base( elementSubRegion,
         finiteElementSpace,
         inputConstitutiveType ),
@@ -70,7 +70,7 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( l
   {
     localIndex const nodeIndex = m_elemsToNodes( k, a );
     GEOS_PRAGMA_UNROLL
-      for( int i=0; i<numDofPerTrialSupportPoint; ++i )
+    for( int i=0; i<numDofPerTrialSupportPoint; ++i )
     {
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
       stack.xLocal[ a ][ i ] = m_X( nodeIndex, i );
@@ -89,7 +89,7 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
                                                                                                localIndex const q,
                                                                                                StackVariables & stack ) const
 {
-#define USE_JACOBIAN
+  #define USE_JACOBIAN
 #if !defined( USE_JACOBIAN )
   real64 dNdX[ numNodesPerElem ][ 3 ];
   real64 const detJ = FE_TYPE::calcGradN( q, stack.xLocal, dNdX );
@@ -107,7 +107,7 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   }
 
   FE_TYPE::plusGradNajAij( dNdX, stressLocal, stack.fLocal );
-  
+
 #else //defined( USE_JACOBIAN )
   real64 invJ[3][3] = {{0}};
   real64 const detJ = FE_TYPE::invJacobianTransformation( q, stack.xLocal, invJ );
@@ -149,34 +149,21 @@ real64 SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::comple
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( localIndex const k,
-                                                                               real64 (&xLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
-                                                                               real64 (&varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const
+                                                                               real64 (& xLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
+                                                                               real64 (& varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const
 {
   GEOS_PRAGMA_UNROLL
   for( localIndex a=0; a< numNodesPerElem; ++a )
   {
     localIndex const nodeIndex = m_elemsToNodes( k, a );
     GEOS_PRAGMA_UNROLL
-      for( int i=0; i<numDofPerTrialSupportPoint; ++i )
+    for( int i=0; i<numDofPerTrialSupportPoint; ++i )
     {
       xLocal[ a ][ i ] = m_X( nodeIndex, i );
       varLocal[ a ][ i ] = m_input( nodeIndex, i );
@@ -195,9 +182,9 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
                                                                                                localIndex const qc,
                                                                                                real64 const (&xLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
                                                                                                real64 const (&varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
-                                                                                               real64 (&fLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const
+                                                                                               real64 (& fLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const
 {
-#define USE_JACOBIAN 1
+  #define USE_JACOBIAN 1
 #if !defined(USE_JACOBIAN)
   real64 dNdX[ numNodesPerElem ][ 3 ];
   real64 const detJ = FE_TYPE::calcGradN( qa, qb, qc, xLocal, dNdX );
@@ -235,7 +222,7 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   real64 invJ[3][3] = {{0}};
   real64 parentGradVar[3][3] = {{0}};
 
-  FE_TYPE::parentGradient2( qa, qb, qc, xLocal, varLocal, invJ, parentGradVar);
+  FE_TYPE::parentGradient2( qa, qb, qc, xLocal, varLocal, invJ, parentGradVar );
   real64 const detJ = LvArray::tensorOps::invert< 3 >( invJ );
 
   real64 gradVar[3][3] = {{0}};
@@ -244,10 +231,10 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   for( int i = 0; i < 3; ++i )
   {
     GEOS_PRAGMA_UNROLL
-      for( int j = 0; j < 3; ++j )
+    for( int j = 0; j < 3; ++j )
     {
       GEOS_PRAGMA_UNROLL
-          for( int kk = 0; kk < 3; ++kk )
+      for( int kk = 0; kk < 3; ++kk )
       {
         gradVar[i][j] = gradVar[i][j] + parentGradVar[i][kk] * invJ[kk][j];
       }
@@ -278,7 +265,6 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 
 
 
-
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
@@ -288,12 +274,12 @@ GEOS_FORCE_INLINE
 void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel( localIndex const k,
                                                                                                real64 const (&xLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
                                                                                                real64 const (&varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
-                                                                                               real64 (&fLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const
+                                                                                               real64 (& fLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const
 {
   real64 invJ[3][3] = {{0}};
   real64 parentGradVar[3][3] = {{0}};
 
-  FE_TYPE::template parentGradient2< qa, qb, qc >( xLocal, varLocal, invJ, parentGradVar);
+  FE_TYPE::template parentGradient2< qa, qb, qc >( xLocal, varLocal, invJ, parentGradVar );
 
 //  FE_TYPE::template parentGradient< qa, qb, qc >( xLocal, invJ);
   real64 const detJ = LvArray::tensorOps::invert< 3 >( invJ );
@@ -305,10 +291,10 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   for( int i = 0; i < 3; ++i )
   {
     GEOS_PRAGMA_UNROLL
-      for( int j = 0; j < 3; ++j )
+    for( int j = 0; j < 3; ++j )
     {
       GEOS_PRAGMA_UNROLL
-          for( int kk = 0; kk < 3; ++kk )
+      for( int kk = 0; kk < 3; ++kk )
       {
         gradVar[i][j] = gradVar[i][j] + parentGradVar[i][kk] * invJ[kk][j];
       }
@@ -337,7 +323,6 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 
 
 
-
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
@@ -359,12 +344,6 @@ real64 SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::comple
 
 
 
-
-
-
-
-
-
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
@@ -377,7 +356,7 @@ kernelLaunch( localIndex const numElems,
 {
   GEOS_MARK_FUNCTION;
 
-#define KERNEL_OPTION 3
+  #define KERNEL_OPTION 3
 #if KERNEL_OPTION == 1
   forAll< POLICY >( numElems,
                     [=] GEOS_DEVICE ( localIndex const k )
@@ -386,60 +365,60 @@ kernelLaunch( localIndex const numElems,
 
     kernelComponent.setup( k, stack );
 //    for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
-  GEOS_PRAGMA_UNROLL
+    GEOS_PRAGMA_UNROLL
     for( integer qa=0; qa<2; ++qa )
-  GEOS_PRAGMA_UNROLL
-    for( integer qb=0; qb<2; ++qb )
-  GEOS_PRAGMA_UNROLL
-    for( integer qc=0; qc<2; ++qc )
-    {
-      //  int qa, qb, qc;
-      //FE_TYPE::LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+      GEOS_PRAGMA_UNROLL
+      for( integer qb=0; qb<2; ++qb )
+        GEOS_PRAGMA_UNROLL
+        for( integer qc=0; qc<2; ++qc )
+        {
+          //  int qa, qb, qc;
+          //FE_TYPE::LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
 
-      int const q = qa + 2 * qb + 4*qc;
-      kernelComponent.quadraturePointKernel( k, q, stack );
-    }
+          int const q = qa + 2 * qb + 4*qc;
+          kernelComponent.quadraturePointKernel( k, q, stack );
+        }
     kernelComponent.complete( k, stack );
   } );
 #elif KERNEL_OPTION == 2 // no stack
 
-    forAll< POLICY >( numElems,
-                      [=] GEOS_DEVICE ( localIndex const k )
-    {
-      real64 fLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ] = {{0}};
-      real64 varLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
-      real64 xLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
+  forAll< POLICY >( numElems,
+                    [=] GEOS_DEVICE ( localIndex const k )
+  {
+    real64 fLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ] = {{0}};
+    real64 varLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
+    real64 xLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
 
-      kernelComponent.setup( k, xLocal, varLocal );
-      for( integer qc=0; qc<2; ++qc )
+    kernelComponent.setup( k, xLocal, varLocal );
+    for( integer qc=0; qc<2; ++qc )
       for( integer qb=0; qb<2; ++qb )
-      for( integer qa=0; qa<2; ++qa )
-      {
-        kernelComponent.quadraturePointKernel( k, qa, qb, qc, xLocal, varLocal, fLocal );
-      }
-      kernelComponent.complete( k, fLocal );
+        for( integer qa=0; qa<2; ++qa )
+        {
+          kernelComponent.quadraturePointKernel( k, qa, qb, qc, xLocal, varLocal, fLocal );
+        }
+    kernelComponent.complete( k, fLocal );
 
-    } );
+  } );
 #else
-    forAll< POLICY >( numElems,
-                      [=] GEOS_DEVICE ( localIndex const k )
-    {
-      real64 fLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ] = {{0}};
-      real64 varLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
-      real64 xLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
+  forAll< POLICY >( numElems,
+                    [=] GEOS_DEVICE ( localIndex const k )
+  {
+    real64 fLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ] = {{0}};
+    real64 varLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
+    real64 xLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
 
-      kernelComponent.setup( k, xLocal, varLocal );
-      kernelComponent.template quadraturePointKernel<0, 0, 0>( k, xLocal, varLocal, fLocal );
-      kernelComponent.template quadraturePointKernel<0, 0, 1>( k, xLocal, varLocal, fLocal );
-      kernelComponent.template quadraturePointKernel<0, 1, 0>( k, xLocal, varLocal, fLocal );
-      kernelComponent.template quadraturePointKernel<0, 1, 1>( k, xLocal, varLocal, fLocal );
-      kernelComponent.template quadraturePointKernel<1, 0, 0>( k, xLocal, varLocal, fLocal );
-      kernelComponent.template quadraturePointKernel<1, 0, 1>( k, xLocal, varLocal, fLocal );
-      kernelComponent.template quadraturePointKernel<1, 1, 0>( k, xLocal, varLocal, fLocal );
-      kernelComponent.template quadraturePointKernel<1, 1, 1>( k, xLocal, varLocal, fLocal );
-      kernelComponent.complete( k, fLocal );
+    kernelComponent.setup( k, xLocal, varLocal );
+    kernelComponent.template quadraturePointKernel< 0, 0, 0 >( k, xLocal, varLocal, fLocal );
+    kernelComponent.template quadraturePointKernel< 0, 0, 1 >( k, xLocal, varLocal, fLocal );
+    kernelComponent.template quadraturePointKernel< 0, 1, 0 >( k, xLocal, varLocal, fLocal );
+    kernelComponent.template quadraturePointKernel< 0, 1, 1 >( k, xLocal, varLocal, fLocal );
+    kernelComponent.template quadraturePointKernel< 1, 0, 0 >( k, xLocal, varLocal, fLocal );
+    kernelComponent.template quadraturePointKernel< 1, 0, 1 >( k, xLocal, varLocal, fLocal );
+    kernelComponent.template quadraturePointKernel< 1, 1, 0 >( k, xLocal, varLocal, fLocal );
+    kernelComponent.template quadraturePointKernel< 1, 1, 1 >( k, xLocal, varLocal, fLocal );
+    kernelComponent.complete( k, fLocal );
 
-    } );
+  } );
 
 #endif
   return 0;

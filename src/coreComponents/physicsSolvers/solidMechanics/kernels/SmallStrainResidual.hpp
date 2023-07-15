@@ -171,18 +171,10 @@ public:
 
 
 
-
-
-
-
-
-
-
-
   GEOS_HOST_DEVICE
   void setup( localIndex const k,
-              real64 (&xLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
-              real64 (&varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const;
+              real64 ( &xLocal ) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
+              real64 ( &varLocal ) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const;
 
   /**
    * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
@@ -200,7 +192,7 @@ public:
                               localIndex const qc,
                               real64 const (&xLocal)[ numNodesPerElem ][ numDofPerTrialSupportPoint ],
                               real64 const (&varLocal)[ numNodesPerElem ][ numDofPerTrialSupportPoint ],
-                              real64 (&fLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const;
+                              real64 ( &fLocal ) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const;
 
 
   template< int qa, int qb, int qc >
@@ -208,7 +200,7 @@ public:
   void quadraturePointKernel( localIndex const k,
                               real64 const (&xLocal)[ numNodesPerElem ][ numDofPerTrialSupportPoint ],
                               real64 const (&varLocal)[ numNodesPerElem ][ numDofPerTrialSupportPoint ],
-                              real64 (&fLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const;
+                              real64 ( &fLocal ) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const;
 
   /**
    * @copydoc geosx::finiteElement::KernelBase::complete
@@ -219,19 +211,6 @@ public:
   GEOS_HOST_DEVICE
   real64 complete( localIndex const k,
                    real64 const (&fLocal) [ numNodesPerElem ][ numDofPerTestSupportPoint ] ) const;
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
