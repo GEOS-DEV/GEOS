@@ -47,32 +47,22 @@ struct WaveSolverUtils
     switch( order )
     {
       case 0:
-      {
         pulse = sgn * gaussian;
-      }
-      break;
+        break;
       case 1:
-      {
         pulse = sgn * (2 * alpha * time_d) * gaussian;
-      }
-      break;
+        break;
       case 2:
-      {
         pulse = sgn * (2 * alpha + 4 * pow(alpha, 2) * pow(time_d, 2)) * gaussian;
-      }
-      break;
+        break;
       case 3:
-      {
         pulse = sgn * (12 * pow(alpha, 2) * time_d + 8 * pow(alpha, 3)*  pow(time_d, 3)) * gaussian;
-      }
-      break;
+        break;
       case 4:
-      {
         pulse = sgn * (12 * pow(alpha, 2) + 48 * pow(alpha, 3) * pow(time_d, 2) + 16 * pow(alpha, 4) * pow(time_d, 4)) * gaussian;
-      }
-      break;
+        break;
       default:
-        GEOS_ERROR( "This option is not supported yet, rickerOrder must be in range {0, ..., 4}" );
+        GEOS_ERROR( "This option is not supported yet, rickerOrder must be in range {0:4}" );
     }
 
     return pulse;
