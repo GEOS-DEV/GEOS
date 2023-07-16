@@ -711,11 +711,11 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 {
   GEOS_MARK_FUNCTION;
 
-  // std::cout << "\t[ElasticWaveEquationSEM::explicitStepInternal] start" << std::endl;
-
   GEOS_UNUSED_VAR( time_n, dt, cycleNumber );
 
   GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
+
+  SortedArrayView< localIndex const > const & solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -763,15 +763,12 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
     addSourceToRightHandSide( cycleNumber, rhsx, rhsy, rhsz );
 
-
-
-    real64 const dt2 = dt*dt;
-    forAll< EXEC_POLICY >( m_solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+    real64 const dt2 = pow(dt, 2);
+    forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
     {
-      localIndex a = m_solverTargetNodesSet[i];
+      localIndex const a = solverTargetNodesSet[n];
       if( freeSurfaceNodeIndicator[a] != 1 )
       {
-        // std::cout << mass[a]  << ' ' <<  mass[a]+0.5*dt*dampingx[a] <<  mass[a]+0.5*dt*dampingz[a] << std::endl;
         ux_np1[a] = ux_n[a];
         ux_np1[a] *= 2.0*mass[a];
         ux_np1[a] -= (mass[a]-0.5*dt*dampingx[a])*ux_nm1[a];
@@ -809,8 +806,9 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     computeAllSeismoTraces( time_n, dt, uy_np1, uy_n, uYReceivers );
     computeAllSeismoTraces( time_n, dt, uz_np1, uz_n, uZReceivers );
 
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+    forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
     {
+      localIndex const a = solverTargetNodesSet[n];
       ux_nm1[a] = ux_n[a];
       uy_nm1[a] = uy_n[a];
       uz_nm1[a] = uz_n[a];
@@ -833,8 +831,6 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     }
 
   } );
-
-  // std::cout << "\t[ElasticWaveEquationSEM::explicitStepInternal] end" << std::endl;
 
   return dt;
 }

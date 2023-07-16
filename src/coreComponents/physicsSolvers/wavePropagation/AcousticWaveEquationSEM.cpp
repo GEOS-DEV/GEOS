@@ -928,9 +928,9 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 {
   GEOS_MARK_FUNCTION;
 
-  // std::cout << "\t[AcousticWaveEquationSEM::explicitStepInternal] start" << std::endl;
-
   GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
+
+  SortedArrayView< localIndex const > const & solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
@@ -946,7 +946,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_n >();
     arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
 
-    arrayView1d< localIndex const > const freeSurfaceNodeIndicatorA = nodeManager.getField< fields::FreeSurfaceNodeIndicatorA >();
+    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicatorA >();
     arrayView1d< real32 > const stiffnessVector = nodeManager.getField< fields::StiffnessVector >();
     arrayView1d< real32 > const rhs = nodeManager.getField< fields::ForcingRHS >();
 
@@ -970,15 +970,15 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     addSourceToRightHandSide( cycleForSource, rhs );
 
     /// calculate your time integrators
-    real64 const dt2 = dt*dt;
+    real64 const dt2 = pow(dt, 2);
 
     if( !usePML )
     {
       GEOS_MARK_SCOPE ( updateP );
-      forAll< EXEC_POLICY >( m_solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+      forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
       {
-        localIndex a = m_solverTargetNodesSet[i];
-        if( freeSurfaceNodeIndicatorA[a] != 1 )
+        localIndex const a = solverTargetNodesSet[n];
+        if( freeSurfaceNodeIndicator[a] != 1 )
         {
           p_np1[a] = p_n[a];
           p_np1[a] *= 2.0*mass[a];
@@ -1010,9 +1010,10 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       applyPML( time_n, domain );
 
       GEOS_MARK_SCOPE ( updatePWithPML );
-      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+      forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
       {
-        if( freeSurfaceNodeIndicatorA[a] != 1 )
+        localIndex const a = solverTargetNodesSet[n];
+        if( freeSurfaceNodeIndicator[a] != 1 )
         {
           real32 sigma[3];
           real64 xLocal[ 3 ];
@@ -1066,16 +1067,16 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                   mesh,
                                   domain.getNeighbors(),
                                   true );
-
     /// compute the seismic traces since last step.
-    arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
+    arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
     if( time_n >= 0 )
     {
       computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
     }
     /// prepare next step
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+    forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
     {
+      localIndex const a = solverTargetNodesSet[n];
       stiffnessVector[a] = 0.0;
       rhs[a] = 0.0;
     } );
@@ -1087,10 +1088,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       grad_n.zero();
       divV_n.zero();
     }
-
   } );
-
-  // std::cout << "\t[AcousticWaveEquationSEM::explicitStepInternal] end" << std::endl;
 
   return dt;
 }

@@ -31,7 +31,7 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        order="1"
+        order="3"
         formulation="SEM"/>
     </FiniteElements>
   </NumericalMethods>
@@ -69,7 +69,7 @@
     <VTK name="vtkOutput"/>
   </Outputs>
 
-  <Events maxTime="1e-2">
+  <Events maxTime="3">
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solidSolverApplications"
