@@ -494,4 +494,4 @@ void SinglePhasePoromechanics::averageMeanStressIncrement( DomainPartition & dom
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanics, string const &, Group * const )
 
-}
+} /* namespace geos */
