@@ -310,7 +310,8 @@ public:
   void boundaryConditionUpdate( real64 dt, real64 time_n );
 
   void particleToGrid( ParticleManager & particleManager,
-                       NodeManager & nodeManager );
+                       NodeManager & nodeManager,
+                       real64 const time_n );
 
   void gridTrialUpdate( real64 dt,
                         NodeManager & nodeManager );
@@ -367,6 +368,22 @@ public:
                                                     real64 * shapeFunctionValues,
                                                     real64 shapeFunctionGradientValues[][3]);
 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  void computeBodyForce(real64 const time_n,
+                        real64 const & shearModulus,
+                        real64 const & bulkMudlus,
+                        arraySlice1d< real64 const > const particlePosition, 
+                        real64 * particleBodyForce);
+  
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  void computeGeneralizedVortexMMSBodyForce(real64 const time_n,
+                                            real64 const & shearModulus,
+                                            real64 const & bulkMudlus,
+                                            arraySlice1d< real64 const > const particlePosition,
+                                            real64 * particleBodyForce);
+
 protected:
   virtual void postProcessInput() override final;
 
@@ -398,6 +415,8 @@ protected:
   array1d< real64 > m_domainF;
   array1d< real64 > m_domainL;
 
+  array1d< real64 > m_bodyForce;
+
   int m_boxAverageHistory;
   int m_reactionHistory;
 
@@ -422,6 +441,9 @@ protected:
 
   int m_planeStrain;
   int m_numDims;
+
+  int m_uniformBodyForce;
+  int m_generalizedVortexMMS;
 
   real64 m_hEl[3];                // Grid spacing in x-y-z
   real64 m_xLocalMin[3];          // Minimum local grid coordinate including ghost nodes
