@@ -29,23 +29,23 @@ def main():
 
 		if (hasLabel):
 			plt.plot( rCoord,
-					  temperature[9, 0:nElements],        
+					  temperature[10, 0:nElements],        
 					  'r+',
 					  label='GEOS: t = 1e4 (s)')
 
 			plt.plot( rCoord,
-					  temperature[99, 0:nElements],        
+					  temperature[100, 0:nElements],        
 					  'b+',
 					  label='GEOS: t = 1e5 (s)')
 
 			hasLabel = False
 		else:
 			plt.plot( rCoord,
-					  temperature[9, 0:nElements],        
+					  temperature[10, 0:nElements],        
 					  'r+')
 
 			plt.plot( rCoord,
-					  temperature[99, 0:nElements],        
+					  temperature[100, 0:nElements],        
 					  'b+')
 
 	temperature_radial_analytic_1e4s = genfromtxt('temperature_radial_analytic_10000s.txt')
