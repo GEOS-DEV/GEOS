@@ -117,7 +117,7 @@ stages:
   stage: build
   variables:
     ALLOC_COMMAND: "salloc -N1 -ppdebug"
-    INTEGRATED_ALLOC_COMMAND: "salloc -N 1 -n 64 -ppdebug"
+    INTEGRATED_ALLOC_COMMAND: "salloc -N 1 -p pbatch"
     SYSTEM: "tioga"
   before_script:
     - module load rocm/5.4.3
