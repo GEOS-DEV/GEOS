@@ -118,21 +118,35 @@ TEST( testGroupPath, testGlobalPaths )
   // checks if the exception has been thrown as expected
   ASSERT_TRUE( trowHappened );
 
-  auto const testDataContextString = [&]( string const & groupPath, string const & ctxString )
+  auto const testGroupContextString = [&]( string const & groupPath, string const & ctxString )
   {
     Group const * const groupToTest = &problem.getGroupByPath( groupPath );
     ASSERT_NE( groupToTest, nullptr );
     ASSERT_STREQ( groupToTest->getDataContext().toString().c_str(),
                   ctxString.c_str() );
   };
-  // check if the DataContext string of a Group declared in the XML is formatted as expected
-  testDataContextString(
-    "/Mesh/mesh1",
-    "mesh1 (CodeIncludedXML0, l.11)" );
+  auto const testWrapperContextString = [&]( string const & groupPath, string const & wrapperName,
+                                             string const & ctxString )
+  {
+    Group const * const containingGroup = &problem.getGroupByPath( groupPath );
+    ASSERT_NE( containingGroup, nullptr );
+    WrapperBase const * const wrapperToTest = &containingGroup->getWrapperBase( wrapperName );
+    ASSERT_NE( wrapperToTest, nullptr );
+    ASSERT_STREQ( wrapperToTest->getDataContext().toString().c_str(),
+                  ctxString.c_str() );
+  };
+
+  // check if the DataContext string of a Group and a Wrapper declared in the XML is formatted as expected
+  testGroupContextString( "/Mesh/mesh1",
+                          "mesh1 (CodeIncludedXML0, l.11)" );
+  testWrapperContextString( "/Mesh/mesh1", "xCoords",
+                            "mesh1/xCoords (CodeIncludedXML0, l.14)" );
+
   // check if the DataContext string of an implicitly created Group is formatted as expected
-  testDataContextString(
-    "/domain/MeshBodies/mesh1/meshLevels/Level0/ElementRegions/elementRegionsGroup/Region2/elementSubRegions",
-    "/domain/MeshBodies/mesh1/meshLevels/Level0/ElementRegions/elementRegionsGroup/Region2(CodeIncludedXML0,l.37)/elementSubRegions" );
+  testGroupContextString( "/domain/MeshBodies/mesh1/meshLevels/Level0",
+                          "/domain/MeshBodies/mesh1/meshLevels/Level0" );
+  testWrapperContextString( "/domain/MeshBodies/mesh1/meshLevels/Level0", "meshLevel",
+                            "/domain/MeshBodies/mesh1/meshLevels/Level0->meshLevel" );
 }
 
 int main( int argc, char * * argv )
