@@ -34,25 +34,24 @@ GroupContext::GroupContext( Group & group ):
 
 string GroupContext::toString() const
 {
+  // we add all parent names in a path string, showing only the first input file info encountered
   std::vector< string > parents;
-  Group const * parentGroup = &m_group;
-  // add all parent names in a path string, until we get some input file info to show
   bool foundNearestLineInfo = false;
-  for(; parentGroup->hasParent(); parentGroup = &parentGroup->getParent() )
+  for( Group const * parent = &m_group; parent->hasParent(); parent = &parent->getParent() )
   {
-    ToStringInfo const info = parentGroup->getDataContext().getToStringInfo();
-    if( !foundNearestLineInfo || info.hasInputFileInfo() )
+    ToStringInfo const info = parent->getDataContext().getToStringInfo();
+    if( info.hasInputFileInfo() && !foundNearestLineInfo )
     {
       // avoiding spaces here is intended as we don't want any line return within the path.
-      parents.push_back( GEOS_FMT( "{}({},l.{})",
-                                   info.m_targetName, info.m_filePath, info.m_line ) );
+      parents.push_back( GEOS_FMT( "{}({},l.{})", info.m_targetName, info.m_filePath, info.m_line ) );
+      foundNearestLineInfo = true;
     }
     else
     {
-      parents.push_back( GEOS_FMT( "/{}", info.m_targetName ) );
+      parents.push_back( string( info.m_targetName ) );
     }
   }
-  return stringutilities::join( parents.rbegin(), parents.rend(), '/' );
+  return '/' + stringutilities::join( parents.rbegin(), parents.rend(), '/' );
 }
 
 DataContext::ToStringInfo GroupContext::getToStringInfo() const
@@ -67,14 +66,9 @@ WrapperContext::WrapperContext( WrapperBase & wrapper ):
 string WrapperContext::toString() const
 {
   ToStringInfo const info = m_group.getDataContext().getToStringInfo();
-  if( info.hasInputFileInfo())
-  {
-    return GEOS_FMT( "{}, attribute {}", m_group.getDataContext().toString(), m_typeName );
-  }
-  else
-  {
-    return GEOS_FMT( "{}->{}", m_group.getDataContext().toString(), m_typeName );
-  }
+  return info.hasInputFileInfo() ?
+         GEOS_FMT( "{} ({}, l.{})", m_targetName, info.m_filePath, info.m_line ) :
+         GEOS_FMT( "{}->{}", m_group.getDataContext().toString(), m_typeName );
 }
 
 
