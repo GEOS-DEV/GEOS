@@ -7,9 +7,9 @@
       cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Fluid }"
-      sourceCoordinates="{ { 1500, 1, 2900 } }"
-      timeSourceFrequency="5"
-      receiverCoordinates="{ { 3752.29351, 1, 2933.3333 } }"
+      sourceCoordinates="{ { 1500, 20, 2900 } }"
+      timeSourceFrequency="10"
+      receiverCoordinates="{ { 3752.29351, 20, 2933.3333 } }"
       rickerOrder="3"/>
     <ElasticSEM
       name="elasticSolver"
@@ -31,7 +31,7 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        order="3"
+        order="5"
         formulation="SEM"/>
     </FiniteElements>
   </NumericalMethods>
@@ -66,7 +66,9 @@
   </FieldSpecifications>
 
   <Outputs>
-    <VTK name="vtkOutput"/>
+    <VTK
+      name="vtkOutput"
+      writeFEMFaces="1"/>
   </Outputs>
 
   <Events maxTime="3">
