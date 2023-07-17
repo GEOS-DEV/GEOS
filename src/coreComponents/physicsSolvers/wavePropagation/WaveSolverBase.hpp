@@ -50,6 +50,7 @@ class WaveSolverBase : public SolverBase
 public:
 
   using EXEC_POLICY = parallelDevicePolicy< 32 >;
+  using wsCoordType = real32;
 
   WaveSolverBase( const std::string & name,
                   Group * const parent );
@@ -293,7 +294,7 @@ protected:
 
 namespace fields
 {
-using reference32Type = array2d< real32, nodes::REFERENCE_POSITION_PERM >;
+using reference32Type = array2d< wsCoordType, nodes::REFERENCE_POSITION_PERM >;
 DECLARE_FIELD( referencePosition32,
                "referencePosition32",
                reference32Type,
