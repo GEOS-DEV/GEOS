@@ -19,18 +19,23 @@
 #ifndef GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 #define GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "mesh/generators/CellBlockManagerABC.hpp"
+
 #include "dataRepository/Group.hpp"
 #include "dataRepository/WrapperBase.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 
+
 namespace geos
 {
 
-namespace dataRepository
-{}
-
-class DomainPartition;
+// This forward declaration prevents from exposing the internals of the module,
+// which are only accessed through some private functions signatures.
+// In order to avoid this forward declaration, we could expose an ABC
+// instead of exposing the MeshGeneratorBase implementation.
+class CellBlockManager;
 
 /**
  *  @class MeshGeneratorBase
@@ -55,6 +60,9 @@ public:
    */
   static string catalogName() { return "MeshGeneratorBase"; }
 
+  /// This function is used to expand any catalogs in the data structure
+  virtual void expandObjectCatalogs() override;
+
   /// using alias for templated Catalog meshGenerator type
   using CatalogInterface = dataRepository::CatalogInterface< MeshGeneratorBase, string const &, Group * const >;
 
@@ -74,9 +82,11 @@ public:
 
   /**
    * @brief Generate the mesh object the input mesh object.
-   * @param[in] domain the domain partition from which to construct the mesh object
+   * @param parent The parent group of the CellBlockManager.
+   * @param[in] partition Number of domaoins in each dimesion (X,Y,Z)
+   * @return The generated CellBlockManagerABC
    */
-  virtual void generateMesh( DomainPartition & domain ) = 0;
+  CellBlockManagerABC & generateMesh( Group & parent, array1d< int > const & partition );
 
   /**
    * @brief Describe which kind of block must be considered.
@@ -122,12 +132,32 @@ public:
    */
   std::map< string, string > const & getSurfacicFieldsMapping() const { return m_surfacicFields; }
 
+  /**
+   * @brief Get the associatied SpatialPartition generated.
+   * @return The generated SpatialPartition
+   */
+  SpatialPartition const & getSpatialPartition() const { return m_spatialPartition; }
+
 protected:
   /// Mapping from volumic field source to GEOSX field.
   std::map< string, string > m_volumicFields;
 
   /// Mapping from surfacic field source to GEOSX field.
   std::map< string, string > m_surfacicFields;
+
+  /// SpatialPartition associated with the mesh
+  SpatialPartition m_spatialPartition;
+
+private:
+  /**
+   * @brief Fill the cellBlockManager object .
+   * @param[inout] cellBlockManager the CellBlockManager that will receive the meshing information
+   * @param[in] partition The number of domains in each dimesion (X,Y,Z)
+   */
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition ) = 0;
+
+  void attachWellInfo( CellBlockManager & cellBlockManager );
+
 };
 }
 

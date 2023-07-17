@@ -176,7 +176,8 @@ void SchemaConstruction( Group & group,
             // Enforce uniqueness of element names
             // Note: this must be done at the parent element level
             xmlWrapper::xmlNode uniqueNameNode = targetIncludeNode.append_child( "xsd:unique" );
-            string uniqueNameNodeStr = targetName + subName + "UniqueName";
+            string path = std::regex_replace( group.getPath(), std::regex( "/" ), "" );
+            string uniqueNameNodeStr =  path + subName + "UniqueName";
             uniqueNameNode.append_attribute( "name" ) = uniqueNameNodeStr.c_str();
             xmlWrapper::xmlNode uniqueNameSelector = uniqueNameNode.append_child( "xsd:selector" );
             uniqueNameSelector.append_attribute( "xpath" ) = subName.c_str();
