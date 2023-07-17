@@ -148,7 +148,7 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
     setSizedFromParent( 0 );
 
 
-  registerWrapper( viewKeyStruct::flagInterpolatorString(), &m_flagInterpolator ).
+  registerWrapper(viewKeyStruct::threePhaseInterpolatorString(), &m_threePhaseInterpolator ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( ThreePhaseInterpolator::BAKER ).
     setDescription( "Type of Three phase interpolator."
@@ -582,27 +582,27 @@ TableRelativePermeabilityHysteresis::createKernelWrapper()
   createAllTableKernelWrappers();
 
   // then we create the actual TableRelativePermeabilityHysteresis::KernelWrapper
-  return KernelWrapper( m_drainageRelPermKernelWrappers,
-                        m_imbibitionRelPermKernelWrappers,
-                        m_jerauldParam_a,
-                        m_jerauldParam_b,
-                        m_killoughCurvatureParam,
-                        m_phaseHasHysteresis,
-                        m_landParam,
-                        m_drainagePhaseMinVolFraction,
-                        m_imbibitionPhaseMinVolFraction,
-                        m_drainagePhaseMaxVolFraction,
-                        m_imbibitionPhaseMaxVolFraction,
-                        m_drainagePhaseRelPermEndPoint,
-                        m_imbibitionPhaseRelPermEndPoint,
-                        m_phaseTypes,
-                        m_phaseOrder,
-                        m_flagInterpolator,
-                        m_phaseMinHistoricalVolFraction,
-                        m_phaseMaxHistoricalVolFraction,
-                        m_phaseTrappedVolFrac,
-                        m_phaseRelPerm,
-                        m_dPhaseRelPerm_dPhaseVolFrac );
+  return KernelWrapper(m_drainageRelPermKernelWrappers,
+                       m_imbibitionRelPermKernelWrappers,
+                       m_jerauldParam_a,
+                       m_jerauldParam_b,
+                       m_killoughCurvatureParam,
+                       m_phaseHasHysteresis,
+                       m_landParam,
+                       m_drainagePhaseMinVolFraction,
+                       m_imbibitionPhaseMinVolFraction,
+                       m_drainagePhaseMaxVolFraction,
+                       m_imbibitionPhaseMaxVolFraction,
+                       m_drainagePhaseRelPermEndPoint,
+                       m_imbibitionPhaseRelPermEndPoint,
+                       m_phaseTypes,
+                       m_phaseOrder,
+                       m_threePhaseInterpolator,
+                       m_phaseMinHistoricalVolFraction,
+                       m_phaseMaxHistoricalVolFraction,
+                       m_phaseTrappedVolFrac,
+                       m_phaseRelPerm,
+                       m_dPhaseRelPerm_dPhaseVolFrac );
 }
 
 void TableRelativePermeabilityHysteresis::resizeFields( localIndex const size, localIndex const numPts )
@@ -654,7 +654,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                  arrayView1d< real64 const > const & imbibitionPhaseRelPermEndPoint,
                  arrayView1d< integer const > const & phaseTypes,
                  arrayView1d< integer const > const & phaseOrder,
-                 ThreePhaseInterpolator const & flagInterpolator,
+                 ThreePhaseInterpolator const & threePhaseInterpolator,
                  arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
                  arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac,
@@ -665,22 +665,22 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                     phaseRelPerm,
                                     dPhaseRelPerm_dPhaseVolFrac,
                                     phaseTrappedVolFrac ),
-  m_drainageRelPermKernelWrappers( drainageRelPermKernelWrappers ),
-  m_imbibitionRelPermKernelWrappers( imbibitionRelPermKernelWrappers ),
-  m_jerauldParam_a( jerauldParam_a ),
-  m_jerauldParam_b( jerauldParam_b ),
-  m_killoughCurvatureParam( killoughCurvatureParam ),
-  m_phaseHasHysteresis( phaseHasHysteresis ),
-  m_landParam( landParam ),
-  m_drainagePhaseMinVolFraction( drainagePhaseMinVolFraction ),
-  m_imbibitionPhaseMinVolFraction( imbibitionPhaseMinVolFraction ),
-  m_drainagePhaseMaxVolFraction( drainagePhaseMaxVolFraction ),
-  m_imbibitionPhaseMaxVolFraction( imbibitionPhaseMaxVolFraction ),
-  m_drainagePhaseRelPermEndPoint( drainagePhaseRelPermEndPoint ),
-  m_imbibitionPhaseRelPermEndPoint( imbibitionPhaseRelPermEndPoint ),
-  m_phaseMinHistoricalVolFraction( phaseMinHistoricalVolFraction ),
-  m_phaseMaxHistoricalVolFraction( phaseMaxHistoricalVolFraction ),
-  m_flagInterpolator( flagInterpolator )
+    m_drainageRelPermKernelWrappers( drainageRelPermKernelWrappers ),
+    m_imbibitionRelPermKernelWrappers( imbibitionRelPermKernelWrappers ),
+    m_jerauldParam_a( jerauldParam_a ),
+    m_jerauldParam_b( jerauldParam_b ),
+    m_killoughCurvatureParam( killoughCurvatureParam ),
+    m_phaseHasHysteresis( phaseHasHysteresis ),
+    m_landParam( landParam ),
+    m_drainagePhaseMinVolFraction( drainagePhaseMinVolFraction ),
+    m_imbibitionPhaseMinVolFraction( imbibitionPhaseMinVolFraction ),
+    m_drainagePhaseMaxVolFraction( drainagePhaseMaxVolFraction ),
+    m_imbibitionPhaseMaxVolFraction( imbibitionPhaseMaxVolFraction ),
+    m_drainagePhaseRelPermEndPoint( drainagePhaseRelPermEndPoint ),
+    m_imbibitionPhaseRelPermEndPoint( imbibitionPhaseRelPermEndPoint ),
+    m_phaseMinHistoricalVolFraction( phaseMinHistoricalVolFraction ),
+    m_phaseMaxHistoricalVolFraction( phaseMaxHistoricalVolFraction ),
+    m_threePhaseInterpolator(threePhaseInterpolator )
 {}
 
 

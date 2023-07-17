@@ -73,7 +73,7 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
     setSizedFromParent( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
 
-  registerWrapper( viewKeyStruct::flagInterpolatorString(), &m_flagInterpolator ).
+  registerWrapper(viewKeyStruct::threePhaseInterpolatorString(), &m_threePhaseInterpolator ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( ThreePhaseInterpolator::BAKER ).
     setDescription( "Type of Three phase interpolator."
@@ -267,7 +267,7 @@ TableRelativePermeability::KernelWrapper::
                  real64 const & waterPhaseMaxVolumeFraction,
                  arrayView1d< integer const > const & phaseTypes,
                  arrayView1d< integer const > const & phaseOrder,
-                 ThreePhaseInterpolator const & flagInterpolator,
+                 ThreePhaseInterpolator const & threePhaseInterpolator,
                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
                  arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac )
@@ -276,10 +276,10 @@ TableRelativePermeability::KernelWrapper::
                                     phaseRelPerm,
                                     dPhaseRelPerm_dPhaseVolFrac,
                                     phaseTrappedVolFrac ),
-  m_relPermKernelWrappers( relPermKernelWrappers ),
-  m_phaseMinVolumeFraction( phaseMinVolumeFraction ),
-  m_waterOilRelPermMaxValue( waterPhaseMaxVolumeFraction ),
-  m_flagInterpolator( flagInterpolator ) {}
+    m_relPermKernelWrappers( relPermKernelWrappers ),
+    m_phaseMinVolumeFraction( phaseMinVolumeFraction ),
+    m_waterOilRelPermMaxValue( waterPhaseMaxVolumeFraction ),
+    m_threePhaseInterpolator(threePhaseInterpolator ) {}
 
 TableRelativePermeability::KernelWrapper
 TableRelativePermeability::createKernelWrapper()
@@ -289,15 +289,15 @@ TableRelativePermeability::createKernelWrapper()
   createAllTableKernelWrappers();
 
   // then we create the actual TableRelativePermeability::KernelWrapper
-  return KernelWrapper( m_relPermKernelWrappers,
-                        m_phaseMinVolumeFraction,
-                        m_waterOilMaxRelPerm,
-                        m_phaseTypes,
-                        m_phaseOrder,
-                        m_flagInterpolator,
-                        m_phaseRelPerm,
-                        m_dPhaseRelPerm_dPhaseVolFrac,
-                        m_phaseTrappedVolFrac );
+  return KernelWrapper(m_relPermKernelWrappers,
+                       m_phaseMinVolumeFraction,
+                       m_waterOilMaxRelPerm,
+                       m_phaseTypes,
+                       m_phaseOrder,
+                       m_threePhaseInterpolator,
+                       m_phaseRelPerm,
+                       m_dPhaseRelPerm_dPhaseVolFrac,
+                       m_phaseTrappedVolFrac );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, TableRelativePermeability, std::string const &, Group * const )

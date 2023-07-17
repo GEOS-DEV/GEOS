@@ -71,7 +71,7 @@ public:
                    real64 const & waterOilPhaseMaxVolumeFraction,
                    arrayView1d< integer const > const & phaseTypes,
                    arrayView1d< integer const > const & phaseOrder,
-                   ThreePhaseInterpolator const & flagInterpolator,
+                   ThreePhaseInterpolator const & threePhaseInterpolator,
                    arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
                    arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
                    arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac );
@@ -121,7 +121,7 @@ private:
 
     real64 const m_waterOilRelPermMaxValue;
 
-    ThreePhaseInterpolator const m_flagInterpolator;
+    ThreePhaseInterpolator const m_threePhaseInterpolator;
   };
 
   /**
@@ -138,7 +138,7 @@ private:
     static constexpr char const * wettingNonWettingRelPermTableNamesString() { return "wettingNonWettingRelPermTableNames"; }
     static constexpr char const * wettingIntermediateRelPermTableNamesString() { return "wettingIntermediateRelPermTableNames"; }
     static constexpr char const * nonWettingIntermediateRelPermTableNamesString() { return "nonWettingIntermediateRelPermTableNames"; }
-    static constexpr char const * flagInterpolatorString() { return "flagInterpolator"; }
+    static constexpr char const * threePhaseInterpolatorString() { return "threePhaseInterpolator"; }
   };
 
   arrayView1d< real64 const > getPhaseMinVolumeFraction() const override { return m_phaseMinVolumeFraction; };
@@ -179,7 +179,7 @@ private:
 
   real64 m_waterOilMaxRelPerm;
 
-  ThreePhaseInterpolator m_flagInterpolator;
+  ThreePhaseInterpolator m_threePhaseInterpolator;
 
 };
 
@@ -254,7 +254,7 @@ TableRelativePermeability::KernelWrapper::
   // use saturation-weighted interpolation
   real64 const shiftedWettingVolFrac = (phaseVolFraction[ipWetting] - m_phaseMinVolumeFraction[ipWetting]);
 
-  if( m_flagInterpolator == ThreePhaseInterpolator::BAKER )
+  if(m_threePhaseInterpolator == ThreePhaseInterpolator::BAKER )
   {
     relpermInterpolators::Baker::compute( shiftedWettingVolFrac,
                                           phaseVolFraction[ipNonWetting],
@@ -267,7 +267,7 @@ TableRelativePermeability::KernelWrapper::
                                           dPhaseRelPerm_dPhaseVolFrac[ipInter] );
 
   }
-  else// if( m_flagInterpolator == ThreePhaseInterpolator::STONEII )
+  else// if( m_threePhaseInterpolator == ThreePhaseInterpolator::STONEII )
   {
     relpermInterpolators::Stone2::compute( shiftedWettingVolFrac,
                                            phaseVolFraction[ipNonWetting],

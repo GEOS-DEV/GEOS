@@ -183,7 +183,7 @@
       phaseNames="{ oil, gas, water }"
       wettingIntermediateRelPermTableNames="{ waterRelPermTable, oilRelPermTableForOW }"
       nonWettingIntermediateRelPermTableNames="{ gasRelPermTable, oilRelPermTableForOG }"
-      flagInterpolator="STONEII"/>
+      threePhaseInterpolator="STONEII"/>
 
     <TableCapillaryPressure
       name="cappres"
