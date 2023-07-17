@@ -61,6 +61,11 @@ public:
                              integer const cycleNumber,
                              DomainPartition & domain ) override;
 
+  void odeSolverStep( real64 const & time_n,
+                      real64 const & dt,
+                      integer const cycleNumber,
+                      DomainPartition & domain );
+
   virtual void
   setupSystem( DomainPartition & domain,
                DofManager & dofManager,
