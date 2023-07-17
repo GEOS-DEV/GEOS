@@ -43,6 +43,7 @@ void CellElementStencilTPFA::add( localIndex const numPts,
                                   localIndex const * const elementRegionIndices,
                                   localIndex const * const elementSubRegionIndices,
                                   localIndex const * const elementIndices,
+                                  real64 const * const partialWeights,
                                   real64 const * const weights,
                                   localIndex const connectorIndex )
 {
@@ -53,6 +54,7 @@ void CellElementStencilTPFA::add( localIndex const numPts,
   m_elementRegionIndices.resize( newSize, numPts );
   m_elementSubRegionIndices.resize( newSize, numPts );
   m_elementIndices.resize( newSize, numPts );
+  m_partialWeights.resize( newSize, numPts );
   m_weights.resize( newSize, numPts );
 
   for( localIndex a=0; a<numPts; ++a )
@@ -60,6 +62,7 @@ void CellElementStencilTPFA::add( localIndex const numPts,
     m_elementRegionIndices( oldSize, a ) = elementRegionIndices[a];
     m_elementSubRegionIndices( oldSize, a ) = elementSubRegionIndices[a];
     m_elementIndices( oldSize, a ) = elementIndices[a];
+    m_partialWeights( oldSize, a ) = partialWeights[a];
     m_weights( oldSize, a ) = weights[a];
   }
   m_connectorIndices[connectorIndex] = oldSize;
@@ -93,6 +96,7 @@ CellElementStencilTPFA::createKernelWrapper() const
   return { m_elementRegionIndices,
            m_elementSubRegionIndices,
            m_elementIndices,
+           m_partialWeights,
            m_weights,
            m_faceNormal,
            m_cellToFaceVec,
@@ -104,6 +108,7 @@ CellElementStencilTPFAWrapper::
   CellElementStencilTPFAWrapper( IndexContainerType const & elementRegionIndices,
                                  IndexContainerType const & elementSubRegionIndices,
                                  IndexContainerType const & elementIndices,
+                                 WeightContainerType const & partialWeights,
                                  WeightContainerType const & weights,
                                  arrayView2d< real64 > const & faceNormal,
                                  arrayView3d< real64 > const & cellToFaceVec,
@@ -112,6 +117,7 @@ CellElementStencilTPFAWrapper::
   : StencilWrapperBase( elementRegionIndices,
                         elementSubRegionIndices,
                         elementIndices,
+                        partialWeights,
                         weights ),
   m_faceNormal( faceNormal ),
   m_cellToFaceVec( cellToFaceVec ),

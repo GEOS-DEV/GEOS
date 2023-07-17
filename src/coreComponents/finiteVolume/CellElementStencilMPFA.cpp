@@ -27,6 +27,7 @@ void CellElementStencilMPFA::reserve( localIndex const size )
   m_elementRegionIndices.reserve( size * 9 );
   m_elementSubRegionIndices.reserve( size * 9 );
   m_elementIndices.reserve( size * 9 );
+  m_partialWeights.reserve( size * 9 );
   m_weights.reserve( size * 9 );
 }
 
@@ -34,6 +35,7 @@ void CellElementStencilMPFA::add( localIndex const numPts,
                                   localIndex const * const elementRegionIndices,
                                   localIndex const * const elementSubRegionIndices,
                                   localIndex const * const elementIndices,
+                                  real64 const * const partialWeights,
                                   real64 const * const weights,
                                   localIndex const connectorIndex )
 {
@@ -42,6 +44,7 @@ void CellElementStencilMPFA::add( localIndex const numPts,
   m_elementRegionIndices.appendArray( elementRegionIndices, elementRegionIndices + numPts );
   m_elementSubRegionIndices.appendArray( elementSubRegionIndices, elementSubRegionIndices + numPts );
   m_elementIndices.appendArray( elementIndices, elementIndices + numPts );
+  m_partialWeights.appendArray( partialWeights, partialWeights + numPts );
   m_weights.appendArray( weights, weights + numPts );
 
   m_connectorIndices[connectorIndex] = m_elementRegionIndices.size()-1;

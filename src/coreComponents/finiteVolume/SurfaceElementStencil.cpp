@@ -31,6 +31,7 @@ void SurfaceElementStencil::add( localIndex const numPts,
                                  localIndex const * const elementRegionIndices,
                                  localIndex const * const elementSubRegionIndices,
                                  localIndex const * const elementIndices,
+                                 real64 const * const partialWeights,
                                  real64 const * const weights,
                                  localIndex const connectorIndex )
 {
@@ -42,6 +43,7 @@ void SurfaceElementStencil::add( localIndex const numPts,
     m_elementRegionIndices.appendArray( elementRegionIndices, elementRegionIndices + numPts );
     m_elementSubRegionIndices.appendArray( elementSubRegionIndices, elementSubRegionIndices + numPts );
     m_elementIndices.appendArray( elementIndices, elementIndices + numPts );
+    m_partialWeights.appendArray( partialWeights, partialWeights + numPts );
     m_weights.appendArray( weights, weights + numPts );
 
     m_connectorIndices[connectorIndex] = m_weights.size() - 1;
@@ -52,11 +54,13 @@ void SurfaceElementStencil::add( localIndex const numPts,
     m_elementRegionIndices.clearArray( stencilIndex );
     m_elementSubRegionIndices.clearArray( stencilIndex );
     m_elementIndices.clearArray( stencilIndex );
+    m_partialWeights.clearArray( stencilIndex );
     m_weights.clearArray( stencilIndex );
 
     m_elementRegionIndices.appendToArray( stencilIndex, elementRegionIndices, elementRegionIndices + numPts );
     m_elementSubRegionIndices.appendToArray( stencilIndex, elementSubRegionIndices, elementSubRegionIndices + numPts );
     m_elementIndices.appendToArray( stencilIndex, elementIndices, elementIndices + numPts );
+    m_partialWeights.appendToArray( stencilIndex, partialWeights, partialWeights + numPts );
     m_weights.appendToArray( stencilIndex, weights, weights + numPts );
   }
 }
@@ -93,6 +97,7 @@ SurfaceElementStencil::createKernelWrapper() const
   return { m_elementRegionIndices,
            m_elementSubRegionIndices,
            m_elementIndices,
+           m_partialWeights,
            m_weights,
            m_cellCenterToEdgeCenters,
            m_meanPermCoefficient };
@@ -102,6 +107,7 @@ SurfaceElementStencilWrapper::
   SurfaceElementStencilWrapper( IndexContainerType const & elementRegionIndices,
                                 IndexContainerType const & elementSubRegionIndices,
                                 IndexContainerType const & elementIndices,
+                                WeightContainerType const & partialWeights,
                                 WeightContainerType const & weights,
                                 ArrayOfArrays< R1Tensor > const & cellCenterToEdgeCenters,
                                 real64 const meanPermCoefficient )
@@ -109,6 +115,7 @@ SurfaceElementStencilWrapper::
   : StencilWrapperBase( elementRegionIndices,
                         elementSubRegionIndices,
                         elementIndices,
+                        partialWeights,
                         weights ),
   m_cellCenterToEdgeCenters( cellCenterToEdgeCenters.toView() ),
   m_meanPermCoefficient( meanPermCoefficient )

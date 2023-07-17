@@ -40,6 +40,7 @@ public:
    * @param elementRegionIndices The container for the element region indices for each point in each stencil
    * @param elementSubRegionIndices The container for the element sub region indices for each point in each stencil
    * @param elementIndices The container for the element indices for each point in each stencil
+   * @param partialWeights The container for the partial weights for each point in each stencil
    * @param weights The container for the weights for each point in each stencil
    * @param faceNormal Face normal vector
    * @param cellToFaceVec Cell center to face center vector
@@ -48,6 +49,7 @@ public:
   FaceElementToCellStencilWrapper( IndexContainerType const & elementRegionIndices,
                                    IndexContainerType const & elementSubRegionIndices,
                                    IndexContainerType const & elementIndices,
+                                   WeightContainerType const & partialWeights,
                                    WeightContainerType const & weights,
                                    arrayView2d< real64 > const & faceNormal,
                                    arrayView2d< real64 > const & cellToFaceVec,
@@ -179,6 +181,7 @@ public:
                     localIndex const * const elementRegionIndices,
                     localIndex const * const elementSubRegionIndices,
                     localIndex const * const elementIndices,
+                    real64 const * const partialWeights,
                     real64 const * const weights,
                     localIndex const connectorIndex ) override;
 

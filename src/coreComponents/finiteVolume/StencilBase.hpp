@@ -51,6 +51,9 @@ struct StencilTraits
   /// The array view to const type for the stencil weights
   using WeightContainerViewConstType = LvArray::typeManipulation::NestedViewTypeConst< WeightContainerType >;
 
+  /// The array view to type for the stencil weights
+  using WeightContainerViewType = LvArray::typeManipulation::NestedViewType< WeightContainerType >;
+
   /// Maximum number of points the flux
   static constexpr localIndex maxNumPointsInFlux = MAX_NUM_POINTS_IN_FLUX;
 
@@ -82,16 +85,19 @@ public:
    * @param elementRegionIndices The container for the element region indices for each point in each stencil
    * @param elementSubRegionIndices The container for the element sub region indices for each point in each stencil
    * @param elementIndices The container for the element indices for each point in each stencil
+   * @param partialWeights The container for the partial weights for each point in each stencil
    * @param weights The container for the weights for each point in each stencil
    */
   StencilWrapperBase( typename TRAITS::IndexContainerType const & elementRegionIndices,
                       typename TRAITS::IndexContainerType const & elementSubRegionIndices,
                       typename TRAITS::IndexContainerType const & elementIndices,
+                      typename TRAITS::WeightContainerType const & partialWeights,
                       typename TRAITS::WeightContainerType const & weights ):
     m_elementRegionIndices( elementRegionIndices.toViewConst() ),
     m_elementSubRegionIndices( elementSubRegionIndices.toViewConst() ),
     m_elementIndices( elementIndices.toViewConst() ),
-    m_weights( weights.toViewConst() )
+    m_partialWeights( partialWeights.toView() ),
+    m_weights( weights.toView() )
   {};
 
   /**
@@ -133,8 +139,11 @@ protected:
   /// The container for the element indices for each point in each stencil
   typename TRAITS::IndexContainerViewConstType m_elementIndices;
 
+  /// The container for the partial weights for each point in each stencil
+  typename TRAITS::WeightContainerViewType m_partialWeights;
+
   /// The container for the weights for each point in each stencil
-  typename TRAITS::WeightContainerViewConstType m_weights;
+  typename TRAITS::WeightContainerViewType m_weights;
 };
 
 
@@ -176,6 +185,7 @@ public:
    * @param[in] elementRegionIndices The element region indices for each point in the stencil entry
    * @param[in] elementSubRegionIndices The element sub-region indices for each point in the stencil entry
    * @param[in] elementIndices The element indices for each point in the stencil entry
+   * @param[in] partialWeights The partial weights each point in the stencil entry
    * @param[in] weights The weights each point in the stencil entry
    * @param[in] connectorIndex The index of the connector element that the stencil acts across
    */
@@ -183,6 +193,7 @@ public:
                     localIndex const * const elementRegionIndices,
                     localIndex const * const elementSubRegionIndices,
                     localIndex const * const elementIndices,
+                    real64 const * const partialWeights,
                     real64 const * const weights,
                     localIndex const connectorIndex ) = 0;
 
@@ -245,6 +256,9 @@ protected:
   /// The container for the element indices for each point in each stencil
   typename TRAITS::IndexContainerType m_elementIndices;
 
+  /// The container for the partial weights for each point in each stencil
+  typename TRAITS::WeightContainerType m_partialWeights;
+
   /// The container for the weights for each point in each stencil
   typename TRAITS::WeightContainerType m_weights;
 
@@ -260,6 +274,7 @@ void StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::reserve( localIndex const size )
   m_elementRegionIndices.reserve( size * 2 );
   m_elementSubRegionIndices.reserve( size * 2 );
   m_elementIndices.reserve( size * 2 );
+  m_partialWeights.reserve( size * 2 );
   m_weights.reserve( size * 2 );
 }
 
@@ -272,6 +287,7 @@ bool StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::zero( localIndex const connector
   {
     for( localIndex i = 0; i < static_cast< LEAFCLASS * >(this)->stencilSize( connectorIndex ); ++i )
     {
+      m_partialWeights[connectionListIndex][i] = 0;
       m_weights[connectionListIndex][i] = 0;
     }
   } );
@@ -283,6 +299,7 @@ void StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::setName( string const & name )
   m_elementRegionIndices.setName( name + "/elementRegionIndices" );
   m_elementSubRegionIndices.setName( name + "/elementSubRegionIndices" );
   m_elementIndices.setName( name + "/elementIndices" );
+  m_partialWeights.setName( name + "/partialWeights" );
   m_weights.setName( name + "/weights" );
 }
 
@@ -292,6 +309,7 @@ void StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::move( LvArray::MemorySpace const
   m_elementRegionIndices.move( space, true );
   m_elementSubRegionIndices.move( space, true );
   m_elementIndices.move( space, true );
+  m_partialWeights.move( space, true );
   m_weights.move( space, true );
 }
 

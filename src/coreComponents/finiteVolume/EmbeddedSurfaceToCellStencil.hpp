@@ -40,11 +40,13 @@ public:
    * @param elementRegionIndices The container for the element region indices for each point in each stencil
    * @param elementSubRegionIndices The container for the element sub region indices for each point in each stencil
    * @param elementIndices The container for the element indices for each point in each stencil
+   * @param partialWeights The container for the partial weights for each point in each stencil
    * @param weights The container for the weights for each point in each stencil
    */
   EmbeddedSurfaceToCellStencilWrapper( IndexContainerType const & elementRegionIndices,
                                        IndexContainerType const & elementSubRegionIndices,
                                        IndexContainerType const & elementIndices,
+                                       WeightContainerType const & partialWeights,
                                        WeightContainerType const & weights );
 
   /**
@@ -154,6 +156,7 @@ public:
                     localIndex const * const elementRegionIndices,
                     localIndex const * const elementSubRegionIndices,
                     localIndex const * const elementIndices,
+                    real64 const * const partialWeights,
                     real64 const * const weights,
                     localIndex const connectorIndex ) override;
 

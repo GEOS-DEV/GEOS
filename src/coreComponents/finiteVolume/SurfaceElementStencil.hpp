@@ -70,6 +70,7 @@ public:
    * @param elementRegionIndices The container for the element region indices for each point in each stencil
    * @param elementSubRegionIndices The container for the element sub region indices for each point in each stencil
    * @param elementIndices The container for the element indices for each point in each stencil
+   * @param partialWeights The container for the partial weights for each point in each stencil
    * @param weights The container for the weights for each point in each stencil
    * @param cellCenterToEdgeCenters Cell center to Edge center vector
    * @param meanPermCoefficient Mean permeability coefficient
@@ -77,6 +78,7 @@ public:
   SurfaceElementStencilWrapper( IndexContainerType const & elementRegionIndices,
                                 IndexContainerType const & elementSubRegionIndices,
                                 IndexContainerType const & elementIndices,
+                                WeightContainerType const & partialWeights,
                                 WeightContainerType const & weights,
                                 ArrayOfArrays< R1Tensor > const & cellCenterToEdgeCenters,
                                 real64 const meanPermCoefficient );
@@ -214,6 +216,9 @@ public:
   ArrayOfArraysView< R1Tensor const > getCellCenterToEdgeCenters() const
   { return m_cellCenterToEdgeCenters.toViewConst(); }
 
+  GEOS_HOST_DEVICE
+  void updateWeights( localIndex const iconn, ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicApertureAccessor ) const;
+
 private:
 
   /// Cell center to Edge center vector
@@ -236,6 +241,7 @@ public:
                     localIndex const * const elementRegionIndices,
                     localIndex const * const elementSubRegionIndices,
                     localIndex const * const elementIndices,
+                    real64 const * const partialWeights,
                     real64 const * const weights,
                     localIndex const connectorIndex ) override;
 
@@ -595,6 +601,20 @@ SurfaceElementStencilWrapper::
   }
 }
 
+GEOS_HOST_DEVICE
+inline void
+SurfaceElementStencilWrapper::
+  updateWeights( localIndex const iconn, ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicApertureAccessor ) const
+{
+  for( localIndex k = 0; k < stencilSize( iconn ); ++k )
+  {
+    localIndex const er  =  m_elementRegionIndices[iconn][k];
+    localIndex const esr =  m_elementSubRegionIndices[iconn][k];
+    localIndex const ei  =  m_elementIndices[iconn][k];
+
+    m_weights[iconn][k] = hydraulicApertureAccessor[er][esr][ei] * m_partialWeights[iconn][k];
+  }
+}
 
 } /* namespace geos */
 

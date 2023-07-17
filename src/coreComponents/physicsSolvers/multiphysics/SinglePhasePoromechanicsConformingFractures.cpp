@@ -736,6 +736,9 @@ void SinglePhasePoromechanicsConformingFractures::updateState( DomainPartition &
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
+    NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+    FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+    FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( poromechanicsSolver()->flowSolver()->getDiscretizationName() );
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
@@ -750,6 +753,20 @@ void SinglePhasePoromechanicsConformingFractures::updateState( DomainPartition &
         poromechanicsSolver()->flowSolver()->updateSolidInternalEnergyModel( subRegion );
       }
     } );
+
+    fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto & stencil )
+    {
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+
+      ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >
+      hydraulicApertureAccessor = mesh.getElemManager().constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::hydraulicAperture::key() );
+
+      forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
+      {
+        stencilWrapper.updateWeights( iconn, hydraulicApertureAccessor );
+      } );
+    } );
+
   } );
 }
 

@@ -45,6 +45,7 @@ public:
                     localIndex const * const elementRegionIndices,
                     localIndex const * const elementSubRegionIndices,
                     localIndex const * const elementIndices,
+                    real64 const * const partialWeights,
                     real64 const * const weights,
                     localIndex const connectorIndex ) override final;
 

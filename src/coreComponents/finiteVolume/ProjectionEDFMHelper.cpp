@@ -221,24 +221,28 @@ void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex const fracEle
   array1d< localIndex > stencilCellsRegionIndex( 2 );
   array1d< localIndex > stencilCellsSubRegionIndex( 2 );
   array1d< localIndex > stencilCellsIndex( 2 );
+  array1d< real64 > stencilPartialWeights( 2 );
   array1d< real64 > stencilWeights( 2 );
 
   // cell data
   stencilCellsRegionIndex[0] = cell.region;
   stencilCellsSubRegionIndex[0] = cell.subRegion;
   stencilCellsIndex[0] = cell.index;
+  stencilPartialWeights[0] =  weights[0];
   stencilWeights[0] =  weights[0];
 
   // fracture data
   stencilCellsRegionIndex[1] = fractureSubRegion.getParent().getParent().getIndexInParent();
   stencilCellsSubRegionIndex[1] = fractureSubRegion.getIndexInParent();
   stencilCellsIndex[1] = fracElement;
+  stencilPartialWeights[1] = weights[1];
   stencilWeights[1] = weights[1];
 
   m_edfmStencil.add( 2,
                      stencilCellsRegionIndex.data(),
                      stencilCellsSubRegionIndex.data(),
                      stencilCellsIndex.data(),
+                     stencilPartialWeights.data(),
                      stencilWeights.data(),
                      m_edfmStencil.size() );
 }
