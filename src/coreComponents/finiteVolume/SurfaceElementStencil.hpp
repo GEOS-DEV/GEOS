@@ -216,6 +216,13 @@ public:
   ArrayOfArraysView< R1Tensor const > getCellCenterToEdgeCenters() const
   { return m_cellCenterToEdgeCenters.toViewConst(); }
 
+  /**
+   * @brief Update the weights in stencil using the updated fracture aperture
+   * 
+   * @param iconn connection index 
+   * @param hydraulicApertureAccessor hydraulicAperture
+   * @return updated weights
+   */
   GEOS_HOST_DEVICE
   void updateWeights( localIndex const iconn, ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicApertureAccessor ) const;
 
