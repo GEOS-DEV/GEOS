@@ -77,8 +77,11 @@ protected:
   /// This struct lifetime depends on that of the source DataContext. The DataContext is considered constant.
   struct ToStringInfo
   {
+    /// the targetName of the DataContext
     string_view m_targetName;
+    /// the file path of the DataFileContext, if it exists (an empty string otherwise)
     string_view m_filePath;
+    /// the file line of the DataFileContext, if it exists (an empty string otherwise)
     size_t m_line;
 
     /**

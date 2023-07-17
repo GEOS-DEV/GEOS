@@ -148,7 +148,7 @@ public:
   xmlDocument( xmlDocument && ) = default;
 
   /**
-   * @return the first child of this document (typically in GEOS, the <Problem/> node)
+   * @return the first child of this document (typically in GEOS, the Problem node)
    */
   xmlNode getFirstChild() const;
   /**
@@ -190,7 +190,6 @@ public:
    * Wrapper of pugi::xml_document::loadBuffer() method.
    * @param contents the string containing the document content
    * @param loadNodeFileInfo Load the node source file info, allowing getNodePosition() to work.
-   * @param options the parsing options
    * @return an xmlResult object representing the parsing resulting status.
    */
   xmlResult loadString( string const & contents, bool loadNodeFileInfo = false );
@@ -200,8 +199,6 @@ public:
    * Wrapper of pugi::xml_document::loadBuffer() method.
    * @param path the path of an xml file to load.
    * @param loadNodeFileInfo Load the node source file info, allowing getNodePosition() to work.
-   * @param options the parsing options
-   * @param encoding the encoding options
    * @return an xmlResult object representing the parsing resulting status.
    */
   xmlResult loadFile( string const & path, bool loadNodeFileInfo = false );
@@ -213,8 +210,6 @@ public:
    * @param contents the buffer containing the document content
    * @param size the size of the buffer in bytes
    * @param loadNodeFileInfo Load the node source file info, allowing getNodePosition() to work.
-   * @param options the parsing options
-   * @param encoding the encoding options
    * @return an xmlResult object representing the parsing resulting status.
    */
   xmlResult loadBuffer( const void * contents, size_t size, bool loadNodeFileInfo = false );
