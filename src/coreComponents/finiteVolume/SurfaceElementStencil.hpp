@@ -218,8 +218,8 @@ public:
 
   /**
    * @brief Update the weights in stencil using the updated fracture aperture
-   * 
-   * @param iconn connection index 
+   *
+   * @param iconn connection index
    * @param hydraulicApertureAccessor hydraulicAperture
    */
   GEOS_HOST_DEVICE
