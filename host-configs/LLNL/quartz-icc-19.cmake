@@ -1,4 +1,4 @@
-include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/LvArray/host-configs/LLNL/quartz-icc@19.0.4.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/LvArray/host-configs/LLNL/quartz-icc-19.cmake)
 
 # Fortran
 set(CMAKE_Fortran_COMPILER ${COMPILER_DIR}/bin/intel64/ifort CACHE PATH "")
