@@ -221,7 +221,6 @@ public:
    * 
    * @param iconn connection index 
    * @param hydraulicApertureAccessor hydraulicAperture
-   * @return updated weights
    */
   GEOS_HOST_DEVICE
   void updateWeights( localIndex const iconn, ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicApertureAccessor ) const;
