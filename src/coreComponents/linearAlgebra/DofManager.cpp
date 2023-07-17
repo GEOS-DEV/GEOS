@@ -518,7 +518,7 @@ processCouplingRegionList( std::set< string > inputList,
   else
   {
     // Check that both fields exist on all regions in the list
-    auto const checkSupport = [&regions]( std::set< string > const & fieldRegions, string const & fieldName )
+    auto const checkSupport = [&regions]( std::set< string > const & fieldRegions, GEOS_MAYBE_UNUSED string const & fieldName )
     {
       // Both regions lists are sorted at this point
       GEOS_ERROR_IF( !std::includes( fieldRegions.begin(), fieldRegions.end(), regions.begin(), regions.end() ),
@@ -570,7 +570,7 @@ processCouplingRegionList( std::vector< DofManager::FieldSupport > inputList,
   else
   {
     // Check that each input entry is included in both row and col field supports
-    auto const checkSupport = [&regions]( std::vector< DofManager::FieldSupport > const & fieldRegions, string const & fieldName )
+    auto const checkSupport = [&regions]( std::vector< DofManager::FieldSupport > const & fieldRegions, GEOS_MAYBE_UNUSED string const & fieldName )
     {
       for( DofManager::FieldSupport const & r : regions )
       {

@@ -27,67 +27,68 @@ namespace geos
 namespace constitutive
 {
 
-struct RachfordRice
-{
-public:
+// struct RachfordRice
+// {
+// public:
 
-  /// Tolerance of the SSI loop
-  static constexpr real64 SSITolerance = 1e-3;
-  /// Tolerance of the Newton loop
-  static constexpr real64 newtonTolerance = 1e-12;
-  /// Max number of SSI iterations
-  static constexpr integer maxSSIIterations = 200;
-  /// Max number of Newton iterations
-  static constexpr integer maxNewtonIterations = 30;
-  /// Epsilon used in the calculations
-  static constexpr real64 epsilon = LvArray::NumericLimits< real64 >::epsilon;
+//   /// Tolerance of the SSI loop
+//   static constexpr real64 SSITolerance = 1e-3;
+//   /// Tolerance of the Newton loop
+//   static constexpr real64 newtonTolerance = 1e-12;
+//   /// Max number of SSI iterations
+//   static constexpr integer maxSSIIterations = 200;
+//   /// Max number of Newton iterations
+//   static constexpr integer maxNewtonIterations = 30;
+//   /// Epsilon used in the calculations
+//   static constexpr real64 epsilon = LvArray::NumericLimits< real64 >::epsilon;
 
-  /**
-   * @brief Function solving the Rachford-Rice equation
-   * @input[in] kValues the array fo K-values
-   * @input[in] feed the component fractions
-   * @input[in] presentComponentIds the indices of components with a non-zero fractions
-   * @return the gas mole fraction
-   **/
-  GEOS_HOST_DEVICE
-  real64
-  solve( arrayView1d< real64 const > const kValues,
-         arrayView1d< real64 const > const feed,
-         arrayView1d< integer const > const presentComponentIds );
+//   /**
+//    * @brief Function solving the Rachford-Rice equation
+//    * @input[in] kValues the array fo K-values
+//    * @input[in] feed the component fractions
+//    * @input[in] presentComponentIds the indices of components with a non-zero fractions
+//    * @return the gas mole fraction
+//    **/
+//   GEOS_HOST_DEVICE
+//   inline
+//   real64
+//   solve( arrayView1d< real64 const > const kValues,
+//          arrayView1d< real64 const > const feed,
+//          arrayView1d< integer const > const presentComponentIds );
 
-private:
+// private:
 
-  /**
-   * @brief Function evaluating the Rachford-Rice function
-   * @input[in] kValues the array fo K-values
-   * @input[in] feed the component fractions
-   * @input[in] presentComponentIds the indices of components with a non-zero fractions
-   * @input[in] x the value at which the Rachford-Rice function is evaluated
-   * @return the value of the Rachford-Rice function at x
-   **/
-  GEOS_HOST_DEVICE
-  real64
-  evaluate( arrayView1d< real64 const > const kValues,
-            arrayView1d< real64 const > const feed,
-            arrayView1d< integer const > const presentComponentIds,
-            real64 const & x );
+//   /**
+//    * @brief Function evaluating the Rachford-Rice function
+//    * @input[in] kValues the array fo K-values
+//    * @input[in] feed the component fractions
+//    * @input[in] presentComponentIds the indices of components with a non-zero fractions
+//    * @input[in] x the value at which the Rachford-Rice function is evaluated
+//    * @return the value of the Rachford-Rice function at x
+//    **/
+//   GEOS_HOST_DEVICE
+//   real64
+//   evaluate( arrayView1d< real64 const > const kValues,
+//             arrayView1d< real64 const > const feed,
+//             arrayView1d< integer const > const presentComponentIds,
+//             real64 const & x );
 
-  /**
-   * @brief Function evaluating the derivative of the Rachford-Rice function
-   * @input[in] kValues the array fo K-values
-   * @input[in] feed the component fractions
-   * @input[in] presentComponentIds the indices of components with a non-zero fractions
-   * @input[in] x the value at which the derivative of the Rachford-Rice function is evaluated
-   * @return the value of the derivative of the Rachford-Rice function at x
-   **/
-  GEOS_HOST_DEVICE
-  real64
-  evaluateDerivative( arrayView1d< real64 const > const kValues,
-                      arrayView1d< real64 const > const feed,
-                      arrayView1d< integer const > const presentComponentIds,
-                      real64 const & x );
+//   /**
+//    * @brief Function evaluating the derivative of the Rachford-Rice function
+//    * @input[in] kValues the array fo K-values
+//    * @input[in] feed the component fractions
+//    * @input[in] presentComponentIds the indices of components with a non-zero fractions
+//    * @input[in] x the value at which the derivative of the Rachford-Rice function is evaluated
+//    * @return the value of the derivative of the Rachford-Rice function at x
+//    **/
+//   GEOS_HOST_DEVICE
+//   real64
+//   evaluateDerivative( arrayView1d< real64 const > const kValues,
+//                       arrayView1d< real64 const > const feed,
+//                       arrayView1d< integer const > const presentComponentIds,
+//                       real64 const & x );
 
-};
+// };
 
 } // namespace constitutive
 

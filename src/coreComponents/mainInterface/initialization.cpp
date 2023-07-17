@@ -37,7 +37,7 @@ struct Arg : public option::Arg
    * @param option the option to parse.
    * @return option::ARG_ILLEGAL.
    */
-  static option::ArgStatus unknown( option::Option const & option, bool )
+  static option::ArgStatus unknown( GEOS_MAYBE_UNUSED option::Option const & option, bool )
   {
     GEOS_LOG_RANK( "Unknown option: " << option.name );
     return option::ARG_ILLEGAL;

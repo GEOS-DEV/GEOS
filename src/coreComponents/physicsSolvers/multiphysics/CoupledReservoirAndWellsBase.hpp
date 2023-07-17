@@ -223,20 +223,20 @@ public:
         // if the log level is 1, we output the value of the transmissibilities
         if( wellControls.getLogLevel() >= 2 )
         {
-          arrayView2d< real64 const > const perfLocation =
+          GEOS_MAYBE_UNUSED arrayView2d< real64 const > const perfLocation =
             perforationData.getField< fields::perforation::location >();
-          arrayView1d< real64 const > const perfTrans =
+          GEOS_MAYBE_UNUSED arrayView1d< real64 const > const perfTrans =
             perforationData.getField< fields::perforation::wellTransmissibility >();
 
           // get the element region, subregion, index
-          arrayView1d< localIndex const > const resElemRegion =
+          GEOS_MAYBE_UNUSED arrayView1d< localIndex const > const resElemRegion =
             perforationData.getField< fields::perforation::reservoirElementRegion >();
-          arrayView1d< localIndex const > const resElemSubRegion =
+          GEOS_MAYBE_UNUSED arrayView1d< localIndex const > const resElemSubRegion =
             perforationData.getField< fields::perforation::reservoirElementSubRegion >();
-          arrayView1d< localIndex const > const resElemIndex =
+          GEOS_MAYBE_UNUSED arrayView1d< localIndex const > const resElemIndex =
             perforationData.getField< fields::perforation::reservoirElementIndex >();
 
-          forAll< serialPolicy >( perforationData.size(), [=] GEOS_HOST_DEVICE ( localIndex const iperf )
+          forAll< serialPolicy >( perforationData.size(), [=] GEOS_HOST_DEVICE ( GEOS_MAYBE_UNUSED localIndex const iperf )
           {
             GEOS_LOG_RANK( GEOS_FMT( "Perforation at ({},{},{}); perforated element center: ({},{},{}); transmissibility: {} Pa.s.rm^3/s/Pa",
                                      perfLocation[iperf][0], perfLocation[iperf][1], perfLocation[iperf][2],

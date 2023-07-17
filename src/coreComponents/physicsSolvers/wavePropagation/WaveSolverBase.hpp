@@ -49,7 +49,7 @@ class WaveSolverBase : public SolverBase
 {
 public:
 
-  using EXEC_POLICY = parallelDevicePolicy< 32 >;
+  using EXEC_POLICY = parallelDevicePolicy< >;
 
   WaveSolverBase( const std::string & name,
                   Group * const parent );

@@ -662,7 +662,7 @@ ElementRegionManager::getCellBlockToSubRegionMap( CellBlockManagerABC const & ce
   forElementSubRegionsComplete< CellElementSubRegion >( [blockMap = blockMap.toView(),
                                                          &cellBlocks]( localIndex const er,
                                                                        localIndex const esr,
-                                                                       ElementRegionBase const & region,
+                                                                       GEOS_MAYBE_UNUSED ElementRegionBase const & region,
                                                                        CellElementSubRegion const & subRegion )
   {
     localIndex const blockIndex = cellBlocks.getIndex( subRegion.getName() );
