@@ -65,11 +65,11 @@ GEOS_FORCE_INLINE
 void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( localIndex const k,
                                                                                StackVariables & stack ) const
 {
-  GEOS_PRAGMA_UNROLL
+  #pragma unroll
   for( localIndex a=0; a< numNodesPerElem; ++a )
   {
     localIndex const nodeIndex = m_elemsToNodes( k, a );
-    GEOS_PRAGMA_UNROLL
+    #pragma unroll
     for( int i=0; i<numDofPerTrialSupportPoint; ++i )
     {
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
@@ -100,7 +100,7 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   real64 stressLocal[ 6 ] = {0};
   m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
 
-  GEOS_PRAGMA_UNROLL
+  #pragma unroll
   for( localIndex c = 0; c < 6; ++c )
   {
     stressLocal[ c ] *= -detJ;
@@ -158,11 +158,11 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( l
                                                                                real64 (& xLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
                                                                                real64 (& varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const
 {
-  GEOS_PRAGMA_UNROLL
+  #pragma unroll
   for( localIndex a=0; a< numNodesPerElem; ++a )
   {
     localIndex const nodeIndex = m_elemsToNodes( k, a );
-    GEOS_PRAGMA_UNROLL
+    #pragma unroll
     for( int i=0; i<numDofPerTrialSupportPoint; ++i )
     {
       xLocal[ a ][ i ] = m_X( nodeIndex, i );
@@ -184,7 +184,7 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
                                                                                                real64 const (&varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
                                                                                                real64 (& fLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const
 {
-  #define USE_JACOBIAN 1
+#define USE_JACOBIAN 2
 #if !defined(USE_JACOBIAN)
   real64 dNdX[ numNodesPerElem ][ 3 ];
   real64 const detJ = FE_TYPE::calcGradN( qa, qb, qc, xLocal, dNdX );
@@ -195,7 +195,7 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 
   real64 stressLocal[ 6 ] = {0};
   m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, qa+2*qb+4*qc, strain, stressLocal );
-  GEOS_PRAGMA_UNROLL
+  #pragma unroll
   for( localIndex c = 0; c < 6; ++c )
   {
     stressLocal[ c ] *= -detJ;
@@ -227,13 +227,13 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 
   real64 gradVar[3][3] = {{0}};
 
-  GEOS_PRAGMA_UNROLL
+  #pragma unroll
   for( int i = 0; i < 3; ++i )
   {
-    GEOS_PRAGMA_UNROLL
+    #pragma unroll
     for( int j = 0; j < 3; ++j )
     {
-      GEOS_PRAGMA_UNROLL
+      #pragma unroll
       for( int kk = 0; kk < 3; ++kk )
       {
         gradVar[i][j] = gradVar[i][j] + parentGradVar[i][kk] * invJ[kk][j];
@@ -287,13 +287,13 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 //  FE_TYPE::template parentGradient< qa, qb, qc >( varLocal, parentGradVar);
   real64 gradVar[3][3] = {{0}};
 
-  GEOS_PRAGMA_UNROLL
+  #pragma unroll
   for( int i = 0; i < 3; ++i )
   {
-    GEOS_PRAGMA_UNROLL
+    #pragma unroll
     for( int j = 0; j < 3; ++j )
     {
-      GEOS_PRAGMA_UNROLL
+      #pragma unroll
       for( int kk = 0; kk < 3; ++kk )
       {
         gradVar[i][j] = gradVar[i][j] + parentGradVar[i][kk] * invJ[kk][j];
@@ -365,11 +365,11 @@ kernelLaunch( localIndex const numElems,
 
     kernelComponent.setup( k, stack );
 //    for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
-    GEOS_PRAGMA_UNROLL
+  #pragma unroll
     for( integer qa=0; qa<2; ++qa )
-      GEOS_PRAGMA_UNROLL
+  #pragma unroll
       for( integer qb=0; qb<2; ++qb )
-        GEOS_PRAGMA_UNROLL
+  #pragma unroll
         for( integer qc=0; qc<2; ++qc )
         {
           //  int qa, qb, qc;

@@ -60,11 +60,11 @@
 
 #define GEOS_PRAGMA( PRAGMA_STRING ) _Pragma( #PRAGMA_STRING )
 
-#if defined(__GNUC__)
-#define GEOS_PRAGMA_UNROLL_DEPTH( NUMITER ) GEOS_PRAGMA( GCC unroll NUMITER )
-#else
+//#if defined(__GNUC__)
+//#define GEOS_PRAGMA_UNROLL_DEPTH( NUMITER ) GEOS_PRAGMA( GCC unroll NUMITER )
+//#else
 #define GEOS_PRAGMA_UNROLL_DEPTH( NUMITER ) GEOS_PRAGMA( unroll NUMITER )
-#endif
+//#endif
 
 #define GEOS_PRAGMA_UNROLL GEOS_PRAGMA_UNROLL_DEPTH( 16 )
 /**

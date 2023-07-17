@@ -72,7 +72,7 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
   arrayView1d< real64 const > const localSrc = src.values();
   arrayView1d< real64 > const localDst = dst.open();
   // We do it by hand to avoid hypre call
-  using POLICY = parallelDeviceAsyncPolicy<>;
+  using POLICY = parallelDeviceAsyncPolicy<256>;
   forAll< POLICY >( localDst.size(), [localDst] GEOS_HOST_DEVICE ( localIndex const i )
   {
     localDst[ i ] = 0.0;
@@ -121,7 +121,7 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
                                                                                          "" );
 
     finiteElement::
-      regionBasedKernelApplication< parallelDeviceAsyncPolicy< 32 >,
+      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                     constitutive::ElasticIsotropic,
                                     CellElementSubRegion >( mesh,
                                                             regionNames,

@@ -184,6 +184,7 @@ UnprecCgSolver< VECTOR >::UnprecCgSolver( LinearSolverParameters params,
 template< typename Vector >
 void axpby( real64 alpha, const Vector & x, real64 beta, const Vector & y, Vector & res )
 {
+  GEOS_MARK_FUNCTION;
   arrayView1d< real64 const > const localX = x.values();
   arrayView1d< real64 const > const localY = y.values();
   arrayView1d< real64 > const localRes = res.open();
@@ -191,7 +192,7 @@ void axpby( real64 alpha, const Vector & x, real64 beta, const Vector & y, Vecto
     localX.size() != localY.size() || localX.size() != localRes.size(),
     "Cannot use CG solver with a non-symmetric system" );
 
-  using POLICY = parallelDeviceAsyncPolicy<>;
+  using POLICY = parallelDeviceAsyncPolicy<1024>;
   forAll< POLICY >( localX.size(), [alpha, beta, localX, localY, localRes] GEOS_HOST_DEVICE ( localIndex const i )
   {
     localRes[ i ] = alpha * localX[ i ] + beta * localY[ i ];
@@ -199,14 +200,110 @@ void axpby( real64 alpha, const Vector & x, real64 beta, const Vector & y, Vecto
   res.close();
 }
 
+
+template< typename Vector >
+real64 axpby_dot( real64 alpha, const Vector & x, real64 beta, const Vector & y, Vector & res )
+{
+  GEOS_MARK_FUNCTION;
+  arrayView1d< real64 const > const localX = x.values();
+  arrayView1d< real64 const > const localY = y.values();
+  arrayView1d< real64 > const localRes = res.open();
+  GEOS_ERROR_IF(
+    localX.size() != localY.size() || localX.size() != localRes.size(),
+    "Cannot use CG solver with a non-symmetric system" );
+
+
+  RAJA::ReduceSum< RAJA::cuda_reduce_atomic, real64 > sum( 0.0 );
+
+  using POLICY = parallelDeviceAsyncPolicy<1024>;
+  forAll< POLICY >( localX.size(), [alpha, beta, localX, localY, localRes, sum] GEOS_HOST_DEVICE ( localIndex const i )
+  {
+    localRes[ i ] = alpha * localX[ i ] + beta * localY[ i ];
+    sum += localRes[ i ] * localRes[ i ] ;
+  } );
+  res.close();
+  return static_cast< real64 >(sum.get());
+}
+
+
+template< typename Vector >
+real64 axpby2_dot( real64 const alpha0, const Vector & x0, real64 const beta0, const Vector & y0, Vector & res0,
+                   real64 const alpha1, const Vector & x1, real64 const beta1, const Vector & y1, Vector & res1 )
+{
+  GEOS_MARK_FUNCTION;
+  arrayView1d< real64 const > const localX0 = x0.values();
+  arrayView1d< real64 const > const localY0 = y0.values();
+  arrayView1d< real64 > const localRes0 = res0.open();
+
+  arrayView1d< real64 const > const localX1 = x1.values();
+  arrayView1d< real64 const > const localY1 = y1.values();
+  arrayView1d< real64 > const localRes1 = res1.open();
+
+  GEOS_ERROR_IF( localX0.size() != localY0.size() || 
+                 localX0.size() != localRes0.size() || 
+                 localX0.size() != localX1.size() || 
+                 localX1.size() != localY1.size() || 
+                 localX1.size() != localRes1.size(),
+    "Cannot use CG solver with a non-symmetric system" );
+
+
+  RAJA::ReduceSum< RAJA::cuda_reduce_atomic, real64 > sum( 0.0 );
+
+  using POLICY = parallelDeviceAsyncPolicy<1024>;
+  forAll< POLICY >( localX0.size(), [ alpha0, beta0, localX0, localY0, localRes0, 
+                                      alpha1, beta1, localX1, localY1, localRes1, sum] GEOS_HOST_DEVICE ( localIndex const i )
+  {
+    localRes0[ i ] = alpha0 * localX0[ i ] + beta0 * localY0[ i ];
+    localRes1[ i ] = alpha1 * localX1[ i ] + beta1 * localY1[ i ];
+    sum += localRes1[ i ] * localRes1[ i ] ;
+  } );
+  res0.close();
+  res1.close();
+  return static_cast< real64 >(sum.get());
+}
+
+
+template< typename Vector >
+real64 axpby2_dot( real64 const alpha0, const Vector & x0, Vector & res0,
+                   real64 const alpha1, const Vector & x1, Vector & res1 )
+{
+  GEOS_MARK_FUNCTION;
+  arrayView1d< real64 const > const localX0 = x0.values();
+  arrayView1d< real64 > const localRes0 = res0.open();
+
+  arrayView1d< real64 const > const localX1 = x1.values();
+  arrayView1d< real64 > const localRes1 = res1.open();
+
+  GEOS_ERROR_IF( localX0.size() != localRes0.size() || 
+                 localX0.size() != localX1.size() || 
+                 localX1.size() != localRes1.size(),
+    "Cannot use CG solver with a non-symmetric system" );
+
+
+  RAJA::ReduceSum< RAJA::cuda_reduce_atomic, real64 > sum( 0.0 );
+
+  using POLICY = parallelDeviceAsyncPolicy<1024>;
+  forAll< POLICY >( localX0.size(), [ alpha0, localX0, localRes0, 
+                                      alpha1, localX1, localRes1, sum] GEOS_HOST_DEVICE ( localIndex const i )
+  {
+    localRes0[ i ] = localRes0[ i ] + alpha0 * localX0[ i ];
+    localRes1[ i ] = localRes1[ i ] + alpha1 * localX1[ i ];
+    sum += localRes1[ i ] * localRes1[ i ] ;
+  } );
+  res0.close();
+  res1.close();
+  return static_cast< real64 >(sum.get());
+}
+
 template< typename Vector >
 real64 dot( const Vector & x, const Vector & y )
 {
+  GEOS_MARK_FUNCTION;
   RAJA::ReduceSum< RAJA::cuda_reduce_atomic, real64 > vsum( 0.0 );
   arrayView1d< real64 const > const localX = x.values();
   arrayView1d< real64 const > const localY = y.values();
 
-  using POLICY = parallelDeviceAsyncPolicy<>;
+  using POLICY = parallelDeviceAsyncPolicy<1024>;
   forAll< POLICY >( localX.size(), [vsum, localX, localY] GEOS_HOST_DEVICE ( localIndex const i )
   {
     vsum += localX[ i ] * localY[ i ];
@@ -224,22 +321,13 @@ void UnprecCgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
   // Define residual vector
   VectorTemp r = createTempVector( b );
 
-//  std::cout << "son qui\n\n\n\n" << std::endl;
-
   // Compute initial rk =  b - Ax
   m_operator.residual( x, b, r );
-
-  // std::cout << "x0: \n" << x << std::endl;
-  // std::cout << "b: \n" << b << std::endl;
-
-  // std::cout << "residual: \n" << r << std::endl;
 
   // Compute the target absolute tolerance
   real64 const rnorm0 = r.norm2();
   real64 const absTol = rnorm0 * m_params.krylov.relTolerance;
 
-  // Preconditioning
-  // VectorTemp z = createTempVector( x );
 
   // Search direction
   VectorTemp p = createTempVector( r );
@@ -255,10 +343,9 @@ void UnprecCgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
   watch.zero();
 
   integer & k = m_result.numIterations;
+  real64 tau = dot( r, r );
   for( k = 0; k <= m_params.krylov.maxIterations; ++k )
   {
-    // real64 const rnorm = r.norm2();
-    real64 const tau = dot( r, r );
     real64 const rnorm = std::sqrt( tau );
     m_residualNorms.emplace_back( rnorm );
     logProgress();
@@ -270,43 +357,47 @@ void UnprecCgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
       break;
     }
 
-    // Update z = Mr
-    // m_precond.apply( r, z );
-
     // Compute beta
-    // real64 const tau = r.dot( r );
-    // real64 const tau = dot( r, r );
     real64 const beta = k > 0 ? tau / tau_old : 0.0;
 
     // Update p = r + beta*p
     // p.axpby( 1.0, r, beta );
     axpby( 1.0, r, beta, p, p );
-//    std::cout << "p("<<k<<"): \n" << p << std::endl;
 
     // Compute Ap
     m_operator.apply( p, Ap );
-//    std::cout << "Ap("<<k<<"): \n" << Ap << std::endl;
 
     // compute alpha
-    // real64 const pAp = p.dot( Ap );
     real64 const pAp = dot( p, Ap );
     //GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( pAp )
     real64 const alpha = tau / pAp;
 
-    // Update x = x + alpha*p
-    // x.axpby( alpha, p, 1.0 );
-    axpby( alpha, p, 1.0, x, x );
-//    std::cout << "x("<<k<<"+1): \n" << x << std::endl;
-
-    // Update rk = rk - alpha*Ap
-    // r.axpby( -alpha, Ap, 1.0 );
-    axpby( -alpha, Ap, 1.0, r, r );
-
-//    std::cout << "r("<<k<<"+1): \n" << r << std::endl;
-
-
     // Keep the old value of tau
     tau_old = tau;
+
+#define GC_FUSION_LEVEL 0
+#if GC_FUSION_LEVEL==3
+    tau = axpby2_dot( +alpha, p, x,
+                      -alpha, Ap, r );
+#elif GC_FUSION_LEVEL==2
+    tau = axpby2_dot( +alpha, p, 1.0, x, x,
+                      -alpha, Ap, 1.0, r, r );
+#elif GC_FUSION_LEVEL==1
+    // Update x = x + alpha*p
+    axpby( alpha, p, 1.0, x, x );
+
+    tau = axpby_dot( -alpha, Ap, 1.0, r, r );
+#else
+    // Update x = x + alpha*p
+    axpby( alpha, p, 1.0, x, x );
+
+    // Update rk = rk - alpha*Ap
+    axpby( -alpha, Ap, 1.0, r, r );
+
+    tau = dot( r, r );
+#endif
+
+    
   }
   // std::cout << "iter: " << k << std::endl;
   // std::cout << "solution: \n" << x << std::endl;
