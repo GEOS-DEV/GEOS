@@ -19,7 +19,6 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSEFEM_IMPL_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSEFEM_IMPL_HPP_
 
-#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "physicsSolvers/contact/ContactFields.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
@@ -176,12 +175,14 @@ setup( localIndex const k,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
+template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void SinglePhasePoromechanicsEFEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 quadraturePointKernel( localIndex const k,
                        localIndex const q,
-                       StackVariables & stack ) const
+                       StackVariables & stack,
+                       FUNC && kernelOp ) const
 {
 
   localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
@@ -196,15 +197,15 @@ quadraturePointKernel( localIndex const k,
   constexpr int nUdof = numNodesPerElem*3;
 
   // Gauss contribution to Kww, Kwu and Kuw blocks
-  real64 Kww_gauss[3][3], Kwu_gauss[3][nUdof], Kuw_gauss[nUdof][3], Kwpm_gauss[3];
+  real64 Kww_gauss[3][3]{}, Kwu_gauss[3][nUdof]{}, Kuw_gauss[nUdof][3]{}, Kwpm_gauss[3]{};
 
   //  Compatibility, equilibrium and strain operators. The compatibility operator is constructed as
   //  a 3 x 6 because it is more convenient for construction purposes (reduces number of local var).
-  real64 compMatrix[3][6], strainMatrix[6][nUdof], eqMatrix[3][6];
-  real64 matBD[nUdof][6], matED[3][6];
+  real64 compMatrix[3][6]{}, strainMatrix[6][nUdof]{}, eqMatrix[3][6]{};
+  real64 matBD[nUdof][6]{}, matED[3][6]{};
   real64 const biotCoefficient = 1.0;
 
-  int Heaviside[ numNodesPerElem ];
+  int Heaviside[ numNodesPerElem ]{};
 
   // TODO: asking for the stiffness here will only work for elastic models.  most other models
   //       need to know the strain increment to compute the current stiffness value.
@@ -257,6 +258,8 @@ quadraturePointKernel( localIndex const k,
   // No neg coz the effective stress is total stress - porePressure
   // and all signs are flipped here.
   LvArray::tensorOps::scaledAdd< 3 >( stack.localKwpm, Kwpm_gauss, detJ*biotCoefficient );
+
+  kernelOp( eqMatrix, detJ );
 }
 
 template< typename SUBREGION_TYPE,

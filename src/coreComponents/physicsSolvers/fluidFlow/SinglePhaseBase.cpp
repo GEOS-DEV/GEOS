@@ -25,7 +25,6 @@
 #include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidSelector.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
-#include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
 #include "constitutive/thermalConductivity/singlePhaseThermalConductivitySelector.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
@@ -81,12 +80,15 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase & subRegion )
     {
+      subRegion.registerField< pressure >( getName() );
       subRegion.registerField< pressure_n >( getName() );
       subRegion.registerField< initialPressure >( getName() );
       subRegion.registerField< deltaPressure >( getName() ); // for reporting/stats purposes
-      subRegion.registerField< pressure >( getName() );
-
       subRegion.registerField< bcPressure >( getName() ); // needed for the application of boundary conditions
+      if( m_isFixedStressPoromechanicsUpdate )
+      {
+        subRegion.registerField< pressure_k >( getName() ); // needed for the fixed-stress porosity update
+      }
 
       subRegion.registerField< deltaVolume >( getName() );
 
@@ -94,6 +96,10 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< temperature_n >( getName() );
       subRegion.registerField< initialTemperature >( getName() );
       subRegion.registerField< bcTemperature >( getName() ); // needed for the application of boundary conditions
+      if( m_isFixedStressPoromechanicsUpdate )
+      {
+        subRegion.registerField< temperature_k >( getName() ); // needed for the fixed-stress porosity update
+      }
 
       subRegion.registerField< mobility >( getName() );
       subRegion.registerField< dMobility_dPressure >( getName() );
@@ -264,6 +270,19 @@ void SinglePhaseBase::updateSolidInternalEnergyModel( ObjectManagerBase & dataGr
   SolidInternalEnergy::KernelWrapper solidInternalEnergyWrapper = solidInternalEnergy.createKernelUpdates();
 
   thermalSinglePhaseBaseKernels::SolidInternalEnergyUpdateKernel::launch< parallelDevicePolicy<> >( dataGroup.size(), solidInternalEnergyWrapper, temp );
+}
+
+void SinglePhaseBase::updateThermalConductivity( ElementSubRegionBase & subRegion ) const
+{
+  CoupledSolidBase const & porousSolid =
+    getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+
+  arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
+
+  string const & thermalConductivityName = subRegion.template getReference< string >( viewKeyStruct::thermalConductivityNamesString() );
+  SinglePhaseThermalConductivityBase const & conductivityMaterial =
+    getConstitutiveModel< SinglePhaseThermalConductivityBase >( subRegion, thermalConductivityName );
+  conductivityMaterial.update( porosity );
 }
 
 void SinglePhaseBase::updateFluidState( ObjectManagerBase & subRegion ) const
@@ -626,6 +645,8 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
       if( m_isThermal )
       {
         updateSolidInternalEnergyModel( subRegion );
+        updateThermalConductivity( subRegion );
+
       }
 
     } );
@@ -688,7 +709,14 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
 
       CoupledSolidBase const & porousSolid =
         getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
-      porousSolid.saveConvergedState();
+      if( m_keepFlowVariablesConstantDuringInitStep )
+      {
+        porousSolid.ignoreConvergedState(); // newPorosity <- porosity_n
+      }
+      else
+      {
+        porousSolid.saveConvergedState(); // porosity_n <- porosity
+      }
 
       if( m_isThermal )
       {

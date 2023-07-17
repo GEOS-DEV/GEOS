@@ -66,6 +66,7 @@ struct PrecomputeSourceAndReceiverKernel
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
   launch( localIndex const size,
+          localIndex const regionIndex,
           localIndex const numNodesPerElem,
           localIndex const numFacesPerElem,
           arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
@@ -80,11 +81,13 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView1d< localIndex > const sourceElem,
           arrayView2d< localIndex > const sourceNodeIds,
           arrayView2d< real64 > const sourceConstants,
+          arrayView1d< localIndex > const sourceRegion,
           arrayView2d< real64 const > const receiverCoordinates,
           arrayView1d< localIndex > const receiverIsLocal,
           arrayView1d< localIndex > const rcvElem,
           arrayView2d< localIndex > const receiverNodeIds,
           arrayView2d< real64 > const receiverConstants,
+          arrayView1d< localIndex > const receiverRegion,
           arrayView2d< real32 > const sourceValue,
           real64 const dt,
           real32 const timeSourceFrequency,
@@ -127,6 +130,7 @@ struct PrecomputeSourceAndReceiverKernel
 
             sourceIsAccessible[isrc] = 1;
             sourceElem[isrc] = k;
+            sourceRegion[isrc] = regionIndex;
             real64 Ntest[FE_TYPE::numNodes];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
@@ -174,6 +178,7 @@ struct PrecomputeSourceAndReceiverKernel
                                                                               coordsOnRefElem );
             receiverIsLocal[ircv] = 1;
             rcvElem[ircv] = k;
+            receiverRegion[ircv] = regionIndex;
 
             real64 Ntest[FE_TYPE::numNodes];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
@@ -443,6 +448,7 @@ struct PressureComputation
    * @tparam EXEC_POLICY the execution policy
    * @tparam ATOMIC_POLICY the atomic policy
    * @param[in] size the number of cells in the subRegion
+   * @param[in] regionIndex Index of the subregion
    * @param[in] size_node the number of nodes in the subRegion
    * @param[in] X coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
@@ -463,6 +469,7 @@ struct PressureComputation
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
+          localIndex const regionIndex,
           localIndex const size_node,
           arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
@@ -475,6 +482,7 @@ struct PressureComputation
           arrayView2d< real32 const > const sourceValue,
           arrayView1d< localIndex const > const sourceIsAccessible,
           arrayView1d< localIndex const > const sourceElem,
+          arrayView1d< localIndex const > const sourceRegion,
           real64 const dt,
           integer const cycleNumber,
           arrayView1d< real32 > const p_np1 )
@@ -552,7 +560,7 @@ struct PressureComputation
       {
         if( sourceIsAccessible[isrc] == 1 )
         {
-          if( sourceElem[isrc]==k )
+          if( sourceElem[isrc]==k && sourceRegion[isrc] == regionIndex )
           {
             for( localIndex i = 0; i < numNodesPerElem; ++i )
             {

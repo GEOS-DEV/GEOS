@@ -137,6 +137,7 @@ public:
     : Base( numPhases,
             rankOffset,
             hasCapPressure,
+            //0.0,                  // no C1-PPU
             stencilWrapper,
             dofNumberAccessor,
             compFlowAccessors,
@@ -337,10 +338,10 @@ public:
                    arrayView1d< real64 > const & localRhs )
   {
     isothermalCompositionalMultiphaseBaseKernels::
-      internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
+      internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
-      integer constexpr NUM_DOF = NC()+1;
+      integer constexpr NUM_DOF = NC() + 1;
 
       ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
