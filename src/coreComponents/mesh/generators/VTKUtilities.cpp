@@ -480,12 +480,12 @@ loadMesh( Path const & filePath,
  * @return the vtk grid with global ids attributes
  */
 vtkSmartPointer< vtkDataSet >
-generateGlobalIDs( vtkDataSet & mesh )
+generateGlobalIDs( vtkSmartPointer< vtkDataSet > mesh )
 {
   GEOS_MARK_FUNCTION;
 
   vtkNew< vtkGenerateGlobalIds > generator;
-  generator->SetInputDataObject( &mesh );
+  generator->SetInputDataObject( mesh );
   generator->Update();
   return vtkDataSet::SafeDownCast( generator->GetOutputDataObject( 0 ) );
 }
@@ -593,8 +593,55 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes )
   return neighbors;
 }
 
+vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mesh, int useGlobalIds )
+{
+  auto hasGlobalIds = []( vtkSmartPointer< vtkDataSet > m ) -> bool
+  {
+    return m->GetPointData()->GetGlobalIds() != nullptr && m->GetCellData()->GetGlobalIds() != nullptr;
+  };
+
+  {
+    // Add global ids on the fly if needed
+    int const me = hasGlobalIds( mesh );
+    int everyone;
+    MpiWrapper::allReduce( &me, &everyone, 1, MPI_MAX, MPI_COMM_GEOSX );
+
+    if( everyone and not me )
+    {
+      mesh->GetPointData()->SetGlobalIds( vtkIdTypeArray::New() );
+      mesh->GetCellData()->SetGlobalIds( vtkIdTypeArray::New() );
+    }
+  }
+
+  vtkSmartPointer< vtkDataSet > output;
+  bool const globalIdsAvailable = hasGlobalIds( mesh );
+  if( useGlobalIds > 0 && !globalIdsAvailable )
+  {
+    GEOS_ERROR( "Global IDs strictly required (useGlobalId > 0) but unavailable. Set useGlobalIds to 0 to build them automatically." );
+  }
+  else if( useGlobalIds >= 0 && globalIdsAvailable )
+  {
+    output = mesh;
+    vtkIdTypeArray const * const globalCellId = vtkIdTypeArray::FastDownCast( output->GetCellData()->GetGlobalIds() );
+    vtkIdTypeArray const * const globalPointId = vtkIdTypeArray::FastDownCast( output->GetPointData()->GetGlobalIds() );
+    GEOS_ERROR_IF( globalCellId->GetNumberOfComponents() != 1 && globalCellId->GetNumberOfTuples() != output->GetNumberOfCells(),
+                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
+    GEOS_ERROR_IF( globalPointId->GetNumberOfComponents() != 1 && globalPointId->GetNumberOfTuples() != output->GetNumberOfPoints(),
+                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
+
+    GEOS_LOG_RANK_0( "Using global Ids defined in VTK mesh" );
+  }
+  else
+  {
+    GEOS_LOG_RANK_0( "Generating global Ids from VTK mesh" );
+    output = generateGlobalIDs( mesh );
+  }
+
+  return output;
+}
+
 vtkSmartPointer< vtkDataSet >
-redistributeMesh( vtkDataSet & loadedMesh,
+redistributeMesh( vtkSmartPointer< vtkDataSet > loadedMesh,
                   MPI_Comm const comm,
                   PartitionMethod const method,
                   int const partitionRefinement,
@@ -603,34 +650,7 @@ redistributeMesh( vtkDataSet & loadedMesh,
   GEOS_MARK_FUNCTION;
 
   // Generate global IDs for vertices and cells, if needed
-  vtkSmartPointer< vtkDataSet > mesh;
-  bool globalIdsAvailable = loadedMesh.GetPointData()->GetGlobalIds() != nullptr
-                            && loadedMesh.GetCellData()->GetGlobalIds() != nullptr;
-  if( useGlobalIds > 0 && !globalIdsAvailable )
-  {
-    GEOS_ERROR( "Global IDs strictly required (useGlobalId > 0) but unavailable. Set useGlobalIds to 0 to build them automatically." );
-  }
-  else if( useGlobalIds >= 0 && globalIdsAvailable )
-  {
-    mesh = &loadedMesh;
-    vtkIdTypeArray const * const globalCellId = vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() );
-    vtkIdTypeArray const * const globalPointId = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
-    GEOS_ERROR_IF( globalCellId->GetNumberOfComponents() != 1 && globalCellId->GetNumberOfTuples() != mesh->GetNumberOfCells(),
-                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
-    GEOS_ERROR_IF( globalPointId->GetNumberOfComponents() != 1 && globalPointId->GetNumberOfTuples() != mesh->GetNumberOfPoints(),
-                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
-
-    GEOS_LOG_RANK_0( "Using global Ids defined in VTK mesh" );
-  }
-  else
-  {
-    GEOS_LOG_RANK_0( "Generating global Ids from VTK mesh" );
-    vtkNew< vtkGenerateGlobalIds > generator;
-    generator->SetInputDataObject( &loadedMesh );
-    generator->Update();
-    mesh = generateGlobalIDs( loadedMesh );
-  }
-
+  vtkSmartPointer< vtkDataSet > mesh = manageGlobalIds( loadedMesh, useGlobalIds );
 
   // Determine if redistribution is required
   vtkIdType const minCellsOnAnyRank = MpiWrapper::min( mesh->GetNumberOfCells(), comm );

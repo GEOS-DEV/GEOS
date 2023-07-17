@@ -90,6 +90,11 @@ void PorosityBase::saveConvergedState() const
   m_porosity_n.setValues< parallelDevicePolicy<> >( m_newPorosity.toViewConst() );
 }
 
+void PorosityBase::ignoreConvergedState() const
+{
+  m_newPorosity.setValues< parallelDevicePolicy<> >( m_porosity_n.toViewConst() );
+}
+
 void PorosityBase::initializeState() const
 {
   m_porosity_n.setValues< parallelDevicePolicy<> >( m_newPorosity.toViewConst() );

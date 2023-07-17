@@ -17,6 +17,8 @@
 
 #include "CellBlockUtilities.hpp"
 #include "dataRepository/Group.hpp"
+#include "PartitionDescriptor.hpp"
+#include "LineBlockABC.hpp"
 
 #include <map>
 
@@ -100,10 +102,24 @@ public:
   virtual Group & getFaceBlocks() = 0;
 
   /**
+   * @brief Returns LineBlockABC corresponding to the given identifier
+   * @param name the name of the required LineBlockABC
+   * @return The LineBlockABC associated with the given name
+   *
+   */
+  virtual LineBlockABC const & getLineBlock( string name ) const = 0;
+
+  /**
    * @brief Returns a group containing the cell blocks as CellBlockABC instances
    * @return Const reference to the Group instance.
    */
   virtual const Group & getCellBlocks() const = 0;
+
+  /**
+   * @brief Returns a group containing the face blocks as FaceBlockABC instances
+   * @return Const reference to the Group instance.
+   */
+  virtual const Group & getFaceBlocks() const = 0;
 
   /**
    * @brief Total number of nodes across all the cell blocks.
@@ -191,6 +207,12 @@ public:
    * @return A reference to constant map.
    */
   virtual std::map< string, SortedArray< localIndex > > const & getNodeSets() const = 0;
+
+  /**
+   * @brief Getter for the global length
+   * @return the global length of the mesh
+   */
+  virtual real64 getGlobalLength() const = 0;
 
   /**
    * @brief Generates in place the high-order maps for this cell block manager.
