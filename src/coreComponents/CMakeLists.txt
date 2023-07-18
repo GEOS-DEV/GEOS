@@ -64,7 +64,7 @@ if( NOT GEOSX_BUILD_SHARED_LIBS )
   foreach( lib ${coreLibs} )
     list( APPEND geosx_core_list ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
   endforeach()
-  set ( geosx_core_libs "${coreLibs}" CACHE INTERNAL "" )
+  set ( geosx_core_libs "${geosx_core_list}" CACHE INTERNAL "" )
 endif( )
 
 foreach( lib ${subdirs} )
