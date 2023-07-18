@@ -174,6 +174,9 @@ void DieterichSeismicityRate::odeSolverStep( real64 const & time_n,
   
         // solve for logarithm of seismicity rate
         real64 tol = 1e-8;
+
+        real64 deltaTau = m_directEffect * m_initialSigma;
+        real64 c = 1e-3;
         forAll< parallelDevicePolicy<> >(  h.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
         {
           real64 error = 100;
@@ -182,8 +185,8 @@ void DieterichSeismicityRate::odeSolverStep( real64 const & time_n,
           while (error > tol) 
           {
             // Hard code erf shear stress history
-            real64 curTau = std::erf((time_n+dt)*1e-5)*1e6 + tau[k];
-            real64 curTauDot = 2/std::sqrt(M_PI)*std::exp(-std::pow((time_n+dt)*1e-5,2))*1e6*1e-5;
+            real64 curTau = deltaTau*std::log(c*(time_n+dt)+1) + tau[k];
+            real64 curTauDot = c*deltaTau/(c*(time_n+dt)+1);
 
             // real64 gdot = ((tauDot[k]+m_bStressRate)*(sig[k]-p[k]) + (tau[k]+m_bStressRate*(time_n+dt))*pDot[k]) / 
             //                   (m_directEffect*std::pow((sig[k]-p[k]), 2));
