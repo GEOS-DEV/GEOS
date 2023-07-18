@@ -347,7 +347,7 @@ public:
       stack.localResidual,
       N,
       biotCoeff*m_pressureMatrix[k]*volStrain,
-      -detJxW );
+      detJxW );
 
     real64 pressureFractureIntegrand[3];
     LvArray::tensorOps::scaledCopy< 3 >( pressureFractureIntegrand, qpDisp, m_pressureFracture[k] );

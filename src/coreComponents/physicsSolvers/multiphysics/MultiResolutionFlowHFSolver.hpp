@@ -80,7 +80,6 @@ public:
                                         MeshLevel const & base, 
                                         MeshLevel const & patch);
 
-
   virtual void findPhaseFieldTip( R1Tensor & tip,
                                   MeshLevel const & patch );
 
