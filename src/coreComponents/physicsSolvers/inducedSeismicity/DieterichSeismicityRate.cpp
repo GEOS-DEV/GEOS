@@ -181,9 +181,15 @@ void DieterichSeismicityRate::odeSolverStep( real64 const & time_n,
   
           while (error > tol) 
           {
-            real64 gdot = ((tauDot[k]+m_bStressRate)*(sig[k]-p[k]) + (tau[k]+m_bStressRate*(time_n+dt))*pDot[k]) / 
-                              (m_directEffect*std::pow((sig[k]-p[k]), 2));
-  
+            // Hard code erf shear stress history
+            real64 curTau = std::erf((time_n+dt)*1e-5)*1e6 + tau[k];
+            real64 curTauDot = 2/std::sqrt(M_PI)*std::exp(-std::pow((time_n+dt)*1e-5,2))*1e6*1e-5;
+
+            // real64 gdot = ((tauDot[k]+m_bStressRate)*(sig[k]-p[k]) + (tau[k]+m_bStressRate*(time_n+dt))*pDot[k]) / 
+            //                   (m_directEffect*std::pow((sig[k]-p[k]), 2));
+            real64 gdot = ((curTauDot+m_bStressRate)*(sig[k]-p[k]) + (curTau+m_bStressRate*(time_n+dt))*pDot[k]) / 
+                            (m_directEffect*std::pow((sig[k]-p[k]), 2));
+
             real64 f = h[k] + dt/t_a[k]*LvArray::math::exp(h[k]) - (h_n[k]  + dt*gdot);
             real64 dfdh = 1 + dt/t_a[k]*LvArray::math::exp(h[k]);
   
