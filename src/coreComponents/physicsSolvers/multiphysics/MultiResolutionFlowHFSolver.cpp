@@ -374,6 +374,103 @@ real64 MultiResolutionFlowHFSolver::solverStep( real64 const & time_n,
   return dtReturn;
 }
 
+bool isColinear(R1Tensor X, R1Tensor Y, R1Tensor Z)
+{
+  LvArray::tensorOps::subtract<3>(Z,X);
+  LvArray::tensorOps::subtract<3>(Y,X);
+  R1Tensor crossProductResult;
+  LvArray::tensorOps::crossProduct(crossProductResult,Y,Z);
+  if(LvArray::tensorOps::l2Norm<3>(crossProductResult)>1e-6)
+  {
+    return true;
+  } 
+  return false;
+}
+
+void MultiResolutionFlowHFSolver::TrackDamageOnEdges( MeshLevel const & base, MeshLevel const & patch )
+{
+// loop over base elements
+    m_allEdgeCrosses.clear();
+    //loop over all base elems using map<globalIndex, set<globalIndex>> m_baseToPatchElementRelation;
+    ElementRegionManager const & baseElemManager = base.getElemManager();
+    NodeManager const & baseNodeManager = base.getNodeManager();
+    EdgeManager const & edgeManager = base.getEdgeManager();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & baseNodePosition = baseNodeManager.referencePosition();
+    //get elemsToNodes for patch
+    ElementRegionManager const & patchElemManager = patch.getElemManager();
+    NodeManager const & patchNodeManager = patch.getNodeManager();
+    // Hard-coded patch region and subRegion
+    ElementRegionBase const & patchElementRegion = patchElemManager.getRegion( 0 );
+    CellElementSubRegion const & patchSubRegion = patchElementRegion.getSubRegion< CellElementSubRegion >( 0 );
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & patchElemsToNodes = patchSubRegion.nodeList();   
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & patchNodePosition = patchNodeManager.referencePosition();
+    baseElemManager.forElementSubRegions< CellElementSubRegion,
+                                          FaceElementSubRegion >( [&] ( auto & baseElementSubRegion )
+    {       
+        arrayView1d< integer const > const baseGhostRank = baseElementSubRegion.ghostRank();  
+        arrayView2d< localIndex const > const edgeToNodes = edgeManager.nodeList();
+        auto & cellToEdges = baseElementSubRegion.edgeList();
+        forAll< serialPolicy >( baseElementSubRegion.size(), [&] ( localIndex const k ) 
+        {
+            if(baseGhostRank[k]<0)
+            {
+                //get globalIndex of k
+                globalIndex globalIndexK = baseElementSubRegion.localToGlobalMap()[k];
+                //get edges
+                auto elementEdges = cellToEdges[k];
+                //iterate over edges and find their associated triplet - build edge to triplet map
+                for(auto edge:elementEdges)
+                {
+                  real64 edgeMaxDamage = 0;
+                  R1Tensor edgeCross = {-1.0, -1.0, -1.0};
+                  localIndex nodeNum = -1;
+                  R1Tensor nodeA; R1Tensor nodeB;
+                  nodeA[0] = baseNodePosition[edgeToNodes[edge][0]][0];
+                  nodeA[1] = baseNodePosition[edgeToNodes[edge][0]][1];
+                  nodeA[2] = baseNodePosition[edgeToNodes[edge][0]][2];
+                  nodeB[0] = baseNodePosition[edgeToNodes[edge][1]][0];
+                  nodeB[1] = baseNodePosition[edgeToNodes[edge][1]][1];
+                  nodeB[2] = baseNodePosition[edgeToNodes[edge][1]][2];
+                  //begin loop over all sub elements of k
+                  for(auto globalIndexPatchElem:m_baseToPatchElementRelation[globalIndexK])
+                  {
+                    //get nodes from globalIndexPatchElem
+                    localIndex localIndexPatchElem = patchSubRegion.globalToLocalMap().at(globalIndexPatchElem);
+                    for(auto patchNode:patchElemsToNodes[localIndexPatchElem])
+                    {
+                     //test colinearity with edge nodes
+                      R1Tensor nodeCoord;
+                      nodeCoord[0] = patchNodePosition[patchNode][0];
+                      nodeCoord[1] = patchNodePosition[patchNode][1];
+                      nodeCoord[2] = patchNodePosition[patchNode][2]; 
+                      if(isColinear(nodeA, nodeB, nodeCoord))
+                      {
+                        //get reference to damage field
+                        arrayView1d< real64 const > const patchDamage = patchNodeManager.getReference< array1d< real64 > >( "Damage" );
+                        //get damage of patchNode
+                        real64 nodeDamage = patchDamage[patchNode];  
+                        if (nodeDamage > edgeMaxDamage && nodeDamage > 0.9)
+                        {
+                          edgeMaxDamage = nodeDamage;
+                          edgeCross = nodeCoord;
+                          nodeNum = patchNode;
+                        }
+                      }
+                    }
+                  }//loop over patch elems
+                  m_allEdgeCrosses.insert(nodeNum);                                                 
+                }//loop over edges
+              }//if ghost
+            });//loop over base elems  - forAll    
+      });//forAll over base sub regions
+      //write all edge crosses to a csv file, use some separator for time steps
+      for(auto node:m_allEdgeCrosses)
+      {
+        std::cout<<"["<<patchNodePosition[node][0]<<", "<<patchNodePosition[node][1]<<", "<<patchNodePosition[node][2]<<"]"<<std::endl;
+      }
+      std::cout<<"======================END TRACKING==========================="<<std::endl;
+}//end function
+
 // this function will loop over all subdomain nodes and check their distance to the prescribed discrete crack. If the
 // distance is smaller than 1 element size (subdomain), we set the damage in this node to be fixed at 1.
 void MultiResolutionFlowHFSolver::setInitialCrackDamageBCs( DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
@@ -1034,15 +1131,6 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
   bool isPatchConverged = false;
   while( iter < solverParams.m_maxIterNewton )
   {
-    if( iter == 0 )
-    {
-      // reset the states of all slave solvers if any of them has been reset
-      //TODO: this is potentially a code duplication since resetStateToBeginningOfStep(domain) already calls the slaves
-      // patchSolver.resetStateToBeginningOfStep( domain );
-      // baseSolver.resetStateToBeginningOfStep( domain );
-      // resetStateToBeginningOfStep( domain );
-    }
-
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", BaseSolver: " );
 
     //we probably want to run a phase-field solve in the patch problem at timestep 0 to get a smooth initial crack. Also, re-run this
@@ -1061,15 +1149,15 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
     patchDamageSolver.setInitialCrackNodes( m_nodeFixDamage );
 
     //now perform the subproblem run with no BCs on displacements, just to set the damage inital condition;
-    // if( iter == 0 )
-    // {
-    //   //TODO: eventually, we will need to update the patch domain
-    //   real64 dtUseless = patchSolver.solverStep( time_n,
-    //                                              dtReturn,
-    //                                              cycleNumber,
-    //                                              domain );
-    //   GEOSX_UNUSED_VAR( dtUseless );
-    // }
+    if( time_n == 0.0 )
+    {
+      //TODO: eventually, we will need to update the patch domain
+      real64 dtUseless = patchSolver.solverStep( time_n,
+                                                 dtReturn,
+                                                 cycleNumber,
+                                                 domain );
+      GEOSX_UNUSED_VAR( dtUseless );
+    }
 
     //test for convergence of MR scheme, based on changes to the fracture topology
     int added = m_addedFractureElements;
@@ -1078,6 +1166,7 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
     if ( added >= 0 && iter > 0 && isPatchConverged)//THIS SHOULD BE ADDED == 0
     {
       GEOSX_LOG_LEVEL_RANK_0( 1, "***** The Global-Local iterative scheme has converged in " << iter << " iterations! *****\n" );
+      TrackDamageOnEdges(base, patch);
       isConverged = true;
       break;  
     }
@@ -1123,13 +1212,13 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
     //                                             cycleNumber,
     //                                             domain );
 
-    for(int subs=0; subs<2; ++subs){
-      dtReturnTemporary = patchSolver.unitSequentiallyCoupledSolverStep( isPatchConverged,
+    //for(int subs=0; subs<2; ++subs){
+    dtReturnTemporary = patchSolver.unitSequentiallyCoupledSolverStep( isPatchConverged,
                                                                         time_n,
                                                                         dtReturn,
                                                                         cycleNumber,
                                                                         domain );
-    }
+    //}
     isPatchConverged=true;                                                                                                               
                              
     // this->findPhaseFieldTip( m_patchTip, domain.getMeshBody( patchTarget.first ).getBaseDiscretization());

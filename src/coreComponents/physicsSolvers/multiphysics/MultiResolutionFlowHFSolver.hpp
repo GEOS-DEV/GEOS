@@ -67,6 +67,10 @@ public:
 
   //virtual void updateNodeMaps( MeshLevel const & base, MeshLevel const & patch );
 
+  virtual void TrackDamageOnEdges( MeshLevel const & base, 
+                                   MeshLevel const & patch );
+
+
   virtual void setInitialCrackDamageBCs( DofManager const & dofManager,
                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                          MeshLevel const & patch,
@@ -185,6 +189,9 @@ private:
 
   //map from patch to base elements
   map<globalIndex, globalIndex> m_patchToBaseElementRelation;
+
+  //all edge crosses with damage
+  SortedArray<localIndex> m_allEdgeCrosses;
 
 };
 
