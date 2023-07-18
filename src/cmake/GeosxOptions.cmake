@@ -151,17 +151,16 @@ if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/
 endif()
 
 
-
-# if( CMAKE_HOST_APPLE )
+if( CMAKE_HOST_APPLE )
 #    set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE STRING "")
 #    set(GEOSX_LINK_POSTPEND_FLAG "" CACHE STRING "")
 # elseif( ENABLE_CUDA )
 #     set( GEOSX_LINK_PREPEND_FLAG  "-Xcompiler \\\\\"-Wl,--whole-archive\\\\\""    CACHE STRING "" )
 #     set( GEOSX_LINK_POSTPEND_FLAG "-Xcompiler \\\\\"-Wl,--no-whole-archive\\\\\"" CACHE STRING "" )
-# else()
-    # set( GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE STRING "" )
-    # set( GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE STRING "" )
-# endif()
+else()
+    set( GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE STRING "" )
+    set( GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE STRING "" )
+endif()
 
 set( GEOSX_LOCALINDEX_TYPE "int" CACHE STRING "" )
 if( ENABLE_HYPRE_MIXINT )
