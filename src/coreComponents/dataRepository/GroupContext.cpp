@@ -34,24 +34,22 @@ GroupContext::GroupContext( Group & group ):
 
 string GroupContext::toString() const
 {
-  // we add all parent names in a path string, showing only the first input file info encountered
-  std::vector< string > parents;
-  bool foundNearestLineInfo = false;
-  for( Group const * parent = &m_group; parent->hasParent(); parent = &parent->getParent() )
+  std::vector< ToStringInfo > parentsInfo;
+  for( Group const * group = &m_group; group->hasParent(); group = &group->getParent() )
   {
-    ToStringInfo const info = parent->getDataContext().getToStringInfo();
-    if( info.hasInputFileInfo() && !foundNearestLineInfo )
-    {
-      // avoiding spaces here is intended as we don't want any line return within the path.
-      parents.push_back( GEOS_FMT( "{}({},l.{})", info.m_targetName, info.m_filePath, info.m_line ) );
-      foundNearestLineInfo = true;
-    }
-    else
-    {
-      parents.push_back( string( info.m_targetName ) );
-    }
+    parentsInfo.push_back( group->getDataContext().getToStringInfo() );
   }
-  return '/' + stringutilities::join( parents.rbegin(), parents.rend(), '/' );
+
+  std::ostringstream path;
+  auto lastFileInfo = &*std::find_if( parentsInfo.begin(), parentsInfo.end(),
+                                      []( ToStringInfo const & i ) { return i.hasInputFileInfo(); } );
+  for( auto info = parentsInfo.rbegin(); info != parentsInfo.rend(); ++info )
+  {
+    path << ( &*info != lastFileInfo ?
+              GEOS_FMT( "/{}", info->m_targetName ) :
+              GEOS_FMT( "/{}({},l.{})", info->m_targetName, info->m_filePath, info->m_line ) );
+  }
+  return path.str();
 }
 
 DataContext::ToStringInfo GroupContext::getToStringInfo() const
