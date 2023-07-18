@@ -66,6 +66,11 @@ public:
                       integer const cycleNumber,
                       DomainPartition & domain );
 
+  void integralSolverStep( real64 const & time_n,
+                      real64 const & dt,
+                      integer const cycleNumber,
+                      DomainPartition & domain );
+
   virtual void
   setupSystem( DomainPartition & domain,
                DofManager & dofManager,
@@ -94,6 +99,7 @@ private:
   real64 m_directEffect;
   real64 m_bStressRate;
   real64 m_initialSigma;
+  real64 m_initialTau;
 
 
 //END_SPHINX_INCLUDE_SOLVERINTERFACE
