@@ -292,13 +292,14 @@ void populateFaceMaps( Group const & cellBlocks,
   GEOS_ERROR_IF_NE( faceToBlocks.size( 1 ), 2 );
 
   // loop over all the nodes.
-  forAll< parallelHostPolicy >( numNodes, [uniqueFaceOffsets,
-                                           lowestNodeToFaces,
-                                           faceToNodes,
-                                           faceToCells,
-                                           faceToBlocks,
-                                           &cellBlocks,
-                                           &faceBuilder]( localIndex const nodeIndex )
+  forAll< parallelHostPolicy >( numNodes, [ numNodes,
+                                            uniqueFaceOffsets,
+                                            lowestNodeToFaces,
+                                            faceToNodes,
+                                            faceToCells,
+                                            faceToBlocks,
+                                            &cellBlocks,
+                                            &faceBuilder ]( localIndex const nodeIndex )
   {
     localIndex nodesInFace[ CellBlockManager::maxNodesPerFace() ];
     localIndex curFaceID = uniqueFaceOffsets[nodeIndex];
