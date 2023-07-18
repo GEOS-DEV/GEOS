@@ -145,6 +145,22 @@ DECLARE_FIELD( h_n,
                WRITE_AND_READ,
                "Log of the seismicity rate at the previous converged time step");
 
+DECLARE_FIELD( logDenom,
+               "logDenom",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Log of the denominator of the integral form of the seismicity rate");
+
+DECLARE_FIELD( logDenom_n,
+               "logDenom_n",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Log of the denominator of the integral form of the seismicity rate at the previous converged time step");
+
 }
 
 }
