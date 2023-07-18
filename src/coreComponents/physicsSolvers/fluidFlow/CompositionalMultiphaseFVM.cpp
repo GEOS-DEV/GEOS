@@ -138,7 +138,8 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
       }
       else
       {
-         if(fluxApprox.useDBC())
+         //if(fluxApprox.useDBC())
+         if(m_useDBC)
          {
           DissipationCompositionalMultiphaseFVMKernels::
           FaceBasedAssemblyKernelFactory::

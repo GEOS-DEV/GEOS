@@ -176,11 +176,11 @@ public:
     /// @return The key for upwindingScheme
     static constexpr char const * upwindingSchemeString() { return "upwindingScheme"; }
 
-    /// @return The key for epsC1PPU
-    //static constexpr char const * epsC1PPUString() { return "epsC1PPU"; }
-
     /// @return The key for useDBC
     static constexpr char const * useDBCString() { return "useDBC"; }
+
+    /// @return The key for epsC1PPU
+    //static constexpr char const * epsC1PPUString() { return "epsC1PPU"; }
 
   };
 

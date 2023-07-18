@@ -57,15 +57,17 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
     setDescription( "Type of upwinding scheme. "
                     "Valid options:\n* " + EnumStrings< UpwindingScheme >::concat( "\n* " ) );
 
+  registerWrapper( viewKeyStruct::useDBCString(), &m_useDBC ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Enable Dissipation-based continuation flux" );
+
 //  registerWrapper( viewKeyStruct::epsC1PPUString(), &m_upwindingParams.epsC1PPU ).
 //    setApplyDefaultValue( 1e-10 ).
 //    setInputFlag( InputFlags::OPTIONAL ).
 //    setDescription( "Tolerance for C1-PPU smoothing" );
 
-  registerWrapper( viewKeyStruct::useDBCString(), &m_useDBC).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Enable Dissipation-based continuation flux" );
+
 }
 
 FluxApproximationBase::CatalogInterface::CatalogType &

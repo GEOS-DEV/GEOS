@@ -70,6 +70,11 @@ TwoPointFluxApproximation::TwoPointFluxApproximation( string const & name,
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
+
+  registerWrapper( viewKeyStruct::useDBCString(), &m_useDBC ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::NO_WRITE );  
 }
 
 void TwoPointFluxApproximation::registerCellStencil( Group & stencilGroup ) const
