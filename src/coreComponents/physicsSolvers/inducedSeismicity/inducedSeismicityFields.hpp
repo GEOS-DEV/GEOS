@@ -57,6 +57,14 @@ DECLARE_FIELD( pressure,
                WRITE_AND_READ,
                "Pore pressure");
 
+DECLARE_FIELD( pressure_n,
+               "pressure_n",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Pore pressure at the previous converged time step");
+
 DECLARE_FIELD( pressureRate,
                "pressureRate",
                array1d< real64 >,
@@ -73,6 +81,14 @@ DECLARE_FIELD( normalStress,
                WRITE_AND_READ,
                "Normal stress acting on the fault");
 
+DECLARE_FIELD( normalStress_n,
+               "normalStress_n",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Normal stress acting on the fault at the previous converged time step");
+
 DECLARE_FIELD( normalStressRate,
                "normalStressRate",
                array1d< real64 >,
@@ -88,6 +104,14 @@ DECLARE_FIELD( shearStress,
                LEVEL_0,
                WRITE_AND_READ,
                "Shear stress acting on the fault");
+
+DECLARE_FIELD( shearStress_n,
+               "shearStress_n",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Shear stress acting on the fault at the previous converged time step");
 
 DECLARE_FIELD( shearStressRate,
                "shearStressRate",
@@ -120,7 +144,6 @@ DECLARE_FIELD( h_n,
                LEVEL_0,
                WRITE_AND_READ,
                "Log of the seismicity rate at the previous converged time step");
-
 
 }
 

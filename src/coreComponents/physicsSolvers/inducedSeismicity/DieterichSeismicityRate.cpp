@@ -115,10 +115,13 @@ void DieterichSeismicityRate::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< inducedSeismicity::aSigma >( getName() );
 
       subRegion.registerField< inducedSeismicity::pressure >( getName() );
+      subRegion.registerField< inducedSeismicity::pressure_n >( getName() );
       subRegion.registerField< inducedSeismicity::pressureRate >( getName() );
       subRegion.registerField< inducedSeismicity::normalStress >( getName() );
+      subRegion.registerField< inducedSeismicity::normalStress_n >( getName() );
       subRegion.registerField< inducedSeismicity::normalStressRate >( getName() );
       subRegion.registerField< inducedSeismicity::shearStress >( getName() );
+      subRegion.registerField< inducedSeismicity::shearStress_n >( getName() );
       subRegion.registerField< inducedSeismicity::shearStressRate >( getName() );
 
       subRegion.registerField< inducedSeismicity::seismicityRate >( getName() );
@@ -326,16 +329,22 @@ void DieterichSeismicityRate::initializePreSubGroups()
       // Hard coded stressing histories for now
       arrayView1d< real64 > const tempP = subRegion.getField< inducedSeismicity::pressure >();
       tempP.setValues< parallelHostPolicy >( 0.0 );
+      arrayView1d< real64 > const tempP_n = subRegion.getField< inducedSeismicity::pressure_n >();
+      tempP_n.setValues< parallelHostPolicy >( 0.0 );
       arrayView1d< real64 > const tempPDot = subRegion.getField< inducedSeismicity::pressureRate >();
       tempPDot.setValues< parallelHostPolicy >( 0.0 );
 
       arrayView1d< real64 > const tempSig = subRegion.getField< inducedSeismicity::normalStress >();
       tempSig.setValues< parallelHostPolicy >( 100e6 );
+      arrayView1d< real64 > const tempSig_n = subRegion.getField< inducedSeismicity::normalStress_n >();
+      tempSig_n.setValues< parallelHostPolicy >( 100e6 );
       arrayView1d< real64 > const tempSigDot = subRegion.getField< inducedSeismicity::normalStressRate >();
       tempSigDot.setValues< parallelHostPolicy >( 0.0 );
 
       arrayView1d< real64 > const tempTau = subRegion.getField< inducedSeismicity::shearStress >();
       tempTau.setValues< parallelHostPolicy >( 60.0 );
+      arrayView1d< real64 > const tempTau_n = subRegion.getField< inducedSeismicity::shearStress_n >();
+      tempTau_n.setValues< parallelHostPolicy >( 60.0 );
       arrayView1d< real64 > const tempTauDot = subRegion.getField< inducedSeismicity::shearStressRate >();
       tempTauDot.setValues< parallelHostPolicy >( 0.0 );
       
@@ -343,8 +352,8 @@ void DieterichSeismicityRate::initializePreSubGroups()
       tempR.setValues< parallelHostPolicy >( 1.0 );
       arrayView1d< real64 > const tempH = subRegion.getField< inducedSeismicity::h >();
       tempH.setValues< parallelHostPolicy >( 0.0 );
-      arrayView1d< real64 > const tempHn = subRegion.getField< inducedSeismicity::h_n >();
-      tempHn.setValues< parallelHostPolicy >( 0.0 );
+      arrayView1d< real64 > const tempH_n = subRegion.getField< inducedSeismicity::h_n >();
+      tempH_n.setValues< parallelHostPolicy >( 0.0 );
     } );
   } );
 }
