@@ -621,9 +621,6 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
   arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicator >();
 
 
-  freeSurfaceFaceIndicator.zero();
-  freeSurfaceNodeIndicator.zero();
-
   fsManager.apply( time,
                    domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
                    string( "FreeSurface" ),
