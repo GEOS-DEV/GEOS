@@ -44,9 +44,12 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
     if (elasNodesSet.contains(val)) m_interfaceNodesSet.insert(val);
   }
 
+  GEOS_THROW_IF( m_interfaceNodesSet.size() == 0, "Failed to compute interface: check xml input (solver order)", std::runtime_error );
+
+  // compute coupling term
+
   std::cout << "\t[AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] "
   << "m_interfaceNodesSet.size()=" << m_interfaceNodesSet.size() << std::endl;
-  GEOS_THROW_IF( m_interfaceNodesSet.size() == 0, "Failed to compute interface: check xml input (solver order)", std::runtime_error );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, AcousticElasticWaveEquationSEM, string const &, Group * const )
