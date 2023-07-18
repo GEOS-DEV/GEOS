@@ -761,7 +761,7 @@ void SinglePhasePoromechanicsConformingFractures::updateState( DomainPartition &
       ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >
       hydraulicApertureAccessor = mesh.getElemManager().constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::hydraulicAperture::key() );
 
-      forAll< serialPolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
+      forAll< serialPolicy >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
       {
         stencilWrapper.updateWeights( iconn, hydraulicApertureAccessor );
       } );
