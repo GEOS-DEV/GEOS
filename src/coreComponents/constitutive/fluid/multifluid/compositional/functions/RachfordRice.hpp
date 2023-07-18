@@ -52,6 +52,7 @@ public:
   GEOS_HOST_DEVICE
   inline
   real64
+  static
   solve( arrayView1d< real64 const > const kValues,
          arrayView1d< real64 const > const feed,
          arrayView1d< integer const > const presentComponentIds )
@@ -190,6 +191,7 @@ private:
    **/
   GEOS_HOST_DEVICE
   real64
+  static
   evaluate( arrayView1d< real64 const > const kValues,
             arrayView1d< real64 const > const feed,
             arrayView1d< integer const > const presentComponentIds,
@@ -214,6 +216,7 @@ private:
    **/
   GEOS_HOST_DEVICE
   real64
+  static
   evaluateDerivative( arrayView1d< real64 const > const kValues,
                       arrayView1d< real64 const > const feed,
                       arrayView1d< integer const > const presentComponentIds,
