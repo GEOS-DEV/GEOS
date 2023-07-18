@@ -589,12 +589,12 @@ void PhaseFieldDamageFEM::fillDofsOutsideSubdomain( DomainPartition & domain,
     {
       //node to elems
       //if all associated elements are not on m_subdomainElems
-      bool outside = true;
+      bool outside = false;
       for(auto neighborElem:nodeToElems[nodeIndex])
       {
-        if(m_subdomainElems.contains(neighborElem))
+        if(!m_subdomainElems.contains(neighborElem))
         {
-          outside = false;
+          outside = true;
         } 
       }
       if(outside)

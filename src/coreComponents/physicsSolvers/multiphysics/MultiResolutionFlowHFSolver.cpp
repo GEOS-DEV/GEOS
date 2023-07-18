@@ -163,7 +163,7 @@ void MultiResolutionFlowHFSolver::buildBaseToPatchMaps(const MeshLevel & base,
     forAll< serialPolicy >( cellElementSubRegion.size(), [&] ( localIndex const k )
     {
       //skip ghosts from global
-      if(baseGhostRank[k]<0)
+      if(baseGhostRank[k]<0 || true)
       {
         arraySlice1d<const real64> baseCenter = baseElemCenters[k];
         patchElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & patchCellElementSubRegion )
@@ -173,7 +173,7 @@ void MultiResolutionFlowHFSolver::buildBaseToPatchMaps(const MeshLevel & base,
           forAll< serialPolicy >( patchCellElementSubRegion.size(), [&] ( localIndex const n )
           {
             //skip ghosts
-            if(patchGhostRank[n]<0)
+            if(patchGhostRank[n]<0 || true)
             {              
                 arraySlice1d<const real64> patchCenter = patchElemCenters[n];
                 bool isInside = true;
@@ -765,7 +765,7 @@ void MultiResolutionFlowHFSolver::buildSubdomainSet( MeshLevel & base,
   {
     //convert patch element index to base - first convert patch to global index
     //this probably needs to be done at ghosts or require a sync operation at the end
-    if(patchGhostRank[k]<0){
+    if(patchGhostRank[k]<0 || true){
       //zero subdomain indicator field
       subdomainIndicator[0][0][k] = 0;
 
@@ -773,7 +773,7 @@ void MultiResolutionFlowHFSolver::buildSubdomainSet( MeshLevel & base,
       patchElemCenter[0] = patchElemCenters[k][0];
       patchElemCenter[1] = patchElemCenters[k][1];
       patchElemCenter[2] = patchElemCenters[k][2];
-      real64 thresholdDist = 10;
+      real64 thresholdDist = 1.0;
       real64 minDist = 1.0e20;
       for(localIndex j=0; j<allData.size(0); j++)
       {
@@ -934,7 +934,7 @@ void MultiResolutionFlowHFSolver::writeBasePressuresToPatch( MeshLevel & base,
   {
     //convert patch element index to base - first convert patch to global index
     //this probably needs to be done at ghosts or require a sync operation at the end
-    if(patchGhostRank[k]<0){
+    if(patchGhostRank[k]<0 || true){
       globalIndex K = patchSubRegion.localToGlobalMap()[k];
       globalIndex baseK = m_patchToBaseElementRelation[K];
       //globalIndex baseK = fineToCoarseStructuredElemMap(K,Nx,Ny,Nz,rx,ry,rz);
@@ -1048,32 +1048,38 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
     //we probably want to run a phase-field solve in the patch problem at timestep 0 to get a smooth initial crack. Also, re-run this
     // anytime the base crack changes
 
+    // testElemMappingPatchToBase( domain.getMeshBody( baseTarget.first ).getBaseDiscretization(), 
+    //                             domain.getMeshBody( patchTarget.first ).getBaseDiscretization() );
 
-    testElemMappingPatchToBase( domain.getMeshBody( baseTarget.first ).getBaseDiscretization(), 
-                                domain.getMeshBody( patchTarget.first ).getBaseDiscretization() );
+    // testElemMappingBaseToPatch( domain.getMeshBody( baseTarget.first ).getBaseDiscretization(), 
+    //                             domain.getMeshBody( patchTarget.first ).getBaseDiscretization() );
 
-    testElemMappingBaseToPatch( domain.getMeshBody( baseTarget.first ).getBaseDiscretization(), 
-                                domain.getMeshBody( patchTarget.first ).getBaseDiscretization() );
-
-    CRSMatrix< real64, globalIndex > & patchDamageLocalMatrix = patchDamageSolver.getLocalMatrix();
-    this->setInitialCrackDamageBCs( patchDamageSolver.getDofManager(), patchDamageLocalMatrix.toViewConstSizes(), patch,
-                                    base );
-    patchDamageSolver.setInitialCrackNodes( m_nodeFixDamage );
-
-    //now perform the subproblem run with no BCs on displacements, just to set the damage inital condition;
-    // if( iter == 0 )
-    // {
-    //   //TODO: eventually, we will need to update the patch domain
-    //   real64 dtUseless = patchSolver.solverStep( time_n,
-    //                                              dtReturn,
-    //                                              cycleNumber,
-    //                                              domain );
-    //   GEOSX_UNUSED_VAR( dtUseless );
-    // }
-
-    //test for convergence of MR scheme, based on changes to the fracture topology
     int added = m_addedFractureElements;
     added = MpiWrapper::sum(added);
+    if(time_n == 0.0 || iter==0 || added!=0)
+    {
+      CRSMatrix< real64, globalIndex > & patchDamageLocalMatrix = patchDamageSolver.getLocalMatrix();
+      this->setInitialCrackDamageBCs( patchDamageSolver.getDofManager(), patchDamageLocalMatrix.toViewConstSizes(), patch,
+                                      base );
+      patchDamageSolver.setInitialCrackNodes( m_nodeFixDamage );
+      buildSubdomainSet( base, patch );
+      // std::cout<<"subdomain size: "<<m_baseCrackFrontBuffer.size()<<std::endl;
+      patchDamageSolver.setSubdomainElements( m_baseCrackFrontBuffer );
+      patchSolidSolver.setSubdomainElements( m_baseCrackFrontBuffer );    
+    }
+    //now perform the subproblem run with no BCs on displacements, just to set the damage inital condition;
+    if( time_n == 0.0 )
+    {
+      //TODO: eventually, we will need to update the patch domain
+      real64 dtUseless = patchSolver.solverStep( time_n,
+                                                 dtReturn,
+                                                 cycleNumber,
+                                                 domain );
+      GEOSX_UNUSED_VAR( dtUseless );
+    }
+
+    //test for convergence of MR scheme, based on changes to the fracture topology
+
     GEOSX_LOG_LEVEL_RANK_0(1, "isPatchConverged "<<isPatchConverged);
     if ( added >= 0 && iter > 0 && isPatchConverged)//THIS SHOULD BE ADDED == 0
     {
@@ -1088,6 +1094,9 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
                                                             dtReturn,
                                                             cycleNumber,
                                                             domain );  
+      baseSolver.implicitStepComplete( time_n, dt, domain );
+      patchSolidSolver.setInternalBoundaryConditions( m_nodeFixDisp, m_fixedDispList, &m_patchToBaseElementRelation );
+      writeBasePressuresToPatch(base, patch);                                                            
     }                                            
 
     if( dtReturnTemporary < dtReturn )
@@ -1104,43 +1113,25 @@ real64 MultiResolutionFlowHFSolver::splitOperatorStep( real64 const & time_n,
     //   break;
     // }
 
-    //here, before calling the nonlinarImplicitStep of the patch solver, we must prescribe the displacement boundary conditions
-    //this->prepareSubProblemBCs( domain.getMeshBody( baseTarget.first ).getBaseDiscretization(), domain.getMeshBody( patchTarget.first ).getBaseDiscretization());
-
-    //write disp BCs to local disp solver
-    //TODO: m_nodeFixDisp and m_fixedDispList dont need to be members, they can be initialized at every time step, this is actually safer
-    //since the size of the boundary can change
-    //THIS IS LIKELY TRANSFERING PRESSURE_N
-    //patchSolver.implicitStepComplete( time_n, dt, domain );
-    baseSolver.implicitStepComplete( time_n, dt, domain );
-    patchSolidSolver.setInternalBoundaryConditions( m_nodeFixDisp, m_fixedDispList, &m_patchToBaseElementRelation );
-    writeBasePressuresToPatch(base, patch);
-
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", PatchSolver: " );
 
     // dtReturnTemporary = patchSolver.solverStep( time_n,
     //                                             dtReturn,
     //                                             cycleNumber,
     //                                             domain );
-
-    for(int subs=0; subs<2; ++subs){
-      dtReturnTemporary = patchSolver.unitSequentiallyCoupledSolverStep( isPatchConverged,
-                                                                        time_n,
-                                                                        dtReturn,
-                                                                        cycleNumber,
-                                                                        domain );
-    }
-    isPatchConverged=true;                                                                                                               
+    MpiWrapper::barrier();
+    //for(int subs=0; subs<2; ++subs){
+    dtReturnTemporary = patchSolver.unitSequentiallyCoupledSolverStep( isPatchConverged,
+                                                                       time_n,
+                                                                       dtReturn,
+                                                                       cycleNumber,
+                                                                       domain );
+    //}
+    //isPatchConverged=true;                                                                                                               
                              
-    // this->findPhaseFieldTip( m_patchTip, domain.getMeshBody( patchTarget.first ).getBaseDiscretization());
-    if( time_n > 0 )
+    if( time_n >= 0 )
     {
-      //efemGenerator.propagationStep( domain, m_baseTip, m_patchTip, m_baseTipElementIndex );
       cutDamagedElements( base, patch );  
-      buildSubdomainSet( base, patch );
-      std::cout<<"subdomain size: "<<m_baseCrackFrontBuffer.size()<<std::endl;
-      patchDamageSolver.setSubdomainElements( m_baseCrackFrontBuffer );
-      patchSolidSolver.setSubdomainElements( m_baseCrackFrontBuffer );
       baseSolver.setupSystem( domain,
                               baseSolver.getDofManager(),
                               baseSolver.getLocalMatrix(),

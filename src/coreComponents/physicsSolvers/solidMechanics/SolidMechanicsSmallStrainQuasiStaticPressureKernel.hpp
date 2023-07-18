@@ -295,7 +295,7 @@ public:
                                   m_gravityVector[2] * m_solidDensity( k, q ) };
 
     //compute terms that account for the background pressure effects
-    m_constitutiveUpdate.updateBiotCoefficient( k, 0.5 );
+    m_constitutiveUpdate.updateBiotCoefficient( k, 1.0 );
     real64 fracturePressureTerm[3]{};
     computeFracturePressureTerm( k, q, fracturePressureTerm );
     real64 matrixPressureTerm = computeMatrixPressureTerm( k, q );
