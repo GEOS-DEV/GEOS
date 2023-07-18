@@ -254,7 +254,7 @@ TableRelativePermeability::KernelWrapper::
   // use saturation-weighted interpolation
   real64 const shiftedWettingVolFrac = (phaseVolFraction[ipWetting] - m_phaseMinVolumeFraction[ipWetting]);
 
-  if(m_threePhaseInterpolator == ThreePhaseInterpolator::BAKER )
+  if( m_threePhaseInterpolator == ThreePhaseInterpolator::BAKER )
   {
     relpermInterpolators::Baker::compute( shiftedWettingVolFrac,
                                           phaseVolFraction[ipNonWetting],
