@@ -310,7 +310,7 @@ void populateFaceMaps( Group const & cellBlocks,
       CellBlock const & cb = cellBlocks.getGroup< CellBlock >( f0.blockIndex );
       localIndex const numNodesInFace = cb.getFaceNodes( f0.cellIndex, f0.faceNumber, nodesInFace );
       GEOS_ASSERT_EQ( numNodesInFace, numNodes );
-
+      GEOS_UNUSED_VAR( numNodes );
 
       for( localIndex i = 0; i < numNodesInFace; ++i )
       {
