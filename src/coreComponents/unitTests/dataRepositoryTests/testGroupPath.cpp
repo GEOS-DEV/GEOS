@@ -142,11 +142,16 @@ TEST( testGroupPath, testGlobalPaths )
   testWrapperContextString( "/Mesh/mesh1", "xCoords",
                             "mesh1/xCoords (CodeIncludedXML0, l.14)" );
 
-  // check if the DataContext string of an implicitly created Group is formatted as expected
-  testGroupContextString( "/domain/MeshBodies/mesh1/meshLevels/Level0",
-                          "/domain/MeshBodies/mesh1/meshLevels/Level0" );
-  testWrapperContextString( "/domain/MeshBodies/mesh1/meshLevels/Level0", "meshLevel",
-                            "/domain/MeshBodies/mesh1/meshLevels/Level0->meshLevel" );
+  // check if the DataContext string of implicitly created Groups are formatted as expected
+  testGroupContextString( "/Solvers/lagsolve/NonlinearSolverParameters",
+                          "/Solvers/lagsolve(CodeIncludedXML0,l.4)/NonlinearSolverParameters" );
+  testGroupContextString( "/domain/MeshBodies/mesh1/meshLevels/Level0/ElementRegions/elementRegionsGroup/Region2/elementSubRegions",
+                          "/domain/MeshBodies/mesh1/meshLevels/Level0/ElementRegions/elementRegionsGroup/Region2(CodeIncludedXML0,l.37)/elementSubRegions" );
+  // check if the DataContext string of implicitly created Wrappers are formatted as expected
+  testWrapperContextString( "/Mesh/mesh1", "positionTolerance",
+                            "mesh1/positionTolerance (CodeIncludedXML0, l.11)" );
+  testWrapperContextString( "/Solvers/lagsolve/NonlinearSolverParameters", "newtonMaxIter",
+                            "/Solvers/lagsolve(CodeIncludedXML0,l.4)/NonlinearSolverParameters/newtonMaxIter" );
 }
 
 int main( int argc, char * * argv )
