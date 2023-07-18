@@ -294,7 +294,7 @@ protected:
 
 namespace fields
 {
-using reference32Type = array2d< wsCoordType, nodes::REFERENCE_POSITION_PERM >;
+using reference32Type = array2d< WaveSolverBase::wsCoordType, nodes::REFERENCE_POSITION_PERM >;
 DECLARE_FIELD( referencePosition32,
                "referencePosition32",
                reference32Type,
