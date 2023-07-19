@@ -234,7 +234,7 @@ public:
       //GEOS_UNUSED_VAR( k_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, er_up, esr_up, ei_up );
 
       // tuning parameter
-      real64 omega = 2e-3;
+      real64 omega = 2e-1;
       //real64 k = 1;
 
       /// dissipation flux and derivatives
