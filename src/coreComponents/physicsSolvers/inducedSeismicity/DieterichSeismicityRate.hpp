@@ -91,20 +91,16 @@ public:
 
   struct viewKeyStruct : public SeismicityRateBase::viewKeyStruct
   {
-    static constexpr char const * directEffect() { return "directEffect"; }
-    static constexpr char const * bStressRate() { return "bStressRate"; }
+    static constexpr char const * stressSolverNameString() { return "stressSolverName"; }
   };
-
-private:
-  real64 m_directEffect;
-  real64 m_bStressRate;
-  real64 m_initialSigma;
-  real64 m_initialTau;
-
 
 //END_SPHINX_INCLUDE_SOLVERINTERFACE
 
   /**@}*/
+
+  private:
+ 
+  string m_stressSolverName;
 
 };
 } /* namespace geos */
