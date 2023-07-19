@@ -1685,7 +1685,7 @@ Wrapper< T > & Group::registerWrapper( string const & name,
   return rval;
 }
 
-template< typename TARGET_DC = DataContext, typename FUNC >
+template< typename TARGET_DC, typename FUNC >
 void Group::forAllDataContext( FUNC func ) const
 {
   if( auto * groupCtx = dynamic_cast< TARGET_DC const * >( &getDataContext() ) )
