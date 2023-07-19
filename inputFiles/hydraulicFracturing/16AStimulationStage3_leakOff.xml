@@ -360,26 +360,26 @@
     <TableFunction
       name="ShFunction"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ stressTable/xlin.geos, stressTable/ylin.geos, stressTable/zlin.geos }"
-      voxelFile="stressTable/Shmin.geos"/>
+      coordinateFiles="{ ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/xlin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/ylin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/zlin.geos }"
+      voxelFile="../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/Shmin.geos"/>
 
     <TableFunction
       name="SHFunction"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ stressTable/xlin.geos, stressTable/ylin.geos, stressTable/zlin.geos }"
-      voxelFile="stressTable/Shmax.geos"/>
+      coordinateFiles="{ ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/xlin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/ylin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/zlin.geos }"
+      voxelFile="../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/Shmax.geos"/>
     
     <TableFunction
       name="SvFunction"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ stressTable/xlin.geos, stressTable/ylin.geos, stressTable/zlin.geos }"
-      voxelFile="stressTable/Sv.geos"/>
+      coordinateFiles="{ ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/xlin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/ylin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/zlin.geos }"
+      voxelFile="../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/Sv.geos"/>
     
     <TableFunction
       name="presFunction"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ stressTable/xlin.geos, stressTable/ylin.geos, stressTable/zlin.geos }"
-      voxelFile="stressTable/pres.geos"/>
+      coordinateFiles="{ ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/xlin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/ylin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/zlin.geos }"
+      voxelFile="../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/pres.geos"/>
   </Functions>
 
   <Geometry>
