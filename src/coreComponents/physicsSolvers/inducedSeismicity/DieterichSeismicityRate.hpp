@@ -71,21 +71,10 @@ public:
                       integer const cycleNumber,
                       DomainPartition & domain );
 
-  virtual void
-  setupSystem( DomainPartition & domain,
-               DofManager & dofManager,
-               CRSMatrix< real64, globalIndex > & localMatrix,
-               ParallelVector & rhs,
-               ParallelVector & solution,
-               bool const setSparsity = false ) override;
 
-  virtual void
-  assembleSystem( real64 const time,
-                  real64 const dt,
-                  DomainPartition & domain,
-                  DofManager const & dofManager,
-                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                  arrayView1d< real64 > const & localRhs ) override;
+//END_SPHINX_INCLUDE_SOLVERINTERFACE
+
+  /**@}*/
 
   virtual void initializePreSubGroups() override;
 
@@ -94,15 +83,12 @@ public:
     static constexpr char const * stressSolverNameString() { return "stressSolverName"; }
   };
 
-//END_SPHINX_INCLUDE_SOLVERINTERFACE
-
-  /**@}*/
-
-  private:
+private:
  
   string m_stressSolverName;
 
 };
+
 } /* namespace geos */
 
 #endif /* GEOS_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_ */

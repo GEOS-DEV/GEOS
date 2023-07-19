@@ -24,10 +24,6 @@
 namespace geos
 {
 
-// Like most physics solvers, the Laplace solver derives from a generic SolverBase class.
-// The base class is densely Doxygen-commented and worth a look if you have not done so already.
-// Most important system assembly steps, linear and non-linear resolutions, and time-stepping mechanisms
-// are implemented at the SolverBase class level and can thus be used in Laplace without needing reimplementation.
 class SeismicityRateBase : public SolverBase
 {
 public:
@@ -40,107 +36,8 @@ public:
 
   /// Destructor
   virtual ~SeismicityRateBase() override;
-
-//START_SPHINX_INCLUDE_REGISTERDATAONMESH
-
-  /// This method ties properties with their supporting mesh
-  virtual void registerDataOnMesh( Group & meshBodies ) override; 
-
-//END_SPHINX_INCLUDE_REGISTERDATAONMESH
-
-  //START_SPHINX_INCLUDE_SOLVERINTERFACE
-  virtual real64 solverStep( real64 const & time_n,
-                             real64 const & dt,
-                             integer const cycleNumber,
-                             DomainPartition & domain ) override;
-
-  virtual void
-  implicitStepSetup( real64 const & time_n,
-                     real64 const & dt,
-                     DomainPartition & domain ) override;
-
-  virtual void
-  setupDofs( DomainPartition const & domain,
-             DofManager & dofManager ) const override;
-
-  virtual void
-  applyBoundaryConditions( real64 const time,
-                           real64 const dt,
-                           DomainPartition & domain,
-                           DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs ) override;
-
-  virtual void
-  applySystemSolution( DofManager const & dofManager,
-                       arrayView1d< real64 const > const & localSolution,
-                       real64 const scalingFactor,
-                       DomainPartition & domain ) override;
-
-  virtual void updateState( DomainPartition & domain ) override final;
-
-  virtual void
-    resetStateToBeginningOfStep( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) override;
-
-  virtual void
-  implicitStepComplete( real64 const & time,
-                        real64 const & dt,
-                        DomainPartition & domain ) override;
-
-  /// This method is specific to this Laplace solver.
-  /// It is used to apply Dirichlet boundary condition
-  /// and called when the base class applyBoundaryConditions() is called.
-  virtual void applyDirichletBCImplicit( real64 const time,
-                                         DofManager const & dofManager,
-                                         DomainPartition & domain,
-                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                         arrayView1d< real64 > const & localRhs );
-
-  //END_SPHINX_INCLUDE_SOLVERINTERFACE
-
-  /// Choice of transient treatment options (steady or backward Euler scheme):
-  //START_SPHINX_INCLUDE_TIMEINTOPT
-  enum class TimeIntegrationOption : integer
-  {
-    SteadyState,
-    ImplicitTransient
-  };
-  //END_SPHINX_INCLUDE_TIMEINTOPT
-
-
-  /// This structure stores ``dataRepository::ViewKey`` objects used as binding between the input
-  /// XML tags and source code variables (here, timeIntegrationOption and fieldVarName)
-  //START_SPHINX_INCLUDE_VIEWKEY
-  struct viewKeyStruct : public SolverBase::viewKeyStruct
-  {
-    static constexpr char const * timeIntegrationOption() { return "timeIntegrationOption"; }
-    static constexpr char const * fieldVarName() { return "fieldName"; }
-  };
-  //END_SPHINX_INCLUDE_VIEWKEY
-
-protected:
-
-  // These two data members are specific to the Laplace solver:
-  /// User-defined name of the physical quantity we wish to solve for (such as "Temperature", etc.)
-  string m_fieldName;
-  /// Choice of transient treatment (SteadyState, ImplicitTransient)
-  TimeIntegrationOption m_timeIntegrationOption;
-
+  
 };
-
-
-/* REGISTERING NEW ENUMS:
-   --------------------------
-   In order to register an enumeration type with the Data Repository and have its value read from input,
-   we must define stream insertion/extraction operators. This is a common task, so GEOSX provides
-   a facility for automating it. Upon including ``common/EnumStrings.hpp``, we can call the following macro
-   at the namespace scope (in this case, right after the ``LaplaceBaseH1`` class definition is complete):
- */
-//START_SPHINX_INCLUDE_REGENUM
-ENUM_STRINGS( SeismicityRateBase::TimeIntegrationOption,
-              "SteadyState",
-              "ImplicitTransient" );
-//END_SPHINX_INCLUDE_REGENUM
 
 } /* namespace geos */
 
