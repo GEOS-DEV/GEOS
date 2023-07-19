@@ -26,9 +26,9 @@ namespace constitutive
 
 GEOS_HOST_DEVICE
 real64
-RachfordRice::solve( arrayView1d< real64 const > const kValues,
-                     arrayView1d< real64 const > const feed,
-                     arrayView1d< integer const > const presentComponentIds )
+RachfordRice::solve( arraySlice1d< real64 const > const kValues,
+                     arraySlice1d< real64 const > const feed,
+                     arraySlice1d< integer const > const presentComponentIds )
 {
   real64 gasPhaseMoleFraction = 0;
 
@@ -154,14 +154,15 @@ RachfordRice::solve( arrayView1d< real64 const > const kValues,
 
 GEOS_HOST_DEVICE
 real64
-RachfordRice::evaluate( arrayView1d< real64 const > const kValues,
-                        arrayView1d< real64 const > const feed,
-                        arrayView1d< integer const > const presentComponentIds,
+RachfordRice::evaluate( arraySlice1d< real64 const > const kValues,
+                        arraySlice1d< real64 const > const feed,
+                        arraySlice1d< integer const > const presentComponentIds,
                         real64 const & x )
 {
   real64 value = 0.0;
-  for( integer ic = 0; ic < presentComponentIds.size(); ++ic )
+  for( integer i = 0; i < presentComponentIds.size(); ++i )
   {
+    integer const ic = presentComponentIds[i];
     real64 const k = ( kValues[ic] - 1.0 );
     value += feed[ic] * k / ( 1.0 + x * k );
   }
@@ -170,9 +171,9 @@ RachfordRice::evaluate( arrayView1d< real64 const > const kValues,
 
 GEOS_HOST_DEVICE
 real64
-RachfordRice::evaluateDerivative( arrayView1d< real64 const > const kValues,
-                                  arrayView1d< real64 const > const feed,
-                                  arrayView1d< integer const > const presentComponentIds,
+RachfordRice::evaluateDerivative( arraySlice1d< real64 const > const kValues,
+                                  arraySlice1d< real64 const > const feed,
+                                  arraySlice1d< integer const > const presentComponentIds,
                                   real64 const & x )
 {
   real64 value = 0.0;
@@ -185,7 +186,6 @@ RachfordRice::evaluateDerivative( arrayView1d< real64 const > const kValues,
   }
   return value;
 }
-
 
 } // namespace constitutive
 
