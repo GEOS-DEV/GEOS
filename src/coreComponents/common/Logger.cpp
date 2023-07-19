@@ -55,79 +55,70 @@ InputError::InputError( std::exception const & subException, std::string const &
   std::runtime_error( InsertExMsg( subException.what(), msgToInsert ) )
 {}
 
-namespace logger
+
+Logger logger;
+
+Logger::Logger():
+  rank(0),
+  ranksCount(1),
+  rankMsgPrefix("") 
 {
-
-namespace internal
+  reset();
+}
+void Logger::reset()
 {
+  globalLogLevel = 0;
+  minLogLevel = 0;
+  maxLogLevel = 5;
 
-int rank = 0;
-std::string rankString = "0";
-
-int n_ranks = 1;
-
-std::ostream * rankStream = nullptr;
-
+  setOutputToStd();
+}
+void Logger::initMpi( MPI_Comm mpiComm )
+{
 #ifdef GEOSX_USE_MPI
-MPI_Comm comm;
+  comm = mpiComm;
+  MPI_Comm_rank( mpiComm, &rank );
+  MPI_Comm_size( mpiComm, &ranksCount );
+  rankMsgPrefix = GEOS_FMT( "Rank {}: ", rank );
+#else
+  GEOS_ERROR( "Trying to initialize MPI in serial build." );
 #endif
-
-} // namespace internal
-
-#ifdef GEOSX_USE_MPI
-
-void InitializeLogger( MPI_Comm mpi_comm, const std::string & rankOutputDir )
-{
-  internal::comm = mpi_comm;
-  MPI_Comm_rank( mpi_comm, &internal::rank );
-  MPI_Comm_size( mpi_comm, &internal::n_ranks );
-
-  internal::rankString = std::to_string( internal::rank );
-
-  if( rankOutputDir != "" )
-  {
-    if( internal::rank == 0 )
-    {
-      makeDirsForPath( rankOutputDir );
-    }
-
-    MPI_Barrier( mpi_comm );
-    std::string outputFilePath = rankOutputDir + "/rank_" + internal::rankString + ".out";
-    internal::rankStream = new std::ofstream( outputFilePath );
-  }
-  else
-  {
-    internal::rankStream = &std::cout;
-  }
 }
 
-#endif
-
-void InitializeLogger( const std::string & rankOutputDir )
+void Logger::setOutputToFile( const std::string & rankOutputDir )
 {
+#ifdef GEOSX_USE_MPI
+  MPI_Barrier( comm );
+#endif
+  std::string outputFolder;
   if( rankOutputDir != "" )
   {
     makeDirsForPath( rankOutputDir );
+    outputFolder = rankOutputDir + '/';
+  }
 
-    std::string outputFilePath = rankOutputDir + "/rank_" + internal::rankString + ".out";
-    internal::rankStream = new std::ofstream( outputFilePath );
-  }
-  else
-  {
-    internal::rankStream = &std::cout;
-  }
+  fileOutStream = std::make_unique< std::ofstream >( GEOS_FMT( "{}rank_{}.out", outputFolder, rank ) );
+  outStream = fileOutStream.get();
 }
-
-void FinalizeLogger()
+void Logger::setOutputToStd()
 {
-  if( internal::rankStream != &std::cout )
+#ifdef GEOSX_USE_MPI
+  if( ranksCount > 1 )
   {
-    delete internal::rankStream;
+    MPI_Barrier( comm );
   }
+#endif
 
-  internal::rankStream = nullptr;
+  fileOutStream = nullptr;
+  outStream = &std::cout;
 }
 
-} // namespace logger
+void Logger::setGlobalLogLevel( int value )
+{ globalLogLevel = value; }
+void Logger::setMinLogLevel( int value )
+{ minLogLevel = value; }
+void Logger::setMaxLogLevel( int value )
+{ maxLogLevel = value; }
+
 
 } // namespace geos

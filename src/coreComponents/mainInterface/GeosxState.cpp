@@ -163,9 +163,12 @@ bool GeosxState::initializeDataRepository()
     m_state = State::INITIALIZED;
     return false;
   }
+  GEOS_LOG_RANK_0( "là ça va : " LOCATION );
 
   getProblemManager().parseInputFile();
+  GEOS_LOG_RANK_0( "là ça va : " LOCATION );
   getProblemManager().problemSetup();
+  GEOS_LOG_RANK_0( "là ça va : " LOCATION );
 
   m_state = State::INITIALIZED;
 
@@ -173,6 +176,7 @@ bool GeosxState::initializeDataRepository()
   {
     dataRepository::printMemoryAllocation( getProblemManager(), 0, m_commandLineOptions->printMemoryUsage );
   }
+  GEOS_LOG_RANK_0( "là ça va : " LOCATION );
 
   return true;
 }

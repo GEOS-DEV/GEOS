@@ -481,7 +481,7 @@ bool SolverBase::lineSearch( real64 const & time_n,
       rhs.close();
     }
 
-    if( getLogLevel() >= 1 && logger::internal::rank==0 )
+    if( getLogLevel() >= 1 && logger.rank==0 )
     {
       std::cout << GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale );
     }
@@ -489,7 +489,7 @@ bool SolverBase::lineSearch( real64 const & time_n,
     // get residual norm
     residualNorm = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
 
-    if( getLogLevel() >= 1 && logger::internal::rank==0 )
+    if( getLogLevel() >= 1 && logger.rank==0 )
     {
       std::cout << std::endl;
     }
@@ -581,7 +581,7 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
       rhs.close();
     }
 
-    if( getLogLevel() >= 1 && logger::internal::rank==0 )
+    if( getLogLevel() >= 1 && logger.rank==0 )
     {
       std::cout << GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale );
     }

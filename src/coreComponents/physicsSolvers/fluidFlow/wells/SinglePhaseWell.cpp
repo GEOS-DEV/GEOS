@@ -824,7 +824,7 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
 
   real64 const residualNorm = MpiWrapper::max( localResidualNorm );
 
-  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+  if( getLogLevel() >= 1 && logger.rank == 0 )
   {
     std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
   }

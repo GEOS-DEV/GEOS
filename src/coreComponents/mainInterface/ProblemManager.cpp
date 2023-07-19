@@ -276,6 +276,8 @@ void ProblemManager::generateDocumentation()
 
     // Generate non-schema documentation
     schemaUtilities::ConvertDocumentationToSchema((schemaName + ".other").c_str(), this, 1 );
+
+  GEOS_LOG_RANK_0( "là ça va : " LOCATION );
   }
 }
 
