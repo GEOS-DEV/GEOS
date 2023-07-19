@@ -53,11 +53,17 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
 
   real64 dte, dta;
 
-  dte = elasticSolver()->solverStep(time_n, dt, cycleNumber, domain);
+  dte = elasticSolver()->explicitStepInternal(time_n, dt, cycleNumber, domain);
 
   // TODO: coupling
 
-  dta = acousticSolver()->solverStep(time_n, dt, cycleNumber, domain);
+  elasticSolver()->synchronize(time_n, dte, cycleNumber, domain);
+
+  dta = acousticSolver()->explicitStepInternal(time_n, dt, cycleNumber, domain);
+
+  // TODO: coupling
+
+  acousticSolver()->synchronize(time_n, dta, cycleNumber, domain);
 
   GEOS_THROW_IF( abs(dte - dta) > acousticSolver()->epsilonLoc, GEOS_FMT( "Timestep error dta={} dte={}", dta, dte ), std::runtime_error );
 

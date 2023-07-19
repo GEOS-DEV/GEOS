@@ -86,7 +86,7 @@ protected:
   virtual real64 solverStep( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
-                             DomainPartition & domain ) override
+                             DomainPartition & domain ) override;
 
   SortedArray< localIndex > m_interfaceNodesSet;
 };

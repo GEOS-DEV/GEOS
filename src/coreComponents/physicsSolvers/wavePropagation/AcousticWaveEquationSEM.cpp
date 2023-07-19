@@ -775,9 +775,9 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                      DomainPartition & domain,
                                                      bool computeGradient )
 {
-  std::cout << "\t[AcousticWaveEquationSEM::explicitStepForward]" << std::endl;
   // print_stacktrace();
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
+  synchronize( time_n, dtOut, cycleNumber, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
@@ -856,6 +856,8 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                       bool computeGradient )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
+  synchronize( time_n, dtOut, cycleNumber, domain );
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
                                         MeshLevel & mesh,
@@ -941,6 +943,8 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                                       integer cycleNumber,
                                                       DomainPartition & domain )
 {
+  std::cout << "\t[AcousticWaveEquationSEM::explicitStepInternal]" << std::endl;
+
   GEOS_MARK_FUNCTION;
 
   GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
@@ -965,8 +969,6 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     arrayView1d< real32 > const stiffnessVector = nodeManager.getField< fields::StiffnessVector >();
     arrayView1d< real32 > const rhs = nodeManager.getField< fields::ForcingRHS >();
 
-    bool const usePML = m_usePML;
-
     auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
 
     finiteElement::
@@ -987,7 +989,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     /// calculate your time integrators
     real64 const dt2 = pow(dt, 2);
 
-    if( !usePML )
+    if( !m_usePML )
     {
       GEOS_MARK_SCOPE ( updateP );
       forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
@@ -1066,11 +1068,36 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       } );
     }
 
+  } );
+
+  return dt;
+}
+
+void AcousticWaveEquationSEM::synchronize(real64 const & time_n,
+                                          real64 const & dt,
+                                          integer GEOS_UNUSED_PARAM(cycleNumber),
+                                          DomainPartition & domain)
+{
+  SortedArrayView< localIndex const > const & solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                    [&] ( string const &,
+                                          MeshLevel & mesh,
+                                          arrayView1d< string const > const & GEOS_UNUSED_PARAM(regionNames) )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
+
+    arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_n >();
+    arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
+
+    arrayView1d< real32 > const stiffnessVector = nodeManager.getField< fields::StiffnessVector >();
+    arrayView1d< real32 > const rhs = nodeManager.getField< fields::ForcingRHS >();
+
     /// synchronize pressure fields
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addFields( FieldLocation::Node, { fields::Pressure_np1::key() } );
 
-    if( usePML )
+    if( m_usePML )
     {
       fieldsToBeSync.addFields( FieldLocation::Node, {
           fields::AuxiliaryVar1PML::key(),
@@ -1096,7 +1123,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       rhs[a] = 0.0;
     } );
 
-    if( usePML )
+    if( m_usePML )
     {
       arrayView2d< real32 > const grad_n = nodeManager.getField< fields::AuxiliaryVar2PML >();
       arrayView1d< real32 > const divV_n = nodeManager.getField< fields::AuxiliaryVar3PML >();
@@ -1105,7 +1132,6 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     }
   } );
 
-  return dt;
 }
 
 void AcousticWaveEquationSEM::cleanup( real64 const time_n,

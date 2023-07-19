@@ -213,7 +213,6 @@ protected:
   /// Time step for seismoTrace output
   real64 m_dtSeismoTrace;
 
-
   /// Cycle number for output SeismoTrace
   localIndex m_indexSeismoTrace;
 

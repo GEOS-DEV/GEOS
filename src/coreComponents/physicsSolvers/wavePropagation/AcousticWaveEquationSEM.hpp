@@ -139,6 +139,11 @@ public:
                                integer const cycleNumber,
                                DomainPartition & domain );
 
+  void synchronize(real64 const & time_n,
+                   real64 const & dt,
+                   integer const cycleNumber,
+                   DomainPartition & domain);
+
 protected:
 
   virtual void postProcessInput() override final;

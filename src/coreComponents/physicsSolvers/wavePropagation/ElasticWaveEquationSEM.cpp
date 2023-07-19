@@ -687,8 +687,8 @@ real64 ElasticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                     DomainPartition & domain,
                                                     bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
-  std::cout << "\t[ElasticWaveEquationSEM::explicitStepForward]" << std::endl;
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
+  synchronize( time_n, dtOut, cycleNumber, domain );
   return dtOut;
 }
 
@@ -702,6 +702,7 @@ real64 ElasticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
 {
   GEOS_ERROR( "Backward propagation for the elastic wave propagator not yet implemented" );
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
+  synchronize( time_n, dtOut, cycleNumber, domain );
   return dtOut;
 }
 
@@ -710,6 +711,8 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                                      integer const cycleNumber,
                                                      DomainPartition & domain )
 {
+  std::cout << "\t[ElasticWaveEquationSEM::explicitStepInternal]" << std::endl;
+
   GEOS_MARK_FUNCTION;
 
   GEOS_UNUSED_VAR( time_n, dt, cycleNumber );
@@ -788,7 +791,43 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       }
     } );
 
-    /// synchronize pressure fields
+  } );
+
+  return dt;
+}
+
+void ElasticWaveEquationSEM::synchronize(real64 const & time_n,
+                                         real64 const & dt,
+                                         integer GEOS_UNUSED_PARAM(cycleNumber),
+                                         DomainPartition & domain)
+{
+  SortedArrayView< localIndex const > const & solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
+
+    arrayView1d< real32 > const stiffnessVectorx = nodeManager.getField< fields::StiffnessVectorx >();
+    arrayView1d< real32 > const stiffnessVectory = nodeManager.getField< fields::StiffnessVectory >();
+    arrayView1d< real32 > const stiffnessVectorz = nodeManager.getField< fields::StiffnessVectorz >();
+
+    arrayView1d< real32 > const ux_nm1 = nodeManager.getField< fields::Displacementx_nm1 >();
+    arrayView1d< real32 > const uy_nm1 = nodeManager.getField< fields::Displacementy_nm1 >();
+    arrayView1d< real32 > const uz_nm1 = nodeManager.getField< fields::Displacementz_nm1 >();
+    arrayView1d< real32 > const ux_n = nodeManager.getField< fields::Displacementx_n >();
+    arrayView1d< real32 > const uy_n = nodeManager.getField< fields::Displacementy_n >();
+    arrayView1d< real32 > const uz_n = nodeManager.getField< fields::Displacementz_n >();
+    arrayView1d< real32 > const ux_np1 = nodeManager.getField< fields::Displacementx_np1 >();
+    arrayView1d< real32 > const uy_np1 = nodeManager.getField< fields::Displacementy_np1 >();
+    arrayView1d< real32 > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
+
+    arrayView1d< real32 > const rhsx = nodeManager.getField< fields::ForcingRHSx >();
+    arrayView1d< real32 > const rhsy = nodeManager.getField< fields::ForcingRHSy >();
+    arrayView1d< real32 > const rhsz = nodeManager.getField< fields::ForcingRHSz >();
+
+    /// synchronize displacement fields
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addFields( FieldLocation::Node, { fields::Displacementx_np1::key(), fields::Displacementy_np1::key(), fields::Displacementz_np1::key() } );
 
@@ -832,8 +871,6 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     }
 
   } );
-
-  return dt;
 }
 
 void ElasticWaveEquationSEM::cleanup( real64 const time_n,
