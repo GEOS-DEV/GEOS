@@ -58,7 +58,7 @@
       name="SurfaceGen"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"      
-      rockToughness="3.0e6"
+      rockToughness="1.0e7"
       mpiCommOrder="1"/>
   <!-- SPHINX_SURFACEGENERATOR_END -->
   </Solvers>
@@ -68,20 +68,20 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ -5, 195, 275, 315, 395, 595 }"
-      yCoords="{ 185, 345, 485, 625, 785 }"
-      zCoords="{ 295, 515, 595, 895 }"
-      nx="{ 10, 10, 10, 10, 10 }"
-      ny="{ 10, 210, 210, 10 }"
-      nz="{ 10, 120, 450 }"
-      yBias="{ 0.0, 0.4, -0.4, 0.0}"
-      zBias="{ 0.0, 0.4, -0.4}"
+      xCoords="{ 0, 30, 70, 100 }"
+      yCoords="{ 0, 50, 100 }"
+      zCoords="{ 0, 50, 100}"
+      nx="{ 3, 10, 3 }"
+      ny="{ 75, 75 }"
+      nz="{ 75, 75 }"
+      yBias="{ 0.4, -0.4}"
+      zBias="{ 0.4, -0.4}"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
   <!-- SPHINX_MESH_END -->
 
   <Events
-    maxTime="8100.0">
+    maxTime="1200.0">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
@@ -110,15 +110,8 @@
     <PeriodicEvent
       name="outputs4"
       beginTime="360.0"
-      endTime="1000.0"
-      forceDt="40.0"
-      target="/Outputs/vtkOutput"/> 
-
-    <PeriodicEvent
-      name="outputs5"
-      beginTime="1000.0"
-      endTime="7500.0"
-      forceDt="100.0"
+      endTime="1200.0"
+      forceDt="20.0"
       target="/Outputs/vtkOutput"/> 
 
     <PeriodicEvent
@@ -145,15 +138,8 @@
     <PeriodicEvent
       name="solverApplications4"
       beginTime="360.0"
-      endTime="1000.0"
+      endTime="1200.0"
       forceDt="40.0"
-      target="/Solvers/hydrofracture"/>
-
-    <PeriodicEvent
-      name="solverApplications5"
-      beginTime="1000.0"
-      endTime="8100.0"
-      forceDt="100.0"
       target="/Solvers/hydrofracture"/>
   </Events>
 
@@ -162,24 +148,24 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ cb1 }"
-      materialList="{ gel, porousRock, rock }"/>
+      materialList="{ water, porousRock, rock }"/>
 
     <SurfaceElementRegion
       name="Fracture"      
       defaultAperture="0.04e-3"
-      materialList="{ gel, rock, fractureFilling, fractureContact }"/>
+      materialList="{ water, rock, fractureFilling, fractureContact }"/>
   </ElementRegions>
   <!-- SPHINX_ELEMENTREGIONS_END -->
 
   <!-- SPHINX_MATERIAL -->
   <Constitutive>
     <CompressibleSinglePhaseFluid
-      name="gel"
+      name="water"
       defaultDensity="1000"
-      defaultViscosity="1.0e-1"
+      defaultViscosity="1.0e-3"
       referencePressure="0.0"
       compressibility="5e-10"
-      referenceViscosity="0.1"
+      referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
 
     <CompressibleSolidConstantPermeability
@@ -190,21 +176,19 @@
 
     <PressurePorosity
        name="rockPorosity"
-       defaultReferencePorosity="0.01"
+       defaultReferencePorosity="0.03"
        referencePressure="0.0"
-       compressibility="1.0e-10"/>
+       compressibility="1.45e-9"/>
 
     <ConstantPermeability
        name="rockPerm"
-       permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15 }"
-       pressureDependenceConstant="3e-7"
-       defaultReferencePressure="20e6"/> 
+       permeabilityComponents="{ 1.0e-17, 1.0e-17, 1.0e-17 }"/> 
 
     <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
-      defaultBulkModulus="38.1944444444e9"
-      defaultShearModulus="21.8253968254e9"/>
+      defaultBulkModulus="37.5e9"
+      defaultShearModulus="15e9"/>
 
     <CompressibleSolidParallelPlatesPermeability
       name="fractureFilling"
@@ -256,8 +240,7 @@
       objectPath="ElementRegions/Domain/cb1"
       fieldName="rock_stress"
       component="0"
-      functionName="ShFunction"
-      scale="-1e6"/>
+      scale="-37e6"/>
 
     <FieldSpecification 
       name="SH"
@@ -266,8 +249,7 @@
       objectPath="ElementRegions/Domain/cb1"
       fieldName="rock_stress"
       component="1"
-      functionName="SHFunction"
-      scale="-1e6"/>
+      scale="-42.2e6"/>
 
     <FieldSpecification 
       name="Sv"
@@ -276,8 +258,7 @@
       objectPath="ElementRegions/Domain/cb1"
       fieldName="rock_stress"
       component="2"
-      functionName="SvFunction"
-      scale="-1e6"/>
+      scale="-54.2e6"/>
 
     <FieldSpecification
        name="initialPressure"
@@ -285,17 +266,7 @@
        objectPath="ElementRegions/Domain/cb1"
        fieldName="pressure"
        setNames="{all}"
-       functionName="presFunction"
-       scale="1e6"/>  
-
-    <FieldSpecification
-      name="refPressure"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="rockPerm_referencePressure"
-      functionName="presFunction"
-      scale="1.0e6"/>
+       scale="20.8e6"/>  
 
     <FieldSpecification
       name="separableFace"
@@ -354,54 +325,30 @@
 
     <TableFunction
       name="timeFunction"
-      coordinates="{ 0.0, 359.9, 360.1, 719.9, 720.1, 1199.9, 1200.1, 1499.9, 1500.1, 2099.9, 2100.1, 4499.9, 4500.1, 6299.9, 6300.1, 6899.9, 6900.1, 7499.9, 7500.1, 7799.9, 7800.1, 8100 }"
-      values="{ 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0, 5.0, 5.0, 6.0, 6.0, 7.0, 7.0, 4.0, 4.0, 3.0, 3.0, 2.0, 2.0, 1.0, 1.0 }"/>
-
-    <TableFunction
-      name="ShFunction"
-      inputVarNames="{ elementCenter }"
-      coordinateFiles="{ ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/xlin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/ylin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/zlin.geos }"
-      voxelFile="../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/Shmin.geos"/>
-
-    <TableFunction
-      name="SHFunction"
-      inputVarNames="{ elementCenter }"
-      coordinateFiles="{ ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/xlin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/ylin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/zlin.geos }"
-      voxelFile="../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/Shmax.geos"/>
-    
-    <TableFunction
-      name="SvFunction"
-      inputVarNames="{ elementCenter }"
-      coordinateFiles="{ ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/xlin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/ylin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/zlin.geos }"
-      voxelFile="../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/Sv.geos"/>
-    
-    <TableFunction
-      name="presFunction"
-      inputVarNames="{ elementCenter }"
-      coordinateFiles="{ ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/xlin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/ylin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/zlin.geos }"
-      voxelFile="../../../GEOSXDATA/DataSets/FORGE/Well16A/insituStress/pres.geos"/>
+      coordinates="{ 0.0, 359.9, 360.1, 1200 }"
+      values="{ 1.0, 1.0, 0.0, 0.0 }"/>
   </Functions>
 
   <Geometry>
   <!-- SPHINX_INITIALFRAC -->
     <Box
       name="fracture"
-      xMin="{ 294.9, 480.9, 590.9 }"
-      xMax="{ 295.1, 489.1, 599.1 }"/>
+      xMin="{ 49.9, 45.9, 45.9 }"
+      xMax="{ 50.1, 54.1, 54.1 }"/>
   <!-- SPHINX_INITIALFRAC_END -->
 
   <!-- SPHINX_INJSOURCE -->
     <Box
       name="source"
-      xMin="{ 294.9, 482.9, 592.9 }"
-      xMax="{ 295.1, 487.1, 597.1 }"/>
+      xMin="{ 49.9, 47.9, 47.9 }"
+      xMax="{ 50.1, 52.1, 52.1 }"/>
   <!-- SPHINX_INJSOURCE_END -->
 
   <!-- SPHINX_FRACPLANE -->
     <Box
       name="core"
-      xMin="{ 294.9, -1000.1, -1000.1 }"
-      xMax="{ 295.1, 1000.1, 1000.1 }"/>
+      xMin="{ 49.9, -1000.1, -1000.1 }"
+      xMax="{ 50.1, 1000.1, 1000.1 }"/>
   <!-- SPHINX_FRACPLANE_END -->
   </Geometry>
 
@@ -409,7 +356,7 @@
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="forge_Well58-32_fracturingTest"/>
+      plotFileRoot="forge_Well58-32_fracturingTest_perm=1e-17"/>
   </Outputs>
   <!-- SPHINX_OUTPUT_END -->
 
