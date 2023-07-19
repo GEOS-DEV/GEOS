@@ -23,7 +23,7 @@ namespace geos
 using namespace dataRepository;
 
 WellGeneratorBase::WellGeneratorBase( string const & name, Group * const parent ):
-  Group( name, parent )
+  WellGeneratorABC( name, parent )
   , m_numPerforations( 0 )
   , m_numElemsPerSegment( 0 )
   , m_minSegmentLength( 1e-2 )

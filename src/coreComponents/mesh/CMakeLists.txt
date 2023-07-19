@@ -48,6 +48,7 @@ set( mesh_headers
      generators/ParMETISInterface.hpp
      generators/PartitionDescriptor.hpp
      generators/PrismUtilities.hpp
+     generators/WellGeneratorABC.hpp
      generators/WellGeneratorBase.hpp
      mpiCommunications/CommID.hpp
      mpiCommunications/CommunicationTools.hpp
