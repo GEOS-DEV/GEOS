@@ -234,7 +234,7 @@ public:
       //GEOS_UNUSED_VAR( k_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, er_up, esr_up, ei_up );
 
       // tuning parameter
-      real64 omega = 2e-5;
+      real64 omega = 2e-3;
       //real64 k = 1;
 
       /// dissipation flux and derivatives
@@ -248,7 +248,7 @@ public:
 
       //real64 const T_ij = stack.transmissibility[connectionIndex][0];                                                 
 
-      //real64 fluxPointCoef[numFluxSupportPoints] = {-1.0, 1.0};
+      real64 fluxPointCoef[numFluxSupportPoints] = {1.0, -1.0};
       // Step 1
       for( integer ke = 0; ke < numFluxSupportPoints; ++ke ) {
           for( integer ic = 0; ic < numComp; ++ic ) {
@@ -257,7 +257,7 @@ public:
             localIndex const ei  = sei[ke];
 
             // composition gradient contribution to the dissipation flux
-           // dissFlux[ic] += omega * fluxPointCoef[ke] * m_compFrac[er][esr][ei][0][ic];
+            dissFlux[ic] += omega * fluxPointCoef[ke] * m_compFrac[er][esr][ei][ic];
 
             for( integer jc = 0; jc < numComp; ++jc ) 
             {
@@ -301,7 +301,7 @@ protected:
   /// Views on flow properties at the previous converged time step
   ElementViewConst< arrayView1d< real64 const > > const m_pres_n;
   ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP > > const m_compDens;
-  ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP > > const m_compFrac;
+  ElementViewConst< arrayView2d< real64 const, compflow::USD_COMP > > const m_compFrac;
 
   ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const m_phaseRelPerm_n;
   //ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_phaseVisc_n;
