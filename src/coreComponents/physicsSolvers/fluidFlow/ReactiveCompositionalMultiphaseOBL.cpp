@@ -210,7 +210,7 @@ void ReactiveCompositionalMultiphaseOBL::postProcessInput()
                                   "whereas it as a value of {} in the operator table (at {}).",
                                   getWrapperDataContext( viewKeyStruct::elemDofFieldString() ),
                                   m_numDofPerCell, m_OBLOperatorsTable->numDims(),
-                                  m_OBLOperatorsTableFile, ),
+                                  m_OBLOperatorsTableFile ),
                         InputError );
 
   GEOS_THROW_IF_NE_MSG( m_numOBLOperators, m_OBLOperatorsTable->numOps(),
@@ -218,7 +218,7 @@ void ReactiveCompositionalMultiphaseOBL::postProcessInput()
                                   "whereas it as a value of {} in the operator table (at {}).",
                                   getWrapperDataContext( viewKeyStruct::elemDofFieldString() ),
                                   m_numDofPerCell, m_OBLOperatorsTable->numDims(),
-                                  m_OBLOperatorsTableFile, ),
+                                  m_OBLOperatorsTableFile ),
                         InputError );
 
 }
