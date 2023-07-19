@@ -9,7 +9,7 @@ set( ExplicitFiniteStrainPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE}
 set( FixedStressThermoPoromechanicsPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
 set( ImplicitSmallStrainNewmarkPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
 set( ImplicitSmallStrainQuasiStaticPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
-set( SmallStrainResidualPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
+set( SmallStrainResidualPolicy "geos::parallelDeviceAsyncPolicy< ${GEOSX_BLOCK_SIZE} >" )
 
 
 configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp.in

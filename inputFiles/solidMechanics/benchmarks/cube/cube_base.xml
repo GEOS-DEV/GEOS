@@ -1,0 +1,145 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <MatrixFreeSolidMechanicsFEM
+      name="Solver"
+      discretization="FE1"
+      targetRegions="{ mesh1/Region1 }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-7"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        directParallel="0"
+        logLevel="200"
+        krylovTol="1.0e-200"
+        krylovMaxIter="1000"/>
+    </MatrixFreeSolidMechanicsFEM>
+
+    <!-- <SolidMechanicsLagrangianSSLE
+      name="Solver"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
+      targetRegions="{ mesh1/Region1 }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        solverType="bicgstab"
+        preconditionerType="none"
+        logLevel="2"
+        krylovMaxIter="300"/>
+    </SolidMechanicsLagrangianSSLE> -->
+  </Solvers>
+
+  <!-- <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 100 }"
+      ny="{ 100 }"
+      nz="{ 100 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh> -->
+
+  <Events
+    maxTime="1.0">
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0"
+      target="/Solvers/Solver"/>
+
+    <!--PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="siloOutputs"
+      timeFrequency="1.0"
+      target="/Outputs/siloOutput"/-->
+
+
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region1"
+      meshBody="mesh1"
+      cellBlocks="{ cb1 }"
+      materialList="{ shale }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ElasticIsotropic
+      name="shale"
+      defaultDensity="2700"
+      defaultBulkModulus="5.5556e9"
+      defaultShearModulus="4.16667e9"/>
+
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg, zpos}"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="xconstraintNeg"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="xconstraintPos"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="-0.001"
+      functionName="timeFunction"
+      setNames="{ xpos }"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0, 2.0, 10.0 }"
+      values="{ 0.0, 1.0, 1.0, 1.0 }"/>
+  </Functions>
+
+  <Outputs>
+    <!--VTK
+      name="vtkOutput"/>
+
+    <Silo
+      name="siloOutput"/-->
+  </Outputs>
+</Problem>

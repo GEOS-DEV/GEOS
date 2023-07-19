@@ -184,7 +184,7 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
                                                                                                real64 const (&varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
                                                                                                real64 (& fLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const
 {
-#define USE_JACOBIAN 2
+  #define USE_JACOBIAN 2
 #if !defined(USE_JACOBIAN)
   real64 dNdX[ numNodesPerElem ][ 3 ];
   real64 const detJ = FE_TYPE::calcGradN( qa, qb, qc, xLocal, dNdX );
@@ -367,9 +367,9 @@ kernelLaunch( localIndex const numElems,
 //    for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
   #pragma unroll
     for( integer qa=0; qa<2; ++qa )
-  #pragma unroll
+                                     #pragma unroll
       for( integer qb=0; qb<2; ++qb )
-  #pragma unroll
+                                       #pragma unroll
         for( integer qc=0; qc<2; ++qc )
         {
           //  int qa, qb, qc;

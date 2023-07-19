@@ -112,7 +112,7 @@ public:
     m_diagPolicy( diagPolicy ),
     m_diagonal( m_dofManager.numLocalDofs() )
   {
-    using POLICY = parallelDevicePolicy<256>;
+    using POLICY = parallelDevicePolicy< 1024 >;
 
     // Compute the "diagonal"
     switch( m_diagPolicy )
@@ -212,16 +212,16 @@ public:
         // we need to write a new variant of this function that calculates the rhs contribution to the original array2d instead of the dof
         // vector.
         bc.computeRhsContribution< FieldSpecificationEqual,
-                                   parallelDevicePolicy<256> >( targetSet,
-                                                             m_time,
-                                                             1.0, // TODO: double check
-                                                             targetGroup,
-                                                             dofMap,
-                                                             rankOffset,
-                                                             m_diagonal.toViewConst(),
-                                                             dof,
-                                                             rhsContribution,
-                                                             [=] GEOS_HOST_DEVICE ( localIndex const a )->real64
+                                   parallelDevicePolicy< 1024 > >( targetSet,
+                                                                   m_time,
+                                                                   1.0, // TODO: double check
+                                                                   targetGroup,
+                                                                   dofMap,
+                                                                   rankOffset,
+                                                                   m_diagonal.toViewConst(),
+                                                                   dof,
+                                                                   rhsContribution,
+                                                                   [=] GEOS_HOST_DEVICE ( localIndex const a )->real64
         {
           return bcFieldValue( field, a, component );
         } );
@@ -249,7 +249,7 @@ public:
   {
     GEOS_MARK_FUNCTION;
 
-    using POLICY = parallelDevicePolicy<256>;
+    using POLICY = parallelDevicePolicy< 1024 >;
 
     // Construct [x_BC,0]
     srcWithBC.zero();
@@ -306,7 +306,7 @@ public:
   {
     GEOS_MARK_FUNCTION;
 
-    using POLICY = parallelDeviceAsyncPolicy<256>;
+    using POLICY = parallelDeviceAsyncPolicy< 1024 >;
 
     arrayView1d< real64 > const localSrcWithBC = srcWithBC.open();
     arrayView1d< real64 const > const localSrc = src.values();

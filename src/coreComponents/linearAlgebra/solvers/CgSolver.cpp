@@ -192,10 +192,27 @@ void axpby( real64 alpha, const Vector & x, real64 beta, const Vector & y, Vecto
     localX.size() != localY.size() || localX.size() != localRes.size(),
     "Cannot use CG solver with a non-symmetric system" );
 
-  using POLICY = parallelDeviceAsyncPolicy<1024>;
+  using POLICY = parallelDeviceAsyncPolicy< 1024 >;
   forAll< POLICY >( localX.size(), [alpha, beta, localX, localY, localRes] GEOS_HOST_DEVICE ( localIndex const i )
   {
     localRes[ i ] = alpha * localX[ i ] + beta * localY[ i ];
+  } );
+  res.close();
+}
+
+
+template< typename Vector >
+void xpby( const Vector & x, real64 beta, Vector & res )
+{
+  GEOS_MARK_FUNCTION;
+  arrayView1d< real64 const > const localX = x.values();
+  arrayView1d< real64 > const localRes = res.open();
+  GEOS_ERROR_IF( localX.size() != localRes.size(), "Cannot use CG solver with a non-symmetric system" );
+
+  using POLICY = parallelDeviceAsyncPolicy< 1024 >;
+  forAll< POLICY >( localX.size(), [beta, localX, localRes] GEOS_HOST_DEVICE ( localIndex const i )
+  {
+    localRes[ i ] = localX[ i ] + beta * localRes[ i ];
   } );
   res.close();
 }
@@ -215,11 +232,11 @@ real64 axpby_dot( real64 alpha, const Vector & x, real64 beta, const Vector & y,
 
   RAJA::ReduceSum< RAJA::cuda_reduce_atomic, real64 > sum( 0.0 );
 
-  using POLICY = parallelDeviceAsyncPolicy<1024>;
+  using POLICY = parallelDeviceAsyncPolicy< 1024 >;
   forAll< POLICY >( localX.size(), [alpha, beta, localX, localY, localRes, sum] GEOS_HOST_DEVICE ( localIndex const i )
   {
     localRes[ i ] = alpha * localX[ i ] + beta * localY[ i ];
-    sum += localRes[ i ] * localRes[ i ] ;
+    sum += localRes[ i ] * localRes[ i ];
   } );
   res.close();
   return static_cast< real64 >(sum.get());
@@ -239,23 +256,23 @@ real64 axpby2_dot( real64 const alpha0, const Vector & x0, real64 const beta0, c
   arrayView1d< real64 const > const localY1 = y1.values();
   arrayView1d< real64 > const localRes1 = res1.open();
 
-  GEOS_ERROR_IF( localX0.size() != localY0.size() || 
-                 localX0.size() != localRes0.size() || 
-                 localX0.size() != localX1.size() || 
-                 localX1.size() != localY1.size() || 
+  GEOS_ERROR_IF( localX0.size() != localY0.size() ||
+                 localX0.size() != localRes0.size() ||
+                 localX0.size() != localX1.size() ||
+                 localX1.size() != localY1.size() ||
                  localX1.size() != localRes1.size(),
-    "Cannot use CG solver with a non-symmetric system" );
+                 "Cannot use CG solver with a non-symmetric system" );
 
 
   RAJA::ReduceSum< RAJA::cuda_reduce_atomic, real64 > sum( 0.0 );
 
-  using POLICY = parallelDeviceAsyncPolicy<1024>;
-  forAll< POLICY >( localX0.size(), [ alpha0, beta0, localX0, localY0, localRes0, 
+  using POLICY = parallelDeviceAsyncPolicy< 1024 >;
+  forAll< POLICY >( localX0.size(), [ alpha0, beta0, localX0, localY0, localRes0,
                                       alpha1, beta1, localX1, localY1, localRes1, sum] GEOS_HOST_DEVICE ( localIndex const i )
   {
     localRes0[ i ] = alpha0 * localX0[ i ] + beta0 * localY0[ i ];
     localRes1[ i ] = alpha1 * localX1[ i ] + beta1 * localY1[ i ];
-    sum += localRes1[ i ] * localRes1[ i ] ;
+    sum += localRes1[ i ] * localRes1[ i ];
   } );
   res0.close();
   res1.close();
@@ -264,8 +281,8 @@ real64 axpby2_dot( real64 const alpha0, const Vector & x0, real64 const beta0, c
 
 
 template< typename Vector >
-real64 axpby2_dot( real64 const alpha0, const Vector & x0, Vector & res0,
-                   real64 const alpha1, const Vector & x1, Vector & res1 )
+real64 axpy2_dot( real64 const alpha0, const Vector & x0, Vector & res0,
+                  real64 const alpha1, const Vector & x1, Vector & res1 )
 {
   GEOS_MARK_FUNCTION;
   arrayView1d< real64 const > const localX0 = x0.values();
@@ -274,21 +291,21 @@ real64 axpby2_dot( real64 const alpha0, const Vector & x0, Vector & res0,
   arrayView1d< real64 const > const localX1 = x1.values();
   arrayView1d< real64 > const localRes1 = res1.open();
 
-  GEOS_ERROR_IF( localX0.size() != localRes0.size() || 
-                 localX0.size() != localX1.size() || 
+  GEOS_ERROR_IF( localX0.size() != localRes0.size() ||
+                 localX0.size() != localX1.size() ||
                  localX1.size() != localRes1.size(),
-    "Cannot use CG solver with a non-symmetric system" );
+                 "Cannot use CG solver with a non-symmetric system" );
 
 
   RAJA::ReduceSum< RAJA::cuda_reduce_atomic, real64 > sum( 0.0 );
 
-  using POLICY = parallelDeviceAsyncPolicy<1024>;
-  forAll< POLICY >( localX0.size(), [ alpha0, localX0, localRes0, 
+  using POLICY = parallelDeviceAsyncPolicy< 1024 >;
+  forAll< POLICY >( localX0.size(), [ alpha0, localX0, localRes0,
                                       alpha1, localX1, localRes1, sum] GEOS_HOST_DEVICE ( localIndex const i )
   {
     localRes0[ i ] = localRes0[ i ] + alpha0 * localX0[ i ];
     localRes1[ i ] = localRes1[ i ] + alpha1 * localX1[ i ];
-    sum += localRes1[ i ] * localRes1[ i ] ;
+    sum += localRes1[ i ] * localRes1[ i ];
   } );
   res0.close();
   res1.close();
@@ -303,7 +320,7 @@ real64 dot( const Vector & x, const Vector & y )
   arrayView1d< real64 const > const localX = x.values();
   arrayView1d< real64 const > const localY = y.values();
 
-  using POLICY = parallelDeviceAsyncPolicy<1024>;
+  using POLICY = parallelDeviceAsyncPolicy< 1024 >;
   forAll< POLICY >( localX.size(), [vsum, localX, localY] GEOS_HOST_DEVICE ( localIndex const i )
   {
     vsum += localX[ i ] * localY[ i ];
@@ -362,7 +379,7 @@ void UnprecCgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
 
     // Update p = r + beta*p
     // p.axpby( 1.0, r, beta );
-    axpby( 1.0, r, beta, p, p );
+    xpby( r, beta, p );
 
     // Compute Ap
     m_operator.apply( p, Ap );
@@ -375,10 +392,10 @@ void UnprecCgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
     // Keep the old value of tau
     tau_old = tau;
 
-#define GC_FUSION_LEVEL 0
+    #define GC_FUSION_LEVEL 3
 #if GC_FUSION_LEVEL==3
-    tau = axpby2_dot( +alpha, p, x,
-                      -alpha, Ap, r );
+    tau = axpy2_dot( +alpha, p, x,
+                     -alpha, Ap, r );
 #elif GC_FUSION_LEVEL==2
     tau = axpby2_dot( +alpha, p, 1.0, x, x,
                       -alpha, Ap, 1.0, r, r );
@@ -397,7 +414,7 @@ void UnprecCgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
     tau = dot( r, r );
 #endif
 
-    
+
   }
   // std::cout << "iter: " << k << std::endl;
   // std::cout << "solution: \n" << x << std::endl;

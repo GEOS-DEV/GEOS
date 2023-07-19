@@ -72,7 +72,7 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
   arrayView1d< real64 const > const localSrc = src.values();
   arrayView1d< real64 > const localDst = dst.open();
   // We do it by hand to avoid hypre call
-  using POLICY = parallelDeviceAsyncPolicy<256>;
+  using POLICY = parallelDeviceAsyncPolicy< 1024 >;
   forAll< POLICY >( localDst.size(), [localDst] GEOS_HOST_DEVICE ( localIndex const i )
   {
     localDst[ i ] = 0.0;
@@ -121,13 +121,15 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
                                                                                          "" );
 
     finiteElement::
-      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+      regionBasedKernelApplication< parallelDeviceAsyncPolicy< 32 >,
                                     constitutive::ElasticIsotropic,
                                     CellElementSubRegion >( mesh,
                                                             regionNames,
                                                             m_finiteElementName,
                                                             "solidMaterialNames",
                                                             kernelFactory );
+    parallelDeviceSync();
+
 #endif
   }
 
@@ -295,8 +297,8 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
   const double time_per_iter = elapsed_seconds / num_iter;
   std::cout << "Time per CG iteration: " << time_per_iter << "s\n";
   const size_t num_dofs = m_dofManager.numLocalDofs();
-  std::cout << "Number of local dofs: " << num_dofs << "dofs\n";
-  std::cout << "Throughput: " << num_dofs/time_per_iter*1e-6 << "MDofs/s\n";
+  std::cout << "Number of local dofs: " << num_dofs << " dofs\n";
+  std::cout << "Throughput: " << num_dofs/time_per_iter*1e-6 << " MDofs/s\n";
 
 // std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp8"<<std::endl;
 
