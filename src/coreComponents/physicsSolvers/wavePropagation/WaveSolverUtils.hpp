@@ -45,7 +45,8 @@ struct WaveSolverUtils
     {
       case 4:
       {
-	pulse = 4.0*lam*lam*(-12.0*lam*(time_n-o_tpeak)*(time_n-o_tpeak)+4.0*lam*lam*(time_n-o_tpeak)*(time_n-o_tpeak)*(time_n-o_tpeak)*(time_n-o_tpeak)+3.0)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
+        pulse = 4.0*lam*lam*(-12.0*lam*(time_n-o_tpeak)*(time_n-o_tpeak)+4.0*lam*lam*(time_n-o_tpeak)*(time_n-o_tpeak)*(time_n-o_tpeak)*(time_n-o_tpeak)+3.0)*exp(
+          -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
       }
       break;
       case 2:

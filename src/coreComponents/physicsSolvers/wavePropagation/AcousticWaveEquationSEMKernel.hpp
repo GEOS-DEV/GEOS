@@ -129,7 +129,8 @@ struct PrecomputeSourceAndReceiverKernel
             {
               real64 const time = cycle*dt;
               sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder );
-	      //sourceValueSecondDerivativeRicker[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder + 2 );
+              //sourceValueSecondDerivativeRicker[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder + 2
+              // );
             }
           }
         }
@@ -184,7 +185,7 @@ struct PrecomputeSourceAndReceiverKernel
 
 
 
-  // Use When we consider the modified equation to perform time integration
+// Use When we consider the modified equation to perform time integration
 struct PrecomputeSourceAndReceiverKernelForModifiedEquation
 {
 
@@ -231,7 +232,7 @@ struct PrecomputeSourceAndReceiverKernelForModifiedEquation
           arrayView2d< localIndex > const receiverNodeIds,
           arrayView2d< real64 > const receiverConstants,
           arrayView2d< real32 > const sourceValue,
-	  arrayView2d< real32 > const sourceValueSecondDerivativeRicker,
+          arrayView2d< real32 > const sourceValueSecondDerivativeRicker,
           real64 const dt,
           real32 const timeSourceFrequency,
           localIndex const rickerOrder )
@@ -285,7 +286,7 @@ struct PrecomputeSourceAndReceiverKernelForModifiedEquation
             {
               real64 const time = cycle*dt;
               sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder );
-	      sourceValueSecondDerivativeRicker[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder + 2 );
+              sourceValueSecondDerivativeRicker[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder + 2 );
             }
           }
         }
@@ -1048,7 +1049,7 @@ public:
                            FE_TYPE const & finiteElementSpace,
                            CONSTITUTIVE_TYPE & inputConstitutiveType,
                            real64 const dt,
-			   arrayView1d <real32 const > coefs_c):
+                           arrayView1d< real32 const > coefs_c ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
@@ -1169,10 +1170,10 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class ExplicitAcousticSEMrkn4k2 : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                                  CONSTITUTIVE_TYPE,
-                                                                  FE_TYPE,
-                                                                  1,
-                                                                  1 >
+                                                                    CONSTITUTIVE_TYPE,
+                                                                    FE_TYPE,
+                                                                    1,
+                                                                    1 >
 {
 public:
 
@@ -1207,15 +1208,15 @@ public:
    *   elements to be processed during this kernel launch.
    */
   ExplicitAcousticSEMrkn4k2( NodeManager & nodeManager,
-                           EdgeManager const & edgeManager,
-                           FaceManager const & faceManager,
-                           localIndex const targetRegionIndex,
-                           SUBREGION_TYPE const & elementSubRegion,
-                           FE_TYPE const & finiteElementSpace,
-                           CONSTITUTIVE_TYPE & inputConstitutiveType,
-			     real64 const dt,
-			     arrayView1d <real32 const > coefs_c,
-			     arrayView2d <real32 const > coefs_abar):
+                             EdgeManager const & edgeManager,
+                             FaceManager const & faceManager,
+                             localIndex const targetRegionIndex,
+                             SUBREGION_TYPE const & elementSubRegion,
+                             FE_TYPE const & finiteElementSpace,
+                             CONSTITUTIVE_TYPE & inputConstitutiveType,
+                             real64 const dt,
+                             arrayView1d< real32 const > coefs_c,
+                             arrayView2d< real32 const > coefs_abar ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
@@ -1228,7 +1229,7 @@ public:
     m_abar( coefs_abar ),
     m_K1_n( nodeManager.getField< fields::Intermediary_pressure_1_n >() )
   {
-    m_dt2 = dt*dt ;
+    m_dt2 = dt*dt;
     GEOS_UNUSED_VAR( edgeManager );
     GEOS_UNUSED_VAR( faceManager );
     GEOS_UNUSED_VAR( targetRegionIndex );
@@ -1259,7 +1260,7 @@ public:
    * @copydoc geosx::finiteElement::KernelBase::setup
    *
    * Copies the primary variable, and position into the local stack array.
-   */       
+   */
   GEOS_HOST_DEVICE
   inline
   void setup( localIndex const k,
@@ -1323,7 +1324,7 @@ protected:
 
   /// The array containing the intermediary pressure k1 for RKN
   arrayView1d< real32 const > const m_K1_n;
-  
+
 };
 
 
@@ -1350,10 +1351,10 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class ExplicitAcousticSEMrkn4k3 : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                                  CONSTITUTIVE_TYPE,
-                                                                  FE_TYPE,
-                                                                  1,
-                                                                  1 >
+                                                                    CONSTITUTIVE_TYPE,
+                                                                    FE_TYPE,
+                                                                    1,
+                                                                    1 >
 {
 public:
 
@@ -1388,15 +1389,15 @@ public:
    *   elements to be processed during this kernel launch.
    */
   ExplicitAcousticSEMrkn4k3( NodeManager & nodeManager,
-                           EdgeManager const & edgeManager,
-                           FaceManager const & faceManager,
-                           localIndex const targetRegionIndex,
-                           SUBREGION_TYPE const & elementSubRegion,
-                           FE_TYPE const & finiteElementSpace,
-                           CONSTITUTIVE_TYPE & inputConstitutiveType,
-			     real64 const dt,
-			     arrayView1d <real32 const > coefs_c,
-			     arrayView2d <real32 const > coefs_abar):
+                             EdgeManager const & edgeManager,
+                             FaceManager const & faceManager,
+                             localIndex const targetRegionIndex,
+                             SUBREGION_TYPE const & elementSubRegion,
+                             FE_TYPE const & finiteElementSpace,
+                             CONSTITUTIVE_TYPE & inputConstitutiveType,
+                             real64 const dt,
+                             arrayView1d< real32 const > coefs_c,
+                             arrayView2d< real32 const > coefs_abar ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
@@ -1410,7 +1411,7 @@ public:
     m_K1_n( nodeManager.getField< fields::Intermediary_pressure_1_n >() ),
     m_K2_n( nodeManager.getField< fields::Intermediary_pressure_2_n >() )
   {
-    m_dt2 = dt*dt ;
+    m_dt2 = dt*dt;
     GEOS_UNUSED_VAR( edgeManager );
     GEOS_UNUSED_VAR( faceManager );
     GEOS_UNUSED_VAR( targetRegionIndex );
@@ -1441,7 +1442,7 @@ public:
    * @copydoc geosx::finiteElement::KernelBase::setup
    *
    * Copies the primary variable, and position into the local stack array.
-   */       
+   */
   GEOS_HOST_DEVICE
   inline
   void setup( localIndex const k,
@@ -1508,8 +1509,8 @@ protected:
 
   /// The array containing the intermediary pressure k2 for RKN
   arrayView1d< real32 const > const m_K2_n;
- 
- 
+
+
 };
 
 
@@ -1521,13 +1522,13 @@ using ExplicitAcousticSEMFactory = finiteElement::KernelFactory< ExplicitAcousti
                                                                  real64 >;
 
 using ExplicitAcousticSEMFactoryrkn2 = finiteElement::KernelFactory< ExplicitAcousticSEMrkn2,
-                                                                     real64 , arrayView1d< real32 > >;
+                                                                     real64, arrayView1d< real32 > >;
 
 using ExplicitAcousticSEMFactoryrkn4k2 = finiteElement::KernelFactory< ExplicitAcousticSEMrkn4k2,
-								       real64, arrayView1d< real32 >,arrayView2d< real32 > >;
+                                                                       real64, arrayView1d< real32 >, arrayView2d< real32 > >;
 
 using ExplicitAcousticSEMFactoryrkn4k3 = finiteElement::KernelFactory< ExplicitAcousticSEMrkn4k3,
-								       real64 , arrayView1d< real32 >,arrayView2d< real32 > >;
+                                                                       real64, arrayView1d< real32 >, arrayView2d< real32 > >;
 
 
 

@@ -199,7 +199,7 @@ protected:
   /// Precomputed value of the source terms
   array2d< real32 > m_sourceValue;
 
-   array2d< real32 > m_sourceValueSecondDerivativeRicker;
+  array2d< real32 > m_sourceValueSecondDerivativeRicker;
   /// Central frequency for the Ricker time source
   real32 m_timeSourceFrequency;
 

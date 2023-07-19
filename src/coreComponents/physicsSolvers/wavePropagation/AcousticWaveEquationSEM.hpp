@@ -169,14 +169,14 @@ private:
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_pressureNp1AtReceivers;
 
-  /// RKN stage coefficients 
+  /// RKN stage coefficients
   localIndex m_stage_rkn;
   array1d< real32 > m_coefs_c;
   array1d< real32 > m_coefs_b;
   array1d< real32 > m_coefs_bbar;
   array2d< real32 > m_coefs_abar;
-  
-  
+
+
 };
 
 
@@ -270,10 +270,10 @@ DECLARE_FIELD( ForcingRHSSecondDerivative,
                NOPLOT,
                WRITE_AND_READ,
                "RHS Second Derivative" );
-  
+
 /// End of Additional Vectors for Modified Equation
 
-  
+
 DECLARE_FIELD( ForcingRHS,
                "rhs",
                array1d< real32 >,
