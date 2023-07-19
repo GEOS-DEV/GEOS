@@ -619,7 +619,7 @@ char const faceBcLogMessage[] =
   "\nNote that if this number is equal to zero, the boundary condition will not be applied on this face set.";
 
 GEOS_MAYBE_UNUSED char const incompleteBCLogmessage[] = "SinglePhaseFVM {}: at time {}, one or more Face boundary conditions are not complete. "
-                                                       "Both pressure and temperature must be specified, one is missing.";
+                                                        "Both pressure and temperature must be specified, one is missing.";
 
 }
 
