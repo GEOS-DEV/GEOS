@@ -61,8 +61,6 @@ public:
     static constexpr char const * meanPermCoefficientString() { return "meanPermCoefficient"; }
     /// @return The key for the usePEDFM flag
     static constexpr char const * usePEDFMString() { return "usePEDFM"; }
-    /// @return The key for the useDBC flag
-    static constexpr char const * useDBCString() { return "useDBC"; }
   };
 
 private:

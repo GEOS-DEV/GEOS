@@ -247,7 +247,6 @@ public:
     static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
     static constexpr char const * maxRelativeTempChangeString() { return "maxRelativeTemperatureChange"; }
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
-    static constexpr char const * useDBCFlagString() { return "useDBC"; }
 
   };
 
@@ -437,8 +436,6 @@ protected:
   /// name of the fluid constitutive model used as a reference for component/phase description
   string m_referenceFluidModelName;
 
-  /// flag indicating whether dissipation based continuation (DBC) method is used
-  integer m_useDBC;
 
 private:
 

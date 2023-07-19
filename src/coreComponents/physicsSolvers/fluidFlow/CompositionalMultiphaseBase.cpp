@@ -116,11 +116,6 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setApplyDefaultValue( 1 ).
     setDescription( "Flag indicating whether local (cell-wise) chopping of negative compositions is allowed" );
 
-  this->registerWrapper( viewKeyStruct::useDBCFlagString(), &m_useDBC ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Enable Dissipation-based continuation flux" );
-
 }
 
 void CompositionalMultiphaseBase::postProcessInput()

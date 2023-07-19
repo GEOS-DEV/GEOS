@@ -62,8 +62,8 @@ public:
 
   using DissCompFlowAccessors =
     StencilAccessors< fields::flow::pressure_n , 
-                      fields::flow::globalCompDensity 
-                      fields::flow::globalCompFraction 
+                      fields::flow::globalCompDensity, 
+                      fields::flow::globalCompFraction, 
                       fields::flow::dGlobalCompFraction_dGlobalCompDensity >;
 
   using DissMultiFluidAccessors =
@@ -72,8 +72,8 @@ public:
                               fields::multifluid::phaseCompFraction_n 
                                >;  
 
-  using DissSolidAccessors = 
-    StencilMaterialAccessors< m_permeability, m_dPerm_dPres >;
+  //using DissSolidAccessors = 
+  //  StencilMaterialAccessors< m_permeability, m_dPerm_dPres >;
                                                                                   
 
   using RelPermAccessors =
@@ -154,11 +154,10 @@ public:
             localMatrix,
             localRhs ),
     m_pres_n( dissCompFlowAccessors.get( fields::flow::pressure_n {} ) ),
-    m_porosity_n( solid.getPorosity_n() ),
-    m_compDens( dissCompFlowAccessors.get( fields::flow::globalCompDensity ) ),
-    m_compFrac( dissCompFlowAccessors.get( fields::flow::globalCompFraction ) ),
-    m_dCompFrac_dCompDens( dissCompFlowAccessors.get( fields::flow::dGlobalCompFraction_dGlobalCompDensity ) ),
-    m_phaseVisc_n( dissCompFlowAccessors.get( fields::flow::phaseVisc_n ) ),
+    //m_porosity_n( solid.getPorosity_n() ),
+    m_compDens( dissCompFlowAccessors.get( fields::flow::globalCompDensity {} ) ),
+    m_compFrac( dissCompFlowAccessors.get( fields::flow::globalCompFraction {} ) ),
+    //m_phaseVisc_n( dissCompFlowAccessors.get( fields::flow::phaseVisc_n ) ),
     m_phaseRelPerm_n( relPermAccessors.get( fields::relperm::phaseRelPerm_n {} ) ),
     m_phaseDens_n( dissMultiFluidAccessors.get( fields::multifluid::phaseDensity_n {} ) ),
     m_phaseCompFrac_n( dissMultiFluidAccessors.get( fields::multifluid::phaseCompFraction_n {} ) )
@@ -192,11 +191,14 @@ public:
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
+    /*
     m_stencilWrapper.computeWeights( iconn,
                                      m_permeability,
                                      m_dPerm_dPres,
                                      stack.transmissibility,
                                      stack.dTrans_dPres );
+                                     
+    */
 
     // ***********************************************
     // First, we call the base computeFlux to compute:
@@ -221,8 +223,8 @@ public:
       GEOS_UNUSED_VAR( k_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, er_up, esr_up, ei_up );
 
       // tuning parameter
-      real64 omega = 2e-5;
-      real64 k = 1;
+      //real64 omega = 2e-5;
+      //real64 k = 1;
 
       /// dissipation flux and derivatives
       real64 dissFlux[numComp]{};
@@ -230,40 +232,17 @@ public:
       real64 dDissFlux_dC[numFluxSupportPoints][numComp]{};
 
       /// Stabilization transmissibility
-      real64 const halfTrans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
-                                                       stack.transmissibility[connectionIndex][1] }; // take absolute value
+      //real64 const halfTrans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
+      //                                                 stack.transmissibility[connectionIndex][1] }; // take absolute value
 
-      real64 const T_ij = stack.transmissibility[connectionIndex][0];                                                 
+      //real64 const T_ij = stack.transmissibility[connectionIndex][0];                                                 
 
 
 
       real64 dz_c = 0;
       // Step 1: compute composition gradient at the interface
-      dz_c = m_compFrac[seri[0]][sesri[0]][sei[0]][0][ic] - m_compFrac[seri[1]][sesri[1]][sei[1]][0][ic];
+      //dz_c = m_compFrac[seri[0]][sesri[0]][sei[0]][0][ic] - m_compFrac[seri[1]][sesri[1]][sei[1]][0][ic];
 
-
-      // Step 2: compute the dissipation flux
-      integer const k_up_diss = (dPresGradDiss >= 0) ? 0 : 1;
-
-      localIndex const er_up_diss  = seri[k_up_diss];
-      localIndex const esr_up_diss = sesri[k_up_diss];
-      localIndex const ei_up_diss  = sei[k_up_diss];
-
-   
-
-      for( integer ic = 0; ic < numComp; ++ic )
-      {
-        real64 const laggedUpwindCoef = m_phaseDens_n[er_up_stab][esr_up_stab][ei_up_stab][0][ip]
-                                          * m_phaseCompFrac_n[er_up_stab][esr_up_stab][ei_up_stab][0][ip][ic]
-                                          * m_phaseRelPerm_n[er_up_stab][esr_up_stab][ei_up_stab][0][ip];
-        dissFlux[ic] += dPresGradStab * laggedUpwindCoef;
-
-        for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
-        {
-          real64 const tauStab = m_elementStabConstant[seri[ke]][sesri[ke]][sei[ke]];
-          dDissFlux_dP[ke][ic] += tauStab * stabTrans[ke] * laggedUpwindCoef;
-        }
-      }
 
       // Step 3: add the dissipation flux and its derivatives to the residual and Jacobian
       for( integer ic = 0; ic < numComp; ++ic )
@@ -292,7 +271,7 @@ protected:
   ElementViewConst< arrayView1d< real64 const > > const m_pres_n;
   ElementViewConst< arrayView2d< real64 const, compflow::USD_COMP > > const m_compDens;
   ElementViewConst< arrayView2d< real64 const, compflow::USD_COMP > > const m_compFrac;
-  ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const m_dCompFrac_dCompDens;
+  //ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const m_dCompFrac_dCompDens;
   ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const m_phaseRelPerm_n;
   ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & m_phaseVisc_n;
 
@@ -338,7 +317,7 @@ public:
                    STENCILWRAPPER const & stencilWrapper,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                   arrayView1d< real64 > const & localRhs 
+                   arrayView1d< real64 > const & localRhs, 
                    CoupledSolidBase const & solid)
   {
     isothermalCompositionalMultiphaseBaseKernels::

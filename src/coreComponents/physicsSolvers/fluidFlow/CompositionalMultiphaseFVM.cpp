@@ -40,6 +40,7 @@
 #include "physicsSolvers/fluidFlow/ThermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/ThermalCompositionalMultiphaseFVMKernels.hpp"
+#include "physicsSolvers/fluidFlow/DissipationCompositionalMultiphaseFVMKernels.hpp"
 
 namespace geos
 {
@@ -138,27 +139,6 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
       }
       else
       {
-         //if(fluxApprox.useDBC())
-         if(m_useDBC)
-         {
-          DissipationCompositionalMultiphaseFVMKernels::
-          FaceBasedAssemblyKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                     m_numPhases,
-                                                     dofManager.rankOffset(),
-                                                     elemDofKey,
-                                                     m_hasCapPressure,
-                                                     fluxApprox.upwindingParams(),
-                                                     getName(),
-                                                     mesh.getElemManager(),
-                                                     stencilWrapper,
-                                                     dt,
-                                                     localMatrix.toViewConstSizes(),
-                                                     localRhs.toView() 
-                                                     solid));
-         }
-         else
-         {
         isothermalCompositionalMultiphaseFVMKernels::
           FaceBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
@@ -173,7 +153,6 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      dt,
                                                      localMatrix.toViewConstSizes(),
                                                      localRhs.toView() );
-         }
       }
 
     } );
