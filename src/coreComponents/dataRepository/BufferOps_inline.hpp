@@ -126,8 +126,9 @@ Pack( buffer_unit_type * & buffer,
   localIndex sizeOfPackedChars = PackPointer< DO_PACKING >( buffer, var.dims(), NDIM );
   sizeOfPackedChars += PackPointer< DO_PACKING >( buffer, var.strides(), NDIM );
   const localIndex length = var.size();
-  sizeOfPackedChars += PackData< DO_PACKING >( buffer, length );
-  return sizeOfPackedChars + PackData< DO_PACKING >( buffer, var );
+  T const * const data = var.data();
+  sizeOfPackedChars += PackPointer< DO_PACKING >( buffer, data, length );
+  return sizeOfPackedChars;
 }
 
 template< bool DO_PACKING, typename T >
