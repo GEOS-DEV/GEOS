@@ -60,7 +60,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_maxNumResolves( 10 ),
   m_strainTheory( 0 ),
   m_iComm( CommunicationTools::getInstance().getCommID() ),
-  m_fixedStressUpdateThermoPoromechanicsFlag( 0 )
+  m_isFixedStressPoromechanicsUpdate( false )
 {
 
   registerWrapper( viewKeyStruct::newmarkGammaString(), &m_newmarkGamma ).
@@ -656,6 +656,8 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
 
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
 
+  integer isDisplacementBCApplied[3]{};
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & )
@@ -679,8 +681,48 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
                                                                      dofManager.rankOffset(),
                                                                      localMatrix,
                                                                      localRhs );
+
+      if( targetSet.size() > 0 && bc.getComponent() == 0 )
+      {
+        isDisplacementBCApplied[0] = 1;
+      }
+      else if( targetSet.size() > 0 && bc.getComponent() == 1 )
+      {
+        isDisplacementBCApplied[1] = 1;
+      }
+      else if( targetSet.size() > 0 && bc.getComponent() == 2 )
+      {
+        isDisplacementBCApplied[2] = 1;
+      }
+
     } );
   } );
+
+  // if the log level is 0, we don't need the reduction below (hence this early check)
+  if( getLogLevel() >= 1 )
+  {
+    integer isDisplacementBCAppliedGlobal[3]{};
+    MpiWrapper::allReduce( isDisplacementBCApplied,
+                           isDisplacementBCAppliedGlobal,
+                           3,
+                           MpiWrapper::getMpiOp( MpiWrapper::Reduction::Max ),
+                           MPI_COMM_GEOSX );
+
+    char const bcLogMessage[] =
+      "\nWarning!"
+      "\n{} `{}`: There is no displacement boundary condition applied to this problem in the {} direction. \n"
+      "The problem may be ill-posed.\n";
+    GEOS_LOG_RANK_0_IF( isDisplacementBCApplied[0] == 0, // target set is empty
+                        GEOS_FMT( bcLogMessage,
+                                  catalogName(), getName(), 'x' ) );
+    GEOS_LOG_RANK_0_IF( isDisplacementBCApplied[1] == 0, // target set is empty
+                        GEOS_FMT( bcLogMessage,
+                                  catalogName(), getName(), 'y' ) );
+    GEOS_LOG_RANK_0_IF( isDisplacementBCApplied[2] == 0, // target set is empty
+                        GEOS_FMT( bcLogMessage,
+                                  catalogName(), getName(), 'z' ) );
+  }
+
 }
 
 void SolidMechanicsLagrangianFEM::applyTractionBC( real64 const time,
@@ -972,7 +1014,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
   localMatrix.zero();
   localRhs.zero();
 
-  if( m_fixedStressUpdateThermoPoromechanicsFlag )
+  if( m_isFixedStressPoromechanicsUpdate )
   {
     GEOS_UNUSED_VAR( dt );
     assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
@@ -1338,9 +1380,9 @@ SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition const & d
   return 1.0;
 }
 
-void SolidMechanicsLagrangianFEM::turnOnFixedStressThermoPoromechanicsFlag()
+void SolidMechanicsLagrangianFEM::enableFixedStressPoromechanicsUpdate()
 {
-  m_fixedStressUpdateThermoPoromechanicsFlag = 1;
+  m_isFixedStressPoromechanicsUpdate = true;
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianFEM, string const &, dataRepository::Group * const )
