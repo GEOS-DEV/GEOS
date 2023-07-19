@@ -20,24 +20,18 @@
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICELASTICWAVEEQUATIONSEM_HPP_
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICELASTICWAVEEQUATIONSEM_HPP_
 
-#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
+#include "physicsSolvers/wavePropagation/CoupledWaveSolver.hpp"
 #include "physicsSolvers/wavePropagation/AcousticWaveEquationSEM.hpp"
 #include "physicsSolvers/wavePropagation/ElasticWaveEquationSEM.hpp"
 
 namespace geos
 {
 
-class AcousticElasticWaveEquationSEM : public CoupledSolver< AcousticWaveEquationSEM, ElasticWaveEquationSEM >
+class AcousticElasticWaveEquationSEM : public CoupledWaveSolver< AcousticWaveEquationSEM, ElasticWaveEquationSEM >
 {
 public:
-  using Base = CoupledSolver< AcousticWaveEquationSEM, ElasticWaveEquationSEM >;
+  using Base = CoupledWaveSolver< AcousticWaveEquationSEM, ElasticWaveEquationSEM >;
   using Base::m_solvers;
-  /*
-  using Base::m_dofManager;
-  using Base::m_localMatrix;
-  using Base::m_rhs;
-  using Base::m_solution;
-  */
 
   enum class SolverType : integer
   {
@@ -45,7 +39,7 @@ public:
     ElasticWaveEquationSEM = 1
   };
 
-  /// String used to form the solverName used to register solvers in CoupledSolver
+  /// String used to form the solverName used to register solvers in CoupledWaveSolver
   static string coupledSolverAttributePrefix() { return "acousticelastic"; }
 
   /**
@@ -54,7 +48,9 @@ public:
    * @param parent the parent group of this instantiation of AcousticElasticWaveEquationSEM
    */
   AcousticElasticWaveEquationSEM( const string & name,
-                                  Group * const parent );
+                                  Group * const parent )
+    : Base( name, parent )
+  { }
 
   /// Destructor for the class
   ~AcousticElasticWaveEquationSEM() override {}
@@ -86,6 +82,11 @@ public:
 protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
+
+  virtual real64 solverStep( real64 const & time_n,
+                             real64 const & dt,
+                             integer const cycleNumber,
+                             DomainPartition & domain ) override
 
   SortedArray< localIndex > m_interfaceNodesSet;
 };

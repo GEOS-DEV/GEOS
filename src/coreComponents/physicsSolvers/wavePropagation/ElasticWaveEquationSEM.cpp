@@ -687,6 +687,7 @@ real64 ElasticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                     DomainPartition & domain,
                                                     bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
+  std::cout << "\t[ElasticWaveEquationSEM::explicitStepForward]" << std::endl;
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   return dtOut;
 }

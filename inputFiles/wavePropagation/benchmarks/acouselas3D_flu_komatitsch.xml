@@ -31,7 +31,7 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        order="5"
+        order="3"
         formulation="SEM"/>
     </FiniteElements>
   </NumericalMethods>
@@ -72,13 +72,19 @@
   </Outputs>
 
   <Events maxTime="3">
-    <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
+      name="solidfluidSolverApplications"
+      forceDt="4.2e-4"
+      target="/Solvers/acousticelasticSolver"/>
+    <!-- control the timestepping here with forceDt -->
+    <SoloEvent
       name="solidSolverApplications"
+      endTime="0"
       forceDt="4.2e-4"
       target="/Solvers/elasticSolver"/>
-    <PeriodicEvent
+    <SoloEvent
       name="fluidSolverApplications"
+      endTime="0"
       forceDt="4.2e-4"
       target="/Solvers/acousticSolver"/>
     <!-- output -->
