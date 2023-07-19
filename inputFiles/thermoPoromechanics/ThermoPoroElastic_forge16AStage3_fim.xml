@@ -304,14 +304,14 @@
     <TableFunction
       name="PresFunction"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ forge_tables/xlin.geos, forge_tables/ylin.geos, forge_tables/zlin.geos }"
-      voxelFile="forge_tables/pres.geos"/>
+      coordinateFiles="{ ../../../GEOSXDATA/DataSets/FORGE/Well16A/forge_tables/xlin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/forge_tables/ylin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/forge_tables/zlin.geos }"
+      voxelFile="../../../GEOSXDATA/DataSets/FORGE/Well16A/forge_tables/pres.geos"/>
 
     <TableFunction
       name="TempFunction"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ forge_tables/xlin.geos, forge_tables/ylin.geos, forge_tables/zlin.geos }"
-      voxelFile="forge_tables/temp.geos"/>
+      coordinateFiles="{ ../../../GEOSXDATA/DataSets/FORGE/Well16A/forge_tables/xlin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/forge_tables/ylin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/forge_tables/zlin.geos }"
+      voxelFile="../../../GEOSXDATA/DataSets/FORGE/Well16A/forge_tables/temp.geos"/>
 
     <TableFunction
       name="permxFunc"
