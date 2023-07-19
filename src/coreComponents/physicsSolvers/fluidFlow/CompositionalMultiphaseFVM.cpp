@@ -116,6 +116,9 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
 
     string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
+    //string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
+    //CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+
     fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
@@ -139,6 +142,24 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
       }
       else
       {
+        if(fluxApprox.m_useDBC)
+         {
+          DissipationCompositionalMultiphaseFVMKernels::
+          FaceBasedAssemblyKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                     m_numPhases,
+                                                     dofManager.rankOffset(),
+                                                     elemDofKey,
+                                                     m_hasCapPressure,
+                                                     getName(),
+                                                     mesh.getElemManager(),
+                                                     stencilWrapper,
+                                                     dt,
+                                                     localMatrix.toViewConstSizes(),
+                                                     localRhs.toView() );
+         }
+         else
+         {
         isothermalCompositionalMultiphaseFVMKernels::
           FaceBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
@@ -153,6 +174,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      dt,
                                                      localMatrix.toViewConstSizes(),
                                                      localRhs.toView() );
+         }
       }
 
     } );
