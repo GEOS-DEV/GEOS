@@ -181,5 +181,8 @@
 #define GEOS_USE_DEVICE
 #endif
 
+#cmakedefine GEOSX_MAPS_OFF
+
+
 #endif  /* GEOS_CONFIG_HPP */
 

@@ -79,7 +79,7 @@ using parallelDeviceAsyncPolicy = RAJA::cuda_exec_async< BLOCK_SIZE >;
 using parallelDeviceStream = RAJA::resources::Cuda;
 using parallelDeviceEvent = RAJA::resources::Event;
 
-using parallelDeviceReduce = RAJA::cuda_reduce;
+using parallelDeviceReduce = RAJA::cuda_reduce_atomic;
 using parallelDeviceAtomic = RAJA::cuda_atomic;
 
 void RAJA_INLINE parallelDeviceSync() { RAJA::synchronize< RAJA::cuda_synchronize >(); }

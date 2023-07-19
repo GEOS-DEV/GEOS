@@ -608,13 +608,16 @@ void ProblemManager::generateMesh()
     }
   }
 
+#if !defined(GEOSX_MAPS_OFF)
   domain.setupCommunications( useNonblockingMPI );
+#endif
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
 
     meshBody.deregisterCellBlockManager();
 
+#if !defined(GEOSX_MAPS_OFF)
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
     {
       FaceManager & faceManager = meshLevel.getFaceManager();
@@ -623,6 +626,7 @@ void ProblemManager::generateMesh()
       faceManager.setIsExternal();
       edgeManager.setIsExternal( faceManager );
     } );
+#endif
   } );
 
 }
@@ -733,20 +737,26 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
 
   elemManager.generateMesh( cellBlockManager );
   nodeManager.setGeometricalRelations( cellBlockManager, elemManager, isbaseMeshLevel );
+
+#if !defined(GEOSX_MAPS_OFF)
   edgeManager.setGeometricalRelations( cellBlockManager, isbaseMeshLevel );
   faceManager.setGeometricalRelations( cellBlockManager,
                                        elemManager,
                                        nodeManager, isbaseMeshLevel );
+#endif
   nodeManager.constructGlobalToLocalMap( cellBlockManager );
   // Edge, face and element region managers rely on the sets provided by the node manager.
   // This is why `nodeManager.buildSets` is called first.
   nodeManager.buildSets( cellBlockManager, this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager ) );
+#if !defined(GEOSX_MAPS_OFF)
   edgeManager.buildSets( nodeManager );
   faceManager.buildSets( nodeManager );
+#endif
   elemManager.buildSets( nodeManager );
   // The edge manager do not hold any information related to the regions nor the elements.
   // This is why the element region manager is not provided.
   nodeManager.setupRelatedObjectsInRelations( edgeManager, faceManager, elemManager );
+#if !defined(GEOSX_MAPS_OFF)
   edgeManager.setupRelatedObjectsInRelations( nodeManager, faceManager );
   faceManager.setupRelatedObjectsInRelations( nodeManager, edgeManager, elemManager );
   // Node and edge managers rely on the boundary information provided by the face manager.
@@ -754,6 +764,7 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   faceManager.setDomainBoundaryObjects();
   nodeManager.setDomainBoundaryObjects( faceManager );
   edgeManager.setDomainBoundaryObjects( faceManager );
+#endif
   meshLevel.generateSets();
 
 

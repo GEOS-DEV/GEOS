@@ -230,7 +230,7 @@ real64 axpby_dot( real64 alpha, const Vector & x, real64 beta, const Vector & y,
     "Cannot use CG solver with a non-symmetric system" );
 
 
-  RAJA::ReduceSum< RAJA::cuda_reduce_atomic, real64 > sum( 0.0 );
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > sum( 0.0 );
 
   using POLICY = parallelDeviceAsyncPolicy< 1024 >;
   forAll< POLICY >( localX.size(), [alpha, beta, localX, localY, localRes, sum] GEOS_HOST_DEVICE ( localIndex const i )
@@ -264,7 +264,7 @@ real64 axpby2_dot( real64 const alpha0, const Vector & x0, real64 const beta0, c
                  "Cannot use CG solver with a non-symmetric system" );
 
 
-  RAJA::ReduceSum< RAJA::cuda_reduce_atomic, real64 > sum( 0.0 );
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > sum( 0.0 );
 
   using POLICY = parallelDeviceAsyncPolicy< 1024 >;
   forAll< POLICY >( localX0.size(), [ alpha0, beta0, localX0, localY0, localRes0,
@@ -297,7 +297,7 @@ real64 axpy2_dot( real64 const alpha0, const Vector & x0, Vector & res0,
                  "Cannot use CG solver with a non-symmetric system" );
 
 
-  RAJA::ReduceSum< RAJA::cuda_reduce_atomic, real64 > sum( 0.0 );
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > sum( 0.0 );
 
   using POLICY = parallelDeviceAsyncPolicy< 1024 >;
   forAll< POLICY >( localX0.size(), [ alpha0, localX0, localRes0,
@@ -316,7 +316,7 @@ template< typename Vector >
 real64 dot( const Vector & x, const Vector & y )
 {
   GEOS_MARK_FUNCTION;
-  RAJA::ReduceSum< RAJA::cuda_reduce_atomic, real64 > vsum( 0.0 );
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > vsum( 0.0 );
   arrayView1d< real64 const > const localX = x.values();
   arrayView1d< real64 const > const localY = y.values();
 

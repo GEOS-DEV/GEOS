@@ -950,7 +950,9 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
   coordinateTransformation( X, nodeSets );
 
+#if !defined(GEOSX_MAPS_OFF)
   cellBlockManager.buildMaps();
+#endif
 
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: total number of nodes = {}", getName(),
                              ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) ) );
