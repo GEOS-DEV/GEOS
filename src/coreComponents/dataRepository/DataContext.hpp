@@ -135,7 +135,7 @@ public:
   /**
    * @return the target object name followed by the the file and line declaring it.
    */
-  virtual string toString() const;
+  string toString() const override;
 
   /**
    * @return the type name in the source file (XML node tag name / attribute name).
