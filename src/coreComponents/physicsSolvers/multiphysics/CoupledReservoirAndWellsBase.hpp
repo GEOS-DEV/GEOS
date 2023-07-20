@@ -299,21 +299,28 @@ private:
         // if the log level is 1, we output the value of the transmissibilities
         if( wellControls.getLogLevel() >= 2 )
         {
-          GEOS_MAYBE_UNUSED arrayView2d< real64 const > const perfLocation =
+          arrayView2d< real64 const > const perfLocation =
             perforationData.getField< fields::perforation::location >();
-          GEOS_MAYBE_UNUSED arrayView1d< real64 const > const perfTrans =
+          arrayView1d< real64 const > const perfTrans =
             perforationData.getField< fields::perforation::wellTransmissibility >();
 
           // get the element region, subregion, index
-          GEOS_MAYBE_UNUSED arrayView1d< localIndex const > const resElemRegion =
+          arrayView1d< localIndex const > const resElemRegion =
             perforationData.getField< fields::perforation::reservoirElementRegion >();
-          GEOS_MAYBE_UNUSED arrayView1d< localIndex const > const resElemSubRegion =
+          arrayView1d< localIndex const > const resElemSubRegion =
             perforationData.getField< fields::perforation::reservoirElementSubRegion >();
-          GEOS_MAYBE_UNUSED arrayView1d< localIndex const > const resElemIndex =
+          arrayView1d< localIndex const > const resElemIndex =
             perforationData.getField< fields::perforation::reservoirElementIndex >();
 
-          forAll< serialPolicy >( perforationData.size(), [=] ( GEOS_MAYBE_UNUSED localIndex const iperf )
+          GEOS_UNUSED_VAR( perfLocation ); // unused if geos_error_if is nulld
+          GEOS_UNUSED_VAR( perfTrans ); // unused if geos_error_if is nulld
+          GEOS_UNUSED_VAR( resElemRegion ); // unused if geos_error_if is nulld
+          GEOS_UNUSED_VAR( resElemSubRegion ); // unused if geos_error_if is nulld
+          GEOS_UNUSED_VAR( resElemIndex ); // unused if geos_error_if is nulld
+
+          forAll< serialPolicy >( perforationData.size(), [=] ( localIndex const iperf )
           {
+            GEOS_UNUSED_VAR( iperf ); // unused if geos_error_if is nulld
             GEOS_LOG_RANK( GEOS_FMT( "Perforation at ({},{},{}); perforated element center: ({},{},{}); transmissibility: {} Pa.s.rm^3/s/Pa",
                                      perfLocation[iperf][0], perfLocation[iperf][1], perfLocation[iperf][2],
                                      elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][0],
