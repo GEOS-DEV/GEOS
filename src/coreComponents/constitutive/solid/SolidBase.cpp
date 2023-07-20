@@ -107,6 +107,6 @@ void SolidBase::saveConvergedState() const
   } );
 }
 
-
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, SolidBase, string const &, Group * const )
 } /* namespace constitutive */
 } /* namespace geos */
