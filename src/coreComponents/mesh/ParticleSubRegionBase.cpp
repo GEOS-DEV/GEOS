@@ -36,6 +36,7 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   m_particleDamage(),
   m_particleStrengthScale(),
   m_particleCenter(),
+  m_particleDisplacement(),
   m_particleVelocity(),
   m_particleMaterialDirection(),
   m_particleVolume(),
@@ -64,7 +65,11 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
     setPlotLevel( PlotLevel::LEVEL_1 );
 
   registerWrapper( viewKeyStruct::particleCenterString(), &m_particleCenter ).
-    setPlotLevel( PlotLevel::NOPLOT ).
+    setPlotLevel( PlotLevel::LEVEL_1 ).
+    reference().resizeDimension< 1 >( 3 );
+
+  registerWrapper( viewKeyStruct::particleDisplacementString(), &m_particleDisplacement ).
+    setPlotLevel( PlotLevel::LEVEL_1 ).
     reference().resizeDimension< 1 >( 3 );
 
   registerWrapper( viewKeyStruct::particleVelocityString(), &m_particleVelocity ).
