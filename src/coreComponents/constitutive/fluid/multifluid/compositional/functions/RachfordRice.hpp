@@ -50,12 +50,11 @@ public:
    * @return the gas mole fraction
    **/
   GEOS_HOST_DEVICE
-  inline
   real64
   static
-  solve( arrayView1d< real64 const > const kValues,
-         arrayView1d< real64 const > const feed,
-         arrayView1d< integer const > const presentComponentIds )
+  solve( arraySlice1d< real64 const > const kValues,
+         arraySlice1d< real64 const > const feed,
+         arraySlice1d< integer const > const presentComponentIds )
   {
     real64 gasPhaseMoleFraction = 0;
 
@@ -111,7 +110,7 @@ public:
       real64 const xMid = 0.5 * ( xMin + xMax );
       if( recomputeMin )
       {
-        // funcXMin = evaluate( kValues, feed, presentComponentIds, xMin );
+        funcXMin = evaluate( kValues, feed, presentComponentIds, xMin );
       }
       if( recomputeMax )
       {
@@ -141,7 +140,7 @@ public:
       }
 
       currentError = LvArray::math::min( LvArray::math::abs( funcXMax - funcXMin ),
-                                         LvArray::math::abs( xMax - xMin ) );
+                                        LvArray::math::abs( xMax - xMin ) );
       SSIIteration++;
 
       // TODO: add warning if max number of SSI iterations is reached
@@ -156,7 +155,7 @@ public:
     while( ( currentError > newtonTolerance ) && ( newtonIteration < maxNewtonIterations ) )
     {
       real64 const deltaNewton = -evaluate( kValues, feed, presentComponentIds, newtonValue )
-                                 / evaluateDerivative( kValues, feed, presentComponentIds, newtonValue );
+                                / evaluateDerivative( kValues, feed, presentComponentIds, newtonValue );
       currentError = LvArray::math::abs( deltaNewton ) / LvArray::math::abs( newtonValue );
 
       // test if we are stepping out of the [xMin;xMax] interval
@@ -192,16 +191,17 @@ private:
   GEOS_HOST_DEVICE
   real64
   static
-  evaluate( arrayView1d< real64 const > const kValues,
-            arrayView1d< real64 const > const feed,
-            arrayView1d< integer const > const presentComponentIds,
+  evaluate( arraySlice1d< real64 const > const kValues,
+            arraySlice1d< real64 const > const feed,
+            arraySlice1d< integer const > const presentComponentIds,
             real64 const & x )
   {
     real64 value = 0.0;
-    for( integer ic = 0; ic < presentComponentIds.size(); ++ic )
+    for( integer i = 0; i < presentComponentIds.size(); ++i )
     {
+      integer const ic = presentComponentIds[i];
       real64 const k = ( kValues[ic] - 1.0 );
-      value += feed[ic] * k / ( 1.0 + x * k  );
+      value += feed[ic] * k / ( 1.0 + x * k );
     }
     return value;
   }
@@ -217,9 +217,9 @@ private:
   GEOS_HOST_DEVICE
   real64
   static
-  evaluateDerivative( arrayView1d< real64 const > const kValues,
-                      arrayView1d< real64 const > const feed,
-                      arrayView1d< integer const > const presentComponentIds,
+  evaluateDerivative( arraySlice1d< real64 const > const kValues,
+                      arraySlice1d< real64 const > const feed,
+                      arraySlice1d< integer const > const presentComponentIds,
                       real64 const & x )
   {
     real64 value = 0.0;
