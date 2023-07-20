@@ -61,7 +61,7 @@ CO2EOSSolver::solve( string const & name,
     if( var < allowedMinValue )
     {
       var = allowedMinValue;
-      (*f)( temp, pres, var );
+      res = (*f)( temp, pres, var );
     }
 
     // compute finite-difference derivative
