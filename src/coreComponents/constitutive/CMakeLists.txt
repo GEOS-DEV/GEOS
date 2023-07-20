@@ -105,6 +105,7 @@ set( constitutive_headers
      solid/DruckerPragerExtended.hpp
      solid/ModifiedCamClay.hpp
      solid/DelftEgg.hpp
+     solid/HyperelasticMMS.hpp
      solid/ElasticIsotropic.hpp
      solid/ElasticIsotropicPressureDependent.hpp
      solid/ElasticTransverseIsotropic.hpp
@@ -226,6 +227,7 @@ set( constitutive_sources
      solid/DruckerPragerExtended.cpp
      solid/ModifiedCamClay.cpp
      solid/DelftEgg.cpp
+     solid/HyperelasticMMS.cpp
      solid/ElasticIsotropic.cpp
      solid/ElasticIsotropicPressureDependent.cpp
      solid/ElasticTransverseIsotropic.cpp
