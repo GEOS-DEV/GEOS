@@ -114,7 +114,7 @@ private:
                    PhaseComp::ViewType phaseCompFraction,
                    FluidProp::ViewType totalDensity );
 
-    GEOS_MAYBE_UNUSED pvt::MultiphaseSystem & m_fluid;
+    pvt::MultiphaseSystem & m_fluid;
 
     arrayView1d< pvt::PHASE_TYPE > m_phaseTypes;
   };
