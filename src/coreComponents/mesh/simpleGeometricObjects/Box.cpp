@@ -66,10 +66,11 @@ void Box::postProcessInput()
   LvArray::tensorOps::scale< 3 >( m_boxCenter, 0.5 );
 
   // reordering min and max to fit former interface but so that user can input any of the two diagonals
-    for (int i = 0; i < m_max.SIZE; ++i) {
-        if(m_max[i]<m_min[i])
-            std::swap(m_max[i],m_min[i]);
-    }
+  for( int i = 0; i < m_max.SIZE; ++i )
+  {
+    if( m_max[i]<m_min[i] )
+      std::swap( m_max[i], m_min[i] );
+  }
 
   m_strikeAngle += 90; // Counterclockwise from x-axis
   if( std::fabs( m_strikeAngle ) > 1e-20 )
