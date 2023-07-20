@@ -20,6 +20,7 @@
       receiverCoordinates="{ }"
       discretization="FE1"/>
     <!-- NOTE: the coupled solver must be declared at the end (for interface computations) -->
+    <!-- NOTE: discretization is also needed for the correct mesh to be passed through from the coupled solver to the elastic / acoustic solvers -->
     <AcousticElasticSEM
       name="acousticelasticSolver"
       acousticSolverName="acousticSolver"

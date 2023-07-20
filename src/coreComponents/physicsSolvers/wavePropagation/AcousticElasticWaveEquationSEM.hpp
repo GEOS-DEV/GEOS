@@ -42,6 +42,9 @@ public:
   /// String used to form the solverName used to register solvers in CoupledWaveSolver
   static string coupledSolverAttributePrefix() { return "acousticelastic"; }
 
+  using EXEC_POLICY = parallelDevicePolicy<  >;
+  using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
+
   /**
    * @brief main constructor for AcousticElasticWaveEquationSEM objects
    * @param name the name of this instantiation of AcousticElasticWaveEquationSEM in the repository
@@ -79,14 +82,14 @@ public:
     return std::get< toUnderlying( SolverType::ElasticWaveEquationSEM ) >( m_solvers );
   }
 
-protected:
-
-  virtual void initializePostInitialConditionsPreSubGroups() override;
-
+  // (requires not to be private because it is called from GEOS_HOST_DEVICE method)
   virtual real64 solverStep( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition & domain ) override;
+protected:
+
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   SortedArray< localIndex > m_interfaceNodesSet;
 };
