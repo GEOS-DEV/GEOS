@@ -18,7 +18,6 @@
 
 // Source includes
 #include "DieterichSeismicityRate.hpp"
-#include "DieterichSeismicityRateKernels.hpp"
 
 namespace geos
 {
