@@ -77,16 +77,7 @@ public:
   /**@}*/
 
   virtual void initializePreSubGroups() override;
-
-  struct viewKeyStruct : public SeismicityRateBase::viewKeyStruct
-  {
-    static constexpr char const * stressSolverNameString() { return "stressSolverName"; }
-  };
-
-private:
- 
-  string m_stressSolverName;
-
+  
 };
 
 } /* namespace geos */
