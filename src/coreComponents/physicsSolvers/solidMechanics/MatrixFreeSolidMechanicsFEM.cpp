@@ -298,7 +298,8 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
   std::cout << "Time per CG iteration: " << time_per_iter << "s\n";
   const size_t num_dofs = m_dofManager.numLocalDofs();
   std::cout << "Number of local dofs: " << num_dofs << " dofs\n";
-  std::cout << "Throughput: " << num_dofs/time_per_iter*1e-6 << " MDofs/s\n";
+  std::cout << "AverageThroughput: " << num_dofs/time_per_iter*1e-6 << " MDofs/s\n";
+  std::cout << "MaxThroughput: " << num_dofs/solver.result().minIterTime *1e-6 << " MDofs/s\n";
 
 // std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp8"<<std::endl;
 

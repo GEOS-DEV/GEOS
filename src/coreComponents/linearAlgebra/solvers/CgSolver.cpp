@@ -334,6 +334,9 @@ void UnprecCgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
   GEOS_MARK_FUNCTION;
 
   Stopwatch watch;
+  Stopwatch watch2;
+
+  m_result.minIterTime = 1e99;
 
   // Define residual vector
   VectorTemp r = createTempVector( b );
@@ -363,6 +366,7 @@ void UnprecCgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
   real64 tau = dot( r, r );
   for( k = 0; k <= m_params.krylov.maxIterations; ++k )
   {
+    watch2.zero();
     real64 const rnorm = std::sqrt( tau );
     m_residualNorms.emplace_back( rnorm );
     logProgress();
@@ -414,6 +418,8 @@ void UnprecCgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
     tau = dot( r, r );
 #endif
 
+  real64 iterTime = watch2.elapsedTime();
+  m_result.minIterTime = LvArray::math::min( iterTime, m_result.minIterTime );
 
   }
   // std::cout << "iter: " << k << std::endl;
