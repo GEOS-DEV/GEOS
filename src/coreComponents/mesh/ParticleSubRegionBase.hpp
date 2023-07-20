@@ -184,6 +184,26 @@ public:
   void setParticleCenter( array2d< real64 > particleCenter )
   { m_particleCenter = particleCenter; }
 
+/**
+   * @brief Get the displacement of each particle in this subregion.
+   * @return an arrayView1d of const particle displacements
+   */
+  arrayView2d< real64 const > getParticleDisplacement() const
+  { return m_particleDisplacement; }
+
+  /**
+   * @copydoc getParticleDisplacement() const
+   */
+  arrayView2d< real64 > getParticleDisplacement()
+  { return m_particleDisplacement; }
+
+  /**
+   * @brief Set the displacement of each particle in this subregion.
+   * @param particleDisplacement the list of coordinates to be used as particle displacements
+   */
+  void setParticleDisplacement( array2d< real64 > particleDisplacement )
+  { m_particleDisplacement = particleDisplacement; }
+
   /**
    * @brief Get the velocity of each particle in this subregion.
    * @return an arrayView1d of const particle velocities
@@ -356,6 +376,9 @@ public:
     /// @return String key for the member level field for the particle center.
     static constexpr char const * particleCenterString() { return "particleCenter"; }
 
+    /// @return String key for the member level field for the particle displacement.
+    static constexpr char const * particleDisplacementString() { return "particleDisplacement"; }
+
     /// @return String key for the member level field for the particle velocity.
     static constexpr char const * particleVelocityString() { return "particleVelocity"; }
 
@@ -456,6 +479,9 @@ protected:
 
   /// Member level field for the particle center.
   array2d< real64 > m_particleCenter;
+
+  /// Member level field for the particle displacement
+  array2d< real64 > m_particleDisplacement;
 
   /// Member level field for the particle velocity.
   array2d< real64 > m_particleVelocity;
