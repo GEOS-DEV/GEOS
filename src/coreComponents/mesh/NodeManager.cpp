@@ -43,27 +43,30 @@ NodeManager::NodeManager( string const & name,
 {
   registerWrapper( viewKeyStruct::referencePositionString(), &m_referencePosition );
   //END_SPHINX_REFPOS_REG
+#if !defined(GEOSX_MAPS_OFF)
   this->registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation );
   this->registerWrapper( viewKeyStruct::faceListString(), &m_toFacesRelation );
   this->registerWrapper( viewKeyStruct::elementRegionListString(), &elementRegionList() );
   this->registerWrapper( viewKeyStruct::elementSubRegionListString(), &elementSubRegionList() );
   this->registerWrapper( viewKeyStruct::elementListString(), &elementList() );
-
   excludeWrappersFromPacking( { viewKeyStruct::edgeListString(),
                                 viewKeyStruct::faceListString(),
                                 viewKeyStruct::elementRegionListString(),
                                 viewKeyStruct::elementSubRegionListString(),
                                 viewKeyStruct::elementListString() } );
+#endif
 }
 
 
 void NodeManager::resize( localIndex const newSize )
 {
+#if !defined(GEOSX_MAPS_OFF)
   m_toFacesRelation.resize( newSize, 2 * getFaceMapOverallocation() );
   m_toEdgesRelation.resize( newSize, 2 * getEdgeMapOverallocation() );
   m_toElements.m_toElementRegion.resize( newSize, 2 * getElemMapOverAllocation() );
   m_toElements.m_toElementSubRegion.resize( newSize, 2 * getElemMapOverAllocation() );
   m_toElements.m_toElementIndex.resize( newSize, 2 * getElemMapOverAllocation() );
+#endif
   ObjectManagerBase::resize( newSize );
 }
 
@@ -142,6 +145,7 @@ void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
 
   m_referencePosition = cellBlockManager.getNodePositions();
 
+#if !defined(GEOSX_MAPS_OFF)
   m_toEdgesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getNodeToEdges(),
                                                              LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
   m_toFacesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getNodeToFaces(),
@@ -152,6 +156,10 @@ void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
   meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( blockToSubRegion.toViewConst(),
                                                                          toCellBlock,
                                                                          m_toElements );
+
+#else
+  GEOS_UNUSED_VAR( cellBlockManager, elemRegionManager );
+#endif
 }
 
 void NodeManager::setupRelatedObjectsInRelations( EdgeManager const & edgeManager,
@@ -167,11 +175,19 @@ void NodeManager::setupRelatedObjectsInRelations( EdgeManager const & edgeManage
 
 void NodeManager::compressRelationMaps()
 {
+#if !defined(GEOSX_MAPS_OFF)
   m_toEdgesRelation.compress();
   m_toFacesRelation.compress();
   m_toElements.m_toElementRegion.compress();
   m_toElements.m_toElementSubRegion.compress();
   m_toElements.m_toElementIndex.compress();
+#else
+  m_toEdgesRelation.compress();
+  m_toFacesRelation.compress();
+  m_toElements.m_toElementRegion.compress();
+  m_toElements.m_toElementSubRegion.compress();
+  m_toElements.m_toElementIndex.compress();
+#endif
 }
 
 

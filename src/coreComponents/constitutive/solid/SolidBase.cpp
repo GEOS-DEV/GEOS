@@ -53,6 +53,7 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default Material Density" );
 
+#if !defined(GEOSX_MAPS_OFF)
   registerWrapper( viewKeyStruct::defaultThermalExpansionCoefficientString(), &m_defaultThermalExpansionCoefficient ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -61,6 +62,7 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::thermalExpansionCoefficientString(), &m_thermalExpansionCoefficient ).
     setApplyDefaultValue( -1.0 ). // will be overwritten
     setDescription( "Linear Thermal Expansion Coefficient Field" );
+#endif
 }
 
 
@@ -73,18 +75,21 @@ void SolidBase::postProcessInput()
   this->getWrapper< array2d< real64 > >( viewKeyStruct::densityString() ).
     setApplyDefaultValue( m_defaultDensity );
 
+#if !defined(GEOSX_MAPS_OFF)
   this->getWrapper< array1d< real64 > >( viewKeyStruct::thermalExpansionCoefficientString() ).
     setApplyDefaultValue( m_defaultThermalExpansionCoefficient );
+#endif
 }
 
 
 void SolidBase::allocateConstitutiveData( dataRepository::Group & parent,
                                           localIndex const numConstitutivePointsPerParentIndex )
 {
+#if !defined(GEOSX_MAPS_OFF)
   m_density.resize( 0, numConstitutivePointsPerParentIndex );
   m_newStress.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   m_oldStress.resize( 0, numConstitutivePointsPerParentIndex, 6 );
-
+#endif
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 

@@ -572,7 +572,9 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
   SortedArray< localIndex > & yposNodes = nodeSets["ypos"];
   SortedArray< localIndex > & znegNodes = nodeSets["zneg"];
   SortedArray< localIndex > & zposNodes = nodeSets["zpos"];
+#if !defined(GEOSX_MAPS_OFF)
   SortedArray< localIndex > & allNodes = nodeSets["all"];
+#endif
 
   // Find elemCenters for even uniform element sizes
   array1d< array1d< real64 > > elemCenterCoords( 3 );
@@ -774,7 +776,9 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
           {
             zposNodes.insert( localNodeIndex );
           }
+#if !defined(GEOSX_MAPS_OFF)
           allNodes.insert( localNodeIndex );
+#endif
 
           ++localNodeIndex;
         }

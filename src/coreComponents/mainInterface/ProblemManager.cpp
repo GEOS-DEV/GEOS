@@ -553,9 +553,11 @@ void ProblemManager::generateMesh()
 
   } );
 
+#if !defined(GEOSX_MAPS_OFF)
   Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
   integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
   domain.setupBaseLevelMeshGlobalInfo();
+#endif
 
   // setup the MeshLevel associated with the discretizations
   for( auto const & discretizationPair: discretizations )
@@ -743,8 +745,8 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   faceManager.setGeometricalRelations( cellBlockManager,
                                        elemManager,
                                        nodeManager, isbaseMeshLevel );
-#endif
   nodeManager.constructGlobalToLocalMap( cellBlockManager );
+#endif
   // Edge, face and element region managers rely on the sets provided by the node manager.
   // This is why `nodeManager.buildSets` is called first.
   nodeManager.buildSets( cellBlockManager, this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager ) );
