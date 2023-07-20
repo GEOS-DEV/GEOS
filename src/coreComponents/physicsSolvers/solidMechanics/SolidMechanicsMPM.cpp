@@ -277,14 +277,14 @@ void SolidMechanicsMPM::postProcessInput()
   }
 
   // Throw error if boundary conditions are incorrectly specified
-  GEOS_ERROR_IF( m_bodyForce.size() != 6 && m_bodyForce.size() > 0,
-                 "bodyForce must be of length 6. ");
+  GEOS_ERROR_IF( m_bodyForce.size() != 3 && m_bodyForce.size() > 0,
+                 "bodyForce must be of length 3. ");
 
   //Initialize body force if they're not specified by the user
   if(m_bodyForce.size() == 0)
   {
-    m_bodyForce.resize(6);
-    LvArray::tensorOps::fill< 6 >(m_bodyForce, 0);
+    m_bodyForce.resize(3);
+    LvArray::tensorOps::fill< 3 >(m_bodyForce, 0);
   }
 }
 
@@ -748,6 +748,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     arrayView1d< real64 > const particleDensity = subRegion.getField< fields::mpm::particleDensity >();
     arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
     arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
+    arrayView2d< real64 > const particleDisplacement = subRegion.getParticleDisplacement();
     arrayView1d< real64 > const particleMass = subRegion.getField< fields::mpm::particleMass >();
     arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
     arrayView3d< real64 > const particleFDot = subRegion.getField< fields::mpm::particleFDot >();
@@ -763,6 +764,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       particleInitialVolume[p] = particleVolume[p];
       for( int i=0; i<3; i++ )
       {
+        particleDisplacement[p][i] = 0;
         particleReferencePosition[p][i] = particlePosition[p][i];
         for( int j=0; j<3; j++ )
         {
@@ -2963,27 +2965,21 @@ void SolidMechanicsMPM::particleToGrid( ParticleManager & particleManager,
             RAJA::atomicAdd( parallelDeviceAtomic{}, &gridMaterialPosition[mappedNode][fieldIndex][i], particleContributionToGrid );
 
             //CC: Compute particle body forces
-            real64 particleBodyForce[6];
+            real64 particleBodyForce[3];
             computeBodyForce(time_n,
                              shearModulus[p], 
                              constitutiveDensity[p][0], //constitutive model for generalizevortexMMS
                              particlePosition[p],
                              particleBodyForce );
 
-            // computeBodyForce(time_n,
-            //       p,
-            //       constitutiveRelation,
-            //       particlePosition[p],
-            //       particleBodyForce );
+            particleContributionToGrid = particleBodyForce[i] * particleMass[p] * shapeFunctionValues[g];
+            RAJA::atomicSub( parallelDeviceAtomic{}, &gridExternalForce[mappedNode][fieldIndex][i], particleContributionToGrid );
 
             for( int k=0; k<numDims; k++ )
             {
               int voigt = voigtMap[k][i];
               particleContributionToGrid = particleStress[p][voigt] * shapeFunctionGradientValues[g][k] * particleVolume[p];
               RAJA::atomicSub( parallelDeviceAtomic{}, &gridInternalForce[mappedNode][fieldIndex][i], particleContributionToGrid );
-
-              particleContributionToGrid = particleBodyForce[voigt] / particleMass[p] * shapeFunctionGradientValues[g][k] * particleVolume[p];
-              RAJA::atomicSub( parallelDeviceAtomic{}, &gridExternalForce[mappedNode][fieldIndex][i], particleContributionToGrid );
             }
           }
         }
@@ -3189,8 +3185,10 @@ void SolidMechanicsMPM::gridToParticle( real64 dt,
     // Registered by subregion
     ParticleType particleType = subRegion.getParticleType();
     arrayView2d< real64 > const particlePosition = subRegion.getParticleCenter();
+    arrayView2d< real64 > const particleDisplacement = subRegion.getParticleDisplacement();
     arrayView2d< real64 > const particleVelocity = subRegion.getParticleVelocity();
     arrayView1d< int const > const particleGroup = subRegion.getParticleGroup();
+    arrayView2d< real64 > const particleReferencePosition = subRegion.getField< fields::mpm::particleReferencePosition >();
 
     // Registered by MPM solver
     arrayView3d< real64 > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
@@ -3265,6 +3263,7 @@ void SolidMechanicsMPM::gridToParticle( real64 dt,
         for( int i=0; i<numDims; i++ )
         {
           particlePosition[p][i] += gridVelocity[mappedNode][fieldIndex][i] * dt * shapeFunctionValues[g];
+          particleDisplacement[p][i] = particlePosition[p][i] - particleReferencePosition[p][i];
           particleVelocity[p][i] += gridAcceleration[mappedNode][fieldIndex][i] * dt * shapeFunctionValues[g]; // FLIP
 
           for( int j=0; j<numDims; j++ )
@@ -4216,76 +4215,6 @@ inline void GEOS_DEVICE SolidMechanicsMPM::computeGeneralizedVortexMMSBodyForce(
   }
 }
 
-// inline void GEOS_DEVICE SolidMechanicsMPM::computeGeneralizedVortexMMSBodyForce(real64 const time_n,
-//                                                                                 localIndex const p,
-//                                                                                 constitutive::SolidBase & solidBase,
-//                                                                                 arraySlice1d< real64 const > const particlePosition,
-//                                                                                 real64 * bodyForce)
-// {
-//   // Method of Manufactured Solutions - generalized vortex.
-//   // As Described in K. Kamojjala, R Brannon, A Sadeghirad, J. Guilkey "Verification Tests
-//   // in Solid Mechanics", Engineering with computers, (2015).
-
-//   ElasticIsotropic & elasticIsotropic = dynamic_cast< ElasticIsotropic &>( solidBase );
-
-//   real64 mu = elasticIsotropic.shearModulus()[p],
-//          rho0 = elasticIsotropic.bulkModulus()[p],
-//          //mu = 384.615384615384585, // Make consistent with elastic properties
-//          //lambda = 577,             // Make consistent with elastic properties
-//          //rho0 = 1000.0,            // Make consistent with initial density.
-//          A = 1.0, // Amplitude of the deformation.
-//          ri = 0.75,
-//          ro = 1.25;
-
-//   real64 pi = 3.141592653589793;
-
-//   real64 x = particlePosition( 0 ),
-//          y = particlePosition( 1 );
-
-//   // Radial and angular coordinates:
-//   real64 R = sqrt( x * x + y * y );
-
-//   // CC: Comment from Mike in old geos?
-//   // I believe the examples in the paper used the reference radius to compute the body force, which
-//   // greatly increases accuracy.  I've disabled this option, because it is better test to use
-//   // the reference in the current configuration.
-//   //    real64 x0 = p_x0( 0 ),
-//   //           y0 = p_x0( 1 );
-//   //    real64 R = sqrt( x0 * x0 + y0 * y0 );
-
-//   // In either case use the current angle
-//   real64 Theta = atan2( y, x );
-
-//   if( ( R > ri ) && ( R < ro ) )
-//   {
-//     // Evaluate some temporary variables:
-//     real64 p1 = 4096.0 * R * std::pow( 15.0 - 47.0 * R + 48.0 * R * R - 16.0 * R * R * R, 2 ) * mu * std::pow(
-//         sin( pi * time_n ), 4 ) / rho0,
-//         p2 = pi * pi * R * std::pow( 15.0 - 32.0 * R + 16.0 * R * R, 4 ) * pow( sin( 2.0 * pi * time_n ), 2 ),
-//         p3 = -16.0 * ( -45.0 + 188.0 * R - 240.0 * R * R + 96.0 * R * R * R ),
-//         p4 = -45.0 + 188.0 * R - 240.0 * R * R + 96.0 * R * R * R,
-//         p5 = std::pow( 15.0 - 32.0 * R + 16.0 * R * R, 2 );
-
-//     // Evaluate radial component of the body force:
-//     real64 br = p1 - p2;
-
-//     // Evaluate circumferential component of the body force:
-//     real64 bt = ( 2.0 * mu * p3 + 2.0 * cos( 2.0 * pi * time_n ) * ( 16.0 * mu * p4 + pi * pi * R * rho0 * p5 ) ) / rho0;
-
-//     // Evaluate the rotation angle
-//     real64 alpha = A * ( 1.0 - cos( 2.0 * pi * time_n ) ) * ( 1.0 - 32.0 * std::pow( R - 1.0, 2 ) + 256.0 * std::pow(
-//                     R - 1.0, 4 ) ) / 2.0;
-
-//     // Evaluate the deformed angular coordinate
-//     real64 theta = Theta + alpha;
-
-//     // evaluate the cartesian components of the body force:
-//     bodyForce[0] += br * cos( theta ) - bt * sin( theta );
-//     bodyForce[1] += br * sin( theta ) + bt * cos( theta );
-//     bodyForce[2] += 0.0;
-//   }
-// }
-
 inline void GEOS_DEVICE SolidMechanicsMPM::computeBodyForce( real64 const time_n,
                                                              real64 const & shearModulus,
                                                              real64 const & density,
@@ -4295,18 +4224,12 @@ inline void GEOS_DEVICE SolidMechanicsMPM::computeBodyForce( real64 const time_n
     particleBodyForce[0] = 0;
     particleBodyForce[1] = 0;
     particleBodyForce[2] = 0;  
-    particleBodyForce[3] = 0;
-    particleBodyForce[4] = 0;
-    particleBodyForce[5] = 0; 
 
     if(m_uniformBodyForce)
     {
       particleBodyForce[0] += m_bodyForce[0];
       particleBodyForce[1] += m_bodyForce[1];
-      particleBodyForce[2] += m_bodyForce[2]; 
-      particleBodyForce[3] += m_bodyForce[3];
-      particleBodyForce[4] += m_bodyForce[4];
-      particleBodyForce[5] += m_bodyForce[5];  
+      particleBodyForce[2] += m_bodyForce[2];  
     }
 
     if(m_generalizedVortexMMS){
@@ -4317,38 +4240,6 @@ inline void GEOS_DEVICE SolidMechanicsMPM::computeBodyForce( real64 const time_n
                                                particleBodyForce);
     }
 }
-
-// inline void GEOS_DEVICE SolidMechanicsMPM::computeBodyForce( real64 const time_n,
-//                                                              localIndex const p,
-//                                                              constitutive::SolidBase & solidBase,
-//                                                              arraySlice1d< real64 const > const particlePosition, 
-//                                                              real64 * particleBodyForce )
-// {
-//     particleBodyForce[0] = 0;
-//     particleBodyForce[1] = 0;
-//     particleBodyForce[2] = 0;  
-//     particleBodyForce[3] = 0;
-//     particleBodyForce[4] = 0;
-//     particleBodyForce[5] = 0; 
-
-//     if(m_uniformBodyForce)
-//     {
-//       particleBodyForce[0] += m_bodyForce[0];
-//       particleBodyForce[1] += m_bodyForce[1];
-//       particleBodyForce[2] += m_bodyForce[2]; 
-//       particleBodyForce[3] += m_bodyForce[3];
-//       particleBodyForce[4] += m_bodyForce[4];
-//       particleBodyForce[5] += m_bodyForce[5];  
-//     }
-
-//     if(m_generalizedVortexMMS){
-//           computeGeneralizedVortexMMSBodyForce(time_n,
-//                                                p,
-//                                                solidBase,
-//                                                particlePosition,
-//                                                particleBodyForce);
-//     }
-// }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsMPM, string const &, dataRepository::Group * const )
 }
