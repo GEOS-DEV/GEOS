@@ -777,7 +777,6 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 {
   // print_stacktrace();
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
-  synchronize( time_n, dtOut, cycleNumber, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
@@ -848,7 +847,6 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
   return dtOut;
 }
 
-
 real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                       real64 const & dt,
                                                       integer cycleNumber,
@@ -856,7 +854,6 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                       bool computeGradient )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
-  synchronize( time_n, dtOut, cycleNumber, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
@@ -938,12 +935,12 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
   return dtOut;
 }
 
-real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
-                                                      real64 const & dt,
-                                                      integer cycleNumber,
-                                                      DomainPartition & domain )
+real64 AcousticWaveEquationSEM::unknownsUpdate( real64 const & time_n,
+                                                real64 const & dt,
+                                                integer cycleNumber,
+                                                DomainPartition & domain )
 {
-  std::cout << "\t[AcousticWaveEquationSEM::explicitStepInternal]" << std::endl;
+  std::cout << "\t[AcousticWaveEquationSEM::unknownsUpdate]" << std::endl;
 
   GEOS_MARK_FUNCTION;
 
@@ -1073,10 +1070,10 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
   return dt;
 }
 
-void AcousticWaveEquationSEM::synchronize(real64 const & time_n,
-                                          real64 const & dt,
-                                          integer GEOS_UNUSED_PARAM(cycleNumber),
-                                          DomainPartition & domain)
+void AcousticWaveEquationSEM::postUnknownsUpdate( real64 const & time_n,
+                                                  real64 const & dt,
+                                                  integer GEOS_UNUSED_PARAM(cycleNumber),
+                                                  DomainPartition & domain )
 {
   SortedArrayView< localIndex const > const & solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
 
@@ -1132,6 +1129,16 @@ void AcousticWaveEquationSEM::synchronize(real64 const & time_n,
     }
   } );
 
+}
+
+real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
+                                                      real64 const & dt,
+                                                      integer const cycleNumber,
+                                                      DomainPartition & domain )
+{
+  real64 dtOut = unknownsUpdate( time_n, dt, cycleNumber, domain );
+  postUnknownsUpdate( time_n, dt, cycleNumber, domain );
+  return dtOut;
 }
 
 void AcousticWaveEquationSEM::cleanup( real64 const time_n,

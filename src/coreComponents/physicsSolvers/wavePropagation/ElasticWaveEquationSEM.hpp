@@ -159,10 +159,15 @@ public:
                                integer const cycleNumber,
                                DomainPartition & domain );
 
-  void synchronize(real64 const & time_n,
-                   real64 const & dt,
-                   integer const cycleNumber,
-                   DomainPartition & domain);
+  real64 unknownsUpdate( real64 const & time_n,
+                         real64 const & dt,
+                         integer const cycleNumber,
+                         DomainPartition & domain );
+
+  void postUnknownsUpdate( real64 const & time_n,
+                           real64 const & dt,
+                           integer const cycleNumber,
+                           DomainPartition & domain );
 
 protected:
 

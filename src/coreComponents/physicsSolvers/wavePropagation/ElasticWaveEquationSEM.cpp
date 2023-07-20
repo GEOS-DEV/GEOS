@@ -688,7 +688,6 @@ real64 ElasticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                     bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
-  synchronize( time_n, dtOut, cycleNumber, domain );
   return dtOut;
 }
 
@@ -702,16 +701,15 @@ real64 ElasticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
 {
   GEOS_ERROR( "Backward propagation for the elastic wave propagator not yet implemented" );
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
-  synchronize( time_n, dtOut, cycleNumber, domain );
   return dtOut;
 }
 
-real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
-                                                     real64 const & dt,
-                                                     integer const cycleNumber,
-                                                     DomainPartition & domain )
+real64 ElasticWaveEquationSEM::unknownsUpdate( real64 const & time_n,
+                                               real64 const & dt,
+                                               integer const cycleNumber,
+                                               DomainPartition & domain )
 {
-  std::cout << "\t[ElasticWaveEquationSEM::explicitStepInternal]" << std::endl;
+  std::cout << "\t[ElasticWaveEquationSEM::unknownsUpdate]" << std::endl;
 
   GEOS_MARK_FUNCTION;
 
@@ -796,10 +794,10 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
   return dt;
 }
 
-void ElasticWaveEquationSEM::synchronize(real64 const & time_n,
-                                         real64 const & dt,
-                                         integer GEOS_UNUSED_PARAM(cycleNumber),
-                                         DomainPartition & domain)
+void ElasticWaveEquationSEM::postUnknownsUpdate( real64 const & time_n,
+                                                 real64 const & dt,
+                                                 integer GEOS_UNUSED_PARAM(cycleNumber),
+                                                 DomainPartition & domain )
 {
   SortedArrayView< localIndex const > const & solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
 
@@ -871,6 +869,16 @@ void ElasticWaveEquationSEM::synchronize(real64 const & time_n,
     }
 
   } );
+}
+
+real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
+                                                     real64 const & dt,
+                                                     integer const cycleNumber,
+                                                     DomainPartition & domain )
+{
+  real64 dtOut = unknownsUpdate( time_n, dt, cycleNumber, domain );
+  postUnknownsUpdate( time_n, dt, cycleNumber, domain );
+  return dtOut;
 }
 
 void ElasticWaveEquationSEM::cleanup( real64 const time_n,
