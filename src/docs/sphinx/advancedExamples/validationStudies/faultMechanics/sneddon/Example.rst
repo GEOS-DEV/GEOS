@@ -269,11 +269,11 @@ Running GEOS
 
 To run these three cases, use the following commands:
 
-``path/to/geosx -i inputFiles/efemFractureMechanics/Sneddon_embeddedFrac_benchmark.xml``
+``path/to/geos -i inputFiles/efemFractureMechanics/Sneddon_embeddedFrac_benchmark.xml``
 
-``path/to/geosx -i inputFiles/lagrangianContactMechanics/Sneddon_contactMechanics_benchmark.xml``
+``path/to/geos -i inputFiles/lagrangianContactMechanics/Sneddon_contactMechanics_benchmark.xml``
 
-``path/to/geosx -i inputFiles/hydraulicFracturing/Sneddon_hydroFrac_benchmark.xml``
+``path/to/geos -i inputFiles/hydraulicFracturing/Sneddon_hydroFrac_benchmark.xml``
 
 ---------------------------------
 Inspecting results
