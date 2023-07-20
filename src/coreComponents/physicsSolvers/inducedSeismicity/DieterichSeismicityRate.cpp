@@ -76,12 +76,7 @@ using namespace fields;
 //START_SPHINX_INCLUDE_CONSTRUCTOR
 DieterichSeismicityRate::DieterichSeismicityRate( const string & name,
                                                   Group * const parent ):
-  SeismicityRateBase( name, parent ) 
-  {
-  this->registerWrapper( viewKeyStruct::stressSolverNameString(), &m_stressSolverName ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name of solver for computing stress history" );
-  }
+  SeismicityRateBase( name, parent ) {}
 //END_SPHINX_INCLUDE_CONSTRUCTOR
 
 DieterichSeismicityRate::~DieterichSeismicityRate()
@@ -107,12 +102,9 @@ void DieterichSeismicityRate::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< inducedSeismicity::t_a >( getName() );
       subRegion.registerField< inducedSeismicity::aSigma >( getName() );
 
-      subRegion.registerField< inducedSeismicity::initialPressure >( getName() );
       subRegion.registerField< inducedSeismicity::initialNormalStress >( getName() );
       subRegion.registerField< inducedSeismicity::initialShearStress >( getName() );
 
-      subRegion.registerField< inducedSeismicity::pressure >( getName() );
-      subRegion.registerField< inducedSeismicity::pressure_n >( getName() );
       subRegion.registerField< inducedSeismicity::pressureRate >( getName() );
       subRegion.registerField< inducedSeismicity::normalStress >( getName() );
       subRegion.registerField< inducedSeismicity::normalStress_n >( getName() );
@@ -166,8 +158,8 @@ void DieterichSeismicityRate::odeSolverStep( real64 const & time_n,
         arrayView1d< real64 const > const t_a = subRegion.getField< inducedSeismicity::t_a >();
         arrayView1d< real64 const > const aSig = subRegion.getField< inducedSeismicity::aSigma >();
         
-        arrayView1d< real64 const > const p_i = subRegion.getField< inducedSeismicity::initialPressure >();
-        arrayView1d< real64 const > const p = subRegion.getField< inducedSeismicity::pressure >();
+        arrayView1d< real64 const > const p_i = subRegion.getField< fields::flow::initialPressure >();
+        arrayView1d< real64 const > const p = subRegion.getField< fields::flow::pressure >();
         arrayView1d< real64 const > const pDot = subRegion.getField< inducedSeismicity::pressureRate >();
   
         arrayView1d< real64 const > const sig_i = subRegion.getField< inducedSeismicity::initialNormalStress >();
@@ -237,9 +229,9 @@ void DieterichSeismicityRate::integralSolverStep( real64 const & time_n,
         arrayView1d< real64 const > const t_a = subRegion.getField< inducedSeismicity::t_a >();
         arrayView1d< real64 const > const aSig = subRegion.getField< inducedSeismicity::aSigma >();
         
-        arrayView1d< real64 const > const p_i = subRegion.getField< inducedSeismicity::initialPressure >();
-        arrayView1d< real64 const > const p = subRegion.getField< inducedSeismicity::pressure >();
-        arrayView1d< real64 const > const p_n = subRegion.getField< inducedSeismicity::pressure_n >();
+        arrayView1d< real64 const > const p_i = subRegion.getField< fields::flow::initialPressure >();
+        arrayView1d< real64 const > const p = subRegion.getField< fields::flow::pressure >();
+        arrayView1d< real64 const > const p_n = subRegion.getField< fields::flow::pressure_n >();
         
         arrayView1d< real64 const > const sig_i = subRegion.getField< inducedSeismicity::initialNormalStress >();
         arrayView1d< real64 const > const sig = subRegion.getField< inducedSeismicity::normalStress >();
@@ -295,12 +287,6 @@ void DieterichSeismicityRate::initializePreSubGroups()
                                                      ElementSubRegionBase & subRegion )
     {
       // Hard coded stressing histories for now
-      arrayView1d< real64 > const tempPIni = subRegion.getField< inducedSeismicity::initialPressure >();
-      tempPIni.setValues< parallelHostPolicy >( 0.0 );
-      arrayView1d< real64 > const tempP = subRegion.getField< inducedSeismicity::pressure >();
-      tempP.setValues< parallelHostPolicy >( 0.0 );
-      arrayView1d< real64 > const tempP_n = subRegion.getField< inducedSeismicity::pressure_n >();
-      tempP_n.setValues< parallelHostPolicy >( 0.0 );
       arrayView1d< real64 > const tempPDot = subRegion.getField< inducedSeismicity::pressureRate >();
       tempPDot.setValues< parallelHostPolicy >( 0.0 );
 

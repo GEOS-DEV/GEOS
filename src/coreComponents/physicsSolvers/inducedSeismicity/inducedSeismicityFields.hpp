@@ -49,30 +49,6 @@ DECLARE_FIELD( aSigma,
                WRITE_AND_READ,
                "Product of direct effect parameter a and initial normal stress" );
 
-DECLARE_FIELD( initialPressure,
-               "initialPressure",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Initial pore pressure");
-
-DECLARE_FIELD( pressure,
-               "pressure",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Pore pressure");
-
-DECLARE_FIELD( pressure_n,
-               "pressure_n",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Pore pressure at the previous converged time step");
-
 DECLARE_FIELD( pressureRate,
                "pressureRate",
                array1d< real64 >,

@@ -30,8 +30,20 @@ using namespace dataRepository;
 //START_SPHINX_INCLUDE_CONSTRUCTOR
 SeismicityRateBase::SeismicityRateBase( const string & name,
                               Group * const parent ):
-  SolverBase( name, parent ) {}
+  SolverBase( name, parent ),
+  m_stressSolver( nullptr )
+  {
+    this->registerWrapper( viewKeyStruct::stressSolverNameString(), &m_stressSolverName ).
+          setInputFlag( InputFlags::OPTIONAL ).
+          setDescription( "Name of solver for computing stress" );
+  }
 //END_SPHINX_INCLUDE_CONSTRUCTOR
+
+void SeismicityRateBase::postProcessInput()
+{
+  m_stressSolver = &this->getParent().getGroup< SolverBase >( m_stressSolverName );
+  SolverBase::postProcessInput();
+}
 
 SeismicityRateBase::~SeismicityRateBase()
 {

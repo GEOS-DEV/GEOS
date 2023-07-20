@@ -21,6 +21,8 @@
 
 #include "physicsSolvers/inducedSeismicity/inducedSeismicityFields.hpp"
 
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+
 namespace geos
 {
 
@@ -36,6 +38,21 @@ public:
 
   /// Destructor
   virtual ~SeismicityRateBase() override;
+
+  struct viewKeyStruct : public SolverBase::viewKeyStruct
+  {
+    static constexpr char const * stressSolverNameString() { return "stressSolverName"; }
+  };
+
+protected:
+
+  virtual void postProcessInput() override;
+
+  /// pointer to stress solver
+  SolverBase * m_stressSolver;
+
+  /// stress solver name string
+  string m_stressSolverName;
   
 };
 
