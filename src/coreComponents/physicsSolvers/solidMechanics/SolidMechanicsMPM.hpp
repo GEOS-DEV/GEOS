@@ -372,17 +372,33 @@ public:
   GEOS_FORCE_INLINE
   void computeBodyForce(real64 const time_n,
                         real64 const & shearModulus,
-                        real64 const & bulkMudlus,
+                        real64 const & density,
                         arraySlice1d< real64 const > const particlePosition, 
                         real64 * particleBodyForce);
+
+  // GEOS_HOST_DEVICE
+  // GEOS_FORCE_INLINE
+  // void computeBodyForce(real64 const time_n,
+  //                       localIndex const p,
+  //                       constitutive::SolidBase & solidBase,
+  //                       arraySlice1d< real64 const > const particlePosition, 
+  //                       real64 * particleBodyForce);
   
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   void computeGeneralizedVortexMMSBodyForce(real64 const time_n,
                                             real64 const & shearModulus,
-                                            real64 const & bulkMudlus,
+                                            real64 const & density,
                                             arraySlice1d< real64 const > const particlePosition,
                                             real64 * particleBodyForce);
+
+  // GEOS_HOST_DEVICE
+  // GEOS_FORCE_INLINE
+  // void computeGeneralizedVortexMMSBodyForce(real64 const time_n,
+  //                                           localIndex const p,
+  //                                           constitutive::SolidBase & solidBase,
+  //                                           arraySlice1d< real64 const > const particlePosition,
+  //                                           real64 * particleBodyForce);
 
 protected:
   virtual void postProcessInput() override final;
