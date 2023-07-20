@@ -78,7 +78,7 @@ runList = [
 cgThroughputs = []
 print( "CG Throughput")
 print( "   #Dofs     MDof/s")
-for case in range( 0, len(runList)-1 ):
+for case in range( 0, len(runList) ):
   cgThroughputs.append( cgThroughput( runList[case][0], runList[case][1], runList[case][2] ) )
   print( "{0:10d} {1:6.2f}".format( numDofs[case], cgThroughputs[case] ) )
 
@@ -86,7 +86,7 @@ for case in range( 0, len(runList)-1 ):
 kernelTimes = []
 print( "Kernel Throughput")
 print( "   #Dofs     MDof/s")
-for case in range( 0, len(runList)-1 ):
+for case in range( 0, len(runList) ):
   kernelTimes.append( femKernelTime_nvprof( runList[case][0], runList[case][1], runList[case][2] ) )
   print( "{0:10d} {1:6.2f}".format( numDofs[case], numDofs[case]/kernelTimes[case]/1.0e6 ) )
 
