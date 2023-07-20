@@ -583,7 +583,7 @@ ArrayOfArrays< localIndex > computeElem2dToNodes( vtkIdType num2dElements,
       std::set< localIndex > tmp;
       for( auto j = 0; j < faceToNodes[faceIndex].size(); ++j )
       {
-        localIndex const & nodeIndex = faceToNodes[faceIndex][j];
+        localIndex const nodeIndex = faceToNodes[faceIndex][j];
         tmp.insert( nodeIndex );
       }
       for( localIndex const & nodeIndex: tmp )
