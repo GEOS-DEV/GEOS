@@ -98,6 +98,8 @@ void AcousticFirstOrderWaveEquationSEM::initializePreSubGroups()
 void AcousticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
 
+  WaveSolverBase::registerDataOnMesh( meshBodies );
+
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
                                                     arrayView1d< string const > const & )
@@ -107,7 +109,6 @@ void AcousticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     nodeManager.registerField< wavesolverfields::Pressure_np1,
                                wavesolverfields::ForcingRHS,
                                wavesolverfields::MassVector,
-                               wavesolverfields::DampingVector,
                                wavesolverfields::FreeSurfaceNodeIndicator >( this->getName() );
 
     FaceManager & faceManager = mesh.getFaceManager();
@@ -175,9 +176,9 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
   arrayView2d< real64 > const sourceConstants = m_sourceConstants.toView();
   arrayView1d< localIndex > const sourceIsAccessible = m_sourceIsAccessible.toView();
   arrayView1d< localIndex > const sourceElem = m_sourceElem.toView();
+  sourceNodeIds.setValues< parallelHostPolicy >( -1 );
+  sourceConstants.setValues< parallelHostPolicy >( -1 );
   arrayView1d< localIndex > const sourceRegion = m_sourceRegion.toView();
-  sourceNodeIds.setValues< EXEC_POLICY >( -1 );
-  sourceConstants.setValues< EXEC_POLICY >( -1 );
   sourceIsAccessible.zero();
 
   arrayView2d< real64 const > const receiverCoordinates = m_receiverCoordinates.toViewConst();
@@ -185,9 +186,9 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
   arrayView2d< real64 > const receiverConstants = m_receiverConstants.toView();
   arrayView1d< localIndex > const receiverIsLocal = m_receiverIsLocal.toView();
   arrayView1d< localIndex > const rcvElem = m_rcvElem.toView();
+  receiverNodeIds.setValues< parallelHostPolicy >( -1 );
+  receiverConstants.setValues< parallelHostPolicy >( -1 );
   arrayView1d< localIndex > const receiverRegion = m_receiverRegion.toView();
-  receiverNodeIds.setValues< EXEC_POLICY >( -1 );
-  receiverConstants.setValues< EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
 
   real32 const timeSourceFrequency = this->m_timeSourceFrequency;
@@ -227,7 +228,7 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
 
       acousticFirstOrderWaveEquationSEMKernels::
         PrecomputeSourceAndReceiverKernel::
-        launch< EXEC_POLICY, FE_TYPE >
+        launch< parallelHostPolicy, FE_TYPE >
         ( elementSubRegion.size(),
         regionIndex,
         numNodesPerElem,
@@ -311,8 +312,9 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
     arrayView1d< real32 > const mass = nodeManager.getField< wavesolverfields::MassVector >();
 
     /// damping matrix to be computed for each dof in the boundary of the mesh
-    arrayView1d< real32 > const damping = nodeManager.getField< wavesolverfields::DampingVector >();
-    damping.zero();
+    arrayView1d< localIndex > const nodeToDampingIdx = nodeManager.getField< fields::wavesolverfields::NodeToDampingIndex >();
+    m_dampingVector.resize( m_dampingNodes.size() );
+    m_dampingVector.zero();
     mass.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
@@ -334,23 +336,24 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
 
         acousticFirstOrderWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
-        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                               X,
-                                                               elemsToNodes,
-                                                               velocity,
-                                                               density,
-                                                               mass );
+        kernelM.template launch< parallelHostPolicy, parallelHostAtomic >( elementSubRegion.size(),
+                                                                           X,
+                                                                           elemsToNodes,
+                                                                           velocity,
+                                                                           density,
+                                                                           mass );
 
         acousticFirstOrderWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
-        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
-                                                               X,
-                                                               facesToElements,
-                                                               facesToNodes,
-                                                               facesDomainBoundaryIndicator,
-                                                               freeSurfaceFaceIndicator,
-                                                               velocity,
-                                                               damping );
+        kernelD.template launch< parallelHostPolicy, parallelHostAtomic >( faceManager.size(),
+                                                                           X,
+                                                                           facesToElements,
+                                                                           facesToNodes,
+                                                                           facesDomainBoundaryIndicator,
+                                                                           freeSurfaceFaceIndicator,
+                                                                           velocity,
+                                                                           nodeToDampingIdx,
+                                                                           m_dampingVector );
       } );
     } );
   } );
@@ -468,7 +471,6 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
     arrayView1d< real32 const > const mass = nodeManager.getField< wavesolverfields::MassVector >();
-    arrayView1d< real32 const > const damping = nodeManager.getField< wavesolverfields::DampingVector >();
 
     arrayView1d< real32 > const p_np1 = nodeManager.getField< wavesolverfields::Pressure_np1 >();
 
@@ -507,14 +509,14 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
         kernel2.template launch< EXEC_POLICY, ATOMIC_POLICY >
           ( elementSubRegion.size(),
           regionIndex,
-          nodeManager.size(),
           X,
           elemsToNodes,
           velocity_x,
           velocity_y,
           velocity_z,
           mass,
-          damping,
+          m_dampingNodes,
+          m_dampingVector,
           sourceConstants,
           sourceValue,
           sourceIsAccessible,

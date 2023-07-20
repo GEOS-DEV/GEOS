@@ -65,6 +65,8 @@ public:
 
   virtual void initializePreSubGroups() override;
 
+  virtual void initializePostInitialConditionsPreSubGroups() override;
+
   virtual real64 solverStep( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
@@ -188,6 +190,10 @@ protected:
                                        DomainPartition & domain,
                                        bool const computeGradient ) = 0;
 
+
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
+
+
   localIndex getNumNodesPerElem();
 
   /// Coordinates of the sources in the mesh
@@ -264,6 +270,9 @@ protected:
 
   /// LIFO to store p_dt2
   std::unique_ptr< lifoStorage< real32 > > m_lifo;
+
+  /// Indices of damping terms
+  array1d< localIndex > m_dampingNodes;
 
   struct parametersPML
   {

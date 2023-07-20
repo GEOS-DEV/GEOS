@@ -231,6 +231,14 @@ private:
   /// Symmetric tensor describing the moment of the source
   R2SymTensor m_sourceMoment;
 
+  /// Damping terms in X direction
+  array1d< real32 > m_dampingVectorX;
+  /// Damping terms in Y direction
+  array1d< real32 > m_dampingVectorY;
+  /// Damping terms in Z direction
+  array1d< real32 > m_dampingVectorZ;
+
+
 };
 
 
@@ -340,30 +348,6 @@ DECLARE_FIELD( MassVector,
                NOPLOT,
                WRITE_AND_READ,
                "Diagonal Mass Matrix." );
-
-DECLARE_FIELD( DampingVectorx,
-               "dampingVectorx",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal Damping Matrix in x-direction." );
-
-DECLARE_FIELD( DampingVectory,
-               "dampingVectory",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal Damping Matrix in y-direction." );
-
-DECLARE_FIELD( DampingVectorz,
-               "dampingVectorz",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal Damping Matrix in z-direction." );
 
 DECLARE_FIELD( StiffnessVectorx,
                "stiffnessVectorx",

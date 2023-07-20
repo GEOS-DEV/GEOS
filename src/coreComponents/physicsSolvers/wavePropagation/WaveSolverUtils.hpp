@@ -21,6 +21,9 @@
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
 
 #include "WaveSolverBase.hpp"
+#include "WaveSolverBaseFields.hpp"
+
+#include "common/DataTypes.hpp"
 
 namespace geos
 {
@@ -295,8 +298,67 @@ struct WaveSolverUtils
 
 
 
-};
+/**
+ * Update pressure in one direction
+ */
+  static void UpdateP( NodeManager & nodeManager,
+                       arrayView1d< real32 > p_nm1,
+                       arrayView1d< real32 > p_n,
+                       arrayView1d< real32 > p_np1,
+                       arrayView1d< real32 const > mass,
+                       arrayView1d< real32 > stiffnessVector,
+                       arrayView1d< real32 > rhs,
+                       arrayView1d< localIndex > dampingNodes,
+                       arrayView1d< real32 > dampingVector,
+                       real64 dt,
+                       parallelDeviceStream & stream,
+                       parallelDeviceEvents & events )
+  {
+    /// calculate your time integrators
+    real64 const dt2 = dt*dt;
 
+    // p_n+1 = 2 * p_n * m - (m - 0.5*dt*damping) * p_n-1 + dt2*(rhs-stiffness))/(m + 0.5*dt*damping)
+    // 1) p_n+1 = mass
+    // 2) if damp : p_n+1 += -0.5*dt*damping
+    // 3) p_n+1 = (p_n+1*p_nm1 + 2*m*p_n + dt2*(rhs-stiffness))/mass
+    // 4) if damp : p_n+1 *= mass/(mass + 0.5*dt*damping);
+    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::FreeSurfaceNodeIndicator >();
+    using EXEC_POLICY = parallelDevicePolicy<  >;
+
+    events.emplace_back( forAll< EXEC_POLICY >( stream, nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+    {
+      if( freeSurfaceNodeIndicator[a] != 1 )
+      {
+        p_np1[a] = mass[a];
+      }
+    } ) );
+
+    events.emplace_back( forAll< EXEC_POLICY >( stream, dampingVector.size(), [=] GEOS_HOST_DEVICE ( localIndex const b )
+    {
+      int a = dampingNodes[b];
+      p_np1[a] += -0.5*dt*dampingVector[b];
+    } ) );
+
+    events.emplace_back( forAll< EXEC_POLICY >( stream, nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+    {
+      if( freeSurfaceNodeIndicator[a] != 1 )
+      {
+        p_np1[a] *= -p_nm1[a];
+        p_np1[a] += p_n[a]*2.0*mass[a];
+        p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
+        p_np1[a] /= mass[a];
+      }
+    } ) );
+
+    events.emplace_back( forAll< EXEC_POLICY >( stream, dampingVector.size(), [=] GEOS_HOST_DEVICE ( localIndex const b )
+    {
+      int a = dampingNodes[b];
+      p_np1[a] *= mass[a];
+      p_np1[a] /= (mass[a]+0.5*dt*dampingVector[b]);
+    } ) );
+  }
+
+};
 } /* namespace geos */
 
 #endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_ */
