@@ -21,8 +21,8 @@
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICELASTICWAVEEQUATIONSEM_HPP_
 
 #include "physicsSolvers/wavePropagation/CoupledWaveSolver.hpp"
-#include "physicsSolvers/wavePropagation/AcousticWaveEquationSEM.hpp"
 #include "physicsSolvers/wavePropagation/ElasticWaveEquationSEM.hpp"
+#include "physicsSolvers/wavePropagation/AcousticWaveEquationSEM.hpp"
 
 namespace geos
 {

@@ -24,7 +24,8 @@
       name="acousticelasticSolver"
       acousticSolverName="acousticSolver"
       elasticSolverName="elasticSolver"
-      targetRegions="{ Solid, Fluid }"/>
+      targetRegions="{ Solid, Fluid }"
+      discretization="FE1"/>
   </Solvers>
 
   <NumericalMethods>

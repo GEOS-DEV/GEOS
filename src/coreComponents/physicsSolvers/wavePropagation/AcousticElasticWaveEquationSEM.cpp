@@ -23,7 +23,6 @@
 namespace geos
 {
 using namespace dataRepository;
-using namespace fields;
 
 void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
@@ -32,42 +31,47 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
   auto acousNodesSet = acousticSolver()->getSolverNodesSet();
   auto elasNodesSet = elasticSolver()->getSolverNodesSet();
 
-  for (auto val : acousNodesSet)
+  for( auto val : acousNodesSet )
   {
-    if (elasNodesSet.contains(val)) m_interfaceNodesSet.insert(val);
+    if( elasNodesSet.contains( val ))
+      m_interfaceNodesSet.insert( val );
   }
 
   std::cout << "\t[AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] "
-  << "m_interfaceNodesSet.size()=" << m_interfaceNodesSet.size() << std::endl;
+            << "m_interfaceNodesSet.size()=" << m_interfaceNodesSet.size() << std::endl;
   GEOS_THROW_IF( m_interfaceNodesSet.size() == 0, "Failed to compute interface: check xml input (solver order)", std::runtime_error );
 }
 
 real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
                                                    real64 const & dt,
                                                    int const cycleNumber,
-                                                   DomainPartition & domain ) 
+                                                   DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
   std::cout << "\t[AcousticElasticWaveEquationSEM::solverStep]" << std::endl;
 
-  real64 dte, dta;
+  auto elasSolver = elasticSolver();
+  auto acousSolver = acousticSolver();
 
-  dte = elasticSolver()->unknownsUpdate(time_n, dt, cycleNumber, domain);
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    elasSolver->unknownsUpdate( time_n, dt, cycleNumber, domain, mesh, regionNames );
 
-  // TODO: coupling
+    // TODO: coupling - get and write data into elastic fields
 
-  elasticSolver()->postUnknownsUpdate(time_n, dte, cycleNumber, domain);
+    elasSolver->postUnknownsUpdate( time_n, dt, cycleNumber, domain, mesh, regionNames );
 
-  dta = acousticSolver()->unknownsUpdate(time_n, dt, cycleNumber, domain);
+    acousSolver->unknownsUpdate( time_n, dt, cycleNumber, domain, mesh, regionNames );
 
-  // TODO: coupling
+    // TODO: coupling - get and write data into acoustic fields
 
-  acousticSolver()->postUnknownsUpdate(time_n, dta, cycleNumber, domain);
+    acousSolver->postUnknownsUpdate( time_n, dt, cycleNumber, domain, mesh, regionNames );
+  } );
 
-  GEOS_THROW_IF( abs(dte - dta) > acousticSolver()->epsilonLoc, GEOS_FMT( "Timestep error dta={} dte={}", dta, dte ), std::runtime_error );
-
-  return dta;
+  return dt;
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, AcousticElasticWaveEquationSEM, string const &, Group * const )

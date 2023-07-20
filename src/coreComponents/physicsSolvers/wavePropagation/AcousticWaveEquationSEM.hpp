@@ -139,15 +139,19 @@ public:
                                integer const cycleNumber,
                                DomainPartition & domain );
 
-  real64 unknownsUpdate( real64 const & time_n,
-                         real64 const & dt,
-                         integer const cycleNumber,
-                         DomainPartition & domain );
+  void unknownsUpdate( real64 const & time_n,
+                       real64 const & dt,
+                       integer const cycleNumber,
+                       DomainPartition & domain,
+                       MeshLevel & mesh,
+                       arrayView1d< string const > const & regionNames );
 
   void postUnknownsUpdate( real64 const & time_n,
                            real64 const & dt,
                            integer const cycleNumber,
-                           DomainPartition & domain );
+                           DomainPartition & domain,
+                           MeshLevel & mesh,
+                           arrayView1d< string const > const & regionNames );
 
 protected:
 

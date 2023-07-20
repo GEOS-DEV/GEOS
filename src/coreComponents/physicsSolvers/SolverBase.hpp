@@ -673,10 +673,22 @@ public:
       MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
 
       MeshLevel const * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( meshLevelName );
-      if( meshLevelPtr==nullptr )
+      bool nok = meshLevelPtr==nullptr;
+      if( nok )
       {
         meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( MeshBody::groupStructKeys::baseDiscretizationString() );
       }
+      /*
+         std::cout << "\t[SolverBase::forDiscretizationOnMeshTargets] ok=" << (nok ? 'F' : 'T')
+         << " meshBodyName=" << meshBodyName
+         << " meshLevelName=" << meshLevelName
+         << " discretizationName=" << m_discretizationName
+         << std::endl;
+         for (auto const & val: regionNames)
+         {
+         std::cout << "\t[SolverBase::forDiscretizationOnMeshTargets] regionNames=" << val << std::endl;
+         }
+       */
       lambda( meshBodyName, *meshLevelPtr, regionNames );
     }
   }
@@ -699,10 +711,22 @@ public:
       MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
 
       MeshLevel * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( meshLevelName );
-      if( meshLevelPtr==nullptr )
+      bool nok = meshLevelPtr==nullptr;
+      if( nok )
       {
         meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( MeshBody::groupStructKeys::baseDiscretizationString() );
       }
+      /*
+         std::cout << "\t[SolverBase::forDiscretizationOnMeshTargets] ok=" << (nok ? 'F' : 'T')
+         << " meshBodyName=" << meshBodyName
+         << " meshLevelName=" << meshLevelName
+         << " discretizationName=" << m_discretizationName
+         << std::endl;
+         for (auto const & val: regionNames)
+         {
+         std::cout << "\t[SolverBase::forDiscretizationOnMeshTargets] regionNames=" << val << std::endl;
+         }
+       */
       lambda( meshBodyName, *meshLevelPtr, regionNames );
     }
   }

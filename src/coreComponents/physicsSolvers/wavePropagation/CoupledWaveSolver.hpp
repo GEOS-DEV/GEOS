@@ -39,7 +39,7 @@ public:
    * @param parent the parent group of this instantiation of CoupledWaveSolver
    */
   CoupledWaveSolver( const string & name,
-                 Group * const parent )
+                     Group * const parent )
     : SolverBase( name, parent )
   {
     forEachArgInTuple( m_solvers, [&]( auto solver, auto idx )
@@ -50,9 +50,6 @@ public:
         setInputFlag( dataRepository::InputFlags::REQUIRED ).
         setDescription( "Name of the " + SolverType::coupledSolverAttributePrefix() + " solver used by the coupled solver" );
     } );
-
-    this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
-      setInputFlag( dataRepository::InputFlags::FALSE );
   }
 
   /// deleted copy constructor
