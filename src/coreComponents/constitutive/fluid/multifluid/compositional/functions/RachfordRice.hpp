@@ -51,9 +51,9 @@ public:
    **/
   GEOS_HOST_DEVICE
   static real64
-  solve( arrayView1d< real64 const > const kValues,
-         arrayView1d< real64 const > const feed,
-         arrayView1d< integer const > const presentComponentIds );
+  solve( arraySlice1d< real64 const > const kValues,
+         arraySlice1d< real64 const > const feed,
+         arraySlice1d< integer const > const presentComponentIds );
 
 private:
 
@@ -67,9 +67,9 @@ private:
    **/
   GEOS_HOST_DEVICE
   static real64
-  evaluate( arrayView1d< real64 const > const kValues,
-            arrayView1d< real64 const > const feed,
-            arrayView1d< integer const > const presentComponentIds,
+  evaluate( arraySlice1d< real64 const > const kValues,
+            arraySlice1d< real64 const > const feed,
+            arraySlice1d< integer const > const presentComponentIds,
             real64 const & x );
 
   /**
@@ -82,9 +82,9 @@ private:
    **/
   GEOS_HOST_DEVICE
   static real64
-  evaluateDerivative( arrayView1d< real64 const > const kValues,
-                      arrayView1d< real64 const > const feed,
-                      arrayView1d< integer const > const presentComponentIds,
+  evaluateDerivative( arraySlice1d< real64 const > const kValues,
+                      arraySlice1d< real64 const > const feed,
+                      arraySlice1d< integer const > const presentComponentIds,
                       real64 const & x );
 
 };
