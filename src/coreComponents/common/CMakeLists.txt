@@ -19,10 +19,18 @@ set( common_headers
      TimingMacros.hpp
      TypeDispatch.hpp
      initializeEnvironment.hpp
+     LifoStorage.hpp
+     LifoStorageCommon.hpp
+     LifoStorageHost.hpp
+     FixedSizeDeque.hpp
+     FixedSizeDequeWithMutexes.hpp
+     MultiMutexesLock.hpp
    )
+
 if ( ENABLE_CUDA )
-  list( APPEND common_headers lifoStorage.hpp )
-endif()
+  list( APPEND common_headers LifoStorageCuda.hpp )
+endif( )
+
 #
 # Specify all sources
 #

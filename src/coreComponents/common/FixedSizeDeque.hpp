@@ -16,6 +16,7 @@
 
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/memcpy.hpp"
+#include "LvArray/src/ChaiBuffer.hpp"
 #include "common/Logger.hpp"
 
 /// Get the positive value of a module b
@@ -24,14 +25,14 @@ namespace geos
 {
 template< typename T, typename INDEX_TYPE >
 /// Implement a double ended queue with fixed number of fixed size buffer to be stored
-class fixedSizeDeque
+class FixedSizeDeque
 {
   /// The integer type used for indexing.
   using IndexType = INDEX_TYPE;
   /// 1D array slice
-  using ArraySlice1D = LvArray::ArraySlice< T const, 1, 0, INDEX_TYPE >;
+  using ArraySlice1DLarge = LvArray::ArraySlice< T const, 1, 0, std::ptrdiff_t >;
   /// 2D array type. See LvArray:Array for details.
-  using Array2D = LvArray::Array< T, 2, camp::make_idx_seq_t< 2 >, IndexType, LvArray::ChaiBuffer >;
+  using Array2D = LvArray::Array< T, 2, camp::make_idx_seq_t< 2 >, std::ptrdiff_t, LvArray::ChaiBuffer >;
 public:
   /**
    * Create a fixed size double ended queue.
@@ -41,7 +42,7 @@ public:
    * @param space          Space used to store que queue.
    * @param stream         Camp resource to perform the copies.
    */
-  fixedSizeDeque( IndexType maxEntries, IndexType valuesPerEntry, LvArray::MemorySpace space, camp::resources::Resource stream ):
+  FixedSizeDeque( IndexType maxEntries, IndexType valuesPerEntry, LvArray::MemorySpace space, camp::resources::Resource stream ):
     m_stream( stream )
   {
     GEOS_ERROR_IF( maxEntries < 0, "Fixed sized queue size must be positive" );
@@ -74,28 +75,28 @@ public:
   }
 
   /// @returns the first array in the queue
-  ArraySlice1D front() const
+  ArraySlice1DLarge front() const
   {
     GEOS_ERROR_IF( empty(), "Can't get front from empty queue" );
     return m_storage[ POSITIVE_MODULO( m_begin, m_storage.size( 0 ) ) ];
   }
 
   /// @returns the future first array in the queue after inc_front will be called
-  ArraySlice1D next_front() const
+  ArraySlice1DLarge next_front() const
   {
     GEOS_ERROR_IF( full(), "Can't increase in a full queue" );
     return m_storage[ POSITIVE_MODULO( m_begin-1, m_storage.size( 0 ) ) ];
   }
 
   /// @returns the last array of the queue
-  ArraySlice1D back() const
+  ArraySlice1DLarge back() const
   {
     GEOS_ERROR_IF( empty(), "Can't get back from empty queue" );
     return m_storage[ POSITIVE_MODULO( m_end, m_storage.size( 0 ) ) ];
   }
 
   /// @returns the future last array of the queue when inc_back will be called
-  ArraySlice1D next_back() const
+  ArraySlice1DLarge next_back() const
   {
     GEOS_ERROR_IF( full(), "Can't increase in a full queue" );
     return m_storage[ POSITIVE_MODULO( m_end+1, m_storage.size( 0 ) ) ];
@@ -135,7 +136,8 @@ public:
    * @param src Array to emplace at the front of the queue
    * @return Event associated to the copy.
    */
-  camp::resources::Event emplace_front( const ArraySlice1D & src )
+  template< typename INDEX_TYPE2 >
+  camp::resources::Event emplace_front( const LvArray::ArraySlice< T const, 1, 0, INDEX_TYPE2 > & src )
   {
     GEOS_ERROR_IF( full(), "Can't emplace in a full  queue" );
     camp::resources::Event e = LvArray::memcpy( m_stream, m_storage[ POSITIVE_MODULO( m_begin-1, m_storage.size( 0 ) ) ], src );
@@ -149,7 +151,8 @@ public:
    * @param src Array to emplace at the end of the queue
    * @return Event associated to the copy.
    */
-  camp::resources::Event emplace_back( const ArraySlice1D & src )
+  template< typename INDEX_TYPE2 >
+  camp::resources::Event emplace_back( const LvArray::ArraySlice< T const, 1, 0, INDEX_TYPE2 > & src )
   {
     GEOS_ERROR_IF( full(), "Can't emplace in a full queue" );
     camp::resources::Event e = LvArray::memcpy( m_stream, m_storage[ POSITIVE_MODULO( m_end+1, m_storage.size( 0 ) ) ], src );
