@@ -27,6 +27,8 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
+#include <limits>
+
 namespace geos
 {
 
@@ -93,20 +95,25 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Set the current shot for temporary files" );
 
-  registerWrapper( viewKeyStruct::lifoSizeString(), &m_lifoSize ).
+  registerWrapper( viewKeyStruct::enableLifoString(), &m_enableLifo ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Set the capacity of the lifo storage" );
+    setDescription( "Set to 1 to enable LIFO storage feature" );
+
+  registerWrapper( viewKeyStruct::lifoSizeString(), &m_lifoSize ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( std::numeric_limits< int >::max() ).
+    setDescription( "Set the capacity of the lifo storage (should be the total number of buffers to store in the LIFO)" );
 
   registerWrapper( viewKeyStruct::lifoOnDeviceString(), &m_lifoOnDevice ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Set the capacity of the lifo device storage" );
+    setApplyDefaultValue( -80 ).
+    setDescription( "Set the capacity of the lifo device storage (if negative, opposite of percentage of remaining memory)" );
 
   registerWrapper( viewKeyStruct::lifoOnHostString(), &m_lifoOnHost ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Set the capacity of the lifo host storage" );
+    setApplyDefaultValue( -80 ).
+    setDescription( "Set the capacity of the lifo host storage (if negative, opposite of percentage of remaining memory)" );
 
 
   registerWrapper( viewKeyStruct::usePMLString(), &m_usePML ).
