@@ -176,10 +176,10 @@
     <CompressibleSinglePhaseFluid
       name="gel"
       defaultDensity="1000"
-      defaultViscosity="1.0e-1"
+      defaultViscosity="70e-3"
       referencePressure="0.0"
       compressibility="5e-10"
-      referenceViscosity="0.1"
+      referenceViscosity="70e-3"
       viscosibility="0.0"/>
 
     <CompressibleSolidConstantPermeability
@@ -385,6 +385,7 @@
 
     <TableFunction
       name="timeFunction"
+      inputVarNames="{ time }"
       coordinates="{ 0.0, 359.9, 360.1, 719.9, 720.1, 1199.9, 1200.1, 1499.9, 1500.1, 2099.9, 2100.1, 4499.9, 4500.1, 6299.9, 6300.1, 6899.9, 6900.1, 7499.9, 7500.1, 7799.9, 7800.1, 8100 }"
       values="{ 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0, 5.0, 5.0, 6.0, 6.0, 7.0, 7.0, 4.0, 4.0, 3.0, 3.0, 2.0, 2.0, 1.0, 1.0 }"/>
 
