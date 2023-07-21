@@ -286,6 +286,12 @@ public:
 #endif
 
   /**
+   * @brief Compute the number of ranks allocated on the same node
+   * @return The number of MPI ranks on the current node.
+   */
+  static int nodeCommSize();
+
+  /**
    * @brief Strongly typed wrapper around MPI_Allgather.
    * @tparam T_SEND The pointer type for \p sendbuf
    * @tparam T_RECV The pointer type for \p recvbuf
