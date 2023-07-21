@@ -211,6 +211,20 @@ void BlackOilFluidBase::initializePostSubGroups()
   createAllKernelWrappers();
 }
 
+void BlackOilFluidBase::checkTablesParameters( real64 const pressure,
+                                               real64 const temperature ) const
+{
+  GEOS_UNUSED_VAR( temperature );
+
+  string const formationVolFactorName = catalogName() + " formation volume factor";
+  m_formationVolFactorTables->checkCoord( pressure, 0, "pressure",
+                                          formationVolFactorName.c_str() );
+
+  string const m_viscosityTablesName = catalogName() + " viscosity";
+  m_viscosityTables->checkCoord( pressure, 0, "pressure",
+                                 m_viscosityTablesName.c_str() );
+}
+
 void BlackOilFluidBase::createAllKernelWrappers()
 {
   FunctionManager const & functionManager = FunctionManager::getInstance();

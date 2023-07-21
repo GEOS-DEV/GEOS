@@ -49,6 +49,11 @@ public:
 
   BlackOilFluidBase( string const & name, Group * const parent );
 
+  /**
+   * @copydoc MultiFluidBase::checkTablesParameters( real64 pressure, real64 temperature )
+   */
+  virtual void checkTablesParameters( real64 pressure, real64 temperature ) const override final;
+
   struct viewKeyStruct : MultiFluidBase::viewKeyStruct
   {
     static constexpr char const * surfacePhaseMassDensitiesString() { return "surfaceDensities"; }
