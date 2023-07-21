@@ -594,15 +594,6 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
   real64 const & surfacePres = wellControls.getSurfacePressure();
   real64 const & surfaceTemp = wellControls.getSurfaceTemperature();
-  try
-  {
-    fluid.checkTablesParameters( surfacePres, surfaceTemp );
-  } catch( SimulationError const & ex )
-  {
-    // TODO: replace getName() by getDataContext() from incoming PR 2404
-    string const errorMsg = GEOS_FMT( "{}: wrong surface pressure / temperature.\n", getName() );
-    throw SimulationError( ex, errorMsg );
-  }
 
   arrayView1d< real64 > const & currentPhaseVolRate =
     wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
@@ -624,6 +615,16 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
+    try
+    {
+      castedFluid.checkTablesParameters( surfacePres, surfaceTemp );
+    } catch( SimulationError const & ex )
+    {
+      // TODO: replace getName() by getDataContext() from incoming PR 2404
+      string const errorMsg = GEOS_FMT( "{}: wrong surface pressure / temperature.\n", getName() );
+      throw SimulationError( ex, errorMsg );
+    }
+
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
     // bring everything back to host, capture the scalars by reference
