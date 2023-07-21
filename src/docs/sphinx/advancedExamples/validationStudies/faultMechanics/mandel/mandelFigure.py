@@ -144,7 +144,7 @@ def main():
     hdf5File1Path = "pressure_history.hdf5"
     hdf5File2Path = "displacement_history.hdf5"
     xmlFile1Path = "../../../../../../../inputFiles/poromechanics/PoroElastic_Mandel_base.xml"
-    xmlFile2Path = "../../../../../../../inputFiles/poromechanics/PoroElastic_Mandel_benchmark.xml"
+    xmlFile2Path = "../../../../../../../inputFiles/poromechanics/PoroElastic_Mandel_benchmark_fim.xml"
 
     # Read HDF5
     # Global Coordinate of Element Center
