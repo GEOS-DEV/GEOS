@@ -19,8 +19,8 @@
       maxNumResolves="1"
       initialDt="0.01">
       <NonlinearSolverParameters
-        newtonTol="1.0e-4"
-        newtonMaxIter="50"/>
+        newtonTol="1.0e-5"
+        newtonMaxIter="30"/>
       <LinearSolverParameters
         directParallel="0"/>
     </Hydrofracture>
@@ -93,10 +93,12 @@
 
     <PeriodicEvent
       name="sourcePressureCollection"
+      beginTime="0.1"
       target="/Tasks/sourcePressureCollection"/>
 
     <PeriodicEvent
       name="sourceHydraulicApertureCollection"
+      beginTime="0.1"
       target="/Tasks/sourceHydraulicApertureCollection"/>
 
     <PeriodicEvent

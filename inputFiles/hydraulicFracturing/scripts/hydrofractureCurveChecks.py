@@ -129,10 +129,11 @@ def pkn_viscosity_dominated_solutions(**kwargs):
     mu = 1.0e-3
     Q0 = -6.625 * -2.0 / 1000.0
     xSource = 0.0
+    height = 6.0
 
     E, nu = get_youngs_modulus_poisson_ratio(bulk_modulus, shear_modulus)
     t = np.squeeze(kwargs['hydraulicAperture Time'][:, 0])
-    pknFrac = HydrofractureSolutions.PKN_viscosityStorageDominated(E, nu, KIC, mu, Q0, t, xSource)
+    pknFrac = HydrofractureSolutions.PKN_viscosityStorageDominated(E, nu, KIC, mu, Q0, t, height)
     halfLength, inletAperture, inletPressure = pknFrac.analyticalSolution()
     return inletPressure, inletAperture
 
