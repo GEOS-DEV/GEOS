@@ -182,7 +182,7 @@ char const *xmlInput =
                                                                      sesri[iconn], \
                                                                      sei[iconn], \
                                                                      1, \
-                                                                     NP ); \
+                                                                     numPhase ); \
   auto dPhaseCapPressure_dPhaseVolFracView = getElementAccessor< true, 4, real64 >( &cap,                     \
                                                                                     fields::cappres::dPhaseCapPressure_dPhaseVolFraction::key(), \
                                                                                     numFluxSupportPoints, \
@@ -190,8 +190,8 @@ char const *xmlInput =
                                                                                     sesri[iconn], \
                                                                                     sei[iconn], \
                                                                                     1, \
-                                                                                    NP, \
-                                                                                    NP );
+                                                                                    numPhase, \
+                                                                                    numPhase );
 #endif
 
 
@@ -203,7 +203,7 @@ char const *xmlInput =
                                                                   seri[iconn], \
                                                                   sesri[iconn], \
                                                                   sei[iconn], 1, \
-                                                                  NP ); \
+                                                                  numPhase ); \
   auto dPhaseMassDensView = getElementAccessor< true, 4, real64 >( &fluid, \
                                                                    fields::multifluid::dPhaseMassDensity::key(), \
                                                                    numFluxSupportPoints, \
@@ -211,7 +211,7 @@ char const *xmlInput =
                                                                    sesri[iconn], \
                                                                    sei[iconn], \
                                                                    1, \
-                                                                   NP, NC+2 ); \
+                                                                   numPhase, numComp+2 ); \
   auto \
     phaseCompFracView = getElementAccessor< true, 4, real64 >( &fluid, \
                                                                fields::multifluid::phaseCompFraction::key(), \
@@ -220,8 +220,8 @@ char const *xmlInput =
                                                                sesri[iconn], \
                                                                sei[iconn],        \
                                                                1, \
-                                                               NP, \
-                                                               NC ); \
+                                                               numPhase, \
+                                                               numComp ); \
   auto \
     dPhaseCompFracView = getElementAccessor< true, 5, real64 >( &fluid, \
                                                                 fields::multifluid::dPhaseCompFraction::key(), \
@@ -230,9 +230,9 @@ char const *xmlInput =
                                                                 sesri[iconn], \
                                                                 sei[iconn],        \
                                                                 1, \
-                                                                NP, \
-                                                                NC, \
-                                                                NC+2 );
+                                                                numPhase, \
+                                                                numComp, \
+                                                                numComp+2 );
 #endif
 
 #ifndef DEFINE_SUBR_FIELDS
@@ -267,14 +267,14 @@ char const *xmlInput =
                                                              numFluxSupportPoints, \
                                                              seri[iconn], \
                                                              sesri[iconn], \
-                                                             sei[iconn], NP ); \
+                                                             sei[iconn], numPhase ); \
   auto dPhaseMobView = getElementAccessor< true, 3, real64 >( &subRegion, \
                                                               fields::flow::dPhaseMobility::key(), \
                                                               numFluxSupportPoints, \
                                                               seri[iconn], \
                                                               sesri[iconn], \
                                                               sei[iconn], \
-                                                              NP, NC+2 ); \
+                                                              numPhase, numComp+2 ); \
   auto \
     dCompFrac_dCompDensView = getElementAccessor< true, 3, real64 >( &subRegion, \
                                                                      fields::flow::dGlobalCompFraction_dGlobalCompDensity::key(), \
@@ -282,15 +282,15 @@ char const *xmlInput =
                                                                      seri[iconn], \
                                                                      sesri[iconn], \
                                                                      sei[iconn], \
-                                                                     NC, \
-                                                                     NC ); \
+                                                                     numComp, \
+                                                                     numComp ); \
   auto dPhaseVolFracView = getElementAccessor< true, 3, real64 >( &subRegion, \
                                                                   fields::flow::dPhaseVolumeFraction::key(), \
                                                                   numFluxSupportPoints, \
                                                                   seri[iconn], \
                                                                   sesri[iconn], \
                                                                   sei[iconn],        \
-                                                                  NP, NC+2 );
+                                                                  numPhase, numComp+2 );
 #endif
 
 //// Sphinx end before input XML
@@ -336,7 +336,7 @@ using PermeabilityAccessors =
                             fields::permeability::permeability,
                             fields::permeability::dPerm_dPressure >;
 
-template< localIndex NC, localIndex NP >
+template< localIndex numComp, localIndex numPhase >
 void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
                                       DomainPartition & domain )
 {
@@ -397,25 +397,25 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
 
           real64 potGrad = 0.;
 
-          localIndex k_up[NP]{};
-          real64 phaseFlux[NP]{0.0, 0.0};
-          real64 dPhaseFlux_dP[NP][numFluxSupportPoints]{};
-          real64 dPhaseFlux_dC[NP][numFluxSupportPoints][NC]{};
+          localIndex k_up[numPhase]{};
+          real64 phaseFlux[numPhase]{0.0, 0.0};
+          real64 dPhaseFlux_dP[numPhase][numFluxSupportPoints]{};
+          real64 dPhaseFlux_dC[numPhase][numFluxSupportPoints][numComp]{};
 
-          real64 compFlux[NC];
-          real64 dCompFlux_dP[numFluxSupportPoints][NC]{};
-          real64 dCompFlux_dC[numFluxSupportPoints][NC][NC]{};
+          real64 compFlux[numComp];
+          real64 dCompFlux_dP[numFluxSupportPoints][numComp]{};
+          real64 dCompFlux_dC[numFluxSupportPoints][numComp][numComp]{};
 
 
-          localIndex k_up_expected[NP]{0, 1};
+          localIndex k_up_expected[numPhase]{0, 1};
           //classical mass balance equation way of computing potential and finding upwinding direction
-          for( localIndex ip = 0; ip < NP; ++ip )
+          for( localIndex ip = 0; ip < numPhase; ++ip )
           {
 
-            PPUPhaseFlux::compute< NC, numFluxSupportPoints >(
-              NP,
+            PPUPhaseFlux::compute< numComp, numFluxSupportPoints >(
+              numPhase,
               ip,
-              capPressureFlag,//hasCapPressure
+              capPressureFlag,      //hasCapPressure
               {seri[iconn][0], seri[iconn][1]},
               {sesri[iconn][0], sesri[iconn][1]},
               {sei[iconn][0], sei[iconn][1]},
@@ -452,7 +452,7 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
 
 }//EOfunc
 
-template< localIndex NC, localIndex NP >
+template< localIndex numComp, localIndex numPhase >
 void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
                                 DomainPartition & domain )
 {
@@ -495,28 +495,28 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
 
         real64 potGrad = 0.;
 
-        localIndex k_up_hu_mu[NP]{}, k_up_hu_g[NP]{}, k_up_hu_pc[NP]{}, k_up_ppu[NP]{};
-        localIndex k_up_hu[NP]{};
+        localIndex k_up_hu_mu[numPhase]{}, k_up_hu_g[numPhase]{}, k_up_hu_pc[numPhase]{}, k_up_ppu[numPhase]{};
+        localIndex k_up_hu[numPhase]{};
 
-        real64 phaseFlux[NP]{0.0, 0.0};
-        real64 dPhaseFlux_dP[NP][numFluxSupportPoints]{};
-        real64 dPhaseFlux_dC[NP][numFluxSupportPoints][NC]{};
+        real64 phaseFlux[numPhase]{0.0, 0.0};
+        real64 dPhaseFlux_dP[numPhase][numFluxSupportPoints]{};
+        real64 dPhaseFlux_dC[numPhase][numFluxSupportPoints][numComp]{};
 
         real64 totFlux{};
         real64 dTotFlux_dP[numFluxSupportPoints]{};
-        real64 dTotFlux_dC[numFluxSupportPoints][NC]{};
+        real64 dTotFlux_dC[numFluxSupportPoints][numComp]{};
 
-        real64 compFlux[NC];
-        real64 dCompFlux_dP[numFluxSupportPoints][NC]{};
-        real64 dCompFlux_dC[numFluxSupportPoints][NC][NC]{};
+        real64 compFlux[numComp];
+        real64 dCompFlux_dP[numFluxSupportPoints][numComp]{};
+        real64 dCompFlux_dC[numFluxSupportPoints][numComp][numComp]{};
 
         //unused for now
         real64 fflow{};
         real64 dFflow_dP[numFluxSupportPoints]{};
-        real64 dFflow_dC[numFluxSupportPoints][NC]{};
-        real64 phaseFluxHU[4][NP]{};
-        real64 dPhaseFluxHU_dP[4][NP][numFluxSupportPoints]{};
-        real64 dPhaseFluxHU_dC[4][NP][numFluxSupportPoints][NC]{};
+        real64 dFflow_dC[numFluxSupportPoints][numComp]{};
+        real64 phaseFluxHU[4][numPhase]{};
+        real64 dPhaseFluxHU_dP[4][numPhase][numFluxSupportPoints]{};
+        real64 dPhaseFluxHU_dC[4][numPhase][numFluxSupportPoints][numComp]{};
 
         for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
         {
@@ -536,12 +536,12 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
           DEFINE_FLUID_FIELDS()
 
           //classical mass balance equation way of computing potential and finding upwinding direction
-          for( localIndex ip = 0; ip < NP; ++ip )
+          for( localIndex ip = 0; ip < numPhase; ++ip )
           {
-            PPUPhaseFlux::compute< NC, numFluxSupportPoints >(
-              NP,
+            PPUPhaseFlux::compute< numComp, numFluxSupportPoints >(
+              numPhase,
               ip,
-              capPressureFlag,        //hasCapPressure
+              capPressureFlag,              //hasCapPressure
               {seri[iconn][0], seri[iconn][1]},
               {sesri[iconn][0], sesri[iconn][1]},
               {sei[iconn][0], sei[iconn][1]},
@@ -575,7 +575,7 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
             {
               dTotFlux_dP[ke] += dPhaseFlux_dP[ip][ke];
 
-              for( localIndex jc = 0; jc < NC; ++jc )
+              for( localIndex jc = 0; jc < numComp; ++jc )
               {
                 dTotFlux_dC[ke][jc] += dPhaseFlux_dC[ip][ke][jc];
               }
@@ -584,40 +584,40 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
           }
 
           //expected upwind directions
-          localIndex k_exp_hu_mu[NP] = {1, 1};                                                                                                   //as
-                                                                                                                                                 // the
-                                                                                                                                                 // total
-                                                                                                                                                 // flux
-                                                                                                                                                 // is
-                                                                                                                                                 // negative
-          localIndex k_exp_hu_g[NP] = {0, 1};                                                                                                   //lighter
-                                                                                                                                                // phase
-                                                                                                                                                // going
-                                                                                                                                                // up
-                                                                                                                                                // (x
-                                                                                                                                                // positive
-                                                                                                                                                // here),
-                                                                                                                                                // heavier
-                                                                                                                                                // ...
-          localIndex k_exp_hu_pc[NP] = {1, 0};                                                                                                   // as
-                                                                                                                                                 // pc(o/g)
-                                                                                                                                                 // is
-                                                                                                                                                 // increasing
-                                                                                                                                                 // wrt
-                                                                                                                                                 // sg
-                                                                                                                                                 // then
-                                                                                                                                                 // dir
-                                                                                                                                                 // is
-                                                                                                                                                 // opposite
-                                                                                                                                                 // to
-                                                                                                                                                 // grad(Sg)
+          localIndex k_exp_hu_mu[numPhase] = {1, 1};                                                                                                   //as
+          // the
+          // total
+          // flux
+          // is
+          // negative
+          localIndex k_exp_hu_g[numPhase] = {0, 1};                                                                                                   //lighter
+          // phase
+          // going
+          // up
+          // (x
+          // positive
+          // here),
+          // heavier
+          // ...
+          localIndex k_exp_hu_pc[numPhase] = {1, 0};                                                                                                   // as
+          // pc(o/g)
+          // is
+          // increasing
+          // wrt
+          // sg
+          // then
+          // dir
+          // is
+          // opposite
+          // to
+          // grad(Sg)
 
-          for( localIndex ip = 0; ip < NP; ++ip )
+          for( localIndex ip = 0; ip < numPhase; ++ip )
           {
 
-            UpwindHelpers::computeFractionalFlowViscous< NC, numFluxSupportPoints,
+            UpwindHelpers::computeFractionalFlowViscous< numComp, numFluxSupportPoints,
                                                          HybridUpwind >(
-              NP,
+              numPhase,
               ip,
               {seri[iconn][0], seri[iconn][1]},
               {sesri[iconn][0], sesri[iconn][1]},
@@ -648,7 +648,7 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
             {
               dPhaseFluxHU_dP[Physics::Viscous][ip][ke] += dFflow_dP[ke] * totFlux;
 
-              for( localIndex jc = 0; jc < NC; ++jc )
+              for( localIndex jc = 0; jc < numComp; ++jc )
               {
                 dPhaseFluxHU_dC[Physics::Viscous][ip][ke][jc] += dFflow_dC[ke][jc] * totFlux;
               }
@@ -659,7 +659,7 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
             {
               dPhaseFluxHU_dP[Physics::Viscous][ip][ke] += fflow * dTotFlux_dP[ke];
 
-              for( localIndex jc = 0; jc < NC; ++jc )
+              for( localIndex jc = 0; jc < numComp; ++jc )
               {
                 dPhaseFluxHU_dC[Physics::Viscous][ip][ke][jc] += fflow * dTotFlux_dC[ke][jc];
               }
@@ -668,9 +668,9 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
             EXPECT_EQ( k_up_hu_mu[ip], k_exp_hu_mu[ip] );
 
             localIndex k_up_hu_og = -1;
-            UpwindHelpers::computePotentialFluxesGravity< NC,
+            UpwindHelpers::computePotentialFluxesGravity< numComp,
                                                           numFluxSupportPoints, HybridUpwind >(
-              NP,
+              numPhase,
               ip,
               {seri[iconn][0], seri[iconn][1]},
               {sesri[iconn][0], sesri[iconn][1]},
@@ -701,9 +701,9 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
             if( capPressureFlag )
             {
               localIndex k_up_hu_opc = -1;
-              UpwindHelpers::computePotentialFluxesCapillary< NC,
+              UpwindHelpers::computePotentialFluxesCapillary< numComp,
                                                               numFluxSupportPoints, HybridUpwind >(
-                NP,
+                numPhase,
                 ip,
                 {seri[iconn][0], seri[iconn][1]},
                 {sesri[iconn][0], sesri[iconn][1]},
@@ -754,13 +754,13 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
           DEFINE_FLUID_FIELDS()
 
           //classical mass balance equation way of computing potential and finding upwinding direction
-          for( localIndex ip = 0; ip < NP; ++ip )
+          for( localIndex ip = 0; ip < numPhase; ++ip )
           {
 
-            IHUPhaseFlux::compute< NC, numFluxSupportPoints >(
-              NP,
+            IHUPhaseFlux::compute< numComp, numFluxSupportPoints >(
+              numPhase,
               ip,
-              capPressureFlag,                //hasCapPressure
+              capPressureFlag,                      //hasCapPressure
               {seri[iconn][0], seri[iconn][1]},
               {sesri[iconn][0], sesri[iconn][1]},
               {sei[iconn][0], sei[iconn][1]},

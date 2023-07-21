@@ -2156,12 +2156,11 @@ public:
 
 /*** IHU ***/
 
-class IHUPhaseFlux
+struct IHUPhaseFlux
 {
 
   using UPWIND_SCHEME = HybridUpwind;
 
-public:
   /**
    * @brief Form the Implicit Hybrid Upwind from pressure gradient and gravitational head
    * @tparam numComp number of components
@@ -2280,16 +2279,6 @@ public:
     real64 fractionalFlow{};
     real64 dFractionalFlow_dP[numFluxSupportPoints]{};
     real64 dFractionalFlow_dC[numFluxSupportPoints][numComp]{};
-
-    // reinit container
-    // phaseFlux = 0.;
-    // for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-    // {
-    //     dPhaseFlux_dP[ke] = 0.;
-    //     for( localIndex ic = 0; ic < numComp; ++ic )
-    //         dPhaseFlux_dC[ke][ic] = 0.;
-    // }
-
 
     // and the fractional flow for viscous part as \lambda_i^{up}/\sum_{NP}(\lambda_j^{up}) with up decided upon
     // the Upwind strategy
