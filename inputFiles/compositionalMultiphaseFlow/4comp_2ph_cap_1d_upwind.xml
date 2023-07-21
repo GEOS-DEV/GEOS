@@ -24,7 +24,7 @@
         xCoords="{ 0, 100 }"
         yCoords="{ 0, 1 }"
         zCoords="{ 0, 1 }"
-        nx="{ 1000 }"
+        nx="{ 100 }"
         ny="{ 1 }"
         nz="{ 1 }"
         cellBlockNames="{ block1 }"/>
@@ -61,7 +61,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
           name="fluidTPFA"
-          upwindSchemeName="ppu"
+          upwindScheme="IHU"
       />
     </FiniteVolume>
   </NumericalMethods>
@@ -185,7 +185,6 @@
                    values="{0.9, 0.9, .1}"
     />
   </Functions>
-  >
 
   <Outputs>
     <VTK
