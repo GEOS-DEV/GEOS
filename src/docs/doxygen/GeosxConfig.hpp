@@ -132,10 +132,10 @@
 #define Conduit_VERSION 0.8.2
 
 /// Version information for RAJA
-#define RAJA_VERSION 2022.10.5
+#define RAJA_VERSION 2022.3.0
 
 /// Version information for umpire
-#define umpire_VERSION 2022.10.0
+#define umpire_VERSION 2022.3.0
 
 /// Version information for chai
 /* #undef chai_VERSION */
@@ -165,7 +165,7 @@
 #define VTK_VERSION 9.2.6
 
 /// Version information for fmt
-#define fmt_VERSION 10.0.0
+#define fmt_VERSION 8.0.1
 
 /// Version information for python
 #define Python3_VERSION 3.10.8

@@ -34,7 +34,6 @@ def kgd_toughness_dominated_solutions(**kwargs):
 
     Ep = get_plane_strain_modulus(E, nu)
     t = np.squeeze(kwargs['hydraulicAperture Time'][:, 0])
-    t[0] = t[1]
     radTimes = t[-1:]
     hfsolns = HydrofractureSolutions.KGDSolutions()
     kgdFrac = hfsolns.Solutions(mu, Ep, Q0, KIC, t, radTimes, xSource)
@@ -59,7 +58,6 @@ def kgd_viscosity_dominated_solutions(**kwargs):
 
     Ep = get_plane_strain_modulus(E, nu)
     t = np.squeeze(kwargs['hydraulicAperture Time'][:, 0])
-    t[0] = t[1]
     radTimes = t[-1:]
     hfsolns = HydrofractureSolutions.KGDSolutions()
     kgdFrac = hfsolns.Solutions(mu, Ep, Q0, KIC, t, radTimes, xSource)
@@ -85,7 +83,6 @@ def penny_shaped_toughness_dominated_solutions(**kwargs):
     E, nu = get_youngs_modulus_poisson_ratio(bulk_modulus, shear_modulus)
     Ep = get_plane_strain_modulus(E, nu)
     t = np.squeeze(kwargs['hydraulicAperture Time'][:, 0])
-    t[0] = t[1]
     radTimes = t[-1:]
     hfsolns = HydrofractureSolutions.PennySolutions()
     pennyFrac = hfsolns.Solutions(mu, Ep, Q0, KIC, t, radTimes, xSource)
@@ -111,7 +108,6 @@ def penny_shaped_viscosity_dominated_solutions(**kwargs):
     E, nu = get_youngs_modulus_poisson_ratio(bulk_modulus, shear_modulus)
     Ep = get_plane_strain_modulus(E, nu)
     t = np.squeeze(kwargs['hydraulicAperture Time'][:, 0])
-    t[0] = t[1]
     radTimes = t[-1:]
     hfsolns = HydrofractureSolutions.PennySolutions()
     pennyFrac = hfsolns.Solutions(mu, Ep, Q0, KIC, t, radTimes, xSource)
@@ -136,7 +132,6 @@ def pkn_viscosity_dominated_solutions(**kwargs):
 
     E, nu = get_youngs_modulus_poisson_ratio(bulk_modulus, shear_modulus)
     t = np.squeeze(kwargs['hydraulicAperture Time'][:, 0])
-    t[0] = t[1]
     pknFrac = HydrofractureSolutions.PKN_viscosityStorageDominated(E, nu, KIC, mu, Q0, t, xSource)
     halfLength, inletAperture, inletPressure = pknFrac.analyticalSolution()
     return inletPressure, inletAperture

@@ -68,9 +68,8 @@
 
     <Box
       name="source"
-      xMin="{ -10.1, -10.1, -0.1 }"
-      xMax="{ 10.1, 10.1, 0.1 }"/>
-
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{  0.01,  10.01,  1.01 }"/>
 
     <Box
       name="core"
@@ -90,6 +89,24 @@
       endTime="10.0"
       forceDt="1.0"
       target="/Solvers/hydrofracture"/>
+
+    <PeriodicEvent
+      name="sourcePressureCollection"
+      target="/Tasks/sourcePressureCollection"/>
+
+    <PeriodicEvent
+      name="sourceHydraulicApertureCollection"
+      target="/Tasks/sourceHydraulicApertureCollection"/>
+
+    <PeriodicEvent
+      name="curveOutput"
+      timeFrequency="5.0"
+      targetExactTimestep="0"
+      target="/Outputs/curveOutput"/>
+
+    <PeriodicEvent
+      name="vtk"
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent 
       name="restarts"

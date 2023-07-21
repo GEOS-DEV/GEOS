@@ -90,6 +90,24 @@
       forceDt="1.0"
       target="/Solvers/hydrofracture"/>
 
+    <PeriodicEvent
+      name="sourcePressureCollection"
+      target="/Tasks/sourcePressureCollection"/>
+
+    <PeriodicEvent
+      name="sourceHydraulicApertureCollection"
+      target="/Tasks/sourceHydraulicApertureCollection"/>
+
+    <PeriodicEvent
+      name="curveOutput"
+      timeFrequency="5.0"
+      targetExactTimestep="0"
+      target="/Outputs/curveOutput"/>
+
+    <PeriodicEvent
+      name="vtk"
+      target="/Outputs/vtkOutput"/>
+
     <PeriodicEvent 
       name="restarts"
       timeFrequency="5.0"
