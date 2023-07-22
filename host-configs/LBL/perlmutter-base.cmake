@@ -65,11 +65,12 @@ set( CUDA_cusparse_LIBRARY "/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/math_libs/11.7
 set( CUDA_cublas_LIBRARY "/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/math_libs/11.7/lib64/libcublas.so" CACHE PATH "" FORCE )
 set( CUDA_curand_LIBRARY "/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/math_libs/11.7/lib64/libcurand.so" CACHE PATH "" FORCE )
 
-set( ENABLE_HYPRE_CUDA ON CACHE BOOL "" FORCE )
-if( ENABLE_HYPRE_CUDA )
+set(ENABLE_HYPRE ON CACHE BOOL "" FORCE )
+set( ENABLE_HYPRE_DEVICE "CUDA" CACHE STRING "" FORCE )
+if( ${ENABLE_HYPRE_DEVICE} STREQUAL "HIP" OR ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" )
     set(ENABLE_TRILINOS OFF CACHE BOOL "" FORCE )
 else()
-    set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE )    
+    set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE )
     set(GEOSX_LA_INTERFACE "Trilinos" CACHE STRING "" FORCE )
 endif()
 

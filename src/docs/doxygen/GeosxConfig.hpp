@@ -69,7 +69,7 @@
   /// Parsed hypre version information
   #define HYPRE_VERSION_MAJOR 2
   /// Parsed hypre version information
-  #define HYPRE_VERSION_MINOR 28
+  #define HYPRE_VERSION_MINOR 29
   /// Parsed hypre version information
   #define HYPRE_VERSION_PATCH 0
 #endif
@@ -156,7 +156,7 @@
 #define scotch_VERSION 6.0.9
 
 /// Version information for superlu_dist
-#define superlu_dist_VERSION 6.3.0
+#define superlu_dist_VERSION 8.1.2
 
 /// Version information for suitesparse
 #define suitesparse_VERSION 5.7.9
@@ -168,7 +168,7 @@
 #define fmt_VERSION 10.0.0
 
 /// Version information for python
-#define Python3_VERSION 3.10.8
+#define Python3_VERSION 3.6.15
 
 /// Version information for CUDAToolkit
 /* #undef CUDAToolkit_VERSION */

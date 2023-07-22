@@ -8,7 +8,8 @@ def cgThroughput( executable, inputFile, numRuns ):
   throughput = []
   for i in range(numRuns):
     #print( "run ", i, " of ", numRuns )
-    proc1 = subprocess.Popen(['lrun', '-N1', '-n1', '-g1', executable, '-i', inputFile], stdout=subprocess.PIPE)
+    #proc1 = subprocess.Popen(['lrun', '-N1', '-n1', '-g1', executable, '-i', inputFile], stdout=subprocess.PIPE)
+    proc1 = subprocess.Popen([executable, '-i', inputFile], stdout=subprocess.PIPE)
     proc2 = subprocess.Popen(['grep', 'MaxThroughput'], stdin=proc1.stdout,
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -26,7 +27,8 @@ def femKernelTime_nvprof( executable, inputFile, numRuns ):
   kernelTime = []
   for i in range(numRuns):
   #  print( "run ", i, " of ", numRuns )
-    proc1 = subprocess.Popen(['lrun', '-N1', '-n1', '-g1', 'nvprof', executable, '-i', inputFile], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    #proc1 = subprocess.Popen(['lrun', '-N1', '-n1', '-g1', 'nvprof', executable, '-i', inputFile], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc1 = subprocess.Popen(['nvprof', executable, '-i', inputFile], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     proc2 = subprocess.Popen(['grep', 'Small'], stdin=proc1.stderr, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     proc1.stdout.close() # Allow proc1 to receive a SIGPIPE if proc2 exits.
@@ -48,6 +50,22 @@ def femKernelTime_nvprof( executable, inputFile, numRuns ):
   return min(kernelTime)
 
 
+def femKernelTime_caliper( executable, inputFile, numRuns ):
+
+  kernelTime = []
+  for i in range(numRuns):
+    #proc1 = subprocess.Popen(['lrun', '-N1', '-n1', '-g1', 'nvprof', executable, '-i', inputFile, '-t runtime-report,max_column_width=400' ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc1 = subprocess.Popen([executable, '-i', inputFile, '-t', 'runtime-report'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc2 = subprocess.Popen(['grep', 'kernelLaunch'], stdin=proc1.stderr, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    #out, err = proc1.communicate()
+    out2, err2 = proc2.communicate()
+    value = float(out2.decode('utf-8').split()[1]) / 1000.0 ;
+
+    kernelTime.append( value )
+
+  return min(kernelTime)
+
 
 
 
@@ -61,17 +79,19 @@ numDofs = [
             1001*101*101*3,
             1001*501*101*3,
             1001*1001*101*3,
-            1001*1001*1001*3 
+            1001*1001*251*3 
             ]
 
 
 runList = [
-            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_111.xml', 10 ],
-            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_211.xml', 10],
-            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_221.xml', 10],
-            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_222.xml', 10],
-            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_322.xml', 10],
-            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_322plus.xml', 10 ]
+            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_111.xml', 5],
+            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_211.xml', 5],
+            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_221.xml', 5],
+            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_222.xml', 5],
+            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_322.xml', 5],
+            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_322plus.xml', 5 ],
+            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_332.xml', 5 ],
+            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_332plus.xml', 5 ]
           ]
 
 
@@ -87,7 +107,7 @@ kernelTimes = []
 print( "Kernel Throughput")
 print( "   #Dofs     MDof/s")
 for case in range( 0, len(runList) ):
-  kernelTimes.append( femKernelTime_nvprof( runList[case][0], runList[case][1], runList[case][2] ) )
+  kernelTimes.append( femKernelTime_caliper( runList[case][0], runList[case][1], runList[case][2] ) )
   print( "{0:10d} {1:6.2f}".format( numDofs[case], numDofs[case]/kernelTimes[case]/1.0e6 ) )
 
 

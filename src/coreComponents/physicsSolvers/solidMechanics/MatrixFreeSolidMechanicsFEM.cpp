@@ -121,14 +121,14 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
                                                                                          "" );
 
     finiteElement::
-      regionBasedKernelApplication< parallelDeviceAsyncPolicy< 32 >,
+      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                     constitutive::ElasticIsotropic,
                                     CellElementSubRegion >( mesh,
                                                             regionNames,
                                                             m_finiteElementName,
                                                             "solidMaterialNames",
                                                             kernelFactory );
-    parallelDeviceSync();
+    //parallelDeviceSync();
 
 #endif
   }
