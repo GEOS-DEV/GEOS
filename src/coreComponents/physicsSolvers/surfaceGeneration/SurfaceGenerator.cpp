@@ -2134,7 +2134,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
             //Face normal need to be updated here
             real64 fCenter[ 3 ];
             computationalGeometry::centroid_3DPolygon( faceToNodeMap[ iFace ],
-                                                       X,
+                                                       X.toViewConst(),
                                                        fCenter,
                                                        faceNormals[ iFace ] );
           }

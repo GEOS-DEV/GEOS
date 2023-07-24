@@ -130,8 +130,8 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const
   X = nodeManager.referencePosition().toViewConst();
 
-  arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
-  arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
+  /// get face to node map
+  ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
@@ -173,7 +173,6 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-    arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
     arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
 
     finiteElement::FiniteElementBase const &
@@ -191,13 +190,11 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
         ( elementSubRegion.size(),
         numNodesPerElem,
         numFacesPerElem,
+        facesToNodes,
         X,
         elemGhostRank,
         elemsToNodes,
         elemsToFaces,
-        elemCenter,
-        faceNormal,
-        faceCenter,
         sourceCoordinates,
         sourceIsAccessible,
         sourceNodeIds,
@@ -212,8 +209,6 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
         rickerOrder );
     } );
     elemsToFaces.freeOnDevice();
-    elemCenter.freeOnDevice();
-    faceNormal.freeOnDevice();
     sourceCoordinates.freeOnDevice();
     receiverCoordinates.freeOnDevice();
   } );

@@ -41,11 +41,12 @@ struct PrecomputeSourceAndReceiverKernel
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
    * @param[in] numNodesPerElem number of nodes per element
+   * @param[in] numFacesPerElem number of faces per element
+   * @param[in] facesToNodes map from faces to nodes
    * @param[in] X coordinates of the nodes
+   @ @param[in] elemGhostRank ranks of the ghost elements
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] elemsToFaces map from element to faces
-   * @param[in] facesToNodes map from faces to nodes
-   * @param[in] elemCenter coordinates of the element centers
    * @param[in] sourceCoordinates coordinates of the source terms
    * @param[out] sourceIsAccessible flag indicating whether the source is accessible or not
    * @param[out] sourceNodeIds indices of the nodes of the element where the source is located
@@ -60,13 +61,11 @@ struct PrecomputeSourceAndReceiverKernel
   launch( localIndex const size,
           localIndex const numNodesPerElem,
           localIndex const numFacesPerElem,
+          ArrayOfArraysView< localIndex const > const facesToNodes,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView1d< integer const > const elemGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
-          arrayView2d< real64 const > const & elemCenter,
-          arrayView2d< real64 const > const faceNormal,
-          arrayView2d< real64 const > const faceCenter,
           arrayView2d< real64 const > const sourceCoordinates,
           arrayView1d< localIndex > const sourceIsAccessible,
           arrayView2d< localIndex > const sourceNodeIds,
@@ -83,10 +82,13 @@ struct PrecomputeSourceAndReceiverKernel
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      real64 const center[3] = { elemCenter[k][0],
-                                 elemCenter[k][1],
-                                 elemCenter[k][2] };
-
+      real64 center[3];
+      LvArray::tensorOps::fill< 3 >( center, 0 );
+      for( localIndex a = 0; a < numNodesPerElem; ++a )
+      {
+        LvArray::tensorOps::add< 3 >( center, X[elemsToNodes[k][a]] );
+      }
+      LvArray::tensorOps::scale< 3 >( center, 1.0 / numNodesPerElem );
       // Step 1: locate the sources, and precompute the source term
 
       /// loop over all the source that haven't been found yet
@@ -98,11 +100,12 @@ struct PrecomputeSourceAndReceiverKernel
                                      sourceCoordinates[isrc][1],
                                      sourceCoordinates[isrc][2] };
 
+
           bool const sourceFound =
             WaveSolverUtils::locateSourceElement( numFacesPerElem,
                                                   center,
-                                                  faceNormal,
-                                                  faceCenter,
+                                                  facesToNodes,
+                                                  X,
                                                   elemsToFaces[k],
                                                   coords );
           if( sourceFound )
@@ -150,8 +153,8 @@ struct PrecomputeSourceAndReceiverKernel
           bool const receiverFound =
             WaveSolverUtils::locateSourceElement( numFacesPerElem,
                                                   center,
-                                                  faceNormal,
-                                                  faceCenter,
+                                                  facesToNodes,
+                                                  X,
                                                   elemsToFaces[k],
                                                   coords );
 

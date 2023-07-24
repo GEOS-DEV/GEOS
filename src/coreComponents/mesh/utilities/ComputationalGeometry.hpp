@@ -193,11 +193,11 @@ real64 ComputeSurfaceArea( arrayView2d< real64 const > const & points,
  * @details if area < - areaTolerance, this function will throw an error,
  *          and if (- areaTolerance <= area <= areaTolerance), the area is set to zero
  */
-template< typename CENTER_TYPE, typename NORMAL_TYPE >
+template< typename CENTER_TYPE, typename NORMAL_TYPE, typename REFERENCE_TYPE=real64 >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
-                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
+                           arrayView2d< REFERENCE_TYPE const, nodes::REFERENCE_POSITION_USD > const & points,
                            CENTER_TYPE && center,
                            NORMAL_TYPE && normal,
                            real64 const areaTolerance = 0.0 )
