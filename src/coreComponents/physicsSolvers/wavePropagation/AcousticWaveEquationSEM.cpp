@@ -138,16 +138,16 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
   arrayView2d< real64 > const sourceConstants = m_sourceConstants.toView();
   arrayView1d< localIndex > const sourceIsAccessible = m_sourceIsAccessible.toView();
-  sourceNodeIds.setValues< parallelHostPolicy >( -1 );
-  sourceConstants.setValues< parallelHostPolicy >( -1 );
+  sourceNodeIds.setValues< EXEC_POLICY >( -1 );
+  sourceConstants.setValues< EXEC_POLICY >( -1 );
   sourceIsAccessible.zero();
 
   arrayView2d< real64 const > const receiverCoordinates = m_receiverCoordinates.toViewConst();
   arrayView2d< localIndex > const receiverNodeIds = m_receiverNodeIds.toView();
   arrayView2d< real64 > const receiverConstants = m_receiverConstants.toView();
   arrayView1d< localIndex > const receiverIsLocal = m_receiverIsLocal.toView();
-  receiverNodeIds.setValues< parallelHostPolicy >( -1 );
-  receiverConstants.setValues< parallelHostPolicy >( -1 );
+  receiverNodeIds.setValues< EXEC_POLICY >( -1 );
+  receiverConstants.setValues< EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
 
   real32 const timeSourceFrequency = this->m_timeSourceFrequency;
@@ -187,7 +187,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
 
       acousticWaveEquationSEMKernels::
         PrecomputeSourceAndReceiverKernel::
-        launch< parallelHostPolicy, FE_TYPE >
+        launch< EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
         numNodesPerElem,
         numFacesPerElem,
@@ -211,6 +211,11 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
         timeSourceFrequency,
         rickerOrder );
     } );
+    elemsToFaces.freeOnDevice();
+    elemCenter.freeOnDevice();
+    faceNormal.freeOnDevice();
+    sourceCoordinates.freeOnDevice();
+    receiverCoordinates.freeOnDevice();
   } );
 }
 
@@ -259,7 +264,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     FaceManager & faceManager = mesh.getFaceManager();
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
-    arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
+    arrayView1d< integer const > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
     /// get face to node map
@@ -283,7 +288,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       /// Partial gradient if gradient as to be computed
       arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
       grad.zero();
-      arrayView1d< localIndex > const nodeToDampingIdx = nodeManager.getField< fields::wavesolverfields::NodeToDampingIndex >();
+      arrayView1d< localIndex const > const nodeToDampingIdx = nodeManager.getField< fields::wavesolverfields::NodeToDampingIndex >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -295,23 +300,27 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
         acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
-        kernelM.template launch< parallelHostPolicy, parallelHostAtomic >( elementSubRegion.size(),
-                                                                           X,
-                                                                           elemsToNodes,
-                                                                           velocity,
-                                                                           mass );
-
+        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                               X,
+                                                               elemsToNodes,
+                                                               velocity,
+                                                               mass );
         acousticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
-        kernelD.template launch< parallelHostPolicy, parallelHostAtomic >( faceManager.size(),
-                                                                           X,
-                                                                           facesToElements,
-                                                                           facesToNodes.toViewConst(),
-                                                                           facesDomainBoundaryIndicator,
-                                                                           freeSurfaceFaceIndicator,
-                                                                           velocity,
-                                                                           nodeToDampingIdx,
-                                                                           m_dampingVector );
+        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
+                                                               X,
+                                                               facesToElements,
+                                                               facesToNodes,
+                                                               facesDomainBoundaryIndicator,
+                                                               freeSurfaceFaceIndicator,
+                                                               velocity,
+                                                               nodeToDampingIdx,
+                                                               m_dampingVector );
+        facesToElements.freeOnDevice();
+        facesDomainBoundaryIndicator.freeOnDevice();
+        freeSurfaceFaceIndicator.freeOnDevice();
+        velocity.freeOnDevice();
+        nodeToDampingIdx.freeOnDevice();
       } );
     } );
   } );
