@@ -216,10 +216,10 @@ private:
   /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
   array2d< real64 > m_sourceConstantsx;
 
-  /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
+  /// Constant part of the source for the nodes listed in m_sourceNodeIds in y-direction
   array2d< real64 > m_sourceConstantsy;
 
-  /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
+  /// Constant part of the source for the nodes listed in m_sourceNodeIds in z-direction
   array2d< real64 > m_sourceConstantsz;
 
   /// Flag that indicates whether the source is accessible or not to the MPI rank

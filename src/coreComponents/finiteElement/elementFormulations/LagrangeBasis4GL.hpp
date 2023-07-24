@@ -271,7 +271,7 @@ public:
   }
 
   /**
-   * @brief The gradient of the basis function for support point 1 evaluated at
+   * @brief The gradient of the basis function for support point 2 evaluated at
    *   a point along the axes.
    * @param xi The coordinate at which to evaluate the gradient.
    * @return The gradient of basis function
