@@ -26,6 +26,7 @@
 #include "fieldSpecification/PerfectlyMatchedLayer.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "WaveSolverUtils.hpp"
 
 namespace geos
 {
@@ -115,9 +116,14 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setDescription( "Flag to apply PML" );
 
   registerWrapper( viewKeyStruct::useDASString(), &m_useDAS ).
-    setInputFlag( InputFlags::FALSE ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Flag to indicate if DAS type of data will be modeled" );
+    setDescription( "Flag to indicate if DAS data will be modeled, and which DAS type to use: 1 for strain integration, 2 for displacement difference" );
+
+  registerWrapper( viewKeyStruct::linearDASSamplesString(), &m_linearDASSamples ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1 ).
+    setDescription( "Number of sample points to be used for strain integration when integrating the strain for the DAS signal" );
 
   registerWrapper( viewKeyStruct::linearDASGeometryString(), &m_linearDASGeometry ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -205,14 +211,20 @@ void WaveSolverBase::postProcessInput()
 
   m_usePML = counter;
 
-  if( m_linearDASGeometry.size( 1 ) > 0 )
+  if( m_useDAS == 0 && m_linearDASGeometry.size( 1 ) > 0 )
   {
     m_useDAS = 1;
   }
 
-  if( m_useDAS )
+  if( m_useDAS == 2  )
+  {
+    m_linearDASSamples = 2;
+  }
+
+  if( m_useDAS > 0 )
   {
     GEOS_LOG_LEVEL_RANK_0( 1, "Modeling linear DAS data is activated" );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Linear DAS formulation: {}", m_useDAS == 1 ? "strain integration" : "displacement difference") );
 
     GEOS_ERROR_IF( m_linearDASGeometry.size( 1 ) != 3,
                    "Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
@@ -220,9 +232,8 @@ void WaveSolverBase::postProcessInput()
     GEOS_ERROR_IF( m_linearDASGeometry.size( 0 ) != m_receiverCoordinates.size( 0 ),
                    "Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
 
-    /// initialize DAS geometry
+    /// initialize DAS geometry by duplicating receiver locations
     initializeDAS();
-
   }
 
   GEOS_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
@@ -268,28 +279,35 @@ void WaveSolverBase::initializeDAS()
   /// double the number of receivers and modify their coordinates
   /// so to have two receivers on each side of each DAS channel
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  m_receiverCoordinates.resize( 2*numReceiversGlobal, 3 );
+  m_receiverCoordinates.resize( m_linearDASSamples*numReceiversGlobal, 3 );
 
   arrayView2d< real64 > const receiverCoordinates = m_receiverCoordinates.toView();
   arrayView2d< real64 const > const linearDASGeometry = m_linearDASGeometry.toViewConst();
+ 
+  array1d< real64 > const samplePointLocationsA( m_linearDASSamples );
+  arrayView1d< real64 > const samplePointLocations = samplePointLocationsA.toView();
+  if( m_linearDASSamples == 1 )
+  {
+    samplePointLocations[ 0 ] = 0;
+  }
+  else
+  {
+    for( integer i = 0; i < m_linearDASSamples; i++ )
+    {
+      samplePointLocations[ i ] = -0.5 + (real64) i / ( m_linearDASSamples - 1 ); 
+    }
+  }
 
   for( localIndex ircv = 0; ircv < numReceiversGlobal; ++ircv )
   {
-    /// updated xyz of receivers on the far end of a DAS channel
-    receiverCoordinates[numReceiversGlobal+ircv][0] = receiverCoordinates[ircv][0]
-                                                      + cos( linearDASGeometry[ircv][0] ) * cos( linearDASGeometry[ircv][1] ) * linearDASGeometry[ircv][2] / 2.0;
-    receiverCoordinates[numReceiversGlobal+ircv][1] = receiverCoordinates[ircv][1]
-                                                      + cos( linearDASGeometry[ircv][0] ) * sin( linearDASGeometry[ircv][1] ) * linearDASGeometry[ircv][2] / 2.0;
-    receiverCoordinates[numReceiversGlobal+ircv][2] = receiverCoordinates[ircv][2]
-                                                      + sin( linearDASGeometry[ircv][0] ) * linearDASGeometry[ircv][2] / 2.0;
-
-    /// updated xyz of receivers on the near end of a DAS channel
-    receiverCoordinates[ircv][0] = receiverCoordinates[ircv][0]
-                                   - cos( linearDASGeometry[ircv][0] ) * cos( linearDASGeometry[ircv][1] ) * linearDASGeometry[ircv][2] / 2.0;
-    receiverCoordinates[ircv][1] = receiverCoordinates[ircv][1]
-                                   - cos( linearDASGeometry[ircv][0] ) * sin( linearDASGeometry[ircv][1] ) * linearDASGeometry[ircv][2] / 2.0;
-    receiverCoordinates[ircv][2] = receiverCoordinates[ircv][2]
-                                   - sin( linearDASGeometry[ircv][0] ) * linearDASGeometry[ircv][2] / 2.0;
+    for( integer i = 0; i < m_linearDASSamples; i++ )
+    {
+      /// updated xyz of sample receiver along DAS
+      R1Tensor dasVector = WaveSolverUtils::computeDASVector( linearDASGeometry[ ircv ][ 0 ], linearDASGeometry[ ircv ][ 1 ] );
+      receiverCoordinates[ i*numReceiversGlobal + ircv ][ 0 ] = receiverCoordinates[ ircv ][ 0 ] + dasVector[ 0 ] * linearDASGeometry[ ircv ][ 2 ] * samplePointLocations[ i ];
+      receiverCoordinates[ i*numReceiversGlobal + ircv ][ 1 ] = receiverCoordinates[ ircv ][ 1 ] + dasVector[ 1 ] * linearDASGeometry[ ircv ][ 2 ] * samplePointLocations[ i ];
+      receiverCoordinates[ i*numReceiversGlobal + ircv ][ 2 ] = receiverCoordinates[ ircv ][ 2 ] + dasVector[ 2 ] * linearDASGeometry[ ircv ][ 2 ] * samplePointLocations[ i ];
+    }
   }
 }
 

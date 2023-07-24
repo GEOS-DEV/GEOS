@@ -105,6 +105,7 @@ public:
     static constexpr char const * lifoOnHostString() { return "lifoOnHost"; }
 
     static constexpr char const * useDASString() { return "useDAS"; }
+    static constexpr char const * linearDASSamplesString() { return "linearDASSamples"; }
     static constexpr char const * linearDASGeometryString() { return "linearDASGeometry"; }
 
     static constexpr char const * usePMLString() { return "usePML"; }
@@ -217,8 +218,11 @@ protected:
   /// Amount of seismoTrace that will be recorded for each receiver
   localIndex m_nsamplesSeismoTrace;
 
-  /// Flag to indicate if DAS type of data will be modeled
+  /// Flag to indicate which DAS type  will be modeled
   integer m_useDAS;
+
+  /// Number of points used for strain integration for dipole DAS
+  integer m_linearDASSamples;
 
   /// Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)
   array2d< real64 > m_linearDASGeometry;
