@@ -156,6 +156,8 @@ private:
                              localIndex const kf0,
                              array1d< real64 > & nodalArea ) const;
 
+  void computeNodalTractionDOFs( DomainPartition const & domain, DofManager & dofManager ) const;
+
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
   struct viewKeyStruct : ContactSolverBase::viewKeyStruct

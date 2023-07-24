@@ -314,6 +314,46 @@ void SolidMechanicsConformingFractures::computeNodalDisplacementJump( DomainPart
   } );
 }
 
+void SolidMechanicsConformingFractures::computeNodalTractionDOFs( DomainPartition const & domain,
+                                                   DofManager & dofManager ) const
+{
+  // compute the nodal traction DOFs
+  GEOS_MARK_FUNCTION;
+  localIndex offset(0);
+  localIndex multiplierCount(0);
+  
+  string const & tracDofKey = dofManager.getKey( contact::traction::key() );
+  string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & meshLevel,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    NodeManager const & nodeManager = meshLevel.getNodeManager();
+    arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+    arrayView1d< globalIndex const > const & tracDofNumber = nodeManager.getReference< globalIndex_array >( tracDofKey );
+    offset = dispDofNumber.size() * 3; 
+    
+    for( localIndex i = 0; i < tracDofNumber.size(); ++i )
+    {
+      if ( tracDofNumber[i] > 0 )
+      {
+        multiplierCount++;
+      }
+    }
+  } );
+
+  multiplierCount = multiplierCount / 2;
+  array1d< localIndex > nodalTractionIndexArray( multiplierCount );
+
+  // Fill the array
+  for( localIndex j = 0; j < multiplierCount; ++j )
+  {
+    nodalTractionIndexArray[j] = offset + 3 * j;
+  }
+  
+}
+
 void SolidMechanicsConformingFractures::setupDofs( DomainPartition const & domain,
                                                    DofManager & dofManager ) const
 {
@@ -339,6 +379,8 @@ void SolidMechanicsConformingFractures::setupDofs( DomainPartition const & domai
     meshTargets[std::make_pair( meshBodyName, meshLevel.getName())] = std::move( regions );
   } );
 
+  // computeNodalTractionDOFs( domain, dofManager ); 
+
   if (m_contactEnforcementMethod == ContactEnforcementMethod::Penalty)
   {
     dofManager.addField( solidMechanics::totalDisplacement::key(),
@@ -359,7 +401,7 @@ void SolidMechanicsConformingFractures::setupDofs( DomainPartition const & domai
                       meshTargets );
 
     dofManager.addField( contact::traction::key(),
-                       FieldLocation::Elem,
+                       FieldLocation::Node,
                        3,
                        meshTargets );
 
@@ -370,7 +412,7 @@ void SolidMechanicsConformingFractures::setupDofs( DomainPartition const & domai
 
     dofManager.addCoupling( contact::traction::key(),
                             contact::traction::key(),
-                            DofManager::Connector::Face,
+                            DofManager::Connector::Elem,
                             meshTargets );
 
     dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
