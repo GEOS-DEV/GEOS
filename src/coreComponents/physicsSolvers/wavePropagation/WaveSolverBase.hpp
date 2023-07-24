@@ -23,7 +23,7 @@
 
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-#include "common/lifoStorage.hpp"
+#include "common/LifoStorage.hpp"
 #if !defined( GEOS_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #endif
@@ -100,6 +100,7 @@ public:
     static constexpr char const * forwardString() { return "forward"; }
     static constexpr char const * saveFieldsString() { return "saveFields"; }
     static constexpr char const * shotIndexString() { return "shotIndex"; }
+    static constexpr char const * enableLifoString() { return "enableLifo"; }
     static constexpr char const * lifoSizeString() { return "lifoSize"; }
     static constexpr char const * lifoOnDeviceString() { return "lifoOnDevice"; }
     static constexpr char const * lifoOnHostString() { return "lifoOnHost"; }
@@ -255,17 +256,20 @@ protected:
   /// Flag that indicates whether the receiver is local or not to the MPI rank
   array1d< localIndex > m_receiverIsLocal;
 
-  /// lifo size
+  /// Flag to enable LIFO
+  localIndex m_enableLifo;
+
+  /// lifo size (should be the total number of buffer to save in LIFO)
   localIndex m_lifoSize;
 
-  /// Number of buffers to store on device by LIFO
+  /// Number of buffers to store on device by LIFO  (if negative, opposite of percentage of remaining memory)
   localIndex m_lifoOnDevice;
 
-  /// Number of buffers to store on host by LIFO
+  /// Number of buffers to store on host by LIFO  (if negative, opposite of percentage of remaining memory)
   localIndex m_lifoOnHost;
 
   /// LIFO to store p_dt2
-  std::unique_ptr< lifoStorage< real32 > > m_lifo;
+  std::unique_ptr< LifoStorage< real32, localIndex > > m_lifo;
 
   struct parametersPML
   {
