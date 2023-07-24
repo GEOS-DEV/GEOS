@@ -793,9 +793,9 @@ void ElasticWaveEquationSEM::postUnknownsUpdate( real64 const & time_n,
   arrayView1d< real32 > const ux_nm1 = nodeManager.getField< fields::Displacementx_nm1 >();
   arrayView1d< real32 > const uy_nm1 = nodeManager.getField< fields::Displacementy_nm1 >();
   arrayView1d< real32 > const uz_nm1 = nodeManager.getField< fields::Displacementz_nm1 >();
-  arrayView1d< real32 > const ux_n = nodeManager.getField< fields::Displacementx_n >();
-  arrayView1d< real32 > const uy_n = nodeManager.getField< fields::Displacementy_n >();
-  arrayView1d< real32 > const uz_n = nodeManager.getField< fields::Displacementz_n >();
+  arrayView1d< real32 > const ux_n   = nodeManager.getField< fields::Displacementx_n >();
+  arrayView1d< real32 > const uy_n   = nodeManager.getField< fields::Displacementy_n >();
+  arrayView1d< real32 > const uz_n   = nodeManager.getField< fields::Displacementz_n >();
   arrayView1d< real32 > const ux_np1 = nodeManager.getField< fields::Displacementx_np1 >();
   arrayView1d< real32 > const uy_np1 = nodeManager.getField< fields::Displacementy_np1 >();
   arrayView1d< real32 > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
@@ -886,15 +886,15 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
                                                                 arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
-    arrayView1d< real32 const > const ux_n = nodeManager.getField< fields::Displacementx_n >();
+    arrayView1d< real32 const > const ux_n   = nodeManager.getField< fields::Displacementx_n >();
     arrayView1d< real32 const > const ux_np1 = nodeManager.getField< fields::Displacementx_np1 >();
-    arrayView1d< real32 const > const uy_n = nodeManager.getField< fields::Displacementy_n >();
+    arrayView1d< real32 const > const uy_n   = nodeManager.getField< fields::Displacementy_n >();
     arrayView1d< real32 const > const uy_np1 = nodeManager.getField< fields::Displacementy_np1 >();
-    arrayView1d< real32 const > const uz_n = nodeManager.getField< fields::Displacementz_n >();
+    arrayView1d< real32 const > const uz_n   = nodeManager.getField< fields::Displacementz_n >();
     arrayView1d< real32 const > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
-    arrayView2d< real32 > const uXReceivers   = m_displacementXNp1AtReceivers.toView();
-    arrayView2d< real32 > const uYReceivers   = m_displacementYNp1AtReceivers.toView();
-    arrayView2d< real32 > const uZReceivers   = m_displacementZNp1AtReceivers.toView();
+    arrayView2d< real32 > const uXReceivers  = m_displacementXNp1AtReceivers.toView();
+    arrayView2d< real32 > const uYReceivers  = m_displacementYNp1AtReceivers.toView();
+    arrayView2d< real32 > const uZReceivers  = m_displacementZNp1AtReceivers.toView();
 
     computeAllSeismoTraces( time_n, 0, ux_np1, ux_n, uXReceivers );
     computeAllSeismoTraces( time_n, 0, uy_np1, uy_n, uYReceivers );

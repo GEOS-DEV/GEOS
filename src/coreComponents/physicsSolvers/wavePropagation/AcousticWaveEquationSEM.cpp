@@ -1118,7 +1118,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 {
   GEOS_MARK_FUNCTION;
 
-  std::cout << "\t[AcousticWaveEquationSEM::explicitStepInternal] " << &domain << std::endl;
+  std::cout << "\t[AcousticWaveEquationSEM::explicitStepInternal]" << std::endl;
 
   GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 

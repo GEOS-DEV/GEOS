@@ -67,9 +67,9 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
     arrayView1d< real32 > const ux_nm1 = nodeManager.getField< fields::Displacementx_nm1 >();
     arrayView1d< real32 > const uy_nm1 = nodeManager.getField< fields::Displacementy_nm1 >();
     arrayView1d< real32 > const uz_nm1 = nodeManager.getField< fields::Displacementz_nm1 >();
-    arrayView1d< real32 > const ux_n = nodeManager.getField< fields::Displacementx_n >();
-    arrayView1d< real32 > const uy_n = nodeManager.getField< fields::Displacementy_n >();
-    arrayView1d< real32 > const uz_n = nodeManager.getField< fields::Displacementz_n >();
+    arrayView1d< real32 > const ux_n   = nodeManager.getField< fields::Displacementx_n >();
+    arrayView1d< real32 > const uy_n   = nodeManager.getField< fields::Displacementy_n >();
+    arrayView1d< real32 > const uz_n   = nodeManager.getField< fields::Displacementz_n >();
     arrayView1d< real32 > const ux_np1 = nodeManager.getField< fields::Displacementx_np1 >();
     arrayView1d< real32 > const uy_np1 = nodeManager.getField< fields::Displacementy_np1 >();
     arrayView1d< real32 > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
@@ -81,7 +81,6 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
     forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
     {
       localIndex const a = interfaceNodesSet[n];
-      // debug
       // TODO: obtain basis functions
       ux_np1[a] += 1e-3 * (p_n[a] / rhof);
       uy_np1[a] += 1e-3 * (p_n[a] / rhof);
@@ -103,16 +102,16 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
     {
       localIndex const a = interfaceNodesSet[n];
       // TODO: obtain basis functions
-      p_np1[a] += (
-        1e-3 * rhof * (( ux_np1[a] - 2.0 * ux_n[a] + ux_nm1[a] ) / dt2) +
-        1e-3 * rhof * (( uy_np1[a] - 2.0 * uy_n[a] + uy_nm1[a] ) / dt2) +
-        1e-3 * rhof * (( uz_np1[a] - 2.0 * uz_n[a] + uz_nm1[a] ) / dt2)
-        ); // debug
+      p_np1[a] += rhof * (
+        1e-3 * (( ux_np1[a] - 2.0 * ux_n[a] + ux_nm1[a] )) +
+        1e-3 * (( uy_np1[a] - 2.0 * uy_n[a] + uy_nm1[a] )) +
+        1e-3 * (( uz_np1[a] - 2.0 * uz_n[a] + uz_nm1[a] ))
+        ) / dt2; // debug
       /*
          p_np1[a] += (
-         Asfx * (ρf * ( ux_np1[a] - 2.0 * ux_n[a] + ux_nm1[a] ) / dt2 ) +
-         Asfy * (ρf * ( uy_np1[a] - 2.0 * uy_n[a] + uy_nm1[a] ) / dt2 ) +
-         Asfz * (ρf * ( uz_np1[a] - 2.0 * uz_n[a] + uz_nm1[a] ) / dt2 )
+           Asfx * (ρf * ( ux_np1[a] - 2.0 * ux_n[a] + ux_nm1[a] ) / dt2 ) +
+           Asfy * (ρf * ( uy_np1[a] - 2.0 * uy_n[a] + uy_nm1[a] ) / dt2 ) +
+           Asfz * (ρf * ( uz_np1[a] - 2.0 * uz_n[a] + uz_nm1[a] ) / dt2 )
          );
        */
     } );
