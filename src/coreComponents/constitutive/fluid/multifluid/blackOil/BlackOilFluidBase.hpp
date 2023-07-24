@@ -207,10 +207,16 @@ protected:
   array1d< integer > m_hydrocarbonPhaseOrder;
 
   /// Table kernel wrappers to interpolate in the oil and gas (B vs p) tables
-  array1d< TableFunction::KernelWrapper > m_formationVolFactorTables;
+  array1d< TableFunction const * > m_formationVolFactorTables;
+
+  /// Table kernel wrappers of m_formationVolFactorTables
+  array1d< TableFunction::KernelWrapper > m_formationVolFactorTableKernels;
 
   /// Table kernel wrappers to interpolate in the oil and gas (\mu vs p) tables
-  array1d< TableFunction::KernelWrapper > m_viscosityTables;
+  array1d< TableFunction const * > m_viscosityTables;
+
+  /// Table kernel wrappers of m_viscosityTables
+  array1d< TableFunction::KernelWrapper > m_viscosityTableKernels;
 
 };
 

@@ -82,10 +82,10 @@ BlackOilFluidBase::BlackOilFluidBase( string const & name,
   registerWrapper( "hydrocarbonPhaseOrder", &m_hydrocarbonPhaseOrder )
     .setSizedFromParent( 0 )
     .setRestartFlags( RestartFlags::NO_WRITE );
-  registerWrapper( "formationVolFactorTableWrappers", &m_formationVolFactorTables )
+  registerWrapper( "formationVolFactorTableWrappers", &m_formationVolFactorTableKernels )
     .setSizedFromParent( 0 )
     .setRestartFlags( RestartFlags::NO_WRITE );
-  registerWrapper( "viscosityTableWrappers", &m_viscosityTables )
+  registerWrapper( "viscosityTableWrappers", &m_viscosityTableKernels )
     .setSizedFromParent( 0 )
     .setRestartFlags( RestartFlags::NO_WRITE );
 }
@@ -216,13 +216,20 @@ void BlackOilFluidBase::checkTablesParameters( real64 const pressure,
 {
   GEOS_UNUSED_VAR( temperature );
 
-  string const formationVolFactorName = catalogName() + " formation volume factor";
-  m_formationVolFactorTables->checkCoord( pressure, 0, "pressure",
-                                          formationVolFactorName.c_str() );
+  for( integer ip = 0; ip < numFluidPhases(); ++ip )
+  {
+    string const volFactorTableName = GEOS_FMT( "{} formation volume factor '{}'",
+                                                getCatalogName(),
+                                                m_formationVolFactorTableNames[ip] );
+    m_formationVolFactorTables[ip]->checkCoord( pressure, 0, "pressure",
+                                                volFactorTableName.c_str() );
 
-  string const m_viscosityTablesName = catalogName() + " viscosity";
-  m_viscosityTables->checkCoord( pressure, 0, "pressure",
-                                 m_viscosityTablesName.c_str() );
+    string const viscosityTableName = GEOS_FMT( "{} viscosity '{}'",
+                                                getCatalogName(),
+                                                m_viscosityTableNames[ip] );
+    m_viscosityTables[ip]->checkCoord( pressure, 0, "pressure",
+                                       viscosityTableName.c_str() );
+  }
 }
 
 void BlackOilFluidBase::createAllKernelWrappers()
@@ -246,8 +253,10 @@ void BlackOilFluidBase::createAllKernelWrappers()
       validateTable( viscosityTable, true );
 
       // create the table wrapper for the oil and (if present) the gas phases
-      m_formationVolFactorTables.emplace_back( fvfTable.createKernelWrapper() );
-      m_viscosityTables.emplace_back( viscosityTable.createKernelWrapper() );
+      m_formationVolFactorTables.emplace_back( &fvfTable );
+      m_viscosityTables.emplace_back( &viscosityTable );
+      m_formationVolFactorTableKernels.emplace_back( fvfTable.createKernelWrapper() );
+      m_viscosityTableKernels.emplace_back( viscosityTable.createKernelWrapper() );
     }
   }
 }
