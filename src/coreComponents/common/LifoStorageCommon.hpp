@@ -19,7 +19,6 @@
 #include <mutex>
 #include <condition_variable>
 #include <camp/camp.hpp>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <algorithm>
@@ -38,7 +37,7 @@
 #include "common/TimingMacros.hpp"
 #include "common/FixedSizeDequeWithMutexes.hpp"
 #include "common/MultiMutexesLock.hpp"
-
+#include "common/getAvailableMemory.hpp"
 
 namespace geos
 {
@@ -155,7 +154,7 @@ public:
   static int computeNumberOfBufferOnHost( int percent, size_t bufferSize, int maxNumberOfBuffers, int numberOfBuffersToStoreOnDevice )
   {
     GEOS_ERROR_IF( percent > 100, "Error, percentage of memory should be smallerer than -100, check lifoOnHost (should be greater that -100)" );
-    size_t free = sysconf( _SC_AVPHYS_PAGES ) * sysconf( _SC_PAGESIZE );
+    size_t free = getAvailableMemory();
     int numberOfBuffersToStoreOnHost = std::max( 1, std::min( ( int )( 0.01 * percent * free / bufferSize ), maxNumberOfBuffers - numberOfBuffersToStoreOnDevice ) );
     double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 ) / MpiWrapper::nodeCommSize();
     LIFO_LOG_RANK( " LIFO : available memory on host " << freeGB << " GB" );
