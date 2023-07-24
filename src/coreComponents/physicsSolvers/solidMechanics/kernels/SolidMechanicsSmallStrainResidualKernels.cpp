@@ -3,7 +3,6 @@
 #include "physicsSolvers/solidMechanics/kernels/SmallStrainResidual_impl.hpp"
 #include "policies.hpp"
 
-using SmallStrainResidualAsyncPolicy = geos::parallelDeviceAsyncPolicy< 32 >;
 
 
 #define INSTANTIATION( NAME ) \
