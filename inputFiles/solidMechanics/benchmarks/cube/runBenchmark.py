@@ -1,5 +1,6 @@
 import subprocess
 import re
+import os.path
 
 
 def cgThroughput( executable, inputFile, numRuns ):
@@ -50,6 +51,27 @@ def femKernelTime_nvprof( executable, inputFile, numRuns ):
   return min(kernelTime)
 
 
+def femKernelTime_nsys( executable, inputFile, numRuns ):
+  #print( "femKernelTime_nsys( ", executable, ", ", inputFile, ", ", numRuns, " )" )
+
+  kernelTime = []
+  for i in range(numRuns):
+    report_fname = "/tmp/" + os.path.basename(inputFile) + ".nsys-rep" # TODO make robust
+    profile_cmd = ['nsys', 'profile', '-o', report_fname, '-f', 'true', executable, '-i', inputFile]
+    stats_cmd = ['nsys', 'stats', '--force-overwrite', 'true', '--force-export', 'true', '--timeunit', 'nsec', '--report', 'cuda_gpu_kern_sum', '--format', 'column:nohdr:nolimit', report_fname]
+
+    subprocess.run(profile_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).check_returncode()
+    proc1 = subprocess.Popen(stats_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc2 = subprocess.Popen(['grep', 'SmallStrainResidual'], stdin=proc1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc1.stdout.close() # Allow proc1 to receive a SIGPIPE if proc2 exits.
+    out, err = proc2.communicate()
+    
+    value = float(out.decode('utf-8').split()[3]) * 1.0e-9
+    kernelTime.append( value )
+    
+  return min(kernelTime)
+
+
 def femKernelTime_caliper( executable, inputFile, numRuns ):
 
   kernelTime = []
@@ -69,47 +91,36 @@ def femKernelTime_caliper( executable, inputFile, numRuns ):
 
 
 
-
-
-numDofs = [ 
-            11*11*11*3,
-            101*11*11*3,
-            101*101*11*3,
-            101*101*101*3,
-            1001*101*101*3,
-            1001*501*101*3,
-            1001*1001*101*3,
-            1001*1001*251*3 
-            ]
-
+benchmark_dir = os.path.dirname(os.path.realpath(__file__))
 
 runList = [
-            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_111.xml', 5],
-            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_211.xml', 5],
-            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_221.xml', 5],
-            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_222.xml', 5],
-            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_322.xml', 5],
-            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_322plus.xml', 5 ],
-            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_332.xml', 5 ],
-            [ 'bin/geosx', '../inputFiles/solidMechanics/benchmarks/cube/cube_332plus.xml', 5 ]
+            ( 'bin/geosx', 'cube_111.xml',     5, 11*11*11*3 ),
+            ( 'bin/geosx', 'cube_211.xml',     5, 101*11*11*3 ),
+            ( 'bin/geosx', 'cube_221.xml',     5, 101*101*11*3 ),
+            ( 'bin/geosx', 'cube_222.xml',     5, 101*101*101*3 ),
+            ( 'bin/geosx', 'cube_322.xml',     5, 1001*101*101*3 ),
+            ( 'bin/geosx', 'cube_322plus.xml', 5, 1001*501*101*3 ),
+            ( 'bin/geosx', 'cube_332.xml',     5, 1001*1001*101*3 ),
+            ( 'bin/geosx', 'cube_332plus.xml', 5, 1001*1001*251*3 )
           ]
 
 
-cgThroughputs = []
 print( "CG Throughput")
 print( "   #Dofs     MDof/s")
-for case in range( 0, len(runList) ):
-  cgThroughputs.append( cgThroughput( runList[case][0], runList[case][1], runList[case][2] ) )
-  print( "{0:10d} {1:6.2f}".format( numDofs[case], cgThroughputs[case] ) )
+for executable, inputFile, numRuns, numDofs in runList:
+  throughput = cgThroughput( executable, os.path.join(benchmark_dir, inputFile), numRuns )
+  print( "{0:10d} {1:>8.2f}".format( numDofs, throughput ) )
 
 
-kernelTimes = []
-print( "Kernel Throughput")
+print( "Kernel Throughput (caliper)")
 print( "   #Dofs     MDof/s")
-for case in range( 0, len(runList) ):
-  kernelTimes.append( femKernelTime_caliper( runList[case][0], runList[case][1], runList[case][2] ) )
-  print( "{0:10d} {1:6.2f}".format( numDofs[case], numDofs[case]/kernelTimes[case]/1.0e6 ) )
+for executable, inputFile, numRuns, numDofs in runList:
+  kernelTime = femKernelTime_caliper( executable, os.path.join(benchmark_dir, inputFile), numRuns )
+  print( "{0:10d} {1:>8.2f}".format( numDofs, numDofs/kernelTime/1.0e6 ) )
 
 
-# for case in range(len(kernelTimes)):
-#   print( "{0:10d} {1:6.2f} {2:6.2f}".format( numDofs[case], numDofs[case]/kernelTimes[case]/1.0e6 ) )
+# print( "Kernel Throughput (nsys)")
+# print( "   #Dofs     MDof/s")
+# for executable, inputFile, numRuns, numDofs in runList:
+#   kernelTime = femKernelTime_nsys( executable, os.path.join(benchmark_dir, inputFile), numRuns )
+#   print( "{0:10d} {1:>8.2f}".format( numDofs, numDofs/kernelTime/1.0e6 ) )

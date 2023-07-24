@@ -13,7 +13,7 @@
         newtonMaxIter="8"/>
       <LinearSolverParameters
         directParallel="0"
-        logLevel="200"
+        logLevel="1"
         krylovTol="1.0e-200"
         krylovMaxIter="1000"/>
     </MatrixFreeSolidMechanicsFEM>
