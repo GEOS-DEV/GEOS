@@ -1230,12 +1230,9 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
           {
             if( freeSurfaceNodeIndicator[a] != 1 )
             {
-              if( m_timeSchemeOrder==2 )
-              {
-                K1_n[a] = (rhs[a] - stiffnessVector[a]-damping[a]*pprime_n[a]*0)/mass[a];
-                p_np1[a]=p_n[a] + dt*pprime_n[a] + 0.5*dt2*K1_n[a];
-                pprime_np1[a]= pprime_n[a] + dt*K1_n[a];
-              }
+              K1_n[a] = (rhs[a] - stiffnessVector[a]-damping[a]*pprime_n[a]*0)/mass[a];
+              p_np1[a]=p_n[a] + dt*pprime_n[a] + 0.5*dt2*K1_n[a];
+              pprime_np1[a]= pprime_n[a] + dt*K1_n[a];
             }
           } );
             break;
@@ -1267,6 +1264,9 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
             stiffnessVector[a] = 0.0;
           } );
             arrayView1d< real32 > const K3_n = nodeManager.getField< fields::Intermediary_pressure_3_n >();
+            arrayView1d< real32 const > const b = m_coefs_b;
+            arrayView1d< real32 const > const bbar = m_coefs_bbar;
+
             auto kernelFactoryk3 = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactoryrkn4k3( dt, m_coefs_c, m_coefs_abar );
 
             finiteElement::
@@ -1283,9 +1283,8 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
             if( freeSurfaceNodeIndicator[a] != 1 )
             {
               K3_n[a]= (rhs[a] - stiffnessVector[a])/mass[a];
-              p_np1[a]= p_n[a] + dt*pprime_n[a] + m_coefs_bbar[0]*dt2*K1_n[a] + m_coefs_bbar[1]*dt2*K2_n[a] + m_coefs_bbar[2]*dt2*K3_n[a];
-              pprime_np1[a]= pprime_n[a] + dt*m_coefs_b[0]*K1_n[a] +  dt*m_coefs_b[1]*K2_n[a] +  dt*m_coefs_b[2]*K3_n[a];
-
+              p_np1[a]= p_n[a] + dt*pprime_n[a] + bbar[0]*dt2*K1_n[a] + bbar[1]*dt2*K2_n[a] + bbar[2]*dt2*K3_n[a];
+              pprime_np1[a]= pprime_n[a] + dt*b[0]*K1_n[a] +  dt*b[1]*K2_n[a] +  dt*b[2]*K3_n[a];
             }
           } );
             break;
