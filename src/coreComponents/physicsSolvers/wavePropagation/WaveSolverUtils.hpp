@@ -299,17 +299,17 @@ struct WaveSolverUtils
  * @param[in] azimuth the azimuth of the linear DAS
  * @param[out] a unit vector pointing in the DAS direction
  */
-GEOS_HOST_DEVICE
-static
-R1Tensor computeDASVector( real64 const dip, real64 const azimuth )
-{
-  real64 cd = cos( dip );
-  real64 v1 = cd * cos( azimuth );
-  real64 v2 = cd * sin( azimuth );
-  real64 v3 = sin( dip );
-  R1Tensor dasVector = { v1, v2, v3 };
-  return dasVector;
-} 
+  GEOS_HOST_DEVICE
+  static
+  R1Tensor computeDASVector( real64 const dip, real64 const azimuth )
+  {
+    real64 cd = cos( dip );
+    real64 v1 = cd * cos( azimuth );
+    real64 v2 = cd * sin( azimuth );
+    real64 v3 = sin( dip );
+    R1Tensor dasVector = { v1, v2, v3 };
+    return dasVector;
+  }
 
 
 

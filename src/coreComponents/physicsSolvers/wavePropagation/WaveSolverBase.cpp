@@ -216,7 +216,7 @@ void WaveSolverBase::postProcessInput()
     m_useDAS = 1;
   }
 
-  if( m_useDAS == 2  )
+  if( m_useDAS == 2 )
   {
     m_linearDASSamples = 2;
   }
@@ -224,7 +224,7 @@ void WaveSolverBase::postProcessInput()
   if( m_useDAS > 0 )
   {
     GEOS_LOG_LEVEL_RANK_0( 1, "Modeling linear DAS data is activated" );
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Linear DAS formulation: {}", m_useDAS == 1 ? "strain integration" : "displacement difference") );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Linear DAS formulation: {}", m_useDAS == 1 ? "strain integration" : "displacement difference" ) );
 
     GEOS_ERROR_IF( m_linearDASGeometry.size( 1 ) != 3,
                    "Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
@@ -283,7 +283,7 @@ void WaveSolverBase::initializeDAS()
 
   arrayView2d< real64 > const receiverCoordinates = m_receiverCoordinates.toView();
   arrayView2d< real64 const > const linearDASGeometry = m_linearDASGeometry.toViewConst();
- 
+
   array1d< real64 > const samplePointLocationsA( m_linearDASSamples );
   arrayView1d< real64 > const samplePointLocations = samplePointLocationsA.toView();
   if( m_linearDASSamples == 1 )
@@ -294,7 +294,7 @@ void WaveSolverBase::initializeDAS()
   {
     for( integer i = 0; i < m_linearDASSamples; i++ )
     {
-      samplePointLocations[ i ] = -0.5 + (real64) i / ( m_linearDASSamples - 1 ); 
+      samplePointLocations[ i ] = -0.5 + (real64) i / ( m_linearDASSamples - 1 );
     }
   }
 

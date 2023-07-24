@@ -104,7 +104,8 @@ public:
 
   /**
    * TODO: move implementation into WaveSolverBase once 'm_receiverIsLocal' is also moved
-   * @brief Compute DAS data as a difference of the field at two points, from the appropriate three-component receiver pairs, when the DAS type is set to 2
+   * @brief Compute DAS data as a difference of the field at two points, from the appropriate three-component receiver pairs, when the DAS
+   *type is set to 2
    * @param xCompRcv the array holding the x-component of pairs of receivers
    * @param yCompRcv the array holding the y-component of pairs of receivers
    * @param zCompRcv the array holding the z-component of pairs of receivers

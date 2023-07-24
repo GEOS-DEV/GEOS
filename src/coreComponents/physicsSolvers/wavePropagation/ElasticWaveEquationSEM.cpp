@@ -392,7 +392,7 @@ void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
   localIndex const nsamplesSeismoTrace = m_nsamplesSeismoTrace;
   localIndex const nlinearDASSamples = m_linearDASSamples;
   localIndex const useDAS = m_useDAS;
- 
+
   array1d< real64 > const samplePointIntegrationConstantsA( m_linearDASSamples );
   /// for displacement difference DAS (m_useDAS==2), take the difference of the pair of geophones
   if( m_useDAS == 2 )
@@ -450,8 +450,8 @@ void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
           {
             // store strain data in the z-component of the receiver (copied to x after resize)
             das += ( dasVector[ 0 ] * xCompRcv[ iTimeSample ][ iSample*numReceiversGlobal+ircv ]
-                   + dasVector[ 1 ] * yCompRcv[ iTimeSample ][ iSample*numReceiversGlobal+ircv ]
-                   + dasVector[ 2 ] * zCompRcv[ iTimeSample ][ iSample*numReceiversGlobal+ircv ] ) * samplePointIntegrationConstants[ iSample ];
+                     + dasVector[ 1 ] * yCompRcv[ iTimeSample ][ iSample*numReceiversGlobal+ircv ]
+                     + dasVector[ 2 ] * zCompRcv[ iTimeSample ][ iSample*numReceiversGlobal+ircv ] ) * samplePointIntegrationConstants[ iSample ];
             if( useDAS == 2 )
             {
               zCompRcv[ iTimeSample ][ ircv ] /= linearDASGeometry[ ircv ][ 2 ];

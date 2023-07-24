@@ -51,9 +51,10 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[in] dt time-step
    * @param[in] timeSourceFrequency Peak frequency of the source
    * @param[in] sourceForce force vector of the source
-   * @param[in] sourceMoment moment (symmetric rank-2 tensor) of the source 
+   * @param[in] sourceMoment moment (symmetric rank-2 tensor) of the source
    * @param[in] useDAS parameter that determines which kind of receiver needs to be modeled (DAS or not, and which type)
-   * @param[in] linearDASSamples parameter that gives the number of integration points to be used when computing the DAS signal via strain integration
+   * @param[in] linearDASSamples parameter that gives the number of integration points to be used when computing the DAS signal via strain
+   *integration
    * @param[in] linearDASGeometry geometry of the linear DAS receivers, if needed
    * @param[in] rickerOrder Order of the Ricker wavelet
    * @param[out] sourceIsAccessible flag indicating whether the source is accessible or not
@@ -222,14 +223,14 @@ struct PrecomputeSourceAndReceiverKernel
             real64 gradN[FE_TYPE::numNodes][3];
             FE_TYPE::calcN( coordsOnRefElem, N );
             FE_TYPE::calcGradN( coordsOnRefElem, xLocal, gradN );
-            
+
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
               if( useDAS == 1 )
               {
                 R1Tensor receiverVector = WaveSolverUtils::computeDASVector( linearDASGeometry[ircv][0], linearDASGeometry[ircv][1] );
                 receiverNodeIds[ircv][a] = elemsToNodes[k][a];
-                receiverConstants[ircv][a] = gradN[a][0] * receiverVector[0] + gradN[a][1] * receiverVector[1] + gradN[a][2] * receiverVector[2]; 
+                receiverConstants[ircv][a] = gradN[a][0] * receiverVector[0] + gradN[a][1] * receiverVector[1] + gradN[a][2] * receiverVector[2];
               }
               else
               {
