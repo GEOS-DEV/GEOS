@@ -1158,10 +1158,10 @@ computeFractionalFlowCapillary( localIndex const numPhase,
  * @tparam T the concerned physics (Viscou,Gravity or Capillary)
  * @tparam numFluxSupportPoints number of point in the stencil
  */
-template< localIndex numComp, localIndex numFluxSupportPoints >
 struct computePotentialViscous
 {
 
+  template< localIndex numComp, localIndex numFluxSupportPoints >
   GEOS_HOST_DEVICE
   static void compute( localIndex const GEOS_UNUSED_PARAM( numPhase ),
                        localIndex const GEOS_UNUSED_PARAM( ip ),
@@ -1197,13 +1197,13 @@ struct computePotentialViscous
 
 /*! @copydoc computePotential
  */
-template< localIndex numComp, localIndex numFluxSupportPoints >
 struct computePotentialGravity
 {
   /*! @copydoc computePotential::compute
    *
    * @brief specialization for gravitational driving forces which only relies on total flux
    */
+  template< localIndex numComp, localIndex numFluxSupportPoints >
   GEOS_HOST_DEVICE
   static void compute( localIndex const GEOS_UNUSED_PARAM( numPhase ),
                        localIndex const ip,
@@ -1298,13 +1298,13 @@ struct computePotentialGravity
 
 /*! @copydoc computePotential
  */
-template< localIndex numComp, localIndex numFluxSupportPoints >
 struct computePotentialCapillary
 {
   /*! @copydoc computePotential::compute
    *
    * @brief specialization for capillary driving forces which only relies on total flux
    */
+  template< localIndex numComp, localIndex numFluxSupportPoints >
   GEOS_HOST_DEVICE
   static void compute( localIndex const numPhase,
                        localIndex const ip,
@@ -1401,7 +1401,7 @@ static void computePotentialFluxesGravity( localIndex const numPhase,
   real64 dProp_dC[numComp]{};
 
   //
-  UpwindHelpers::computePotentialGravity< numComp, numFluxSupportPoints >::compute( numPhase,
+  UpwindHelpers::computePotentialGravity::compute< numComp, numFluxSupportPoints >( numPhase,
                                                                                     ip,
                                                                                     seri,
                                                                                     sesri,
@@ -1459,7 +1459,7 @@ static void computePotentialFluxesGravity( localIndex const numPhase,
       real64 dPropOther_dC[numComp]{};
 
       //Fetch pot for phase j!=i defined as \rho_j g dz/dx
-      UpwindHelpers::computePotentialGravity< numComp, numFluxSupportPoints >::compute( numPhase,
+      UpwindHelpers::computePotentialGravity::compute< numComp, numFluxSupportPoints >( numPhase,
                                                                                         jp,
                                                                                         seri,
                                                                                         sesri,
@@ -1581,7 +1581,7 @@ static void computePotentialFluxesCapillary( localIndex const numPhase,
   real64 dPot_dC[numFluxSupportPoints][numComp]{};
   real64 dProp_dC[numComp]{};
 
-  UpwindHelpers::computePotentialCapillary< numComp, numFluxSupportPoints >::compute( numPhase,
+  UpwindHelpers::computePotentialCapillary::compute< numComp, numFluxSupportPoints >( numPhase,
                                                                                       ip,
                                                                                       seri,
                                                                                       sesri,
@@ -1639,7 +1639,7 @@ static void computePotentialFluxesCapillary( localIndex const numPhase,
       real64 dPropOther_dC[numComp]{};
 
       //Fetch pot for phase j!=i defined as \rho_j g dz/dx
-      UpwindHelpers::computePotentialCapillary< numComp, numFluxSupportPoints >::compute( numPhase,
+      UpwindHelpers::computePotentialCapillary::compute< numComp, numFluxSupportPoints >( numPhase,
                                                                                           jp,
                                                                                           seri,
                                                                                           sesri,
@@ -2007,7 +2007,7 @@ public:
     real64 dProp_dC[numComp]{};
 
 
-    UpwindHelpers::computePotentialViscous< numComp, numFluxSupportPoints >::compute(
+    UpwindHelpers::computePotentialViscous::compute< numComp, numFluxSupportPoints >(
       numPhase,
       ip,
       seri,
@@ -2066,7 +2066,7 @@ public:
                                                                             real64 (& dPotential_dC_)[numFluxSupportPoints][numComp],
                                                                             real64 (& dProp_dC)[numComp] ) {
 
-      UpwindHelpers::computePotentialGravity< numComp, numFluxSupportPoints >::compute(
+      UpwindHelpers::computePotentialGravity::compute< numComp, numFluxSupportPoints >(
         numPhase,
         ipp,
         seri,
@@ -2129,7 +2129,7 @@ public:
                                                                             real64 (& dPotential_dC_)[numFluxSupportPoints][numComp],
                                                                             real64 (& dProp_dC)[numComp] ) {
 
-      UpwindHelpers::computePotentialCapillary< numComp, numFluxSupportPoints >::compute(
+      UpwindHelpers::computePotentialCapillary::compute< numComp, numFluxSupportPoints >(
         numPhase,
         ipp,
         seri,

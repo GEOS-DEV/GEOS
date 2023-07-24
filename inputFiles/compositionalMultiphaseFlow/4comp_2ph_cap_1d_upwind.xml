@@ -61,7 +61,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
           name="fluidTPFA"
-          upwindScheme="IHU"
+          upwindingScheme="IHU"
       />
     </FiniteVolume>
   </NumericalMethods>
