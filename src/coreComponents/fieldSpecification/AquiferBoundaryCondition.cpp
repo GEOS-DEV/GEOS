@@ -262,13 +262,13 @@ void AquiferBoundaryCondition::setupDefaultPressureInfluenceFunction()
 
 void AquiferBoundaryCondition::setGravityVector( R1Tensor const & gravityVector )
 {
-  GEOS_LOG_RANK_0_IF( ( !isZero( gravityVector[0] ) || !isZero( gravityVector[1] ) ),
-                      catalogName() << " " << getName() <<
-                      "The gravity vector specified in this simulation (" << gravityVector[0] << " " << gravityVector[1] << " " << gravityVector[2] <<
-                      ") is not aligned with the z-axis. \n" <<
-                      "But, the pressure difference between reservoir and aquifer uses " << viewKeyStruct::aquiferElevationString() <<
-                      " and assumes that the gravity vector is aligned with the z-axis. \n" <<
-                      "As a result, aquifer calculations may be inacurrate." );
+  logger.rank0LogIf( ( !isZero( gravityVector[0] ) || !isZero( gravityVector[1] ) ),
+                     catalogName(), " ", getName(),
+                     "The gravity vector specified in this simulation (", gravityVector[0], " ", gravityVector[1], " ", gravityVector[2],
+                     ") is not aligned with the z-axis. \n",
+                     "But, the pressure difference between reservoir and aquifer uses ", viewKeyStruct::aquiferElevationString(),
+                     " and assumes that the gravity vector is aligned with the z-axis. \n",
+                     "As a result, aquifer calculations may be inacurrate." );
 
   m_gravityVector = gravityVector;
 }

@@ -192,7 +192,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
             if( added )
             {
-              GEOS_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
+              GEOS_LOG_LEVEL_RANK_0( 2, "Element ", cellIndex, " is fractured" );
 
               // Add the information to the CellElementSubRegion
               subRegion.addFracturedElement( cellIndex, localNumberOfSurfaceElems );
@@ -354,7 +354,7 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
     totalNumberOfSurfaceElements += numberOfSurfaceElemsPerRank[rank];
   }
 
-  GEOS_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: " << totalNumberOfSurfaceElements );
+  GEOS_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: ", totalNumberOfSurfaceElements );
 
   arrayView1d< globalIndex > const & elemLocalToGlobal = embeddedSurfaceSubRegion.localToGlobalMap();
 

@@ -31,8 +31,8 @@ int MPI_COMM_GEOSX = 0;
 
 void printTypeSummary()
 {
-  logger.rank0Log( "real64 is alias of " , LvArray::system::demangle( typeid(real64).name() ) );
-  logger.rank0Log( "localIndex is alias of " , LvArray::system::demangle( typeid(localIndex).name() ) );
+  logger.rank0Log( "real64 is alias of ", LvArray::system::demangle( typeid(real64).name() ) );
+  logger.rank0Log( "localIndex is alias of ", LvArray::system::demangle( typeid(localIndex).name() ) );
   logger.rank0Log( "globalIndex is alias of ", LvArray::system::demangle( typeid(globalIndex).name()) );
 }
 

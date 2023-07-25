@@ -95,15 +95,15 @@ void VTKOutput::postProcessInput()
                            catalogName(), getName(), onlyPlotSpecifiedFieldNamesString, fieldNamesString ),
                  InputError );
 
-  GEOS_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames != 0 ),
-                      GEOS_FMT(
-                        "{} `{}`: found {} fields to plot in `{}`. These fields will be output regardless of the `plotLevel` specified by the user. No other field will be output.",
-                        catalogName(), getName(), std::to_string( m_fieldNames.size() ), fieldNamesString ) );
+  logger.rank0LogIf( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames != 0 ),
+                     GEOS_FMT(
+                       "{} `{}`: found {} fields to plot in `{}`. These fields will be output regardless of the `plotLevel` specified by the user. No other field will be output.",
+                       catalogName(), getName(), std::to_string( m_fieldNames.size() ), fieldNamesString ) );
 
-  GEOS_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames == 0 ),
-                      GEOS_FMT(
-                        "{} `{}`: found {} fields to plot in `{}`, in addition to all fields with `plotLevel` smaller or equal to {}.",
-                        catalogName(), getName(), std::to_string( m_fieldNames.size() ), fieldNamesString, m_plotLevel ) );
+  logger.rank0LogIf( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames == 0 ),
+                     GEOS_FMT(
+                       "{} `{}`: found {} fields to plot in `{}`, in addition to all fields with `plotLevel` smaller or equal to {}.",
+                       catalogName(), getName(), std::to_string( m_fieldNames.size() ), fieldNamesString, m_plotLevel ) );
 }
 
 

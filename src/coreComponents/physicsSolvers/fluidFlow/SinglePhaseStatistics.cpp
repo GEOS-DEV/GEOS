@@ -184,14 +184,14 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
     regionStatistics.averagePressure = MpiWrapper::sum( regionStatistics.averagePressure );
     regionStatistics.averagePressure /= regionStatistics.totalUncompactedPoreVolume;
 
-    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                        << ": Pressure (min, average, max): "
-                                        << regionStatistics.minPressure << ", " << regionStatistics.averagePressure << ", " << regionStatistics.maxPressure << " Pa" );
-    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                        << ": Delta pressure (min, max): "
-                                        << regionStatistics.minDeltaPressure << ", " << regionStatistics.maxDeltaPressure << " Pa" );
-    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                        << ": Total dynamic pore volume: " << regionStatistics.totalPoreVolume << " rm^3" );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName(), ", ", regionNames[i],
+                           ": Pressure (min, average, max): ",
+                           regionStatistics.minPressure, ", ", regionStatistics.averagePressure, ", ", regionStatistics.maxPressure, " Pa" );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName(), ", ", regionNames[i],
+                           ": Delta pressure (min, max): ",
+                           regionStatistics.minDeltaPressure, ", ", regionStatistics.maxDeltaPressure, " Pa" );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName(), ", ", regionNames[i],
+                           ": Total dynamic pore volume: ", regionStatistics.totalPoreVolume, " rm^3" );
 
   }
 }

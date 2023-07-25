@@ -541,7 +541,7 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
   if( logLevel >= 2 )
   {
     logger.rankLog( GEOS_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
-                             wellControlsName, currentBHP ) );
+                              wellControlsName, currentBHP ) );
   }
 
 }
@@ -665,7 +665,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
         if( logLevel >= 2 )
         {
           logger.rankLog( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa and T_surface = {} K",
-                                   wellControlsName, surfacePres, surfaceTemp ) );
+                                    wellControlsName, surfacePres, surfaceTemp ) );
 #ifdef GEOS_USE_HIP
           GEOS_UNUSED_VAR( wellControlsName );
 #endif
@@ -704,9 +704,9 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
       if( logLevel >= 2 && useSurfaceConditions )
       {
         logger.rankLog( GEOS_FMT( "{}: The total fluid density at surface conditions is {} {}/sm3. \n"
-                                 "The total rate is {} {}/s, which corresponds to a total surface volumetric rate of {} sm3/s",
-                                 wellControlsName, totalDens[iwelemRef][0], massUnit,
-                                 currentTotalRate, massUnit, currentTotalVolRate ) );
+                                  "The total rate is {} {}/s, which corresponds to a total surface volumetric rate of {} sm3/s",
+                                  wellControlsName, totalDens[iwelemRef][0], massUnit,
+                                  currentTotalRate, massUnit, currentTotalVolRate ) );
       }
 
       // Step 3: update the phase volume rate
@@ -743,8 +743,8 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
         if( logLevel >= 2 && useSurfaceConditions )
         {
           logger.rankLog( GEOS_FMT( "{}: The density of phase {} at surface conditions is {} {}/sm3. \n"
-                                   "The phase surface volumetric rate is {} sm3/s",
-                                   wellControlsName, ip, phaseDens[iwelemRef][0][ip], massUnit, currentPhaseVolRate[ip] ) );
+                                    "The phase surface volumetric rate is {} sm3/s",
+                                    wellControlsName, ip, phaseDens[iwelemRef][0][ip], massUnit, currentPhaseVolRate[ip] ) );
         }
       }
     } );
@@ -1268,8 +1268,8 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition const & domain
 
       if( !subRegionSolutionCheck )
       {
-        GEOS_LOG_LEVEL( 1, "Solution is invalid in well " << subRegion.getName()
-                                                          << " (either a negative pressure or a negative component density was found)." );
+        GEOS_LOG_LEVEL( 1, "Solution is invalid in well ", subRegion.getName(),
+                        " (either a negative pressure or a negative component density was found)." );
       }
 
       localCheck = std::min( localCheck, subRegionSolutionCheck );
@@ -1595,21 +1595,21 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
           if( wellControls.isProducer() )
           {
             wellControls.switchToPhaseRateControl( wellControls.getTargetPhaseRate( timeAtEndOfStep ) );
-            GEOS_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
-                                                          << " from BHP constraint to phase volumetric rate constraint" );
+            GEOS_LOG_LEVEL( 1, "Control switch for well ", subRegion.getName(),
+                            " from BHP constraint to phase volumetric rate constraint" );
           }
           else
           {
             wellControls.switchToTotalRateControl( wellControls.getTargetTotalRate( timeAtEndOfStep ) );
-            GEOS_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
-                                                          << " from BHP constraint to total volumetric rate constraint" );
+            GEOS_LOG_LEVEL( 1, "Control switch for well ", subRegion.getName(),
+                            " from BHP constraint to total volumetric rate constraint" );
           }
         }
         else
         {
           wellControls.switchToBHPControl( wellControls.getTargetBHP( timeAtEndOfStep ) );
-          GEOS_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
-                                                        << " from rate constraint to BHP constraint" );
+          GEOS_LOG_LEVEL( 1, "Control switch for well ", subRegion.getName(),
+                          " from rate constraint to BHP constraint" );
         }
       }
     } );
@@ -1834,13 +1834,13 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
 
         real64 const currentTotalRate = connRate[iwelemRef];
         logger.stdLog( GEOS_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
-                            wellControlsName, currentBHP ) );
+                                 wellControlsName, currentBHP ) );
         logger.stdLog( GEOS_FMT( "{}: Total rate: {} {}/s; total {} volumetric rate: {} {}m3/s",
-                            wellControlsName, currentTotalRate, massUnit, conditionKey, currentTotalVolRate, unitKey ) );
+                                 wellControlsName, currentTotalRate, massUnit, conditionKey, currentTotalVolRate, unitKey ) );
         for( integer ip = 0; ip < numPhase; ++ip )
         {
           logger.stdLog( GEOS_FMT( "{}: Phase {} {} volumetric rate: {} {}m3/s",
-                              wellControlsName, ip, conditionKey, currentPhaseVolRate[ip], unitKey ) );
+                                   wellControlsName, ip, conditionKey, currentPhaseVolRate[ip], unitKey ) );
         }
 
       } );

@@ -1692,9 +1692,9 @@ void printMeshStatistics( vtkDataSet & mesh,
 
     int const widthLocal = static_cast< int >( std::log10( maxLocalElems ) + 1 );
     logger.stdLog( GEOS_FMT( "Load balancing: {1:>{0}} {2:>{0}} {3:>{0}}\n"
-                        "(element/rank): {4:>{0}} {5:>{0}} {6:>{0}}",
-                        widthLocal, "min", "avg", "max",
-                        minLocalElems, avgLocalElems, maxLocalElems ) );
+                             "(element/rank): {4:>{0}} {5:>{0}} {6:>{0}}",
+                             widthLocal, "min", "avg", "max",
+                             minLocalElems, avgLocalElems, maxLocalElems ) );
   }
 }
 
@@ -1780,7 +1780,7 @@ void importNodesets( integer const logLevel,
 
   for( int i=0; i < nodesetNames.size(); ++i )
   {
-    GEOS_LOG_RANK_0_IF( logLevel >= 2, "    " + nodesetNames[i] );
+    logger.rank0LogIf( logLevel >= 2, "    ", nodesetNames[i] );
 
     vtkAbstractArray * const curArray = mesh.GetPointData()->GetAbstractArray( nodesetNames[i].c_str() );
     GEOS_THROW_IF( curArray == nullptr,
@@ -1883,7 +1883,7 @@ void writeCells( integer const logLevel,
       std::vector< vtkIdType > const & cellIds = regionCells.second;
 
       string const cellBlockName = vtk::buildCellBlockName( elemType, regionId );
-      GEOS_LOG_RANK_0_IF( logLevel >= 1, "Importing cell block " << cellBlockName );
+      logger.rank0LogIf( logLevel >= 1, "Importing cell block ", cellBlockName );
 
       // Create and resize the cell block.
       CellBlock & cellBlock = cellBlockManager.registerCellBlock( cellBlockName );
@@ -1911,7 +1911,7 @@ void writeSurfaces( integer const logLevel,
     int const surfaceId = surfaceCells.first;
     std::vector< vtkIdType > const & cellIds = surfaceCells.second;
     string const surfaceName = std::to_string( surfaceId );
-    GEOS_LOG_RANK_0_IF( logLevel >= 1, "Importing surface " << surfaceName );
+    logger.rank0LogIf( logLevel >= 1, "Importing surface ", surfaceName );
 
     // Get or create all surfaces (even those which are empty in this rank)
     SortedArray< localIndex > & curNodeSet = nodeSets[ surfaceName ];

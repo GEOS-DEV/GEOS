@@ -37,65 +37,65 @@
  * @brief Log a message on screen.
  * @details The expression to log must evaluate something that can be stream inserted.
  */
-#define GEOS_LOG( ... ) LVARRAY_LOG( __VA_ARGS__ )
+//deprecated// #define GEOS_LOG( ... ) LVARRAY_LOG( __VA_ARGS__ )
 
 /**
  * @brief Log an expression and its value on screen.
  * @details The expression to log must evaluate something that can be stream inserted.
  */
-#define GEOS_LOG_VAR( ... ) LVARRAY_LOG_VAR( __VA_ARGS__ )
+#define GEOS_LOG_VAR( ... ) logger.stdLog( STRINGIZE( __VA_ARGS__ ) " = ", __VA_ARGS__ )
 
 /**
  * @brief Conditionally log a message on screen on rank 0.
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_RANK_0_IF( EXP, msg ) \
-  do { \
-    if( ::geos::logger.rank == 0 && EXP ) \
-    { \
-      std::ostringstream oss; \
-      oss << msg; \
-      std::cout << oss.str() << std::endl; \
-    } \
-  } while( false )
+//deprecated// #define GEOS_LOG_RANK_0_IF( EXP, msg ) \/
+// do { \/
+//   if( ::geos::logger.rank == 0 && EXP ) \/
+//   { \/
+//     std::ostringstream oss; \/
+//     oss << msg; \/
+//     std::cout << oss.str() << std::endl; \/
+//   } \/
+// } while( false )
 
 /**
  * @brief Log a message on screen on rank 0.
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_RANK_0( msg ) GEOS_LOG_RANK_0_IF( true, msg )
+//deprecated// #define GEOS_LOG_RANK_0( msg ) GEOS_LOG_RANK_0_IF( true, msg )
 
 /**
  * @brief Conditionally log a message to the rank output stream.
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#if defined(GEOS_DEVICE_COMPILE)
-#define GEOS_LOG_RANK_IF( EXP, msg )
-#else
-#define GEOS_LOG_RANK_IF( EXP, msg ) \
-  do { \
-    if( EXP ) \
-    { \
-      std::ostringstream oss; \
-      oss << ::geos::logger.rankMsgPrefix << msg; \
-      *logger.outStream << oss.str() << std::endl; \
-    } \
-  } while( false )
-#endif
+// #if defined(GEOS_DEVICE_COMPILE)
+// //deprecated// #define GEOS_LOG_RANK_IF( EXP, msg )
+// #else
+// //deprecated// #define GEOS_LOG_RANK_IF( EXP, msg ) \/
+// do { \/
+//   if( EXP ) \/
+//   { \/
+//     std::ostringstream oss; \/
+//     oss << ::geos::logger.rankMsgPrefix << msg; \/
+//     *logger.outStream << oss.str() << std::endl; \/
+//   } \/
+// } while( false )
+// #endif
 
 /**
  * @brief Log a message to the rank output stream.
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_RANK( msg ) GEOS_LOG_RANK_IF( true, msg )
+//deprecated// #define GEOS_LOG_RANK( msg ) GEOS_LOG_RANK_IF( true, msg )
 
 /**
  * @brief Log a variable/expression name and value on screen to the rank output stream.
  * @param var a variable or expression accessible from current scope that can be stream inserted
  */
-#define GEOS_LOG_RANK_VAR( var ) GEOS_LOG_RANK( #var " = " << var )
+#define GEOS_LOG_RANK_VAR( ... ) logger.rankLog( STRINGIZE( __VA_ARGS__ ) " = ", __VA_ARGS__ )//GEOS_LOG_RANK( #var " = " << var )
 
 /**
  * @brief Conditionally raise a hard error and terminate the program.
@@ -160,13 +160,13 @@
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_INFO_IF( EXP, msg ) LVARRAY_INFO_IF( EXP, msg )
+//deprecated// #define GEOS_INFO_IF( EXP, msg ) LVARRAY_INFO_IF( EXP, msg )
 
 /**
  * @brief Log an info message.
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_INFO( msg ) LVARRAY_INFO( msg )
+//deprecated// #define GEOS_INFO( msg ) LVARRAY_INFO( msg )
 
 /**
  * @brief Raise a hard error if two values are equal.
@@ -425,34 +425,39 @@
  * @param[in] minLevel Minimum log level
  * @param[in] fn Function to filter
  */
-#define GEOS_LOG_LEVEL_FN( minLevel, fn )                                      \
-  do {                                                                         \
-    if( this->getLogLevel() >= minLevel )                                      \
-    {                                                                          \
-      fn;                                                                      \
-    }                                                                          \
-  } while( false )
+// //deprecated// #define GEOS_LOG_LEVEL_FN( minLevel, fn )                                      \/
+//   do {                                                                         \/
+//     if( this->getLogLevel() >= minLevel )                                      \/
+//     {                                                                          \/
+//       fn;                                                                      \/
+//     }                                                                          \/
+//   } while( false )
 
 /**
  * @brief Output messages based on current Group's log level.
  * @param[in] minLevel minimum log level
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_LEVEL( minLevel, msg ) GEOS_INFO_IF( this->getLogLevel() >= minLevel, msg );
+#define GEOS_LOG_LEVEL( minLevel, ... ) logger.stdLogIf( this->getLogLevel() >= minLevel, __VA_ARGS__ )//GEOS_INFO_IF( this->getLogLevel()
+                                                                                                       // >= minLevel, msg );
 
 /**
  * @brief Output messages (only on rank 0) based on current Group's log level.
  * @param[in] minLevel minimum log level
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_LEVEL_RANK_0( minLevel, msg ) GEOS_LOG_RANK_0_IF( this->getLogLevel() >= minLevel, msg )
+#define GEOS_LOG_LEVEL_RANK_0( minLevel, ... ) logger.rank0LogIf( this->getLogLevel() >= minLevel, __VA_ARGS__ )//GEOS_LOG_RANK_0_IF(
+                                                                                                                // this->getLogLevel() >=
+                                                                                                                // minLevel, msg )
 
 /**
  * @brief Output messages (with one line per rank) based on current Group's log level.
  * @param[in] minLevel minimum log level
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_LEVEL_BY_RANK( minLevel, msg ) GEOS_LOG_RANK_IF( this->getLogLevel() >= minLevel, msg )
+#define GEOS_LOG_LEVEL_BY_RANK( minLevel, ... ) logger.rankLogIf( this->getLogLevel() >= minLevel, __VA_ARGS__ )//GEOS_LOG_RANK_IF(
+                                                                                                                // this->getLogLevel() >=
+                                                                                                                // minLevel, msg )
 
 
 namespace geos
@@ -508,14 +513,14 @@ public:
   void setMaxLogLevel( int value );
 
   /////////////////////////////////////////////////////////////////////////////////////////////////
-  // TODO : stdLog() devrait être abandonnée au profit de rank0Log() ou rankLog(), car le 
+  // TODO : stdLog() devrait être abandonnée au profit de rank0Log() ou rankLog(), car le
   // message est spam par tous les ranks sans qu'on puisse identifier d'où il vient...
   //
   // Une autre possibilité serait de créer une méthode logOnce() qui renvoit tout au rank 0 qui
-  // s'occupe de n'afficher le message qu'une seule et unique fois si et seulement si il apparait 
+  // s'occupe de n'afficher le message qu'une seule et unique fois si et seulement si il apparait
   // sur un des ranks.
   //
-  // Encore une autre possibilité serait de créer une méthode logMerge() qui a le même 
+  // Encore une autre possibilité serait de créer une méthode logMerge() qui a le même
   // comportement que logOnce(), mais précède le message d'un range des ranks qui l'emettent, du
   // style "Rank 0->54, 55, 57, 67->127: Hello World"
   /**
@@ -525,6 +530,10 @@ public:
    */
   template< typename ... INPUTS >
   void stdLog( INPUTS ... inputs );
+
+  template< typename ... INPUTS >
+  void stdLogIf( bool cond, INPUTS ... inputs );
+
   /**
    * @brief log one or more inputs, only from the rank 0, to the standard output (and to
    * the rank 0 file stream if used).
@@ -535,6 +544,8 @@ public:
   void rank0Log( INPUTS ... inputs );
 
   template< typename ... INPUTS >
+  void rank0LogIf( bool cond, INPUTS ... inputs );
+
   /**
    * @brief log one or more inputs to the rank file stream if used, or to the standard output.
    * @param input the inputs to log.
@@ -542,6 +553,9 @@ public:
    */
   template< typename ... INPUTS >
   void rankLog( INPUTS ... input );
+
+  template< typename ... INPUTS >
+  void rankLogIf( bool cond, INPUTS ... input );
 
 public://todo: private
   /// @see setGlobalLogLevel( int value )
@@ -665,6 +679,28 @@ template< typename ... INPUTS >
 void Logger::rankLog( INPUTS ... inputs )
 {
   streamLog( *outStream, rankMsgPrefix, inputs ... );
+}
+
+
+template< typename ... INPUTS >
+void Logger::stdLogIf( bool condition, INPUTS ... inputs )
+{
+  if( condition )
+    stdLog( inputs ... );
+}
+
+template< typename ... INPUTS >
+void Logger::rank0LogIf( bool condition, INPUTS ... inputs )
+{
+  if( condition )
+    rank0Log( inputs ... );
+}
+
+template< typename ... INPUTS >
+void Logger::rankLogIf( bool condition, INPUTS ... inputs )
+{
+  if( condition )
+    rankLog( inputs ... );
 }
 
 

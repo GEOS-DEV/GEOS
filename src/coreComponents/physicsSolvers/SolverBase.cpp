@@ -557,7 +557,7 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
 
     if( !checkSystemSolution( domain, dofManager, solution.values(), deltaLocalScaleFactor ) )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, "        Line search " << lineSearchIteration << ", solution check failed" );
+      GEOS_LOG_LEVEL_RANK_0( 1, "        Line search ", lineSearchIteration, ", solution check failed" );
       continue;
     }
 

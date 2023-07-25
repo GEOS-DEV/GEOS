@@ -250,8 +250,8 @@ public:
   {
 #if OBJECTCATALOGVERBOSE > 1
     logger.stdLog( "Calling constructor for CatalogEntry< ", LvArray::system::demangle( typeid(TYPE).name()),
-                " , ", LvArray::system::demangle( typeid(BASETYPE).name()),
-                " , ... >" );
+                   " , ", LvArray::system::demangle( typeid(BASETYPE).name()),
+                   " , ... >" );
 #endif
   }
 
@@ -262,8 +262,8 @@ public:
   {
 #if OBJECTCATALOGVERBOSE > 1
     logger.stdLog( "Calling destructor for CatalogEntry< ", LvArray::system::demangle( typeid(TYPE).name()),
-                " , ", LvArray::system::demangle( typeid(BASETYPE).name()),
-                " , ... >" );
+                   " , ", LvArray::system::demangle( typeid(BASETYPE).name()),
+                   " , ... >" );
 #endif
 
   }
@@ -314,7 +314,7 @@ public:
   {
 #if OBJECTCATALOGVERBOSE > 0
     logger.stdLog( "Creating type ", LvArray::system::demangle( typeid(TYPE).name()),
-                " from catalog of ", LvArray::system::demangle( typeid(BASETYPE).name()));
+                   " from catalog of ", LvArray::system::demangle( typeid(BASETYPE).name()));
 #endif
 #if ( __cplusplus >= 201402L )
     return std::make_unique< TYPE >( args ... );
@@ -344,8 +344,8 @@ public:
   {
 #if OBJECTCATALOGVERBOSE > 1
     logger.stdLog( "Calling constructor for CatalogEntryConstructor< ", LvArray::system::demangle( typeid(TYPE).name()),
-                " , ", LvArray::system::demangle( typeid(BASETYPE).name()),
-                " , ... >" );
+                   " , ", LvArray::system::demangle( typeid(BASETYPE).name()),
+                   " , ... >" );
 #endif
 
     std::string name = TYPE::catalogName();
@@ -360,10 +360,10 @@ public:
 
 #if OBJECTCATALOGVERBOSE > 0
     logger.stdLog( "Registered ", LvArray::system::demangle( typeid(BASETYPE).name()),
-                " catalog component of derived type ",
-                LvArray::system::demangle( typeid(TYPE).name()),
-                " where ", LvArray::system::demangle( typeid(TYPE).name()),
-                "::catalogName() = ", TYPE::catalogName());
+                   " catalog component of derived type ",
+                   LvArray::system::demangle( typeid(TYPE).name()),
+                   " where ", LvArray::system::demangle( typeid(TYPE).name()),
+                   "::catalogName() = ", TYPE::catalogName());
 #endif
   }
 
@@ -374,8 +374,8 @@ public:
   {
 #if OBJECTCATALOGVERBOSE > 1
     logger.stdLog( "Calling destructor for CatalogEntryConstructor< ", LvArray::system::demangle( typeid(TYPE).name()),
-                " , ", LvArray::system::demangle( typeid(BASETYPE).name()),
-                " , ... >" );
+                   " , ", LvArray::system::demangle( typeid(BASETYPE).name()),
+                   " , ... >" );
 #endif
   }
 
@@ -423,7 +423,7 @@ public:
   {
 #if OBJECTCATALOGVERBOSE > 1
     logger.stdLog( "Calling constructor for CatalogInterface< ", LvArray::system::demangle( typeid(BASETYPE).name()),
-                " , ... >" );
+                   " , ... >" );
 #endif
   }
 
@@ -434,7 +434,7 @@ public:
   {
 #if OBJECTCATALOGVERBOSE > 1
     logger.stdLog( "Calling destructor for CatalogInterface< ", LvArray::system::demangle( typeid(BASETYPE).name()),
-                " , ... >" );
+                   " , ... >" );
 #endif
   }
 
@@ -536,8 +536,8 @@ public:
   {
 #if OBJECTCATALOGVERBOSE > 1
     logger.stdLog( "Calling constructor for CatalogEntry< ", LvArray::system::demangle( typeid(TYPE).name()),
-                " , ", LvArray::system::demangle( typeid(BASETYPE).name()),
-                " , ... >" );
+                   " , ", LvArray::system::demangle( typeid(BASETYPE).name()),
+                   " , ... >" );
 #endif
   }
 
@@ -548,8 +548,8 @@ public:
   {
 #if OBJECTCATALOGVERBOSE > 1
     logger.stdLog( "Calling destructor for CatalogEntry< ", LvArray::system::demangle( typeid(TYPE).name()),
-                " , ", LvArray::system::demangle( typeid(BASETYPE).name()),
-                " , ... >" );
+                   " , ", LvArray::system::demangle( typeid(BASETYPE).name()),
+                   " , ... >" );
 #endif
 
   }
@@ -598,7 +598,7 @@ public:
   {
 #if OBJECTCATALOGVERBOSE > 0
     logger.stdLog( "Creating type ", LvArray::system::demangle( typeid(TYPE).name()),
-                " from catalog of ", LvArray::system::demangle( typeid(BASETYPE).name()));
+                   " from catalog of ", LvArray::system::demangle( typeid(BASETYPE).name()));
 #endif
 #if ( __cplusplus >= 201402L )
     return std::make_unique< TYPE >(  );
@@ -624,8 +624,8 @@ public:
   {
 #if OBJECTCATALOGVERBOSE > 1
     logger.stdLog( "Calling constructor for CatalogEntryConstructor< ", LvArray::system::demangle( typeid(TYPE).name()),
-                " , ", LvArray::system::demangle( typeid(BASETYPE).name()),
-                " , ... >" );
+                   " , ", LvArray::system::demangle( typeid(BASETYPE).name()),
+                   " , ... >" );
 #endif
 
     std::string name = TYPE::catalogName();
@@ -638,10 +638,10 @@ public:
 
 #if OBJECTCATALOGVERBOSE > 0
     logger.stdLog( "Registered ", LvArray::system::demangle( typeid(BASETYPE).name()),
-                " catalog component of derived type ",
-                LvArray::system::demangle( typeid(TYPE).name()),
-                " where ", LvArray::system::demangle( typeid(TYPE).name()),
-                "::catalogName() = ", TYPE::catalogName());
+                   " catalog component of derived type ",
+                   LvArray::system::demangle( typeid(TYPE).name()),
+                   " where ", LvArray::system::demangle( typeid(TYPE).name()),
+                   "::catalogName() = ", TYPE::catalogName());
 #endif
   }
 
@@ -652,7 +652,7 @@ public:
   {
 #if OBJECTCATALOGVERBOSE > 1
     logger.stdLog( "Calling destructor for CatalogEntryConstructor< ", LvArray::system::demangle( typeid(TYPE).name()),
-                " , ", LvArray::system::demangle( typeid(BASETYPE).name()), " , ... >" );
+                   " , ", LvArray::system::demangle( typeid(BASETYPE).name()), " , ... >" );
 #endif
   }
 

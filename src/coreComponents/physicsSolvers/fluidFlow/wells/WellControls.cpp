@@ -303,8 +303,8 @@ void WellControls::postProcessInput()
   else if( m_targetBHP <= 0.0 && m_targetBHPTableName.empty() )
   {
     m_targetBHP = isProducer() ? WellConstants::defaultProducerBHP : WellConstants::defaultInjectorBHP;
-    GEOS_LOG_LEVEL_RANK_0( 1, "WellControls '" << getName() << "': Setting " << viewKeyStruct::targetBHPString() << " to default value "
-                                               << m_targetBHP << "." );
+    GEOS_LOG_LEVEL_RANK_0( 1, "WellControls '", getName(), "': Setting ", viewKeyStruct::targetBHPString(), " to default value ",
+                           m_targetBHP, "." );
   }
 
   // 6.2) Check incoherent information

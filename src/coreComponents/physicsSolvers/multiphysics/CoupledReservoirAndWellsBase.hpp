@@ -315,11 +315,11 @@ private:
           forAll< serialPolicy >( perforationData.size(), [=] ( localIndex const iperf )
           {
             logger.rankLog( GEOS_FMT( "Perforation at ({},{},{}); perforated element center: ({},{},{}); transmissibility: {} Pa.s.rm^3/s/Pa",
-                                     perfLocation[iperf][0], perfLocation[iperf][1], perfLocation[iperf][2],
-                                     elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][0],
-                                     elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][1],
-                                     elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][2],
-                                     perfTrans[iperf] ) );
+                                      perfLocation[iperf][0], perfLocation[iperf][1], perfLocation[iperf][2],
+                                      elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][0],
+                                      elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][1],
+                                      elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][2],
+                                      perfTrans[iperf] ) );
           } );
         }
       } );

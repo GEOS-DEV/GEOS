@@ -261,12 +261,12 @@ void BlackOilFluidBase::validateTable( TableFunction const & table,
   // we don't check the first value, as it may be used to specify surface conditions
   for( localIndex i = 2; i < property.size(); ++i )
   {
-    GEOS_LOG_RANK_0_IF( ( property[i] - property[i-1] < 0 ) && warningIfDecreasing,
-                        GEOS_FMT( "{}: Warning! in table '{}', values must be increasing as a function of pressure, please check your PVT tables",
-                                  getFullName(), table.getName() ) );
-    GEOS_LOG_RANK_0_IF( ( property[i] - property[i-1] > 0 ) && !warningIfDecreasing,
-                        GEOS_FMT( "{}: Warning! In table '{}', values must be decreasing as a function of pressure, please check your PVT tables",
-                                  getFullName(), table.getName() ) );
+    logger.rank0LogIf( ( property[i] - property[i-1] < 0 ) && warningIfDecreasing,
+                       GEOS_FMT( "{}: Warning! in table '{}', values must be increasing as a function of pressure, please check your PVT tables",
+                                 getFullName(), table.getName() ) );
+    logger.rank0LogIf( ( property[i] - property[i-1] > 0 ) && !warningIfDecreasing,
+                       GEOS_FMT( "{}: Warning! In table '{}', values must be decreasing as a function of pressure, please check your PVT tables",
+                                 getFullName(), table.getName() ) );
   }
 }
 

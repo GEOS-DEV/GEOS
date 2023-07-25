@@ -618,14 +618,14 @@ void AcousticWaveEquationSEM::initializePML()
     indicatorPML.zero();
 
     GEOS_LOG_LEVEL_RANK_0( 1,
-                           "PML parameters are: \n"
-                           << "\t inner boundaries xMin = "<<param.xMinPML<<"\n"
-                           << "\t inner boundaries xMax = "<<param.xMaxPML<<"\n"
-                           << "\t left, front, top max PML thicknesses  = "<<param.thicknessMinXYZPML<<"\n"
-                           << "\t right, back, bottom max PML thicknesses  = "<<param.thicknessMaxXYZPML<<"\n"
-                           << "\t left, front, top average wave speed  = "<<param.waveSpeedMinXYZPML<<"\n"
-                           << "\t right, back, bottom average wave speed  = "<<param.waveSpeedMaxXYZPML<<"\n"
-                           << "\t theoretical reflectivity = "<< param.reflectivityPML );
+                           "PML parameters are: \n",
+                           "\t inner boundaries xMin = ", param.xMinPML, "\n",
+                           "\t inner boundaries xMax = ", param.xMaxPML, "\n",
+                           "\t left, front, top max PML thicknesses  = ", param.thicknessMinXYZPML, "\n",
+                           "\t right, back, bottom max PML thicknesses  = ", param.thicknessMaxXYZPML, "\n",
+                           "\t left, front, top average wave speed  = ", param.waveSpeedMinXYZPML, "\n",
+                           "\t right, back, bottom average wave speed  = ", param.waveSpeedMaxXYZPML, "\n",
+                           "\t theoretical reflectivity = ", param.reflectivityPML );
 
   } );
 }
@@ -916,7 +916,8 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 {
   GEOS_MARK_FUNCTION;
 
-  GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
+  logger.rank0LogIf( dt < epsilonLoc,
+                     "Warning! Value for dt: ", dt, "s is smaller than local threshold: ", epsilonLoc );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,

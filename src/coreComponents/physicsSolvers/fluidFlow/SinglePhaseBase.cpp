@@ -522,12 +522,12 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     localIndex const numPointsInTable = ( elevationIncrement > 0 ) ? std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1 : 1;
 
     real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
-    GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
-                        SinglePhaseBase::catalogName() << " " << getName()
-                                                       << ": By looking at the elevation of the cell centers in this model, GEOSX found that "
-                                                       << "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " << globalMaxElevation[equilIndex] << "\n"
-                                                       << "But, a datum elevation of " << datumElevation << " was specified in the input file to equilibrate the model.\n "
-                                                       << "The simulation is going to proceed with this out-of-bound datum elevation, but the initial condition may be inaccurate." );
+    logger.rank0LogIf( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
+                       SinglePhaseBase::catalogName(), " ", getName(),
+                       ": By looking at the elevation of the cell centers in this model, GEOSX found that ",
+                       "the min elevation is ", globalMinElevation[equilIndex], " and the max elevation is ", globalMaxElevation[equilIndex], "\n",
+                       "But, a datum elevation of ", datumElevation, " was specified in the input file to equilibrate the model.\n ",
+                       "The simulation is going to proceed with this out-of-bound datum elevation, but the initial condition may be inaccurate." );
 
     array1d< array1d< real64 > > elevationValues;
     array1d< real64 > pressureValues;

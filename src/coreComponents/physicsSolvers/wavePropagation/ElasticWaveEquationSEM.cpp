@@ -703,7 +703,8 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
   GEOS_UNUSED_VAR( time_n, dt, cycleNumber );
 
-  GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
+  logger.rank0LogIf( dt < epsilonLoc,
+                     "Warning! Value for dt: ", dt, "s is smaller than local threshold: ", epsilonLoc );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,

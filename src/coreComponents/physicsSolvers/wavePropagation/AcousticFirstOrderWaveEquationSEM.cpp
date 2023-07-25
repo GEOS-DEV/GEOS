@@ -456,7 +456,8 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
   arrayView1d< localIndex const > const sourceRegion = m_sourceRegion.toView();
   arrayView2d< real32 const > const sourceValue = m_sourceValue.toView();
 
-  GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
+  logger.rank0LogIf( dt < epsilonLoc,
+                     "Warning! Value for dt: ", dt, "s is smaller than local threshold: ", epsilonLoc );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,

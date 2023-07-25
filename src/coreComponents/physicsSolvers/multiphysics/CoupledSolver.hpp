@@ -522,7 +522,7 @@ protected:
 
       if( isConverged )
       {
-        GEOS_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter + 1 << " iteration(s)! *****\n" );
+        GEOS_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in ", iter + 1, " iteration(s)! *****\n" );
       }
     }
     return isConverged;

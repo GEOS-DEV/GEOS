@@ -59,9 +59,9 @@ InputError::InputError( std::exception const & subException, std::string const &
 Logger logger;
 
 Logger::Logger():
-  rank(0),
-  ranksCount(1),
-  rankMsgPrefix("") 
+  rank( 0 ),
+  ranksCount( 1 ),
+  rankMsgPrefix( "" )
 {
   reset();
 }

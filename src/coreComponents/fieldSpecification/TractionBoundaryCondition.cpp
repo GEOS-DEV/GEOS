@@ -71,18 +71,18 @@ void TractionBoundaryCondition::postProcessInput()
   }
   else
   {
-    GEOS_LOG_RANK_0_IF( LvArray::tensorOps::l2Norm< 3 >( getDirection() ) > 1e-20,
-                        viewKeyStruct::directionString() << " is not required unless " <<
-                        viewKeyStruct::tractionTypeString() << " = " << TractionType::vector <<
-                        ", but appears to be specified" );
+    logger.rank0LogIf( LvArray::tensorOps::l2Norm< 3 >( getDirection() ) > 1e-20,
+                       viewKeyStruct::directionString(), " is not required unless ",
+                       viewKeyStruct::tractionTypeString(), " = ", TractionType::vector,
+                       ", but appears to be specified" );
   }
 
   bool const inputStressRead = getWrapper< R2SymTensor >( viewKeyStruct::inputStressString() ).getSuccessfulReadFromInput();
 
-  GEOS_LOG_RANK_0_IF( inputStressRead && m_tractionType != TractionType::stress,
-                      viewKeyStruct::inputStressString() << " is specified, but " <<
-                      viewKeyStruct::tractionTypeString() << " != " << TractionType::stress <<
-                      ", so value of " << viewKeyStruct::inputStressString() << " is unused." );
+  logger.rank0LogIf( inputStressRead && m_tractionType != TractionType::stress,
+                     viewKeyStruct::inputStressString(), " is specified, but ",
+                     viewKeyStruct::tractionTypeString(), " != ", TractionType::stress,
+                     ", so value of ", viewKeyStruct::inputStressString(), " is unused." );
 
   GEOS_ERROR_IF( !inputStressRead && m_tractionType == TractionType::stress,
                  viewKeyStruct::tractionTypeString() << " = " << TractionType::stress <<

@@ -717,7 +717,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
   real64 ruptureRate = calculateRuptureRate( elementManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName ) );
 
-  GEOS_LOG_LEVEL_RANK_0( 3, "rupture rate is " << ruptureRate );
+  GEOS_LOG_LEVEL_RANK_0( 3, "rupture rate is ", ruptureRate );
   if( ruptureRate > 0 )
     m_nextDt = ruptureRate < 1e99 ? m_cflFactor / ruptureRate : 1e99;
 

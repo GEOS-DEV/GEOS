@@ -70,7 +70,7 @@ void outputVersionInfo()
   logger.rank0Log( "  - c++ compiler: ", getCppCompilerIdString() );
 
   string const gpuCompilerIdString = getGpuCompilerIdString();
-  GEOS_LOG_RANK_0_IF( !gpuCompilerIdString.empty(), gpuCompilerIdString );
+  logger.rank0LogIf( !gpuCompilerIdString.empty(), gpuCompilerIdString );
 
 
 #if defined(_OPENMP)

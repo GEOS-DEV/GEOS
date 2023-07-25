@@ -387,15 +387,15 @@ void FlowSolverBase::validatePoreVolumes( DomainPartition const & domain ) const
   numElemsBelowPoreVolumeThreshold = MpiWrapper::sum( numElemsBelowPoreVolumeThreshold );
   numElemsAbovePorosityThreshold = MpiWrapper::sum( numElemsAbovePorosityThreshold );
 
-  GEOS_LOG_RANK_0_IF( numElemsBelowPoreVolumeThreshold > 0,
-                      GEOS_FMT( "\nWarning! The mesh contains {} elements with a pore volume below {} m^3."
-                                "\nThe minimum pore volume is {} m^3."
-                                "\nOur recommendation is to check the validity of mesh and/or increase the porosity in these elements.\n",
-                                numElemsBelowPoreVolumeThreshold, flowSolverBaseKernels::poreVolumeThreshold, minPoreVolume ) );
-  GEOS_LOG_RANK_0_IF( numElemsAbovePorosityThreshold > 0,
-                      GEOS_FMT( "\nWarning! The mesh contains {} elements with a porosity above 1."
-                                "\nThe maximum porosity is {}.\n",
-                                numElemsAbovePorosityThreshold, maxPorosity ) );
+  logger.rank0LogIf( numElemsBelowPoreVolumeThreshold > 0,
+                     GEOS_FMT( "\nWarning! The mesh contains {} elements with a pore volume below {} m^3."
+                               "\nThe minimum pore volume is {} m^3."
+                               "\nOur recommendation is to check the validity of mesh and/or increase the porosity in these elements.\n",
+                               numElemsBelowPoreVolumeThreshold, flowSolverBaseKernels::poreVolumeThreshold, minPoreVolume ) );
+  logger.rank0LogIf( numElemsAbovePorosityThreshold > 0,
+                     GEOS_FMT( "\nWarning! The mesh contains {} elements with a porosity above 1."
+                               "\nThe maximum porosity is {}.\n",
+                               numElemsAbovePorosityThreshold, maxPorosity ) );
 }
 
 void FlowSolverBase::initializePostInitialConditionsPreSubGroups()

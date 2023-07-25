@@ -893,13 +893,12 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       localIndex const numPointsInTable = ( elevationIncrement > 0 ) ? std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1 : 1;
 
       real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
-      GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
-                          CompositionalMultiphaseBase::catalogName() << " " << getName()
-                                                                     << ": By looking at the elevation of the cell centers in this model, GEOSX found that "
-                                                                     << "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " << globalMaxElevation[equilIndex] <<
-                          "\n"
-                                                                     << "But, a datum elevation of " << datumElevation << " was specified in the input file to equilibrate the model.\n "
-                                                                     << "The simulation is going to proceed with this out-of-bound datum elevation, but the initial condition may be inaccurate." );
+      logger.rank0LogIf( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
+                         CompositionalMultiphaseBase::catalogName(), " ", getName(),
+                         ": By looking at the elevation of the cell centers in this model, GEOSX found that ",
+                         "the min elevation is ", globalMinElevation[equilIndex], " and the max elevation is ", globalMaxElevation[equilIndex], "\n",
+                         "But, a datum elevation of ", datumElevation, " was specified in the input file to equilibrate the model.\n ",
+                         "The simulation is going to proceed with this out-of-bound datum elevation, but the initial condition may be inaccurate." );
 
       array1d< array1d< real64 > > elevationValues;
       array1d< real64 > pressureValues;
@@ -992,12 +991,12 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
                                                                   << "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
                        std::runtime_error );
 
-        GEOS_LOG_RANK_0_IF( returnValue == isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
-                            CompositionalMultiphaseBase::catalogName() << " " << getName()
-                                                                       << ": currently, GEOSX assumes that there is only one mobile phase when computing the hydrostatic pressure. \n"
-                                                                       << "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n"
-                                                                       << "Please make sure that only one phase is mobile at the beginning of the simulation. \n"
-                                                                       << "If this is not the case, the problem will not be at equilibrium when the simulation starts" );
+        logger.rank0LogIf( returnValue == isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
+                           CompositionalMultiphaseBase::catalogName(), " ", getName(),
+                           ": currently, GEOSX assumes that there is only one mobile phase when computing the hydrostatic pressure. \n",
+                           "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n",
+                           "Please make sure that only one phase is mobile at the beginning of the simulation. \n",
+                           "If this is not the case, the problem will not be at equilibrium when the simulation starts" );
 
       } );
 
@@ -1905,13 +1904,13 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
 
   maxRelativePresChange = MpiWrapper::max( maxRelativePresChange );
   maxAbsolutePhaseVolFracChange = MpiWrapper::max( maxAbsolutePhaseVolFracChange );
-  GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max relative pressure change: "<< 100*maxRelativePresChange << " %" );
-  GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max absolute phase volume fraction change: "<< maxAbsolutePhaseVolFracChange );
+  GEOS_LOG_LEVEL_RANK_0( 1, getName(), ": Max relative pressure change: ", 100*maxRelativePresChange, " %" );
+  GEOS_LOG_LEVEL_RANK_0( 1, getName(), ": Max absolute phase volume fraction change: ", maxAbsolutePhaseVolFracChange );
 
   if( m_isThermal )
   {
     maxRelativeTempChange = MpiWrapper::max( maxRelativeTempChange );
-    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max relative temperature change: "<< 100*maxRelativeTempChange << " %" );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName(), ": Max relative temperature change: ", 100*maxRelativeTempChange, " %" );
   }
 
   real64 const eps = LvArray::NumericLimits< real64 >::epsilon;
