@@ -182,14 +182,14 @@ public:
    * @brief Provide an immutable accessor to a const perforation skin factor array.
    * @return list of perforation well skin factors
    */
-  arrayView1d< real64 const > getWellSkin() const { return m_wellSkin; }
+  arrayView1d< real64 const > getWellSkinFactor() const { return m_wellSkinFactor; }
 
 
   /**
    * @brief Get perforation well skin factors.
    * @return list of perforation well skin factors
    */
-  arrayView1d< real64 > getWellSkin() { return m_wellSkin; }
+  arrayView1d< real64 > getWellSkinFactor() { return m_wellSkinFactor; }
 
 
   ///@}
@@ -280,8 +280,8 @@ private:
   /// Well transmissibility at the perforations
   array1d< real64 > m_wellTransmissibility;
 
-  /// Well skin at the perforations
-  array1d< real64 > m_wellSkin;
+  /// Well skin factor at the perforations
+  array1d< real64 > m_wellSkinFactor;
 
 };
 

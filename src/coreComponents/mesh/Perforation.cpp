@@ -28,7 +28,7 @@ Perforation::Perforation( string const & name, Group * const parent )
   : Group( name, parent ),
   m_distanceFromHead( 0 ),
   m_wellTransmissibility( 0 ),
-  m_wellSkin( 0 )
+  m_wellSkinFactor( 0 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -41,7 +41,7 @@ Perforation::Perforation( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Perforation transmissibility" );
 
-  registerWrapper( viewKeyStruct::wellSkinString(), &m_wellSkin ).
+  registerWrapper( viewKeyStruct::wellSkinFactorString(), &m_wellSkinFactor ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Perforation skin factor" );
