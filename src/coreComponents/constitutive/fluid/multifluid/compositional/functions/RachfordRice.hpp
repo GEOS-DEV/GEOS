@@ -140,7 +140,7 @@ public:
       }
 
       currentError = LvArray::math::min( LvArray::math::abs( funcXMax - funcXMin ),
-                                        LvArray::math::abs( xMax - xMin ) );
+                                         LvArray::math::abs( xMax - xMin ) );
       SSIIteration++;
 
       // TODO: add warning if max number of SSI iterations is reached
@@ -155,7 +155,7 @@ public:
     while( ( currentError > newtonTolerance ) && ( newtonIteration < maxNewtonIterations ) )
     {
       real64 const deltaNewton = -evaluate( kValues, feed, presentComponentIds, newtonValue )
-                                / evaluateDerivative( kValues, feed, presentComponentIds, newtonValue );
+                                 / evaluateDerivative( kValues, feed, presentComponentIds, newtonValue );
       currentError = LvArray::math::abs( deltaNewton ) / LvArray::math::abs( newtonValue );
 
       // test if we are stepping out of the [xMin;xMax] interval
