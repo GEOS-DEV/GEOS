@@ -681,151 +681,231 @@ struct waveSpeedPMLKernel
  */
 
 
-template< typename SUBREGION_TYPE,
-          typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
-class ExplicitAcousticSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                              CONSTITUTIVE_TYPE,
-                                                              FE_TYPE,
-                                                              1,
-                                                              1 >
+template< typename FE_TYPE >
+struct StiffnessVectorComputation
 {
-public:
 
-  /// Alias for the base class;
-  using Base = finiteElement::KernelBase< SUBREGION_TYPE,
-                                          CONSTITUTIVE_TYPE,
-                                          FE_TYPE,
-                                          1,
-                                          1 >;
-
-  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
-  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
-  /// will be the actual number of nodes per element.
-  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
-
-  using Base::numDofPerTestSupportPoint;
-  using Base::numDofPerTrialSupportPoint;
-  using Base::m_elemsToNodes;
-  using Base::m_elemGhostRank;
-  using Base::m_constitutiveUpdate;
-  using Base::m_finiteElementSpace;
-
-//*****************************************************************************
-  /**
-   * @brief Constructor
-   * @copydoc geos::finiteElement::KernelBase::KernelBase
-   * @param nodeManager Reference to the NodeManager object.
-   * @param edgeManager Reference to the EdgeManager object.
-   * @param faceManager Reference to the FaceManager object.
-   * @param targetRegionIndex Index of the region the subregion belongs to.
-   * @param dt The time interval for the step.
-   *   elements to be processed during this kernel launch.
-   */
-  ExplicitAcousticSEM( NodeManager & nodeManager,
-                       EdgeManager const & edgeManager,
-                       FaceManager const & faceManager,
-                       localIndex const targetRegionIndex,
-                       SUBREGION_TYPE const & elementSubRegion,
-                       FE_TYPE const & finiteElementSpace,
-                       CONSTITUTIVE_TYPE & inputConstitutiveType,
-                       real64 const dt ):
-    Base( elementSubRegion,
-          finiteElementSpace,
-          inputConstitutiveType ),
-    m_X( nodeManager.referencePosition() ),
-    m_p_n( nodeManager.getField< fields::Pressure_n >() ),
-    m_stiffnessVector( nodeManager.getField< fields::StiffnessVector >() ),
-    m_dt( dt )
-  {
-    GEOS_UNUSED_VAR( edgeManager );
-    GEOS_UNUSED_VAR( faceManager );
-    GEOS_UNUSED_VAR( targetRegionIndex );
-  }
-
-  //*****************************************************************************
-  /**
-   * @copydoc geos::finiteElement::KernelBase::StackVariables
-   *
-   * ### ExplicitAcousticSEM Description
-   * Adds a stack arrays for the nodal force, primary displacement variable, etc.
-   */
-  struct StackVariables : Base::StackVariables
-  {
-public:
-    GEOS_HOST_DEVICE
-    StackVariables():
-      xLocal()
-    {}
-
-    /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ numNodesPerElem ][ 3 ];
-  };
-  //***************************************************************************
-
+  StiffnessVectorComputation( FE_TYPE const & finiteElement )
+    : m_finiteElement( finiteElement )
+  {}
 
   /**
-   * @copydoc geos::finiteElement::KernelBase::setup
-   *
-   * Copies the primary variable, and position into the local stack array.
+   * @brief Launches the computation of the pressure for one iteration
+   * @tparam EXEC_POLICY the execution policy
+   * @tparam ATOMIC_POLICY the atomic policy
+   * @param[in] size the number of cells in the subRegion
+   * @param[in] regionIndex Index of the subregion
+   * @param[in] size_node the number of nodes in the subRegion
+   * @param[in] X coordinates of the nodes
+   * @param[in] elemsToNodes map from element to nodes
+   * @param[out] velocity_x velocity array in the x direction (only used here)
+   * @param[out] velocity_y velocity array in the y direction (only used here)
+   * @param[out] velocity_z velocity array in the z direction (only used here)
+   * @param[in] mass the mass matrix
+   * @param[in] damping the damping matrix
+   * @param[in] sourceConstants constant part of the source terms
+   * @param[in] sourceValue value of the temporal source (eg. Ricker)
+   * @param[in] sourceIsAccessible flag indicating whether the source is accessible or not
+   * @param[in] sourceElem element where a source is located
+   * @param[in] cycleNumber the number of cycle
+   * @param[in] dt time-step
+   * @param[out] p_np1 pressure array (updated here)
    */
-  GEOS_HOST_DEVICE
-  inline
-  void setup( localIndex const k,
-              StackVariables & stack ) const
+
+  template< typename EXEC_POLICY, typename ATOMIC_POLICY >
+  void
+  launch( localIndex const size,
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+          arrayView1d< real32 const > const p_n,
+          arrayView1d< real32 > const stiffnessVector )
+
   {
-    /// numDofPerTrialSupportPoint = 1
-    for( localIndex a=0; a< numNodesPerElem; ++a )
+
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      localIndex const nodeIndex = m_elemsToNodes( k, a );
-      for( int i=0; i< 3; ++i )
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+
+      real64 xLocal[numNodesPerElem][3];
+      for( localIndex a=0; a< numNodesPerElem; ++a )
       {
-        stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
+        for( localIndex i=0; i<3; ++i )
+        {
+          xLocal[a][i] = X( elemsToNodes( k, a ), i );
+        }
       }
-    }
-  }
 
-  /**
-   * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
-   *
-   * ### ExplicitAcousticSEM Description
-   * Calculates stiffness vector
-   *
-   */
-  GEOS_HOST_DEVICE
-  inline
-  void quadraturePointKernel( localIndex const k,
-                              localIndex const q,
-                              StackVariables & stack ) const
-  {
-    m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
+      // Volume integration
+      for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+      {
+       m_finiteElementSpace.template computeStiffnessTerm( q, xLocal, [&] ( int i, int j, real64 val )
+       {
+         real32 const localIncrement = val*p_n[elemsToNodes[k][j]];
+         RAJA::atomicAdd< parallelDeviceAtomic >( &stiffnessVector[elemsToNodes[k][i]], localIncrement );
+       } );
+
+      }
+
+    } );
+
+    //Pre-mult by the first factor for damping
+    forAll< EXEC_POLICY >( size_node, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      real32 const localIncrement = val*m_p_n[m_elemsToNodes[k][j]];
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
+      p_np1[a] /= 1.0+((dt/2)*(damping[a]/mass[a]));
     } );
   }
 
-protected:
-  /// The array containing the nodal position array.
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+  /// The finite element space/discretization object for the element type in the subRegion
+  FE_TYPE const & m_finiteElement;
 
-  /// The array containing the nodal pressure array.
-  arrayView1d< real32 const > const m_p_n;
+// };
 
-  /// The array containing the product of the stiffness matrix and the nodal pressure.
-  arrayView1d< real32 > const m_stiffnessVector;
+// template< typename SUBREGION_TYPE,
+//           typename CONSTITUTIVE_TYPE,
+//           typename FE_TYPE >
+// class ExplicitAcousticSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
+//                                                               CONSTITUTIVE_TYPE,
+//                                                               FE_TYPE,
+//                                                               1,
+//                                                               1 >
+// {
+// public:
 
-  /// The time increment for this time integration step.
-  real64 const m_dt;
+//   /// Alias for the base class;
+//   using Base = finiteElement::KernelBase< SUBREGION_TYPE,
+//                                           CONSTITUTIVE_TYPE,
+//                                           FE_TYPE,
+//                                           1,
+//                                           1 >;
+
+//   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+//   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+//   /// will be the actual number of nodes per element.
+//   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
+
+//   using Base::numDofPerTestSupportPoint;
+//   using Base::numDofPerTrialSupportPoint;
+//   using Base::m_elemsToNodes;
+//   using Base::m_elemGhostRank;
+//   using Base::m_constitutiveUpdate;
+//   using Base::m_finiteElementSpace;
+
+// //*****************************************************************************
+//   /**
+//    * @brief Constructor
+//    * @copydoc geos::finiteElement::KernelBase::KernelBase
+//    * @param nodeManager Reference to the NodeManager object.
+//    * @param edgeManager Reference to the EdgeManager object.
+//    * @param faceManager Reference to the FaceManager object.
+//    * @param targetRegionIndex Index of the region the subregion belongs to.
+//    * @param dt The time interval for the step.
+//    *   elements to be processed during this kernel launch.
+//    */
+//   ExplicitAcousticSEM( NodeManager & nodeManager,
+//                        EdgeManager const & edgeManager,
+//                        FaceManager const & faceManager,
+//                        localIndex const targetRegionIndex,
+//                        SUBREGION_TYPE const & elementSubRegion,
+//                        FE_TYPE const & finiteElementSpace,
+//                        CONSTITUTIVE_TYPE & inputConstitutiveType,
+//                        real64 const dt ):
+//     Base( elementSubRegion,
+//           finiteElementSpace,
+//           inputConstitutiveType ),
+//     m_X( nodeManager.referencePosition() ),
+//     m_p_n( nodeManager.getField< fields::Pressure_n >() ),
+//     m_stiffnessVector( nodeManager.getField< fields::StiffnessVector >() ),
+//     m_dt( dt )
+//   {
+//     GEOS_UNUSED_VAR( edgeManager );
+//     GEOS_UNUSED_VAR( faceManager );
+//     GEOS_UNUSED_VAR( targetRegionIndex );
+//   }
+
+//   //*****************************************************************************
+//   /**
+//    * @copydoc geos::finiteElement::KernelBase::StackVariables
+//    *
+//    * ### ExplicitAcousticSEM Description
+//    * Adds a stack arrays for the nodal force, primary displacement variable, etc.
+//    */
+//   struct StackVariables : Base::StackVariables
+//   {
+// public:
+//     GEOS_HOST_DEVICE
+//     StackVariables():
+//       xLocal()
+//     {}
+
+//     /// C-array stack storage for element local the nodal positions.
+//     real64 xLocal[ numNodesPerElem ][ 3 ];
+//   };
+//   //***************************************************************************
 
 
-};
+//   /**
+//    * @copydoc geos::finiteElement::KernelBase::setup
+//    *
+//    * Copies the primary variable, and position into the local stack array.
+//    */
+//   GEOS_HOST_DEVICE
+//   inline
+//   void setup( localIndex const k,
+//               StackVariables & stack ) const
+//   {
+//     /// numDofPerTrialSupportPoint = 1
+//     for( localIndex a=0; a< numNodesPerElem; ++a )
+//     {
+//       localIndex const nodeIndex = m_elemsToNodes( k, a );
+//       for( int i=0; i< 3; ++i )
+//       {
+//         stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
+//       }
+//     }
+//   }
+
+//   /**
+//    * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
+//    *
+//    * ### ExplicitAcousticSEM Description
+//    * Calculates stiffness vector
+//    *
+//    */
+//   GEOS_HOST_DEVICE
+//   inline
+//   void quadraturePointKernel( localIndex const k,
+//                               localIndex const q,
+//                               StackVariables & stack ) const
+//   {
+//     m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
+//     {
+//       real32 const localIncrement = val*m_p_n[m_elemsToNodes[k][j]];
+//       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
+//     } );
+//   }
+
+// protected:
+//   /// The array containing the nodal position array.
+//   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+
+//   /// The array containing the nodal pressure array.
+//   arrayView1d< real32 const > const m_p_n;
+
+//   /// The array containing the product of the stiffness matrix and the nodal pressure.
+//   arrayView1d< real32 > const m_stiffnessVector;
+
+//   /// The time increment for this time integration step.
+//   real64 const m_dt;
+
+
+// };
 
 
 
-/// The factory used to construct a ExplicitAcousticWaveEquation kernel.
-using ExplicitAcousticSEMFactory = finiteElement::KernelFactory< ExplicitAcousticSEM,
-                                                                 real64 >;
+// /// The factory used to construct a ExplicitAcousticWaveEquation kernel.
+// using ExplicitAcousticSEMFactory = finiteElement::KernelFactory< ExplicitAcousticSEM,
+//                                                                  real64 >;
 
 
 } // namespace acousticWaveEquationSEMKernels

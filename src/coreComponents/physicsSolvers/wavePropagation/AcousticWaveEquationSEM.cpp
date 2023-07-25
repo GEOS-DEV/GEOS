@@ -948,7 +948,9 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
     arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVector >();
     arrayView1d< real32 const > const damping = nodeManager.getField< fields::DampingVector >();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
+    
     arrayView1d< real32 > const p_nm1 = nodeManager.getField< fields::Pressure_nm1 >();
     arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_n >();
     arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
@@ -959,16 +961,40 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
     bool const usePML = m_usePML;
 
-    auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const regionIndex,
+                                                                                          CellElementSubRegion & elementSubRegion )
+    {
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
+      finiteElement::FiniteElementBase const &
+      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+      finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
+      {
+        using FE_TYPE = TYPEOFREF( finiteElement );
 
-    finiteElement::
-      regionBasedKernelApplication< EXEC_POLICY,
-                                    constitutive::NullModel,
-                                    CellElementSubRegion >( mesh,
-                                                            regionNames,
-                                                            getDiscretizationName(),
-                                                            "",
-                                                            kernelFactory );
+
+
+        acousticWaveEquationSEMKernels::
+          StiffnessVectorComputation< FE_TYPE > kernel( finiteElement );
+        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
+          ( elementSubRegion.size(),
+            X,
+            elemsToNodes,
+            p_n,
+            stiffnessVector );
+      } );
+    
+    } );
+
+    // auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
+
+    // finiteElement::
+    //   regionBasedKernelApplication< EXEC_POLICY,
+    //                                 constitutive::NullModel,
+    //                                 CellElementSubRegion >( mesh,
+    //                                                         regionNames,
+    //                                                         getDiscretizationName(),
+    //                                                         "",
+    //                                                         kernelFactory );
 
     EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
     real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
