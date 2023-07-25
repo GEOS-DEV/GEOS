@@ -43,8 +43,8 @@ void HypreInterface::initialize()
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
   hypre_HandleDefaultExecPolicy( hypre_handle() ) = HYPRE_EXEC_DEVICE;
   hypre_HandleSpgemmUseVendor( hypre_handle() ) = 0;
-  HYPRE_SetUmpireUMPoolSize( 0 );
-  HYPRE_SetUmpireDevicePoolSize( 0 );
+  // HYPRE_SetUmpireUMPoolSize( 0 );
+  // HYPRE_SetUmpireDevicePoolSize( 0 );
 
 #endif
   HYPRE_SetMemoryLocation( hypre::memoryLocation );
