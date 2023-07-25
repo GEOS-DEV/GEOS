@@ -60,13 +60,18 @@
 
 #define GEOS_PRAGMA( PRAGMA_STRING ) _Pragma( #PRAGMA_STRING )
 
-//#if defined(__GNUC__) && !defined( __clang__) &&  __GNUC__>=11
-//#define GEOS_PRAGMA_UNROLL_DEPTH( NUMITER ) GEOS_PRAGMA( GCC unroll NUMITER )
-// #else
- #define GEOS_PRAGMA_UNROLL_DEPTH( NUMITER ) GEOS_PRAGMA( unroll NUMITER )
-// #endif
 
-#define GEOS_PRAGMA_UNROLL GEOS_PRAGMA_UNROLL_DEPTH( 16 )
+#if defined(__GNUC__) && !defined( __clang__) &&  __GNUC__>=11
+#if defined(GEOS_USE_DEVICE)
+#define GEOS_PRAGMA_UNROLL _Pragma( "GCC unroll" )
+#else
+#define GEOS_PRAGMA_UNROLL _Pragma( "GCC unroll 16" )
+#endif
+#else
+#define GEOS_PRAGMA_UNROLL _Pragma( "unroll" )
+#endif
+
+
 /**
  * @name Unused variable markers.
  *

@@ -113,14 +113,17 @@ void test_capture()
 
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
 
-  forAll< geos::parallelDevicePolicy<> >( 1, [ feBase, gradNDimsView, detJDimsView ] GEOS_HOST_DEVICE ( int const )
+  arrayView4d< real64 const > const gradNView = feBase.getGradNView();
+  arrayView2d< real64 const > const detJView = feBase.getDetJView();
+
+  forAll< geos::parallelDevicePolicy<> >( 1, [ gradNView, detJView, gradNDimsView, detJDimsView ] GEOS_HOST_DEVICE ( int const )
   {
-    gradNDimsView[0] = feBase.getGradNView().size( 0 );
-    gradNDimsView[1] = feBase.getGradNView().size( 1 );
-    gradNDimsView[2] = feBase.getGradNView().size( 2 );
-    gradNDimsView[3] = feBase.getGradNView().size( 3 );
-    detJDimsView[0] = feBase.getDetJView().size( 0 );
-    detJDimsView[1] = feBase.getDetJView().size( 1 );
+    gradNDimsView[0] = gradNView.size( 0 );
+    gradNDimsView[1] = gradNView.size( 1 );
+    gradNDimsView[2] = gradNView.size( 2 );
+    gradNDimsView[3] = gradNView.size( 3 );
+    detJDimsView[0] = detJView.size( 0 );
+    detJDimsView[1] = detJView.size( 1 );
   } );
 
   forAll< serialPolicy >( 1, [ feBase, gradNDimsView, detJDimsView ]( int const )

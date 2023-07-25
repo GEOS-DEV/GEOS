@@ -16,6 +16,7 @@ configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp.in
                 ${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/policies.hpp )
 
 
+
 set( kernelNames SolidMechanicsKernels )
 set( subregionList CellElementSubRegion )
 set( solidBaseDispatch DamageSpectral<ElasticIsotropic>
@@ -74,8 +75,11 @@ endif( )
     endforeach()
   endforeach()
 
-  list( APPEND physicsSolvers_sources "${CMAKE_SOURCE_DIR}/coreComponents/physicsSolvers/solidMechanics/kernels/SolidMechanicsSmallStrainResidualKernels.cpp" )
 
+  configure_file( ${CMAKE_SOURCE_DIR}/coreComponents/physicsSolvers/solidMechanics/kernels/SolidMechanicsSmallStrainResidualKernels.cpp
+                  ${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/SolidMechanicsSmallStrainResidualKernels.cpp )
+
+  list( APPEND physicsSolvers_sources ${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/SolidMechanicsSmallStrainResidualKernels.cpp )
   
   set( porousSolidDispatch PorousSolid<ElasticIsotropic> )
 
