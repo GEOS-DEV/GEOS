@@ -15,6 +15,12 @@ if( ENABLE_CUDA_NVTOOLSEXT )
   set( dependencyList ${dependencyList} CUDA::nvToolsExt )
 endif()
 
+if ( GEOSX_BUILD_SHARED_LIBS )
+  set (dependencyList ${dependencyList} geosx_core )
+else()
+  set (dependencyList ${dependencyList} ${geosx_core_libs} )
+endif()
+
 #
 # Add gtest C++ based tests
 #

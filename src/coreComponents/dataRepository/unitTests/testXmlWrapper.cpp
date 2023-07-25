@@ -15,7 +15,7 @@
 #include <gtest/gtest.h>
 
 #include "dataRepository/xmlWrapper.hpp"
-#include "common/initializeEnvironment.hpp"
+#include "mainInterface/initialization.hpp"
 
 using namespace geos;
 
@@ -324,13 +324,13 @@ INSTANTIATE_TEST_SUITE_P(
 
 int main( int argc, char * argv[] )
 {
-  geos::setupLogger();
+  geos::basicSetup( argc, argv, false );
 
   int result = 0;
   testing::InitGoogleTest( &argc, argv );
   result = RUN_ALL_TESTS();
 
-  geos::finalizeLogger();
+  geos::basicCleanup();
 
   return result;
 }
