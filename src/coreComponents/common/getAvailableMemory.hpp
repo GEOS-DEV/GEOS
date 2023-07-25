@@ -43,7 +43,6 @@ static inline size_t getAvailableMemory()
 
   return vmstat.free_count * pagesize;
 #else
-  GEOS_ERROR_IF( percent > 100, "Error, percentage of memory should be smallerer than -100, check lifoOnHost (should be greater that -100)" );
   return (size_t)sysconf( _SC_AVPHYS_PAGES ) *(size_t) sysconf( _SC_PAGESIZE );
 #endif
 }
