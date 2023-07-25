@@ -1,4 +1,4 @@
-# Replace `DEFINE_ME` by the value of `GEOSX_TPL_TAG` in the `.travis.yml` file.
+# Replace `DEFINE_ME` by the value of `GEOSX_TPL_TAG` in the `.github/workflows/ci_tests.yml` file.
 FROM docker.io/geosx/ubuntu20.04-gcc10:DEFINE_ME
 
 RUN apt-get update
