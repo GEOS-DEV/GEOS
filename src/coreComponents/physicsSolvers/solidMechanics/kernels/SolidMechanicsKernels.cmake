@@ -15,43 +15,47 @@ set( SmallStrainResidualPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} 
 configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp.in
                 ${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/policies.hpp )
 
-
 set( kernelNames SolidMechanicsKernels )
 set( subregionList CellElementSubRegion )
-set( solidBaseDispatch DamageSpectral<ElasticIsotropic>
-                       DamageVolDev<ElasticIsotropic>
-                       Damage<ElasticIsotropic>
-                       DruckerPragerExtended
-                       ModifiedCamClay
-                       DelftEgg
-                       DruckerPrager
-                       ElasticIsotropic
-                       ElasticTransverseIsotropic
-                       ElasticIsotropicPressureDependent
-                       ElasticOrthotropic )
 
-set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
-                           H1_Wedge_Lagrange1_Gauss6
-                           H1_Tetrahedron_Lagrange1_Gauss1
-                           H1_Pyramid_Lagrange1_Gauss5
-                           H1_Tetrahedron_VEM_Gauss1
-                           H1_Prism5_VEM_Gauss1
-                           H1_Prism6_VEM_Gauss1
-                           H1_Prism7_VEM_Gauss1
-                           H1_Prism8_VEM_Gauss1
-                           H1_Prism9_VEM_Gauss1
-                           H1_Prism10_VEM_Gauss1 )
+if( NOT GEOS_MINIMAL_DISPATCH )
+  set( solidBaseDispatch DamageSpectral<ElasticIsotropic>
+                        DamageVolDev<ElasticIsotropic>
+                        Damage<ElasticIsotropic>
+                        DruckerPragerExtended
+                        ModifiedCamClay
+                        DelftEgg
+                        DruckerPrager
+                        ElasticIsotropic
+                        ElasticTransverseIsotropic
+                        ElasticIsotropicPressureDependent
+                        ElasticOrthotropic )
 
-if ( NOT ${ENABLE_HIP} )
-  list(APPEND finiteElementDispatch
-              Q1_Hexahedron_Lagrange_GaussLobatto
-              Q2_Hexahedron_Lagrange_GaussLobatto
-              Q3_Hexahedron_Lagrange_GaussLobatto
-              Q4_Hexahedron_Lagrange_GaussLobatto
-              Q5_Hexahedron_Lagrange_GaussLobatto
-              H1_Hexahedron_VEM_Gauss1
-              H1_Wedge_VEM_Gauss1
-              H1_Prism11_VEM_Gauss1 )
+  set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
+                            H1_Wedge_Lagrange1_Gauss6
+                            H1_Tetrahedron_Lagrange1_Gauss1
+                            H1_Pyramid_Lagrange1_Gauss5
+                            H1_Tetrahedron_VEM_Gauss1
+                            H1_Prism5_VEM_Gauss1
+                            H1_Prism6_VEM_Gauss1
+                            H1_Prism7_VEM_Gauss1
+                            H1_Prism8_VEM_Gauss1
+                            H1_Prism9_VEM_Gauss1
+                            H1_Prism10_VEM_Gauss1 )
+
+  if ( NOT ${ENABLE_HIP} )
+    list(APPEND finiteElementDispatch
+                Q1_Hexahedron_Lagrange_GaussLobatto
+                Q2_Hexahedron_Lagrange_GaussLobatto
+                Q3_Hexahedron_Lagrange_GaussLobatto
+                Q4_Hexahedron_Lagrange_GaussLobatto
+                Q5_Hexahedron_Lagrange_GaussLobatto
+                H1_Hexahedron_VEM_Gauss1
+                H1_Wedge_VEM_Gauss1
+                H1_Prism11_VEM_Gauss1 )
+  endif( )
+  set( solidBaseDispatch ElasticIsotropic )
+  set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2 )
 endif( )
 
   foreach( KERNELNAME ${kernelNames} )
@@ -76,11 +80,13 @@ endif( )
 
   list( APPEND physicsSolvers_sources "${CMAKE_SOURCE_DIR}/coreComponents/physicsSolvers/solidMechanics/kernels/SolidMechanicsSmallStrainResidualKernels.cpp" )
 
-  
+if( NOT GEOS_MINIMAL_DISPATCH )
   set( porousSolidDispatch PorousSolid<ElasticIsotropic> )
+else()
+  set( porousSolidDispatch )
+endif()
 
   set( kernelNames SolidMechanicsFixedStressThermoPoroElasticKernels )
-
 
   foreach( KERNELNAME ${kernelNames} )
     foreach( SUBREGION_TYPE  ${subregionList} )

@@ -78,13 +78,11 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
     localDst[ i ] = 0.0;
   } );
 
-  // {
-  // std::cout<<"MatrixFreeSolidMechanicsFEMOperator::apply - bp1"<<std::endl;
-  // LvArray::print< parallelDevicePolicy< 32 > >( localSrc );
-  // std::cout<<"MatrixFreeSolidMechanicsFEMOperator::apply - bp2"<<std::endl;
-  // }
-
-
+    // {
+    // std::cout<<"MatrixFreeSolidMechanicsFEMOperator::apply - bp1"<<std::endl;
+    // LvArray::print< parallelDevicePolicy< > >( localSrc );
+    // std::cout<<"MatrixFreeSolidMechanicsFEMOperator::apply - bp2"<<std::endl;
+    // }
 
   for( auto const & target: m_meshTargets )
   {
@@ -121,21 +119,19 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
                                                                                          "" );
 
     finiteElement::
-      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                    constitutive::ElasticIsotropic,
-                                    CellElementSubRegion >( mesh,
-                                                            regionNames,
-                                                            m_finiteElementName,
-                                                            "solidMaterialNames",
-                                                            kernelFactory );
-    //parallelDeviceSync();
-
+    regionBasedKernelApplication< parallelDevicePolicy< >,
+                                  constitutive::ElasticIsotropic,
+                                  CellElementSubRegion >( mesh,
+                                                          regionNames,
+                                                          m_finiteElementName,
+                                                          "solidMaterialNames",
+                                                          kernelFactory );
 #endif
   }
 
   // {
   //   std::cout<<"MatrixFreeSolidMechanicsFEMOperator::apply - bp3"<<std::endl;
-  //   LvArray::print< parallelDevicePolicy< 32 > >( localDst );
+  //   LvArray::print< parallelDevicePolicy< > >( localDst );
   //   std::cout<<"MatrixFreeSolidMechanicsFEMOperator::apply - bp4"<<std::endl;
   // }
 

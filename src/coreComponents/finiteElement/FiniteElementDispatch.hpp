@@ -32,6 +32,7 @@
 #include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
 #include "LvArray/src/system.hpp"
 
+#if GEOS_MINIMAL_DISPATCH == 0
 #define FE_1_TYPES \
   finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2, \
   finiteElement::H1_Wedge_Lagrange1_Gauss6, \
@@ -83,7 +84,12 @@
 #define ALL_FE_TYPES BASE_FE_TYPES
 #endif
 
+#else 
 
+#define BASE_FE_TYPES finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2
+#define ALL_FE_TYPES BASE_FE_TYPES
+
+#endif
 
 #define FE_TYPES_2D \
   finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2  \

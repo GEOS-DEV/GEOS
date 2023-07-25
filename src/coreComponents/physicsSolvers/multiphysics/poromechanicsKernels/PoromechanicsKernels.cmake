@@ -7,45 +7,49 @@ set( ThermalMultiphasePoromechanicsPolicy "geos::parallelDevicePolicy< ${GEOSX_B
 set( ThermalSinglePhasePoromechanicsPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
 set( ThermalSinglePhasePoromechanicsEFEMPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
 
-
 configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp.in
                 ${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/policies.hpp )
 
 set( kernelNames PoromechanicsKernels )
 set( subregionList CellElementSubRegion )
-set( porousSolidDispatch PorousSolid<DruckerPragerExtended>
-                         PorousSolid<ModifiedCamClay>
-                         PorousSolid<DelftEgg>
-                         PorousSolid<DruckerPrager>
-                         PorousSolid<ElasticIsotropic>
-                         PorousSolid<ElasticTransverseIsotropic>
-                         PorousSolid<ElasticIsotropicPressureDependent>
-                         PorousSolid<ElasticOrthotropic>
-                         PorousSolid<DamageSpectral<ElasticIsotropic>>
-                         PorousSolid<DamageVolDev<ElasticIsotropic>>
-                         PorousSolid<Damage<ElasticIsotropic>> )
-##                         PorousSolid<DuvautLionsSolid<DruckerPrager>>
-##                         PorousSolid<DuvautLionsSolid<DruckerPragerExtended>>
-##                         PorousSolid<DuvautLionsSolid<ModifiedCamClay>> )
+if( NOT GEOS_MINIMAL_DISPATCH )
+  set( porousSolidDispatch PorousSolid<DruckerPragerExtended>
+                          PorousSolid<ModifiedCamClay>
+                          PorousSolid<DelftEgg>
+                          PorousSolid<DruckerPrager>
+                          PorousSolid<ElasticIsotropic>
+                          PorousSolid<ElasticTransverseIsotropic>
+                          PorousSolid<ElasticIsotropicPressureDependent>
+                          PorousSolid<ElasticOrthotropic>
+                          PorousSolid<DamageSpectral<ElasticIsotropic>>
+                          PorousSolid<DamageVolDev<ElasticIsotropic>>
+                          PorousSolid<Damage<ElasticIsotropic>> )
+  ##                         PorousSolid<DuvautLionsSolid<DruckerPrager>>
+  ##                         PorousSolid<DuvautLionsSolid<DruckerPragerExtended>>
+  ##                         PorousSolid<DuvautLionsSolid<ModifiedCamClay>> )
 
-set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
-                           H1_Wedge_Lagrange1_Gauss6
-                           H1_Tetrahedron_Lagrange1_Gauss1
-                           H1_Pyramid_Lagrange1_Gauss5
-                           H1_Tetrahedron_VEM_Gauss1
-                           H1_Prism5_VEM_Gauss1
-                           H1_Prism6_VEM_Gauss1
-                           H1_Prism7_VEM_Gauss1
-                           H1_Prism8_VEM_Gauss1
-                           H1_Prism9_VEM_Gauss1
-                           H1_Prism10_VEM_Gauss1 )
+  set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
+                            H1_Wedge_Lagrange1_Gauss6
+                            H1_Tetrahedron_Lagrange1_Gauss1
+                            H1_Pyramid_Lagrange1_Gauss5
+                            H1_Tetrahedron_VEM_Gauss1
+                            H1_Prism5_VEM_Gauss1
+                            H1_Prism6_VEM_Gauss1
+                            H1_Prism7_VEM_Gauss1
+                            H1_Prism8_VEM_Gauss1
+                            H1_Prism9_VEM_Gauss1
+                            H1_Prism10_VEM_Gauss1 )
 
-if ( NOT ${ENABLE_HIP} )
-  list(APPEND finiteElementDispatch
-              H1_Hexahedron_VEM_Gauss1
-              H1_Wedge_VEM_Gauss1
-              H1_Prism11_VEM_Gauss1 )
-endif( )
+  if ( NOT ${ENABLE_HIP} )
+    list(APPEND finiteElementDispatch
+                H1_Hexahedron_VEM_Gauss1
+                H1_Wedge_VEM_Gauss1
+                H1_Prism11_VEM_Gauss1 )
+  endif( )
+else()
+  set( porousSolidDispatch "" )
+  set( finiteElementDispatch "" )
+endif()
 
 
   foreach( KERNELNAME ${kernelNames} )
@@ -71,26 +75,31 @@ endif( )
 
 set( kernelNames PoromechanicsEFEMKernels )
 set( subregionList CellElementSubRegion )
-set( porousSolidDispatch PorousSolid<ElasticIsotropic> )
-set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
-                           H1_Wedge_Lagrange1_Gauss6
-                           H1_Tetrahedron_Lagrange1_Gauss1
-                           H1_Pyramid_Lagrange1_Gauss5
-                           H1_Tetrahedron_VEM_Gauss1
-                           H1_Prism5_VEM_Gauss1
-                           H1_Prism6_VEM_Gauss1
-                           H1_Prism7_VEM_Gauss1
-                           H1_Prism8_VEM_Gauss1
-                           H1_Prism9_VEM_Gauss1
-                           H1_Prism10_VEM_Gauss1 )
+if( NOT GEOS_MINIMAL_DISPATCH )
 
-if ( NOT ${ENABLE_HIP} )
-  list(APPEND finiteElementDispatch
-              H1_Hexahedron_VEM_Gauss1
-              H1_Wedge_VEM_Gauss1
-              H1_Prism11_VEM_Gauss1 )
+  set( porousSolidDispatch PorousSolid<ElasticIsotropic> )
+  set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
+                            H1_Wedge_Lagrange1_Gauss6
+                            H1_Tetrahedron_Lagrange1_Gauss1
+                            H1_Pyramid_Lagrange1_Gauss5
+                            H1_Tetrahedron_VEM_Gauss1
+                            H1_Prism5_VEM_Gauss1
+                            H1_Prism6_VEM_Gauss1
+                            H1_Prism7_VEM_Gauss1
+                            H1_Prism8_VEM_Gauss1
+                            H1_Prism9_VEM_Gauss1
+                            H1_Prism10_VEM_Gauss1 )
+
+  if ( NOT ${ENABLE_HIP} )
+    list(APPEND finiteElementDispatch
+                H1_Hexahedron_VEM_Gauss1
+                H1_Wedge_VEM_Gauss1
+                H1_Prism11_VEM_Gauss1 )
+  endif( )
+else( )
+  set( porousSolidDispatch "" )
+  set( finiteElementDispatch "" )
 endif( )
-  
   foreach( KERNELNAME ${kernelNames} )
     foreach( SUBREGION_TYPE  ${subregionList} )
       foreach( CONSTITUTIVE_TYPE ${porousSolidDispatch} )
@@ -113,27 +122,31 @@ endif( )
 
 set( kernelNames ThermoPoromechanicsKernels )
 set( subregionList CellElementSubRegion )
-set( porousSolidDispatch PorousSolid<ElasticIsotropic> )
+if( NOT GEOS_MINIMAL_DISPATCH )
+  set( porousSolidDispatch PorousSolid<ElasticIsotropic> )
 
-set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
-                           H1_Wedge_Lagrange1_Gauss6
-                           H1_Tetrahedron_Lagrange1_Gauss1
-                           H1_Pyramid_Lagrange1_Gauss5
-                           H1_Tetrahedron_VEM_Gauss1
-                           H1_Prism5_VEM_Gauss1
-                           H1_Prism6_VEM_Gauss1
-                           H1_Prism7_VEM_Gauss1
-                           H1_Prism8_VEM_Gauss1
-                           H1_Prism9_VEM_Gauss1
-                           H1_Prism10_VEM_Gauss1 )
+  set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
+                            H1_Wedge_Lagrange1_Gauss6
+                            H1_Tetrahedron_Lagrange1_Gauss1
+                            H1_Pyramid_Lagrange1_Gauss5
+                            H1_Tetrahedron_VEM_Gauss1
+                            H1_Prism5_VEM_Gauss1
+                            H1_Prism6_VEM_Gauss1
+                            H1_Prism7_VEM_Gauss1
+                            H1_Prism8_VEM_Gauss1
+                            H1_Prism9_VEM_Gauss1
+                            H1_Prism10_VEM_Gauss1 )
 
-if ( NOT ${ENABLE_HIP} )
-  list(APPEND finiteElementDispatch
-              H1_Hexahedron_VEM_Gauss1
-              H1_Wedge_VEM_Gauss1
-              H1_Prism11_VEM_Gauss1 )
+  if ( NOT ${ENABLE_HIP} )
+    list(APPEND finiteElementDispatch
+                H1_Hexahedron_VEM_Gauss1
+                H1_Wedge_VEM_Gauss1
+                H1_Prism11_VEM_Gauss1 )
+  endif( )
+else( )
+  set( porousSolidDispatch "" )
+  set( finiteElementDispatch "" )
 endif( )
-
   foreach( KERNELNAME ${kernelNames} )
     foreach( SUBREGION_TYPE  ${subregionList} )
       foreach( CONSTITUTIVE_TYPE ${porousSolidDispatch} )

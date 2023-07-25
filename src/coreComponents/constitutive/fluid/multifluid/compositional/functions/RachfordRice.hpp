@@ -195,7 +195,6 @@ private:
             arraySlice1d< real64 const > const feed,
             arraySlice1d< integer const > const presentComponentIds,
             real64 const & x )
-  {
     real64 value = 0.0;
     for( integer i = 0; i < presentComponentIds.size(); ++i )
     {
@@ -206,14 +205,6 @@ private:
     return value;
   }
 
-  /**
-   * @brief Function evaluating the derivative of the Rachford-Rice function
-   * @input[in] kValues the array fo K-values
-   * @input[in] feed the component fractions
-   * @input[in] presentComponentIds the indices of components with a non-zero fractions
-   * @input[in] x the value at which the derivative of the Rachford-Rice function is evaluated
-   * @return the value of the derivative of the Rachford-Rice function at x
-   **/
   GEOS_HOST_DEVICE
   real64
   static
@@ -232,7 +223,6 @@ private:
     }
     return value;
   }
-
 };
 
 } // namespace constitutive

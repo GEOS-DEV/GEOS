@@ -8,6 +8,9 @@
 #ifndef GEOS_COMMON_CONFIG_HPP
 #define GEOS_COMMON_CONFIG_HPP
 
+/// Enabled dispatch minimizing to only build a small subset of kernels
+#cmakedefine01 GEOS_MINIMAL_DISPATCH
+
 /// Enables floating point exceptions
 #cmakedefine GEOSX_USE_FPE
 
