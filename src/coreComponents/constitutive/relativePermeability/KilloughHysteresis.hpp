@@ -122,6 +122,40 @@ public:
       m_criticalImbibitionValue = criticalImbibitionValue;
       m_criticalDrainageValue = criticalDrainageValue;
 
+      GEOS_THROW_IF( m_criticalImbibitionPhaseVolFraction < 0 || m_criticalImbibitionPhaseVolFraction > 1,
+                     GEOS_FMT( "KilloughHysteresis: the critical imbibition phase volume fraction is equal to {} but must be between 0 an 1",
+                               m_criticalImbibitionPhaseVolFraction ),
+                     InputError );
+      GEOS_THROW_IF( m_criticalDrainagePhaseVolFraction < 0 || m_criticalDrainagePhaseVolFraction > 1,
+                     GEOS_FMT( "KilloughHysteresis: the critical drainage phase volume fraction is equal to {} but must be between 0 an 1",
+                               m_criticalDrainagePhaseVolFraction ),
+                     InputError );
+      GEOS_THROW_IF( m_extremumPhaseVolFraction < 0 || m_extremumPhaseVolFraction > 1,
+                     GEOS_FMT( "KilloughHysteresis: the extremum phase volume fraction is equal to {} but must be between 0 an 1",
+                               m_extremumPhaseVolFraction ),
+                     InputError );
+
+      GEOS_THROW_IF( m_criticalImbibitionValue < 0 || m_criticalImbibitionValue > 1,
+                     GEOS_FMT( "KilloughHysteresis: the critical imbibition relative permeability is equal to {} but must be between 0 an 1",
+                               m_criticalImbibitionValue ),
+                     InputError );
+      GEOS_THROW_IF( m_criticalDrainageValue < 0 || m_criticalDrainageValue > 1,
+                     GEOS_FMT( "KilloughHysteresis: the critical drainage relative permeability is equal to {} but must be between 0 an 1",
+                               m_criticalDrainageValue ),
+                     InputError );
+      GEOS_THROW_IF( m_extremumValue < 0 || m_extremumValue > 1,
+                     GEOS_FMT( "KilloughHysteresis: the extremum relative permeability is equal to {} but must be between 0 an 1",
+                               m_extremumValue ),
+                     InputError );
+
+
+      std::cout << m_extremumPhaseVolFraction << " "
+                << m_criticalImbibitionPhaseVolFraction << " "
+                << m_criticalDrainagePhaseVolFraction << " "
+                << m_extremumValue << " "
+                << m_criticalImbibitionValue << " "
+                << m_criticalDrainageValue << std::endl;
+
       m_isWetting =  ((m_criticalDrainagePhaseVolFraction > m_extremumPhaseVolFraction) ?
                       PhaseWettability::WETTING :
                       PhaseWettability::NONWETTING) == PhaseWettability::WETTING;
@@ -216,6 +250,7 @@ KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::HysteresisCurve 
     real64 const Smxi = hystereticCurve.m_criticalImbibitionPhaseVolFraction;
     real64 const Swc = Scrd;
 
+    std::cout << Scrd << " " << Smxd << " " << Smxi << " " << Swc << std::endl;
     GEOS_ERROR_IF(  (Smxi - Smxd) > 0,
                     GEOS_FMT( "{}: For wetting-phase hysteresis, the imbibition end-point saturation Smxi( {} ) must be smaller "
                               "than the drainage saturation end-point Smxd( {} ).\n Crossing relative permeability curves.\n",

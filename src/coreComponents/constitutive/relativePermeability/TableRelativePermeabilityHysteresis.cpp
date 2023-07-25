@@ -247,10 +247,10 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateWettingRelPer
   std::tie( ipWetting, ipNonWetting ) = RelativePermeabilityBase::phaseIndex( m_phaseOrder );
 
   // Step 1.a: take care of the two-phase case
-  real64 drainagePhaseMinVolFraction,     // output
-         drainagePhaseMaxVolFraction,
-         drainagePhaseRelPermMinEndPoint,
-         drainagePhaseRelPermMaxEndPoint;
+  real64 drainagePhaseMinVolFraction = -1; // output
+  real64 drainagePhaseMaxVolFraction = -1;
+  real64 drainagePhaseRelPermMinEndPoint = -1;
+  real64 drainagePhaseRelPermMaxEndPoint = -1;
 
   string const tableName = ( numPhases == 2 ) ?   m_drainageWettingNonWettingRelPermTableNames[0] : m_drainageWettingIntermediateRelPermTableNames[0];
   checkExistenceAndValidateRelPermTable( tableName, // input
@@ -261,10 +261,10 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateWettingRelPer
 
 
   // imbibition if provided
-  real64 imbibitionPhaseMinVolFraction, // output
-         imbibitionPhaseMaxVolFraction,
-         imbibitionPhaseRelPermMinEndPoint,
-         imbibitionPhaseRelPermMaxEndPoint;
+  real64 imbibitionPhaseMinVolFraction = drainagePhaseMinVolFraction; // output
+  real64 imbibitionPhaseMaxVolFraction = drainagePhaseMaxVolFraction;
+  real64 imbibitionPhaseRelPermMinEndPoint = drainagePhaseRelPermMinEndPoint;
+  real64 imbibitionPhaseRelPermMaxEndPoint = drainagePhaseRelPermMaxEndPoint;
 
   if( m_phaseHasHysteresis[IPT::WETTING] )
   {
@@ -314,10 +314,10 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateNonWettingRel
   std::tie( ipWetting, ipNonWetting ) = RelativePermeabilityBase::phaseIndex( m_phaseOrder );
 
   // treat drainage
-  real64 drainagePhaseMinVolFraction, // output
-         drainagePhaseMaxVolFraction,
-         drainagePhaseRelPermMinEndPoint,
-         drainagePhaseRelPermMaxEndPoint;
+  real64 drainagePhaseMinVolFraction = -1; // output
+  real64 drainagePhaseMaxVolFraction = -1;
+  real64 drainagePhaseRelPermMinEndPoint = -1;
+  real64 drainagePhaseRelPermMaxEndPoint = -1;
 
   // Step 1: Read the drainage for the non wetting phase
   string const tableName = ( numPhases == 2 ) ? m_drainageWettingNonWettingRelPermTableNames[1] :
@@ -329,10 +329,10 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateNonWettingRel
                                          drainagePhaseRelPermMaxEndPoint );
 
   // Step 2: validate non-wetting-phase imbibition relative permeability table
-  real64 imbibitionPhaseMinVolFraction, // output
-         imbibitionPhaseMaxVolFraction,
-         imbibitionPhaseRelPermMinEndPoint,
-         imbibitionPhaseRelPermMaxEndPoint;
+  real64 imbibitionPhaseMinVolFraction = drainagePhaseMinVolFraction; // output
+  real64 imbibitionPhaseMaxVolFraction = drainagePhaseMaxVolFraction;
+  real64 imbibitionPhaseRelPermMinEndPoint = drainagePhaseRelPermMinEndPoint;
+  real64 imbibitionPhaseRelPermMaxEndPoint = drainagePhaseRelPermMaxEndPoint;
 
   if( m_phaseHasHysteresis[IPT::NONWETTING] )
   {
