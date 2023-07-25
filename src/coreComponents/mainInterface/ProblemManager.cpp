@@ -256,7 +256,7 @@ bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions 
 void ProblemManager::generateDocumentation()
 {
   // Documentation output
-  GEOS_LOG_RANK_0( "Trying to generate schema..." );
+  logger.rank0Log( "Trying to generate schema..." );
   Group & commandLine = getGroup< Group >( groupKeys.commandLine );
   string const & schemaName = commandLine.getReference< string >( viewKeys.schemaFileName );
 
@@ -277,7 +277,7 @@ void ProblemManager::generateDocumentation()
     // Generate non-schema documentation
     schemaUtilities::ConvertDocumentationToSchema((schemaName + ".other").c_str(), this, 1 );
 
-  GEOS_LOG_RANK_0( "là ça va : " LOCATION );
+    logger.rank0Log( "là ça va : " LOCATION );
   }
 }
 
@@ -889,8 +889,8 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
     string const regionName = std::get< 2 >( key );
     string const subRegionName = std::get< 3 >( key );
 
-    GEOS_LOG_RANK_0( "regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = "<<
-                     meshBodyName<<", "<<meshLevelName<<", "<<regionName<<", "<<subRegionName );
+    logger.rank0Log( "regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = ",
+                     meshBodyName, ", ", meshLevelName, ", ", regionName, ", ", subRegionName );
 
 
 
@@ -907,7 +907,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
       for( auto & materialName : materialList )
       {
         constitutiveManager.hangConstitutiveRelation( materialName, &elemSubRegion, numQuadraturePoints );
-        GEOS_LOG_RANK_0( GEOS_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
+        logger.rank0Log( GEOS_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
                                    meshBodyName,
                                    meshLevelName,
                                    regionName,

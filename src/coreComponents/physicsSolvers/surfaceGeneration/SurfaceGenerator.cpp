@@ -1702,7 +1702,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
   localIndex newNodeIndex;
   if( getLogLevel() )
   {
-    GEOS_LOG_RANK( "" );
+    logger.rankLog( "" );
     std::cout<<"Splitting node "<<nodeID<<" along separation plane faces: ";
     for( std::set< localIndex >::const_iterator i=separationPathFaces.begin(); i!=separationPathFaces.end(); ++i )
     {
@@ -1772,7 +1772,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 
       if( getLogLevel() )
       {
-        GEOS_LOG_RANK( "" );
+        logger.rankLog( "" );
         std::cout<<"  Split edge "<<parentEdgeIndex<<" into edges "<<parentEdgeIndex<<" and "<<newEdgeIndex<<std::endl;
       }
 
@@ -1833,7 +1833,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 
         if( getLogLevel() )
         {
-          GEOS_LOG_RANK( "" );
+          logger.rankLog( "" );
           std::cout<<"  Split face "<<faceIndex<<" into faces "<<faceIndex<<" and "<<newFaceIndex<<std::endl;
         }
 
@@ -2104,19 +2104,19 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 
           if( getLogLevel() > 1 )
           {
-            GEOS_LOG( "    faceToRegionMap["<<newFaceIndex<<"][0]    = "<<faceToRegionMap[newFaceIndex][0] );
-            GEOS_LOG( "    faceToSubRegionMap["<<newFaceIndex<<"][0] = "<<faceToSubRegionMap[newFaceIndex][0] );
-            GEOS_LOG( "    faceToElementMap["<<newFaceIndex<<"][0]      = "<<faceToElementMap[newFaceIndex][0] );
-            GEOS_LOG( "    faceToRegionMap["<<newFaceIndex<<"][1]    = "<<faceToRegionMap[newFaceIndex][1] );
-            GEOS_LOG( "    faceToSubRegionMap["<<newFaceIndex<<"][1] = "<<faceToSubRegionMap[newFaceIndex][1] );
-            GEOS_LOG( "    faceToElementMap["<<newFaceIndex<<"][1]      = "<<faceToElementMap[newFaceIndex][1] );
+            logger.stdLog( "    faceToRegionMap[", newFaceIndex, "][0]    = ", faceToRegionMap[newFaceIndex][0] );
+            logger.stdLog( "    faceToSubRegionMap[", newFaceIndex, "][0] = ", faceToSubRegionMap[newFaceIndex][0] );
+            logger.stdLog( "    faceToElementMap[", newFaceIndex, "][0]      = ", faceToElementMap[newFaceIndex][0] );
+            logger.stdLog( "    faceToRegionMap[", newFaceIndex, "][1]    = ", faceToRegionMap[newFaceIndex][1] );
+            logger.stdLog( "    faceToSubRegionMap[", newFaceIndex, "][1] = ", faceToSubRegionMap[newFaceIndex][1] );
+            logger.stdLog( "    faceToElementMap[", newFaceIndex, "][1]      = ", faceToElementMap[newFaceIndex][1] );
 
-            GEOS_LOG( "    faceToRegionMap["<<faceIndex<<"][0]    = "<<faceToRegionMap[faceIndex][0] );
-            GEOS_LOG( "    faceToSubRegionMap["<<faceIndex<<"][0] = "<<faceToSubRegionMap[faceIndex][0] );
-            GEOS_LOG( "    faceToElementMap["<<faceIndex<<"][0]      = "<<faceToElementMap[faceIndex][0] );
-            GEOS_LOG( "    faceToRegionMap["<<faceIndex<<"][1]    = "<<faceToRegionMap[faceIndex][1] );
-            GEOS_LOG( "    faceToSubRegionMap["<<faceIndex<<"][1] = "<<faceToSubRegionMap[faceIndex][1] );
-            GEOS_LOG( "    faceToElementMap["<<faceIndex<<"][1]      = "<<faceToElementMap[faceIndex][1] );
+            logger.stdLog( "    faceToRegionMap[", faceIndex, "][0]    = ", faceToRegionMap[faceIndex][0] );
+            logger.stdLog( "    faceToSubRegionMap[", faceIndex, "][0] = ", faceToSubRegionMap[faceIndex][0] );
+            logger.stdLog( "    faceToElementMap[", faceIndex, "][0]      = ", faceToElementMap[faceIndex][0] );
+            logger.stdLog( "    faceToRegionMap[", faceIndex, "][1]    = ", faceToRegionMap[faceIndex][1] );
+            logger.stdLog( "    faceToSubRegionMap[", faceIndex, "][1] = ", faceToSubRegionMap[faceIndex][1] );
+            logger.stdLog( "    faceToElementMap[", faceIndex, "][1]      = ", faceToElementMap[faceIndex][1] );
 
           }
 
@@ -2329,7 +2329,7 @@ void SurfaceGenerator::mapConsistencyCheck( localIndex const GEOS_UNUSED_PARAM( 
       std::set< localIndex > elemNodes;
 
 
-      GEOS_LOG( "Element " << elemIndex );
+      logger.stdLog( "Element ", elemIndex );
       std::cout << " elementToNodes = ";
       for( int a=0; a<8; ++a )
       {

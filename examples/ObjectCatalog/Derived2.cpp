@@ -17,12 +17,12 @@
 Derived2::Derived2( int junk, double const & junk2, Parameter& param ):
   Base( junk, junk2, param )
 {
-  GEOS_LOG( "calling Derived2 constructor with arguments ("<<junk<<" "<<junk2<<")" );
+  logger.stdLog( "calling Derived2 constructor with arguments (", junk, " ", junk2, ")" );
 }
 
 Derived2::~Derived2()
 {
-  GEOS_LOG( "calling Derived2 destructor" );
+  logger.stdLog( "calling Derived2 destructor" );
 }
 
 REGISTER_CATALOG_ENTRY( Base, Derived2, int, double const &, Parameter& )

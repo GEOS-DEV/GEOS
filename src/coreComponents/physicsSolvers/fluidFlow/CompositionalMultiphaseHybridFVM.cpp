@@ -149,9 +149,9 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
-      GEOS_LOG_RANK_0( catalogName() << " " << getName() <<
-                       "An aquifer boundary condition named " << bc.getName() << " was requested in the XML file. \n"
-                                                                                 "This type of boundary condition is not yet supported by CompositionalMultiphaseHybridFVM and will be ignored" );
+      logger.rank0Log( catalogName(), " ", getName(),
+                       "An aquifer boundary condition named ", bc.getName(), " was requested in the XML file. \n",
+                       "This type of boundary condition is not yet supported by CompositionalMultiphaseHybridFVM and will be ignored" );
     } );
   } );
 

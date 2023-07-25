@@ -41,7 +41,7 @@ void ConvertDocumentationToSchema( string const & fname,
                                    Group * const group,
                                    integer documentationType )
 {
-  GEOS_LOG_RANK_0( "Generating XML Schema..." );
+  logger.rank0Log( "Generating XML Schema..." );
 
   string schemaBase=
     "<?xml version=\"1.1\" encoding=\"ISO-8859-1\" ?>\
@@ -56,18 +56,18 @@ void ConvertDocumentationToSchema( string const & fname,
   xmlWrapper::xmlNode schemaRoot = schemaTree.child( "xsd:schema" );
 
   // Build the simple schema types
-  GEOS_LOG_RANK_0( "  Basic datatypes" );
+  logger.rank0Log( "  Basic datatypes" );
   BuildSimpleSchemaTypes( schemaRoot );
 
   // Recursively build the schema from the data structure skeleton
-  GEOS_LOG_RANK_0( "  Data structure layout" );
+  logger.rank0Log( "  Data structure layout" );
   SchemaConstruction( *group, schemaRoot, schemaRoot, documentationType );
 
   // Write the schema to file
-  GEOS_LOG_RANK_0( "  Saving file" );
+  logger.rank0Log( "  Saving file" );
   schemaTree.save_file( fname.c_str());
 
-  GEOS_LOG_RANK_0( "  Done!" );
+  logger.rank0Log( "  Done!" );
 }
 
 void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
@@ -265,7 +265,7 @@ void SchemaConstruction( Group & group,
             // (Optional) Default Value
             if( (flag == InputFlags::OPTIONAL_NONUNIQUE) || (flag == InputFlags::REQUIRED_NONUNIQUE))
             {
-              GEOS_LOG_RANK_0( attributeName << " has an invalid input flag" );
+              logger.rank0Log( attributeName, " has an invalid input flag" );
               GEOS_ERROR( "SchemaConstruction: duplicate xml attributes are not allowed" );
             }
             else if( flag == InputFlags::OPTIONAL )

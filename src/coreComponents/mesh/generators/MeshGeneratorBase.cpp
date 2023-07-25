@@ -27,7 +27,7 @@ MeshGeneratorBase::MeshGeneratorBase( string const & name, Group * const parent 
 
 Group * MeshGeneratorBase::createChild( string const & childKey, string const & childName )
 {
-  GEOS_LOG_RANK_0( "Adding Mesh attribute: " << childKey << ", " << childName );
+  logger.rank0Log( "Adding Mesh attribute: ", childKey, ", ", childName );
   std::unique_ptr< WellGeneratorBase > wellGen = WellGeneratorBase::CatalogInterface::factory( childKey, childName, this );
   return &this->registerGroup< WellGeneratorBase >( childName, std::move( wellGen ) );
 }

@@ -42,7 +42,7 @@ MeshManager::~MeshManager()
 
 Group * MeshManager::createChild( string const & childKey, string const & childName )
 {
-  GEOS_LOG_RANK_0( "Adding Mesh: " << childKey << ", " << childName );
+  logger.rank0Log( "Adding Mesh: ", childKey, ", ", childName );
   std::unique_ptr< MeshGeneratorBase > solver = MeshGeneratorBase::CatalogInterface::factory( childKey, childName, this );
   return &this->registerGroup< MeshGeneratorBase >( childName, std::move( solver ) );
 }
@@ -115,7 +115,7 @@ void MeshManager::importFields( DomainPartition & domain )
     if( !domain.hasMeshBody( generator.getName() ) )
       return;
 
-    GEOS_LOG_RANK_0( GEOS_FMT( "{}: importing field data from mesh dataset", generator.getName() ) );
+    logger.rank0Log( GEOS_FMT( "{}: importing field data from mesh dataset", generator.getName() ) );
 
     auto const importFields = [&generator]( ElementRegionBase const & region,
                                             ElementSubRegionBase & subRegion,
@@ -135,8 +135,8 @@ void MeshManager::importFields( DomainPartition & domain )
           // Skip - the user may have not enabled a particular physics model/solver on this destination region.
           if( generator.getLogLevel() >= 1 )
           {
-            GEOS_LOG_RANK_0( "Skipping import of " << meshFieldName << " -> " << geosxFieldName <<
-                             " on " << region.getName() << "/" << subRegion.getName() << " (field not found)" );
+            logger.rank0Log( "Skipping import of ", meshFieldName, " -> ", geosxFieldName,
+                             " on ", region.getName(), "/", subRegion.getName(), " (field not found)" );
           }
 
           continue;
@@ -148,8 +148,8 @@ void MeshManager::importFields( DomainPartition & domain )
         WrapperBase & wrapper = subRegion.getWrapperBase( geosxFieldName );
         if( generator.getLogLevel() >= 1 )
         {
-          GEOS_LOG_RANK_0( "Importing field " << meshFieldName << " into " << geosxFieldName <<
-                           " on " << region.getName() << "/" << subRegion.getName() );
+          logger.rank0Log( "Importing field ", meshFieldName, " into ", geosxFieldName,
+                           " on ", region.getName(), "/", subRegion.getName() );
         }
 
         bool const isMaterialField = materialWrapperNames.count( geosxFieldName ) > 0 && wrapper.numArrayDims() > 1;

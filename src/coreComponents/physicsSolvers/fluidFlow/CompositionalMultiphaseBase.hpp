@@ -476,7 +476,7 @@ void CompositionalMultiphaseBase::applyFieldValue( real64 const & time_n,
     if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
     {
       globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
-      GEOS_LOG_RANK_0( GEOS_FMT( logMessage,
+      logger.rank0Log( GEOS_FMT( logMessage,
                                  getName(), time_n+dt, FieldSpecificationBase::catalogName(),
                                  fs.getName(), setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
     }

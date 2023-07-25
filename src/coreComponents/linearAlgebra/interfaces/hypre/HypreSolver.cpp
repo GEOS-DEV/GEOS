@@ -275,14 +275,14 @@ void HypreSolver::solve( HypreVector const & rhs,
 
   if( m_params.logLevel >= 1 )
   {
-    GEOS_LOG_RANK_0( "\t\tLinear Solver | " << m_result.status <<
-                     " | Iterations: " << m_result.numIterations <<
-                     " | Final Rel Res: " << m_result.residualReduction <<
-                     " | Make Restrictor Time: " << m_makeRestrictorTime <<
-                     " | Compute Auu Time: " << m_computeAuuTime <<
-                     " | SC Filter Time: " << m_componentFilterTime <<
-                     " | Setup Time: " << m_result.setupTime << " s" <<
-                     " | Solve Time: " << m_result.solveTime << " s" );
+    logger.rank0Log( "\t\tLinear Solver | ", m_result.status,
+                     " | Iterations: ", m_result.numIterations,
+                     " | Final Rel Res: ", m_result.residualReduction,
+                     " | Make Restrictor Time: ", m_makeRestrictorTime,
+                     " | Compute Auu Time: ", m_computeAuuTime,
+                     " | SC Filter Time: ", m_componentFilterTime,
+                     " | Setup Time: ", m_result.setupTime, " s",
+                     " | Solve Time: ", m_result.solveTime, " s" );
   }
 }
 

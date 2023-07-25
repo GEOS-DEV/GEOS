@@ -502,7 +502,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
       }
       else
       {
-        GEOS_LOG_RANK_0( "Fracture Occurred. Resolve" );
+        logger.rank0Log( "Fracture Occurred. Resolve" );
       }
     }
     implicitStepComplete( time_n, dt, domain );

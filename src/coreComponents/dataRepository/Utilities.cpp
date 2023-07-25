@@ -106,10 +106,10 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
         //                          1         2         3         4         5         6         7         8         9        10        11
         //        12
         //                 123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
-        GEOS_LOG_RANK_0( "************************************************************************************************************************" );
-        GEOS_LOG_RANK_0( " Data repository memory allocations " );
-        GEOS_LOG_RANK_0( "                                                                                       min          max          sum    " );
-        GEOS_LOG_RANK_0( "                                                                                   -----------  -----------  -----------" );
+        logger.rank0Log( "************************************************************************************************************************" );
+        logger.rank0Log( " Data repository memory allocations " );
+        logger.rank0Log( "                                                                                       min          max          sum    " );
+        logger.rank0Log( "                                                                                   -----------  -----------  -----------" );
       }
 
 
@@ -121,14 +121,14 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
         indentChars += 3;
       }
       // put a indent between groups in the tree
-      GEOS_LOG_RANK_0( outputLine.c_str()<<"|" );
+      logger.rank0Log( outputLine.c_str(), "|" );
       indentChars += 1;
       // only allocation data if it is above the threshold...
       if( groupAllocations[0] >= threshold )
       {
         indentChars += 3;
         outputLine += "|--{:.<" + std::to_string( 83-indentChars ) + "} {:>9s}    {:>9s}    {:>9s}";
-        GEOS_LOG_RANK_0( GEOS_FMT( outputLine.c_str(),
+        logger.rank0Log( GEOS_FMT( outputLine.c_str(),
                                    "[" + group.getName() + "]",
                                    stringutilities::toMetricPrefixString( groupAllocations[0] ) + 'B',
                                    stringutilities::toMetricPrefixString( groupAllocations[1] ) + 'B',
@@ -137,7 +137,7 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
       else  // ...but we still need to output the group name to have a valid tree.
       {
         outputLine += "|--[{:<}]";
-        GEOS_LOG_RANK_0( GEOS_FMT( outputLine.c_str(),
+        logger.rank0Log( GEOS_FMT( outputLine.c_str(),
                                    group.getName() ) );
       }
     }
@@ -158,7 +158,7 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
           }
           indentChars += 5;
           outputLine += "| - {:.<" + std::to_string( 83-indentChars ) + "} {:>9s}    {:>9s}    {:>9s}";
-          GEOS_LOG_RANK_0( GEOS_FMT( outputLine.c_str(),
+          logger.rank0Log( GEOS_FMT( outputLine.c_str(),
                                      view.second->getName(),
                                      stringutilities::toMetricPrefixString( allocationReductions( viewCount, 0 ) ) + 'B',
                                      stringutilities::toMetricPrefixString( allocationReductions( viewCount, 1 ) ) + 'B',
@@ -190,7 +190,7 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
   {
     //         1         2         3         4         5         6         7         8         9        10
     //1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
-    GEOS_LOG_RANK_0( "****************************************************************************************************" );
+    logger.rank0Log( "****************************************************************************************************" );
   }
 }
 

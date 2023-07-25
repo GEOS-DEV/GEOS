@@ -31,12 +31,12 @@ class Base
 public:
   Base( int & junk, double const & junk2 )
   {
-    GEOS_LOG( "calling Base constructor with arguments ("<<junk<<" "<<junk2<<")" );
+    logger.stdLog( "calling Base constructor with arguments (", junk, " ", junk2, ")" );
   }
 
   virtual ~Base()
   {
-    GEOS_LOG( "calling Base destructor" );
+    logger.stdLog( "calling Base destructor" );
   }
 
   using CatalogInterface = dataRepository::CatalogInterface< Base, int &, double const & >;
@@ -57,12 +57,12 @@ public:
   Derived1( int & junk, double const & junk2 ):
     Base( junk, junk2 )
   {
-    GEOS_LOG( "calling Derived1 constructor with arguments ("<<junk<<" "<<junk2<<")" );
+    logger.stdLog( "calling Derived1 constructor with arguments (", junk, " ", junk2, ")" );
   }
 
   ~Derived1()
   {
-    GEOS_LOG( "calling Derived1 destructor" );
+    logger.stdLog( "calling Derived1 destructor" );
   }
   static string catalogName() { return "derived1"; }
   string getCatalogName() { return catalogName(); }
@@ -78,12 +78,12 @@ public:
   Derived2( int & junk, double const & junk2 ):
     Base( junk, junk2 )
   {
-    GEOS_LOG( "calling Derived2 constructor with arguments ("<<junk<<" "<<junk2<<")" );
+    logger.stdLog( "calling Derived2 constructor with arguments (", junk, " ", junk2, ")" );
   }
 
   ~Derived2()
   {
-    GEOS_LOG( "calling Derived2 destructor" );
+    logger.stdLog( "calling Derived2 destructor" );
   }
   static string catalogName() { return "derived2"; }
   string getCatalogName() { return catalogName(); }
@@ -95,7 +95,7 @@ REGISTER_CATALOG_ENTRY( Base, Derived2, int &, double const & )
 //START_SPHINX_TEST
 TEST( testObjectCatalog, testRegistration )
 {
-  GEOS_LOG( "EXECUTING MAIN" );
+  logger.stdLog( "EXECUTING MAIN" );
   int junk = 1;
   double junk2 = 3.14;
 
@@ -112,7 +112,7 @@ TEST( testObjectCatalog, testRegistration )
 
   EXPECT_STREQ( derived2->getCatalogName().c_str(),
                 Derived2::catalogName().c_str() );
-  GEOS_LOG( "EXITING MAIN" );
+  logger.stdLog( "EXITING MAIN" );
 }
 //STOP_SPHINX
 

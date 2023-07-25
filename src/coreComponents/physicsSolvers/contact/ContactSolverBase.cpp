@@ -177,7 +177,7 @@ void ContactSolverBase::outputConfigurationStatistics( DomainPartition const & d
     {
       computeFractureStateStatistics( mesh, numStick, numSlip, numOpen );
 
-      GEOS_LOG_RANK_0( GEOS_FMT( "  Number of element for each fracture state:"
+      logger.rank0Log( GEOS_FMT( "  Number of element for each fracture state:"
                                  " stick: {:12} | slip:  {:12} | open:  {:12}",
                                  numStick, numSlip, numOpen ) );
     } );

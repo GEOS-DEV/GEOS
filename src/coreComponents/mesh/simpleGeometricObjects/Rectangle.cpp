@@ -120,10 +120,10 @@ void Rectangle::findRectangleLimits()
 
   if( getLogLevel() > 1 )
   {
-    GEOS_LOG_RANK_0( "Point A: " << m_points[0] );
-    GEOS_LOG_RANK_0( "Point B: " << m_points[1] );
-    GEOS_LOG_RANK_0( "Point C: " << m_points[2] );
-    GEOS_LOG_RANK_0( "Point D: " << m_points[3] );
+    logger.rank0Log( "Point A: ", m_points[0] );
+    logger.rank0Log( "Point B: ", m_points[1] );
+    logger.rank0Log( "Point C: ", m_points[2] );
+    logger.rank0Log( "Point D: ", m_points[3] );
   }
 }
 

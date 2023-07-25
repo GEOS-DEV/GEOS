@@ -459,6 +459,8 @@ namespace geos
 {
 
 
+/// @brief Class used to log messages in the standard output (and optional rank log files).
+/// Doesn't have any GPU logging capacities for now.
 class Logger
 {
 public:
@@ -472,7 +474,7 @@ public:
    */
   void reset();
   /**
-   * @brief Initialize the logger in a parallel build. Must be called at least once, after the 
+   * @brief Initialize the logger in a parallel build. Must be called at least once, after the
    * MPI_Init() call. Must not be called in a serial build.
    * @param mpiComm global MPI communicator
    */
@@ -505,6 +507,42 @@ public:
    */
   void setMaxLogLevel( int value );
 
+  /////////////////////////////////////////////////////////////////////////////////////////////////
+  // TODO : stdLog() devrait être abandonnée au profit de rank0Log() ou rankLog(), car le 
+  // message est spam par tous les ranks sans qu'on puisse identifier d'où il vient...
+  //
+  // Une autre possibilité serait de créer une méthode logOnce() qui renvoit tout au rank 0 qui
+  // s'occupe de n'afficher le message qu'une seule et unique fois si et seulement si il apparait 
+  // sur un des ranks.
+  //
+  // Encore une autre possibilité serait de créer une méthode logMerge() qui a le même 
+  // comportement que logOnce(), mais précède le message d'un range des ranks qui l'emettent, du
+  // style "Rank 0->54, 55, 57, 67->127: Hello World"
+  /**
+   * @brief log one or more inputs to the standard output (std::cout).
+   * @param inputs the inputs to log.
+   * @tparam INPUTS types of the inputs.
+   */
+  template< typename ... INPUTS >
+  void stdLog( INPUTS ... inputs );
+  /**
+   * @brief log one or more inputs, only from the rank 0, to the standard output (and to
+   * the rank 0 file stream if used).
+   * @param inputs the inputs to log.
+   * @tparam INPUTS types of the inputs.
+   */
+  template< typename ... INPUTS >
+  void rank0Log( INPUTS ... inputs );
+
+  template< typename ... INPUTS >
+  /**
+   * @brief log one or more inputs to the rank file stream if used, or to the standard output.
+   * @param input the inputs to log.
+   * @tparam INPUTS types of the inputs.
+   */
+  template< typename ... INPUTS >
+  void rankLog( INPUTS ... input );
+
 public://todo: private
   /// @see setGlobalLogLevel( int value )
   int globalLogLevel;
@@ -522,10 +560,18 @@ public://todo: private
   /// @brief prefix to add before a message that is specific to a rank. Empty in a serial build.
   std::string rankMsgPrefix;
 
-  /// @brief Pointer to the selected output stream
+  /// @brief Pointer to the rank output stream
   std::ostream * outStream;
   /// @brief Smart pointer to the active file output stream. Equals to nullptr if not outputing to a file.
   std::unique_ptr< std::ostream > fileOutStream;
+
+  // todo comment
+  template< typename INPUT >
+  static void streamLog( std::ostream & stream, INPUT input );
+  // todo comment
+  template< typename INPUT, typename ... MORE_INPUTS >
+  static void streamLog( std::ostream & stream, INPUT input, MORE_INPUTS ... moreInputs );
+
 };
 extern Logger logger;
 
@@ -564,6 +610,62 @@ struct InputError : public std::runtime_error
  */
 class NotAnError : public std::exception
 {};
+
+
+template< typename INPUT >
+void Logger::streamLog( std::ostream & stream, INPUT input )
+{
+  stream << input << std::endl;
+}
+
+template< typename INPUT, typename ... MORE_INPUTS >
+void Logger::streamLog( std::ostream & stream, INPUT input, MORE_INPUTS ... moreInputs )
+{
+  stream << input;
+  streamLog( stream, moreInputs ... );
+}
+
+
+template< typename ... INPUTS >
+void Logger::stdLog( INPUTS ... inputs )
+{
+  streamLog( std::cout, inputs ... );
+}
+
+template< typename ... INPUTS >
+void Logger::rank0Log( INPUTS ... inputs )
+{
+  if( rank == 0 )
+  {
+    streamLog( std::cout, inputs ... );// TODO : choisir si rankMsgPrefix doit être utilisé ici
+  }
+}
+// TODO: decide to use this version or not (streams on std output + rank 0 file stream)
+// template< typename ... INPUTS >
+// void Logger::rank0log( INPUTS ... inputs )
+// {
+//   if( rank == 0 )
+//   {
+//     if( fileOutStream!=nullptr )
+//     {
+//       streamLog( &std::cout, rankMsgPrefix, inputs ... );
+//     }
+//     else
+//     {
+//       std::ostringstream oss;
+//       streamLog( oss, rankMsgPrefix, inputs ... );
+//       string const str( oss.str() );
+//       std::cout << str;
+//       fileOutStream << str;
+//     }
+//   }
+// }
+
+template< typename ... INPUTS >
+void Logger::rankLog( INPUTS ... inputs )
+{
+  streamLog( *outStream, rankMsgPrefix, inputs ... );
+}
 
 
 } // namespace geos

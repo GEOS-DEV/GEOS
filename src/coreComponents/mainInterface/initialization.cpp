@@ -39,7 +39,7 @@ struct Arg : public option::Arg
    */
   static option::ArgStatus unknown( option::Option const & option, bool )
   {
-    GEOS_LOG_RANK( "Unknown option: " << option.name );
+    logger.rankLog( "Unknown option: ", option.name );
     return option::ARG_ILLEGAL;
   }
 
@@ -55,7 +55,7 @@ struct Arg : public option::Arg
       return option::ARG_OK;
     }
 
-    GEOS_LOG_RANK( "Error: " << option.name << " requires a non-empty argument!" );
+    logger.rankLog( "Error: ", option.name, " requires a non-empty argument!" );
     return option::ARG_ILLEGAL;
   }
 
@@ -73,7 +73,7 @@ struct Arg : public option::Arg
       return option::ARG_OK;
     }
 
-    GEOS_LOG_RANK( "Error: " << option.name << " requires a long-int argument!" );
+    logger.rankLog( "Error: ", option.name, " requires a long-int argument!" );
     return option::ARG_ILLEGAL;
   }
 };
@@ -232,7 +232,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
       {
         // we should store this in commandLineOptions and sleep in main
         integer const duration = std::stoi( opt.arg );
-        GEOS_LOG_RANK_0( "Paused for " << duration << " s" );
+        logger.rank0Log( "Paused for ", duration, " s" );
         std::this_thread::sleep_for( std::chrono::seconds( duration ) );
       }
       break;

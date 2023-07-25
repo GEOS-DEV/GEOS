@@ -97,7 +97,7 @@ void setupLvArray()
 void setupMKL()
 {
 #ifdef GEOSX_USE_MKL
-  GEOS_LOG_RANK_0( "MKL max threads: " << mkl_get_max_threads() );
+  logger.rank0Log( "MKL max threads: ", mkl_get_max_threads() );
 #endif
 }
 
@@ -105,7 +105,7 @@ void setupMKL()
 void setupOpenMP()
 {
 #ifdef GEOSX_USE_OPENMP
-  GEOS_LOG_RANK_0( "Max threads: " << omp_get_max_threads() );
+  logger.rank0Log( "Max threads: ", omp_get_max_threads() );
 #endif
 }
 
@@ -292,10 +292,10 @@ static void addUmpireHighWaterMarks()
     std::size_t const mark = rm.getAllocator( allocatorName ).getHighWatermark();
     std::size_t const totalMark = MpiWrapper::sum( mark );
     std::size_t const maxMark = MpiWrapper::max( mark );
-    GEOS_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " sum across ranks: " <<
-                     std::setw( 9 ) << LvArray::system::calculateSize( totalMark ) );
-    GEOS_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << "         rank max: " <<
-                     std::setw( 9 ) << LvArray::system::calculateSize( maxMark ) );
+    logger.rank0Log( "Umpire ", std::setw( 15 ), allocatorName, " sum across ranks: ",
+                     std::setw( 9 ), LvArray::system::calculateSize( totalMark ) );
+    logger.rank0Log( "Umpire ", std::setw( 15 ), allocatorName, "         rank max: ",
+                     std::setw( 9 ), LvArray::system::calculateSize( maxMark ) );
 
     pushStatsIntoAdiak( allocatorName + " sum across ranks", mark );
     pushStatsIntoAdiak( allocatorName + " rank max", mark );

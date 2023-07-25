@@ -48,7 +48,7 @@ Group * PhysicsSolverManager::createChild( string const & childKey, string const
   Group * rval = nullptr;
   if( SolverBase::CatalogInterface::hasKeyName( childKey ) )
   {
-    GEOS_LOG_RANK_0( "Adding Solver of type " << childKey << ", named " << childName );
+    logger.rank0Log( "Adding Solver of type ", childKey, ", named ", childName );
     rval = &registerGroup( childName,
                            SolverBase::CatalogInterface::factory( childKey, childName, this ) );
   }

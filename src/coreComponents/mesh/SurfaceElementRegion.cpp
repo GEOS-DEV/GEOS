@@ -66,7 +66,7 @@ void SurfaceElementRegion::generateMesh( Group const & faceBlocks )
     }
     else
     {
-      GEOS_LOG_RANK_0( "No face block \"" << m_faceBlockName << "\" was found in the mesh. Empty surface region was created." );
+      logger.rank0Log( "No face block \"", m_faceBlockName, "\" was found in the mesh. Empty surface region was created." );
     }
   }
 }

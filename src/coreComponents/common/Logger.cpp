@@ -79,7 +79,7 @@ void Logger::initMpi( MPI_Comm mpiComm )
   comm = mpiComm;
   MPI_Comm_rank( mpiComm, &rank );
   MPI_Comm_size( mpiComm, &ranksCount );
-  rankMsgPrefix = GEOS_FMT( "Rank {}: ", rank );
+  rankMsgPrefix = ranksCount > 0  ? GEOS_FMT( "Rank {}: ", rank ) : "";// TODO : choisir si l'on garde cette ternaire
 #else
   GEOS_ERROR( "Trying to initialize MPI in serial build." );
 #endif

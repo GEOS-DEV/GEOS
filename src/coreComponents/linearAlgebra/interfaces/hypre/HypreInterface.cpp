@@ -49,13 +49,13 @@ void HypreInterface::initialize()
   // Hypre version info
 #if defined(HYPRE_DEVELOP_STRING)
 #if defined(HYPRE_BRANCH_NAME)
-  GEOS_LOG_RANK_0( "  - hypre development version: " << HYPRE_DEVELOP_STRING <<
-                   " (" << HYPRE_BRANCH_NAME << ")" );
+  logger.rank0Log( "  - hypre development version: ", HYPRE_DEVELOP_STRING,
+                   " (", HYPRE_BRANCH_NAME, ")" );
 #else
-  GEOS_LOG_RANK_0( "  - hypre development version: " << HYPRE_DEVELOP_STRING );
+  logger.rank0Log( "  - hypre development version: ", HYPRE_DEVELOP_STRING );
 #endif
 #elif defined(HYPRE_RELEASE_VERSION)
-  GEOS_LOG_RANK_0( "  - hypre release version: " << HYPRE_RELEASE_VERSION );
+  logger.rank0Log( "  - hypre release version: ", HYPRE_RELEASE_VERSION );
 #endif
 }
 

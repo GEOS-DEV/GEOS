@@ -87,7 +87,7 @@ void writeTree( string const & path, conduit::Node & root )
 
   conduit::Node rootFileNode;
   string const filePathForRank = writeRootFile( rootFileNode, path );
-  GEOS_LOG_RANK( "Writing out restart file at " << filePathForRank );
+  logger.rankLog( "Writing out restart file at ", filePathForRank );
   conduit::relay::io::save( root, filePathForRank, "hdf5" );
 }
 
@@ -95,7 +95,7 @@ void loadTree( string const & path, conduit::Node & root )
 {
   GEOS_MARK_FUNCTION;
   string const filePathForRank = readRootNode( path );
-  GEOS_LOG_RANK( "Reading in restart file at " << filePathForRank );
+  logger.rankLog( "Reading in restart file at ", filePathForRank );
   conduit::relay::io::load( filePathForRank, "hdf5", root );
 }
 

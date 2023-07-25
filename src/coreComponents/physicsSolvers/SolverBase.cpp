@@ -752,11 +752,11 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
 
   if( !isConfigurationLoopConverged )
   {
-    GEOS_LOG_RANK_0( "Convergence not achieved." );
+    logger.rank0Log( "Convergence not achieved." );
 
     if( allowNonConverged )
     {
-      GEOS_LOG_RANK_0( "The accepted solution may be inaccurate." );
+      logger.rank0Log( "The accepted solution may be inaccurate." );
     }
     else
     {
@@ -940,7 +940,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     if( !checkSystemSolution( domain, m_dofManager, m_solution.values(), scaleFactor ) )
     {
       // TODO try chopping (similar to line search)
-      GEOS_LOG_RANK_0( "    Solution check failed. Newton loop terminated." );
+      logger.rank0Log( "    Solution check failed. Newton loop terminated." );
       break;
     }
 
@@ -1054,15 +1054,15 @@ void debugOutputLAObject( T const & obj,
   if( toScreen )
   {
     string const frame( screenName.size() + 1, '=' );
-    GEOS_LOG_RANK_0( frame << "\n" << screenName << ":\n" << frame );
-    GEOS_LOG( obj );
+    logger.rank0Log( frame, "\n", screenName, ":\n", frame );
+    logger.stdLog( obj );
   }
 
   if( toFile )
   {
     string const filename = GEOS_FMT( "{}_{:06}_{:02}.mtx", filePrefix.c_str(), cycleNumber, nonlinearIteration );
     obj.write( filename, LAIOutputFormat::MATRIX_MARKET );
-    GEOS_LOG_RANK_0( screenName << " written to " << filename );
+    logger.rank0Log( screenName, " written to ", filename );
   }
 }
 

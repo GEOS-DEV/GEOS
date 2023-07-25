@@ -64,7 +64,7 @@ inline void logOutputType( string const & typeString, string const & msg )
   if( !m_types.count( typeString ) )
   {
     m_types.insert( typeString );
-    GEOS_LOG( msg << typeString );
+    logger.stdLog( msg, typeString );
   }
 #else
   GEOS_DEBUG_VAR( typeString );

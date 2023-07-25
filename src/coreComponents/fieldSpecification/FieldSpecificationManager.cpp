@@ -198,7 +198,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                   FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
       if( areAllSetsEmpty )
       {
-        GEOS_LOG_RANK_0( errorMsg );
+        logger.rank0Log( errorMsg );
       }
       else
       {

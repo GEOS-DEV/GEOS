@@ -126,7 +126,7 @@ GeosxState::GeosxState( std::unique_ptr< CommandLineOptions > && commandLineOpti
   string restartFileName;
   if( ProblemManager::parseRestart( restartFileName, getCommandLineOptions() ) )
   {
-    GEOS_LOG_RANK_0( "Loading restart file " << restartFileName );
+    logger.rank0Log( "Loading restart file ", restartFileName );
     dataRepository::loadTree( restartFileName, getRootConduitNode() );
   }
 
@@ -163,12 +163,9 @@ bool GeosxState::initializeDataRepository()
     m_state = State::INITIALIZED;
     return false;
   }
-  GEOS_LOG_RANK_0( "là ça va : " LOCATION );
 
   getProblemManager().parseInputFile();
-  GEOS_LOG_RANK_0( "là ça va : " LOCATION );
   getProblemManager().problemSetup();
-  GEOS_LOG_RANK_0( "là ça va : " LOCATION );
 
   m_state = State::INITIALIZED;
 
@@ -176,7 +173,6 @@ bool GeosxState::initializeDataRepository()
   {
     dataRepository::printMemoryAllocation( getProblemManager(), 0, m_commandLineOptions->printMemoryUsage );
   }
-  GEOS_LOG_RANK_0( "là ça va : " LOCATION );
 
   return true;
 }

@@ -258,8 +258,8 @@ void InternalWellboreGenerator::postProcessInput()
   }
 
 
-  GEOS_LOG_RANK_0( "Radial elements: "<<m_nElems[0] );
-  GEOS_LOG_RANK_0( "Radial coordinates: "<<m_radialCoords );
+  logger.rank0Log( "Radial elements: ", m_nElems[0] );
+  logger.rank0Log( "Radial coordinates: ", m_radialCoords );
 
 
   // if the cartesian outer boundary has been specified by the user

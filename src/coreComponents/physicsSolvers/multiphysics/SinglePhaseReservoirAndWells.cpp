@@ -115,7 +115,7 @@ setMGRStrategy()
 {
   if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM )
   {
-    GEOS_LOG_RANK_0( "The MGR strategy for hybrid FVM is not implemented" );
+    logger.rank0Log( "The MGR strategy for hybrid FVM is not implemented" );
   }
   else
   {

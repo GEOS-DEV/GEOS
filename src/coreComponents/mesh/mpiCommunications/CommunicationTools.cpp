@@ -435,8 +435,8 @@ void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
       if( ghostRank[ recvIdx ] != neighborRank )
       {
         error = true;
-        GEOS_LOG_RANK( "Receiving " << recvIdx << " from " << neighborRank <<
-                       " but ghostRank[ " << recvIdx << " ] is " << ghostRank[ recvIdx ] );
+        logger.rankLog( "Receiving ", recvIdx, " from ", neighborRank,
+                        " but ghostRank[ ", recvIdx, " ] is ", ghostRank[ recvIdx ] );
       }
     }
 
@@ -446,8 +446,8 @@ void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
       if( ghostRank[ sendIdx ] != -1 )
       {
         error = true;
-        GEOS_LOG_RANK( "Sending " << sendIdx << " to " << neighborRank <<
-                       " but ghostRank[ " << sendIdx << " ] is " << ghostRank[ sendIdx ] );
+        logger.rankLog( "Sending ", sendIdx, " to ", neighborRank,
+                        " but ghostRank[ ", sendIdx, " ] is ", ghostRank[ sendIdx ] );
       }
     }
 
@@ -455,8 +455,8 @@ void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
     if( !nonLocalGhosts.empty() )
     {
       error = true;
-      GEOS_LOG_RANK( "Expected to send 0 non local ghosts to rank " << neighborRank <<
-                     " but sending " << nonLocalGhosts.size() );
+      logger.rankLog( "Expected to send 0 non local ghosts to rank ", neighborRank,
+                      " but sending ", nonLocalGhosts.size() );
     }
   }
 

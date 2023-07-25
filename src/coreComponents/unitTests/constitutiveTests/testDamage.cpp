@@ -50,9 +50,9 @@ TEST( DamageTests, testDamageSpectral )
                                                              inputStream.size() );
   if( !xmlResult )
   {
-    GEOS_LOG_RANK_0( "XML parsed with errors!" );
-    GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+    logger.rank0Log( "XML parsed with errors!" );
+    logger.rank0Log( "Error description: ", xmlResult.description());
+    logger.rank0Log( "Error offset: ", xmlResult.offset );
   }
 
   xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child( "Constitutive" );

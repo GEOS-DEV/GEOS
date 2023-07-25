@@ -182,10 +182,10 @@ void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & oilTable,
 
   real64 const atmPressure = 101325.0;
 
-  GEOS_LOG_RANK_0_IF( !isZero( m_PVTO.Rs[0] ) && m_PVTO.bubblePressure[0] <= atmPressure,
-                      GEOS_FMT( "{}: Warning! In the PVTO table, the first Rs value is different from zero for a bubble-point pressure of {} Pa. \n"
-                                "The simulation is going to proceed with the user-provided Rs, but we recommend using a Rs equal to zero when the bubble-point pressure is smaller or equal to {} Pa",
-                                getFullName(), m_PVTO.bubblePressure[0], atmPressure ) );
+  logger.rank0LogIf( !isZero( m_PVTO.Rs[0] ) && m_PVTO.bubblePressure[0] <= atmPressure,
+                        GEOS_FMT( "{}: Warning! In the PVTO table, the first Rs value is different from zero for a bubble-point pressure of {} Pa. \n"
+                                  "The simulation is going to proceed with the user-provided Rs, but we recommend using a Rs equal to zero when the bubble-point pressure is smaller or equal to {} Pa",
+                                  getFullName(), m_PVTO.bubblePressure[0], atmPressure ) );
 
   if( !isZero( m_PVTO.Rs[0] ) && m_PVTO.bubblePressure[0] > atmPressure )
   {
@@ -202,10 +202,10 @@ void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & oilTable,
     m_PVTO.saturatedViscosity.emplace( 0, viscosity );
     m_PVTO.numSaturatedPoints++;
 
-    GEOS_LOG_RANK_0( GEOS_FMT( "{}: Warning! GEOSX is adding surface condition values to the PVTO table. \n"
-                               "The following values are added: Rs = 0; P_bubblePoint = {} Pa; Bo = 1.0; oil viscosity = {} Pa.s. \n"
-                               "To disable this behavior, you just have to provide a PVTO table entry for P_bubblePoint = {} Pa",
-                               getFullName(), atmPressure, viscosity, atmPressure ) );
+    logger.rank0Log( GEOS_FMT( "{}: Warning! GEOSX is adding surface condition values to the PVTO table. \n"
+                                  "The following values are added: Rs = 0; P_bubblePoint = {} Pa; Bo = 1.0; oil viscosity = {} Pa.s. \n"
+                                  "To disable this behavior, you just have to provide a PVTO table entry for P_bubblePoint = {} Pa",
+                                  getFullName(), atmPressure, viscosity, atmPressure ) );
 
     // Note: the additional undersaturated values of this branch will be created in createUndersaturatedProperties
 

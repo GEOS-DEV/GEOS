@@ -65,16 +65,16 @@ string getGpuCompilerIdString()
 void outputVersionInfo()
 {
 
-  GEOS_LOG_RANK_0( "GEOSX version: " << getVersion() );
+  logger.rank0Log( "GEOSX version: ", getVersion() );
 
-  GEOS_LOG_RANK_0( "  - c++ compiler: "<<getCppCompilerIdString() );
+  logger.rank0Log( "  - c++ compiler: ", getCppCompilerIdString() );
 
   string const gpuCompilerIdString = getGpuCompilerIdString();
   GEOS_LOG_RANK_0_IF( !gpuCompilerIdString.empty(), gpuCompilerIdString );
 
 
 #if defined(_OPENMP)
-  GEOS_LOG_RANK_0( "  - openmp version: "<<_OPENMP );
+  logger.rank0Log( "  - openmp version: ", _OPENMP );
 #endif
 
 #if defined(GEOSX_USE_MPI)
@@ -82,66 +82,66 @@ void outputVersionInfo()
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
     int len;
     MPI_Get_library_version( version, &len );
-    GEOS_LOG_RANK_0( "  - MPI version: " << version );
+    logger.rank0Log( "  - MPI version: ", version );
   }
 #endif
 
 #if defined(HDF5_VERSION)
-  GEOS_LOG_RANK_0( "  - HDF5 version: " << STRINGIZE( HDF5_VERSION ) );
+  logger.rank0Log( "  - HDF5 version: ", STRINGIZE( HDF5_VERSION ) );
 #endif
 
 #if defined(Conduit_VERSION)
-  GEOS_LOG_RANK_0( "  - Conduit version: " << STRINGIZE( Conduit_VERSION ) );
+  logger.rank0Log( "  - Conduit version: ", STRINGIZE( Conduit_VERSION ) );
 #endif
 
 #if defined(VTK_VERSION)
-  GEOS_LOG_RANK_0( "  - VTK version: " << STRINGIZE( VTK_VERSION ) );
+  logger.rank0Log( "  - VTK version: ", STRINGIZE( VTK_VERSION ) );
 #endif
 
 #if defined(RAJA_VERSION)
-  GEOS_LOG_RANK_0( "  - RAJA version: " << STRINGIZE( RAJA_VERSION ) );
+  logger.rank0Log( "  - RAJA version: ", STRINGIZE( RAJA_VERSION ) );
 #endif
 #if defined(umpire_VERSION)
-  GEOS_LOG_RANK_0( "  - umpire version: " << STRINGIZE( umpire_VERSION ) );
+  logger.rank0Log( "  - umpire version: ", STRINGIZE( umpire_VERSION ) );
 #endif
 #if defined(chai_VERSION)
-  GEOS_LOG_RANK_0( "  - chai version: " << STRINGIZE( chai_VERSION ) );
+  logger.rank0Log( "  - chai version: ", STRINGIZE( chai_VERSION ) );
 #endif
 
 #if defined(adiak_VERSION)
-  GEOS_LOG_RANK_0( "  -  adiak version: " << STRINGIZE( adiak_VERSION ) );
+  logger.rank0Log( "  -  adiak version: ", STRINGIZE( adiak_VERSION ) );
 #endif
 
 #if defined(caliper_VERSION)
-  GEOS_LOG_RANK_0( "  - caliper version: " << STRINGIZE( caliper_VERSION ) );
+  logger.rank0Log( "  - caliper version: ", STRINGIZE( caliper_VERSION ) );
 #endif
 
 #if defined(METIS_VERSION)
-  GEOS_LOG_RANK_0( "  - METIS version: " << STRINGIZE( METIS_VERSION ) );
+  logger.rank0Log( "  - METIS version: ", STRINGIZE( METIS_VERSION ) );
 #endif
 
 #if defined(PARAMETIS_VERSION)
-  GEOS_LOG_RANK_0( "  - PARAMETIS version: " << STRINGIZE( PARAMETIS_VERSION ) );
+  logger.rank0Log( "  - PARAMETIS version: ", STRINGIZE( PARAMETIS_VERSION ) );
 #endif
 
 #if defined(scotch_VERSION)
-  GEOS_LOG_RANK_0( "  - scotch version: " << STRINGIZE( scotch_VERSION ) );
+  logger.rank0Log( "  - scotch version: ", STRINGIZE( scotch_VERSION ) );
 #endif
 
 #if defined(superlu_dist_VERSION)
-  GEOS_LOG_RANK_0( "  - superlu_dist version: " << STRINGIZE( superlu_dist_VERSION ) );
+  logger.rank0Log( "  - superlu_dist version: ", STRINGIZE( superlu_dist_VERSION ) );
 #endif
 
 #if defined(suitesparse_VERSION)
-  GEOS_LOG_RANK_0( "  - suitesparse version: " << STRINGIZE( suitesparse_VERSION ) );
+  logger.rank0Log( "  - suitesparse version: ", STRINGIZE( suitesparse_VERSION ) );
 #endif
 
 #if defined(Python3_VERSION)
-  GEOS_LOG_RANK_0( "  - Python3 version: " << STRINGIZE( Python3_VERSION ) );
+  logger.rank0Log( "  - Python3 version: ", STRINGIZE( Python3_VERSION ) );
 #endif
 
 #if defined(CUDAToolkit_VERSION)
-  GEOS_LOG_RANK_0( "  - CUDAToolkit version: " << STRINGIZE( CUDAToolkit_VERSION ) );
+  logger.rank0Log( "  - CUDAToolkit version: ", STRINGIZE( CUDAToolkit_VERSION ) );
 #endif
 
 }

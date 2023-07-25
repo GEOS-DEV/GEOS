@@ -233,7 +233,7 @@ Group * Group::createChild( string const & childKey, string const & childName )
 {
   GEOS_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
                  "KeyName ("<<childKey<<") not found in Group::Catalog" );
-  GEOS_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from Group::Catalog." );
+  logger.rank0Log( "Adding Object ", childKey, " named ", childName, " from Group::Catalog." );
   return &registerGroup( childName,
                          CatalogInterface::factory( childKey, childName, this ) );
 }
@@ -243,12 +243,12 @@ void Group::printDataHierarchy( integer const indent )
 {
   for( auto & view : wrappers() )
   {
-    GEOS_LOG( string( indent, '\t' ) << view.second->getName() << ", " << LvArray::system::demangleType( view.second ) );
+    logger.stdLog( string( indent, '\t' ), view.second->getName(), ", ", LvArray::system::demangleType( view.second ) );
   }
 
   for( auto & group : m_subGroups )
   {
-    GEOS_LOG( string( indent, '\t' ) << group.first << ':' );
+    logger.stdLog( string( indent, '\t' ), group.first, ':' );
     group.second->printDataHierarchy( indent + 1 );
   }
 }

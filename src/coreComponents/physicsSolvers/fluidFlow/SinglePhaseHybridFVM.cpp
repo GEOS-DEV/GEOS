@@ -130,9 +130,9 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
-      GEOS_LOG_RANK_0( catalogName() << " " << getName() <<
-                       "An aquifer boundary condition named " << bc.getName() << " was requested in the XML file. \n"
-                                                                                 "This type of boundary condition is not yet supported by SinglePhaseHybridFVM and will be ignored" );
+      logger.rank0Log( catalogName(), " ", getName(),
+                       "An aquifer boundary condition named ", bc.getName(), " was requested in the XML file. \n",
+                       "This type of boundary condition is not yet supported by SinglePhaseHybridFVM and will be ignored" );
     } );
   } );
 }
@@ -366,7 +366,7 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
+        logger.rank0Log( GEOS_FMT( faceBcLogMessage,
                                    this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
                                    fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
       }

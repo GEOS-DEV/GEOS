@@ -243,7 +243,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
 
       if( getLogLevel() >= 1 )
       {
-        GEOS_LOG_RANK_0( "++ Fracture propagation. Re-entering Newton Solve." );
+        logger.rank0Log( "++ Fracture propagation. Re-entering Newton Solve." );
       }
     }
   }

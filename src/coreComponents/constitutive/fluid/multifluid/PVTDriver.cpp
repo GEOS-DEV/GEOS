@@ -138,16 +138,16 @@ bool PVTDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
 
   if( getLogLevel() > 0 )
   {
-    GEOS_LOG_RANK_0( "Launching PVT Driver" );
-    GEOS_LOG_RANK_0( "  Fluid .................. " << m_fluidName );
-    GEOS_LOG_RANK_0( "  Type ................... " << baseFluid.getCatalogName() );
-    GEOS_LOG_RANK_0( "  No. of Phases .......... " << m_numPhases );
-    GEOS_LOG_RANK_0( "  No. of Components ...... " << m_numComponents );
-    GEOS_LOG_RANK_0( "  Pressure Control ....... " << m_pressureFunctionName );
-    GEOS_LOG_RANK_0( "  Temperature Control .... " << m_temperatureFunctionName );
-    GEOS_LOG_RANK_0( "  Steps .................. " << m_numSteps );
-    GEOS_LOG_RANK_0( "  Output ................. " << m_outputFile );
-    GEOS_LOG_RANK_0( "  Baseline ............... " << m_baselineFile );
+    logger.rank0Log( "Launching PVT Driver" );
+    logger.rank0Log( "  Fluid .................. ", m_fluidName );
+    logger.rank0Log( "  Type ................... ", baseFluid.getCatalogName() );
+    logger.rank0Log( "  No. of Phases .......... ", m_numPhases );
+    logger.rank0Log( "  No. of Components ...... ", m_numComponents );
+    logger.rank0Log( "  Pressure Control ....... ", m_pressureFunctionName );
+    logger.rank0Log( "  Temperature Control .... ", m_temperatureFunctionName );
+    logger.rank0Log( "  Steps .................. ", m_numSteps );
+    logger.rank0Log( "  Output ................. ", m_outputFile );
+    logger.rank0Log( "  Baseline ............... ", m_baselineFile );
   }
 
   // create a dummy discretization with one quadrature point for
@@ -259,7 +259,7 @@ void PVTDriver::compareWithBaseline()
 
   if( getLogLevel() > 0 )
   {
-    GEOS_LOG_RANK_0( "  Comparison ............. Internal results consistent with baseline." );
+    logger.rank0Log( "  Comparison ............. Internal results consistent with baseline." );
   }
 
   file.close();

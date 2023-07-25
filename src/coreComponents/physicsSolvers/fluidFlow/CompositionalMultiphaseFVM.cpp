@@ -833,7 +833,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       if( bc.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
+        logger.rank0Log( GEOS_FMT( faceBcLogMessage,
                                    getName(), time+dt, AquiferBoundaryCondition::catalogName(),
                                    bc.getName(), setName, faceManager.getName(), bc.getScale(), numTargetFaces ) );
       }

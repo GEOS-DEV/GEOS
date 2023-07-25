@@ -67,7 +67,7 @@ public:
     string const s = m_stream.str();
     if( !s.empty() )
     {
-      GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': JIT compiler produced the following output:\n{}",
+      logger.rank0Log( GEOS_FMT( "{} '{}': JIT compiler produced the following output:\n{}",
                                  SymbolicFunction::catalogName(), m_name, s ) );
     }
   }

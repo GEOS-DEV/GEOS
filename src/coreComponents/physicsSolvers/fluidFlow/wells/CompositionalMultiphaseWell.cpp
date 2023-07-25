@@ -540,7 +540,7 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
 
   if( logLevel >= 2 )
   {
-    GEOS_LOG_RANK( GEOS_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
+    logger.rankLog( GEOS_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
                              wellControlsName, currentBHP ) );
   }
 
@@ -664,7 +664,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
         fluidWrapper.update( iwelemRef, 0, surfacePres, surfaceTemp, compFrac[iwelemRef] );
         if( logLevel >= 2 )
         {
-          GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa and T_surface = {} K",
+          logger.rankLog( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa and T_surface = {} K",
                                    wellControlsName, surfacePres, surfaceTemp ) );
 #ifdef GEOS_USE_HIP
           GEOS_UNUSED_VAR( wellControlsName );
@@ -703,7 +703,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
       if( logLevel >= 2 && useSurfaceConditions )
       {
-        GEOS_LOG_RANK( GEOS_FMT( "{}: The total fluid density at surface conditions is {} {}/sm3. \n"
+        logger.rankLog( GEOS_FMT( "{}: The total fluid density at surface conditions is {} {}/sm3. \n"
                                  "The total rate is {} {}/s, which corresponds to a total surface volumetric rate of {} sm3/s",
                                  wellControlsName, totalDens[iwelemRef][0], massUnit,
                                  currentTotalRate, massUnit, currentTotalVolRate ) );
@@ -742,7 +742,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
         if( logLevel >= 2 && useSurfaceConditions )
         {
-          GEOS_LOG_RANK( GEOS_FMT( "{}: The density of phase {} at surface conditions is {} {}/sm3. \n"
+          logger.rankLog( GEOS_FMT( "{}: The density of phase {} at surface conditions is {} {}/sm3. \n"
                                    "The phase surface volumetric rate is {} sm3/s",
                                    wellControlsName, ip, phaseDens[iwelemRef][0][ip], massUnit, currentPhaseVolRate[ip] ) );
         }
@@ -1805,7 +1805,7 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
       }
       if( !wellControls.isWellOpen( time_n + dt ) )
       {
-        GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
+        logger.stdLog( GEOS_FMT( "{}: well is shut", wellControlsName ) );
         return;
       }
 
@@ -1833,13 +1833,13 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
         string const unitKey = useSurfaceConditions ? "s" : "r";
 
         real64 const currentTotalRate = connRate[iwelemRef];
-        GEOS_LOG( GEOS_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
+        logger.stdLog( GEOS_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
                             wellControlsName, currentBHP ) );
-        GEOS_LOG( GEOS_FMT( "{}: Total rate: {} {}/s; total {} volumetric rate: {} {}m3/s",
+        logger.stdLog( GEOS_FMT( "{}: Total rate: {} {}/s; total {} volumetric rate: {} {}m3/s",
                             wellControlsName, currentTotalRate, massUnit, conditionKey, currentTotalVolRate, unitKey ) );
         for( integer ip = 0; ip < numPhase; ++ip )
         {
-          GEOS_LOG( GEOS_FMT( "{}: Phase {} {} volumetric rate: {} {}m3/s",
+          logger.stdLog( GEOS_FMT( "{}: Phase {} {} volumetric rate: {} {}m3/s",
                               wellControlsName, ip, conditionKey, currentPhaseVolRate[ip], unitKey ) );
         }
 

@@ -403,16 +403,16 @@ bool TriaxialDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
 
   if( getLogLevel() > 0 )
   {
-    GEOS_LOG_RANK_0( "Launching Triaxial Driver" );
-    GEOS_LOG_RANK_0( "  Material .......... " << m_solidMaterialName );
-    GEOS_LOG_RANK_0( "  Type .............. " << baseSolid.getCatalogName() );
-    GEOS_LOG_RANK_0( "  Mode .............. " << m_mode );
-    GEOS_LOG_RANK_0( "  Axial Control ..... " << m_axialFunctionName );
-    GEOS_LOG_RANK_0( "  Radial Control .... " << m_radialFunctionName );
-    GEOS_LOG_RANK_0( "  Initial Stress .... " << m_initialStress );
-    GEOS_LOG_RANK_0( "  Steps ............. " << m_numSteps );
-    GEOS_LOG_RANK_0( "  Output ............ " << m_outputFile );
-    GEOS_LOG_RANK_0( "  Baseline .......... " << m_baselineFile );
+    logger.rank0Log( "Launching Triaxial Driver" );
+    logger.rank0Log( "  Material .......... ", m_solidMaterialName );
+    logger.rank0Log( "  Type .............. ", baseSolid.getCatalogName() );
+    logger.rank0Log( "  Mode .............. ", m_mode );
+    logger.rank0Log( "  Axial Control ..... ", m_axialFunctionName );
+    logger.rank0Log( "  Radial Control .... ", m_radialFunctionName );
+    logger.rank0Log( "  Initial Stress .... ", m_initialStress );
+    logger.rank0Log( "  Steps ............. ", m_numSteps );
+    logger.rank0Log( "  Output ............ ", m_outputFile );
+    logger.rank0Log( "  Baseline .......... ", m_baselineFile );
   }
 
   // create a dummy discretization with one quadrature point for
@@ -482,9 +482,9 @@ void TriaxialDriver::validateResults()
   {
     if( m_table( n, NORM ) > m_newtonTol )
     {
-      GEOS_LOG_RANK_0( "WARNING: Material driver failed to converge at loadstep " << n << "." );
-      GEOS_LOG_RANK_0( "         This usually indicates the material has completely failed and/or the loading state is inadmissible." );
-      GEOS_LOG_RANK_0( "         In rare cases, it may indicate a problem in the material model implementation." );
+      logger.rank0Log( "WARNING: Material driver failed to converge at loadstep ", n, "." );
+      logger.rank0Log( "         This usually indicates the material has completely failed and/or the loading state is inadmissible." );
+      logger.rank0Log( "         In rare cases, it may indicate a problem in the material model implementation." );
 
       for( integer col=EPS0; col<ITER; ++col )
       {
@@ -579,7 +579,7 @@ void TriaxialDriver::compareWithBaseline()
 
   if( getLogLevel() > 0 )
   {
-    GEOS_LOG_RANK_0( "  Comparison ........ Internal results consistent with baseline." );
+    logger.rank0Log( "  Comparison ........ Internal results consistent with baseline." );
   }
 
   file.close();

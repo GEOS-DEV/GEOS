@@ -117,13 +117,13 @@ bool RelpermDriver::execute( const geos::real64 GEOS_UNUSED_PARAM( time_n ),
 
   if( getLogLevel() > 0 )
   {
-    GEOS_LOG_RANK_0( "Launching Relperm Driver" );
-    GEOS_LOG_RANK_0( "  Relperm .................. " << m_relpermName );
-    GEOS_LOG_RANK_0( "  Type ................... " << baseRelperm.getCatalogName() );
-    GEOS_LOG_RANK_0( "  No. of Phases .......... " << m_numPhases );
-    GEOS_LOG_RANK_0( "  Steps .................. " << m_numSteps );
-    GEOS_LOG_RANK_0( "  Output ................. " << m_outputFile );
-    GEOS_LOG_RANK_0( "  Baseline ............... " << m_baselineFile );
+    logger.rank0Log( "Launching Relperm Driver" );
+    logger.rank0Log( "  Relperm .................. ", m_relpermName );
+    logger.rank0Log( "  Type ................... ", baseRelperm.getCatalogName() );
+    logger.rank0Log( "  No. of Phases .......... ", m_numPhases );
+    logger.rank0Log( "  Steps .................. ", m_numSteps );
+    logger.rank0Log( "  Output ................. ", m_outputFile );
+    logger.rank0Log( "  Baseline ............... ", m_baselineFile );
   }
 
   // create a dummy discretization with one quadrature point for
@@ -323,7 +323,7 @@ void RelpermDriver::compareWithBaseline()
 
   if( getLogLevel() > 0 )
   {
-    GEOS_LOG_RANK_0( "  Comparison ............. Internal results consistent with baseline." );
+    logger.rank0Log( "  Comparison ............. Internal results consistent with baseline." );
   }
 
   file.close();

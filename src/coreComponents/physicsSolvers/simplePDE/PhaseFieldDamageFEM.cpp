@@ -408,10 +408,10 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n
 
     if( getLogLevel() == 2 )
     {
-      GEOS_LOG_RANK_0( "After PhaseFieldDamageFEM::AssembleSystem" );
-      GEOS_LOG_RANK_0( "\nJacobian:\n" );
+      logger.rank0Log( "After PhaseFieldDamageFEM::AssembleSystem" );
+      logger.rank0Log( "\nJacobian:\n" );
       std::cout << matrix;
-      GEOS_LOG_RANK_0( "\nResidual:\n" );
+      logger.rank0Log( "\nResidual:\n" );
       std::cout << rhs;
     }
 
@@ -471,10 +471,10 @@ void PhaseFieldDamageFEM::applyBoundaryConditions(
 
   if( getLogLevel() == 2 )
   {
-    GEOS_LOG_RANK_0( "After PhaseFieldDamageFEM::applyBoundaryConditions" );
-    GEOS_LOG_RANK_0( "\nJacobian:\n" );
+    logger.rank0Log( "After PhaseFieldDamageFEM::applyBoundaryConditions" );
+    logger.rank0Log( "\nJacobian:\n" );
     std::cout << localMatrix.toViewConst();
-    GEOS_LOG_RANK_0( "\nResidual:\n" );
+    logger.rank0Log( "\nResidual:\n" );
     std::cout << localRhs;
   }
 //
@@ -491,9 +491,9 @@ void PhaseFieldDamageFEM::applyBoundaryConditions(
 //                          std::to_string( newtonIter ) + ".mtx";
 //    rhs.write( filename_rhs );
 //
-//    GEOS_LOG_RANK_0( "After PhaseFieldDamageFEM::applyBoundaryConditions" );
-//    GEOS_LOG_RANK_0( "Jacobian: written to " << filename_mat );
-//    GEOS_LOG_RANK_0( "Residual: written to " << filename_rhs );
+//    logger.rank0Log( "After PhaseFieldDamageFEM::applyBoundaryConditions" );
+//    logger.rank0Log( "Jacobian: written to " << filename_mat );
+//    logger.rank0Log( "Residual: written to " << filename_rhs );
 //  }
 }
 

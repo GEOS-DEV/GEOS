@@ -204,10 +204,10 @@ void InternalWellGenerator::constructPolylineNodeToSegmentMap()
 
   if( foundSmallElem )
   {
-    GEOS_LOG_RANK_0( "\nWarning: the chosen number of well elements per polyline segment (" << m_numElemsPerSegment <<
-                     ") leads to well elements measuring less than " << m_minElemLength << "m in the topology of well '" << getName() << "'.\n" <<
-                     "The simulation can proceed like that, but small well elements may cause numerical issues, so it is something to keep an eye on.\n" <<
-                     "You can get rid of this message by changing the field " << viewKeyStruct::minElementLengthString() );
+    logger.rank0Log( "\nWarning: the chosen number of well elements per polyline segment (", m_numElemsPerSegment,
+                     ") leads to well elements measuring less than ", m_minElemLength, "m in the topology of well '", getName(), "'.\n",
+                     "The simulation can proceed like that, but small well elements may cause numerical issues, so it is something to keep an eye on.\n",
+                     "You can get rid of this message by changing the field ", viewKeyStruct::minElementLengthString() );
   }
 }
 
@@ -504,15 +504,16 @@ void InternalWellGenerator::mergePerforations( array1d< array1d< localIndex > > 
           continue;
         }
 
-        GEOS_LOG_RANK_0( "\n \nThe GEOSX wells currently have the following limitation in parallel: \n"
-                         << "We cannot allow an element of the well mesh to have two or more perforations associated with it. \n"
-                         << "So, in the present simulation, perforation #" << elemToPerfMap[iwelem][ip]
-                         << " of well " << getName()
-                         << " is moved from " << m_perfCoords[elemToPerfMap[iwelem][ip]]
-                         << " to " << m_perfCoords[iperfMaxTransmissibility]
-                         << " to make sure that no element of the well mesh has two perforations associated with it. \n"
-                         << "To circumvent this issue, please increase the value of \"numElementsPerSegment\" that controls the number of (uniformly distributed) well mesh elements per segment of the well polyline. \n"
-                         << "Our recommendation is to choose \"numElementsPerSegment\" such that each well mesh element has at most one perforation. \n\n" );
+        logger.rank0Log( "\n \nThe GEOSX wells currently have the following limitation in parallel: \n",
+                         "We cannot allow an element of the well mesh to have two or more perforations associated with it. \n",
+                         "So, in the present simulation, perforation #", elemToPerfMap[iwelem][ip],
+                         " of well ",
+                         getName(),
+                         " is moved from ", m_perfCoords[elemToPerfMap[iwelem][ip]],
+                         " to ", m_perfCoords[iperfMaxTransmissibility],
+                         " to make sure that no element of the well mesh has two perforations associated with it. \n",
+                         "To circumvent this issue, please increase the value of \"numElementsPerSegment\" that controls the number of (uniformly distributed) well mesh elements per segment of the well polyline. \n",
+                         "Our recommendation is to choose \"numElementsPerSegment\" such that each well mesh element has at most one perforation. \n\n" );
         LvArray::tensorOps::copy< 3 >( m_perfCoords[elemToPerfMap[iwelem][ip]], m_perfCoords[iperfMaxTransmissibility] );
       }
     }

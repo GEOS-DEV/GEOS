@@ -866,7 +866,7 @@ void applyAndSpecifyFieldValue( real64 const & time_n,
     if( fs.getLogLevel() >= 1 && isFirstNonlinearIteration )
     {
       globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
-      GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
+      logger.rank0Log( GEOS_FMT( bcLogMessage,
                                  solverName, time_n+dt, FieldSpecificationBase::catalogName(),
                                  fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
     }
@@ -1002,7 +1002,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
+        logger.rank0Log( GEOS_FMT( bcLogMessage,
                                    getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(),
                                    fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
 
@@ -1013,7 +1013,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                              "\n - negative value (injection): the mass balance equation is modified to considered the additional source term"
                              "\n - positive value (production): both the mass balance and the energy balance equations are modified to considered the additional source term. " \
                              "\n For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.";
-          GEOS_LOG_RANK_0( GEOS_FMT( msg,
+          logger.rank0Log( GEOS_FMT( msg,
                                      getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(), fs.getName() ) );
         }
       }

@@ -186,9 +186,9 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( xmlInput, strlen( xmlInput ) );
   if( !xmlResult )
   {
-    GEOS_LOG_RANK_0( "XML parsed with errors!" );
-    GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+    logger.rank0Log( "XML parsed with errors!" );
+    logger.rank0Log( "Error description: ", xmlResult.description());
+    logger.rank0Log( "Error offset: ", xmlResult.offset );
   }
 
   int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );

@@ -52,7 +52,7 @@ FunctionManager & FunctionManager::getInstance()
 Group * FunctionManager::createChild( string const & functionCatalogKey,
                                       string const & functionName )
 {
-  GEOS_LOG_RANK_0( "   " << functionCatalogKey << ": " << functionName );
+  logger.rank0Log( "   " ,  functionCatalogKey ,  ": " ,  functionName );
   std::unique_ptr< FunctionBase > function = FunctionBase::CatalogInterface::factory( functionCatalogKey, functionName, this );
   return &this->registerGroup< FunctionBase >( functionName, std::move( function ) );
 }

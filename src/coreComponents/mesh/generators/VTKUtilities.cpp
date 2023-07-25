@@ -629,11 +629,11 @@ vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mes
     GEOS_ERROR_IF( globalPointId->GetNumberOfComponents() != 1 && globalPointId->GetNumberOfTuples() != output->GetNumberOfPoints(),
                    "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
 
-    GEOS_LOG_RANK_0( "Using global Ids defined in VTK mesh" );
+    logger.rank0Log( "Using global Ids defined in VTK mesh" );
   }
   else
   {
-    GEOS_LOG_RANK_0( "Generating global Ids from VTK mesh" );
+    logger.rank0Log( "Generating global Ids from VTK mesh" );
     output = generateGlobalIDs( mesh );
   }
 
@@ -1683,15 +1683,15 @@ void printMeshStatistics( vtkDataSet & mesh,
   if( rank == 0 )
   {
     int const widthGlobal = static_cast< int >( std::log10( std::max( numGlobalElems, numGlobalNodes ) ) + 1 );
-    GEOS_LOG( GEOS_FMT( "Number of nodes: {:>{}}", numGlobalNodes, widthGlobal ) );
-    GEOS_LOG( GEOS_FMT( "  Number of elems: {:>{}}", numGlobalElems, widthGlobal ) );
+    logger.stdLog( GEOS_FMT( "Number of nodes: {:>{}}", numGlobalNodes, widthGlobal ) );
+    logger.stdLog( GEOS_FMT( "  Number of elems: {:>{}}", numGlobalElems, widthGlobal ) );
     for( auto const & typeCount: elemCounts )
     {
-      GEOS_LOG( GEOS_FMT( "{:>17}: {:>{}}", toString( typeCount.first ), typeCount.second, widthGlobal ) );
+      logger.stdLog( GEOS_FMT( "{:>17}: {:>{}}", toString( typeCount.first ), typeCount.second, widthGlobal ) );
     }
 
     int const widthLocal = static_cast< int >( std::log10( maxLocalElems ) + 1 );
-    GEOS_LOG( GEOS_FMT( "Load balancing: {1:>{0}} {2:>{0}} {3:>{0}}\n"
+    logger.stdLog( GEOS_FMT( "Load balancing: {1:>{0}} {2:>{0}} {3:>{0}}\n"
                         "(element/rank): {4:>{0}} {5:>{0}} {6:>{0}}",
                         widthLocal, "min", "avg", "max",
                         minLocalElems, avgLocalElems, maxLocalElems ) );
