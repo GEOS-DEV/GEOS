@@ -50,7 +50,7 @@ fi
 #
 # The option `--oversubscribe` tells OpenMPI to allow more MPI ranks than the node has cores.
 # This is needed because our unit test `blt_mpi_smoke` is run in parallel with _hard coded_ 4 ranks.
-# While our travis-ci nodes only have 2.
+# While some of our ci nodes may have less cores available.
 # 
 # In case we have more powerful nodes, consider removing `--oversubscribe` and use `--use-hwthread-cpus` instead.
 # This will tells OpenMPI to discover the number of hardware threads on the node,

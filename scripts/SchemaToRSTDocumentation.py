@@ -17,7 +17,7 @@ def writeTableRST(file_name, values):
     L = [[len(x) for x in row] for row in values]
     #  M = tuple(np.amax(np.array(L), axis=0))
 
-    # np isn't in the docker images for travisCI
+    # np isn't in the docker images for our CI
     MAX = [None] * len(L[0])
     for ii in range(0, len(L[0])):
         MAX[ii] = 0
