@@ -24,9 +24,7 @@
 
 namespace geos
 {
-/**
- * A scope for field traits.
- */
+
 namespace fields
 {
 

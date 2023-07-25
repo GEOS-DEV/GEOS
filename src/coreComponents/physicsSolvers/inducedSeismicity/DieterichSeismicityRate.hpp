@@ -15,15 +15,10 @@
 #ifndef GEOS_PHYSICSSOLVERS_INDUCED_SEISMICITY_DIETERICH_SEISMICITY_RATE_HPP_
 #define GEOS_PHYSICSSOLVERS_INDUCED_SEISMICITY_DIETERICH_SEISMICITY_RATE_HPP_
 
-#include "physicsSolvers/inducedSeismicity/SeismicityRateBase.hpp"  // a base class shared by all Laplace solvers
+#include "physicsSolvers/inducedSeismicity/SeismicityRateBase.hpp" 
 
 namespace geos
 {
-
-// Like most physics solvers, the Laplace solver derives from a generic SolverBase class.
-// The base class is densely Doxygen-commented and worth a look if you have not done so already.
-// Most important system assembly steps, linear and non-linear resolutions, and time-stepping mechanisms
-// are implemented at the SolverBase class level and can thus be used in Laplace without needing reimplementation.
 
 //START_SPHINX_INCLUDE_BEGINCLASS
 class DieterichSeismicityRate : public SeismicityRateBase
@@ -48,12 +43,6 @@ public:
   virtual void registerDataOnMesh( Group & meshBodies ) override; 
 
 //END_SPHINX_INCLUDE_BEGINCLASS
-// /**
-//  * @defgroup Solver Interface Functions
-//  *
-//  * These functions provide the primary interface that is required for derived classes
-//  */
-// /**@{*/
 
 //START_SPHINX_INCLUDE_SOLVERINTERFACE
   virtual real64 solverStep( real64 const & time_n,
@@ -82,4 +71,4 @@ public:
 
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_INDUCED_SEISMICITY_DIETERICH_SEISMICITY_RATE_HPP_ */

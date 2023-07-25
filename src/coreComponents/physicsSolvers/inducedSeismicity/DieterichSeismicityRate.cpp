@@ -32,46 +32,36 @@ using namespace dataRepository;
 using namespace fields;
 
 /*----------------------------------------------------------------------------------
- * LaplaceFEM: Solving Laplace's partial differential equation with finite elements
+ * DieterichSeismicityRate: Solving the ODE for seismicity rate from Dieterich, 1994
  * ---------------------------------------------------------------------------------
  *
  * What does this solver do?
  * --------------------------
  *
- * This solver finds a solution f(x,y,z) to the Laplace equation: div ( grad ( f )) = 0
- * This common elliptic PDE represents the solution of a steady-state heat transfer, for instance.
- *
+ * This solver finds a solution R(x, t) - the seismicity rate - to the ODE formulated 
+ * by Dieterich, 1994 given a certain stressing history. The stressing history can consist
+ * of mechanical stresses and pore pressure. The solver class includes a member variable 
+ * pointing to the stress solver that is specified in the XML file. SolverStep for the 
+ * stress solver is then called in the SolverStep function for the seismicity rate, to take
+ * the updated stress history as the input.
+ * 
+ * Solving the ODE is currently implemented in two different ways: 1. By backward-Euler 
+ * discretization of the ODE and 2. Computing the closed-form solution to the ODE which 
+ * involves numerical calculation of an integral of a stress functional. Both methods solve
+ * for the log of the seismicity rate in order to avoid overflow that typically accompanies
+ * the exponential of the stress history in the original formulations. 
+ * 
+ * 
  * Where can I find an example of what it does?
  * --------------------------------------------
  *
- * Integrated tests associated to this solver are found in the ./integratedTests/ folder
- * These tests consist of computing the steady-state temperature profile in a simple cube-shaped domain
- * with fixed temperatures applied on two opposite cube faces ("Dirichlet" boundary conditions: imposing a value).
- * Feel free to run these tests cases, check out the XML input files, and inspect the output.
- *
- * Implementation: before we start:
- * ---------------------------------
- * In this implementation, the solution function (called above f) is called m_fieldName.
- * The variable m_fieldName is a string that points to a data container (an array) that
- * holds the numerical values of the PDE solution for each location at which f is evaluated.
- *
- * Let's take a look at the implementation step by step.
+ * TODO
  *
  * ---------------------------------------------------------------------------------
  */
 
 
-/* CONSTRUCTOR
-   First, let us inspect the constructor of a "LaplaceFEM" object.
-   This constructor does three important things:
-   1 - It constructs an instance of the LaplaceFEM class (here: using the SolverBase constructor and passing through the arguments).
-   2 - It sets some default values for the LaplaceFEM-specific private variables (here: m_fieldName and m_timeIntegrationOption).
-   3 - It creates and activates a "registerWrapper" for each private variable.
-   This is where the private variables are declared either as REQUIRED or OPTIONAL.
-   An error is thrown if a REQUIRED variable is not specified in the XML file,
-   along with the description of this variable and possible enum values if relevant.
-   The description that is set is used in auto-generated documentation and console error messages.
- */
+/* CONSTRUCTOR */
 
 //START_SPHINX_INCLUDE_CONSTRUCTOR
 DieterichSeismicityRate::DieterichSeismicityRate( const string & name,
