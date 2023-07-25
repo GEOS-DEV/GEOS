@@ -353,6 +353,9 @@ public:
   virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
                                               DomainPartition & domain ) override;
 
+  virtual real64 setNextDtBasedOnCFL( real64 const & currentDt,
+                                      DomainPartition & domain ) override;
+
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
 protected:
