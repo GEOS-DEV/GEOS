@@ -7,6 +7,7 @@
       logLevel="1"
       discretization="fluidTPFA"
       targetRegions="{ Region1 }"
+      cflFactor="0.01"
       temperature="297.15">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -50,26 +51,13 @@
 
     <PeriodicEvent
       name="solverApplications1"
-      forceDt="1e3"
-      endTime="1e4"
-      target="/Solvers/compflow"/>
-
-    <PeriodicEvent
-      name="solverApplications2"
-      forceDt="1e4"
-      beginTime="1e4"
-      endTime="1e5"
-      target="/Solvers/compflow"/>
-
-    <PeriodicEvent
-      name="solverApplications3"
       forceDt="1e5"
-      beginTime="1e5"
+      endTime="2e7"
       target="/Solvers/compflow"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="1e7"
+      timeFrequency="2e7"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>

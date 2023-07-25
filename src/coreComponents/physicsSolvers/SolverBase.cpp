@@ -52,7 +52,7 @@ SolverBase::SolverBase( string const & name,
   this->setTimesteppingBehavior( ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize );
 
   registerWrapper( viewKeyStruct::cflFactorString(), &m_cflFactor ).
-    setApplyDefaultValue( 0.5 ).
+    setApplyDefaultValue( -1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
                     " when calculating the maximum allowable time step. Values should be in the interval (0,1] " );
@@ -284,37 +284,49 @@ real64 SolverBase::setNextDt( real64 const & currentDt,
 {
   real64 const nextDtNewton = setNextDtBasedOnNewtonIter( currentDt );
   real64 const nextDtStateChange = setNextDtBasedOnStateChange( currentDt, domain );
+  real64 const nextDtCFL = setNextDtBasedOnCFL( currentDt, domain );
 
-  if( nextDtNewton < nextDtStateChange ) // time step size decided based on convergence
+  if( m_cflFactor<0.0 )      //default case
   {
-    integer const iterDecreaseLimit = m_nonlinearSolverParameters.timeStepDecreaseIterLimit();
-    integer const iterIncreaseLimit = m_nonlinearSolverParameters.timeStepIncreaseIterLimit();
-    if( nextDtNewton > currentDt )
+    if( nextDtNewton < nextDtStateChange )    // time step size decided based on convergence
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Newton solver converged in less than {} iterations, time-step required will be increased.",
-                                          getName(), iterIncreaseLimit ) );
+      integer const iterDecreaseLimit = m_nonlinearSolverParameters.timeStepDecreaseIterLimit();
+      integer const iterIncreaseLimit = m_nonlinearSolverParameters.timeStepIncreaseIterLimit();
+      if( nextDtNewton > currentDt )
+      {
+        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT(
+                                 "{}: Newton solver converged in less than {} iterations, time-step required will be increased.",
+                                 getName(), iterIncreaseLimit ));
+      }
+      else if( nextDtNewton < currentDt )
+      {
+        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT(
+                                 "{}: Newton solver converged in more than {} iterations, time-step required will be decreased.",
+                                 getName(), iterDecreaseLimit ));
+      }
     }
-    else if( nextDtNewton < currentDt )
+    else       // time step size decided based on state change
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Newton solver converged in more than {} iterations, time-step required will be decreased.",
-                                          getName(), iterDecreaseLimit ) );
+      if( nextDtStateChange > currentDt )
+      {
+        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Time-step required will be increased based on state change.",
+                                            getName()));
+      }
+      else if( nextDtStateChange < currentDt )
+      {
+        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Time-step required will be decreased based on state change.",
+                                            getName()));
+      }
     }
+
+    return std::min( nextDtNewton, nextDtStateChange );
   }
-  else // time step size decided based on state change
+  else
   {
-    if( nextDtStateChange > currentDt )
-    {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Time-step required will be increased based on state change.",
-                                          getName() ) );
-    }
-    else if( nextDtStateChange < currentDt )
-    {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Time-step required will be decreased based on state change.",
-                                          getName() ) );
-    }
+    return nextDtCFL;
   }
 
-  return std::min( nextDtNewton, nextDtStateChange );
+
 }
 
 real64 SolverBase::setNextDtBasedOnStateChange( real64 const & currentDt,
@@ -347,6 +359,15 @@ real64 SolverBase::setNextDtBasedOnNewtonIter( real64 const & currentDt )
   }
   return nextDt;
 }
+
+
+real64 SolverBase::setNextDtBasedOnCFL( const geos::real64 & currentDt, geos::DomainPartition & domain )
+{
+  GEOS_UNUSED_VAR( currentDt, domain );
+  return LvArray::NumericLimits< real64 >::max;       // i.e., not implemented
+}
+
+
 
 real64 SolverBase::linearImplicitStep( real64 const & time_n,
                                        real64 const & dt,
