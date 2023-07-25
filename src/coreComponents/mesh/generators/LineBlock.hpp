@@ -152,14 +152,14 @@ public:
    */
   void setPerfTransmissibility( arrayView1d< real64 const > perfTransmissibility ) { m_perfTransmissibility = perfTransmissibility; }
 
-  arrayView1d< real64 const > getPerfSkin() const override final { return m_perfSkin; }
+  arrayView1d< real64 const > getPerfSkinFactor() const override final { return m_perfSkinFactor; }
 
 
   /**
-   * @brief Set the well skin at the perforations.
-   * @param perfSkin list of well skin at all the perforations on the well
+   * @brief Set the well skin factor at the perforations.
+   * @param perfSkin list of well skin factor at all the perforations on the well
    */
-  void setPerfSkin( arrayView1d< real64 const > perfSkin ) { m_perfSkin = perfSkin; }
+  void setPerfSkinFactor( arrayView1d< real64 const > perfSkinFactor ) { m_perfSkinFactor = perfSkinFactor; }
 
   arrayView1d< globalIndex const > getPerfElemIndex() const override final { return m_perfElemId; }
 
@@ -239,8 +239,8 @@ private:
   /// Well Peaceman index at the perforation
   array1d< real64 > m_perfTransmissibility;
 
-  /// Well skin at the perforation
-  array1d< real64 > m_perfSkin;
+  /// Well skin factor at the perforation
+  array1d< real64 > m_perfSkinFactor;
 
   /// Global index of the well element
   array1d< globalIndex > m_perfElemId;

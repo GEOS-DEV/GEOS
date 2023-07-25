@@ -73,13 +73,13 @@ DECLARE_FIELD( wellTransmissibility,
                WRITE_AND_READ,
                "For each perforation, well transmissibility" );
 
-DECLARE_FIELD( wellSkin,
-               "wellSkin",
+DECLARE_FIELD( wellSkinFactor,
+               "wellSkinFactor",
                array1d< real64 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "For each perforation, well skin" ); 
+               "For each perforation, well skin factor" ); 
 
 DECLARE_FIELD( location,
                "location",
