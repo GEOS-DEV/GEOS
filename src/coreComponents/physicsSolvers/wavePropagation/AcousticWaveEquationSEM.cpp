@@ -311,7 +311,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
         acousticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
-        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >(faceManager.size(),
+        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
                                                                X,
                                                                facesToElements,
                                                                facesToNodes,
