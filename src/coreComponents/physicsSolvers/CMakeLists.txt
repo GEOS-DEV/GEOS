@@ -66,7 +66,6 @@ set( physicsSolvers_headers
      fluidFlow/wells/WellSolverBase.hpp
      fluidFlow/wells/WellSolverBaseFields.hpp
      inducedSeismicity/DieterichSeismicityRate.hpp
-     inducedSeismicity/DieterichSeismicityRateKernels.hpp
      inducedSeismicity/inducedSeismicityFields.hpp
      inducedSeismicity/SeismicityRateBase.hpp
      multiphysics/CompositionalMultiphaseReservoirAndWells.hpp

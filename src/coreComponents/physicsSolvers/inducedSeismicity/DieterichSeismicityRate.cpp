@@ -104,8 +104,8 @@ void DieterichSeismicityRate::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< inducedSeismicity::meanShearStressRate >( getName() );
 
       subRegion.registerField< inducedSeismicity::seismicityRate >( getName() );
-      subRegion.registerField< inducedSeismicity::h >( getName() );
-      subRegion.registerField< inducedSeismicity::h_n >( getName() );
+      subRegion.registerField< inducedSeismicity::logSeismicityRate >( getName() );
+      subRegion.registerField< inducedSeismicity::logSeismicityRate_n >( getName() );
       subRegion.registerField< inducedSeismicity::logDenom >( getName() );
       subRegion.registerField< inducedSeismicity::logDenom_n >( getName() );
     } );
@@ -141,8 +141,8 @@ void DieterichSeismicityRate::odeSolverStep( real64 const & time_n,
                                                        ElementSubRegionBase & subRegion )
       {
         arrayView1d< real64 > const R = subRegion.getField< inducedSeismicity::seismicityRate >();
-        arrayView1d< real64 > const h = subRegion.getField< inducedSeismicity::h >();
-        arrayView1d< real64 > const h_n = subRegion.getField< inducedSeismicity::h_n >();
+        arrayView1d< real64 > const h = subRegion.getField< inducedSeismicity::logSeismicityRate >();
+        arrayView1d< real64 > const h_n = subRegion.getField< inducedSeismicity::logSeismicityRate_n >();
   
         arrayView1d< real64 const > const t_a = subRegion.getField< inducedSeismicity::t_a >();
         arrayView1d< real64 const > const aSig = subRegion.getField< inducedSeismicity::aSigma >();
@@ -211,7 +211,7 @@ void DieterichSeismicityRate::integralSolverStep( real64 const & time_n,
                                                        ElementSubRegionBase & subRegion )
       {
         arrayView1d< real64 > const R = subRegion.getField< inducedSeismicity::seismicityRate >();
-        arrayView1d< real64 > const h = subRegion.getField< inducedSeismicity::h >();
+        arrayView1d< real64 > const h = subRegion.getField< inducedSeismicity::logSeismicityRate >();
         arrayView1d< real64 > const logDenom = subRegion.getField< inducedSeismicity::logDenom >();
         arrayView1d< real64 > const logDenom_n = subRegion.getField< inducedSeismicity::logDenom_n >();
 
@@ -299,9 +299,9 @@ void DieterichSeismicityRate::initializePreSubGroups()
       
       arrayView1d< real64 > const tempR = subRegion.getField< inducedSeismicity::seismicityRate >();
       tempR.setValues< parallelHostPolicy >( 1.0 );
-      arrayView1d< real64 > const tempH = subRegion.getField< inducedSeismicity::h >();
+      arrayView1d< real64 > const tempH = subRegion.getField< inducedSeismicity::logSeismicityRate >();
       tempH.setValues< parallelHostPolicy >( 0.0 );
-      arrayView1d< real64 > const tempH_n = subRegion.getField< inducedSeismicity::h_n >();
+      arrayView1d< real64 > const tempH_n = subRegion.getField< inducedSeismicity::logSeismicityRate_n >();
       tempH_n.setValues< parallelHostPolicy >( 0.0 );
       arrayView1d< real64 > const tempLogDenom = subRegion.getField< inducedSeismicity::logDenom >();
       tempLogDenom.setValues< parallelHostPolicy >( 0.0 );
