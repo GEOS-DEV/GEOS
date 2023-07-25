@@ -136,6 +136,15 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
   bool const noXML = options[INPUT].count() == 0 && options[SCHEMA].count() == 0;
   if( parse.error() || options[HELP] || (argc == 0) || noXML )
   {
+    if( parse.error())
+    {
+      GEOS_THROW( "Bad command line arguments.\n", InputError );
+    }
+    else
+    {
+      logger.rank0Log("No command line arguments.\n");
+    }
+
     int columns = getenv( "COLUMNS" ) ? atoi( getenv( "COLUMNS" )) : 120;
     option::printUsage( fwrite, stdout, usage, columns );
 
@@ -143,8 +152,6 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     {
       throw NotAnError();
     }
-
-    GEOS_THROW( "Bad command line arguments.", InputError );
   }
 
   // Iterate over the remaining inputs
