@@ -96,10 +96,10 @@ namespace geos
     real64 getWellTransmissibility() const { return m_wellTransmissibility; }
 
     /**
-     * @brief Get the well skin at the perforation.
-     * @return the well skin
+     * @brief Get the well skin factor at the perforation.
+     * @return the well skin factor
      */
-    real64 getWellSkin() const { return m_wellSkin; }
+    real64 getWellSkinFactor() const { return m_wellSkinFactor; }
 
     ///@}
 
@@ -113,14 +113,14 @@ namespace geos
       static constexpr char const *distanceFromHeadString() { return "distanceFromHead"; }
       /// @return String key for the well transmissibility at this perforation
       static constexpr char const *wellTransmissibilityString() { return "transmissibility"; }
-      /// @return String key for the well skin at this perforation
-      static constexpr char const *wellSkinString() { return "skin"; }
+      /// @return String key for the well skin factor at this perforation
+      static constexpr char const *wellSkinFactorString() { return "skinFactor"; }
       /// ViewKey for the linear distance from well head
       dataRepository::ViewKey distanceFromHead = {distanceFromHeadString()};
       /// ViewKey for the well transmissibility at this perforation
       dataRepository::ViewKey wellTransmissibility = {wellTransmissibilityString()};
       /// ViewKey for the well transmissibility at this perforation
-      dataRepository::ViewKey wellSkin = { wellSkinString() };
+      dataRepository::ViewKey wellSkinFactor = { wellSkinFactorString() };
     }
     /// ViewKey struct for the Perforation class
     viewKeysPerforation;
@@ -135,8 +135,8 @@ namespace geos
     /// Well transmissibility at this perforation
     real64 m_wellTransmissibility;
 
-    /// Well skin at this perforation
-    real64 m_wellSkin;
+    /// Well skin factor at this perforation
+    real64 m_wellSkinFactor;
   };
 
 } // namespace geos
