@@ -722,6 +722,8 @@ struct StiffnessVectorComputation
 
   {
 
+    GEOS_MARK_FUNCTION;
+
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
@@ -739,7 +741,7 @@ struct StiffnessVectorComputation
       // Volume integration
       for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
       {
-       m_finiteElementSpace.template computeStiffnessTerm( q, xLocal, [&] ( int i, int j, real64 val )
+       m_finiteElement.template computeStiffnessTerm( q, xLocal, [&] ( int i, int j, real64 val )
        {
          real32 const localIncrement = val*p_n[elemsToNodes[k][j]];
          RAJA::atomicAdd< parallelDeviceAtomic >( &stiffnessVector[elemsToNodes[k][i]], localIncrement );
@@ -749,17 +751,12 @@ struct StiffnessVectorComputation
 
     } );
 
-    //Pre-mult by the first factor for damping
-    forAll< EXEC_POLICY >( size_node, [=] GEOS_HOST_DEVICE ( localIndex const a )
-    {
-      p_np1[a] /= 1.0+((dt/2)*(damping[a]/mass[a]));
-    } );
   }
 
   /// The finite element space/discretization object for the element type in the subRegion
   FE_TYPE const & m_finiteElement;
 
-// };
+ };
 
 // template< typename SUBREGION_TYPE,
 //           typename CONSTITUTIVE_TYPE,
