@@ -206,60 +206,6 @@ struct WaveSolverUtils
    * @brief Check if the source point is inside an element or not
    */
 
-  /**
-   * @brief Check if the source point is inside an element or not
-   * @param numFacesPerElem number of face on an element
-   * @param elemCenter array containing the center of the elements
-   * @param faceNormal array containing the normal of all faces
-   * @param faceCenter array containing the center of all faces
-   * @param elemsToFaces map to get the global faces from element index and local face index
-   * @param coords coordinate of the point
-   * @return true if coords is inside the element
-   */
-
-  GEOS_HOST_DEVICE
-  static bool
-  locateSourceElement( real64 const numFacesPerElem,
-                       real64 const (&elemCenter)[3],
-                       arrayView2d< real64 const > const faceNormal,
-                       arrayView2d< real64 const > const faceCenter,
-                       arraySlice1d< localIndex const > const elemsToFaces,
-                       real64 const (&coords)[3] )
-  {
-    //Loop over the element faces
-    real64 tmpVector[3]{};
-    for( localIndex kfe = 0; kfe < numFacesPerElem; ++kfe )
-    {
-
-      localIndex const iface = elemsToFaces[kfe];
-      real64 faceCenterOnFace[3] = {faceCenter[iface][0],
-                                    faceCenter[iface][1],
-                                    faceCenter[iface][2]};
-      real64 faceNormalOnFace[3] = {faceNormal[iface][0],
-                                    faceNormal[iface][1],
-                                    faceNormal[iface][2]};
-
-      //Test to make sure if the normal is outwardly directed
-      LvArray::tensorOps::copy< 3 >( tmpVector, faceCenterOnFace );
-      LvArray::tensorOps::subtract< 3 >( tmpVector, elemCenter );
-      if( LvArray::tensorOps::AiBi< 3 >( tmpVector, faceNormalOnFace ) < 0.0 )
-      {
-        LvArray::tensorOps::scale< 3 >( faceNormalOnFace, -1 );
-      }
-
-      // compute the vector face center to query point
-      LvArray::tensorOps::subtract< 3 >( faceCenterOnFace, coords );
-      localIndex const s = computationalGeometry::sign( LvArray::tensorOps::AiBi< 3 >( faceNormalOnFace, faceCenterOnFace ));
-
-      // all dot products should be non-negative (we enforce outward normals)
-      if( s < 0 )
-      {
-        return false;
-      }
-
-    }
-    return true;
-  }
 
   /**
    * @brief Check if the source point is inside an element or not

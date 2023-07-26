@@ -285,8 +285,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X =
     nodeManager.referencePosition().toViewConst();
-  arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
-  arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
+  ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
@@ -295,7 +294,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
   arrayView2d< real64 > const sourceConstantsz = m_sourceConstantsz.toView();
   arrayView1d< localIndex > const sourceIsAccessible = m_sourceIsAccessible.toView();
 
-  sourceNodeIds.setValues< parallelHostPolicy >( -1 );
+  sourceNodeIds.setValues< EXEC_POLICY >( -1 );
   sourceConstantsx.zero();
   sourceConstantsy.zero();
   sourceConstantsz.zero();
@@ -305,7 +304,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
   arrayView2d< localIndex > const receiverNodeIds = m_receiverNodeIds.toView();
   arrayView2d< real64 > const receiverConstants = m_receiverConstants.toView();
   arrayView1d< localIndex > const receiverIsLocal = m_receiverIsLocal.toView();
-  receiverNodeIds.setValues< parallelHostPolicy >( -1 );
+  receiverNodeIds.setValues< EXEC_POLICY >( -1 );
   receiverConstants.zero();
   receiverIsLocal.zero();
 
@@ -334,7 +333,6 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-    arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
     arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
 
     finiteElement::FiniteElementBase const &
@@ -347,16 +345,14 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
 
       elasticWaveEquationSEMKernels::
         PrecomputeSourceAndReceiverKernel::
-        launch< parallelHostPolicy, FE_TYPE >
+        launch< EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
         numFacesPerElem,
+        facesToNodes,
         X,
         elemGhostRank,
         elemsToNodes,
         elemsToFaces,
-        elemCenter,
-        faceNormal,
-        faceCenter,
         sourceCoordinates,
         sourceIsAccessible,
         sourceNodeIds,
@@ -374,6 +370,9 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
         m_sourceForce,
         m_sourceMoment );
     } );
+    elemsToFaces.freeOnDevice();
+    sourceCoordinates.freeOnDevice();
+    receiverCoordinates.freeOnDevice();
   } );
 }
 
@@ -409,7 +408,7 @@ void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                            MPI_COMM_GEOSX );
 
-    forAll< parallelHostPolicy >( numReceiversGlobal, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
+    forAll< EXEC_POLICY >( numReceiversGlobal, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
     {
       if( receiverIsLocal[ircv] == 1 )
       {
@@ -454,7 +453,7 @@ void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
   /// the remaining x-component contains DAS data, the other components are set to zero
   m_displacementXNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
   arrayView2d< real32 > const dasReceiver = m_displacementXNp1AtReceivers.toView();
-  forAll< parallelHostPolicy >( numReceiversGlobal, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
+  forAll< EXEC_POLICY >( numReceiversGlobal, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
   {
     if( receiverIsLocal[ircv] == 1 )
     {
@@ -478,6 +477,7 @@ void ElasticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumb
                                                        arrayView1d< real32 > const rhsy,
                                                        arrayView1d< real32 > const rhsz )
 {
+  GEOS_MARK_FUNCTION;
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstantsx   = m_sourceConstantsx.toViewConst();
   arrayView2d< real64 const > const sourceConstantsy   = m_sourceConstantsy.toViewConst();
@@ -567,28 +567,37 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
         elasticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
-        kernelM.template launch< parallelHostPolicy, parallelHostAtomic >( elementSubRegion.size(),
-                                                                           X,
-                                                                           elemsToNodes,
-                                                                           density,
-                                                                           mass );
+        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                               X,
+                                                               elemsToNodes,
+                                                               density,
+                                                               mass );
 
         elasticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
-        kernelD.template launch< parallelHostPolicy, parallelHostAtomic >( faceManager.size(),
-                                                                           X,
-                                                                           facesToElements,
-                                                                           facesToNodes,
-                                                                           facesDomainBoundaryIndicator,
-                                                                           freeSurfaceFaceIndicator,
-                                                                           faceNormal,
-                                                                           density,
-                                                                           velocityVp,
-                                                                           velocityVs,
-                                                                           nodeToDampingIdx,
-                                                                           m_dampingVectorX,
-                                                                           m_dampingVectorY,
-                                                                           m_dampingVectorZ );
+        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
+                                                               X,
+                                                               facesToElements,
+                                                               facesToNodes,
+                                                               facesDomainBoundaryIndicator,
+                                                               freeSurfaceFaceIndicator,
+                                                               faceNormal,
+                                                               density,
+                                                               velocityVp,
+                                                               velocityVs,
+                                                               nodeToDampingIdx,
+                                                               m_dampingVectorX,
+                                                               m_dampingVectorY,
+                                                               m_dampingVectorZ );
+        facesToElements.freeOnDevice();
+        facesDomainBoundaryIndicator.freeOnDevice();
+        freeSurfaceFaceIndicator.freeOnDevice();
+        density.freeOnDevice();
+        velocityVp.freeOnDevice();
+        velocityVs.freeOnDevice();
+        nodeToDampingIdx.freeOnDevice();
+        facesToNodes.freeOnDevice();
+
       } );
     } );
   } );
@@ -738,39 +747,44 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
     auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dt );
 
-    finiteElement::
-      regionBasedKernelApplication< EXEC_POLICY,
-                                    constitutive::NullModel,
-                                    CellElementSubRegion >( mesh,
-                                                            regionNames,
-                                                            getDiscretizationName(),
-                                                            "",
-                                                            kernelFactory );
-
+    {
+      GEOS_MARK_SCOPE(updateStiffness);
+      finiteElement::
+        regionBasedKernelApplication< EXEC_POLICY,
+                                      constitutive::NullModel,
+                                      CellElementSubRegion >( mesh,
+                                                              regionNames,
+                                                              getDiscretizationName(),
+                                                              "",
+                                                              kernelFactory );
+    }
 
     addSourceToRightHandSide( cycleNumber, rhsx, rhsy, rhsz );
 
-    parallelDeviceStream streamx, streamy, streamz;
-    parallelDeviceEvents events;
+    {
+      GEOS_MARK_SCOPE(updateUxyz);
+      parallelDeviceStream streamx, streamy, streamz;
+      parallelDeviceEvents events;
 
-    WaveSolverUtils::UpdateP( nodeManager,
-                              ux_nm1, ux_n, ux_np1,
-                              mass, stiffnessVectorx, rhsx,
-                              m_dampingNodes, m_dampingVectorX,
-                              dt, streamx, events );
+      WaveSolverUtils::UpdateP( nodeManager,
+                                ux_nm1, ux_n, ux_np1,
+                                mass, stiffnessVectorx, rhsx,
+                                m_dampingNodes, m_dampingVectorX,
+                                dt, streamx, events );
 
-    WaveSolverUtils::UpdateP( nodeManager,
-                              uy_nm1, uy_n, uy_np1,
-                              mass, stiffnessVectory, rhsy,
-                              m_dampingNodes, m_dampingVectorY,
-                              dt, streamy, events );
+      WaveSolverUtils::UpdateP( nodeManager,
+                                uy_nm1, uy_n, uy_np1,
+                                mass, stiffnessVectory, rhsy,
+                                m_dampingNodes, m_dampingVectorY,
+                                dt, streamy, events );
 
-    WaveSolverUtils::UpdateP( nodeManager,
-                              uz_nm1, uz_n, uz_np1,
-                              mass, stiffnessVectorz, rhsz,
-                              m_dampingNodes, m_dampingVectorZ,
-                              dt, streamz, events );
-    waitAllDeviceEvents( events );
+      WaveSolverUtils::UpdateP( nodeManager,
+                                uz_nm1, uz_n, uz_np1,
+                                mass, stiffnessVectorz, rhsz,
+                                m_dampingNodes, m_dampingVectorZ,
+                                dt, streamz, events );
+      waitAllDeviceEvents( events );
+    }
 
 
 

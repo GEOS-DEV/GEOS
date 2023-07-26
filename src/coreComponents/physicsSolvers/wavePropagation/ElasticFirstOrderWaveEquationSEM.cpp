@@ -215,8 +215,8 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
   FaceManager const & faceManager = mesh.getFaceManager();
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
-  arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
-  arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
+  /// get face to node map
+  ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
@@ -264,7 +264,6 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-    arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
     arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
 
     finiteElement::FiniteElementBase const &
@@ -278,18 +277,16 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
 
       elasticFirstOrderWaveEquationSEMKernels::
         PrecomputeSourceAndReceiverKernel::
-        launch< parallelHostPolicy, FE_TYPE >
+        launch< EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
         regionIndex,
         numNodesPerElem,
         numFacesPerElem,
+        facesToNodes,
         X,
         elemGhostRank,
         elemsToNodes,
         elemsToFaces,
-        elemCenter,
-        faceNormal,
-        faceCenter,
         sourceCoordinates,
         sourceIsAccessible,
         sourceElem,
@@ -307,12 +304,17 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
         timeSourceFrequency,
         rickerOrder );
     } );
+    elemsToFaces.freeOnDevice();
+    sourceCoordinates.freeOnDevice();
+    receiverCoordinates.freeOnDevice();
+
   } );
 }
 
 
 void ElasticFirstOrderWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs )
 {
+  GEOS_MARK_FUNCTION;
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
@@ -396,28 +398,37 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
 
         elasticFirstOrderWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
-        kernelM.template launch< parallelHostPolicy, parallelHostAtomic >( elementSubRegion.size(),
-                                                                           X,
-                                                                           elemsToNodes,
-                                                                           density,
-                                                                           mass );
+        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                               X,
+                                                               elemsToNodes,
+                                                               density,
+                                                               mass );
 
         elasticFirstOrderWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
-        kernelD.template launch< parallelHostPolicy, parallelHostAtomic >( faceManager.size(),
-                                                                           X,
-                                                                           facesToElements,
-                                                                           facesToNodes,
-                                                                           facesDomainBoundaryIndicator,
-                                                                           freeSurfaceFaceIndicator,
-                                                                           faceNormal,
-                                                                           density,
-                                                                           velocityVp,
-                                                                           velocityVs,
-                                                                           nodeToDampingIdx,
-                                                                           m_dampingVectorX,
-                                                                           m_dampingVectorY,
-                                                                           m_dampingVectorZ );
+        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
+                                                               X,
+                                                               facesToElements,
+                                                               facesToNodes,
+                                                               facesDomainBoundaryIndicator,
+                                                               freeSurfaceFaceIndicator,
+                                                               faceNormal,
+                                                               density,
+                                                               velocityVp,
+                                                               velocityVs,
+                                                               nodeToDampingIdx,
+                                                               m_dampingVectorX,
+                                                               m_dampingVectorY,
+                                                               m_dampingVectorZ );
+        facesToElements.freeOnDevice();
+        facesDomainBoundaryIndicator.freeOnDevice();
+        freeSurfaceFaceIndicator.freeOnDevice();
+        density.freeOnDevice();
+        velocityVp.freeOnDevice();
+        velocityVs.freeOnDevice();
+        nodeToDampingIdx.freeOnDevice();
+        facesToNodes.freeOnDevice();
+
       } );
     } );
   } );
@@ -569,57 +580,61 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
-
-        elasticFirstOrderWaveEquationSEMKernels::
-          StressComputation< FE_TYPE > kernel( finiteElement );
-        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
-          ( elementSubRegion.size(),
-          regionIndex,
-          X,
-          elemsToNodes,
-          ux_np1,
-          uy_np1,
-          uz_np1,
-          density,
-          velocityVp,
-          velocityVs,
-          lambda,
-          mu,
-          sourceConstants,
-          sourceIsAccessible,
-          sourceElem,
-          sourceRegion,
-          sourceValue,
-          dt,
-          cycleNumber,
-          stressxx,
-          stressyy,
-          stresszz,
-          stressxy,
-          stressxz,
-          stressyz );
-
-        elasticFirstOrderWaveEquationSEMKernels::
-          VelocityComputation< FE_TYPE > kernel2( finiteElement );
-        kernel2.template launch< EXEC_POLICY, ATOMIC_POLICY >
-          ( elementSubRegion.size(),
-          X,
-          elemsToNodes,
-          stressxx,
-          stressyy,
-          stresszz,
-          stressxy,
-          stressxz,
-          stressyz,
-          mass,
-          m_dampingNodes,
-          m_dampingVectorX,
-          m_dampingVectorY,
-          m_dampingVectorZ,
-          dt,
-          ux_np1,
-          uy_np1,
-          uz_np1 );
+        {
+          GEOS_MARK_SCOPE(StressComputation);
+          elasticFirstOrderWaveEquationSEMKernels::
+            StressComputation< FE_TYPE > kernel( finiteElement );
+          kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
+            ( elementSubRegion.size(),
+              regionIndex,
+              X,
+              elemsToNodes,
+              ux_np1,
+              uy_np1,
+              uz_np1,
+              density,
+              velocityVp,
+              velocityVs,
+              lambda,
+              mu,
+              sourceConstants,
+              sourceIsAccessible,
+              sourceElem,
+              sourceRegion,
+              sourceValue,
+              dt,
+              cycleNumber,
+              stressxx,
+              stressyy,
+              stresszz,
+              stressxy,
+              stressxz,
+              stressyz );
+        }
+        {
+          GEOS_MARK_SCOPE(VelocityComputation);
+          elasticFirstOrderWaveEquationSEMKernels::
+            VelocityComputation< FE_TYPE > kernel2( finiteElement );
+          kernel2.template launch< EXEC_POLICY, ATOMIC_POLICY >
+            ( elementSubRegion.size(),
+              X,
+              elemsToNodes,
+              stressxx,
+              stressyy,
+              stresszz,
+              stressxy,
+              stressxz,
+              stressyz,
+              mass,
+              m_dampingNodes,
+              m_dampingVectorX,
+              m_dampingVectorY,
+              m_dampingVectorZ,
+              dt,
+              ux_np1,
+              uy_np1,
+              uz_np1 );
+        }
 
 
       } );
