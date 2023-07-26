@@ -32,6 +32,82 @@ namespace geos
 namespace acousticElasticWaveEquationSEMKernels
 {
 
+template< typename FE_TYPE >
+struct CouplingKernel
+{
+  static constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
+
+  CouplingKernel( FE_TYPE const & finiteElement ) : m_finiteElement( finiteElement )
+  {}
+
+  template< typename EXEC_POLICY, typename ATOMIC_POLICY >
+  void
+  launch( localIndex const size,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< localIndex const > const faceToRegion,
+          arrayView2d< localIndex const > const faceToSubRegion,
+          arrayView2d< localIndex const > const faceToElement,
+          ArrayOfArraysView< localIndex const > const facesToNodes,
+          arrayView1d< real32 > const couplingVector )
+  {
+    real32 rhof = 1020;  // hardcoded until github.com/GEOS-DEV/GEOS/pull/2548 is merged
+
+    array1d< localIndex > arr( 1 );
+    arr.zero();
+    arrayView1d< localIndex > const & view = arr.toView();
+
+    // printf("faceToRegion.size(1)=%i\n", faceToRegion.size( 1 ));  // 2
+
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
+    {
+      localIndex e0 = faceToElement( f, 0 ), e1 = faceToElement( f, 1 );
+      localIndex er0 = faceToRegion( f, 0 ), er1 = faceToRegion( f, 1 );
+      localIndex esr0 = faceToSubRegion( f, 0 ), esr1 = faceToSubRegion( f, 1 );
+
+      if ((e0 != -1 && e1 == -1) || (e0 == -1 && e1 != -1))
+      {
+        printf("!! here\n");
+        // RAJA::atomicAdd< ATOMIC_POLICY >( &view[0], 1 );
+        RAJA::atomicInc< ATOMIC_POLICY >( &view[0] );
+      }
+
+      if (e0 != -1 && e1 != -1)
+      {
+        printf( "\t[CouplingKernel::launch] f=%i -> (e0=%i, e1=%i)\n", f, e0, e1 );
+        if (er0 != er1 && esr0 != esr1)  /* should define an interface */
+        {
+          printf( "\t[CouplingKernel::launch] interface found for f=%i\n", f );
+          real64 xLocal[ numNodesPerFace ][ 3 ];
+          for( localIndex a = 0; a < numNodesPerFace; ++a )
+          {
+            for( localIndex i = 0; i < 3; ++i )
+            {
+              xLocal[a][i] = X( facesToNodes( f, a ), i );
+            }
+          }
+
+          for( localIndex q = 0; q < numNodesPerFace; ++q )
+          {
+            real32 const localIncrement = -rhof * m_finiteElement.computeDampingTerm( q, xLocal );
+            RAJA::atomicAdd< ATOMIC_POLICY >( &couplingVector[facesToNodes[f][q]], localIncrement );
+          }
+        }
+      }
+    } ); // end loop over element
+
+    printf("\t[CouplingKernel::launch] n_faces=%i n_boundary_facets=%i\n", size, view[0]);
+  }
+
+  /// The finite element space/discretization object for the element type in the subRegion
+  FE_TYPE const & m_finiteElement;
+
+};
+
+} /* namespace acousticElasticWaveEquationSEMKernels */
+
+namespace acousticElasticWaveEquationSEMKernels_old
+{
+
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >

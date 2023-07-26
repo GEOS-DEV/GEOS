@@ -32,6 +32,7 @@ class AcousticElasticWaveEquationSEM : public CoupledWaveSolver< AcousticWaveEqu
 public:
   using Base = CoupledWaveSolver< AcousticWaveEquationSEM, ElasticWaveEquationSEM >;
   using Base::m_solvers;
+  using wsCoordType = AcousticWaveEquationSEM::wsCoordType;
 
   enum class SolverType : integer
   {
@@ -44,6 +45,8 @@ public:
 
   using EXEC_POLICY = parallelDevicePolicy<  >;
   using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
+
+  virtual void registerDataOnMesh( Group & meshBodies ) override final;
 
   /**
    * @brief main constructor for AcousticElasticWaveEquationSEM objects
@@ -93,6 +96,19 @@ protected:
 
   SortedArray< localIndex > m_interfaceNodesSet;
 };
+
+namespace fields
+{
+
+DECLARE_FIELD( CouplingVector,
+               "couplingVector",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Coupling term." );
+
+}
 
 } /* namespace geos */
 
