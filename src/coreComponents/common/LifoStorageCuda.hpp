@@ -21,7 +21,6 @@
 #include <camp/camp.hpp>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <algorithm>
 
 #include "common/FixedSizeDeque.hpp"
@@ -30,7 +29,7 @@
 #include "common/FixedSizeDequeWithMutexes.hpp"
 #include "common/MultiMutexesLock.hpp"
 #include "common/LifoStorageCommon.hpp"
-#include "LvArray/system.hpp"
+#include "LvArray/src/system.hpp"
 
 namespace geos
 {
