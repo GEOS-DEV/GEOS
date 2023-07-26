@@ -180,7 +180,7 @@ public:
     //static constexpr char const * epsC1PPUString() { return "epsC1PPU"; }
 
     /// @return The key for useDBC
-    static constexpr char const * useDBCString() { return "useDBC"; }
+    //static constexpr char const * useDBCString() { return "useDBC"; }
   };
 
   /**
@@ -303,9 +303,9 @@ protected:
   /// upwinding parameters
   UpwindingParameters m_upwindingParams;
   
-public:
+//public:
   /// flag for DBC
-  integer m_useDBC;
+  //integer m_useDBC;
 };
 
 template< typename TYPE >

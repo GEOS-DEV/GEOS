@@ -63,6 +63,7 @@ public:
   static string catalogName() { return "NonlinearSolverParameters"; }
 
   virtual void postProcessInput() override;
+  void updateKappaDBCNewton();
 
   struct viewKeysStruct
   {
@@ -96,6 +97,9 @@ public:
     static constexpr char const * couplingTypeString()                   { return "couplingType"; }
     static constexpr char const * sequentialConvergenceCriterionString() { return "sequentialConvergenceCriterion"; }
     static constexpr char const * subcyclingOptionString()               { return "subcycling"; }
+
+    static constexpr char const * useDBCString()                  { return "useDBC"; }
+    static constexpr char const * omegaDBCString()                { return "omegaDBC"; }
   } viewKeys;
 
   /**
@@ -201,6 +205,35 @@ public:
     return m_sequentialConvergenceCriterion;
   }
 
+  /**
+   * @brief Getter for the DBC flag
+   * @return 1 or 0 depending if DBC is enabled
+   */
+  integer useDBC() const
+  {
+    return m_useDBC;
+  }
+
+
+  /**
+   * @brief Getter for the omega multiplier for DBC flux
+   * @return the coefficient the omega multiplier for DBC flux
+   */
+  real64 omegaDBC() const
+  {
+    return m_omegaDBC;
+  }
+
+  /**
+   * @brief Getter for the coefficient kappa controls DBC flux
+   * @return the coefficient that controls the amount of DBC flux
+   */
+  real64 kappaDBC() const
+  {
+    return m_kappaDBC;
+  }
+
+  
   /// Flag to apply a line search.
   LineSearchAction m_lineSearchAction;
 
@@ -272,6 +305,15 @@ public:
 
   /// Flag to specify whether subcycling is allowed or not in sequential schemes
   integer m_subcyclingOption;
+
+  /// Flag to enable Dissipation Based Continuation Method
+  integer m_useDBC;
+
+  /// Factor by which the DBC flux is multiplied
+  real64 m_omegaDBC;
+
+  /// Factor by which the DBC flux is diminished every Newton
+  real64 m_kappaDBC;
 };
 
 ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction,

@@ -149,6 +149,16 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Flag to decide whether to iterate between sequentially coupled solvers or not." );
 
+  registerWrapper( viewKeysStruct::useDBCString(), &m_useDBC ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Enable Dissipation-based continuation flux" );      
+
+  registerWrapper( viewKeysStruct::omegaDBCString(), &m_omegaDBC ).
+    setApplyDefaultValue( 1e-3 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Factor by which DBC flux is multiplied" );  
+
 }
 
 void NonlinearSolverParameters::postProcessInput()
@@ -159,6 +169,21 @@ void NonlinearSolverParameters::postProcessInput()
   }
 }
 
+
+/*
+void NonlinearSolverParameters::updateKappaDBCNewton()
+{
+  if(m_useDBC)
+  {
+    if (m_numNewtonIterations == 0)
+      m_kappaDBC = 1.0;
+    else if (m_numNewtonIterations > 6)
+      m_kappaDBC = 1e-20;
+    else
+      m_kappaDBC *= 0.2; 
+  }
+}
+*/
 
 
 REGISTER_CATALOG_ENTRY( Group, NonlinearSolverParameters, string const &, Group * const )

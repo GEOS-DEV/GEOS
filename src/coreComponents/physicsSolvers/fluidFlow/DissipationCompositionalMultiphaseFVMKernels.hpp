@@ -138,7 +138,9 @@ public:
                            RelPermAccessors const & relPermAccessors,
                            real64 const & dt,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs )
+                           arrayView1d< real64 > const & localRhs,
+                           real64 kappa,
+                           real64 omega )
     : Base( numPhases,
             rankOffset,
             hasCapPressure,
@@ -151,14 +153,16 @@ public:
             permeabilityAccessors,
             dt,
             localMatrix,
-            localRhs ),
+            localRhs),
     m_pres_n( dissCompFlowAccessors.get( fields::flow::pressure_n {} ) ),
     m_compDens( dissCompFlowAccessors.get( fields::flow::globalCompDensity {} ) ),
     m_compFrac( dissCompFlowAccessors.get( fields::flow::globalCompFraction {} ) ),
     m_phaseRelPerm_n( relPermAccessors.get( fields::relperm::phaseRelPerm_n {} ) ),
     //m_phaseVisc_n( dissMultiFluidAccessors.get( fields::multifluid::phaseViscosity_n {} ) ),
     m_phaseDens_n( dissMultiFluidAccessors.get( fields::multifluid::phaseDensity_n {} ) ),
-    m_phaseCompFrac_n( dissMultiFluidAccessors.get( fields::multifluid::phaseCompFraction_n {} ) )
+    m_phaseCompFrac_n( dissMultiFluidAccessors.get( fields::multifluid::phaseCompFraction_n {} ) ),
+    m_kappaDBC(kappa),
+    m_omegaDBC(omega)
     //m_porosity_n( solid.getPorosity_n() ),
   {}
   
@@ -233,14 +237,12 @@ public:
       GEOS_UNUSED_VAR( seri, sesri, sei, ip, connectionIndex,  k_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, er_up, esr_up, ei_up );
       //GEOS_UNUSED_VAR( k_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, er_up, esr_up, ei_up );
 
-      // tuning parameter
-      real64 omega = 2e-1;
-      //real64 k = 1;
-
       /// dissipation flux and derivatives
       real64 dissFlux[numComp]{};
       //real64 dDissFlux_dP[numFluxSupportPoints][numComp][numComp]{};
       real64 dDissFlux_dC[numFluxSupportPoints][numComp][numComp]{};
+
+      bool dz_config = false;
 
       /// Stabilization transmissibility
       //real64 const halfTrans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
@@ -249,7 +251,16 @@ public:
       //real64 const T_ij = stack.transmissibility[connectionIndex][0];                                                 
 
       real64 fluxPointCoef[numFluxSupportPoints] = {1.0, -1.0};
-      // Step 1
+
+      // Step 1. Compute potential gradient (only viscous for now)
+      real64 potential_gradient = 0;
+      for( integer ke = 0; ke < numFluxSupportPoints; ++ke ) 
+      {
+          potential_gradient += fluxPointCoef[ke] * m_pres_n[seri[ke]][sesri[ke]][sei[ke]];
+      }
+      potential_gradient = abs(potential_gradient);
+
+      // Step 2. Compute the dissipation flux and its derivative
       for( integer ke = 0; ke < numFluxSupportPoints; ++ke ) {
           for( integer ic = 0; ic < numComp; ++ic ) {
             localIndex const er  = seri[ke];
@@ -257,12 +268,19 @@ public:
             localIndex const ei  = sei[ke];
 
             // composition gradient contribution to the dissipation flux
-            dissFlux[ic] += omega * fluxPointCoef[ke] * m_compFrac[er][esr][ei][ic];
+            if (dz_config) // using z gradient
+              dissFlux[ic] += m_kappaDBC * m_omegaDBC * fluxPointCoef[ke] * m_compFrac[er][esr][ei][ic] * potential_gradient;
+            else // using rho_c gradeint
+              dissFlux[ic] += m_kappaDBC * m_omegaDBC * fluxPointCoef[ke] * m_compDens[er][esr][ei][ic] * potential_gradient;
+            
 
             for( integer jc = 0; jc < numComp; ++jc ) 
             {
               // composition gradient derivative with respect to component density contribution to the dissipation flux
-              dDissFlux_dC[ke][ic][jc] += omega * fluxPointCoef[ke] * m_dCompFrac_dCompDens[er][esr][ei][ic][jc];
+              if (dz_config) // using z gradient
+                dDissFlux_dC[ke][ic][jc] += m_kappaDBC * m_omegaDBC * fluxPointCoef[ke] * m_dCompFrac_dCompDens[er][esr][ei][ic][jc] * potential_gradient;
+              else // using rho_c gradeint
+                dDissFlux_dC[ke][ic][jc] += m_kappaDBC * m_omegaDBC * fluxPointCoef[ke] * potential_gradient;
             }
           }
       }
@@ -300,7 +318,7 @@ protected:
 
   /// Views on flow properties at the previous converged time step
   ElementViewConst< arrayView1d< real64 const > > const m_pres_n;
-  ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP > > const m_compDens;
+  ElementViewConst< arrayView2d< real64 const, compflow::USD_COMP > > const m_compDens;
   ElementViewConst< arrayView2d< real64 const, compflow::USD_COMP > > const m_compFrac;
 
   ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const m_phaseRelPerm_n;
@@ -308,6 +326,9 @@ protected:
 
   ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_phaseDens_n;
   ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const m_phaseCompFrac_n;
+
+  real64 m_kappaDBC;
+  real64 m_omegaDBC;
   
 
 };
@@ -347,7 +368,9 @@ public:
                    STENCILWRAPPER const & stencilWrapper,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                   arrayView1d< real64 > const & localRhs)
+                   arrayView1d< real64 > const & localRhs,
+                   real64 kappa,
+                   real64 omega)
                    //CoupledSolidBase const & solid)
   {
     isothermalCompositionalMultiphaseBaseKernels::
@@ -372,7 +395,7 @@ public:
       KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
                           compFlowAccessors, dissCompFlowAccessors, multiFluidAccessors, dissMultiFluidAccessors,
                           capPressureAccessors, permeabilityAccessors, relPermAccessors,
-                          dt, localMatrix, localRhs );
+                          dt, localMatrix, localRhs, kappa, omega );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }

@@ -116,6 +116,8 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
 
     string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
+    
+
     //string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
     //CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
@@ -142,8 +144,24 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
       }
       else
       {
-        if(fluxApprox.m_useDBC)
+        if(getNonlinearSolverParameters().useDBC())
          {
+          integer curNewtonIteration = getNonlinearSolverParameters().m_numNewtonIterations;
+          real64 kappaDBC = 1.0;
+          // update kappa before computing the DBC flux
+          if (curNewtonIteration == 0)
+            kappaDBC = 1.0;
+          else if (curNewtonIteration > 6)
+            for (int mp = 0; mp < 6; mp++) 
+              kappaDBC *= 0.2; 
+          else
+          {
+            for (int mp = 0; mp < curNewtonIteration; mp++) 
+              kappaDBC *= 0.2; 
+          }
+          //std::cout << "Newton " << curNewtonIteration << "    kappa = " << kappaDBC << std::endl;
+          
+
           DissipationCompositionalMultiphaseFVMKernels::
           FaceBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
@@ -156,7 +174,9 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      stencilWrapper,
                                                      dt,
                                                      localMatrix.toViewConstSizes(),
-                                                     localRhs.toView() );
+                                                     localRhs.toView(),
+                                                     getNonlinearSolverParameters().omegaDBC(),
+                                                     kappaDBC);
          }
          else
          {
