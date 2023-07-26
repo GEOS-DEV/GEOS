@@ -82,11 +82,12 @@ def femKernelTime_rocprof( executable, inputFile, numRuns ):
 
     import json
     with open('results.json') as fin:
-      results = json.loads( fin )
+      results = json.loads( fin.read() )
     rtimes = []
-    for result in results:
-      if 'SmallStrainResidual' in result['name']:
-        rtimes.append( result['args']['DurationoNs'] )
+    for result in results['traceEvents']:
+      if 'name' in result.keys():
+        if 'SmallStrainResidual' in result['name']:
+          rtimes.append( int( result['args']['DurationNs'] ) )
 
     kernelTime_ns = min( rtimes )
     value = kernelTime_ns * 1.0e-9
