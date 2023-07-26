@@ -58,7 +58,7 @@ public:
                      SUBREGION_TYPE const & elementSubRegion,
                      FE_TYPE const & finiteElementSpace,
                      CONSTITUTIVE_TYPE & inputConstitutiveType,
-                     // SortedArrayView< localIndex const > const & interfaceNodesSet,
+                     SortedArrayView< localIndex const > const & interfaceNodesSet,
                      real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
@@ -75,7 +75,7 @@ public:
     m_ux_np1( nodeManager.getField< fields::Displacementx_np1 >() ),
     m_uy_np1( nodeManager.getField< fields::Displacementy_np1 >() ),
     m_uz_np1( nodeManager.getField< fields::Displacementz_np1 >() ),
-    // m_interfaceNodesSet( interfaceNodesSet ),
+    m_interfaceNodesSet( interfaceNodesSet ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );
@@ -116,7 +116,7 @@ protected:
   arrayView1d< real32 > const m_uy_np1;
   arrayView1d< real32 > const m_uz_np1;
 
-  // SortedArrayView< localIndex const > const & m_interfaceNodesSet;
+  SortedArrayView< localIndex const > const & m_interfaceNodesSet;
 
   real64 const m_dt;
 };
@@ -212,8 +212,8 @@ public:
 
 };
 
-using AcousticElasticSEMFactory = finiteElement::KernelFactory< AcousticElasticSEM, real64 >;
-using ElasticAcousticSEMFactory = finiteElement::KernelFactory< ElasticAcousticSEM, real64 >;
+using AcousticElasticSEMFactory = finiteElement::KernelFactory< AcousticElasticSEM, SortedArrayView< localIndex const > const &, real64 >;
+using ElasticAcousticSEMFactory = finiteElement::KernelFactory< ElasticAcousticSEM, SortedArrayView< localIndex const > const &, real64 >;
 
 } // namespace acousticElasticWaveEquationSEMKernels
 

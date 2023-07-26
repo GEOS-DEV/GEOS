@@ -55,8 +55,8 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
   auto acousSolver = acousticSolver();
 
   SortedArrayView< localIndex const > const & interfaceNodesSet = m_interfaceNodesSet.toViewConst();
-  auto acous2elasCoupling = acousticElasticWaveEquationSEMKernels::AcousticElasticSEMFactory( dt );
-  auto elas2acousCoupling = acousticElasticWaveEquationSEMKernels::ElasticAcousticSEMFactory( dt );
+  auto acous2elasCoupling = acousticElasticWaveEquationSEMKernels::AcousticElasticSEMFactory( interfaceNodesSet, dt );
+  auto elas2acousCoupling = acousticElasticWaveEquationSEMKernels::ElasticAcousticSEMFactory( interfaceNodesSet, dt );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -73,8 +73,6 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
                                                             "",
                                                             acous2elasCoupling );
 
-    elasSolver->postUnknownsUpdate( time_n, dt, cycleNumber, domain, mesh, regionNames );
-
     acousSolver->unknownsUpdate( time_n, dt, cycleNumber, domain, mesh, regionNames );
 
     finiteElement::
@@ -86,8 +84,8 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
                                                             "",
                                                             elas2acousCoupling );
 
+    elasSolver->postUnknownsUpdate( time_n, dt, cycleNumber, domain, mesh, regionNames );
     acousSolver->postUnknownsUpdate( time_n, dt, cycleNumber, domain, mesh, regionNames );
-
   } );
 
   return dt;
