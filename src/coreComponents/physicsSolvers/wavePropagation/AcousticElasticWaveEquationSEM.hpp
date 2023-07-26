@@ -14,7 +14,7 @@
 
 
 /**
- * @file AcousticElasticWaveEquation.hpp
+ * @file AcousticElasticWaveEquationSEM.hpp
  */
 
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICELASTICWAVEEQUATIONSEM_HPP_

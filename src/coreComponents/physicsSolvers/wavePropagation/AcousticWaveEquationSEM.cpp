@@ -1022,7 +1022,7 @@ void AcousticWaveEquationSEM::unknownsUpdate( real64 const & time_n,
     arrayView2d< real32 > const grad_n = nodeManager.getField< fields::AuxiliaryVar2PML >();
     arrayView1d< real32 > const divV_n = nodeManager.getField< fields::AuxiliaryVar3PML >();
     arrayView1d< real32 > const u_n = nodeManager.getField< fields::AuxiliaryVar4PML >();
-    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const 
+    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const
     X32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
     real32 const xMin[ 3 ] = {param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
