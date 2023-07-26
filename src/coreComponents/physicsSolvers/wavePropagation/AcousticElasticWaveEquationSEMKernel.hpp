@@ -52,11 +52,9 @@ struct CouplingKernel
   {
     real32 rhof = 1020;  // hardcoded until github.com/GEOS-DEV/GEOS/pull/2548 is merged
 
-    array1d< localIndex > arr( 1 );
-    arr.zero();
-    arrayView1d< localIndex > const & view = arr.toView();
-
-    // printf("faceToRegion.size(1)=%i\n", faceToRegion.size( 1 ));  // 2
+    array1d< localIndex > count( 3 );
+    count.zero();
+    arrayView1d< localIndex > const count_view = count.toView();
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
     {
@@ -66,16 +64,17 @@ struct CouplingKernel
 
       if ((e0 != -1 && e1 == -1) || (e0 == -1 && e1 != -1))
       {
-        printf("!! here\n");
-        // RAJA::atomicAdd< ATOMIC_POLICY >( &view[0], 1 );
-        RAJA::atomicInc< ATOMIC_POLICY >( &view[0] );
+        // printf( "\t[CouplingKernel::launch] debug\n" );
+        RAJA::atomicInc< ATOMIC_POLICY >( &count_view[0] );
       }
 
       if (e0 != -1 && e1 != -1)
       {
+        RAJA::atomicInc< ATOMIC_POLICY >( &count_view[1] );
         printf( "\t[CouplingKernel::launch] f=%i -> (e0=%i, e1=%i)\n", f, e0, e1 );
         if (er0 != er1 && esr0 != esr1)  /* should define an interface */
         {
+          RAJA::atomicInc< ATOMIC_POLICY >( &count_view[2] );
           printf( "\t[CouplingKernel::launch] interface found for f=%i\n", f );
           real64 xLocal[ numNodesPerFace ][ 3 ];
           for( localIndex a = 0; a < numNodesPerFace; ++a )
@@ -93,9 +92,12 @@ struct CouplingKernel
           }
         }
       }
-    } ); // end loop over element
+    } );
 
-    printf("\t[CouplingKernel::launch] n_faces=%i n_boundary_facets=%i\n", size, view[0]);
+    printf(
+      "\t[CouplingKernel::launch] n_faces=%i n_boundary_faces=%i n_internal_faces=%i n_interface_faces=%i\n",
+      size, count_view[0], count_view[1], count_view[2]
+    );
   }
 
   /// The finite element space/discretization object for the element type in the subRegion
