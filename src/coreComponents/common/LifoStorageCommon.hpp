@@ -37,7 +37,7 @@
 #include "common/TimingMacros.hpp"
 #include "common/FixedSizeDequeWithMutexes.hpp"
 #include "common/MultiMutexesLock.hpp"
-#include "LvArray/system.hpp"
+#include "LvArray/src/system.hpp"
 
 namespace geos
 {
