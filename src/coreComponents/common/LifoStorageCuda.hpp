@@ -21,7 +21,6 @@
 #include <camp/camp.hpp>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <algorithm>
 
 #include "common/FixedSizeDeque.hpp"
@@ -30,6 +29,7 @@
 #include "common/FixedSizeDequeWithMutexes.hpp"
 #include "common/MultiMutexesLock.hpp"
 #include "common/LifoStorageCommon.hpp"
+#include "LvArray/src/system.hpp"
 
 namespace geos
 {
@@ -147,8 +147,7 @@ public:
   static int computeNumberOfBufferOnDevice( int percent, size_t bufferSize, int maxNumberOfBuffers )
   {
     GEOS_ERROR_IF( percent > 100, "Error, percentage of memory should be smaller than 100, check lifoOnDevice (should be greater than -100)" );
-    size_t free, total;
-    GEOS_ERROR_IF( cudaSuccess != cudaMemGetInfo( &free, &total ), "Error getting CUDA device available memory" );
+    size_t free = LvArray::system::getAvailableMemoryOnDevice();
     double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 );
     LIFO_LOG_RANK( " LIFO : available memory on device " << freeGB << " GB" );
     return std::min( ( int )( 0.01 * percent * free / bufferSize ), maxNumberOfBuffers );
