@@ -300,13 +300,13 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-          acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
-          kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                                 X32,
-                                                                 elemsToNodes,
-                                                                 velocity,
-                                                                 density,
-                                                                 mass );
+        acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
+        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                               X32,
+                                                               elemsToNodes,
+                                                               velocity,
+                                                               density,
+                                                               mass );
         {
           GEOS_MARK_SCOPE( DampingMatrixKernel );
           acousticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
