@@ -103,14 +103,15 @@ using parallelDevicePolicy = RAJA::hip_exec< BLOCK_SIZE >;
 using parallelDeviceStream = RAJA::resources::Hip;
 using parallelDeviceEvent = RAJA::resources::Event;
 
-using parallelDeviceReduce = RAJA::hip_reduce;
+// using parallelDeviceReduce = RAJA::hip_reduce;
+using parallelDeviceReduce = RAJA::hip_reduce_atomic;
 using parallelDeviceAtomic = RAJA::hip_atomic;
 
 void RAJA_INLINE parallelDeviceSync() { RAJA::synchronize< RAJA::hip_synchronize >( ); }
 
 // the async dispatch policy caused runtime issues as of rocm@4.5.2, hasn't been checked in rocm@5:
 template< size_t BLOCK_SIZE = GEOSX_BLOCK_SIZE >
-using parallelDeviceAsyncPolicy = parallelDevicePolicy< BLOCK_SIZE >; // RAJA::hip_exec_async< BLOCK_SIZE >;
+using parallelDeviceAsyncPolicy = RAJA::hip_exec_async< BLOCK_SIZE >;
 
 template< typename POLICY, typename RESOURCE, typename LAMBDA >
 RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && GEOS_UNUSED_PARAM( stream ), const localIndex end, LAMBDA && body )

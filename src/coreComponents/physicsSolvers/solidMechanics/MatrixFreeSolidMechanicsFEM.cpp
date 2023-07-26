@@ -113,6 +113,7 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
                                                             "solidMaterialNames",
                                                             kernelFactory );
 #else
+    parallelDeviceSync();
     auto kernelFactory = solidMechanicsLagrangianFEMKernels::SmallStrainResidualFactory( localSrc2d,
                                                                                          localDst2d,
                                                                                          0,
