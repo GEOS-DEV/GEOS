@@ -400,7 +400,7 @@ void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
     samplePointIntegrationConstantsA[ 0 ] = 1.0;
     samplePointIntegrationConstantsA[ 1 ] = -1.0;
   }
-  /// for strain integration DAS (m_useDAS==1), take the average of strains to average strain data and
+  /// for strain integration DAS (m_useDAS==1), take the average of strains to average strain data
   if( m_linearDASSamples == 1 )
   {
     samplePointIntegrationConstantsA[ 0 ] = 1.0;
@@ -454,7 +454,7 @@ void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
                      + dasVector[ 2 ] * zCompRcv[ iTimeSample ][ iSample*numReceiversGlobal+ircv ] ) * samplePointIntegrationConstants[ iSample ];
             if( useDAS == 2 )
             {
-              zCompRcv[ iTimeSample ][ ircv ] /= linearDASGeometry[ ircv ][ 2 ];
+              das /= linearDASGeometry[ ircv ][ 2 ];
             }
           }
           zCompRcv[ iTimeSample ][ ircv ] = das;
