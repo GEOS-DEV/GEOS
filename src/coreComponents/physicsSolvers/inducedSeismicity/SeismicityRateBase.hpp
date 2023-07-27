@@ -39,10 +39,17 @@ public:
   /// Destructor
   virtual ~SeismicityRateBase() override;
 
+  /// This method ties properties with their supporting mesh
+  virtual void registerDataOnMesh( Group & meshBodies ) override; 
+
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
     static constexpr char const * stressSolverNameString() { return "stressSolverName"; }
+    static constexpr char const * initialSigmaString() { return "initialSigma"; }
+    static constexpr char const * initialTauString() { return "initialTau"; }
   };
+
+  virtual void initializePreSubGroups() override;
 
 protected:
 
@@ -53,6 +60,10 @@ protected:
 
   /// stress solver name string
   string m_stressSolverName;
+
+  /// intial stress conditions
+  real64 m_initialSigma;
+  real64 m_initialTau;
   
 };
 
