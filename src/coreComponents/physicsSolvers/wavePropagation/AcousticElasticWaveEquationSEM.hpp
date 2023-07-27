@@ -100,13 +100,30 @@ protected:
 namespace fields
 {
 
-DECLARE_FIELD( CouplingVector,
-               "couplingVector",
+DECLARE_FIELD( CouplingVectorx,
+               "couplingVectorx",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Coupling term." );
+               "Coupling term on x." );
+
+DECLARE_FIELD( CouplingVectory,
+               "couplingVectory",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Coupling term on y." );
+
+DECLARE_FIELD( CouplingVectorz,
+               "couplingVectorz",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Coupling term on z." );
+
 
 }
 

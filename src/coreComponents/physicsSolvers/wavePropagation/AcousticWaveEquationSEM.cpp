@@ -241,6 +241,7 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNum
       for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
       {
         real32 const localIncrement = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
+        // printf("[AcousticWaveEquationSEM::addSourceToRightHandSide] localIncrement=%g\n", localIncrement);
         RAJA::atomicAdd< ATOMIC_POLICY >( &rhs[sourceNodeIds[isrc][inode]], localIncrement );
       }
     }
@@ -350,7 +351,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     } );
   } );
 
-  std::cout << "\t[AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] m_solverTargetNodesSet.size()=" << m_solverTargetNodesSet.size() << std::endl;
+  std::cout << "\t[AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] m_solverTargetNodesSet.size()=" << m_solverTargetNodesSet.size() << " m_usePML=" (m_usePML ?  'T' : 'F') << std::endl;
 }
 
 

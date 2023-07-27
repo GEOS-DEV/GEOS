@@ -8,7 +8,7 @@
       discretization="FE1"
       targetRegions="{ Fluid }"
       sourceCoordinates="{ { 1500, 20, 2900 } }"
-      timeSourceFrequency="10"
+      timeSourceFrequency="5"
       receiverCoordinates="{ { 3752.29351, 20, 2933.3333 } }"
       rickerOrder="3"/>
     <ElasticSEM
@@ -33,18 +33,18 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        order="2"
+        order="1"
         formulation="SEM"/>
     </FiniteElements>
   </NumericalMethods>
 
   <ElementRegions>
     <CellElementRegion
-      name="Solid"
+      name="Fluid"
       cellBlocks="{ 1_hexahedra }"
       materialList="{ nullModel }"/>
     <CellElementRegion
-      name="Fluid"
+      name="Solid"
       cellBlocks="{ 2_hexahedra }"
       materialList="{ nullModel }"/>
   </ElementRegions>
@@ -60,7 +60,7 @@
       name="Bilayer"
       fieldsToImport="{ mediumVelocity,mediumVelocityVp,mediumVelocityVs,mediumDensity }"    
       fieldNamesInGEOSX="{ mediumVelocity,mediumVelocityVp,mediumVelocityVs,mediumDensity }"
-      file="acouselas3D_flu_komatitsch.vtu"
+      file="../../../Debug/acouselas3D_flu_komatitsch.vtu"
       useGlobalIds="0"
       logLevel="1"/>
   </Mesh> 

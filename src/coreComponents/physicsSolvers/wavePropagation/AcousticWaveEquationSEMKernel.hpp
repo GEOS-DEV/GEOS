@@ -213,6 +213,7 @@ struct MassMatrixKernel
     {
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+      // printf("\t[Acoustic MassMatrixKernel] vel=%g\n", velocity[k]);
 
       real32 const invC2 = 1.0 / ( velocity[k] * velocity[k] );
       real64 xLocal[ numNodesPerElem ][ 3 ];
