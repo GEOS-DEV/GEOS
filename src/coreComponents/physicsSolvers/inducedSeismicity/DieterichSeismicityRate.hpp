@@ -65,7 +65,18 @@ public:
 
   /**@}*/
 
+  struct viewKeyStruct : public SolverBase::viewKeyStruct
+  {
+    static constexpr char const * directEffectString() { return "directEffect"; }
+    static constexpr char const * backgroundStressingRateString() { return "backgroundStressingRate"; }
+  };
+
   virtual void initializePreSubGroups() override;
+
+protected:
+
+  real64 m_directEffect;
+  real64 m_backgroundStressingRate;
   
 };
 

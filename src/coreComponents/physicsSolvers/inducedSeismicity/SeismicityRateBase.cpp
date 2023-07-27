@@ -34,10 +34,89 @@ SeismicityRateBase::SeismicityRateBase( const string & name,
   m_stressSolver( nullptr )
   {
     this->registerWrapper( viewKeyStruct::stressSolverNameString(), &m_stressSolverName ).
-          setInputFlag( InputFlags::OPTIONAL ).
+          setInputFlag( InputFlags::REQUIRED ).
           setDescription( "Name of solver for computing stress" );
+    this->registerWrapper( viewKeyStruct::initialSigmaString(), &m_initialSigma ).
+          setInputFlag( InputFlags::OPTIONAL ).
+          setDescription( "Initial normal stress" );
+    this->registerWrapper( viewKeyStruct::initialTauString(), &m_initialTau ).
+          setInputFlag( InputFlags::OPTIONAL ).
+          setDescription( "Initial shear stress" );
   }
 //END_SPHINX_INCLUDE_CONSTRUCTOR
+
+//START_SPHINX_INCLUDE_REGISTERDATAONMESH
+void SeismicityRateBase::registerDataOnMesh( Group & meshBodies )
+{
+  SolverBase::registerDataOnMesh( meshBodies );
+
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   ElementSubRegionBase & subRegion )
+    {
+      subRegion.registerField< geos::fields::inducedSeismicity::initialmeanNormalStress >( getName() );
+      subRegion.registerField< geos::fields::inducedSeismicity::initialmeanShearStress >( getName() );
+
+      subRegion.registerField< geos::fields::inducedSeismicity::meanNormalStress >( getName() );
+      subRegion.registerField< geos::fields::inducedSeismicity::meanNormalStress_n >( getName() );
+      subRegion.registerField< geos::fields::inducedSeismicity::meanShearStress >( getName() );
+      subRegion.registerField< geos::fields::inducedSeismicity::meanShearStress_n >( getName() );
+
+      subRegion.registerField< geos::fields::inducedSeismicity::seismicityRate >( getName() );
+    } );
+   } );
+}
+
+void SeismicityRateBase::initializePreSubGroups()
+{
+  SolverBase::initializePreSubGroups();
+
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  // 1. Validate various models against each other (must have same phases and components)
+  // validateConstitutiveModels( domain );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
+    {
+      // Initialize initial stresses as specified by user (normal and shear need to be specified if only calling flow solver)
+      if ( m_initialSigma > 0 )
+      {
+        arrayView1d< real64 > const tempSigIni = subRegion.getField< geos::fields::inducedSeismicity::initialmeanNormalStress >();
+        tempSigIni.setValues< parallelHostPolicy >( m_initialSigma );
+        arrayView1d< real64 > const tempSig = subRegion.getField< geos::fields::inducedSeismicity::meanNormalStress >();
+        tempSig.setValues< parallelHostPolicy >( m_initialSigma );
+        arrayView1d< real64 > const tempSig_n = subRegion.getField< geos::fields::inducedSeismicity::meanNormalStress_n >();
+        tempSig_n.setValues< parallelHostPolicy >( m_initialSigma );
+      }
+
+      if ( m_initialTau > 0 )
+      {
+        arrayView1d< real64 > const tempTauIni = subRegion.getField< geos::fields::inducedSeismicity::initialmeanShearStress >();
+        tempTauIni.setValues< parallelHostPolicy >( m_initialTau );
+        arrayView1d< real64 > const tempTau = subRegion.getField< geos::fields::inducedSeismicity::meanShearStress >();
+        tempTau.setValues< parallelHostPolicy >( m_initialTau );
+        arrayView1d< real64 > const tempTau_n = subRegion.getField< geos::fields::inducedSeismicity::meanShearStress_n >();
+        tempTau_n.setValues< parallelHostPolicy >( m_initialTau );
+      }
+                 
+      arrayView1d< real64 > const tempR = subRegion.getField< geos::fields::inducedSeismicity::seismicityRate >();
+      tempR.setValues< parallelHostPolicy >( 1.0 );
+    } );
+  } );
+}
 
 void SeismicityRateBase::postProcessInput()
 {

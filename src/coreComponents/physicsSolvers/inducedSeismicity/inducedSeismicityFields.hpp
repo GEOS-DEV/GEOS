@@ -31,21 +31,21 @@ namespace fields
 namespace inducedSeismicity
 {
 
-DECLARE_FIELD( t_a,
-               "t_a",
+DECLARE_FIELD( directEffect,
+               "directEffect",
                array1d< real64 >,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Dieterich constitutive relaxation time of seismicity rate" );
+               "Rate-and-state friction direct effect parameter" );
 
-DECLARE_FIELD( aSigma,
-               "aSigma",
+DECLARE_FIELD( backgroundStressingRate,
+               "backgroundStressingRate",
                array1d< real64 >,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Product of direct effect parameter a and initial meanNormal stress" );
+               "Background stressing rate" );
 
 DECLARE_FIELD( pressureRate,
                "pressureRate",
