@@ -320,7 +320,7 @@ struct WaveSolverUtils
     // 3) p_n+1 = (p_n+1*p_nm1 + 2*m*p_n + dt2*(rhs-stiffness))/mass
     // 4) if damp : p_n+1 *= mass/(mass + 0.5*dt*damping);
     arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::FreeSurfaceNodeIndicator >();
-    using EXEC_POLICY = parallelDevicePolicy<  >;
+    using EXEC_POLICY = parallelDeviceAsyncPolicy< >;
 
     events.emplace_back( forAll< EXEC_POLICY >( stream, nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
