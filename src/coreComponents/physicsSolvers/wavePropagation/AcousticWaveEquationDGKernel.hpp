@@ -290,9 +290,9 @@ struct PressureComputation
               //m_finiteElement.template computeFluxLocalTerm(q,xLocal,f [&] (int i, int j, real32 val)
               //PS: Not sure about how to include the normals so I'll just put "normals" (surely missing something with the gradient inside
               // the flux matrix)
-              // Inside the matrix computation: we need the volumic Jacobian (its inverse) and the surface determinant. If fact due to the
+              // Inside the matrix computation: we need the volumic Jacobian (its inverse) and the surface determinant. Due to the
               // fact that we take the inverse of the jacobian
-              // we will have the ratio surafce/volume.
+              // we will have the ratio surface/volume.
               //{
               //fp += 0.5* val *  p_n[k][i] + gamma[k]* val * p_n[k][i];
               //flow[j] += fp*normals
