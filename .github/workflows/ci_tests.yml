@@ -188,10 +188,11 @@ jobs:
         ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
         ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
         GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
+        COMMIT: ${{ github.event.pull_request.head.sha }}
       run: |
         source ./scripts/ci_build_and_test.sh
         TMP_DIR=/tmp
-        GEOSX_EXPORT_DIR=GEOSX-and-TPL-${GITHUB_SHA:0:7}
+        GEOSX_EXPORT_DIR=GEOSX-and-TPL-${COMMIT:0:7}
         docker cp -a ${CONTAINER_NAME}:${GEOSX_TPL_DIR}/.. ${TMP_DIR}/${GEOSX_EXPORT_DIR}
         GEOSX_BUNDLE=${TMP_DIR}/${GEOSX_EXPORT_DIR}.tar.gz
         tar czf ${GEOSX_BUNDLE} --directory=${TMP_DIR} ${GEOSX_EXPORT_DIR}
@@ -287,10 +288,11 @@ jobs:
         ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
         ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
         GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
+        COMMIT: ${{ github.event.pull_request.head.sha }}
       run: |
         source ./scripts/ci_build_and_test.sh
         TMP_DIR=/tmp
-        GEOSX_EXPORT_DIR=GEOSX-and-TPL-${GITHUB_SHA:0:7}
+        GEOSX_EXPORT_DIR=GEOSX-and-TPL-${COMMIT:0:7}
         docker cp -a ${CONTAINER_NAME}:${GEOSX_TPL_DIR}/.. ${TMP_DIR}/${GEOSX_EXPORT_DIR}
         GEOSX_BUNDLE=${TMP_DIR}/${GEOSX_EXPORT_DIR}.tar.gz
         tar czf ${GEOSX_BUNDLE} --directory=${TMP_DIR} ${GEOSX_EXPORT_DIR}
