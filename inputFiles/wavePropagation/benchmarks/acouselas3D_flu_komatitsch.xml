@@ -7,9 +7,9 @@
       cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Fluid }"
-      sourceCoordinates="{ { 1500, 800, 2900 } }"
+      sourceCoordinates="{ { 1500, 1200, 2900 } }"
       timeSourceFrequency="10"
-      receiverCoordinates="{ { 3752.29351, 800, 2933.3333 } }"
+      receiverCoordinates="{ { 3752.29351, 1200, 2933.3333 } }"
       rickerOrder="3"
       outputSeismoTrace="1"
       dtSeismoTrace="1e-2"/>

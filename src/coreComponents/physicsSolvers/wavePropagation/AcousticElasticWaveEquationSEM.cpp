@@ -82,9 +82,16 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
     arrayView1d< real32 > const atoez = nodeManager.getField< fields::CouplingVectorz >();
     atoez.zero();
 
-    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const targetIndex,
+    auto & elementRegionManager = mesh.getElemManager();
+    auto & fluid_region = elementRegionManager.getRegion("Fluid");
+    localIndex const fluid_index = elementRegionManager.getRegions().getIndex( "Fluid" );
+    arrayView1d< real32 const > const fluid_density = fluid_region.getField< fields::MediumDensity >();
+
+    elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const targetIndex,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
+      if (targetIndex != fluid_index) return;  // only loop over the fluid region
+
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
@@ -94,12 +101,10 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
 
         acousticElasticWaveEquationSEMKernels::CouplingKernel< FE_TYPE > kernelC;
 
-        // arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensity >();
-
         kernelC.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
-                                                               targetIndex,
                                                                X32,
-                                                               // density,
+                                                               fluid_index,
+                                                               fluid_density,
                                                                faceToRegion,
                                                                faceToSubRegion,
                                                                faceToElement,
@@ -150,54 +155,65 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
     arrayView1d< real32 > const uy_np1 = nodeManager.getField< fields::Displacementy_np1 >();
     arrayView1d< real32 > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
 
-    elasSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
-
+    // source ok when using (elas=false, acous=true, coupling=false)
+    bool elas = true;
+    bool acous = true;
+    bool coupling = false;
     real64 const rho0 = 1020.0;  // hardcoded until github.com/GEOS-DEV/GEOS/pull/2548 is merged
-    forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
+
+    if (elas) elasSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+
+    if (coupling)
     {
-      localIndex const a = interfaceNodesSet[n];
-      
-      real32 const localIncrementx = atoex[a] * (p_n[a] / rho0);
-      real32 const localIncrementy = atoey[a] * (p_n[a] / rho0);
-      real32 const localIncrementz = atoez[a] * (p_n[a] / rho0);
+      forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
+      {
+        localIndex const a = interfaceNodesSet[n];
+        
+        real32 const localIncrementx = atoex[a] * (p_n[a] / rho0);
+        real32 const localIncrementy = atoey[a] * (p_n[a] / rho0);
+        real32 const localIncrementz = atoez[a] * (p_n[a] / rho0);
 
-      // printf(
-      //   "\t[AcousticElasticWaveEquationSEM::solverStep] atoex=%g atoey=%g atoez=%g incx=%g incy=%g incz=%g\n",
-      //   atoex[a], atoey[a], atoez[a],
-      //   localIncrementx, localIncrementy, localIncrementz
-      // );
+        // printf(
+        //   "\t[AcousticElasticWaveEquationSEM::solverStep] atoex=%g atoey=%g atoez=%g incx=%g incy=%g incz=%g\n",
+        //   atoex[a], atoey[a], atoez[a],
+        //   localIncrementx, localIncrementy, localIncrementz
+        // );
 
-      RAJA::atomicAdd< ATOMIC_POLICY >( &ux_np1[a], localIncrementx );
-      RAJA::atomicAdd< ATOMIC_POLICY >( &uy_np1[a], localIncrementy );
-      RAJA::atomicAdd< ATOMIC_POLICY >( &uz_np1[a], localIncrementz );
-    } );
+        RAJA::atomicAdd< ATOMIC_POLICY >( &ux_np1[a], localIncrementx );
+        RAJA::atomicAdd< ATOMIC_POLICY >( &uy_np1[a], localIncrementy );
+        RAJA::atomicAdd< ATOMIC_POLICY >( &uz_np1[a], localIncrementz );
+      } );
+    }
 
-    acousSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+    if (acous) acousSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
 
-    real64 const dt2 = pow( dt, 2 );
-    forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
+    if (coupling)
     {
-      localIndex const a = interfaceNodesSet[n];
+      real64 const dt2 = pow( dt, 2 );
+      forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
+      {
+        localIndex const a = interfaceNodesSet[n];
 
-      real32 const localIncrement = rho0 * (
-        atoex[a] * ( ux_np1[a] - 2.0 * ux_n[a] + ux_nm1[a] ) +
-        atoey[a] * ( uy_np1[a] - 2.0 * uy_n[a] + uy_nm1[a] ) +
-        atoez[a] * ( uz_np1[a] - 2.0 * uz_n[a] + uz_nm1[a] )
-      ) / dt2;
+        real32 const localIncrement = rho0 * (
+          atoex[a] * ( ux_np1[a] - 2.0 * ux_n[a] + ux_nm1[a] ) +
+          atoey[a] * ( uy_np1[a] - 2.0 * uy_n[a] + uy_nm1[a] ) +
+          atoez[a] * ( uz_np1[a] - 2.0 * uz_n[a] + uz_nm1[a] )
+        ) / dt2;
 
-      // printf(
-      //   "\t[AcousticElasticWaveEquationSEM::solverStep] atoex=%g atoey=%g atoez=%g inc=%g\n",
-      //   atoex[a], atoey[a], atoez[a],
-      //   localIncrement
-      // );
+        // printf(
+        //   "\t[AcousticElasticWaveEquationSEM::solverStep] atoex=%g atoey=%g atoez=%g inc=%g\n",
+        //   atoex[a], atoey[a], atoez[a],
+        //   localIncrement
+        // );
 
-      RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[a], localIncrement );
-    } );
+        RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[a], localIncrement );
+      } );
+    }
 
-    acousSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
-    acousSolver->prepareNextTimestep( mesh );
-    elasSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
-    elasSolver->prepareNextTimestep( mesh );
+    if (acous) acousSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+    if (acous) acousSolver->prepareNextTimestep( mesh );
+    if (elas) elasSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+    if (elas) elasSolver->prepareNextTimestep( mesh );
   } );
 
 #else
