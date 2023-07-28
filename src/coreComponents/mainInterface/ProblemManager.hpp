@@ -207,8 +207,17 @@ public:
   string const & getSchemaFileName() const
   { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.schemaFileName ); }
 
-  /// Command line input viewKeys
+  /// problem node input viewKeys
   struct viewKeysStruct
+  {
+    // TODO Logger: ça va là ?
+    dataRepository::GroupKey globalLogLevel = { "globalLogLevel" };
+    dataRepository::GroupKey minLogLevel = { "minLogLevel" };
+    dataRepository::GroupKey maxLogLevel = { "maxLogLevel" };
+  } viewKeys; ///< Command line input viewKeys
+
+  /// Command line input viewKeys
+  struct clViewKeysStruct
   {
     dataRepository::ViewKey inputFileName            = {"inputFileName"};            ///< Input file name key
     dataRepository::ViewKey restartFileName          = {"restartFileName"};          ///< Restart file name key
@@ -227,7 +236,7 @@ public:
     dataRepository::ViewKey useNonblockingMPI        = {"useNonblockingMPI"};        ///< Flag to use non-block MPI key
     dataRepository::ViewKey suppressPinned           = {"suppressPinned"};           ///< Flag to suppress use of pinned
                                                                                      ///< memory key
-  } viewKeys; ///< Command line input viewKeys
+  } clViewKeys; ///< Command line input viewKeys
 
   /// Child group viewKeys
   struct groupKeysStruct
@@ -366,6 +375,10 @@ private:
 
   /// The FieldSpecificationManager
   FieldSpecificationManager * m_fieldSpecificationManager;
+
+  LogLevel m_globalLogLevel;
+  LogLevel m_minLogLevel;
+  LogLevel m_maxLogLevel;
 };
 
 } /* namespace geos */

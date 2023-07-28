@@ -102,6 +102,9 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     TRACE_DATA_MIGRATION,
     MEMORY_USAGE,
     PAUSE_FOR,
+    GLOBAL_LOG_LEVEL,
+    MIN_LOG_LEVEL,
+    MAX_LOG_LEVEL,
   };
 
   const option::Descriptor usage[] =
@@ -122,6 +125,9 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     { TRACE_DATA_MIGRATION, 0, "", "trace-data-migration", Arg::None, "\t--trace-data-migration, \t Trace host-device data migration" },
     { MEMORY_USAGE, 0, "m", "memory-usage", Arg::nonEmpty, "\t-m, --memory-usage, \t Minimum threshold for printing out memory allocations in a member of the data repository." },
     { PAUSE_FOR, 0, "", "pause-for", Arg::numeric, "\t--pause-for, \t Pause geosx for a given number of seconds before starting execution" },
+    { GLOBAL_LOG_LEVEL, 0, "-gll", "global-log-level", Arg::nonEmpty, "\t-gll, --global-log-level, \t Allow the messages of the given log level or less to be logged." },
+    { MIN_LOG_LEVEL, 0, "-minll", "min-log-level", Arg::nonEmpty, "\t-minll, --min-log-level, \t Force the messages to be at least of the given log level." },
+    { MAX_LOG_LEVEL, 0, "-maxll", "max-log-level", Arg::nonEmpty, "\t-maxll, --max-log-level, \t Force the messages to be at most of the given log level." },
     { 0, 0, nullptr, nullptr, nullptr, nullptr }
   };
 
@@ -233,6 +239,30 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
       case MEMORY_USAGE:
       {
         commandLineOptions->printMemoryUsage = std::stod( opt.arg );
+      }
+      break;
+      case PAUSE_FOR:
+      {
+        // we should store this in commandLineOptions and sleep in main
+        integer const duration = std::stoi( opt.arg );
+        logger.rank0Log( "Paused for ", duration, " s" );
+        std::this_thread::sleep_for( std::chrono::seconds( duration ) );
+      }
+      break;
+      case PAUSE_FOR:
+      {
+        // we should store this in commandLineOptions and sleep in main
+        integer const duration = std::stoi( opt.arg );
+        logger.rank0Log( "Paused for ", duration, " s" );
+        std::this_thread::sleep_for( std::chrono::seconds( duration ) );
+      }
+      break;
+      case PAUSE_FOR:
+      {
+        // we should store this in commandLineOptions and sleep in main
+        integer const duration = std::stoi( opt.arg );
+        logger.rank0Log( "Paused for ", duration, " s" );
+        std::this_thread::sleep_for( std::chrono::seconds( duration ) );
       }
       break;
       case PAUSE_FOR:

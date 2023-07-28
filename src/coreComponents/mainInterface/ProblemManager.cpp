@@ -62,7 +62,10 @@ ProblemManager::ProblemManager( conduit::Node & root ):
   m_physicsSolverManager( nullptr ),
   m_eventManager( nullptr ),
   m_functionManager( nullptr ),
-  m_fieldSpecificationManager( nullptr )
+  m_fieldSpecificationManager( nullptr ),
+  m_globalLogLevel( Logger::defaultGlobalLogLevel ),
+  m_minLogLevel( Logger::defaultMinLogLevel ),
+  m_maxLogLevel( Logger::defaultMaxLogLevel )
 {
   // Groups that do not read from the xml
   registerGroup< DomainPartition >( groupKeys.domain );
@@ -137,6 +140,21 @@ ProblemManager::ProblemManager( conduit::Node & root ):
     setRestartFlags( RestartFlags::WRITE ).
     setDescription( "Whether to disallow using pinned memory allocations for MPI communication buffers." );
 
+
+  registerWrapper( viewKeysStruct::globalLogLevel, &m_globalLogLevel ).
+    setApplyDefaultValue( Logger::defaultGlobalLogLevel ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Global Log level for general purpose messages." );
+
+  registerWrapper( viewKeysStruct::minLogLevel, &m_minLogLevel ).
+    setApplyDefaultValue( Logger::defaultMinLogLevel ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( sdfg );
+
+  registerWrapper( viewKeysStruct::maxLogLevel, &m_maxLogLevel ).
+    setApplyDefaultValue( Logger::defaultMaxLogLevel ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( sdfgsdfg );
 }
 
 ProblemManager::~ProblemManager()
@@ -417,6 +435,13 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
   // Extract the problem node and begin processing the user inputs
   xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( this->getName().c_str() );
   processInputFileRecursive( xmlProblemNode );
+
+  logger.setMinLogLevel( Logger::PrioritizedLogLevel( m_globalLogLevel,
+                                                      Logger::PriorityLevel::FromInputFile ) );
+  logger.setMaxLogLevel( Logger::PrioritizedLogLevel( m_minLogLevel,
+                                                      Logger::PriorityLevel::FromInputFile ) );
+  logger.setGlobalLogLevel( Logger::PrioritizedLogLevel( m_maxLogLevel,
+                                                         Logger::PriorityLevel::FromInputFile ) );
 
   // The objects in domain are handled separately for now
   {

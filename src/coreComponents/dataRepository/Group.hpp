@@ -1425,7 +1425,7 @@ public:
   void enableLogLevelInput();
 
   /// @return The verbosity level
-  integer getLogLevel() const { return m_logLevel; }
+  integer getLogLevel() const { return m_log; }
   ///@}
 
   /**
@@ -1547,8 +1547,8 @@ private:
   /// The name/key of this Group in its parent collection of sub-Groups.
   string m_name;
 
-  /// Verbosity flag for group logs
-  integer m_logLevel;
+  /// group logSource for message local filtering
+  LogSource m_log;
   //END_SPHINX_INCLUDE_02
 
   /// Restart flag for this group... and subsequently all wrappers in this group.

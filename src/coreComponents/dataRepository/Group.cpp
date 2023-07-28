@@ -44,7 +44,6 @@ Group::Group( string const & name,
   m_size( 0 ),
   m_capacity( 0 ),
   m_name( name ),
-  m_logLevel( 0 ),
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
   m_input_flags( InputFlags::INVALID ),
   m_conduitNode( rootNode[ name ] )

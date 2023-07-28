@@ -3,6 +3,7 @@
 #
 set( codingUtilities_headers
      EnumStrings.hpp
+     EnumBimap.hpp
      Parsing.hpp
      SFINAE_Macros.hpp
      StringUtilities.hpp

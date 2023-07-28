@@ -23,6 +23,7 @@
 #include "common/GeosxConfig.hpp"
 #include "common/GeosxMacros.hpp"
 #include "common/Format.hpp"
+#include "codingUtilities/EnumBimap.hpp/EnumBimap.hpp"
 #include "LvArray/src/Macros.hpp"
 
 // System includes
@@ -438,37 +439,89 @@
  * @param[in] minLevel minimum log level
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_LEVEL( minLevel, ... ) logger.stdLogIf( this->getLogLevel() >= minLevel, __VA_ARGS__ )//GEOS_INFO_IF( this->getLogLevel()
-                                                                                                       // >= minLevel, msg );
+//deprecated// #define GEOS_LOG_LEVEL( minLevel, ... ) logger.stdLogIf( this->getLogLevel() >= minLevel, __VA_ARGS__ )//GEOS_INFO_IF(
+// this->getLogLevel()
+// >= minLevel, msg );
 
 /**
  * @brief Output messages (only on rank 0) based on current Group's log level.
  * @param[in] minLevel minimum log level
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_LEVEL_RANK_0( minLevel, ... ) logger.rank0LogIf( this->getLogLevel() >= minLevel, __VA_ARGS__ )//GEOS_LOG_RANK_0_IF(
-                                                                                                                // this->getLogLevel() >=
-                                                                                                                // minLevel, msg )
+//deprecated// #define GEOS_LOG_LEVEL_RANK_0( minLevel, ... ) logger.rank0LogIf( this->getLogLevel() >= minLevel, __VA_ARGS__
+// )//GEOS_LOG_RANK_0_IF(
+// this->getLogLevel() >=
+// minLevel, msg )
 
 /**
  * @brief Output messages (with one line per rank) based on current Group's log level.
  * @param[in] minLevel minimum log level
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_LEVEL_BY_RANK( minLevel, ... ) logger.rankLogIf( this->getLogLevel() >= minLevel, __VA_ARGS__ )//GEOS_LOG_RANK_IF(
-                                                                                                                // this->getLogLevel() >=
-                                                                                                                // minLevel, msg )
+//deprecated// #define GEOS_LOG_LEVEL_BY_RANK( minLevel, ... ) logger.rankLogIf( this->getLogLevel() >= minLevel, __VA_ARGS__
+// )//GEOS_LOG_RANK_IF(
+// this->getLogLevel() >=
+// minLevel, msg )
 
 
 namespace geos
 {
 
 
-/// @brief Class used to log messages in the standard output (and optional rank log files).
+/// @brief Enumerate the logging levels from the most importants messages to the one that contain the more details.
+enum class LogLevel : int16_t
+{
+  Silent = -1,    // Useful as a globalLogLevel for silencing the logger. shouldn't be used as a message level.
+  Important = 0,  // Application level messages (help, almost blocking warnings, application informations & phases)
+  Progress = 1,   // Time step attempts, newton loop progress of Solver objects
+  Detailed = 2,   // More detailed info and stats that affect progress, e.g. residual norms.
+  Trace = 3,      // This is intended as a user-level debugging tool. detailed info trace what each component is doing. e.g. a line for
+                  // every part of the assembly process, every boundary condition that's being applied by a physics solver, etc.
+  Debug = 4,      // Information that are only relevant for a developper in a debugging context.
+  DebugTrace = 5, // This level is useful to have deeper debugging information (which can be potencially heavy to log).
+};
+ENUM_BIMAP( SolidMechanicsLagrangianFEM::TimeIntegrationOption,
+            { LogLevel::Silent, "Silent" },
+            { LogLevel::Important, "Important" },
+            { LogLevel::Progress, "Progress" },
+            { LogLevel::Detailed, "Detailed" },
+            { LogLevel::Trace, "Trace" },
+            { LogLevel::Debug, "Debug" },
+            { LogLevel::DebugTrace, "DebugTrace" } );
+
+
+/// @brief Class used to log messages in the standard output and rank log files.
+/// A "logger" extern global is available for general use, but other instances can be created where
+/// a specialized logger is needed.
 /// Doesn't have any GPU logging capacities for now.
 class Logger
 {
 public:
+
+  /// @brief The default message log level when logging directly with the Logger
+  static constexpr LogLevel defaultLogLevel = LogLevel::Important;// TODO Logger: mettre ça à Important ? Detailed ? Debug ?
+  // TODO :
+  static constexpr LogLevel defaultGlobalLogLevel = defaultLogLevel;// TODO Logger: mettre ça à Important ? Detailed ?
+  // TODO :
+  static constexpr LogLevel defaultMinLogLevel = LogLevel::Important;
+  // TODO :
+  static constexpr LogLevel defaultMaxLogLevel = LogLevel::DebugTrace;
+  // TODO :
+  enum class PriorityLevel
+  {
+    FromInputFile=0,
+    FromCommandLine=1,
+  };
+  struct PrioritizedLogLevel
+  {
+    LogLevel m_value;
+    PriorityLevel m_priorityLevel;
+
+    PrioritizedParam( LogLevel value, PriorityLevel priorityLevel ) :
+      m_value( value ),
+      m_priorityLevel( priorityLevel )
+    {}
+  }
 
   /**
    * @brief Construct the logger. Default output is the standard one.
@@ -485,35 +538,41 @@ public:
    */
   void initMpi( MPI_Comm mpiComm );
 
+  // TODO Logger: les politiques de log sont actuellement confues...
+  /**
+   * @brief Change the logger output to the specified stream.
+   * Also close the potential previously opened file output stream.
+   * @param stream the stream to use when calling rankLog()
+   */
+  void setRankOutputToStream( std::ostream & stream );
   /**
    * @brief Change the logger output to a automatically created file in the specified folder.
    * The file name is based on the rank number. The file extension is a ".out".
-   * @param output_dir optional output directory for rank log files
+   * @param output_dir optional output directory for rank log files to stream to when calling rankLog()
    */
-  void setOutputToFile( const std::string & output_dir = "" );
-  /**
-   * @brief Change the logger output to the standard output (std::cout).
-   * Also close the potential file output stream.
-   */
-  void setOutputToStd();
+  void setRankOutputToFile( const std::string & output_dir = "" );
 
   /**
-   * @param value set the log level for global messages (ie. applied to simulation progress messages).
+   * @param param set the log level for global messages (ie. applied to simulation progress messages).
+   * TODO : documenter la priorité
    */
-  void setGlobalLogLevel( int value );
+  void setGlobalLogLevel( PrioritizedLogLevel const & param );
   /**
-   * @param value set the minimal log level requiered for all messages. With a value of 2, all
+   * @param param set the minimal log level requiered for all messages. With a value of 2, all
    * messages from level 0, 1 and 2 will be output.
+   * TODO : documenter la priorité
    */
-  void setMinLogLevel( int value );
+  void setMinLogLevel( PrioritizedLogLevel const & param );
   /**
-   * @param value set the maximal log level allowed for all messages. With a value of 2, all
-   * messages from level 3 and more will not be output.
+   * @param param set the maximal log level allowed for all messages. With a value of 2, all
+   * messages from level 3 and more will not be output. With a value of -1, the logger become silent.
+   * This value is prioritized over setMinLogLevel.
+   * TODO : documenter la priorité
    */
-  void setMaxLogLevel( int value );
+  void setMaxLogLevel( PrioritizedLogLevel const & param );
 
   /////////////////////////////////////////////////////////////////////////////////////////////////
-  // TODO : stdLog() devrait être abandonnée au profit de rank0Log() ou rankLog(), car le
+  // TODO Logger: stdLog() devrait être abandonnée au profit de rank0Log() ou rankLog(), car le
   // message est spam par tous les ranks sans qu'on puisse identifier d'où il vient...
   //
   // Une autre possibilité serait de créer une méthode logOnce() qui renvoit tout au rank 0 qui
@@ -525,59 +584,65 @@ public:
   // style "Rank 0->54, 55, 57, 67->127: Hello World"
   /**
    * @brief log one or more inputs to the standard output (std::cout).
+   * @param MSG_LEVEL the level of the message to log: The message will be ignored if the MSG_LEVEL
+   * is strictly higher than the current globalLogLevel value.
    * @param inputs the inputs to log.
    * @tparam INPUTS types of the inputs.
    */
-  template< typename ... INPUTS >
+  template< LogLevel MSG_LEVEL = defaultLogLevel, typename ... INPUTS >
   void stdLog( INPUTS ... inputs );
 
-  template< typename ... INPUTS >
+  template< LogLevel MSG_LEVEL = defaultLogLevel, typename ... INPUTS >
   void stdLogIf( bool cond, INPUTS ... inputs );
 
   /**
    * @brief log one or more inputs, only from the rank 0, to the standard output (and to
    * the rank 0 file stream if used).
+   * @param MSG_LEVEL the level of the message to log: The message will be ignored if the MSG_LEVEL
+   * is strictly higher than the current globalLogLevel value.
    * @param inputs the inputs to log.
    * @tparam INPUTS types of the inputs.
    */
-  template< typename ... INPUTS >
+  template< LogLevel MSG_LEVEL = defaultLogLevel, typename ... INPUTS >
   void rank0Log( INPUTS ... inputs );
 
-  template< typename ... INPUTS >
+  template< LogLevel MSG_LEVEL = defaultLogLevel, typename ... INPUTS >
   void rank0LogIf( bool cond, INPUTS ... inputs );
 
   /**
    * @brief log one or more inputs to the rank file stream if used, or to the standard output.
+   * @param MSG_LEVEL the level of the message to log: The message will be ignored if the MSG_LEVEL
+   * is strictly higher than the current globalLogLevel value.
    * @param input the inputs to log.
    * @tparam INPUTS types of the inputs.
    */
-  template< typename ... INPUTS >
+  template< LogLevel MSG_LEVEL = defaultLogLevel, typename ... INPUTS >
   void rankLog( INPUTS ... input );
 
-  template< typename ... INPUTS >
+  template< LogLevel MSG_LEVEL = defaultLogLevel, typename ... INPUTS >
   void rankLogIf( bool cond, INPUTS ... input );
 
 public://todo: private
-  /// @see setGlobalLogLevel( int value )
-  int globalLogLevel;
-  /// @see setMinLogLevel( int value )
-  int minLogLevel;
-  /// @see setMaxLogLevel( int value )
-  int maxLogLevel;
+  /// @see setGlobalLogLevel( PrioritizedLogLevel const & param )
+  PrioritizedLogLevel< LogLevel > m_globalLogLevel;
+  /// @see setMinLogLevel( PrioritizedLogLevel const & param )
+  PrioritizedLogLevel< LogLevel > m_minLogLevel;
+  /// @see setMaxLogLevel( PrioritizedLogLevel const & param )
+  PrioritizedLogLevel< LogLevel > m_maxLogLevel;
 
   /// @brief MPI communicator
-  MPI_Comm comm;
+  MPI_Comm m_comm;
   /// @brief MPI rank id
-  int rank;
+  int m_rank;
   /// @brief MPI total ranks count
-  int ranksCount;
+  int m_ranksCount;
   /// @brief prefix to add before a message that is specific to a rank. Empty in a serial build.
-  std::string rankMsgPrefix;
+  std::string m_rankMsgPrefix;
 
   /// @brief Pointer to the rank output stream
-  std::ostream * outStream;
+  std::ostream * m_outStream;
   /// @brief Smart pointer to the active file output stream. Equals to nullptr if not outputing to a file.
-  std::unique_ptr< std::ostream > fileOutStream;
+  std::unique_ptr< std::ostream > m_fileOutStream;
 
   // todo comment
   template< typename INPUT >
@@ -588,6 +653,42 @@ public://todo: private
 
 };
 extern Logger logger;
+
+
+struct LogSource
+{
+
+  LogLevel m_logLevel;
+
+
+  LogSource():
+    m_logLevel( Logger::defaultLogLevel )
+  {}
+  LogSource( LogLevel logLevel ):
+    m_logLevel( logLevel )
+  {}
+
+  
+  //TODO implementations
+  template< LogLevel MSG_LEVEL = Logger::defaultLogLevel, Logger& TARGET = logger, typename ... INPUTS >
+  void stdLog( INPUTS ... inputs );
+
+  template< LogLevel MSG_LEVEL = Logger::defaultLogLevel, Logger& TARGET = logger, typename ... INPUTS >
+  void stdLogIf( bool cond, INPUTS ... inputs );
+
+  template< LogLevel MSG_LEVEL = Logger::defaultLogLevel, Logger& TARGET = logger, typename ... INPUTS >
+  void rank0Log( INPUTS ... inputs );
+
+  template< LogLevel MSG_LEVEL = Logger::defaultLogLevel, Logger& TARGET = logger, typename ... INPUTS >
+  void rank0LogIf( bool cond, INPUTS ... inputs );
+
+  template< LogLevel MSG_LEVEL = Logger::defaultLogLevel, Logger& TARGET = logger, typename ... INPUTS >
+  void rankLog( INPUTS ... input );
+
+  template< LogLevel MSG_LEVEL = Logger::defaultLogLevel, Logger& TARGET = logger, typename ... INPUTS >
+  void rankLogIf( bool cond, INPUTS ... input );
+
+};
 
 
 /**
@@ -640,21 +741,50 @@ void Logger::streamLog( std::ostream & stream, INPUT input, MORE_INPUTS ... more
 }
 
 
-template< typename ... INPUTS >
+template< LogLevel MSG_LEVEL, typename ... INPUTS >
 void Logger::stdLog( INPUTS ... inputs )
 {
-  streamLog( std::cout, inputs ... );
+  if( MSG_LEVEL <= globalLogLevel )
+    streamLog( std::cout, inputs ... );
 }
 
-template< typename ... INPUTS >
+template< LogLevel MSG_LEVEL, typename ... INPUTS >
 void Logger::rank0Log( INPUTS ... inputs )
 {
-  if( rank == 0 )
-  {
-    streamLog( std::cout, inputs ... );// TODO : choisir si rankMsgPrefix doit être utilisé ici
-  }
+  if( rank == 0 && MSG_LEVEL <= globalLogLevel )
+    streamLog( std::cout, inputs ... ); // TODO Logger: choisir si rankMsgPrefix doit être utilisé ici
 }
-// TODO: decide to use this version or not (streams on std output + rank 0 file stream)
+
+template< LogLevel MSG_LEVEL, typename ... INPUTS >
+void Logger::rankLog( INPUTS ... inputs )
+{
+  if( MSG_LEVEL <= globalLogLevel )
+    streamLog( *outStream, rankMsgPrefix, inputs ... );
+}
+
+
+template< LogLevel MSG_LEVEL, typename ... INPUTS >
+void Logger::stdLogIf( bool condition, INPUTS ... inputs )
+{
+  if( condition )
+    stdLog< MSG_LEVEL >( inputs ... );
+}
+
+template< LogLevel MSG_LEVEL, typename ... INPUTS >
+void Logger::rank0LogIf( bool condition, INPUTS ... inputs )
+{
+  if( condition )
+    rank0Log< MSG_LEVEL >( inputs ... );
+}
+
+template< LogLevel MSG_LEVEL, typename ... INPUTS >
+void Logger::rankLogIf( bool condition, INPUTS ... inputs )
+{
+  if( condition )
+    rankLog< MSG_LEVEL >( inputs ... );
+}
+
+// TODO Logger: decide to use this version or not (streams on std output + rank 0 file stream)
 // template< typename ... INPUTS >
 // void Logger::rank0log( INPUTS ... inputs )
 // {
@@ -674,35 +804,6 @@ void Logger::rank0Log( INPUTS ... inputs )
 //     }
 //   }
 // }
-
-template< typename ... INPUTS >
-void Logger::rankLog( INPUTS ... inputs )
-{
-  streamLog( *outStream, rankMsgPrefix, inputs ... );
-}
-
-
-template< typename ... INPUTS >
-void Logger::stdLogIf( bool condition, INPUTS ... inputs )
-{
-  if( condition )
-    stdLog( inputs ... );
-}
-
-template< typename ... INPUTS >
-void Logger::rank0LogIf( bool condition, INPUTS ... inputs )
-{
-  if( condition )
-    rank0Log( inputs ... );
-}
-
-template< typename ... INPUTS >
-void Logger::rankLogIf( bool condition, INPUTS ... inputs )
-{
-  if( condition )
-    rankLog( inputs ... );
-}
-
 
 } // namespace geos
 

@@ -67,11 +67,11 @@ Logger::Logger():
 }
 void Logger::reset()
 {
-  globalLogLevel = 0;
-  minLogLevel = 0;
-  maxLogLevel = 5;
+  globalLogLevel = defaultGlobalLogLevel;// TODO Logger: mettre ça à Important ? Detailed ?
+  minLogLevel = defaultMinLogLevel;
+  maxLogLevel = defaultMaxLogLevel;
 
-  setOutputToStd();
+  setRankOutputToStream( std::cout );
 }
 void Logger::initMpi( MPI_Comm mpiComm )
 {
@@ -79,13 +79,13 @@ void Logger::initMpi( MPI_Comm mpiComm )
   comm = mpiComm;
   MPI_Comm_rank( mpiComm, &rank );
   MPI_Comm_size( mpiComm, &ranksCount );
-  rankMsgPrefix = ranksCount > 0  ? GEOS_FMT( "Rank {}: ", rank ) : "";// TODO : choisir si l'on garde cette ternaire
+  rankMsgPrefix = ranksCount > 0  ? GEOS_FMT( "Rank {}: ", rank ) : "";// TODO Logger: choisir si l'on garde cette ternaire
 #else
   GEOS_ERROR( "Trying to initialize MPI in serial build." );
 #endif
 }
 
-void Logger::setOutputToFile( const std::string & rankOutputDir )
+void Logger::setRankOutputToRankFile( const std::string & rankOutputDir )
 {
 #ifdef GEOSX_USE_MPI
   MPI_Barrier( comm );
@@ -100,7 +100,7 @@ void Logger::setOutputToFile( const std::string & rankOutputDir )
   fileOutStream = std::make_unique< std::ofstream >( GEOS_FMT( "{}rank_{}.out", outputFolder, rank ) );
   outStream = fileOutStream.get();
 }
-void Logger::setOutputToStd()
+void Logger::setRankOutputToStream( std::ostream & stream )
 {
 #ifdef GEOSX_USE_MPI
   if( ranksCount > 1 )
@@ -110,15 +110,24 @@ void Logger::setOutputToStd()
 #endif
 
   fileOutStream = nullptr;
-  outStream = &std::cout;
+  outStream = &stream;
 }
 
-void Logger::setGlobalLogLevel( int value )
-{ globalLogLevel = value; }
-void Logger::setMinLogLevel( int value )
-{ minLogLevel = value; }
-void Logger::setMaxLogLevel( int value )
-{ maxLogLevel = value; }
+void Logger::setGlobalLogLevel( PrioritizedLogLevel const & param )
+{
+  if( globalLogLevel.m_priorityLevel <= param.m_priorityLevel )
+    globalLogLevel = param;
+}
+void Logger::setMinLogLevel( PrioritizedLogLevel const & param )
+{
+  if( minLogLevel.m_priorityLevel <= param.m_priorityLevel )
+    minLogLevel = param;
+}
+void Logger::setMaxLogLevel( PrioritizedLogLevel const & param )
+{
+  if( maxLogLevel.m_priorityLevel <= param.m_priorityLevel )
+    maxLogLevel = param;
+}
 
 
 } // namespace geos
