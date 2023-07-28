@@ -73,14 +73,14 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
     arrayView2d< localIndex const > const faceToElement    = faceManager.elementList();
     arrayView2d< real64 const > const faceNormals          = faceManager.faceNormal().toViewConst();
 
-    arrayView1d< real32 > const couplingx = nodeManager.getField< fields::CouplingVectorx >();
-    couplingx.zero();
+    arrayView1d< real32 > const atoex = nodeManager.getField< fields::CouplingVectorx >();
+    atoex.zero();
 
-    arrayView1d< real32 > const couplingy = nodeManager.getField< fields::CouplingVectory >();
-    couplingy.zero();
+    arrayView1d< real32 > const atoey = nodeManager.getField< fields::CouplingVectory >();
+    atoey.zero();
 
-    arrayView1d< real32 > const couplingz = nodeManager.getField< fields::CouplingVectorz >();
-    couplingz.zero();
+    arrayView1d< real32 > const atoez = nodeManager.getField< fields::CouplingVectorz >();
+    atoez.zero();
 
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const targetIndex,
                                                                                           CellElementSubRegion & elementSubRegion )
@@ -105,9 +105,9 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
                                                                faceToElement,
                                                                faceToNode,
                                                                faceNormals,
-                                                               couplingx,
-                                                               couplingy,
-                                                               couplingz );
+                                                               atoex,
+                                                               atoey,
+                                                               atoez );
       } );
     } );
   } );
@@ -134,16 +134,16 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< real32 const > const p_n       = nodeManager.getField< fields::Pressure_n >();
-    arrayView1d< real32 const > const ux_nm1    = nodeManager.getField< fields::Displacementx_nm1 >();
-    arrayView1d< real32 const > const uy_nm1    = nodeManager.getField< fields::Displacementy_nm1 >();
-    arrayView1d< real32 const > const uz_nm1    = nodeManager.getField< fields::Displacementz_nm1 >();
-    arrayView1d< real32 const > const ux_n      = nodeManager.getField< fields::Displacementx_n >();
-    arrayView1d< real32 const > const uy_n      = nodeManager.getField< fields::Displacementy_n >();
-    arrayView1d< real32 const > const uz_n      = nodeManager.getField< fields::Displacementz_n >();
-    arrayView1d< real32 const > const couplingx = nodeManager.getField< fields::CouplingVectorx >();
-    arrayView1d< real32 const > const couplingy = nodeManager.getField< fields::CouplingVectory >();
-    arrayView1d< real32 const > const couplingz = nodeManager.getField< fields::CouplingVectorz >();
+    arrayView1d< real32 const > const p_n    = nodeManager.getField< fields::Pressure_n >();
+    arrayView1d< real32 const > const ux_nm1 = nodeManager.getField< fields::Displacementx_nm1 >();
+    arrayView1d< real32 const > const uy_nm1 = nodeManager.getField< fields::Displacementy_nm1 >();
+    arrayView1d< real32 const > const uz_nm1 = nodeManager.getField< fields::Displacementz_nm1 >();
+    arrayView1d< real32 const > const ux_n   = nodeManager.getField< fields::Displacementx_n >();
+    arrayView1d< real32 const > const uy_n   = nodeManager.getField< fields::Displacementy_n >();
+    arrayView1d< real32 const > const uz_n   = nodeManager.getField< fields::Displacementz_n >();
+    arrayView1d< real32 const > const atoex  = nodeManager.getField< fields::CouplingVectorx >();
+    arrayView1d< real32 const > const atoey  = nodeManager.getField< fields::CouplingVectory >();
+    arrayView1d< real32 const > const atoez  = nodeManager.getField< fields::CouplingVectorz >();
 
     arrayView1d< real32 > const p_np1  = nodeManager.getField< fields::Pressure_np1 >();
     arrayView1d< real32 > const ux_np1 = nodeManager.getField< fields::Displacementx_np1 >();
@@ -151,37 +151,35 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
     arrayView1d< real32 > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
 
     real64 rhof = 1020;  // hardcoded until github.com/GEOS-DEV/GEOS/pull/2548 is merged
-    /*
+
+#if 0
     elasSolver->unknownsUpdate( time_n, dt, cycleNumber, domain, mesh, regionNames );
 
     forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
     {
       localIndex const a = interfaceNodesSet[n];
-      // printf("\t[AcousticElasticWaveEquationSEM::solverStep] cx=%g cy=%g cz=%g\n", couplingx[a], couplingy[a], couplingz[a]);
-      ux_np1[a] += couplingx[a] * (p_n[a] / rhof);
-      uy_np1[a] += couplingy[a] * (p_n[a] / rhof);
-      uz_np1[a] += couplingz[a] * (p_n[a] / rhof);
+      // printf("\t[AcousticElasticWaveEquationSEM::solverStep] cx=%g cy=%g cz=%g\n", atoex[a], atoey[a], atoez[a]);
+      ux_np1[a] += atoex[a] * (p_n[a] / rhof);
+      uy_np1[a] += atoey[a] * (p_n[a] / rhof);
+      uz_np1[a] += atoez[a] * (p_n[a] / rhof);
     } );
 
     elasSolver->postUnknownsUpdate( time_n, dt, cycleNumber, domain, mesh, regionNames );
-    */
-
+#endif
     acousSolver->unknownsUpdate( time_n, dt, cycleNumber, domain, mesh, regionNames );
 
-    /*
     real64 const dt2 = pow( dt, 2 );
-
+/*
     forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
     {
       localIndex const a = interfaceNodesSet[n];
       p_np1[a] += rhof * (
-        couplingx[a] * ( ux_np1[a] - 2.0 * ux_n[a] + ux_nm1[a] ) +
-        couplingy[a] * ( uy_np1[a] - 2.0 * uy_n[a] + uy_nm1[a] ) +
-        couplingz[a] * ( uz_np1[a] - 2.0 * uz_n[a] + uz_nm1[a] )
+        atoex[a] * ( ux_np1[a] - 2.0 * ux_n[a] + ux_nm1[a] ) +
+        atoey[a] * ( uy_np1[a] - 2.0 * uy_n[a] + uy_nm1[a] ) +
+        atoez[a] * ( uz_np1[a] - 2.0 * uz_n[a] + uz_nm1[a] )
         ) / dt2;
     } );
-    */
-
+*/
     acousSolver->postUnknownsUpdate( time_n, dt, cycleNumber, domain, mesh, regionNames );
 
   } );

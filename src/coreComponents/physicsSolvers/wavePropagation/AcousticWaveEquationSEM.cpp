@@ -351,7 +351,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     } );
   } );
 
-  std::cout << "\t[AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] m_solverTargetNodesSet.size()=" << m_solverTargetNodesSet.size() << " m_usePML=" (m_usePML ?  'T' : 'F') << std::endl;
+  std::cout << "\t[AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] m_solverTargetNodesSet.size()=" << m_solverTargetNodesSet.size() << " m_usePML=" << (m_usePML ?  'T' : 'F') << std::endl;
 }
 
 
