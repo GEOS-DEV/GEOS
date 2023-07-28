@@ -122,6 +122,26 @@ public:
   bool resetConfigurationToDefault( DomainPartition & domain ) const override final;
   
   bool updateConfiguration( DomainPartition & domain ) override final;
+  
+  /**
+   * @Brief add the number of nonzeros induced by coupling
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param rowLengths 1D array for storing the number of nonzeros in each row
+   */
+  void addCouplingNumNonzeros( DomainPartition & domain,
+                               DofManager & dofManager,
+                               arrayView1d< localIndex > const & rowLengths ) const;
+
+  /**
+   * @Brief add the sparsity pattern induced by the coupling
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param pattern the sparsity pattern
+   */
+  void addCouplingSparsityPattern( DomainPartition const & domain,
+                                   DofManager const & dofManager,
+                                   SparsityPatternView< globalIndex > const & pattern ) const;
 
   enum ContactEnforcementMethod : integer
   {
@@ -156,7 +176,7 @@ private:
                              localIndex const kf0,
                              array1d< real64 > & nodalArea ) const;
 
-  void computeNodalTractionDOFs( DomainPartition const & domain, DofManager & dofManager ) const;
+  void computeNodalTractionDOFs( DomainPartition & domain, DofManager & dofManager ) const;
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 

@@ -75,6 +75,8 @@ void SolidMechanicsConformingFractures::registerDataOnMesh( Group & meshBodies )
 
     nodes.registerField< contact::oldFractureState >( getName() );
 
+    // The tractionDOFs node-based field is used to store the traction DOFs for the contact enforcement without duplicates
+    nodes.registerField< contact::tractionDOFs >( getName() );
     //nodes.registerField< contact::dualGridNodalArea >( getName() );
 
     nodes.registerWrapper< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() ).
@@ -139,9 +141,215 @@ void SolidMechanicsConformingFractures::setupSystem( DomainPartition & domain,
     m_precond->clear();
   }
 
-  // setup monolithic coupled system
-  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+  GEOS_UNUSED_VAR( setSparsity );
+  dofManager.setDomain( domain );
+  setupDofs( domain, dofManager );
+  dofManager.reorderByRank();
+
+  // Set the sparsity pattern of stiffness matrix blocks Kuu without Kut and Ktt blocks.
+  SparsityPattern< globalIndex > patternDiag;
+  dofManager.setSparsityPattern( patternDiag );
+
+  computeNodalTractionDOFs( domain, dofManager ); 
+  // Get the original row lengths (diagonal blocks only)
+  array1d< localIndex > rowLengths( patternDiag.numRows() );
+  for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
+  {
+    rowLengths[localRow] = patternDiag.numNonZeros( localRow );
+  }
+
+  // Add the number of nonzeros induced by coupling
+  // it should modify the entry of rowLengths for all rows corresponding to a displacement 
+  // dof that talks // to a lagrange multipllier (B matrix). 
+  //addCouplingNumNonzeros( domain, dofManager, rowLengths.toView() );
+
+  // Create a new pattern with enough capacity for coupled matrix
+  SparsityPattern< globalIndex > pattern;
+  pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data() );
+
+  // Copy the original nonzeros
+  for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
+  {
+    globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
+    pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ) );
+  }
+
+  // Add the nonzeros from coupling
+  // addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
+
+  // Finally, steal the pattern into a CRS matrix
+  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
+  localMatrix.setName( this->getName() + "/localMatrix" );
+
+  rhs.setName( this->getName() + "/rhs" );
+  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+
+  solution.setName( this->getName() + "/solution" );
+  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+
 }
+
+// void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & domain,
+//                                                               DofManager & dofManager,
+//                                                               arrayView1d< localIndex > const & rowLengths ) const
+// {
+//   // Find all rows related to the displacement DOFs associated with the fracture
+//   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+//                                                                 MeshLevel const & mesh,
+//                                                                 arrayView1d< string const > const & regionNames )
+//   {
+//     NodeManager const & nodeManager          = mesh.getNodeManager();
+//     ElementRegionManager const & elemManager = mesh.getElemManager();
+
+//     string const jumpDofKey = dofManager.getKey( contact::traction::key() );
+//     string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+
+//     arrayView1d< globalIndex const > const &
+//     dispDofNumber =  nodeManager.getReference< globalIndex_array >( dispDofKey );
+
+//     globalIndex const rankOffset = dofManager.rankOffset();
+
+//     SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getFractureRegionName() );
+
+//     EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion = fractureRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+
+//     arrayView1d< globalIndex const > const &
+//     jumpDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
+
+//     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const, CellElementSubRegion const & cellElementSubRegion )
+//     {
+
+//       SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
+
+//       ArrayOfArraysView< localIndex const > const cellsToEmbeddedSurfaces = cellElementSubRegion.embeddedSurfacesList().toViewConst();
+
+//       localIndex const numDispDof = 3*cellElementSubRegion.numNodesPerElement();
+
+//       for( localIndex ei=0; ei<fracturedElements.size(); ++ei )
+//       {
+//         localIndex const cellIndex = fracturedElements[ei];
+
+//         localIndex k = cellsToEmbeddedSurfaces[cellIndex][0];
+//         localIndex const localRow = LvArray::integerConversion< localIndex >( jumpDofNumber[k] - rankOffset );
+//         if( localRow >= 0 && localRow < rowLengths.size() )
+//         {
+//           for( localIndex i=0; i<3; ++i )
+//           {
+//             rowLengths[localRow + i] += numDispDof;
+//           }
+//         }
+
+//         for( localIndex a=0; a<cellElementSubRegion.numNodesPerElement(); ++a )
+//         {
+//           const localIndex & node = cellElementSubRegion.nodeList( cellIndex, a );
+//           localIndex const localDispRow = LvArray::integerConversion< localIndex >( dispDofNumber[node] - rankOffset );
+
+//           if( localDispRow >= 0 && localDispRow < rowLengths.size() )
+//           {
+//             for( int d=0; d<3; ++d )
+//             {
+//               rowLengths[localDispRow + d] += 3;
+//             }
+//           }
+//         }
+//       }
+//     } );
+//   } );
+// }
+
+
+// void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartition const & domain,
+//                                                                   DofManager const & dofManager,
+//                                                                   SparsityPatternView< globalIndex > const & pattern ) const
+// {
+//   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+//                                                                 MeshLevel const & mesh,
+//                                                                 arrayView1d< string const > const & regionNames )
+//   {
+//     NodeManager const & nodeManager          = mesh.getNodeManager();
+//     ElementRegionManager const & elemManager = mesh.getElemManager();
+
+//     string const jumpDofKey = dofManager.getKey( contact::dispJump::key() );
+//     string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+
+//     arrayView1d< globalIndex const > const &
+//     dispDofNumber =  nodeManager.getReference< globalIndex_array >( dispDofKey );
+
+//     globalIndex const rankOffset = dofManager.rankOffset();
+
+//     SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getFractureRegionName() );
+
+//     EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion = fractureRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+
+//     arrayView1d< globalIndex const > const &
+//     jumpDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
+
+//     static constexpr int maxNumDispDof = 3 * 8;
+
+//     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+//                                                                                 CellElementSubRegion const & cellElementSubRegion )
+//     {
+
+//       SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
+
+//       ArrayOfArraysView< localIndex const > const cellsToEmbeddedSurfaces = cellElementSubRegion.embeddedSurfacesList().toViewConst();
+
+//       localIndex const numDispDof = 3*cellElementSubRegion.numNodesPerElement();
+
+//       for( localIndex ei=0; ei<fracturedElements.size(); ++ei )
+//       {
+//         localIndex const cellIndex = fracturedElements[ei];
+//         localIndex const k = cellsToEmbeddedSurfaces[cellIndex][0];
+
+//         // working arrays
+//         stackArray1d< globalIndex, maxNumDispDof > eqnRowIndicesDisp ( numDispDof );
+//         stackArray1d< globalIndex, 3 > eqnRowIndicesJump( 3 );
+//         stackArray1d< globalIndex, maxNumDispDof > dofColIndicesDisp ( numDispDof );
+//         stackArray1d< globalIndex, 3 > dofColIndicesJump( 3 );
+
+//         for( localIndex idof = 0; idof < 3; ++idof )
+//         {
+//           eqnRowIndicesJump[idof] = jumpDofNumber[k] + idof - rankOffset;
+//           dofColIndicesJump[idof] = jumpDofNumber[k] + idof;
+//         }
+
+//         for( localIndex a=0; a<cellElementSubRegion.numNodesPerElement(); ++a )
+//         {
+//           const localIndex & node = cellElementSubRegion.nodeList( cellIndex, a );
+//           for( localIndex idof = 0; idof < 3; ++idof )
+//           {
+//             eqnRowIndicesDisp[3*a + idof] = dispDofNumber[node] + idof - rankOffset;
+//             dofColIndicesDisp[3*a + idof] = dispDofNumber[node] + idof;
+//           }
+//         }
+
+//         for( localIndex i = 0; i < eqnRowIndicesDisp.size(); ++i )
+//         {
+//           if( eqnRowIndicesDisp[i] >= 0 && eqnRowIndicesDisp[i] < pattern.numRows() )
+//           {
+//             for( localIndex j = 0; j < dofColIndicesJump.size(); ++j )
+//             {
+//               pattern.insertNonZero( eqnRowIndicesDisp[i], dofColIndicesJump[j] );
+//             }
+//           }
+//         }
+
+//         for( localIndex i = 0; i < eqnRowIndicesJump.size(); ++i )
+//         {
+//           if( eqnRowIndicesJump[i] >= 0 && eqnRowIndicesJump[i] < pattern.numRows() )
+//           {
+//             for( localIndex j=0; j < dofColIndicesDisp.size(); ++j )
+//             {
+//               pattern.insertNonZero( eqnRowIndicesJump[i], dofColIndicesDisp[j] );
+//             }
+//           }
+//         }
+//       }
+
+//     } );
+//   } );
+
+// }
 
 void SolidMechanicsConformingFractures::implicitStepSetup( real64 const & time_n,
                                                            real64 const & dt,
@@ -314,43 +522,45 @@ void SolidMechanicsConformingFractures::computeNodalDisplacementJump( DomainPart
   } );
 }
 
-void SolidMechanicsConformingFractures::computeNodalTractionDOFs( DomainPartition const & domain,
+void SolidMechanicsConformingFractures::computeNodalTractionDOFs( DomainPartition & domain,
                                                    DofManager & dofManager ) const
 {
   // compute the nodal traction DOFs
   GEOS_MARK_FUNCTION;
-  localIndex offset(0);
-  localIndex multiplierCount(0);
-  
-  string const & tracDofKey = dofManager.getKey( contact::traction::key() );
-  string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
-
+  std::set< localIndex > uniqueNodeSet;
+  localIndex const numComponents = 3;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel const & meshLevel,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                MeshLevel & meshLevel,
+                                                                arrayView1d< string const > const & regionNames ) 
   {
-    NodeManager const & nodeManager = meshLevel.getNodeManager();
-    arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
-    arrayView1d< globalIndex const > const & tracDofNumber = nodeManager.getReference< globalIndex_array >( tracDofKey );
-    offset = dispDofNumber.size() * 3; 
-    
-    for( localIndex i = 0; i < tracDofNumber.size(); ++i )
+    NodeManager & nodeManager = meshLevel.getNodeManager();
+    FaceManager const & faceManager = meshLevel.getFaceManager();
+    // we need to recompute the dofs for tractions. For each pair of nodes, we use the smaller value of the two dofs as the 
+    // dof for the traction.
+
+    arrayView1d< localIndex > const & tracDofNumber = nodeManager.getField< contact::tractionDOFs >();
+    ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+
+    meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                              [&]( localIndex,
+                                                                   FaceElementSubRegion & subRegion )
     {
-      if ( tracDofNumber[i] > 0 )
+      arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+      forAll< parallelHostPolicy >( subRegion.size(), [&] ( localIndex const kfe )
       {
-        multiplierCount++;
-      }
-    }
+        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
+
+        for ( localIndex lagIndex = 0; lagIndex < numNodesPerFace; ++lagIndex )
+        {
+          // Get the smaller value of the two dofs as the dof for the traction
+          // Only get the index of nodes on the first face
+          localIndex const firstTractionIndex = faceToNodeMap( elemsToFaces[kfe][0], lagIndex );
+          uniqueNodeSet.insert( firstTractionIndex );
+          tracDofNumber[firstTractionIndex] = dofManager.numLocalDofs() + uniqueNodeSet.size()*numComponents;
+        }
+      } );
+    } );
   } );
-
-  multiplierCount = multiplierCount / 2;
-  array1d< localIndex > nodalTractionIndexArray( multiplierCount );
-
-  // Fill the array
-  for( localIndex j = 0; j < multiplierCount; ++j )
-  {
-    nodalTractionIndexArray[j] = offset + 3 * j;
-  }
   
 }
 
@@ -372,17 +582,15 @@ void SolidMechanicsConformingFractures::setupDofs( DomainPartition const & domai
     ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
     elementRegionManager.forElementRegions< SurfaceElementRegion >( regionNames,
                                                                     [&]( localIndex const,
-                                                                         SurfaceElementRegion const & region )
+                                                                        SurfaceElementRegion const & region )
     {
       regions.emplace_back( region.getName() );
     } );
     meshTargets[std::make_pair( meshBodyName, meshLevel.getName())] = std::move( regions );
   } );
-
-  // computeNodalTractionDOFs( domain, dofManager ); 
-
+  
   if (m_contactEnforcementMethod == ContactEnforcementMethod::Penalty)
-  {
+  { 
     dofManager.addField( solidMechanics::totalDisplacement::key(),
                           FieldLocation::Node,
                           3,
@@ -395,30 +603,17 @@ void SolidMechanicsConformingFractures::setupDofs( DomainPartition const & domai
   }
   else if (m_contactEnforcementMethod == ContactEnforcementMethod::NodalLagrangeMultiplier)
   {
-    dofManager.addField( solidMechanics::totalDisplacement::key(),
-                      FieldLocation::Node,
-                      3,
-                      meshTargets );
 
-    dofManager.addField( contact::traction::key(),
-                       FieldLocation::Node,
-                       3,
-                       meshTargets );
+    // dofManager.addField( contact::traction::key(),
+    //                    FieldLocation::Node,
+    //                    3,
+    //                    meshTargets );
 
-    dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
-                            solidMechanics::totalDisplacement::key(),
-                            DofManager::Connector::Elem,
-                            meshTargets );
-
-    dofManager.addCoupling( contact::traction::key(),
-                            contact::traction::key(),
-                            DofManager::Connector::Elem,
-                            meshTargets );
-
-    dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
-                            contact::traction::key(),
-                            DofManager::Connector::Elem,
-                            meshTargets );                         
+    // dofManager.addCoupling( contact::traction::key(),
+    //                         contact::traction::key(),
+    //                         DofManager::Connector::Elem,
+    //                         meshTargets );
+                         
   }
   else
   {

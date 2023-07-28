@@ -122,6 +122,14 @@ DECLARE_FIELD( oldFractureState,
                NO_WRITE,
                "Fracture state at the previous timestep." );
 
+DECLARE_FIELD( tractionDOFs,
+              "tractionDOFs",
+               array1d< localIndex >,
+               FractureState::Stick,
+               NOPLOT,
+               NO_WRITE,
+              "Traction dofs set up in contact solvers." );
+
 DECLARE_FIELD( dualGridNodalArea,
                "dualGridNodalArea",
                array1d< real64 >,
