@@ -37,9 +37,6 @@ struct CouplingKernel
 {
   static constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
 
-  CouplingKernel( FE_TYPE const & finiteElement ) : m_finiteElement( finiteElement )
-  {}
-
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
@@ -80,9 +77,9 @@ struct CouplingKernel
         {
 #if 0
           // when github.com/GEOS-DEV/GEOS/pull/2548 is merged
-          real32 const rho = density[er0 == targetIndex ? er0 : er1];  // NOTE: or rho_fluid always ?
+          real32 const rho0 = density[er0 == targetIndex ? er0 : er1];  // NOTE: or rho_fluid always ?
 #else
-          real32 const rho = 1020;  // hardcoded until github.com/GEOS-DEV/GEOS/pull/2548 is merged
+          real64 const rho0 = 1020.0;  // hardcoded until github.com/GEOS-DEV/GEOS/pull/2548 is merged
 #endif
           RAJA::atomicInc< ATOMIC_POLICY >( &count_view[2] );
           // printf( "\t[CouplingKernel::launch] interface found for f=%i\n", f );
@@ -97,10 +94,11 @@ struct CouplingKernel
 
           for( localIndex q = 0; q < numNodesPerFace; ++q )
           {
-            real32 const localIncrement = -rho * m_finiteElement.computeDampingTerm( q, xLocal );
-            real32 const localIncrementx = localIncrement * faceNormals[f][0];
-            real32 const localIncrementy = localIncrement * faceNormals[f][1];
-            real32 const localIncrementz = localIncrement * faceNormals[f][2];
+            real64 const aux = -rho0 * FE_TYPE::computeDampingTerm( q, xLocal );
+            real32 const localIncrementx = aux * faceNormals[f][0];
+            real32 const localIncrementy = aux * faceNormals[f][1];
+            real32 const localIncrementz = aux * faceNormals[f][2];
+
             RAJA::atomicAdd< ATOMIC_POLICY >( &couplingVectorx[facesToNodes[f][q]], localIncrementx );
             RAJA::atomicAdd< ATOMIC_POLICY >( &couplingVectory[facesToNodes[f][q]], localIncrementy );
             RAJA::atomicAdd< ATOMIC_POLICY >( &couplingVectorz[facesToNodes[f][q]], localIncrementz );
@@ -116,10 +114,6 @@ struct CouplingKernel
 
 
   }
-
-  /// The finite element space/discretization object for the element type in the subRegion
-  FE_TYPE const & m_finiteElement;
-
 };
 
 } /* namespace acousticElasticWaveEquationSEMKernels */

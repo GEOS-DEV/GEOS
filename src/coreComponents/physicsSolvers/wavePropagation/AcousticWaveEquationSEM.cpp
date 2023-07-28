@@ -856,14 +856,9 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                        "An error occured while writting "<< fileName,
                        InputError );
       }
-
     }
 
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-    {
-      p_nm1[a] = p_n[a];
-      p_n[a]   = p_np1[a];
-    } );
+    prepareNextTimestep( mesh );
   } );
 
   return dtOut;
@@ -949,17 +944,37 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
       } );
     }
 
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-    {
-      p_nm1[a] = p_n[a];
-      p_n[a]   = p_np1[a];
-    } );
+    prepareNextTimestep( mesh );
   } );
 
   return dtOut;
 }
 
-void AcousticWaveEquationSEM::unknownsUpdate( real64 const & time_n,
+void AcousticWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
+{
+  NodeManager & nodeManager = mesh.getNodeManager();
+
+  arrayView1d< real32 > const p_nm1 = nodeManager.getField< fields::Pressure_nm1 >();
+  arrayView1d< real32 > const p_n   = nodeManager.getField< fields::Pressure_n >();
+  arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
+
+  arrayView1d< real32 > const stiffnessVector = nodeManager.getField< fields::StiffnessVector >();
+  arrayView1d< real32 > const rhs = nodeManager.getField< fields::ForcingRHS >();
+
+  SortedArrayView< localIndex const > const & solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
+
+  forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
+  {
+    localIndex const a = solverTargetNodesSet[n];
+
+    p_nm1[a] = p_n[a];
+    p_n[a]   = p_np1[a];
+
+    stiffnessVector[a] = rhs[a] = 0.0;
+  } );
+}
+
+void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
                                               real64 const & dt,
                                               integer cycleNumber,
                                               DomainPartition & domain,
@@ -993,7 +1008,7 @@ void AcousticWaveEquationSEM::unknownsUpdate( real64 const & time_n,
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
   integer const cycleForSource = int(round( -minTime/dt + cycleNumber ));
-  //std::cout<<"cycle GEOSX = "<<cycleForSource<<std::endl;
+  // std::cout << "cycle GEOSX = " << cycleForSource << std::endl;
   addSourceToRightHandSide( cycleForSource, rhs );
 
   /// calculate your time integrators
@@ -1081,7 +1096,7 @@ void AcousticWaveEquationSEM::unknownsUpdate( real64 const & time_n,
   }
 }
 
-void AcousticWaveEquationSEM::postUnknownsUpdate( real64 const & time_n,
+void AcousticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
                                                   real64 const & dt,
                                                   integer const,
                                                   DomainPartition & domain,
@@ -1118,14 +1133,6 @@ void AcousticWaveEquationSEM::postUnknownsUpdate( real64 const & time_n,
   {
     computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
   }
-  /// prepare next step
-  SortedArrayView< localIndex const > const & solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
-  forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
-  {
-    localIndex const a = solverTargetNodesSet[n];
-    stiffnessVector[a] = 0.0;
-    rhs[a] = 0.0;
-  } );
 
   if( m_usePML )
   {
@@ -1151,8 +1158,8 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    unknownsUpdate( time_n, dt, cycleNumber, domain, mesh, regionNames );
-    postUnknownsUpdate( time_n, dt, cycleNumber, domain, mesh, regionNames );
+    computeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+    synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
   } );
 
   return dt;

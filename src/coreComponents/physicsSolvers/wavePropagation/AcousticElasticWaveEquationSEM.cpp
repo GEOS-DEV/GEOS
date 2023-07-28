@@ -92,7 +92,7 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        acousticElasticWaveEquationSEMKernels::CouplingKernel< FE_TYPE > kernelC( finiteElement );
+        acousticElasticWaveEquationSEMKernels::CouplingKernel< FE_TYPE > kernelC;
 
         // arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensity >();
 
@@ -120,10 +120,10 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
 {
   GEOS_MARK_FUNCTION;
 
-  std::cout << "\t[AcousticElasticWaveEquationSEM::solverStep] dt=" << dt << std::endl;
+  std::cout << "\t[AcousticElasticWaveEquationSEM::solverStep]" << std::endl;
 
-  auto elasSolver = elasticSolver();
   auto acousSolver = acousticSolver();
+  auto elasSolver = elasticSolver();
 
   SortedArrayView< localIndex const > const & interfaceNodesSet = m_interfaceNodesSet.toViewConst();
 
@@ -150,38 +150,54 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
     arrayView1d< real32 > const uy_np1 = nodeManager.getField< fields::Displacementy_np1 >();
     arrayView1d< real32 > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
 
-    real64 rhof = 1020;  // hardcoded until github.com/GEOS-DEV/GEOS/pull/2548 is merged
+    elasSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
 
-#if 0
-    elasSolver->unknownsUpdate( time_n, dt, cycleNumber, domain, mesh, regionNames );
-
+    real64 const rho0 = 1020.0;  // hardcoded until github.com/GEOS-DEV/GEOS/pull/2548 is merged
     forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
     {
       localIndex const a = interfaceNodesSet[n];
-      // printf("\t[AcousticElasticWaveEquationSEM::solverStep] cx=%g cy=%g cz=%g\n", atoex[a], atoey[a], atoez[a]);
-      ux_np1[a] += atoex[a] * (p_n[a] / rhof);
-      uy_np1[a] += atoey[a] * (p_n[a] / rhof);
-      uz_np1[a] += atoez[a] * (p_n[a] / rhof);
+      
+      real32 const localIncrementx = atoex[a] * (p_n[a] / rho0);
+      real32 const localIncrementy = atoey[a] * (p_n[a] / rho0);
+      real32 const localIncrementz = atoez[a] * (p_n[a] / rho0);
+
+      // printf(
+      //   "\t[AcousticElasticWaveEquationSEM::solverStep] atoex=%g atoey=%g atoez=%g incx=%g incy=%g incz=%g\n",
+      //   atoex[a], atoey[a], atoez[a],
+      //   localIncrementx, localIncrementy, localIncrementz
+      // );
+
+      RAJA::atomicAdd< ATOMIC_POLICY >( &ux_np1[a], localIncrementx );
+      RAJA::atomicAdd< ATOMIC_POLICY >( &uy_np1[a], localIncrementy );
+      RAJA::atomicAdd< ATOMIC_POLICY >( &uz_np1[a], localIncrementz );
     } );
 
-    elasSolver->postUnknownsUpdate( time_n, dt, cycleNumber, domain, mesh, regionNames );
-#endif
-    acousSolver->unknownsUpdate( time_n, dt, cycleNumber, domain, mesh, regionNames );
+    acousSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
 
     real64 const dt2 = pow( dt, 2 );
-/*
     forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
     {
       localIndex const a = interfaceNodesSet[n];
-      p_np1[a] += rhof * (
+
+      real32 const localIncrement = rho0 * (
         atoex[a] * ( ux_np1[a] - 2.0 * ux_n[a] + ux_nm1[a] ) +
         atoey[a] * ( uy_np1[a] - 2.0 * uy_n[a] + uy_nm1[a] ) +
         atoez[a] * ( uz_np1[a] - 2.0 * uz_n[a] + uz_nm1[a] )
-        ) / dt2;
-    } );
-*/
-    acousSolver->postUnknownsUpdate( time_n, dt, cycleNumber, domain, mesh, regionNames );
+      ) / dt2;
 
+      // printf(
+      //   "\t[AcousticElasticWaveEquationSEM::solverStep] atoex=%g atoey=%g atoez=%g inc=%g\n",
+      //   atoex[a], atoey[a], atoez[a],
+      //   localIncrement
+      // );
+
+      RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[a], localIncrement );
+    } );
+
+    acousSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+    acousSolver->prepareNextTimestep( mesh );
+    elasSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+    elasSolver->prepareNextTimestep( mesh );
   } );
 
 #else

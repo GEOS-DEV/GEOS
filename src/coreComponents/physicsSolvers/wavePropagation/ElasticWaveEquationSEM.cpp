@@ -703,7 +703,7 @@ real64 ElasticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
   return explicitStepInternal( time_n, dt, cycleNumber, domain );
 }
 
-void ElasticWaveEquationSEM::unknownsUpdate( real64 const &,
+void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
                                              real64 const & dt,
                                              integer const cycleNumber,
                                              DomainPartition &,
@@ -778,7 +778,7 @@ void ElasticWaveEquationSEM::unknownsUpdate( real64 const &,
   } );
 }
 
-void ElasticWaveEquationSEM::postUnknownsUpdate( real64 const & time_n,
+void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
                                                  real64 const & dt,
                                                  integer const,
                                                  DomainPartition & domain,
@@ -824,7 +824,38 @@ void ElasticWaveEquationSEM::postUnknownsUpdate( real64 const & time_n,
   computeAllSeismoTraces( time_n, dt, uy_np1, uy_n, uYReceivers );
   computeAllSeismoTraces( time_n, dt, uz_np1, uz_n, uZReceivers );
 
+  // increment m_indexSeismoTrace
+  while( (m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
+  {
+    m_indexSeismoTrace++;
+  }
+
+}
+
+void ElasticWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
+{
+  NodeManager & nodeManager = mesh.getNodeManager();
+
+  arrayView1d< real32 > const ux_nm1 = nodeManager.getField< fields::Displacementx_nm1 >();
+  arrayView1d< real32 > const uy_nm1 = nodeManager.getField< fields::Displacementy_nm1 >();
+  arrayView1d< real32 > const uz_nm1 = nodeManager.getField< fields::Displacementz_nm1 >();
+  arrayView1d< real32 > const ux_n   = nodeManager.getField< fields::Displacementx_n >();
+  arrayView1d< real32 > const uy_n   = nodeManager.getField< fields::Displacementy_n >();
+  arrayView1d< real32 > const uz_n   = nodeManager.getField< fields::Displacementz_n >();
+  arrayView1d< real32 > const ux_np1 = nodeManager.getField< fields::Displacementx_np1 >();
+  arrayView1d< real32 > const uy_np1 = nodeManager.getField< fields::Displacementy_np1 >();
+  arrayView1d< real32 > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
+
+  arrayView1d< real32 > const stiffnessVectorx = nodeManager.getField< fields::StiffnessVectorx >();
+  arrayView1d< real32 > const stiffnessVectory = nodeManager.getField< fields::StiffnessVectory >();
+  arrayView1d< real32 > const stiffnessVectorz = nodeManager.getField< fields::StiffnessVectorz >();
+
+  arrayView1d< real32 > const rhsx = nodeManager.getField< fields::ForcingRHSx >();
+  arrayView1d< real32 > const rhsy = nodeManager.getField< fields::ForcingRHSy >();
+  arrayView1d< real32 > const rhsz = nodeManager.getField< fields::ForcingRHSz >();
+
   SortedArrayView< localIndex const > const & solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
+
   forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
   {
     localIndex const a = solverTargetNodesSet[n];
@@ -835,19 +866,10 @@ void ElasticWaveEquationSEM::postUnknownsUpdate( real64 const & time_n,
     uy_n[a] = uy_np1[a];
     uz_n[a] = uz_np1[a];
 
-    stiffnessVectorx[a] = 0.0;
-    stiffnessVectory[a] = 0.0;
-    stiffnessVectorz[a] = 0.0;
-    rhsx[a] = 0.0;
-    rhsy[a] = 0.0;
-    rhsz[a] = 0.0;
+    stiffnessVectorx[a] = stiffnessVectory[a] = stiffnessVectorz[a] = 0.0;
+    rhsx[a] = rhsy[a] = rhsz[a] = 0.0;
   } );
 
-  // increment m_indexSeismoTrace
-  while( (m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
-  {
-    m_indexSeismoTrace++;
-  }
 }
 
 real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
@@ -865,8 +887,9 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    unknownsUpdate( time_n, dt, cycleNumber, domain, mesh, regionNames );
-    postUnknownsUpdate( time_n, dt, cycleNumber, domain, mesh, regionNames );
+    computeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+    synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+    prepareNextTimestep( mesh );
   } );
 
   return dt;

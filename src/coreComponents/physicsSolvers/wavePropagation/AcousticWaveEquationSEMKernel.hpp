@@ -119,16 +119,19 @@ struct PrecomputeSourceAndReceiverKernel
             real64 Ntest[FE_TYPE::numNodes];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
+            // printf("\t== isrc=%i ==\n", isrc);
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
               sourceNodeIds[isrc][a] = elemsToNodes[k][a];
               sourceConstants[isrc][a] = Ntest[a];
+              // printf("a=%i sourceNode=%i phi=%g\n", a, sourceNodeIds[isrc][a], sourceConstants[isrc][a]);
             }
 
             for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
             {
               real64 const time = cycle*dt;
               sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder );
+              // printf("cycle=%i val=%g\n", cycle, sourceValue[cycle][isrc]);
             }
           }
         }
