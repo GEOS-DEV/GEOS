@@ -130,7 +130,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="nodeManager"
-      fieldName="pressure_n"
+      fieldName="pressure_p_n"
       scale="0.0"/>
 
     <FieldSpecification
@@ -138,7 +138,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="nodeManager"
-      fieldName="pressure_nm1"
+      fieldName="pressure_p_nm1"
       scale="0.0"/>
 
     <FieldSpecification
@@ -203,6 +203,10 @@
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput"/>
 
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="0.104"
+      target="/Outputs/restartOutput"/>
   </Events>
 
   <!-- collect the pressure values at the nodes -->
@@ -210,7 +214,7 @@
     <PackCollection
       name="pressureCollection"
       objectPath="/Problem/domain/MeshBodies/mesh/meshLevels/FE1/nodeManager"
-      fieldName="pressure_np1"/>
+      fieldName="pressure_p_np1"/>
   </Tasks>
 
   <Outputs>
@@ -224,6 +228,8 @@
       name="timeHistoryOutput"
       sources="{ /Tasks/pressureCollection }"
       filename="pressure_history"/>
- 
+
+    <Restart
+      name="restartOutput"/>
   </Outputs>
 </Problem>

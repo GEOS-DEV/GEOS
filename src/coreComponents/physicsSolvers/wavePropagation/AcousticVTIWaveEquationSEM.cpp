@@ -54,6 +54,7 @@ void AcousticVTIWaveEquationSEM::initializePreSubGroups()
 
 void AcousticVTIWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
+  WaveSolverBase::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
