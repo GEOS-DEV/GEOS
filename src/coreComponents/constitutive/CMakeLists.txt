@@ -53,6 +53,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/functions/CompositionalProperties.hpp     
      fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp     
      fluid/multifluid/compositional/functions/KValueInitialization.hpp
+     fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp
      fluid/multifluid/compositional/functions/RachfordRice.hpp     
      fluid/multifluid/reactive/ReactiveBrineFluid.hpp
      fluid/multifluid/reactive/ReactiveMultiFluid.hpp
