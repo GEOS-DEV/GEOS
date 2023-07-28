@@ -249,7 +249,7 @@ DECLARE_FIELD( MediumVelocity,
                WRITE_AND_READ,
                "Medium velocity of the cell" );
 
-DECLARE_FIELD( MediumDensity,
+DECLARE_FIELD( MediumDensityA,
                "mediumDensity",
                array1d< real32 >,
                0,

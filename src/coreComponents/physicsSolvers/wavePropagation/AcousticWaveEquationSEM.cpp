@@ -111,7 +111,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
       subRegion.registerField< fields::MediumVelocity >( this->getName() );
-      subRegion.registerField< fields::MediumDensity >( this->getName() );
+      subRegion.registerField< fields::MediumDensityA >( this->getName() );
       subRegion.registerField< fields::PartialGradient >( this->getName() );
     } );
 
@@ -316,7 +316,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
       arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
-      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensity >();
+      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensityA >();
 
       /// Partial gradient if gradient as to be computed
       arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();

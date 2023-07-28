@@ -425,8 +425,8 @@ DECLARE_FIELD( MediumVelocityVs,
                WRITE_AND_READ,
                "S-waves speed in the cell" );
 
-DECLARE_FIELD( MediumDensity,
-               "mediumDensity",
+DECLARE_FIELD( MediumDensityE,
+               "mediumDensityE",
                array1d< real32 >,
                0,
                NOPLOT,

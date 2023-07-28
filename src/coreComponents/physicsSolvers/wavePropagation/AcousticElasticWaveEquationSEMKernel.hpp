@@ -75,7 +75,6 @@ struct CouplingKernel
         // NOTE: subregion check doesn't work: /* sr0 != esr1 */
         if (er0 != er1)  /* should define an interface */
         {
-          // when github.com/GEOS-DEV/GEOS/pull/2548 is merged
           real32 const rho0 = fluid_density[er0 == fluid_index ? er0 : er1];
 
           RAJA::atomicInc< ATOMIC_POLICY >( &count_view[2] );
@@ -98,7 +97,10 @@ struct CouplingKernel
             real32 const localIncrementy = aux * faceNormals[f][1];
             real32 const localIncrementz = aux * faceNormals[f][2];
 
-            printf("\t[CouplingKernel::launch] rho0=%g nx=%g ny=%g nz=%g\n", rho0, faceNormals[f][0], faceNormals[f][1], faceNormals[f][2]);
+            if (q == 0) printf(
+              "\t[CouplingKernel::launch] rho0=%g nx=%g ny=%g nz=%g\n",
+              rho0, faceNormals[f][0], faceNormals[f][1], faceNormals[f][2]
+            );
             RAJA::atomicAdd< ATOMIC_POLICY >( &couplingVectorx[facesToNodes[f][q]], localIncrementx );
             RAJA::atomicAdd< ATOMIC_POLICY >( &couplingVectory[facesToNodes[f][q]], localIncrementy );
             RAJA::atomicAdd< ATOMIC_POLICY >( &couplingVectorz[facesToNodes[f][q]], localIncrementz );

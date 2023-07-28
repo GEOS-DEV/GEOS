@@ -43,8 +43,11 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
 {
   SolverBase::initializePostInitialConditionsPreSubGroups();
 
-  auto acousNodesSet = acousticSolver()->getSolverNodesSet();
-  auto elasNodesSet = elasticSolver()->getSolverNodesSet();
+  auto acousSolver = acousticSolver();
+  auto elasSolver = elasticSolver();
+
+  auto acousNodesSet = acousSolver->getSolverNodesSet();
+  auto elasNodesSet = elasSolver->getSolverNodesSet();
 
   for( auto val : acousNodesSet )
   {
@@ -82,18 +85,26 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
     arrayView1d< real32 > const atoez = nodeManager.getField< fields::CouplingVectorz >();
     atoez.zero();
 
-    auto & elementRegionManager = mesh.getElemManager();
-    auto & fluid_region = elementRegionManager.getRegion("Fluid");
+    ElementRegionManager & elementRegionManager = mesh.getElemManager();
     localIndex const fluid_index = elementRegionManager.getRegions().getIndex( "Fluid" );
-    arrayView1d< real32 const > const fluid_density = fluid_region.getField< fields::MediumDensity >();
+    localIndex const solid_index = elementRegionManager.getRegions().getIndex( "Solid" );
+
+    printf("\t[AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] fluid_index=%i solid_index=%i\n", fluid_index, solid_index);
 
     elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const targetIndex,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
-      if (targetIndex != fluid_index) return;  // only loop over the fluid region
+      auto & parent_name = elementSubRegion.getParent().getParent().getName();
+      printf(
+        "\t[AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] targetIndex=%i elementSubRegion.getName()=%s parent=%s\n",
+        targetIndex, elementSubRegion.getName().c_str(), parent_name.c_str()
+      );
+
+      if (parent_name != "Fluid") return;  // only loop over the fluid region
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+      arrayView1d< real32 const > const fluid_density = elementSubRegion.getField< fields::MediumDensityA >();
 
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
@@ -155,7 +166,9 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
     arrayView1d< real32 > const uy_np1 = nodeManager.getField< fields::Displacementy_np1 >();
     arrayView1d< real32 > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
 
-    // source ok when using (elas=false, acous=true, coupling=false)
+    // arrayView1d< real32 const > const fluid_density = elementSubRegion.getField< fields::MediumDensityA >();
+
+    // source ok when using (elas=false, acous=true, coupling=false) or (elas=true, acous=true, coupling=false)
     bool elas = true;
     bool acous = true;
     bool coupling = false;

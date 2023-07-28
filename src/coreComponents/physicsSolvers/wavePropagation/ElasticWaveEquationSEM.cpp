@@ -217,7 +217,7 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     {
       subRegion.registerField< fields::MediumVelocityVp >( this->getName() );
       subRegion.registerField< fields::MediumVelocityVs >( this->getName() );
-      subRegion.registerField< fields::MediumDensity >( this->getName() );
+      subRegion.registerField< fields::MediumDensityE >( this->getName() );
     } );
 
   } );
@@ -564,7 +564,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       }
 
       arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
-      arrayView1d< real32 > const density = elementSubRegion.getField< fields::MediumDensity >();
+      arrayView1d< real32 > const density = elementSubRegion.getField< fields::MediumDensityE >();
       arrayView1d< real32 > const velocityVp = elementSubRegion.getField< fields::MediumVelocityVp >();
       arrayView1d< real32 > const velocityVs = elementSubRegion.getField< fields::MediumVelocityVs >();
 

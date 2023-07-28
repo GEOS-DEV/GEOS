@@ -218,7 +218,10 @@ struct MassMatrixKernel
     {
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-      // printf("\t[Acoustic MassMatrixKernel] vel=%g\n", velocity[k]);
+      if (k == 0) printf(
+        "\t[acousticWaveEquationSEMKernels::MassMatrixKernel] rho=%g vel=%g\n",
+        density[k], velocity[k]
+      );
 
       real32 const invC2 = 1.0 / ( density[k] * velocity[k] * velocity[k] );
       real64 xLocal[ numNodesPerElem ][ 3 ];
@@ -746,7 +749,7 @@ public:
     m_X( nodeManager.getField< fields::referencePosition32 >() ),
     m_p_n( nodeManager.getField< fields::Pressure_n >() ),
     m_stiffnessVector( nodeManager.getField< fields::StiffnessVector >() ),
-    m_density( elementSubRegion.template getField< fields::MediumDensity >() ),
+    m_density( elementSubRegion.template getField< fields::MediumDensityA >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );
