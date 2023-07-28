@@ -377,7 +377,7 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
                  InputError );
   GEOS_THROW_IF( wellControls.isProducer() && currentControl == WellControls::Control::TOTALVOLRATE,
                  "WellControls named " << wellControls.getName() <<
-                 ": Phase rate control is not available for producers",
+                 ": Total rate control is not available for producers",
                  InputError );
 
   GEOS_THROW_IF( wellControls.isInjector() && targetTotalRate < 0.0,
