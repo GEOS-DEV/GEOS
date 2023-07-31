@@ -100,6 +100,7 @@ public:
 
     static constexpr char const * useDBCString()                  { return "useDBC"; }
     static constexpr char const * omegaDBCString()                { return "omegaDBC"; }
+    static constexpr char const * continuationDBCString()         { return "continuationDBC"; }
   } viewKeys;
 
   /**
@@ -233,6 +234,15 @@ public:
     return m_kappaDBC;
   }
 
+    /**
+   * @brief Getter for the flag to enable continuation
+   * @return 1 or 0 depending if continuation for DBC is enabled
+   */
+  real64 continuationDBC() const
+  {
+    return m_continuationDBC;
+  }
+
   
   /// Flag to apply a line search.
   LineSearchAction m_lineSearchAction;
@@ -314,6 +324,9 @@ public:
 
   /// Factor by which the DBC flux is diminished every Newton
   real64 m_kappaDBC;
+
+  /// Flag to enable continuation for DBC Method
+  integer m_continuationDBC;
 };
 
 ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction,

@@ -157,7 +157,12 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
   registerWrapper( viewKeysStruct::omegaDBCString(), &m_omegaDBC ).
     setApplyDefaultValue( 1e-3 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Factor by which DBC flux is multiplied" );  
+    setDescription( "Factor by which DBC flux is multiplied" ); 
+
+  registerWrapper( viewKeysStruct::continuationDBCString(), &m_continuationDBC ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag for enabling continuation parameter" );   
 
 }
 
@@ -168,22 +173,6 @@ void NonlinearSolverParameters::postProcessInput()
     GEOS_ERROR( " timeStepIncreaseIterLimit should be smaller than timeStepDecreaseIterLimit!!" );
   }
 }
-
-
-/*
-void NonlinearSolverParameters::updateKappaDBCNewton()
-{
-  if(m_useDBC)
-  {
-    if (m_numNewtonIterations == 0)
-      m_kappaDBC = 1.0;
-    else if (m_numNewtonIterations > 6)
-      m_kappaDBC = 1e-20;
-    else
-      m_kappaDBC *= 0.2; 
-  }
-}
-*/
 
 
 REGISTER_CATALOG_ENTRY( Group, NonlinearSolverParameters, string const &, Group * const )
