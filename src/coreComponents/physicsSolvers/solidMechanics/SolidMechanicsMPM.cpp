@@ -859,12 +859,12 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     if( solidModel.hasWrapper( "strengthScale" ) )
     {
       arrayView1d< real64 > const particleStrengthScale = subRegion.getParticleStrengthScale();
-      arrayView2d< real64 > const constitutiveStrengthScale = solidModel.getReference< array2d< real64 > >( "strengthScale" );
       SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+      arrayView2d< real64 > const constitutiveStrengthScale = solidModel.getReference< array2d< real64 > >( "strengthScale" );
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
-        constitutiveStrengthScale[p][0] = particleStrengthScale[p];
+        constitutiveStrengthScale[p] = particleStrengthScale[p];
       } );
     }
   } );
@@ -2562,6 +2562,7 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
   {
     // Get needed particle fields
     arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
 
     // Get constitutive model reference
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
@@ -2572,11 +2573,29 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
                                                  // integrated test that checks this
     {
       arrayView1d< real64 > const lengthScale = solidModel.getReference< array1d< real64 > >( "lengthScale" );
-      SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
         lengthScale[p] = pow( particleVolume[p], 1.0 / 3.0 );
+      } );
+    }
+
+    if(  solidModel.hasWrapper( "materialDirection" ) )
+    {
+      // CC: Pass particle material direction to constitutive model
+      // Material direction will need to be updated by cofactor of F every time step (think this will probably happen in the solver not the constitutive model)
+      arrayView2d< real64 > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
+      arrayView2d< real64 > const constitutiveMaterialDirection = solidModel.getReference< array2d< real64 > >( "materialDirection" );
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        // CC: Can you do a LvArray tensorOps copy with dereferences pointer of arrayview? like below?
+        // Or can I just to a copy by value assignment?
+        LvArray::tensorOps::copy< 3 >(constitutiveMaterialDirection[p][i], particleMaterialDirection[p][i]); 
+        // for(int i = 0; i < 3; )
+        // {
+        //   constitutiveMaterialDirection[p][i] = particleMaterialDirection[p][i];
+        // }
       } );
     }
   } );
@@ -2628,6 +2647,8 @@ void SolidMechanicsMPM::particleKinematicUpdate( ParticleManager & particleManag
     arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
     arrayView3d< real64 const > const particleInitialRVectors = subRegion.getField< fields::mpm::particleInitialRVectors >();
     arrayView3d< real64 const > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+    arrayView2d< real64 const > const particleInitialMaterialDirection = subRegion.getParticleInitialMaterialDirection();
+    arrayView2d< real64 const > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
 
     // Update volume and r-vectors
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
@@ -2648,6 +2669,17 @@ void SolidMechanicsMPM::particleKinematicUpdate( ParticleManager & particleManag
       {
         particleVolume[p] = particleInitialVolume[p] * detF;
         particleDensity[p] = particleMass[p] / particleVolume[p];
+
+        // Update material direction (CC: TODO add check for materail direction for plane and fiber, currently plane)
+        real64 materialDirection[3];
+        real64 deformationGradientCofactor[3][3];
+        cofactor(particleDeformationGradient, deformationGradientCofactor);
+        LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( materialDirection, deformationGradientCofactor, particleInitialMaterialDirection[p] )
+        LvArray::tensorOps::copy< 3 >(particleMaterialDirection[p][i], materialDirection[i]);
+        // for(int i = 0; i < 3; ++i)
+        // {
+        //   particleMaterialDirection[p][i] = materialDirection[i];
+        // }
       }
     } );
   } );
@@ -3176,6 +3208,8 @@ void SolidMechanicsMPM::gridToParticle( real64 dt,
 
 void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleManager )
 {
+  // CC: should plastic strain updated here?
+  // CC: TODO add update for material direction for graphite model
   // Get particle damage values from constitutive model
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -3187,7 +3221,6 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
     {
       arrayView1d< real64 > const particleDamage = subRegion.getParticleDamage();
       arrayView2d< real64 const > const constitutiveDamage = solidModel.getReference< array2d< real64 > >( "damage" );
-      // arrayView2d< real64 const > const constitutiveStrengthScale = solidModel.getReference< array2d< real64 > >( "strengthScale" ); // CC: debug
       SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
@@ -4024,6 +4057,21 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
     // Increment the subRegion index
     subRegionIndex++;
   } );
+}
+
+// CC: does this belong here or somewhere else?
+void SolidMechanicsMPM::cofactor( real64 const (& F)[3][3],
+                                  real64 (& Fc)[3][3] )
+{
+  Fc(0,0) = F(1,1)*F(2,2) - F(1,2)*F(2,1);
+  Fc(0,1) = F(1,2)*F(2,0) - F(1,0)*F(2,2);
+  Fc(0,2) = F(1,0)*F(2,1) - F(1,1)*F(2,0);
+  Fc(1,0) = F(0,2)*F(2,1) - F(0,1)*F(2,2);
+  Fc(1,1) = F(0,0)*F(2,2) - F(0,2)*F(2,0);
+  Fc(1,2) = F(0,1)*F(2,0) - F(0,0)*F(2,1);
+  Fc(2,0) = F(0,1)*F(1,2) - F(0,2)*F(1,1);
+  Fc(2,1) = F(0,2)*F(1,0) - F(0,0)*F(1,2);
+  Fc(2,2) = F(0,0)*F(1,1) - F(0,1)*F(1,0);
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsMPM, string const &, dataRepository::Group * const )

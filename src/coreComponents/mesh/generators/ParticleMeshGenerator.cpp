@@ -310,6 +310,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     particleBlock.setParticleID( particleID );
     particleBlock.setParticleCenter( particleCenter );
     particleBlock.setParticleVelocity( particleVelocity );
+    particleBlock.setParticleInitialMaterialDirection( particleMaterialDirection );
     particleBlock.setParticleMaterialDirection( particleMaterialDirection );
     particleBlock.setParticleGroup( particleGroup );
     particleBlock.setParticleSurfaceFlag( particleSurfaceFlag );

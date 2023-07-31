@@ -111,12 +111,22 @@ public:
   void setParticleVelocity( array2d< real64 > const particleVelocity )
   { m_particleVelocity = particleVelocity; }
 
+  array2d< real64 > getParticleInitialMaterialDirection() const override
+  { return m_particleInitialMaterialDirection; }
+
+  /**
+   * @brief Set the list of material directions in this subregion.
+   * @param particleInitialMaterialDirection The input list of initial directions
+   */
+  void setParticleInitialMaterialDirection( array2d< real64 > const particleInitialMaterialDirection )
+  { m_particleInitialMaterialDirection = particleInitialMaterialDirection; }
+
   array2d< real64 > getParticleMaterialDirection() const override
   { return m_particleMaterialDirection; }
 
   /**
    * @brief Set the list of material directions in this subregion.
-   * @param particleVelocity The input list of directions
+   * @param particleMaterialDirection The input list of directions
    */
   void setParticleMaterialDirection( array2d< real64 > const particleMaterialDirection )
   { m_particleMaterialDirection = particleMaterialDirection; }
@@ -239,6 +249,9 @@ private:
 
   /// Member level field for the particle velocity.
   array2d< real64 > m_particleVelocity;
+
+  /// Member level field for the particle initial material direction.
+  array2d< real64 > m_particleInitialMaterialDirection;
 
   /// Member level field for the particle material direction.
   array2d< real64 > m_particleMaterialDirection;

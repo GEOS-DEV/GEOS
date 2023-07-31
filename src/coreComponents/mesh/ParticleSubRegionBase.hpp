@@ -198,6 +198,20 @@ public:
   { return m_particleVelocity; }
 
   /**
+   * @brief Get the initial material direction of each particle in this subregion.
+   * @return an arrayView1d of const particle material direction
+   */
+  arrayView2d< real64 const > getParticleInitialMaterialDirection() const
+  { return m_particleInitialMaterialDirection; }
+
+  /**
+   * @copydoc getParticleInitialMaterialDirection() const
+   */
+  arrayView2d< real64 > getParticleInitialMaterialDirection()
+  { return m_particleInitialMaterialDirection; }
+
+
+  /**
    * @brief Get the material direction of each particle in this subregion.
    * @return an arrayView1d of const particle material direction
    */
@@ -359,6 +373,9 @@ public:
     /// @return String key for the member level field for the particle velocity.
     static constexpr char const * particleVelocityString() { return "particleVelocity"; }
 
+    /// @return String key for the member level field for the particle initial material direction.
+    static constexpr char const * particleInitialMaterialDirectionString() { return "particleInitialMaterialDirection"; }
+
     /// @return String key for the member level field for the particle material direction.
     static constexpr char const * particleMaterialDirectionString() { return "particleMaterialDirection"; }
 
@@ -459,6 +476,9 @@ protected:
 
   /// Member level field for the particle velocity.
   array2d< real64 > m_particleVelocity;
+
+  /// Member level field for the particle initial material direction.
+  array2d< real64 > m_particleInitialMaterialDirection;
 
   /// Member level field for the particle material direction.
   array2d< real64 > m_particleMaterialDirection;

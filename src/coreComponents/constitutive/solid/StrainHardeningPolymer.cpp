@@ -29,14 +29,14 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
   m_damage(),
   m_jacobian(),
   m_yieldStrength(),
-  m_maximumStretch(),
+  m_maximumStretch()
 {
   // register default values
-  registerWrapper( viewKeyStruct::yieldStrengthString(), &m_yieldStrength ).
+  registerWrapper( viewKeyStruct::yieldStrengthString(), &m_initialYieldStrength ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Yield strength" );
+    setDescription( "Initial yield strength" );
 
-  registerWrapper( viewKeyStruct::maximumStretchString(), &m_maximumStrength ).
+  registerWrapper( viewKeyStruct::maximumStretchString(), &m_maximumStretch ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Maximum stretch" );
 
@@ -80,15 +80,11 @@ void StrainHardeningPolymer::allocateConstitutiveData( dataRepository::Group & p
 {
   ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_strainHardeningSlope.resize( 0, numConstitutivePointsPerParentIndex );
-  m_shearSofteningMagnitude.resize( 0, numConstitutivePointsPerParentIndex );
-  m_shearSofteningShapeParameter1.resize( 0, numConstitutivePointsPerParentIndex );
-  m_shearSofteningShapeParameter2.resize( 0, numConstitutivePointsPerParentIndex );
-  m_plasticStrain.( 0, numConstitutivePointsPerParentIndex, 6);
+  m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6);
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
   m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
-  m_yieldStrength.resize( 0, numConstitutivePointsPerParentIndex );
-  m_maximumStretch.resize( 0, numConstitutivePointsPerParentIndex );
+  // CC: m_initialYieldStrength need to initialize m_yieldStrength  with m_initialYieldStrength
+  m_yieldStrength.resize( numConstitutivePointsPerParentIndex );
 }
 
 
@@ -97,8 +93,8 @@ void StrainHardeningPolymer::postProcessInput()
   ElasticIsotropic::postProcessInput();
 
   // CC: need checks for strain hardening and softening inputs
-  GEOS_THROW_IF( m_yieldStrength < 0.0, "Yield strength must be a positive number.", InputError );
-  GEOS_THROW_IF( m_maxStrength <= 1.0, "Max stretch must be greater than 1", InputError );
+  GEOS_THROW_IF( m_initialYieldStrength < 0.0, "Yield strength must be a positive number.", InputError );
+  GEOS_THROW_IF( m_maximumStretch <= 1.0, "Max stretch must be greater than 1", InputError );
 }
 
 

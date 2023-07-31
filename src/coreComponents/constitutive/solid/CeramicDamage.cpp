@@ -26,10 +26,10 @@ namespace constitutive
 
 CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
   ElasticIsotropic( name, parent ),
-  m_strengthScale(),
   m_damage(),
   m_jacobian(),
   m_lengthScale(),
+  m_strengthScale(),
   m_tensileStrength(),
   m_compressiveStrength(),
   m_maximumStrength(),
@@ -84,7 +84,7 @@ void CeramicDamage::allocateConstitutiveData( dataRepository::Group & parent,
 {
   ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_strengthScale.resize(1, numConstitutivePointsPerParentIndex);
+  m_strengthScale.resize(numConstitutivePointsPerParentIndex);
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
   m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
 }

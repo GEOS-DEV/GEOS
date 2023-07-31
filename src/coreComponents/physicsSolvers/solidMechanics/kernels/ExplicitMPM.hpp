@@ -30,6 +30,7 @@ namespace geos
 namespace solidMechanicsMPMKernels
 {
 
+// CC: need to check if there is an LvArray for this again
 // A helper function to calculate polar decomposition. TODO: Previously this was an LvArray method, hopefully it will be again someday.
 GEOS_HOST_DEVICE
 void polarDecomposition( real64 (& R)[3][3],

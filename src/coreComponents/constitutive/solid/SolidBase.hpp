@@ -443,7 +443,12 @@ public:
 
     real64 eps = 1e-4*norm;     // finite difference perturbation
 
-    smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
+    smallStrainUpdate( k,
+                       q, 
+                       timeIncrement,
+                       strainIncrement, 
+                       stress, 
+                       stiffness );
 
     for( localIndex i=0; i<6; ++i )
     {
@@ -454,7 +459,12 @@ public:
         strainIncrementFD[i-1] -= eps;
       }
 
-      smallStrainUpdate( k, q, timeIncrement, strainIncrementFD, stressFD, stiffnessFD );
+      smallStrainUpdate( k, 
+                         q, 
+                         timeIncrement,
+                         strainIncrementFD, 
+                         stressFD, 
+                         stiffnessFD );
 
       for( localIndex j=0; j<6; ++j )
       {
@@ -490,8 +500,17 @@ public:
     real64 stiffnessFD[6][6]{};   // finite difference approximation
     real64 stress[6]{};           // original stress
 
-    smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
-    computeSmallStrainFiniteDifferenceStiffness( k, q, timeIncrement, strainIncrement, stiffnessFD );
+    smallStrainUpdate( k, 
+                       q, 
+                       timeIncrement,
+                       strainIncrement, 
+                       stress, 
+                       stiffness );
+    computeSmallStrainFiniteDifferenceStiffness( k, 
+                                                 q, 
+                                                 timeIncrement, 
+                                                 strainIncrement, 
+                                                 stiffnessFD );
 
     // compute relative error between two versions
 
