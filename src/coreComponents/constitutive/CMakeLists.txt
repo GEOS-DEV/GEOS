@@ -105,6 +105,7 @@ set( constitutive_headers
      solid/DruckerPragerExtended.hpp
      solid/ModifiedCamClay.hpp
      solid/DelftEgg.hpp
+     solid/ElasticTransverseIsotropicPressureDependent.hpp
      solid/ElasticIsotropic.hpp
      solid/ElasticIsotropicPressureDependent.hpp
      solid/ElasticTransverseIsotropic.hpp
@@ -121,6 +122,8 @@ set( constitutive_headers
      solid/SolidModelDiscretizationOpsIsotropic.hpp
      solid/SolidModelDiscretizationOpsTransverseIsotropic.hpp
      solid/SolidModelDiscretizationOpsOrthotropic.hpp
+     solid/Graphite.hpp
+     solid/StrainHardeningPolymer.hpp
      solid/CeramicDamage.hpp
      solid/TriaxialDriver.hpp
      solid/porosity/PorosityFields.hpp
@@ -226,6 +229,7 @@ set( constitutive_sources
      solid/DruckerPragerExtended.cpp
      solid/ModifiedCamClay.cpp
      solid/DelftEgg.cpp
+     solid/ElasticTransverseIsotropicPressureDependent.cpp
      solid/ElasticIsotropic.cpp
      solid/ElasticIsotropicPressureDependent.cpp
      solid/ElasticTransverseIsotropic.cpp
@@ -234,6 +238,8 @@ set( constitutive_sources
      solid/PorousSolid.cpp
      solid/SolidBase.cpp
      solid/SolidInternalEnergy.cpp
+     solid/Graphite.cpp
+     solid/StrainHardeningPolymer.cpp
      solid/CeramicDamage.cpp
      solid/TriaxialDriver.cpp
      solid/porosity/BiotPorosity.cpp

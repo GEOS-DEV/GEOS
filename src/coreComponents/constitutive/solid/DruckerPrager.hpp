@@ -166,7 +166,12 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
                                               real64 ( & stiffness )[6][6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
-  ElasticIsotropicUpdates::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
+  ElasticIsotropicUpdates::smallStrainUpdate( k, 
+                                              q, 
+                                              timeIncrement,
+                                              strainIncrement, 
+                                              stress, 
+                                              stiffness );
 
   if( m_disableInelasticity )
   {

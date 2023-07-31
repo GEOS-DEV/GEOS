@@ -59,6 +59,7 @@ public:
    * @param[in] damage The ArrayView holding the damage for each quardrature point.
    * @param[in] jacobian The ArrayView holding the jacobian for each quardrature point.
    * @param[in] lengthScale The ArrayView holding the length scale for each element.
+   * @param[in] strengthScale The ArrayView holding the strength scale for each element/particle.
    * @param[in] tensileStrength The unconfined tensile strength.
    * @param[in] compressiveStrength The unconfined compressive strength.
    * @param[in] maximumStrength The theoretical maximum strength.
@@ -69,10 +70,10 @@ public:
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point.
    */
-  CeramicDamageUpdates( arrayView2d< real64 > const & strengthScale,
-                        arrayView2d< real64 > const & damage,
+  CeramicDamageUpdates( arrayView2d< real64 > const & damage,
                         arrayView2d< real64 > const & jacobian,
                         arrayView1d< real64 > const & lengthScale,
+                        arrayView1d< real64 > const & strengthScale,
                         real64 const & tensileStrength,
                         real64 const & compressiveStrength,
                         real64 const & maximumStrength,
@@ -84,10 +85,10 @@ public:
                         arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                         bool const & disableInelasticity ):
     ElasticIsotropicUpdates( bulkModulus, shearModulus, thermalExpansionCoefficient, newStress, oldStress, disableInelasticity ),
-    m_strengthScale( strengthScale ),
     m_damage( damage ),
     m_jacobian( jacobian ),
     m_lengthScale( lengthScale ),
+    m_strengthScale( strengthScale ),
     m_tensileStrength( tensileStrength ),
     m_compressiveStrength( compressiveStrength ),
     m_maximumStrength( maximumStrength ),
@@ -141,7 +142,7 @@ public:
   GEOS_HOST_DEVICE
   void smallStrainUpdateHelper( localIndex const k,
                                 localIndex const q,
-                                real64 const dt,
+                                real64 const timeIncrement,
                                 real64 ( &stress )[6] ) const;
 
   GEOS_HOST_DEVICE
@@ -162,9 +163,6 @@ public:
   }
 
 private:
-  /// A reference to the ArrayView holding the strength scale.
-  arrayView2d< real64 > const m_strengthScale;
-
   /// A reference to the ArrayView holding the damage for each quadrature point.
   arrayView2d< real64 > const m_damage;
 
@@ -173,6 +171,9 @@ private:
 
   /// A reference to the ArrayView holding the length scale for each element/particle.
   arrayView1d< real64 > const m_lengthScale;
+
+  /// A reference to the ArrayView holding the strength scale.
+  arrayView1d< real64 > const m_strengthScale;
 
   /// The tensile strength
   real64 const m_tensileStrength;
@@ -198,7 +199,12 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
                                               real64 ( & stiffness )[6][6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
-  ElasticIsotropicUpdates::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
+  ElasticIsotropicUpdates::smallStrainUpdate( k, 
+                                              q, 
+                                              timeIncrement,
+                                              strainIncrement, 
+                                              stress, 
+                                              stiffness );
   m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
   if( m_disableInelasticity )
@@ -225,7 +231,12 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
                                               real64 ( & stress )[6],
                                               DiscretizationOps & stiffness ) const
 {
-  smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
+  smallStrainUpdate( k, 
+                     q, 
+                     timeIncrement,
+                     strainIncrement, 
+                     stress, 
+                     stiffness.m_c );
 }
 
 GEOS_HOST_DEVICE
@@ -237,7 +248,11 @@ void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                          real64 ( & stress )[6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
-  ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
+  ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, 
+                                                         q, 
+                                                         timeIncrement,
+                                                         strainIncrement, 
+                                                         stress );
   m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
   if( m_disableInelasticity )
@@ -257,24 +272,20 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
                                                     localIndex const q,
-                                                    real64 const dt,
+                                                    real64 const timeIncrement,
                                                     real64 ( & stress )[6] ) const
 {
-
   // Scaled strengths
   real64 gamma = m_compressiveStrength / m_tensileStrength; // TXC/TXE
 
-  real64 Yt = m_strengthScale[k][q] * m_tensileStrength;
-  real64 Yc = m_strengthScale[k][q] * m_compressiveStrength;
+  real64 Yt = m_strengthScale[k] * m_tensileStrength;
+  real64 Yc = m_strengthScale[k] * m_compressiveStrength;
 
   real64 Ycmax = m_maximumStrength;
   real64 Ytmax = Ycmax / gamma;
 
   Yt = std::min(Yt, 0.999*Ytmax);
   Yc = std::min(Yc, 0.999*Ycmax);
-
-  // CC: debug
-  // GEOS_LOG_RANK(k << ", " << q << ", " << m_strengthScale[k][q] << ", Yt=" << Yt << ", Yc=" << Yc);
 
   // get failure time
   real64 tFail = m_lengthScale[k] / m_crackSpeed;
@@ -304,7 +315,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   if( pressure < pmin ) // TODO: pressure or trial pressure?
   {
     // Increment damage
-    m_damage[k][q] = fmin( m_damage[k][q] + dt / tFail, 1.0 );
+    m_damage[k][q] = fmin( m_damage[k][q] + timeIncrement / tFail, 1.0 );
 
     // Pressure is on the vertex
     pressure = ( 1.0 - m_damage[k][q] ) * pmin0;
@@ -337,7 +348,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
                   deviator[2] * deviator[5] * deviator[5] );
 
     // Find the strength
-    real64 strength = CeramicDamageUpdates::getStrength( m_strengthScale[k][q], m_damage[k][q], pressure, J2, J3, mu, Yt0 );
+    real64 strength = CeramicDamageUpdates::getStrength( m_strengthScale[k], m_damage[k][q], pressure, J2, J3, mu, Yt0 );
 
     // Increment damage and get new associated yield surface
     real64 newDeviatorMagnitude = vonMises;
@@ -345,8 +356,8 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
     {
       if( pressure <= brittleDuctileTransitionPressure )
       {
-        m_damage[k][q] = fmin( m_damage[k][q] + dt / tFail, 1.0 );
-        strength = CeramicDamageUpdates::getStrength( m_strengthScale[k][q], m_damage[k][q], pressure, J2, J3, mu, Yt0 );
+        m_damage[k][q] = fmin( m_damage[k][q] + timeIncrement / tFail, 1.0 );
+        strength = CeramicDamageUpdates::getStrength( m_strengthScale[k], m_damage[k][q], pressure, J2, J3, mu, Yt0 );
       }
       newDeviatorMagnitude = strength;
     }
@@ -524,10 +535,10 @@ public:
    */
   CeramicDamageUpdates createKernelUpdates() const
   {
-    return CeramicDamageUpdates( m_strengthScale,
-                                 m_damage,
+    return CeramicDamageUpdates( m_damage,
                                  m_jacobian,
                                  m_lengthScale,
+                                 m_strengthScale,
                                  m_tensileStrength,
                                  m_compressiveStrength,
                                  m_maximumStrength,
@@ -551,10 +562,10 @@ public:
   UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
   {
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
-                          m_strengthScale,
                           m_damage,
                           m_jacobian,
                           m_lengthScale,
+                          m_strengthScale,
                           m_tensileStrength,
                           m_compressiveStrength,
                           m_maximumStrength,
@@ -571,9 +582,6 @@ public:
 protected:
   virtual void postProcessInput() override;
 
-  /// State variable: The strength scale values
-  array2d< real64 > m_strengthScale;
-
   /// State variable: The damage values for each quadrature point
   array2d< real64 > m_damage;
 
@@ -582,6 +590,9 @@ protected:
 
   /// Discretization-sized variable: The length scale for each element/particle
   array1d< real64 > m_lengthScale;
+
+  /// Material parameter: The strength scale values
+  array1d< real64 > m_strengthScale;
 
   /// Material parameter: The value of unconfined tensile strength
   real64 m_tensileStrength;
