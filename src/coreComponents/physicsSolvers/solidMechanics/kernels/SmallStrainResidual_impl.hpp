@@ -65,17 +65,19 @@ GEOS_FORCE_INLINE
 void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( localIndex const k,
                                                                                StackVariables & stack ) const
 {
-  static_device_for< numNodesPerElem >( [&] ( auto a )
+  RAJA_UNROLL
+  for( localIndex a=0; a< numNodesPerElem; ++a )
   {
     localIndex const nodeIndex = m_elemsToNodes( k, a );
-    static_device_for< numDofPerTrialSupportPoint >( [&] ( auto i )
+    RAJA_UNROLL
+    for( int i=0; i<numDofPerTrialSupportPoint; ++i )
     {
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
       stack.xLocal[ a ][ i ] = m_X( nodeIndex, i );
 #endif
       stack.varLocal[ a ][ i ] = m_input( nodeIndex, i );
-    } );
-  } );
+    }
+  }
 }
 
 template< typename SUBREGION_TYPE,
@@ -98,7 +100,7 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   real64 stressLocal[ 6 ] = {0};
   m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
 
-  #pragma unroll
+  RAJA_UNROLL
   for( localIndex c = 0; c < 6; ++c )
   {
     stressLocal[ c ] *= -detJ;
@@ -116,11 +118,10 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   real64 stressLocal[ 6 ] = {0};
   m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
 
-  // for( localIndex c = 0; c < 6; ++c )
-  static_device_for< 6 >( [&] ( auto c )
+  for( localIndex c = 0; c < 6; ++c )
   {
     stressLocal[ c ] *= -detJ;
-  } );
+  }
 
   FE_TYPE::plusGradNajAij( q, invJ, stressLocal, stack.fLocal );
 #endif // !defined( USE_JACOBIAN )
@@ -135,16 +136,14 @@ GEOS_FORCE_INLINE
 real64 SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::complete( localIndex const k,
                                                                                     StackVariables const & stack ) const
 {
-  // for( localIndex a = 0; a < numNodesPerElem; ++a )
-  static_device_for< numNodesPerElem >( [&] ( auto a )
+  for( localIndex a = 0; a < numNodesPerElem; ++a )
   {
     localIndex const nodeIndex = m_elemsToNodes( k, a );
-    // for( int i = 0; i < numDofPerTestSupportPoint; ++i )
-    static_device_for< numDofPerTestSupportPoint > ( [&] ( auto i )
+    for( int i = 0; i < numDofPerTestSupportPoint; ++i )
     {
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_res( nodeIndex, i ), stack.fLocal[ a ][ i ] );
-    } );
-  } );
+    }
+  }
   return 0;
 }
 
@@ -159,15 +158,17 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( l
                                                                                real64 (& xLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
                                                                                real64 (& varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const
 {
-  static_device_for< numNodesPerElem >( [&] ( auto a )
+  RAJA_UNROLL
+  for( localIndex a=0; a< numNodesPerElem; ++a )
   {
     localIndex const nodeIndex = m_elemsToNodes( k, a );
-    static_device_for< numDofPerTrialSupportPoint > ( [&] ( auto i )
+    RAJA_UNROLL
+    for( int i=0; i<numDofPerTrialSupportPoint; ++i )
     {
       xLocal[ a ][ i ] = m_X( nodeIndex, i );
       varLocal[ a ][ i ] = m_input( nodeIndex, i );
-    } );
-  } );
+    }
+  }
 }
 
 template< typename SUBREGION_TYPE,
@@ -194,7 +195,7 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 
   real64 stressLocal[ 6 ] = {0};
   m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, qa+2*qb+4*qc, strain, stressLocal );
-  #pragma unroll
+  RAJA_UNROLL
   for( localIndex c = 0; c < 6; ++c )
   {
     stressLocal[ c ] *= -detJ;
@@ -226,22 +227,19 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 
   real64 gradVar[3][3] = {{0}};
 
-  // #pragma unroll
-  // for( int i = 0; i < 3; ++i )
-  static_device_for< 3 >( [&] ( auto i )
+  RAJA_UNROLL
+  for( int i = 0; i < 3; ++i )
   {
-    // #pragma unroll
-    // for( int j = 0; j < 3; ++j )
-    static_device_for< 3 >( [&] ( auto j )
+    RAJA_UNROLL
+    for( int j = 0; j < 3; ++j )
     {
-      // #pragma unroll
-      // for( int kk = 0; kk < 3; ++kk )
-      static_device_for< 3 >( [&] ( auto kk )
+      RAJA_UNROLL
+      for( int kk = 0; kk < 3; ++kk )
       {
         gradVar[i][j] = gradVar[i][j] + parentGradVar[i][kk] * invJ[kk][j];
-      } );
-    } );
-  } );
+      }
+    }
+  }
   real64 strain[6] = {0};
   strain[0] = gradVar[0][0];
   strain[1] = gradVar[1][1];
@@ -254,11 +252,10 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   real64 stressLocal[ 6 ] = {0};
   m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, qa+2*qb+4*qc, strain, stressLocal );
 
-  // for( localIndex c = 0; c < 6; ++c )
-  static_device_for< 6 >( [&] ( auto c )
+  for( localIndex c = 0; c < 6; ++c )
   {
     stressLocal[ c ] *= -detJ;
-  } );
+  }
 
   FE_TYPE::plusGradNajAij( qa, qb, qc, invJ, stressLocal, fLocal );
 #endif
@@ -290,22 +287,19 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 //  FE_TYPE::template parentGradient< qa, qb, qc >( varLocal, parentGradVar);
   real64 gradVar[3][3] = {{0}};
 
-  // #pragma unroll
-  // for( int i = 0; i < 3; ++i )
-  static_device_for< 3 >( [&] ( auto i )
+  RAJA_UNROLL
+  for( int i = 0; i < 3; ++i )
   {
-    // #pragma unroll
-    // for( int j = 0; j < 3; ++j )
-    static_device_for< 3 >( [&] ( auto j )
+    RAJA_UNROLL
+    for( int j = 0; j < 3; ++j )
     {
-      // #pragma unroll
-      // for( int kk = 0; kk < 3; ++kk )
-      static_device_for< 3 >( [&] ( auto kk )
+      RAJA_UNROLL
+      for( int kk = 0; kk < 3; ++kk )
       {
         gradVar[i][j] = gradVar[i][j] + parentGradVar[i][kk] * invJ[kk][j];
-      } );
-    } );
-  } );
+      }
+    }
+  }
   real64 strain[6] = {0};
   strain[0] = gradVar[0][0];
   strain[1] = gradVar[1][1];
@@ -318,11 +312,10 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   real64 stressLocal[ 6 ] = {0};
   m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, qa+2*qb+4*qc, strain, stressLocal );
 
-  // for( localIndex c = 0; c < 6; ++c )
-  static_device_for< 6 >( [&] ( auto c )
+  for( localIndex c = 0; c < 6; ++c )
   {
     stressLocal[ c ] *= -detJ;
-  } );
+  }
 
   FE_TYPE::template plusGradNajAij< qa, qb, qc >( invJ, stressLocal, fLocal );
 
@@ -338,16 +331,14 @@ GEOS_FORCE_INLINE
 real64 SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::complete( localIndex const k,
                                                                                     real64 const (&fLocal) [ numNodesPerElem ][ numDofPerTestSupportPoint ] ) const
 {
-  // for( localIndex a = 0; a < numNodesPerElem; ++a )
-  static_device_for< numNodesPerElem >( [&] ( auto a )
+  for( localIndex a = 0; a < numNodesPerElem; ++a )
   {
     localIndex const nodeIndex = m_elemsToNodes( k, a );
-    // for( int i = 0; i < numDofPerTestSupportPoint; ++i )
-    static_device_for< numDofPerTestSupportPoint >( [&] ( auto i )
+    for( int i = 0; i < numDofPerTestSupportPoint; ++i )
     {
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_res( nodeIndex, i ), fLocal[ a ][ i ] );
-    } );
-  } );
+    }
+  }
   return 0;
 }
 
@@ -374,11 +365,11 @@ kernelLaunch( localIndex const numElems,
 
     kernelComponent.setup( k, stack );
 //    for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
-  #pragma unroll
+  RAJA_UNROLL
     for( integer qa=0; qa<2; ++qa )
-                                     #pragma unroll
+                                     RAJA_UNROLL
       for( integer qb=0; qb<2; ++qb )
-                                       #pragma unroll
+                                       RAJA_UNROLL
         for( integer qc=0; qc<2; ++qc )
         {
           //  int qa, qb, qc;

@@ -47,6 +47,7 @@
 #define GEOS_HOST_DEVICE
 /// Marks a function or lambda for inlining
 #define GEOS_FORCE_INLINE inline
+/// Compiler directive specifying to unroll the loop.
 #endif
 
 #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
@@ -66,35 +67,6 @@
 // #endif
 
 #define GEOS_PRAGMA_UNROLL GEOS_PRAGMA_UNROLL_DEPTH( 16 )
-
-// #if defined( GEOS_DEVICE_COMPILE )
-// #define GEOS_PRAGMA_UNROLL #pragma unroll
-// #else
-// #define GEOS_PRAGMA_UNROLL _Pragma( "unroll" )
-// #endif
-
-#include <utility>
-#include <iostream>
-
-template<typename Lambda, std::size_t... Idx>
-constexpr void static_device_for_impl(Lambda&& lambda, std::index_sequence<Idx...>)
-{
-    [[clang::always_inline]] (lambda(std::integral_constant<std::size_t, Idx>{}), ...);
-}
-
-template<std::size_t N, typename Lambda>
-constexpr void static_device_for(Lambda&& lambda)
-{
-#ifdef GEOS_DEVICE_COMPILE
-    static_device_for_impl(std::forward<Lambda>(lambda), std::make_index_sequence<N>{});
-#else
-    for( std::size_t ii = 0; ii < N; ++ii )
-    {
-        [[clang::always_inline]] lambda( ii );
-    }
-#endif
-}
-
 /**
  * @name Unused variable markers.
  *
