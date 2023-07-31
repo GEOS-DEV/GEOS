@@ -97,21 +97,21 @@ public:
   virtual void smallStrainNoStateUpdate_StressOnly( localIndex const k,
                                                     localIndex const q,
                                                     real64 const ( &totalStrain )[6],
-                                                    real64 ( &stress )[6] ) const override final;
+                                                    real64 ( &stress )[6] ) const override;
 
   GEOS_HOST_DEVICE
   virtual void smallStrainNoStateUpdate( localIndex const k,
                                          localIndex const q,
                                          real64 const ( &totalStrain )[6],
                                          real64 ( &stress )[6],
-                                         real64 ( &stiffness )[6][6] ) const override final;
+                                         real64 ( &stiffness )[6][6] ) const override;
 
   GEOS_HOST_DEVICE
   virtual void smallStrainNoStateUpdate( localIndex const k,
                                          localIndex const q,
                                          real64 const ( &totalStrain )[6],
                                          real64 ( &stress )[6],
-                                         DiscretizationOps & stiffness ) const final;
+                                         DiscretizationOps & stiffness ) const;
 
   // incremental strain interfaces
 
@@ -120,7 +120,7 @@ public:
                                              localIndex const q,
                                              real64 const & timeIncrement,
                                              real64 const ( &strainIncrement )[6],
-                                             real64 ( &stress )[6] ) const override final;
+                                             real64 ( &stress )[6] ) const override;
 
   GEOS_HOST_DEVICE
   void smallStrainUpdate( localIndex const k,
@@ -136,14 +136,14 @@ public:
                                   real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
-                                  DiscretizationOps & stiffness ) const final;
+                                  DiscretizationOps & stiffness ) const;
 
   // miscellaneous getters
 
   GEOS_HOST_DEVICE
-  virtual void getElasticStiffness( localIndex const k, localIndex const q, real64 ( &stiffness )[6][6] ) const override final;
+  virtual void getElasticStiffness( localIndex const k, localIndex const q, real64 ( &stiffness )[6][6] ) const override;
 
-private:
+protected:
 
   /// A reference to the ArrayView holding c11 for each element.
   arrayView1d< real64 const > const m_c11;
