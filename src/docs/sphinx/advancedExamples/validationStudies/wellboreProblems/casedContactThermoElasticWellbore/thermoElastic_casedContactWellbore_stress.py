@@ -126,7 +126,7 @@ def main():
 	plt.ylabel('Radial stress [Pa]')
 	plt.xlabel('Radial coordinate [m]')
 	plt.xlim(0.15,0.4)
-	plt.ylim(-2.0,5.5)
+	plt.ylim(-2.0e6,5.5e6)
 
 	plt.subplot(1,2,2)
 	plt.plot( stress_tangent_analytic_1e4s[:,0],
