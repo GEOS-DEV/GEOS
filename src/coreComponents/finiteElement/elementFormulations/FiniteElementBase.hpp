@@ -915,7 +915,7 @@ void FiniteElementBase::symmetricGradient( GRADIENT_TYPE const & gradN,
   gradVar[0] = gradN[0][0] * var[0][0];
   gradVar[1] = gradN[0][1] * var[0][1];
   gradVar[2] = gradN[0][2] * var[0][2];
-  GEOS_PRAGMA_UNROLL
+  RAJA_UNROLL
   for( int a=1; a<NUM_SUPPORT_POINTS; ++a )
   {
     gradVar[0] = gradVar[0] + gradN[a][0] * var[ a ][0];
@@ -926,7 +926,7 @@ void FiniteElementBase::symmetricGradient( GRADIENT_TYPE const & gradN,
   gradVar[3] = gradN[0][2] * var[0][1] + gradN[0][1] * var[0][2];
   gradVar[4] = gradN[0][2] * var[0][0] + gradN[0][0] * var[0][2];
   gradVar[5] = gradN[0][1] * var[0][0] + gradN[0][0] * var[0][1];
-  GEOS_PRAGMA_UNROLL
+  RAJA_UNROLL
   for( int a=1; a<NUM_SUPPORT_POINTS; ++a )
   {
     gradVar[3] = gradVar[3] + gradN[a][2] * var[ a ][1] + gradN[a][1] * var[ a ][2];
@@ -1011,7 +1011,7 @@ void FiniteElementBase::plusGradNajAij( GRADIENT_TYPE const & gradN,
                                         real64 const (&var_detJxW)[6],
                                         real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
-  GEOS_PRAGMA_UNROLL
+  RAJA_UNROLL
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
     R[a][0] = R[a][0] + var_detJxW[0] * gradN[a][0] + var_detJxW[5] * gradN[a][1] + var_detJxW[4] * gradN[a][2];

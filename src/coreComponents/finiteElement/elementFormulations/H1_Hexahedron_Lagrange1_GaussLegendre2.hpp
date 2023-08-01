@@ -600,17 +600,17 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
 //  constexpr static int qxx[2][2] = { {0, 1}, {1, 0} };
 
   // Loop over the linear basis indices in each direction.
-  GEOS_PRAGMA_UNROLL
+  RAJA_UNROLL
   for( int a=0; a<2; ++a )
   {
     int const qaa = ( a^qa ); // abs(a-qa)
 //    int const qaa = qxx[a][qa]; // abs(a-qa)
-    GEOS_PRAGMA_UNROLL
+    RAJA_UNROLL
     for( int b=0; b<2; ++b )
     {
       int const qbb = ( b^qb );
       //int const qbb = qxx[b][qb];
-      GEOS_PRAGMA_UNROLL
+      RAJA_UNROLL
       for( int c=0; c<2; ++c )
       {
         int const qcc = ( c^qc );
@@ -635,17 +635,17 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
   constexpr static int qxx[2][2] = { {0, 1}, {1, 0} };
 
   // Loop over the linear basis indices in each direction.
-  GEOS_PRAGMA_UNROLL
+  RAJA_UNROLL
   for( int a=0; a<2; ++a )
   {
     //int const qaa = ( a^qa ); // abs(a-qa)
     int const qaa = qxx[a][qa]; // abs(a-qa)
-    GEOS_PRAGMA_UNROLL
+    RAJA_UNROLL
     for( int b=0; b<2; ++b )
     {
       //int const qbb = ( b^qb );
       int const qbb = qxx[b][qb];
-      GEOS_PRAGMA_UNROLL
+      RAJA_UNROLL
       for( int c=0; c<2; ++c )
       {
         //int const qcc = ( c^qc );
@@ -951,10 +951,10 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const qa,
                                                  real64 const (&var)[numNodes][3],
                                                  real64 (& grad)[3][3] )
   {
-    GEOS_PRAGMA_UNROLL
+    RAJA_UNROLL
     for( int i = 0; i < 3; ++i )
     {
-      GEOS_PRAGMA_UNROLL
+      RAJA_UNROLL
       for( int k = 0; k < 3; ++k )
       {
         grad[k][i] = grad[k][i] + dNdXi[ i ] * var[ nodeIndex ][k];
@@ -962,13 +962,13 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const qa,
     }
   }, var, parentGrad );
 
-  GEOS_PRAGMA_UNROLL
+  RAJA_UNROLL
   for( int i = 0; i < 3; ++i )
   {
-    GEOS_PRAGMA_UNROLL
+    RAJA_UNROLL
     for( int j = 0; j < 3; ++j )
     {
-      GEOS_PRAGMA_UNROLL
+      RAJA_UNROLL
       for( int k = 0; k < 3; ++k )
       {
         grad[i][j] = grad[i][j] + parentGrad[i][k] * invJ[k][j];
@@ -995,10 +995,10 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::parentGradient2( int const qa,
                                                  real64 (& grad1)[3][3],
                                                  real64 (& grad2)[3][3] )
   {
-    GEOS_PRAGMA_UNROLL
+    RAJA_UNROLL
     for( int i = 0; i < 3; ++i )
     {
-      GEOS_PRAGMA_UNROLL
+      RAJA_UNROLL
       for( int k = 0; k < 3; ++k )
       {
         grad1[k][i] = grad1[k][i] + dNdXi[ i ] * var1[ nodeIndex ][k];
@@ -1023,10 +1023,10 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::parentGradient2( real64 const (&var
                                                    real64 (& grad1)[3][3],
                                                    real64 (& grad2)[3][3] )
   {
-    GEOS_PRAGMA_UNROLL
+    RAJA_UNROLL
     for( int i = 0; i < 3; ++i )
     {
-      GEOS_PRAGMA_UNROLL
+      RAJA_UNROLL
       for( int k = 0; k < 3; ++k )
       {
         grad1[k][i] = grad1[k][i] + dNdXi[ i ] * var1[ nodeIndex ][k];
@@ -1047,10 +1047,10 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::parentGradient( real64 const (&var)
                                                    real64 const (&var)[numNodes][3],
                                                    real64 (& grad)[3][3] )
   {
-    GEOS_PRAGMA_UNROLL
+    RAJA_UNROLL
     for( int i = 0; i < 3; ++i )
     {
-      GEOS_PRAGMA_UNROLL
+      RAJA_UNROLL
       for( int k = 0; k < 3; ++k )
       {
         grad[k][i] = grad[k][i] + dNdXi[ i ] * var[ nodeIndex ][k];
