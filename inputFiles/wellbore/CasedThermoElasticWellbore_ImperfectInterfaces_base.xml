@@ -19,7 +19,7 @@
         directParallel="0"
         solverType="direct"/>
     </SinglePhasePoromechanicsConformingFractures>
-    <!-- SPHINX_ContactTHMSolveEnd -->
+    <!-- SPHINX_ContactTHMSolverEnd -->
 
     <SinglePhasePoromechanics
       name="thermoElasticSolver"
