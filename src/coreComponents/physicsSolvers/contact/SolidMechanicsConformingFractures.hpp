@@ -122,16 +122,6 @@ public:
   bool resetConfigurationToDefault( DomainPartition & domain ) const override final;
   
   bool updateConfiguration( DomainPartition & domain ) override final;
-  
-  /**
-   * @Brief add the number of nonzeros induced by coupling
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param rowLengths 1D array for storing the number of nonzeros in each row
-   */
-  void addCouplingNumNonzeros( DomainPartition & domain,
-                               DofManager & dofManager,
-                               arrayView1d< localIndex > const & rowLengths ) const;
 
   /**
    * @Brief add the sparsity pattern induced by the coupling
@@ -169,6 +159,10 @@ private:
 
   void computeNodalDisplacementJump( DomainPartition & domain ) const;
   
+  void permutateNodeIndices( arrayView2d< localIndex const > const & elemsToFaces, localIndex const kfe, 
+                             ArrayOfArraysView< localIndex const > const & faceToNodeMap, 
+                             array1d< localIndex > & slaveFaceNodeMap ) const;
+
   void computeRotationMatrices( DomainPartition & domain ) const;
 
   void computeFaceNodalArea( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
@@ -176,7 +170,8 @@ private:
                              localIndex const kf0,
                              array1d< real64 > & nodalArea ) const;
 
-  void computeNodalTractionDOFs( DomainPartition & domain, DofManager & dofManager ) const;
+  localIndex computeNodalTractionDOFs( DomainPartition & domain, DofManager & dofManager,
+                                 arrayView1d< localIndex > const & rowLengths ) const;
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
