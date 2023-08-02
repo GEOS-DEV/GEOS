@@ -2264,6 +2264,10 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="directEffect" type="real64" use="required" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
+		<!--faultNormal => Fault normal direction-->
+		<xsd:attribute name="faultNormal" type="real64_array" default="{0}" />
+		<!--faultShear => Fault shear direction-->
+		<xsd:attribute name="faultShear" type="real64_array" default="{0}" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--initialSigma => Initial normal stress-->
