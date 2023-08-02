@@ -17,6 +17,7 @@
 #define GEOS_FILEIO_VTK_VTKPOLYDATAWRITERINTERFACE_HPP_
 
 #include "common/DataTypes.hpp"
+#include "mesh/ObjectManagerBase.hpp"
 #include "dataRepository/WrapperBase.hpp"
 #include "dataRepository/Wrapper.hpp"
 #include "fileIO/vtk/VTKPVDWriter.hpp"
@@ -167,6 +168,14 @@ public:
   {
     m_levelNames.insert( levelNames.begin(), levelNames.end() );
   }
+  /**
+   * @brief Set the Number Of Target Processes
+   * @param[in] numberOfTargetProcesses  the number of processes
+   */
+  void setNumberOfTargetProcesses( integer const numberOfTargetProcesses )
+  {
+    m_numberOfTargetProcesses = numberOfTargetProcesses;
+  }
 
   /**
    * @brief Main method of this class. Write all the files for one time step.
@@ -210,7 +219,7 @@ public:
   void clearData();
 
 
-private:
+protected:
 
   /**
    * @brief Check if plotting is enabled for this field
@@ -232,11 +241,7 @@ private:
   void writeCellElementRegions( real64 time,
                                 ElementRegionManager const & elemManager,
                                 NodeManager const & nodeManager,
-                                string const & path ) const;
-
-  void writeParticleRegions( real64 const time,
-                             ParticleManager const & particleManager,
-                             string const & path ) const;
+                                string const & path );
 
   /**
    * @brief Writes the files containing the well representation
@@ -249,7 +254,11 @@ private:
   void writeWellElementRegions( real64 time,
                                 ElementRegionManager const & elemManager,
                                 NodeManager const & nodeManager,
-                                string const & path ) const;
+                                string const & path );
+
+  void writeParticleRegions( real64 const time,
+                             ParticleManager const & particleManager,
+                             string const & path );
 
   /**
    * @brief Writes the files containing the faces elements
@@ -309,9 +318,10 @@ private:
    * @param[in] path directory path for the grid file
    */
   void writeUnstructuredGrid( string const & path,
-                              vtkUnstructuredGrid * ug ) const;
+                              ObjectManagerBase const & region,
+                              vtkUnstructuredGrid * ug );
 
-private:
+protected:
 
   /// Output directory name
   string m_outputDir;
@@ -352,6 +362,11 @@ private:
 
   /// Defines whether to plot a faceElement as a 3D volumetric element or not.
   bool m_writeFaceElementsAs3D;
+
+  /// Number of target processes to aggregate the data to be written
+  integer m_numberOfTargetProcesses;
+
+  std::map< string, std::vector< integer > > m_targetProcessesId;
 };
 
 } // namespace vtk
