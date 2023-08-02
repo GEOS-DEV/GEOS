@@ -15,6 +15,7 @@
 #include "CellBlockManager.hpp"
 
 #include "mesh/generators/CellBlockUtilities.hpp"
+#include "mesh/generators/LineBlock.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 
 #include <algorithm>
@@ -29,6 +30,7 @@ CellBlockManager::CellBlockManager( string const & name, Group * const parent ):
 {
   this->registerGroup< Group >( viewKeyStruct::cellBlocks() );
   this->registerGroup< Group >( viewKeyStruct::faceBlocks() );
+  this->registerGroup< Group >( viewKeyStruct::lineBlocks() );
 }
 
 void CellBlockManager::resize( integer_array const & numElements,
@@ -677,9 +679,24 @@ Group & CellBlockManager::getCellBlocks()
   return this->getGroup( viewKeyStruct::cellBlocks() );
 }
 
+Group const & CellBlockManager::getFaceBlocks() const
+{
+  return this->getGroup( viewKeyStruct::faceBlocks() );
+}
+
 Group & CellBlockManager::getFaceBlocks()
 {
   return this->getGroup( viewKeyStruct::faceBlocks() );
+}
+
+Group & CellBlockManager::getLineBlocks()
+{
+  return this->getGroup( viewKeyStruct::lineBlocks() );
+}
+
+LineBlockABC const & CellBlockManager::getLineBlock( string name ) const
+{
+  return this->getGroup( viewKeyStruct::lineBlocks() ).getGroup< LineBlockABC >( name );
 }
 
 localIndex CellBlockManager::numNodes() const
@@ -737,6 +754,11 @@ CellBlock & CellBlockManager::registerCellBlock( string const & name )
 FaceBlock & CellBlockManager::registerFaceBlock( string const & name )
 {
   return this->getFaceBlocks().registerGroup< FaceBlock >( name );
+}
+
+LineBlock & CellBlockManager::registerLineBlock( string const & name )
+{
+  return this->getLineBlocks().registerGroup< LineBlock >( name );
 }
 
 array2d< real64, nodes::REFERENCE_POSITION_PERM > CellBlockManager::getNodePositions() const
@@ -1060,11 +1082,12 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
 
     cellBlock.resizeNumNodes( numNodesPerCell );
     elemsToNodesNew = cellBlock.getElemToNode();
+    localIndex const numCellElements = cellBlock.numElements();
 
     // then loop through all the elements and assign the globalID according to the globalID of the Element
     // and insert the new local to global ID ( for the internal nodes of elements ) into the nodeLocalToGlobal
     // retrieve finite element type
-    for( localIndex iter_elem = 0; iter_elem < numLocalCells; ++iter_elem )
+    for( localIndex iter_elem = 0; iter_elem < numCellElements; ++iter_elem )
     {
       localIndex newCellNodes = 0;
       for( localIndex iter_vertex = 0; iter_vertex < numVerticesPerCell; iter_vertex++ )

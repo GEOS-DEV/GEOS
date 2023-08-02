@@ -457,7 +457,7 @@ getVtkCells( CellElementRegion const & region,
 // Here we privilege code simplicity. This can be more efficient (less tests) if the code is
 // specialized for each type of subregion.
 // This is not a time sensitive part of the code. Can be optimized later if needed.
-    forAll< parallelHostPolicy >( subRegion.size(), [=, &connectivity, &offsets]( localIndex const c )
+    forAll< parallelHostPolicy >( subRegion.size(), [&]( localIndex const c )
     {
       localIndex const elemConnOffset = connOffset + c * numVtkData;
       auto const nodes = nodeList[c];
