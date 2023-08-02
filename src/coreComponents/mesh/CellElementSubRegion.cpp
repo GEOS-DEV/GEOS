@@ -95,8 +95,8 @@ void CellElementSubRegion::copyFromCellBlock( CellBlockABC const & cellBlock )
     types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
     {
       using ArrayType = camp::first< decltype( tupleOfTypes ) >;
-      Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
-      this->registerWrapper( wrapper.getName(), std::make_unique< ArrayType >( wrapperT.reference() ) );
+      auto const src = Wrapper< ArrayType >::cast( wrapper ).reference().toViewConst();
+      this->registerWrapper( wrapper.getName(), std::make_unique< ArrayType >( &src ) );
     }, wrapper );
   } );
 }
