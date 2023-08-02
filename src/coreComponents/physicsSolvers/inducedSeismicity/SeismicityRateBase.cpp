@@ -60,6 +60,9 @@ void SeismicityRateBase::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase & subRegion )
     {
+      subRegion.registerField< geos::fields::inducedSeismicity::meanStress >( getName() ).
+        reference().resizeDimension< 1 >( 6 );
+
       subRegion.registerField< geos::fields::inducedSeismicity::initialmeanNormalStress >( getName() );
       subRegion.registerField< geos::fields::inducedSeismicity::initialmeanShearStress >( getName() );
 
