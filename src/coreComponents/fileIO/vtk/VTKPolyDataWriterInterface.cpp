@@ -1301,7 +1301,7 @@ void VTKPolyDataWriterInterface::writeUnstructuredGrid( string const & path,
     auto const vtuWriter = vtkSmartPointer< vtkXMLUnstructuredGridWriter >::New();
     vtuWriter->SetInputData( aggregate->GetOutput() );
     vtuWriter->SetFileName( vtuFilePath.c_str() );
-    // vtuWriter->SetDataMode( vtkXMLWriter::Binary );
+    vtuWriter->SetDataMode( toVtkOutputMode( m_outputMode ) );
     vtuWriter->Write();
   }
 
@@ -1323,14 +1323,7 @@ void VTKPolyDataWriterInterface::writeUnstructuredGrid( string const & path,
                                         globalValues.end(),
                                         []( int x ) { return x == -1; } ),
                         globalValues.end());
-    // std::copy_if(globalValues.begin(), globalValues.end(),
-    //              std::back_inserter(m_targetProcessesId),
-    //              [](int x) { return x != -1; });
-
     m_targetProcessesId[region.getName()] = globalValues;
-
-    for( auto const & v: globalValues )
-      std::cout << v << " ";
   }
 }
 
