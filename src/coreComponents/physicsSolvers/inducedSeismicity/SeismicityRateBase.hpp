@@ -45,6 +45,8 @@ public:
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
     static constexpr char const * stressSolverNameString() { return "stressSolverName"; }
+    static constexpr char const * faultNormalString() { return "faultNormal"; }
+    static constexpr char const * faultShearString() { return "faultShear"; }
     static constexpr char const * initialSigmaString() { return "initialSigma"; }
     static constexpr char const * initialTauString() { return "initialTau"; }
   };
@@ -64,7 +66,10 @@ protected:
   /// intial stress conditions
   real64 m_initialSigma;
   real64 m_initialTau;
-  
+
+  /// fault orientation
+  array1d< real64 > m_faultNormal;
+  array1d< real64 > m_faultShear;
 };
 
 } /* namespace geos */

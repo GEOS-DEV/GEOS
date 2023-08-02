@@ -36,6 +36,12 @@ SeismicityRateBase::SeismicityRateBase( const string & name,
     this->registerWrapper( viewKeyStruct::stressSolverNameString(), &m_stressSolverName ).
           setInputFlag( InputFlags::REQUIRED ).
           setDescription( "Name of solver for computing stress" );
+    this->registerWrapper( viewKeyStruct::faultNormalString(), &m_faultNormal ).
+          setInputFlag( InputFlags::OPTIONAL ).
+          setDescription( "Fault normal direction" );
+    this->registerWrapper( viewKeyStruct::faultShearString(), &m_faultShear ).
+          setInputFlag( InputFlags::OPTIONAL ).
+          setDescription( "Fault shear direction" );
     this->registerWrapper( viewKeyStruct::initialSigmaString(), &m_initialSigma ).
           setInputFlag( InputFlags::OPTIONAL ).
           setDescription( "Initial normal stress" );
