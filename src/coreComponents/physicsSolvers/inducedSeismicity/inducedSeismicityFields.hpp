@@ -54,6 +54,14 @@ DECLARE_FIELD( pressureRate,
                LEVEL_0,
                WRITE_AND_READ,
                "Pore pressure rate");
+               
+DECLARE_FIELD( meanStress,
+               "meanStress",
+               array2d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Mean stress tensor over the element");
 
 DECLARE_FIELD( initialmeanNormalStress,
                "initialmeanNormalStress",

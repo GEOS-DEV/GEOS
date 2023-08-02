@@ -56,10 +56,11 @@ public:
                       DomainPartition & domain );
 
   void integralSolverStep( real64 const & time_n,
-                      real64 const & dt,
-                      integer const cycleNumber,
-                      DomainPartition & domain );
+                           real64 const & dt,
+                           integer const cycleNumber,
+                           DomainPartition & domain );
 
+  void updateMeanSolidStress( DomainPartition & domain );
 
 //END_SPHINX_INCLUDE_SOLVERINTERFACE
 
