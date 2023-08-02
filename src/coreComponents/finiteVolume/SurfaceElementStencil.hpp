@@ -459,6 +459,7 @@ SurfaceElementStencilWrapper::
 
       m_meanPermCoefficient = 0;
       real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
+      std::cout << "ff trans " << value << std::endl;
 
       weight[connectionIndex][0] = value;
       weight[connectionIndex][1] = -value;

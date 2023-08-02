@@ -254,6 +254,8 @@ inline void FaceElementToCellStencilWrapper::
   weight[0][0] = halfWeight;
   weight[0][1] = -halfWeight;
 
+  std::cout << "fm trans " << halfWeight << std::endl;
+
   dWeight_dVar[0][0] = 0.0 * dCoeff_dVar[er0][esr0][ei0][0][0];
   dWeight_dVar[0][1] = 0.0;
 }
