@@ -101,7 +101,7 @@ void SeismicityRateBase::initializePreSubGroups()
                                                      ElementSubRegionBase & subRegion )
     {
       // Initialize initial stresses as specified by user (normal and shear need to be specified if only calling flow solver)
-      if ( m_initialSigma > 0 )
+      if ( m_initialSigma < 0 )
       {
         arrayView1d< real64 > const tempSigIni = subRegion.getField< geos::fields::inducedSeismicity::initialmeanNormalStress >();
         tempSigIni.setValues< parallelHostPolicy >( m_initialSigma );
@@ -111,7 +111,7 @@ void SeismicityRateBase::initializePreSubGroups()
         tempSig_n.setValues< parallelHostPolicy >( m_initialSigma );
       }
 
-      if ( m_initialTau > 0 )
+      if ( m_initialTau < 0 )
       {
         arrayView1d< real64 > const tempTauIni = subRegion.getField< geos::fields::inducedSeismicity::initialmeanShearStress >();
         tempTauIni.setValues< parallelHostPolicy >( m_initialTau );
@@ -129,8 +129,26 @@ void SeismicityRateBase::initializePreSubGroups()
 
 void SeismicityRateBase::postProcessInput()
 {
+  initializeFaultOrientation();
   m_stressSolver = &this->getParent().getGroup< SolverBase >( m_stressSolverName );
   SolverBase::postProcessInput();
+}
+
+void SeismicityRateBase::initializeFaultOrientation()
+{
+  m_faultNormalVoigt[0] = m_faultNormal[0]*m_faultNormal[0];
+  m_faultNormalVoigt[1] = m_faultNormal[1]*m_faultNormal[1];
+  m_faultNormalVoigt[2] = m_faultNormal[2]*m_faultNormal[2];
+  m_faultNormalVoigt[3] = 2*m_faultNormal[1]*m_faultNormal[2];
+  m_faultNormalVoigt[4] = 2*m_faultNormal[0]*m_faultNormal[2];
+  m_faultNormalVoigt[5] = 2*m_faultNormal[0]*m_faultNormal[1];
+
+  m_faultShearVoigt[0] = m_faultShear[0]*m_faultNormal[0];
+  m_faultShearVoigt[1] = m_faultShear[1]*m_faultNormal[1];
+  m_faultShearVoigt[2] = m_faultShear[2]*m_faultNormal[2];
+  m_faultShearVoigt[3] = m_faultShear[1]*m_faultNormal[2] + m_faultShear[2]*m_faultNormal[1];
+  m_faultShearVoigt[4] = m_faultShear[0]*m_faultNormal[2] + m_faultShear[2]*m_faultNormal[0];
+  m_faultShearVoigt[5] = m_faultShear[0]*m_faultNormal[1] + m_faultShear[1]*m_faultNormal[0];
 }
 
 SeismicityRateBase::~SeismicityRateBase()

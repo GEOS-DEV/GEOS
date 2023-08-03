@@ -52,10 +52,12 @@ public:
   };
 
   virtual void initializePreSubGroups() override;
-
+  
 protected:
 
   virtual void postProcessInput() override;
+
+  void initializeFaultOrientation();
 
   /// pointer to stress solver
   SolverBase * m_stressSolver;
@@ -70,6 +72,8 @@ protected:
   /// fault orientation
   array1d< real64 > m_faultNormal;
   array1d< real64 > m_faultShear;
+  real64 m_faultNormalVoigt[6];
+  real64 m_faultShearVoigt[6];
 };
 
 } /* namespace geos */
