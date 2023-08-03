@@ -101,7 +101,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
 #if !defined( GEOS_USE_HIP )
           return std::make_unique< H1_Wedge_VEM_Gauss1 >();
 #else
-          GEOS_ERROR( "Cannot compile this on Crusher." );
+          GEOS_ERROR( "Cannot compile this with HIP active." );
           return nullptr;
 #endif
         }
@@ -117,7 +117,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
 #if !defined( GEOS_USE_HIP )
           return std::make_unique< H1_Hexahedron_VEM_Gauss1 >();
 #else
-          GEOS_ERROR( "Cannot compile this on Crusher." );
+          GEOS_ERROR( "Cannot compile this with HIP active." );
           return nullptr;
 #endif
         }
@@ -126,7 +126,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
 #if !defined( GEOS_USE_HIP )
           return std::make_unique< Q1_Hexahedron_Lagrange_GaussLobatto >();
 #else
-          GEOS_ERROR( "Cannot compile this on Crusher." );
+          GEOS_ERROR( "Cannot compile this with HIP active." );
           return nullptr;
 #endif
         }
@@ -184,7 +184,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
                        "Element type Hexahedron with order 2 available only when using the Spectral Element Method" );
         return std::make_unique< Q2_Hexahedron_Lagrange_GaussLobatto >();
 #else
-      GEOS_ERROR( "Cannot compile this on Crusher." );
+      GEOS_ERROR( "Cannot compile this with HIP active." );
 #endif
       default:
       {
@@ -204,7 +204,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
                        "Element type Hexahedron with order 3 available only when using the Spectral Element Method" );
         return std::make_unique< Q3_Hexahedron_Lagrange_GaussLobatto >();
 #else
-      GEOS_ERROR( "Cannot compile this on Crusher." );
+      GEOS_ERROR( "Cannot compile this with HIP active." );
 #endif
       default:
       {
@@ -224,7 +224,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
                        "Element type Hexahedron with order 4 available only when using the Spectral Element Method" );
         return std::make_unique< Q4_Hexahedron_Lagrange_GaussLobatto >();
 #else
-      GEOS_ERROR( "Cannot compile this on Crusher." );
+      GEOS_ERROR( "Cannot compile this with HIP active." );
 #endif
       default:
       {
@@ -244,7 +244,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
                        "Element type Hexahedron with order 5 available only when using the Spectral Element Method" );
         return std::make_unique< Q5_Hexahedron_Lagrange_GaussLobatto >();
 #else
-      GEOS_ERROR( "Cannot compile this on Crusher." );
+      GEOS_ERROR( "Cannot compile this with HIP active." );
 #endif
       default:
       {
