@@ -249,12 +249,12 @@ void DieterichSeismicityRate::integralSolverStep( real64 const & time_n,
           // real64 g_n = (curTau_n + backgroundStressingRate[k]*time_n)/(directEffect[k]*(sig_n[k]-p_n[k])) 
           //                     - tau_i[k]/(directEffect[k]*(sig_i[k]-p_i[k]));
 
-          real64 g = (tau[k] + backgroundStressingRate[k]*(time_n+dt))/(directEffect[k]*(sig[k]-p[k])) 
-                              - tau_i[k]/(directEffect[k]*(sig_i[k]-p_i[k]));
-          real64 g_n = (tau_n[k] + backgroundStressingRate[k]*time_n)/(directEffect[k]*(sig_n[k]-p_n[k])) 
-                              - tau_i[k]/(directEffect[k]*(sig_i[k]-p_i[k]));
+          real64 g = (tau[k] + backgroundStressingRate[k]*(time_n+dt))/(directEffect[k]*(-sig[k]-p[k])) 
+                              - tau_i[k]/(directEffect[k]*(-sig_i[k]-p_i[k]));
+          real64 g_n = (tau_n[k] + backgroundStressingRate[k]*time_n)/(directEffect[k]*(-sig_n[k]-p_n[k])) 
+                              - tau_i[k]/(directEffect[k]*(-sig_i[k]-p_i[k]));
 
-          real64 deltaLogDenom = std::log(1 + dt/(2*(directEffect[k]*sig[k]/backgroundStressingRate[k]))
+          real64 deltaLogDenom = std::log(1 + dt/(2*(directEffect[k]*-sig_i[k]/backgroundStressingRate[k]))
                                               *(std::exp(g - logDenom_n[k]) + std::exp(g_n - logDenom_n[k]) ));
           logDenom[k] = logDenom_n[k] + deltaLogDenom;
   
@@ -288,21 +288,38 @@ void DieterichSeismicityRate::updateMeanSolidStress( DomainPartition & domain )
         arrayView1d< real64 > const tau_n = subRegion.getField< inducedSeismicity::meanShearStress_n >();
 
         // get solid stresses
-        string const & solidModelName = subRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString());
-        SolidBase const & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidModelName );
-        arrayView3d< real64 const, solid::STRESS_USD > stress = solidModel.getStress();
+        // string const & solidModelName = subRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString());
+        // SolidBase const & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidModelName );
+        // arrayView3d< real64 const, solid::STRESS_USD > stress = solidModel.getStress();
         
-        // loop over elements 
-        forAll< parallelDevicePolicy<> >(  sig.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-        {
-          // loop over quadrature points and average
-          forAll< parallelDevicePolicy<> >(  stress.size( 1 ), [=] GEOS_HOST_DEVICE ( localIndex const q )
-          {
-            LvArray::tensorOps::add< 6 >( meanStress[k], stress[k][q] );
-          } );
+        string const porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
+        PorousSolidBase & porousSolid = subRegion.template getConstitutiveModel< PorousSolidBase >( porousSolidName );
 
-          // average
-          LvArray::tensorOps::scale< 6 >(meanStress[k], 1./stress.size(1));
+        constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+        {
+          typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
+          // loop over elements 
+          forAll< parallelDevicePolicy<> >(  sig.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+          {
+            // update previous solutions
+            sig_n[k] = sig[k];
+            tau_n[k] = tau[k];
+
+            // loop over quadrature points and sum
+            // use a normal loop
+
+            for(integer q = 0; q < numQuadPoints; q++ ) 
+            {
+              LvArray::tensorOps::add< 6 >( meanStress[k], stress[k][q] );
+            }
+
+            // average
+            LvArray::tensorOps::scale< 6 >(meanStress[k], 1./stress.size(1));
+
+            // Compute fault normal and shear stresses
+            sig[k] = LvArray::tensorOps::AiBi< 6 >( meanStress[k], m_faultNormalVoigt);
+            tau[k] = LvArray::tensorOps::AiBi< 6 >( meanStress[k], m_faultShearVoigt);
+          } );
         } );
       } );
     } );
