@@ -4,7 +4,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/tioga-base.cmake)
 set( CONDUIT_DIR "${GEOSX_TPL_DIR}/conduit-0.8.7" CACHE PATH "" )
 set( HDF5_DIR "${GEOSX_TPL_DIR}/hdf5-1.14.1-2" CACHE PATH "" )
 
-set( BLAS_DIR "/opt/rocm-5.4.0/" CACHE PATH "" )
+set( BLAS_DIR "/opt/rocm-5.4.3/" CACHE PATH "" )
 
 set( PUGIXML_DIR "${GEOSX_TPL_DIR}/pugixml-1.13" CACHE PATH "" )
 set( FMT_DIR "${GEOSX_TPL_DIR}/fmt-10.0.0" CACHE PATH "" )
