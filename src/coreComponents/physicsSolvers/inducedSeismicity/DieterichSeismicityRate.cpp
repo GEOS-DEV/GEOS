@@ -292,12 +292,14 @@ void DieterichSeismicityRate::updateMeanSolidStress( DomainPartition & domain )
         // SolidBase const & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidModelName );
         // arrayView3d< real64 const, solid::STRESS_USD > stress = solidModel.getStress();
         
+        // pass porous solid model through for loop
         string const porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
-        PorousSolidBase & porousSolid = subRegion.template getConstitutiveModel< PorousSolidBase >( porousSolidName );
+        CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( porousSolidName );
 
-        constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+        constitutive::ConstitutivePassThru< PorousSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
         {
           typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
+
           // loop over elements 
           forAll< parallelDevicePolicy<> >(  sig.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
           {
@@ -308,13 +310,17 @@ void DieterichSeismicityRate::updateMeanSolidStress( DomainPartition & domain )
             // loop over quadrature points and sum
             // use a normal loop
 
-            for(integer q = 0; q < numQuadPoints; q++ ) 
-            {
-              LvArray::tensorOps::add< 6 >( meanStress[k], stress[k][q] );
-            }
+            double temp[6][6] = {0.0};
+
+            porousMaterialWrapper.getElasticStiffness(k, 0, temp);
+
+            // for( int q = 0; q < numQuadPoints; q++ ) 
+            // {Coupled
+            //   LvArray::tensorOps::add< 6 >( meanStress[k], stress[k][q] );
+            // }
 
             // average
-            LvArray::tensorOps::scale< 6 >(meanStress[k], 1./stress.size(1));
+            // LvArray::tensorOps::scale< 6 >(meanStress[k], 1./numQuadPoints);
 
             // Compute fault normal and shear stresses
             sig[k] = LvArray::tensorOps::AiBi< 6 >( meanStress[k], m_faultNormalVoigt);
