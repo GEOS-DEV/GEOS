@@ -6,10 +6,10 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ cb1 }"
-      materialList="{ water, rock }"/>
+      materialList="{ water, porousRock }"/>
 
     <SurfaceElementRegion
-      name="Fracture"
+      name="Fracture"      
       defaultAperture="0.02e-3"
       materialList="{ water, rock, fractureFilling, fractureContact }"/>
   </ElementRegions>
@@ -20,17 +20,32 @@
     <CompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
-      defaultViscosity="0.001"
+      defaultViscosity="1.0e-6"
       referencePressure="0.0"
-      compressibility="5e-12"
-      referenceViscosity="1.0e-3"
+      compressibility="5e-13"
+      referenceViscosity="1.0e-6"
       viscosibility="0.0"/>
+
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="rock"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>  
 
     <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultBulkModulus="20.0e9"
       defaultShearModulus="12.0e9"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      grainBulkModulus="1.2e11"
+      defaultReferencePorosity="0.3"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-18, 1.0e-18, 1.0e-18 }"/>  
 
     <CompressibleSolidParallelPlatesPermeability
       name="fractureFilling"
@@ -56,7 +71,7 @@
       apertureTableName="apertureTable"/>
   </Constitutive>
   <!-- SPHINX_MATERIAL_END -->
-
+  
   <!-- SPHINX_NUMERICAL -->
   <NumericalMethods>
     <FiniteElements>
@@ -68,7 +83,6 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        meanPermCoefficient="0.8"
         />
     </FiniteVolume>
   </NumericalMethods>
@@ -135,8 +149,8 @@
   <Functions>
     <TableFunction
       name="apertureTable"
-      coordinates="{ -0.01, -1.0e-3, 0.0 }"
-      values="{ 0.005e-3, 0.01e-3, 0.02e-3 }"/>
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 0.002e-3, 0.02e-3 }"/>
   </Functions>
 
   <!-- SPHINX_TASKS -->
@@ -159,39 +173,22 @@
     <PackCollection
       name="areaCollection"
       objectPath="ElementRegions/Fracture/FractureSubRegion"
-      fieldName="elementArea"/>
-
-    <!-- Collect aperture, pressure at the source for curve checks -->
-    <PackCollection
-      name="sourcePressureCollection"
-      objectPath="ElementRegions/Fracture/FractureSubRegion"
-      fieldName="pressure"
-      setNames="{ source }"/>
-
-    <PackCollection
-      name="sourceHydraulicApertureCollection"
-      objectPath="ElementRegions/Fracture/FractureSubRegion"
-      fieldName="hydraulicAperture"
-      setNames="{ source }"/>
+      fieldName="elementArea"/> 
   </Tasks>
   <!-- SPHINX_TASKS_END -->
 
-  <!-- SPHINX_OUTPUT -->          
+  <!-- SPHINX_OUTPUT -->    
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="zeroToughness"
+      plotFileRoot="zeroViscosity_poroelastic"
       plotLevel="3"
       parallelThreads="48"/>
 
     <TimeHistory
       name="timeHistoryOutput"
       sources="{/Tasks/pressureCollection, /Tasks/apertureCollection, /Tasks/hydraulicApertureCollection, /Tasks/areaCollection}"
-      filename="pennyShapedViscosityDominated_output" />  
-    <TimeHistory
-      name="curveOutput"
-      sources="{/Tasks/sourcePressureCollection, /Tasks/sourceHydraulicApertureCollection}"
-      filename="hydrofracture_source_curves" />
+      filename="pennyShapedToughnessDominated_output" />  
 
     <Restart
       name="restartOutput"/>
