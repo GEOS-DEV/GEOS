@@ -257,6 +257,9 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
         timeSourceFrequency,
         rickerOrder );
     } );
+    elemsToFaces.freeOnDevice();
+    sourceCoordinates.freeOnDevice();
+    receiverCoordinates.freeOnDevice();
   } );
 
 }

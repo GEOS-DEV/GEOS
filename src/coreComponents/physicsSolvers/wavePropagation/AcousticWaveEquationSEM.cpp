@@ -208,6 +208,9 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
           rickerOrder );
       }
     } );
+    elemsToFaces.freeOnDevice();
+    sourceCoordinates.freeOnDevice();
+    receiverCoordinates.freeOnDevice();
   } );
 }
 
@@ -320,6 +323,11 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                  velocity,
                                                                  damping );
         }
+        facesToElements.freeOnDevice();
+        facesDomainBoundaryIndicator.freeOnDevice();
+        freeSurfaceFaceIndicator.freeOnDevice();
+        velocity.freeOnDevice();
+        facesToNodes.freeOnDevice();
       } );
     } );
   } );

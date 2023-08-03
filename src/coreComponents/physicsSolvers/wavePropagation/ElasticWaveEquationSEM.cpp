@@ -375,6 +375,9 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
         m_sourceForce,
         m_sourceMoment );
     } );
+    elemsToFaces.freeOnDevice();
+    sourceCoordinates.freeOnDevice();
+    receiverCoordinates.freeOnDevice();
   } );
 }
 
@@ -588,6 +591,13 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                dampingx,
                                                                dampingy,
                                                                dampingz );
+        facesToElements.freeOnDevice();
+        facesDomainBoundaryIndicator.freeOnDevice();
+        freeSurfaceFaceIndicator.freeOnDevice();
+        density.freeOnDevice();
+        velocityVp.freeOnDevice();
+        velocityVs.freeOnDevice();
+        facesToNodes.freeOnDevice();
       } );
     } );
   } );

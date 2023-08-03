@@ -309,6 +309,9 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
         timeSourceFrequency,
         rickerOrder );
     } );
+    elemsToFaces.freeOnDevice();
+    sourceCoordinates.freeOnDevice();
+    receiverCoordinates.freeOnDevice();
   } );
 }
 
@@ -418,6 +421,13 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
                                                                dampingx,
                                                                dampingy,
                                                                dampingz );
+        facesToElements.freeOnDevice();
+        facesDomainBoundaryIndicator.freeOnDevice();
+        freeSurfaceFaceIndicator.freeOnDevice();
+        density.freeOnDevice();
+        velocityVp.freeOnDevice();
+        velocityVs.freeOnDevice();
+        facesToNodes.freeOnDevice();
       } );
     } );
   } );
