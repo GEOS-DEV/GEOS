@@ -3,7 +3,7 @@
 <Problem>
   <Included>
     <File
-      name="./pknViscosityDominated_base.xml"/>
+      name="./pknViscosityDominated_poroelastic_base.xml"/>
   </Included>
 
   <Solvers
@@ -15,15 +15,15 @@
       flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
       logLevel="1"
-      targetRegions="{ Fracture }"
+      targetRegions="{ Domain, Fracture }"
+      isMatrixPoroelastic="1"
       contactRelationName="fractureContact"
       maxNumResolves="5"
       initialDt="0.1">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
         newtonMaxIter="10"
-        maxTimeStepCuts="5"
-        maxAllowedResidualNorm="1e+15"/>
+        maxTimeStepCuts="5"/>
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="mgr"
@@ -51,7 +51,7 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }">
+      targetRegions="{ Domain, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="10"/>
