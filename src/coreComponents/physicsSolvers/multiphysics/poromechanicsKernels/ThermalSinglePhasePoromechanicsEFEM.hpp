@@ -63,6 +63,7 @@ public:
   using Base::m_elementVolume;
   using Base::m_deltaVolume;
   using Base::m_cellsToEmbeddedSurfaces;
+  using Base::m_dt;
 
 
 
@@ -80,6 +81,7 @@ public:
                                        globalIndex const rankOffset,
                                        CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                        arrayView1d< real64 > const inputRhs,
+                                       real64 const inputDt,
                                        real64 const (&inputGravityVector)[3],
                                        string const fluidModelKey );
 
