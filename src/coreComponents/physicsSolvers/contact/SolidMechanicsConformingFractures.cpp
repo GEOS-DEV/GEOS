@@ -190,10 +190,23 @@ void SolidMechanicsConformingFractures::setupSystem( DomainPartition & domain,
   localIndex const totalNumDofs = dofManager.numLocalDofs() + numLocalLagrangeMultipliers; 
 
   rhs.setName( this->getName() + "/rhs" );
-  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  rhs.create( totalNumDofs, MPI_COMM_GEOSX );
 
   solution.setName( this->getName() + "/solution" );
-  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  solution.create( totalNumDofs, MPI_COMM_GEOSX );
+
+//  if( getLogLevel() >= 0 )
+//  {
+//    string filename_mat = "matrix_setup" + ".mtx";
+//    matrix.write( filename_mat );
+
+//    string filename_rhs = "rhs_setup" + ".mtx";
+//    rhs.write( filename_rhs );
+
+//    GEOS_LOG_RANK_0( "After SolidMechanicsConformingFractures::setupSystem" );
+//    GEOS_LOG_RANK_0( "Jacobian: written to " << filename_mat );
+//    GEOS_LOG_RANK_0( "Residual: written to " << filename_rhs );
+//  }
 
 }
 
@@ -222,7 +235,7 @@ void SolidMechanicsConformingFractures::addCouplingSparsityPattern( DomainPartit
       forAll< parallelHostPolicy >( subRegion.size(), [&] ( localIndex const kfe )
       {
         localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
-        array1d< localIndex > slaveFaceNodeMap;
+        array1d< localIndex > slaveFaceNodeMap; // childFaceNodeMap
         permutateNodeIndices( elemsToFaces, kfe , faceToNodeMap, slaveFaceNodeMap );
 
         for ( localIndex lagIndex = 0; lagIndex < numNodesPerFace; ++lagIndex )
