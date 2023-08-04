@@ -305,6 +305,7 @@ using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDa
                                                                     globalIndex,
                                                                     CRSMatrixView< real64, globalIndex const > const,
                                                                     arrayView1d< real64 > const,
+                                                                    real64 const,
                                                                     string const,
                                                                     int >;
 

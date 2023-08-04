@@ -351,6 +351,7 @@ using MultiphasePoromechanicsKernelFactory =
                                 globalIndex const,
                                 CRSMatrixView< real64, globalIndex const > const,
                                 arrayView1d< real64 > const,
+                                real64 const,
                                 real64 const (&)[3],
                                 string const,
                                 localIndex const,

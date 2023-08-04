@@ -261,6 +261,7 @@ using LaplaceFEMKernelFactory = finiteElement::KernelFactory< LaplaceFEMKernel,
                                                               globalIndex const,
                                                               CRSMatrixView< real64, globalIndex const > const,
                                                               arrayView1d< real64 > const,
+                                                              real64 const,
                                                               string const >;
 
 } // namespace geos

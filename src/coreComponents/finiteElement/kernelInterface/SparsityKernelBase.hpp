@@ -85,6 +85,7 @@ public:
                       CONSTITUTIVE_TYPE & inputConstitutiveType,
                       arrayView1d< globalIndex const > const & inputDofNumber,
                       globalIndex const rankOffset,
+                      real64 const inputDt,
                       SparsityPattern< globalIndex > & inputSparsity ):
     Base( nodeManager,
           edgeManager,
@@ -96,7 +97,8 @@ public:
           inputDofNumber,
           rankOffset,
           CRSMatrixView< real64, globalIndex const >(),
-          arrayView1d< real64 >() ),
+          arrayView1d< real64 >(),
+          inputDt ),
     m_sparsity( inputSparsity )
   {}
 
