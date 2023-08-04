@@ -54,7 +54,7 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[in] sourceMoment moment (symmetric rank-2 tensor) of the source
    * @param[in] useDAS parameter that determines which kind of receiver needs to be modeled (DAS or not, and which type)
    * @param[in] linearDASSamples parameter that gives the number of integration points to be used when computing the DAS signal via strain
-   * integration
+   *integration
    * @param[in] linearDASGeometry geometry of the linear DAS receivers, if needed
    * @param[in] rickerOrder Order of the Ricker wavelet
    * @param[out] sourceIsAccessible flag indicating whether the source is accessible or not
