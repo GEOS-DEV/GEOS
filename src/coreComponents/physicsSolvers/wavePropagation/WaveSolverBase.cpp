@@ -109,7 +109,6 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Set the capacity of the lifo host storage" );
 
-
   registerWrapper( viewKeyStruct::usePMLString(), &m_usePML ).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0 ).
@@ -214,6 +213,7 @@ void WaveSolverBase::postProcessInput()
   if( m_useDAS == 0 && m_linearDASGeometry.size( 1 ) > 0 )
   {
     m_useDAS = 1;
+    m_linearDASSamples = 5;
   }
 
   if( m_useDAS == 2 )
@@ -232,7 +232,7 @@ void WaveSolverBase::postProcessInput()
     GEOS_ERROR_IF( m_linearDASGeometry.size( 0 ) != m_receiverCoordinates.size( 0 ),
                    "Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
 
-    /// initialize DAS geometry by duplicating receiver locations
+    /// initialize DAS geometry by adding receiver locations along the DAS, as needed
     initializeDAS();
   }
 
@@ -276,8 +276,8 @@ void WaveSolverBase::postProcessInput()
 
 void WaveSolverBase::initializeDAS()
 {
-  /// double the number of receivers and modify their coordinates
-  /// so to have two receivers on each side of each DAS channel
+  /// increase the number of receivers and modify their coordinates
+  /// so to have two correct number of receivers along each DAS channel
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
   m_receiverCoordinates.resize( m_linearDASSamples*numReceiversGlobal, 3 );
 
@@ -300,13 +300,14 @@ void WaveSolverBase::initializeDAS()
 
   for( localIndex ircv = 0; ircv < numReceiversGlobal; ++ircv )
   {
+    R1Tensor receiverCenter = { receiverCoordinates[ ircv ][ 0 ], receiverCoordinates[ ircv ][ 1 ], receiverCoordinates[ ircv ][ 2 ] };
     for( integer i = 0; i < m_linearDASSamples; i++ )
     {
       /// updated xyz of sample receiver along DAS
       R1Tensor dasVector = WaveSolverUtils::computeDASVector( linearDASGeometry[ ircv ][ 0 ], linearDASGeometry[ ircv ][ 1 ] );
-      receiverCoordinates[ i*numReceiversGlobal + ircv ][ 0 ] = receiverCoordinates[ ircv ][ 0 ] + dasVector[ 0 ] * linearDASGeometry[ ircv ][ 2 ] * samplePointLocations[ i ];
-      receiverCoordinates[ i*numReceiversGlobal + ircv ][ 1 ] = receiverCoordinates[ ircv ][ 1 ] + dasVector[ 1 ] * linearDASGeometry[ ircv ][ 2 ] * samplePointLocations[ i ];
-      receiverCoordinates[ i*numReceiversGlobal + ircv ][ 2 ] = receiverCoordinates[ ircv ][ 2 ] + dasVector[ 2 ] * linearDASGeometry[ ircv ][ 2 ] * samplePointLocations[ i ];
+      receiverCoordinates[ i*numReceiversGlobal + ircv ][ 0 ] = receiverCenter[ 0 ] + dasVector[ 0 ] * linearDASGeometry[ ircv ][ 2 ] * samplePointLocations[ i ];
+      receiverCoordinates[ i*numReceiversGlobal + ircv ][ 1 ] = receiverCenter[ 1 ] + dasVector[ 1 ] * linearDASGeometry[ ircv ][ 2 ] * samplePointLocations[ i ];
+      receiverCoordinates[ i*numReceiversGlobal + ircv ][ 2 ] = receiverCenter[ 2 ] + dasVector[ 2 ] * linearDASGeometry[ ircv ][ 2 ] * samplePointLocations[ i ];
     }
   }
 }

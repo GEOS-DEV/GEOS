@@ -191,16 +191,6 @@ struct PrecomputeSourceAndReceiverKernel
                                      receiverCoordinates[ircv][2] };
 
 
-          real64 xLocal[numNodesPerElem][3];
-
-          for( localIndex a=0; a< numNodesPerElem; ++a )
-          {
-            for( localIndex i=0; i<3; ++i )
-            {
-              xLocal[a][i] = X( elemsToNodes( k, a ), i );
-            }
-          }
-
           bool const receiverFound =
             WaveSolverUtils::locateSourceElement( numFacesPerElem,
                                                   center,
@@ -212,11 +202,20 @@ struct PrecomputeSourceAndReceiverKernel
           if( receiverFound && elemGhostRank[k] < 0 )
           {
             real64 coordsOnRefElem[3]{};
+            real64 xLocal[numNodesPerElem][3];
+
+            for( localIndex a=0; a< numNodesPerElem; ++a )
+            {
+              for( localIndex i=0; i<3; ++i )
+              {
+                xLocal[a][i] = X( elemsToNodes( k, a ), i );
+              }
+            }
+
             WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                                               elemsToNodes[k],
                                                                               X,
                                                                               coordsOnRefElem );
-
             receiverIsLocal[ircv] = 1;
 
             real64 N[FE_TYPE::numNodes];
@@ -226,15 +225,14 @@ struct PrecomputeSourceAndReceiverKernel
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
+              receiverNodeIds[ircv][a] = elemsToNodes[k][a];
               if( useDAS == 1 )
               {
-                R1Tensor receiverVector = WaveSolverUtils::computeDASVector( linearDASGeometry[ircv][0], linearDASGeometry[ircv][1] );
-                receiverNodeIds[ircv][a] = elemsToNodes[k][a];
+                R1Tensor receiverVector = WaveSolverUtils::computeDASVector( linearDASGeometry[ircv/linearDASSamples][0], linearDASGeometry[ircv/linearDASSamples][1] );
                 receiverConstants[ircv][a] = gradN[a][0] * receiverVector[0] + gradN[a][1] * receiverVector[1] + gradN[a][2] * receiverVector[2];
               }
               else
               {
-                receiverNodeIds[ircv][a] = elemsToNodes[k][a];
                 receiverConstants[ircv][a] = N[a];
               }
             }
