@@ -1149,6 +1149,13 @@ Element: VTK
 .. include:: ../../coreComponents/schema/docs/VTK.rst
 
 
+.. _XML_VTKCompositeMesh:
+
+Element: VTKCompositeMesh
+=========================
+.. include:: ../../coreComponents/schema/docs/VTKCompositeMesh.rst
+
+
 .. _XML_VTKMesh:
 
 Element: VTKMesh
@@ -2404,6 +2411,13 @@ Datastructure: TwoPointFluxApproximation
 Datastructure: VTK
 ==================
 .. include:: ../../coreComponents/schema/docs/VTK_other.rst
+
+
+.. _DATASTRUCTURE_VTKCompositeMesh:
+
+Datastructure: VTKCompositeMesh
+===============================
+.. include:: ../../coreComponents/schema/docs/VTKCompositeMesh_other.rst
 
 
 .. _DATASTRUCTURE_VTKMesh:

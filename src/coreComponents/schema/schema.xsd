@@ -253,6 +253,10 @@
 					<xsd:selector xpath="InternalWellbore" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="MeshVTKCompositeMeshUniqueName">
+					<xsd:selector xpath="VTKCompositeMesh" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="MeshVTKMeshUniqueName">
 					<xsd:selector xpath="VTKMesh" />
 					<xsd:field xpath="@name" />
@@ -1341,6 +1345,12 @@ stress - traction is applied to the faces as specified by the inner product of i
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 			</xsd:element>
+			<xsd:element name="VTKCompositeMesh" type="VTKCompositeMeshType">
+				<xsd:unique name="MeshVTKCompositeMeshInternalWellUniqueName">
+					<xsd:selector xpath="InternalWell" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
 			<xsd:element name="VTKMesh" type="VTKMeshType">
 				<xsd:unique name="MeshVTKMeshInternalWellUniqueName">
 					<xsd:selector xpath="InternalWell" />
@@ -1467,6 +1477,44 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="zBias" type="real64_array" default="{1}" />
 		<!--zCoords => z-coordinates of each mesh block vertex-->
 		<xsd:attribute name="zCoords" type="real64_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="VTKCompositeMeshType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="InternalWell" type="InternalWellType">
+				<xsd:unique name="MeshVTKCompositeMeshInternalWellPerforationUniqueName">
+					<xsd:selector xpath="Perforation" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
+		</xsd:choice>
+		<!--faceBlocks => For multi-block files, names of the face mesh block.-->
+		<xsd:attribute name="faceBlocks" type="string_array" default="{}" />
+		<!--fieldNamesInGEOSX => Names of the volumic fields in GEOSX to import into-->
+		<xsd:attribute name="fieldNamesInGEOSX" type="string_array" default="{}" />
+		<!--fieldsToImport => Volumic fields to be imported from the external mesh file-->
+		<xsd:attribute name="fieldsToImport" type="string_array" default="{}" />
+		<!--file => Path to the mesh file-->
+		<xsd:attribute name="file" type="path" use="required" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--mainBlockName => For multi-block files, name of the 3d mesh block.-->
+		<xsd:attribute name="mainBlockName" type="string" default="main" />
+		<!--nodesetNames => Names of the VTK nodesets to import-->
+		<xsd:attribute name="nodesetNames" type="string_array" default="{}" />
+		<!--regionAttribute => Name of the VTK cell attribute to use as region marker-->
+		<xsd:attribute name="regionAttribute" type="string" default="attribute" />
+		<!--scale => Scale the coordinates of the vertices by given scale factors (after translation)-->
+		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
+		<!--surfacicFieldsInGEOSX => Names of the surfacic fields in GEOSX to import into-->
+		<xsd:attribute name="surfacicFieldsInGEOSX" type="string_array" default="{}" />
+		<!--surfacicFieldsToImport => Surfacic fields to be imported from the external mesh file-->
+		<xsd:attribute name="surfacicFieldsToImport" type="string_array" default="{}" />
+		<!--translate => Translate the coordinates of the vertices by a given vector (prior to scaling)-->
+		<xsd:attribute name="translate" type="R1Tensor" default="{0,0,0}" />
+		<!--useGlobalIds => Controls the use of global IDs in the input file for cells and points. If set to 0 (default value), the GlobalId arrays in the input mesh are used if available, and generated otherwise. If set to a negative value, the GlobalId arrays in the input mesh are not used, and generated global Ids are automatically generated. If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available-->
+		<xsd:attribute name="useGlobalIds" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
