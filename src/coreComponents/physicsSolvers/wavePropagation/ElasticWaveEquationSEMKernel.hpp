@@ -54,7 +54,7 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[in] sourceMoment moment (symmetric rank-2 tensor) of the source
    * @param[in] useDAS parameter that determines which kind of receiver needs to be modeled (DAS or not, and which type)
    * @param[in] linearDASSamples parameter that gives the number of integration points to be used when computing the DAS signal via strain
-   *integration
+   * integration
    * @param[in] linearDASGeometry geometry of the linear DAS receivers, if needed
    * @param[in] rickerOrder Order of the Ricker wavelet
    * @param[out] sourceIsAccessible flag indicating whether the source is accessible or not
@@ -71,7 +71,7 @@ struct PrecomputeSourceAndReceiverKernel
   static void
   launch( localIndex const size,
           localIndex const numFacesPerElem,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView1d< integer const > const elemGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
@@ -191,16 +191,6 @@ struct PrecomputeSourceAndReceiverKernel
                                      receiverCoordinates[ircv][2] };
 
 
-          real64 xLocal[numNodesPerElem][3];
-
-          for( localIndex a=0; a< numNodesPerElem; ++a )
-          {
-            for( localIndex i=0; i<3; ++i )
-            {
-              xLocal[a][i] = X( elemsToNodes( k, a ), i );
-            }
-          }
-
           bool const receiverFound =
             WaveSolverUtils::locateSourceElement( numFacesPerElem,
                                                   center,
@@ -212,11 +202,20 @@ struct PrecomputeSourceAndReceiverKernel
           if( receiverFound && elemGhostRank[k] < 0 )
           {
             real64 coordsOnRefElem[3]{};
+            real64 xLocal[numNodesPerElem][3];
+
+            for( localIndex a=0; a< numNodesPerElem; ++a )
+            {
+              for( localIndex i=0; i<3; ++i )
+              {
+                xLocal[a][i] = X( elemsToNodes( k, a ), i );
+              }
+            }
+
             WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                                               elemsToNodes[k],
                                                                               X,
                                                                               coordsOnRefElem );
-
             receiverIsLocal[ircv] = 1;
 
             real64 N[FE_TYPE::numNodes];
@@ -224,17 +223,16 @@ struct PrecomputeSourceAndReceiverKernel
             FE_TYPE::calcN( coordsOnRefElem, N );
             FE_TYPE::calcGradN( coordsOnRefElem, xLocal, gradN );
 
+            R1Tensor receiverVector = WaveSolverUtils::computeDASVector( linearDASGeometry[ircv/linearDASSamples][0], linearDASGeometry[ircv/linearDASSamples][1] );
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
+              receiverNodeIds[ircv][a] = elemsToNodes[k][a];
               if( useDAS == 1 )
               {
-                R1Tensor receiverVector = WaveSolverUtils::computeDASVector( linearDASGeometry[ircv][0], linearDASGeometry[ircv][1] );
-                receiverNodeIds[ircv][a] = elemsToNodes[k][a];
                 receiverConstants[ircv][a] = gradN[a][0] * receiverVector[0] + gradN[a][1] * receiverVector[1] + gradN[a][2] * receiverVector[2];
               }
               else
               {
-                receiverNodeIds[ircv][a] = elemsToNodes[k][a];
                 receiverConstants[ircv][a] = N[a];
               }
             }
@@ -269,7 +267,7 @@ struct MassMatrixKernel
   //std::enable_if_t< geos::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void >
   void
   launch( localIndex const size,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView1d< real32 const > const density,
           arrayView1d< real32 > const mass )
@@ -328,7 +326,7 @@ struct DampingMatrixKernel
   //std::enable_if_t< geos::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void >
   void
   launch( localIndex const size,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const > const facesToElems,
           ArrayOfArraysView< localIndex const > const facesToNodes,
           arrayView1d< integer const > const facesDomainBoundaryIndicator,
@@ -458,7 +456,7 @@ public:
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
-    m_X( nodeManager.referencePosition() ),
+    m_X( nodeManager.getField< fields::referencePosition32 >() ),
     m_ux_n( nodeManager.getField< fields::Displacementx_n >() ),
     m_uy_n( nodeManager.getField< fields::Displacementy_n >() ),
     m_uz_n( nodeManager.getField< fields::Displacementz_n >() ),
@@ -561,7 +559,7 @@ public:
 
 protected:
   /// The array containing the nodal position array.
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const m_X;
 
   /// The array containing the nodal displacement array in x direction.
   arrayView1d< real32 > const m_ux_n;

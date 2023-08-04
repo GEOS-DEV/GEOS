@@ -28,6 +28,8 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "WaveSolverUtils.hpp"
 
+#include <limits>
+
 namespace geos
 {
 
@@ -94,21 +96,25 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Set the current shot for temporary files" );
 
-  registerWrapper( viewKeyStruct::lifoSizeString(), &m_lifoSize ).
+  registerWrapper( viewKeyStruct::enableLifoString(), &m_enableLifo ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Set the capacity of the lifo storage" );
+    setDescription( "Set to 1 to enable LIFO storage feature" );
+
+  registerWrapper( viewKeyStruct::lifoSizeString(), &m_lifoSize ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( std::numeric_limits< int >::max() ).
+    setDescription( "Set the capacity of the lifo storage (should be the total number of buffers to store in the LIFO)" );
 
   registerWrapper( viewKeyStruct::lifoOnDeviceString(), &m_lifoOnDevice ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Set the capacity of the lifo device storage" );
+    setApplyDefaultValue( -80 ).
+    setDescription( "Set the capacity of the lifo device storage (if negative, opposite of percentage of remaining memory)" );
 
   registerWrapper( viewKeyStruct::lifoOnHostString(), &m_lifoOnHost ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Set the capacity of the lifo host storage" );
-
+    setApplyDefaultValue( -80 ).
+    setDescription( "Set the capacity of the lifo host storage (if negative, opposite of percentage of remaining memory)" );
 
   registerWrapper( viewKeyStruct::usePMLString(), &m_usePML ).
     setInputFlag( InputFlags::FALSE ).
@@ -122,7 +128,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
 
   registerWrapper( viewKeyStruct::linearDASSamplesString(), &m_linearDASSamples ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 1 ).
+    setApplyDefaultValue( 5 ).
     setDescription( "Number of sample points to be used for strain integration when integrating the strain for the DAS signal" );
 
   registerWrapper( viewKeyStruct::linearDASGeometryString(), &m_linearDASGeometry ).
@@ -175,6 +181,29 @@ void WaveSolverBase::reinit()
   initializePostInitialConditionsPreSubGroups();
 }
 
+void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
+{
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
+
+    nodeManager.registerField< fields::referencePosition32 >( this->getName() );
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+
+    nodeManager.getField< fields::referencePosition32 >().resizeDimension< 1 >( X.size( 1 ) );
+    arrayView2d< wsCoordType, nodes::REFERENCE_POSITION_USD > const X32  = nodeManager.getField< fields::referencePosition32 >();
+    for( int i = 0; i < X.size( 0 ); i++ )
+    {
+      for( int j = 0; j < X.size( 1 ); j++ )
+      {
+        X32[i][j] = X[i][j];
+      }
+    }
+  } );
+}
+
 void WaveSolverBase::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
@@ -214,6 +243,7 @@ void WaveSolverBase::postProcessInput()
   if( m_useDAS == 0 && m_linearDASGeometry.size( 1 ) > 0 )
   {
     m_useDAS = 1;
+    m_linearDASSamples = 5;
   }
 
   if( m_useDAS == 2 )
@@ -232,7 +262,7 @@ void WaveSolverBase::postProcessInput()
     GEOS_ERROR_IF( m_linearDASGeometry.size( 0 ) != m_receiverCoordinates.size( 0 ),
                    "Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
 
-    /// initialize DAS geometry by duplicating receiver locations
+    /// initialize DAS geometry by adding receiver locations along the DAS, as needed
     initializeDAS();
   }
 
@@ -276,8 +306,8 @@ void WaveSolverBase::postProcessInput()
 
 void WaveSolverBase::initializeDAS()
 {
-  /// double the number of receivers and modify their coordinates
-  /// so to have two receivers on each side of each DAS channel
+  /// increase the number of receivers and modify their coordinates
+  /// so to have two correct number of receivers along each DAS channel
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
   m_receiverCoordinates.resize( m_linearDASSamples*numReceiversGlobal, 3 );
 
@@ -300,13 +330,14 @@ void WaveSolverBase::initializeDAS()
 
   for( localIndex ircv = 0; ircv < numReceiversGlobal; ++ircv )
   {
+    R1Tensor receiverCenter = { receiverCoordinates[ ircv ][ 0 ], receiverCoordinates[ ircv ][ 1 ], receiverCoordinates[ ircv ][ 2 ] };
     for( integer i = 0; i < m_linearDASSamples; i++ )
     {
       /// updated xyz of sample receiver along DAS
       R1Tensor dasVector = WaveSolverUtils::computeDASVector( linearDASGeometry[ ircv ][ 0 ], linearDASGeometry[ ircv ][ 1 ] );
-      receiverCoordinates[ i*numReceiversGlobal + ircv ][ 0 ] = receiverCoordinates[ ircv ][ 0 ] + dasVector[ 0 ] * linearDASGeometry[ ircv ][ 2 ] * samplePointLocations[ i ];
-      receiverCoordinates[ i*numReceiversGlobal + ircv ][ 1 ] = receiverCoordinates[ ircv ][ 1 ] + dasVector[ 1 ] * linearDASGeometry[ ircv ][ 2 ] * samplePointLocations[ i ];
-      receiverCoordinates[ i*numReceiversGlobal + ircv ][ 2 ] = receiverCoordinates[ ircv ][ 2 ] + dasVector[ 2 ] * linearDASGeometry[ ircv ][ 2 ] * samplePointLocations[ i ];
+      receiverCoordinates[ i*numReceiversGlobal + ircv ][ 0 ] = receiverCenter[ 0 ] + dasVector[ 0 ] * linearDASGeometry[ ircv ][ 2 ] * samplePointLocations[ i ];
+      receiverCoordinates[ i*numReceiversGlobal + ircv ][ 1 ] = receiverCenter[ 1 ] + dasVector[ 1 ] * linearDASGeometry[ ircv ][ 2 ] * samplePointLocations[ i ];
+      receiverCoordinates[ i*numReceiversGlobal + ircv ][ 2 ] = receiverCenter[ 2 ] + dasVector[ 2 ] * linearDASGeometry[ ircv ][ 2 ] * samplePointLocations[ i ];
     }
   }
 }
