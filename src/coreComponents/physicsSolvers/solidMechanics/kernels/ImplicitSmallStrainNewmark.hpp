@@ -215,7 +215,6 @@ using ImplicitNewmarkFactory = finiteElement::KernelFactory< ImplicitSmallStrain
                                                              real64,
                                                              real64,
                                                              real64,
-                                                             real64,
                                                              real64 >;
 
 } // namespace solidMechanicsLagrangianFEMKernels
