@@ -149,7 +149,7 @@ struct WaveSolverUtils
     real32 const a2 = 1.0 - a1;
 
     if( nsamplesSeismoTrace > 0 )
-    {                                         
+    {
       forAll< WaveSolverBase::EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const ircv )
       {
         if( receiverIsLocal[ircv] == 1 )
