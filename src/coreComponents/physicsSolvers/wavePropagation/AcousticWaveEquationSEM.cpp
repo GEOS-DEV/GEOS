@@ -978,22 +978,31 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     /// calculate your time integrators
     real64 const dt2 = dt*dt;
 
-    arrayView1d< real32 const > const damping = m_dampingVector;
-
     if( !usePML )
     {
+
       GEOS_MARK_SCOPE ( updateP );
-      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-      {
-        if( freeSurfaceNodeIndicator[a] != 1 )
-        {
-          p_np1[a] = p_n[a];
-          p_np1[a] *= 2.0*mass[a];
-          p_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
-          p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
-          p_np1[a] /= mass[a]+0.5*dt*damping[a];
-        }
-      } );
+
+      parallelDeviceStream stream;
+      parallelDeviceEvents events;
+      WaveSolverUtils::UpdateP( nodeManager,
+                                p_nm1, p_n, p_np1,
+                                mass, stiffnessVector, rhs,
+                                m_dampingNodes, m_dampingVector,
+                                dt, stream, events );
+      waitAllDeviceEvents( events );
+      // GEOS_MARK_SCOPE ( updateP );
+      // forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+      // {
+      //   if( freeSurfaceNodeIndicator[a] != 1 )
+      //   {
+      //     p_np1[a] = p_n[a];
+      //     p_np1[a] *= 2.0*mass[a];
+      //     p_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
+      //     p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
+      //     p_np1[a] /= mass[a]+0.5*dt*damping[a];
+      //   }
+      // } );
     }
     else
     {
