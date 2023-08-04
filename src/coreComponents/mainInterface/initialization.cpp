@@ -39,6 +39,7 @@ struct Arg : public option::Arg
    */
   static option::ArgStatus unknown( option::Option const & option, bool )
   {
+    GEOS_UNUSED_VAR( option ); // unused if geos_error_if is nulld
     GEOS_LOG_RANK( "Unknown option: " << option.name );
     return option::ARG_ILLEGAL;
   }
