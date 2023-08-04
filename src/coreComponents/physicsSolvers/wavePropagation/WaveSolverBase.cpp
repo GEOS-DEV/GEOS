@@ -128,7 +128,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
 
   registerWrapper( viewKeyStruct::linearDASSamplesString(), &m_linearDASSamples ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 1 ).
+    setApplyDefaultValue( 5 ).
     setDescription( "Number of sample points to be used for strain integration when integrating the strain for the DAS signal" );
 
   registerWrapper( viewKeyStruct::linearDASGeometryString(), &m_linearDASGeometry ).
