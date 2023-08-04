@@ -322,7 +322,7 @@ void WaveSolverBase::initializeDAS()
   }
   else
   {
-    for( integer i = 0; i < m_linearDASSamples; i++ )
+    for( integer i = 0; i < m_linearDASSamples; ++i )
     {
       samplePointLocations[ i ] = -0.5 + (real64) i / ( m_linearDASSamples - 1 );
     }
@@ -331,7 +331,7 @@ void WaveSolverBase::initializeDAS()
   for( localIndex ircv = 0; ircv < numReceiversGlobal; ++ircv )
   {
     R1Tensor receiverCenter = { receiverCoordinates[ ircv ][ 0 ], receiverCoordinates[ ircv ][ 1 ], receiverCoordinates[ ircv ][ 2 ] };
-    for( integer i = 0; i < m_linearDASSamples; i++ )
+    for( integer i = 0; i < m_linearDASSamples; ++i )
     {
       /// updated xyz of sample receiver along DAS
       R1Tensor dasVector = WaveSolverUtils::computeDASVector( linearDASGeometry[ ircv ][ 0 ], linearDASGeometry[ ircv ][ 1 ] );
