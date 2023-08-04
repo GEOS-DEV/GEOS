@@ -281,8 +281,6 @@ void DieterichSeismicityRate::updateMeanSolidStress( DomainPartition & domain )
         arrayView2d< real64 > const meanStress = subRegion.getField< inducedSeismicity::meanStress >();
         meanStress.setValues< parallelHostPolicy >( 0.0 );
 
-        arrayView1d< real64 const > const p = subRegion.getField< flow::pressure >();
-
         arrayView1d< real64 > const sig = subRegion.getField< inducedSeismicity::meanNormalStress >();
         arrayView1d< real64 > const sig_n = subRegion.getField< inducedSeismicity::meanNormalStress_n >();
   
@@ -293,29 +291,26 @@ void DieterichSeismicityRate::updateMeanSolidStress( DomainPartition & domain )
         string const & solidModelName = subRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString());
         SolidBase const & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidModelName );
         arrayView3d< real64 const, solid::STRESS_USD > const stress = solidModel.getStress();
-        
-        // pass porous solid model through for loop
-        string const porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
-        CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( porousSolidName );
-
-        constitutive::ConstitutivePassThru< PorousSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+       
+        // loop over elements 
+        forAll< parallelDevicePolicy<> >(  sig.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
         {
-          typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
+          // update previous solutions
+          sig_n[k] = sig[k];
+          tau_n[k] = tau[k];
 
-          // loop over elements 
-          forAll< parallelDevicePolicy<> >(  sig.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+          // update mean stress at element
+          for( int q = 0; q < stress.size(1); q++ ) 
           {
-            // update previous solutions
-            sig_n[k] = sig[k];
-            tau_n[k] = tau[k];
+            LvArray::tensorOps::add< 6 >( meanStress[k], stress[k][q] );
+          }
 
-            // compute mean effective stress at each element
-            porousMaterialWrapper.updateMeanEffectiveStress(k, p[k], stress, meanStress);
+          // average
+          LvArray::tensorOps::scale< 6 >(meanStress[k], 1./stress.size(1));
 
-            // Compute fault normal and shear stresses
-            sig[k] = LvArray::tensorOps::AiBi< 6 >( meanStress[k], m_faultNormalVoigt);
-            tau[k] = LvArray::tensorOps::AiBi< 6 >( meanStress[k], m_faultShearVoigt);
-          } );
+          // Compute fault normal and shear stresses
+          sig[k] = LvArray::tensorOps::AiBi< 6 >( meanStress[k], m_faultNormalVoigt);
+          tau[k] = LvArray::tensorOps::AiBi< 6 >( meanStress[k], m_faultShearVoigt);
         } );
       } );
     } );

@@ -111,7 +111,7 @@ void SeismicityRateBase::initializePreSubGroups()
         tempSig_n.setValues< parallelHostPolicy >( m_initialSigma );
       }
 
-      if ( m_initialTau < 0 )
+      if ( m_initialTau > 0 )
       {
         arrayView1d< real64 > const tempTauIni = subRegion.getField< geos::fields::inducedSeismicity::initialmeanShearStress >();
         tempTauIni.setValues< parallelHostPolicy >( m_initialTau );

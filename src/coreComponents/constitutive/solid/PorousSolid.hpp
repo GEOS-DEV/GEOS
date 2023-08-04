@@ -152,25 +152,6 @@ public:
     m_porosityUpdate.updateMeanEffectiveStressIncrement( k, q, meanEffectiveStressIncrement );
   }
 
-  GEOS_HOST_DEVICE
-  void updateMeanEffectiveStress( localIndex const k,
-                                  real64 const & pressure,
-                                  arrayView3d< real64 const, solid::STRESS_USD > const & totalStress,
-                                  arrayView2d< real64 > const & meanStress) const
-  {
-    // get Biot Coefficient
-    real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
-
-    // update mean stress at element
-    for( int q = 0; q < totalStress.size(1); q++ ) 
-    {
-      LvArray::tensorOps::add< 6 >( meanStress[k], totalStress[k][q] );
-    }
-
-    // average
-    LvArray::tensorOps::scale< 6 >(meanStress[k], 1./totalStress.size(1));
-  }
-
   /**
    * @brief Return the stiffness at a given element (small-strain interface)
    *
