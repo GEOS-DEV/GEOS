@@ -27,6 +27,7 @@
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "WaveSolverUtils.hpp"
+#include "WaveSolverBaseFields.hpp"
 
 namespace geos
 {
@@ -72,7 +73,6 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                fields::PressureDoubleDerivative,
                                fields::ForcingRHS,
                                fields::MassVector,
-                               fields::DampingVector,
                                fields::StiffnessVector,
                                fields::FreeSurfaceNodeIndicator >( this->getName() );
 
@@ -272,11 +272,10 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       mass.zero();
     }
     /// damping matrix to be computed for each dof in the boundary of the mesh
-    arrayView1d< real32 > const damping = nodeManager.getField< fields::DampingVector >();
-    {
-      GEOS_MARK_SCOPE( damping_zero );
-      damping.zero();
-    }
+    arrayView1d< localIndex const > const nodeToDampingIdx = nodeManager.getField< fields::wavesolverfields::NodeToDampingIndex >();
+    m_dampingVector.resize( m_dampingNodes.size() );
+    m_dampingVector.zero();
+
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
     arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
 
@@ -318,7 +317,8 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                  facesDomainBoundaryIndicator,
                                                                  freeSurfaceFaceIndicator,
                                                                  velocity,
-                                                                 damping );
+                                                                 nodeToDampingIdx,
+                                                                 m_dampingVector );
         }
       } );
     } );
@@ -947,7 +947,6 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     NodeManager & nodeManager = mesh.getNodeManager();
 
     arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVector >();
-    arrayView1d< real32 const > const damping = nodeManager.getField< fields::DampingVector >();
 
     arrayView1d< real32 > const p_nm1 = nodeManager.getField< fields::Pressure_nm1 >();
     arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_n >();
@@ -978,6 +977,8 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
     /// calculate your time integrators
     real64 const dt2 = dt*dt;
+
+    arrayView1d< real32 const > const damping = m_dampingVector;
 
     if( !usePML )
     {

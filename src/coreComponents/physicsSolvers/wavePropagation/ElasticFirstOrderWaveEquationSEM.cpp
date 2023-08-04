@@ -133,9 +133,6 @@ void ElasticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                wavesolverfields::Displacementz_np1,
                                wavesolverfields::ForcingRHS,
                                wavesolverfields::MassVector,
-                               wavesolverfields::DampingVectorx,
-                               wavesolverfields::DampingVectory,
-                               wavesolverfields::DampingVectorz,
                                wavesolverfields::FreeSurfaceNodeIndicator >( this->getName() );
 
     FaceManager & faceManager = mesh.getFaceManager();
@@ -366,12 +363,13 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
     arrayView1d< real32 > const mass = nodeManager.getField< wavesolverfields::MassVector >();
     mass.zero();
     /// damping matrix to be computed for each dof in the boundary of the mesh
-    arrayView1d< real32 > const dampingx = nodeManager.getField< wavesolverfields::DampingVectorx >();
-    arrayView1d< real32 > const dampingy = nodeManager.getField< wavesolverfields::DampingVectory >();
-    arrayView1d< real32 > const dampingz = nodeManager.getField< wavesolverfields::DampingVectorz >();
-    dampingx.zero();
-    dampingy.zero();
-    dampingz.zero();
+    arrayView1d< localIndex > const nodeToDampingIdx = nodeManager.getField< fields::wavesolverfields::NodeToDampingIndex >();
+    m_dampingVectorX.resize( m_dampingNodes.size() );
+    m_dampingVectorY.resize( m_dampingNodes.size() );
+    m_dampingVectorZ.resize( m_dampingNodes.size() );
+    m_dampingVectorX.zero();
+    m_dampingVectorY.zero();
+    m_dampingVectorZ.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
     arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< wavesolverfields::FreeSurfaceFaceIndicator >();
@@ -415,9 +413,10 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
                                                                density,
                                                                velocityVp,
                                                                velocityVs,
-                                                               dampingx,
-                                                               dampingy,
-                                                               dampingz );
+                                                               nodeToDampingIdx,
+                                                               m_dampingVectorX,
+                                                               m_dampingVectorY,
+                                                               m_dampingVectorZ );
       } );
     } );
   } );
@@ -574,56 +573,61 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        elasticFirstOrderWaveEquationSEMKernels::
-          StressComputation< FE_TYPE > kernel( finiteElement );
-        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
-          ( elementSubRegion.size(),
-          regionIndex,
-          X,
-          elemsToNodes,
-          ux_np1,
-          uy_np1,
-          uz_np1,
-          density,
-          velocityVp,
-          velocityVs,
-          lambda,
-          mu,
-          sourceConstants,
-          sourceIsAccessible,
-          sourceElem,
-          sourceRegion,
-          sourceValue,
-          dt,
-          cycleNumber,
-          stressxx,
-          stressyy,
-          stresszz,
-          stressxy,
-          stressxz,
-          stressyz );
-
-        elasticFirstOrderWaveEquationSEMKernels::
-          VelocityComputation< FE_TYPE > kernel2( finiteElement );
-        kernel2.template launch< EXEC_POLICY, ATOMIC_POLICY >
-          ( elementSubRegion.size(),
-          nodeManager.size(),
-          X,
-          elemsToNodes,
-          stressxx,
-          stressyy,
-          stresszz,
-          stressxy,
-          stressxz,
-          stressyz,
-          mass,
-          dampingx,
-          dampingy,
-          dampingz,
-          dt,
-          ux_np1,
-          uy_np1,
-          uz_np1 );
+        {
+          GEOS_MARK_SCOPE( StressComputation );
+          elasticFirstOrderWaveEquationSEMKernels::
+            StressComputation< FE_TYPE > kernel( finiteElement );
+          kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
+            ( elementSubRegion.size(),
+            regionIndex,
+            X,
+            elemsToNodes,
+            ux_np1,
+            uy_np1,
+            uz_np1,
+            density,
+            velocityVp,
+            velocityVs,
+            lambda,
+            mu,
+            sourceConstants,
+            sourceIsAccessible,
+            sourceElem,
+            sourceRegion,
+            sourceValue,
+            dt,
+            cycleNumber,
+            stressxx,
+            stressyy,
+            stresszz,
+            stressxy,
+            stressxz,
+            stressyz );
+        }
+        {
+          GEOS_MARK_SCOPE( VelocityComputation );
+          elasticFirstOrderWaveEquationSEMKernels::
+            VelocityComputation< FE_TYPE > kernel2( finiteElement );
+          kernel2.template launch< EXEC_POLICY, ATOMIC_POLICY >
+            ( elementSubRegion.size(),
+            X,
+            elemsToNodes,
+            stressxx,
+            stressyy,
+            stresszz,
+            stressxy,
+            stressxz,
+            stressyz,
+            mass,
+            m_dampingNodes,
+            m_dampingVectorX,
+            m_dampingVectorY,
+            m_dampingVectorZ,
+            dt,
+            ux_np1,
+            uy_np1,
+            uz_np1 );
+        }
 
 
       } );

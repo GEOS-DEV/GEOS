@@ -222,6 +222,13 @@ private:
   /// Array containing the elements which contain the region which the receiver belongs
   array1d< localIndex > m_receiverRegion;
 
+  /// Damping terms in X direction
+  array1d< real32 > m_dampingVectorX;
+  /// Damping terms in Y direction
+  array1d< real32 > m_dampingVectorY;
+  /// Damping terms in Z direction
+  array1d< real32 > m_dampingVectorZ;
+
 };
 
 } /* namespace geos */

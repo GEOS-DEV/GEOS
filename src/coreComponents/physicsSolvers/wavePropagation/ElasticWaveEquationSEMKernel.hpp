@@ -229,7 +229,6 @@ struct MassMatrixKernel
    * @tparam EXEC_POLICY the execution policy
    * @tparam ATOMIC_POLICY the atomic policy
    * @param[in] size the number of cells in the subRegion
-   * @param[in] numFacesPerElem number of faces per element
    * @param[in] X coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] velocity cell-wise velocity
@@ -292,7 +291,10 @@ struct DampingMatrixKernel
    * @param[in] facesDomainBoundaryIndicator flag equal to 1 if the face is on the boundary, and to 0 otherwise
    * @param[in] freeSurfaceFaceIndicator flag equal to 1 if the face is on the free surface, and to 0 otherwise
    * @param[in] velocity cell-wise velocity
-   * @param[out] damping diagonal of the damping matrix
+   * @param[in] nodeToDampingIdx nodes to damping index mapping
+   * @param[out] dampingx diagonal of the damping matrix in x direction
+   * @param[out] dampingy diagonal of the damping matrix in y direction
+   * @param[out] dampingz diagonal of the damping matrix in z direction
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   //std::enable_if_t< geos::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void >
@@ -307,6 +309,7 @@ struct DampingMatrixKernel
           arrayView1d< real32 const > const density,
           arrayView1d< real32 const > const velocityVp,
           arrayView1d< real32 const > const velocityVs,
+          arrayView1d< localIndex > const nodeToDampingIdx,
           arrayView1d< real32 > const dampingx,
           arrayView1d< real32 > const dampingy,
           arrayView1d< real32 > const dampingz )
@@ -348,9 +351,9 @@ struct DampingMatrixKernel
             q,
             xLocal );
 
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dampingx[facesToNodes[f][q]], localIncrementx );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dampingy[facesToNodes[f][q]], localIncrementy );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dampingz[facesToNodes[f][q]], localIncrementz );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &dampingx[nodeToDampingIdx[facesToNodes[f][q]]], localIncrementx );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &dampingy[nodeToDampingIdx[facesToNodes[f][q]]], localIncrementy );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &dampingz[nodeToDampingIdx[facesToNodes[f][q]]], localIncrementz );
         }
       }
     } ); // end loop over element

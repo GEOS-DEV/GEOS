@@ -282,6 +282,7 @@ struct DampingMatrixKernel
           arrayView1d< real32 const > const density,
           arrayView1d< real32 const > const velocityVp,
           arrayView1d< real32 const > const velocityVs,
+          arrayView1d< localIndex const > const nodeToDampingIdx,
           arrayView1d< real32 > const dampingx,
           arrayView1d< real32 > const dampingy,
           arrayView1d< real32 > const dampingz )
@@ -323,9 +324,9 @@ struct DampingMatrixKernel
             q,
             xLocal );
 
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dampingx[facesToNodes[f][q]], localIncrementx );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dampingy[facesToNodes[f][q]], localIncrementy );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dampingz[facesToNodes[f][q]], localIncrementz );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &dampingx[nodeToDampingIdx[facesToNodes[f][q]]], localIncrementx );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &dampingy[nodeToDampingIdx[facesToNodes[f][q]]], localIncrementy );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &dampingz[nodeToDampingIdx[facesToNodes[f][q]]], localIncrementz );
         }
       }
     } ); // end loop over element
@@ -526,7 +527,6 @@ struct VelocityComputation
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          localIndex const size_node,
           arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView2d< real32 const > const stressxx,
@@ -536,6 +536,7 @@ struct VelocityComputation
           arrayView2d< real32 const > const stressxz,
           arrayView2d< real32 const > const stressyz,
           arrayView1d< const real32 > const mass,
+          arrayView1d< localIndex const > const dampingNodes,
           arrayView1d< real32 const > const dampingx,
           arrayView1d< real32 const > const dampingy,
           arrayView1d< real32 const > const dampingz,
@@ -545,11 +546,11 @@ struct VelocityComputation
           arrayView1d< real32 > const uz_np1 )
   {
 
-    forAll< EXEC_POLICY >( size_node, [=] GEOS_HOST_DEVICE ( localIndex const a )
+    forAll< EXEC_POLICY >( dampingNodes.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      ux_np1[a] *= 1.0-((dt/2)*(dampingx[a]/mass[a]));
-      uy_np1[a] *= 1.0-((dt/2)*(dampingy[a]/mass[a]));
-      uz_np1[a] *= 1.0-((dt/2)*(dampingz[a]/mass[a]));
+      ux_np1[dampingNodes[a]] *= 1.0-((dt/2)*(dampingx[a]/mass[dampingNodes[a]]));
+      uy_np1[dampingNodes[a]] *= 1.0-((dt/2)*(dampingy[a]/mass[dampingNodes[a]]));
+      uz_np1[dampingNodes[a]] *= 1.0-((dt/2)*(dampingz[a]/mass[dampingNodes[a]]));
     } );
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
@@ -622,11 +623,11 @@ struct VelocityComputation
       }
 
     } );
-    forAll< EXEC_POLICY >( size_node, [=] GEOS_HOST_DEVICE ( localIndex const a )
+    forAll< EXEC_POLICY >( dampingNodes.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      ux_np1[a] /= 1.0+((dt/2)*(dampingx[a]/mass[a]));
-      uy_np1[a] /= 1.0+((dt/2)*(dampingy[a]/mass[a]));
-      uz_np1[a] /= 1.0+((dt/2)*(dampingz[a]/mass[a]));
+      ux_np1[dampingNodes[a]] /= 1.0+((dt/2)*(dampingx[a]/mass[dampingNodes[a]]));
+      uy_np1[dampingNodes[a]] /= 1.0+((dt/2)*(dampingy[a]/mass[dampingNodes[a]]));
+      uz_np1[dampingNodes[a]] /= 1.0+((dt/2)*(dampingz[a]/mass[dampingNodes[a]]));
     } );
   }
 

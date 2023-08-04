@@ -88,6 +88,14 @@ DECLARE_FIELD( DampingVector,
                WRITE_AND_READ,
                "Diagonal of the Damping Matrix." );
 
+DECLARE_FIELD( NodeToDampingIndex,
+               "nodeToDampingIndex",
+               array1d< localIndex >,
+               -1,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Index of the damping node (-1 if not damping)." );
+
 DECLARE_FIELD( MediumVelocity,
                "mediumVelocity",
                array1d< real32 >,

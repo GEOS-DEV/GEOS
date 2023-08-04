@@ -168,6 +168,9 @@ private:
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_pressureNp1AtReceivers;
 
+  /// Damping terms
+  array1d< real32 > m_dampingVector;
+
 };
 
 
@@ -213,14 +216,6 @@ DECLARE_FIELD( MassVector,
                NOPLOT,
                WRITE_AND_READ,
                "Diagonal of the Mass Matrix." );
-
-DECLARE_FIELD( DampingVector,
-               "dampingVector",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal of the Damping Matrix." );
 
 DECLARE_FIELD( MediumVelocity,
                "mediumVelocity",

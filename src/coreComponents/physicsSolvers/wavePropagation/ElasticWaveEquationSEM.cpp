@@ -26,6 +26,8 @@
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "WaveSolverUtils.hpp"
+#include "WaveSolverBaseFields.hpp"
+
 
 namespace geos
 {
@@ -200,9 +202,6 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                fields::ForcingRHSy,
                                fields::ForcingRHSz,
                                fields::MassVector,
-                               fields::DampingVectorx,
-                               fields::DampingVectory,
-                               fields::DampingVectorz,
                                fields::StiffnessVectorx,
                                fields::StiffnessVectory,
                                fields::StiffnessVectorz,
@@ -536,12 +535,13 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVector >();
     mass.zero();
     /// damping matrix to be computed for each dof in the boundary of the mesh
-    arrayView1d< real32 > const dampingx = nodeManager.getField< fields::DampingVectorx >();
-    arrayView1d< real32 > const dampingy = nodeManager.getField< fields::DampingVectory >();
-    arrayView1d< real32 > const dampingz = nodeManager.getField< fields::DampingVectorz >();
-    dampingx.zero();
-    dampingy.zero();
-    dampingz.zero();
+    arrayView1d< localIndex > const nodeToDampingIdx = nodeManager.getField< fields::wavesolverfields::NodeToDampingIndex >();
+    m_dampingVectorX.resize( m_dampingNodes.size() );
+    m_dampingVectorY.resize( m_dampingNodes.size() );
+    m_dampingVectorZ.resize( m_dampingNodes.size() );
+    m_dampingVectorX.zero();
+    m_dampingVectorY.zero();
+    m_dampingVectorZ.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
     arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
@@ -585,9 +585,10 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                density,
                                                                velocityVp,
                                                                velocityVs,
-                                                               dampingx,
-                                                               dampingy,
-                                                               dampingz );
+                                                               nodeToDampingIdx,
+                                                               m_dampingVectorX,
+                                                               m_dampingVectorY,
+                                                               m_dampingVectorZ );
       } );
     } );
   } );
@@ -713,9 +714,6 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     NodeManager & nodeManager = mesh.getNodeManager();
 
     arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVector >();
-    arrayView1d< real32 const > const dampingx = nodeManager.getField< fields::DampingVectorx >();
-    arrayView1d< real32 const > const dampingy = nodeManager.getField< fields::DampingVectory >();
-    arrayView1d< real32 const > const dampingz = nodeManager.getField< fields::DampingVectorz >();
     arrayView1d< real32 > const stiffnessVectorx = nodeManager.getField< fields::StiffnessVectorx >();
     arrayView1d< real32 > const stiffnessVectory = nodeManager.getField< fields::StiffnessVectory >();
     arrayView1d< real32 > const stiffnessVectorz = nodeManager.getField< fields::StiffnessVectorz >();
@@ -753,6 +751,9 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     addSourceToRightHandSide( cycleNumber, rhsx, rhsy, rhsz );
 
 
+    arrayView1d< real32 const > const dampingy = m_dampingVectorY;
+    arrayView1d< real32 const > const dampingz = m_dampingVectorZ;
+    arrayView1d< real32 const > const dampingx = m_dampingVectorX;
 
     real64 const dt2 = dt*dt;
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
