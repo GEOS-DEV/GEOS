@@ -335,6 +335,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                   dofManager.rankOffset(),
                                   localMatrix,
                                   localRhs,
+                                  0.0,
                                   gravityVectorData,
                                   std::forward< PARAMS >( params )... );
 

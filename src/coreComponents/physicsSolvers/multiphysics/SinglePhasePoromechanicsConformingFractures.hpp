@@ -260,6 +260,7 @@ real64 SinglePhasePoromechanicsConformingFractures::assemblyLaunch( MeshLevel & 
                                 dofManager.rankOffset(),
                                 localMatrix,
                                 localRhs,
+                                0.0,
                                 gravityVectorData,
                                 std::forward< PARAMS >( params )... );
 

@@ -234,6 +234,7 @@ real64 MultiphasePoromechanics::assemblyLaunch( MeshLevel & mesh,
                                 dofManager.rankOffset(),
                                 localMatrix,
                                 localRhs,
+                                0.0,
                                 gravityVectorData,
                                 std::forward< PARAMS >( params )... );
 

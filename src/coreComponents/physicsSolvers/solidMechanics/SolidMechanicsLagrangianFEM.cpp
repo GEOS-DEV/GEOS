@@ -1014,18 +1014,18 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
 
   if( m_isFixedStressPoromechanicsUpdate )
   {
-    GEOS_UNUSED_VAR( dt );
+    //GEOS_UNUSED_VAR( dt );
     assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
                     solidMechanicsLagrangianFEMKernels::FixedStressThermoPoromechanicsFactory >( domain,
                                                                                                  dofManager,
                                                                                                  localMatrix,
-                                                                                                 localRhs );
+                                                                                                 localRhs);
   }
   else
   {
     if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
     {
-      GEOS_UNUSED_VAR( dt );
+      //GEOS_UNUSED_VAR( dt );
       assemblyLaunch< constitutive::SolidBase,
                       solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
                                                                                 dofManager,
@@ -1042,8 +1042,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
                                                                                     m_newmarkGamma,
                                                                                     m_newmarkBeta,
                                                                                     m_massDamping,
-                                                                                    m_stiffnessDamping,
-                                                                                    dt );
+                                                                                    m_stiffnessDamping );
     }
   }
 }

@@ -100,7 +100,7 @@ public:
     m_dofRankOffset( rankOffset ),
     m_matrix( inputMatrix ),
     m_rhs( inputRhs ),
-    m_dt(inputDt)
+    m_dt(inputDt) 
   {
     FiniteElementBase::initialize< FE_TYPE >( nodeManager,
                                               edgeManager,
@@ -223,7 +223,7 @@ protected:
   typename FE_TYPE::template MeshData< SUBREGION_TYPE > m_meshData;
 
   /// time increment
-  real64 const m_dt;
+  real64 const m_dt; ///TODO: Consider moving to finite element kernel base?
 
 };
 

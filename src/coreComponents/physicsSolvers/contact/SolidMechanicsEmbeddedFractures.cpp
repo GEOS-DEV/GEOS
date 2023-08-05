@@ -318,6 +318,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
                                                             dofManager.rankOffset(),
                                                             localMatrix,
                                                             localRhs,
+                                                            dt,
                                                             gravityVectorData );
 
       real64 maxTraction = finiteElement::
@@ -340,6 +341,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
                                                                               dofManager.rankOffset(),
                                                                               localMatrix,
                                                                               localRhs,
+                                                                              dt,
                                                                               gravityVectorData );
       real64 maxTraction = finiteElement::
                              regionBasedKernelApplication
@@ -709,6 +711,7 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
                                                                     dofManager.rankOffset(),
                                                                     voidMatrix.toViewConstSizes(),
                                                                     voidRhs.toView(),
+                                                                    0.0,
                                                                     gravityVectorData );
 
     real64 maxTraction = finiteElement::

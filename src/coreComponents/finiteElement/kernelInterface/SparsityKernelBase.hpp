@@ -62,6 +62,7 @@ public:
 
   using typename Base::StackVariables;
   using Base::m_dofRankOffset;
+  using Base::m_dt;
 
   using Base::setup;
 
@@ -238,6 +239,7 @@ public:
                                                                      inputConstitutiveType,
                                                                      m_inputDofNumber,
                                                                      m_rankOffset,
+                                                                     0.0,
                                                                      m_inputSparsityPattern );
   }
 
