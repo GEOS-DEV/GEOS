@@ -202,7 +202,7 @@ protected:
   /// the force.
   arrayView2d< real64, nodes::ACCELERATION_USD > const m_acc;
 
-  /// The time increment for this time integration step. 
+  /// The time increment for this time integration step.
   real64 const m_dt; ///TODO: Consider moving to finite element kernel base?
 
   /// The list of elements to process for the kernel launch.

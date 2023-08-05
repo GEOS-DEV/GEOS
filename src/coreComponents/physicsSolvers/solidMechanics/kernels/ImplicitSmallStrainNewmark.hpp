@@ -99,8 +99,8 @@ public:
                               real64 const inputNewmarkGamma,
                               real64 const inputNewmarkBeta,
                               real64 const inputMassDamping,
-                              real64 const inputStiffnessDamping);
-                              //real64 const inputDt );
+                              real64 const inputStiffnessDamping );
+  //real64 const inputDt );
 
   //***************************************************************************
   /**
@@ -200,7 +200,7 @@ protected:
   real64 const m_stiffnessDamping;
 
   /// The timestep for the update.
- // real64 const m_dt;
+  // real64 const m_dt;
 
 };
 

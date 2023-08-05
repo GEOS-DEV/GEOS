@@ -143,7 +143,7 @@ void LaplaceFEM::setupSystem( DomainPartition & domain,
  */
 //START_SPHINX_INCLUDE_ASSEMBLY
 void LaplaceFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
-                                 real64 const  dt ,
+                                 real64 const dt,
                                  DomainPartition & domain,
                                  DofManager const & dofManager,
                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,

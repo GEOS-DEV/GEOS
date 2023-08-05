@@ -100,7 +100,7 @@ public:
     m_dofRankOffset( rankOffset ),
     m_matrix( inputMatrix ),
     m_rhs( inputRhs ),
-    m_dt(inputDt) 
+    m_dt( inputDt )
   {
     FiniteElementBase::initialize< FE_TYPE >( nodeManager,
                                               edgeManager,
