@@ -424,7 +424,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
                                                                                                             regionNames,
                                                                                                             SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
                                                                                                             localMatrix,
-                                                                                                            localRhs );
+                                                                                                            localRhs,
+                                                                                                            dt );
     }
     else
     {
@@ -436,7 +437,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
                                                                               regionNames,
                                                                               SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
                                                                               localMatrix,
-                                                                              localRhs );
+                                                                              localRhs,
+                                                                              dt );
     }
 
     // 3. Assemble poroelastic fluxes and all derivatives
