@@ -174,6 +174,7 @@ public:
                        DofManager const & dofManager,
                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                        arrayView1d< real64 > const & localRhs,
+                       real64 const dt,
                        PARAMS && ... params );
 
 
@@ -316,6 +317,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                                   DofManager const & dofManager,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs,
+                                                  real64 const dt,
                                                   PARAMS && ... params )
 {
   GEOS_MARK_FUNCTION;
@@ -335,7 +337,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                   dofManager.rankOffset(),
                                   localMatrix,
                                   localRhs,
-                                  0.0,
+                                  dt,
                                   gravityVectorData,
                                   std::forward< PARAMS >( params )... );
 

@@ -1019,7 +1019,8 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
                     solidMechanicsLagrangianFEMKernels::FixedStressThermoPoromechanicsFactory >( domain,
                                                                                                  dofManager,
                                                                                                  localMatrix,
-                                                                                                 localRhs );
+                                                                                                 localRhs,
+                                                                                                 dt );
   }
   else
   {
@@ -1030,7 +1031,8 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
                       solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
                                                                                 dofManager,
                                                                                 localMatrix,
-                                                                                localRhs );
+                                                                                localRhs,
+                                                                                dt );
     }
     else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
     {
@@ -1039,6 +1041,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
                                                                                     dofManager,
                                                                                     localMatrix,
                                                                                     localRhs,
+                                                                                    dt,
                                                                                     m_newmarkGamma,
                                                                                     m_newmarkBeta,
                                                                                     m_massDamping,
