@@ -401,7 +401,7 @@ private:
   Mat m_mat{};
 
   /// Indices of rows to be cleared on next close()
-  array1d< globalIndex > m_rowsToClear;
+  array1d< int64_t > m_rowsToClear;
 
   /// Diagonal values of rows to be set on next close()
   array1d< real64 > m_diagValues;

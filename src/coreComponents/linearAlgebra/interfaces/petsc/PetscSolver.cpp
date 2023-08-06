@@ -94,7 +94,7 @@ void PetscSolver::setup( PetscMatrix const & mat )
   {
     // cast needed because of "void *" vs "PetscViewerAndFormat *" in last parameter
     using MonitorFunc = PetscErrorCode ( * )( KSP, PetscInt, PetscReal, void * );
-    GEOS_LAI_CHECK_ERROR( KSPMonitorSet( m_solver, ( MonitorFunc ) KSPMonitorDefault, nullptr, nullptr ) );
+    GEOS_LAI_CHECK_ERROR( KSPMonitorSet( m_solver, ( MonitorFunc ) KSPMonitorResidual, nullptr, nullptr ) );
   }
 
   // This can be used to extract residual norm history:

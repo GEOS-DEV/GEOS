@@ -25,7 +25,7 @@
 extern "C" struct _p_IS;
 
 /// VecScatter struct forward declaration
-extern "C" struct _p_VecScatter;
+extern "C" struct _p_PetscSF;
 
 namespace geos
 {
@@ -118,7 +118,7 @@ private:
   using IS = struct _p_IS *;
 
   /// Alias for PETSc vector scatter struct pointer
-  using VecScatter = struct _p_VecScatter *;
+  using VecScatter = struct _p_PetscSF *;
 
   /// Target rank for single-rank export/import
   integer m_targetRank = -1;

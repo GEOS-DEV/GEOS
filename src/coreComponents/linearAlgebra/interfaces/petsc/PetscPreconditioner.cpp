@@ -143,14 +143,6 @@ void createPetscAMG( LinearSolverParameters const & params,
   // Default options only for the moment
   GEOS_LAI_CHECK_ERROR( PCSetType( precond, PCGAMG ) );
 
-  if( !params.isSymmetric )
-  {
-    // Usually GEOSX matrix is not symmetric, but GAMG is designed for symmetric matrices
-    // In case of a general matrix, we need to compute a symmetric graph (slightly heavier
-    // than the default, but necessary in case of asymmetric matrices).
-    GEOS_LAI_CHECK_ERROR( PCGAMGSetSymGraph( precond, PETSC_TRUE ) );
-  }
-
   // Add user-defined null space / rigid body mode support
   if( params.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes && nullsp )
   {
