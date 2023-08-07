@@ -19,6 +19,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITFINITESTRAIN_IMPL_HPP_
 #define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITFINITESTRAIN_IMPL_HPP_
 
+#include "constitutive/solid/SolidUtilities.hpp"
 #include "ExplicitFiniteStrain.hpp"
 #include "ExplicitSmallStrain_impl.hpp"
 #include "finiteElement/Kinematics.h"
@@ -56,7 +57,7 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( localIndex const k,
                                                                                 StackVariables & stack ) const
 {
@@ -78,7 +79,7 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel( localIndex const k,
                                                                                                 localIndex const q,
                                                                                                 StackVariables & stack ) const
@@ -112,14 +113,17 @@ void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadrat
   LvArray::tensorOps::addIdentity< 3 >( F, 1.0 );
   real64 const detF = LvArray::tensorOps::invert< 3 >( fInv, F );
 
-  real64 Rot[ 3 ][ 3 ];
-  real64 Dadt[ 6 ];
+  real64 Rot[ 3 ][ 3 ]{};
+  real64 Dadt[ 6 ]{};
   HughesWinget( Rot, Dadt, Ldt );
 
-  real64 stress[ 6 ] = { };
-  m_constitutiveUpdate.hypoUpdate_StressOnly( k, q, Dadt, Rot, stress );
+  real64 stress[ 6 ]{};
+  real64 const timeIncrement = 0.0;
+  constitutive::SolidUtilities::
+    hypoUpdate_StressOnly( m_constitutiveUpdate,
+                           k, q, timeIncrement, Dadt, Rot, stress );
 
-  real64 P[ 3 ][ 3 ];
+  real64 P[ 3 ][ 3 ]{};
   LvArray::tensorOps::Rij_eq_symAikBjk< 3 >( P, stress, fInv );
   LvArray::tensorOps::scale< 3, 3 >( P, -detJ * detF );
 

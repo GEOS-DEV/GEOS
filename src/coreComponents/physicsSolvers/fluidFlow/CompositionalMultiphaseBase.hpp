@@ -20,7 +20,7 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_
 
 #include "common/DataLayouts.hpp"
-#include "constitutive/fluid/layouts.hpp"
+#include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/relativePermeability/layouts.hpp"
 #include "constitutive/capillaryPressure/layouts.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
@@ -152,6 +152,10 @@ public:
   void updateFluidState( ObjectManagerBase & dataGroup ) const;
 
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override final;
+
+  virtual void saveIterationState( DomainPartition & domain ) const override final;
+
+  virtual void saveIterationState( ElementSubRegionBase & subRegion ) const override final;
 
   virtual void updateState( DomainPartition & domain ) override final;
 

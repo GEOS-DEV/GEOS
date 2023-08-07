@@ -46,7 +46,7 @@
     <FieldSpecification
       name="cellVelocity"
       initialCondition="1"
-      objectPath="ElementRegions/Region/cb"
+      objectPath="mesh/FE1/ElementRegions/Region/cb"
       fieldName="mediumVelocity"
       scale="1500.0"
       setNames="{ all }"/>
@@ -54,7 +54,7 @@
     <FieldSpecification
       name="cellDensity"
       initialCondition="1"
-      objectPath="ElementRegions/Region/cb"
+      objectPath="mesh/FE1/ElementRegions/Region/cb"
       fieldName="mediumDensity"
       scale="1.0"
       setNames="{ all }"/>
@@ -62,7 +62,7 @@
     <!-- 3) The free surface condition the domain -->
     <FieldSpecification
       name="zposFreeSurface"
-      objectPath="faceManager"
+      objectPath="mesh/FE1/faceManager"
       fieldName="FreeSurface"
       scale="0.0"
       setNames="{ zpos }"/>
@@ -76,13 +76,6 @@
       name="solverApplications"
       forceDt="0.001"
       target="/Solvers/acousticFirstOrderSolver"/>
-
-    <!-- generate an output that can be read from VTK -->
-    <PeriodicEvent
-      name="vtk"
-      timeFrequency="0.01"
-      targetExactTimestep="0"
-      target="/Outputs/vtkOutput"/>
 
     <!-- two events to output pressure in an hdf5 file -->
     <PeriodicEvent
@@ -111,10 +104,6 @@
   </Tasks>
 
   <Outputs>
-    <!-- output all the mesh values registered with a plot level LEVEL_0, LEVEL_1, LEVEL_2, LEVEL_3   -->
-    <VTK
-      name="vtkOutput"
-      plotLevel="3"/>
 
     <!-- output the pressure values to a file named pressure_history.hdf5  -->
     <TimeHistory

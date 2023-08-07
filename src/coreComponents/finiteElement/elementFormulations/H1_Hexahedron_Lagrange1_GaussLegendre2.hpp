@@ -148,7 +148,7 @@ public:
     const int i1 = ( (linearIndex - i0)/numSamplingPointsPerDirection ) % numSamplingPointsPerDirection;
     const int i2 = ( (linearIndex - i0)/numSamplingPointsPerDirection - i1 ) / numSamplingPointsPerDirection;
 
-    constexpr real64 step = 2 / ( numSamplingPointsPerDirection - 1 );
+    constexpr real64 step = 2. / ( numSamplingPointsPerDirection - 1 );
 
     samplingPointCoord[0] = -1 + i0 * step;
     samplingPointCoord[1] = -1 + i1 * step;
@@ -178,7 +178,7 @@ public:
    *   point.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static void calcN( localIndex const q,
                      real64 (& N)[numNodes] )
   {
@@ -200,7 +200,7 @@ public:
    *   point.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static void calcN( localIndex const q,
                      StackVariables const & stack,
                      real64 ( & N )[numNodes] )
@@ -234,7 +234,7 @@ public:
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static real64 calcGradN( localIndex const q,
                            real64 const (&X)[numNodes][3],
                            StackVariables const & stack,
@@ -250,6 +250,21 @@ public:
   GEOS_HOST_DEVICE
   static real64 transformedQuadratureWeight( localIndex const q,
                                              real64 const (&X)[numNodes][3] );
+
+
+  /**
+   * @brief Calculate the integration weights for a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param stack Variables allocated on the stack as filled by @ref setupStack.
+   * @return The product of the quadrature rule weight and the determinate of
+   *   the parent/physical transformation matrix.
+   */
+  GEOS_HOST_DEVICE
+  static real64 transformedQuadratureWeight( localIndex const q,
+                                             real64 const (&X)[numNodes][3],
+                                             StackVariables const & stack )
+  { GEOS_UNUSED_VAR( stack ); return transformedQuadratureWeight( q, X ); }
 
 
   /**
@@ -416,7 +431,7 @@ private:
 
 };
 
-//GEOS_HOST_DEVICE GEOS_FORCE_INLINE real64
+//GEOS_HOST_DEVICE inline real64
 //psiProductFunc( int const n )
 //{
 //  // factor = 1./(2 + Sqrt[3]) = 0.267949192431122706
@@ -432,7 +447,7 @@ private:
 /// @cond Doxygen_Suppress
 
 template< typename FUNC, typename ... PARAMS >
-GEOS_HOST_DEVICE GEOS_FORCE_INLINE void
+GEOS_HOST_DEVICE inline void
 H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
                                                      int const qb,
                                                      int const qc,
@@ -526,7 +541,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
 
 //*************************************************************************************************
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 real64
 H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN( localIndex const q,
                                                    real64 const (&X)[numNodes][3],
@@ -548,7 +563,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN( localIndex const q,
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 real64 H1_Hexahedron_Lagrange1_GaussLegendre2::
   calcGradN( localIndex const q,
              real64 const (&X)[numNodes][3],
@@ -565,7 +580,7 @@ real64 H1_Hexahedron_Lagrange1_GaussLegendre2::
 #endif
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void
 H1_Hexahedron_Lagrange1_GaussLegendre2::
   jacobianTransformation( int const qa,
@@ -604,7 +619,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
 
 //*************************************************************************************************
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void
 H1_Hexahedron_Lagrange1_GaussLegendre2::
   applyTransformationToParentGradients( int const qa,
@@ -637,7 +652,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
 
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 real64
 H1_Hexahedron_Lagrange1_GaussLegendre2::
   transformedQuadratureWeight( localIndex const q,
@@ -656,7 +671,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
 
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void H1_Hexahedron_Lagrange1_GaussLegendre2::symmetricGradient( int const q,
                                                                 real64 const (&invJ)[3][3],
                                                                 real64 const (&var)[numNodes][3],
@@ -691,7 +706,7 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::symmetricGradient( int const q,
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( int const q,
                                                              real64 const (&invJ)[3][3],
                                                              real64 const (&var)[6],
@@ -726,7 +741,7 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( int const q,
 
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const q,
                                                        real64 const (&invJ)[3][3],
                                                        real64 const (&var)[numNodes][3],

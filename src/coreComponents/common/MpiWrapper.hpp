@@ -286,6 +286,12 @@ public:
 #endif
 
   /**
+   * @brief Compute the number of ranks allocated on the same node
+   * @return The number of MPI ranks on the current node.
+   */
+  static int nodeCommSize();
+
+  /**
    * @brief Strongly typed wrapper around MPI_Allgather.
    * @tparam T_SEND The pointer type for \p sendbuf
    * @tparam T_RECV The pointer type for \p recvbuf
@@ -435,7 +441,7 @@ public:
                    MPI_Status * MPI_PARAM( request ) );
 
   template< typename T >
-  static int iSend( arrayView1d< T const > const & buf,
+  static int iSend( arrayView1d< T > const & buf,
                     int MPI_PARAM( dest ),
                     int tag,
                     MPI_Comm MPI_PARAM( comm ),
@@ -906,7 +912,7 @@ int MpiWrapper::recv( array1d< T > & buf,
 }
 
 template< typename T >
-int MpiWrapper::iSend( arrayView1d< T const > const & buf,
+int MpiWrapper::iSend( arrayView1d< T > const & buf,
                        int MPI_PARAM( dest ),
                        int tag,
                        MPI_Comm MPI_PARAM( comm ),

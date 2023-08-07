@@ -480,12 +480,12 @@ loadMesh( Path const & filePath,
  * @return the vtk grid with global ids attributes
  */
 vtkSmartPointer< vtkDataSet >
-generateGlobalIDs( vtkDataSet & mesh )
+generateGlobalIDs( vtkSmartPointer< vtkDataSet > mesh )
 {
   GEOS_MARK_FUNCTION;
 
   vtkNew< vtkGenerateGlobalIds > generator;
-  generator->SetInputDataObject( &mesh );
+  generator->SetInputDataObject( mesh );
   generator->Update();
   return vtkDataSet::SafeDownCast( generator->GetOutputDataObject( 0 ) );
 }
@@ -507,22 +507,22 @@ redistributeByCellGraph( vtkDataSet & mesh,
 {
   GEOS_MARK_FUNCTION;
 
-  int64_t const numElems = mesh.GetNumberOfCells();
-  int64_t const numProcs = MpiWrapper::commSize( comm );
+  pmet_idx_t const numElems = mesh.GetNumberOfCells();
+  pmet_idx_t const numProcs = MpiWrapper::commSize( comm );
 
   // Compute `elemdist` parameter (element range owned by each rank)
-  array1d< int64_t > const elemDist( numProcs + 1 );
+  array1d< pmet_idx_t > const elemDist( numProcs + 1 );
   {
-    array1d< int64_t > elemCounts;
+    array1d< pmet_idx_t > elemCounts;
     MpiWrapper::allGather( numElems, elemCounts, comm );
     std::partial_sum( elemCounts.begin(), elemCounts.end(), elemDist.begin() + 1 );
   }
 
-  // Use int64_t here to match ParMETIS' idx_t
-  ArrayOfArrays< int64_t, int64_t > const elemToNodes = buildElemToNodes< int64_t >( mesh );
-  ArrayOfArrays< int64_t, int64_t > const graph = parmetis::meshToDual( elemToNodes.toViewConst(), elemDist, comm, 3 );
+  // Use pmet_idx_t here to match ParMETIS' pmet_idx_t
+  ArrayOfArrays< pmet_idx_t, pmet_idx_t > const elemToNodes = buildElemToNodes< pmet_idx_t >( mesh );
+  ArrayOfArrays< pmet_idx_t, pmet_idx_t > const graph = parmetis::meshToDual( elemToNodes.toViewConst(), elemDist, comm, 3 );
 
-  array1d< int64_t > const newParts = [&]()
+  array1d< pmet_idx_t > const newParts = [&]()
   {
     switch( method )
     {
@@ -593,8 +593,163 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes )
   return neighbors;
 }
 
+vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mesh, int useGlobalIds )
+{
+  auto hasGlobalIds = []( vtkSmartPointer< vtkDataSet > m ) -> bool
+  {
+    return m->GetPointData()->GetGlobalIds() != nullptr && m->GetCellData()->GetGlobalIds() != nullptr;
+  };
+
+  {
+    // Add global ids on the fly if needed
+    int const me = hasGlobalIds( mesh );
+    int everyone;
+    MpiWrapper::allReduce( &me, &everyone, 1, MPI_MAX, MPI_COMM_GEOSX );
+
+    if( everyone and not me )
+    {
+      mesh->GetPointData()->SetGlobalIds( vtkIdTypeArray::New() );
+      mesh->GetCellData()->SetGlobalIds( vtkIdTypeArray::New() );
+    }
+  }
+
+  vtkSmartPointer< vtkDataSet > output;
+  bool const globalIdsAvailable = hasGlobalIds( mesh );
+  if( useGlobalIds > 0 && !globalIdsAvailable )
+  {
+    GEOS_ERROR( "Global IDs strictly required (useGlobalId > 0) but unavailable. Set useGlobalIds to 0 to build them automatically." );
+  }
+  else if( useGlobalIds >= 0 && globalIdsAvailable )
+  {
+    output = mesh;
+    vtkIdTypeArray const * const globalCellId = vtkIdTypeArray::FastDownCast( output->GetCellData()->GetGlobalIds() );
+    vtkIdTypeArray const * const globalPointId = vtkIdTypeArray::FastDownCast( output->GetPointData()->GetGlobalIds() );
+    GEOS_ERROR_IF( globalCellId->GetNumberOfComponents() != 1 && globalCellId->GetNumberOfTuples() != output->GetNumberOfCells(),
+                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
+    GEOS_ERROR_IF( globalPointId->GetNumberOfComponents() != 1 && globalPointId->GetNumberOfTuples() != output->GetNumberOfPoints(),
+                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
+
+    GEOS_LOG_RANK_0( "Using global Ids defined in VTK mesh" );
+  }
+  else
+  {
+    GEOS_LOG_RANK_0( "Generating global Ids from VTK mesh" );
+    output = generateGlobalIDs( mesh );
+  }
+
+  return output;
+}
+
+/**
+ * @brief This function tries to make sure that no MPI rank is empty
+ *
+ * @param[in] mesh a vtk grid
+ * @param[in] comm the MPI communicator
+ * @return the vtk grid redistributed
+ */
 vtkSmartPointer< vtkDataSet >
-redistributeMesh( vtkDataSet & loadedMesh,
+ensureNoEmptyRank( vtkDataSet & mesh,
+                   MPI_Comm const comm )
+{
+  GEOS_MARK_FUNCTION;
+
+  // step 1: figure out who is a donor and who is a recipient
+  localIndex const numElems = LvArray::integerConversion< localIndex >( mesh.GetNumberOfCells() );
+  integer const numProcs = MpiWrapper::commSize( comm );
+
+  array1d< localIndex > elemCounts( numProcs );
+  MpiWrapper::allGather( numElems, elemCounts, comm );
+
+  SortedArray< integer > recipientRanks;
+  array1d< integer > donorRanks;
+  recipientRanks.reserve( numProcs );
+  donorRanks.reserve( numProcs );
+
+  for( integer iRank = 0; iRank < numProcs; ++iRank )
+  {
+    if( elemCounts[iRank] == 0 )
+    {
+      recipientRanks.insert( iRank );
+    }
+    else if( elemCounts[iRank] > 1 ) // need at least two elems to be a donor
+    {
+      donorRanks.emplace_back( iRank );
+    }
+  }
+
+  // step 2: at this point, we need to determine the donors and which cells they donate
+
+  // First we sort the donor in order of the number of elems they contain
+  std::stable_sort( donorRanks.begin(), donorRanks.end(),
+                    [&elemCounts] ( auto i1, auto i2 )
+  { return elemCounts[i1] < elemCounts[i2]; } );
+
+  // Then, if my position is "i" in the donorRanks array, I will send half of my elems to the i-th recipient
+  integer const myRank = MpiWrapper::commRank();
+  auto const myPosition =
+    LvArray::sortedArrayManipulation::find( donorRanks.begin(), donorRanks.size(), myRank );
+  bool const isDonor = myPosition != donorRanks.size();
+
+  // step 3: my rank was selected to donate cells, let's proceed
+  // we need to make a distinction between two configurations
+
+  array1d< localIndex > newParts( numElems );
+  newParts.setValues< parallelHostPolicy >( myRank );
+
+  // step 3.1: donorRanks.size() >= recipientRanks.size()
+  // we use a strategy that preserves load balancing
+  if( isDonor && donorRanks.size() >= recipientRanks.size() )
+  {
+    if( myPosition < recipientRanks.size() )
+    {
+      integer const recipientRank = recipientRanks[myPosition];
+      for( localIndex iElem = numElems/2; iElem < numElems; ++iElem )
+      {
+        newParts[iElem] = recipientRank; // I donate half of my cells
+      }
+    }
+  }
+  // step 3.2: donorRanks.size() < recipientRanks.size()
+  // this is the unhappy path: we don't care anymore about load balancing at this stage
+  // we just want the simulation to run and count on ParMetis/PTScotch to restore load balancing
+  else if( isDonor && donorRanks.size() < recipientRanks.size() )
+  {
+    localIndex firstRecipientPosition = 0;
+    for( integer iRank = 0; iRank < myPosition; ++iRank )
+    {
+      firstRecipientPosition += elemCounts[iRank] - 1;
+    }
+    if( firstRecipientPosition < recipientRanks.size() )
+    {
+      bool const isLastDonor = myPosition == donorRanks.size() - 1;
+      localIndex const lastRecipientPosition = firstRecipientPosition + numElems - 1;
+      GEOS_THROW_IF( isLastDonor && ( lastRecipientPosition < recipientRanks.size() ),
+                     "The current implementation is unable to guarantee that all ranks have at least one element",
+                     std::runtime_error );
+
+      for( localIndex iElem = 1; iElem < numElems; ++iElem ) // I only keep my first element
+      {
+        // this is the brute force approach
+        // each donor donates all its elems except the first one
+        localIndex const recipientPosition = firstRecipientPosition + iElem - 1;
+        if( recipientPosition < recipientRanks.size() )
+        {
+          newParts[iElem] = recipientRanks[recipientPosition];
+        }
+      }
+    }
+  }
+
+  GEOS_LOG_RANK_0_IF( donorRanks.size() < recipientRanks.size(),
+                      "\nWarning! We strongly encourage the use of partitionRefinement > 5 for this number of MPI ranks \n" );
+
+  vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( mesh, numProcs, newParts.toViewConst() );
+  return vtk::redistribute( *splitMesh, MPI_COMM_GEOSX );
+}
+
+
+vtkSmartPointer< vtkDataSet >
+redistributeMesh( vtkSmartPointer< vtkDataSet > loadedMesh,
                   MPI_Comm const comm,
                   PartitionMethod const method,
                   int const partitionRefinement,
@@ -603,34 +758,7 @@ redistributeMesh( vtkDataSet & loadedMesh,
   GEOS_MARK_FUNCTION;
 
   // Generate global IDs for vertices and cells, if needed
-  vtkSmartPointer< vtkDataSet > mesh;
-  bool globalIdsAvailable = loadedMesh.GetPointData()->GetGlobalIds() != nullptr
-                            && loadedMesh.GetCellData()->GetGlobalIds() != nullptr;
-  if( useGlobalIds > 0 && !globalIdsAvailable )
-  {
-    GEOS_ERROR( "Global IDs strictly required (useGlobalId > 0) but unavailable. Set useGlobalIds to 0 to build them automatically." );
-  }
-  else if( useGlobalIds >= 0 && globalIdsAvailable )
-  {
-    mesh = &loadedMesh;
-    vtkIdTypeArray const * const globalCellId = vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() );
-    vtkIdTypeArray const * const globalPointId = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
-    GEOS_ERROR_IF( globalCellId->GetNumberOfComponents() != 1 && globalCellId->GetNumberOfTuples() != mesh->GetNumberOfCells(),
-                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
-    GEOS_ERROR_IF( globalPointId->GetNumberOfComponents() != 1 && globalPointId->GetNumberOfTuples() != mesh->GetNumberOfPoints(),
-                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
-
-    GEOS_LOG_RANK_0( "Using global Ids defined in VTK mesh" );
-  }
-  else
-  {
-    GEOS_LOG_RANK_0( "Generating global Ids from VTK mesh" );
-    vtkNew< vtkGenerateGlobalIds > generator;
-    generator->SetInputDataObject( &loadedMesh );
-    generator->Update();
-    mesh = generateGlobalIDs( loadedMesh );
-  }
-
+  vtkSmartPointer< vtkDataSet > mesh = manageGlobalIds( loadedMesh, useGlobalIds );
 
   // Determine if redistribution is required
   vtkIdType const minCellsOnAnyRank = MpiWrapper::min( mesh->GetNumberOfCells(), comm );
@@ -638,6 +766,14 @@ redistributeMesh( vtkDataSet & loadedMesh,
   {
     // Redistribute the mesh over all ranks using simple octree partitions
     mesh = redistributeByKdTree( *mesh );
+  }
+
+  // Check if a rank does not have a cell after the redistribution
+  // If this is the case, we need a fix otherwise the next redistribution will fail
+  // We expect this function to only be called in some pathological cases
+  if( MpiWrapper::min( mesh->GetNumberOfCells(), comm ) == 0 )
+  {
+    mesh = ensureNoEmptyRank( *mesh, comm );
   }
 
   // Redistribute the mesh again using higher-quality graph partitioner

@@ -17,6 +17,9 @@
 /// Enables use of Caliper (CMake option ENABLE_CALIPER)
 #define GEOSX_USE_CALIPER
 
+/// Enables use of Caliper (CMake option ENABLE_ADIAK)
+/* #undef GEOSX_USE_ADIAK */
+
 /// Enables use of CHAI (CMake option ENABLE_CHAI)
 #define GEOSX_USE_CHAI
 
@@ -30,10 +33,13 @@
 #define GEOSX_USE_OPENMP
 
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
-#define GEOSX_USE_CUDA
+#define GEOS_USE_CUDA
 
 /// Enables use of CUDA NVToolsExt (CMake option ENABLE_CUDA_NVTOOLSEXT)
-#define GEOSX_USE_CUDA_NVTOOLSEXT
+/* #undef GEOS_USE_CUDA_NVTOOLSEXT */
+
+/// Enables use of HIP (CMake option ENABLE_HIP)
+/* #undef GEOS_USE_HIP */
 
 /// Enables use of PVTPackage (CMake option ENABLE_PVTPackage)
 #define GEOSX_USE_PVTPackage
@@ -59,8 +65,26 @@
 /// Enables use of Hypre library (CMake option ENABLE_HYPRE)
 #define GEOSX_USE_HYPRE
 
-/// Macro defined when using cuda in HYPRE  (CMake option ENABLE_HYPRE_CUDA)
-#define GEOSX_USE_HYPRE_CUDA
+#if defined( GEOSX_USE_HYPRE )
+  /// Parsed hypre version information
+  #define HYPRE_VERSION_MAJOR 2
+  /// Parsed hypre version information
+  #define HYPRE_VERSION_MINOR 28
+  /// Parsed hypre version information
+  #define HYPRE_VERSION_PATCH 0
+#endif
+
+/// Denotes HYPRE using CPU
+#define GEOS_USE_HYPRE_CPU 0
+/// Denotes HYPRE using CUDA
+#define GEOS_USE_HYPRE_CUDA 1
+/// Denotes HYPRE using HIP
+#define GEOS_USE_HYPRE_HIP 2
+/// Macro determining what parellel interface hypre is using
+#define GEOS_USE_HYPRE_DEVICE GEOS_USE_HYPRE_CUDA
+
+/// Enables use of SuperLU_dist library through HYPRE (CMake option ENABLE_SUPERLU_DIST)
+#define GEOSX_USE_SUPERLU_DIST
 
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
 #define GEOSX_USE_PETSC
@@ -98,6 +122,9 @@
 /// An integer flag representing the type that globalIndex will be aliased to.
 #define GEOSX_GLOBALINDEX_TYPE_FLAG 2
 
+/// The default block size for GEOSX on this platform
+#define GEOSX_BLOCK_SIZE 32
+
 /// Version information for HDF5
 #define HDF5_VERSION 1.12.1
 
@@ -105,10 +132,10 @@
 #define Conduit_VERSION 0.8.2
 
 /// Version information for RAJA
-#define RAJA_VERSION 2022.3.0
+#define RAJA_VERSION 2022.10.5
 
 /// Version information for umpire
-#define umpire_VERSION 2022.3.0
+#define umpire_VERSION 2022.10.0
 
 /// Version information for chai
 /* #undef chai_VERSION */
@@ -125,7 +152,7 @@
 /// Version information for ParMetis
 #define PARAMETIS_VERSION 4.0.3
 
-/// Version information for scotch 
+/// Version information for scotch
 #define scotch_VERSION 6.0.9
 
 /// Version information for superlu_dist
@@ -135,10 +162,10 @@
 #define suitesparse_VERSION 5.7.9
 
 /// Version information for VTK
-#define VTK_VERSION 9.1.0
+#define VTK_VERSION 9.2.6
 
 /// Version information for fmt
-#define fmt_VERSION 8.0.1
+#define fmt_VERSION 10.0.0
 
 /// Version information for python
 #define Python3_VERSION 3.10.8
@@ -146,6 +173,13 @@
 /// Version information for CUDAToolkit
 /* #undef CUDAToolkit_VERSION */
 
+#if defined(GEOS_USE_CUDA) || defined(GEOS_USE_HIP)
+// This needs to be placed into this header in order to appropriately replace
+//  the old usage of GEOS_USE_CUDA, since we detect whether it is defined
+//  rather than a value, not having it in the *same* header can cauase nebulous
+//  compilation problems including the USD of arrays changing depending the scope
+#define GEOS_USE_DEVICE
+#endif
 
 #endif  /* GEOS_CONFIG_HPP */
 

@@ -219,7 +219,7 @@ public:
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
 
-  void turnOnFixedStressThermoPoromechanicsFlag();
+  void enableFixedStressPoromechanicsUpdate();
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -289,7 +289,7 @@ protected:
   integer m_strainTheory;
   string m_contactRelationName;
   MPI_iCommData m_iComm;
-  integer m_fixedStressUpdateThermoPoromechanicsFlag;
+  bool m_isFixedStressPoromechanicsUpdate;
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
@@ -338,10 +338,10 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                   gravityVectorData,
                                   std::forward< PARAMS >( params )... );
 
-    if( m_fixedStressUpdateThermoPoromechanicsFlag )
+    if( m_isFixedStressPoromechanicsUpdate )
     {
       m_maxForce = finiteElement::
-                     regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                     regionBasedKernelApplication< parallelDevicePolicy< >,
                                                    CONSTITUTIVE_BASE,
                                                    CellElementSubRegion >( mesh,
                                                                            regionNames,
@@ -352,7 +352,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
     else
     {
       m_maxForce = finiteElement::
-                     regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                     regionBasedKernelApplication< parallelDevicePolicy< >,
                                                    CONSTITUTIVE_BASE,
                                                    CellElementSubRegion >( mesh,
                                                                            regionNames,
@@ -361,7 +361,6 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                                                            kernelWrapper );
     }
   } );
-
 
   applyContactConstraint( dofManager, domain, localMatrix, localRhs );
 }

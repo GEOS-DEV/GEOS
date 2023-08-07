@@ -40,6 +40,13 @@ set(YAPF_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/pyt
 # Sphinx
 set(SPHINX_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/python/bin/sphinx-build CACHE PATH "" FORCE)
 
+
+set(ENABLE_FESAPI OFF CACHE BOOL "" FORCE)
+
+# caliper 
+set(ENABLE_CALIPER ON CACHE BOOL "" FORCE)
+set(ENABLE_CALIPER_HYPRE ON CACHE BOOL "" FORCE)
+
 # MKL
 set(ENABLE_MKL ON CACHE BOOL "")
 set(MKL_ROOT /usr/tce/packages/mkl/mkl-2022.1.0)
@@ -49,5 +56,7 @@ set(MKL_LIBRARIES ${MKL_ROOT}/lib/intel64/libmkl_intel_lp64.so
                   ${MKL_ROOT}/lib/intel64/libmkl_core.so
                   CACHE STRING "")
 
+# ATS
+set(ATS_ARGUMENTS "--machine slurm36"  CACHE STRING "")
 
 include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)

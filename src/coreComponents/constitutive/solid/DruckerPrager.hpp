@@ -96,26 +96,45 @@ public:
   using ElasticIsotropicUpdates::smallStrainUpdate;
 
   GEOS_HOST_DEVICE
-  virtual void smallStrainUpdate( localIndex const k,
-                                  localIndex const q,
-                                  real64 const ( &strainIncrement )[6],
-                                  real64 ( &stress )[6],
-                                  real64 ( &stiffness )[6][6] ) const override final;
+  void smallStrainUpdate( localIndex const k,
+                          localIndex const q,
+                          real64 const & timeIncrement,
+                          real64 const ( &strainIncrement )[6],
+                          real64 ( &stress )[6],
+                          real64 ( &stiffness )[6][6] ) const;
 
   GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
-                                  DiscretizationOps & stiffness ) const final;
+                                  DiscretizationOps & stiffness ) const;
 
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  virtual void smallStrainUpdate_ElasticOnly( localIndex const k,
+                                              localIndex const q,
+                                              real64 const & timeIncrement,
+                                              real64 const ( &strainIncrement )[6],
+                                              real64 ( &stress )[6],
+                                              real64 ( &stiffness )[6][6] ) const override;
+
+  GEOS_HOST_DEVICE
+  inline
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const override final
   {
     ElasticIsotropicUpdates::saveConvergedState( k, q );
     m_oldCohesion[k][q] = m_newCohesion[k][q];
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  virtual void viscousStateUpdate( localIndex const k,
+                                   localIndex const q,
+                                   real64 beta ) const override
+  {
+    m_newCohesion[k][q] = beta * m_oldCohesion[k][q] + (1 - beta) * m_newCohesion[k][q];
   }
 
 private:
@@ -138,16 +157,16 @@ private:
 
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
                                               localIndex const q,
+                                              real64 const & timeIncrement,
                                               real64 const ( &strainIncrement )[6],
                                               real64 ( & stress )[6],
                                               real64 ( & stiffness )[6][6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
-
-  ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+  ElasticIsotropicUpdates::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
 
   if( m_disableInelasticity )
   {
@@ -181,7 +200,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
   // iteration, but this is a template for more general models with either
   // nonlinear hardening or yield surfaces.
 
-  real64 solution[3]{}, residual[3]{}, delta[3]{};
+  real64 solution[3] = {}, residual[3] = {}, delta[3] = {};
   real64 jacobian[3][3] = {{}}, jacobianInv[3][3] = {{}};
 
   solution[0] = trialP; // initial guess for newP
@@ -293,16 +312,30 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
   return;
 }
 
-
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
+void DruckerPragerUpdates::smallStrainUpdate_ElasticOnly( localIndex const k,
+                                                          localIndex const q,
+                                                          real64 const & timeIncrement,
+                                                          real64 const ( &strainIncrement )[6],
+                                                          real64 ( & stress )[6],
+                                                          real64 ( & stiffness )[6][6] ) const
+{
+  // elastic predictor (assume strainIncrement is all elastic)
+  ElasticIsotropicUpdates::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
+  return;
+}
+
+GEOS_HOST_DEVICE
+inline
 void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
                                               localIndex const q,
+                                              real64 const & timeIncrement,
                                               real64 const ( &strainIncrement )[6],
                                               real64 ( & stress )[6],
                                               DiscretizationOps & stiffness ) const
 {
-  smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );
+  smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
 }
 
 
@@ -414,7 +447,7 @@ public:
    * @return An @p UPDATE_KERNEL object.
    */
   template< typename UPDATE_KERNEL, typename ... PARAMS >
-  UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
+  UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams ) const
   {
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
                           m_friction,

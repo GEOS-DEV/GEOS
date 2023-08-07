@@ -28,10 +28,7 @@
 namespace geos
 {
 
-// Note that in the current implementation, the order of the templates in CoupledSolver< ... > matters
-// We put CompositionalMultiphaseBase first to start with a flow solve in the sequential option
-class MultiphasePoromechanics : public CoupledSolver< CompositionalMultiphaseBase,
-                                                      SolidMechanicsLagrangianFEM >
+class MultiphasePoromechanics : public CoupledSolver< CompositionalMultiphaseBase, SolidMechanicsLagrangianFEM >
 {
 public:
 
@@ -97,6 +94,13 @@ public:
 
   virtual void setupCoupling( DomainPartition const & domain,
                               DofManager & dofManager ) const override;
+
+  virtual void setupDofs( DomainPartition const & domain,
+                          DofManager & dofManager ) const override;
+
+  virtual void implicitStepSetup( real64 const & time_n,
+                                  real64 const & dt,
+                                  DomainPartition & domain ) override;
 
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
@@ -168,6 +172,12 @@ private:
    */
   void updateBulkDensity( ElementSubRegionBase & subRegion );
 
+  /**
+   * @brief Helper function to average the mean stress increment over quadrature points
+   * @param[in] domain the domain partition
+   */
+  void averageMeanStressIncrement( DomainPartition & domain );
+
   template< typename CONSTITUTIVE_BASE,
             typename KERNEL_WRAPPER,
             typename ... PARAMS >
@@ -228,7 +238,7 @@ real64 MultiphasePoromechanics::assemblyLaunch( MeshLevel & mesh,
                                 std::forward< PARAMS >( params )... );
 
   return finiteElement::
-           regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+           regionBasedKernelApplication< parallelDevicePolicy< >,
                                          CONSTITUTIVE_BASE,
                                          CellElementSubRegion >( mesh,
                                                                  regionNames,

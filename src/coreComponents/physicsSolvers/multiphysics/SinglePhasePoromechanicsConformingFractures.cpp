@@ -19,11 +19,12 @@
 #include "SinglePhasePoromechanicsConformingFractures.hpp"
 
 #include "constitutive/solid/PorousSolid.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
@@ -37,12 +38,23 @@ using namespace fields;
 
 SinglePhasePoromechanicsConformingFractures::SinglePhasePoromechanicsConformingFractures( const string & name,
                                                                                           Group * const parent )
-  : Base( name, parent )
-{}
+  : Base( name, parent ),
+  m_isThermal( 0 )
+{
+  this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag indicating whether the problem is thermal or not. Set isThermal=\"1\" to enable the thermal coupling" );
+}
 
 void SinglePhasePoromechanicsConformingFractures::initializePostInitialConditionsPostSubGroups()
 {
   contactSolver()->setSolidSolverDofFlags( false );
+
+  integer const & isPoromechanicsSolverThermal = poromechanicsSolver()->getReference< integer >( SinglePhasePoromechanics::viewKeyStruct::isThermalString() );
+
+  GEOS_ERROR_IF( isPoromechanicsSolverThermal != m_isThermal, GEOS_FMT( "{} {}: The attribute `{}` of the poromechanics solver `{}` must be set to the same value as for this solver.",
+                                                                        catalogName(), getName(), SinglePhasePoromechanics::viewKeyStruct::isThermalString(), poromechanicsSolver()->getName() ) );
 }
 
 void SinglePhasePoromechanicsConformingFractures::setupCoupling( DomainPartition const & domain,
@@ -193,32 +205,37 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    NodeManager const & nodeManager = mesh.getNodeManager();
+    string const flowDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
+    if( m_isThermal )
+    {
+      assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
+                      thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory >( mesh,
+                                                                                                   dofManager,
+                                                                                                   regionNames,
+                                                                                                   SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
+                                                                                                   localMatrix,
+                                                                                                   localRhs,
+                                                                                                   flowDofKey,
+                                                                                                   FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    }
+    else
+    {
+      assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >,
+                      poromechanicsKernels::SinglePhasePoromechanicsKernelFactory >( mesh,
+                                                                                     dofManager,
+                                                                                     regionNames,
+                                                                                     SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
+                                                                                     localMatrix,
+                                                                                     localRhs,
+                                                                                     flowDofKey,
+                                                                                     FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    }
 
-    string const dofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
-    arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
-
-    string const pDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
-
-    real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
-
-    poromechanicsKernels::SinglePhasePoromechanicsKernelFactory kernelFactory( dispDofNumber,
-                                                                               dofManager.rankOffset(),
-                                                                               localMatrix,
-                                                                               localRhs,
-                                                                               gravityVectorData,
-                                                                               pDofKey,
-                                                                               FlowSolverBase::viewKeyStruct::fluidNamesString() );
-
-    // 1. Cell-based contributions to Kuu, Kup, Kpu, Kpp blocks
-    finiteElement::
-      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                    constitutive::PorousSolidBase,
-                                    CellElementSubRegion >( mesh,
-                                                            regionNames,
-                                                            contactSolver()->getSolidSolver()->getDiscretizationName(),
-                                                            SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
-                                                            kernelFactory );
+    mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          FaceElementSubRegion const & subRegion )
+    {
+      poromechanicsSolver()->flowSolver()->accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );
+    } );
 
     /// 2.a assemble Kut
     contactSolver()->assembleForceResidualDerivativeWrtTraction( mesh, regionNames, dofManager, localMatrix, localRhs );
@@ -714,6 +731,26 @@ void SinglePhasePoromechanicsConformingFractures::updateState( DomainPartition &
   Base::updateState( domain );
 
   updateHydraulicApertureAndFracturePermeability( domain );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   FaceElementSubRegion & subRegion )
+    {
+      // update fluid model
+      poromechanicsSolver()->flowSolver()->updateFluidState( subRegion );
+      if( m_isThermal )
+      {
+        // update solid internal energy
+        poromechanicsSolver()->flowSolver()->updateSolidInternalEnergyModel( subRegion );
+      }
+    } );
+  } );
 }
 
 void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFracturePermeability( DomainPartition & domain )
