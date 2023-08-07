@@ -54,12 +54,13 @@ and launching a 2-cores example.
 then, as you local directory is automatically mounted, if the results are produced locally, you should be able to inspect them once the virtualization ended.
 
 .. note::
+
     It might be required to `export OMPI_MCA_opal_cuda_support=false` in order to disable cuda support loading of the ompi version as the base TPL image
 might have CUDA compiled in it and might perturb the CPU only test at stake here.
 
 .. note::
 
-    During pull/convert operation Singularity will refuse to overwrite an existing image.
+   During pull/convert operation Singularity will refuse to overwrite an existing image.
    Moreover, Singularity images are read-only container by default.
 
 Now let us use that to launch `sbatch` computation.
