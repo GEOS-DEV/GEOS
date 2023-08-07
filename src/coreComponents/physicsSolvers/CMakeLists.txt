@@ -12,6 +12,7 @@ set( physicsSolvers_headers
      contact/ContactSolverBase.hpp
      contact/ContactFields.hpp
      contact/LagrangianContactSolver.hpp
+     contact/SolidMechanicsConformingFracturesVEM.hpp
      contact/SolidMechanicsEFEMKernelsBase.hpp
      contact/SolidMechanicsEFEMKernels.hpp
      contact/SolidMechanicsEFEMStaticCondensationKernels.hpp
@@ -148,6 +149,7 @@ set( physicsSolvers_sources
      SolverStatistics.cpp
      contact/ContactSolverBase.cpp
      contact/LagrangianContactSolver.cpp
+     contact/SolidMechanicsConformingFracturesVEM.cpp
      contact/SolidMechanicsEmbeddedFractures.cpp
      fluidFlow/CompositionalMultiphaseBase.cpp
      fluidFlow/CompositionalMultiphaseFVM.cpp
