@@ -90,8 +90,7 @@ The pull/convert command then is formulated as,
 
     srun -c 12 singularity pull docker://jafranc/geos-gpu-test:11.5.2-sm80-devel
 
-We will use either `11.5.2-sm80-devel` tag for targeting *sm_80* tag cards (e.g. A100-SXM4) and `11.5.2-sm70-devel` when
-targeting *sm_70* older cards (e.g. V100).
+We will use either `11.5.2-sm80-devel` tag for targeting *sm_80* tag cards (e.g. A100-SXM4).
 
 A batch file example to lauch them is then,
 
