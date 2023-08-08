@@ -9,7 +9,7 @@ Governing Equations
 
 GEOS contact solvers solve the the balance of linear momentum within a fractured solid, accounting for the continuity of stress across surfaces (i.e., fractures), i.e.
 
-... math::
+.. math::
 
    \nabla \cdot \sigma = 0 \\\\
    [[\sigma]] \cdot \mathbf{n} = 0
