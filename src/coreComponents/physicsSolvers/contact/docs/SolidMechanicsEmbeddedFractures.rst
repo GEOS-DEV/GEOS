@@ -13,30 +13,9 @@ Introduction
 ============
 
 
-Theory
+Discretization & soltuion strategy
 =========================
 
-Governing Equations
---------------------------
-
-The `SolidMechanicsEmbeddedFractures` solves the the balance of linear momentum within a fractured solid, accounting for the continuity of stress across surfaces (i.e., fractures), i.e.
-
-... math::
-
-   \nabla \cdot \sigma = 0 \\\\
-   [[\sigma]] \cdot \mathbf{n} = 0
-
-Where:
-- :math:`\sigma` is the stress tensor in the solid,
-- :math:`\mathbf{n}` is the outward unit normal to the surface,
-- :math:`[[\sigma]]` is the stress jump across the surface.
-
-
-On each fracture surface, a no-interpenetration constraint is enforced. Additionally, tangential tractions can also be generated, which are modeled using a regularized Coulomb model to describe frictional sliding.
-
-
-Discretization & soltuion strategy
-----------------------------------
 
 The linear momentum balance equation is discretized using a low order finite element method. Moreover, to account for the influence of the fractures on the overall behavior, we utilize the enriched finite element method (EFEM)
 with a piece-wise constant enrichment. This method employs an element-local enrichment of the FE space using the concept of assumedenhanced strain [1-6].

@@ -11,6 +11,8 @@ Introduction
 Theory
 =========================
 
+Under construction
+
 Governing Equations
 --------------------------
 
@@ -26,5 +28,5 @@ The following attributes are supported in the input block for `LagrangianContact
 
 The following data are allocated and used by the solver:
 
-.. include:: /coreComponents/schema/docs/SLagrangianContactSolver_other.rst
+.. include:: /coreComponents/schema/docs/LagrangianContactSolver_other.rst
 
