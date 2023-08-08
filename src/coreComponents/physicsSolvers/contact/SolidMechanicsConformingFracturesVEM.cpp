@@ -816,6 +816,221 @@ void SolidMechanicsConformingFracturesVEM::computeRotationMatrices( DomainPartit
   } );
 }
 
+
+void SolidMechanicsConformingFracturesVEM::computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
+                      array1d< localIndex const > const & faceToNodes,
+                      array1d< localIndex const > const & faceToEdges,
+                      localIndex const & numFaceVertices,
+                      real64 const & faceArea,
+                      real64 const (&faceCenter)[3],
+                      real64 const (&faceNormal)[3],
+                      array2d< localIndex const > const & edgeToNodes,
+                      real64 const & invCellDiameter,
+                      real64 const (&cellCenter)[3],
+                      array1d< real64 > & basisIntegrals,
+                      real64 (& threeDMonomialIntegrals)[3] ) const
+{
+  GEOS_MARK_FUNCTION;
+  localIndex const MFN = 11; // Max number of face vertices.
+  GEOS_ASSERT( numFaceVertices <= MFN );
+  
+  basisIntegrals.resize( numFaceVertices );
+  // Rotate the face.
+  //  - compute rotation matrix.
+  real64 faceRotationMatrix[ 3 ][ 3 ];
+  computationalGeometry::RotationMatrix_3D( faceNormal, faceRotationMatrix );
+  //  - below we compute the diameter, the rotated vertices and the rotated center.
+  real64 faceRotatedVertices[ MFN ][ 2 ];
+  real64 faceDiameter = 0;
+  
+  for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
+  {
+    // apply the transpose (that is the inverse) of the rotation matrix to face vertices.
+    // NOTE:
+    // the second and third rows of the transpose of the rotation matrix rotate on the 2D face.
+    faceRotatedVertices[numVertex][0] =
+      faceRotationMatrix[ 0 ][ 1 ]*nodesCoords( faceToNodes[ numVertex ], 0 ) +
+      faceRotationMatrix[ 1 ][ 1 ]*nodesCoords( faceToNodes[ numVertex ], 1 ) +
+      faceRotationMatrix[ 2 ][ 1 ]*nodesCoords( faceToNodes[ numVertex ], 2 );
+    faceRotatedVertices[numVertex][1] =
+      faceRotationMatrix[ 0 ][ 2 ]*nodesCoords( faceToNodes[ numVertex ], 0 ) +
+      faceRotationMatrix[ 1 ][ 2 ]*nodesCoords( faceToNodes[ numVertex ], 1 ) +
+      faceRotationMatrix[ 2 ][ 2 ]*nodesCoords( faceToNodes[ numVertex ], 2 );
+  }
+
+  faceDiameter = SolidMechanicsConformingFracturesVEM::
+                 computeDiameter< 2 >( faceRotatedVertices,
+                                       numFaceVertices );
+  real64 const invFaceDiameter = 1.0/faceDiameter;
+  // - rotate the face centroid as done for the vertices.
+  real64 faceRotatedCentroid[2];
+  faceRotatedCentroid[0] =
+    faceRotationMatrix[ 0 ][ 1 ]*faceCenter[0] +
+    faceRotationMatrix[ 1 ][ 1 ]*faceCenter[1] +
+    faceRotationMatrix[ 2 ][ 1 ]*faceCenter[2];
+  faceRotatedCentroid[1] =
+    faceRotationMatrix[ 0 ][ 2 ]*faceCenter[0] +
+    faceRotationMatrix[ 1 ][ 2 ]*faceCenter[1] +
+    faceRotationMatrix[ 2 ][ 2 ]*faceCenter[2];
+  // - compute edges' lengths, outward pointing normals and local edge-to-nodes map.
+  real64 edgeOutwardNormals[ MFN ][ 2 ];
+  real64 edgeLengths[ MFN ];
+  localIndex localEdgeToNodes[ MFN ][ 2 ];
+
+  for( localIndex numEdge = 0; numEdge < numFaceVertices; ++numEdge )
+  {
+    if( edgeToNodes( faceToEdges[numEdge], 0 ) == faceToNodes[ numEdge ] )
+    {
+      localEdgeToNodes[ numEdge ][ 0 ] = numEdge;
+      localEdgeToNodes[ numEdge ][ 1 ] = (numEdge+1)%numFaceVertices;
+    }
+    else
+    {
+      localEdgeToNodes[ numEdge ][ 0 ] = (numEdge+1)%numFaceVertices;
+      localEdgeToNodes[ numEdge ][ 1 ] = numEdge;
+    }
+    real64 edgeTangent[2];
+    edgeTangent[0] = faceRotatedVertices[(numEdge+1)%numFaceVertices][0] -
+                     faceRotatedVertices[numEdge][0];
+    edgeTangent[1] = faceRotatedVertices[(numEdge+1)%numFaceVertices][1] -
+                     faceRotatedVertices[numEdge][1];
+    edgeOutwardNormals[numEdge][0] = edgeTangent[1];
+    edgeOutwardNormals[numEdge][1] = -edgeTangent[0];
+    real64 signTestVector[2];
+    signTestVector[0] = faceRotatedVertices[numEdge][0] - faceRotatedCentroid[0];
+    signTestVector[1] = faceRotatedVertices[numEdge][1] - faceRotatedCentroid[1];
+    if( signTestVector[0]*edgeOutwardNormals[numEdge][0] +
+        signTestVector[1]*edgeOutwardNormals[numEdge][1] < 0 )
+    {
+      edgeOutwardNormals[numEdge][0] = -edgeOutwardNormals[numEdge][0];
+      edgeOutwardNormals[numEdge][1] = -edgeOutwardNormals[numEdge][1];
+    }
+    edgeLengths[numEdge] = LvArray::math::sqrt< real64 >( edgeTangent[0]*edgeTangent[0] +
+                                                          edgeTangent[1]*edgeTangent[1] );
+    edgeOutwardNormals[numEdge][0] /= edgeLengths[numEdge];
+    edgeOutwardNormals[numEdge][1] /= edgeLengths[numEdge];
+  }
+
+  // Compute boundary quadrature weights (also equal to the integrals of basis functions on the
+  // boundary).
+  real64 boundaryQuadratureWeights[ MFN ];
+  for( localIndex numWeight = 0; numWeight < numFaceVertices; ++numWeight )
+    boundaryQuadratureWeights[numWeight] = 0.0;
+  for( localIndex numEdge = 0; numEdge < numFaceVertices; ++numEdge )
+  {
+    boundaryQuadratureWeights[ localEdgeToNodes[ numEdge ][ 0 ] ] += 0.5*edgeLengths[numEdge];
+    boundaryQuadratureWeights[ localEdgeToNodes[ numEdge ][ 1 ] ] += 0.5*edgeLengths[numEdge];
+  }
+
+  // Compute scaled monomials' integrals on edges.
+  real64 monomBoundaryIntegrals[3] = { 0.0 };
+  for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
+  {
+    monomBoundaryIntegrals[0] += boundaryQuadratureWeights[ numVertex ];
+    monomBoundaryIntegrals[1] += (faceRotatedVertices[ numVertex ][ 0 ] - faceRotatedCentroid[0]) *
+                                 invFaceDiameter*boundaryQuadratureWeights[ numVertex ];
+    monomBoundaryIntegrals[2] += (faceRotatedVertices[ numVertex ][ 1 ] - faceRotatedCentroid[1]) *
+                                 invFaceDiameter*boundaryQuadratureWeights[ numVertex ];
+  }
+
+  // Compute non constant 2D and 3D scaled monomials' integrals on the face.
+  real64 monomInternalIntegrals[2] = { 0.0 };
+  for( localIndex numSubTriangle = 0; numSubTriangle < numFaceVertices; ++numSubTriangle )
+  {
+    localIndex const nextVertex = (numSubTriangle+1)%numFaceVertices;
+    // - compute value of 2D monomials at the quadrature point on the sub-triangle (the
+    //   barycenter).
+    //   The result is ((v(0)+v(1)+faceCenter)/3 - faceCenter) / faceDiameter =
+    //   = (v(0) + v(1) - 2*faceCenter)/(3*faceDiameter).
+    real64 monomialValues[2];
+    for( localIndex i = 0; i < 2; ++i )
+    {
+      monomialValues[i] = (faceRotatedVertices[numSubTriangle][i] +
+                           faceRotatedVertices[nextVertex][i] -
+                           2.0*faceRotatedCentroid[i]) / (3.0*faceDiameter);
+    }
+    // compute value of 3D monomials at the quadrature point on the sub-triangle (the
+    // barycenter).  The result is
+    // ((v(0) + v(1) + faceCenter)/3 - cellCenter)/cellDiameter.
+    real64 threeDMonomialValues[3];
+    for( localIndex i = 0; i < 3; ++i )
+    {
+      threeDMonomialValues[i] = ( (faceCenter[i] +
+                                   nodesCoords[faceToNodes[ numSubTriangle ]][i] +
+                                   nodesCoords[faceToNodes[ nextVertex ]][i]) / 3.0 -
+                                  cellCenter[i] ) * invCellDiameter;
+    }
+    // compute quadrature weight associated to the quadrature point (the area of the
+    // sub-triangle).
+    real64 edgesTangents[2][2];               // used to compute the area of the sub-triangle
+    for( localIndex i = 0; i < 2; ++i )
+    {
+      edgesTangents[0][i] = faceRotatedVertices[numSubTriangle][i] - faceRotatedCentroid[i];
+    }
+    for( localIndex i = 0; i < 2; ++i )
+    {
+      edgesTangents[1][i] = faceRotatedVertices[nextVertex][i] - faceRotatedCentroid[i];
+    }
+    real64 subTriangleArea = 0.5*LvArray::math::abs
+                               ( edgesTangents[0][0]*edgesTangents[1][1] -
+                               edgesTangents[0][1]*edgesTangents[1][0] );
+    // compute the integrals on the sub-triangle and add it to the global integrals
+    for( localIndex i = 0; i < 2; ++i )
+    {
+      monomInternalIntegrals[ i ] += monomialValues[ i ]*subTriangleArea;
+    }
+    for( localIndex i = 0; i < 3; ++i )
+    {
+      // threeDMonomialIntegrals is assumed to be initialized to 0 by the caller
+      threeDMonomialIntegrals[ i ] += threeDMonomialValues[ i ]*subTriangleArea;
+    }
+  }
+
+  // Compute integral of basis functions times normal derivative of monomials on the boundary.
+  real64 basisTimesMonomNormalDerBoundaryInt[ MFN ][ 2 ];
+  for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
+  {
+    for( localIndex i = 0; i < 2; ++i )
+    {
+      basisTimesMonomNormalDerBoundaryInt[ numVertex ][ i ] = 0.0;
+    }
+  }
+  for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
+  {
+    for( localIndex i = 0; i < 2; ++i )
+    {
+      real64 thisEdgeIntTimesNormal_i = edgeOutwardNormals[numVertex][i]*edgeLengths[numVertex];
+      basisTimesMonomNormalDerBoundaryInt[ localEdgeToNodes[ numVertex ][ 0 ] ][i] += thisEdgeIntTimesNormal_i;
+      basisTimesMonomNormalDerBoundaryInt[ localEdgeToNodes[ numVertex ][ 1 ] ][i] += thisEdgeIntTimesNormal_i;
+    }
+  }
+  for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
+  {
+    for( localIndex i = 0; i < 2; ++i )
+    {
+      basisTimesMonomNormalDerBoundaryInt[ numVertex ][ i ] *= 0.5*invFaceDiameter;
+    }
+  }
+
+  // Compute integral mean of basis functions on this face.
+  real64 const invFaceArea = 1.0/faceArea;
+  real64 const monomialDerivativeInverse = (faceDiameter*faceDiameter)*invFaceArea;
+  for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
+  {
+    real64 piNablaDofs[ 3 ];
+    piNablaDofs[ 1 ] = monomialDerivativeInverse *
+                       basisTimesMonomNormalDerBoundaryInt[ numVertex ][ 0 ];
+    piNablaDofs[ 2 ] = monomialDerivativeInverse *
+                       basisTimesMonomNormalDerBoundaryInt[ numVertex ][ 1 ];
+    piNablaDofs[ 0 ] = (boundaryQuadratureWeights[ numVertex ] -
+                        piNablaDofs[ 1 ]*monomBoundaryIntegrals[ 1 ] -
+                        piNablaDofs[ 2 ]*monomBoundaryIntegrals[ 2 ])/monomBoundaryIntegrals[ 0 ];
+    basisIntegrals[ numVertex ] = piNablaDofs[ 0 ]*faceArea +
+                                  (piNablaDofs[ 1 ]*monomInternalIntegrals[ 0 ] +
+                                   piNablaDofs[ 2 ]*monomInternalIntegrals[ 1 ]);
+  }
+}
+
 void SolidMechanicsConformingFracturesVEM::computeFaceNodalArea( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                                                     ArrayOfArraysView< localIndex const > const & faceToNodeMap,
                                                     localIndex const kf0,

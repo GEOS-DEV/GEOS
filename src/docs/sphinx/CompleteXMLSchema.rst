@@ -988,6 +988,13 @@ Element: SolidInternalEnergy
 .. include:: ../../coreComponents/schema/docs/SolidInternalEnergy.rst
 
 
+.. _XML_SolidMechanicsConformingFracturesVEM:
+
+Element: SolidMechanicsConformingFracturesVEM
+=============================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsConformingFracturesVEM.rst
+
+
 .. _XML_SolidMechanicsEmbeddedFractures:
 
 Element: SolidMechanicsEmbeddedFractures
@@ -2236,6 +2243,13 @@ Datastructure: SlipDependentPermeability
 Datastructure: SolidInternalEnergy
 ==================================
 .. include:: ../../coreComponents/schema/docs/SolidInternalEnergy_other.rst
+
+
+.. _DATASTRUCTURE_SolidMechanicsConformingFracturesVEM:
+
+Datastructure: SolidMechanicsConformingFracturesVEM
+===================================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsConformingFracturesVEM_other.rst
 
 
 .. _DATASTRUCTURE_SolidMechanicsEmbeddedFractures:

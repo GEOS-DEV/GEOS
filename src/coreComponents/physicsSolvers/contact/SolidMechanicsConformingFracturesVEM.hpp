@@ -42,11 +42,11 @@ public:
    */
   static string catalogName()
   {
-    return "LagrangianContact";
+    return "SolidMechanicsConformingFracturesVEM";
   }
 
   /// String used to form the solverName used to register single-physics solvers in CoupledSolver
-  static string coupledSolverAttributePrefix() { return "LagrangianContact"; }
+  static string coupledSolverAttributePrefix() { return "SolidMechanicsConformingFracturesVEM"; }
 
   virtual void initializePreSubGroups() override;
 
@@ -139,6 +139,19 @@ public:
                              localIndex const kf0,
                              array1d< real64 > & nodalArea ) const;
 
+  void computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
+                      array1d< localIndex const > const & faceToNodes,
+                      array1d< localIndex const > const & faceToEdges,
+                      localIndex const & numFaceVertices,
+                      real64 const & faceArea,
+                      real64 const (&faceCenter)[3],
+                      real64 const (&faceNormal)[3],
+                      array2d< localIndex const > const & edgeToNodes,
+                      real64 const & invCellDiameter,
+                      real64 const (&cellCenter)[3],
+                      array1d< real64 > & basisIntegrals,
+                      real64 (& threeDMonomialIntegrals)[3] ) const;
+  
   real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
 
   string getStabilizationName() const { return m_stabilizationName; }
@@ -161,6 +174,30 @@ private:
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
+  template< localIndex DIMENSION, typename POINT_COORDS_TYPE >
+  GEOS_HOST_DEVICE
+  inline static real64 computeDiameter( POINT_COORDS_TYPE points,
+                                localIndex const & numPoints )
+  {
+    real64 diameter = 0;
+    for( localIndex numPoint = 0; numPoint < numPoints; ++numPoint )
+    {
+      for( localIndex numOthPoint = 0; numOthPoint < numPoint; ++numOthPoint )
+      {
+        real64 candidateDiameter = 0.0;
+        for( localIndex i = 0; i < DIMENSION; ++i )
+        {
+          real64 coordDiff = points[numPoint][i] - points[numOthPoint][i];
+          candidateDiameter += coordDiff * coordDiff;
+        }
+        if( diameter < candidateDiameter )
+        {
+          diameter = candidateDiameter;
+        }
+      }
+    }
+    return LvArray::math::sqrt< real64 >( diameter );
+  }
 
   struct viewKeyStruct : ContactSolverBase::viewKeyStruct
   {

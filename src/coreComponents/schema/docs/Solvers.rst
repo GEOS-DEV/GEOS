@@ -32,6 +32,7 @@ SinglePhasePoromechanicsReservoir           node                 :ref:`XML_Singl
 SinglePhaseProppantFVM                      node                 :ref:`XML_SinglePhaseProppantFVM`                      
 SinglePhaseReservoir                        node                 :ref:`XML_SinglePhaseReservoir`                        
 SinglePhaseWell                             node                 :ref:`XML_SinglePhaseWell`                             
+SolidMechanicsConformingFracturesVEM        node                 :ref:`XML_SolidMechanicsConformingFracturesVEM`        
 SolidMechanicsEmbeddedFractures             node                 :ref:`XML_SolidMechanicsEmbeddedFractures`             
 SolidMechanicsLagrangianSSLE                node                 :ref:`XML_SolidMechanicsLagrangianSSLE`                
 SolidMechanics_LagrangianFEM                node                 :ref:`XML_SolidMechanics_LagrangianFEM`                
