@@ -55,7 +55,7 @@ def getFractureLengthFromXML(xmlFilePath):
     dimensions = rectangle.get("dimensions")
     dimensions = [float(i) for i in dimensions[1:-1].split(",")]
     length = dimensions[0] / 2
-    origin = boundedPlane.get("origin")
+    origin = rectangle.get("origin")
     origin = [float(i) for i in origin[1:-1].split(",")]
 
     return length, origin[0]
