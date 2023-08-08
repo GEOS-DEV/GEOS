@@ -293,6 +293,32 @@ struct WaveSolverUtils
     }
   }
 
+  /**
+   * @brief Compute dotProduct between two vectors
+   * @param numFacesPerElem number of face on an element
+   * @param elemCenter array containing the center of the elements
+   * @param faceNormal array containing the normal of all faces
+   * @param faceCenter array containing the center of all faces
+   * @param elemsToFaces map to get the global faces from element index and local face index
+   * @param coords coordinate of the point
+   * @return true if coords is inside the element
+   */
+
+  
+  static void dotProduct( localIndex const size,
+                     arrayView1d< real32 > const vector1,
+                     arrayView1d< real32 > const vector2,
+                     arrayView1d< real64 > const res)
+  {
+
+    res[0] = 0.0;
+    forAll< WaveSolverBase::EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
+    {
+       res[0]+= vector1[a]*vector2[a];
+    } );
+
+  }
+
 
 
 };

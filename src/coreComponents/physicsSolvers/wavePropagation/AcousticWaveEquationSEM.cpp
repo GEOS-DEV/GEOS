@@ -292,6 +292,9 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       {
         grad.zero();
       }
+
+      //Time-Step computed by power iteration method
+      real64 dtCompute=0.0;
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
@@ -320,6 +323,17 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                  velocity,
                                                                  damping );
         }
+
+        acousticWaveEquationSEMKernels::ComputeTimeStep < FE_TYPE > kernelT( finiteElement );
+
+        dtCompute = kernelT.template launch < EXEC_POLICY, ATOMIC_POLICY > (elementSubRegion.size(),
+                                                                nodeManager.size(),
+                                                                X32,
+                                                                elemsToNodes,
+                                                                mass);
+
+        exit(2);
+
       } );
     } );
   } );
