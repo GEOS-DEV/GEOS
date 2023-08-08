@@ -138,47 +138,6 @@ void EdgeManager::setDomainBoundaryObjects( FaceManager const & faceManager,
       }
     }
   } );
-
-  // Here, we need to take into account the fact that the fractures elements
-  // share the same edges as the matrix.
-  // So edges can be considered as boundary objects while the face built on top of it may no.
-
-  // We'll proceed as follows.
-  //
-  // Faces which are tagged as boundary faces will have their support nodes on the boundary as well.
-  // (But keep in mind that some edges may sit astride two faces with different statuses.)
-  // Face edges which are not on the boundary may however be tagged "boundary"
-  // if they connect to a 2d element which is itself on the boundary (because those 2d elements share those edges).
-  //
-  // To solve this issue, we loop over all the fracture 2d elements.
-  // If they have only one neighboring matrix element,
-  // this means that the fracture 2d element is on the boundary.
-  // As such, we tag the support edges of the unique neighboring face as boundary nodes.
-  auto const f = [&]( localIndex er,
-                      SurfaceElementRegion const & region )
-  {
-    if( region.subRegionType() != SurfaceElementRegion::SurfaceSubRegionType::faceElement )
-    {
-      return;
-    }
-
-    FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
-    ArrayOfArraysView< localIndex const > const & elem2dToFaces = subRegion.faceList().toViewConst();
-    for( int ei = 0; ei < elem2dToFaces.size(); ++ei )
-    {
-      if( elem2dToFaces.sizeOfArray( ei ) == 2 )
-      { continue; }
-
-      for( localIndex const & face: elem2dToFaces[ei] )
-      {
-        for( localIndex const & edge: faceToEdges[face] )
-        {
-          isEdgeOnDomainBoundary[edge] = 1;
-        }
-      }
-    }
-  };
-  elemRegionManager.forElementRegionsComplete< SurfaceElementRegion >( f );
 }
 
 bool EdgeManager::hasNode( const localIndex edgeIndex, const localIndex nodeIndex ) const

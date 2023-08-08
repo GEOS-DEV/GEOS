@@ -112,6 +112,8 @@ void FaceManager::setDomainBoundaryObjects( ElementRegionManager const & elemReg
     }
   } );
 
+  // We want to tag as boundary faces all the faces that touch a surface element (mainly a fracture),
+  // if this element only has one unique neighbor.
   auto const f = [&]( localIndex er,
                       SurfaceElementRegion const & region )
   {

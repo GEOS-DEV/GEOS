@@ -159,32 +159,6 @@ void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager,
       }
     }
   } );
-
-  auto const f = [&]( localIndex er,
-                      SurfaceElementRegion const & region )
-  {
-    if( region.subRegionType() != SurfaceElementRegion::SurfaceSubRegionType::faceElement )
-    {
-      return;
-    }
-
-    FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
-    ArrayOfArraysView< localIndex const > const elem2dToFaces = subRegion.faceList().toViewConst();
-    for( int ei = 0; ei < elem2dToFaces.size(); ++ei )
-    {
-      if( elem2dToFaces.sizeOfArray( ei ) == 2 )
-      { continue; }
-
-      for( localIndex const & face: elem2dToFaces[ei] )
-      {
-        for( localIndex const & node: faceToNodes[face] )
-        {
-          isNodeOnDomainBoundary[node] = 1;
-        }
-      }
-    }
-  };
-  elemRegionManager.forElementRegionsComplete< SurfaceElementRegion >( f );
 }
 
 void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
