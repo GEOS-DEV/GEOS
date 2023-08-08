@@ -50,17 +50,16 @@ public:
                              integer const cycleNumber,
                              DomainPartition & domain ) override;
 
-  void odeSolverStep( real64 const & time_n,
-                      real64 const & dt,
-                      integer const cycleNumber,
-                      DomainPartition & domain );
+  // void odeSolverStep( real64 const & time_n,
+  //                     real64 const & dt,
+  //                     integer const cycleNumber,
+  //                     DomainPartition & domain );
 
   void integralSolverStep( real64 const & time_n,
                            real64 const & dt,
-                           integer const cycleNumber,
-                           DomainPartition & domain );
+                           ElementSubRegionBase & subRegion );
 
-  void updateMeanSolidStress( DomainPartition & domain );
+  void updateMeanSolidStress( ElementSubRegionBase & subRegion );
 
 //END_SPHINX_INCLUDE_SOLVERINTERFACE
 
