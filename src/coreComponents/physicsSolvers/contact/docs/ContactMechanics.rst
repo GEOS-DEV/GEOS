@@ -15,9 +15,10 @@ GEOS contact solvers solve the the balance of linear momentum within a fractured
    [[\sigma]] \cdot \mathbf{n} = 0
 
 Where:
-- :math:`\sigma` is the stress tensor in the solid,
-- :math:`\mathbf{n}` is the outward unit normal to the surface,
-- :math:`[[\sigma]]` is the stress jump across the surface.
+
+* :math:`\sigma` is the stress tensor in the solid,
+* :math:`\mathbf{n}` is the outward unit normal to the surface,
+* :math:`[[\sigma]]` is the stress jump across the surface.
 
 On each fracture surface, a no-interpenetration constraint is enforced. Additionally, tangential tractions can also be generated, which are modeled using a regularized Coulomb model to describe frictional sliding.
 
