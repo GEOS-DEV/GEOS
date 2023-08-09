@@ -63,8 +63,8 @@ DECLARE_FIELD( meanStress,
                WRITE_AND_READ,
                "Mean stress tensor over the element");
 
-DECLARE_FIELD( initialmeanNormalStress,
-               "initialmeanNormalStress",
+DECLARE_FIELD( initialMeanNormalStress,
+               "initialMeanNormalStress",
                array1d< real64 >,
                0,
                LEVEL_0,
@@ -95,8 +95,8 @@ DECLARE_FIELD( meanNormalStressRate,
                WRITE_AND_READ,
                "meanNormal stress rate acting on the fault");
                
-DECLARE_FIELD( initialmeanShearStress,
-               "initialmeanShearStress",
+DECLARE_FIELD( initialMeanShearStress,
+               "initialMeanShearStress",
                array1d< real64 >,
                0,
                LEVEL_0,

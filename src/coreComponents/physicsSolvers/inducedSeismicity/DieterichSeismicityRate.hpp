@@ -59,8 +59,6 @@ public:
                            real64 const & dt,
                            ElementSubRegionBase & subRegion );
 
-  void updateMeanSolidStress( ElementSubRegionBase & subRegion );
-
 //END_SPHINX_INCLUDE_SOLVERINTERFACE
 
   /**@}*/

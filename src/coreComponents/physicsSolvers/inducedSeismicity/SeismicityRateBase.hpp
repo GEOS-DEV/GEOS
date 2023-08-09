@@ -52,6 +52,10 @@ public:
   };
 
   virtual void initializePreSubGroups() override;
+
+  void updateMeanSolidStress( ElementSubRegionBase & subRegion );
+
+  void initializeMeanSolidStress( integer const cycleNumber, DomainPartition & domain );
   
 protected:
 
