@@ -36,6 +36,7 @@ void AcousticElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     nodeManager.registerField< fields::CouplingVectorx >( this->getName() );
     nodeManager.registerField< fields::CouplingVectory >( this->getName() );
     nodeManager.registerField< fields::CouplingVectorz >( this->getName() );
+    nodeManager.registerField< fields::CouplingDensity>( this->getName() );
   } );
 }
 
@@ -72,18 +73,20 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
 
     ArrayOfArraysView< localIndex const > const faceToNode = faceManager.nodeList().toViewConst();
     arrayView2d< localIndex const > const faceToRegion     = faceManager.elementRegionList();
-    arrayView2d< localIndex const > const faceToSubRegion  = faceManager.elementSubRegionList();
     arrayView2d< localIndex const > const faceToElement    = faceManager.elementList();
     arrayView2d< real64 const > const faceNormals          = faceManager.faceNormal().toViewConst();
 
-    arrayView1d< real32 > const atoex = nodeManager.getField< fields::CouplingVectorx >();
-    atoex.zero();
+    arrayView1d< real32 > const couplingVectorx = nodeManager.getField< fields::CouplingVectorx >();
+    couplingVectorx.zero();
 
-    arrayView1d< real32 > const atoey = nodeManager.getField< fields::CouplingVectory >();
-    atoey.zero();
+    arrayView1d< real32 > const couplingVectory = nodeManager.getField< fields::CouplingVectory >();
+    couplingVectory.zero();
 
-    arrayView1d< real32 > const atoez = nodeManager.getField< fields::CouplingVectorz >();
-    atoez.zero();
+    arrayView1d< real32 > const couplingVectorz = nodeManager.getField< fields::CouplingVectorz >();
+    couplingVectorz.zero();
+
+    arrayView1d< real32 > const couplingDensity = nodeManager.getField< fields::CouplingDensity >();
+    couplingDensity.zero();
 
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     localIndex const fluid_index = elementRegionManager.getRegions().getIndex( "Fluid" );
@@ -117,13 +120,13 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
                                                                fluid_index,
                                                                fluid_density,
                                                                faceToRegion,
-                                                               faceToSubRegion,
                                                                faceToElement,
                                                                faceToNode,
                                                                faceNormals,
-                                                               atoex,
-                                                               atoey,
-                                                               atoez );
+                                                               couplingVectorx,
+                                                               couplingVectory,
+                                                               couplingVectorz,
+                                                               couplingDensity );
       } );
     } );
   } );
@@ -150,6 +153,11 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
+    arrayView1d< real32 const > const massA = nodeManager.getField< fields::MassVectorA >();
+    arrayView1d< real32 const > const massE = nodeManager.getField< fields::MassVectorE >();
+    arrayView1d< localIndex > const freeSurfaceNodeIndicatorA = nodeManager.getField< fields::FreeSurfaceNodeIndicatorA >();
+    arrayView1d< localIndex > const freeSurfaceNodeIndicatorE = nodeManager.getField< fields::FreeSurfaceNodeIndicatorE >();
+
     arrayView1d< real32 const > const p_n    = nodeManager.getField< fields::Pressure_n >();
     arrayView1d< real32 const > const ux_nm1 = nodeManager.getField< fields::Displacementx_nm1 >();
     arrayView1d< real32 const > const uy_nm1 = nodeManager.getField< fields::Displacementy_nm1 >();
@@ -160,19 +168,19 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
     arrayView1d< real32 const > const atoex  = nodeManager.getField< fields::CouplingVectorx >();
     arrayView1d< real32 const > const atoey  = nodeManager.getField< fields::CouplingVectory >();
     arrayView1d< real32 const > const atoez  = nodeManager.getField< fields::CouplingVectorz >();
+    arrayView1d< real32 const > const rho0   = nodeManager.getField< fields::CouplingDensity >();
 
     arrayView1d< real32 > const p_np1  = nodeManager.getField< fields::Pressure_np1 >();
     arrayView1d< real32 > const ux_np1 = nodeManager.getField< fields::Displacementx_np1 >();
     arrayView1d< real32 > const uy_np1 = nodeManager.getField< fields::Displacementy_np1 >();
     arrayView1d< real32 > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
 
-    // arrayView1d< real32 const > const fluid_density = elementSubRegion.getField< fields::MediumDensityA >();
-
     // source ok when using (elas=false, acous=true, coupling=false) or (elas=true, acous=true, coupling=false)
-    bool elas = true;
-    bool acous = true;
-    bool coupling = false;
-    real64 const rho0 = 1020.0;  // hardcoded until github.com/GEOS-DEV/GEOS/pull/2548 is merged
+    bool const elas = !helpers::benv("NO_ELAS");
+    bool const acous = !helpers::benv("NO_ACOUS");
+    bool const coupling = !helpers::benv("NO_COUPLING");
+    bool const dump = helpers::ienv("DUMP") > 0;
+    // std::cout << "elas=" << (elas ? 'T' : 'F') << " acous=" << (acous ? 'T' : 'F') << " coupling=" << (coupling ? 'T' : 'F')  << " dump=" << (dump ? 'T' : 'F') << std::endl;
 
     if (elas) elasSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
 
@@ -181,16 +189,18 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
       forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
       {
         localIndex const a = interfaceNodesSet[n];
-        
-        real32 const localIncrementx = atoex[a] * (p_n[a] / rho0);
-        real32 const localIncrementy = atoey[a] * (p_n[a] / rho0);
-        real32 const localIncrementz = atoez[a] * (p_n[a] / rho0);
+        if (freeSurfaceNodeIndicatorE[a] == 1) return;
 
-        // printf(
-        //   "\t[AcousticElasticWaveEquationSEM::solverStep] atoex=%g atoey=%g atoez=%g incx=%g incy=%g incz=%g\n",
-        //   atoex[a], atoey[a], atoez[a],
-        //   localIncrementx, localIncrementy, localIncrementz
-        // );
+        real32 const aux = (p_n[a] / rho0[a]) / massE[a];
+        real32 const localIncrementx = atoex[a] * aux;
+        real32 const localIncrementy = atoey[a] * aux;
+        real32 const localIncrementz = atoez[a] * aux;
+
+        if (dump) printf(
+          "\t[AcousticElasticWaveEquationSEM::solverStep] atoex=%g atoey=%g atoez=%g p_n=%g rho0=%g massE=%g aux=%g incx=%g incy=%g incz=%g\n",
+          atoex[a], atoey[a], atoez[a], p_n[a], rho0[a], massE[a], aux,
+          localIncrementx, localIncrementy, localIncrementz
+        );
 
         RAJA::atomicAdd< ATOMIC_POLICY >( &ux_np1[a], localIncrementx );
         RAJA::atomicAdd< ATOMIC_POLICY >( &uy_np1[a], localIncrementy );
@@ -198,34 +208,35 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
       } );
     }
 
+    if (elas) elasSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+
     if (acous) acousSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
 
     if (coupling)
     {
-      real64 const dt2 = pow( dt, 2 );
       forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
       {
         localIndex const a = interfaceNodesSet[n];
+        if (freeSurfaceNodeIndicatorA[a] == 1) return;
 
-        real32 const localIncrement = rho0 * (
-          atoex[a] * ( ux_np1[a] - 2.0 * ux_n[a] + ux_nm1[a] ) +
-          atoey[a] * ( uy_np1[a] - 2.0 * uy_n[a] + uy_nm1[a] ) +
-          atoez[a] * ( uz_np1[a] - 2.0 * uz_n[a] + uz_nm1[a] )
-        ) / dt2;
+        real32 const localIncrement = rho0[a] * (
+          -atoex[a] * ( ux_np1[a] - 2.0 * ux_n[a] + ux_nm1[a] ) +
+          -atoey[a] * ( uy_np1[a] - 2.0 * uy_n[a] + uy_nm1[a] ) +
+          -atoez[a] * ( uz_np1[a] - 2.0 * uz_n[a] + uz_nm1[a] )
+        ) / massA[a];
 
-        // printf(
-        //   "\t[AcousticElasticWaveEquationSEM::solverStep] atoex=%g atoey=%g atoez=%g inc=%g\n",
-        //   atoex[a], atoey[a], atoez[a],
-        //   localIncrement
-        // );
+        if (dump) printf(
+          "\t[AcousticElasticWaveEquationSEM::solverStep] atoex=%g atoey=%g atoez=%g rho0=%g massA=%g inc=%g\n",
+          atoex[a], atoey[a], atoez[a], rho0[a], massA[a], localIncrement
+        );
 
         RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[a], localIncrement );
       } );
     }
 
     if (acous) acousSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+
     if (acous) acousSolver->prepareNextTimestep( mesh );
-    if (elas) elasSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
     if (elas) elasSolver->prepareNextTimestep( mesh );
   } );
 

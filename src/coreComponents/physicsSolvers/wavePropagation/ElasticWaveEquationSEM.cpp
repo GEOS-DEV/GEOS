@@ -179,6 +179,8 @@ void ElasticWaveEquationSEM::initializePreSubGroups()
 
 void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
+  std::cout << "\t[ElasticWaveEquationSEM::registerDataOnMesh]" << std::endl;
+
   WaveSolverBase::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
@@ -704,11 +706,11 @@ real64 ElasticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
 }
 
 void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
-                                             real64 const & dt,
-                                             integer const cycleNumber,
-                                             DomainPartition &,
-                                             MeshLevel & mesh,
-                                             arrayView1d< string const > const & regionNames )
+                                              real64 const & dt,
+                                              integer const cycleNumber,
+                                              DomainPartition &,
+                                              MeshLevel & mesh,
+                                              arrayView1d< string const > const & regionNames )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -779,11 +781,11 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
 }
 
 void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
-                                                 real64 const & dt,
-                                                 integer const,
-                                                 DomainPartition & domain,
-                                                 MeshLevel & mesh,
-                                                 arrayView1d< string const > const & )
+                                                  real64 const & dt,
+                                                  integer const,
+                                                  DomainPartition & domain,
+                                                  MeshLevel & mesh,
+                                                  arrayView1d< string const > const & )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 

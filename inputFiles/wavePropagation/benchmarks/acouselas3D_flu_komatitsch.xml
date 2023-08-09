@@ -63,21 +63,21 @@
   <Mesh>
     <VTKMesh
       name="Bilayer"
-      fieldsToImport="{ mediumVelocity,mediumVelocityVp,mediumVelocityVs,mediumDensity }"    
-      fieldNamesInGEOSX="{ mediumVelocity,mediumVelocityVp,mediumVelocityVs,mediumDensity }"
+      fieldsToImport="{ mediumVelocity,mediumVelocityVp,mediumVelocityVs,mediumDensityA,mediumDensityE }"    
+      fieldNamesInGEOSX="{ mediumVelocity,mediumVelocityVp,mediumVelocityVs,mediumDensityA,mediumDensityE }"
       file="../../../Debug/acouselas3D_flu_komatitsch.vtu"
       useGlobalIds="0"
       logLevel="1"/>
   </Mesh> 
 
   <!-- read from the Mesh instead -->
-  <FieldSpecifications>
-  </FieldSpecifications>
+  <!-- <FieldSpecifications></FieldSpecifications> -->
 
   <Outputs>
     <VTK
       name="vtkOutput"
-      writeFEMFaces="1"/>
+      writeFEMFaces="1"
+      plotLevel="2"/>
   </Outputs>
 
   <Events maxTime="3">

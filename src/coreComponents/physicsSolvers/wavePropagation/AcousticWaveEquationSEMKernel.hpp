@@ -218,10 +218,11 @@ struct MassMatrixKernel
     {
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-      if (k == 0) printf(
-        "\t[acousticWaveEquationSEMKernels::MassMatrixKernel] rho=%g vel=%g\n",
-        density[k], velocity[k]
-      );
+      if( k == 0 )
+        printf(
+          "\t[AcousticWaveEquationSEMKernel::MassMatrixKernel] rho=%g vel=%g\n",
+          density[k], velocity[k]
+          );
 
       real32 const invC2 = 1.0 / ( density[k] * velocity[k] * velocity[k] );
       real64 xLocal[ numNodesPerElem ][ 3 ];

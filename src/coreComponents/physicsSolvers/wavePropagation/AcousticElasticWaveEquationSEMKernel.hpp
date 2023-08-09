@@ -44,36 +44,38 @@ struct CouplingKernel
           localIndex const fluid_index,
           arrayView1d< real32 const > const & fluid_density,
           arrayView2d< localIndex const > const faceToRegion,
-          arrayView2d< localIndex const > const faceToSubRegion,
           arrayView2d< localIndex const > const faceToElement,
           ArrayOfArraysView< localIndex const > const facesToNodes,
           arrayView2d< real64 const > const faceNormals,
           arrayView1d< real32 > const couplingVectorx,
           arrayView1d< real32 > const couplingVectory,
-          arrayView1d< real32 > const couplingVectorz )
+          arrayView1d< real32 > const couplingVectorz,
+          arrayView1d< real32 > const couplingDensity )
   {
     array1d< localIndex > count( 3 );
     count.zero();
     arrayView1d< localIndex > const count_view = count.toView();
 
+    bool const dump = helpers::ienv( "DUMP" ) > 1;
+
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
     {
       localIndex e0 = faceToElement( f, 0 ), e1 = faceToElement( f, 1 );
       localIndex er0 = faceToRegion( f, 0 ), er1 = faceToRegion( f, 1 );
-      localIndex esr0 = faceToSubRegion( f, 0 ), esr1 = faceToSubRegion( f, 1 );
+      // localIndex esr0 = faceToSubRegion( f, 0 ), esr1 = faceToSubRegion( f, 1 );
 
-      if ((e0 != -1 && e1 == -1) || (e0 == -1 && e1 != -1))
+      if((e0 != -1 && e1 == -1) || (e0 == -1 && e1 != -1))
       {
         // printf("\t[CouplingKernel::launch] debug\n");
         RAJA::atomicInc< ATOMIC_POLICY >( &count_view[0] );
       }
 
-      if (e0 != -1 && e1 != -1)
+      if( e0 != -1 && e1 != -1 )
       {
         RAJA::atomicInc< ATOMIC_POLICY >( &count_view[1] );
         // printf("\t[CouplingKernel::launch] fluid_index=%i f=%i -> (e0=%i, e1=%i)\n", fluid_index, f, e0, e1);
-        // NOTE: subregion check doesn't work: /* sr0 != esr1 */
-        if (er0 != er1)  /* should define an interface */
+        // NOTE: subregion check doesn't work: sr0 != esr1
+        if( er0 != er1 )  // should define an interface
         {
           real32 const rho0 = fluid_density[er0 == fluid_index ? er0 : er1];
 
@@ -97,13 +99,15 @@ struct CouplingKernel
             real32 const localIncrementy = aux * faceNormals[f][1];
             real32 const localIncrementz = aux * faceNormals[f][2];
 
-            if (q == 0) printf(
-              "\t[CouplingKernel::launch] rho0=%g nx=%g ny=%g nz=%g\n",
-              rho0, faceNormals[f][0], faceNormals[f][1], faceNormals[f][2]
-            );
+            if( dump && q == 0 )
+              printf(
+                "\t[CouplingKernel::launch] rho0=%g nx=%g ny=%g nz=%g\n",
+                rho0, faceNormals[f][0], faceNormals[f][1], faceNormals[f][2]
+                );
             RAJA::atomicAdd< ATOMIC_POLICY >( &couplingVectorx[facesToNodes[f][q]], localIncrementx );
             RAJA::atomicAdd< ATOMIC_POLICY >( &couplingVectory[facesToNodes[f][q]], localIncrementy );
             RAJA::atomicAdd< ATOMIC_POLICY >( &couplingVectorz[facesToNodes[f][q]], localIncrementz );
+            RAJA::atomicExchange< ATOMIC_POLICY >( &couplingDensity[facesToNodes[f][q]], rho0 );
           }
         }
       }
@@ -112,7 +116,7 @@ struct CouplingKernel
     printf(
       "\t[CouplingKernel::launch] n_faces=%i n_boundary_faces=%i n_internal_faces=%i n_interface_faces=%i\n",
       size, count[0], count[1], count[2]
-    );
+      );
 
 
   }
@@ -347,8 +351,7 @@ public:
     m_elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
     m_interfaceNodesSet( interfaceNodesSet ),
     m_dt( dt )
-  {
-  }
+  {}
 
   GEOS_HOST_DEVICE
   inline

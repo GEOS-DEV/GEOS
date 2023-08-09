@@ -28,20 +28,6 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "WaveSolverUtils.hpp"
 
-////////////////////////////////////
-// debugging - TODO: remove in prod
-#include <execinfo.h> /* backtrace, backtrace_symbols_fd */
-#include <unistd.h> /* STDOUT_FILENO */
-void print_stacktrace( void )
-{
-  size_t size;
-  enum Constexpr { MAX_SIZE = 1024 };
-  void *array[MAX_SIZE];
-  size = backtrace( array, MAX_SIZE );
-  backtrace_symbols_fd( array, size, STDOUT_FILENO );
-}
-////////////////////////////////////
-
 namespace geos
 {
 
@@ -73,6 +59,8 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
 
 void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
+  std::cout << "\t[AcousticWaveEquationSEM::registerDataOnMesh]" << std::endl;
+
   WaveSolverBase::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
@@ -352,7 +340,8 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     } );
   } );
 
-  std::cout << "\t[AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] m_solverTargetNodesSet.size()=" << m_solverTargetNodesSet.size() << " m_usePML=" << (m_usePML ?  'T' : 'F') << std::endl;
+  std::cout << "\t[AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] m_solverTargetNodesSet.size()=" << m_solverTargetNodesSet.size() << " m_usePML=" << (m_usePML ?  'T' : 'F') <<
+    std::endl;
 }
 
 
@@ -373,12 +362,12 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartition &
 
   /// array of indicators: 1 if a face is on on free surface; 0 otherwise
   arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicatorA >();
+  freeSurfaceFaceIndicator.zero();
 
   /// array of indicators: 1 if a node is on on free surface; 0 otherwise
   arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicatorA >();
+  freeSurfaceNodeIndicator.zero();
 
-  //freeSurfaceFaceIndicator.zero();
-  //freeSurfaceNodeIndicator.zero();
 
   fsManager.apply< FaceManager >( time,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
@@ -791,7 +780,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                      DomainPartition & domain,
                                                      bool computeGradient )
 {
-  // print_stacktrace();
+  // helpers::print_stacktrace();
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
@@ -976,11 +965,11 @@ void AcousticWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
 }
 
 void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
-                                              real64 const & dt,
-                                              integer cycleNumber,
-                                              DomainPartition & domain,
-                                              MeshLevel & mesh,
-                                              arrayView1d< string const > const & regionNames )
+                                               real64 const & dt,
+                                               integer cycleNumber,
+                                               DomainPartition & domain,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & regionNames )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -1098,11 +1087,11 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
 }
 
 void AcousticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
-                                                  real64 const & dt,
-                                                  integer const,
-                                                  DomainPartition & domain,
-                                                  MeshLevel & mesh,
-                                                  arrayView1d< string const > const & )
+                                                   real64 const & dt,
+                                                   integer const,
+                                                   DomainPartition & domain,
+                                                   MeshLevel & mesh,
+                                                   arrayView1d< string const > const & )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
