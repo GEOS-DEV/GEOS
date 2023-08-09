@@ -47,20 +47,37 @@ public:
     static constexpr char const * stressSolverNameString() { return "stressSolverName"; }
     static constexpr char const * faultNormalString() { return "faultNormal"; }
     static constexpr char const * faultShearString() { return "faultShear"; }
-    static constexpr char const * initialSigmaString() { return "initialSigma"; }
-    static constexpr char const * initialTauString() { return "initialTau"; }
+    static constexpr char const * initialFaultNormalStressString() { return "initialFaultNormalStress"; }
+    static constexpr char const * initialFaultShearStressString() { return "initialFaultShearStress"; }
   };
 
   virtual void initializePreSubGroups() override;
 
+  /**
+   * @brief called in SolverStep after member stress solver is called to
+   *  project the stress state to pre-defined fault orientations 
+   * @param subRegion The ElementSubRegionBase that will have the stress information
+  */
   void updateMeanSolidStress( ElementSubRegionBase & subRegion );
 
+  /**
+   * @brief called in SolverStep before member stress solver is called to
+   *  project the initial stress state to pre-defined fault orientations,
+   *  only when cycleNumber == 0 
+   * @param cycleNumber current cycle number
+   * @param domain The DomainPartition of the problem
+  */
   void initializeMeanSolidStress( integer const cycleNumber, DomainPartition & domain );
   
 protected:
 
   virtual void postProcessInput() override;
 
+  /**
+   * @brief takes pre-defined fault orientations (m_faultNormal and m_faultShear)
+   *  and forms projection tensors in Voigt notation, to be multiplied in double dot product
+   *  with the stress tensor in updateMeanSolidStress
+  */
   void initializeFaultOrientation();
 
   /// pointer to stress solver
@@ -70,8 +87,8 @@ protected:
   string m_stressSolverName;
 
   /// intial stress conditions
-  real64 m_initialSigma;
-  real64 m_initialTau;
+  real64 m_initialFaultNormalStress;
+  real64 m_initialFaultShearStress;
 
   /// fault orientation
   array1d< real64 > m_faultNormal;

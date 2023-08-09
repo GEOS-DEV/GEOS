@@ -45,10 +45,10 @@ SeismicityRateBase::SeismicityRateBase( const string & name,
     this->registerWrapper( viewKeyStruct::faultShearString(), &m_faultShear ).
           setInputFlag( InputFlags::OPTIONAL ).
           setDescription( "Fault shear direction" );
-    this->registerWrapper( viewKeyStruct::initialSigmaString(), &m_initialSigma ).
+    this->registerWrapper( viewKeyStruct::initialFaultNormalStressString(), &m_initialFaultNormalStress ).
           setInputFlag( InputFlags::OPTIONAL ).
           setDescription( "Initial normal stress" );
-    this->registerWrapper( viewKeyStruct::initialTauString(), &m_initialTau ).
+    this->registerWrapper( viewKeyStruct::initialFaultShearStressString(), &m_initialFaultShearStress ).
           setInputFlag( InputFlags::OPTIONAL ).
           setDescription( "Initial shear stress" );
   }
@@ -107,6 +107,7 @@ void SeismicityRateBase::initializePreSubGroups()
 
 void SeismicityRateBase::updateMeanSolidStress( ElementSubRegionBase & subRegion )
 {
+  // Retrieve field variables
   arrayView2d< real64 > const meanStress = subRegion.getField< inducedSeismicity::meanStress >();
   meanStress.setValues< parallelHostPolicy >( 0.0 );
 
@@ -116,28 +117,28 @@ void SeismicityRateBase::updateMeanSolidStress( ElementSubRegionBase & subRegion
   arrayView1d< real64 > const tau = subRegion.getField< inducedSeismicity::meanShearStress >();
   arrayView1d< real64 > const tau_n = subRegion.getField< inducedSeismicity::meanShearStress_n >();
 
-  // get total stresses
+  // Retrieve stress state computed by m_stressSolver, called in solverStep
   string const & solidModelName = subRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString());
   SolidBase const & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidModelName );
   arrayView3d< real64 const, solid::STRESS_USD > const stress = solidModel.getStress();
   
-  // loop over elements 
+  // loop over all elements and computed unweighted average across all nodes 
+  // as average stress state acting over the cell ceneter
+  // TODO: APPLY WEIGHTS TO AVERAGE TO ACCOUNT FOR ELEMENT SHAPE
   forAll< parallelDevicePolicy<> >(  sig.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
-    // update previous solutions
+    // update projected stresses from previou step
     sig_n[k] = sig[k];
     tau_n[k] = tau[k];
 
-    // update mean stress at element
+    // Compute average stress state
     for( int q = 0; q < stress.size(1); q++ ) 
     {
       LvArray::tensorOps::add< 6 >( meanStress[k], stress[k][q] );
     }
-
-    // average
     LvArray::tensorOps::scale< 6 >(meanStress[k], 1./stress.size(1));
 
-    // Compute fault normal and shear stresses
+    // Project average stress state to fault
     sig[k] = LvArray::tensorOps::AiBi< 6 >( meanStress[k], m_faultNormalVoigt);
     tau[k] = LvArray::tensorOps::AiBi< 6 >( meanStress[k], m_faultShearVoigt);
   } );
@@ -145,6 +146,7 @@ void SeismicityRateBase::updateMeanSolidStress( ElementSubRegionBase & subRegion
 
 void SeismicityRateBase::initializeMeanSolidStress(integer const cycleNumber, DomainPartition & domain)
 {
+  // Only call initialization step before stress solver has been called for first time step
   if ( cycleNumber == 0 ) {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
@@ -155,13 +157,14 @@ void SeismicityRateBase::initializeMeanSolidStress(integer const cycleNumber, Do
                                                   [&]( localIndex const,
                                                        ElementSubRegionBase & subRegion )
       {
+        // Retrieve field variables
         arrayView1d< real64 const > const sig = subRegion.getField< inducedSeismicity::meanNormalStress >();
         arrayView1d< real64 > const sig_i = subRegion.getField< inducedSeismicity::initialMeanNormalStress >();
   
         arrayView1d< real64 const > const tau = subRegion.getField< inducedSeismicity::meanShearStress >();
         arrayView1d< real64 > const tau_i = subRegion.getField< inducedSeismicity::initialMeanShearStress >();
 
-        // update mean solid stress at each element
+        // If solid stress solver has been called, call updateMeanSolidStress to project stress state onto faults
         if ( subRegion.hasWrapper( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString() ) )
         {
           initializeFaultOrientation();
@@ -169,27 +172,28 @@ void SeismicityRateBase::initializeMeanSolidStress(integer const cycleNumber, Do
           updateMeanSolidStress( subRegion );
           forAll< parallelDevicePolicy<> >(  sig.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
           {
-            // update previous solutions
+            // Set initial stress conditions on faults
             sig_i[k] = sig[k];
             tau_i[k] = tau[k];
           } );
 
         }
+        // If solid stress solver has not been called, initialize fault stresses to user-defined values
         else
         {
           arrayView1d< real64 > const tempSigIni = subRegion.getField< inducedSeismicity::initialMeanNormalStress >();
-          tempSigIni.setValues< parallelHostPolicy >( m_initialSigma );
+          tempSigIni.setValues< parallelHostPolicy >( m_initialFaultNormalStress );
           arrayView1d< real64 > const tempSig = subRegion.getField< inducedSeismicity::meanNormalStress >();
-          tempSig.setValues< parallelHostPolicy >( m_initialSigma );
+          tempSig.setValues< parallelHostPolicy >( m_initialFaultNormalStress );
           arrayView1d< real64 > const tempSig_n = subRegion.getField< inducedSeismicity::meanNormalStress_n >();
-          tempSig_n.setValues< parallelHostPolicy >( m_initialSigma );
+          tempSig_n.setValues< parallelHostPolicy >( m_initialFaultNormalStress );
 
           arrayView1d< real64 > const tempTauIni = subRegion.getField< inducedSeismicity::initialMeanShearStress >();
-          tempTauIni.setValues< parallelHostPolicy >( m_initialTau );
+          tempTauIni.setValues< parallelHostPolicy >( m_initialFaultShearStress );
           arrayView1d< real64 > const tempTau = subRegion.getField< inducedSeismicity::meanShearStress >();
-          tempTau.setValues< parallelHostPolicy >( m_initialTau );
+          tempTau.setValues< parallelHostPolicy >( m_initialFaultShearStress );
           arrayView1d< real64 > const tempTau_n = subRegion.getField< inducedSeismicity::meanShearStress_n >();
-          tempTau_n.setValues< parallelHostPolicy >( m_initialTau );
+          tempTau_n.setValues< parallelHostPolicy >( m_initialFaultShearStress );
         }
       } );
     } );
@@ -206,10 +210,15 @@ void SeismicityRateBase::initializeFaultOrientation()
 {
   if ( m_faultNormal.size()==1 )
   {
-    // THROW ERROR
+    // THROW ERROR, FAULT ORIENTATION MUST BE DEFINED FOR SOLID STRESS SOLVER
   }
   else
   {
+    // TODO: NORMALIZE FAULT NORMAL AND SHEAR VECTORS AS UNIT VECTORS
+    // TODO: CHECK THAT FAULT NORMAL AND SHEAR VECTORS ARE ORTHOGONAL
+
+    // Voigt notation of dyadic product of fault normal vectors 
+    // when multiplied in double dot product with symmetric stress tensor
     m_faultNormalVoigt[0] = m_faultNormal[0]*m_faultNormal[0];
     m_faultNormalVoigt[1] = m_faultNormal[1]*m_faultNormal[1];
     m_faultNormalVoigt[2] = m_faultNormal[2]*m_faultNormal[2];
@@ -217,6 +226,8 @@ void SeismicityRateBase::initializeFaultOrientation()
     m_faultNormalVoigt[4] = 2*m_faultNormal[0]*m_faultNormal[2];
     m_faultNormalVoigt[5] = 2*m_faultNormal[0]*m_faultNormal[1];
 
+    // Voigt notation of dyadic product of fault normal and shear vectors 
+    // when multiplied in double dot product with symmetric stress tensor
     m_faultShearVoigt[0] = m_faultShear[0]*m_faultNormal[0];
     m_faultShearVoigt[1] = m_faultShear[1]*m_faultNormal[1];
     m_faultShearVoigt[2] = m_faultShear[2]*m_faultNormal[2];

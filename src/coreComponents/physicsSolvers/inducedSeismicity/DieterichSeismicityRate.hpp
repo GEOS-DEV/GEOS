@@ -45,6 +45,7 @@ public:
 //END_SPHINX_INCLUDE_BEGINCLASS
 
 //START_SPHINX_INCLUDE_SOLVERINTERFACE
+
   virtual real64 solverStep( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
@@ -55,6 +56,14 @@ public:
   //                     integer const cycleNumber,
   //                     DomainPartition & domain );
 
+  /**
+   * @brief single step advance in computing the seismicity rate based on 
+   *  stress history according to closed form integral solution (Heimisson & Segall, 2018)
+   *  to the ODE formulated by Dieterich, 1994
+   * @param time_n time at previous converged step
+   * @param dt time step size
+   * @param subRegion ElementSubRegionBase to compute the solution in
+  */
   void integralSolverStep( real64 const & time_n,
                            real64 const & dt,
                            ElementSubRegionBase & subRegion );

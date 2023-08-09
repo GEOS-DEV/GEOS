@@ -47,11 +47,10 @@ using namespace constitutive;
  * stress solver is then called in the SolverStep function for the seismicity rate, to take
  * the updated stress history as the input.
  * 
- * Solving the ODE is currently implemented in two different ways: 1. By backward-Euler 
- * discretization of the ODE and 2. Computing the closed-form solution to the ODE which 
- * involves numerical calculation of an integral of a stress functional. Both methods solve
- * for the log of the seismicity rate in order to avoid overflow that typically accompanies
- * the exponential of the stress history in the original formulations. 
+ * Solving the ODE is currently implemented by computing the closed-form interal solution 
+ * to the ODE which involves numerical calculation of an integral of a stress functional. 
+ * We initially solve for the log of the seismicity rate in order to avoid overflow that 
+ * typically occurs in the exponential of the stress history. 
  * 
  * 
  * Where can I find an example of what it does?
@@ -116,11 +115,13 @@ real64 DieterichSeismicityRate::solverStep( real64 const & time_n,
                                   const int cycleNumber,
                                   DomainPartition & domain )
 {
+  // Save initial stress state on pre-defined fault orienations to field variables
   initializeMeanSolidStress(cycleNumber, domain); 
 
-  // Call stress solver
+  // Call member variable stress solver to update the stress state
   real64 dtStress = m_stressSolver->solverStep(time_n, dt, cycleNumber, domain );
 
+  // Loop over subRegions to update stress on faults and solver for seismicity rate
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
                                                                  arrayView1d< string const > const & regionNames )
@@ -130,16 +131,18 @@ real64 DieterichSeismicityRate::solverStep( real64 const & time_n,
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
-      // update mean solid stress at each element
+      // project new stress state to update stress on fault
       if ( subRegion.hasWrapper( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString() ) )
       {
         updateMeanSolidStress( subRegion );
       }
 
-      integralSolverStep( time_n, dt, subRegion ); 
+      // solve for the seismcity rate given new stresses on faults
+      integralSolverStep( time_n, dtStress, subRegion ); 
     });
   });
 
+  // return time step size achieved by stress solver
   return dtStress;
 }
 
@@ -219,6 +222,7 @@ void DieterichSeismicityRate::integralSolverStep( real64 const & time_n,
                     real64 const & dt,
                     ElementSubRegionBase & subRegion )
 {
+  // Retrieve field variables
   arrayView1d< real64 > const R = subRegion.getField< inducedSeismicity::seismicityRate >();
   arrayView1d< real64 > const h = subRegion.getField< inducedSeismicity::logSeismicityRate >();
   arrayView1d< real64 > const logDenom = subRegion.getField< inducedSeismicity::logDenom >();
@@ -239,32 +243,36 @@ void DieterichSeismicityRate::integralSolverStep( real64 const & time_n,
   arrayView1d< real64 const > const tau = subRegion.getField< inducedSeismicity::meanShearStress >();
   arrayView1d< real64 const > const tau_n = subRegion.getField< inducedSeismicity::meanShearStress_n >();
 
-  // solve for logarithm of seismicity rate
+  // hard-coded parameter for testing solver against analytical solution 
   // real64 c = 1e-3;
 
   forAll< parallelDevicePolicy<> >(  h.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
-    // Hard code log meanShear stress history
+    // Hard coded log meanShear stress history
     // real64 curTau = directEffect[k]*sig_i[k]*std::log(c*(time_n+dt)+1) + tau_i[k];
     // real64 curTau_n = directEffect[k]*sig_i[k]*std::log(c*time_n+1) + tau_i[k];
-
     // real64 g = (curTau + backgroundStressingRate[k]*(time_n+dt))/(directEffect[k]*(sig[k]-p[k])) 
     //                     - tau_i[k]/(directEffect[k]*(sig_i[k]-p_i[k]));
     // real64 g_n = (curTau_n + backgroundStressingRate[k]*time_n)/(directEffect[k]*(sig_n[k]-p_n[k])) 
     //                     - tau_i[k]/(directEffect[k]*(sig_i[k]-p_i[k]));
 
+    // arguments of stress exponential at current and previous time step
     real64 g = (tau[k] + backgroundStressingRate[k]*(time_n+dt))/(directEffect[k]*(-sig[k]-p[k])) 
                         - tau_i[k]/(directEffect[k]*(-sig_i[k]-p_i[k]));
     real64 g_n = (tau_n[k] + backgroundStressingRate[k]*time_n)/(directEffect[k]*(-sig_n[k]-p_n[k])) 
                         - tau_i[k]/(directEffect[k]*(-sig_i[k]-p_i[k]));
 
+    // Compute the difference of the log of the denominator of closed for integral solution.
+    // This avoids directly computing the exponential of the current stress state which is more prone to overflow.
     real64 deltaLogDenom = std::log(1 + dt/(2*(directEffect[k]*-sig_i[k]/backgroundStressingRate[k]))
                                         *(std::exp(g - logDenom_n[k]) + std::exp(g_n - logDenom_n[k]) ));
     logDenom[k] = logDenom_n[k] + deltaLogDenom;
   
+    // Convert log seismicity rate to raw value
     h[k] = g - logDenom[k];
     R[k] = LvArray::math::exp( h[k] );
     
+    // Update log of the denominator for next time step
     logDenom_n[k] = logDenom[k];
   } );
 }
