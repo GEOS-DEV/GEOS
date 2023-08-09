@@ -202,20 +202,26 @@ void SeismicityRateBase::initializeMeanSolidStress(integer const cycleNumber, Do
 
 void SeismicityRateBase::postProcessInput()
 {
+  // Initialize member stress solver as specified in XML input
   m_stressSolver = &this->getParent().getGroup< SolverBase >( m_stressSolverName );
+
   SolverBase::postProcessInput();
 }
 
 void SeismicityRateBase::initializeFaultOrientation()
 {
-  if ( m_faultNormal.size()==1 )
+  if ( m_faultNormal.size()!=3 || m_faultShear.size()!=3 )
   {
     // THROW ERROR, FAULT ORIENTATION MUST BE DEFINED FOR SOLID STRESS SOLVER
+    GEOS_ERROR("Proper fault orientation (faultNormal and faultShear) must be defined for seismicity rate solver if a solid stress solver is being used.");
   }
   else
   {
-    // TODO: NORMALIZE FAULT NORMAL AND SHEAR VECTORS AS UNIT VECTORS
-    // TODO: CHECK THAT FAULT NORMAL AND SHEAR VECTORS ARE ORTHOGONAL
+    if( !checkFaultOrthogonality() ){
+      GEOS_ERROR("Fault normal and fault shear must be orthogonal");
+    }
+
+    normalizeFaultVecs(); 
 
     // Voigt notation of dyadic product of fault normal vectors 
     // when multiplied in double dot product with symmetric stress tensor
@@ -235,6 +241,12 @@ void SeismicityRateBase::initializeFaultOrientation()
     m_faultShearVoigt[4] = m_faultShear[0]*m_faultNormal[2] + m_faultShear[2]*m_faultNormal[0];
     m_faultShearVoigt[5] = m_faultShear[0]*m_faultNormal[1] + m_faultShear[1]*m_faultNormal[0];
   }
+}
+
+void SeismicityRateBase::normalizeFaultVecs()
+{
+  LvArray::tensorOps::normalize< 3 >( m_faultNormal );
+  LvArray::tensorOps::normalize< 3 >( m_faultShear );
 }
 
 SeismicityRateBase::~SeismicityRateBase()
