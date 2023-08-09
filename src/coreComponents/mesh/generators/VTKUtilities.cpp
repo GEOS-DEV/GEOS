@@ -808,13 +808,13 @@ vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mes
  * @return the vtk grid redistributed
  */
 vtkSmartPointer< vtkDataSet >
-ensureNoEmptyRank( vtkDataSet & mesh,
+ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
                    MPI_Comm const comm )
 {
   GEOS_MARK_FUNCTION;
 
   // step 1: figure out who is a donor and who is a recipient
-  localIndex const numElems = LvArray::integerConversion< localIndex >( mesh.GetNumberOfCells() );
+  localIndex const numElems = LvArray::integerConversion< localIndex >( mesh->GetNumberOfCells() );
   integer const numProcs = MpiWrapper::commSize( comm );
 
   array1d< localIndex > elemCounts( numProcs );
@@ -948,7 +948,7 @@ redistributeMesh( vtkSmartPointer< vtkDataSet > loadedMesh,
   // We expect this function to only be called in some pathological cases
   if( MpiWrapper::min( mesh->GetNumberOfCells(), comm ) == 0 )
   {
-    mesh = ensureNoEmptyRank( *mesh, comm );
+    mesh = ensureNoEmptyRank( mesh, comm );
   }
 
   AllMeshes result;
