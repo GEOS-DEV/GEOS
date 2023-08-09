@@ -58,6 +58,16 @@
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
+  <Geometry>
+    <Rectangle
+      name="FracturePlane"
+      normal="{ 0, 1, 0 }"
+      origin="{ 20, 20, 0.5 }"
+      lengthVector="{ 1, 0, 0 }"
+      widthVector="{ 0, 0, 1 }"
+      dimensions="{ 2, 2 }"/>
+  </Geometry>
+
   <Events
     maxTime="10">
     <SoloEvent

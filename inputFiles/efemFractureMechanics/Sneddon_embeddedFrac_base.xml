@@ -1,16 +1,6 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Geometry>
-    <Rectangle
-      name="FracturePlane"
-      normal="{ 0, 1, 0 }"
-      origin="{ 1.5, 1.5, 1.5 }"
-      lengthVector="{ 1, 0, 0 }"
-      widthVector="{ 0, 0, 1 }"
-      dimensions="{ 1.1, 4 }"/>
-  </Geometry>
-
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
@@ -106,7 +96,8 @@
     <PackCollection
       name="displacementJumpCollection"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
-      fieldName="displacementJump"/>   
+      fieldName="displacementJump"
+      setNames="{all}"/>
   </Tasks>
   <!-- SPHINX_SNEDDON_TASK_END -->
 

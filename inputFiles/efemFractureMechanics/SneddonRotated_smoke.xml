@@ -33,8 +33,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Domain }"
-      />
+      targetRegions="{ Domain }"/>
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
@@ -48,25 +47,25 @@
 
   <Mesh>
     <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 3 }"
-      yCoords="{ 0, 3 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 11 }"
-      ny="{ 11 }"
-      nz="{ 1 }"
-      cellBlockNames="{ cb1 }"/>
+    name="mesh1"
+    elementTypes="{ C3D8 }"
+    xCoords="{ 0, 16, 19, 21, 24, 40 }"
+    yCoords="{ 0, 16, 24, 40 }"
+    zCoords="{ 0, 1 }"
+    nx="{ 1, 1, 5 , 1, 1 }"
+    ny="{ 1, 5, 1 }"
+    nz="{ 1 }"
+    cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
     <Rectangle
       name="FracturePlane"
       normal="{ 0.5547, 0.8321, 0 }"
-      origin="{ 1.5, 1.5, 1.5 }"
+      origin="{ 20, 20, 0.5 }"
       lengthVector="{ 0.8321, -0.5547, 0 }"
       widthVector="{ 0, 0, 1 }"
-      dimensions="{ 1.1, 4 }"/>
+      dimensions="{ 2, 4 }"/>
   </Geometry>
 
     <Events
