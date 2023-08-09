@@ -2,15 +2,15 @@
 Publications
 ###############################################################################
 
-Last updated 23-October-2022
+Last updated 9-August-2023
 
 Preprints and Early-Views
 =========================
 
 * - | **A phase-field model for hydraulic fracture nucleation and propagation in porous media**
     | F Fei, A Costa, JE Dolbow, R Settgast, M Cusini
-    | under review
-    | `doi.org/10.48550/arXiv.2304.13197 <https://doi.org/10.48550/arXiv.2304.13197>`_
+    | accepted for publication International Journal for Numerical and Analytical Methods in Geomechanics
+    | preprint at `doi.org/10.48550/arXiv.2304.13197 <https://doi.org/10.48550/arXiv.2304.13197>`_
 
 2022
 ====
