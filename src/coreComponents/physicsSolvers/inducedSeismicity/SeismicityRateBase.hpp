@@ -80,6 +80,17 @@ protected:
   */
   void initializeFaultOrientation();
 
+  /**
+   * @brief ensures that user=defined fault orientations are orthogonal. 
+   * outputs error message if not.
+  */
+  bool checkFaultOrthogonality(){ return std::abs(LvArray::tensorOps::AiBi< 3 >(m_faultNormal, m_faultShear)) <= 1e-8; }
+
+  /**
+   * @brief normalize fault vectors to be unit vectors
+  */
+  void normalizeFaultVecs();
+
   /// pointer to stress solver
   SolverBase * m_stressSolver;
 
