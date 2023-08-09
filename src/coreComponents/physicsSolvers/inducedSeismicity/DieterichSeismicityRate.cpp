@@ -116,6 +116,8 @@ real64 DieterichSeismicityRate::solverStep( real64 const & time_n,
                                   const int cycleNumber,
                                   DomainPartition & domain )
 {
+  initializeMeanSolidStress(cycleNumber, domain); 
+
   // Call stress solver
   real64 dtStress = m_stressSolver->solverStep(time_n, dt, cycleNumber, domain );
 
@@ -167,11 +169,11 @@ real64 DieterichSeismicityRate::solverStep( real64 const & time_n,
 //         arrayView1d< real64 const > const p = subRegion.getField< flow::pressure >();
 //         arrayView1d< real64 const > const pDot = subRegion.getField< inducedSeismicity::pressureRate >();
 //   
-//         arrayView1d< real64 const > const sig_i = subRegion.getField< inducedSeismicity::initialmeanNormalStress >();
+//         arrayView1d< real64 const > const sig_i = subRegion.getField< inducedSeismicity::initialMeanNormalStress >();
 //         arrayView1d< real64 const > const sig = subRegion.getField< inducedSeismicity::meanNormalStress >();
 //         arrayView1d< real64 const > const sigDot = subRegion.getField< inducedSeismicity::meanNormalStressRate >();
 //         
-//         arrayView1d< real64 const > const tau_i = subRegion.getField< inducedSeismicity::initialmeanShearStress >();
+//         arrayView1d< real64 const > const tau_i = subRegion.getField< inducedSeismicity::initialMeanShearStress >();
 //         arrayView1d< real64 const > const tau = subRegion.getField< inducedSeismicity::meanShearStress >();
 //         arrayView1d< real64 const > const tauDot = subRegion.getField< inducedSeismicity::meanShearStressRate >();
 //   
@@ -229,11 +231,11 @@ void DieterichSeismicityRate::integralSolverStep( real64 const & time_n,
   arrayView1d< real64 const > const p = subRegion.getField< flow::pressure >();
   arrayView1d< real64 const > const p_n = subRegion.getField< flow::pressure_n >();
   
-  arrayView1d< real64 const > const sig_i = subRegion.getField< inducedSeismicity::initialmeanNormalStress >();
+  arrayView1d< real64 const > const sig_i = subRegion.getField< inducedSeismicity::initialMeanNormalStress >();
   arrayView1d< real64 const > const sig = subRegion.getField< inducedSeismicity::meanNormalStress >();
   arrayView1d< real64 const > const sig_n = subRegion.getField< inducedSeismicity::meanNormalStress_n >();
   
-  arrayView1d< real64 const > const tau_i = subRegion.getField< inducedSeismicity::initialmeanShearStress >();
+  arrayView1d< real64 const > const tau_i = subRegion.getField< inducedSeismicity::initialMeanShearStress >();
   arrayView1d< real64 const > const tau = subRegion.getField< inducedSeismicity::meanShearStress >();
   arrayView1d< real64 const > const tau_n = subRegion.getField< inducedSeismicity::meanShearStress_n >();
 
@@ -267,54 +269,11 @@ void DieterichSeismicityRate::integralSolverStep( real64 const & time_n,
   } );
 }
 
-void DieterichSeismicityRate::updateMeanSolidStress( ElementSubRegionBase & subRegion )
-{
-  arrayView2d< real64 > const meanStress = subRegion.getField< inducedSeismicity::meanStress >();
-  meanStress.setValues< parallelHostPolicy >( 0.0 );
-
-  arrayView1d< real64 > const sig = subRegion.getField< inducedSeismicity::meanNormalStress >();
-  arrayView1d< real64 > const sig_n = subRegion.getField< inducedSeismicity::meanNormalStress_n >();
-  
-  arrayView1d< real64 > const tau = subRegion.getField< inducedSeismicity::meanShearStress >();
-  arrayView1d< real64 > const tau_n = subRegion.getField< inducedSeismicity::meanShearStress_n >();
-
-  // get total stresses
-  string const & solidModelName = subRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString());
-  SolidBase const & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidModelName );
-  arrayView3d< real64 const, solid::STRESS_USD > const stress = solidModel.getStress();
-  
-  // loop over elements 
-  forAll< parallelDevicePolicy<> >(  sig.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-  {
-    // update previous solutions
-    sig_n[k] = sig[k];
-    tau_n[k] = tau[k];
-
-    // update mean stress at element
-    for( int q = 0; q < stress.size(1); q++ ) 
-    {
-      LvArray::tensorOps::add< 6 >( meanStress[k], stress[k][q] );
-    }
-
-    // average
-    LvArray::tensorOps::scale< 6 >(meanStress[k], 1./stress.size(1));
-
-    // Compute fault normal and shear stresses
-    sig[k] = LvArray::tensorOps::AiBi< 6 >( meanStress[k], m_faultNormalVoigt);
-    tau[k] = LvArray::tensorOps::AiBi< 6 >( meanStress[k], m_faultShearVoigt);
-  } );
-}
-
-
 void DieterichSeismicityRate::initializePreSubGroups()
 {
   SeismicityRateBase::initializePreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-
-  // 1. Validate various models against each other (must have same phases and components)
-  // validateConstitutiveModels( domain );
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
