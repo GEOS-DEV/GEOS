@@ -324,15 +324,15 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                  damping );
         }
 
-        acousticWaveEquationSEMKernels::ComputeTimeStep < FE_TYPE > kernelT( finiteElement );
+        acousticWaveEquationSEMKernels::ComputeTimeStep< FE_TYPE > kernelT( finiteElement );
 
-        dtCompute = kernelT.template launch < EXEC_POLICY, ATOMIC_POLICY > (elementSubRegion.size(),
-                                                                nodeManager.size(),
-                                                                X32,
-                                                                elemsToNodes,
-                                                                mass);
+        dtCompute = kernelT.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                           nodeManager.size(),
+                                                                           X32,
+                                                                           elemsToNodes,
+                                                                           mass );
 
-        exit(2);
+        exit( 2 );
 
       } );
     } );

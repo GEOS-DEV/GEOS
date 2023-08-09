@@ -320,11 +320,11 @@ struct ComputeTimeStep
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   real64
-  launch(localIndex const sizeElem,
-         localIndex const sizeNode,
-         arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
-         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
-         arrayView1d< real32  > const mass)
+  launch( localIndex const sizeElem,
+          localIndex const sizeNode,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+          arrayView1d< real32 > const mass )
   {
 
     constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
@@ -334,30 +334,30 @@ struct ComputeTimeStep
     localIndex numberIter = 0;
     localIndex counter = 0;
     real64 lambdaNew = 0.0;
-    array1d< real64 > const  normP(1);
-    array1d< real64 > const  dotProductPPaux(1);
-    array1d< real64 > const  normPaux(1);
+    array1d< real64 > const normP( 1 );
+    array1d< real64 > const dotProductPPaux( 1 );
+    array1d< real64 > const normPaux( 1 );
 
-    arrayView1d< real64 > const  normPView=normP;
-    arrayView1d< real64 > const  dotProductPPauxView=dotProductPPaux;
-    arrayView1d< real64 > const  normPauxView=normPaux;
+    arrayView1d< real64 > const normPView=normP;
+    arrayView1d< real64 > const dotProductPPauxView=dotProductPPaux;
+    arrayView1d< real64 > const normPauxView=normPaux;
 
 
-    array1d< real32 > const p(sizeNode);
-    array1d< real32 > const pAux(sizeNode);
+    array1d< real32 > const p( sizeNode );
+    array1d< real32 > const pAux( sizeNode );
 
     arrayView1d< real32 > const pView = p;
     arrayView1d< real32 > const pAuxView = pAux;
 
     //Randomize p values
-    srand(time(NULL));
+    srand( time( NULL ));
     forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       pView[a] = (real64)rand()/(real64) RAND_MAX;
     } );
 
     //Step 1: Normalize randomized pressure
-    WaveSolverUtils::dotProduct(sizeNode,pView,pView,normPView);
+    WaveSolverUtils::dotProduct( sizeNode, pView, pView, normPView );
     // forAll< WaveSolverBase::EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
     // {
     //    dotProducts[0]+= pView[a]*pView[a];
@@ -366,7 +366,7 @@ struct ComputeTimeStep
 
     forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-    pView[a]/= sqrt(normPView[0]);
+      pView[a]/= sqrt( normPView[0] );
     } );
 
     //Step 2: Initial iteration of (M^{-1}K)p
@@ -383,7 +383,7 @@ struct ComputeTimeStep
           xLocal[a][i] = X( elemsToNodes( k, a ), i );
         }
       }
-      for (localIndex q = 0; q < numNodesPerElem; ++q)
+      for( localIndex q = 0; q < numNodesPerElem; ++q )
       {
         m_finiteElement.computeStiffnessTerm( q, xLocal, [&] ( int i, int j, real64 val )
         {
@@ -401,13 +401,13 @@ struct ComputeTimeStep
 
     forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-       pAuxView[a]/= mass[a];
+      pAuxView[a]/= mass[a];
     } );
     real64 lambdaOld = lambdaNew;
 
     //Compute lambdaNew using two dotProducts
-    WaveSolverUtils::dotProduct(sizeNode,pView,pAuxView,dotProductPPauxView);
-    WaveSolverUtils::dotProduct(sizeNode,pView,pView,normPView);
+    WaveSolverUtils::dotProduct( sizeNode, pView, pAuxView, dotProductPPauxView );
+    WaveSolverUtils::dotProduct( sizeNode, pView, pView, normPView );
 
     // forAll< WaveSolverBase::EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
     // {
@@ -423,10 +423,10 @@ struct ComputeTimeStep
 
     //lambdaNew = LvArray::tensorOps::AiBi<sizeNode>(p,pAux)/LvArray::tensorOps::AiBi<sizeNode>(pAux,pAux);
 
-    WaveSolverUtils::dotProduct(sizeNode,pAuxView,pAuxView,normPauxView);
+    WaveSolverUtils::dotProduct( sizeNode, pAuxView, pAuxView, normPauxView );
     forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-    pView[a]/= sqrt(normPauxView[0]);
+      pView[a]/= sqrt( normPauxView[0] );
     } );
 
     //p = LvArray::tensorOps::normalize<sizeNode>(pAuxView);
@@ -446,7 +446,7 @@ struct ComputeTimeStep
             xLocal[a][i] = X( elemsToNodes( k, a ), i );
           }
         }
-        for (localIndex q = 0; q < numNodesPerElem; ++q)
+        for( localIndex q = 0; q < numNodesPerElem; ++q )
         {
           m_finiteElement.computeStiffnessTerm( q, xLocal, [&] ( int i, int j, real64 val )
           {
@@ -463,17 +463,17 @@ struct ComputeTimeStep
       } );
 
       forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
-    {
-       pAuxView[a]/= mass[a];
-    } );
+      {
+        pAuxView[a]/= mass[a];
+      } );
 
       lambdaOld = lambdaNew;
 
       // WaveSolverUtils::dotProduct(sizeNode,pView,pAuxView,dotProductPPaux);
       // WaveSolverUtils::dotProduct(sizeNode,pAuxView,pAuxView,normPaux);
 
-      WaveSolverUtils::dotProduct(sizeNode,pView,pAuxView,dotProductPPauxView);
-      WaveSolverUtils::dotProduct(sizeNode,pView,pView,normPView);
+      WaveSolverUtils::dotProduct( sizeNode, pView, pAuxView, dotProductPPauxView );
+      WaveSolverUtils::dotProduct( sizeNode, pView, pView, normPView );
 
 
       // dotProductPPaux = 0.0;
@@ -492,12 +492,12 @@ struct ComputeTimeStep
 
       lambdaNew = dotProductPPauxView[0]/normPView[0];
 
-      WaveSolverUtils::dotProduct(sizeNode,pAuxView,pAuxView,normPauxView);
+      WaveSolverUtils::dotProduct( sizeNode, pAuxView, pAuxView, normPauxView );
       //lambdaNew = LvArray::tensorOps::AiBi<sizeNode>(p,pAux)/LvArray::tensorOps::AiBi<sizeNode>(pAux,pAux);
 
       forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
-      pView[a]/= sqrt(normPauxView[0]);
+        pView[a]/= sqrt( normPauxView[0] );
       } );
 
 
@@ -505,7 +505,7 @@ struct ComputeTimeStep
 
       // p = LvArray::tensorOps::normalize<sizeNode>(pAuxView);
 
-      if(abs(lambdaNew-lambdaOld)/abs(lambdaNew)<= epsilon)
+      if( abs( lambdaNew-lambdaOld )/abs( lambdaNew )<= epsilon )
       {
         counter++;
       }
@@ -517,15 +517,18 @@ struct ComputeTimeStep
       numberIter++;
 
 
-    } while (counter < 10 && numberIter < nIterMax);
+    }
+    while (counter < 10 && numberIter < nIterMax);
 
 
 
     GEOS_THROW_IF( numberIter> nIterMax, "Power Iteration algorithm does not converge", std::runtime_error );
 
 
+    real64 const coeff = sqrt( 2 )/2.0;
 
-    real64 dt = 1.99/sqrt(abs(lambdaNew));
+    real64 dt = coeff/sqrt( abs( lambdaNew ));
+
     return dt;
 
   }
