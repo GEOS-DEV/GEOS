@@ -92,20 +92,30 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # Performance portability
     #
-    depends_on('raja@test +openmp~examples~exercises')
+    # depends_on('raja +openmp~examples~exercises')
+    depends_on('raja +openmp~examples~exercises~shared')
 
-    depends_on('umpire@2022.03.0+c+openmp~examples+fortran')
 
-    depends_on('chai@test +raja+openmp~benchmarks~examples')
+    # depends_on('umpire')
+    # depends_on('umpire +c+openmp~examples+fortran')
+    # depends_on('umpire +c+openmp~examples+fortran~shared')
+
+    # depends_on('umpire@2022.03.0 +c+openmp~examples+fortran')
+
+    # depends_on('chai@2023.06.0 +raja+openmp~examples')
+    depends_on('chai@2023.06.0 +raja+openmp~examples~shared')
+    # depends_on('chai@2023.06.0 +openmp~examples~shared')
+
 
     #depends_on('camp@2022.03.2')
+    # depends_on('camp')
 
     with when('+cuda'):
         for sm_ in CudaPackage.cuda_arch_values:
             depends_on('raja+cuda cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))
-            depends_on('umpire~shared+cuda cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))
+            # depends_on('umpire+cuda cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))
             depends_on('chai+cuda cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))
-            depends_on('camp+cuda cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))
+            # depends_on('camp+cuda cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))
 
     #
     # IO
@@ -144,7 +154,8 @@ class Geosx(CMakePackage, CudaPackage):
 
     depends_on('hypre@2.28.0geosx+superlu-dist+mixedint+mpi+openmp', when='+hypre~cuda')
 
-    depends_on('hypre@2.28.0geosx+cuda+superlu-dist+mixedint+mpi+openmp+umpire+unified-memory', when='+hypre+cuda')
+    # depends_on('hypre@2.28.0geosx+cuda+superlu-dist+mixedint+mpi+openmp+umpire+unified-memory', when='+hypre+cuda')
+    depends_on('hypre@2.28.0geosx+cuda+superlu-dist+mixedint+mpi+openmp+unified-memory+chai', when='+hypre+cuda')
     with when('+cuda'):
         for sm_ in CudaPackage.cuda_arch_values:
             depends_on('hypre+cuda cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))
@@ -347,35 +358,47 @@ class Geosx(CMakePackage, CudaPackage):
                 if not spec.satisfies('cuda_arch=none'):
                     cuda_arch = spec.variants['cuda_arch'].value
                     cmake_cuda_flags += ' -arch sm_{0}'.format(cuda_arch[0])
+                    cfg.write(cmake_cache_string('CMAKE_CUDA_ARCHITECTURES', cuda_arch[0]))
 
                 cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS', cmake_cuda_flags))
 
-                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_RELEASE', '-O3 -Xcompiler -O3 -DNDEBUG'))
-                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_RELWITHDEBINFO', '-O3 -g -lineinfo -Xcompiler -O3'))
-                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_DEBUG', '-O0 -Xcompiler -O0 -g -G'))
+                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_RELEASE', '-O3 -DNDEBUG -Xcompiler -DNDEBUG -Xcompiler -O3 -Xcompiler -mcpu=powerpc64le -Xcompiler -mtune=powerpc64le'))
+                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_RELWITHDEBINFO', '-g -lineinfo ${CMAKE_CUDA_FLAGS_RELEASE}'))
+                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_DEBUG', '-g -G -O0 -Xcompiler -O0'))
 
             else:
                 cfg.write(cmake_cache_option('ENABLE_CUDA', False))
 
-            performance_portability_tpls = (('raja', 'RAJA', True), ('umpire', 'UMPIRE', True), ('chai', 'CHAI', True))
+            # performance_portability_tpls = (('raja', 'RAJA', True), ('umpire', 'UMPIRE', True), ('chai', 'CHAI', True))
+            #performance_portability_tpls = (('raja', 'RAJA', True), ('chai', 'CHAI', True))
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Performance Portability TPLs\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
-            for tpl, cmake_name, enable in performance_portability_tpls:
-                if enable:
-                    cfg.write(cmake_cache_entry('{}_DIR'.format(cmake_name), spec[tpl].prefix))
-                else:
-                    cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
+            #for tpl, cmake_name, enable in performance_portability_tpls:
+            #    if enable:
+            #        cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), True))
+            #        cfg.write(cmake_cache_entry('{}_DIR'.format(cmake_name), spec[tpl].prefix))
+            #    else:
+            #        cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
 
-            cfg.write(cmake_cache_entry('{}_DIR'.format('camp'), spec['camp'].prefix + '/lib/cmake/camp'))
+            cfg.write(cmake_cache_option('ENABLE_{}'.format('CHAI'), True))
+            cfg.write(cmake_cache_entry('{}_DIR'.format('CHAI'), spec['chai'].prefix))
+
+            cfg.write(cmake_cache_entry('{}_DIR'.format('RAJA'), spec['raja'].prefix))
+
+            cfg.write(cmake_cache_option('ENABLE_{}'.format('UMPIRE'), True))
+            cfg.write(cmake_cache_entry('{}_DIR'.format('UMPIRE'), spec['chai'].prefix))
+
+            cfg.write(cmake_cache_entry('{}_DIR'.format('CAMP'), spec['chai'].prefix))
+            # cfg.write(cmake_cache_entry('{}_DIR'.format('camp'), spec['camp'].prefix + '/lib/cmake/camp'))
 
             # yapf: disable
             io_tpls = (
                 ('hdf5', 'HDF5', True),
                 ('conduit', 'CONDUIT', True),
                 ('silo', 'SILO', True),
-                ('adiak', 'ADIAK', '+caliper' in spec),
-                ('caliper', 'CALIPER', '+caliper' in spec),
+                # ('adiak', 'adiak', '+caliper' in spec),
+                # ('caliper', 'CALIPER', '+caliper' in spec),
                 ('pugixml', 'PUGIXML', True),
                 ('vtk', 'VTK', '+vtk' in spec),
                 ('fesapi', 'FESAPI', '+fesapi' in spec),
@@ -386,6 +409,12 @@ class Geosx(CMakePackage, CudaPackage):
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# IO TPLs\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
+
+            if '+caliper' in spec:
+                cfg.write(cmake_cache_option('ENABLE_CALIPER', True))
+                cfg.write(cmake_cache_entry('CALIPER_DIR', spec['caliper'].prefix))
+                cfg.write(cmake_cache_entry('adiak_DIR', spec['adiak'].prefix + '/lib/cmake/adiak'))
+
             for tpl, cmake_name, enable in io_tpls:
                 if enable:
                     cfg.write(cmake_cache_entry('{}_DIR'.format(cmake_name), spec[tpl].prefix))
@@ -439,6 +468,9 @@ class Geosx(CMakePackage, CudaPackage):
                         cfg.write(cmake_cache_string('ENABLE_HYPRE_DEVICE', "HIP"))
                 else:
                     cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
+
+            if '+caliper' in spec and '+hypre' in spec and '+cuda' not in spec:
+                cfg.write(cmake_cache_option('ENABLE_CALIPER_HYPRE', True))
 
             if 'lai=trilinos' in spec:
                 cfg.write(cmake_cache_entry('GEOSX_LA_INTERFACE', 'Trilinos'))

@@ -27,12 +27,6 @@ class Essl(BundlePackage):
         essl_libs = ["libesslsmpcuda", "liblapackforessl", "liblapackforessl_"]
         all_libs = find_libraries(essl_libs, root=essl_root, shared=True)
 
-        xl_root = "/usr/tce/packages/xl/xl-beta-2019.06.20/alllibs"
-        xl_libs_shared = ["libxlsmp", "libxlfmath", "libxlf90_r"]
-        xl_libs_static = ["libxl"]
-        all_libs += find_libraries(xl_libs_shared, root=xl_root, shared=True)
-        all_libs += find_libraries(xl_libs_static, root=xl_root, shared=False)
-
         cuda_toolkit_root = "/usr/tce/packages/cuda/cuda-11.8.0/lib64"
         cuda_libs = ["libcublas", "libcudart", "libcublasLt"]
         all_libs += find_libraries(cuda_libs, root=cuda_toolkit_root, shared=True)
@@ -47,12 +41,6 @@ class Essl(BundlePackage):
         essl_root = prefix.lib64
         essl_libs = ["libesslsmpcuda", "liblapackforessl", "liblapackforessl_"]
         all_libs = find_libraries(essl_libs, root=essl_root, shared=True)
-
-        xl_root = "/usr/tce/packages/xl/xl-beta-2019.06.20/alllibs"
-        xl_libs_shared = ["libxlsmp", "libxlfmath", "libxlf90_r"]
-        xl_libs_static = ["libxl"]
-        all_libs += find_libraries(xl_libs_shared, root=xl_root, shared=True)
-        all_libs += find_libraries(xl_libs_static, root=xl_root, shared=False)
 
         cuda_toolkit_root = "/usr/tce/packages/cuda/cuda-11.8.0/lib64"
         cuda_libs = ["libcublas", "libcudart", "libcublasLt"]

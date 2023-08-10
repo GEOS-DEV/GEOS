@@ -19,7 +19,7 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
     maintainers("davidbeckingsale")
 
     # GEOS_EDIT_START
-    version("test", branch="v2023.06.0-RC", submodules=False)
+    version("2023.06.0", branch="v2023.06.0", submodules=True)
     # GEOS_EDIT_END
 
     version("develop", branch="develop", submodules=False)
@@ -63,19 +63,27 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
     # and remove the +tests conflict below.
     variant("tests", default=False, description="Build tests")
 
-    depends_on("blt")
-    depends_on("blt@0.5.0:", type="build", when="@0.14.1:")
-    depends_on("blt@0.4.1", type="build", when="@0.14.0")
-    depends_on("blt@0.4.0:", type="build", when="@0.13.0")
-    depends_on("blt@0.3.6:", type="build", when="@:0.12.0")
+    # GEOS_EDIT_START
+    # depends_on("blt")
+    # # GEOS_EDIT_START
+    # depends_on("blt@0.5.3:", type="build", when="@2023.06.0:")
+    # # GEOS_EDIT_END
+    # depends_on("blt@0.5.0:", type="build", when="@0.14.1:")
+    # depends_on("blt@0.4.1", type="build", when="@0.14.0")
+    # depends_on("blt@0.4.0:", type="build", when="@0.13.0")
+    # depends_on("blt@0.3.6:", type="build", when="@:0.12.0")
 
-    depends_on("camp@0.2.2:0.2.3", when="@0.14.0")
-    depends_on("camp@0.1.0", when="@0.10.0:0.13.0")
-    depends_on("camp@2022.03.2:2022.03", when="@2022.03.0:2022.03")
-    depends_on("camp@2022.10:", when="@2022.10:")
-    depends_on("camp@main", when="@main")
-    depends_on("camp@main", when="@develop")
-    depends_on("camp+openmp", when="+openmp")
+    # depends_on("camp@0.2.2:0.2.3", when="@0.14.0")
+    # depends_on("camp@0.1.0", when="@0.10.0:0.13.0")
+    # depends_on("camp@2022.03.2:2022.03", when="@2022.03.0:2022.03")
+    # # GEOS_EDIT_START
+    # depends_on("camp@2023.06", when="@2023.06")
+    # # GEOS_EDIT_END
+    # depends_on("camp@main", when="@main")
+    # depends_on("camp@main", when="@main")
+    # depends_on("camp@main", when="@develop")
+    # depends_on("camp+openmp", when="+openmp")
+    # GEOS_EDIT_END
 
     depends_on("cmake@:3.20", when="@:2022.03+rocm", type="build")
     depends_on("cmake@3.23:", when="@2022.10:+rocm", type="build")
@@ -84,18 +92,20 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
     depends_on("llvm-openmp", when="+openmp %apple-clang")
 
     depends_on("rocprim", when="+rocm")
-    with when("+rocm @0.12.0:"):
-        depends_on("camp+rocm")
-        for arch in ROCmPackage.amdgpu_targets:
-            depends_on(
-                "camp+rocm amdgpu_target={0}".format(arch), when="amdgpu_target={0}".format(arch)
-            )
-        conflicts("+openmp")
+    # GEOS_EDIT_START
+    # with when("+rocm @0.12.0:"):
+    #     depends_on("camp+rocm")
+    #     for arch in ROCmPackage.amdgpu_targets:
+    #         depends_on(
+    #             "camp+rocm amdgpu_target={0}".format(arch), when="amdgpu_target={0}".format(arch)
+    #         )
+    #     conflicts("+openmp")
 
-    with when("+cuda @0.12.0:"):
-        depends_on("camp+cuda")
-        for sm_ in CudaPackage.cuda_arch_values:
-            depends_on("camp +cuda cuda_arch={0}".format(sm_), when="cuda_arch={0}".format(sm_))
+    # with when("+cuda @0.12.0:"):
+    #     depends_on("camp+cuda")
+    #     for sm_ in CudaPackage.cuda_arch_values:
+    #         depends_on("camp +cuda cuda_arch={0}".format(sm_), when="cuda_arch={0}".format(sm_))
+    # GEOS_EDIT_END
 
     def _get_sys_type(self, spec):
         sys_type = spec.architecture
@@ -163,9 +173,11 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
 
         option_prefix = "RAJA_" if spec.satisfies("@0.14.0:") else ""
 
-        entries.append(cmake_cache_path("BLT_SOURCE_DIR", spec["blt"].prefix))
-        if "camp" in self.spec:
-            entries.append(cmake_cache_path("camp_DIR", spec["camp"].prefix))
+        # GEOS_EDIT_START
+        # entries.append(cmake_cache_path("BLT_SOURCE_DIR", spec["blt"].prefix))
+        # if "camp" in self.spec:
+            # entries.append(cmake_cache_path("camp_DIR", spec["camp"].prefix))
+        # GEOS_EDIT_END
         entries.append(cmake_cache_option("BUILD_SHARED_LIBS", "+shared" in spec))
         entries.append(
             cmake_cache_option("{}ENABLE_EXAMPLES".format(option_prefix), "+examples" in spec)

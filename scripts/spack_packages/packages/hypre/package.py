@@ -79,7 +79,10 @@ class Hypre(AutotoolsPackage, CudaPackage, ROCmPackage):
     variant("unified-memory", default=False, description="Use unified memory")
     variant("fortran", default=True, description="Enables fortran bindings")
     variant("gptune", default=False, description="Add the GPTune hookup code")
-    variant("umpire", default=False, description="Enable Umpire support")
+
+    #GEOS EDIT START
+    variant("chai", default=False, description="Enable Umpire support thorugh Chai")
+    # GEOS EDIT END
 
     # GEOSX EDIT START
     # Unused patches
@@ -109,16 +112,19 @@ class Hypre(AutotoolsPackage, CudaPackage, ROCmPackage):
     depends_on("rocsparse", when="+rocm")
     depends_on("rocthrust", when="+rocm")
     depends_on("rocrand", when="+rocm")
-    depends_on("umpire", when="+umpire")
-    for sm_ in CudaPackage.cuda_arch_values:
-        depends_on(
-            "umpire+cuda cuda_arch={0}".format(sm_), when="+umpire+cuda cuda_arch={0}".format(sm_)
-        )
-    for gfx in ROCmPackage.amdgpu_targets:
-        depends_on(
-            "umpire+rocm amdgpu_target={0}".format(gfx),
-            when="+umpire+rocm amdgpu_target={0}".format(gfx),
-        )
+    # GEOS_EDIT_START
+    depends_on("chai", when="+chai")
+    # depends_on("umpire", when="+umpire")
+    # for sm_ in CudaPackage.cuda_arch_values:
+    #     depends_on(
+    #         "umpire+cuda cuda_arch={0}".format(sm_), when="+umpire+cuda cuda_arch={0}".format(sm_)
+    #     )
+    # for gfx in ROCmPackage.amdgpu_targets:
+    #     depends_on(
+    #         "umpire+rocm amdgpu_target={0}".format(gfx),
+    #         when="+umpire+rocm amdgpu_target={0}".format(gfx),
+    #     )
+    # GEOS_EDIT_END
 
     # Conflicts
     conflicts("+cuda", when="+int64")
@@ -127,7 +133,10 @@ class Hypre(AutotoolsPackage, CudaPackage, ROCmPackage):
     conflicts("+unified-memory", when="~cuda~rocm")
     conflicts("+gptune", when="~mpi")
     # Umpire device allocator exports device code, which requires static libs
-    conflicts("+umpire", when="+shared+cuda")
+    #GEOS EDIT START
+    # conflicts("+umpire", when="+shared+cuda")
+    conflicts("+chai", when="+shared+cuda")
+    #GEOS EDIT END
 
     # Patch to build shared libraries on Darwin does not apply to
     # versions before 2.13.0
@@ -144,7 +153,10 @@ class Hypre(AutotoolsPackage, CudaPackage, ROCmPackage):
     conflicts("+mixedint", when="@:2.15")
 
     # Option added in v2.21.0
-    conflicts("+umpire", when="@:2.20")
+    #GEOS EDIT START
+    # conflicts("+umpire", when="@:2.20")
+    conflicts("+chai", when="@:2.20")
+    #GEOS EDIT END
 
     configure_directory = "src"
 
@@ -209,13 +221,23 @@ class Hypre(AutotoolsPackage, CudaPackage, ROCmPackage):
             configure_args.append("--with-dsuperlu-lib=%s" % spec["superlu-dist"].libs)
             configure_args.append("--with-dsuperlu")
 
-        if "+umpire" in spec:
-            configure_args.append("--with-umpire-include=%s" % spec["umpire"].prefix.include)
-            configure_args.append("--with-umpire-lib=%s" % spec["umpire"].libs)
+        #GEOS_EDIT_START
+        # if "+umpire" in spec:
+        #     configure_args.append("--with-umpire-include=%s" % spec["umpire"].prefix.include)
+        #     configure_args.append("--with-umpire-lib=%s" % spec["umpire"].libs)
+        #     if "~cuda~rocm" in spec:
+        #         configure_args.append("--with-umpire-host")
+        #     else:
+        #         configure_args.append("--with-umpire")
+
+        if "+chai" in spec:
+            configure_args.append("--with-umpire-include=%s" % spec["chai"].prefix.include)
+            configure_args.append("--with-umpire-lib=%s/lib/libumpire.a" % spec["chai"].prefix)
             if "~cuda~rocm" in spec:
                 configure_args.append("--with-umpire-host")
             else:
                 configure_args.append("--with-umpire")
+        #GEOS_EDIT_END
 
         configure_args.extend(self.enable_or_disable("debug"))
 
