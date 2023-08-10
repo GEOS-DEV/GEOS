@@ -1159,9 +1159,15 @@ void SolidMechanicsConformingFracturesVEM::
 
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
+  EdgeManager const & edgeManager = mesh.getEdgeManager();
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager.edgeList().toViewConst();
+  arrayView2d< localIndex const > const & edgeToNodeMap = edgeManager.nodeList().toViewConst();
+  arrayView2d< real64 const > faceCenters = faceManager.faceCenter();
+  arrayView2d< real64 const > faceNormals = faceManager.faceNormal();
+  arrayView1d< real64 const > faceAreas = faceManager.faceArea();
 
   string const & tracDofKey = dofManager.getKey( contact::traction::key() );
   string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
@@ -1181,15 +1187,11 @@ void SolidMechanicsConformingFracturesVEM::
     arrayView3d< real64 const > const & rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
     arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
-    constexpr localIndex TriangularPermutation[3] = { 0, 1, 2 };
-    constexpr localIndex QuadrilateralPermutation[4] = { 0, 1, 3, 2 };
-
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
     {
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
-      localIndex const numQuadraturePointsPerElem = numNodesPerFace==3 ? 1 : 4;
 
-      globalIndex rowDOF[12];
+      globalIndex rowDOF[12]; // this needs to be changed when dealing with arbitrary element types
       real64 nodeRHS[12];
       stackArray2d< real64, 3*4*3 > dRdT( 3*numNodesPerFace, 3 );
       globalIndex colDOF[3];
@@ -1198,82 +1200,59 @@ void SolidMechanicsConformingFracturesVEM::
         colDOF[i] = tracDofNumber[kfe] + i;
       }
 
-      localIndex const * const permutation = ( numNodesPerFace == 3 ) ? TriangularPermutation : QuadrilateralPermutation;
-      real64 xLocal[2][4][3];
       for( localIndex kf = 0; kf < 2; ++kf )
       {
+        constexpr int normalSign[2] = { 1, -1 };
+        // Testing the face integral on polygonal faces
+        array1d< real64 > nodalArea;
         localIndex const faceIndex = elemsToFaces[kfe][kf];
+        computeProjectors(  faceIndex,
+                            nodePosition, 
+                            faceToNodeMap, 
+                            faceToEdgeMap,
+                            edgeToNodeMap,
+                            faceCenters,
+                            faceNormals,
+                            faceAreas,
+                            nodalArea);
+
         for( localIndex a = 0; a < numNodesPerFace; ++a )
         {
-          for( localIndex j = 0; j < 3; ++j )
+          real64 const localNodalForce[ 3 ] = { traction( kfe, 0 ) * faceAreas[a],
+                                                traction( kfe, 1 ) * faceAreas[a],
+                                                traction( kfe, 2 ) * faceAreas[a] };
+          real64 globalNodalForce[ 3 ];
+          LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( globalNodalForce, rotationMatrix[ kfe ], localNodalForce );
+
+          for( localIndex i = 0; i < 3; ++i )
           {
-            xLocal[kf][a][j] = nodePosition[ faceToNodeMap( faceIndex, permutation[a] ) ][j];
+            rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + i;
+            // Opposite sign w.r.t. to formulation presented in
+            // Algebraically Stabilized Lagrange Multiplier Method for Frictional Contact Mechanics with
+            // Hydraulically Active Fractures
+            // Franceschini, A., Castelletto, N., White, J. A., Tchelepi, H. A.
+            // Computer Methods in Applied Mechanics and Engineering (2020) 368, 113161
+            // doi: 10.1016/j.cma.2020.113161
+            nodeRHS[3*a+i] = +globalNodalForce[i] * normalSign[ kf ];
+
+            // Opposite sign w.r.t. to the same formulation as above
+            dRdT( 3*a+i, 0 ) = rotationMatrix( kfe, i, 0 ) * normalSign[ kf ] * faceAreas[a];
+            dRdT( 3*a+i, 1 ) = rotationMatrix( kfe, i, 1 ) * normalSign[ kf ] * faceAreas[a];
+            dRdT( 3*a+i, 2 ) = rotationMatrix( kfe, i, 2 ) * normalSign[ kf ] * faceAreas[a];
           }
         }
-      }
 
-      real64 N[4];
-
-      for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
-      {
-        if( numNodesPerFace==3 )
+        for( localIndex idof = 0; idof < numNodesPerFace * 3; ++idof )
         {
-          using NT = real64[3];
-          H1_TriangleFace_Lagrange1_Gauss1::calcN( q, reinterpret_cast< NT & >(N) );
-        }
-        else if( numNodesPerFace==4 )
-        {
-          H1_QuadrilateralFace_Lagrange1_GaussLegendre2::calcN( q, N );
-        }
+          localIndex const localRow = LvArray::integerConversion< localIndex >( rowDOF[idof] - rankOffset );
 
-        constexpr int normalSign[2] = { 1, -1 };
-        for( localIndex kf = 0; kf < 2; ++kf )
-        {
-          localIndex const faceIndex = elemsToFaces[kfe][kf];
-          using xLocalTriangle = real64[3][3];
-          real64 const detJxW = numNodesPerFace==3 ?
-                                H1_TriangleFace_Lagrange1_Gauss1::transformedQuadratureWeight( q, reinterpret_cast< xLocalTriangle & >( xLocal[kf] ) ) :
-                                H1_QuadrilateralFace_Lagrange1_GaussLegendre2::transformedQuadratureWeight( q, xLocal[kf] );
-
-          for( localIndex a = 0; a < numNodesPerFace; ++a )
+          if( localRow >= 0 && localRow < localMatrix.numRows() )
           {
-            real64 const NaDetJxQ = N[permutation[a]] * detJxW;
-            real64 const localNodalForce[ 3 ] = { traction( kfe, 0 ) * NaDetJxQ,
-                                                  traction( kfe, 1 ) * NaDetJxQ,
-                                                  traction( kfe, 2 ) * NaDetJxQ };
-            real64 globalNodalForce[ 3 ];
-            LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( globalNodalForce, rotationMatrix[ kfe ], localNodalForce );
-
-            for( localIndex i = 0; i < 3; ++i )
-            {
-              rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + i;
-              // Opposite sign w.r.t. to formulation presented in
-              // Algebraically Stabilized Lagrange Multiplier Method for Frictional Contact Mechanics with
-              // Hydraulically Active Fractures
-              // Franceschini, A., Castelletto, N., White, J. A., Tchelepi, H. A.
-              // Computer Methods in Applied Mechanics and Engineering (2020) 368, 113161
-              // doi: 10.1016/j.cma.2020.113161
-              nodeRHS[3*a+i] = +globalNodalForce[i] * normalSign[ kf ];
-
-              // Opposite sign w.r.t. to the same formulation as above
-              dRdT( 3*a+i, 0 ) = rotationMatrix( kfe, i, 0 ) * normalSign[ kf ] * NaDetJxQ;
-              dRdT( 3*a+i, 1 ) = rotationMatrix( kfe, i, 1 ) * normalSign[ kf ] * NaDetJxQ;
-              dRdT( 3*a+i, 2 ) = rotationMatrix( kfe, i, 2 ) * normalSign[ kf ] * NaDetJxQ;
-            }
-          }
-
-          for( localIndex idof = 0; idof < numNodesPerFace * 3; ++idof )
-          {
-            localIndex const localRow = LvArray::integerConversion< localIndex >( rowDOF[idof] - rankOffset );
-
-            if( localRow >= 0 && localRow < localMatrix.numRows() )
-            {
-              localMatrix.addToRow< parallelHostAtomic >( localRow,
-                                                          colDOF,
-                                                          dRdT[idof].dataIfContiguous(),
-                                                          3 );
-              RAJA::atomicAdd( parallelHostAtomic{}, &localRhs[localRow], nodeRHS[idof] );
-            }
+            localMatrix.addToRow< parallelHostAtomic >( localRow,
+                                                        colDOF,
+                                                        dRdT[idof].dataIfContiguous(),
+                                                        3 );
+            RAJA::atomicAdd( parallelHostAtomic{}, &localRhs[localRow], nodeRHS[idof] );
           }
         }
       }
@@ -1370,11 +1349,11 @@ void SolidMechanicsConformingFracturesVEM::
                 for( localIndex kf = 0; kf < 2; ++kf )
                 {
                   // Compute local area contribution for each node
-                  array1d< real64 > nodalArea;
-                  computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+                  // array1d< real64 > nodalArea;
+                  // computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
 
                   // Testing the face integral on polygonal faces
-                  array1d< real64 > basisIntegrals;
+                  array1d< real64 > nodalArea;
                   computeProjectors( elemsToFaces[kfe][kf],
                                      nodePosition, 
                                      faceToNodeMap, 
@@ -1383,7 +1362,7 @@ void SolidMechanicsConformingFracturesVEM::
                                      faceCenters,
                                      faceNormals,
                                      faceAreas,
-                                     basisIntegrals);
+                                     nodalArea);
 
                   for( localIndex a = 0; a < numNodesPerFace; ++a )
                   {
@@ -1407,8 +1386,19 @@ void SolidMechanicsConformingFracturesVEM::
                 for( localIndex kf = 0; kf < 2; ++kf )
                 {
                   // Compute local area contribution for each node
+                  // array1d< real64 > nodalArea;
+                  // computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+
                   array1d< real64 > nodalArea;
-                  computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+                  computeProjectors( elemsToFaces[kfe][kf],
+                                     nodePosition, 
+                                     faceToNodeMap, 
+                                     faceToEdgeMap,
+                                     edgeToNodeMap,
+                                     faceCenters,
+                                     faceNormals,
+                                     faceAreas,
+                                     nodalArea);
 
                   for( localIndex a = 0; a < numNodesPerFace; ++a )
                   {
@@ -1445,8 +1435,18 @@ void SolidMechanicsConformingFracturesVEM::
                   for( localIndex kf = 0; kf < 2; ++kf )
                   {
                     // Compute local area contribution for each node
+                    // array1d< real64 > nodalArea;
+                    // computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
                     array1d< real64 > nodalArea;
-                    computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+                    computeProjectors( elemsToFaces[kfe][kf],
+                                     nodePosition, 
+                                     faceToNodeMap, 
+                                     faceToEdgeMap,
+                                     edgeToNodeMap,
+                                     faceCenters,
+                                     faceNormals,
+                                     faceAreas,
+                                     nodalArea);
 
                     for( localIndex a = 0; a < numNodesPerFace; ++a )
                     {
