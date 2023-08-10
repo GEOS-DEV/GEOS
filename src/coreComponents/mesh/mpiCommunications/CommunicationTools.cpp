@@ -333,80 +333,111 @@ CommunicationTools::assignNewGlobalIndices( ElementRegionManager & elementManage
   elementManager.setMaxGlobalIndex();
 }
 
+
+/**
+ * @brief Exchange some @p data with all the @p neighbors. The data received from the @p neighbors is the returned by the function.
+ * @tparam DATA_PROVIDER Callable that takes neighbor index @p i and returns an <tt>array1d\< globalIndex \></tt>.
+ * Note that the index @p i is the index of the @p neighbor in the @p neighbors list, not its MPI rank.
+ * @param commId MPI communicator Id.
+ * @param neighbors List of all the concerned neighbor communicators.
+ * @param data Provides the data to be sent to each neighbor.
+ * @return The data sent by all the @p neighbors. Data at index @p i coming from neighbor at index @p i in the list of @p neighbors.
+ */
+template< class DATA_PROVIDER >
+array1d< array1d< globalIndex > > exchange( int commId,
+                                            std::vector< NeighborCommunicator > & neighbors,
+                                            DATA_PROVIDER const & data )
+{
+  MPI_iCommData commData( commId );
+  integer const numNeighbors = LvArray::integerConversion< integer >( neighbors.size() );
+  commData.resize( numNeighbors );
+  for( integer i = 0; i < numNeighbors; ++i )
+  {
+    neighbors[i].mpiISendReceiveSizes( data( i ),
+                                       commData.mpiSendBufferSizeRequest( i ),
+                                       commData.mpiRecvBufferSizeRequest( i ),
+                                       commId,
+                                       MPI_COMM_GEOSX );
+  }
+
+  MpiWrapper::waitAll( numNeighbors, commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
+  MpiWrapper::waitAll( numNeighbors, commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus() );
+
+  array1d< array1d< globalIndex > > output( neighbors.size() );
+
+  for( integer i = 0; i < numNeighbors; ++i )
+  {
+    neighbors[i].mpiISendReceiveData( data( i ),
+                                      commData.mpiSendBufferRequest( i ),
+                                      output[i],
+                                      commData.mpiRecvBufferRequest( i ),
+                                      commId,
+                                      MPI_COMM_GEOSX );
+  }
+  MpiWrapper::waitAll( numNeighbors, commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
+  MpiWrapper::waitAll( numNeighbors, commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus() );
+
+  return output;
+}
+
+
+array1d< array1d< globalIndex > >
+CommunicationTools::buildNeighborPartitionBoundaryObjects( ObjectManagerBase & manager,
+                                                           std::vector< NeighborCommunicator > & allNeighbors )
+{
+  arrayView1d< integer > const & domainBoundaryIndicator = manager.getDomainBoundaryIndicator();
+  array1d< globalIndex > const globalPartitionBoundaryObjectsIndices = manager.constructGlobalListOfBoundaryObjects();
+
+  auto const data = [&]( auto i ) -> array1d< globalIndex > const &
+  {
+    return std::cref( globalPartitionBoundaryObjectsIndices );
+  };
+  array1d< array1d< globalIndex > > const neighborPartitionBoundaryObjects = exchange( getCommID(), allNeighbors, data );
+
+  integer const numNeighbors = LvArray::integerConversion< integer >( allNeighbors.size() );
+  for( integer i = 0; i < numNeighbors; ++i )
+  {
+    NeighborCommunicator & neighbor = allNeighbors[i];
+    array1d< localIndex > & matchedPartitionBoundaryObjects = manager.getNeighborData( neighbor.neighborRank() ).matchedPartitionBoundary();
+
+    localIndex localCounter = 0;
+    localIndex neighborCounter = 0;
+    while( localCounter < globalPartitionBoundaryObjectsIndices.size() &&
+           neighborCounter < neighborPartitionBoundaryObjects[i].size() )
+    {
+      globalIndex const & gi = globalPartitionBoundaryObjectsIndices[localCounter];
+      globalIndex const & gni = neighborPartitionBoundaryObjects[i][neighborCounter];
+
+      if( gi == gni )
+      {
+        localIndex const localMatchedIndex = manager.globalToLocalMap( gi );
+        matchedPartitionBoundaryObjects.emplace_back( localMatchedIndex );
+        domainBoundaryIndicator[localMatchedIndex] = 2;  // TODO check if useful.
+        ++localCounter;
+        ++neighborCounter;
+      }
+      else if( gi > gni )
+      {
+        ++neighborCounter;
+      }
+      else
+      {
+        ++localCounter;
+      }
+    }
+  }
+
+  return neighborPartitionBoundaryObjects;
+}
+
+
 void
 CommunicationTools::
   findMatchedPartitionBoundaryObjects( ObjectManagerBase & objectManager,
                                        std::vector< NeighborCommunicator > & allNeighbors )
 {
   GEOS_MARK_FUNCTION;
-  arrayView1d< integer > const & domainBoundaryIndicator = objectManager.getDomainBoundaryIndicator();
-
-  array1d< globalIndex > const globalPartitionBoundaryObjectsIndices = objectManager.constructGlobalListOfBoundaryObjects();
-
-  // send the size of the partitionBoundaryObjects to neighbors
-  {
-    array1d< array1d< globalIndex > > neighborPartitionBoundaryObjects( allNeighbors.size() );
-
-    MPI_iCommData commData( getCommID() );
-    int const commID = commData.commID();
-    integer const numNeighbors = LvArray::integerConversion< integer >( allNeighbors.size() );
-    commData.resize( numNeighbors );
-    for( integer i = 0; i < numNeighbors; ++i )
-    {
-      allNeighbors[i].mpiISendReceiveSizes( globalPartitionBoundaryObjectsIndices,
-                                            commData.mpiSendBufferSizeRequest( i ),
-                                            commData.mpiRecvBufferSizeRequest( i ),
-                                            commID,
-                                            MPI_COMM_GEOSX );
-    }
-
-    MpiWrapper::waitAll( numNeighbors, commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
-    MpiWrapper::waitAll( numNeighbors, commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus() );
-
-    for( integer i = 0; i < numNeighbors; ++i )
-    {
-      allNeighbors[i].mpiISendReceiveData( globalPartitionBoundaryObjectsIndices,
-                                           commData.mpiSendBufferRequest( i ),
-                                           neighborPartitionBoundaryObjects[i],
-                                           commData.mpiRecvBufferRequest( i ),
-                                           commID,
-                                           MPI_COMM_GEOSX );
-    }
-    MpiWrapper::waitAll( numNeighbors, commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
-    MpiWrapper::waitAll( numNeighbors, commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus() );
-
-    for( integer i = 0; i < numNeighbors; ++i )
-    {
-      NeighborCommunicator & neighbor = allNeighbors[i];
-      array1d< localIndex > & matchedPartitionBoundaryObjects = objectManager.getNeighborData( neighbor.neighborRank() ).matchedPartitionBoundary();
-
-      localIndex localCounter = 0;
-      localIndex neighborCounter = 0;
-      while( localCounter < globalPartitionBoundaryObjectsIndices.size() &&
-             neighborCounter < neighborPartitionBoundaryObjects[i].size() )
-      {
-        globalIndex const & gi = globalPartitionBoundaryObjectsIndices[localCounter];
-        globalIndex const & gni = neighborPartitionBoundaryObjects[i][neighborCounter];
-
-        if( gi == gni )
-        {
-          localIndex const localMatchedIndex = objectManager.globalToLocalMap( gi );
-          matchedPartitionBoundaryObjects.emplace_back( localMatchedIndex );
-          domainBoundaryIndicator[ localMatchedIndex ] = 2;  // TODO check if useful.
-          ++localCounter;
-          ++neighborCounter;
-        }
-        else if( gi > gni )
-        {
-          ++neighborCounter;
-        }
-        else
-        {
-          ++localCounter;
-        }
-      }
-    }
-  }
+  this->buildNeighborPartitionBoundaryObjects( objectManager, allNeighbors );
 }
 
 
@@ -426,7 +457,7 @@ std::map< int, array1d< globalIndex > > reorganizeRequestedNodes( std::map< int,
 
   for( auto const & p: tmp )
   {
-    output[*std::min_element( p.second.begin(), p.second.end() )].emplace_back( p.first );
+    output[*std::min_element( p.second.begin(), p.second.end() )].emplace_back( p.first );  // Manage ownership.
   }
 
   return output;
@@ -441,76 +472,20 @@ CommunicationTools::
                                        std::set< globalIndex > const & requested )
 {
   GEOS_MARK_FUNCTION;
-  arrayView1d< integer > const & domainBoundaryIndicator = nodeManager.getDomainBoundaryIndicator();
-
-  array1d< globalIndex > const globalPartitionBoundaryObjectsIndices = nodeManager.constructGlobalListOfBoundaryObjects();
-
-  std::map< int, array1d< globalIndex > > requestedMatchesMap;  // The key is the neighbor MPI rank.
+  auto const & g2l = nodeManager.globalToLocalMap();
+  std::map< int, array1d< globalIndex > > requestedMatchesMap;  // The key is the neighbor index, not the MPI rank.
 
   // send the size of the partitionBoundaryObjects to neighbors
   {
-    array1d< array1d< globalIndex > > neighborPartitionBoundaryObjects( allNeighbors.size() );
+    array1d< array1d< globalIndex > > const neighborPartitionBoundaryObjects = this->buildNeighborPartitionBoundaryObjects( nodeManager, allNeighbors );
 
-    MPI_iCommData commData( getCommID() );
-    int const commID = commData.commID();
     integer const numNeighbors = LvArray::integerConversion< integer >( allNeighbors.size() );
-    commData.resize( numNeighbors );
     for( integer i = 0; i < numNeighbors; ++i )
     {
-      allNeighbors[i].mpiISendReceiveSizes( globalPartitionBoundaryObjectsIndices,
-                                            commData.mpiSendBufferSizeRequest( i ),
-                                            commData.mpiRecvBufferSizeRequest( i ),
-                                            commID,
-                                            MPI_COMM_GEOSX );
-    }
-
-    MpiWrapper::waitAll( numNeighbors, commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
-    MpiWrapper::waitAll( numNeighbors, commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus() );
-
-    for( integer i = 0; i < numNeighbors; ++i )
-    {
-      allNeighbors[i].mpiISendReceiveData( globalPartitionBoundaryObjectsIndices,
-                                           commData.mpiSendBufferRequest( i ),
-                                           neighborPartitionBoundaryObjects[i],
-                                           commData.mpiRecvBufferRequest( i ),
-                                           commID,
-                                           MPI_COMM_GEOSX );
-    }
-    MpiWrapper::waitAll( numNeighbors, commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
-    MpiWrapper::waitAll( numNeighbors, commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus() );
-
-    for( integer i = 0; i < numNeighbors; ++i )
-    {
-      NeighborCommunicator & neighbor = allNeighbors[i];
-      array1d< localIndex > & matchedPartitionBoundaryObjects = nodeManager.getNeighborData( neighbor.neighborRank() ).matchedPartitionBoundary();
+      array1d< localIndex > & matchedPartitionBoundaryObjects = nodeManager.getNeighborData( allNeighbors[i].neighborRank() ).matchedPartitionBoundary();
       array1d< localIndex > secondLevelMatches;
-      array1d< globalIndex > & requestedMatches = requestedMatchesMap[neighbor.neighborRank()];
+      array1d< globalIndex > & requestedMatches = requestedMatchesMap[i];
 
-      localIndex localCounter = 0;
-      localIndex neighborCounter = 0;
-      while( localCounter < globalPartitionBoundaryObjectsIndices.size() &&
-             neighborCounter < neighborPartitionBoundaryObjects[i].size() )
-      {
-        globalIndex const & gi = globalPartitionBoundaryObjectsIndices[localCounter];
-        globalIndex const & gni = neighborPartitionBoundaryObjects[i][neighborCounter];
-
-        if( gi == gni )
-        {
-          localIndex const localMatchedIndex = nodeManager.globalToLocalMap( gi );
-          matchedPartitionBoundaryObjects.emplace_back( localMatchedIndex );
-          domainBoundaryIndicator[ localMatchedIndex ] = 2;  // TODO check if useful.
-          ++localCounter;
-          ++neighborCounter;
-        }
-        else if( gi > gni )
-        {
-          ++neighborCounter;
-        }
-        else
-        {
-          ++localCounter;
-        }
-      }
       std::set< globalIndex > const candidates( neighborPartitionBoundaryObjects[i].begin(), neighborPartitionBoundaryObjects[i].end() );
       for( std::set< globalIndex > const & collocatedNodes: collocatedNodesBuckets )
       {
@@ -518,7 +493,6 @@ CommunicationTools::
         std::set_intersection( collocatedNodes.cbegin(), collocatedNodes.cend(),
                                candidates.cbegin(), candidates.cend(),
                                std::back_inserter( intersection ) );
-        auto const & g2l = nodeManager.globalToLocalMap();
         if( intersection.empty() )
         { continue; }
         for( globalIndex const & gi: collocatedNodes )  // TODO why not the intersection? Because I want all the nodes at the same location?
@@ -538,7 +512,6 @@ CommunicationTools::
                                candidates.cbegin(), candidates.cend(),
                                std::back_inserter( intersection ) );
 //        for( globalIndex const gn: requested )
-        auto const & g2l = nodeManager.globalToLocalMap();
         arrayView1d< integer const > const ghostRank = nodeManager.ghostRank().toViewConst();
         for( globalIndex const gn: intersection )
         {
@@ -565,41 +538,13 @@ CommunicationTools::
 
   // Managing the requests
   {
-    MPI_iCommData commData( getCommID() );
-    int const commID = commData.commID();
+    auto const data = [&]( auto i ) -> array1d< globalIndex > const &
+    {
+      return std::cref( requestedMatchesFinal.at( i ) );
+    };
+    array1d< array1d< globalIndex > > neighborRequestedNodes = exchange( getCommID(), allNeighbors, data );
+
     integer const numNeighbors = LvArray::integerConversion< integer >( allNeighbors.size() );
-    commData.resize( numNeighbors );
-    for( integer i = 0; i < numNeighbors; ++i )
-    {
-      NeighborCommunicator & neighbor = allNeighbors[i];
-      array1d< globalIndex > const & requestedMatches = requestedMatchesFinal.at( neighbor.neighborRank() );
-      allNeighbors[i].mpiISendReceiveSizes( requestedMatches,
-                                            commData.mpiSendBufferSizeRequest( i ),
-                                            commData.mpiRecvBufferSizeRequest( i ),
-                                            commID,
-                                            MPI_COMM_GEOSX );
-    }
-
-    MpiWrapper::waitAll( numNeighbors, commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
-    MpiWrapper::waitAll( numNeighbors, commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus() );
-
-    array1d< array1d< globalIndex > > neighborRequestedNodes( numNeighbors );
-
-    auto const & g2l = nodeManager.globalToLocalMap();
-    for( integer i = 0; i < numNeighbors; ++i )
-    {
-      NeighborCommunicator & neighbor = allNeighbors[i];
-      array1d< globalIndex > const & requestedMatches = requestedMatchesFinal.at( neighbor.neighborRank() );
-      allNeighbors[i].mpiISendReceiveData( requestedMatches,
-                                           commData.mpiSendBufferRequest( i ),
-                                           neighborRequestedNodes[i],
-                                           commData.mpiRecvBufferRequest( i ),
-                                           commID,
-                                           MPI_COMM_GEOSX );
-    }
-    MpiWrapper::waitAll( numNeighbors, commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
-    MpiWrapper::waitAll( numNeighbors, commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus() );
-
     for( integer i = 0; i < numNeighbors; ++i )
     {
       std::set< globalIndex > notFound;
