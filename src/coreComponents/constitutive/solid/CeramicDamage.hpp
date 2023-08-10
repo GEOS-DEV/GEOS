@@ -29,8 +29,8 @@
  * integrated and tracked by this model.
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_KINEMATICDAMAGE_HPP
-#define GEOSX_CONSTITUTIVE_SOLID_KINEMATICDAMAGE_HPP
+#ifndef GEOSX_CONSTITUTIVE_SOLID_CERAMICDAMAGE_HPP_
+#define GEOSX_CONSTITUTIVE_SOLID_CERAMICDAMAGE_HPP_
 
 #include "ElasticIsotropic.hpp"
 #include "InvariantDecompositions.hpp"
@@ -140,6 +140,15 @@ public:
                                              real64 ( &stress )[6] ) const override;
 
   GEOS_HOST_DEVICE
+  virtual void smallStrainUpdate_StressOnly( localIndex const k,
+                                             localIndex const q,
+                                             real64 const & timeIncrement,
+                                             real64 const ( & beginningRotation )[3][3],
+                                             real64 const ( & endRotation )[3][3],
+                                             real64 const ( &strainIncrement )[6],
+                                             real64 ( &stress )[6] ) const override;
+
+  GEOS_HOST_DEVICE
   void smallStrainUpdateHelper( localIndex const k,
                                 localIndex const q,
                                 real64 const timeIncrement,
@@ -244,9 +253,30 @@ GEOS_FORCE_INLINE
 void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                          localIndex const q,
                                                          real64 const & timeIncrement,
+                                                         real64 const ( & strainIncrement )[6],
+                                                         real64 ( & stress )[6] ) const
+{
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( timeIncrement );
+  GEOS_UNUSED_VAR( strainIncrement );
+  GEOS_UNUSED_VAR( stress );
+  GEOS_ERROR( "smallStrainUpdateStressOnly overload not implemented for CeramicDamage" );
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
+                                                         localIndex const q,
+                                                         real64 const & timeIncrement,
+                                                         real64 const ( & beginningRotation )[3][3],
+                                                         real64 const ( & endRotation )[3][3],
                                                          real64 const ( &strainIncrement )[6],
                                                          real64 ( & stress )[6] ) const
 {
+  GEOS_UNUSED_VAR( beginningRotation );
+  GEOS_UNUSED_VAR( endRotation );
+
   // elastic predictor (assume strainIncrement is all elastic)
   ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, 
                                                          q, 

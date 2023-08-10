@@ -359,6 +359,9 @@ public:
   void populateMappingArrays( ParticleManager & particleManager,
                               NodeManager & nodeManager );
 
+  void cofactor( real64 const (& F)[3][3],
+                 real64 (& Fc)[3][3] );
+
 protected:
   virtual void postProcessInput() override final;
 

@@ -38,8 +38,8 @@
 #include "solid/PorousSolid.hpp"
 #include "solid/CompressibleSolid.hpp"
 #include "solid/ProppantSolid.hpp"
-#include "solid/CeramicDamage.hpp"
 #include "solid/StrainHardeningPolymer.hpp"
+#include "solid/CeramicDamage.hpp"
 #include "solid/Graphite.hpp"
 #include "solid/porosity/PressurePorosity.hpp"
 #include "solid/porosity/ProppantPorosity.hpp"
@@ -126,10 +126,11 @@ struct ConstitutivePassThruMPM< SolidBase >
   void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
     ConstitutivePassThruHandler< Graphite,
-                                 ElasticTransverseIsotropic,
+                                 CeramicDamage,
                                  StrainHardeningPolymer,
                                  PerfectlyPlastic,
-                                 CeramicDamage,
+                                 ElasticTransverseIsotropicPressureDependent,
+                                 ElasticTransverseIsotropic,
                                  ElasticIsotropic >::execute( constitutiveRelation,
                                                               std::forward< LAMBDA >( lambda ) );
   }

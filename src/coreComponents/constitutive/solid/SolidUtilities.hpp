@@ -325,8 +325,8 @@ struct SolidUtilities
                           localIndex const q,
                           real64 const timeIncrement,
                           real64 ( & Ddt )[6],
-                          real64 const ( &RotBeginning )[3][3],
-                          real64 const ( &RotEnd )[3][3],
+                          real64 const ( & RotBeginning )[3][3],
+                          real64 const ( & RotEnd )[3][3],
                           real64 ( & stress )[6] )
   {
     // Prepare strain increment for rotation
@@ -349,7 +349,7 @@ struct SolidUtilities
     Ddt[5] *= 2;
 
     // Stress increment
-    solid.smallStrainUpdate_StressOnly( k, q, timeIncrement, Ddt, stress );
+    solid.smallStrainUpdate_StressOnly( k, q, timeIncrement,  RotBeginning, RotEnd, Ddt, stress );
 
     // Rotate final stress to end-of-step (current) configuration
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, RotEnd, solid.m_newStress[ k ][ q ] );
