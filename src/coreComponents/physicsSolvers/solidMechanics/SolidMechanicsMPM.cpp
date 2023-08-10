@@ -913,7 +913,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     initialize( nodeManager, particleManager, partition );
   }
 
-
   //#######################################################################################
   solverProfiling( "Set grid multi-field labels to avoid a VTK output bug" );
   //#######################################################################################
@@ -1470,6 +1469,19 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
          << m_domainL[1] << ","
          << m_domainL[2] << std::endl;
     file.close();
+  }
+}
+
+void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager ){
+  sourceSubregionName = ;
+  destinationSubRegionName = ;
+
+  ParticleSubRegion & sourceSubregion = particleManager.getSubRegion< ParticleSubRegion >();
+  ParticleSubRegion & destinationSubregion = particleManager.getSubRegion< ParticleSubRegion >();
+  int regionSize = sourceSubregion.size();
+  
+  for(int p=0; ){
+
   }
 }
 
