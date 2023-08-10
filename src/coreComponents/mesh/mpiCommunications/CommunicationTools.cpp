@@ -12,11 +12,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file CommunicationTools.cpp
- *
- */
-
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 #include "common/TimingMacros.hpp"
@@ -464,12 +459,10 @@ std::map< int, array1d< globalIndex > > reorganizeRequestedNodes( std::map< int,
 }
 
 
-void
-CommunicationTools::
-  findMatchedPartitionBoundaryObjects( NodeManager & nodeManager,
-                                       std::vector< NeighborCommunicator > & allNeighbors,
-                                       std::set< std::set< globalIndex > > const & collocatedNodesBuckets,
-                                       std::set< globalIndex > const & requested )
+void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeManager,
+                                                            std::vector< NeighborCommunicator > & allNeighbors,
+                                                            std::set< std::set< globalIndex > > const & collocatedNodesBuckets,
+                                                            std::set< globalIndex > const & requested )
 {
   GEOS_MARK_FUNCTION;
   auto const & g2l = nodeManager.globalToLocalMap();
@@ -501,7 +494,6 @@ CommunicationTools::
           if( it != g2l.cend() )
           {
             secondLevelMatches.emplace_back( it->second );
-//            GEOS_LOG_RANK("Found a second level match : loc " << it->second << " " << " glob " << gi );
           }
         }
       }
@@ -511,13 +503,11 @@ CommunicationTools::
         std::set_intersection( requested.cbegin(), requested.cend(),
                                candidates.cbegin(), candidates.cend(),
                                std::back_inserter( intersection ) );
-//        for( globalIndex const gn: requested )
         arrayView1d< integer const > const ghostRank = nodeManager.ghostRank().toViewConst();
         for( globalIndex const gn: intersection )
         {
           requestedMatches.emplace_back( gn );  // TODO find a way to select the lowest rank that will send the node, not all of them...
         }
-//        GEOS_LOG_RANK( "Requests matching: {" << stringutilities::join( requestedMatches, ", " ) << "}." );
       }
 
       GEOS_LOG_RANK( "Second level matches : loc {" << stringutilities::join( secondLevelMatches, ", " ) << "}" );
@@ -534,13 +524,11 @@ CommunicationTools::
     }
   }
 
-  std::map< int, array1d< globalIndex > > const requestedMatchesFinal = reorganizeRequestedNodes( requestedMatchesMap );
-
   // Managing the requests
   {
-    auto const data = [&]( auto i ) -> array1d< globalIndex > const &
+    auto const data = [req = reorganizeRequestedNodes( requestedMatchesMap )]( auto i ) -> array1d< globalIndex > const &
     {
-      return std::cref( requestedMatchesFinal.at( i ) );
+      return req.at( i );
     };
     array1d< array1d< globalIndex > > neighborRequestedNodes = exchange( getCommID(), allNeighbors, data );
 
@@ -556,12 +544,9 @@ CommunicationTools::
       array1d< localIndex > & matchedPartitionBoundaryObjects = nodeManager.getNeighborData( neighbor.neighborRank() ).matchedPartitionBoundary();
       for( globalIndex const & gi: neighborRequestedNodes[i] )
       {
-//        localIndex const li = objectManager.globalToLocalMap( gi );
         auto const locIt = g2l.find( gi );
-//        if( std::find( matchedPartitionBoundaryObjects.begin(), matchedPartitionBoundaryObjects.end(), li ) == matchedPartitionBoundaryObjects.end() )
         if( locIt != g2l.cend() )
         {
-//          matchedPartitionBoundaryObjects.emplace_back( li );
           matchedPartitionBoundaryObjects.emplace_back( locIt->second );
         }
         else

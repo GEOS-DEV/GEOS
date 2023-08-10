@@ -209,10 +209,10 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
     CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( edgeManager,
                                                                            m_neighbors );
 
-    CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
-                                                                           m_neighbors,
-                                                                           collocatedNodes,
-                                                                           requestedNodes );
+    CommunicationTools::getInstance().findMatchedPartitionBoundaryNodes( nodeManager,
+                                                                         m_neighbors,
+                                                                         collocatedNodes,
+                                                                         requestedNodes );
   } );
 }
 

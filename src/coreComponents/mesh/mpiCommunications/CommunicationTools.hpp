@@ -84,10 +84,10 @@ public:
   void findMatchedPartitionBoundaryObjects( ObjectManagerBase & group,
                                             std::vector< NeighborCommunicator > & allNeighbors );
 
-  void findMatchedPartitionBoundaryObjects( NodeManager & nodeManager,
-                                            std::vector< NeighborCommunicator > & allNeighbors,
-                                            std::set< std::set< globalIndex > > const & collocatedNodesBuckets,
-                                            std::set< globalIndex > const & requested );
+  void findMatchedPartitionBoundaryNodes( NodeManager & nodeManager,
+                                          std::vector< NeighborCommunicator > & allNeighbors,
+                                          std::set< std::set< globalIndex > > const & collocatedNodesBuckets,
+                                          std::set< globalIndex > const & requested );
 
   void synchronizeFields( FieldIdentifiers const & fieldsToBeSync,
                           MeshLevel & mesh,
