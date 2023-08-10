@@ -33,7 +33,7 @@ RUN echo "PermitRootLogin prohibit-password" >> /etc/ssh/sshd_config
 RUN echo "PermitUserEnvironment yes" >> /etc/ssh/sshd_config
 RUN mkdir -p -m 700 /root/.ssh
 # Put your own public key here!
-RUN echo "ssh-rsa [#a public ssh key]" > /root/.ssh/authorized_keys
+RUN echo "ssh-rsa AAAAB... your public ssh key here ...EinP5Q== somebody@somewhere.org" > /root/.ssh/authorized_keys
 
 # Some important variables are provided through the environment.
 # You need to explicitly tell sshd to forward them.
