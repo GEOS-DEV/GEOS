@@ -82,6 +82,13 @@ public:
 
 protected:
 
+  /**
+   * @brief Checks stress rate that is argument of exponential in stress functional,
+   *  called in integralSolverStep. If too large as to cause overflow, checks various 
+   *  conditions to give informative output message to user. 
+  */
+  void checkExpArgument( rea64 arg ); 
+
   real64 m_directEffect;
   real64 m_backgroundStressingRate;
   

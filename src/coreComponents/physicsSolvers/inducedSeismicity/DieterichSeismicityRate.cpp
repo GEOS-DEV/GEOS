@@ -262,6 +262,8 @@ void DieterichSeismicityRate::integralSolverStep( real64 const & time_n,
     real64 g_n = (tau_n[k] + backgroundStressingRate[k]*time_n)/(directEffect[k]*(-sig_n[k]-p_n[k])) 
                         - tau_i[k]/(directEffect[k]*(-sig_i[k]-p_i[k]));
 
+    // checkExpArgument();
+
     // Compute the difference of the log of the denominator of closed for integral solution.
     // This avoids directly computing the exponential of the current stress state which is more prone to overflow.
     real64 deltaLogDenom = std::log(1 + dt/(2*(directEffect[k]*-sig_i[k]/backgroundStressingRate[k]))
@@ -306,6 +308,13 @@ void DieterichSeismicityRate::initializePreSubGroups()
       tempTaur.setValues< parallelHostPolicy >( m_backgroundStressingRate );
     } );
   } );
+}
+
+void checkExpArgument( real64 arg ){
+  // TODO:
+  // 1. CHECK IF CLOSE TO LITHOSTATIC PRESSURE
+  // 2. CHECK IF STRESSING RATE IS TOO LARGE
+  // 3. CHECK IF a IS TOO SMALL
 }
 
 //START_SPHINX_INCLUDE_REGISTER
