@@ -233,24 +233,23 @@ vtkSmartPointer< vtkCellArray > getCellArray( vtkSmartPointer< vtkDataSet > mesh
 }
 
 
- /**
- * @brief Build the Elements to Nodes indexing
- * @tparam INDEX_TYPE the type of the indexes
- * @tparam POLICY The execution policy
- * @param mesh an input mesh
- * @param cells an array of the cells
- * @param fractures The list of the fracture meshes.
- * @return An Elements to Nodes indexing
-  */
+/**
+ * @brief Build the element to nodes mappings for all the @p meshes.
+ * @tparam INDEX_TYPE The indexing type that will be used by the toolbox that will perfomrn the parallel split.
+ * @tparam POLICY The computational policy (parallel/serial)
+ * @param meshes All the meshes involved (volumic and surfacic (for fractures))l
+ * @param cells The vtk cell array.
+ * @return The mapping.
+ */
 template< typename INDEX_TYPE, typename POLICY >
 ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
-buildElemToNodesImpl( AllMeshes & input,
+buildElemToNodesImpl( AllMeshes & meshes,
                       vtkSmartPointer< vtkCellArray > const & cells )
 {
-  localIndex const num3dCells = LvArray::integerConversion< localIndex >( input.main->GetNumberOfCells() );
+  localIndex const num3dCells = LvArray::integerConversion< localIndex >( meshes.getMainMesh()->GetNumberOfCells() );
 
   localIndex num2dCells = 0;
-  for( auto const & fracture: input.faceBlocks )
+  for( auto const & fracture: meshes.getFaceBlocks() )
   {
     num2dCells += fracture.second->GetNumberOfCells();
   }
@@ -264,7 +263,7 @@ buildElemToNodesImpl( AllMeshes & input,
   } );
 
   localIndex offset = num3dCells;
-  for( auto & nf: input.faceBlocks )
+  for( auto & nf: meshes.getFaceBlocks() )
   {
     vtkSmartPointer< vtkDataSet > fracture = nf.second;
     // Check that fracture is not empty.
@@ -297,7 +296,7 @@ buildElemToNodesImpl( AllMeshes & input,
   ArrayOfArrays< INDEX_TYPE, INDEX_TYPE > elemToNodes;
   elemToNodes.template resizeFromCapacities< parallelHostPolicy >( numCells, nodeCounts.data() );
 
-  vtkIdTypeArray const & globalPointId = *vtkIdTypeArray::FastDownCast( input.main->GetPointData()->GetGlobalIds() );
+  vtkIdTypeArray const & globalPointId = *vtkIdTypeArray::FastDownCast( meshes.getMainMesh()->GetPointData()->GetGlobalIds() );
 
   // GetCellAtId() is conditionally thread-safe, use POLICY argument
   forAll< POLICY >( num3dCells, [&cells, &globalPointId, elemToNodes = elemToNodes.toView()] ( localIndex const cellIdx )
@@ -313,7 +312,7 @@ buildElemToNodesImpl( AllMeshes & input,
   } );
 
   offset = num3dCells;  // Restarting the loop from the beginning.
-  for( auto const & nf: input.faceBlocks )
+  for( auto const & nf: meshes.getFaceBlocks() )
   {
     vtkSmartPointer< vtkDataSet > fracture = nf.second;
 
@@ -347,24 +346,23 @@ buildElemToNodesImpl( AllMeshes & input,
 }
 
 
-/**
- * @brief Build the Elements to Nodes indexing depending on the execution policy
- *
- * @tparam INDEX_TYPE the type of the indexes
- * @param mesh an input mesh
- * @return An Elements to Nodes indexing
- */
+ /**
+  * @brief Build the element to nodes mappings for all the @p meshes.
+  * @tparam INDEX_TYPE The indexing type that will be used by the toolbox that will perfomrn the parallel split.
+  * @param meshes All the meshes involved (volumic and surfacic (for fractures))l
+  * @return The mapping.
+  */
 template< typename INDEX_TYPE >
 ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
-buildElemToNodes( AllMeshes & input )
+buildElemToNodes( AllMeshes & meshes )
 {
-  vtkSmartPointer< vtkCellArray > const & cells = vtk::getCellArray( input.main );
+  vtkSmartPointer< vtkCellArray > const & cells = vtk::getCellArray( meshes.getMainMesh() );
   // According to VTK docs, IsStorageShareable() indicates whether pointers extracted via
   // vtkCellArray::GetCellAtId() are pointers into internal storage rather than temp buffer
   // and thus results can be used in a thread-safe way.
   return cells->IsStorageShareable()
-         ? buildElemToNodesImpl< INDEX_TYPE, parallelHostPolicy >( input, cells )
-         : buildElemToNodesImpl< INDEX_TYPE, serialPolicy >( input, cells );
+         ? buildElemToNodesImpl< INDEX_TYPE, parallelHostPolicy >( meshes, cells )
+         : buildElemToNodesImpl< INDEX_TYPE, serialPolicy >( meshes, cells );
 }
 
 /**
@@ -608,7 +606,7 @@ AllMeshes redistributeByCellGraph( AllMeshes & input,
 {
   GEOS_MARK_FUNCTION;
 
-  pmet_idx_t const numElems = input.main->GetNumberOfCells();
+  pmet_idx_t const numElems = input.getMainMesh()->GetNumberOfCells();
   pmet_idx_t const numRanks = MpiWrapper::commSize( comm );
   int const rank = MpiWrapper::commRank( comm );
   int const lastRank = numRanks - 1;
@@ -631,7 +629,7 @@ AllMeshes redistributeByCellGraph( AllMeshes & input,
   if( isLastMpiRank ) // Let's add artificially the fracture to the last rank (for numbering reasons).
   {
     // Adding one fracture element
-    for( auto fracture: input.faceBlocks )
+    for( auto fracture: input.getFaceBlocks() )
     {
       localNumFracCells += fracture.second->GetNumberOfCells();
     }
@@ -673,8 +671,8 @@ AllMeshes redistributeByCellGraph( AllMeshes & input,
 
   // Extract the partition information related to the fracture mesh.
   std::map< string , array1d< pmet_idx_t > > newFracturePartitions;
-  vtkIdType fracOffset = input.main->GetNumberOfCells();
-  for( auto const & nf: input.faceBlocks )
+  vtkIdType fracOffset = input.getMainMesh()->GetNumberOfCells();
+  for( auto const & nf: input.getFaceBlocks() )
   {
     vtkSmartPointer< vtkDataSet > fracture = nf.second;
 
@@ -691,11 +689,11 @@ AllMeshes redistributeByCellGraph( AllMeshes & input,
   // Then those newly split meshes will be redistributed across the ranks.
 
   // First for the main 3d mesh...
-  vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( input.main, numRanks, newPartitions.toViewConst() );
+  vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( input.getMainMesh(), numRanks, newPartitions.toViewConst() );
   vtkSmartPointer< vtkUnstructuredGrid > finalMesh = vtk::redistribute( *splitMesh, MPI_COMM_GEOSX );
   // ... and then for the fractures.
   std::map< string, vtkSmartPointer< vtkDataSet > > finalFractures;
-  for( auto const & nf: input.faceBlocks )
+  for( auto const & nf: input.getFaceBlocks() )
   {
     string const fractureName = nf.first;
     vtkSmartPointer< vtkDataSet > fracture = nf.second;
@@ -960,11 +958,11 @@ redistributeMesh( vtkSmartPointer< vtkDataSet > loadedMesh,
   }
   else
   {
-    result.main = mesh;
-    result.faceBlocks = namesToFractures;
+    result.setMainMesh( mesh );
+    result.setFaceBlocks( namesToFractures );
   }
 
-  GEOS_LOG_RANK( "Mesh sizes are: main = " << result.main->GetNumberOfCells() << " faceBlock = " << result.faceBlocks.at( "fracture" )->GetNumberOfCells() );
+  GEOS_LOG_RANK( "Mesh sizes are: main = " << result.getMainMesh()->GetNumberOfCells() << " faceBlock = " << result.getFaceBlocks().at( "fracture" )->GetNumberOfCells() );
 
   return result;
 }

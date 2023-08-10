@@ -71,18 +71,54 @@ inline static const string COLLOCATED_NODES = "duplicated_nodes";
  */
 vtkSmartPointer< vtkMultiProcessController > getController();
 
-struct AllMeshes
+class AllMeshes
 {
-  vtkSmartPointer< vtkDataSet > main;
-  std::map< string, vtkSmartPointer< vtkDataSet > > faceBlocks;
-
+public:
   AllMeshes() = default;
 
-  AllMeshes( vtkSmartPointer< vtkDataSet > const & main_,
-             std::map< string, vtkSmartPointer< vtkDataSet>> const & faceBlocks_ )
-    : main( main_ ),
-      faceBlocks( faceBlocks_ )
+  AllMeshes( vtkSmartPointer< vtkDataSet > const & main,
+             std::map< string, vtkSmartPointer< vtkDataSet>> const & faceBlocks )
+    : m_main( main ),
+      m_faceBlocks( faceBlocks )
   { }
+
+  /**
+   * @return the main 3d mesh for the simulation.
+   */
+  vtkSmartPointer< vtkDataSet > getMainMesh()
+  {
+    return m_main;
+  }
+
+  /**
+   * @return a mapping linking the name of each face block to its mesh.
+   */
+  std::map< string, vtkSmartPointer< vtkDataSet > > & getFaceBlocks()
+  {
+    return m_faceBlocks;
+  }
+
+  /**
+   * @brief Defines the main 3d mesh for the simulation.
+   * @param main The new 3d mesh.
+   */
+  void setMainMesh( vtkSmartPointer< vtkDataSet > main )
+  {
+    m_main = main;
+  }
+
+  /**
+   * @brief Defines the face blocks/fractures.
+   * @param faceBlocks A map which connects each name of the face block to its mesh.
+   */
+  void setFaceBlocks( std::map< string, vtkSmartPointer< vtkDataSet > > const & faceBlocks )
+  {
+    m_faceBlocks = faceBlocks;
+  }
+
+private:
+  vtkSmartPointer< vtkDataSet > m_main;
+  std::map< string, vtkSmartPointer< vtkDataSet > > m_faceBlocks;
 };
 
 /**

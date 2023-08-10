@@ -349,7 +349,6 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
                                                  FaceManager const & faceManager,
                                                  ElementRegionManager const & elemManager )
 {
-  GEOS_LOG_RANK( "I WAS THERE fixSecondaryMappings: " << this->getName() );
   // Here I can fix the other mappings which are not properly defined...
   localIndex const num2dElems = this->size();
 
