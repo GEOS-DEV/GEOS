@@ -51,6 +51,7 @@
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
       targetRegions="{ RockMatrix, Fracture }"
+      targetObjects="{ FracturePlane }"
       discretization="FE1"
       fractureRegion="Fracture"
       logLevel="1"
