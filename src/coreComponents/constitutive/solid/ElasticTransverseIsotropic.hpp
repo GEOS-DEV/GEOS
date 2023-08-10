@@ -123,6 +123,15 @@ public:
                                              real64 ( &stress )[6] ) const override;
 
   GEOS_HOST_DEVICE
+  virtual void smallStrainUpdate_StressOnly( localIndex const k,
+                                             localIndex const q,
+                                             real64 const & timeIncrement,
+                                             real64 const ( & beginningRotation )[3][3],
+                                             real64 const ( & endRotation )[3][3],
+                                             real64 const ( & strainIncrement)[6],
+                                             real64 ( & stress )[6]) const override;
+
+  GEOS_HOST_DEVICE
   void smallStrainUpdate( localIndex const k,
                           localIndex const q,
                           real64 const & timeIncrement,
@@ -246,6 +255,26 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
   smallStrainNoStateUpdate_StressOnly( k, q, strainIncrement, stress ); // stress =  incrementalStress
   LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q] );            // stress += m_oldStress
   saveStress( k, q, stress );                                           // m_newStress = stress
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
+                                                         localIndex const q,
+                                                         real64 const & timeIncrement,
+                                                         real64 const ( & beginningRotation )[3][3],
+                                                         real64 const ( & endRotation )[3][3],
+                                                         real64 const ( & strainIncrement )[6],
+                                                         real64 ( & stress )[6] ) const
+{
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( timeIncrement );
+  GEOS_UNUSED_VAR( beginningRotation );
+  GEOS_UNUSED_VAR( endRotation );
+  GEOS_UNUSED_VAR( strainIncrement );
+  GEOS_UNUSED_VAR( stress );
+  GEOS_ERROR( "smallStrainUpdate_StressOnly overload not implemented for ElasticTransverseIsotropic" );
 }
 
 inline

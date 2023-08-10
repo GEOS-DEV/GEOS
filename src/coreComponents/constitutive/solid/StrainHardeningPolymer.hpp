@@ -21,8 +21,8 @@
  * schemes implementing explicit time integration. CC: TODO add description of material model
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_KINEMATICDAMAGE_HPP
-#define GEOSX_CONSTITUTIVE_SOLID_KINEMATICDAMAGE_HPP
+#ifndef GEOS_CONSTITUTIVE_SOLID_STRAINHARDENINGPOLYMER_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_STRAINHARDENINGPOLYMER_HPP_
 
 #include "ElasticIsotropic.hpp"
 #include "InvariantDecompositions.hpp"
@@ -48,9 +48,15 @@ public:
 
   /**
    * @brief Constructor
-   * @param[in] damage 
-   * @param[in] jacobian The ArrayView holding the jacobian for each quardrature point.
-   * @param[in] yieldStrength The yield strength
+   * @param[in] deformationGradient The ArrayView holding the deformation gradient for each element/particle.
+   * @param[in] plasticStrain The ArrayView holding the plastic strain for each quadrature point
+   * @param[in] damage The ArrayView holding the damage for each quadrature point.
+   * @param[in] jacobian The ArrayView holding the jacobian for each quadrature point.
+   * @param[in] yieldStrength The ArrayView holding the current yield strength
+   * @param[in] strainHardeningSlope The strain hardening slope
+   * @param[in] shearSofteningMagnitude The shear softening magnitude
+   * @param[in] shearSofteningShapeParameter1 The shear softening shape parameter 1
+   * @param[in] shearSofteningShapeParameter2 The shear softening shape parameter 2
    * @param[in] maximumStretch The maximum stretch
    * @param[in] thermalSoftening not currently implemented (CC: TODO)
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
@@ -59,14 +65,15 @@ public:
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point.
    */
-  StrainHardeningPolymerUpdates( arrayView3d< real64 > const & plasticStrain,
+  StrainHardeningPolymerUpdates( arrayView3d< real64 > const & deformationGradient,
+                                 arrayView3d< real64 > const & plasticStrain,
                                  arrayView2d< real64 > const & damage,
                                  arrayView2d< real64 > const & jacobian,
+                                 arrayView1d< real64 > const & yieldStrength,
                                  real64 const & strainHardeningSlope,
                                  real64 const & shearSofteningMagnitude,
                                  real64 const & shearSofteningShapeParameter1,
                                  real64 const & shearSofteningShapeParameter2,
-                                 arrayView1d< real64 > const & yieldStrength,
                                  real64 const & maximumStretch,
                                  // arrayView2d< real64 > const & thermalSoftening,
                                  arrayView1d< real64 const > const & bulkModulus,
@@ -76,10 +83,11 @@ public:
                                  arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                                  bool const & disableInelasticity ):
     ElasticIsotropicUpdates( bulkModulus, shearModulus, thermalExpansionCoefficient, newStress, oldStress, disableInelasticity ),
+    m_deformationGradient( deformationGradient ),
     m_plasticStrain( plasticStrain ),
-    m_yieldStrength( yieldStrength ),
     m_damage( damage ),
     m_jacobian( jacobian ),
+    m_yieldStrength( yieldStrength ),
     m_strainHardeningSlope( strainHardeningSlope ),
     m_shearSofteningMagnitude( shearSofteningMagnitude ),
     m_shearSofteningShapeParameter1( shearSofteningShapeParameter1 ),
@@ -131,10 +139,22 @@ public:
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( &stress )[6] ) const override;
 
+
+  GEOS_HOST_DEVICE
+  virtual void smallStrainUpdate_StressOnly( localIndex const k,
+                                             localIndex const q,
+                                             real64 const & timeIncrement,
+                                             real64 const ( & beginningRotation )[3][3],
+                                             real64 const ( & endRotation )[3][3],
+                                             real64 const ( &strainIncrement )[6],
+                                             real64 ( &stress )[6] ) const override;
+
   GEOS_HOST_DEVICE
   void smallStrainUpdateHelper( localIndex const k,
                                 localIndex const q,
                                 real64 const timeIncrement,
+                                real64 const ( & beginningRotation )[3][3],
+                                real64 const ( & endRotation )[3][3],
                                 real64 const ( &strainIncrement )[6],
                                 real64 ( &stress )[6] ) const;
 
@@ -144,7 +164,7 @@ public:
                                        const real64 timeIncrement,
                                        real64 const ( &strainIncrement )[6],
                                        real64 const ( &stressIncrement )[6],
-                                       arrayView1d< real64 > plastic_strain_increment ) const;
+                                       real64 ( & plasticStrainIncrement )[6] ) const;
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -155,17 +175,20 @@ public:
   }
 
 private:
+  /// A reference to the ArrayView holding the deformation gradient for each element/particle.
+  arrayView3d< real64 > const m_deformationGradient;
+
   /// A reference to the ArrayView holding the plastic strain for each quadrature point.
   arrayView3d< real64 > const m_plasticStrain;
-
-  /// A reference to the ArrayView holding the yield strength for each element/particle
-  arrayView1d< real64 > const m_yieldStrength;
 
   /// A reference to the ArrayView holding the damage for each quadrature point.
   arrayView2d< real64 > const m_damage;
 
   /// A reference to the ArrayView holding the jacobian for each quadrature point.
   arrayView2d< real64 > const m_jacobian;
+
+  /// A reference to the ArrayView holding the yield strength for each element/particle
+  arrayView1d< real64 > const m_yieldStrength;
 
   /// The strain hardening slope
   real64 const m_strainHardeningSlope;
@@ -194,32 +217,42 @@ void StrainHardeningPolymerUpdates::smallStrainUpdate( localIndex const k,
                                                        real64 ( & stress )[6],
                                                        real64 ( & stiffness )[6][6] ) const
 {
-  // elastic predictor (assume strainIncrement is all elastic)
-  ElasticIsotropicUpdates::smallStrainUpdate( k, 
-                                              q, 
-                                              timeIncrement, 
-                                              strainIncrement, 
-                                              stress, 
-                                              stiffness );
-  m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
+  // CC: we don't call this for the MPM solver but other solvers may want to use this
+  // Need to resolve if rotation matrix is always passed and update accordingly
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( timeIncrement );
+  GEOS_UNUSED_VAR( strainIncrement );
+  GEOS_UNUSED_VAR( stress );
+  GEOS_UNUSED_VAR( stiffness );
+  GEOS_ERROR( "smallStrainUpdate not implemented for StrainHardeningPolymer" );
 
-  if( m_disableInelasticity )
-  {
-    return;
-  }
+  // // elastic predictor (assume strainIncrement is all elastic)
+  // ElasticIsotropicUpdates::smallStrainUpdate( k, 
+  //                                             q, 
+  //                                             timeIncrement, 
+  //                                             strainIncrement, 
+  //                                             stress, 
+  //                                             stiffness );
+  // m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
-  // call the constitutive model
-  StrainHardeningPolymerUpdates::smallStrainUpdateHelper( k, 
-                                                          q, 
-                                                          timeIncrement,
-                                                          strainIncrement, 
-                                                          stress );
+  // if( m_disableInelasticity )
+  // {
+  //   return;
+  // }
 
-  // It doesn't make sense to modify stiffness with this model
+  // // call the constitutive model
+  // StrainHardeningPolymerUpdates::smallStrainUpdateHelper( k, 
+  //                                                         q, 
+  //                                                         timeIncrement,
+  //                                                         strainIncrement, 
+  //                                                         stress );
 
-  // save new stress and return
-  saveStress( k, q, stress );
-  return;
+  // // It doesn't make sense to modify stiffness with this model
+
+  // // save new stress and return
+  // saveStress( k, q, stress );
+  // return;
 }
 
 GEOS_HOST_DEVICE
@@ -231,12 +264,38 @@ void StrainHardeningPolymerUpdates::smallStrainUpdate( localIndex const k,
                                                        real64 ( & stress )[6],
                                                        DiscretizationOps & stiffness ) const
 {
-  smallStrainUpdate( k, 
-                     q, 
-                     timeIncrement, 
-                     strainIncrement, 
-                     stress, 
-                     stiffness.m_c );
+  // CC: we don't call this for the MPM solver but other solvers may want to use this
+  // Need to resolve if rotation matrix is always passed and update accordingly
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( timeIncrement );
+  GEOS_UNUSED_VAR( strainIncrement );
+  GEOS_UNUSED_VAR( stress );
+  GEOS_UNUSED_VAR( stiffness );
+  GEOS_ERROR( "smallStrainUpdate not implemented for StrainHardeningPolymer" );
+
+  // smallStrainUpdate( k, 
+  //                    q, 
+  //                    timeIncrement, 
+  //                    strainIncrement, 
+  //                    stress, 
+  //                    stiffness.m_c );
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void StrainHardeningPolymerUpdates::smallStrainUpdate_StressOnly( localIndex const k,
+                                                         localIndex const q,
+                                                         real64 const & timeIncrement,
+                                                         real64 const ( & strainIncrement )[6],
+                                                         real64 ( & stress )[6] ) const
+{
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( timeIncrement );
+  GEOS_UNUSED_VAR( strainIncrement );
+  GEOS_UNUSED_VAR( stress );
+  GEOS_ERROR( "smallStrainUpdateStressOnly overload not implemented for CeramicDamage" );
 }
 
 GEOS_HOST_DEVICE
@@ -244,14 +303,17 @@ GEOS_FORCE_INLINE
 void StrainHardeningPolymerUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                                   localIndex const q,
                                                                   real64 const & timeIncrement,
-                                                                  real64 const ( &strainIncrement )[6],
+                                                                  real64 const ( & beginningRotation )[3][3],
+                                                                  real64 const ( & endRotation )[3][3],
+                                                                  real64 const ( & strainIncrement )[6],
                                                                   real64 ( & stress )[6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
   ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, 
                                                          q, 
                                                          timeIncrement,
-                                                         strainIncrement, stress );
+                                                         strainIncrement, 
+                                                         stress );
   m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
   if( m_disableInelasticity )
@@ -263,6 +325,8 @@ void StrainHardeningPolymerUpdates::smallStrainUpdate_StressOnly( localIndex con
   StrainHardeningPolymerUpdates::smallStrainUpdateHelper( k, 
                                                           q, 
                                                           timeIncrement,
+                                                          beginningRotation,
+                                                          endRotation,
                                                           strainIncrement, 
                                                           stress );
 
@@ -276,9 +340,13 @@ GEOS_FORCE_INLINE
 void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
                                                              localIndex const q,
                                                              real64 const timeIncrement,
-                                                             real64 const ( &strainIncrement )[6],
+                                                             real64 const ( & beginningRotation )[3][3],
+                                                             real64 const ( & endRotation )[3][3],
+                                                             real64 const ( & strainIncrement )[6],
                                                              real64 ( & stress )[6] ) const
 {
+  real64 yieldStrength = m_yieldStrength[k];
+
   // Store old stress for plastic strain increment
   real64 oldStress[6];
   LvArray::tensorOps::copy< 6 >( oldStress, stress);
@@ -292,22 +360,53 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
                                      trialQ,
                                      deviator );
 
-  // check yield function
-  real64 yield = trialQ / m_yieldStrength[k];
-  if( yield < 1.0 ) // elasticity
-  {
-    return;
-  } 
-  else
-  {
+
+  // GEOS_LOG_RANK( k << ": " << 
+  //                stress[0] << ", " <<
+  //                stress[1] << ", " << 
+  //                stress[2] << ", " << 
+  //                stress[3] << ", " << 
+  //                stress[4] << ", " <<
+  //                stress[5] << ", " << 
+  //                m_plasticStrain[k][0] << ", " << 
+  //                m_plasticStrain[k][1] << ", " << 
+  //                m_plasticStrain[k][2] << ", " << 
+  //                m_plasticStrain[k][3] << ", " << 
+  //                m_plasticStrain[k][4] << ", " << 
+  //                m_plasticStrain[k][5] << ", " << 
+  //                trialP << ", " <<
+  //                trialQ << ", " <<
+  //                yield);
+
     // CC: model needs the unrotated deformation gradient
     // Right stretch tensor
-    real64 U[6];
-    LvArray::tensorOps::copy< 6 >(U, deformationGradient);
+    real64 rotationTranspose[3][3];
+    LvArray::tensorOps::transpose< 3, 3 >( rotationTranspose, beginningRotation );
 
-    real64 stretch[3] = {};
-    real64 eigenVectors[3][3] = {};
+    real64 oldPlasticStrain[6] = { 0 };
+    LvArray::tensorOps::copy< 6 >(oldPlasticStrain, m_plasticStrain[k][q]);
+    oldPlasticStrain[3] *= 0.5;
+    oldPlasticStrain[4] *= 0.5;
+    oldPlasticStrain[5] *= 0.5;
+
+    real64 unrotatedOldPlasticStrain[6] = { 0 };
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >(unrotatedOldPlasticStrain, rotationTranspose, oldPlasticStrain);
+
+    unrotatedOldPlasticStrain[3] *= 2.0;
+    unrotatedOldPlasticStrain[4] *= 2.0;
+    unrotatedOldPlasticStrain[5] *= 2.0;
+
+    real64 unrotatedDeformationGradient[3][3] = {{ 0 }};
+    LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3>( unrotatedDeformationGradient, rotationTranspose, m_deformationGradient[k] );
+
+    real64 U[6];
+    LvArray::tensorOps::denseToSymmetric< 3 >( U, unrotatedDeformationGradient );
+
+    real64 stretch[3] = { 0 };
+    real64 eigenVectors[3][3] = { { 0 } };
     LvArray::tensorOps::symEigenvectors< 3 >( stretch, eigenVectors, U );
+
+    // GEOS_LOG_RANK(stretch[0] << ", " << stretch[1] << ", " << stretch[2]);
 
     // Find the largest eigenvalues
     real64 maximumStretch = 0.0;
@@ -325,7 +424,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 gamma_p = 0.0;
     for( int i = 0; i < 6; i++ )
     {
-      gamma_p += ( 1 + (i >= 3) ) * m_plasticStrain[k][q][i] * m_plasticStrain[k][q][i];
+      gamma_p += 0.5*( 1 + (i < 3) ) * unrotatedOldPlasticStrain[i] * unrotatedOldPlasticStrain[i];
     }
     gamma_p = sqrt( gamma_p );
     
@@ -336,55 +435,97 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     // Compute change in yield strength
     real64 plasticSoftening = m_shearSofteningMagnitude * std::exp( std::max( -1.0 * gamma_by_r1_to_r2, -16.0 ) );
     real64 stretchHardening = m_strainHardeningSlope * ( maximumStretch * maximumStretch - 1.0 / maximumStretch );
-    m_yieldStrength[k] += plasticSoftening + stretchHardening;
+    yieldStrength += plasticSoftening + stretchHardening; // CC: debugging disabling change in yield strength
 
     // // CC: need to add this later
-    //real64 thermalStrengthReduction = 1.0;
+    // real64 thermalStrengthReduction = 1.0;
     // if(m_thermalSoftening)
     // {
     //   thermalStrengthReduction = computeThermalStrengthReduction();
     // }
     // m_yieldStrength[k] *= thermalStrengthReduction;
 
-    m_yieldStrength[k] *= LvArray::NumericLimits< real64 >::epsilon + (1.0 - m_damage[k][q]);
+    // check yield function
+    real64 yield = trialQ / yieldStrength;
 
-    // re-construct stress = P*eye + sqrt(2/3)*Q*nhat
-    twoInvariant::stressRecomposition( trialP,
-                                       m_yieldStrength[k],
-                                       deviator,
-                                       stress );
+    if( trialQ > yieldStrength ){
+      // re-construct stress = P*eye + sqrt(2/3)*Q*nhat
+      twoInvariant::stressRecomposition( trialP,
+                                         yieldStrength,
+                                         deviator,
+                                         stress );
 
-    // Increment plastic strain
-    real64 stressIncrement[6];
-    for(int i = 0; i < 6; i++ )
-    {
-      stressIncrement[i] = oldStress[i]-stress[i];
+      // Increment plastic strain
+      real64 stressIncrement[6] = {0};
+      LvArray::tensorOps::copy< 6 >(stressIncrement, stress);
+      LvArray::tensorOps::subtract< 6 >(stressIncrement, oldStress);
+
+      // increment plastic strain
+      real64 plasticStrainIncrement[6] = {0};
+      computePlasticStrainIncrement( k,
+                                    q,
+                                    timeIncrement,           
+                                    strainIncrement,
+                                    stressIncrement,
+                                    plasticStrainIncrement );
+
+      real64 unrotatedNewPlasticStrain[6] = { 0 };
+      LvArray::tensorOps::copy< 6 >(unrotatedNewPlasticStrain, unrotatedOldPlasticStrain);
+      LvArray::tensorOps::add< 6 >(unrotatedNewPlasticStrain, plasticStrainIncrement);
+
+      unrotatedNewPlasticStrain[3] *= 0.5;
+      unrotatedNewPlasticStrain[4] *= 0.5;
+      unrotatedNewPlasticStrain[5] *= 0.5;
+
+      real64 newPlasticStrain[6] = { 0 };
+      LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >(newPlasticStrain, endRotation, unrotatedNewPlasticStrain);
+      newPlasticStrain[3] *= 2.0;
+      newPlasticStrain[4] *= 2.0;
+      newPlasticStrain[5] *= 2.0;
+
+      LvArray::tensorOps::copy< 6 >(m_plasticStrain[k][q], newPlasticStrain);
     }
+    // GEOS_LOG_RANK(k << ", " << 
+    //               yield << ", " << 
+    //               m_yieldStrength[k] << ", " << 
+    //               m_damage[k][q] << ", " << 
+    //               stretch[0] << ", " <<
+    //               stretch[1] << ", " << 
+    //               stretch[2] << ", {" << 
+    //               oldStress[0] << ", " << 
+    //               oldStress[1] << ", " << 
+    //               oldStress[2] << ", " << 
+    //               oldStress[3] << ", " << 
+    //               oldStress[4] << ", " << 
+    //               oldStress[5] << "}, {" <<
+    //               stress[0] << ", " << 
+    //               stress[1] << ", " << 
+    //               stress[2] << ", " << 
+    //               stress[3] << ", " << 
+    //               stress[4] << ", " << 
+    //               stress[5] << "}, " <<
+    //               m_plasticStrain[k][q] );
 
-    // increment plastic strain
-    array1d< real64 > plasticStrainIncrement;
-    computePlasticStrainIncrement( k,
-                                   q,
-                                   timeIncrement,           
-                                   strainIncrement,
-                                   stressIncrement,
-                                   plasticStrainIncrement );
-
-    for(int i = 0; i < 3; i++)
-    {
-      m_plasticStrain[k][q][i] += plasticStrainIncrement[i];
-    }
-  }
+    // GEOS_LOG_RANK(k << ": " << 
+    //               m_bulkModulus[k] << ", " << 
+    //               m_shearModulus[k] << ", " << 
+    //               m_yieldStrength[k] << ", " << 
+    //               m_strainHardeningSlope << ", " << 
+    //               m_shearSofteningMagnitude << ", " <<
+    //               m_shearSofteningShapeParameter1 << ", " << 
+    //               m_shearSofteningShapeParameter2 << ", ");
+  
 }
+
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void StrainHardeningPolymerUpdates::computePlasticStrainIncrement ( localIndex const k,
                                                                     localIndex const q,
                                                                     const real64 timeIncrement,
-                                                                    real64 const ( &strainIncrement )[6],
-                                                                    real64 const ( &stressIncrement )[6],
-                                                                    arrayView1d< real64 > plasticStrainIncrement ) const
+                                                                    real64 const ( & strainIncrement )[6],
+                                                                    real64 const ( & stressIncrement )[6],
+                                                                    real64 ( & plasticStrainIncrement )[6] ) const
 { 
   GEOS_UNUSED_VAR( q );
   // For hypo-elastic models we compute the increment in plastic strain assuming
@@ -411,11 +552,12 @@ void StrainHardeningPolymerUpdates::computePlasticStrainIncrement ( localIndex c
   {
     if (m_bulkModulus[k] > 1.0e-12)
     {
-      elasticStrainIncrement[i] += stressIncrementIsostatic[i] * 1.0/3.0/m_bulkModulus[k];
+      // CC: off diagonal elements need x2 for strain
+      elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * stressIncrementIsostatic[i] * 1.0/3.0/m_bulkModulus[k];
     }
     if (m_shearModulus[k] > 1.0e-12)
     {
-      elasticStrainIncrement[i] += stressIncrementDeviator[i] * 1.0/2.0/m_shearModulus[k];
+      elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * sqrt(2/3) * trialQ * stressIncrementDeviator[i] * 1.0/2.0/m_shearModulus[k];
     }
   }
 
@@ -476,6 +618,9 @@ public:
    */
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
+    // string/key for element/particle deformation gradient value
+    static constexpr char const * deformationGradientString() { return "deformationGradient"; }
+
     // string/key for quadrature point plastic strain value
     static constexpr char const * plasticStrainString() { return "plasticStrain"; }
 
@@ -484,6 +629,9 @@ public:
 
     /// string/key for quadrature point jacobian value
     static constexpr char const * jacobianString() { return "jacobian"; }
+
+    /// string/key for yield strength
+    static constexpr char const * yieldStrengthString() { return "yieldStrength"; }
 
     /// string/key for strain hardening slope
     static constexpr char const * strainHardeningSlopeString() { return "strainHardeningSlope"; }
@@ -497,11 +645,8 @@ public:
     /// string/key for shear softening shape parameter 2
     static constexpr char const * shearSofteningShapeParameter2String() { return "shearSofteningShapeParameter2"; }
 
-    /// string/key for yield strength
-    static constexpr char const * initialYieldStrengthString() { return "initialYieldStrength"; }
-
-    /// string/key for yield strength
-    static constexpr char const * yieldStrengthString() { return "yieldStrength"; }
+    /// string/key for default yield strength
+    static constexpr char const * defaultYieldStrengthString() { return "defaultYieldStrength"; }
 
     /// string/key for maximum stretch
     static constexpr char const * maximumStretchString() { return "maximumStretch"; }
@@ -513,14 +658,15 @@ public:
    */
   StrainHardeningPolymerUpdates createKernelUpdates() const
   {
-    return StrainHardeningPolymerUpdates( m_plasticStrain,
+    return StrainHardeningPolymerUpdates( m_deformationGradient,
+                                          m_plasticStrain,
                                           m_damage,
                                           m_jacobian,
+                                          m_yieldStrength,
                                           m_strainHardeningSlope,
                                           m_shearSofteningMagnitude,
                                           m_shearSofteningShapeParameter1,
                                           m_shearSofteningShapeParameter2,
-                                          m_yieldStrength,
                                           m_maximumStretch,
                                           m_bulkModulus,
                                           m_shearModulus,
@@ -541,14 +687,15 @@ public:
   UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
   {
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
+                          m_deformationGradient,
                           m_plasticStrain,
                           m_damage,
                           m_jacobian,
+                          m_yieldStrength,
                           m_strainHardeningSlope,
                           m_shearSofteningMagnitude,
                           m_shearSofteningShapeParameter1,
                           m_shearSofteningShapeParameter2,
-                          m_yieldStrength,
                           m_maximumStretch,
                           m_bulkModulus,
                           m_shearModulus,
@@ -561,6 +708,8 @@ public:
 
 protected:
   virtual void postProcessInput() override;
+  /// State variable: The deformation gradient values for each element/particle.
+  array3d< real64 > m_deformationGradient;
 
   /// State variable: The plastic strain values for each quadrature point
   array3d< real64 > m_plasticStrain;
@@ -568,7 +717,7 @@ protected:
   /// State variable: The damage values for each quadrature point
   array2d< real64 > m_damage;
 
-  /// State variable: The jacobian of the deformation
+  /// State variable: The jacobian of the deformation gradient for each quadrature point
   array2d< real64 > m_jacobian;
 
   /// State variable: The yield strength 
@@ -586,8 +735,8 @@ protected:
   /// Material parameter: The value of shear softening shape parameter 2
   real64 m_shearSofteningShapeParameter2;
 
-  /// Material parameter: The value of unconfined tensile strength
-  real64 m_initialYieldStrength;
+  /// Material parameter: The value of default yield strength
+  real64 m_defaultYieldStrength;
 
   /// Material parameter: The value of maximum theoretical strength
   real64 m_maximumStretch;

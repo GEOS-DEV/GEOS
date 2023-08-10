@@ -84,7 +84,7 @@ void CeramicDamage::allocateConstitutiveData( dataRepository::Group & parent,
 {
   ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_strengthScale.resize(numConstitutivePointsPerParentIndex);
+  m_strengthScale.resize( 0 );
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
   m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
 }

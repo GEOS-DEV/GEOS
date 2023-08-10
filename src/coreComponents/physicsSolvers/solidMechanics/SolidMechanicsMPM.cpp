@@ -324,6 +324,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 
         // Double-indexed fields (vectors and symmetric tensors stored in Voigt notation)
         subRegion.registerField< particleStress >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
+        subRegion.registerField< particlePlasticStrain >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
         subRegion.registerField< particleDamageGradient >( getName() ).reference().resizeDimension< 1 >( 3 );
         subRegion.registerField< particleReferencePosition >( getName() ).reference().resizeDimension< 1 >( 3 );
 
@@ -720,6 +721,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
     arrayView2d< real64 const > const constitutiveDensity = constitutiveRelation.getDensity();
+    arrayView2d< real64 > const particlePlasticStrain = subRegion.getField< fields::mpm::particlePlasticStrain >(); 
     arrayView1d< real64 > const particleDensity = subRegion.getField< fields::mpm::particleDensity >();
     arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
     arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
@@ -754,6 +756,10 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       particleDensity[p] = constitutiveDensity[p][0];
       particleMass[p] = particleDensity[p] * particleVolume[p];
       localMinMass = particleMass[p] < localMinMass ? particleMass[p] : localMinMass;
+
+      for (int j=0; j < 6; ++j){
+        particlePlasticStrain[p][j] = 0;
+      }
     }
     if( subRegion.size() == 0 ) // Handle empty partitions
     {
@@ -858,9 +864,9 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     SolidBase & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
     if( solidModel.hasWrapper( "strengthScale" ) )
     {
-      arrayView1d< real64 > const particleStrengthScale = subRegion.getParticleStrengthScale();
       SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-      arrayView2d< real64 > const constitutiveStrengthScale = solidModel.getReference< array2d< real64 > >( "strengthScale" );
+      arrayView1d< real64 > const particleStrengthScale = subRegion.getParticleStrengthScale();
+      arrayView1d< real64 > const constitutiveStrengthScale = solidModel.getReference< array1d< real64 > >( "strengthScale" );
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
@@ -1574,6 +1580,9 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
         }
       }
 
+      // CC: debug
+      // GEOS_LOG_RANK("m_numVelocityFields: " << m_numVelocityFields);
+
       // Loop over all possible field pairings and enforce contact on each pair.
       // gridContactForce will be gradually updated due to a '+=' in computePairwiseNodalContactForce
       for( localIndex A = 0; A < m_numVelocityFields - 1; A++ )
@@ -1630,6 +1639,21 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int const & separable,
                                                           arraySlice1d< real64 > const fA,
                                                           arraySlice1d< real64 > const fB )
 {
+    // CC: debug
+  // GEOS_LOG_RANK_0( separable << ", " << 
+  //                  dt << ", " <<
+  //                  mA << ", " <<
+  //                  mB << ", " <<
+  //                  vA.size() << ", " <<
+  //                  qA.size() << ", " << 
+  //                  qB.size() << ", " <<
+  //                  nA.size() << ", " << 
+  //                  nB.size() << ", " <<
+  //                  xA.size() << ", " <<
+  //                  xB.size() << ", " <<
+  //                  fA.size() << ", " <<
+  //                  fB.size());
+
   // Total mass for the contact pair.
   real64 mAB = mA + mB;
 
@@ -1650,6 +1674,9 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int const & separable,
   //   nAB[2] = -nB[2];
   // }
 
+  // CC: debug
+  // GEOS_LOG_RANK( "Mass-weighted average of the field normals" );
+
   // Mass-weighted average of the field normals
   for( int i=0; i<3; i++ )
   {
@@ -1662,6 +1689,9 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int const & separable,
   //   nAB[i] = (xB[i] - xA[i]) / m_hEl[i];
   // }
 
+  // CC: debug
+  // GEOS_LOG_RANK( "Normalize the effective surface normal" );
+
   // Normalize the effective surface normal
   if( m_planeStrain == 1 )
   {
@@ -1672,27 +1702,56 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int const & separable,
   nAB[1] /= norm;
   nAB[2] /= norm;
 
-
+  // CC: debug
+  // GEOS_LOG_RANK("Calculate the contact gap between the fields");
 
   // Calculate the contact gap between the fields
   real64 gap0;
   if( m_planeStrain == 1 )
   {
+      // CC: debug
+    // GEOS_LOG_RANK("Plane strain");
     gap0 = ( m_hEl[0]*m_hEl[1] ) / sqrt( m_hEl[1]*m_hEl[1]*nAB[0]*nAB[0] + m_hEl[0]*m_hEl[0]*nAB[1]*nAB[1] );
   }
   else
   {
-    gap0 = (m_hEl[0]*m_hEl[1]*m_hEl[2]) /
-           sqrt( m_hEl[2]*m_hEl[2]*nAB[2]*nAB[2]*( m_hEl[1]*m_hEl[1]*nAB[0]*nAB[0] + m_hEl[0]*m_hEl[0]*nAB[1]*nAB[1] ) + m_hEl[0]*m_hEl[0]*m_hEl[1]*m_hEl[1]*( nAB[0]*nAB[0] + nAB[1]*nAB[1] ) );
+    // CC: debug
+    // GEOS_LOG_RANK("Not plane strain");
+    // GEOS_LOG_RANK("m_hEl:" << m_hEl[0] << ", " << m_hEl[1] << ", " << m_hEl[2] );
+    // GEOS_LOG_RANK("nAB: " << nAB[0] << ", " << nAB[1] << ", " << nAB[2]);
+    // GEOS_LOG_RANK("Numerator: " << (m_hEl[0]*m_hEl[1]*m_hEl[2]));
+    // GEOS_LOG_RANK("Determinant: " << m_hEl[2]*m_hEl[2]*nAB[2]*nAB[2]*( m_hEl[1]*m_hEl[1]*nAB[0]*nAB[0] + m_hEl[0]*m_hEl[0]*nAB[1]*nAB[1] ) + m_hEl[0]*m_hEl[0]*m_hEl[1]*m_hEl[1]*( nAB[0]*nAB[0] + nAB[1]*nAB[1] ) );
+    // GEOS_LOG_RANK("Denominator: " << sqrt( m_hEl[2]*m_hEl[2]*nAB[2]*nAB[2]*( m_hEl[1]*m_hEl[1]*nAB[0]*nAB[0] + m_hEl[0]*m_hEl[0]*nAB[1]*nAB[1] ) + m_hEl[0]*m_hEl[0]*m_hEl[1]*m_hEl[1]*( nAB[0]*nAB[0] + nAB[1]*nAB[1] ) ));
+    
+    // CC: debug
+    // currently failes with polymer model (suspect compliant materials) when z direction boundary type is 2
+    //This needs to be corrected
+    // gap0 = (m_hEl[0]*m_hEl[1]*m_hEl[2]) /
+    //        sqrt( m_hEl[2]*m_hEl[2]*nAB[2]*nAB[2]*( m_hEl[1]*m_hEl[1]*nAB[0]*nAB[0] + m_hEl[0]*m_hEl[0]*nAB[1]*nAB[1] ) + m_hEl[0]*m_hEl[0]*m_hEl[1]*m_hEl[1]*( nAB[0]*nAB[0] + nAB[1]*nAB[1] ) );
+ 
+    // Ellipse solution
+    // Gives element sizes in each direction and reasonable approximations in others
+    gap0 = 1/sqrt(std::pow(nAB[0]/m_hEl[0],2) + std::pow(nAB[1]/m_hEl[1],2) + std::pow(nAB[2]/m_hEl[2],2));
+
   }
+
+  // CC: debug
+  // GEOS_LOG_RANK("Fudge factor");
+
   // TODO: A fudge factor of 0.67 on gap0 makes diagonal surfaces (wrt grid) close better I think, but this is more general
   real64 gap = (xB[0] - xA[0]) * nAB[0] + (xB[1] - xA[1]) * nAB[1] + (xB[2] - xA[2]) * nAB[2] - gap0;
+
+  // CC: debug
+  // GEOS_LOG_RANK("Total momentum for the contact pair.");
 
   // Total momentum for the contact pair.
   real64 qAB[3];
   qAB[0] = qA[0] + qB[0];
   qAB[1] = qA[1] + qB[1];
   qAB[2] = qA[2] + qB[2];
+
+  // CC: debug
+  // GEOS_LOG_RANK(" Center-of-mass velocity for the contact pair.");
 
   // Center-of-mass velocity for the contact pair.
   real64 vAB[3];
@@ -1705,11 +1764,17 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int const & separable,
   real64 s1AB[3], s2AB[3]; // Tangential vectors for the contact pair
   computeOrthonormalBasis( nAB, s1AB, s2AB );
 
+  // CC: debug
+  // GEOS_LOG_RANK("Compute force decomposition, declare increment in fA from 'this' contact pair");
+
   // Compute force decomposition, declare increment in fA from "this" contact pair
   real64 fnor =  ( mA / dt ) * ( (vAB[0] - vA[0]) * nAB[0]  + (vAB[1] - vA[1]) * nAB[1]  + (vAB[2] - vA[2]) * nAB[2] ),
          ftan1 = ( mA / dt ) * ( (vAB[0] - vA[0]) * s1AB[0] + (vAB[1] - vA[1]) * s1AB[1] + (vAB[2] - vA[2]) * s1AB[2] ),
          ftan2 = ( mA / dt ) * ( (vAB[0] - vA[0]) * s2AB[0] + (vAB[1] - vA[1]) * s2AB[1] + (vAB[2] - vA[2]) * s2AB[2] );
   real64 dfA[3];
+
+  // CC: debug
+  // GEOS_LOG_RANK("Check for separability, and enforce either slip, or no-slip contact, accordingly");
 
   // Check for separability, and enforce either slip, or no-slip contact, accordingly
   if( separable == 0 )
@@ -1740,12 +1805,13 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int const & separable,
     {
       contact = test > 0.0 ? 1.0 : 0.0;
     }
-
+  
     // Modify normal contact force
     fnor *= contact;
 
     // Determine force for tangential sticking
     real64 ftanMag = sqrt( ftan1 * ftan1 + ftan2 * ftan2 );
+
 
     // Get direction of tangential contact force
     real64 sAB[3];
@@ -2580,22 +2646,56 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
       } );
     }
 
+    // CC: debug
+    // GEOS_LOG_RANK("Update materialDirection");
+
     if(  solidModel.hasWrapper( "materialDirection" ) )
     {
-      // CC: Pass particle material direction to constitutive model
-      // Material direction will need to be updated by cofactor of F every time step (think this will probably happen in the solver not the constitutive model)
+      // CC: Todo add check for fiber vs plane update to material direction
       arrayView2d< real64 > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
       arrayView2d< real64 > const constitutiveMaterialDirection = solidModel.getReference< array2d< real64 > >( "materialDirection" );
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
-        // CC: Can you do a LvArray tensorOps copy with dereferences pointer of arrayview? like below?
-        // Or can I just to a copy by value assignment?
-        LvArray::tensorOps::copy< 3 >(constitutiveMaterialDirection[p][i], particleMaterialDirection[p][i]); 
-        // for(int i = 0; i < 3; )
-        // {
-        //   constitutiveMaterialDirection[p][i] = particleMaterialDirection[p][i];
+        LvArray::tensorOps::copy< 3 >(constitutiveMaterialDirection[p], particleMaterialDirection[p]); 
+      } );
+    }
+
+    // CC: debug
+    // GEOS_LOG_RANK("Update deformationGradient");
+
+    if(  solidModel.hasWrapper( "deformationGradient" ) )
+    {
+      arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+      arrayView3d< real64 > const constitutiveDeformationGradient = solidModel.getReference< array3d< real64 > >( "deformationGradient" );
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        // CC: debug
+        // GEOS_LOG_RANK(p << ": size " << particleDeformationGradient.size());
+        // GEOS_LOG_RANK(particleDeformationGradient[p][0][0] << ", " << particleDeformationGradient[p][0][1] << ", " << particleDeformationGradient[p][0][2]);
+        // GEOS_LOG_RANK(particleDeformationGradient[p][1][0] << ", " << particleDeformationGradient[p][1][1] << ", " << particleDeformationGradient[p][1][2]);
+        // GEOS_LOG_RANK(particleDeformationGradient[p][2][0] << ", " << particleDeformationGradient[p][2][1] << ", " << particleDeformationGradient[p][2][2]);
+        LvArray::tensorOps::copy< 3, 3 >(constitutiveDeformationGradient[p], particleDeformationGradient[p]); 
+        // for (int i =0; i < 3; i++){
+        //   for (int j=0; j < 3; j++){
+        //     constitutiveDeformationGradient[p][i][j] = particleDeformationGradient[p][i][j];
+        //   }
         // }
+      } );
+    }
+
+    // CC: debug
+    // GEOS_LOG_RANK("Update velocityGradient");
+
+    if(  solidModel.hasWrapper( "velocityGradient" ) )
+    {
+      arrayView3d< real64 > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
+      arrayView3d< real64 > const constitutiveVelocityGradient = solidModel.getReference< array3d< real64 > >( "velocityGradient" );
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        LvArray::tensorOps::copy< 3, 3 >(constitutiveVelocityGradient[p], particleVelocityGradient[p]); 
       } );
     }
   } );
@@ -2648,7 +2748,7 @@ void SolidMechanicsMPM::particleKinematicUpdate( ParticleManager & particleManag
     arrayView3d< real64 const > const particleInitialRVectors = subRegion.getField< fields::mpm::particleInitialRVectors >();
     arrayView3d< real64 const > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
     arrayView2d< real64 const > const particleInitialMaterialDirection = subRegion.getParticleInitialMaterialDirection();
-    arrayView2d< real64 const > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
+    arrayView2d< real64 > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
 
     // Update volume and r-vectors
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
@@ -2672,12 +2772,14 @@ void SolidMechanicsMPM::particleKinematicUpdate( ParticleManager & particleManag
 
         // Update material direction (CC: TODO add check for materail direction for plane and fiber, currently plane)
         real64 materialDirection[3];
+        real64 deformationGradient[3][3];
+        LvArray::tensorOps::copy< 3, 3 >(deformationGradient, particleDeformationGradient[p]);
+
         real64 deformationGradientCofactor[3][3];
-        cofactor(particleDeformationGradient, deformationGradientCofactor);
-        LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( materialDirection, deformationGradientCofactor, particleInitialMaterialDirection[p] )
-        LvArray::tensorOps::copy< 3 >(particleMaterialDirection[p][i], materialDirection[i]);
-        // for(int i = 0; i < 3; ++i)
-        // {
+        cofactor(deformationGradient, deformationGradientCofactor);
+        LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( materialDirection, deformationGradientCofactor, particleInitialMaterialDirection[p] );
+        LvArray::tensorOps::copy< 3 >(particleMaterialDirection[p], materialDirection);
+        // for(int i = 0; i <3; i++){
         //   particleMaterialDirection[p][i] = materialDirection[i];
         // }
       }
@@ -3216,12 +3318,13 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
     // Get constitutive model reference
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     SolidBase & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+
     if( solidModel.hasWrapper( "damage" ) ) // Fragile code because someone could change the damage key without our knowledge. TODO: Make an
                                             // integrated test that checks this
     {
       arrayView1d< real64 > const particleDamage = subRegion.getParticleDamage();
       arrayView2d< real64 const > const constitutiveDamage = solidModel.getReference< array2d< real64 > >( "damage" );
-      SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
@@ -3232,6 +3335,18 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
                                                         // switch to using VTK input such that we can initialize any field we want without
                                                         // explicitly post-processing the input file.
         }
+      } );
+    }
+
+    if( solidModel.hasWrapper( "plasticStrain" ) ) // Fragile code because someone could change the damage key without our knowledge. TODO: Make an
+                                            // integrated test that checks this
+    {
+      arrayView2d< real64 > const particlePlasticStrain = subRegion.getField< fields::mpm::particlePlasticStrain >();
+      arrayView3d< real64 const > const constitutivePlasticStrain = solidModel.getReference< array3d< real64 > >( "plasticStrain" );
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        LvArray::tensorOps::copy< 6 >( particlePlasticStrain[p], constitutivePlasticStrain[p][0] );
       } );
     }
   } );
@@ -4059,19 +4174,19 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
   } );
 }
 
-// CC: does this belong here or somewhere else?
+// CC: does LvArray have function to compute cofactor?
 void SolidMechanicsMPM::cofactor( real64 const (& F)[3][3],
                                   real64 (& Fc)[3][3] )
 {
-  Fc(0,0) = F(1,1)*F(2,2) - F(1,2)*F(2,1);
-  Fc(0,1) = F(1,2)*F(2,0) - F(1,0)*F(2,2);
-  Fc(0,2) = F(1,0)*F(2,1) - F(1,1)*F(2,0);
-  Fc(1,0) = F(0,2)*F(2,1) - F(0,1)*F(2,2);
-  Fc(1,1) = F(0,0)*F(2,2) - F(0,2)*F(2,0);
-  Fc(1,2) = F(0,1)*F(2,0) - F(0,0)*F(2,1);
-  Fc(2,0) = F(0,1)*F(1,2) - F(0,2)*F(1,1);
-  Fc(2,1) = F(0,2)*F(1,0) - F(0,0)*F(1,2);
-  Fc(2,2) = F(0,0)*F(1,1) - F(0,1)*F(1,0);
+  Fc[0][0] = F[1][1]*F[2][2] - F[1][2]*F[2][1];
+  Fc[0][1] = F[1][2]*F[2][0] - F[1][0]*F[2][2];
+  Fc[0][2] = F[1][0]*F[2][1] - F[1][1]*F[2][0];
+  Fc[1][0] = F[0][2]*F[2][1] - F[0][1]*F[2][2];
+  Fc[1][1] = F[0][0]*F[2][2] - F[0][2]*F[2][0];
+  Fc[1][2] = F[0][1]*F[2][0] - F[0][0]*F[2][1];
+  Fc[2][0] = F[0][1]*F[1][2] - F[0][2]*F[1][1];
+  Fc[2][1] = F[0][2]*F[1][0] - F[0][0]*F[1][2];
+  Fc[2][2] = F[0][0]*F[1][1] - F[0][1]*F[1][0];
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsMPM, string const &, dataRepository::Group * const )
