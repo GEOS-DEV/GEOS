@@ -107,7 +107,6 @@ void FaceManager::setDomainBoundaryObjects( ElementRegionManager const & elemReg
   {
     if( toElementRegion( kf, 1 ) == -1 )
     {
-//      GEOS_LOG_RANK( "TODO ERROR!" ); // TODO we cannot rely on te second argument being empty anymore...
       isFaceOnDomainBoundary( kf ) = 1;
     }
   } );
@@ -141,11 +140,11 @@ void FaceManager::setDomainBoundaryObjects( ElementRegionManager const & elemReg
 void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
                                            ElementRegionManager const & elemRegionManager,
                                            NodeManager const & nodeManager,
-                                           bool baseMeshLevel )
+                                           bool isBaseMeshLevel )
 {
   GEOS_MARK_FUNCTION;
 
-  if( baseMeshLevel )
+  if( isBaseMeshLevel )
   {
     resize( cellBlockManager.numFaces() );
   }
@@ -199,7 +198,7 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
   // Connecting all the 3d elements (information is already in the m_toElements mappings) and all the 2d elements.
   elemRegionManager.forElementRegionsComplete< SurfaceElementRegion >( connect2dElems );
 
-  if( baseMeshLevel )
+  if( isBaseMeshLevel )
   {
     computeGeometry( nodeManager );
   }
@@ -207,12 +206,12 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
 
 void FaceManager::setupRelatedObjectsInRelations( NodeManager const & nodeManager,
                                                   EdgeManager const & edgeManager,
-                                                  ElementRegionManager const & elementRegionManager )
+                                                  ElementRegionManager const & elemRegionManager )
 {
   m_toNodesRelation.setRelatedObject( nodeManager );
   m_toEdgesRelation.setRelatedObject( edgeManager );
 
-  m_toElements.setElementRegionManager( elementRegionManager );
+  m_toElements.setElementRegionManager( elemRegionManager );
 }
 
 void FaceManager::computeGeometry( NodeManager const & nodeManager )

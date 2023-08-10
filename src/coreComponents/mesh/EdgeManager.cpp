@@ -96,10 +96,10 @@ void EdgeManager::buildEdges( localIndex const numNodes,
   resize( numEdges );
 }
 
-void EdgeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager, bool baseMeshLevel )
+void EdgeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager, bool isBaseMeshLevel )
 {
   GEOS_MARK_FUNCTION;
-  if( baseMeshLevel )
+  if( isBaseMeshLevel )
   {
     resize( cellBlockManager.numEdges() );
   }

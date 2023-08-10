@@ -163,10 +163,10 @@ void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager,
 
 void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
                                            ElementRegionManager const & elemRegionManager,
-                                           bool baseMeshLevel )
+                                           bool isBaseMeshLevel )
 {
   GEOS_MARK_FUNCTION;
-  if( baseMeshLevel )
+  if( isBaseMeshLevel )
   {
     resize( cellBlockManager.numNodes() );
   }
@@ -215,12 +215,12 @@ void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
 
 void NodeManager::setupRelatedObjectsInRelations( EdgeManager const & edgeManager,
                                                   FaceManager const & faceManager,
-                                                  ElementRegionManager const & elementRegionManager )
+                                                  ElementRegionManager const & elemRegionManager )
 {
   m_toEdgesRelation.setRelatedObject( edgeManager );
   m_toFacesRelation.setRelatedObject( faceManager );
 
-  m_toElements.setElementRegionManager( elementRegionManager );
+  m_toElements.setElementRegionManager( elemRegionManager );
 }
 
 
