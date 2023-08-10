@@ -334,14 +334,6 @@ struct ComputeTimeStep
     localIndex numberIter = 0;
     localIndex counter = 0;
     real64 lambdaNew = 0.0;
-    array1d< real64 > const normP( 1 );
-    array1d< real64 > const dotProductPPaux( 1 );
-    array1d< real64 > const normPaux( 1 );
-
-    arrayView1d< real64 > const normPView=normP;
-    arrayView1d< real64 > const dotProductPPauxView=dotProductPPaux;
-    arrayView1d< real64 > const normPauxView=normPaux;
-
 
     array1d< real32 > const p( sizeNode );
     array1d< real32 > const pAux( sizeNode );
@@ -351,13 +343,15 @@ struct ComputeTimeStep
 
     //Randomize p values
     srand( time( NULL ));
-    forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
+    //forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
+    for( localIndex a = 0; a < sizeNode; ++a )
     {
       pView[a] = (real64)rand()/(real64) RAND_MAX;
-    } );
+    } //);
 
     //Step 1: Normalize randomized pressure
-    WaveSolverUtils::dotProduct( sizeNode, pView, pView, normPView );
+    real64 normP= 0.0;
+    WaveSolverUtils::dotProduct( sizeNode, pView, pView, normP );
     // forAll< WaveSolverBase::EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
     // {
     //    dotProducts[0]+= pView[a]*pView[a];
@@ -366,7 +360,7 @@ struct ComputeTimeStep
 
     forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      pView[a]/= sqrt( normPView[0] );
+      pView[a]/= sqrt( normP );
     } );
 
     //Step 2: Initial iteration of (M^{-1}K)p
@@ -406,8 +400,10 @@ struct ComputeTimeStep
     real64 lambdaOld = lambdaNew;
 
     //Compute lambdaNew using two dotProducts
-    WaveSolverUtils::dotProduct( sizeNode, pView, pAuxView, dotProductPPauxView );
-    WaveSolverUtils::dotProduct( sizeNode, pView, pView, normPView );
+    real64 dotProductPPaux = 0.0;
+    normP = 0.0;
+    WaveSolverUtils::dotProduct( sizeNode, pView, pAuxView, dotProductPPaux );
+    WaveSolverUtils::dotProduct( sizeNode, pView, pView, normP );
 
     // forAll< WaveSolverBase::EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
     // {
@@ -419,14 +415,15 @@ struct ComputeTimeStep
     //    normPaux+= pAuxView[a]*pAuxView[a];
     // } );
 
-    lambdaNew = dotProductPPauxView[0]/normPView[0];
+    lambdaNew = dotProductPPaux/normP;
 
     //lambdaNew = LvArray::tensorOps::AiBi<sizeNode>(p,pAux)/LvArray::tensorOps::AiBi<sizeNode>(pAux,pAux);
 
-    WaveSolverUtils::dotProduct( sizeNode, pAuxView, pAuxView, normPauxView );
+    real64 normPaux = 0.0;
+    WaveSolverUtils::dotProduct( sizeNode, pAuxView, pAuxView, normPaux );
     forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      pView[a]/= sqrt( normPauxView[0] );
+      pView[a]/= sqrt( normPaux );
     } );
 
     //p = LvArray::tensorOps::normalize<sizeNode>(pAuxView);
@@ -472,8 +469,10 @@ struct ComputeTimeStep
       // WaveSolverUtils::dotProduct(sizeNode,pView,pAuxView,dotProductPPaux);
       // WaveSolverUtils::dotProduct(sizeNode,pAuxView,pAuxView,normPaux);
 
-      WaveSolverUtils::dotProduct( sizeNode, pView, pAuxView, dotProductPPauxView );
-      WaveSolverUtils::dotProduct( sizeNode, pView, pView, normPView );
+      dotProductPPaux = 0.0;
+      normP=0.0;
+      WaveSolverUtils::dotProduct( sizeNode, pView, pAuxView, dotProductPPaux );
+      WaveSolverUtils::dotProduct( sizeNode, pView, pView, normP );
 
 
       // dotProductPPaux = 0.0;
@@ -490,14 +489,15 @@ struct ComputeTimeStep
 
 
 
-      lambdaNew = dotProductPPauxView[0]/normPView[0];
+      lambdaNew = dotProductPPaux/normP;
 
-      WaveSolverUtils::dotProduct( sizeNode, pAuxView, pAuxView, normPauxView );
+      normPaux = 0.0;
+      WaveSolverUtils::dotProduct( sizeNode, pAuxView, pAuxView, normPaux );
       //lambdaNew = LvArray::tensorOps::AiBi<sizeNode>(p,pAux)/LvArray::tensorOps::AiBi<sizeNode>(pAux,pAux);
 
       forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
-        pView[a]/= sqrt( normPauxView[0] );
+        pView[a]/= sqrt( normPaux );
       } );
 
 

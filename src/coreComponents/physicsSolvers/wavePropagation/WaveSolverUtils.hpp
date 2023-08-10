@@ -306,16 +306,18 @@ struct WaveSolverUtils
 
 
   static void dotProduct( localIndex const size,
-                          arrayView1d< real32 > const vector1,
-                          arrayView1d< real32 > const vector2,
-                          arrayView1d< real64 > const res )
+                          arrayView1d< real32 > const & vector1,
+                          arrayView1d< real32 > const & vector2,
+                          real64 & res )
   {
 
-    res[0] = 0.0;
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > tmp( 0.0 );
     forAll< WaveSolverBase::EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      res[0]+= vector1[a]*vector2[a];
+      tmp+= vector1[a]*vector2[a];
     } );
+
+    res = tmp.get();
 
   }
 
