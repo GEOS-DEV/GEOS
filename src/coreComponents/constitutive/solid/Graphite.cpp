@@ -24,26 +24,9 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-    /// State variable: The damage values for each quadrature point
-  array2d< real64 > m_damage;
-
-  /// State variable: The jacobian of the deformation
-  array2d< real64 > m_jacobian;
-
-  /// State variable: The material direction for each element/particle
-  array2d< real64 > m_materialDirection;
-
-  /// Discretization-sized variable: The length scale for each element/particle
-  array1d< real64 > m_lengthScale;
-
-  /// Material parameter: The value of the failure strength
-  real64 m_failureStrength;
-
-  /// Material parameter: The value of crack speed
-  real64 m_crackSpeed;
-
 Graphite::Graphite( string const & name, Group * const parent ):
   ElasticTransverseIsotropicPressureDependent( name, parent ),
+  m_velocityGradient(),
   m_plasticStrain(),
   m_relaxation(),
   m_damage(),
@@ -80,27 +63,92 @@ Graphite::Graphite( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Damaged material frictional slope" );
 
+  registerWrapper( viewKeyStruct::distortionShearResponseX2String(), &m_distortionShearResponseX2 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Distortion Shear Response X2" );
+
+  registerWrapper( viewKeyStruct::distortionShearResponseY1String(), &m_distortionShearResponseY1 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Distortion Shear Response Y1" );
+
+  registerWrapper( viewKeyStruct::distortionShearResponseY2String(), &m_distortionShearResponseY2 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Distortion Shear Response Y2" );
+
+  registerWrapper( viewKeyStruct::distortionShearResponseM1String(), &m_distortionShearResponseM1 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Distortion Shear Response M1" );
+
+  registerWrapper( viewKeyStruct::inPlaneShearResponseX2String(), &m_inPlaneShearResponseX2 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "In Plane Shear Response X2" );
+
+  registerWrapper( viewKeyStruct::inPlaneShearResponseY1String(), &m_inPlaneShearResponseY1 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "In Plane Shear Response Y1" );
+
+  registerWrapper( viewKeyStruct::inPlaneShearResponseY2String(), &m_inPlaneShearResponseY2 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "In Plane Shear Response Y2" );
+
+  registerWrapper( viewKeyStruct::inPlaneShearResponseM1String(), &m_inPlaneShearResponseM1 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "In Plane Shear Response M1" );
+
+  registerWrapper( viewKeyStruct::coupledShearResponseX2String(), &m_coupledShearResponseX2 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Coupled Shear Response X2" );
+
+  registerWrapper( viewKeyStruct::coupledShearResponseY1String(), &m_coupledShearResponseY1 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Coupled Shear Response Y1" );
+
+  registerWrapper( viewKeyStruct::coupledShearResponseY2String(), &m_coupledShearResponseY2 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Coupled Shear Response Y2" );
+
+  registerWrapper( viewKeyStruct::coupledShearResponseM1String(), &m_coupledShearResponseM1 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Coupled Shear Response M1" );
+
+  registerWrapper( viewKeyStruct::maximumPlasticStrainString(), &m_maximumPlasticStrain ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Maximum plastic strain" );
+
   // register fields
-  registerWrapper( viewKeyStruct::materialDirectionString(), &m_materialDirection ).
-    setPlotLevel( PlotLevel::LEVEL_0).
-    setDescription( "Strength scale" );
+  registerWrapper( viewKeyStruct::velocityGradientString(), &m_velocityGradient).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "Velocity gradient" );
+
+  registerWrapper( viewKeyStruct::plasticStrainString(), &m_plasticStrain).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "Plastic strain" );
+
+  registerWrapper( viewKeyStruct::relaxationString(), &m_relaxation).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Relaxation" );
 
   registerWrapper( viewKeyStruct::damageString(), &m_damage ).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Array of quadrature point damage values" );
 
-  registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).
+registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).
     setApplyDefaultValue( 1.0 ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point jacobian values" );
 
+  registerWrapper( viewKeyStruct::materialDirectionString(), &m_materialDirection ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "Strength scale" );
+  
   registerWrapper( viewKeyStruct::lengthScaleString(), &m_lengthScale ).
     setApplyDefaultValue( DBL_MIN ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point damage values" );
-
-  //Need to register inputs for failure envelope
 }
 
 
@@ -113,6 +161,8 @@ void Graphite::allocateConstitutiveData( dataRepository::Group & parent,
 {
   ElasticTransverseIsotropicPressureDependent::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
+  m_velocityGradient.resize(0, 3, 3);
+  m_plasticStrain.resize(0, numConstitutivePointsPerParentIndex, 6);
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
   m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
 }
@@ -124,6 +174,25 @@ void Graphite::postProcessInput()
 
   GEOS_THROW_IF( m_failureStrength <= 0.0, "Maximum theoretical strength must be greater than 0", InputError );
   GEOS_THROW_IF( m_crackSpeed <= 0.0, "Crack speed must be a positive number.", InputError );
+  
+  GEOS_THROW_IF( m_damagedMaterialFrictionalSlope < 0.0, "Damaged material frictional slope must be greater than 0", InputError );
+
+  GEOS_THROW_IF( m_distortionShearResponseX2 < 0.0, "Distortion shear response x2 must be a positive number.", InputError );
+  GEOS_THROW_IF( m_distortionShearResponseY1 < 0.0, "Distortion shear response y1 must be a positive number.", InputError );
+  GEOS_THROW_IF( m_distortionShearResponseX2 < 0.0, "Distortion shear response y2 must be a positive number.", InputError );
+  GEOS_THROW_IF( m_distortionShearResponseM1 < 0.0, "Distortion shear response m1 must be a positive number.", InputError );
+
+  GEOS_THROW_IF( m_inPlaneShearResponseX2 < 0.0, "In plane shear response x2 must be a positive number.", InputError );
+  GEOS_THROW_IF( m_inPlaneShearResponseY1 < 0.0, "In plane shear response y1 must be a positive number.", InputError );
+  GEOS_THROW_IF( m_inPlaneShearResponseX2 < 0.0, "In plane shear response y2 must be a positive number.", InputError );
+  GEOS_THROW_IF( m_inPlaneShearResponseM1 < 0.0, "In plane shear response m1 must be a positive number.", InputError );
+
+  GEOS_THROW_IF( m_coupledShearResponseX2 < 0.0, "Coupled shear response x2 must be a positive number.", InputError );
+  GEOS_THROW_IF( m_coupledShearResponseY1 < 0.0, "Coupled shear response y1 must be a positive number.", InputError );
+  GEOS_THROW_IF( m_coupledShearResponseX2 < 0.0, "Coupled shear response y2 must be a positive number.", InputError );
+  GEOS_THROW_IF( m_coupledShearResponseM1 < 0.0, "Coupled shear response m1 must be a positive number.", InputError );
+
+  GEOS_THROW_IF( m_maximumPlasticStrain < 0.0, "Maximum plastic strain must be a positive number.", InputError);
 }
 
 

@@ -29,8 +29,8 @@
  * integrated and tracked by this model.
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_KINEMATICDAMAGE_HPP
-#define GEOSX_CONSTITUTIVE_SOLID_KINEMATICDAMAGE_HPP
+#ifndef GEOS_CONSTITUTIVE_SOLID_GRAPHITE_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_GRAPHITE_HPP_
 
 #include "ElasticTransverseIsotropicPressureDependent.hpp"
 #include "InvariantDecompositions.hpp"
@@ -56,6 +56,7 @@ public:
 
   /**
    * @brief Constructor
+   * @param[in] velocityGradient The ArrayView holding the velocity gradient for each element/particle.
    * @param[in] plasticStrain The ArrayView holding the plastic strain for each quadrature point.
    * @param[in] relaxation The ArrayView holding the relaxation for each quadrature point.
    * @param[in] damage The ArrayView holding the damage for each quardrature point.
@@ -73,7 +74,8 @@ public:
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point.
    */
-  GraphiteUpdates( arrayView3d< real64 > const & plasticStrain,
+  GraphiteUpdates( arrayView3d< real64 > const & velocityGradient,
+                   arrayView3d< real64 > const & plasticStrain,
                    arrayView2d< real64 > const & relaxation,
                    arrayView2d< real64 > const & damage,
                    arrayView2d< real64 > const & jacobian,
@@ -123,6 +125,7 @@ public:
                                                         newStress, 
                                                         oldStress, 
                                                         disableInelasticity ),
+    m_velocityGradient( velocityGradient ),
     m_plasticStrain( plasticStrain ),
     m_relaxation( relaxation ),
     m_damage( damage ),
@@ -192,9 +195,20 @@ public:
                                              real64 ( &stress )[6] ) const override;
 
   GEOS_HOST_DEVICE
+  virtual void smallStrainUpdate_StressOnly( localIndex const k,
+                                             localIndex const q,
+                                             real64 const & timeIncrement,
+                                             real64 const ( & beginningRotation )[3][3],
+                                             real64 const ( & endRotation )[3][3],
+                                             real64 const ( &strainIncrement )[6],
+                                             real64 ( &stress )[6] ) const override;
+
+  GEOS_HOST_DEVICE
   void smallStrainUpdateHelper( localIndex const k,
                                 localIndex const q,
                                 real64 const timeIncrement,
+                                real64 const ( & beginningRotation )[3][3],
+                                real64 const ( & endRotation )[3][3],
                                 real64 ( &stress )[6] ) const;
 
   GEOS_HOST_DEVICE
@@ -210,17 +224,17 @@ public:
                                                 real64 (& newStress) [6] ) const;
 
   GEOS_HOST_DEVICE
-  void computeTransverselyIsotropicPlasticStrainIncrement( arrayView2d< real64 const > const velocityGradient,
-                                                           real64 const (& oldStress)[6],
-                                                           real64 const (& newStress)[6],
+  void computeTransverselyIsotropicPlasticStrainIncrement( real64 const ( & velocityGradient )[3][3],
+                                                           real64 const ( & oldStress )[6],
+                                                           real64 const ( & newStress )[6],
                                                            const real64 Ez,             
                                                            const real64 Ep,             
                                                            const real64 nuzp,           
                                                            const real64 nup,            
                                                            const real64 Gzp,            
-                                                           real64 const (& materialDirection)[3],	
+                                                           real64 const ( & materialDirection )[3],	
                                                            const real64 timeIncrement,
-                                                           real64 (& plasticStrainIncrement)[6] ) const;
+                                                           real64 ( & plasticStrainIncrement )[6] ) const;
 
   GEOS_HOST_DEVICE
   real64 transverselyIsotropicB1( real64 const (& materialDirection)[3],
@@ -282,6 +296,9 @@ public:
   }
 
 private:
+  /// A reference to the ArrayView holding the velocity gradient for each element/particle.
+  arrayView3d< real64 > const m_velocityGradient;
+
   /// A reference to the ArrayView holding the damage for each quadrature point.
   arrayView3d< real64 > const m_plasticStrain;
 
@@ -339,31 +356,41 @@ void GraphiteUpdates::smallStrainUpdate( localIndex const k,
                                          real64 ( & stress )[6],
                                          real64 ( & stiffness )[6][6] ) const
 {
-  // elastic predictor (assume strainIncrement is all elastic)
-  ElasticTransverseIsotropicUpdates::smallStrainUpdate( k, 
-                                                        q, 
-                                                        timeIncrement,
-                                                        strainIncrement, 
-                                                        stress, 
-                                                        stiffness );
-  m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
+  // CC: we don't call this for the MPM solver but other solvers may want to use this
+  // Need to resolve if rotation matrix is always passed and update accordingly
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( timeIncrement );
+  GEOS_UNUSED_VAR( strainIncrement );
+  GEOS_UNUSED_VAR( stress );
+  GEOS_UNUSED_VAR( stiffness );
+  GEOS_ERROR( "smallStrainUpdate not implemented for Graphite model" );
 
-  if( m_disableInelasticity )
-  {
-    return;
-  }
+  // // elastic predictor (assume strainIncrement is all elastic)
+  // ElasticTransverseIsotropicUpdates::smallStrainUpdate( k, 
+  //                                                       q, 
+  //                                                       timeIncrement,
+  //                                                       strainIncrement, 
+  //                                                       stress, 
+  //                                                       stiffness );
+  // m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
-  // call the constitutive model
-  GraphiteUpdates::smallStrainUpdateHelper( k, 
-                                            q, 
-                                            timeIncrement,
-                                            stress );
+  // if( m_disableInelasticity )
+  // {
+  //   return;
+  // }
 
-  // It doesn't make sense to modify stiffness with this model
+  // // call the constitutive model
+  // GraphiteUpdates::smallStrainUpdateHelper( k, 
+  //                                           q, 
+  //                                           timeIncrement,
+  //                                           stress );
 
-  // save new stress and return
-  saveStress( k, q, stress );
-  return;
+  // // It doesn't make sense to modify stiffness with this model
+
+  // // save new stress and return
+  // saveStress( k, q, stress );
+  // return;
 }
 
 GEOS_HOST_DEVICE
@@ -386,9 +413,27 @@ void GraphiteUpdates::smallStrainUpdate( localIndex const k,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void GraphiteUpdates::smallStrainUpdate_StressOnly( localIndex const k,
+                                                         localIndex const q,
+                                                         real64 const & timeIncrement,
+                                                         real64 const ( & strainIncrement )[6],
+                                                         real64 ( & stress )[6] ) const
+{
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( timeIncrement );
+  GEOS_UNUSED_VAR( strainIncrement );
+  GEOS_UNUSED_VAR( stress );
+  GEOS_ERROR( "smallStrainUpdateStressOnly overload not implemented for CeramicDamage model" );
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void GraphiteUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                     localIndex const q,
                                                     real64 const & timeIncrement,
-                                                    real64 const ( &strainIncrement )[6],
+                                                    real64 const ( & beginningRotation )[3][3],
+                                                    real64 const ( & endRotation )[3][3],
+                                                    real64 const ( & strainIncrement )[6],
                                                     real64 ( & stress )[6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
@@ -407,7 +452,9 @@ void GraphiteUpdates::smallStrainUpdate_StressOnly( localIndex const k,
   // call the constitutive model
   GraphiteUpdates::smallStrainUpdateHelper( k, 
                                             q, 
-                                            timeIncrement,
+                                            timeIncrement,                
+                                            beginningRotation,
+                                            endRotation,
                                             stress );
 
   // save new stress and return
@@ -415,24 +462,37 @@ void GraphiteUpdates::smallStrainUpdate_StressOnly( localIndex const k,
   return;
 }
 
+
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
                                                localIndex const q,
-                                               real64 const timeIncrement,
+                                               real64 const timeIncrement,  
+                                               real64 const ( & beginningRotation )[3][3],
+                                               real64 const ( & endRotation )[3][3],
                                                real64 ( & stress )[6] ) const
 {
     // CC: TODO: MUST PASS DEFORMATION AND VELOCITY GRADIENTS
     real64 oldStress[6];
     LvArray::tensorOps::copy< 6 >(oldStress, stress);
 
+    real64 rotationTranspose[3][3];
+    LvArray::tensorOps::transpose< 3, 3 >(rotationTranspose, beginningRotation); 
+
+    real64 unrotatedVelocityGradient[3][3];
+    LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >(unrotatedVelocityGradient, rotationTranspose, m_velocityGradient[k]);
+    
+    real64 unrotatedVelocityGradientTranspose[3][3];
+    LvArray::tensorOps::transpose< 3, 3 >(unrotatedVelocityGradientTranspose, unrotatedVelocityGradient);
+
     // CC: Is there an LvArray operation to get the symmetric part of a matrix?
-    real64 velocityGradientTranspose[6];
+    real64 denseD[3][3];
+    LvArray::tensorOps::copy< 3, 3 >( denseD, unrotatedVelocityGradient );
+    LvArray::tensorOps::add< 3, 3 >( denseD, unrotatedVelocityGradientTranspose );
+    LvArray::tensorOps::scale< 3, 3 >( denseD, 0.5 );
+
     real64 D[6];
-    LvArray::tensorOps::copy< 6 >(D, velocityGradient);
-    LvArray::tensorOps::transpose(velocityGradient, velocityGradientTranspose);
-    LvArray::tensorOps::add< 6 >( D, velocityGradientTranspose );
-    LvArray::tensorOps::scale< 6 >( D, 0.5 );
+    LvArray::tensorOps::denseToSymmetric<3>(D, denseD);
 
     // make sure material direction is normalized.
     real64 materialDirection[3];
@@ -441,15 +501,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
     // Use beginning of step normal stress to compute stress dependence of Ez
     real64 temp[3];
-    // real64 tempOldStress[3][3];
     int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
-    // for(int i = 0; i < 3; ++i)
-    // {
-    //   for( int j = 0; j < 3; ++j)
-    //   {
-    //     tempOldStress[i][j] = oldStress[voigtMap[i][j]]; 
-    //   }
-    // }
     LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, oldStress, materialDirection );
     real64 oldPlaneNormalStress = LvArray::tensorOps::AiBi< 3 >( materialDirection, temp );
 
@@ -528,7 +580,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
     // Check for tensile failure in preferred direction
     // real64 temp[3];
-    LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( temp, stress, materialDirection );
+    LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, stress, materialDirection );
     real64 planeNormalStress = LvArray::tensorOps::AiBi< 3 >( materialDirection, temp );
 
     // increment damage, but enforce 0<=d<=1
@@ -580,10 +632,10 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // -------------------------------
     // "distortion" shear relating sigma normal and in-plane iso"
     x1 = 0;
-    x2 = m_distortionShearResponseX2; // 50.;
-    y1 = m_distortionShearResponseY1; // 2.5;
-    y2 = m_distortionShearResponseY2; // 26.0;
-    m1 = m_distortionShearResponseM1; // 1.3;
+    x2 = m_distortionShearResponseX2;
+    y1 = m_distortionShearResponseY1;
+    y2 = m_distortionShearResponseY2;
+    m1 = m_distortionShearResponseM1;
 
     // damage or softening reduces cohesion and reduces slope to failed value.
     y1 = fac*y1;
@@ -604,10 +656,10 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // -------------------------------------------
     // Coupled shear response (slip on weak plane)
     x1 = 0;
-    x2 = m_coupledShearResponseX2; // 50.0;
-    y1 = m_coupledShearResponseY1; // 1.2;
-    y2 = m_coupledShearResponseY2; // 7.7;
-    m1 = m_coupledShearResponseM1; // 0.5;
+    x2 = m_coupledShearResponseX2;
+    y1 = m_coupledShearResponseY1;
+    y2 = m_coupledShearResponseY2;
+    m1 = m_coupledShearResponseM1;
 
     // damage or softening reduces cohesion and reduces slope to failed value.
     y1 = fac*y1;
@@ -628,10 +680,10 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // -------------------------------
     // In-plane shear response
     x1 = 0;
-    x2 = m_inPlaneShearResponseX2; // 50.0;
-    y1 = m_inPlaneShearResponseY1; // 1.0;
-    y2 = m_inPlaneShearResponseY2; // 6.6;
-    m1 = m_inPlaneShearResponseM1; // 0.5;
+    x2 = m_inPlaneShearResponseX2;
+    y1 = m_inPlaneShearResponseY1;
+    y2 = m_inPlaneShearResponseY2;
+    m1 = m_inPlaneShearResponseM1;
 
     // damage or softening reduces cohesion and reduces slope to failed value.
     y1 = fac*y1;
@@ -699,7 +751,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     {
         // increment plastic strain
         real64 plasticStrainIncrement[6] = {0};
-        computeTransverselyIsotropicPlasticStrainIncrement( velocityGradient,          // Velocity gradient tensor
+        computeTransverselyIsotropicPlasticStrainIncrement( unrotatedVelocityGradient,          // Velocity gradient tensor
                                                             oldStress,                 // Stress at start of step
                                                             stress,                    // Stress at end of step
                                                             Ez,                        // Elastic modulus preferred direction
@@ -763,17 +815,17 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void GraphiteUpdates::computeTransverselyIsotropicPlasticStrainIncrement(arrayView2d< real64 const > const velocityGradient,          // Velocity gradient tensor
-                                                                         real64 const (& oldStress)[6], // Stress at start of step
-                                                                         real64 const (& newStress)[6], // Stress at end of step
+void GraphiteUpdates::computeTransverselyIsotropicPlasticStrainIncrement(real64 const ( & velocityGradient )[3][3],          // Velocity gradient tensor
+                                                                         real64 const ( & oldStress )[6], // Stress at start of step
+                                                                         real64 const ( & newStress )[6], // Stress at end of step
                                                                          const real64 Ez,             // Elastic modulus preferred direction
                                                                          const real64 Ep,             // Elastic modulus transverse plane
                                                                          const real64 nuzp,           // Poisson ratio coupled
                                                                          const real64 nup,            // Poisson ratio transverse plane
                                                                          const real64 Gzp,            // Shear modulus coupled plane
-                                                                         real64 const (& materialDirection)[3],			// material direction (unit vector)
+                                                                         real64 const ( & materialDirection )[3],			// material direction (unit vector)
                                                                          const real64 timeIncrement,
-                                                                         real64 (& plasticStrainIncrement)[6]
+                                                                         real64 ( & plasticStrainIncrement )[6]
 ) const
 {  // For hypo-elastic transversely isotropic models we compute the increment in plastic strain assuming
 	// for some increment in total strain and stress and elastic properties.
@@ -817,7 +869,7 @@ void GraphiteUpdates::computeTransverselyIsotropicPlasticStrainIncrement(arrayVi
 		{
             //Old GEOS code did not index plasticStrainIncrement, how did this not through an error
             //does the voigt notation include the factore of 2 for off axis entries of the tensor?
-			plasticStrainIncrement[voigtMap[i][j]] += 0.5 * ( velocityGradient( i, j ) + velocityGradient( j, i ) ) * timeIncrement - elasticStrainIncrement[voigtMap[i][j]];
+			plasticStrainIncrement[voigtMap[i][j]] += 0.5 * ( velocityGradient[i][j] + velocityGradient[j][i] ) * timeIncrement - elasticStrainIncrement[voigtMap[i][j]];
 		}
 	}
 
@@ -982,6 +1034,9 @@ public:
    */
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
+    //string/key for element/particle velocityGradient value
+    static constexpr char const * velocityGradientString() { return "velocityGradient"; }
+
     /// string/key for quadrature point plasticStrain value 
     static constexpr char const * plasticStrainString() { return "plasticStrain"; }
 
@@ -1055,7 +1110,8 @@ public:
    */
   GraphiteUpdates createKernelUpdates() const
   {
-    return GraphiteUpdates( m_plasticStrain,
+    return GraphiteUpdates( m_velocityGradient,
+                            m_plasticStrain,
                             m_relaxation,
                             m_damage,
                             m_jacobian,
@@ -1104,6 +1160,7 @@ public:
   UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
   {
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
+                          m_velocityGradient,
                           m_plasticStrain,
                           m_relaxation,
                           m_damage,
@@ -1145,6 +1202,9 @@ public:
 
 protected:
   virtual void postProcessInput() override;
+  ///State variable: The velocity gradient for each element/particle
+  array3d< real64 > m_velocityGradient;
+
   ///State variable: The plastic strain values for each quadrature point
   array3d< real64 > m_plasticStrain;
 
@@ -1173,20 +1233,20 @@ protected:
   real64 m_damagedMaterialFrictionalSlope;
 
   /// Material parameters: The values controlling the failure envelope
-  real64 m_distortionShearResponseX2; // 50.0
-  real64 m_distortionShearResponseY1; // 2.5
-  real64 m_distortionShearResponseY2; // 26.0
-  real64 m_distortionShearResponseM1; // 1.3
+  real64 m_distortionShearResponseX2;
+  real64 m_distortionShearResponseY1;
+  real64 m_distortionShearResponseY2;
+  real64 m_distortionShearResponseM1;
 
-  real64 m_inPlaneShearResponseX2; // 50.0
-  real64 m_inPlaneShearResponseY1; // 1.0
-  real64 m_inPlaneShearResponseY2; // 6.6
-  real64 m_inPlaneShearResponseM1; // 0.5
+  real64 m_inPlaneShearResponseX2;
+  real64 m_inPlaneShearResponseY1;
+  real64 m_inPlaneShearResponseY2;
+  real64 m_inPlaneShearResponseM1;
 
-  real64 m_coupledShearResponseX2; // 50.0
-  real64 m_coupledShearResponseY1; // 1.2
-  real64 m_coupledShearResponseY2; // 7.7
-  real64 m_coupledShearResponseM1; // 0.5
+  real64 m_coupledShearResponseX2;
+  real64 m_coupledShearResponseY1;
+  real64 m_coupledShearResponseY2;
+  real64 m_coupledShearResponseM1;
   
   real64 m_maximumPlasticStrain;
 };
