@@ -139,18 +139,28 @@ public:
                              localIndex const kf0,
                              array1d< real64 > & nodalArea ) const;
 
+  void computeProjectors( localIndex const faceIndex,
+                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
+                          ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                          ArrayOfArraysView< localIndex const > const & faceToEdgeMap,
+                          arrayView2d< localIndex const > const & edgeToNodeMap,
+                          arrayView2d< real64 const > const faceCenters,
+                          arrayView2d< real64 const > const faceNormals,
+                          arrayView1d< real64 const > const faceAreas,
+                          array1d< real64 > & basisIntegrals );                           
+
   void computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
-                      array1d< localIndex const > const & faceToNodes,
-                      array1d< localIndex const > const & faceToEdges,
+                      localIndex const (&faceToNodes)[11],
+                      localIndex const (&faceToEdges)[11],
                       localIndex const & numFaceVertices,
                       real64 const & faceArea,
                       real64 const (&faceCenter)[3],
                       real64 const (&faceNormal)[3],
-                      array2d< localIndex const > const & edgeToNodes,
+                      arrayView2d< localIndex const > const & edgeToNodes,
                       real64 const & invCellDiameter,
                       real64 const (&cellCenter)[3],
                       array1d< real64 > & basisIntegrals,
-                      real64 (& threeDMonomialIntegrals)[3] ) const;
+                      real64 (& threeDMonomialIntegrals)[3] );
   
   real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
 

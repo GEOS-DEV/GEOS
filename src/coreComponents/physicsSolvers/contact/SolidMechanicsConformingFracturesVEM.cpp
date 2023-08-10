@@ -816,24 +816,71 @@ void SolidMechanicsConformingFracturesVEM::computeRotationMatrices( DomainPartit
   } );
 }
 
-
-void SolidMechanicsConformingFracturesVEM::computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
-                      array1d< localIndex const > const & faceToNodes,
-                      array1d< localIndex const > const & faceToEdges,
-                      localIndex const & numFaceVertices,
-                      real64 const & faceArea,
-                      real64 const (&faceCenter)[3],
-                      real64 const (&faceNormal)[3],
-                      array2d< localIndex const > const & edgeToNodes,
-                      real64 const & invCellDiameter,
-                      real64 const (&cellCenter)[3],
-                      array1d< real64 > & basisIntegrals,
-                      real64 (& threeDMonomialIntegrals)[3] ) const
+void SolidMechanicsConformingFracturesVEM::computeProjectors( localIndex const faceIndex,
+                                                              arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
+                                                              ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                                                              ArrayOfArraysView< localIndex const > const & faceToEdgeMap,
+                                                              arrayView2d< localIndex const > const & edgeToNodeMap,
+                                                              arrayView2d< real64 const > const faceCenters,
+                                                              arrayView2d< real64 const > const faceNormals,
+                                                              arrayView1d< real64 const > const faceAreas,
+                                                              array1d< real64 > & basisIntegrals )
 {
   GEOS_MARK_FUNCTION;
   localIndex const MFN = 11; // Max number of face vertices.
-  GEOS_ASSERT( numFaceVertices <= MFN );
-  
+  localIndex const numFaceNodes = faceToNodeMap[ faceIndex ].size();
+  GEOS_ASSERT( numFaceNodes <= MFN );
+
+  // get the face center and normal.
+  real64 const faceArea = faceAreas[ faceIndex ];
+  localIndex faceToNodes[ MFN ];
+  localIndex faceToEdges[ MFN ];
+  for( localIndex i = 0; i < numFaceNodes; ++i )
+  {
+    faceToNodes[i] = faceToNodeMap[ faceIndex ][ i ];
+    faceToEdges[i] = faceToEdgeMap[ faceIndex ][ i ];
+  }
+  // - get outward face normal and center
+  real64 faceNormal[3] = { faceNormals[faceIndex][0],
+                            faceNormals[faceIndex][1],
+                            faceNormals[faceIndex][2] };
+  real64 const faceCenter[3] { faceCenters[faceIndex][0],
+                                faceCenters[faceIndex][1],
+                                faceCenters[faceIndex][2] };
+  // - compute integrals calling auxiliary method
+
+  real64 threeDMonomialIntegrals[3] = { 0.0 };  // not used, but required by computeFaceIntegrals
+  real64 const invCellDiameter = 0.0;           // not used, but required by computeFaceIntegrals
+  real64 const cellCenter[3] { 0.0, 0.0, 0.0 }; // not used, but required by computeFaceIntegrals
+  computeFaceIntegrals( nodesCoords,
+                        faceToNodes,
+                        faceToEdges,
+                        numFaceNodes,
+                        faceArea,
+                        faceCenter,
+                        faceNormal,
+                        edgeToNodeMap,
+                        invCellDiameter,
+                        cellCenter,
+                        basisIntegrals,
+                        threeDMonomialIntegrals );
+}
+
+void SolidMechanicsConformingFracturesVEM::computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
+                                                                localIndex const (&faceToNodes)[11],
+                                                                localIndex const (&faceToEdges)[11],
+                                                                localIndex const & numFaceVertices,
+                                                                real64 const & faceArea,
+                                                                real64 const (&faceCenter)[3],
+                                                                real64 const (&faceNormal)[3],
+                                                                arrayView2d< localIndex const > const & edgeToNodes,
+                                                                real64 const & invCellDiameter,
+                                                                real64 const (&cellCenter)[3],
+                                                                array1d< real64 > & basisIntegrals,
+                                                                real64 (& threeDMonomialIntegrals)[3] )
+{
+  GEOS_MARK_FUNCTION;
+  localIndex const MFN = 11; // Max number of face vertices.
   basisIntegrals.resize( numFaceVertices );
   // Rotate the face.
   //  - compute rotation matrix.
@@ -1244,10 +1291,16 @@ void SolidMechanicsConformingFracturesVEM::
   GEOS_MARK_FUNCTION;
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
+  EdgeManager const & edgeManager = mesh.getEdgeManager();
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
-
+  ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager.edgeList().toViewConst();
+  arrayView2d< localIndex const > const & edgeToNodeMap = edgeManager.nodeList().toViewConst();
+  arrayView2d< real64 const > faceCenters = faceManager.faceCenter();
+  arrayView2d< real64 const > faceNormals = faceManager.faceNormal();
+  arrayView1d< real64 const > faceAreas = faceManager.faceArea();
+  
   string const & tracDofKey = dofManager.getKey( contact::traction::key() );
   string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
 
@@ -1319,6 +1372,18 @@ void SolidMechanicsConformingFracturesVEM::
                   // Compute local area contribution for each node
                   array1d< real64 > nodalArea;
                   computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+
+                  // Testing the face integral on polygonal faces
+                  array1d< real64 > basisIntegrals;
+                  computeProjectors( elemsToFaces[kfe][kf],
+                                     nodePosition, 
+                                     faceToNodeMap, 
+                                     faceToEdgeMap,
+                                     edgeToNodeMap,
+                                     faceCenters,
+                                     faceNormals,
+                                     faceAreas,
+                                     basisIntegrals);
 
                   for( localIndex a = 0; a < numNodesPerFace; ++a )
                   {
