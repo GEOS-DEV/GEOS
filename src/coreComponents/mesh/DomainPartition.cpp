@@ -172,12 +172,6 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
         }
 	    } );
 
-    meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >(
-      [&]( FaceElementSubRegion & subRegion )
-      {
-        subRegion.setMissingNodes( meshLevel.getNodeManager() );
-      } );
-
     NodeManager & nodeManager = meshLevel.getNodeManager();
     FaceManager & faceManager = meshLevel.getFaceManager();
     EdgeManager & edgeManager = meshLevel.getEdgeManager();
@@ -200,7 +194,8 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
     meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >(
       [&]( FaceElementSubRegion const & subRegion )
       {
-        requestedNodes.insert( subRegion.m_missingNodes.begin(), subRegion.m_missingNodes.end() );
+        std::set< globalIndex > const missingNodes = subRegion.getMissingNodes( nodeManager.globalToLocalMap() );
+        requestedNodes.insert( missingNodes.cbegin(), missingNodes.cend() );
       } );
 
     CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,

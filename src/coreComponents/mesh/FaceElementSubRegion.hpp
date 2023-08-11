@@ -263,9 +263,13 @@ public:
   arrayView2d< real64 const > detJ() const
   { return m_detJ; }
 
-  array1d< globalIndex > m_missingNodes;
-
-  void setMissingNodes( NodeManager const & nodeManager );
+  /**
+   * @brief Computes all the nodes required by the `FaceElementSubRegion` which are not available on the rank.
+   * @param g2l The global to local nodes mapping.
+   * @return The set of the missing nodes.
+   * @note This is function is meaningful when building the ghosts.
+   */
+  std::set< globalIndex > getMissingNodes( unordered_map< globalIndex, localIndex > const & g2l ) const;
 
   std::vector< ArrayOfArrays< globalIndex > > m_otherCollocatedNodes;
 

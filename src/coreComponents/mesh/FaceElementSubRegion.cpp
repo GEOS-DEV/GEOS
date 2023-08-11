@@ -696,16 +696,12 @@ void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const & f
   }
 }
 
-void FaceElementSubRegion::setMissingNodes( NodeManager const & nodeManager )
+std::set< globalIndex > FaceElementSubRegion::getMissingNodes( unordered_map< globalIndex, localIndex > const & g2l ) const
 {
-  // TODO make this function return instead of storing?
-  auto const & g2l = nodeManager.globalToLocalMap();
   std::set< globalIndex > missingNodes;
-
   for( int i = 0; i < m_collocatedNodes.size(); ++i )
   {
-    auto const & nodes = m_collocatedNodes[i];
-    for( globalIndex const & n: nodes )
+    for( globalIndex const & n:  m_collocatedNodes[i] )
     {
       auto const it = g2l.find( n );
       if( it == g2l.cend() )
@@ -715,13 +711,7 @@ void FaceElementSubRegion::setMissingNodes( NodeManager const & nodeManager )
     }
   }
 
-  m_missingNodes.clear();
-  m_missingNodes.reserve( missingNodes.size() );
-  for( globalIndex const & gi: missingNodes )
-  {
-    m_missingNodes.emplace_back( gi );
-  }
+  return missingNodes;
 }
-
 
 } /* namespace geos */
