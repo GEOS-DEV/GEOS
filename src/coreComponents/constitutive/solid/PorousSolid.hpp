@@ -169,29 +169,29 @@ public:
   {
     m_solidUpdate.getElasticStiffness( k, q, stiffness );
   }
-  
+
   /**
    * @brief Return the stiffness at a given element (small-strain interface)
    *
    * @param [in] k the element number
    * @param [out] biotCefficient the biot-coefficient
-   */ 
+   */
   GEOS_HOST_DEVICE
   inline
-  void getBiotCoefficient( localIndex const k, real64 & biotCoefficient) const
+  void getBiotCoefficient( localIndex const k, real64 & biotCoefficient ) const
   {
     biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
   }
-  
+
   /**
    * @brief Return the stiffness at a given element (small-strain interface)
    *
    * @param [in] k the element number
    * @param [out] thermalExpansionCoefficient the thermal expansion coefficient
-   */ 
+   */
   GEOS_HOST_DEVICE
   inline
-  void getThermalExpansionCoefficient(localIndex const k, real64 & thermalExpansionCoefficient ) const
+  void getThermalExpansionCoefficient( localIndex const k, real64 & thermalExpansionCoefficient ) const
   {
     thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
   }

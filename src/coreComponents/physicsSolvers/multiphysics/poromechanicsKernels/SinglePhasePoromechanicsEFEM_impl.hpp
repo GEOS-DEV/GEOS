@@ -257,7 +257,7 @@ quadraturePointKernel( localIndex const k,
   LvArray::tensorOps::scaledAdd< 3, 3 >( stack.localKww, Kww_gauss, -detJ );
   LvArray::tensorOps::scaledAdd< 3, nUdof >( stack.localKwu, Kwu_gauss, -detJ );
   LvArray::tensorOps::scaledAdd< nUdof, 3 >( stack.localKuw, Kuw_gauss, -detJ );
-  
+
   /// TODO: should this be negative???
   // I had No neg coz the total stress = effective stress - porePressure
   // and all signs are flipped here.

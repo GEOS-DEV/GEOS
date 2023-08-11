@@ -121,7 +121,7 @@ quadraturePointKernel( localIndex const k,
                                                   real64 const detJ )
   {
     real64 KwTm_gauss[3]{};
-    real64 thermalExpansionCoefficient{}; 
+    real64 thermalExpansionCoefficient{};
 
     m_constitutiveUpdate.getThermalExpansionCoefficient( k, thermalExpansionCoefficient );
 
