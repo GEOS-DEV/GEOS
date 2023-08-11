@@ -500,8 +500,20 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
           auto it = g2l.find( gi );
           if( it != g2l.cend() )
           {
-            collocatedNodesToSend.emplace_back( it->second );
+            collocatedNodesToSend.emplace_back( it->second );  // TODO find a way to select the lowest rank that will send the node, not all of them...
           }
+        }
+      }
+
+      GEOS_LOG_RANK( "Second level matches : loc {" << stringutilities::join( collocatedNodesToSend, ", " ) << "}" );
+      // Looks like the duplicated nodes information is not shared among the ranks.
+      // So it's not possible for a rank that touches a fracture to know it has to send its nodes.
+
+      for( localIndex const & li: collocatedNodesToSend )
+      {
+        if( std::find( matchedBoundaryNodes.begin(), matchedBoundaryNodes.end(), li ) == matchedBoundaryNodes.end() )
+        {
+          matchedBoundaryNodes.emplace_back( li );
         }
       }
 
@@ -515,18 +527,6 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
         for( globalIndex const gn: intersection )
         {
           requestedMatches.emplace_back( gn );  // TODO find a way to select the lowest rank that will send the node, not all of them...
-        }
-      }
-
-      GEOS_LOG_RANK( "Second level matches : loc {" << stringutilities::join( collocatedNodesToSend, ", " ) << "}" );
-      // Looks like the duplicated nodes information is not shared among the ranks.
-      // So it's not possible for a rank that touches a fracture to know it has to send its nodes.
-
-      for( localIndex const & li: collocatedNodesToSend )
-      {
-        if( std::find( matchedBoundaryNodes.begin(), matchedBoundaryNodes.end(), li ) == matchedBoundaryNodes.end() )
-        {
-          matchedBoundaryNodes.emplace_back( li );
         }
       }
     }
