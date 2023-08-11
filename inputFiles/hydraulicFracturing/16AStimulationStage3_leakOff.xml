@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="{ 0.0, 0.0, 0.0 }">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
   <!-- SPHINX_HYDROFRACSOLVER -->
     <Hydrofracture
       name="hydrofracture"
@@ -69,13 +69,13 @@
       name="mesh1"
       elementTypes="{ C3D8 }"
       xCoords="{ -5, 195, 275, 315, 395, 595 }"
-      yCoords="{ 185, 345, 485, 625, 785 }"
-      zCoords="{ 295, 515, 595, 895 }"
-      nx="{ 10, 10, 10, 10, 10 }"
-      ny="{ 10, 210, 210, 10 }"
-      nz="{ 10, 120, 450 }"
+      yCoords="{ 185, 305, 485, 665, 785 }"
+      zCoords="{ 295, 455, 595, 795, 895 }"
+      nx="{ 5, 5, 10, 5, 5 }"
+      ny="{ 10, 270, 270, 10 }"
+      nz="{ 10, 210, 300, 10 }"
       yBias="{ 0.0, 0.4, -0.4, 0.0}"
-      zBias="{ 0.0, 0.4, -0.4}"
+      zBias="{ 0.0, 0.4, -0.4, 0.0}"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
   <!-- SPHINX_MESH_END -->
@@ -117,7 +117,7 @@
     <PeriodicEvent
       name="outputs5"
       beginTime="1000.0"
-      endTime="7500.0"
+      endTime="8100.0"
       forceDt="100.0"
       target="/Outputs/vtkOutput"/> 
 
@@ -176,10 +176,10 @@
     <CompressibleSinglePhaseFluid
       name="gel"
       defaultDensity="1000"
-      defaultViscosity="1.0e-1"
+      defaultViscosity="70e-3"
       referencePressure="0.0"
       compressibility="5e-10"
-      referenceViscosity="0.1"
+      referenceViscosity="70e-3"
       viscosibility="0.0"/>
 
     <CompressibleSolidConstantPermeability
@@ -196,9 +196,7 @@
 
     <ConstantPermeability
        name="rockPerm"
-       permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15 }"
-       pressureDependenceConstant="3e-7"
-       defaultReferencePressure="20e6"/> 
+       permeabilityComponents="{ 1.0e-17, 1.0e-17, 1.0e-17 }"/> 
 
     <ElasticIsotropic
       name="rock"
@@ -410,7 +408,7 @@
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="16AStimulation-insituStress-injectionReal-stressGradient-leakoff-presPerm-penalty=1e12"/>
+      plotFileRoot="16AStimulation-insituStress-injectionReal-stressGradient-leakoff"/>
 
     <Restart
       name="restartOutput"/>

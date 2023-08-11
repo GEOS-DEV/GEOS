@@ -68,50 +68,55 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 30, 70, 100 }"
-      yCoords="{ 0, 50, 100 }"
-      zCoords="{ 0, 50, 100 }"
-      nx="{ 3, 10, 3 }"
-      ny="{ 75, 75 }"
-      nz="{ 75, 75 }"
-      yBias="{ 0.4, -0.4}"
-      zBias="{ 0.4, -0.4}"
+      xCoords="{ 0, 80, 120, 200 }"
+      yCoords="{ 0, 100, 200 }"
+      zCoords="{ 0, 100, 200 }"
+      nx="{ 4, 10, 4 }"
+      ny="{ 100, 100 }"
+      nz="{ 100, 100 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
   <!-- SPHINX_MESH_END -->
 
   <Events
-    maxTime="1200.0">
+    maxTime="1300.0">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
 
     <PeriodicEvent
-      name="outputs1"
+      name="outputs0"
       beginTime="0.0"
-      endTime="5.0"
-      forceDt="0.5"
+      endTime="100.0"
+      forceDt="20.0"
+      target="/Outputs/vtkOutput"/> 
+    
+    <PeriodicEvent
+      name="outputs1"
+      beginTime="100.0"
+      endTime="105.0"
+      forceDt="1.0"
       target="/Outputs/vtkOutput"/> 
 
     <PeriodicEvent
       name="outputs2"
-      beginTime="5.0"
-      endTime="100.0"
+      beginTime="105.0"
+      endTime="200.0"
       forceDt="1.0"
       target="/Outputs/vtkOutput"/> 
 
     <PeriodicEvent
       name="outputs3"
-      beginTime="100.0"
-      endTime="360.0"
+      beginTime="200.0"
+      endTime="460.0"
       forceDt="10.0"
       target="/Outputs/vtkOutput"/> 
     
     <PeriodicEvent
       name="outputs4"
-      beginTime="360.0"
-      endTime="1200.0"
-      forceDt="40.0"
+      beginTime="460.0"
+      endTime="1300.0"
+      forceDt="10.0"
       target="/Outputs/vtkOutput"/> 
 
     <!-- <PeriodicEvent
@@ -128,31 +133,38 @@
       target="/Outputs/timeHistoryOutput"/>  -->
 
     <PeriodicEvent
-      name="solverApplications1"
+      name="solverApplications0"
       beginTime="0.0"
-      endTime="5.0"
-      forceDt="0.5"
+      endTime="100.0"
+      forceDt="20.0"
+      target="/Solvers/hydrofracture"/>
+
+    <PeriodicEvent
+      name="solverApplications1"
+      beginTime="100.0"
+      endTime="105.0"
+      forceDt="1.0"
       target="/Solvers/hydrofracture"/>
 
     <PeriodicEvent
       name="solverApplications2"
-      beginTime="5.0"
-      endTime="100.0"
+      beginTime="105.0"
+      endTime="200.0"
       forceDt="1.0"
       target="/Solvers/hydrofracture"/>
 
     <PeriodicEvent
       name="solverApplications3"
-      beginTime="100.0"
-      endTime="360.0"
+      beginTime="200.0"
+      endTime="460.0"
       forceDt="10.0"
       target="/Solvers/hydrofracture"/>
 
     <PeriodicEvent
       name="solverApplications4"
-      beginTime="360.0"
-      endTime="1200.0"
-      forceDt="40.0"
+      beginTime="460.0"
+      endTime="1300.0"
+      forceDt="10.0"
       target="/Solvers/hydrofracture"/>
   </Events>
 
@@ -165,7 +177,7 @@
 
     <SurfaceElementRegion
       name="Fracture"      
-      defaultAperture="0.1e-3"
+      defaultAperture="0.04e-3"
       materialList="{ water, rock, fractureFilling, fractureContact }"/>
   </ElementRegions>
   <!-- SPHINX_ELEMENTREGIONS_END -->
@@ -177,7 +189,7 @@
       defaultDensity="1000"
       defaultViscosity="1.0e-3"
       referencePressure="0.0"
-      compressibility="5e-9"
+      compressibility="5e-10"
       referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
 
@@ -195,7 +207,7 @@
 
     <ConstantPermeability
        name="rockPerm"
-       permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-14 }"/> 
+       permeabilityComponents="{ 1e-15, 1e-15, 1e-15 }"/> 
 
     <ElasticIsotropic
       name="rock"
@@ -253,7 +265,7 @@
       objectPath="ElementRegions/Domain/cb1"
       fieldName="rock_stress"
       component="0"
-      scale="-37e6"/>
+      scale="-45e6"/>
 
     <FieldSpecification 
       name="SH"
@@ -262,7 +274,7 @@
       objectPath="ElementRegions/Domain/cb1"
       fieldName="rock_stress"
       component="1"
-      scale="-42.2e6"/>
+      scale="-51.32e6"/>
 
     <FieldSpecification 
       name="Sv"
@@ -271,7 +283,7 @@
       objectPath="ElementRegions/Domain/cb1"
       fieldName="rock_stress"
       component="2"
-      scale="-54.2e6"/>
+      scale="-65.92e6"/>
 
     <FieldSpecification
        name="initialPressure"
@@ -334,46 +346,35 @@
     <TableFunction
       name="apertureTable"
       coordinates="{ -0.01, -0.03e-3, 0.0 }"
-      values="{ 0.002e-3, 0.08e-3, 0.1e-3 }"/>
+      values="{ 0.002e-3, 0.02e-3, 0.04e-3 }"/>
 
     <TableFunction
       name="timeFunction"
       inputVarNames="{ time }"
-      coordinates="{ 0.0, 0.9, 1.1, 360.9, 361.1, 1e10 }"
+      coordinates="{ 0.0, 100.0, 140.0, 459.9, 460.1, 1e10 }"
       values="{ 0.0, 0.0, 13.25, 13.25, 0.0, 0.0 }"/>
   </Functions>
 
   <Geometry>
   <!-- SPHINX_INITIALFRAC -->
-    <!-- <Box
+    <Box
       name="fracture"
-      xMin="{ 49.9, 45.9, 44.9 }"
-      xMax="{ 50.1, 54.1, 55.1 }"/> -->
+      xMin="{ 99.9, 97.9, 97.9 }"
+      xMax="{ 100.1, 102.1, 102.1 }"/>
   <!-- SPHINX_INITIALFRAC_END -->
 
-  <Cylinder
-    name="fracture"
-    firstFaceCenter="{ 49.9, 50, 50 }"
-    secondFaceCenter="{ 50.1, 50, 50 }"
-    outerRadius="4"/>
-
   <!-- SPHINX_INJSOURCE -->
-    <!-- <Box
+    <Box
       name="source"
-      xMin="{ 49.9, 45.9, 45.9 }"
-      xMax="{ 50.1, 54.1, 54.1 }"/> -->
+      xMin="{ 99.9, 98.9, 98.9 }"
+      xMax="{ 100.1, 101.1, 101.1 }"/>
   <!-- SPHINX_INJSOURCE_END -->
-  <Cylinder
-    name="source"
-    firstFaceCenter="{ -0.1, 50, 50 }"
-    secondFaceCenter="{ 100.1, 50, 50 }"
-    outerRadius="4"/>
 
   <!-- SPHINX_FRACPLANE -->
     <Box
       name="core"
-      xMin="{ 49.9, -1000.1, -1000.1 }"
-      xMax="{ 50.1, 1000.1, 1000.1 }"/>
+      xMin="{ 99.9, -1000.1, -1000.1 }"
+      xMax="{ 100.1, 1000.1, 1000.1 }"/>
   <!-- SPHINX_FRACPLANE_END -->
   </Geometry>
 
@@ -388,12 +389,7 @@
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="forge_Well58-32_fracturingTest_perm=1e-14_cf=5e-9"/>
-
-    <!-- <TimeHistory
-      name="timeHistoryOutput"
-      sources="{/Tasks/pressureCollection}"
-      filename="forge_Well58-32_perm=1e-14_KI=1e7_cf=5e-8_output" />   -->
+      plotFileRoot="forge_Well58-32_fracturingTest_perm=1e-15_Rinj=1_Rfrac=2_Sh=45"/>
   </Outputs>
   <!-- SPHINX_OUTPUT_END -->
 
