@@ -343,20 +343,14 @@ struct ComputeTimeStep
 
     //Randomize p values
     srand( time( NULL ));
-    //forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
     for( localIndex a = 0; a < sizeNode; ++a )
     {
       pView[a] = (real64)rand()/(real64) RAND_MAX;
-    } //);
+    }
 
     //Step 1: Normalize randomized pressure
     real64 normP= 0.0;
     WaveSolverUtils::dotProduct( sizeNode, pView, pView, normP );
-    // forAll< WaveSolverBase::EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
-    // {
-    //    dotProducts[0]+= pView[a]*pView[a];
-    // } );
-
 
     forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
@@ -367,7 +361,6 @@ struct ComputeTimeStep
     pAuxView.zero();
     forAll< EXEC_POLICY >( sizeElem, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-
 
       real64 xLocal[ numNodesPerElem ][ 3 ];
       for( localIndex a = 0; a < numNodesPerElem; ++a )
@@ -386,11 +379,6 @@ struct ComputeTimeStep
         } );
       }
 
-      // for (localIndex i = 0; i < numNodesPerElem; ++i)
-      // {
-      //    pAuxView[elemsToNodes[k][i]] /= mass[elemsToNodes[k][i]];
-      // }
-
     } );
 
     forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
@@ -405,16 +393,6 @@ struct ComputeTimeStep
     WaveSolverUtils::dotProduct( sizeNode, pView, pAuxView, dotProductPPaux );
     WaveSolverUtils::dotProduct( sizeNode, pView, pView, normP );
 
-    // forAll< WaveSolverBase::EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
-    // {
-    //    dotProductPPaux+= pView[a]*pAuxView[a];
-    // } );
-
-    // forAll< WaveSolverBase::EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
-    // {
-    //    normPaux+= pAuxView[a]*pAuxView[a];
-    // } );
-
     lambdaNew = dotProductPPaux/normP;
 
     //lambdaNew = LvArray::tensorOps::AiBi<sizeNode>(p,pAux)/LvArray::tensorOps::AiBi<sizeNode>(pAux,pAux);
@@ -425,8 +403,6 @@ struct ComputeTimeStep
     {
       pView[a]/= sqrt( normPaux );
     } );
-
-    //p = LvArray::tensorOps::normalize<sizeNode>(pAuxView);
 
     //Step 3: Do previous algorithm until we found the max eigenvalues
     do
@@ -452,11 +428,6 @@ struct ComputeTimeStep
           } );
         }
 
-        // for (localIndex i = 0; i < numNodesPerElem; ++i)
-        // {
-        //    pAuxView[elemsToNodes[k][i]] /= mass[elemsToNodes[k][i]];
-        // }
-
       } );
 
       forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
@@ -466,44 +437,20 @@ struct ComputeTimeStep
 
       lambdaOld = lambdaNew;
 
-      // WaveSolverUtils::dotProduct(sizeNode,pView,pAuxView,dotProductPPaux);
-      // WaveSolverUtils::dotProduct(sizeNode,pAuxView,pAuxView,normPaux);
-
       dotProductPPaux = 0.0;
       normP=0.0;
       WaveSolverUtils::dotProduct( sizeNode, pView, pAuxView, dotProductPPaux );
       WaveSolverUtils::dotProduct( sizeNode, pView, pView, normP );
 
-
-      // dotProductPPaux = 0.0;
-      // normPaux = 0.0;
-      // forAll< WaveSolverBase::EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
-      // {
-      //    dotProductPPaux+= pView[a]*pAuxView[a];
-      // } );
-
-      // forAll< WaveSolverBase::EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
-      // {
-      //    normPaux+= pAuxView[a]*pAuxView[a];
-      // } );
-
-
-
       lambdaNew = dotProductPPaux/normP;
 
       normPaux = 0.0;
       WaveSolverUtils::dotProduct( sizeNode, pAuxView, pAuxView, normPaux );
-      //lambdaNew = LvArray::tensorOps::AiBi<sizeNode>(p,pAux)/LvArray::tensorOps::AiBi<sizeNode>(pAux,pAux);
 
       forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
         pView[a]/= sqrt( normPaux );
       } );
-
-
-      // lambdaNew = LvArray::tensorOps::AiBi<sizeNode>(pView,pAuxView)/LvArray::tensorOps::AiBi<sizeNode>(pAuxView,pAuxView);
-
-      // p = LvArray::tensorOps::normalize<sizeNode>(pAuxView);
 
       if( abs( lambdaNew-lambdaOld )/abs( lambdaNew )<= epsilon )
       {
@@ -520,10 +467,7 @@ struct ComputeTimeStep
     }
     while (counter < 10 && numberIter < nIterMax);
 
-
-
     GEOS_THROW_IF( numberIter> nIterMax, "Power Iteration algorithm does not converge", std::runtime_error );
-
 
     real64 const coeff = sqrt( 2 )/2.0;
 

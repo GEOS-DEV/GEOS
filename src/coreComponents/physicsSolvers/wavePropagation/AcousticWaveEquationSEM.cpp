@@ -331,10 +331,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                            X32,
                                                                            elemsToNodes,
                                                                            mass );
-        printf( "%f\n", dtCompute );
-
-        exit( 2 );
-
       } );
     } );
   } );
