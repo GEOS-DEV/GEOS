@@ -529,10 +529,6 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
         }
       }
 
-      GEOS_LOG_RANK( "Second level matches : loc {" << stringutilities::join( collocatedNodesToSend, ", " ) << "}" );
-      // Looks like the duplicated nodes information is not shared among the ranks.
-      // So it's not possible for a rank that touches a fracture to know it has to send its nodes.
-
       for( localIndex const & li: collocatedNodesToSend )
       {
         if( std::find( matchedBoundaryNodes.begin(), matchedBoundaryNodes.end(), li ) == matchedBoundaryNodes.end() )
@@ -541,7 +537,9 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
         }
       }
 
-      // Managing the requested nodes
+      // Some ranks may also have some nodes that the current rank requires.
+      // In that case, we store the information.
+      // Later in this function, we'll send this request to the rank and it will send those to us.
       array1d< globalIndex > & requestedMatches = requestedMatchesMap[allNeighbors[i].neighborRank()];
       {
         std::vector< globalIndex > intersection;
@@ -550,44 +548,38 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
                                std::back_inserter( intersection ) );
         for( globalIndex const & gn: intersection )
         {
-          requestedMatches.emplace_back( gn );  // TODO find a way to select the lowest rank that will send the node, not all of them...
+          requestedMatches.emplace_back( gn );
         }
       }
     }
   }
 
-  // Managing the requests
+  // We send the requested nodes to the relevant ranks.
+  auto const data = [req = reorganizeRequestedNodes( requestedMatchesMap ), &allNeighbors]( auto i ) -> array1d< globalIndex > const &
   {
-    auto const data = [req = reorganizeRequestedNodes( requestedMatchesMap ), &allNeighbors]( auto i ) -> array1d< globalIndex > const &
-    {
-      return req.at( allNeighbors[i].neighborRank() );
-    };
-    array1d< array1d< globalIndex > > neighborRequestedNodes = exchange( getCommID(), allNeighbors, data );
+    return req.at( allNeighbors[i].neighborRank() );
+  };
+  array1d< array1d< globalIndex > > neighborRequestedNodes = exchange( getCommID(), allNeighbors, data );
 
-    for( integer i = 0; i < numNeighbors; ++i )
+  // Then we store the requested nodes for each receiver.
+  for( integer i = 0; i < numNeighbors; ++i )
+  {
+    std::set< globalIndex > nodesNotFound;
+    array1d< localIndex > & matchedBoundaryNodes = nodeManager.getNeighborData( allNeighbors[i].neighborRank() ).matchedPartitionBoundary();
+    for( globalIndex const & gi: neighborRequestedNodes[i] )
     {
-      std::set< globalIndex > nodesNotFound;
-      NeighborCommunicator & neighbor = allNeighbors[i];
-      if( !neighborRequestedNodes[i].empty() )
+      auto const locIt = g2l.find( gi );
+      if( locIt != g2l.cend() )
       {
-        GEOS_LOG_RANK( "Requested nodes from rank " << neighbor.neighborRank() << " are {" << stringutilities::join( neighborRequestedNodes[i], ", " ) << "}." );
+        matchedBoundaryNodes.emplace_back( locIt->second );
       }
-      array1d< localIndex > & matchedBoundaryNodes = nodeManager.getNeighborData( neighbor.neighborRank() ).matchedPartitionBoundary();
-      for( globalIndex const & gi: neighborRequestedNodes[i] )
+      else
       {
-        auto const locIt = g2l.find( gi );
-        if( locIt != g2l.cend() )
-        {
-          matchedBoundaryNodes.emplace_back( locIt->second );
-        }
-        else
-        {
-          nodesNotFound.insert( gi );
-        }
+        nodesNotFound.insert( gi );
       }
-      GEOS_ERROR_IF( !nodesNotFound.empty(),
-                     "Global nodes {" << stringutilities::join( nodesNotFound, ", " ) << "} requested by rank " << neighbor.neighborRank() << " were not found on this rank." );
     }
+    GEOS_ERROR_IF( !nodesNotFound.empty(),
+                   "Global nodes {" << stringutilities::join( nodesNotFound, ", " ) << "} requested by rank " << allNeighbors[i].neighborRank() << " were not found on this rank." );
   }
 }
 
