@@ -466,59 +466,67 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
 {
   GEOS_MARK_FUNCTION;
   auto const & g2l = nodeManager.globalToLocalMap();
-  std::map< int, array1d< globalIndex > > requestedMatchesMap;  // The key is the neighbor index, not the MPI rank.
+  integer const numNeighbors = LvArray::integerConversion< integer >( allNeighbors.size() );
 
-  // send the size of the partitionBoundaryObjects to neighbors
+  std::map< int, array1d< globalIndex > > requestedMatchesMap;  // The key of the map is the neighbor index in `allNeighbors`, not the MPI rank.
+
   {
-    array1d< array1d< globalIndex > > const neighborPartitionBoundaryObjects = this->buildNeighborPartitionBoundaryObjects( nodeManager, allNeighbors );
+    array1d< array1d< globalIndex > > const neighborBoundaryNodes = this->buildNeighborPartitionBoundaryObjects( nodeManager, allNeighbors );
 
-    integer const numNeighbors = LvArray::integerConversion< integer >( allNeighbors.size() );
     for( integer i = 0; i < numNeighbors; ++i )
     {
-      array1d< localIndex > & matchedPartitionBoundaryObjects = nodeManager.getNeighborData( allNeighbors[i].neighborRank() ).matchedPartitionBoundary();
-      array1d< localIndex > secondLevelMatches;
-      array1d< globalIndex > & requestedMatches = requestedMatchesMap[i];
+      array1d< localIndex > & matchedBoundaryNodes = nodeManager.getNeighborData( allNeighbors[i].neighborRank() ).matchedPartitionBoundary();
+      array1d< localIndex > collocatedNodesToSend;  // The collocated nodes that match neighbor nodes and that we want to send.
 
-      std::set< globalIndex > const candidates( neighborPartitionBoundaryObjects[i].begin(), neighborPartitionBoundaryObjects[i].end() );
+      std::set< globalIndex > const neighborNodes( neighborBoundaryNodes[i].begin(), neighborBoundaryNodes[i].end() );
+      // This loop searches for neighbor nodes that may be the collocated with some nodes on the current domain/rank.
+      // If we find any match, then we tag the node on the current domain/rank in order to send it to the neighbor that will need it.
       for( std::set< globalIndex > const & collocatedNodes: collocatedNodesBuckets )
       {
+        // First step is to find if there is any matching collocated node.
         std::vector< globalIndex > intersection;
         std::set_intersection( collocatedNodes.cbegin(), collocatedNodes.cend(),
-                               candidates.cbegin(), candidates.cend(),
+                               neighborNodes.cbegin(), neighborNodes.cend(),
                                std::back_inserter( intersection ) );
         if( intersection.empty() )
         { continue; }
-        for( globalIndex const & gi: collocatedNodes )  // TODO why not the intersection? Because I want all the nodes at the same location?
+
+        std::vector< globalIndex > nodesMissingOnNeighbor;
+        std::set_difference( collocatedNodes.cbegin(), collocatedNodes.cend(),
+                             intersection.cbegin(), intersection.cend(),
+                             std::back_inserter( nodesMissingOnNeighbor ) );
+        for( globalIndex const & gi: nodesMissingOnNeighbor )
         {
           auto it = g2l.find( gi );
           if( it != g2l.cend() )
           {
-            secondLevelMatches.emplace_back( it->second );
+            collocatedNodesToSend.emplace_back( it->second );
           }
         }
       }
+
       // Managing the requested nodes
+      array1d< globalIndex > & requestedMatches = requestedMatchesMap[i];
       {
         std::vector< globalIndex > intersection;
         std::set_intersection( requested.cbegin(), requested.cend(),
-                               candidates.cbegin(), candidates.cend(),
+                               neighborNodes.cbegin(), neighborNodes.cend(),
                                std::back_inserter( intersection ) );
-        arrayView1d< integer const > const ghostRank = nodeManager.ghostRank().toViewConst();
         for( globalIndex const gn: intersection )
         {
           requestedMatches.emplace_back( gn );  // TODO find a way to select the lowest rank that will send the node, not all of them...
         }
       }
 
-      GEOS_LOG_RANK( "Second level matches : loc {" << stringutilities::join( secondLevelMatches, ", " ) << "}" );
+      GEOS_LOG_RANK( "Second level matches : loc {" << stringutilities::join( collocatedNodesToSend, ", " ) << "}" );
       // Looks like the duplicated nodes information is not shared among the ranks.
       // So it's not possible for a rank that touches a fracture to know it has to send its nodes.
 
-      for( localIndex const & li: secondLevelMatches )
+      for( localIndex const & li: collocatedNodesToSend )
       {
-        if( std::find( matchedPartitionBoundaryObjects.begin(), matchedPartitionBoundaryObjects.end(), li ) == matchedPartitionBoundaryObjects.end() )
+        if( std::find( matchedBoundaryNodes.begin(), matchedBoundaryNodes.end(), li ) == matchedBoundaryNodes.end() )
         {
-          matchedPartitionBoundaryObjects.emplace_back( li );
+          matchedBoundaryNodes.emplace_back( li );
         }
       }
     }
@@ -532,30 +540,29 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
     };
     array1d< array1d< globalIndex > > neighborRequestedNodes = exchange( getCommID(), allNeighbors, data );
 
-    integer const numNeighbors = LvArray::integerConversion< integer >( allNeighbors.size() );
     for( integer i = 0; i < numNeighbors; ++i )
     {
-      std::set< globalIndex > notFound;
+      std::set< globalIndex > nodesNotFound;
       NeighborCommunicator & neighbor = allNeighbors[i];
       if( !neighborRequestedNodes[i].empty() )
       {
         GEOS_LOG_RANK( "Requested nodes from rank " << neighbor.neighborRank() << " are {" << stringutilities::join( neighborRequestedNodes[i], ", " ) << "}." );
       }
-      array1d< localIndex > & matchedPartitionBoundaryObjects = nodeManager.getNeighborData( neighbor.neighborRank() ).matchedPartitionBoundary();
+      array1d< localIndex > & matchedBoundaryNodes = nodeManager.getNeighborData( neighbor.neighborRank() ).matchedPartitionBoundary();
       for( globalIndex const & gi: neighborRequestedNodes[i] )
       {
         auto const locIt = g2l.find( gi );
         if( locIt != g2l.cend() )
         {
-          matchedPartitionBoundaryObjects.emplace_back( locIt->second );
+          matchedBoundaryNodes.emplace_back( locIt->second );
         }
         else
         {
-          notFound.insert( gi );
+          nodesNotFound.insert( gi );
         }
       }
-      GEOS_ERROR_IF( !notFound.empty(),
-                     "Global nodes {" << stringutilities::join( notFound, ", " ) << "} requested by rank " << neighbor.neighborRank() << " were not found on this rank." );
+      GEOS_ERROR_IF( !nodesNotFound.empty(),
+                     "Global nodes {" << stringutilities::join( nodesNotFound, ", " ) << "} requested by rank " << neighbor.neighborRank() << " were not found on this rank." );
     }
   }
 }
