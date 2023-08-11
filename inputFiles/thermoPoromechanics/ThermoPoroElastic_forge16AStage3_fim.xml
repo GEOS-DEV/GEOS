@@ -133,7 +133,7 @@
       defaultDensity="2700"
       defaultBulkModulus="38.1944444444e9"
       defaultShearModulus="21.8253968254e9"
-      defaultThermalExpansionCoefficient="8e-7"/>
+      defaultThermalExpansionCoefficient="10e-7"/>
 
     <BiotPorosity
       name="rockPorosity"
@@ -163,7 +163,7 @@
     <ConstantPermeability
       name="rockPerm"
       permeabilityComponents="{ 4.0e-15, 4.0e-15, 4.0e-15 }"
-      pressureDependenceConstant="3e-7"
+      pressureDependenceConstant="1e-7"
       defaultReferencePressure="20e6"/>
     
     <SinglePhaseConstantThermalConductivity
@@ -317,22 +317,22 @@
     <TableFunction
       name="permxFunc"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ perm_tables/xlin.geos, perm_tables/ylin.geos, perm_tables/zlin.geos }"
-      voxelFile="perm_tables/perm_x.geos"
+      coordinateFiles="{ ../../../GEOSXDATA/DataSets/FORGE/Well16A/permeability/xlin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/permeability/ylin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/permeability/zlin.geos }"
+      voxelFile="../../../GEOSXDATA/DataSets/FORGE/Well16A/permeability/perm_x.geos"
       interpolation="nearest"/>
 
     <TableFunction
       name="permyFunc"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ perm_tables/xlin.geos, perm_tables/ylin.geos, perm_tables/zlin.geos }"
-      voxelFile="perm_tables/perm_y.geos"
+      coordinateFiles="{ ../../../GEOSXDATA/DataSets/FORGE/Well16A/permeability/xlin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/permeability/ylin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/permeability/zlin.geos }"
+      voxelFile="../../../GEOSXDATA/DataSets/FORGE/Well16A/permeability/perm_y.geos"
       interpolation="nearest"/>
 
     <TableFunction
       name="permzFunc"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ perm_tables/xlin.geos, perm_tables/ylin.geos, perm_tables/zlin.geos }"
-      voxelFile="perm_tables/perm_z.geos"
+      coordinateFiles="{ ../../../GEOSXDATA/DataSets/FORGE/Well16A/permeability/xlin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/permeability/ylin.geos, ../../../GEOSXDATA/DataSets/FORGE/Well16A/permeability/zlin.geos }"
+      voxelFile="../../../GEOSXDATA/DataSets/FORGE/Well16A/permeability/perm_z.geos"
       interpolation="nearest"/>
   </Functions>
 
@@ -361,7 +361,7 @@
   <Outputs>
     <VTK
       name="thermoPoroVTKOutput"
-      plotFileRoot="thermoPoro_forge_fim_mu=1cp_presDFNPerm_sourceTemp"/>
+      plotFileRoot="thermoPoro_forge_fim_mu=1cp_alpha=1e-7_presDFNPerm_sourceTemp_10x16x16"/>
 
     <Restart
       name="restartOutput"/>
@@ -370,8 +370,8 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{ 289.9, 474.9, 589.9 }"
-      xMax="{ 300.1, 485.1, 600.1 }"/>
+      xMin="{ 289.9, 471.9, 586.9 }"
+      xMax="{ 300.1, 488.1, 603.1 }"/>
   </Geometry>
 
 </Problem>
