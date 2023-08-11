@@ -435,27 +435,51 @@ CommunicationTools::
   this->buildNeighborPartitionBoundaryObjects( objectManager, allNeighbors );
 }
 
-
-std::map< int, array1d< globalIndex > > reorganizeRequestedNodes( std::map< int, array1d< globalIndex > > const & input )
+/**
+ * @brief During the ghosting process, some nodes may be on multiple ranks in the same time.
+ * But if we want to send those nodes, the rank with the minimal MPI rank really owns the node,
+ * and therefore should be responsible for sending the node to the others.
+ * @param mpiRankToNodes For each involved mpi rank, all the nodes that need to be sent.
+ * @return The sanitized mapping: only the ranks with the minimal MPI rank will be in charged of sending the proper nodes.
+ */
+std::map< int, array1d< globalIndex > > reorganizeRequestedNodes( std::map< int, array1d< globalIndex > > const & mpiRankToNodes )
 {
-  std::map< int, array1d< globalIndex > > output;
-
-  std::map< globalIndex, array1d< int > > tmp;
-  for( auto const & p: input )
+  class MinInt
   {
-    for( globalIndex const & gi: p.second )
+  public:
+    MinInt & operator=( int other )
     {
-      tmp[gi].emplace_back( p.first );
+      m_value = std::min( other, m_value );
+      return *this;
     }
-    output[p.first];
-  }
 
-  for( auto const & p: tmp )
+    operator int() const
+    {
+      return m_value;
+    }
+
+  private:
+    int m_value = std::numeric_limits< int >::max();
+  };
+
+  std::map< int, array1d< globalIndex > > minMpiRankToNodes;
+
+  std::map< globalIndex, MinInt > nodeToMpiRank;
+  for( auto const & [mpiRank, nodes]: mpiRankToNodes )
   {
-    output[*std::min_element( p.second.begin(), p.second.end() )].emplace_back( p.first );  // Manage ownership.
+    for( globalIndex const & gi: nodes )
+    {
+      nodeToMpiRank[gi] = mpiRank;
+    }
+    minMpiRankToNodes[mpiRank];  // Allocate all the ranks. Important, otherwise mpi ranks with empty ranks will not be defined.
   }
 
-  return output;
+  for( auto const & [node, mpiRank]: nodeToMpiRank )
+  {
+    minMpiRankToNodes[mpiRank].emplace_back( node );
+  }
+
+  return minMpiRankToNodes;
 }
 
 
@@ -468,7 +492,7 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
   auto const & g2l = nodeManager.globalToLocalMap();
   integer const numNeighbors = LvArray::integerConversion< integer >( allNeighbors.size() );
 
-  std::map< int, array1d< globalIndex > > requestedMatchesMap;  // The key of the map is the neighbor index in `allNeighbors`, not the MPI rank.
+  std::map< int, array1d< globalIndex > > requestedMatchesMap;  // The key of the map is the MPI rank of the `neighbor`, not the index.
 
   {
     array1d< array1d< globalIndex > > const neighborBoundaryNodes = this->buildNeighborPartitionBoundaryObjects( nodeManager, allNeighbors );
@@ -518,13 +542,13 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
       }
 
       // Managing the requested nodes
-      array1d< globalIndex > & requestedMatches = requestedMatchesMap[i];
+      array1d< globalIndex > & requestedMatches = requestedMatchesMap[allNeighbors[i].neighborRank()];
       {
         std::vector< globalIndex > intersection;
         std::set_intersection( requested.cbegin(), requested.cend(),
                                neighborNodes.cbegin(), neighborNodes.cend(),
                                std::back_inserter( intersection ) );
-        for( globalIndex const gn: intersection )
+        for( globalIndex const & gn: intersection )
         {
           requestedMatches.emplace_back( gn );  // TODO find a way to select the lowest rank that will send the node, not all of them...
         }
@@ -534,9 +558,9 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
 
   // Managing the requests
   {
-    auto const data = [req = reorganizeRequestedNodes( requestedMatchesMap )]( auto i ) -> array1d< globalIndex > const &
+    auto const data = [req = reorganizeRequestedNodes( requestedMatchesMap ), &allNeighbors]( auto i ) -> array1d< globalIndex > const &
     {
-      return req.at( i );
+      return req.at( allNeighbors[i].neighborRank() );
     };
     array1d< array1d< globalIndex > > neighborRequestedNodes = exchange( getCommID(), allNeighbors, data );
 
