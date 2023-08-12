@@ -145,7 +145,7 @@ public:
     /// @return String key to collocated nodes.
     static constexpr char const * collocatedNodesString() { return "collocatedNodes"; }
 
-    static constexpr char const * collocatedNodesOf2dElemString() { return "collocatedNodesOf2dElem"; }
+    static constexpr char const * elem2dToCollocatedNodesString() { return "elem2dToCollocatedNodes"; }
 
 #if GEOSX_USE_SEPARATION_COEFFICIENT
     /// Separation coefficient string.
@@ -273,7 +273,7 @@ public:
 
   std::vector< ArrayOfArrays< globalIndex > > m_otherCollocatedNodes;
 
-  ArrayOfArrays< globalIndex > m_collocatedNodesOf2dElems;  // TODO maybe we can exchange this properly?
+  ArrayOfArrays< globalIndex > m_2dElemToCollocatedNodes;  // TODO maybe we can exchange this properly?
 
 private:
 
