@@ -648,6 +648,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
 void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & dofManager,
                                                            arrayView1d< real64 const > const & localSolution,
                                                            real64 const scalingFactor,
+                                                           real64 const dt,
                                                            DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
@@ -655,6 +656,7 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
   m_solidSolver->applySystemSolution( dofManager,
                                       localSolution,
                                       scalingFactor,
+                                      dt,
                                       domain );
 
   if( !m_useStaticCondensation )
@@ -665,7 +667,7 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
   }
   else
   {
-    updateJump( dofManager, domain );
+    updateJump( dofManager, dt, domain );
   }
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -686,6 +688,7 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
 }
 
 void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
+                                                  real64 const dt,
                                                   DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -711,7 +714,7 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
                                                                     dofManager.rankOffset(),
                                                                     voidMatrix.toViewConstSizes(),
                                                                     voidRhs.toView(),
-                                                                    0.0,
+                                                                    dt,
                                                                     gravityVectorData );
 
     real64 maxTraction = finiteElement::

@@ -1197,8 +1197,10 @@ void
 SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
                                                   arrayView1d< real64 const > const & localSolution,
                                                   real64 const scalingFactor,
+                                                  real64 const dt,
                                                   DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( dt );
   GEOS_MARK_FUNCTION;
   dofManager.addVectorToField( localSolution,
                                solidMechanics::totalDisplacement::key(),

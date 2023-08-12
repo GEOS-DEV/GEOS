@@ -257,8 +257,10 @@ template< typename BASE >
 void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
                                                   arrayView1d< real64 const > const & localSolution,
                                                   real64 const scalingFactor,
+                                                  real64 const dt,
                                                   DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( dt );
   if( m_isThermal )
   {
     DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
