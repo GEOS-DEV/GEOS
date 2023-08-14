@@ -6,6 +6,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
   GEOSX_TPL_TAG: 225-48
 
 jobs:
