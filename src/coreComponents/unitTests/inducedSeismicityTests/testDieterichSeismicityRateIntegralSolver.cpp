@@ -31,6 +31,8 @@ using namespace geos::testing;
 
 CommandLineOptions g_commandLineOptions;
 
+static constexpr real64 relTol = 1.0e-2;
+
 // This unit test checks the accuracy of the integral seismicity rate solver
 // It computes the seismicity in response to a hard coded stressing history to which there exists an analytical solution
 char const * xmlInput =
@@ -43,14 +45,13 @@ char const * xmlInput =
         discretization="singlePhaseTPFA"
         stressSolverName="singlePhaseFlow"
         targetRegions="{ Domain }"
-        initialFaultNormalStress="-155e6"
-        initialFaultShearStress="93e6"
+        initialFaultNormalStress="-100e6"
+        initialFaultShearStress="60e6"
         directEffect="0.01"
         backgroundStressingRate="3.171e-5">
       </DieterichSeismicityRate>
       <SinglePhaseFVM
         name="singlePhaseFlow"
-        logLevel="1"
         discretization="singlePhaseTPFA"
         targetRegions="{ Domain }">
       </SinglePhaseFVM>
@@ -206,14 +207,66 @@ protected:
     setupProblemFromXML( state.getProblemManager(), xmlInput );
   }
 
+  static real64 constexpr time = 0.0;
+  static real64 constexpr dt = 3600.0;
+  static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
+
+  static real64 constexpr cTau = 1e-3;
+  static real64 constexpr aSigma = 1e6;
+  static real64 constexpr t_a = 1e6/3.171e-5;
+
   GeosxState state;
   DieterichSeismicityRate * propagator;
 };
 
 TEST_F( DieterichSeismicityRateIntegralSolverTest, solverTest )
 {
-  // DomainPartition & domain = state.getProblemManager().getDomainPartition();
-  // propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticFirstOrderWaveEquationSEM >( "acousticFirstOrderSolver" );
+  DomainPartition & domain = state.getProblemManager().getDomainPartition();
+  propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< DieterichSeismicityRate >( "dieterichSR" );
+  real64 time_n = time;
+  // run for 1s (100 steps)
+  for( int i=0; i<100; i++ )
+  {
+    propagator->initializeMeanSolidStress(i, domain); 
+    
+    domain.forMeshBodies( [&] ( MeshBody & meshBody )
+    {
+      meshBody.forMeshLevels( [&] ( MeshLevel & mesh )
+      {
+        ElementRegionManager & elemManager = mesh.getElemManager();
+        for( localIndex er = 0; er < elemManager.numRegions(); ++er )
+        {
+          ElementRegionBase & elemRegion = elemManager.getRegion( er );
+          elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const, CellElementSubRegion & subRegion )
+          {
+            // Hard code shear stress history
+            arrayView1d< real64 > const tau_i = subRegion.getField< geos::fields::inducedSeismicity::initialMeanShearStress >();
+            arrayView1d< real64 > const tau = subRegion.getField< geos::fields::inducedSeismicity::meanShearStress >();
+            arrayView1d< real64 > const tau_n = subRegion.getField< geos::fields::inducedSeismicity::meanShearStress_n >();
+
+            real64 curTau = aSigma*std::log(cTau*(time_n+dt)+1) + tau_i[0];
+            real64 curTau_n = aSigma*std::log(cTau*(time_n)+1) + tau_i[0];
+
+            tau.setValues< parallelHostPolicy >( curTau );
+            tau_n.setValues< parallelHostPolicy >( curTau_n );
+
+            propagator->integralSolverStep( time_n, dt, subRegion ); 
+
+            // check seismicity rate
+            arrayView1d< real64 const > const R = subRegion.getField< geos::fields::inducedSeismicity::seismicityRate >();
+
+            // compute analytical solution
+            real64 K = std::exp(curTau/aSigma - tau_i[0]/aSigma);
+            real64 denom = (cTau*(time_n+dt - t_a) + 1)*std::exp((time_n+dt)/t_a) + cTau*t_a;
+            real64 Ranly = K/denom;
+
+            checkRelativeError(R[0], Ranly, relTol);
+          });
+        }
+      });
+    });
+    time_n += dt;
+  }
 
   // check number of seismos and trace length
   ASSERT_EQ( 0, 0 );
