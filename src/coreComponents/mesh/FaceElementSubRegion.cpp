@@ -406,7 +406,12 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
     edgesIds[pg] = edge;
   }
 
-  std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > uniqueEdgeIds;
+  // The `collocatedEdgeIds` map gathers all the collocated edges together.
+  // The key of the map (`std::pair< globalIndex, globalIndex >`) represents the global indices of two nodes.
+  // Those two nodes are the lowest index of collocated nodes. As such, those two nodes may not form a real edge.
+  // But this trick lets us define some kind of hash that allows to compare the location of the edges:
+  // edges sharing the same hash lie in the same position.
+  std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > collocatedEdgeBuckets;
   for( auto const & p: edgesIds )
   {
     std::pair< globalIndex, globalIndex > const & nodes = p.first;
@@ -418,13 +423,11 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
     auto it1 = referenceCollocatedNodes.find( nodes.second );
     globalIndex const n1 = it1 != referenceCollocatedNodes.cend() ? it1->second : nodes.second;
 
-    // `edgeHash` is a trick to compare edges: it's not a real edge,
-    // but edges sharing the same hash will be collocated (since there made of nodes themselves collocated).
     std::pair< globalIndex, globalIndex > const edgeHash = std::minmax( n0, n1 );
-    uniqueEdgeIds[edgeHash].insert( edge );
+    collocatedEdgeBuckets[edgeHash].insert( edge );
   }
 
-  std::size_t const num2dFaces = uniqueEdgeIds.size();
+  std::size_t const num2dFaces = collocatedEdgeBuckets.size();
   arrayView1d< integer const > edgeGhostRanks = edgeManager.ghostRank().toViewConst();
   m_2dFaceToEdge.clear();
   m_2dFaceToEdge.reserve( num2dFaces );
@@ -435,17 +438,15 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
     int const rf = edgeGhostRanks[f] < 0 ? 0 : 1;
     return std::tie( re, e ) < std::tie( rf, f );
   };
-  std::map< localIndex, localIndex > rejectedEdges;  // Mapping from the removed edge to its replacement.
-  for( auto const & p: uniqueEdgeIds )
+  std::map< localIndex, localIndex > collocatedEdges;  // Mapping from the removed edge to its replacement.
+  for( auto const & p: collocatedEdgeBuckets )
   {
     std::set< localIndex > const & input = p.second;
-    localIndex const e = *std::min_element( input.cbegin(), input.cend(), cmp );
-    std::set< localIndex > rejectedEdgeIds( input );
-    rejectedEdgeIds.erase( e );
-    m_2dFaceToEdge.emplace_back( e );
-    for( localIndex const & re: rejectedEdgeIds )
+    localIndex const edge = *std::min_element( input.cbegin(), input.cend(), cmp );
+    m_2dFaceToEdge.emplace_back( edge );
+    for( localIndex const & collocatedEdge: input )  // Including `edge`
     {
-      rejectedEdges[re] = e;
+      collocatedEdges[collocatedEdge] = edge;
     }
   }
 
@@ -469,24 +470,18 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
     m_recalculateConnectionsFor2dFaces.insert( i );
   }
 
-  std::vector< std::vector< localIndex > > tmp( num2dFaces );
-  for( auto i = 0; i < num2dElems; ++i )
+  // Filling the 2d face to 2d elements mappings
   {
-    for( auto const & e: elem2dToEdges[i] )
+    // `tmp` contains the 2d face to 2d elements mappings as a `std` container.
+    // Eventually, it's copied into an `LvArray` container.
+    std::vector< std::vector< localIndex > > tmp( num2dFaces );
+    for( auto i = 0; i < num2dElems; ++i )
     {
-      auto const fIt = m_edgesTo2dFaces.find( e );
-      if( fIt != m_edgesTo2dFaces.cend() )
+      for( auto const & e: elem2dToEdges[i] )
       {
-        localIndex const & f = fIt->second;
-        tmp[f].push_back( i );
-      }
-      else
-      {
-        tmp[m_edgesTo2dFaces.at( rejectedEdges.at( e ) )].push_back( i );
+        tmp[m_edgesTo2dFaces.at( collocatedEdges.at( e ) )].push_back( i );
       }
     }
-  }
-  {
     std::vector< localIndex > sizes;
     sizes.reserve( tmp.size() );
     for( std::vector< localIndex > const & t: tmp )
@@ -508,8 +503,9 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
     }
   }
 
-  // When a fracture element has only one neighbor, let's try to find the other one.
-  // Reconnecting the elements from the side of the fracture.
+  // When a fracture element has only one (or less!) neighbor, let's try to find the other one.
+  // The `ElemPath` provides all the information of a given face: obviously its face index,
+  // but also the element index that touch the face, and the node indices of the face as well.
   struct ElemPath
   {
     localIndex er;
@@ -524,7 +520,9 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
     }
   };
 
-  std::map< std::set< globalIndex >, std::set< ElemPath > > faceNodesToElems;  // TODO so bad: only consider some candidate elements.
+  // We are building the mapping that connect all the reference (duplicated) nodes of any face to the elements they are touching.
+  // Using this nodal information will let use reconnect the the fracture 2d element to its 3d neighbor.
+  std::map< std::set< globalIndex >, std::set< ElemPath > > faceRefNodesToElems;
   auto const buildFaceNodesToElems = [&]( localIndex const er,
                                           localIndex const esr,
                                           ElementRegionBase const & region,
@@ -532,15 +530,12 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
   {
     auto const & elemToFaces = subRegion.faceList().base();
     auto const & faceToNodes = faceManager.nodeList();
-//    auto const & isOnBoundary = subRegion.getDomainBoundaryIndicator();
     for( localIndex ei = 0; ei < elemToFaces.size( 0 ); ++ei )
     {
-//      if( not isOnBoundary[ei] )
-//      { continue; }
-
       for( auto const & face: elemToFaces[ei] )
       {
-        std::set< globalIndex > nodesOfFace;  // Signature of the face nodes.
+        // A set of the global indices of the nodes of the face is used as the "signature" of the face nodes.
+        std::set< globalIndex > nodesOfFace;
         for( localIndex const & n: faceToNodes[face] )
         {
           auto const it = referenceCollocatedNodes.find( nl2g[n] );
@@ -548,37 +543,42 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
           {
             nodesOfFace.insert( it->second );
           }
-          // No else: not finding is legit. Maybe `break`?
+          else
+          {
+            // If all the nodes are not found, it makes no sense to keep on considering the current face as a candidate.
+            // So we can exit the loop.
+            break;
+          }
         }
+        // We still double check that all the nodes of the face were found.
         if( nodesOfFace.size() == LvArray::integerConversion< std::size_t >( faceToNodes[face].size() ) )
         {
           std::vector< localIndex > const nodes( faceToNodes[face].begin(), faceToNodes[face].end() );
-          ElemPath const path = ElemPath{ er, esr, ei, face, nodes };
-          faceNodesToElems[nodesOfFace].insert( path );
+          faceRefNodesToElems[nodesOfFace].insert( ElemPath{ er, esr, ei, face, nodes } );
         }
       }
     }
   };
   elemManager.forElementSubRegionsComplete< CellElementSubRegion >( buildFaceNodesToElems );
 
+  // The `misMatches` array will contain fracture element that did not find all of its neighbors.
+  // This is used to display a more precise error message.
   std::vector< localIndex > misMatches;
+  // Here we loop over all the elements of the fracture.
+  // When there's neighbor missing, we search for a face that would lie on the collocated nodes of the fracture element.
   for( int e2d = 0; e2d < num2dElems; ++e2d )
   {
-    if( m_2dElemToElems.m_toElementIndex.sizeOfArray( e2d ) >= 2 )
+    if( m_2dElemToElems.m_toElementIndex.sizeOfArray( e2d ) >= 2 )  // All the neighbors are known.
     { continue; }
 
-    std::set< globalIndex > refNodes;  // TODO think about those ref node twice.
+    std::set< globalIndex > refNodes;
     if( m_toNodesRelation[e2d].size() != 0 )
     {
-      for( localIndex const & n: m_toNodesRelation[e2d] )  // TODO Refatctor this branch into something neat...
+      for( localIndex const & n: m_toNodesRelation[e2d] )
       {
         globalIndex const & gn = nl2g[n];
         auto const it = referenceCollocatedNodes.find( gn );
-        if( it == referenceCollocatedNodes.cend() )
-        {
-          GEOS_LOG_RANK( "Could not find node " << gn << " in the duplicated nodes dict 1." );
-        }
-        else
+        if( it != referenceCollocatedNodes.cend() )
         {
           refNodes.insert( it->second );
         }
@@ -589,28 +589,21 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
       for( globalIndex const & gn: m_2dElemToCollocatedNodes[e2d] )
       {
         auto const it = referenceCollocatedNodes.find( gn );
-        if( it == referenceCollocatedNodes.cend() )
-        {
-          GEOS_LOG_RANK( "Could not find node " << gn << " in the duplicated nodes dict 2." );
-        }
-        else
+        if( it != referenceCollocatedNodes.cend() )
         {
           refNodes.insert( it->second );
         }
       }
     }
 
-    auto const match = faceNodesToElems.find( refNodes );
-    if( match != faceNodesToElems.cend() )
+    auto const match = faceRefNodesToElems.find( refNodes );
+    if( match != faceRefNodesToElems.cend() )
     {
-//      GEOS_LOG_RANK( "Found a match for " << e2d );
-      bool found = false;
       for( ElemPath const & path: match->second )
       {
+        // This `if` prevents from storing the same data twice.
         if( m_2dElemToElems.m_toElementIndex.sizeOfArray( e2d ) == 0 || m_2dElemToElems.m_toElementIndex[e2d][0] != path.ei )
         {
-          found = true;
-//          GEOS_LOG_RANK( "Found a correction for " << e2d );
           m_2dElemToElems.m_toElementRegion.emplaceBack( e2d, path.er );
           m_2dElemToElems.m_toElementSubRegion.emplaceBack( e2d, path.esr );
           m_2dElemToElems.m_toElementIndex.emplaceBack( e2d, path.ei );
@@ -621,12 +614,6 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
           }
         }
       }
-      if( !found && m_ghostRank[e2d] < 0 )
-      {
-        misMatches.emplace_back(e2d );
-//        GEOS_LOG_RANK( "ERROR " << stringutilities::join( refNodes, ", " ) );
-        GEOS_ERROR( "  -->> match not validated " << stringutilities::join( refNodes, ", " ) << ", ghostRank = " << m_ghostRank[e2d] );
-      }
     }
   }
 
@@ -634,6 +621,7 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
                  "Fracture " << this->getName() << " has elements {" << stringutilities::join( misMatches, ", " ) << "} without two neighbors." );
 
   // Checking that each face has two neighboring elements.
+  // If not, we pop up an error.
   {
     std::vector< localIndex > isolatedFractureElements;
     for( int e2d = 0; e2d < num2dElems; ++e2d )

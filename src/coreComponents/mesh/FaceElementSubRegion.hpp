@@ -111,6 +111,13 @@ public:
 
   virtual void fixUpDownMaps( bool const clearIfUnmapped ) override;
 
+  /**
+   * @brief Fixes the mappings between the @p FaceElementSubRegion and its neighbor regions.
+   * @param nodeManager The node manager
+   * @param edgeManager The edge manager
+   * @param faceManager The face manager
+   * @param elemManager The element manager
+   */
   void fixSecondaryMappings( NodeManager const & nodeManager,
                              EdgeManager const & edgeManager,
                              FaceManager const & faceManager,
