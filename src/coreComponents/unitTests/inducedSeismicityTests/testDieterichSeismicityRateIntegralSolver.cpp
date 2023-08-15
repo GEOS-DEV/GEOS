@@ -224,7 +224,8 @@ TEST_F( DieterichSeismicityRateIntegralSolverTest, solverTest )
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
   propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< DieterichSeismicityRate >( "dieterichSR" );
   real64 time_n = time;
-  // run for 1s (100 steps)
+
+  // run for 100 hours (100 steps)
   for( int i=0; i<100; i++ )
   {
     propagator->initializeMeanSolidStress(i, domain); 
@@ -240,7 +241,7 @@ TEST_F( DieterichSeismicityRateIntegralSolverTest, solverTest )
           elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const, CellElementSubRegion & subRegion )
           {
             // Hard code shear stress history
-            arrayView1d< real64 > const tau_i = subRegion.getField< geos::fields::inducedSeismicity::initialMeanShearStress >();
+            arrayView1d< real64 const > const tau_i = subRegion.getField< geos::fields::inducedSeismicity::initialMeanShearStress >();
             arrayView1d< real64 > const tau = subRegion.getField< geos::fields::inducedSeismicity::meanShearStress >();
             arrayView1d< real64 > const tau_n = subRegion.getField< geos::fields::inducedSeismicity::meanShearStress_n >();
 
@@ -267,9 +268,6 @@ TEST_F( DieterichSeismicityRateIntegralSolverTest, solverTest )
     });
     time_n += dt;
   }
-
-  // check number of seismos and trace length
-  ASSERT_EQ( 0, 0 );
 }
 
 int main( int argc, char * * argv )
