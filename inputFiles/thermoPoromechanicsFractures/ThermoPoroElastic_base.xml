@@ -25,7 +25,7 @@
       defaultViscosity="1e-3"
       referencePressure="0.0"
       referenceTemperature="0.0"
-      compressibility="0.0"
+      compressibility="1.0e-10"
       thermalExpansionCoeff="0.0"
       viscosibility="0.0"
       volumetricHeatCapacity="1.672e2"
@@ -74,8 +74,8 @@
   <Functions>
     <TableFunction
       name="apertureTable"
-      coordinates="{ -1.0e-3, 0.0 }"
-      values="{ 4.01e-3, 5.0e-3 }"/>
+      coordinates="{ -1.0e-4, 0.0 }"
+      values="{ 0.5e-4, 1.0e-4 }"/>
   </Functions>
 
   <Tasks>
