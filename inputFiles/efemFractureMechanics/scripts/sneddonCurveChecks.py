@@ -63,12 +63,11 @@ def sneddon_curve_check_solution(**kwargs):
     #-------- Extract info from XML
     xmlFilePath = "./Sneddon_embeddedFrac_base.xml"
 
-    print("I got at least here")
-
     mechanicalParameters = getMechanicalParametersFromXML(xmlFilePath)
     appliedPressure = getFracturePressureFromXML(xmlFilePath)
 
     # Get length of the fracture
+    xmlFilePath = "./Sneddon_embeddedFrac_benchmark.xml"
     length, originShift = getFractureLengthFromXML(xmlFilePath)
 
     localX = localX - originShift
@@ -108,6 +107,7 @@ def debug():
     appliedPressure = getFracturePressureFromXML(xmlFilePath)
 
     # Get length of the fracture
+    xmlFilePath = "../inputFiles/efemFractureMechanics/Sneddon_embeddedFrac_benchmark.xml"
     length, originShift = getFractureLengthFromXML(xmlFilePath)
 
     print(length)
