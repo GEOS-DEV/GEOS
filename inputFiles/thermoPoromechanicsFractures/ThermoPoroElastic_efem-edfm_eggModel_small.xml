@@ -60,6 +60,7 @@
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"      
       targetRegions="{ Reservoir, Overburden, Underburden, Sideburden, Fracture }"
+      targetObjects="{ Fracture1, Fracture2, Fracture3, Fracture4, Fracture5 }"
       fractureRegion="Fracture"
       logLevel="1"
       discretization="FE1"
