@@ -211,6 +211,7 @@ protected:
   static real64 constexpr dt = 3600.0;
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
 
+  // Parameters of model and analytical solution
   static real64 constexpr cTau = 1e-3;
   static real64 constexpr aSigma = 1e6;
   static real64 constexpr t_a = 1e6/3.171e-5;
@@ -228,8 +229,11 @@ TEST_F( DieterichSeismicityRateIntegralSolverTest, solverTest )
   // run for 100 hours (100 steps)
   for( int i=0; i<100; i++ )
   {
+    // Initialize shear and normal stresses acting on fault (field variables in seismicity rate solver) 
+    // as specified in XML file
     propagator->initializeMeanSolidStress(i, domain); 
     
+    // Loop through CellElementSubRegions of domain to pass the subRegion as input to seismciity rate solver
     domain.forMeshBodies( [&] ( MeshBody & meshBody )
     {
       meshBody.forMeshLevels( [&] ( MeshLevel & mesh )
@@ -240,27 +244,30 @@ TEST_F( DieterichSeismicityRateIntegralSolverTest, solverTest )
           ElementRegionBase & elemRegion = elemManager.getRegion( er );
           elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const, CellElementSubRegion & subRegion )
           {
-            // Hard code shear stress history
+            // Retrieve shear stress fields from seismicity rate solver, to be hard coded
             arrayView1d< real64 const > const tau_i = subRegion.getField< geos::fields::inducedSeismicity::initialMeanShearStress >();
             arrayView1d< real64 > const tau = subRegion.getField< geos::fields::inducedSeismicity::meanShearStress >();
             arrayView1d< real64 > const tau_n = subRegion.getField< geos::fields::inducedSeismicity::meanShearStress_n >();
 
+            // Shear stress history will follow a log history, 
+            // to which one can compute an analytical solution for the seismicity rate
             real64 curTau = aSigma*std::log(cTau*(time_n+dt)+1) + tau_i[0];
             real64 curTau_n = aSigma*std::log(cTau*(time_n)+1) + tau_i[0];
-
             tau.setValues< parallelHostPolicy >( curTau );
             tau_n.setValues< parallelHostPolicy >( curTau_n );
 
+            // Call seismicity rate solver with the modified shear stress history
             propagator->integralSolverStep( time_n, dt, subRegion ); 
 
-            // check seismicity rate
+            // retrive seismicity rate from solver
             arrayView1d< real64 const > const R = subRegion.getField< geos::fields::inducedSeismicity::seismicityRate >();
 
-            // compute analytical solution
+            // compute analytical solution to the hard coded shear stress history
             real64 K = std::exp(curTau/aSigma - tau_i[0]/aSigma);
             real64 denom = (cTau*(time_n+dt - t_a) + 1)*std::exp((time_n+dt)/t_a) + cTau*t_a;
             real64 Ranly = K/denom;
 
+            // Check relative error against analytical solution
             checkRelativeError(R[0], Ranly, relTol);
           });
         }
