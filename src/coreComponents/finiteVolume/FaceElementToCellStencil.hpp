@@ -243,12 +243,16 @@ inline void FaceElementToCellStencilWrapper::
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
   localIndex const ei0  =  m_elementIndices[iconn][0];
+  localIndex const er1  =  m_elementRegionIndices[iconn][1];
+  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
+  localIndex const ei1  =  m_elementIndices[iconn][1];
 
   real64 halfWeight = m_weights[iconn][0];
 
   real64 faceConormal[3];
 
   LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er0][esr0][ei0][0], m_faceNormal[iconn] );
+  if (coefficient[er1][esr1][ei1][0][0] < 0) faceConormal[0] = 0, faceConormal[1] = 0, faceConormal[2] = 0;
   halfWeight *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal ) * m_transMultiplier[iconn];
 
   weight[0][0] = halfWeight;
