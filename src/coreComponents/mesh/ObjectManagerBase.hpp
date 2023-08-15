@@ -901,8 +901,7 @@ public:
 
   /**
    * @brief Get the domain boundary indicator
-   * @return The information in an array of integers, mainly treated as booleans
-   *         (1 meaning the "index" is on the boundary, 2 means something about MPI boundaries).
+   * @return The information in an array of integers, mainly treated as booleans.
    */
   array1d< integer > & getDomainBoundaryIndicator()
   {
@@ -934,10 +933,7 @@ protected:
   /// Array that holds if an object is external.
   array1d< integer > m_isExternal;
 
-  /**
-   * @brief Domain boundary indicator.
-   * @details 1 means the "index" is on the boundary. 2 that there's somthing going on with MPI partioning.
-   */
+  /// Domain boundary indicator: 1 means the "index" is on the boundary.
   array1d< integer > m_domainBoundaryIndicator;
 
   /**

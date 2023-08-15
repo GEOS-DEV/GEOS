@@ -102,9 +102,9 @@ public:
 
 private:
   /// global element index to the local cell block index
-  std::map< globalIndex, localIndex > m_elementToCellBlock;  // TODO use a vector.
+  std::map< globalIndex, localIndex > m_elementToCellBlock;
 
-  /// Cell block index to a mapping from global element index to the local (to the cell block?) element index.
+  /// Cell block index to a mapping from global element index to the local (to the cell block) element index.
   std::map< localIndex , std::map< globalIndex, localIndex > > m_cbe;
 
   /// Cell block index to a mapping from global element index to the faces indices.
@@ -158,7 +158,7 @@ public:
    * Multiple nodes that are considered to be duplicated one of each other make one bucket.
    * @return The number of duplicated nodes buckets.
    */
-  std::size_t size() const
+  [[nodiscard]] std::size_t size() const
   {
     return m_collocatedNodes.size();
   }
@@ -199,24 +199,24 @@ private:
 
 
 /**
- * @brief Organize the duplicated nodes information as an LvArray ArrayOfArrys.
- * @param dn The duplicated nodes informations.
- * @return An iterable of arrays. Each array containing the global indices of the nodes which are duplicated of each others.
+ * @brief Organize the duplicated nodes information as an @p LvArray::ArrayOfArrays.
+ * @param cns The collocated nodes information.
+ * @return An iterable of arrays. Each array containing the global indices of the nodes which are collocated of each others.
  */
-ArrayOfArrays< globalIndex > buildCollocatedNodesMap( CollocatedNodes const & dn )
+ArrayOfArrays< globalIndex > buildCollocatedNodesMap( CollocatedNodes const & cns )
 {
   ArrayOfArrays< globalIndex > result;
 
-  std::vector< int > sizes( dn.size() );
-  for( std::size_t i = 0; i < dn.size(); ++i )
+  std::vector< int > sizes( cns.size() );
+  for( std::size_t i = 0; i < cns.size(); ++i )
   {
-    sizes[i] = dn[i].size();
+    sizes[i] = cns[i].size();
   }
   result.resizeFromCapacities< serialPolicy >( sizes.size(), sizes.data() );
 
-  for( std::size_t i = 0; i < dn.size(); ++i )
+  for( std::size_t i = 0; i < cns.size(); ++i )
   {
-    for( globalIndex const & g: dn[i] )
+    for( globalIndex const & g: cns[i] )
     {
       result.emplaceBack( i, g );
     }
@@ -229,19 +229,20 @@ ArrayOfArrays< globalIndex > buildCollocatedNodesMap( CollocatedNodes const & dn
 /**
  * @brief Build the mapping between the elements and their nodes.
  * @param mesh The mesh for which to compute the mapping.
- * @return The mapping.
+ * @return The mapping (that allows heterogeneous meshes).
  */
 ArrayOfArrays< localIndex > build2dElemTo2dNodes( vtkSmartPointer< vtkDataSet > mesh )
 {
+  // First allocate...
   vtkIdType const numCells = mesh->GetNumberOfCells();
   std::vector< localIndex > sizes( numCells );
   for( auto i = 0; i < numCells; ++i )
   {
     sizes[i] = mesh->GetCell( i )->GetNumberOfPoints();
   }
-
   ArrayOfArrays< localIndex > result;
   result.resizeFromCapacities< geos::serialPolicy >( sizes.size(), sizes.data() );
+  // ... then fill with data.
   for( auto i = 0; i < numCells; ++i )
   {
     vtkIdList * const pointIds = mesh->GetCell( i )->GetPointIds();
@@ -344,19 +345,17 @@ ArrayOfArrays< localIndex > buildFace2dToElems2d( vtkPolyData * edges,
 
 /**
  * @brief For each 2d face (a segment in 3d), returns one single overlapping 3d edge (and not 2).
- * @param edges The edges as computed by vtk.
- * @param collocatedNodes The collocated nodes information.
- * @param nodeToEdges The node to edges mapping.
+ * @param globalPtIds[in] The global point ids.
+ * @param edges[in] The edges as computed by vtk.
+ * @param collocatedNodes[in] The collocated nodes information.
+ * @param nodeToEdgesbin] The node to edges mapping.
  * @return The 2d face to 3d edge mapping.
- *
- * @see FaceBlockABC::get2dFaceToEdge for more information.
  */
-array1d< localIndex > buildFace2dToEdge( vtkSmartPointer< vtkDataSet > mesh,
+array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
                                          vtkPolyData * edges,
                                          CollocatedNodes const & collocatedNodes,
                                          ArrayOfArraysView< localIndex const > nodeToEdges )
 {
-  vtkIdTypeArray const * globalPtIds = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
   std::map< globalIndex , std::vector< localIndex > > n2e;
   for( auto i = 0; i < nodeToEdges.size(); ++i )
   {
@@ -386,9 +385,10 @@ array1d< localIndex > buildFace2dToEdge( vtkSmartPointer< vtkDataSet > mesh,
       }
     }
     std::map< vtkIdType, int > edgeCount;
-    for( auto const & d: allDuplicatedNodesOfEdge )
+    for( vtkIdType const & d: allDuplicatedNodesOfEdge )
     {
-      for( localIndex const & val: n2e[d] )  // TODO allDuplicatedNodesOfEdge contains global indices and nodeToEdges uses local indices as input key.
+      localIndex const dd = LvArray::integerConversion< localIndex >( d );
+      for( localIndex const & val: n2e[dd] )
       {
         edgeCount[val]++;
       }
@@ -525,10 +525,10 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
 
     for( vtkIdType const & n: allDuplicatedNodes )
     {
-      auto const iter = nodesToCellsFull.find( n );
-      if( iter != nodesToCellsFull.cend() )
+      auto const it = nodesToCellsFull.find( n );
+      if( it != nodesToCellsFull.cend() )
       {
-        std::vector< vtkIdType > const & tmp = iter->second;
+        std::vector< vtkIdType > const & tmp = it->second;
         std::set< vtkIdType > const cells{ tmp.cbegin(), tmp.cend() };
         nodesToCells[n] = cells;
       }
@@ -640,41 +640,37 @@ ArrayOfArrays< localIndex > buildElem2dToNodes( vtkIdType num2dElements,
 
 /**
  * @brief Computes the local to global mappings for the 2d elements of the face mesh.
- * @param faceMesh The face mesh for which to compute the mapping.
- * @param mesh The volumic mesh.
+ * @param faceMeshCellGlobalIds The cell global ids for the face mesh.
+ * @param meshCellGlobalIds The cell global ids for the volumic mesh.
  * @return The mapping as an array.
  * @details The vtk global ids of the elements of the @p faceMesh are used,
  * but they are shifted by the maximum element global id of the @p mesh,
  * to avoid any collision.
  */
-array1d< globalIndex > buildLocalToGlobal( vtkSmartPointer< vtkDataSet > faceMesh,
-                                           vtkSmartPointer< vtkDataSet > mesh )
+array1d< globalIndex > buildLocalToGlobal( vtkIdTypeArray const * faceMeshCellGlobalIds,
+                                           vtkIdTypeArray const * meshCellGlobalIds )
 {
-  array1d< globalIndex > l2g( faceMesh->GetNumberOfCells() );
+  vtkIdType const numCells = faceMeshCellGlobalIds ? faceMeshCellGlobalIds->GetNumberOfTuples() : 0;
+  array1d< globalIndex > l2g( numCells );
 
   // In order to avoid any cell global id collision, we gather the max cell global id over all the ranks.
   // Then we use this maximum as on offset.
   // TODO This does not take into account multiple fractures.
-  vtkIdType const maxLocalCellId = vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() )->GetMaxId();
+  vtkIdType const maxLocalCellId = meshCellGlobalIds->GetMaxId();
   vtkIdType const maxGlobalCellId = MpiWrapper::max( maxLocalCellId );
   vtkIdType const cellGlobalOffset = maxGlobalCellId + 1;
 
-  vtkIdTypeArray const * globalIds = vtkIdTypeArray::FastDownCast( faceMesh->GetCellData()->GetGlobalIds() );
   for( auto i = 0; i < l2g.size(); ++i )
   {
-    l2g[i] = globalIds->GetValue( i ) + cellGlobalOffset;
+    // Note that `l2g.size()` is zero if `faceMeshGlobalIds` is 0 too.
+    // This prevents from call a member on a null instance.
+    l2g[i] = faceMeshCellGlobalIds->GetValue( i ) + cellGlobalOffset;
   }
 
   return l2g;
 }
 
 
-/**
- * @brief Convert the @p faceMesh into a @p FaceBlock and registers it into the @p cellBlockManager.
- * @param faceMesh The mesh representing the fracture.
- * @param mesh The volumic mesh (for neighboring and global indices purposes).
- * @param cellBlockManager The manager in which the resulting @p FaceBlock will be stored.
- */
 void importFractureNetwork( string const & faceBlockName,
                             vtkSmartPointer< vtkDataSet > faceMesh,
                             vtkSmartPointer< vtkDataSet > mesh,
@@ -700,7 +696,7 @@ void importFractureNetwork( string const & faceBlockName,
   ArrayOfArrays< localIndex > elem2dToNodes = buildElem2dToNodes( num2dElements, faceToNodes.toViewConst(), elem2dTo3d.elem2dToFaces.toViewConst() );
 
   ArrayOfArrays< localIndex > face2dToElems2d = buildFace2dToElems2d( edges, faceMesh );
-  array1d< localIndex > face2dToEdge = buildFace2dToEdge( mesh, edges, collocatedNodes, nodeToEdges.toViewConst() );
+  array1d< localIndex > face2dToEdge = buildFace2dToEdge( vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() ), edges, collocatedNodes, nodeToEdges.toViewConst() );
   ArrayOfArrays< localIndex > const elem2dToFace2d = buildElem2dToFace2d( num2dElements, face2dToElems2d.toViewConst() );
   ArrayOfArrays< localIndex > elem2DToEdges = buildElem2dToEdges( num2dElements, face2dToEdge.toViewConst(), elem2dToFace2d.toViewConst() );
 
@@ -717,8 +713,10 @@ void importFractureNetwork( string const & faceBlockName,
   faceBlock.set2dElemToFaces( std::move( elem2dTo3d.elem2dToFaces ) );
   faceBlock.set2dElemToElems( std::move( elem2dTo3d.elem2dToElem3d ) );
 
-  faceBlock.setLocalToGlobalMap( buildLocalToGlobal( faceMesh, mesh ) );
-  // TODO there are build* functions and compute* functions.
+  faceBlock.setLocalToGlobalMap(
+    buildLocalToGlobal( vtkIdTypeArray::FastDownCast( faceMesh->GetCellData()->GetGlobalIds() ),
+                        vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() ) )
+  );
   ArrayOfArrays< globalIndex > cn = buildCollocatedNodesMap( collocatedNodes );
   ArrayOfArrays< globalIndex > cne = buildCollocatedNodesOf2dElemsMap( build2dElemTo2dNodes( faceMesh ), cn );
 

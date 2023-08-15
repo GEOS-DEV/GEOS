@@ -302,65 +302,66 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
   std::set< localIndex > faceAdjacencySet;
   std::vector< std::vector< std::set< localIndex > > > elementAdjacencySet( elemManager.numRegions() );
 
+  // Add the nodes, edges, and faces connected to the volumic element.
   auto const addVolumicSupport = [&]( localIndex const er,
                                       localIndex const esr,
                                       auto const & subRegion )
   {
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = subRegion.nodeList();
     arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
-    for( auto const elementIndex: elementAdjacencySet[er][esr] )
+
+    for( localIndex const ei: elementAdjacencySet[er][esr] )
     {
-      for( localIndex a = 0; a < elemsToNodes.size( 1 ); ++a )
+      for( localIndex const & ni: elemsToNodes[ei] )
       {
-        nodeAdjacencySet.insert( elemsToNodes[elementIndex][a] );
+        nodeAdjacencySet.insert( ni );
       }
-
-      for( localIndex a = 0; a < elemsToFaces.size( 1 ); ++a )
+      for( localIndex const fi: elemsToFaces[ei] )
       {
-        faceAdjacencySet.insert( elemsToFaces[elementIndex][a] );
-
-        localIndex const faceIndex = elemsToFaces[elementIndex][a];
-        localIndex const numEdges = faceToEdges.sizeOfArray( faceIndex );
-        for( localIndex b = 0; b < numEdges; ++b )
+        faceAdjacencySet.insert( fi );
+        for( auto const & edi: faceToEdges[fi] )
         {
-          edgeAdjacencySet.insert( faceToEdges( faceIndex, b ) );
+          edgeAdjacencySet.insert( edi );
         }
       }
     }
   };
 
+  // Add the nodes, edges, and faces connected to the fracture element.
   auto const addFractureSupport = [&]( localIndex const er,
                                        localIndex const esr,
                                        FaceElementSubRegion const & subRegion )
   {
-    ArrayOfArraysView< localIndex const > const elems2dToNodes = subRegion.nodeList().toViewConst();  // TODO What about edges and faces?
-    ArrayOfArraysView< localIndex const > const elems2dToFaces = subRegion.faceList().toViewConst();
+    ArrayOfArraysView< localIndex const > const elems2dToNodes = subRegion.nodeList().toViewConst();
     ArrayOfArraysView< localIndex const > const elem2dToEdges = subRegion.edgeList().toViewConst();
-    for( auto const ei: elementAdjacencySet[er][esr] )
+    ArrayOfArraysView< localIndex const > const elems2dToFaces = subRegion.faceList().toViewConst();
+
+    for( localIndex const ei: elementAdjacencySet[er][esr] )
     {
-      for( auto const & ni: elems2dToNodes[ei] )
+      for( localIndex const & ni: elems2dToNodes[ei] )
       {
         nodeAdjacencySet.insert( ni );
       }
-      for( auto const & edi: elem2dToEdges[ei] )
+      for( localIndex const & edi: elem2dToEdges[ei] )
       {
         edgeAdjacencySet.insert( edi );
       }
-      for( auto const & fi: elems2dToFaces[ei] )
+      for( localIndex const & fi: elems2dToFaces[ei] )
       {
         faceAdjacencySet.insert( fi );
       }
     }
   };
 
-  auto const addDuplicatedFractureNodes = [&]( localIndex const er,
+  // Add all the collocated nodes of the fracture element.
+  auto const addCollocatedFractureNodes = [&]( localIndex const er,
                                                localIndex const esr,
                                                FaceElementSubRegion const & subRegion )
   {
-    arrayView1d< globalIndex const > l2g = nodeManager.localToGlobalMap();
-    unordered_map< globalIndex, localIndex > const & g2l = nodeManager.globalToLocalMap();
+    auto const & l2g = nodeManager.localToGlobalMap();
+    auto const & g2l = nodeManager.globalToLocalMap();
 
-    std::set< globalIndex > newNodes;
+    std::set< localIndex > newNodes;
     for( localIndex const & ln: nodeAdjacencySet )
     {
       globalIndex const & gn = l2g[ln];
@@ -375,11 +376,7 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
             auto it = g2l.find( n );
             if( it != g2l.cend() )
             {
-              if( nodeAdjacencySet.find( it->second ) == nodeAdjacencySet.cend() )
-              {
-//                GEOS_LOG_RANK( "Inserting collocated node loc " << it->second << " glob " << it->first );
-                newNodes.insert( it->second );
-              }
+              newNodes.insert( it->second );
             }
           }
         }
@@ -408,7 +405,7 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
       }
     }
 
-    for( typename dataRepository::indexType er = 0; er < elemManager.numRegions(); ++er )
+    for( localIndex er = 0; er < elemManager.numRegions(); ++er )
     {
       ElementRegionBase const & elemRegion = elemManager.getRegion( er );
 
@@ -428,11 +425,12 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
       elemRegion.forElementSubRegionsIndex< FaceElementSubRegion >( [&]( localIndex const esr,
                                                                          FaceElementSubRegion const & subRegion )
       {
-        addDuplicatedFractureNodes( er, esr, subRegion );
+        addCollocatedFractureNodes( er, esr, subRegion );
       } );
     }
   }
 
+  // Convert the `std::set` containers to `LvArray` containers.
   nodeAdjacencyList.resize( LvArray::integerConversion< localIndex >( nodeAdjacencySet.size()));
   std::copy( nodeAdjacencySet.begin(), nodeAdjacencySet.end(), nodeAdjacencyList.begin() );
 
@@ -456,7 +454,6 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
 
     }
   }
-
 }
 
 void MeshLevel::generateSets()

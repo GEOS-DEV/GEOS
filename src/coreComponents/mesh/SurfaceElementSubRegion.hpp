@@ -234,6 +234,13 @@ public:
 
   using ElementSubRegionBase::getElementType;
 
+  /**
+   * @brief Returns the type of element @p ei.
+   * @param ei The local index of the element.
+   * @return The type.
+   * @warning The @p SurfaceElementSubRegion is @e de @e facto heterogeneous.
+   * This is a first attempt to reflect this in the interface. Use with great care.
+   */
   ElementType getElementType( localIndex ei ) const;
 
 protected:

@@ -119,28 +119,14 @@ void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager,
   arrayView1d< integer > const isNodeOnDomainBoundary = getDomainBoundaryIndicator();
   isNodeOnDomainBoundary.zero();
 
-  // Here, we need to take into account the fact that the fractures elements
-  // share the same nodes as the matrix.
-  // So nodes can be considered as boundary objects while the face built on top of it may not.
+  // Nodes of faces and edges must share the same "boundary status".
 
-  // We'll proceed as follows.
-  //
-  // Faces which are tagged as boundary faces will have their support nodes on the boundary as well.
-  // (But keep in mind that some nodes may sit astride two faces with different statuses.)
-  // Face nodes which are not on the boundary may however be tagged "boundary"
-  // if they connect to a 2d element which is itself on the boundary (because those 2d elements share those nodes).
-  //
-  // To solve this issue, we loop over all the fracture 2d elements.
-  // If they have only one neighboring matrix element,
-  // this means that the fracture 2d element is on the boundary.
-  // As such, we tag the support nodes of the unique neighboring face as boundary nodes.
   ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
-
   forAll< parallelHostPolicy >( faceManager.size(), [=]( localIndex const faceIndex )
   {
     if( isFaceOnDomainBoundary[faceIndex] == 1 )
     {
-      for( localIndex const nodeIndex : faceToNodes[faceIndex] )
+      for( localIndex const & nodeIndex : faceToNodes[faceIndex] )
       {
         isNodeOnDomainBoundary[nodeIndex] = 1;
       }
@@ -148,12 +134,11 @@ void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager,
   } );
 
   auto const & edgeToNodes = edgeManager.nodeList().toViewConst();
-
   forAll< parallelHostPolicy >( edgeManager.size(), [=]( localIndex const edgeIndex )
   {
     if( isEdgeOnDomainBoundary[edgeIndex] == 1 )
     {
-      for( localIndex const nodeIndex : edgeToNodes[edgeIndex] )
+      for( localIndex const & nodeIndex : edgeToNodes[edgeIndex] )
       {
         isNodeOnDomainBoundary[nodeIndex] = 1;
       }
@@ -184,9 +169,8 @@ void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
                                                                          toCellBlock,
                                                                          m_toElements );
 
-  // TODO connect nodes to 2d elements!
-  auto const connect2dElements = [&]( localIndex er,
-                                      SurfaceElementRegion const & region )
+  auto const connectNodesTo2dElements = [&]( localIndex er,
+                                             SurfaceElementRegion const & region )
   {
     if( region.subRegionType() != SurfaceElementRegion::SurfaceSubRegionType::faceElement )
     {
@@ -200,8 +184,6 @@ void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
     {
       for( auto const ni: elem2dToNodes[ei] )
       {
-        if( ni < 0 )
-        { continue; }
         m_toElements.m_toElementRegion.emplaceBack( ni, er );
         m_toElements.m_toElementSubRegion.emplaceBack( ni, esr );
         m_toElements.m_toElementIndex.emplaceBack( ni, ei );
@@ -209,8 +191,7 @@ void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
     }
   };
   // Connecting all the 3d elements (information is already in the m_toElements mappings) and all the 2d elements.
-  elemRegionManager.forElementRegionsComplete< SurfaceElementRegion >( connect2dElements );
-  // TODO do the same for the EdgeManager
+  elemRegionManager.forElementRegionsComplete< SurfaceElementRegion >( connectNodesTo2dElements );
 }
 
 void NodeManager::setupRelatedObjectsInRelations( EdgeManager const & edgeManager,
