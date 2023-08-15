@@ -462,13 +462,18 @@ void SolidMechanicsConformingFracturesVEM::computeFaceDisplacementJump( DomainPa
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
+    EdgeManager const & edgeManager = mesh.getEdgeManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
+
+    ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+    ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager.edgeList().toViewConst();
+    arrayView2d< localIndex const > const & edgeToNodeMap = edgeManager.nodeList().toViewConst();
+    arrayView2d< real64 const > faceCenters = faceManager.faceCenter();
+    arrayView2d< real64 const > faceNormals = faceManager.faceNormal();
+    arrayView1d< real64 const > faceAreas = faceManager.faceArea();
 
     // Get the coordinates for all nodes
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
-
-    ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
-
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u =
       nodeManager.getField< solidMechanics::totalDisplacement >();
 
@@ -490,8 +495,27 @@ void SolidMechanicsConformingFracturesVEM::computeFaceDisplacementJump( DomainPa
           localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
 
           array1d< real64 > nodalArea0, nodalArea1;
-          computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][0], nodalArea0 );
-          computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][1], nodalArea1 );
+          //computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][0], nodalArea0 );
+          //computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][1], nodalArea1 );
+          computeProjectors( elemsToFaces[kfe][0],
+                            nodePosition, 
+                            faceToNodeMap, 
+                            faceToEdgeMap,
+                            edgeToNodeMap,
+                            faceCenters,
+                            faceNormals,
+                            faceAreas,
+                            nodalArea0);
+          
+          computeProjectors( elemsToFaces[kfe][1],
+                            nodePosition, 
+                            faceToNodeMap, 
+                            faceToEdgeMap,
+                            edgeToNodeMap,
+                            faceCenters,
+                            faceNormals,
+                            faceAreas,
+                            nodalArea1);
 
           real64 globalJumpTemp[ 3 ] = { 0 };
           for( localIndex a = 0; a < numNodesPerFace; ++a )
@@ -1218,9 +1242,9 @@ void SolidMechanicsConformingFracturesVEM::
 
         for( localIndex a = 0; a < numNodesPerFace; ++a )
         {
-          real64 const localNodalForce[ 3 ] = { traction( kfe, 0 ) * faceAreas[a],
-                                                traction( kfe, 1 ) * faceAreas[a],
-                                                traction( kfe, 2 ) * faceAreas[a] };
+          real64 const localNodalForce[ 3 ] = { traction( kfe, 0 ) * nodalArea[a],
+                                                traction( kfe, 1 ) * nodalArea[a],
+                                                traction( kfe, 2 ) * nodalArea[a] };
           real64 globalNodalForce[ 3 ];
           LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( globalNodalForce, rotationMatrix[ kfe ], localNodalForce );
 
@@ -1236,9 +1260,9 @@ void SolidMechanicsConformingFracturesVEM::
             nodeRHS[3*a+i] = +globalNodalForce[i] * normalSign[ kf ];
 
             // Opposite sign w.r.t. to the same formulation as above
-            dRdT( 3*a+i, 0 ) = rotationMatrix( kfe, i, 0 ) * normalSign[ kf ] * faceAreas[a];
-            dRdT( 3*a+i, 1 ) = rotationMatrix( kfe, i, 1 ) * normalSign[ kf ] * faceAreas[a];
-            dRdT( 3*a+i, 2 ) = rotationMatrix( kfe, i, 2 ) * normalSign[ kf ] * faceAreas[a];
+            dRdT( 3*a+i, 0 ) = rotationMatrix( kfe, i, 0 ) * normalSign[ kf ] * nodalArea[a];
+            dRdT( 3*a+i, 1 ) = rotationMatrix( kfe, i, 1 ) * normalSign[ kf ] * nodalArea[a];
+            dRdT( 3*a+i, 2 ) = rotationMatrix( kfe, i, 2 ) * normalSign[ kf ] * nodalArea[a];
           }
         }
 
@@ -1549,6 +1573,7 @@ void SolidMechanicsConformingFracturesVEM::assembleStabilization( MeshLevel cons
 
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
+  EdgeManager const & edgeManager = mesh.getEdgeManager();
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
   string const & tracDofKey = dofManager.getKey( contact::traction::key() );
@@ -1587,7 +1612,12 @@ void SolidMechanicsConformingFracturesVEM::assembleStabilization( MeshLevel cons
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
 
   // Get area and rotation matrix for all faces
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager.edgeList().toViewConst();
+  arrayView2d< localIndex const > const & edgeToNodeMap = edgeManager.nodeList().toViewConst();
+  arrayView2d< real64 const > faceCenters = faceManager.faceCenter();
+  arrayView2d< real64 const > faceNormals = faceManager.faceNormal();
+
   arrayView1d< real64 const > const & faceArea = faceManager.faceArea();
   arrayView3d< real64 const > const &
   faceRotationMatrix = fractureSubRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
@@ -1686,8 +1716,31 @@ void SolidMechanicsConformingFracturesVEM::assembleStabilization( MeshLevel cons
           }
         }
         array1d< real64 > nodalArea0, nodalArea1;
-        computeFaceNodalArea( nodePosition, faceToNodeMap, faceMap[sei[iconn][0]][0], nodalArea0 );
-        computeFaceNodalArea( nodePosition, faceToNodeMap, faceMap[sei[iconn][1]][id1], nodalArea1 );
+        //computeFaceNodalArea( nodePosition, faceToNodeMap, faceMap[sei[iconn][0]][0], nodalArea0 );
+        //computeFaceNodalArea( nodePosition, faceToNodeMap, faceMap[sei[iconn][1]][id1], nodalArea1 );
+        array1d< real64 > nodalArea;
+        localIndex const faceIndex0 = faceMap[sei[iconn][0]][0];
+        localIndex const faceIndex1 = faceMap[sei[iconn][1]][id1];
+        computeProjectors(  faceIndex0,
+                            nodePosition, 
+                            faceToNodeMap, 
+                            faceToEdgeMap,
+                            edgeToNodeMap,
+                            faceCenters,
+                            faceNormals,
+                            faceArea,
+                            nodalArea0);
+
+        computeProjectors(  faceIndex1,
+                            nodePosition, 
+                            faceToNodeMap, 
+                            faceToEdgeMap,
+                            edgeToNodeMap,
+                            faceCenters,
+                            faceNormals,
+                            faceArea,
+                            nodalArea1);
+        
         real64 const areafac = nodalArea0[node0index0] * nodalArea1[node0index1] + nodalArea0[node1index0] * nodalArea1[node1index1];
 
         // first index: face, second index: element (T/B), third index: dof (x, y, z)
