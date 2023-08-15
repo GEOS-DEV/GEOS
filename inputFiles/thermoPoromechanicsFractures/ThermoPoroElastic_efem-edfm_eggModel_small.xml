@@ -97,14 +97,14 @@
          xMin="{479.0, 0.0, -500.0}" 
          name="right" />     
 
-    <BoundedPlane
+    <Rectangle
       name="Fracture1"
       origin="{ 110, 340, 40 }"
       normal="{ -0.707, 0.707, 0 }"
       lengthVector="{ 0.707, 0.707, 0 }"
       widthVector="{ 0, 0, 1 }"
       dimensions="{ 80, 60 }"/>
-    <BoundedPlane
+    <Rectangle
       name="Fracture2"
       origin="{ 140, 280, 35 }"
       normal="{ 1, -1, 1 }"
@@ -112,7 +112,7 @@
       widthVector="{ -0.5, 0, 0.5 }"
       dimensions="{ 120, 30 }"/>
 
-    <BoundedPlane
+    <Rectangle
       name="Fracture3"
       origin="{ 160, 220, 1.5 }"
       normal="{ 1, -1, 1 }"
@@ -120,7 +120,7 @@
       widthVector="{ -0.5, 0, 0.5 }"
       dimensions="{ 160, 200 }"/>
 
-    <BoundedPlane
+    <Rectangle
       name="Fracture4"
       origin="{ 200, 180, 40 }"
       normal="{ -0.707, 0.707, 0 }"
@@ -128,7 +128,7 @@
       widthVector="{ 0, 0, 1 }"
       dimensions="{ 180, 55 }"/>
 
-    <BoundedPlane
+    <Rectangle
       name="Fracture5"
       origin="{ 350, 195, 40 }"
       normal="{ -0.5, 0, 0.5 }"
@@ -136,7 +136,7 @@
       lengthVector="{ 0.3333, 0.6666, 0.3333 }"
       dimensions="{ 140, 40 }"/>
       
-    <!-- <BoundedPlane
+    <!-- <Rectangle
       name="Fracture5"
       origin="{ 220, 100, 40 }"
       normal="{ 1, -1, 1 }"
