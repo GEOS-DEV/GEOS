@@ -239,7 +239,7 @@ public:
                                                                      inputConstitutiveType,
                                                                      m_inputDofNumber,
                                                                      m_rankOffset,
-                                                                     0.0,
+                                                                     0.0, //dt but not needed
                                                                      m_inputSparsityPattern );
   }
 

@@ -190,7 +190,7 @@ public:
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      solver->applySystemSolution( dofManager, localSolution, scalingFactor, dt , domain );
+      solver->applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
     } );
   }
 
