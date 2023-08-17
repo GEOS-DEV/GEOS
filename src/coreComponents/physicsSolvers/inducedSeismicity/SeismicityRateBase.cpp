@@ -69,9 +69,6 @@ void SeismicityRateBase::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase & subRegion )
     {
-      subRegion.registerField< inducedSeismicity::meanStress >( getName() ).
-        reference().resizeDimension< 1 >( 6 );
-
       subRegion.registerField< inducedSeismicity::initialMeanNormalStress >( getName() );
       subRegion.registerField< inducedSeismicity::initialMeanShearStress >( getName() );
 
@@ -108,12 +105,8 @@ void SeismicityRateBase::initializePreSubGroups()
 void SeismicityRateBase::updateMeanSolidStress( ElementSubRegionBase & subRegion )
 {
   // Retrieve field variables
-  arrayView2d< real64 > const meanStress = subRegion.getField< inducedSeismicity::meanStress >();
-  meanStress.setValues< parallelHostPolicy >( 0.0 );
-
   arrayView1d< real64 > const sig = subRegion.getField< inducedSeismicity::meanNormalStress >();
   arrayView1d< real64 > const sig_n = subRegion.getField< inducedSeismicity::meanNormalStress_n >();
-  
   arrayView1d< real64 > const tau = subRegion.getField< inducedSeismicity::meanShearStress >();
   arrayView1d< real64 > const tau_n = subRegion.getField< inducedSeismicity::meanShearStress_n >();
 
@@ -132,22 +125,26 @@ void SeismicityRateBase::updateMeanSolidStress( ElementSubRegionBase & subRegion
     tau_n[k] = tau[k];
 
     // Compute average stress state
+    array1d< real64 > meanStress( 6 );
     for( int q = 0; q < stress.size(1); q++ ) 
     {
-      LvArray::tensorOps::add< 6 >( meanStress[k], stress[k][q] );
+      LvArray::tensorOps::add< 6 >( meanStress, stress[k][q] );
     }
-    LvArray::tensorOps::scale< 6 >(meanStress[k], 1./stress.size(1));
+    LvArray::tensorOps::scale< 6 >(meanStress, 1./stress.size(1));
 
     // Project average stress state to fault
-    sig[k] = LvArray::tensorOps::AiBi< 6 >( meanStress[k], m_faultNormalVoigt);
-    tau[k] = LvArray::tensorOps::AiBi< 6 >( meanStress[k], m_faultShearVoigt);
+    sig[k] = LvArray::tensorOps::AiBi< 6 >( meanStress, m_faultNormalVoigt);
+    tau[k] = LvArray::tensorOps::AiBi< 6 >( meanStress, m_faultShearVoigt);
   } );
 }
 
-void SeismicityRateBase::initializeMeanSolidStress(integer const cycleNumber, DomainPartition & domain)
+void SeismicityRateBase::initializeMeanSolidStress(real64 const time_n, integer const cycleNumber, DomainPartition & domain)
 {
   // Only call initialization step before stress solver has been called for first time step
   if ( cycleNumber == 0 ) {
+    // Call solverStep of stress solver with dt=0 to initialize stresses in the matrix
+    m_stressSolver->solverStep(time_n, 0.0, cycleNumber, domain );
+
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
                                                                  arrayView1d< string const > const & regionNames )
@@ -160,7 +157,6 @@ void SeismicityRateBase::initializeMeanSolidStress(integer const cycleNumber, Do
         // Retrieve field variables
         arrayView1d< real64 const > const sig = subRegion.getField< inducedSeismicity::meanNormalStress >();
         arrayView1d< real64 > const sig_i = subRegion.getField< inducedSeismicity::initialMeanNormalStress >();
-  
         arrayView1d< real64 const > const tau = subRegion.getField< inducedSeismicity::meanShearStress >();
         arrayView1d< real64 > const tau_i = subRegion.getField< inducedSeismicity::initialMeanShearStress >();
 

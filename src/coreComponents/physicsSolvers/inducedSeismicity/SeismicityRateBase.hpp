@@ -67,7 +67,7 @@ public:
    * @param cycleNumber current cycle number
    * @param domain The DomainPartition of the problem
   */
-  void initializeMeanSolidStress( integer const cycleNumber, DomainPartition & domain );
+  void initializeMeanSolidStress( real64 const time_n, integer const cycleNumber, DomainPartition & domain );
   
 protected:
 

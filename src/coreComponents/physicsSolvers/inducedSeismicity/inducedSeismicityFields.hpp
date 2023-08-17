@@ -35,7 +35,7 @@ DECLARE_FIELD( directEffect,
                "directEffect",
                array1d< real64 >,
                0,
-               LEVEL_0,
+               LEVEL_1,
                WRITE_AND_READ,
                "Rate-and-state friction direct effect parameter" );
 
@@ -43,25 +43,9 @@ DECLARE_FIELD( backgroundStressingRate,
                "backgroundStressingRate",
                array1d< real64 >,
                0,
-               LEVEL_0,
+               LEVEL_1,
                WRITE_AND_READ,
                "Background stressing rate" );
-
-DECLARE_FIELD( pressureRate,
-               "pressureRate",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Pore pressure rate");
-               
-DECLARE_FIELD( meanStress,
-               "meanStress",
-               array2d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Mean stress tensor over the element");
 
 DECLARE_FIELD( initialMeanNormalStress,
                "initialMeanNormalStress",
@@ -83,18 +67,10 @@ DECLARE_FIELD( meanNormalStress_n,
                "meanNormalStress_n",
                array1d< real64 >,
                0,
-               LEVEL_0,
+               LEVEL_1,
                WRITE_AND_READ,
                "meanNormal stress acting on the fault at the previous converged time step");
 
-DECLARE_FIELD( meanNormalStressRate,
-               "meanNormalStressRate",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "meanNormal stress rate acting on the fault");
-               
 DECLARE_FIELD( initialMeanShearStress,
                "initialMeanShearStress",
                array1d< real64 >,
@@ -115,17 +91,9 @@ DECLARE_FIELD( meanShearStress_n,
                "meanShearStress_n",
                array1d< real64 >,
                0,
-               LEVEL_0,
+               LEVEL_1,
                WRITE_AND_READ,
                "meanShear stress acting on the fault at the previous converged time step");
-
-DECLARE_FIELD( meanShearStressRate,
-               "meanShearStressRate",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "meanShear stress rate acting on the fault");
 
 DECLARE_FIELD( seismicityRate,
                "seismicityRate",
@@ -139,7 +107,7 @@ DECLARE_FIELD( logDenom,
                "logDenom",
                array1d< real64 >,
                0,
-               LEVEL_0,
+               LEVEL_2,
                WRITE_AND_READ,
                "Log of the denominator of the integral form of the seismicity rate");
 
@@ -147,7 +115,7 @@ DECLARE_FIELD( logDenom_n,
                "logDenom_n",
                array1d< real64 >,
                0,
-               LEVEL_0,
+               LEVEL_2,
                WRITE_AND_READ,
                "Log of the denominator of the integral form of the seismicity rate at the previous converged time step");
 

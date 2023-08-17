@@ -231,7 +231,10 @@ TEST_F( DieterichSeismicityRateIntegralSolverTest, solverTest )
   {
     // Initialize shear and normal stresses acting on fault (field variables in seismicity rate solver) 
     // as specified in XML file
-    propagator->initializeMeanSolidStress(i, domain); 
+    if ( i==0 )
+    {
+      propagator->initializeMeanSolidStress(0.0, i, domain); 
+    }
     
     // Loop through CellElementSubRegions of domain to pass the subRegion as input to seismciity rate solver
     domain.forMeshBodies( [&] ( MeshBody & meshBody )

@@ -113,8 +113,7 @@ real64 DieterichSeismicityRate::solverStep( real64 const & time_n,
                                   DomainPartition & domain )
 {
   // Save initial stress state on pre-defined fault orienations to field variables
-  m_stressSolver->solverStep(time_n, 0.0, cycleNumber, domain );
-  initializeMeanSolidStress(cycleNumber, domain); 
+  initializeMeanSolidStress(time_n, cycleNumber, domain); 
 
   // Call member variable stress solver to update the stress state
   real64 dtStress = m_stressSolver->solverStep(time_n, dt, cycleNumber, domain );
