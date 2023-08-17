@@ -135,22 +135,6 @@ DECLARE_FIELD( seismicityRate,
                WRITE_AND_READ,
                "Seismicity rate");
 
-DECLARE_FIELD( logSeismicityRate,
-               "logSeismicityRate",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Log of the seismicity rate");
-
-DECLARE_FIELD( logSeismicityRate_n,
-               "logSeismicityRate_n",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Log of the seismicity rate at the previous converged time step");
-
 DECLARE_FIELD( logDenom,
                "logDenom",
                array1d< real64 >,

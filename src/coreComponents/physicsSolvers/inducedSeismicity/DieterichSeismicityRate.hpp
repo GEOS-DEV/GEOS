@@ -51,11 +51,6 @@ public:
                              integer const cycleNumber,
                              DomainPartition & domain ) override;
 
-  // void odeSolverStep( real64 const & time_n,
-  //                     real64 const & dt,
-  //                     integer const cycleNumber,
-  //                     DomainPartition & domain );
-
   /**
    * @brief single step advance in computing the seismicity rate based on 
    *  stress history according to closed form integral solution (Heimisson & Segall, 2018)
