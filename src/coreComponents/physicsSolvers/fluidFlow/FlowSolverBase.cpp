@@ -155,13 +155,13 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< fields::flow::gravityCoefficient >( getName() );
 
       subRegion.registerField< fields::flow::aperture0 >( getName() ).
-        setDefaultValue( faceRegion.getDefaultAperture() );
+        setApplyDefaultValue( faceRegion.getDefaultAperture() );
 
       subRegion.registerField< fields::flow::hydraulicAperture >( getName() ).
-        setDefaultValue( faceRegion.getDefaultAperture() );
+        setApplyDefaultValue( faceRegion.getDefaultAperture() );
 
       subRegion.registerField< fields::flow::minimumHydraulicAperture >( getName() ).
-        setDefaultValue( faceRegion.getDefaultAperture() );
+        setApplyDefaultValue( faceRegion.getDefaultAperture() );
 
     } );
 
@@ -712,5 +712,52 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
   } );
 }
 
+void FlowSolverBase::prepareWeights( DomainPartition & domain )
+{
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+    FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+    FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( getDiscretizationName() );
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture =
+      mesh.getElemManager().constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::hydraulicAperture::key() );
+
+    fluxApprox.forStencils< SurfaceElementStencil, FaceElementToCellStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
+    {
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+
+      forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] ( localIndex const iconn )
+      {
+        stencilWrapper.removeHydraulicApertureContribution( iconn, hydraulicAperture );
+      } );
+    } );
+  } );
+}
+
+void FlowSolverBase::updateWeights( DomainPartition & domain )
+{
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+    FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+    FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( getDiscretizationName() );
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture =
+      mesh.getElemManager().constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::hydraulicAperture::key() );
+
+    fluxApprox.forStencils< SurfaceElementStencil, FaceElementToCellStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
+    {
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+
+      forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] ( localIndex const iconn )
+      {
+        stencilWrapper.addHydraulicApertureContribution( iconn, hydraulicAperture );
+      } );
+    } );
+  } );
+}
 
 } // namespace geos

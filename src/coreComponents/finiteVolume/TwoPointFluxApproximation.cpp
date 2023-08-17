@@ -245,6 +245,9 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsDFM( MeshLevel & m
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
     elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture =
+    elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::hydraulicAperture::key() );
+
   arrayView2d< real64 const > faceCenter = faceManager.faceCenter();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > X = nodeManager.referencePosition();
 
@@ -276,6 +279,7 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsDFM( MeshLevel & m
                             X,
                             &faceMap,
                             faceCenter,
+                            hydraulicAperture,
                             fractureRegionIndex,
                             elemGhostRank,
 #if SET_CREATION_DISPLACEMENT==1
@@ -332,7 +336,7 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsDFM( MeshLevel & m
       stencilCellsIndex[kfe] = fractureElementIndex;
       containsLocalElement = containsLocalElement || elemGhostRank[fractureRegionIndex][0][fractureElementIndex] < 0;
 
-      stencilWeights[kfe] = edgeLength / LvArray::tensorOps::l2Norm< 3 >( cellCenterToEdgeCenter );
+      stencilWeights[kfe] = hydraulicAperture[fractureRegionIndex][0][fractureElementIndex] * edgeLength / LvArray::tensorOps::l2Norm< 3 >( cellCenterToEdgeCenter );
 
       LvArray::tensorOps::copy< 3 >( stencilCellCenterToEdgeCenters[kfe], cellCenterToEdgeCenter );
     }
@@ -631,6 +635,9 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
     elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture =
+    elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::hydraulicAperture::key() );
+
   arrayView1d< real64 const > faceArea   = faceManager.faceArea();
   arrayView2d< real64 const > faceCenter = faceManager.faceCenter();
   arrayView2d< real64 const > faceNormal = faceManager.faceNormal();
@@ -681,6 +688,7 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
                             elemCenter,
                             faceNormal,
                             faceArea,
+                            hydraulicAperture,
                             transMultiplier,
                             regionIndices = regionIndices.toViewConst(),
                             fractureRegionIndex ] ( localIndex const k )
@@ -737,7 +745,7 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
         stencilCellsRegionIndex[1] = fractureRegionIndex;
         stencilCellsSubRegionIndex[1] = 0;
         stencilCellsIndex[1] = kfe;
-        stencilWeights[1] = ht;
+        stencilWeights[1] = 2. * faceArea[faceIndex] / hydraulicAperture[fractureRegionIndex][0][kfe];
 
         faceToCellStencil.add( 2,
                                stencilCellsRegionIndex.data(),
@@ -780,6 +788,11 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsEDFM( MeshLevel & me
 
   EmbeddedSurfaceSubRegion & fractureSubRegion = fractureRegion.getUniqueSubRegion< EmbeddedSurfaceSubRegion >();
 
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture =
+    elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::hydraulicAperture::key() );
+
+  arrayView1d< real64 const > const faceArea = fractureSubRegion.getElementArea();
+
   FixedToManyElementRelation const & surfaceElementsToCells = fractureSubRegion.getToCellRelation();
 
   arrayView1d< real64 const >     const & connectivityIndex = fractureSubRegion.getConnectivityIndex();
@@ -811,19 +824,15 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsEDFM( MeshLevel & me
       localIndex const esr = surfaceElementsToCells.m_toElementSubRegion[kes][0];
       localIndex const ei  = surfaceElementsToCells.m_toElementIndex[kes][0];
 
-      // Here goes EDFM transmissibility computation.
-      real64 const ht = connectivityIndex[kes];
-
-      //
       stencilCellsRegionIndex[0] = er;
       stencilCellsSubRegionIndex[0] = esr;
       stencilCellsIndex[0] = ei;
-      stencilWeights[0] = ht;
+      stencilWeights[0] = connectivityIndex[kes];
 
       stencilCellsRegionIndex[1] = fractureRegionIndex;
       stencilCellsSubRegionIndex[1] = 0;
       stencilCellsIndex[1] = kes;
-      stencilWeights[1] = ht;
+      stencilWeights[1] = 4. * faceArea[fractureRegionIndex] / hydraulicAperture[fractureRegionIndex][0][kes];
 
       edfmStencil.add( 2,
                        stencilCellsRegionIndex.data(),
@@ -856,6 +865,9 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsEDFM( MeshLevel & 
   EmbeddedSurfaceSubRegion & fractureSubRegion = fractureRegion.getUniqueSubRegion< EmbeddedSurfaceSubRegion >();
   arrayView2d< real64 const > const fractureElemCenter = fractureSubRegion.getElementCenter();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition();
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture =
+    elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::hydraulicAperture::key() );
 
   EdgeManager::FaceMapType const & edgeToEmbSurfacesMap = embSurfEdgeManager.faceList();
 
@@ -906,8 +918,7 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsEDFM( MeshLevel & 
         stencilCellsSubRegionIndex[kes] = 0;  // there is only one subregion.
         stencilCellsIndex[kes]          = fractureElementIndex;
 
-        //TODO use the proper geometrical info to compute the weight.
-        stencilWeights[kes] = edgeLength / LvArray::tensorOps::l2Norm< 3 >( cellCenterToEdgeCenter );
+        stencilWeights[kes] = hydraulicAperture[fractureRegionIndex][0][fractureElementIndex] * edgeLength / LvArray::tensorOps::l2Norm< 3 >( cellCenterToEdgeCenter );
 
         LvArray::tensorOps::copy< 3 >( stencilCellCenterToEdgeCenters[kes], cellCenterToEdgeCenter );
       }

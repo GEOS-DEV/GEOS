@@ -802,7 +802,14 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
 template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::updateState( DomainPartition & domain )
 {
+  // remove the contribution of the hydraulic aperture from the stencil weights
+  flowSolver()->prepareWeights( domain );
+
   updateDeformationForCoupling( domain );
+
+  // update the stencil weights using the updated hydraulic aperture  
+  flowSolver()->updateWeights( domain );
+  
   flowSolver()->updateState( domain );
 }
 template< typename POROMECHANICS_SOLVER >
