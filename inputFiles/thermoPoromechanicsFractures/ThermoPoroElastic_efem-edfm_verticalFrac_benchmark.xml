@@ -13,8 +13,8 @@
       xCoords="{ 0, 20 }"
       yCoords="{ 0, 20 }"
       zCoords="{ 0, 1 }"
-      nx="{ 11 }"
-      ny="{ 10 }"
+      nx="{ 101 }"
+      ny="{ 300 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
@@ -26,7 +26,8 @@
       origin="{ 10.0, 10.0, 0.5 }"
       lengthVector="{ 0, 1, 0 }"
       widthVector="{ 0, 0, 1 }"
-      dimensions="{ 25, 4 }"/>
+      dimensions="{ 5, 4 }"/>
+
   </Geometry>
 
   <Events
@@ -44,14 +45,9 @@
       name="solverApplication0"
       forceDt="1e5"
       target="/Solvers/poroSolver"/>
-
-    <PeriodicEvent
-      name="restarts"
-      timeFrequency="1e6"
-      target="/Outputs/restartOutput"/>
   </Events>
-  
-  <FieldSpecifications>
+
+   <FieldSpecifications>
     <FieldSpecification
       name="fracPorosity"
       initialCondition="1"
@@ -69,22 +65,22 @@
       scale="0.0"/>
 
     <FieldSpecification
-      name="initialPressureFracture"
+      name="initialTemperature"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/RockMatrix/cb1"
+      fieldName="temperature"
+      scale="0.0"/>  
+
+    <FieldSpecification
+      name="sourcePressure"
       setNames="{ all }"
       objectPath="ElementRegions/Fracture"
       fieldName="pressure"
       scale="1.0e5"/>
 
     <FieldSpecification
-      name="initialTemperature"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/RockMatrix/cb1"
-      fieldName="temperature"
-      scale="0.0"/>
-
-    <FieldSpecification
-      name="initialTemperatureFracture"
+      name="sourceTemp"
       setNames="{ all }"
       objectPath="ElementRegions/Fracture"
       fieldName="temperature"
@@ -142,4 +138,5 @@
       scale="0.0"
       setNames="{ xpos }"/>
   </FieldSpecifications>
+
 </Problem>
