@@ -149,7 +149,7 @@ public:
 
   /**
    * @brief Remove the contribution of the aperture from the weight in the stencil (done before aperture update)
-   * 
+   *
    * @param iconn connection index
    * @param hydraulicAperture hydraulic apertures of the fractures
    */
@@ -157,9 +157,9 @@ public:
   void removeHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture ) const;
 
   /**
-   * @brief Add the contribution of the aperture to the weight in the stencil (done after aperture update) 
-   * 
-   * @param iconn connection index 
+   * @brief Add the contribution of the aperture to the weight in the stencil (done after aperture update)
+   *
+   * @param iconn connection index
    * @param hydraulicAperture hydraulic apertures of the fractures
    */
   GEOS_HOST_DEVICE
@@ -273,7 +273,7 @@ inline void FaceElementToCellStencilWrapper::
   real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
   // Only the first component of the permeability is used, we may need to change that
   real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][0];
-  
+
   real64 const sumOfTrans = t0+t1;
   real64 const value = m_transMultiplier[iconn]*t0*t1/sumOfTrans;
 
@@ -298,7 +298,7 @@ FaceElementToCellStencilWrapper
   // Will change when implementing collocation points.
   real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], m_faceNormal[iconn] );
   real64 const t1 = m_weights[iconn][1];
-  
+
   real64 const sumOfTrans = t0+t1;
   real64 const value = m_transMultiplier[iconn]*t0*t1/sumOfTrans;
 
@@ -335,7 +335,7 @@ FaceElementToCellStencilWrapper::
   real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
   // Only the first component of the permeability is used, we may need to change that
   real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][0];
-  
+
   real64 const sumOfTrans = t0+t1;
   real64 const value = m_transMultiplier[iconn]*t0*t1/sumOfTrans;
 

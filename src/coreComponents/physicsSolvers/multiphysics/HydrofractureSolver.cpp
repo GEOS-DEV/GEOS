@@ -807,9 +807,9 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateState( DomainPartition &
 
   updateDeformationForCoupling( domain );
 
-  // update the stencil weights using the updated hydraulic aperture  
+  // update the stencil weights using the updated hydraulic aperture
   flowSolver()->updateWeights( domain );
-  
+
   flowSolver()->updateState( domain );
 }
 template< typename POROMECHANICS_SOLVER >

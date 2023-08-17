@@ -45,7 +45,7 @@ public:
                 arraySlice2d< real64 > const & dPerm_dDispJump ) const
   {
     GEOS_UNUSED_VAR( oldHydraulicAperture );
-    
+
     real64 const perm  = newHydraulicAperture*newHydraulicAperture / 12.0;
     real64 const dPerm = newHydraulicAperture / 6.0;
 

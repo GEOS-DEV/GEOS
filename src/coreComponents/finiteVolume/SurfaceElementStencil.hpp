@@ -216,7 +216,7 @@ public:
 
   /**
    * @brief Remove the contribution of the aperture from the weight in the stencil (done before aperture update)
-   * 
+   *
    * @param iconn connection index
    * @param hydraulicAperture hydraulic apertures of the fractures
    */
@@ -224,9 +224,9 @@ public:
   void removeHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture ) const;
 
   /**
-   * @brief Add the contribution of the aperture to the weight in the stencil (done after aperture update) 
-   * 
-   * @param iconn connection index 
+   * @brief Add the contribution of the aperture to the weight in the stencil (done after aperture update)
+   *
+   * @param iconn connection index
    * @param hydraulicAperture hydraulic apertures of the fractures
    */
   GEOS_HOST_DEVICE
