@@ -98,8 +98,6 @@ void DieterichSeismicityRate::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase & subRegion )
     {
-      subRegion.registerField< inducedSeismicity::directEffect >( getName() );
-      subRegion.registerField< inducedSeismicity::backgroundStressingRate >( getName() );
       subRegion.registerField< inducedSeismicity::logDenom >( getName() );
       subRegion.registerField< inducedSeismicity::logDenom_n >( getName() );
     } );
@@ -153,9 +151,6 @@ void DieterichSeismicityRate::integralSolverStep( real64 const & time_n,
   arrayView1d< real64 > const logDenom = subRegion.getField< inducedSeismicity::logDenom >();
   arrayView1d< real64 > const logDenom_n = subRegion.getField< inducedSeismicity::logDenom_n >();
 
-  arrayView1d< real64 const > const directEffect = subRegion.getField< inducedSeismicity::directEffect >();
-  arrayView1d< real64 const > const backgroundStressingRate = subRegion.getField< inducedSeismicity::backgroundStressingRate >();
-  
   arrayView1d< real64 const > const sig_i = subRegion.getField< inducedSeismicity::initialMeanNormalStress >();
   arrayView1d< real64 const > const sig = subRegion.getField< inducedSeismicity::meanNormalStress >();
   arrayView1d< real64 const > const sig_n = subRegion.getField< inducedSeismicity::meanNormalStress_n >();
@@ -179,16 +174,16 @@ void DieterichSeismicityRate::integralSolverStep( real64 const & time_n,
   forAll< parallelDevicePolicy<> >( R.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     // arguments of stress exponential at current and previous time step
-    real64 g = (tau[k] + backgroundStressingRate[k]*(time_n+dt))/(directEffect[k]*(-sig[k]-p[k])) 
-                        - tau_i[k]/(directEffect[k]*(-sig_i[k]-p_i[k]));
-    real64 g_n = (tau_n[k] + backgroundStressingRate[k]*time_n)/(directEffect[k]*(-sig_n[k]-p_n[k])) 
-                        - tau_i[k]/(directEffect[k]*(-sig_i[k]-p_i[k]));
+    real64 g = (tau[k] + m_backgroundStressingRate*(time_n+dt))/(m_directEffect*(-sig[k]-p[k])) 
+                        - tau_i[k]/(m_directEffect*(-sig_i[k]-p_i[k]));
+    real64 g_n = (tau_n[k] + m_backgroundStressingRate*time_n)/(m_directEffect*(-sig_n[k]-p_n[k])) 
+                        - tau_i[k]/(m_directEffect*(-sig_i[k]-p_i[k]));
 
     // checkExpArgument();
 
     // Compute the difference of the log of the denominator of closed for integral solution.
     // This avoids directly computing the exponential of the current stress state which is more prone to overflow.
-    logDenom[k] = logDenom_n[k] + std::log(1 + dt/(2*(directEffect[k]*-sig_i[k]/backgroundStressingRate[k]))
+    logDenom[k] = logDenom_n[k] + std::log(1 + dt/(2*(m_directEffect*-sig_i[k]/m_backgroundStressingRate))
                                         *(std::exp(g - logDenom_n[k]) + std::exp(g_n - logDenom_n[k]) ));
   
     // Convert log seismicity rate to raw value
@@ -217,11 +212,6 @@ void DieterichSeismicityRate::initializePreSubGroups()
       tempLogDenom.setValues< parallelHostPolicy >( 0.0 );
       arrayView1d< real64 > const tempLogDenom_n = subRegion.getField< inducedSeismicity::logDenom_n >();
       tempLogDenom_n.setValues< parallelHostPolicy >( 0.0 );
-
-      arrayView1d< real64 > const tempA = subRegion.getField< inducedSeismicity::directEffect >();
-      tempA.setValues< parallelHostPolicy >( m_directEffect );
-      arrayView1d< real64 > const tempTaur = subRegion.getField< inducedSeismicity::backgroundStressingRate >();
-      tempTaur.setValues< parallelHostPolicy >( m_backgroundStressingRate );
     } );
   } );
 }

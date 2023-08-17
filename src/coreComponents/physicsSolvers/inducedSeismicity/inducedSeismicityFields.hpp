@@ -31,22 +31,6 @@ namespace fields
 namespace inducedSeismicity
 {
 
-DECLARE_FIELD( directEffect,
-               "directEffect",
-               array1d< real64 >,
-               0,
-               LEVEL_1,
-               WRITE_AND_READ,
-               "Rate-and-state friction direct effect parameter" );
-
-DECLARE_FIELD( backgroundStressingRate,
-               "backgroundStressingRate",
-               array1d< real64 >,
-               0,
-               LEVEL_1,
-               WRITE_AND_READ,
-               "Background stressing rate" );
-
 DECLARE_FIELD( initialMeanNormalStress,
                "initialMeanNormalStress",
                array1d< real64 >,
