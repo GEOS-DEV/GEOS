@@ -45,10 +45,10 @@ public:
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
     static constexpr char const * stressSolverNameString() { return "stressSolverName"; }
-    static constexpr char const * faultNormalString() { return "faultNormal"; }
-    static constexpr char const * faultShearString() { return "faultShear"; }
     static constexpr char const * initialFaultNormalStressString() { return "initialFaultNormalStress"; }
     static constexpr char const * initialFaultShearStressString() { return "initialFaultShearStress"; }
+    static constexpr char const * faultNormalString() { return "faultNormal"; }
+    static constexpr char const * faultShearString() { return "faultShear"; }
   };
 
   virtual void initializePreSubGroups() override;
@@ -71,25 +71,9 @@ public:
   
 protected:
 
+  void constructFaultStressProjectionTensors(real64 faultNormalProjectionTensor[6], real64 faultShearProjectionTensor[6]);
+
   virtual void postProcessInput() override;
-
-  /**
-   * @brief takes pre-defined fault orientations (m_faultNormal and m_faultShear)
-   *  and forms projection tensors in Voigt notation, to be multiplied in double dot product
-   *  with the stress tensor in updateMeanSolidStress
-  */
-  void initializeFaultOrientation();
-
-  /**
-   * @brief ensures that user=defined fault orientations are orthogonal. 
-   * outputs error message if not.
-  */
-  bool checkFaultOrthogonality(){ return std::abs(LvArray::tensorOps::AiBi< 3 >(m_faultNormal, m_faultShear)) <= 1e-8; }
-
-  /**
-   * @brief normalize fault vectors to be unit vectors
-  */
-  void normalizeFaultVecs();
 
   /// pointer to stress solver
   SolverBase * m_stressSolver;
@@ -102,10 +86,8 @@ protected:
   real64 m_initialFaultShearStress;
 
   /// fault orientation
-  array1d< real64 > m_faultNormal;
-  array1d< real64 > m_faultShear;
-  real64 m_faultNormalVoigt[6];
-  real64 m_faultShearVoigt[6];
+  R1Tensor m_faultNormalDirection;
+  R1Tensor m_faultShearDirection;
 };
 
 } /* namespace geos */

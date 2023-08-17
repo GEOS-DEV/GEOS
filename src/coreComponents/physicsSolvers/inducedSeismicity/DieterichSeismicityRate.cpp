@@ -146,7 +146,7 @@ void DieterichSeismicityRate::integralSolverStep( real64 const & time_n,
                     real64 const & dt,
                     ElementSubRegionBase & subRegion )
 {
-  // Retrieve field variables
+  // Retrieve field variables1734
   arrayView1d< real64 > const R = subRegion.getField< inducedSeismicity::seismicityRate >();
   arrayView1d< real64 > const logDenom = subRegion.getField< inducedSeismicity::logDenom >();
   arrayView1d< real64 > const logDenom_n = subRegion.getField< inducedSeismicity::logDenom_n >();
