@@ -746,7 +746,7 @@ void FlowSolverBase::prepareWeights( DomainPartition & domain )
       } );
     } );
 
-      fluxApprox.forStencils< FaceElementToCellStencil >( mesh, [&]( auto & stencil )
+    fluxApprox.forStencils< FaceElementToCellStencil >( mesh, [&]( auto & stencil )
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
