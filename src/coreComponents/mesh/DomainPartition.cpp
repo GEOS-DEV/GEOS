@@ -160,23 +160,11 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
   {
     MeshLevel & meshLevel = meshBody.getBaseDiscretization();
 
-//    std::set< std::set< globalIndex > > collocatedNodes;
-//    meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >(
-//      [&]( FaceElementSubRegion const & subRegion )
-//      {
-//        ArrayOfArraysView< globalIndex const > collNodes = subRegion.getCollocatedNodes();
-//        for( int i = 0; i < collNodes.size(); ++i )
-//        {
-//          std::set< globalIndex > const tmp( collNodes[i].begin(), collNodes[i].end() );
-//          collocatedNodes.insert( tmp );
-//        }
-//	    } );
-
     std::set< std::set< globalIndex > > collocatedNodes;
     meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >(
       [&]( FaceElementSubRegion const & subRegion )
       {
-        ArrayOfArrays< array1d< globalIndex > > const & collocatedNodesBuckets = subRegion.m_2dElemToCollocatedNodesBuckets;
+        ArrayOfArraysView< array1d< globalIndex > const > const collocatedNodesBuckets = subRegion.get2dElemToCollocatedNodesBuckets();
         for( localIndex e2d = 0; e2d < collocatedNodesBuckets.size(); ++e2d )
         {
           for( integer ni = 0; ni < collocatedNodesBuckets.sizeOfArray( e2d ); ++ni )

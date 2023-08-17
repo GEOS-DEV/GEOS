@@ -57,6 +57,16 @@ ArrayOfArrays< localIndex > FaceBlock::get2dFaceTo2dElems() const
   return m_2dFaceTo2dElems;
 }
 
+ArrayOfArrays< array1d< globalIndex > > FaceBlock::get2dElemsToCollocatedNodesBuckets() const
+{
+  return m_2dElemsToCollocatedNodesBuckets;
+}
+
+array1d< globalIndex > FaceBlock::localToGlobalMap() const
+{
+  return m_localToGlobalMap;
+}
+
 void FaceBlock::setNum2dElements( localIndex num2DElements )
 {
   m_num2dElements = num2DElements;
@@ -97,29 +107,9 @@ void FaceBlock::set2dElemToElems( ToCellRelation< ArrayOfArrays< localIndex > > 
   m_2dElemToElems = _2dElemToElems;
 }
 
-ArrayOfArrays< globalIndex > FaceBlock::getCollocatedNodes() const
+void FaceBlock::setLocalToGlobalMap( array1d< globalIndex > && l2g )
 {
-  return m_collocatedNodes;
-}
-
-void FaceBlock::setCollocatedNodes( ArrayOfArrays< globalIndex > && collocatedNodes )
-{
-  m_collocatedNodes = collocatedNodes;
-}
-
-ArrayOfArrays< globalIndex > FaceBlock::getCollocatedNodesOf2dElems() const
-{
-  return m_collocatedNodesOf2dElems;
-}
-
-void FaceBlock::setCollocatedNodesOf2dElems( ArrayOfArrays< geos::globalIndex > && collocatedNodes )
-{
-  m_collocatedNodesOf2dElems = collocatedNodes;
-}
-
-ArrayOfArrays< array1d< globalIndex > > FaceBlock::get2dElemsToCollocatedNodesBuckets() const
-{
-  return m_2dElemsToCollocatedNodesBuckets;
+  m_localToGlobalMap = l2g;
 }
 
 void FaceBlock::set2dElemsToCollocatedNodesBuckets( ArrayOfArrays< array1d< globalIndex > > && collocatedNodesBuckets )

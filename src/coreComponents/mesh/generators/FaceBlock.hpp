@@ -55,6 +55,10 @@ public:
 
   ArrayOfArrays< localIndex > get2dFaceTo2dElems() const override;
 
+  ArrayOfArrays< array1d< globalIndex > > get2dElemsToCollocatedNodesBuckets() const override;
+
+  array1d< globalIndex > localToGlobalMap() const override;
+
   /**
    * @brief Defines the number of 2d elements.
    * @param num2DElements The input value.
@@ -107,31 +111,13 @@ public:
    * Defines the local to global map for the 2d elements.
    * @param l2g The input mapping.
    */
-  void setLocalToGlobalMap( array1d< globalIndex > && l2g )
-  { m_localToGlobalMap = l2g; }
-
-  array1d< globalIndex > localToGlobalMap() const override
-  { return m_localToGlobalMap; }
-
-  ArrayOfArrays< globalIndex > getCollocatedNodes() const override;
-
-  ArrayOfArrays< array1d< globalIndex > > get2dElemsToCollocatedNodesBuckets() const override;
+  void setLocalToGlobalMap( array1d< globalIndex > && l2g );
 
   /**
-   * Defines the collocated nodes bucket (node to nodes).
-   * @param collocatedNodes The input buckets.
+   * @brief Defines the collocated nodes bucket.
+   * @param collocatedNodesBuckets The input data.
    */
-  void setCollocatedNodes( ArrayOfArrays< globalIndex > && collocatedNodes );
-
   void set2dElemsToCollocatedNodesBuckets( ArrayOfArrays< array1d< globalIndex > > && collocatedNodesBuckets );
-
-  ArrayOfArrays< globalIndex > getCollocatedNodesOf2dElems() const override;
-
-  /**
-   * Defines the collocated nodes bucket (2d element to nodes).
-   * @param collocatedNodes The input buckets.
-   */
-  void setCollocatedNodesOf2dElems( ArrayOfArrays< globalIndex > && collocatedNodes );
 
 private:
 
@@ -142,15 +128,12 @@ private:
   ArrayOfArrays< localIndex > m_2dElemToEdges;
   ArrayOfArrays< localIndex > m_2dElemToFaces;
   ToCellRelation< ArrayOfArrays< localIndex > > m_2dElemToElems;
+  ArrayOfArrays< array1d< globalIndex > > m_2dElemsToCollocatedNodesBuckets;
 
   ArrayOfArrays< localIndex > m_2dFaceTo2dElems;
   array1d< localIndex > m_2dFaceToEdge;
 
   array1d< globalIndex > m_localToGlobalMap;
-
-  ArrayOfArrays< globalIndex > m_collocatedNodes;
-  ArrayOfArrays< globalIndex > m_collocatedNodesOf2dElems;
-  ArrayOfArrays< array1d< globalIndex > > m_2dElemsToCollocatedNodesBuckets;
 };
 
 

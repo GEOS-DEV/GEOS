@@ -365,13 +365,11 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
     for( localIndex const & ln: nodeAdjacencySet )
     {
       globalIndex const & gn = l2g[ln];
-      ArrayOfArraysView< globalIndex const > collocatedNodes = subRegion.getCollocatedNodes();
-      for( int i = 0; i < collocatedNodes.size(); ++i )
+      for( std::set< globalIndex > const & bucket: subRegion.getCollocatedNodes() )
       {
-        std::set< globalIndex > const gns( collocatedNodes[i].begin(), collocatedNodes[i].end() );
-        if( gns.find( gn ) != gns.cend() )
+        if( bucket.find( gn ) != bucket.cend() )
         {
-          for( globalIndex const & n: gns )
+          for( globalIndex const & n: bucket )
           {
             auto it = g2l.find( n );
             if( it != g2l.cend() )

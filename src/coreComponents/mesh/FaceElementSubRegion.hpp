@@ -149,10 +149,7 @@ public:
     static constexpr char const * fractureConnectorEdgesToEdgesString() { return "fractureConnectorsToEdges"; }
     /// @return String key to the map of fracture connector local indices face element local indices.
     static constexpr char const * fractureConnectorsEdgesToFaceElementsIndexString() { return "fractureConnectorsToElementIndex"; }
-    /// @return String key to collocated nodes.
-    static constexpr char const * collocatedNodesString() { return "collocatedNodes"; }
-
-    static constexpr char const * elem2dToCollocatedNodesString() { return "elem2dToCollocatedNodes"; }
+    /// @return String key to collocated nodes buckets.
     static constexpr char const * elem2dToCollocatedNodesBucketsString() { return "elem2dToCollocatedNodesBuckets"; }
 
 #if GEOSX_USE_SEPARATION_COEFFICIENT
@@ -224,7 +221,6 @@ public:
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToFaces;
 
   /// Unmapped face elements to faces map
-  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToCollocatedNodes;
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToCollocatedNodesBucket;
 
   /// List of the new face elements that have been generated
@@ -243,13 +239,10 @@ public:
   ArrayOfArrays< localIndex > m_2dFaceTo2dElems;
 
   /**
-   * @brief Each bucket (array) contains all the global indices of the nodes which are duplicated of each others.
-   * @returnAn iterable of the collocated nodes buckets.
+   * @brief Computes and returns all the buckets of collocated nodes.
+   * @return The buckets are returned in no particular order.
    */
-  ArrayOfArraysView< globalIndex const > getCollocatedNodes() const
-  {
-    return m_collocatedNodes.toViewConst();
-  }
+  std::set< std::set< globalIndex > > getCollocatedNodes() const;
 
   /**
    * @brief @return The array of shape function derivatives.
@@ -283,10 +276,16 @@ public:
    */
   std::set< globalIndex > getMissingNodes( unordered_map< globalIndex, localIndex > const & g2l ) const;
 
-  std::vector< ArrayOfArrays< globalIndex > > m_otherCollocatedNodes;
-
-  ArrayOfArrays< globalIndex > m_2dElemToCollocatedNodes;  // TODO maybe we can exchange this properly?
-  ArrayOfArrays< array1d< globalIndex > > m_2dElemToCollocatedNodesBuckets;  // TODO maybe we can exchange this properly?
+  /**
+   * @brief Returns the 2d element (local to the @p FaceElementSubRegion) to node (local to the 2d element) to collocated nodes (global) bucket mapping.
+   * @return A const view to the data.
+   * @note The 2d element is local to the @p FaceElementSubRegion,
+   * the node is local to the 2d element and the collocated nodes are global.
+   */
+  ArrayOfArraysView< array1d< globalIndex > const > get2dElemToCollocatedNodesBuckets() const
+  {
+    return m_2dElemToCollocatedNodesBuckets.toViewConst();
+  }
 
 private:
 
@@ -310,8 +309,11 @@ private:
   /// Element-to-face relation
   FaceMapType m_toFacesRelation;
 
-  /// Each sub-array contains all the global indices of the nodes that are collocated.
-  ArrayOfArrays< globalIndex > m_collocatedNodes;
+  /**
+   * @brief The collocated nodes buckets.
+   * @see FaceElementSubRegion::get2dElemToCollocatedNodesBuckets
+   */
+  ArrayOfArrays< array1d< globalIndex > > m_2dElemToCollocatedNodesBuckets;
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   /// Separation coefficient

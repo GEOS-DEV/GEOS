@@ -257,31 +257,6 @@ ArrayOfArrays< localIndex > build2dElemTo2dNodes( vtkSmartPointer< vtkDataSet > 
 }
 
 
-/**
- * @brief Computes the bucket of all the collocated nodes for each 2d element.
- * @param elem2dTo2dNodes The 2d elements to its "2d" nodes mapping.
- * @param nodes2dToCollocatedNodes The "2d" nodes to their collocated nodes mapping.
- * @return The computed mapping. First dimension being the number of 2d elements.
- */
-ArrayOfArrays< globalIndex > buildCollocatedNodesOf2dElemsMap( ArrayOfArrays< localIndex > const & elem2dTo2dNodes,
-                                                               ArrayOfArrays< globalIndex > const & nodes2dToCollocatedNodes )
-{
-  ArrayOfArrays< globalIndex > result;
-  result.resize( elem2dTo2dNodes.size() );
-  for( localIndex e2d = 0; e2d < elem2dTo2dNodes.size(); ++e2d )
-  {
-    for( auto const & node: elem2dTo2dNodes[e2d] )
-    {
-      for( auto const collocatedNode: nodes2dToCollocatedNodes[node] )
-      {
-        result.emplaceBack( e2d, collocatedNode );
-      }
-    }
-  }
-
-  return result;
-}
-
 ArrayOfArrays< array1d< globalIndex > > buildCollocatedNodesBucketsOf2dElemsMap( ArrayOfArrays< localIndex > const & elem2dTo2dNodes,
                                                                                  ArrayOfArrays< globalIndex > const & nodes2dToCollocatedNodes )
 {
@@ -747,15 +722,11 @@ void importFractureNetwork( string const & faceBlockName,
     buildLocalToGlobal( vtkIdTypeArray::FastDownCast( faceMesh->GetCellData()->GetGlobalIds() ),
                         vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() ) )
   );
-  ArrayOfArrays< globalIndex > cn = buildCollocatedNodesMap( collocatedNodes );
-  ArrayOfArrays< globalIndex > cne = buildCollocatedNodesOf2dElemsMap( build2dElemTo2dNodes( faceMesh ), cn );
-  ArrayOfArrays< array1d< globalIndex > > cneb = buildCollocatedNodesBucketsOf2dElemsMap( build2dElemTo2dNodes( faceMesh ), cn );
 
-  GEOS_LOG_RANK( "cneb = " << cneb );
-
-  faceBlock.setCollocatedNodes( std::move( cn ) );
-  faceBlock.setCollocatedNodesOf2dElems( std::move( cne ) );
-  faceBlock.set2dElemsToCollocatedNodesBuckets( std::move( cneb ) );
+  faceBlock.set2dElemsToCollocatedNodesBuckets(
+    buildCollocatedNodesBucketsOf2dElemsMap( build2dElemTo2dNodes( faceMesh ),
+                                             buildCollocatedNodesMap( collocatedNodes ) )
+  );
 }
 
 } // end of namespace

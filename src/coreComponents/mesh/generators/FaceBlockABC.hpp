@@ -121,6 +121,19 @@ public:
   virtual ToCellRelation< ArrayOfArrays< localIndex > > get2dElemToElems() const = 0;
 
   /**
+   * @brief Returns the collocated nodes for each node of each 2d element of the @p FaceBlockABC.
+   * @return The bucket of collocated nodes.
+   * First dimension indices of the 2d element are local to the @p FaceBlockABC.
+   * The size of the first dimension is equal to @p num2dElements.
+   * The size of the second dimension is the number of nodes in the 2d element (e.g. 3 for a triangle).
+   *
+   * @details Each node of the @p FaceBlockABC is pointing to other nodes which are collocated.
+   * Those other nodes are meant to be nodes of neighboring 3d cells.
+   * All the collocated nodes of each node of each 2d element of the @p FaceBlockABC are gathered in the same bucket.
+   */
+  virtual ArrayOfArrays< array1d< globalIndex > > get2dElemsToCollocatedNodesBuckets() const = 0;
+
+  /**
    * @brief Get @e one 3d edge equivalent for each 2d faces (geometrical edges in 3d).
    * @return The mapping of size @p num2dFaces.
    * 2d face numbering is local to the FaceBlockABC.
@@ -154,39 +167,6 @@ public:
    * @return The mapping relationship as an array.
    */
   virtual array1d< globalIndex > localToGlobalMap() const = 0;
-
-  /**
-   * @brief Returns the collocated nodes for each node of the @p FaceBlockABC.
-   * @return The bucket of collocated nodes, of first dimension being equal to the number of nodes of the @p FaceBlockABC.
-   * First dimension indices are local to the @p FaceBlockABC.
-   * Second dimension indices are the global indices of the nodes.
-   *
-   * @details Each node of the @p FaceBlockABC is pointing to other nodes which are collocated.
-   * Those other nodes are meant to be nodes of neighboring 3d cells.
-   * Each collocated node "bucket" contains unsorted nodes of potentially any size.
-   * Considering the simple example of a flat fracture, each bucket of collocated nodes will be of size 2.
-   * For the case where two flat fractures may intersect, at the intersection, the bucket will contain 4 nodes,
-   * while other buckets will contain 2 nodes as well.
-   */
-  virtual ArrayOfArrays< globalIndex > getCollocatedNodes() const = 0;
-
-  /**
-   * @brief Returns the collocated nodes for each 2d element of the @p FaceBlockABC.
-   * @return The bucket of collocated nodes, of first dimension being equal to @p num2dElements.
-   * First dimension indices of the 2d element are local to the @p FaceBlockABC.
-   * Second dimension indices are the global indices of the nodes.
-   *
-   * @details Each node of the @p FaceBlockABC is pointing to other nodes which are collocated.
-   * Those other nodes are meant to be nodes of neighboring 3d cells.
-   * All the collocated nodes of all the nodes of all the nodes of each 2d element of the @p FaceBlockABC
-   * are gathered in the same bucket.
-   * Considering the simple example of a flat fracture made of quadrangles,
-   * each bucket will contain 8 collocated nodes.
-
-   */
-  virtual ArrayOfArrays< globalIndex > getCollocatedNodesOf2dElems() const = 0;
-
-  virtual ArrayOfArrays< array1d< globalIndex > > get2dElemsToCollocatedNodesBuckets() const = 0;
 };
 
 }
