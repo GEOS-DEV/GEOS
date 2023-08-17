@@ -113,6 +113,7 @@ real64 DieterichSeismicityRate::solverStep( real64 const & time_n,
                                   DomainPartition & domain )
 {
   // Save initial stress state on pre-defined fault orienations to field variables
+  m_stressSolver->solverStep(time_n, 0.0, cycleNumber, domain );
   initializeMeanSolidStress(cycleNumber, domain); 
 
   // Call member variable stress solver to update the stress state
@@ -165,21 +166,15 @@ void DieterichSeismicityRate::integralSolverStep( real64 const & time_n,
   arrayView1d< real64 const > const tau_n = subRegion.getField< inducedSeismicity::meanShearStress_n >();
 
   // Retrieve pore pressure variables if flow solver is being used. If not, initialize them as zero arrays.
-  arrayView1d< real64 const > p_i;
-  arrayView1d< real64 const > p;
-  arrayView1d< real64 const > p_n;
+  array1d< real64 > temp( R.size() );
+  arrayView1d< real64 const > p_i = temp.toView();
+  arrayView1d< real64 const > p = p_i;
+  arrayView1d< real64 const > p_n = p_i;
   if ( subRegion.hasWrapper( FlowSolverBase::viewKeyStruct::fluidNamesString() ) )
   {
     p_i = subRegion.getField< flow::initialPressure >();
     p = subRegion.getField< flow::pressure >();
     p_n = subRegion.getField< flow::pressure_n >();
-  }
-  else
-  {
-    array1d< real64 > temp( R.size() );
-    p_i = temp.toView();
-    p = p_i;
-    p_n = p_i;
   }
 
   forAll< parallelDevicePolicy<> >( R.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
