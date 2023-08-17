@@ -115,11 +115,15 @@ public:
 
   ArrayOfArrays< globalIndex > getCollocatedNodes() const override;
 
+  ArrayOfArrays< array1d< globalIndex > > get2dElemsToCollocatedNodesBuckets() const override;
+
   /**
    * Defines the collocated nodes bucket (node to nodes).
    * @param collocatedNodes The input buckets.
    */
   void setCollocatedNodes( ArrayOfArrays< globalIndex > && collocatedNodes );
+
+  void set2dElemsToCollocatedNodesBuckets( ArrayOfArrays< array1d< globalIndex > > && collocatedNodesBuckets );
 
   ArrayOfArrays< globalIndex > getCollocatedNodesOf2dElems() const override;
 
@@ -146,6 +150,7 @@ private:
 
   ArrayOfArrays< globalIndex > m_collocatedNodes;
   ArrayOfArrays< globalIndex > m_collocatedNodesOf2dElems;
+  ArrayOfArrays< array1d< globalIndex > > m_2dElemsToCollocatedNodesBuckets;
 };
 
 

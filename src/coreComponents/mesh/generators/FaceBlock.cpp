@@ -117,4 +117,14 @@ void FaceBlock::setCollocatedNodesOf2dElems( ArrayOfArrays< geos::globalIndex > 
   m_collocatedNodesOf2dElems = collocatedNodes;
 }
 
+ArrayOfArrays< array1d< globalIndex > > FaceBlock::get2dElemsToCollocatedNodesBuckets() const
+{
+  return m_2dElemsToCollocatedNodesBuckets;
+}
+
+void FaceBlock::set2dElemsToCollocatedNodesBuckets( ArrayOfArrays< array1d< globalIndex > > && collocatedNodesBuckets )
+{
+  m_2dElemsToCollocatedNodesBuckets = collocatedNodesBuckets;
+}
+
 }

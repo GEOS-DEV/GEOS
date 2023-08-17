@@ -63,6 +63,16 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setDescription( "A map of fracture connector local indices face element local indices" ).
     setSizedFromParent( 0 );
 
+  registerWrapper( viewKeyStruct::elem2dToCollocatedNodesString(), &m_2dElemToCollocatedNodes ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "Dummy" ).
+    setSizedFromParent( 1 );
+
+  registerWrapper( viewKeyStruct::elem2dToCollocatedNodesBucketsString(), &m_2dElemToCollocatedNodesBuckets ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "Dummy" ).
+    setSizedFromParent( 1 );
+
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   registerWrapper( viewKeyStruct::separationCoeffString(), &m_separationCoefficient ).
     setApplyDefaultValue( 0.0 ).
@@ -172,6 +182,7 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
 
   m_collocatedNodes = faceBlock.getCollocatedNodes();
   m_2dElemToCollocatedNodes = faceBlock.getCollocatedNodesOf2dElems();
+  m_2dElemToCollocatedNodesBuckets = faceBlock.get2dElemsToCollocatedNodesBuckets();
 
   // TODO We still need to be able to import fields on the FaceElementSubRegion.
 }
@@ -216,6 +227,375 @@ localIndex FaceElementSubRegion::packUpDownMaps( buffer_unit_type * & buffer,
 }
 
 
+// line 885
+template< bool DO_PACKING, int USD >
+localIndex Pack2( buffer_unit_type * & buffer,
+                 arraySlice1d< globalIndex const, USD > const & var,
+                 globalIndex const * const unmappedGlobalIndices,
+                 localIndex const length )
+{
+  localIndex sizeOfPackedChars = bufferOps::Pack< DO_PACKING >( buffer, length );
+  sizeOfPackedChars += length*sizeof(globalIndex);
+
+  if( DO_PACKING )
+  {
+    globalIndex * const buffer_GI = reinterpret_cast< globalIndex * >(buffer);
+    for( localIndex a=0; a<length; ++a )
+    {
+      if( var[a] != unmappedLocalIndexValue )
+      {
+//        GEOS_ERROR("HERE!");
+//        buffer_GI[a] = localToGlobalMap[var[a]];
+        buffer_GI[a] = var[a];
+      }
+      else
+      {
+        buffer_GI[a] = unmappedGlobalIndices[a];
+      }
+    }
+
+    buffer += length * sizeof(globalIndex);
+  }
+
+  return sizeOfPackedChars;
+}
+
+// Copied from above
+template< bool DO_PACKING, int USD >
+localIndex Pack3( buffer_unit_type * & buffer,
+                 arraySlice1d< array1d< globalIndex > const, USD > const & var,
+                 globalIndex const * const unmappedGlobalIndices,
+                 localIndex const length )
+{
+//  localIndex sizeOfPackedChars = 0;
+  localIndex sizeOfPackedChars = bufferOps::Pack< DO_PACKING >( buffer, length );
+  GEOS_ERROR_IF_NE_MSG(var.size(), length, "Internal error");
+//  sizeOfPackedChars += length * sizeof( globalIndex );
+
+//  if( DO_PACKING )
+  {
+//    globalIndex * const buffer_GI = reinterpret_cast< globalIndex * >(buffer);
+    for( localIndex a = 0; a < length; ++a )
+    {
+      array1d< globalIndex > const & tmp = var[a];
+      sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, tmp );
+//      buffer += tmp.size() * sizeof( globalIndex );
+//      if( var[a] != unmappedLocalIndexValue )
+//      {
+////        GEOS_ERROR("HERE!");
+////        buffer_GI[a] = localToGlobalMap[var[a]];
+//        buffer_GI[a] = var[a];
+//      }
+//      else
+//      {
+//        buffer_GI[a] = unmappedGlobalIndices[a];
+//      }
+    }
+
+//    buffer += length * sizeof(globalIndex);
+  }
+
+  return sizeOfPackedChars;
+}
+
+
+
+// line 1269 in BufferOps_inline.hpp
+//template< bool DO_PACKING, typename SORTED >
+template< bool DO_PACKING >
+localIndex
+Pack2( buffer_unit_type *& buffer,
+       ArrayOfArraysView< globalIndex const > const & var,
+       map< localIndex, array1d< globalIndex > > const & unmappedGlobalIndices,
+       arrayView1d< localIndex const > const & indices,
+       arrayView1d< globalIndex const > const & localToGlobalMap )
+//      arrayView1d< globalIndex const > const & localToGlobalMap,
+//      arrayView1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
+{
+  localIndex sizeOfPackedChars=0;
+  array1d< globalIndex > junk;
+
+  sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, indices.size() );
+  for( localIndex a = 0; a < indices.size(); ++a )
+  {
+    localIndex const li = indices[a];
+    sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
+
+    auto iterUnmappedGI = unmappedGlobalIndices.find( li );
+
+    array1d< globalIndex > const & unmappedGI = iterUnmappedGI == unmappedGlobalIndices.end() ?
+                                                junk :
+                                                iterUnmappedGI->second;
+
+//    sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, var[li] );
+    sizeOfPackedChars += Pack2< DO_PACKING >( buffer,
+                                             var[li],
+                                             unmappedGI.data(),
+                                             var.sizeOfArray( li ) );
+//    sizeOfPackedChars += Pack< DO_PACKING >( buffer,
+//                                             var[li],
+//                                             unmappedGI.data(),
+//                                             var.sizeOfArray( li ),
+//                                             relatedObjectLocalToGlobalMap );
+  }
+
+  return sizeOfPackedChars;
+}
+
+// Copied from above
+template< bool DO_PACKING >
+localIndex
+Pack3( buffer_unit_type *& buffer,
+       ArrayOfArraysView< array1d< globalIndex > const > const & var,
+       map< localIndex, array1d< globalIndex > > const & unmappedGlobalIndices,
+       arrayView1d< localIndex const > const & indices,
+       arrayView1d< globalIndex const > const & localToGlobalMap )
+//      arrayView1d< globalIndex const > const & localToGlobalMap,
+//      arrayView1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
+{
+  localIndex sizeOfPackedChars=0;
+  array1d< globalIndex > junk;
+
+  sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, indices.size() );
+  for( localIndex a = 0; a < indices.size(); ++a )
+  {
+    localIndex const li = indices[a];
+    sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
+
+    auto iterUnmappedGI = unmappedGlobalIndices.find( li );
+
+    array1d< globalIndex > const & unmappedGI = iterUnmappedGI == unmappedGlobalIndices.end() ?
+                                                junk :
+                                                iterUnmappedGI->second;
+
+//    sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, var[li] );
+    sizeOfPackedChars += Pack3< DO_PACKING >( buffer,
+                                             var[li],
+                                             unmappedGI.data(),
+                                             var.sizeOfArray( li ) );
+//    sizeOfPackedChars += Pack< DO_PACKING >( buffer,
+//                                             var[li],
+//                                             unmappedGI.data(),
+//                                             var.sizeOfArray( li ),
+//                                             relatedObjectLocalToGlobalMap );
+  }
+
+  return sizeOfPackedChars;
+}
+
+// copied from 977
+inline
+localIndex
+Unpack2( buffer_unit_type const * & buffer,
+        ArrayOfArrays< globalIndex > & var,
+        localIndex const subArrayIndex,
+        array1d< globalIndex > & unmappedGlobalIndices )
+{
+  localIndex length;
+  localIndex sizeOfUnpackedChars = bufferOps::Unpack( buffer, length );
+
+  var.resizeArray( subArrayIndex, length );
+  unmappedGlobalIndices.resize( length );
+  unmappedGlobalIndices.setValues< serialPolicy >( unmappedLocalIndexValue );
+
+  bool unpackedGlobalFlag = false;
+  for( localIndex a = 0; a < length; ++a )
+  {
+    globalIndex unpackedGlobalIndex;
+    sizeOfUnpackedChars += bufferOps::Unpack( buffer, unpackedGlobalIndex );
+
+    var( subArrayIndex, a ) = unpackedGlobalIndex;
+
+////    typename mapBase< globalIndex, localIndex, SORTED >::const_iterator
+//    auto iter = globalToLocalMap.find( unpackedGlobalIndex );
+//    if( iter == globalToLocalMap.end() )
+//    {
+//      var( subArrayIndex, a ) = unmappedLocalIndexValue;
+//      unmappedGlobalIndices[a] = unpackedGlobalIndex;
+//      unpackedGlobalFlag = true;
+//    }
+//    else
+//    {
+//      var( subArrayIndex, a ) = iter->second;
+//    }
+  }
+//  if( !unpackedGlobalFlag )
+//  {
+//    unmappedGlobalIndices.clear();
+//  }
+
+  return sizeOfUnpackedChars;
+}
+
+// Copied from above
+inline
+localIndex
+Unpack3( buffer_unit_type const * & buffer,
+        ArrayOfArrays< array1d< globalIndex > > & var,
+        localIndex const subArrayIndex,
+        array1d< globalIndex > & unmappedGlobalIndices )
+{
+  localIndex length;
+  localIndex sizeOfUnpackedChars = bufferOps::Unpack( buffer, length );
+
+  var.resizeArray( subArrayIndex, length );
+  unmappedGlobalIndices.resize( length );
+  unmappedGlobalIndices.setValues< serialPolicy >( unmappedLocalIndexValue );
+
+  bool unpackedGlobalFlag = false;
+  for( localIndex a = 0; a < length; ++a )
+  {
+//    globalIndex unpackedGlobalIndex;
+//    sizeOfUnpackedChars += bufferOps::Unpack( buffer, unpackedGlobalIndex );
+//
+//    var( subArrayIndex, a ) = unpackedGlobalIndex;
+
+
+
+//    array1d< globalIndex > tmp;
+//    sizeOfUnpackedChars += bufferOps::Unpack( buffer, tmp );
+//    var( subArrayIndex, a ) = tmp;
+    array1d< globalIndex > & tmp = var( subArrayIndex, a );
+    sizeOfUnpackedChars += bufferOps::Unpack( buffer, tmp );
+
+////    typename mapBase< globalIndex, localIndex, SORTED >::const_iterator
+//    auto iter = globalToLocalMap.find( unpackedGlobalIndex );
+//    if( iter == globalToLocalMap.end() )
+//    {
+//      var( subArrayIndex, a ) = unmappedLocalIndexValue;
+//      unmappedGlobalIndices[a] = unpackedGlobalIndex;
+//      unpackedGlobalFlag = true;
+//    }
+//    else
+//    {
+//      var( subArrayIndex, a ) = iter->second;
+//    }
+  }
+//  if( !unpackedGlobalFlag )
+//  {
+//    unmappedGlobalIndices.clear();
+//  }
+
+  return sizeOfUnpackedChars;
+}
+
+
+// copied from BufferOps_inline 1304
+inline
+localIndex
+Unpack2( buffer_unit_type const * & buffer,
+        ArrayOfArrays< globalIndex > & var,
+        array1d< localIndex > & indices,
+        map< localIndex, array1d< globalIndex > > & unmappedGlobalIndices,
+        unordered_map< globalIndex, localIndex > const & globalToLocalMap )
+{
+  localIndex numIndicesUnpacked;
+  localIndex const sizeOfIndicesPassedIn = indices.size();
+
+  localIndex sizeOfUnpackedChars = bufferOps::Unpack( buffer, numIndicesUnpacked );
+
+  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
+                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
+                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+
+  indices.resize( numIndicesUnpacked );
+  array1d< globalIndex > unmappedIndices;
+
+  for( localIndex a=0; a<indices.size(); ++a )
+  {
+    globalIndex gi;
+    sizeOfUnpackedChars += bufferOps::Unpack( buffer, gi );
+
+    localIndex & li = indices[a];
+    if( sizeOfIndicesPassedIn > 0 )
+    {
+      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
+                     "global index "<<gi<<" unpacked from buffer does not equal the lookup "
+                                    <<li<<" for localIndex "<<li<<" on this rank" );
+    }
+    else
+    {
+//      GEOS_ERROR("We should not be there");
+      li = globalToLocalMap.at( gi );
+    }
+
+//    sizeOfUnpackedChars += Unpack2( buffer,
+//                                    var,
+//                                    li );
+
+    unmappedIndices.resize( 0 );
+    sizeOfUnpackedChars += Unpack2( buffer,
+                                   var,
+                                   li,
+                                   unmappedIndices );
+
+    if( unmappedIndices.size() > 0 )
+    {
+      unmappedGlobalIndices[li] = unmappedIndices;
+    }
+  }
+  return sizeOfUnpackedChars;
+}
+
+// Copied from above
+inline
+localIndex
+Unpack3( buffer_unit_type const *& buffer,
+         ArrayOfArrays< array1d< globalIndex > > & var,
+         array1d< localIndex > & indices,
+         map< localIndex, array1d< globalIndex > > & unmappedGlobalIndices,
+         unordered_map< globalIndex, localIndex > const & globalToLocalMap )
+{
+  localIndex numIndicesUnpacked;
+  localIndex const sizeOfIndicesPassedIn = indices.size();
+
+  localIndex sizeOfUnpackedChars = bufferOps::Unpack( buffer, numIndicesUnpacked );
+
+  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
+                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
+                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+
+  indices.resize( numIndicesUnpacked );
+  array1d< globalIndex > unmappedIndices;
+
+  for( localIndex a=0; a<indices.size(); ++a )
+  {
+    globalIndex gi;
+    sizeOfUnpackedChars += bufferOps::Unpack( buffer, gi );
+
+    localIndex & li = indices[a];
+    if( sizeOfIndicesPassedIn > 0 )
+    {
+      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
+                     "global index "<<gi<<" unpacked from buffer does not equal the lookup "
+                                    <<li<<" for localIndex "<<li<<" on this rank" );
+    }
+    else
+    {
+//      GEOS_ERROR("We should not be there");
+      li = globalToLocalMap.at( gi );
+    }
+
+//    sizeOfUnpackedChars += Unpack2( buffer,
+//                                    var,
+//                                    li );
+
+    unmappedIndices.resize( 0 );
+    sizeOfUnpackedChars += Unpack3( buffer,
+                                   var,
+                                   li,
+                                   unmappedIndices );
+
+    if( unmappedIndices.size() > 0 )
+    {
+      unmappedGlobalIndices[li] = unmappedIndices;
+    }
+  }
+  return sizeOfUnpackedChars;
+}
+
+
+
 template< bool DO_PACKING >
 localIndex FaceElementSubRegion::packUpDownMapsImpl( buffer_unit_type * & buffer,
                                                      arrayView1d< localIndex const > const & packList ) const
@@ -255,11 +635,27 @@ localIndex FaceElementSubRegion::packUpDownMapsImpl( buffer_unit_type * & buffer
                                                packList,
                                                m_2dElemToElems.getElementRegionManager() );
 
-//  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::elem2dToCollocatedNodesString() ) );
-//  packedSize += bufferOps::Pack< DO_PACKING >( buffer, m_2dElemToCollocatedNodes );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::elem2dToCollocatedNodesString() ) );
+  packedSize += Pack2< DO_PACKING >( buffer,
+                                     m_2dElemToCollocatedNodes.toViewConst(),
+                                     m_unmappedGlobalIndicesInToCollocatedNodes,
+                                     packList,
+                                     localToGlobal );
+
+  GEOS_LOG_RANK( "before packing m_2dElemToCollocatedNodesBuckets = " << m_2dElemToCollocatedNodesBuckets );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::elem2dToCollocatedNodesBucketsString() ) );
+  packedSize += Pack3< DO_PACKING >( buffer,
+                                     m_2dElemToCollocatedNodesBuckets.toViewConst(),
+                                     m_unmappedGlobalIndicesInToCollocatedNodesBucket,
+                                     packList,
+                                     localToGlobal );
+  GEOS_LOG_RANK( "after packing m_2dElemToCollocatedNodesBuckets" );
+
+  GEOS_LOG_RANK("DONE pack");
 
   packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::collocatedNodesString() ) );
   packedSize += bufferOps::Pack< DO_PACKING >( buffer, m_collocatedNodes );
+  GEOS_LOG_RANK("DONE pack2");
 
 //  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( "missingNodes" ) );
 //  packedSize += bufferOps::Pack< DO_PACKING >( buffer, m_missingNodes );
@@ -319,6 +715,30 @@ localIndex FaceElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & bu
                                      packList.toViewConst(),
                                      m_2dElemToElems.getElementRegionManager(),
                                      overwriteUpMaps );
+
+//  GEOS_LOG_RANK( "m_2dElemToCollocatedNodes before = " << m_2dElemToCollocatedNodes );
+  string elem2dToCollocatedNodesString;
+  unPackedSize += bufferOps::Unpack( buffer, elem2dToCollocatedNodesString );
+  GEOS_ERROR_IF_NE( elem2dToCollocatedNodesString, viewKeyStruct::elem2dToCollocatedNodesString() );
+  unPackedSize += Unpack2( buffer,
+                           m_2dElemToCollocatedNodes,
+                           packList,
+                           m_unmappedGlobalIndicesInToCollocatedNodes,
+                           this->globalToLocalMap() );
+//  GEOS_LOG_RANK( "m_2dElemToCollocatedNodes after = " << m_2dElemToCollocatedNodes );
+
+  GEOS_LOG_RANK( "m_2dElemToCollocatedNodesBuckets before unpack = " << m_2dElemToCollocatedNodesBuckets );
+  string elem2dToCollocatedNodesBucketsString;
+  unPackedSize += bufferOps::Unpack( buffer, elem2dToCollocatedNodesBucketsString );
+  GEOS_ERROR_IF_NE( elem2dToCollocatedNodesBucketsString, viewKeyStruct::elem2dToCollocatedNodesBucketsString() );
+  unPackedSize += Unpack3( buffer,
+                           m_2dElemToCollocatedNodesBuckets,
+                           packList,
+                           m_unmappedGlobalIndicesInToCollocatedNodesBucket,
+                           this->globalToLocalMap() );
+  GEOS_LOG_RANK( "m_2dElemToCollocatedNodesBuckets after unpack = " << m_2dElemToCollocatedNodesBuckets );
+
+  GEOS_LOG_RANK("DONE unpack");
 
   string collocatedNodesString;
   unPackedSize += bufferOps::Unpack( buffer, collocatedNodesString );
@@ -651,17 +1071,32 @@ void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const & f
 std::set< globalIndex > FaceElementSubRegion::getMissingNodes( unordered_map< globalIndex, localIndex > const & g2l ) const
 {
   std::set< globalIndex > missingNodes;
-  for( int i = 0; i < m_collocatedNodes.size(); ++i )
+  for( localIndex e2d = 0; e2d < m_2dElemToCollocatedNodesBuckets.size(); ++e2d )
   {
-    for( globalIndex const & n:  m_collocatedNodes[i] )
+    for( integer ni = 0; ni < m_2dElemToCollocatedNodesBuckets[e2d].size(); ++ni )
     {
-      auto const it = g2l.find( n );
-      if( it == g2l.cend() )
+      for( globalIndex const gni: m_2dElemToCollocatedNodesBuckets( e2d, ni ) )
       {
-        missingNodes.insert( n );
+        auto const it = g2l.find( gni );
+        if( it == g2l.cend() )
+        {
+          missingNodes.insert( gni );
+        }
       }
     }
   }
+
+//  for( int i = 0; i < m_collocatedNodes.size(); ++i )
+//  {
+//    for( globalIndex const & n:  m_collocatedNodes[i] )
+//    {
+//      auto const it = g2l.find( n );
+//      if( it == g2l.cend() )
+//      {
+//        missingNodes.insert( n );
+//      }
+//    }
+//  }
 
   return missingNodes;
 }

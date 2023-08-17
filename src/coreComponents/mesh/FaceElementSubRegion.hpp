@@ -153,6 +153,7 @@ public:
     static constexpr char const * collocatedNodesString() { return "collocatedNodes"; }
 
     static constexpr char const * elem2dToCollocatedNodesString() { return "elem2dToCollocatedNodes"; }
+    static constexpr char const * elem2dToCollocatedNodesBucketsString() { return "elem2dToCollocatedNodesBuckets"; }
 
 #if GEOSX_USE_SEPARATION_COEFFICIENT
     /// Separation coefficient string.
@@ -222,6 +223,10 @@ public:
   /// Unmapped face elements to faces map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToFaces;
 
+  /// Unmapped face elements to faces map
+  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToCollocatedNodes;
+  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToCollocatedNodesBucket;
+
   /// List of the new face elements that have been generated
   SortedArray< localIndex > m_newFaceElements;
 
@@ -281,6 +286,7 @@ public:
   std::vector< ArrayOfArrays< globalIndex > > m_otherCollocatedNodes;
 
   ArrayOfArrays< globalIndex > m_2dElemToCollocatedNodes;  // TODO maybe we can exchange this properly?
+  ArrayOfArrays< array1d< globalIndex > > m_2dElemToCollocatedNodesBuckets;  // TODO maybe we can exchange this properly?
 
 private:
 

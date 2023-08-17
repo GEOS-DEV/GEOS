@@ -282,6 +282,36 @@ ArrayOfArrays< globalIndex > buildCollocatedNodesOf2dElemsMap( ArrayOfArrays< lo
   return result;
 }
 
+ArrayOfArrays< array1d< globalIndex > > buildCollocatedNodesBucketsOf2dElemsMap( ArrayOfArrays< localIndex > const & elem2dTo2dNodes,
+                                                                                 ArrayOfArrays< globalIndex > const & nodes2dToCollocatedNodes )
+{
+  ArrayOfArrays< array1d< globalIndex > > result;
+  // Allocation
+  result.resize( elem2dTo2dNodes.size() );
+  for( localIndex e2d = 0; e2d < elem2dTo2dNodes.size(); ++e2d )
+  {
+    result.resizeArray( e2d, elem2dTo2dNodes[e2d].size() );
+  }
+  for( localIndex e2d = 0; e2d < elem2dTo2dNodes.size(); ++e2d )
+  {
+    for( integer ni = 0; ni < elem2dTo2dNodes[e2d].size(); ++ni )
+    {
+      auto & dest = result( e2d, ni );
+      localIndex const node = elem2dTo2dNodes[e2d][ni];
+      auto const src = nodes2dToCollocatedNodes[node];
+      dest.reserve( src.size() );
+      // Definition
+      for( globalIndex const s: src )
+      {
+        dest.emplace_back( s );
+      }
+//      result( e2d, node ) = nodes2dToCollocatedNodes[node];
+    }
+  }
+
+  return result;
+}
+
 
 /**
  * @brief Some hash function for pairs of integers.
@@ -719,9 +749,13 @@ void importFractureNetwork( string const & faceBlockName,
   );
   ArrayOfArrays< globalIndex > cn = buildCollocatedNodesMap( collocatedNodes );
   ArrayOfArrays< globalIndex > cne = buildCollocatedNodesOf2dElemsMap( build2dElemTo2dNodes( faceMesh ), cn );
+  ArrayOfArrays< array1d< globalIndex > > cneb = buildCollocatedNodesBucketsOf2dElemsMap( build2dElemTo2dNodes( faceMesh ), cn );
+
+  GEOS_LOG_RANK( "cneb = " << cneb );
 
   faceBlock.setCollocatedNodes( std::move( cn ) );
   faceBlock.setCollocatedNodesOf2dElems( std::move( cne ) );
+  faceBlock.set2dElemsToCollocatedNodesBuckets( std::move( cneb ) );
 }
 
 } // end of namespace

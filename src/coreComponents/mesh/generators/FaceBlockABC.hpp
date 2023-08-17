@@ -185,6 +185,8 @@ public:
 
    */
   virtual ArrayOfArrays< globalIndex > getCollocatedNodesOf2dElems() const = 0;
+
+  virtual ArrayOfArrays< array1d< globalIndex > > get2dElemsToCollocatedNodesBuckets() const = 0;
 };
 
 }
