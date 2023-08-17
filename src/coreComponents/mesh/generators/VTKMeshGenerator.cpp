@@ -122,26 +122,6 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
 
   GEOS_LOG_LEVEL_RANK_0( 2, "  done!" );
   vtk::printMeshStatistics( *m_vtkMesh, m_cellMap, comm );
-
-  {
-    auto writer = vtkSmartPointer< vtkXMLUnstructuredGridWriter >::New();
-    std::string const name( "/tmp/meshes/main-" + std::to_string( MpiWrapper::commRank() ) + ".vtu" );
-    writer->SetFileName( name.c_str() );
-    writer->SetInputData( m_vtkMesh );
-    writer->Update();
-    writer->Write();
-  }
-
-  for( auto nameToMesh: m_faceBlockMeshes )
-  {
-    auto writer = vtkSmartPointer< vtkXMLUnstructuredGridWriter >::New();
-    std::string const name( "/tmp/meshes/frac-" + std::to_string( MpiWrapper::commRank() ) + ".vtu" );
-    writer->SetFileName( name.c_str() );
-    writer->SetInputData( nameToMesh.second );
-    writer->Update();
-    writer->Write();
-  }
-
 }
 
 void VTKMeshGenerator::importVolumicFieldOnArray( string const & cellBlockName,
