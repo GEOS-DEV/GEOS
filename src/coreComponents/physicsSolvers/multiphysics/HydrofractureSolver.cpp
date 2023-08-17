@@ -23,6 +23,7 @@
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "physicsSolvers/multiphysics/HydrofractureSolverKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 
@@ -178,6 +179,20 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
                                                                             int const cycleNumber,
                                                                             DomainPartition & domain )
 {
+  /// THIS is a hack to force variables in the fractures to be initialized since they are created after initialization occurs.
+  if( cycleNumber == 0 && time_n <= 0 )
+  {
+    FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();;
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                  MeshLevel & meshLevel,
+                                                                  arrayView1d< string const > const & )
+    {
+      fsManager.applyInitialConditions( meshLevel );
+    } );
+
+    flowSolver()->initializePostInitialConditionsPreSubGroups();
+  }
+
   real64 dtReturn = dt;
 
   implicitStepSetup( time_n, dt, domain );

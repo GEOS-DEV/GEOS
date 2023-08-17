@@ -79,90 +79,54 @@
   <!-- SPHINX_MESH_END -->
 
   <Events
-    maxTime="1300.0">
+    maxTime="100.0">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
 
     <PeriodicEvent
       name="outputs0"
-      beginTime="0.0"
-      endTime="100.0"
-      forceDt="20.0"
-      target="/Outputs/vtkOutput"/> 
-    
-    <PeriodicEvent
-      name="outputs1"
-      beginTime="100.0"
-      endTime="105.0"
-      forceDt="1.0"
-      target="/Outputs/vtkOutput"/> 
-
-    <PeriodicEvent
-      name="outputs2"
-      beginTime="105.0"
-      endTime="200.0"
-      forceDt="1.0"
-      target="/Outputs/vtkOutput"/> 
-
-    <PeriodicEvent
-      name="outputs3"
-      beginTime="200.0"
-      endTime="460.0"
-      forceDt="10.0"
-      target="/Outputs/vtkOutput"/> 
-    
-    <PeriodicEvent
-      name="outputs4"
-      beginTime="460.0"
-      endTime="1300.0"
-      forceDt="10.0"
-      target="/Outputs/vtkOutput"/> 
+      cycleFrequency="1"
+      target="/Outputs/vtkOutput"/>
 
     <!-- <PeriodicEvent
-      name="timeHistoryCollection0"
+      name="pressureHistoryCollection0"
       beginTime="0.0"
-      timeFrequency="40.0"
-      target="/Tasks/pressureCollection" />
+      cycleFrequency="1"
+      targetExactTimestep="0"
+      target="/Tasks/pressureCollection"/>    
 
     <PeriodicEvent
       name="timeHistoryOutput"
       beginTime="0.0"
-      timeFrequency="40.0"
+      cycleFrequency="10"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput"/>  -->
-
+      target="/Outputs/pressureHistoryOutput"/>   -->
+      
     <PeriodicEvent
       name="solverApplications0"
       beginTime="0.0"
-      endTime="100.0"
-      forceDt="20.0"
+      endTime="50.0"
+      forceDt="1.0"
       target="/Solvers/hydrofracture"/>
 
     <PeriodicEvent
       name="solverApplications1"
-      beginTime="100.0"
-      endTime="105.0"
-      forceDt="1.0"
-      target="/Solvers/hydrofracture"/>
-
-    <PeriodicEvent
-      name="solverApplications2"
-      beginTime="105.0"
-      endTime="200.0"
-      forceDt="1.0"
-      target="/Solvers/hydrofracture"/>
-
-    <PeriodicEvent
-      name="solverApplications3"
-      beginTime="200.0"
-      endTime="460.0"
+      beginTime="50.0"
+      endTime="350.0"
       forceDt="10.0"
       target="/Solvers/hydrofracture"/>
 
     <PeriodicEvent
-      name="solverApplications4"
-      beginTime="460.0"
+      name="solverApplications2"
+      beginTime="350.0"
+      endTime="400.0"
+      forceDt="1.0"
+      target="/Solvers/hydrofracture"/>
+    
+    <PeriodicEvent
+      name="solverApplications3"
+      beginTime="400.0"
       endTime="1300.0"
       forceDt="10.0"
       target="/Solvers/hydrofracture"/>
@@ -291,7 +255,15 @@
        objectPath="ElementRegions/Domain/cb1"
        fieldName="pressure"
        setNames="{all}"
-       scale="20.8e6"/>  
+       scale="20.8e6"/>
+    
+    <FieldSpecification
+       name="initialPressureFracture"
+       initialCondition="1"
+       objectPath="ElementRegions/Fracture"
+       fieldName="pressure"
+       setNames="{all}"
+       scale="20.8e6"/>     
 
     <FieldSpecification
       name="separableFace"
@@ -335,10 +307,20 @@
 
     <SourceFlux
       name="sourceTerm"
+      logLevel="0"
       objectPath="ElementRegions/Fracture"
       scale="-1"
       setNames="{ source }"
       functionName="timeFunction"/>
+
+    <FieldSpecification
+      name="wellBoreVolume"
+      initialCondition="1"
+      logLevel="1"
+      objectPath="ElementRegions/Fracture"
+      fieldName="wellBoreVolume"
+      scale="0.0e-1"
+      setNames="{ source }"/>  
   </FieldSpecifications>
   <!-- SPHINX_BC_END -->
 
@@ -351,8 +333,8 @@
     <TableFunction
       name="timeFunction"
       inputVarNames="{ time }"
-      coordinates="{ 0.0, 100.0, 140.0, 459.9, 460.1, 1e10 }"
-      values="{ 0.0, 0.0, 13.25, 13.25, 0.0, 0.0 }"/>
+      coordinates="{ 0.0, 40.0, 359.9, 360.1, 1e10 }"
+      values="{ 0.0, 13.25, 13.25, 0.0, 0.0 }"/>
   </Functions>
 
   <Geometry>
@@ -378,18 +360,23 @@
   <!-- SPHINX_FRACPLANE_END -->
   </Geometry>
 
-  <Tasks>
+  <!-- <Tasks>
     <PackCollection
       name="pressureCollection"
       objectPath="ElementRegions/Fracture/FractureSubRegion"
       fieldName="pressure"/>
-  </Tasks>
+  </Tasks> -->
 
   <!-- SPHINX_OUTPUT -->    
   <Outputs>
     <VTK
       name="vtkOutput"
       plotFileRoot="forge_Well58-32_fracturingTest_perm=1e-15_Rinj=1_Rfrac=2_Sh=45"/>
+
+    <!-- <TimeHistory
+      name="pressureHistoryOutput"
+      sources="{/Tasks/pressureCollection}"
+      filename="forge-58-32_injPressure_history"/>      -->
   </Outputs>
   <!-- SPHINX_OUTPUT_END -->
 
