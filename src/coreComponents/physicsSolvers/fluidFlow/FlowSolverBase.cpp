@@ -718,6 +718,8 @@ void FlowSolverBase::prepareWeights( DomainPartition & domain )
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
+    GEOS_UNUSED_VAR( regionNames );
+
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( getDiscretizationName() );
@@ -742,6 +744,8 @@ void FlowSolverBase::updateWeights( DomainPartition & domain )
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
+    GEOS_UNUSED_VAR( regionNames );
+
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( getDiscretizationName() );
