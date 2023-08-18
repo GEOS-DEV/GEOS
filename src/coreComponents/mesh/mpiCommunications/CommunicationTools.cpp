@@ -383,6 +383,9 @@ CommunicationTools::buildNeighborPartitionBoundaryObjects( ObjectManagerBase & m
   arrayView1d< integer > const & domainBoundaryIndicator = manager.getDomainBoundaryIndicator();
   array1d< globalIndex > const globalPartitionBoundaryObjectsIndices = manager.constructGlobalListOfBoundaryObjects();
 
+  // The data functor will return the same information, whatever the rank `i` is.
+  // This is because the `exchange` function is able to send different data depending on the rank.
+  // Since in our precise case, we want to send the same information, we adapt the functor that way.
   auto const data = [&]( auto i ) -> array1d< globalIndex > const &
   {
     return std::cref( globalPartitionBoundaryObjectsIndices );
@@ -437,7 +440,7 @@ CommunicationTools::
 
 /**
  * @brief During the ghosting process, some nodes may be on multiple ranks in the same time.
- * But if we want to send those nodes, the rank with the minimal MPI rank really owns the node,
+ * But if we want to send those nodes, the rank with the lowest MPI rank really owns the node,
  * and therefore should be responsible for sending the node to the others.
  * @param mpiRankToNodes For each involved mpi rank, all the nodes that need to be sent.
  * @return The sanitized mapping: only the ranks with the minimal MPI rank will be in charged of sending the proper nodes.
@@ -462,7 +465,7 @@ std::map< int, array1d< globalIndex > > reorganizeRequestedNodes( std::map< int,
     int m_value = std::numeric_limits< int >::max();
   };
 
-  std::map< int, array1d< globalIndex > > minMpiRankToNodes;
+  std::map< int, array1d< globalIndex > > minMpiRankToNodes;  // Will be returned.
 
   std::map< globalIndex, MinInt > nodeToMpiRank;
   for( auto const & [mpiRank, nodes]: mpiRankToNodes )
@@ -471,7 +474,7 @@ std::map< int, array1d< globalIndex > > reorganizeRequestedNodes( std::map< int,
     {
       nodeToMpiRank[gi] = mpiRank;
     }
-    minMpiRankToNodes[mpiRank];  // Allocate all the ranks. Important, otherwise mpi ranks with empty ranks will not be defined.
+    minMpiRankToNodes[mpiRank];  // Explicitly allocate all the ranks. Important, otherwise mpi ranks without nodes will not be defined.
   }
 
   for( auto const & [node, mpiRank]: nodeToMpiRank )
@@ -486,7 +489,7 @@ std::map< int, array1d< globalIndex > > reorganizeRequestedNodes( std::map< int,
 void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeManager,
                                                             std::vector< NeighborCommunicator > & allNeighbors,
                                                             std::set< std::set< globalIndex > > const & collocatedNodesBuckets,
-                                                            std::set< globalIndex > const & requested )
+                                                            std::set< globalIndex > const & requestedNodes )
 {
   GEOS_MARK_FUNCTION;
   auto const & g2l = nodeManager.globalToLocalMap();
@@ -543,7 +546,7 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
       array1d< globalIndex > & requestedMatches = requestedMatchesMap[allNeighbors[i].neighborRank()];
       {
         std::vector< globalIndex > intersection;
-        std::set_intersection( requested.cbegin(), requested.cend(),
+        std::set_intersection( requestedNodes.cbegin(), requestedNodes.cend(),
                                neighborNodes.cbegin(), neighborNodes.cend(),
                                std::back_inserter( intersection ) );
         for( globalIndex const & gn: intersection )
@@ -559,14 +562,14 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
   {
     return req.at( allNeighbors[i].neighborRank() );
   };
-  array1d< array1d< globalIndex > > neighborRequestedNodes = exchange( getCommID(), allNeighbors, data );
+  array1d< array1d< globalIndex > > const nodesRequestedByNeighbors = exchange( getCommID(), allNeighbors, data );
 
   // Then we store the requested nodes for each receiver.
   for( integer i = 0; i < numNeighbors; ++i )
   {
     std::set< globalIndex > nodesNotFound;
     array1d< localIndex > & matchedBoundaryNodes = nodeManager.getNeighborData( allNeighbors[i].neighborRank() ).matchedPartitionBoundary();
-    for( globalIndex const & gi: neighborRequestedNodes[i] )
+    for( globalIndex const & gi: nodesRequestedByNeighbors[i] )
     {
       auto const locIt = g2l.find( gi );
       if( locIt != g2l.cend() )

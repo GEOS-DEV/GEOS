@@ -112,7 +112,7 @@ public:
   virtual void fixUpDownMaps( bool const clearIfUnmapped ) override;
 
   /**
-   * @brief Fixes the mappings between the @p FaceElementSubRegion and its neighbor regions.
+   * @brief Fixes the mappings between the @p FaceElementSubRegion and regions next to it (e.g., matrix regions).
    * @param nodeManager The node manager
    * @param edgeManager The edge manager
    * @param faceManager The face manager
@@ -277,7 +277,7 @@ public:
   std::set< globalIndex > getMissingNodes( unordered_map< globalIndex, localIndex > const & g2l ) const;
 
   /**
-   * @brief Returns the 2d element (local to the @p FaceElementSubRegion) to node (local to the 2d element) to collocated nodes (global) bucket mapping.
+   * @brief Returns the 2d element to node to collocated nodes bucket mapping.
    * @return A const view to the data.
    * @note The 2d element is local to the @p FaceElementSubRegion,
    * the node is local to the 2d element and the collocated nodes are global.

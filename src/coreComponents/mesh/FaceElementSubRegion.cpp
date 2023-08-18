@@ -65,7 +65,7 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
 
   registerWrapper( viewKeyStruct::elem2dToCollocatedNodesBucketsString(), &m_2dElemToCollocatedNodesBuckets ).
     setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "Dummy" ).
+    setDescription( "A map eventually containing all the collocated nodes." ).
     setSizedFromParent( 1 );
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
@@ -96,7 +96,7 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
   // which emphasizes the need of a refactoring.
   // In the meantime, we try to fill the face block into the sub region and hope for the best...
   {
-    auto const hack = []( integer allSizes ) -> ElementType
+    auto const hack = [&]( integer allSizes ) -> ElementType
     {
       GEOS_LOG_RANK( "All sizes : " << allSizes );
       switch( allSizes )
@@ -106,7 +106,9 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
           return ElementType::Wedge;
         case 4:
         case 8:
+          return ElementType::Hexahedron;
         case 0:
+          GEOS_WARNING( "Could not determine the element type of the fracture " << getName() << ". Defaulted to hexahedron." );
           return ElementType::Hexahedron;
         default:
           GEOS_ERROR( "Unsupported type of elements during the face element sub region creation." );
@@ -142,7 +144,8 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
   // But we only have access to the cell block indices, not the sub regions indices.
   // Temporarily, and also because they share the same dimensions,
   // we store the cell block mapping at the sub region mapping location.
-  // It will later be transformed into a sub regions mapping.  // Last, we fill the regions mapping with dummy -1 values that should all be replaced eventually.
+  // It will later be transformed into a sub regions mapping.
+  // Last, we fill the regions mapping with dummy -1 values that should all be replaced eventually.
   auto const elem2dToElems = faceBlock.get2dElemToElems();
   m_2dElemToElems.resize( num2dElements, 2 );
   for( int i = 0; i < num2dElements; ++i )

@@ -87,7 +87,7 @@ public:
   void findMatchedPartitionBoundaryNodes( NodeManager & nodeManager,
                                           std::vector< NeighborCommunicator > & allNeighbors,
                                           std::set< std::set< globalIndex > > const & collocatedNodesBuckets,
-                                          std::set< globalIndex > const & requested );
+                                          std::set< globalIndex > const & requestedNodes );
 
   void synchronizeFields( FieldIdentifiers const & fieldsToBeSync,
                           MeshLevel & mesh,

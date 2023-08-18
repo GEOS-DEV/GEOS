@@ -66,7 +66,7 @@ public:
    * still at the boundary, can be included.
    * For example, if the mesh is split along a fracture, the nodes on the two sides of the fracture
    * do not share the same index, but they still need to be exchanged
-   * for the fracture two have its two neighboring elements.
+   * for the fracture to have its two neighboring elements.
    */
   array1d< localIndex > & matchedPartitionBoundary()
   { return m_matchedPartitionBoundary; }

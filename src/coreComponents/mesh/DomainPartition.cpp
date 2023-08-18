@@ -160,22 +160,6 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
   {
     MeshLevel & meshLevel = meshBody.getBaseDiscretization();
 
-    std::set< std::set< globalIndex > > collocatedNodes;
-    meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >(
-      [&]( FaceElementSubRegion const & subRegion )
-      {
-        ArrayOfArraysView< array1d< globalIndex > const > const collocatedNodesBuckets = subRegion.get2dElemToCollocatedNodesBuckets();
-        for( localIndex e2d = 0; e2d < collocatedNodesBuckets.size(); ++e2d )
-        {
-          for( integer ni = 0; ni < collocatedNodesBuckets.sizeOfArray( e2d ); ++ni )
-          {
-            array1d< globalIndex > const & bucket = collocatedNodesBuckets( e2d, ni );
-            std::set< globalIndex > tmp( bucket.begin(), bucket.end() );
-            collocatedNodes.insert( tmp );
-          }
-        }
-	    } );
-
     NodeManager & nodeManager = meshLevel.getNodeManager();
     FaceManager & faceManager = meshLevel.getFaceManager();
     EdgeManager & edgeManager = meshLevel.getEdgeManager();
@@ -194,6 +178,35 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
                                                            nodeManager,
                                                            m_neighbors );
 
+    CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
+                                                                           m_neighbors );
+
+    CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( edgeManager,
+                                                                           m_neighbors );
+
+    // w.r.t. edges and faces, finding the matching nodes between partitions is a bit trickier.
+    // Because for contact mechanics and fractures, some nodes can be collocated.
+    // And the fracture elements will point to those nodes.
+    // While they are not the _same_ nodes (which is the criterion for edges and faces),
+    // we still want those collocated nodes to be exchanged between the ranks.
+    // This is what we gather some additional information: what are those collocated nodes
+    // and also what are the nodes that we require but are not present on the current rank!
+    std::set< std::set< globalIndex > > collocatedNodesBuckets;
+    meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >(
+      [&]( FaceElementSubRegion const & subRegion )
+      {
+        ArrayOfArraysView< array1d< globalIndex > const > const buckets = subRegion.get2dElemToCollocatedNodesBuckets();
+        for( localIndex e2d = 0; e2d < buckets.size(); ++e2d )
+        {
+          for( integer ni = 0; ni < buckets.sizeOfArray( e2d ); ++ni )
+          {
+            array1d< globalIndex > const & bucket = buckets( e2d, ni );
+            std::set< globalIndex > tmp( bucket.begin(), bucket.end() );
+            collocatedNodesBuckets.insert( tmp );
+          }
+        }
+      } );
+
     std::set< globalIndex > requestedNodes;
     meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >(
       [&]( FaceElementSubRegion const & subRegion )
@@ -202,15 +215,9 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
         requestedNodes.insert( missingNodes.cbegin(), missingNodes.cend() );
       } );
 
-    CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
-                                                                           m_neighbors );
-
-    CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( edgeManager,
-                                                                           m_neighbors );
-
     CommunicationTools::getInstance().findMatchedPartitionBoundaryNodes( nodeManager,
                                                                          m_neighbors,
-                                                                         collocatedNodes,
+                                                                         collocatedNodesBuckets,
                                                                          requestedNodes );
   } );
 }
