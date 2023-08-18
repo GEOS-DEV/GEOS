@@ -151,7 +151,6 @@ endif()
 #endif()
 
 
-
 if( CMAKE_HOST_APPLE )
 #    set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE STRING "")
 #    set(GEOSX_LINK_POSTPEND_FLAG "" CACHE STRING "")

@@ -80,12 +80,15 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase & subRegion )
     {
+      subRegion.registerField< pressure >( getName() );
       subRegion.registerField< pressure_n >( getName() );
       subRegion.registerField< initialPressure >( getName() );
       subRegion.registerField< deltaPressure >( getName() ); // for reporting/stats purposes
-      subRegion.registerField< pressure >( getName() );
-
       subRegion.registerField< bcPressure >( getName() ); // needed for the application of boundary conditions
+      if( m_isFixedStressPoromechanicsUpdate )
+      {
+        subRegion.registerField< pressure_k >( getName() ); // needed for the fixed-stress porosity update
+      }
 
       subRegion.registerField< deltaVolume >( getName() );
 
@@ -93,6 +96,10 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< temperature_n >( getName() );
       subRegion.registerField< initialTemperature >( getName() );
       subRegion.registerField< bcTemperature >( getName() ); // needed for the application of boundary conditions
+      if( m_isFixedStressPoromechanicsUpdate )
+      {
+        subRegion.registerField< temperature_k >( getName() ); // needed for the fixed-stress porosity update
+      }
 
       subRegion.registerField< mobility >( getName() );
       subRegion.registerField< dMobility_dPressure >( getName() );
@@ -267,8 +274,10 @@ void SinglePhaseBase::updateSolidInternalEnergyModel( ObjectManagerBase & dataGr
 
 void SinglePhaseBase::updateThermalConductivity( ElementSubRegionBase & subRegion ) const
 {
+  //START_SPHINX_INCLUDE_COUPLEDSOLID
   CoupledSolidBase const & porousSolid =
     getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+  //END_SPHINX_INCLUDE_COUPLEDSOLID
 
   arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
 
@@ -702,7 +711,14 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
 
       CoupledSolidBase const & porousSolid =
         getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
-      porousSolid.saveConvergedState();
+      if( m_keepFlowVariablesConstantDuringInitStep )
+      {
+        porousSolid.ignoreConvergedState(); // newPorosity <- porosity_n
+      }
+      else
+      {
+        porousSolid.saveConvergedState(); // porosity_n <- porosity
+      }
 
       if( m_isThermal )
       {
