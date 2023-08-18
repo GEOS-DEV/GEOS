@@ -238,6 +238,8 @@ class Umpire(CachedCMakePackage, CudaPackage, ROCmPackage):
             entries.append(cmake_cache_path("camp_DIR", spec["camp"].prefix))
         entries.append(cmake_cache_option("{}ENABLE_NUMA".format(option_prefix), "+numa" in spec))
         # GEOS_EDIT_START
+
+        # The wrong way to initialize OpenMP from spack upstream
         # entries.append(
         #     cmake_cache_option("{}ENABLE_OPENMP".format(option_prefix), "+openmp" in spec)
         # )

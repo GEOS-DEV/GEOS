@@ -20,8 +20,7 @@ class Chai(CachedCMakePackage, CudaPackage, ROCmPackage):
     maintainers("davidbeckingsale")
 
     # GEOS_EDIT_START
-    version("2023.06.0", tag="v2023.06.0", submodules=True)
-    # version("2023.06.0", tag="v2023.06.0", submodules=False)
+    version("2023.06.0", tag="v2023.06.0", submodules=False)
     # GEOS_EDIT_END
 
     version("develop", branch="develop", submodules=False)
@@ -54,39 +53,33 @@ class Chai(CachedCMakePackage, CudaPackage, ROCmPackage):
     depends_on("cmake@3.14:", when="@2022.03.0:")
 
     # GEOS_EDIT_START
-    # GEOS_EDIT_START
-    # depends_on("blt@0.5.3:", type="build", when="@2023.06.0:")
+    depends_on("blt@0.5.3:", type="build", when="@2023.06.0:")
     # # GEOS_EDIT_END
-    # depends_on("blt@0.5.0:", type="build", when="@2022.03.0:")
-    # depends_on("blt@0.4.1:", type="build", when="@2.4.0:")
-    # depends_on("blt@0.4.0:", type="build", when="@2.3.0")
-    # depends_on("blt@0.3.6:", type="build", when="@:2.2.2")
-    # GEOS_EDIT_END
+    depends_on("blt@0.5.0:", type="build", when="@2022.03.0:")
+    depends_on("blt@0.4.1:", type="build", when="@2.4.0:")
+    depends_on("blt@0.4.0:", type="build", when="@2.3.0")
+    depends_on("blt@0.3.6:", type="build", when="@:2.2.2")
 
+    depends_on("umpire")
     # GEOS_EDIT_START
-    # depends_on("umpire")
-    # GEOS_EDIT_START
-    # depends_on("umpire@2023.06.0:", when="@2023.06.0:")
+    depends_on("umpire@2023.06.0:", when="@2023.06.0:")
     # GEOS_EDIT_END
-    # depends_on("umpire@2022.03.0:", when="@2022.03.0:")
-    # depends_on("umpire@6.0.0", when="@2.4.0")
-    # depends_on("umpire@4.1.2", when="@2.2.0:2.3.0")
-    # depends_on("umpire@main", when="@main")
-    # GEOS_EDIT_END
+    depends_on("umpire@2022.03.0:", when="@2022.03.0:")
+    depends_on("umpire@6.0.0", when="@2.4.0")
+    depends_on("umpire@4.1.2", when="@2.2.0:2.3.0")
+    depends_on("umpire@main", when="@main")
 
-    # GEOS_EDIT_START
-    # with when("+cuda"):
-    #     depends_on("umpire+cuda")
-    #     for sm_ in CudaPackage.cuda_arch_values:
-    #         depends_on("umpire+cuda cuda_arch={0}".format(sm_), when="cuda_arch={0}".format(sm_))
+    with when("+cuda"):
+        depends_on("umpire+cuda")
+        for sm_ in CudaPackage.cuda_arch_values:
+            depends_on("umpire+cuda cuda_arch={0}".format(sm_), when="cuda_arch={0}".format(sm_))
 
-    # with when("+rocm"):
-    #     depends_on("umpire+rocm")
-    #     for arch in ROCmPackage.amdgpu_targets:
-    #         depends_on(
-    #             "umpire+rocm amdgpu_target={0}".format(arch), when="amdgpu_target={0}".format(arch)
-    #         )
-    # GEOS_EDIT_END
+    with when("+rocm"):
+        depends_on("umpire+rocm")
+        for arch in ROCmPackage.amdgpu_targets:
+            depends_on(
+                "umpire+rocm amdgpu_target={0}".format(arch), when="amdgpu_target={0}".format(arch)
+            )
 
     with when("+raja"):
         depends_on("raja~openmp", when="~openmp")
@@ -183,19 +176,14 @@ class Chai(CachedCMakePackage, CudaPackage, ROCmPackage):
 
         option_prefix = "CHAI_" if spec.satisfies("@2022.03.0:") else ""
 
-        # GEOS_EDIT_START
-        # entries.append(cmake_cache_path("BLT_SOURCE_DIR", spec["blt"].prefix))
-        # GEOS_EDIT_END
+        entries.append(cmake_cache_path("BLT_SOURCE_DIR", spec["blt"].prefix))
         if "+raja" in spec:
             entries.append(cmake_cache_option("{}ENABLE_RAJA_PLUGIN".format(option_prefix), True))
             entries.append(cmake_cache_path("RAJA_DIR", spec["raja"].prefix))
         entries.append(
             cmake_cache_option("{}ENABLE_PICK".format(option_prefix), "+enable_pick" in spec)
         )
-        # GEOS_EDIT_START
-        # entries.append(cmake_cache_path("umpire_DIR", spec["umpire"].prefix.share.umpire.cmake))
-        entries.append(cmake_cache_option("UMPIRE_ENABLE_C", True))
-        # GEOS_EDIT_END
+        entries.append(cmake_cache_path("umpire_DIR", spec["umpire"].prefix.share.umpire.cmake))
         entries.append(cmake_cache_option("ENABLE_TESTS", "+tests" in spec))
         entries.append(cmake_cache_option("ENABLE_BENCHMARKS", "+benchmarks" in spec))
         entries.append(
