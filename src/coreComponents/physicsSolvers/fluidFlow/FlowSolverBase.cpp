@@ -726,41 +726,11 @@ void FlowSolverBase::prepareWeights( DomainPartition & domain )
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture =
       mesh.getElemManager().constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::hydraulicAperture::key() );
 
-    // fluxApprox.forStencils< SurfaceElementStencil, FaceElementToCellStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
-    // {
-    //   typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
-
-    //   forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] ( localIndex const iconn )
-    //   {
-    //     stencilWrapper.removeHydraulicApertureContribution( iconn, hydraulicAperture );
-    //   } );
-    // } );
-
-    fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto & stencil )
+    fluxApprox.forStencils< SurfaceElementStencil, FaceElementToCellStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-      forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] ( localIndex const iconn )
-      {
-        stencilWrapper.removeHydraulicApertureContribution( iconn, hydraulicAperture );
-      } );
-    } );
-
-    fluxApprox.forStencils< FaceElementToCellStencil >( mesh, [&]( auto & stencil )
-    {
-      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
-
-      forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] ( localIndex const iconn )
-      {
-        stencilWrapper.removeHydraulicApertureContribution( iconn, hydraulicAperture );
-      } );
-    } );
-
-    fluxApprox.forStencils< EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
-    {
-      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
-
-      forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] ( localIndex const iconn )
+      forAll< parallelHostPolicy >( stencilWrapper.size(), [=] ( localIndex const iconn )
       {
         stencilWrapper.removeHydraulicApertureContribution( iconn, hydraulicAperture );
       } );
@@ -782,41 +752,11 @@ void FlowSolverBase::updateWeights( DomainPartition & domain )
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture =
       mesh.getElemManager().constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::hydraulicAperture::key() );
 
-    // fluxApprox.forStencils< SurfaceElementStencil, FaceElementToCellStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
-    // {
-    //   typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
-
-    //   forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] ( localIndex const iconn )
-    //   {
-    //     stencilWrapper.addHydraulicApertureContribution( iconn, hydraulicAperture );
-    //   } );
-    // } );
-
-    fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto & stencil )
+    fluxApprox.forStencils< SurfaceElementStencil, FaceElementToCellStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-      forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] ( localIndex const iconn )
-      {
-        stencilWrapper.addHydraulicApertureContribution( iconn, hydraulicAperture );
-      } );
-    } );
-
-    fluxApprox.forStencils< FaceElementToCellStencil >( mesh, [&]( auto & stencil )
-    {
-      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
-
-      forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] ( localIndex const iconn )
-      {
-        stencilWrapper.addHydraulicApertureContribution( iconn, hydraulicAperture );
-      } );
-    } );
-
-    fluxApprox.forStencils< EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
-    {
-      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
-
-      forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] ( localIndex const iconn )
+      forAll< parallelHostPolicy >( stencilWrapper.size(), [=] ( localIndex const iconn )
       {
         stencilWrapper.addHydraulicApertureContribution( iconn, hydraulicAperture );
       } );
