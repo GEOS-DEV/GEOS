@@ -248,9 +248,9 @@ TEST_F( DieterichSeismicityRateIntegralSolverTest, solverTest )
           elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const, CellElementSubRegion & subRegion )
           {
             // Retrieve shear stress fields from seismicity rate solver, to be hard coded
-            arrayView1d< real64 const > const tau_i = subRegion.getField< geos::fields::inducedSeismicity::initialMeanShearStress >();
-            arrayView1d< real64 > const tau = subRegion.getField< geos::fields::inducedSeismicity::meanShearStress >();
-            arrayView1d< real64 > const tau_n = subRegion.getField< geos::fields::inducedSeismicity::meanShearStress_n >();
+            arrayView1d< real64 const > const tau_i = subRegion.getField< geos::fields::inducedSeismicity::initialProjectedShearTraction >();
+            arrayView1d< real64 > const tau = subRegion.getField< geos::fields::inducedSeismicity::projectedShearTraction >();
+            arrayView1d< real64 > const tau_n = subRegion.getField< geos::fields::inducedSeismicity::projectedShearTraction_n >();
 
             // Shear stress history will follow a log history, 
             // to which one can compute an analytical solution for the seismicity rate

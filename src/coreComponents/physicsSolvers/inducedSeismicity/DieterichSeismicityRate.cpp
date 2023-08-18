@@ -40,14 +40,14 @@ using namespace constitutive;
  * What does this solver do?
  * --------------------------
  *
- * This solver finds a solution R(x, t) - the seismicity rate - to the ODE formulated 
- * by Dieterich, 1994 given a certain stressing history. The stressing history can consist
+ * This solver finds a solution R(x, t) - the seismicity rate - to the ordinary differential equation (ODE) 
+ * formulated by Dieterich, 1994 given a certain stressing history. The stressing history can consist
  * of mechanical stresses and pore pressure. The solver class includes a member variable 
  * pointing to the stress solver that is specified in the XML file. SolverStep for the 
  * stress solver is then called in the SolverStep function for the seismicity rate, to take
  * the updated stress history as the input.
  * 
- * Solving the ODE is currently implemented by computing the closed-form interal solution 
+ * Solving the ODE is currently implemented by computing the closed-form integral solution 
  * to the ODE which involves numerical calculation of an integral of a stress functional. 
  * We initially solve for the log of the seismicity rate in order to avoid overflow that 
  * typically occurs in the exponential of the stress history. 
@@ -110,7 +110,7 @@ real64 DieterichSeismicityRate::solverStep( real64 const & time_n,
                                   const int cycleNumber,
                                   DomainPartition & domain )
 {
-  // Save initial stress state on pre-defined fault orienations to field variables
+  // Save initial stress state on pre-defined fault orientations to field variables
   initializeMeanSolidStress(time_n, cycleNumber, domain); 
 
   // Call member variable stress solver to update the stress state
@@ -132,7 +132,7 @@ real64 DieterichSeismicityRate::solverStep( real64 const & time_n,
         updateMeanSolidStress( subRegion );
       }
 
-      // solve for the seismcity rate given new stresses on faults
+      // solve for the seismicity rate given new stresses on faults
       integralSolverStep( time_n, dtStress, subRegion ); 
     });
   });
@@ -151,16 +151,16 @@ void DieterichSeismicityRate::integralSolverStep( real64 const & time_n,
   arrayView1d< real64 > const logDenom = subRegion.getField< inducedSeismicity::logDenom >();
   arrayView1d< real64 > const logDenom_n = subRegion.getField< inducedSeismicity::logDenom_n >();
 
-  arrayView1d< real64 const > const sig_i = subRegion.getField< inducedSeismicity::initialMeanNormalStress >();
-  arrayView1d< real64 const > const sig = subRegion.getField< inducedSeismicity::meanNormalStress >();
-  arrayView1d< real64 const > const sig_n = subRegion.getField< inducedSeismicity::meanNormalStress_n >();
+  arrayView1d< real64 const > const sig_i = subRegion.getField< inducedSeismicity::initialProjectedNormalTraction >();
+  arrayView1d< real64 const > const sig = subRegion.getField< inducedSeismicity::projectedNormalTraction >();
+  arrayView1d< real64 const > const sig_n = subRegion.getField< inducedSeismicity::projectedNormalTraction_n >();
   
-  arrayView1d< real64 const > const tau_i = subRegion.getField< inducedSeismicity::initialMeanShearStress >();
-  arrayView1d< real64 const > const tau = subRegion.getField< inducedSeismicity::meanShearStress >();
-  arrayView1d< real64 const > const tau_n = subRegion.getField< inducedSeismicity::meanShearStress_n >();
+  arrayView1d< real64 const > const tau_i = subRegion.getField< inducedSeismicity::initialProjectedShearTraction >();
+  arrayView1d< real64 const > const tau = subRegion.getField< inducedSeismicity::projectedShearTraction >();
+  arrayView1d< real64 const > const tau_n = subRegion.getField< inducedSeismicity::projectedShearTraction_n >();
 
   // Retrieve pore pressure variables if flow solver is being used. If not, initialize them as zero arrays.
-  array1d< real64 > temp( R.size() );
+  array1d< real64 > temp( subRegion.size() );
   arrayView1d< real64 const > p_i = temp.toView();
   arrayView1d< real64 const > p = p_i;
   arrayView1d< real64 const > p_n = p_i;
@@ -171,7 +171,7 @@ void DieterichSeismicityRate::integralSolverStep( real64 const & time_n,
     p_n = subRegion.getField< flow::pressure_n >();
   }
 
-  forAll< parallelDevicePolicy<> >( R.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     // arguments of stress exponential at current and previous time step
     real64 g = (tau[k] + m_backgroundStressingRate*(time_n+dt))/(m_directEffect*(-sig[k]-p[k])) 

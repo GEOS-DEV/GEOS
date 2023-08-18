@@ -47,10 +47,10 @@ SeismicityRateBase::SeismicityRateBase( const string & name,
           setDescription( "Initial shear stress" );
 
     // Only temporarily store user-specified fault directions here, then initialize fault projection tensors
-    this->registerWrapper( viewKeyStruct::faultNormalString(), &m_faultNormalDirection ).
+    this->registerWrapper( viewKeyStruct::faultNormalDirectionString(), &m_faultNormalDirection ).
           setInputFlag( InputFlags::OPTIONAL ).
           setDescription( "Fault normal direction" );
-    this->registerWrapper( viewKeyStruct::faultShearString(), &m_faultShearDirection ).
+    this->registerWrapper( viewKeyStruct::faultShearDirectionString(), &m_faultShearDirection ).
           setInputFlag( InputFlags::OPTIONAL ).
           setDescription( "Fault shear direction" );
 
@@ -85,13 +85,13 @@ void SeismicityRateBase::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase & subRegion )
     {
-      subRegion.registerField< inducedSeismicity::initialMeanNormalStress >( getName() );
-      subRegion.registerField< inducedSeismicity::initialMeanShearStress >( getName() );
+      subRegion.registerField< inducedSeismicity::initialProjectedNormalTraction >( getName() );
+      subRegion.registerField< inducedSeismicity::initialProjectedShearTraction >( getName() );
 
-      subRegion.registerField< inducedSeismicity::meanNormalStress >( getName() );
-      subRegion.registerField< inducedSeismicity::meanNormalStress_n >( getName() );
-      subRegion.registerField< inducedSeismicity::meanShearStress >( getName() );
-      subRegion.registerField< inducedSeismicity::meanShearStress_n >( getName() );
+      subRegion.registerField< inducedSeismicity::projectedNormalTraction >( getName() );
+      subRegion.registerField< inducedSeismicity::projectedNormalTraction_n >( getName() );
+      subRegion.registerField< inducedSeismicity::projectedShearTraction >( getName() );
+      subRegion.registerField< inducedSeismicity::projectedShearTraction_n >( getName() );
 
       subRegion.registerField< inducedSeismicity::seismicityRate >( getName() );
     } );
@@ -121,10 +121,10 @@ void SeismicityRateBase::initializePreSubGroups()
 void SeismicityRateBase::updateMeanSolidStress( ElementSubRegionBase & subRegion )
 {
   // Retrieve field variables
-  arrayView1d< real64 > const sig = subRegion.getField< inducedSeismicity::meanNormalStress >();
-  arrayView1d< real64 > const sig_n = subRegion.getField< inducedSeismicity::meanNormalStress_n >();
-  arrayView1d< real64 > const tau = subRegion.getField< inducedSeismicity::meanShearStress >();
-  arrayView1d< real64 > const tau_n = subRegion.getField< inducedSeismicity::meanShearStress_n >();
+  arrayView1d< real64 > const sig = subRegion.getField< inducedSeismicity::projectedNormalTraction >();
+  arrayView1d< real64 > const sig_n = subRegion.getField< inducedSeismicity::projectedNormalTraction_n >();
+  arrayView1d< real64 > const tau = subRegion.getField< inducedSeismicity::projectedShearTraction >();
+  arrayView1d< real64 > const tau_n = subRegion.getField< inducedSeismicity::projectedShearTraction_n >();
 
   // Retrieve stress state computed by m_stressSolver, called in solverStep
   string const & solidModelName = subRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString());
@@ -177,10 +177,10 @@ void SeismicityRateBase::initializeMeanSolidStress(real64 const time_n, integer 
                                                        ElementSubRegionBase & subRegion )
       {
         // Retrieve field variables
-        arrayView1d< real64 const > const sig = subRegion.getField< inducedSeismicity::meanNormalStress >();
-        arrayView1d< real64 > const sig_i = subRegion.getField< inducedSeismicity::initialMeanNormalStress >();
-        arrayView1d< real64 const > const tau = subRegion.getField< inducedSeismicity::meanShearStress >();
-        arrayView1d< real64 > const tau_i = subRegion.getField< inducedSeismicity::initialMeanShearStress >();
+        arrayView1d< real64 const > const sig = subRegion.getField< inducedSeismicity::projectedNormalTraction >();
+        arrayView1d< real64 > const sig_i = subRegion.getField< inducedSeismicity::initialProjectedNormalTraction >();
+        arrayView1d< real64 const > const tau = subRegion.getField< inducedSeismicity::projectedShearTraction >();
+        arrayView1d< real64 > const tau_i = subRegion.getField< inducedSeismicity::initialProjectedShearTraction >();
 
         // If solid stress solver has been called, call updateMeanSolidStress to project stress state onto faults
         if ( subRegion.hasWrapper( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString() ) )
@@ -202,18 +202,18 @@ void SeismicityRateBase::initializeMeanSolidStress(real64 const time_n, integer 
         // If solid stress solver has not been called, initialize fault stresses to user-defined values
         else
         {
-          arrayView1d< real64 > const tempSigIni = subRegion.getField< inducedSeismicity::initialMeanNormalStress >();
+          arrayView1d< real64 > const tempSigIni = subRegion.getField< inducedSeismicity::initialProjectedNormalTraction >();
           tempSigIni.setValues< parallelHostPolicy >( m_initialFaultNormalStress );
-          arrayView1d< real64 > const tempSig = subRegion.getField< inducedSeismicity::meanNormalStress >();
+          arrayView1d< real64 > const tempSig = subRegion.getField< inducedSeismicity::projectedNormalTraction >();
           tempSig.setValues< parallelHostPolicy >( m_initialFaultNormalStress );
-          arrayView1d< real64 > const tempSig_n = subRegion.getField< inducedSeismicity::meanNormalStress_n >();
+          arrayView1d< real64 > const tempSig_n = subRegion.getField< inducedSeismicity::projectedNormalTraction_n >();
           tempSig_n.setValues< parallelHostPolicy >( m_initialFaultNormalStress );
 
-          arrayView1d< real64 > const tempTauIni = subRegion.getField< inducedSeismicity::initialMeanShearStress >();
+          arrayView1d< real64 > const tempTauIni = subRegion.getField< inducedSeismicity::initialProjectedShearTraction >();
           tempTauIni.setValues< parallelHostPolicy >( m_initialFaultShearStress );
-          arrayView1d< real64 > const tempTau = subRegion.getField< inducedSeismicity::meanShearStress >();
+          arrayView1d< real64 > const tempTau = subRegion.getField< inducedSeismicity::projectedShearTraction >();
           tempTau.setValues< parallelHostPolicy >( m_initialFaultShearStress );
-          arrayView1d< real64 > const tempTau_n = subRegion.getField< inducedSeismicity::meanShearStress_n >();
+          arrayView1d< real64 > const tempTau_n = subRegion.getField< inducedSeismicity::projectedShearTraction_n >();
           tempTau_n.setValues< parallelHostPolicy >( m_initialFaultShearStress );
         }
       } );

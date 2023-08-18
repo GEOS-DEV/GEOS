@@ -75,7 +75,7 @@ public:
 
   virtual void initializePreSubGroups() override;
 
-protected:
+private:
 
   /**
    * @brief Checks stress rate that is argument of exponential in stress functional,

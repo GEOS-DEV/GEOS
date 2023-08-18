@@ -31,48 +31,48 @@ namespace fields
 namespace inducedSeismicity
 {
 
-DECLARE_FIELD( initialMeanNormalStress,
-               "initialMeanNormalStress",
+DECLARE_FIELD( initialProjectedNormalTraction,
+               "initialProjectedNormalTraction",
                array1d< real64 >,
                0,
                LEVEL_0,
                WRITE_AND_READ,
                "Initial meanNormal stress acting on the fault");
 
-DECLARE_FIELD( meanNormalStress,
-               "meanNormalStress",
+DECLARE_FIELD( projectedNormalTraction,
+               "projectedNormalTraction",
                array1d< real64 >,
                0,
                LEVEL_0,
                WRITE_AND_READ,
                "meanNormal stress acting on the fault");
 
-DECLARE_FIELD( meanNormalStress_n,
-               "meanNormalStress_n",
+DECLARE_FIELD( projectedNormalTraction_n,
+               "projectedNormalTraction_n",
                array1d< real64 >,
                0,
                LEVEL_1,
                WRITE_AND_READ,
                "meanNormal stress acting on the fault at the previous converged time step");
 
-DECLARE_FIELD( initialMeanShearStress,
-               "initialMeanShearStress",
+DECLARE_FIELD( initialProjectedShearTraction,
+               "initialProjectedShearTraction",
                array1d< real64 >,
                0,
                LEVEL_0,
                WRITE_AND_READ,
                "Initial meanShear stress acting on the fault");
 
-DECLARE_FIELD( meanShearStress,
-               "meanShearStress",
+DECLARE_FIELD( projectedShearTraction,
+               "projectedShearTraction",
                array1d< real64 >,
                0,
                LEVEL_0,
                WRITE_AND_READ,
                "meanShear stress acting on the fault");
 
-DECLARE_FIELD( meanShearStress_n,
-               "meanShearStress_n",
+DECLARE_FIELD( projectedShearTraction_n,
+               "projectedShearTraction_n",
                array1d< real64 >,
                0,
                LEVEL_1,

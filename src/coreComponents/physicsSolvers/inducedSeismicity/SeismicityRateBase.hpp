@@ -47,8 +47,8 @@ public:
     static constexpr char const * stressSolverNameString() { return "stressSolverName"; }
     static constexpr char const * initialFaultNormalStressString() { return "initialFaultNormalStress"; }
     static constexpr char const * initialFaultShearStressString() { return "initialFaultShearStress"; }
-    static constexpr char const * faultNormalString() { return "faultNormal"; }
-    static constexpr char const * faultShearString() { return "faultShear"; }
+    static constexpr char const * faultNormalDirectionString() { return "faultNormalDirection"; }
+    static constexpr char const * faultShearDirectionString() { return "faultShearDirection"; }
   };
 
   virtual void initializePreSubGroups() override;
