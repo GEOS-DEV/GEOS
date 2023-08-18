@@ -13,10 +13,11 @@
     "customizations": {
         "vscode": {
             "extensions": [
-                "ms-vscode.cpptools-extension-pack",
-                "GitHub.vscode-pull-request-github",
                 "eamodio.gitlens",
                 "fredericbonnet.cmake-test-adapter",
+                "github.vscode-github-actions",
+                "GitHub.vscode-pull-request-github",
+                "ms-vscode.cpptools-extension-pack",
                 "redhat.vscode-xml"
             ]
         }
