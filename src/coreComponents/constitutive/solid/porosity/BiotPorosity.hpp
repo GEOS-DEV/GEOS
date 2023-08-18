@@ -26,6 +26,8 @@ namespace geos
 {
 namespace constitutive
 {
+static std::vector<double> accTtlStrs;
+// static int siter;
 
 class BiotPorosityUpdates : public PorosityBaseUpdates
 {
@@ -117,24 +119,68 @@ public:
                         real64 const & thermalExpansionCoefficient,
                         real64 const & meanEffectiveStressIncrement_k,
                         real64 const & bulkModulus ) const
+                        // real64 const omega ) const
   {
     real64 const biotSkeletonModulusInverse = (biotCoefficient - referencePorosity) / m_grainBulkModulus;
     real64 const porosityThermalExpansion = 3 * thermalExpansionCoefficient * ( biotCoefficient - referencePorosity );
-    real64 const fixedStressPressureCoefficient = biotCoefficient * biotCoefficient / bulkModulus;
+    real64 fixedStressPressureCoefficient = biotCoefficient * biotCoefficient / bulkModulus;
     real64 const fixedStressTemperatureCoefficient = 3 * biotCoefficient * thermalExpansionCoefficient;
 
+    // using effective stress
+    // porosity = porosity_n
+    //           + biotCoefficient * meanEffectiveStressIncrement_k / bulkModulus // change due to stress increment (at the previous
+    //                                                                             // sequential iteration)
+    //           + biotSkeletonModulusInverse * omega* deltaPressureFromBeginningOfTimeStep // change due to pressure increment
+    //           - porosityThermalExpansion * deltaTemperatureFromBeginningOfTimeStep; // change due to temperature increment
+    // dPorosity_dPressure = biotSkeletonModulusInverse;
+    // dPorosity_dTemperature = -porosityThermalExpansion;
+
+    // if( !isZero( meanEffectiveStressIncrement_k ) ) // TODO: find a better way to disable this at the first flow iteration
+    // {
+    //   porosity += fixedStressPressureCoefficient * deltaPressureFromLastIteration // fixed-stress pressure term
+    //               + fixedStressTemperatureCoefficient * deltaTemperatureFromLastIteration; // fixed-stress temperature term
+    //   dPorosity_dPressure += fixedStressPressureCoefficient;
+    //   dPorosity_dTemperature += fixedStressTemperatureCoefficient;
+    // }
+
+    // using total stress formulation and match the other formulation
+    // real64 ttlStrs = meanEffectiveStressIncrement_k -  biotCoefficient * (deltaPressureFromBeginningOfTimeStep - deltaPressureFromLastIteration);
+    // porosity = porosity_n
+    //           + biotCoefficient * ttlStrs / bulkModulus // change due to stress increment (at the previous
+    //                                                                             // sequential iteration)
+    //           + biotSkeletonModulusInverse * deltaPressureFromBeginningOfTimeStep // change due to pressure increment
+    //           - porosityThermalExpansion * deltaTemperatureFromBeginningOfTimeStep; // change due to temperature increment
+    // dPorosity_dPressure = biotSkeletonModulusInverse;
+    // dPorosity_dTemperature = -porosityThermalExpansion;
+  
+    // if( !isZero( meanEffectiveStressIncrement_k ) ) // TODO: find a better way to disable this at the first flow iteration
+    // {
+    //   porosity += fixedStressPressureCoefficient * deltaPressureFromBeginningOfTimeStep // fixed-stress pressure term
+    //               + fixedStressTemperatureCoefficient * deltaTemperatureFromLastIteration; // fixed-stress temperature term
+    //   dPorosity_dPressure += fixedStressPressureCoefficient;
+    //   dPorosity_dTemperature += fixedStressTemperatureCoefficient;
+    // }
+
+    //accelerated total strs
+    static int output = 0;
+    real64 ttlStrs = meanEffectiveStressIncrement_k;
+    if (!isZero(ttlStrs) && !output ){
+      std::cout << bulkModulus <<" " << meanEffectiveStressIncrement_k << " " << biotCoefficient << " " << deltaPressureFromBeginningOfTimeStep << std::endl;
+      output = 1;
+    }
     porosity = porosity_n
-               + biotCoefficient * meanEffectiveStressIncrement_k / bulkModulus // change due to stress increment (at the previous
+              + biotCoefficient * ttlStrs / bulkModulus // change due to stress increment (at the previous
                                                                                 // sequential iteration)
-               + biotSkeletonModulusInverse * deltaPressureFromBeginningOfTimeStep // change due to pressure increment
-               - porosityThermalExpansion * deltaTemperatureFromBeginningOfTimeStep; // change due to temperature increment
+              + biotSkeletonModulusInverse * deltaPressureFromBeginningOfTimeStep // change due to pressure increment
+              - porosityThermalExpansion * deltaTemperatureFromBeginningOfTimeStep; // change due to temperature increment
     dPorosity_dPressure = biotSkeletonModulusInverse;
     dPorosity_dTemperature = -porosityThermalExpansion;
 
     if( !isZero( meanEffectiveStressIncrement_k ) ) // TODO: find a better way to disable this at the first flow iteration
     {
-      porosity += fixedStressPressureCoefficient * deltaPressureFromLastIteration // fixed-stress pressure term
-                  + fixedStressTemperatureCoefficient * deltaTemperatureFromLastIteration; // fixed-stress temperature term
+      porosity += fixedStressPressureCoefficient * deltaPressureFromBeginningOfTimeStep // fixed-stress pressure term
+                  + fixedStressTemperatureCoefficient * deltaTemperatureFromLastIteration // fixed-stress temperature term
+                  + 0 * deltaPressureFromLastIteration; //just to use deltP
       dPorosity_dPressure += fixedStressPressureCoefficient;
       dPorosity_dTemperature += fixedStressTemperatureCoefficient;
     }
@@ -149,25 +195,69 @@ public:
                                                  real64 const & temperature,
                                                  real64 const & temperature_k,
                                                  real64 const & temperature_n ) const override final
+                                                //  real64 omega ) const override final
   {
     real64 const deltaPressureFromBeginningOfTimeStep = pressure - pressure_n;
     real64 const deltaPressureFromLastIteration = pressure - pressure_k;
     real64 const deltaTemperatureFromBeginningOfTimeStep = temperature - temperature_n;
     real64 const deltaTemperatureFromLastIteration = temperature - temperature_k;
+    static int ttl_k = 0;
 
     computePorosity( deltaPressureFromBeginningOfTimeStep,
-                     deltaPressureFromLastIteration,
-                     deltaTemperatureFromBeginningOfTimeStep,
-                     deltaTemperatureFromLastIteration,
-                     m_porosity_n[k][q],
-                     m_referencePorosity[k],
-                     m_newPorosity[k][q],
-                     m_dPorosity_dPressure[k][q],
-                     m_dPorosity_dTemperature[k][q],
-                     m_biotCoefficient[k],
-                     m_thermalExpansionCoefficient[k],
-                     m_averageMeanEffectiveStressIncrement_k[k],
-                     m_bulkModulus[k] );
+                deltaPressureFromLastIteration,
+                deltaTemperatureFromBeginningOfTimeStep,
+                deltaTemperatureFromLastIteration,
+                m_porosity_n[k][q],
+                m_referencePorosity[k],
+                m_newPorosity[k][q],
+                m_dPorosity_dPressure[k][q],
+                m_dPorosity_dTemperature[k][q],
+                m_biotCoefficient[k],
+                m_thermalExpansionCoefficient[k],
+                geos::constitutive::accTtlStrs[ttl_k],
+                //m_averageMeanEffectiveStressIncrement_k[k],
+                m_bulkModulus[k] );
+                // omega );
+
+    if (q == 7)  ttl_k++;
+    if (ttl_k == 5292) ttl_k = 0;
+
+    // if (geos::constitutive::siter <= 1)
+    // {
+    //   computePorosity( deltaPressureFromBeginningOfTimeStep,
+    //                   deltaPressureFromLastIteration,
+    //                   deltaTemperatureFromBeginningOfTimeStep,
+    //                   deltaTemperatureFromLastIteration,
+    //                   m_porosity_n[k][q],
+    //                   m_referencePorosity[k],
+    //                   m_newPorosity[k][q],
+    //                   m_dPorosity_dPressure[k][q],
+    //                   m_dPorosity_dTemperature[k][q],
+    //                   m_biotCoefficient[k],
+    //                   m_thermalExpansionCoefficient[k],
+    //                   m_averageMeanEffectiveStressIncrement_k[k],
+    //                   m_bulkModulus[k],
+    //                   omega );
+    // }
+    // else
+    // {
+    //   computePorosity( deltaPressureFromBeginningOfTimeStep,
+    //                   deltaPressureFromLastIteration,
+    //                   deltaTemperatureFromBeginningOfTimeStep,
+    //                   deltaTemperatureFromLastIteration,
+    //                   m_porosity_n[k][q],
+    //                   m_referencePorosity[k],
+    //                   m_newPorosity[k][q],
+    //                   m_dPorosity_dPressure[k][q],
+    //                   m_dPorosity_dTemperature[k][q],
+    //                   m_biotCoefficient[k],
+    //                   m_thermalExpansionCoefficient[k],
+    //                   geos::constitutive::accTtlStrs[k],
+    //                   m_bulkModulus[k],
+    //                   omega );
+
+    // }
+
   }
 
   GEOS_HOST_DEVICE

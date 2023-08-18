@@ -678,6 +678,51 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
 
 }
 
+// void SinglePhaseBase::implicitStepComplete( real64 const & time,
+//                                             real64 const & dt,
+//                                             DomainPartition & domain )
+// {
+//   GEOS_MARK_FUNCTION;
+
+//   std::cout << "SinglePhaseBase::implicitStepComplete" << std::endl;
+
+//   // note: we have to save the aquifer state **before** updating the pressure,
+//   // otherwise the aquifer flux is saved with the wrong pressure time level
+//   saveAquiferConvergedState( time, dt, domain );
+
+//   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+//                                                                MeshLevel & mesh,
+//                                                                arrayView1d< string const > const & regionNames )
+//   {
+//     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
+//                                                                   ElementSubRegionBase & subRegion )
+//     {
+//       arrayView1d< real64 const > const dVol = subRegion.getField< fields::flow::deltaVolume >();
+//       arrayView1d< real64 > const vol = subRegion.getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString() );
+
+//       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+//       {
+//         vol[ei] += dVol[ei];
+//       } );
+
+//       SingleFluidBase const & fluid =
+//         getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
+//       fluid.saveConvergedState();
+
+//       CoupledSolidBase const & porousSolid =
+//         getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+//       if( m_keepFlowVariablesConstantDuringInitStep )
+//       {
+//         porousSolid.ignoreConvergedState(); // newPorosity <- porosity_n
+//       }
+//       else
+//       {
+//         // AAA porousSolid.saveConvergedState(); // porosity_n <- porosity
+//       }
+//     } );
+//   } );
+// }
+
 void SinglePhaseBase::implicitStepComplete( real64 const & time,
                                             real64 const & dt,
                                             DomainPartition & domain )

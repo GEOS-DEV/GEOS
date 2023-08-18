@@ -118,7 +118,11 @@ void SolverStatistics::outputStatistics() const
   bool const printOuterLoopIterations = !(m_numSuccessfulOuterLoopIterations == 0 && m_numDiscardedOuterLoopIterations == 0);
   bool const printIterations = !(m_numSuccessfulNonlinearIterations == 0 && m_numDiscardedNonlinearIterations == 0);
   bool const printLinearIterations = !(m_numSuccessfulLinearIterations == 0 && m_numDiscardedLinearIterations == 0);
-
+  
+  // std::cout << "\nNumber of successful outer loop iterations: " << m_numSuccessfulOuterLoopIterations << std::endl;
+  // std::cout << "\nNumber of successful nonlinear iterations: " << m_numSuccessfulNonlinearIterations << std::endl;
+  // std::cout << "\nNumber of successful linear iterations: " << m_numSuccessfulLinearIterations << std::endl;
+  
   auto const logStat = [&]( auto const name, auto const value )
   {
     GEOS_LOG_RANK_0( GEOS_FMT( "{}, number of {}: {}",

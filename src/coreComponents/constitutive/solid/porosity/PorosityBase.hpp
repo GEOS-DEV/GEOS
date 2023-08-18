@@ -137,8 +137,9 @@ public:
                                                  real64 const & temperature,
                                                  real64 const & temperature_k,
                                                  real64 const & temperature_n ) const
+                                                //  real64 omega ) const
   {
-    GEOS_UNUSED_VAR( k, q, pressure, pressure_k, pressure_n, temperature, temperature_k, temperature_n );
+    GEOS_UNUSED_VAR( k, q, pressure, pressure_k, pressure_n, temperature, temperature_k, temperature_n); //, omega );
     GEOS_ERROR( "updateFromPressureAndTemperature is not implemented for porosityBase." );
   }
 
@@ -289,6 +290,16 @@ public:
     return out.toView();
   }
 
+  GEOS_HOST_DEVICE
+  inline
+  void savePorosity( localIndex const k,
+                     localIndex const q,
+                     real64 const & porosity,
+                     real64 const & dPorosity_dPressure ) const
+  {
+    m_newPorosity[k][q] = porosity;
+    m_dPorosity_dPressure[k][q] = dPorosity_dPressure;
+  }
 
   using KernelWrapper = PorosityBaseUpdates;
 

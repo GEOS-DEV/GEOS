@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<VTKFile type="vtkMultiBlockDataSet" version="1.0">
+	<vtkMultiBlockDataSet>
+		<Block name="mesh1">
+			<Block name="Level0">
+				<Block name="CellElementRegion">
+					<Block name="Domain">
+						<DataSet name="rank_0" file="000071/mesh1/Level0/Domain/rank_0.vtu" />
+					</Block>
+				</Block>
+			</Block>
+		</Block>
+	</vtkMultiBlockDataSet>
+</VTKFile>

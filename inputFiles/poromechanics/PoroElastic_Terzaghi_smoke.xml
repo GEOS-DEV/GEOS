@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./PoroElastic_Terzaghi_base_direct.xml"/>
+    <File name="./PoroElastic_Terzaghi_base_iterative.xml"/>
   </Included>
   <!-- SPHINX_POROELASTIC_MESH -->
   <Mesh>
@@ -27,7 +27,7 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="10.0"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplication0"
@@ -67,8 +67,8 @@
   </Events>
 
   <Outputs>
-    <Silo
-      name="siloOutput"/>
+    <VTK
+      name="vtkOutput"/>
 
     <TimeHistory
       name="timeHistoryOutput"

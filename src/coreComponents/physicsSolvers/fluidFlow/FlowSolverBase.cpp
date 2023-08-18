@@ -16,6 +16,8 @@
  * @file FlowSolverBase.cpp
  */
 
+#include <fstream>
+
 #include "FlowSolverBase.hpp"
 
 #include "constitutive/ConstitutivePassThru.hpp"
@@ -36,6 +38,8 @@
 
 namespace geos
 {
+
+// static int subRegion_i = -1;
 
 using namespace dataRepository;
 using namespace constitutive;
@@ -59,6 +63,7 @@ void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE
                                                            temperature[k],
                                                            temperature[k], // will not be used
                                                            temperature_n[k] ); // will not be used
+                                                          //  1.0 );
     }
   } );
 }
@@ -72,7 +77,54 @@ void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE
                                                               arrayView1d< real64 const > const & temperature,
                                                               arrayView1d< real64 const > const & temperature_k,
                                                               arrayView1d< real64 const > const & temperature_n )
+                                                              // real64 const omega )
 {
+
+  // std::string tmp;
+  std::ifstream f;
+  // f.open("iter.txt");
+  // if ( f.is_open() ) { // always check whether the file is open
+  // f >> tmp; // pipe file's content into stream
+  // geos::constitutive::siter = std::stoi( tmp );
+  // //std::cout << "iter = " << geos::constitutive::siter << ", "; // pipe stream's content to standard output
+  // }
+  // f.close();
+
+  auto& ttlStrs = geos::constitutive::accTtlStrs;
+  f.open("accTtlStrs.txt");
+  int n = 0;
+  f >> n;
+  ttlStrs.resize(n);
+  for (int i = 0; i < n; ++i)
+    f >> ttlStrs[i];
+  f.close();
+  // std::cout << ttlStrs[0] << " done reading accTtlStrs\n";  
+
+  // if (siter > 1)
+  // {
+  //   if ( geos::subRegion_i >= 62 )
+  //   {
+  //     geos::subRegion_i = 0;
+  //   }
+  //   else
+  //   {
+  //     geos::subRegion_i += 1;
+  //   }
+  //   std::cout << "subRegion = " << geos::subRegion_i << std::endl;
+
+
+  //   auto& ttlStrs = geos::constitutive::accTtlStrs;
+  //   f.open("accTtlStrs" + std::to_string( geos::subRegion_i ) + ".txt");
+  //   int n = 0;
+  //   f >> n;
+  //   ttlStrs.resize(n);
+  //   for (int i = 0; i < n; ++i)
+  //     f >> ttlStrs[i];
+  //   f.close();
+  //   std::cout << "done reading accTtlStrs" + std::to_string( geos::subRegion_i ) + ".txt" << std::endl;
+  // }
+
+
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
   {
 
@@ -85,6 +137,7 @@ void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE
                                                            temperature[k],
                                                            temperature_k[k],
                                                            temperature_n[k] );
+                                                          //  omega );
     }
   } );
 }
@@ -247,6 +300,26 @@ void FlowSolverBase::saveIterationState( DomainPartition & domain ) const
     } );
   } );
 }
+
+// void FlowSolverBase::saveIterationState( DomainPartition & domain ) const
+// {
+//   std::cout << "FlowSolverBase::saveIterationState" << std::endl;
+//   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+//                                                                MeshLevel & mesh,
+//                                                                arrayView1d< string const > const & regionNames )
+//   {
+//     mesh.getElemManager().forElementSubRegions( regionNames,
+//                                                 [&]( localIndex const,
+//                                                      ElementSubRegionBase & subRegion )
+//     {
+//       saveIterationState( subRegion );
+
+//       CoupledSolidBase const & porousSolid =
+//         getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+//       porousSolid.saveConvergedState();
+//     } );
+//   } );
+// }
 
 void FlowSolverBase::enableFixedStressPoromechanicsUpdate()
 {
@@ -455,6 +528,8 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   arrayView1d< real64 const > const & temperature = subRegion.getField< fields::flow::temperature >();
   arrayView1d< real64 const > const & temperature_n = subRegion.getField< fields::flow::temperature_n >();
 
+  // real64 omega = 1.0;
+
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
 
@@ -477,6 +552,7 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
       updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion,
                                                                pressure, pressure_k, pressure_n,
                                                                temperature, temperature_k, temperature_n );
+                                                              //  omega );
     }
     else // for fully implicit simulations
     {

@@ -786,6 +786,9 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
   bool isNewtonConverged = false;
 
+  // rm laterrr
+  // std::vector<real64> res_v;
+
   for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
   {
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ) );
@@ -826,6 +829,9 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
     // get residual norm
     real64 residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
+
+    // rm laterrrrrrr
+    // res_v.push_back(residualNorm);
 
 
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
@@ -952,6 +958,25 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
     lastResidual = residualNorm;
   }
+
+  // if (isNewtonConverged)
+  // {
+  //   std::fstream f;
+  //   f.open("resNorm_fim.txt", std::ios_base::out);
+  //   if (!f)
+  //   {
+  //     std::cout << "Failed to open the file for storing residuals" << std::endl;
+  //   } 
+  //   else
+  //   {
+  //     std::cout << "copying residual to resNorm_fc.txt" << std::endl;  
+  //     for (long unsigned int i = 0; i < res_v.size(); i++)
+  //     {
+  //       f << res_v[i] << std::endl;
+  //     }
+  //     f.close();
+  //   }
+  // }
 
   return isNewtonConverged;
 }

@@ -61,10 +61,12 @@ public:
                                                       real64 const & temperature,
                                                       real64 const & temperature_k,
                                                       real64 const & temperature_n ) const override final
+                                                      // real64 omega ) const override final
   {
     m_porosityUpdate.updateFromPressureAndTemperature( k, q,
                                                        pressure, pressure_k, pressure_n,
                                                        temperature, temperature_k, temperature_n );
+                                                      //  omega );
   }
 
   GEOS_HOST_DEVICE
