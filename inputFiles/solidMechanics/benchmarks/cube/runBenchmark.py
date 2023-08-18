@@ -118,6 +118,57 @@ def femKernelTime_nsys( executable, inputFile, numRuns ):
 
   return min(kernelTime)
 
+def femRoofline_ncu( executable, inputFile, numRuns ):
+  launchCommand = getLaunchCommands()
+
+  kernelTime = []
+  for _ in range(numRuns):
+    report_fname = "/tmp/" + os.path.basename(inputFile) + ".nsys-rep" # TODO make robust
+    profile_cmd = launchCommand + ['ncu', 
+                                   '--kernel-name-base', 'demangled',
+                                   '--kernel-id', '::regex:SmallStrainResidual:',
+                                   '--target-processes', 'all',
+                                   '--metrics', 'dram__bytes_write.sum,dram__bytes_read.sum,smsp__sass_thread_inst_executed_op_dadd_pred_on.sum,smsp__sass_thread_inst_executed_op_dmul_pred_on.sum,smsp__sass_thread_inst_executed_op_dfma_pred_on.sum,gpu__time_duration.min',
+                                   '--launch-count', '10',
+                                   '--print-summary','per-gpu',
+                                   '--print-units','base',
+                                    executable, '-i', inputFile]
+
+
+    proc1 = subprocess.Popen(profile_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc2 = subprocess.Popen(['grep', '-A', '7', 'Metric Name'], stdin=proc1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc1.stdout.close() # Allow proc1 to receive a SIGPIPE if proc2 exits.
+    out, _ = proc2.communicate()
+    stringValue = out.decode('utf-8')
+#    print(stringValue)
+    lines = stringValue.split('\n')
+
+    memory = 0
+    dflops = 0
+    duration = 0
+
+    for c in range(2,len(lines)):
+      if lines[c]:
+        line = lines[c].split()
+#        print(line)
+        name = line[0]
+        units = line[1]
+        minVal = float(line[2])
+        if any([x in name for x in ['dram__bytes_read.sum','dram__bytes_write.sum']]):
+          memory += minVal
+        elif any([x in name for x in ['smsp__sass_thread_inst_executed_op_dadd_pred_on.sum','smsp__sass_thread_inst_executed_op_dmul_pred_on.sum']]):
+          dflops += minVal
+        elif 'smsp__sass_thread_inst_executed_op_dfma_pred_on.sum' in name:
+          dflops += 2*minVal
+        elif 'duration' in name:
+          duration = minVal
+
+    return memory, dflops, duration
+    # value = float( stringValue.replace(',','') ) * 1.0e-9
+    # kernelTime.append( value )
+
+  return min(kernelTime)
+
 
 def femKernelTime_rocprof( executable, inputFile, numRuns ):
   kernelTime = []
@@ -164,14 +215,14 @@ def femKernelTime_caliper( executable, inputFile, numRuns ):
 benchmark_dir = os.path.dirname(os.path.realpath(__file__))
 
 runList = [
-            ( 'bin/geosx', 'cube_111.xml',     2, 11*11*11*3 ),
-            ( 'bin/geosx', 'cube_211.xml',     2, 101*11*11*3 ),
-            ( 'bin/geosx', 'cube_221.xml',     2, 101*101*11*3 ),
-            ( 'bin/geosx', 'cube_222.xml',     2, 101*101*101*3 ),
-            ( 'bin/geosx', 'cube_322.xml',     2, 1001*101*101*3 ),
-            ( 'bin/geosx', 'cube_322plus.xml', 2, 1001*501*101*3 ),
-            ( 'bin/geosx', 'cube_332.xml',     2, 1001*1001*101*3 ),
-            ( 'bin/geosx', 'cube_332plus.xml', 2, 1001*1001*251*3 )
+             ( 'bin/geosx', 'cube_111.xml',     2, 11*11*11*3 ),
+             ( 'bin/geosx', 'cube_211.xml',     2, 101*11*11*3 ),
+             ( 'bin/geosx', 'cube_221.xml',     2, 101*101*11*3 ),
+             ( 'bin/geosx', 'cube_222.xml',     2, 101*101*101*3 ),
+             ( 'bin/geosx', 'cube_322.xml',     2, 1001*101*101*3 ),
+             ( 'bin/geosx', 'cube_322plus.xml', 2, 1001*501*101*3 )
+            # ( 'bin/geosx', 'cube_332.xml',     2, 1001*1001*101*3 ),
+            # ( 'bin/geosx', 'cube_332plus.xml', 2, 1001*1001*251*3 )
           ]
 
 import sys
@@ -203,3 +254,11 @@ if 'nsys' in sys.argv:
   for executable, inputFile, numRuns, numDofs in runList:
     kernelTime = femKernelTime_nsys( executable, os.path.join(benchmark_dir, inputFile), numRuns )
     print( "{0:10d} {1:>8.2f}".format( numDofs, numDofs/kernelTime/1.0e6 ) )
+
+if 'ncu' in sys.argv:
+  print( "Roofline")
+  print( "     #Dofs HBM(bytes)       FLOP     dur(s)         AI    TFLOP/s")
+
+  for executable, inputFile, numRuns, numDofs in runList:
+    memory, dflop, duration = femRoofline_ncu( executable, os.path.join(benchmark_dir, inputFile), 1 )
+    print( "{0:10d} {1:>8.4e} {2:>8.4e} {3:>8.4e} {4:>8.4e} {5:>8.4e}".format( numDofs, memory, dflop, duration/1e9, dflop/memory, dflop/(duration/1e9)/1e12 ) )
