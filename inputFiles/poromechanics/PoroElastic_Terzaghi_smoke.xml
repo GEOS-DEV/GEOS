@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./PoroElastic_Terzaghi_base_iterative.xml"/>
+    <File name="./PoroElastic_Terzaghi_base.xml"/>
   </Included>
   <!-- SPHINX_POROELASTIC_MESH -->
   <Mesh>

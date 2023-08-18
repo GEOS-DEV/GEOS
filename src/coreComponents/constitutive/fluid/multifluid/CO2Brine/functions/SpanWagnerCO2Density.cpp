@@ -256,7 +256,6 @@ void SpanWagnerCO2Density::calculateCO2Density( string const & functionName,
 
   localIndex const nPressures = tableCoords.nPressures();
   localIndex const nTemperatures = tableCoords.nTemperatures();
-  // std::cout << "Starting dens cal:" << std::endl; 
   for( localIndex i = 0; i < nPressures; ++i )
   {
     real64 const PPa = tableCoords.getPressure( i );
@@ -264,13 +263,8 @@ void SpanWagnerCO2Density::calculateCO2Density( string const & functionName,
     {
       real64 const TK = tableCoords.getTemperature( j ) + TK_f;
       densities[j*nPressures+i] = spanWagnerCO2DensityFunction( functionName, tolerance, TK, PPa, &co2HelmholtzEnergy );
-      // if (abs(TK - 368.0) < 1.0)
-      // {
-      //   std::cout << "T " << TK << " p " << PPa << " dens " << densities[j*nPressures+i] << std::endl;
-      // }
     }
   }
-  //std::cout << "Dens cal completed." << std::endl;
 }
 
 SpanWagnerCO2Density::SpanWagnerCO2Density( string const & name,
