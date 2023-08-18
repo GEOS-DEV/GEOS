@@ -279,6 +279,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
   GEOS_UNUSED_VAR( phaseEnthalpy, phaseInternalEnergy );
 #if defined(GEOS_DEVICE_COMPILE)
   GEOS_ERROR( "This function cannot be used on GPU" );
+  GEOS_UNUSED_VAR( m_fluid );
   GEOS_UNUSED_VAR( pressure );
   GEOS_UNUSED_VAR( temperature );
   GEOS_UNUSED_VAR( composition );
