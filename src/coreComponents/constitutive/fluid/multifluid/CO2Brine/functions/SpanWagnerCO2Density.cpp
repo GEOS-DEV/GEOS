@@ -256,6 +256,7 @@ void SpanWagnerCO2Density::calculateCO2Density( string const & functionName,
 
   localIndex const nPressures = tableCoords.nPressures();
   localIndex const nTemperatures = tableCoords.nTemperatures();
+  
   for( localIndex i = 0; i < nPressures; ++i )
   {
     real64 const PPa = tableCoords.getPressure( i );
