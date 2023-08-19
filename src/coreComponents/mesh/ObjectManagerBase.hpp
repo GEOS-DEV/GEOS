@@ -902,6 +902,8 @@ public:
   /**
    * @brief Get the domain boundary indicator
    * @return The information in an array of integers, mainly treated as booleans.
+   * @note Domain boundary is to be understood as the boundary of the domain <em>on the current rank</em>,
+   * not the whole physical domain which spans all the ranks.
    */
   array1d< integer > & getDomainBoundaryIndicator()
   {
