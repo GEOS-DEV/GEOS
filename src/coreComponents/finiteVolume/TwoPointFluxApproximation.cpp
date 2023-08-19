@@ -641,19 +641,19 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
   SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( faceElementRegionName );
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
   FaceElementSubRegion & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
-  OrderedVariableToManyElementRelation const & faceElementsToCells = fractureSubRegion.getToCellRelation();
+  OrderedVariableToManyElementRelation const & elems2dToElems3d = fractureSubRegion.getToCellRelation();
 
   SortedArrayView< localIndex const > const new2dElems = fractureSubRegion.m_newFaceElements.toViewConst();
   FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion.faceList();
 
-  ArrayOfArraysView< localIndex const > elemRegionList = faceElementsToCells.m_toElementRegion.toViewConst();
-  ArrayOfArraysView< localIndex const > elemSubRegionList = faceElementsToCells.m_toElementSubRegion.toViewConst();
-  ArrayOfArraysView< localIndex const > elemList = faceElementsToCells.m_toElementIndex.toViewConst();
+  ArrayOfArraysView< localIndex const > elemRegionList = elems2dToElems3d.m_toElementRegion.toViewConst();
+  ArrayOfArraysView< localIndex const > elemSubRegionList = elems2dToElems3d.m_toElementSubRegion.toViewConst();
+  ArrayOfArraysView< localIndex const > elemList = elems2dToElems3d.m_toElementIndex.toViewConst();
 
   // reserve memory for the connections of this region
   if( cellStencil.size() != 0 )
   {
-    faceToCellStencil.reserve( faceToCellStencil.size() + faceElementsToCells.size() );
+    faceToCellStencil.reserve( faceToCellStencil.size() + elems2dToElems3d.size() );
   }
 
   // We store the concerned region indices,
@@ -670,7 +670,7 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
 
   forAll< serialPolicy >( new2dElems.size(),
                           [ new2dElems,
-                            &faceElementsToCells,
+                            &elems2dToElems3d,
                             &faceToCellStencil,
                             &faceMap,
                             elemRegionList,
@@ -687,7 +687,8 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
   {
     localIndex const kfe = new2dElems[k];
     {
-      localIndex const numElems = faceElementsToCells.m_toElementSubRegion.sizeOfArray( kfe );
+      localIndex const numElems = elems2dToElems3d.m_toElementSubRegion.sizeOfArray( kfe );
+      GEOS_ERROR_IF( numElems != 2, "Internal error, the TPFA can only manage 2d elements connected to 2 3d elements." );
 
       GEOS_ERROR_IF( numElems > maxElems, "Max stencil size exceeded by fracture-cell connector " << kfe );
 
