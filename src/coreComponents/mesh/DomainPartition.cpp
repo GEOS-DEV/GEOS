@@ -192,8 +192,9 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
     // This is what we gather some additional information: what are those collocated nodes
     // and also what are the nodes that we require but are not present on the current rank!
     std::set< std::set< globalIndex > > collocatedNodesBuckets;
+    std::set< globalIndex > requestedNodes;
     meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >(
-      [&]( FaceElementSubRegion const & subRegion )
+      [&, g2l = &nodeManager.globalToLocalMap()]( FaceElementSubRegion const & subRegion )
       {
         ArrayOfArraysView< array1d< globalIndex > const > const buckets = subRegion.get2dElemToCollocatedNodesBuckets();
         for( localIndex e2d = 0; e2d < buckets.size(); ++e2d )
@@ -203,16 +204,17 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
             array1d< globalIndex > const & bucket = buckets( e2d, ni );
             std::set< globalIndex > tmp( bucket.begin(), bucket.end() );
             collocatedNodesBuckets.insert( tmp );
+
+            for( globalIndex const gni: bucket )
+            {
+              auto const it = g2l->find( gni );
+              if( it == g2l->cend() )
+              {
+                requestedNodes.insert( gni );
+              }
+            }
           }
         }
-      } );
-
-    std::set< globalIndex > requestedNodes;
-    meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >(
-      [&]( FaceElementSubRegion const & subRegion )
-      {
-        std::set< globalIndex > const missingNodes = subRegion.getMissingNodes( nodeManager.globalToLocalMap() );
-        requestedNodes.insert( missingNodes.cbegin(), missingNodes.cend() );
       } );
 
     CommunicationTools::getInstance().findMatchedPartitionBoundaryNodes( nodeManager,

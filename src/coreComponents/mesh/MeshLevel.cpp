@@ -418,11 +418,6 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
                                                                          FaceElementSubRegion const & subRegion )
       {
         addFractureSupport( er, esr, subRegion );
-      } );
-
-      elemRegion.forElementSubRegionsIndex< FaceElementSubRegion >( [&]( localIndex const esr,
-                                                                         FaceElementSubRegion const & subRegion )
-      {
         addCollocatedFractureNodes( er, esr, subRegion );
       } );
     }

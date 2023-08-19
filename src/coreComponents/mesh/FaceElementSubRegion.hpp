@@ -268,13 +268,15 @@ public:
   arrayView2d< real64 const > detJ() const
   { return m_detJ; }
 
+  using ElementSubRegionBase::getElementType;
+
   /**
-   * @brief Computes all the nodes required by the `FaceElementSubRegion` which are not available on the rank.
-   * @param g2l The global to local nodes mapping.
-   * @return The set of the missing nodes.
-   * @note This is function is meaningful when building the ghosts.
+   * @brief Returns the type of element @p ei.
+   * @param ei The local index of the element.
+   * @return The type.
+   * This is a first attempt to reflect this in the interface. Use with great care.
    */
-  std::set< globalIndex > getMissingNodes( unordered_map< globalIndex, localIndex > const & g2l ) const;
+  ElementType getElementType( localIndex ei ) const;
 
   /**
    * @brief Returns the 2d element to node to collocated nodes bucket mapping.

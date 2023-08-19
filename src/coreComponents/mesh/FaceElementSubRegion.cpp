@@ -208,6 +208,19 @@ void FaceElementSubRegion::calculateElementGeometricQuantities( NodeManager cons
   } );
 }
 
+ElementType FaceElementSubRegion::getElementType( localIndex ei ) const
+{
+  switch( m_2dElemToCollocatedNodesBuckets[ei].size() )
+  {
+    case 3:
+      return ElementType::Triangle;
+    case 4:
+      return ElementType::Quadrilateral;
+    default:
+      GEOS_ERROR( "Unsupported surfacic element type." );
+      return {};
+  }
+}
 
 
 localIndex FaceElementSubRegion::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
@@ -779,8 +792,6 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
     GEOS_ERROR_IF( !isolatedFractureElements.empty(),
                    "Fracture " << this->getName() << " has elements {" << stringutilities::join( isolatedFractureElements, ", " ) << "} with less than two neighbors." );
   }
-
-  // TODO clear all useless mappings!
 }
 
 void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const & faceManager,
@@ -791,28 +802,6 @@ void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const & f
   {
     m_ghostRank[index] = faceGhostRank[m_toFacesRelation[index][0]];
   }
-}
-
-std::set< globalIndex > FaceElementSubRegion::getMissingNodes( unordered_map< globalIndex, localIndex > const & g2l ) const
-{
-  std::set< globalIndex > missingNodes;
-
-  for( localIndex e2d = 0; e2d < m_2dElemToCollocatedNodesBuckets.size(); ++e2d )
-  {
-    for( integer ni = 0; ni < m_2dElemToCollocatedNodesBuckets[e2d].size(); ++ni )
-    {
-      for( globalIndex const gni: m_2dElemToCollocatedNodesBuckets( e2d, ni ) )
-      {
-        auto const it = g2l.find( gni );
-        if( it == g2l.cend() )
-        {
-          missingNodes.insert( gni );
-        }
-      }
-    }
-  }
-
-  return missingNodes;
 }
 
 std::set< std::set< globalIndex > > FaceElementSubRegion::getCollocatedNodes() const
