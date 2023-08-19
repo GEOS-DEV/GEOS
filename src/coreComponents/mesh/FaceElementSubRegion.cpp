@@ -96,19 +96,17 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
   // which emphasizes the need of a refactoring.
   // In the meantime, we try to fill the face block into the sub region and hope for the best...
   {
-    auto const hack = [&]( integer allSizes ) -> ElementType
+    auto const deduce3dElemType = [&]( integer maxSize ) -> ElementType
     {
-      GEOS_LOG_RANK( "All sizes : " << allSizes );
-      switch( allSizes )
+      switch( maxSize )
       {
         case 3:
-        case 6:
           return ElementType::Wedge;
         case 4:
-        case 8:
           return ElementType::Hexahedron;
         case 0:
-          GEOS_WARNING( "Could not determine the element type of the fracture " << getName() << ". Defaulted to hexahedron." );
+          // In the case the fracture is empty (on this rank), then we default to hexahedron. Otherwise, there's something wrong
+          GEOS_ERROR_IF_NE_MSG( num2dElements, 0, "Could not determine the element type of the fracture \"" << getName() << "\"." );
           return ElementType::Hexahedron;
         default:
           GEOS_ERROR( "Unsupported type of elements during the face element sub region creation." );
@@ -116,12 +114,13 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
       }
     };
 
+    m_2dElemToCollocatedNodesBuckets = faceBlock.get2dElemsToCollocatedNodesBuckets();
     // Checking if all the 2d elements are homogeneous.
     // We rely on the number of nodes for each element to find out.
     std::vector< integer > sizes( num2dElements );
     for( int i = 0; i < num2dElements; ++i )
     {
-      sizes[i] = m_toNodesRelation[i].size();
+      sizes[i] = m_2dElemToCollocatedNodesBuckets[i].size();
     }
     std::set< integer > const s( sizes.cbegin(), sizes.cend() );
 
@@ -135,7 +134,7 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
 
     auto const it = std::max_element( s.cbegin(), s.cend() );
     integer const maxSize = *it;
-    m_elementType = hack( maxSize );
+    m_elementType = deduce3dElemType( maxSize );
     m_numNodesPerElement = maxSize;
   }
 
@@ -177,8 +176,6 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
   {
     m_newFaceElements.insert( i );
   }
-
-  m_2dElemToCollocatedNodesBuckets = faceBlock.get2dElemsToCollocatedNodesBuckets();
 
   // TODO We still need to be able to import fields on the FaceElementSubRegion.
 }
