@@ -45,8 +45,8 @@ char const * xmlInput =
         discretization="singlePhaseTPFA"
         stressSolverName="singlePhaseFlow"
         targetRegions="{ Domain }"
-        initialFaultNormalStress="-100e6"
-        initialFaultShearStress="60e6"
+        initialFaultNormalTraction="-100e6"
+        initialFaultShearTraction="60e6"
         directEffect="0.01"
         backgroundStressingRate="3.171e-5">
       </DieterichSeismicityRate>
@@ -233,7 +233,7 @@ TEST_F( DieterichSeismicityRateIntegralSolverTest, solverTest )
     // as specified in XML file
     if ( i==0 )
     {
-      propagator->initializeMeanSolidStress(0.0, i, domain); 
+      propagator->initializeFaultTraction(0.0, i, domain); 
     }
     
     // Loop through CellElementSubRegions of domain to pass the subRegion as input to seismciity rate solver

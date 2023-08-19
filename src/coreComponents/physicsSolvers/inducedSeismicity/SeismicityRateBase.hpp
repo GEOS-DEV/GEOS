@@ -45,8 +45,8 @@ public:
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
     static constexpr char const * stressSolverNameString() { return "stressSolverName"; }
-    static constexpr char const * initialFaultNormalStressString() { return "initialFaultNormalStress"; }
-    static constexpr char const * initialFaultShearStressString() { return "initialFaultShearStress"; }
+    static constexpr char const * initialFaultNormalTractionString() { return "initialFaultNormalTraction"; }
+    static constexpr char const * initialFaultShearTractionString() { return "initialFaultShearTraction"; }
     static constexpr char const * faultNormalDirectionString() { return "faultNormalDirection"; }
     static constexpr char const * faultShearDirectionString() { return "faultShearDirection"; }
   };
@@ -58,7 +58,7 @@ public:
    *  project the stress state to pre-defined fault orientations 
    * @param subRegion The ElementSubRegionBase that will have the stress information
   */
-  void updateMeanSolidStress( ElementSubRegionBase & subRegion );
+  void updateFaultTraction( ElementSubRegionBase & subRegion );
 
   /**
    * @brief called in SolverStep before member stress solver is called to
@@ -67,7 +67,7 @@ public:
    * @param cycleNumber current cycle number
    * @param domain The DomainPartition of the problem
   */
-  void initializeMeanSolidStress( real64 const time_n, integer const cycleNumber, DomainPartition & domain );
+  void initializeFaultTraction( real64 const time_n, integer const cycleNumber, DomainPartition & domain );
   
 protected:
 
@@ -82,8 +82,8 @@ protected:
   string m_stressSolverName;
 
   /// intial stress conditions
-  real64 m_initialFaultNormalStress;
-  real64 m_initialFaultShearStress;
+  real64 m_initialFaultNormalTraction;
+  real64 m_initialFaultShearTraction;
 
   /// fault orientation
   R1Tensor m_faultNormalDirection;

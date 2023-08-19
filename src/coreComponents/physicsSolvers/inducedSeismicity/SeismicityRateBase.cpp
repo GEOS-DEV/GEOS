@@ -39,12 +39,12 @@ SeismicityRateBase::SeismicityRateBase( const string & name,
     this->registerWrapper( viewKeyStruct::stressSolverNameString(), &m_stressSolverName ).
           setInputFlag( InputFlags::REQUIRED ).
           setDescription( "Name of solver for computing stress" );
-    this->registerWrapper( viewKeyStruct::initialFaultNormalStressString(), &m_initialFaultNormalStress ).
+    this->registerWrapper( viewKeyStruct::initialFaultNormalTractionString(), &m_initialFaultNormalTraction ).
           setInputFlag( InputFlags::OPTIONAL ).
-          setDescription( "Initial normal stress" );
-    this->registerWrapper( viewKeyStruct::initialFaultShearStressString(), &m_initialFaultShearStress ).
+          setDescription( "Initial normal traction" );
+    this->registerWrapper( viewKeyStruct::initialFaultShearTractionString(), &m_initialFaultShearTraction ).
           setInputFlag( InputFlags::OPTIONAL ).
-          setDescription( "Initial shear stress" );
+          setDescription( "Initial shear traction" );
 
     // Only temporarily store user-specified fault directions here, then initialize fault projection tensors
     this->registerWrapper( viewKeyStruct::faultNormalDirectionString(), &m_faultNormalDirection ).
@@ -118,7 +118,7 @@ void SeismicityRateBase::initializePreSubGroups()
   } );
 }
 
-void SeismicityRateBase::updateMeanSolidStress( ElementSubRegionBase & subRegion )
+void SeismicityRateBase::updateFaultTraction( ElementSubRegionBase & subRegion )
 {
   // Retrieve field variables
   arrayView1d< real64 > const sig = subRegion.getField< inducedSeismicity::projectedNormalTraction >();
@@ -160,7 +160,7 @@ void SeismicityRateBase::updateMeanSolidStress( ElementSubRegionBase & subRegion
   } );
 }
 
-void SeismicityRateBase::initializeMeanSolidStress(real64 const time_n, integer const cycleNumber, DomainPartition & domain)
+void SeismicityRateBase::initializeFaultTraction(real64 const time_n, integer const cycleNumber, DomainPartition & domain)
 {
   // Only call initialization step before stress solver has been called for first time step
   if ( cycleNumber == 0 ) {
@@ -190,7 +190,7 @@ void SeismicityRateBase::initializeMeanSolidStress(real64 const time_n, integer 
             GEOS_ERROR("Fault directions must be specified for solid stress solver");
           }
 
-          updateMeanSolidStress( subRegion );
+          updateFaultTraction( subRegion );
           forAll< parallelDevicePolicy<> >(  sig.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
           {
             // Set initial stress conditions on faults
@@ -203,18 +203,18 @@ void SeismicityRateBase::initializeMeanSolidStress(real64 const time_n, integer 
         else
         {
           arrayView1d< real64 > const tempSigIni = subRegion.getField< inducedSeismicity::initialProjectedNormalTraction >();
-          tempSigIni.setValues< parallelHostPolicy >( m_initialFaultNormalStress );
+          tempSigIni.setValues< parallelHostPolicy >( m_initialFaultNormalTraction );
           arrayView1d< real64 > const tempSig = subRegion.getField< inducedSeismicity::projectedNormalTraction >();
-          tempSig.setValues< parallelHostPolicy >( m_initialFaultNormalStress );
+          tempSig.setValues< parallelHostPolicy >( m_initialFaultNormalTraction );
           arrayView1d< real64 > const tempSig_n = subRegion.getField< inducedSeismicity::projectedNormalTraction_n >();
-          tempSig_n.setValues< parallelHostPolicy >( m_initialFaultNormalStress );
+          tempSig_n.setValues< parallelHostPolicy >( m_initialFaultNormalTraction );
 
           arrayView1d< real64 > const tempTauIni = subRegion.getField< inducedSeismicity::initialProjectedShearTraction >();
-          tempTauIni.setValues< parallelHostPolicy >( m_initialFaultShearStress );
+          tempTauIni.setValues< parallelHostPolicy >( m_initialFaultShearTraction );
           arrayView1d< real64 > const tempTau = subRegion.getField< inducedSeismicity::projectedShearTraction >();
-          tempTau.setValues< parallelHostPolicy >( m_initialFaultShearStress );
+          tempTau.setValues< parallelHostPolicy >( m_initialFaultShearTraction );
           arrayView1d< real64 > const tempTau_n = subRegion.getField< inducedSeismicity::projectedShearTraction_n >();
-          tempTau_n.setValues< parallelHostPolicy >( m_initialFaultShearStress );
+          tempTau_n.setValues< parallelHostPolicy >( m_initialFaultShearTraction );
         }
       } );
     } );

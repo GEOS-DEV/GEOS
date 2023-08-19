@@ -110,7 +110,7 @@ real64 DieterichSeismicityRate::solverStep( real64 const & time_n,
                                   DomainPartition & domain )
 {
   // Save initial stress state on pre-defined fault orientations to field variables
-  initializeMeanSolidStress(time_n, cycleNumber, domain); 
+  initializeFaultTraction(time_n, cycleNumber, domain); 
 
   // Call member variable stress solver to update the stress state
   real64 dtStress = m_stressSolver->solverStep(time_n, dt, cycleNumber, domain );
@@ -128,7 +128,7 @@ real64 DieterichSeismicityRate::solverStep( real64 const & time_n,
       // project new stress state to update stress on fault
       if ( subRegion.hasWrapper( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString() ) )
       {
-        updateMeanSolidStress( subRegion );
+        updateFaultTraction( subRegion );
       }
 
       // solve for the seismicity rate given new stresses on faults
