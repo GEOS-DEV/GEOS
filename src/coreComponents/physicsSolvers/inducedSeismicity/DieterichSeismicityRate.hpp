@@ -16,9 +16,12 @@
 #define GEOS_PHYSICSSOLVERS_INDUCED_SEISMICITY_DIETERICH_SEISMICITY_RATE_HPP_
 
 #include "physicsSolvers/inducedSeismicity/SeismicityRateBase.hpp" 
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 namespace geos
 {
+
+using namespace fields;
 
 //START_SPHINX_INCLUDE_BEGINCLASS
 class DieterichSeismicityRate : public SeismicityRateBase
@@ -86,9 +89,82 @@ private:
 
   real64 m_directEffect;
   real64 m_backgroundStressingRate;
+
+  struct solverHelper
+  {
+    // Constructor
+    solverHelper( ElementSubRegionBase & subRegion )
+    {
+      // Retrieve field variables
+      R = subRegion.getField< inducedSeismicity::seismicityRate >();
+      logDenom = subRegion.getField< inducedSeismicity::logDenom >();
+      
+      sigViews[0] = subRegion.getField< inducedSeismicity::initialProjectedNormalTraction >();
+      sigViews[1] = subRegion.getField< inducedSeismicity::projectedNormalTraction_n >();
+      sigViews[2] = subRegion.getField< inducedSeismicity::projectedNormalTraction >();
+
+      tauViews[0] = subRegion.getField< inducedSeismicity::initialProjectedShearTraction >();
+      tauViews[1] = subRegion.getField< inducedSeismicity::projectedShearTraction_n >();
+      tauViews[2] = subRegion.getField< inducedSeismicity::projectedShearTraction >();
+
+      if ( subRegion.hasWrapper( FlowSolverBase::viewKeyStruct::fluidNamesString() ) )
+      {
+        flowExists = true; 
+
+        pViews[0] = subRegion.getField< flow::initialPressure >();
+        pViews[1] = subRegion.getField< flow::pressure_n >();
+        pViews[2] = subRegion.getField< flow::pressure >();
+      }
+    }
+
+    void computeSeismicityRate( ElementSubRegionBase & subRegion, 
+                                real64 const & time_n, real64 const & dt,
+                                real64 const directEffectValue, real64 backgroundStressingRateValue)
+    {
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+      {
+        // arguments of stress exponential at current and previous time step
+        real64 g = (tauViews[2][k] + backgroundStressingRateValue*(time_n+dt))/(directEffectValue*getEffectiveNormalTraction(2, k)) 
+                            - tauViews[0][k]/(directEffectValue*getEffectiveNormalTraction(0, k));
+        real64 g_n = (tauViews[1][k] + backgroundStressingRateValue*time_n)/(directEffectValue*getEffectiveNormalTraction(1, k)) 
+                            - tauViews[0][k]/(directEffectValue*getEffectiveNormalTraction(0, k));
+
+        // checkExpArgument();
+
+        // Compute the difference of the log of the denominator of closed for integral solution.
+        // This avoids directly computing the exponential of the current stress state which is more prone to overflow.
+        logDenom[k] += std::log(1 + dt/(2*(directEffectValue*getEffectiveNormalTraction(0, k)/backgroundStressingRateValue))
+                                            *(std::exp(g - logDenom[k]) + std::exp(g_n - logDenom[k]) ));
   
+        // Convert log seismicity rate to raw value
+        R[k] = LvArray::math::exp( g - logDenom[k] );
+      } );
+    }
+
+    real64 getEffectiveNormalTraction( size_t const nIndex, localIndex const k)
+    {
+      if ( flowExists )
+      {
+        return -sigViews[nIndex][k]-pViews[nIndex][k];
+      }
+      else
+      {
+        return -sigViews[nIndex][k];
+      }
+    }
+
+    arrayView1d< real64 > R;
+    arrayView1d< real64 > logDenom;
+
+    arrayView1d< real64 const > sigViews[ 3 ];
+    arrayView1d< real64 const > tauViews[ 3 ];
+    arrayView1d< real64 const > pViews[ 3 ];
+
+    bool flowExists = false;
+  };
+
 };
 
-} /* namespace geos */
+}/* namespace geos */
 
 #endif /* GEOS_PHYSICSSOLVERS_INDUCED_SEISMICITY_DIETERICH_SEISMICITY_RATE_HPP_ */

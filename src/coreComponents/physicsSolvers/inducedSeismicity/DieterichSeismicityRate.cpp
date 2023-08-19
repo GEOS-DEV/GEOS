@@ -99,7 +99,6 @@ void DieterichSeismicityRate::registerDataOnMesh( Group & meshBodies )
                                                                    ElementSubRegionBase & subRegion )
     {
       subRegion.registerField< inducedSeismicity::logDenom >( getName() );
-      subRegion.registerField< inducedSeismicity::logDenom_n >( getName() );
     } );
    } );
 }
@@ -146,52 +145,10 @@ void DieterichSeismicityRate::integralSolverStep( real64 const & time_n,
                     real64 const & dt,
                     ElementSubRegionBase & subRegion )
 {
-  // Retrieve field variables1734
-  arrayView1d< real64 > const R = subRegion.getField< inducedSeismicity::seismicityRate >();
-  arrayView1d< real64 > const logDenom = subRegion.getField< inducedSeismicity::logDenom >();
-  arrayView1d< real64 > const logDenom_n = subRegion.getField< inducedSeismicity::logDenom_n >();
-
-  arrayView1d< real64 const > const sig_i = subRegion.getField< inducedSeismicity::initialProjectedNormalTraction >();
-  arrayView1d< real64 const > const sig = subRegion.getField< inducedSeismicity::projectedNormalTraction >();
-  arrayView1d< real64 const > const sig_n = subRegion.getField< inducedSeismicity::projectedNormalTraction_n >();
+  solverHelper solverHelperStruct( subRegion );
   
-  arrayView1d< real64 const > const tau_i = subRegion.getField< inducedSeismicity::initialProjectedShearTraction >();
-  arrayView1d< real64 const > const tau = subRegion.getField< inducedSeismicity::projectedShearTraction >();
-  arrayView1d< real64 const > const tau_n = subRegion.getField< inducedSeismicity::projectedShearTraction_n >();
-
-  // Retrieve pore pressure variables if flow solver is being used. If not, initialize them as zero arrays.
-  array1d< real64 > temp( subRegion.size() );
-  arrayView1d< real64 const > p_i = temp.toView();
-  arrayView1d< real64 const > p = p_i;
-  arrayView1d< real64 const > p_n = p_i;
-  if ( subRegion.hasWrapper( FlowSolverBase::viewKeyStruct::fluidNamesString() ) )
-  {
-    p_i = subRegion.getField< flow::initialPressure >();
-    p = subRegion.getField< flow::pressure >();
-    p_n = subRegion.getField< flow::pressure_n >();
-  }
-
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-  {
-    // arguments of stress exponential at current and previous time step
-    real64 g = (tau[k] + m_backgroundStressingRate*(time_n+dt))/(m_directEffect*(-sig[k]-p[k])) 
-                        - tau_i[k]/(m_directEffect*(-sig_i[k]-p_i[k]));
-    real64 g_n = (tau_n[k] + m_backgroundStressingRate*time_n)/(m_directEffect*(-sig_n[k]-p_n[k])) 
-                        - tau_i[k]/(m_directEffect*(-sig_i[k]-p_i[k]));
-
-    // checkExpArgument();
-
-    // Compute the difference of the log of the denominator of closed for integral solution.
-    // This avoids directly computing the exponential of the current stress state which is more prone to overflow.
-    logDenom[k] = logDenom_n[k] + std::log(1 + dt/(2*(m_directEffect*-sig_i[k]/m_backgroundStressingRate))
-                                        *(std::exp(g - logDenom_n[k]) + std::exp(g_n - logDenom_n[k]) ));
-  
-    // Convert log seismicity rate to raw value
-    R[k] = LvArray::math::exp( g - logDenom[k] );
-    
-    // Update log of the denominator for next time step
-    logDenom_n[k] = logDenom[k];
-  } );
+  solverHelperStruct.computeSeismicityRate( subRegion, time_n, dt,
+                                            m_directEffect, m_backgroundStressingRate);
 }
 
 void DieterichSeismicityRate::initializePreSubGroups()
@@ -210,8 +167,6 @@ void DieterichSeismicityRate::initializePreSubGroups()
     {
       arrayView1d< real64 > const tempLogDenom = subRegion.getField< inducedSeismicity::logDenom >();
       tempLogDenom.setValues< parallelHostPolicy >( 0.0 );
-      arrayView1d< real64 > const tempLogDenom_n = subRegion.getField< inducedSeismicity::logDenom_n >();
-      tempLogDenom_n.setValues< parallelHostPolicy >( 0.0 );
     } );
   } );
 }
