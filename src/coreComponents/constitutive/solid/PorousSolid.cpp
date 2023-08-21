@@ -28,6 +28,7 @@
 #include "DamageSpectral.hpp"
 #include "DamageVolDev.hpp"
 #include "ModifiedCamClay.hpp"
+#include "DuvautLionsSolid.hpp"
 
 namespace geos
 {
