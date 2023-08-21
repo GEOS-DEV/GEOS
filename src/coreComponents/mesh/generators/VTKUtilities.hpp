@@ -62,9 +62,6 @@ ENUM_STRINGS( PartitionMethod,
  */
 using CellMapType = std::map< ElementType, std::unordered_map< int, std::vector< vtkIdType > > >;
 
-/// The vtk field to the collocated nodes for fractures.
-inline static const string COLLOCATED_NODES = "duplicated_nodes";
-
 /**
  * @brief Return a VTK controller for multiprocessing.
  * @return Return a VTK controller for multiprocessing.

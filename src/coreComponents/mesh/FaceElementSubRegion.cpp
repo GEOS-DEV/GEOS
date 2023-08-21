@@ -12,10 +12,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file FaceElementSubRegion.cpp
- */
-
 #include "FaceElementSubRegion.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 

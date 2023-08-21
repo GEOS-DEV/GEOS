@@ -12,19 +12,17 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file VTKUtilities.cpp
- */
 
-#include "mesh/generators/VTKUtilities.hpp"
-
-#include "common/TypeDispatch.hpp"
+#include "mesh/generators/CollocatedNodes.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
+#include "mesh/generators/VTKUtilities.hpp"
 
 #include "mesh/generators/ParMETISInterface.hpp"
 #ifdef GEOSX_USE_SCOTCH
 #include "mesh/generators/PTScotchInterface.hpp"
 #endif
+
+#include "common/TypeDispatch.hpp"
 
 #include <vtkArrayDispatch.h>
 #include <vtkBoundingBox.h>
@@ -39,7 +37,6 @@
 #include <vtkMultiBlockDataSet.h>
 #include <vtkNew.h>
 #include <vtkPartitionedDataSet.h>
-#include <vtkPointData.h>
 #include <vtkRectilinearGrid.h>
 #include <vtkRectilinearGridReader.h>
 #include <vtkRedistributeDataSetFilter.h>
@@ -249,9 +246,11 @@ buildElemToNodesImpl( AllMeshes & meshes,
   localIndex const num3dCells = LvArray::integerConversion< localIndex >( meshes.getMainMesh()->GetNumberOfCells() );
 
   localIndex num2dCells = 0;
-  for( auto const & fracture: meshes.getFaceBlocks() )
+  std::map< string, CollocatedNodes > collocatedNodesMap;
+  for( auto & [fractureName, fractureMesh]: meshes.getFaceBlocks() )
   {
-    num2dCells += fracture.second->GetNumberOfCells();
+    num2dCells += fractureMesh->GetNumberOfCells();
+    collocatedNodesMap.insert( { fractureName, CollocatedNodes( fractureName, fractureMesh, false ) } );
   }
   localIndex const numCells = num3dCells + num2dCells;
   array1d< INDEX_TYPE > nodeCounts( numCells );
@@ -263,34 +262,19 @@ buildElemToNodesImpl( AllMeshes & meshes,
   } );
 
   localIndex offset = num3dCells;
-  for( auto & nf: meshes.getFaceBlocks() )
+  for( auto & [fractureName, fractureMesh]: meshes.getFaceBlocks() )
   {
-    vtkSmartPointer< vtkDataSet > fracture = nf.second;
-    // Check that fracture is not empty.
-    if( fracture->GetNumberOfCells() == 0 )
-    { continue; }
-
-    vtkIdTypeArray const * collocatedNodes = vtkIdTypeArray::FastDownCast( fracture->GetPointData()->GetArray( vtk::COLLOCATED_NODES .c_str()) );
-    GEOS_ERROR_IF( collocatedNodes == nullptr, "Could not find valid field for fracture [1]." );
-    int const numComponents = collocatedNodes->GetNumberOfComponents();
-
-    forAll< parallelHostPolicy >( fracture->GetNumberOfCells(), [&, nodeCounts = nodeCounts.toView(), fracture = fracture.Get()] ( localIndex const cellIdx )
+    CollocatedNodes const & collocatedNodes = collocatedNodesMap.at( fractureName );
+    forAll< parallelHostPolicy >( fractureMesh->GetNumberOfCells(), [&, nodeCounts = nodeCounts.toView(), fracture = fractureMesh.Get()] ( localIndex const cellIdx )
     {
-      // TODO This loop can be made easier by using the `DuplicatedNodes` in the `VTKFaceBlockUtilities.cpp` file.
       nodeCounts[cellIdx + offset] = 0;
       // We are doing a very strict allocation because some TPLs rely on not having any over allocation.
       for( vtkIdType const pointId: *fracture->GetCell( cellIdx )->GetPointIds() )
       {
-        for( int j = 0; j < numComponents; ++j )
-        {
-          if ( collocatedNodes->GetTypedComponent( pointId, j ) > -1 )
-          {
-            nodeCounts[cellIdx + offset]++;
-          }
-        }
+        nodeCounts[cellIdx + offset] += collocatedNodes[pointId].size();
       }
     } );
-    offset += fracture->GetNumberOfCells();
+    offset += fractureMesh->GetNumberOfCells();
   }
 
   ArrayOfArrays< INDEX_TYPE, INDEX_TYPE > elemToNodes;
@@ -312,34 +296,20 @@ buildElemToNodesImpl( AllMeshes & meshes,
   } );
 
   offset = num3dCells;  // Restarting the loop from the beginning.
-  for( auto const & nf: meshes.getFaceBlocks() )
+  for( auto & [fractureName, fractureMesh]: meshes.getFaceBlocks() )
   {
-    vtkSmartPointer< vtkDataSet > fracture = nf.second;
-
-    if( fracture->GetNumberOfCells() == 0 )
-    { continue; }  // Maybe check on num2dCells?
-
-    vtkIdTypeArray const * collocatedNodes = vtkIdTypeArray::FastDownCast( fracture->GetPointData()->GetArray( vtk::COLLOCATED_NODES.c_str() ) );
-    vtkIdType const numTuples = collocatedNodes->GetNumberOfTuples();
-    int const numComponents = collocatedNodes->GetNumberOfComponents();
-    GEOS_ERROR_IF( collocatedNodes == nullptr, "Could not find valid field [2]." );
-    for( vtkIdType i = 0; i < fracture->GetNumberOfCells(); ++i )
+    CollocatedNodes const & collocatedNodes = collocatedNodesMap.at( fractureName );
+    for( vtkIdType i = 0; i < fractureMesh->GetNumberOfCells(); ++i )
     {
-      vtkCell * cell = fracture->GetCell( i );
-      vtkIdList * pointIds = cell->GetPointIds();
-      for( vtkIdType pointId: *pointIds )
+      for( vtkIdType const pointId: *fractureMesh->GetCell( i )->GetPointIds() )
       {
-        for( int j = 0; j < numComponents; ++j )
+        for( vtkIdType const & tmp: collocatedNodes[pointId] )
         {
-          vtkIdType const tmp = collocatedNodes->GetTypedComponent( pointId, j );
-          if( tmp > -1 )
-          {
-            elemToNodes.emplaceBack( offset + i, tmp );
-          }
+          elemToNodes.emplaceBack( offset + i, tmp );
         }
       }
     }
-    offset += fracture->GetNumberOfCells();
+    offset += fractureMesh->GetNumberOfCells();
   }
 
   return elemToNodes;

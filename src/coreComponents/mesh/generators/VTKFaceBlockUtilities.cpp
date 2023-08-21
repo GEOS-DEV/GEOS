@@ -15,6 +15,7 @@
 #include "VTKFaceBlockUtilities.hpp"
 
 #include "mesh/generators/VTKUtilities.hpp"
+#include "mesh/generators/CollocatedNodes.hpp"
 
 #include "dataRepository/Group.hpp"
 
@@ -22,7 +23,6 @@
 
 #include <vtkExtractEdges.h>
 #include <vtkGeometryFilter.h>
-#include <vtkPointData.h>
 #include <vtkCellData.h>
 
 #include <algorithm>
@@ -112,90 +112,6 @@ private:
 };
 
 } // end of namespace internal
-
-
-/**
- * @brief Convenience wrapper around the raw vtk information.
- */
-class CollocatedNodes
-{
-public:
-  CollocatedNodes( string const & faceBlockName,
-                   vtkSmartPointer< vtkDataSet > faceMesh )
-  {
-    vtkIdTypeArray const * collocatedNodes = vtkIdTypeArray::FastDownCast( faceMesh->GetPointData()->GetArray( vtk::COLLOCATED_NODES.c_str() ) );
-    {
-      // Depending on the parallel split, the vtk face mesh may be empty on a rank.
-      // In that case, vtk will not provide any field for the emtpy mesh.
-      // Therefore, not finding the duplicated nodes field on a rank cannot be interpreted as a globally missing field.
-      // Converting the address into an integer and exchanging it through the MPI ranks let us find out
-      // if the field is globally missing or not.
-      std::uintptr_t const address = MpiWrapper::max( reinterpret_cast<std::uintptr_t>(collocatedNodes) );
-      if( address == 0 )
-      {
-        GEOS_ERROR_IF( collocatedNodes == nullptr, "Could not find valid field \"" << vtk::COLLOCATED_NODES << "\" for fracture \"" << faceBlockName << "\"." );
-      }
-    }
-
-    if( collocatedNodes )
-    {
-      init( collocatedNodes );
-    }
-  }
-
-  /**
-   * @brief For node @p i of the face block, returns all the duplicated global node indices in the main 3d mesh.
-   * @param i the node in the face block (numbering is local to the face block).
-   * @return The list of global node indices in the main 3d mesh.
-   */
-  std::vector< vtkIdType > const & operator[]( std::size_t i ) const
-  {
-    return m_collocatedNodes[i];
-  }
-
-  /**
-   * @brief Number of duplicated nodes buckets.
-   * Multiple nodes that are considered to be duplicated one of each other make one bucket.
-   * @return The number of duplicated nodes buckets.
-   */
-  [[nodiscard]] std::size_t size() const
-  {
-    return m_collocatedNodes.size();
-  }
-
-private:
-
-  /**
-   * @brief Populates the mapping.
-   * @param collocatedNodes The pointer to the vtk data array. Guaranteed not to be null.
-   * @details Converts the raw vtk data to STL containers.
-   */
-  void init( vtkIdTypeArray const * collocatedNodes )
-  {
-    vtkIdType const numTuples = collocatedNodes->GetNumberOfTuples();
-    int const numComponents = collocatedNodes->GetNumberOfComponents();
-    m_collocatedNodes.resize( numTuples );
-    for( vtkIdType i = 0; i < numTuples; ++i )
-    {
-      m_collocatedNodes[i].reserve( numComponents );
-    }
-
-    for( vtkIdType i = 0; i < numTuples; ++i )
-    {
-      for( int j = 0; j < numComponents; ++j )
-      {
-        vtkIdType const tmp = collocatedNodes->GetTypedComponent( i, j );
-        if( tmp > -1 )
-        {
-          m_collocatedNodes[i].emplace_back( tmp );
-        }
-      }
-    }
-  }
-
-  /// For each node of the face block, lists all the duplicated nodes in the main 3d mesh.
-  std::vector< std::vector< vtkIdType > > m_collocatedNodes;
-};
 
 
 /**
