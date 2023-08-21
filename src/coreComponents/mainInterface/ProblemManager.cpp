@@ -398,7 +398,7 @@ void ProblemManager::parseInputString( string const & xmlString )
 {
   // Load preprocessed xml file
   xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.loadBuffer( xmlString.c_str(), xmlString.length(), true );
+  xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( xmlString, true );
   GEOS_THROW_IF( !xmlResult, GEOS_FMT( "Errors found while parsing XML string\nDescription: {}\nOffset: {}",
                                        xmlResult.description(), xmlResult.offset ), InputError );
 

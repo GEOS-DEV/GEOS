@@ -192,7 +192,7 @@ public:
    * @param loadNodeFileInfo Load the node source file info, allowing getNodePosition() to work.
    * @return an xmlResult object representing the parsing resulting status.
    */
-  xmlResult loadString( string const & contents, bool loadNodeFileInfo = false );
+  xmlResult loadString( string_view content, bool loadNodeFileInfo = false );
 
   /**
    * @brief Load document from file. Free any previously loaded xml tree.
@@ -202,17 +202,6 @@ public:
    * @return an xmlResult object representing the parsing resulting status.
    */
   xmlResult loadFile( string const & path, bool loadNodeFileInfo = false );
-
-  /**
-   * @brief Load document from buffer. Copies/converts the buffer, so it may be deleted or changed
-   * after the function returns. Free any previously loaded xml tree.
-   * Wrapper of pugi::xml_document::loadBuffer() method.
-   * @param contents the buffer containing the document content
-   * @param size the size of the buffer in bytes
-   * @param loadNodeFileInfo Load the node source file info, allowing getNodePosition() to work.
-   * @return an xmlResult object representing the parsing resulting status.
-   */
-  xmlResult loadBuffer( const void * contents, size_t size, bool loadNodeFileInfo = false );
 
   /**
    * @brief Add a root element to the document

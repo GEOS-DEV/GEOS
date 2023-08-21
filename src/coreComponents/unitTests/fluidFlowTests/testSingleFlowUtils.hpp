@@ -75,7 +75,7 @@ void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
 void setupProblemFromXML( ProblemManager & problemManager, char const * const xmlInput )
 {
   xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.loadBuffer( xmlInput, strlen( xmlInput ) );
+  xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( xmlInput );
   if( !xmlResult )
   {
     GEOS_LOG_RANK_0( "XML parsed with errors!" );

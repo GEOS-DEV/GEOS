@@ -280,7 +280,7 @@ TEST( ConformingVirtualElementOrder1, hexahedra )
     "</Problem>";
 
   xmlWrapper::xmlDocument inputFile;
-  xmlWrapper::xmlResult xmlResult = inputFile.loadBuffer( inputStream.c_str(), inputStream.size());
+  xmlWrapper::xmlResult xmlResult = inputFile.loadString( inputStream );
   if( !xmlResult )
   {
     GEOS_LOG_RANK_0( "XML parsed with errors!" );
@@ -333,7 +333,7 @@ TEST( ConformingVirtualElementOrder1, wedges )
     "  </ElementRegions>"
     "</Problem>";
   xmlWrapper::xmlDocument inputFile;
-  xmlWrapper::xmlResult xmlResult = inputFile.loadBuffer( inputStream.c_str(), inputStream.size());
+  xmlWrapper::xmlResult xmlResult = inputFile.loadString( inputStream );
   if( !xmlResult )
   {
     GEOS_LOG_RANK_0( "XML parsed with errors!" );

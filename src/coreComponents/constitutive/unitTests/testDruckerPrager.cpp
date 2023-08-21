@@ -72,8 +72,7 @@ void testDruckerPragerDriver()
                                                                   "</Constitutive>";
 
   xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.loadBuffer( inputStream.c_str(),
-                                                            inputStream.size() );
+  xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( inputStream );
   if( !xmlResult )
   {
     GEOS_LOG_RANK_0( "XML parsed with errors!" );
@@ -189,8 +188,7 @@ void testDruckerPragerExtendedDriver()
                                 "</Constitutive>";
 
   xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.loadBuffer( inputStream.c_str(),
-                                                            inputStream.size() );
+  xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( inputStream );
   if( !xmlResult )
   {
     GEOS_LOG_RANK_0( "XML parsed with errors!" );

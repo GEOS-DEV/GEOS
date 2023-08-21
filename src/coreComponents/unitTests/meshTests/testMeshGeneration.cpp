@@ -99,7 +99,7 @@ protected:
       maxCoordInX, maxCoordInY, maxCoordInZ, numElemsInX, numElemsInY, numElemsInZ );
 
     xmlWrapper::xmlDocument xmlDocument;
-    xmlWrapper::xmlResult xmlResult = xmlDocument.loadBuffer( inputStream.c_str(), inputStream.size() );
+    xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( inputStream );
     ASSERT_TRUE( xmlResult );
 
     xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( dataRepository::keys::ProblemManager );

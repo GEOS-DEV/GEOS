@@ -210,15 +210,16 @@ xmlDocument::xmlDocument():
   m_rootFilePath( "CodeIncludedXML" + std::to_string( documentId++ ) )
 {}
 
-xmlResult xmlDocument::loadString( string const & contents, bool loadNodeFileInfo )
+xmlResult xmlDocument::loadString( string_view content, bool loadNodeFileInfo )
 {
-  xmlResult result = pugiDocument.load_string( contents.c_str(), pugi::parse_default );
+  xmlResult result = pugiDocument.load_buffer( content.data(), content.size(),
+                                               pugi::parse_default, pugi::encoding_auto );
 
   // keeping a copy of original buffer to allow line retrieval
   if( loadNodeFileInfo )
   {
     m_originalBuffers.clear();
-    m_originalBuffers[m_rootFilePath] = contents;
+    m_originalBuffers[m_rootFilePath] = content;
 
     addNodeFileInfo( getFirstChild(), m_rootFilePath );
   }
@@ -241,21 +242,6 @@ xmlResult xmlDocument::loadFile( string const & path, bool loadNodeFileInfo )
     m_originalBuffers[m_rootFilePath] = string( buffer.str() );
 
     addNodeFileInfo( getFirstChild(), getAbsolutePath( m_rootFilePath ) );
-  }
-
-  return result;
-}
-xmlResult xmlDocument::loadBuffer( const void * contents, size_t size, bool loadNodeFileInfo )
-{
-  xmlResult result = pugiDocument.load_buffer( contents, size, pugi::parse_default, pugi::encoding_auto );
-
-  //keeping a copy of original buffer
-  if( loadNodeFileInfo )
-  {
-    m_originalBuffers.clear();
-    m_originalBuffers[m_rootFilePath] = string( ( char const * )contents, size );
-
-    addNodeFileInfo( getFirstChild(), m_rootFilePath );
   }
 
   return result;

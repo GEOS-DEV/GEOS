@@ -38,7 +38,7 @@ void TestMeshImport( string const & meshFilePath, V const & validate )
 {
   string const meshNode = GEOS_FMT( R"(<Mesh><VTKMesh name="mesh" file="{}" partitionRefinement="0"/></Mesh>)", meshFilePath );
   xmlWrapper::xmlDocument xmlDocument;
-  xmlDocument.loadBuffer( meshNode.c_str(), meshNode.size() );
+  xmlDocument.loadString( meshNode );
   xmlWrapper::xmlNode xmlMeshNode = xmlDocument.getChild( "Mesh" );
 
   conduit::Node node;
