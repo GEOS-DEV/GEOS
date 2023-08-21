@@ -65,7 +65,11 @@ using xmlTypes = pugi::xml_node_type;
 
 class xmlDocument;
 
-/// Stores the source file path, and position in the file of a xml attribute.
+/**
+ * @struct xmlAttributePos
+ * 
+ * Stores the source file path, and position in the file of a xml attribute.
+ */
 struct xmlAttributePos
 {
   /// Path of the file containing this element
@@ -98,7 +102,11 @@ struct xmlAttributePos
   string toString() const;
 };
 
-/// Used to retrieve the position of dataRepository::Wrapper in XML
+/**
+ * @struct xmlNodePos
+ * 
+ * Used to retrieve the position of dataRepository::Wrapper in XML
+ */
 struct xmlNodePos : xmlAttributePos
 {
   /// Reference of the main xmlDocument that contains all original file buffers.
@@ -125,9 +133,13 @@ struct xmlNodePos : xmlAttributePos
   xmlAttributePos getAttributeLine( string const & attName ) const;
 };
 
-/// Wrapper class for the type of xml document.
-/// This class exists to intercept file / string loading methods, and to keep the loaded buffers,
-/// in order to retrieve the source file and line of nodes and attributes.
+/**
+ * @class xmlDocument
+ * 
+ * Wrapper class for the type of xml document.
+ * This class exists to intercept file / string loading methods, and to keep the loaded buffers,
+ * in order to retrieve the source file and line of nodes and attributes.
+ */
 class xmlDocument
 {
 public:

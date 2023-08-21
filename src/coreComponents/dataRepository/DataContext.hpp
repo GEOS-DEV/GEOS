@@ -30,10 +30,14 @@ namespace dataRepository
 {
 
 
-/// DataContext is an abstract class storing contextual information on an object:
-/// - Either its line position in a file (if applicable, implementation in DataFileContext),
-/// - or its location in the data hierarchy (implementation in GroupContext and WrapperContext).
-/// Typically, the target object contains an unique_ptr< DataContext > instance of this class.
+/**
+ * @class DataContext
+ * 
+ * DataContext is an abstract class storing contextual information on an object:
+ * - Either its line position in a file (if applicable, implementation in DataFileContext),
+ * - or its location in the data hierarchy (implementation in GroupContext and WrapperContext).
+ * Typically, the target object contains an unique_ptr< DataContext > instance of this class.
+ */
 class DataContext
 {
 public:
@@ -111,8 +115,13 @@ protected:
 
 };
 
-/// Stores information to retrieve where a target object has been declared in the input source
-/// file (e.g. XML).
+/// 
+/**
+ * @class DataContext
+ * 
+ * Stores information to retrieve where a target object has been declared in the input source
+ * file (e.g. XML).
+ */
 class DataFileContext final : public DataContext
 {
 public:

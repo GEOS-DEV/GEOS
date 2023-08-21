@@ -29,8 +29,12 @@ namespace dataRepository
 {
 
 
-/// Helps to know where a Group is in the hierarchy.
-/// See DataContext class for more info.
+/**
+ * @class GroupContext
+ * 
+ * Helps to know where a Group is in the hierarchy.
+ * See DataContext class for more info.
+ */
 class GroupContext : public DataContext
 {
 public:
@@ -70,8 +74,12 @@ private:
   ToStringInfo getToStringInfo() const override;
 };
 
-/// Dedicated implementation of GroupContext for Wrapper.
-/// See DataContext class for more info.
+/**
+ * @class WrapperContext
+ * 
+ * Dedicated implementation of GroupContext for Wrapper.
+ * See DataContext class for more info.
+ */
 class WrapperContext final : public GroupContext
 {
 public:
