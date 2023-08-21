@@ -104,6 +104,20 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
           return ElementType::Wedge;
         case 4:
           return ElementType::Hexahedron;
+        case 5:
+          return ElementType::Prism5;
+        case 6:
+          return ElementType::Prism6;
+        case 7:
+          return ElementType::Prism7;
+        case 8:
+          return ElementType::Prism8;
+        case 9:
+          return ElementType::Prism9;
+        case 10:
+          return ElementType::Prism10;
+        case 11:
+          return ElementType::Prism11;
         case 0:
           // In the case the fracture is empty (on this rank), then we default to hexahedron. Otherwise, there's something wrong
           GEOS_ERROR_IF_NE_MSG( num2dElements, 0, "Could not determine the element type of the fracture \"" << getName() << "\"." );
