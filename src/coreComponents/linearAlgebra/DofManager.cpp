@@ -520,6 +520,7 @@ processCouplingRegionList( std::set< string > inputList,
     // Check that both fields exist on all regions in the list
     auto const checkSupport = [&regions]( std::set< string > const & fieldRegions, string const & fieldName )
     {
+      GEOS_UNUSED_VAR( fieldName ); // unused if geos_error_if is nulld
       // Both regions lists are sorted at this point
       GEOS_ERROR_IF( !std::includes( fieldRegions.begin(), fieldRegions.end(), regions.begin(), regions.end() ),
                      GEOS_FMT( "Coupling domain is not a subset of {}'s support:\nCoupling: {}\nField: {}",
@@ -572,6 +573,7 @@ processCouplingRegionList( std::vector< DofManager::FieldSupport > inputList,
     // Check that each input entry is included in both row and col field supports
     auto const checkSupport = [&regions]( std::vector< DofManager::FieldSupport > const & fieldRegions, string const & fieldName )
     {
+      GEOS_UNUSED_VAR( fieldName ); // unused if geos_error_if is nulled
       for( DofManager::FieldSupport const & r : regions )
       {
         auto const comp = [&r]( auto const & f ){ return RegionComp< std::equal_to<> >{} ( r, f ); };
