@@ -8,3 +8,4 @@ pandas
 # using plantuml for diagrams
 sphinxcontrib-plantuml
 sphinx-argparse
+pydata-sphinx-theme

@@ -19,7 +19,7 @@ class Mandel:
         p0 = 1. / 3. / alen * B * (1. + nuu) * F
 
         alpha_n = []
-        eps = np.finfo(np.float).eps
+        eps = np.finfo(np.float64).eps
         coef = (1 - nu) / (nuu - nu)
 
         n = 1

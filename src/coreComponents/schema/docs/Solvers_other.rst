@@ -31,6 +31,7 @@ SinglePhasePoromechanicsReservoir           node :ref:`DATASTRUCTURE_SinglePhase
 SinglePhaseProppantFVM                      node :ref:`DATASTRUCTURE_SinglePhaseProppantFVM`                      
 SinglePhaseReservoir                        node :ref:`DATASTRUCTURE_SinglePhaseReservoir`                        
 SinglePhaseWell                             node :ref:`DATASTRUCTURE_SinglePhaseWell`                             
+SolidMechanicsConformingFracturesVEM        node :ref:`DATASTRUCTURE_SolidMechanicsConformingFracturesVEM`        
 SolidMechanicsEmbeddedFractures             node :ref:`DATASTRUCTURE_SolidMechanicsEmbeddedFractures`             
 SolidMechanicsLagrangianSSLE                node :ref:`DATASTRUCTURE_SolidMechanicsLagrangianSSLE`                
 SolidMechanics_LagrangianFEM                node :ref:`DATASTRUCTURE_SolidMechanics_LagrangianFEM`                
