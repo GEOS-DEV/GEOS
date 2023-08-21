@@ -1010,8 +1010,10 @@ localIndex HypreMatrix::rowLength( globalIndex const globalRowIndex ) const
   cudaMemcpy( ia_offd_h, ia_offd + localRow, 2 * sizeof( HYPRE_Int ), cudaMemcpyDeviceToHost );
 #elif GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
   // Don't know if this is faster or slower than launching a kernel. We should deprecate this function in any case.
-  hipMemcpy( ia_diag_h, ia_diag + localRow, 2 * sizeof( HYPRE_Int ), hipMemcpyDeviceToHost );
-  hipMemcpy( ia_offd_h, ia_offd + localRow, 2 * sizeof( HYPRE_Int ), hipMemcpyDeviceToHost );
+  hipError_t err = hipMemcpy( ia_diag_h, ia_diag + localRow, 2 * sizeof( HYPRE_Int ), hipMemcpyDeviceToHost );
+  GEOS_ERROR_IF( err != 0, GEOS_FMT( "{}", hipGetErrorString( err ) ) );
+  err = hipMemcpy( ia_offd_h, ia_offd + localRow, 2 * sizeof( HYPRE_Int ), hipMemcpyDeviceToHost );
+  GEOS_ERROR_IF( err != 0, GEOS_FMT( "{}", hipGetErrorString( err ) ) );
 #else
   ia_diag_h[0] = ia_diag[localRow]; ia_diag_h[1] = ia_diag[localRow + 1];
   ia_offd_h[0] = ia_offd[localRow]; ia_offd_h[1] = ia_offd[localRow + 1];
