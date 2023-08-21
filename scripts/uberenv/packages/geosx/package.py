@@ -49,7 +49,7 @@ def cmake_cache_option(name, boolean_value, comment=""):
     return 'set(%s %s CACHE BOOL "%s")\n\n' % (name, value, comment)
 
 
-class Geosx(CMakePackage, CudaPackage):
+class Geosx(CMakePackage, CudaPackage, ROCmPackage):
     """GEOSX simulation framework."""
 
     homepage = "https://github.com/GEOS-DEV/GEOS"
@@ -59,18 +59,21 @@ class Geosx(CMakePackage, CudaPackage):
 
     # SPHINX_BEGIN_VARIANTS
 
-    variant('shared', default=True, description='Build Shared Libs.')
+    # variant('shared', default=True, description='Build shared Libs.')
+    variant('openmp', default=True, description='Build with openmp support.')
+    variant('silo', default=False, description="Build with support for silo output.")
+    # variant('vtk', default=False, description="Build with support for vtk output.")
     variant('caliper', default=True, description='Build Caliper support.')
-    variant('mkl', default=False, description='Use the Intel MKL library.')
-    variant('essl', default=False, description='Use the IBM ESSL library.')
-    variant('suite-sparse', default=True, description='Build SuiteSparse support.')
-    variant('trilinos', default=True, description='Build Trilinos support.')
+    variant('scotch', default=False, description='Build Scotch support.')
+
+    variant('trilinos', default=False, description='Build Trilinos support.')
     variant('hypre', default=True, description='Build HYPRE support.')
-    variant('hypre-cuda', default=False, description='Build HYPRE with CUDA support.')
-    variant('petsc', default=True, description='Build PETSc support.')
-    variant('scotch', default=True, description='Build Scotch support.')
+    variant('petsc', default=False, description='Build PETSc support.')
+    variant('suite-sparse', default=False, description='Build SuiteSparse support.')
+    variant('superlu-dist', default=False, description='Build SuperLU_dist support.')
+
     variant('lai',
-            default='trilinos',
+            default='hypre',
             description='Linear algebra interface.',
             values=('trilinos', 'hypre', 'petsc'),
             multi=False)
@@ -81,115 +84,129 @@ class Geosx(CMakePackage, CudaPackage):
     # variant('tests', default=True, description='Build tests')
     # variant('benchmarks', default=False, description='Build benchmarks')
     # variant('examples', default=False, description='Build examples')
-    # variant('docs', default=False, description='Build docs')
-    # variant('addr2line', default=True,
-    #         description='Build support for addr2line.')
+    variant( 'dev', default=False, description='Build with optional dev tools.' )
+    variant( 'docs', default=False, description='Build with doc generation support.' )
+
 
     # SPHINX_BEGIN_DEPENDS
 
-    depends_on('cmake@3.8:', type='build')
-    depends_on('cmake@3.9:', when='+cuda', type='build')
+    depends_on('cmake@3.23:', type='build')
 
     #
     # Virtual packages
     #
-    depends_on('mpi')
-    depends_on('blas')
-    depends_on('lapack')
+    depends_on( 'mpi' )
+    depends_on( 'blas' )
+    depends_on( 'lapack' )
 
     #
-    # Performance portability
+    # Immediate dependecies with only absolutely required variants/versions
     #
-    depends_on('raja@0.12.1 +openmp +shared ~examples ~exercises')
-    depends_on('raja +cuda', when='+cuda')
+    depends_on( 'chai +raja' )
+    depends_on( 'raja' )
+    depends_on( 'umpire' )
+    depends_on( 'camp' )
 
-    depends_on('umpire@4.1.2 ~c +shared +openmp ~examples')
-    depends_on('umpire +cuda', when='+cuda')
-
-    depends_on('chai@2.2.2 +shared +raja ~benchmarks ~examples')
-    depends_on('chai@2.2.2 +cuda', when='+cuda')
-
-    #
-    # IO
-    #
-    depends_on('hdf5@1.10.5: +shared +pic +mpi', when='~vtk')
-
-    depends_on('conduit@0.5.0 +shared ~test ~fortran +mpi +hdf5 ~hdf5_compat')
-
-    depends_on('silo@4.10: ~fortran +shared ~silex +pic +mpi ~zlib')
-
-    depends_on('adiak@0.2: +mpi +shared', when='+caliper')
-    depends_on('caliper@2.4: +shared +adiak +mpi ~callpath ~libpfm ~gotcha ~sampler', when='+caliper')
-
-    depends_on('pugixml@1.8: +shared')
-
-    depends_on('fmt@8.0: cxxstd=14 +pic')
+    depends_on( 'conduit@0.5.0: +mpi +hdf5 ~hdf5_compat' )
+    depends_on( 'hdf5@1.10.5: +mpi' )
+    depends_on( 'pugixml@1.8:' )
+    depends_on(' fmt@10.0: cxxstd=17' )
+    depends_on( 'parmetis@4.0.3: +int64' )
 
     #
-    # Math
+    # Variant-specific dependencies with only required variants/versions
     #
-    depends_on('intel-mkl +shared ~ilp64', when='+mkl')
+    depends_on( 'silo@4.10: +mpi', when='+silo' )
+    depends_on( 'caliper@2.4: +mpi', when='+caliper' )
+    depends_on( 'scotch@6.0.9: +mpi +int64', when='+scotch' )
+    depends_on( 'superlu-dist', when='+superlu-dist' )
 
-    # depends_on('essl ~ilp64 threads=openmp +lapack +cuda', when='+essl')
-
-    depends_on('parmetis@4.0.3: +shared +int64')
-
-    depends_on('scotch@6.0.9: +mpi +int64', when='+scotch')
-
-    depends_on('superlu-dist +int64 +openmp +shared', when='~petsc')
-    depends_on('superlu-dist@6.3.0 +int64 +openmp +shared', when='+petsc')
-
-    depends_on('suite-sparse@5.8.1: +pic +openmp +amd +camd +colamd +ccolamd +cholmod +umfpack', when='+suite-sparse')
-    depends_on('suite-sparse +blas-no-underscore', when='%gcc +suite-sparse +essl')
-
-    trilinos_build_options = '~fortran +openmp +shared'
-    trilinos_tpls = '~boost ~glm ~gtest ~hdf5 ~hypre ~matio ~metis +mpi ~mumps ~netcdf ~suite-sparse'
-    trilinos_packages = '+amesos +aztec +epetra +epetraext +ifpack +kokkos +ml +stk +stratimikos +teuchos +tpetra ~amesos2 ~anasazi ~belos ~exodus ~ifpack2 ~muelu ~sacado ~zoltan ~zoltan2'
-    depends_on('trilinos@12.18.1 ' + trilinos_build_options + trilinos_tpls + trilinos_packages, when='+trilinos')
-    depends_on('trilinos +blas_lowercase_no_underscore', when='+trilinos +essl')
-    # depends_on('trilinos +force-new-lapack', when='+trilinos +essl')
-
-    depends_on('hypre@2.20.300 +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
-    depends_on('hypre@2.20.300 +cuda +shared +superlu-dist +mpi +openmp +unified-memory +cusparse', when='+hypre-cuda')
-
-    petsc_build_options = '+shared +mpi'
-    petsc_tpls = '+metis ~hdf5 ~hypre +superlu-dist +int64'
-    depends_on('petsc@3.13.0: ' + petsc_build_options + petsc_tpls, when='+petsc')
+    depends_on( 'uncrustify@0.71:', when='+dev', type='build' )
+    depends_on( 'doxygen@1.8.13:', when='+docs', type='build' )
+    depends_on( 'py-sphinx@1.6.3:', when='+docs', type='build' )
 
     #
-    # Python
+    # Additional variants/restrictions on dependencies depending on local variants / spec restrictions.
     #
-    depends_on('python +shared +pic', when='+pygeosx')
-    depends_on('py-numpy@1.19: +blas +lapack +force-parallel-build', when='+pygeosx')
-    depends_on('py-scipy@1.5.2: +force-parallel-build', when='+pygeosx')
-    depends_on('py-mpi4py@3.0.3:', when='+pygeosx')
-    depends_on('py-pip', when='+pygeosx')
+    with when( '+cuda' ):
+        # we specify these to forward cuda_arch appropriately
+        for cuda_arch in CudaPackage.cuda_arch_values:
+            cuda_arch_variant = f'cuda_arch={cuda_arch}'
+            with when( cuda_arch_variant ):
+                depends_on( f'chai +cuda {cuda_arch_variant}' )
+                depends_on( f'raja +cuda {cuda_arch_variant}' )
+                depends_on( f'umpire +cuda {cuda_arch_variant}' )
+                depends_on( f'camp +cuda {cuda_arch_variant}' )
+                depends_on( f'caliper +cuda {cuda_arch_variant}' )
 
-    #
-    # Dev tools
-    #
-    depends_on('uncrustify@0.71:')
+        depends_on( f'essl +lapackforessl +cuda', when='^essl' ) # no cuda_arch here..
 
-    #
-    # Documentation
-    #
-    depends_on('doxygen@1.8.13:', when='+docs', type='build')
-    depends_on('py-sphinx@1.6.3:', when='+docs', type='build')
+    with when( '+rocm' ):
+        for rocm_arch in ROCmPackage.amdgpu_targets:
+            rocm_arch_variant = f'amdgpu_target={rocm_arch}'
+            with when( rocm_arch_variant ):
+                # we specify these to forward rocm_arch appropriately
+                depends_on( f'chai +rocm  {rocm_arch_variant}' )
+                depends_on( f'raja +rocm {rocm_arch_variant}' )
+                depends_on( f'umpire +rocm {rocm_arch_variant}' )
+                depends_on( f'camp +rocm {rocm_arch_variant}' )
+                depends_on( f'caliper +rocm {rocm_arch_variant}' )
+
+    with when( '+openmp' ):
+        depends_on( 'chai +openmp' )
+        depends_on( 'raja +openmp' )
+        depends_on( 'umpire +openmp' )
+        depends_on( 'camp +openmp' )
+
+    with when( '~openmp' ):
+        # many of these default to +openmp but not all
+        #  so things can get mixed and give configuration errors
+        #  best just to be consistent
+        depends_on( 'chai ~openmp' )
+        depends_on( 'raja ~openmp' )
+        depends_on( 'umpire ~openmp' )
+        depends_on( 'camp ~openmp' )
+
+    with when( '+petsc' ):
+        depends_on( 'petsc@3.13.0: +mpi' )
+
+    with when( '+suite-sparse' ):
+        depends_on('suite-sparse@5.8.1:' )
+
+    with when( '+trilinos' ):
+        depends_on( 'trilinos@12.18.1:' )
+
+    with when( '+hypre' ):
+        depends_on( 'hypre +mpi' )
+
+        for cuda_arch in CudaPackage.cuda_arch_values:
+            cuda_arch_variant = f'cuda_arch={cuda_arch}'
+            with when( f'{cuda_arch_variant} ^hypre+cuda' ):
+                depends_on( f'hypre +cuda +unified-memory {cuda_arch_variant}' )
+
+        for rocm_arch in ROCmPackage.amdgpu_targets:
+            rocm_arch_variant = f'amdgpu_target={rocm_arch}'
+            with when( f'{rocm_arch_variant} ^hypre+rocm' ):
+                depends_on( f'hypre +rocm +unified-memory {rocm_arch_variant}' )
+
+    with when( '+pygeosx' ):
+        depends_on( 'python +shared +pic' )
+        depends_on( 'py-numpy@1.19: +blas +lapack' )
+        depends_on( 'py-scipy@1.5.2:' )
+        depends_on( 'py-mpi4py@3.0.3:' )
+        depends_on( 'py-pip' )
 
     # SPHINX_END_DEPENDS
 
     #
     # Conflicts
     #
-    conflicts('+mkl +essl', msg='Cannot use both MKL and ESSL.')
-    conflicts('+essl ~cuda', msg='Cannot use ESSL without CUDA.')
+    conflicts( '+cuda +rocm' )
 
+    conflicts('~cuda ^essl', msg='Cannot use ESSL without CUDA.')
     conflicts('~trilinos lai=trilinos', msg='To use Trilinos as the Linear Algebra Interface you must build it.')
-    conflicts('~hypre ~hypre-cuda lai=hypre', msg='To use HYPRE as the Linear Algebra Interface you must build it.')
+    conflicts('~hypre lai=hypre', msg='To use HYPRE as the Linear Algebra Interface you must build it.')
     conflicts('~petsc lai=petsc', msg='To use PETSc as the Linear Algebra Interface you must build it.')
-
-    conflicts('+hypre +hypre-cuda', msg='Only one of the two can be used at a time.')
-    conflicts('+hypre-cuda ~cuda', msg='When building hypre-cuda CUDA must be enabled.')
 
     phases = ['hostconfig', 'cmake', 'build', 'install']
 
@@ -301,9 +318,6 @@ class Geosx(CMakePackage, CudaPackage):
             debug_flags = "-O0 -g"
             cfg.write(cmake_cache_string("CMAKE_CXX_FLAGS_DEBUG", debug_flags))
 
-            if "%clang arch=linux-rhel7-ppc64le" in spec:
-                cfg.write(cmake_cache_entry("CMAKE_EXE_LINKER_FLAGS", "-Wl,--no-toc-optimize"))
-
             cfg.write("#{0}\n".format("-" * 80))
             cfg.write("# MPI\n")
             cfg.write("#{0}\n\n".format("-" * 80))
@@ -325,19 +339,19 @@ class Geosx(CMakePackage, CudaPackage):
             cfg.write("# OpenMP\n")
             cfg.write("#{0}\n\n".format("-" * 80))
 
-            cfg.write(cmake_cache_option('ENABLE_OPENMP', True))
+            cfg.write(cmake_cache_option('ENABLE_OPENMP', spec.satisfies('+openmp')))
 
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Cuda\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
             if '+cuda' in spec:
                 cfg.write(cmake_cache_option('ENABLE_CUDA', True))
-                cfg.write(cmake_cache_entry('CMAKE_CUDA_STANDARD', 14))
+                cfg.write(cmake_cache_entry('CMAKE_CUDA_STANDARD', 17))
 
-                cudatoolkitdir = spec['cuda'].prefix
-                cfg.write(cmake_cache_entry('CUDA_TOOLKIT_ROOT_DIR', cudatoolkitdir))
-                cudacompiler = '${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc'
-                cfg.write(cmake_cache_entry('CMAKE_CUDA_COMPILER', cudacompiler))
+                cfg.write(cmake_cache_entry('CUDA_TOOLKIT_ROOT_DIR', spec['cuda'].prefix))
+                cfg.write(cmake_cache_entry('CMAKE_CUDA_HOST_COMPILER', '${CMAKE_CXX_COMPILER}'))
+                cfg.write(cmake_cache_entry('CMAKE_CUDA_COMPILER', '${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc'))
+                cfg.write(cmake_cache_string('CMAKE_CUDA_ARCHITECTURES', spec.variants['cuda_arch'] ) )
 
                 cmake_cuda_flags = ('-restrict --expt-extended-lambda -Werror '
                                     'cross-execution-space-call,reorder,'
@@ -349,20 +363,21 @@ class Geosx(CMakePackage, CudaPackage):
                         if compilerArg.startswith(archSpecifier):
                             cmake_cuda_flags += ' -Xcompiler ' + compilerArg
 
-                if not spec.satisfies('cuda_arch=none'):
-                    cuda_arch = spec.variants['cuda_arch'].value
-                    cmake_cuda_flags += ' -arch sm_{0}'.format(cuda_arch[0])
+                cmake_cuda_flags += f" -arch {spec.variants['cuda_arch']}"
 
                 cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS', cmake_cuda_flags))
 
-                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_RELEASE', '-O3 -Xcompiler -O3 -DNDEBUG'))
-                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_RELWITHDEBINFO', '-O3 -g -lineinfo -Xcompiler -O3'))
-                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_DEBUG', '-O0 -Xcompiler -O0 -g -G'))
+                cmake_cuda_release_flags = '-O3 -Xcompiler -O3 -DNDEBUG'
+                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_RELEASE', cmake_cuda_release_flags ))
+                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_RELWITHDEBINFO', f'-g -lineinfo {cmake_cuda_release_flags}'))
+                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_DEBUG', '-g -G -O0 -Xcompiler -O0 '))
 
             else:
                 cfg.write(cmake_cache_option('ENABLE_CUDA', False))
 
-            performance_portability_tpls = (('raja', 'RAJA', True), ('umpire', 'UMPIRE', True), ('chai', 'CHAI', True))
+            performance_portability_tpls = (('raja', 'RAJA', True),
+                                            ('umpire', 'UMPIRE', True),
+                                            ('chai', 'CHAI', True))
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Performance Portability TPLs\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
@@ -372,10 +387,16 @@ class Geosx(CMakePackage, CudaPackage):
                 else:
                     cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
 
-            io_tpls = (('hdf5', 'HDF5', True), ('conduit', 'CONDUIT', True), ('silo', 'SILO', True),
-                       ('adiak', 'ADIAK', '+caliper'
-                        in spec), ('caliper', 'CALIPER', '+caliper'
-                                   in spec), ('pugixml', 'PUGIXML', True), ('vtk', 'VTK', False)('fmt', 'FMT', True))
+            have_adiak = spec.satisfies('+caliper') and '+adiak' in spec['caliper'].variants
+
+            io_tpls = (('hdf5', 'HDF5', True),
+                       ('conduit', 'CONDUIT', True),
+                       ('silo', 'SILO', spec.satisfies('+silo')),
+                       ('adiak', 'ADIAK', have_adiak),
+                       ('caliper', 'CALIPER', spec.satisfies('+caliper')),
+                       ('pugixml', 'PUGIXML', True),
+                       ('vtk', 'VTK', spec.satisfies('+vtk')),
+                       ('fmt', 'FMT', True))
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# IO TPLs\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
@@ -388,11 +409,11 @@ class Geosx(CMakePackage, CudaPackage):
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# System Math Libraries\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
-            if '+mkl' in spec:
+            if spec.satisfies('^intel-oneapi-mkl'):
                 cfg.write(cmake_cache_option('ENABLE_MKL', True))
-                cfg.write(cmake_cache_entry('MKL_INCLUDE_DIRS', spec['intel-mkl'].prefix.include))
-                cfg.write(cmake_cache_list('MKL_LIBRARIES', spec['intel-mkl'].libs))
-            elif '+essl' in spec:
+                cfg.write(cmake_cache_entry('MKL_INCLUDE_DIRS', spec['intel-oneapi-mkl'].prefix.include))
+                cfg.write(cmake_cache_list('MKL_LIBRARIES', spec['intel-oneapi--mkl'].libs))
+            elif spec.satisfies('^essl'):
                 cfg.write(cmake_cache_option('ENABLE_ESSL', True))
                 cfg.write(cmake_cache_entry('ESSL_INCLUDE_DIRS', spec['essl'].prefix.include))
                 cfg.write(cmake_cache_list('ESSL_LIBRARIES', spec['essl'].libs + spec['cuda'].libs))
@@ -406,12 +427,12 @@ class Geosx(CMakePackage, CudaPackage):
             math_tpls = (
               ('metis', 'METIS', True),
               ('parmetis', 'PARMETIS', True),
-              ('scotch', 'SCOTCH', '+scotch' in spec),
-              ('superlu-dist', 'SUPERLU_DIST', True),
-              ('suite-sparse', 'SUITESPARSE', '+suite-sparse' in spec),
-              ('trilinos', 'TRILINOS', '+trilinos' in spec),
-              ('hypre', 'HYPRE', '+hypre' in spec or '+hypre-cuda' in spec),
-              ('petsc', 'PETSC', '+petsc' in spec)
+              ('scotch', 'SCOTCH', spec.satisfies('+scotch')),
+              ('superlu-dist', 'SUPERLU_DIST', spec.satisfies('+superlu-dist')),
+              ('suite-sparse', 'SUITESPARSE', spec.satisfies('+suite-sparse')),
+              ('trilinos', 'TRILINOS', spec.satisfies('+trilinos')),
+              ('hypre', 'HYPRE', spec.satisfies('+hypre')),
+              ('petsc', 'PETSC', spec.satisfies('+petsc'))
             )
             # yapf: enable
 
@@ -421,18 +442,18 @@ class Geosx(CMakePackage, CudaPackage):
             for tpl, cmake_name, enable in math_tpls:
                 if enable:
                     cfg.write(cmake_cache_entry('{}_DIR'.format(cmake_name), spec[tpl].prefix))
-                    if tpl == 'hypre' and '+hypre-cuda' in spec:
+                    if tpl == 'hypre' and spec.satisfies('^hypre+cuda'):
                         cfg.write(cmake_cache_string('ENABLE_HYPRE_DEVICE', "CUDA"))
-                    elif tpl == 'hypre' and '+hypre-hip' in spec:
+                    elif tpl == 'hypre' and spec.satisfies('^hypre+rocm'):
                         cfg.write(cmake_cache_string('ENABLE_HYPRE_DEVICE', "HIP"))
                 else:
                     cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
 
-            if 'lai=trilinos' in spec:
+            if spec.satisfies('lai=trilinos'):
                 cfg.write(cmake_cache_entry('GEOSX_LA_INTERFACE', 'Trilinos'))
-            if 'lai=hypre' in spec:
+            if spec.satisfies('lai=hypre'):
                 cfg.write(cmake_cache_entry('GEOSX_LA_INTERFACE', 'Hypre'))
-            if 'lai=petsc' in spec:
+            if spec.satisfies('lai=petsc'):
                 cfg.write(cmake_cache_entry('GEOSX_LA_INTERFACE', 'Petsc'))
 
             cfg.write('#{0}\n'.format('-' * 80))
@@ -447,7 +468,7 @@ class Geosx(CMakePackage, CudaPackage):
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Documentation\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
-            if '+docs' in spec:
+            if spec.satisfies('+doc'):
                 sphinx_bin_dir = spec['py-sphinx'].prefix.bin
                 cfg.write(cmake_cache_entry('SPHINX_EXECUTABLE', os.path.join(sphinx_bin_dir, 'sphinx-build')))
 
@@ -458,11 +479,13 @@ class Geosx(CMakePackage, CudaPackage):
                 cfg.write(cmake_cache_option('ENABLE_DOXYGEN', False))
                 cfg.write(cmake_cache_option('ENABLE_SPHINX', False))
 
-            cfg.write('#{0}\n'.format('-' * 80))
-            cfg.write('# Development tools\n')
-            cfg.write('#{0}\n\n'.format('-' * 80))
-            cfg.write(
-                cmake_cache_entry('UNCRUSTIFY_EXECUTABLE', os.path.join(spec['uncrustify'].prefix.bin, 'uncrustify')))
+            if spec.satisfies('+dev'):
+                cfg.write('#{0}\n'.format('-' * 80))
+                cfg.write('# Development tools\n')
+                cfg.write('#{0}\n\n'.format('-' * 80))
+                cfg.write(cmake_cache_entry('UNCRUSTIFY_EXECUTABLE', os.path.join(spec['uncrustify'].prefix.bin, 'uncrustify')))
+            else:
+                cfg.write(cmake_cache_option('ENABLE_UNCRUSTIFY', False))
 
             # cfg.write('#{0}\n'.format('-' * 80))
             # cfg.write('# addr2line\n')
@@ -478,29 +501,4 @@ class Geosx(CMakePackage, CudaPackage):
 
     def cmake_args(self):
         pass
-        # spec = self.spec
-        # host_config_path = self._get_host_config_path(spec)
 
-        # options = []
-        # options.extend(['-C', host_config_path])
-
-        # # Shared libs
-        # options.append(self.define_from_variant('BUILD_SHARED_LIBS', 'shared'))
-
-        # if '~tests~examples~benchmarks' in spec:
-        #     options.append('-DGEOS_ENABLE_TESTS=OFF')
-        # else:
-        #     options.append('-DGEOS_ENABLE_TESTS=ON')
-
-        # if '~test' in spec:
-        #     options.append('-DDISABLE_UNIT_TESTS=ON')
-        # elif "+tests" in spec and ('%intel' in spec or '%xl' in spec):
-        #     warnings.warn('The LvArray unit tests take an excessive amount of'
-        #                   ' time to build with the Intel or IBM compilers.')
-
-        # options.append(self.define_from_variant('ENABLE_EXAMPLES', 'examples'))
-        # options.append(self.define_from_variant('ENABLE_BENCHMARKS',
-        #                                         'benchmarks'))
-        # options.append(self.define_from_variant('ENABLE_DOCS', 'docs'))
-
-        # return options
