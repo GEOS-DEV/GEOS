@@ -6,7 +6,7 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ cb1 }"
-      materialList="{ water, rock }"/>
+      materialList="{ water, porousRock }"/>
 
     <SurfaceElementRegion
       name="Fracture"
@@ -26,11 +26,26 @@
       referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
 
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="rock"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>  
+
     <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultBulkModulus="20.0e9"
       defaultShearModulus="12.0e9"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      grainBulkModulus="1.2e11"
+      defaultReferencePorosity="0.3"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15 }"/>  
 
     <CompressibleSolidParallelPlatesPermeability
       name="fractureFilling"
@@ -159,20 +174,7 @@
     <PackCollection
       name="areaCollection"
       objectPath="ElementRegions/Fracture/FractureSubRegion"
-      fieldName="elementArea"/>
-
-    <!-- Collect aperture, pressure at the source for curve checks -->
-    <PackCollection
-      name="sourcePressureCollection"
-      objectPath="ElementRegions/Fracture/FractureSubRegion"
-      fieldName="pressure"
-      setNames="{ source }"/>
-
-    <PackCollection
-      name="sourceHydraulicApertureCollection"
-      objectPath="ElementRegions/Fracture/FractureSubRegion"
-      fieldName="hydraulicAperture"
-      setNames="{ source }"/>
+      fieldName="elementArea"/> 
   </Tasks>
   <!-- SPHINX_TASKS_END -->
 
@@ -180,7 +182,7 @@
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="zeroToughness"
+      plotFileRoot="zeroToughness_poroelastic"
       plotLevel="3"
       parallelThreads="48"/>
 
@@ -188,10 +190,6 @@
       name="timeHistoryOutput"
       sources="{/Tasks/pressureCollection, /Tasks/apertureCollection, /Tasks/hydraulicApertureCollection, /Tasks/areaCollection}"
       filename="pennyShapedViscosityDominated_output" />  
-    <TimeHistory
-      name="curveOutput"
-      sources="{/Tasks/sourcePressureCollection, /Tasks/sourceHydraulicApertureCollection}"
-      filename="hydrofracture_source_curves" />
 
     <Restart
       name="restartOutput"/>

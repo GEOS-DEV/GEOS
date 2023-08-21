@@ -3,18 +3,16 @@
 <Problem>
   <Solvers
     gravityVector="{ 0.0, 0.0, -0.0 }">
-    <!-- Sphinx_Solvers_Hydrofracture -->
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
       flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
       logLevel="1"
-      initialDt="0.1"
-      targetRegions="{ Fracture }"
+      targetRegions="{ Domain, Fracture }"
+      isMatrixPoroelastic="1"
       contactRelationName="fractureContact"
       maxNumResolves="2">
-    <!-- Sphinx_Solvers_Hydrofracture_End -->
 
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
@@ -24,31 +22,24 @@
         directParallel="0"/>
     </Hydrofracture>
 
-    <!-- Sphinx_Solvers_SolidMechanicsLagrangianSSLE -->
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       contactRelationName="fractureContact"/>
-    <!-- Sphinx_Solvers_SolidMechanicsLagrangianSSLE_End -->
 
-    <!-- Sphinx_Solvers_SinglePhaseFVM -->
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"/>
-    <!-- Sphinx_Solvers_SinglePhaseFVM_End -->
+      targetRegions="{ Domain, Fracture }"/>
 
-    <!-- Sphinx_Solvers_SurfaceGenerator -->
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"
-      rockToughness="1e4"
+      rockToughness="1e6"
       mpiCommOrder="1"/>
-    <!-- Sphinx_Solvers_SurfaceGenerator_End -->
-
   </Solvers>
 
   <NumericalMethods>
@@ -68,7 +59,7 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ cb1 }"
-      materialList="{ water, rock }"/>
+      materialList="{ water, porousRock }"/>
 
     <SurfaceElementRegion
       name="Fracture"
@@ -77,24 +68,35 @@
   </ElementRegions>
 
   <Constitutive>
-    <!-- Sphinx_Constitutive_CompressibleSinglePhaseFluid -->
     <CompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
-      defaultViscosity="1.0e-3"
+      defaultViscosity="1.0e-6"
       referencePressure="0.0"
       compressibility="5e-10"
-      referenceViscosity="1.0e-3"
+      referenceViscosity="1.0e-6"
       viscosibility="0.0"/>
-    <!-- Sphinx_Constitutive_CompressibleSinglePhaseFluid_End -->
 
-    <!-- Sphinx_Constitutive_ElasticIsotropic -->
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="rock"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>  
+
     <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultYoungModulus="30.0e9"
       defaultPoissonRatio="0.25"/>
-    <!-- Sphinx_Constitutive_ElasticIsotropic_End -->
+
+    <BiotPorosity
+      name="rockPorosity"
+      grainBulkModulus="1.2e11"
+      defaultReferencePorosity="0.3"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-18, 1.0e-18, 1.0e-18 }"/>  
 
     <CompressibleSolidParallelPlatesPermeability
       name="fractureFilling"
@@ -129,7 +131,6 @@
       fieldName="water_density"
       scale="1000"/>
 
-    <!-- Sphinx_FieldSpecifications_FracturePlane -->
     <FieldSpecification
       name="separableFace"
       initialCondition="1"
@@ -137,9 +138,7 @@
       objectPath="faceManager"
       fieldName="isFaceSeparable"
       scale="1"/>
-    <!-- Sphinx_FieldSpecifications_FracturePlane_End -->
 
-    <!-- Sphinx_FieldSpecifications_InitFracture -->
     <FieldSpecification
       name="frac"
       initialCondition="1"
@@ -147,7 +146,6 @@
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1"/>
-    <!-- Sphinx_FieldSpecifications_InitFracture_End -->
 
     <FieldSpecification
       name="xConstraint"
@@ -173,13 +171,11 @@
       scale="0.0"
       setNames="{ zneg, zpos }"/>
 
-    <!-- Sphinx_SourceFlux_InjSource -->
     <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/Fracture"
       scale="-5e-2"
       setNames="{ source }"/>
-    <!-- Sphinx_SourceFlux_InjSource_End -->
   </FieldSpecifications>
   
   <Functions>
@@ -189,7 +185,6 @@
       values="{ 0.002e-3, 0.02e-3 }"/>
   </Functions>
  
-  <!-- SPHINX_TASKS -->
   <Tasks>
     <PackCollection
       name="pressureCollection"
@@ -209,39 +204,20 @@
     <PackCollection
       name="areaCollection"
       objectPath="ElementRegions/Fracture/FractureSubRegion"
-      fieldName="elementArea"/>
-
-    <!-- Collect aperture, pressure at the source for curve checks -->
-    <PackCollection
-      name="sourcePressureCollection"
-      objectPath="ElementRegions/Fracture/FractureSubRegion"
-      fieldName="pressure"
-      setNames="{ source }"/>
-
-    <PackCollection
-      name="sourceHydraulicApertureCollection"
-      objectPath="ElementRegions/Fracture/FractureSubRegion"
-      fieldName="hydraulicAperture"
-      setNames="{ source }"/>
+      fieldName="elementArea"/> 
   </Tasks>
-  <!-- SPHINX_TASKS_END -->
 
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="zeroToughness"
+      plotFileRoot="zeroViscosity_poroelastic"
       plotLevel="3"
       parallelThreads="48"/>
 
     <TimeHistory
       name="timeHistoryOutput"
       sources="{/Tasks/pressureCollection, /Tasks/apertureCollection, /Tasks/hydraulicApertureCollection, /Tasks/areaCollection}"
-      filename="kgdViscosityDominated_output" />
-
-    <TimeHistory
-      name="curveOutput"
-      sources="{/Tasks/sourcePressureCollection, /Tasks/sourceHydraulicApertureCollection}"
-      filename="hydrofracture_source_curves" /> 
+      filename="kgdToughnessDominated_output" /> 
 
     <Restart
       name="restartOutput"/>

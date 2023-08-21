@@ -3,7 +3,7 @@
 <Problem>
   <Included>
     <File
-      name="./pknViscosityDominated_base.xml"/>
+      name="./pknViscosityDominated_poroelastic_base.xml"/>
   </Included>
 
   <Solvers
@@ -16,10 +16,10 @@
       logLevel="1"
       targetRegions="{ Fracture }"
       contactRelationName="fractureContact"
-      maxNumResolves="1"
-      initialDt="0.01">
+      maxNumResolves="5"
+      initialDt="0.1">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
+        newtonTol="1.0e-4"
         newtonMaxIter="50"/>
       <LinearSolverParameters
         directParallel="0"/>
@@ -36,14 +36,14 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }">     
+      targetRegions="{ Domain, Fracture }">     
     </SinglePhaseFVM>
 
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"      
-      rockToughness="1e4"
+      rockToughness="0.1e6"
       mpiCommOrder="1"/>
   </Solvers>
 
@@ -51,69 +51,48 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 20, 40 }"
-      yCoords="{ -10, 0, 10 }"
-      zCoords="{ 0, 10, 20 }"
-      nx="{ 20, 10 }"
-      ny="{ 5, 5 }"
-      nz="{ 10, 5 }"
-      xBias="{ 0, -0.5 }"
-      yBias="{ 0.5, -0.5 }"
-      zBias="{ 0, -0.5 }"
+      xCoords="{ 0, 150, 200, 400 }"
+      yCoords="{ 0, 150, 200, 400 }"
+      zCoords="{ -400, -100, -20, 20, 100, 400 }"
+      nx="{ 10, 1, 2 }"
+      ny="{ 10, 1, 2 }"
+      nz="{ 1, 1, 2, 1, 1 }"
       cellBlockNames="{ cb1 }"/> 
   </Mesh>
  
   <Geometry> 
     <Box
       name="fracture"
-      xMin="{ -0.1, -0.1, -0.1 }"
-      xMax="{ 2.1, 0.1, 5.1 }"/>
+      xMin="{ -15.1, -15.1, -0.1 }"
+      xMax="{ 15.1, 15.1, 0.1 }"/>
 
     <Box
       name="source"
-      xMin="{ -0.1, -0.1, -0.1 }"
-      xMax="{ 1.1, 0.1, 1.1 }"/>
+      xMin="{ -15.1, -15.1, -0.1 }"
+      xMax="{ 15.1, 15.1, 0.1 }"/>
 
     <Box
       name="core"
-      xMin="{ -0.1, -0.1, -0.1 }"
-      xMax="{ 1e6, 0.1, 5.1 }"/>
+      xMin="{ -500.1, -500.1, -0.1 }"
+      xMax="{ 500.1, 30.1, 0.1 }"/>
   </Geometry>
 
   <Events
-   maxTime="4">
+   maxTime="5.0">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
 
     <PeriodicEvent
       name="solverApplications1"
-      maxEventDt="0.2"
+      beginTime="0.0"
+      endTime="10.0"
+      forceDt="1.0"
       target="/Solvers/hydrofracture"/>
-
-    <PeriodicEvent
-      name="sourcePressureCollection"
-      beginTime="0.5"
-      target="/Tasks/sourcePressureCollection"/>
-
-    <PeriodicEvent
-      name="sourceHydraulicApertureCollection"
-      beginTime="0.5"
-      target="/Tasks/sourceHydraulicApertureCollection"/>
-
-    <PeriodicEvent
-      name="curveOutput"
-      timeFrequency="0.75"
-      targetExactTimestep="0"
-      target="/Outputs/curveOutput"/>
-
-    <PeriodicEvent
-      name="vtk"
-      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent 
       name="restarts"
-      timeFrequency="0.75"
+      timeFrequency="5.0"
       targetExactTimestep="0"
       target="/Outputs/restartOutput" />
   </Events>
