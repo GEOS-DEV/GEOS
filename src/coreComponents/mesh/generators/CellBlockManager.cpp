@@ -15,6 +15,7 @@
 #include "CellBlockManager.hpp"
 
 #include "mesh/generators/CellBlockUtilities.hpp"
+#include "mesh/generators/LineBlock.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 
 #include <algorithm>
@@ -29,6 +30,7 @@ CellBlockManager::CellBlockManager( string const & name, Group * const parent ):
 {
   this->registerGroup< Group >( viewKeyStruct::cellBlocks() );
   this->registerGroup< Group >( viewKeyStruct::faceBlocks() );
+  this->registerGroup< Group >( viewKeyStruct::lineBlocks() );
 }
 
 void CellBlockManager::resize( integer_array const & numElements,
@@ -290,13 +292,14 @@ void populateFaceMaps( Group const & cellBlocks,
   GEOS_ERROR_IF_NE( faceToBlocks.size( 1 ), 2 );
 
   // loop over all the nodes.
-  forAll< parallelHostPolicy >( numNodes, [uniqueFaceOffsets,
-                                           lowestNodeToFaces,
-                                           faceToNodes,
-                                           faceToCells,
-                                           faceToBlocks,
-                                           &cellBlocks,
-                                           &faceBuilder]( localIndex const nodeIndex )
+  forAll< parallelHostPolicy >( numNodes, [ numNodes,
+                                            uniqueFaceOffsets,
+                                            lowestNodeToFaces,
+                                            faceToNodes,
+                                            faceToCells,
+                                            faceToBlocks,
+                                            &cellBlocks,
+                                            &faceBuilder ]( localIndex const nodeIndex )
   {
     localIndex nodesInFace[ CellBlockManager::maxNodesPerFace() ];
     localIndex curFaceID = uniqueFaceOffsets[nodeIndex];
@@ -307,7 +310,7 @@ void populateFaceMaps( Group const & cellBlocks,
       CellBlock const & cb = cellBlocks.getGroup< CellBlock >( f0.blockIndex );
       localIndex const numNodesInFace = cb.getFaceNodes( f0.cellIndex, f0.faceNumber, nodesInFace );
       GEOS_ASSERT_EQ( numNodesInFace, numNodes );
-
+      GEOS_UNUSED_VAR( numNodes );
 
       for( localIndex i = 0; i < numNodesInFace; ++i )
       {
@@ -677,9 +680,24 @@ Group & CellBlockManager::getCellBlocks()
   return this->getGroup( viewKeyStruct::cellBlocks() );
 }
 
+Group const & CellBlockManager::getFaceBlocks() const
+{
+  return this->getGroup( viewKeyStruct::faceBlocks() );
+}
+
 Group & CellBlockManager::getFaceBlocks()
 {
   return this->getGroup( viewKeyStruct::faceBlocks() );
+}
+
+Group & CellBlockManager::getLineBlocks()
+{
+  return this->getGroup( viewKeyStruct::lineBlocks() );
+}
+
+LineBlockABC const & CellBlockManager::getLineBlock( string name ) const
+{
+  return this->getGroup( viewKeyStruct::lineBlocks() ).getGroup< LineBlockABC >( name );
 }
 
 localIndex CellBlockManager::numNodes() const
@@ -737,6 +755,11 @@ CellBlock & CellBlockManager::registerCellBlock( string const & name )
 FaceBlock & CellBlockManager::registerFaceBlock( string const & name )
 {
   return this->getFaceBlocks().registerGroup< FaceBlock >( name );
+}
+
+LineBlock & CellBlockManager::registerLineBlock( string const & name )
+{
+  return this->getLineBlocks().registerGroup< LineBlock >( name );
 }
 
 array2d< real64, nodes::REFERENCE_POSITION_PERM > CellBlockManager::getNodePositions() const

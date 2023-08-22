@@ -20,30 +20,25 @@
 #include "InternalWellGenerator.hpp"
 
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "mesh/DomainPartition.hpp"
-#include "mesh/MeshBody.hpp"
-#include "mesh/WellElementRegion.hpp"
-#include "mesh/WellElementSubRegion.hpp"
-#include "mesh/PerforationData.hpp"
 #include "mesh/Perforation.hpp"
+#include "mesh/generators/LineBlockABC.hpp"
+#include "LvArray/src/genericTensorOps.hpp"
 
 namespace geos
 {
 using namespace dataRepository;
 
 InternalWellGenerator::InternalWellGenerator( string const & name, Group * const parent ):
-  MeshGeneratorBase( name, parent ),
+  WellGeneratorBase( name, parent ),
   m_numElemsPerSegment( 0 ),
   m_minSegmentLength( 1e-2 ),
   m_minElemLength( 1e-3 ),
   m_radius( 0 ),
   m_wellRegionName( "" ),
   m_wellControlsName( "" ),
-  m_meshBodyName( "" ),
   m_numElems( 0 ),
   m_numNodesPerElem( 2 ),
   m_numNodes( 0 ),
-  m_numPerforations( 0 ),
   m_nDims( 3 ),
   m_polylineHeadNodeId( -1 )
 {
@@ -90,16 +85,6 @@ InternalWellGenerator::InternalWellGenerator( string const & name, Group * const
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Name of the set of constraints associated with this well" );
-
-  registerWrapper( viewKeyStruct::meshNameString(), &m_meshBodyName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setSizedFromParent( 0 ).
-    setDescription( "Name of the reservoir mesh associated with this well" );
-}
-
-InternalWellGenerator::~InternalWellGenerator()
-{
-  // TODO Auto-generated destructor stub
 }
 
 void InternalWellGenerator::postProcessInput()
@@ -124,10 +109,6 @@ void InternalWellGenerator::postProcessInput()
                  "Invalid well region name in well " << getName(),
                  InputError );
 
-  GEOS_THROW_IF( m_meshBodyName.empty(),
-                 "Invalid mesh name in well " << getName(),
-                 InputError );
-
   GEOS_THROW_IF( m_wellControlsName.empty(),
                  "Invalid well constraint name in well " << getName(),
                  InputError );
@@ -137,30 +118,7 @@ void InternalWellGenerator::postProcessInput()
   // TODO: check that with no branching we can go from top to bottom and touch all the elements
 }
 
-Group * InternalWellGenerator::createChild( string const & childKey, string const & childName )
-{
-  if( childKey == viewKeyStruct::perforationString() )
-  {
-    ++m_numPerforations;
-
-    // keep track of the perforations that have been added
-    m_perforationList.emplace_back( childName );
-
-    return &registerGroup< Perforation >( childName );
-  }
-  else
-  {
-    GEOS_THROW( "Unrecognized node: " << childKey, InputError );
-  }
-  return nullptr;
-}
-
-void InternalWellGenerator::expandObjectCatalogs()
-{
-  createChild( viewKeyStruct::perforationString(), viewKeyStruct::perforationString() );
-}
-
-void InternalWellGenerator::generateMesh( DomainPartition & domain )
+void InternalWellGenerator::generateWellGeometry( )
 {
   // count the number of well elements to create
   m_numElems = m_numElemsPerSegment * m_segmentToPolyNodeMap.size( 0 );
@@ -202,16 +160,6 @@ void InternalWellGenerator::generateMesh( DomainPartition & domain )
     debugWellGeometry();
   }
 
-  // get the element (sub) region to populate and save the well generator and constraints names
-  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
-
-  ElementRegionManager & elemManager = meshLevel.getElemManager();
-  WellElementRegion &
-  wellRegion = elemManager.getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() ).
-                 getGroup< WellElementRegion >( this->m_wellRegionName );
-
-  wellRegion.setWellGeneratorName( this->getName() );
-  wellRegion.setWellControlsName( m_wellControlsName );
 }
 
 void InternalWellGenerator::constructPolylineNodeToSegmentMap()
@@ -359,8 +307,8 @@ void InternalWellGenerator::discretizePolyline()
       // 2) set the node properties
       globalIndex const iwellNodeTop    = iwelemCurrent;
       globalIndex const iwellNodeBottom = iwelemCurrent+1;
-      m_elemToNodesMap[iwelemCurrent][NodeLocation::TOP]    = iwellNodeTop;
-      m_elemToNodesMap[iwelemCurrent][NodeLocation::BOTTOM] = iwellNodeBottom;
+      m_elemToNodesMap[iwelemCurrent][LineBlockABC::NodeLocation::TOP]    = iwellNodeTop;
+      m_elemToNodesMap[iwelemCurrent][LineBlockABC::NodeLocation::BOTTOM] = iwellNodeBottom;
 
       real64 const scaleBottom = (iw + 1.0) / m_numElemsPerSegment;
       LvArray::tensorOps::copy< 3 >( m_nodeCoords[iwellNodeBottom], vPoly );
@@ -409,7 +357,7 @@ void InternalWellGenerator::connectPerforationsToWellElements()
     globalIndex iwelemBottom = m_numElems - 1;
 
     // check the validity of the perforation before starting
-    real64 const wellLength = m_nodeDistFromHead[m_elemToNodesMap[iwelemBottom][NodeLocation::BOTTOM]];
+    real64 const wellLength = m_nodeDistFromHead[m_elemToNodesMap[iwelemBottom][LineBlockABC::NodeLocation::BOTTOM]];
 
     GEOS_THROW_IF( m_perfDistFromHead[iperf] > wellLength,
                    "Distance from perforation " << perf.getName() << " to head is larger than well polyline length for well " << getName() << "\n \n"
@@ -426,7 +374,7 @@ void InternalWellGenerator::connectPerforationsToWellElements()
       globalIndex iwelemMid =
         static_cast< globalIndex >(floor( static_cast< real64 >(iwelemTop + iwelemBottom) / 2.0 ));
       real64 const headToBottomDist =
-        m_nodeDistFromHead[m_elemToNodesMap[iwelemMid][NodeLocation::BOTTOM]];
+        m_nodeDistFromHead[m_elemToNodesMap[iwelemMid][LineBlockABC::NodeLocation::BOTTOM]];
 
       if( headToBottomDist < m_perfDistFromHead[iperf] )
       {
@@ -453,8 +401,8 @@ void InternalWellGenerator::connectPerforationsToWellElements()
     m_perfElemId[iperf] = iwelemMatched;
 
     // compute the physical location of the perforation
-    globalIndex const inodeTop    = m_elemToNodesMap[iwelemMatched][NodeLocation::TOP];
-    globalIndex const inodeBottom = m_elemToNodesMap[iwelemMatched][NodeLocation::BOTTOM];
+    globalIndex const inodeTop    = m_elemToNodesMap[iwelemMatched][LineBlockABC::NodeLocation::TOP];
+    globalIndex const inodeBottom = m_elemToNodesMap[iwelemMatched][LineBlockABC::NodeLocation::BOTTOM];
     real64 const elemLength       = m_nodeDistFromHead[inodeBottom] - m_nodeDistFromHead[inodeTop];
     real64 const topToPerfDist    = m_perfDistFromHead[iperf] - m_nodeDistFromHead[inodeTop];
 
@@ -629,5 +577,5 @@ void InternalWellGenerator::debugWellGeometry() const
 
 }
 
-REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalWellGenerator, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( WellGeneratorBase, InternalWellGenerator, string const &, Group * const )
 }
