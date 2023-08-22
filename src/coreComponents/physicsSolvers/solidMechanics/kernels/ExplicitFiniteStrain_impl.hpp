@@ -118,7 +118,6 @@ void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadrat
   HughesWinget( Rot, Dadt, Ldt );
 
   real64 stress[ 6 ]{};
-  //real64 const timeIncrement = 0.0;
   constitutive::SolidUtilities::
     hypoUpdate_StressOnly( m_constitutiveUpdate,
                            k, q, m_dt, Dadt, Rot, stress );

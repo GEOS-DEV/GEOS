@@ -87,7 +87,6 @@ smallStrainUpdate( localIndex const k,
   real64 dPorosity_dPressure = 0.0;
   real64 dPorosity_dTemperature = 0.0;
   real64 dSolidDensity_dPressure = 0.0;
-  //real64 timeIncrement = 0.0;
 
   // Step 1: call the constitutive model to evaluate the total stress and compute porosity
   m_constitutiveUpdate.smallStrainUpdatePoromechanics( k, q,
