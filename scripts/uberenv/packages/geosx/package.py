@@ -61,8 +61,7 @@ class Geosx(CMakePackage, CudaPackage, ROCmPackage):
 
     # variant('shared', default=True, description='Build shared Libs.')
     variant('openmp', default=True, description='Build with openmp support.')
-    variant('silo', default=False, description="Build with support for silo output.")
-    # variant('vtk', default=False, description="Build with support for vtk output.")
+
     variant('caliper', default=True, description='Build Caliper support.')
     variant('scotch', default=False, description='Build Scotch support.')
 
@@ -77,6 +76,10 @@ class Geosx(CMakePackage, CudaPackage, ROCmPackage):
             description='Linear algebra interface.',
             values=('trilinos', 'hypre', 'petsc'),
             multi=False)
+
+    variant('silo', default=False, description="Build with support for silo output.")
+    # variant('vtk', default=False, description="Build with support for vtk output.")
+
     variant('pygeosx', default=False, description='Build the GEOSX python interface.')
 
     # SPHINX_END_VARIANTS
@@ -157,6 +160,7 @@ class Geosx(CMakePackage, CudaPackage, ROCmPackage):
         depends_on( 'raja +openmp' )
         depends_on( 'umpire +openmp' )
         depends_on( 'camp +openmp' )
+        depends_on( 'superlu-dist +openmp', when='+superlu-dist' )
 
     with when( '~openmp' ):
         # many of these default to +openmp but not all
@@ -166,6 +170,7 @@ class Geosx(CMakePackage, CudaPackage, ROCmPackage):
         depends_on( 'raja ~openmp' )
         depends_on( 'umpire ~openmp' )
         depends_on( 'camp ~openmp' )
+        # depends_on( 'superlu-dist ~openmp', when='+superlu-dist' )
 
     with when( '+petsc' ):
         depends_on( 'petsc@3.13.0: +mpi' )
@@ -173,8 +178,25 @@ class Geosx(CMakePackage, CudaPackage, ROCmPackage):
     with when( '+suite-sparse' ):
         depends_on('suite-sparse@5.8.1:' )
 
+        with when( '+openmp' ):
+            depends_on( 'suite-sparse +openmp' )
+
+        with when( '+cuda' ):
+            depends_on( 'suite-sparse +cuda' )
+
     with when( '+trilinos' ):
         depends_on( 'trilinos@12.18.1:' )
+
+    with when( '+superlu-dist' ):
+        for cuda_arch in CudaPackage.cuda_arch_values:
+            cuda_arch_variant = f'cuda_arch={cuda_arch}'
+            with when( cuda_arch_variant ):
+                depends_on( f'superlu-dist +cuda {cuda_arch_variant}' )
+
+        for rocm_arch in ROCmPackage.amdgpu_targets:
+            rocm_arch_variant = f'amdgpu_target={rocm_arch}'
+            with when( rocm_arch_variant ):
+                depends_on( f'superlu-dist +rocm {rocm_arch_variant}' )
 
     with when( '+hypre' ):
         depends_on( 'hypre +mpi' )
@@ -351,7 +373,10 @@ class Geosx(CMakePackage, CudaPackage, ROCmPackage):
                 cfg.write(cmake_cache_entry('CUDA_TOOLKIT_ROOT_DIR', spec['cuda'].prefix))
                 cfg.write(cmake_cache_entry('CMAKE_CUDA_HOST_COMPILER', '${CMAKE_CXX_COMPILER}'))
                 cfg.write(cmake_cache_entry('CMAKE_CUDA_COMPILER', '${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc'))
-                cfg.write(cmake_cache_string('CMAKE_CUDA_ARCHITECTURES', spec.variants['cuda_arch'] ) )
+                # since cuda_arch is a multi-value variant, .value is a tuple
+                cfg.write(cmake_cache_string('CUDA_ARCH', ','.join( f'sm_{arch}' for arch in spec.variants['cuda_arch'].value ) ) )
+                # since cuda_arch is a multi-value variant, .value is a tuple
+                cfg.write(cmake_cache_string('CMAKE_CUDA_ARCHITECTURES', ','.join( spec.variants['cuda_arch'].value ) ) )
 
                 cmake_cuda_flags = ('-restrict --expt-extended-lambda -Werror '
                                     'cross-execution-space-call,reorder,'
@@ -363,7 +388,9 @@ class Geosx(CMakePackage, CudaPackage, ROCmPackage):
                         if compilerArg.startswith(archSpecifier):
                             cmake_cuda_flags += ' -Xcompiler ' + compilerArg
 
-                cmake_cuda_flags += f" -arch {spec.variants['cuda_arch']}"
+                # since cuda_arch is a multi-value variant, .value is a tuple
+                for arch in spec.variants['cuda_arch'].value:
+                    cmake_cuda_flags += f" -arch sm_{arch}"
 
                 cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS', cmake_cuda_flags))
 
@@ -500,5 +527,4 @@ class Geosx(CMakePackage, CudaPackage, ROCmPackage):
             cfg.write(cmake_cache_option('ENABLE_XML_UPDATES', False))
 
     def cmake_args(self):
-        pass
-
+        return [ '-C', self._get_host_config_path(self.spec), '-

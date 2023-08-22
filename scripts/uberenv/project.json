@@ -1,8 +1,8 @@
 {
   "package_name" : "geosx",
   "package_version" : "develop",
-  "package_final_phase" : "hostconfig",
-  "package_source_dir" : "../..",
+  "package_final_phase" : "build",
+  "package_source_dir" : "../../src",
   "spack_url": "git@github.com:spack/spack.git",
   "spack_branch": "develop",
   "spack_activate" : {},

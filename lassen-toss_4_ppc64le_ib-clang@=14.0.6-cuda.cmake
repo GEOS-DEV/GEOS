@@ -35,7 +35,7 @@ set(MPI_CXX_COMPILER "/usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-releas
 # OpenMP
 #--------------------------------------------------------------------------------
 
-set(ENABLE_OPENMP OFF CACHE BOOL "")
+set(ENABLE_OPENMP ON CACHE BOOL "")
 
 #--------------------------------------------------------------------------------
 # Cuda
@@ -79,7 +79,7 @@ set(HDF5_DIR "/usr/WS1/tobin6/geosx/develop/scripts/uberenv/uberenv_libs/spack/o
 
 set(CONDUIT_DIR "/usr/WS1/tobin6/geosx/develop/scripts/uberenv/uberenv_libs/spack/opt/spack/install-linux-rhel8-ppc64le-clang-14.0.6/conduit-0.8.8" CACHE PATH "")
 
-set(ENABLE_SILO OFF CACHE BOOL "")
+set(SILO_DIR "/usr/WS1/tobin6/geosx/develop/scripts/uberenv/uberenv_libs/spack/opt/spack/install-linux-rhel8-ppc64le-clang-14.0.6/silo-4.11" CACHE PATH "")
 
 set(ENABLE_ADIAK OFF CACHE BOOL "")
 
@@ -116,7 +116,7 @@ set(ENABLE_SCOTCH OFF CACHE BOOL "")
 
 set(ENABLE_SUPERLU_DIST OFF CACHE BOOL "")
 
-set(ENABLE_SUITESPARSE OFF CACHE BOOL "")
+set(SUITESPARSE_DIR "/usr/WS1/tobin6/geosx/develop/scripts/uberenv/uberenv_libs/spack/opt/spack/install-linux-rhel8-ppc64le-clang-14.0.6/suite-sparse-5.13.0" CACHE PATH "")
 
 set(ENABLE_TRILINOS OFF CACHE BOOL "")
 
