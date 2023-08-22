@@ -1812,28 +1812,6 @@ string getElementTypeName( ElementType const type )
   }
 }
 
-/**
- * @brief Collect a set of material field names registered in a subregion.
- * @param subRegion the target subregion
- * @return a set of wrapper names
- */
-std::unordered_set< string > getMaterialWrapperNames( ElementSubRegionBase const & subRegion )
-{
-  using namespace constitutive;
-  std::unordered_set< string > materialWrapperNames;
-  subRegion.getConstitutiveModels().forSubGroups< ConstitutiveBase >( [&]( ConstitutiveBase const & material )
-  {
-    material.forWrappers( [&]( WrapperBase const & wrapper )
-    {
-      if( wrapper.sizedFromParent() )
-      {
-        materialWrapperNames.insert( ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() ) );
-      }
-    } );
-  } );
-  return materialWrapperNames;
-}
-
 void importMaterialField( std::vector< vtkIdType > const & cellIds,
                           vtkDataArray * vtkArray,
                           WrapperBase & wrapper )
@@ -1964,30 +1942,6 @@ void printMeshStatistics( vtkDataSet & mesh,
                         widthLocal, "min", "avg", "max",
                         minLocalElems, avgLocalElems, maxLocalElems ) );
   }
-}
-
-std::vector< vtkDataArray * >
-findArraysForImport( vtkDataSet & mesh,
-                     arrayView1d< string const > const & srcFieldNames )
-{
-  std::vector< vtkDataArray * > arrays;
-  vtkCellData & cellData = *mesh.GetCellData();
-
-  for( string const & sourceName : srcFieldNames )
-  {
-    vtkAbstractArray * const curArray = cellData.GetAbstractArray( sourceName.c_str() );
-    GEOS_THROW_IF( curArray == nullptr,
-                   GEOS_FMT( "Source field '{}' not found in dataset", sourceName ),
-                   InputError );
-
-    int const dataType = curArray->GetDataType();
-    GEOS_ERROR_IF( dataType != VTK_FLOAT && dataType != VTK_DOUBLE,
-                   GEOS_FMT( "Source field '{}' has unsupported type: {} (expected floating point type)",
-                             sourceName, curArray->GetDataTypeAsString() ) );
-    arrays.push_back( vtkDataArray::SafeDownCast( curArray ) );
-  }
-
-  return arrays;
 }
 
 vtkDataArray *

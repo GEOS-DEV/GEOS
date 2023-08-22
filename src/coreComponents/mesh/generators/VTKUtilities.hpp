@@ -180,16 +180,6 @@ void printMeshStatistics( vtkDataSet & mesh,
 /**
  * @brief Collect the data to be imported.
  * @param[in] mesh an input mesh
- * @param[in] srcFieldNames an array of field names
- * @return A list of pointers to VTK data arrays.
- */
-std::vector< vtkDataArray * >
-findArraysForImport( vtkDataSet & mesh,
-                     arrayView1d< string const > const & srcFieldNames );
-
-/**
- * @brief Collect the data to be imported.
- * @param[in] mesh an input mesh
  * @param[in] sourceName a field name
  * @return A VTK data array pointer.
  */
