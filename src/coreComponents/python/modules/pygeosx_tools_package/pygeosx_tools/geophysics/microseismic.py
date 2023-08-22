@@ -82,10 +82,10 @@ class JointSet():
             random_location (bool): Choose random locations within the regin (default=True)
             density (float): Joint density (#/m3)
             uniform_orientation (bool): Use randomly oriented joints (default=True)
-            strike_mean (float): Strike angle mean (degrees)
-            strike_std (float): Strike angle std deviation (degrees)
-            dip_mean (float): Dip angle mean (degrees)
-            dip_std: Dip angle std deviation (degrees)
+            strike_mean (float): Strike angle mean (radians)
+            strike_std (float): Strike angle std deviation (radians)
+            dip_mean (float): Dip angle mean (radians)
+            dip_std: Dip angle std deviation (radians)
             mu_mean (float): Friction coefficient mean (unitless)
             mu_std: Friction coefficient std deviation (unitless)
             cohesion_mean (float): Cohesion mean (Pa)
@@ -202,14 +202,14 @@ class JointSet():
         s[0, 0] = sigma[jj, 0, 0]
         s[1, 1] = sigma[jj, 0, 1]
         s[2, 2] = sigma[jj, 0, 2]
-        s[0, 1] = sigma[jj, 0, 3]
+        s[0, 1] = sigma[jj, 0, 5]
         s[0, 2] = sigma[jj, 0, 4]
-        s[1, 2] = sigma[jj, 0, 5]
+        s[1, 2] = sigma[jj, 0, 3]
         s[1, 0] = s[0, 1]
         s[2, 0] = s[0, 2]
         s[2, 1] = s[1, 2]
         R = self.rotation[index]
-        s_sdn = np.dot(np.dot(R, s), np.transpose(R))
+        s_sdn = np.matmul(np.matmul(R, s), np.transpose(R))
         return s_sdn
 
     def check_critical_stress(self, problem):
@@ -302,10 +302,10 @@ class JointSet():
         Choose random normal orientations for joints
 
         Args:
-            strike_mean (float): Strike angle mean (degrees)
-            strike_std (float): Strike angle std deviation (degrees)
-            dip_mean (float): Dip angle mean (degrees)
-            dip_std: Dip angle std deviation (degrees)
+            strike_mean (float): Strike angle mean (radians)
+            strike_std (float): Strike angle std deviation (radians)
+            dip_mean (float): Dip angle mean (radians)
+            dip_std: Dip angle std deviation (radians)
         """
         self.strike = (np.random.randn(self.N) * strike_std) + strike_mean
         self.dip = (np.random.randn(self.N) * dip_std) + dip_mean
@@ -326,16 +326,9 @@ class JointSet():
         sdelta = np.sin(dip)
         cdelta = np.cos(dip)
 
-        rotation_matrix = np.zeros((3, 3))
-        rotation_matrix[0, 0] = ctheta
-        rotation_matrix[1, 0] = stheta
-        rotation_matrix[2, 0] = 0.0
-        rotation_matrix[0, 1] = -stheta*cdelta
-        rotation_matrix[1, 1] = ctheta*cdelta
-        rotation_matrix[2, 1] = -sdelta
-        rotation_matrix[0, 2] = -stheta*sdelta
-        rotation_matrix[1, 2] = ctheta*sdelta
-        rotation_matrix[2, 2] = cdelta
+        rotation_matrix_strike = np.array([[ctheta,-stheta,0],[stheta,ctheta,0],[0,0,1]])
+        rotation_matrix_dip = np.array([[cdelta,0,-sdelta],[0,1,0],[sdelta,0,cdelta]])
+        rotation_matrix = np.matmul(rotation_matrix_dip,rotation_matrix_strike)
 
         return rotation_matrix
 
