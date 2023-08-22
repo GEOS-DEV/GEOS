@@ -130,9 +130,10 @@ void WrapperBase::processInputException( std::exception const & ex,
   oss << "***** XML parsing error at node ";
   if( nodePos.isFound() )
   {
+    string const & filePath = attPos.isFound() ? attPos.filePath : nodePos.filePath;
+    int const line = attPos.isFound() ? attPos.line : nodePos.line;
     oss << "named " << m_parent->getName() << ", attribute " << getName()
-        << " (" << splitPath( attPos.isFound() ? attPos.filePath : nodePos.filePath ).second
-        << ", l." << ( attPos.isFound() ? attPos.line : nodePos.line ) << ").";
+        << " (" << splitPath( filePath ).second << ", l." << line << ").";
   }
   else
   {
