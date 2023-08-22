@@ -119,6 +119,10 @@ TEST( testDispatch, DispatchSimpleTypesSingles )
 
   int a = 0;
   testDispatch< types::TypeList< int > >( Types{}, a );
+
+  float b = 0;
+  testDispatch< types::TypeList< float > >( Types{}, b );
+
 }
 
 
@@ -157,8 +161,8 @@ TEST( testDispatch, DispatchVirtualTypeTriplets )
                                  types::TypeList< B, C, D > >;
 
 
-  std::cout << typeid(types::TypeList< C, B, B >).name() << std::endl;
-  std::cout << typeid(types::TypeList< B, B, B >).name() << std::endl;
+  std::cout << LvArray::system::demangle( typeid(types::TypeList< C, B, B >).name() ) << std::endl;
+  std::cout << LvArray::system::demangle( typeid(types::TypeList< B, B, B >).name() ) << std::endl;
 
   std::unique_ptr< A > b = std::make_unique< B >();
   std::unique_ptr< A > c = std::make_unique< C >();

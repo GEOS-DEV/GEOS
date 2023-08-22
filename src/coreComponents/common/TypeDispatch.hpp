@@ -252,6 +252,17 @@ auto const & getTypeMap( LIST, std::integer_sequence< std::size_t, Is... > )
   return result;
 }
 
+HAS_MEMBER_FUNCTION_NO_RTYPE( getTypeId, );
+
+template< typename T >
+std::type_info const & typeIdWrapper( T const & object )
+{
+  if constexpr ( HasMemberFunction_getTypeId< T > )
+    return object.getTypeId();
+  else
+    return typeid(object);
+}
+
 /**
  * @brief
  *
@@ -309,13 +320,18 @@ bool dispatch( LIST const combinations,
 {
   bool const success = internal::dispatchViaTable( combinations,
                                                    std::forward< LAMBDA >( lambda ),
+//                                                   std::make_tuple( std::type_index( internal::typeIdWrapper(objects))... ) );
                                                    std::make_tuple( std::type_index( typeid(objects))... ) );
 
   if( !success )
   {
-    GEOS_ERROR( "Type was not dispatched.\n" <<
-                "Check the stack trace below and revise the type list passed to dispatch().\n" <<
-                "If you are unsure about this error, please report it to GEOS issue tracker." );
+    std::ostringstream dispatchInput;
+    ( (dispatchInput<<"\n  "<<LvArray::system::demangle( internal::typeIdWrapper( objects ).name() ) ), ...);
+
+    GEOS_ERROR( "Type was not dispatched. The type is specified as:\n" <<
+                "( "<<dispatchInput.str()<<" \n)\n"<<
+                "and the dispatch options are:\n"<<
+                LvArray::system::demangle( typeid(combinations).name() ) );
   }
   return success;
 }
