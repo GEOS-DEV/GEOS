@@ -92,25 +92,13 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # Performance portability
     #
-    # depends_on('raja +openmp~examples~exercises')
-    # depends_on('raja +openmp~examples~exercises~shared')
     depends_on('raja@2023.06.0 +openmp~examples~exercises~shared')
 
-    # depends_on('umpire')
-    # depends_on('umpire +c+openmp~examples+fortran')
-    # depends_on('umpire +c+openmp~examples+fortran~shared')
-    # depends_on('umpire@2023.06.0 +c+openmp~examples+fortran~shared')
     depends_on('umpire@2023.06.0 +c+openmp~examples+fortran~device_alloc~shared')
 
-    # depends_on('umpire@2022.03.0 +c+openmp~examples+fortran')
-
-    # depends_on('chai@2023.06.0 +raja+openmp~examples')
     depends_on('chai@2023.06.0 +raja+openmp~examples~shared')
-    # depends_on('chai@2023.06.0 +openmp~examples~shared')
 
     depends_on('camp@2023.06.0')
-    #depends_on('camp@2022.03.2')
-    # depends_on('camp')
 
     with when('+cuda'):
         for sm_ in CudaPackage.cuda_arch_values:
@@ -157,7 +145,6 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('hypre@2.28.0geosx+superlu-dist+mixedint+mpi+openmp', when='+hypre~cuda')
 
     depends_on('hypre@2.28.0geosx+cuda+superlu-dist+mixedint+mpi+openmp+umpire+unified-memory', when='+hypre+cuda')
-    # depends_on('hypre@2.28.0geosx+cuda+superlu-dist+mixedint+mpi+openmp+unified-memory+chai', when='+hypre+cuda')
     with when('+cuda'):
         for sm_ in CudaPackage.cuda_arch_values:
             depends_on('hypre+cuda cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))
@@ -371,39 +358,25 @@ class Geosx(CMakePackage, CudaPackage):
             else:
                 cfg.write(cmake_cache_option('ENABLE_CUDA', False))
 
-            # performance_portability_tpls = (('raja', 'RAJA', True), ('umpire', 'UMPIRE', True), ('chai', 'CHAI', True))
-            #performance_portability_tpls = (('raja', 'RAJA', True), ('chai', 'CHAI', True))
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Performance Portability TPLs\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
-            #for tpl, cmake_name, enable in performance_portability_tpls:
-            #    if enable:
-            #        cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), True))
-            #        cfg.write(cmake_cache_entry('{}_DIR'.format(cmake_name), spec[tpl].prefix))
-            #    else:
-            #        cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
 
-            cfg.write(cmake_cache_option('ENABLE_{}'.format('CHAI'), True))
-            cfg.write(cmake_cache_entry('{}_DIR'.format('CHAI'), spec['chai'].prefix))
+            cfg.write(cmake_cache_option('ENABLE_CHAI', True))
+            cfg.write(cmake_cache_entry('CHAI_DIR', spec['chai'].prefix))
 
-            cfg.write(cmake_cache_entry('{}_DIR'.format('RAJA'), spec['raja'].prefix))
+            cfg.write(cmake_cache_entry('RAJA_DIR', spec['raja'].prefix))
 
-            cfg.write(cmake_cache_option('ENABLE_{}'.format('UMPIRE'), True))
-            # cfg.write(cmake_cache_entry('{}_DIR'.format('UMPIRE'), spec['chai'].prefix))
-            cfg.write(cmake_cache_entry('{}_DIR'.format('UMPIRE'), spec['umpire'].prefix))
+            cfg.write(cmake_cache_option('ENABLE_UMPIRE', True))
+            cfg.write(cmake_cache_entry('UMPIRE_DIR', spec['umpire'].prefix))
 
-
-            # cfg.write(cmake_cache_entry('{}_DIR'.format('CAMP'), spec['chai'].prefix))
-            cfg.write(cmake_cache_entry('{}_DIR'.format('CAMP'), spec['camp'].prefix))
-            # cfg.write(cmake_cache_entry('{}_DIR'.format('camp'), spec['camp'].prefix + '/lib/cmake/camp'))
+            cfg.write(cmake_cache_entry('CAMP_DIR', spec['camp'].prefix))
 
             # yapf: disable
             io_tpls = (
                 ('hdf5', 'HDF5', True),
                 ('conduit', 'CONDUIT', True),
                 ('silo', 'SILO', True),
-                # ('adiak', 'adiak', '+caliper' in spec),
-                # ('caliper', 'CALIPER', '+caliper' in spec),
                 ('pugixml', 'PUGIXML', True),
                 ('vtk', 'VTK', '+vtk' in spec),
                 ('fesapi', 'FESAPI', '+fesapi' in spec),

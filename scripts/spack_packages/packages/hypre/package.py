@@ -100,7 +100,7 @@ class Hypre(AutotoolsPackage, CudaPackage, ROCmPackage):
     # Patch to get config flags right
     # patch("detect-compiler.patch", when="@2.15.0:2.20.0")
 
-    # GEOSX EDIT SEND
+    # GEOSX EDIT END
 
     depends_on("mpi", when="+mpi")
     depends_on("blas")
