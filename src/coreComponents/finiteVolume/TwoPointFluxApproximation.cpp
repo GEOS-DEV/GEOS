@@ -688,7 +688,6 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
     localIndex const kfe = new2dElems[k];
     {
       localIndex const numElems = elems2dToElems3d.m_toElementSubRegion.sizeOfArray( kfe );
-      GEOS_ERROR_IF( numElems != 2, "Internal error, the TPFA can only manage 2d elements connected to 2 3d elements." );
 
       GEOS_ERROR_IF( numElems > maxElems, "Max stencil size exceeded by fracture-cell connector " << kfe );
 
