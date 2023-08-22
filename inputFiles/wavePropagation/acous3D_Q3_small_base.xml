@@ -71,7 +71,7 @@
       name="cellDensity"
       initialCondition="1"
       objectPath="mesh/FE2/ElementRegions/Region/cb"
-      fieldName="mediumDensity"
+      fieldName="mediumDensityA"
       scale="1"
       setNames="{ all }"/>
 
