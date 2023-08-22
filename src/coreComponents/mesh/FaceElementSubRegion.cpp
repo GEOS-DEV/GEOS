@@ -544,21 +544,23 @@ std::map< globalIndex, globalIndex > buildReferenceCollocatedNodes( ArrayOfArray
 
 
 /**
- * @brief Returns a map that connects a pair of collocated nodes to all the edges that overlaps the pair.
+ * @brief Returns a mapping that links any collocated edge to the collocated edge with the lowest index.
  * @param referenceCollocatedNodes The mapping that links any collocated node to its collocated node with the lowest index.
  * @param nl2g The local to glocal mapping for nodes.
  * @param edgeToNodes The edge to nodes mapping.
  * @param elem2dToEdges The 2d elem to edges mapping.
+ * @param edgeGhostRanks The ghost rank of the edges.
  * @return The computed map.
  * @details The key of the map (`std::pair< globalIndex, globalIndex >`) represents the global indices of two nodes.
  * Those two nodes are the lowest index of collocated nodes. As such, those two nodes may not form a @e existing edge.
  * But this trick lets us define some kind of @e hash that allows to compare the location of the edges:
  * edges sharing the same @e hash lie in the same position.
  */
-std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > buildCollocatedEdgesBuckets( std::map< globalIndex, globalIndex > const & referenceCollocatedNodes,
-                                                                                                       arrayView1d< globalIndex const > const nl2g,
-                                                                                                       EdgeManager::NodeMapType const & edgeToNodes,
-                                                                                                       ArrayOfArraysView< localIndex const > const elem2dToEdges )
+std::map< localIndex, localIndex > buildReferenceCollocatedEdges( std::map< globalIndex, globalIndex > const & referenceCollocatedNodes,
+                                                                  arrayView1d< globalIndex const > const nl2g,
+                                                                  EdgeManager::NodeMapType const & edgeToNodes,
+                                                                  ArrayOfArraysView< localIndex const > const elem2dToEdges,
+                                                                  arrayView1d< integer const > edgeGhostRanks )
 {
   // `edgeIds` maps the nodes of the edges of the face element sub-region to its index.
   std::map< std::pair< globalIndex, globalIndex >, localIndex > edgesIds;
@@ -573,7 +575,7 @@ std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > buildC
     }
   }
 
-  std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > collocatedEdgeBuckets;  // Will be returned.
+  std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > collocatedEdgeBuckets;
   // The `collocatedEdgeIds` map gathers all the collocated edges together.
   for( auto const & p: edgesIds )
   {
@@ -590,7 +592,29 @@ std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > buildC
     collocatedEdgeBuckets[edgeHash].insert( edge );
   }
 
-  return collocatedEdgeBuckets;
+  std::map< localIndex, localIndex > referenceCollocatedEdges;
+
+  // We want to consider in priority the edges that are owned by the rank.
+  // So this comparator takes the ghost rank into account and favors lower values of the ghost rank.
+  auto comp = [=]( int e,
+                   int f ) -> bool
+  {
+    int const re = edgeGhostRanks[e] < 0 ? 0 : 1;
+    int const rf = edgeGhostRanks[f] < 0 ? 0 : 1;
+    return std::tie( re, e ) < std::tie( rf, f );
+  };
+
+  for( auto const & p: collocatedEdgeBuckets )
+  {
+    std::set< localIndex > const & collocatedEdges = p.second;
+    localIndex const refEdge = *std::min_element( collocatedEdges.cbegin(), collocatedEdges.cend(), comp );
+    for( localIndex const & collocatedEdge: collocatedEdges )
+    {
+      referenceCollocatedEdges[collocatedEdge] = refEdge;
+    }
+  }
+
+  return referenceCollocatedEdges;
 }
 
 
@@ -667,59 +691,39 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
                                                  FaceManager const & faceManager,
                                                  ElementRegionManager const & elemManager )
 {
-  localIndex const num2dElems = this->size();
-
-  std::map< globalIndex, globalIndex > const referenceCollocatedNodes = buildReferenceCollocatedNodes( m_2dElemToCollocatedNodesBuckets );
-
   arrayView1d< globalIndex const > const nl2g = nodeManager.localToGlobalMap();
 
-  std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > const
-    collocatedEdgesBuckets = buildCollocatedEdgesBuckets( referenceCollocatedNodes, nl2g, edgeManager.nodeList(), m_toEdgesRelation.toViewConst() );
+  // First let's create the reference mappings for both nodes and edges.
+  std::map< globalIndex, globalIndex > const referenceCollocatedNodes = buildReferenceCollocatedNodes( m_2dElemToCollocatedNodesBuckets );
+  std::map< localIndex, localIndex > const referenceCollocatedEdges =
+    buildReferenceCollocatedEdges( referenceCollocatedNodes, nl2g, edgeManager.nodeList(), m_toEdgesRelation.toViewConst(), edgeManager.ghostRank().toViewConst() );
 
-  // The concept of "2d face" is deeply local to the `FaceElementSubRegion`.
-  // Therefore, it's not exchanged during the ghosting process.
-  // Furthermore, all the information is there to reconstruct the mappings related to the 2d faces.
+  localIndex const num2dElems = this->size();
+  localIndex const num2dFaces = LvArray::integerConversion< localIndex >( referenceCollocatedEdges.size() );
 
-  // To recreate the mappings, the first step is to associate a `2d face index` based on the global indices.
-  // But let's be precise: some the global indices of the edges are different while the
-  // Then we can resize all the mappings related to the `2d faces`.
-
-  std::size_t const num2dFaces = collocatedEdgesBuckets.size();
-  arrayView1d< integer const > edgeGhostRanks = edgeManager.ghostRank().toViewConst();
+  // For the `m_2dFaceToEdge`, we can select any values that we want.
+  // But then we need to be consistent...
   m_2dFaceToEdge.clear();
-  m_2dFaceToEdge.reserve( LvArray::integerConversion< localIndex >( num2dFaces ) );
-  auto comp = [=]( int e,
-                   int f ) -> bool
+  m_2dFaceToEdge.reserve( num2dFaces );
+  for( auto const & p: referenceCollocatedEdges )
   {
-    int const re = edgeGhostRanks[e] < 0 ? 0 : 1;
-    int const rf = edgeGhostRanks[f] < 0 ? 0 : 1;
-    return std::tie( re, e ) < std::tie( rf, f );
-  };
-  // A mapping that links any collocated edge to the collocated edge with the lowest index.
-  std::map< localIndex, localIndex > referenceCollocatedEdges;  // TODO make buildCollocatedEdgesBuckets return referenceCollocatedEdges directely.
-  for( auto const & p: collocatedEdgesBuckets )
-  {
-    std::set< localIndex > const & collocatedEdges = p.second;
-    localIndex const refEdge = *std::min_element( collocatedEdges.cbegin(), collocatedEdges.cend(), comp );
+    globalIndex const & refEdge = p.second;
     m_2dFaceToEdge.emplace_back( refEdge );
-    for( localIndex const & collocatedEdge: collocatedEdges )
-    {
-      referenceCollocatedEdges[collocatedEdge] = refEdge;
-    }
   }
 
   // `m_edgesTo2dFaces` is computed by the simple inversion of `m_2dFaceToEdge`
   m_edgesTo2dFaces.clear();
-  for( localIndex i = 0; i < LvArray::integerConversion< localIndex >( num2dFaces ); ++i )
+  for( localIndex i = 0; i < num2dFaces; ++i )
   {
     m_edgesTo2dFaces[m_2dFaceToEdge[i]] = i;
   }
 
-  // Mark 2d elements and their connections as "new" so they get computed.
+  // Mark 2d elements and their connections as "new" so they get considered during the stencil computations.
+  // This is mainly due to the dynamic process of the fracture propagation and the legacy unique way to import the fracture
+  // by splitting the mesh during the first steps of the simulations.
   m_newFaceElements = makeSortedArrayIota( num2dElems );
-  m_recalculateConnectionsFor2dFaces = makeSortedArrayIota( LvArray::integerConversion< localIndex >( num2dFaces ) );
+  m_recalculateConnectionsFor2dFaces = makeSortedArrayIota( num2dFaces );
 
-  // Filling the 2d face to 2d elements mappings
   m_2dFaceTo2dElems = build2dFaceTo2dElems( num2dFaces, num2dElems, m_toEdgesRelation.toViewConst(), m_edgesTo2dFaces, referenceCollocatedEdges );
 
   // When a fracture element has only one (or less!) neighbor, let's try to find the other one.
@@ -739,8 +743,8 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
     }
   };
 
-  // We are building the mapping that connect all the reference (duplicated) nodes of any face to the elements they are touching.
-  // Using this nodal information will let use reconnect the the fracture 2d element to its 3d neighbor.
+  // We are building the mapping that connect all the reference (collocated) nodes of any face to the elements those nodes are touching.
+  // Using this nodal information will let use reconnect the fracture 2d element to its 3d neighbor.
   std::map< std::set< globalIndex >, std::set< ElemPath > > faceRefNodesToElems;
   elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex const er,
                                                                          localIndex const esr,
@@ -769,7 +773,8 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
             break;
           }
         }
-        // We still double check that all the nodes of the face were found.
+        // We still double-check that all the nodes of the face were found,
+        // even if there's no chance for this entry to successfully match any request.
         if( nodesOfFace.size() == LvArray::integerConversion< std::size_t >( faceToNodes[face].size() ) )
         {
           std::vector< localIndex > const nodes( faceToNodes[face].begin(), faceToNodes[face].end() );
@@ -844,18 +849,16 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
 
   // Checking that each face has two neighboring elements.
   // If not, we pop up an error.
+  std::vector< localIndex > isolatedFractureElements;
+  for( int e2d = 0; e2d < num2dElems; ++e2d )
   {
-    std::vector< localIndex > isolatedFractureElements;
-    for( int e2d = 0; e2d < num2dElems; ++e2d )
+    if( m_2dElemToElems.m_toElementIndex.sizeOfArray( e2d ) < 2 && m_ghostRank[e2d] < 0 )
     {
-      if( m_2dElemToElems.m_toElementIndex.sizeOfArray( e2d ) < 2 && m_ghostRank[e2d] < 0 )
-      {
-        isolatedFractureElements.push_back( e2d );
-      }
+      isolatedFractureElements.push_back( e2d );
     }
-    GEOS_ERROR_IF( !isolatedFractureElements.empty(),
-                   "Fracture " << this->getName() << " has elements {" << stringutilities::join( isolatedFractureElements, ", " ) << "} with less than two neighbors." );
   }
+  GEOS_ERROR_IF( !isolatedFractureElements.empty(),
+                 "Fracture " << this->getName() << " has elements {" << stringutilities::join( isolatedFractureElements, ", " ) << "} with less than two neighbors." );
 }
 
 void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const & faceManager,
