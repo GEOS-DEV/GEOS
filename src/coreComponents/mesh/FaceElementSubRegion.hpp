@@ -220,9 +220,6 @@ public:
   /// Unmapped face elements to faces map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToFaces;
 
-  /// Unmapped face elements to faces map
-  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToCollocatedNodesBucket;
-
   /// List of the new face elements that have been generated
   SortedArray< localIndex > m_newFaceElements;
 
