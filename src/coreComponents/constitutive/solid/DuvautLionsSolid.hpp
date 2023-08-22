@@ -66,6 +66,7 @@ public:
   using UPDATE_BASE::m_disableInelasticity;
 
   GEOS_HOST_DEVICE
+  //inline
   void smallStrainUpdate( localIndex const k,
                           localIndex const q,
                           real64 const & timeIncrement,
