@@ -12,44 +12,7 @@ import os
 from os import environ as env
 from os.path import join as pjoin
 
-# ./scripts/uberenv/uberenv.py --spec="%clang +mkl ^chai ^caliper+papi"
-
-# ./scripts/uberenv/uberenv.py --spec="%clang +mkl ^raja build_type=Release ^umpire build_type=Release ^chai build_type=Release ^adiak build_type=Release ^caliper+papi build_type=Release ^pugixml build_type=Release ^parmetis build_type=Release ^superlu-dist build_type=Release ^trilinos build_type=Release"
-
-# ./scripts/uberenv/uberenv.py --spec="%clang +essl +cuda ~petsc cuda_arch=70 ^raja build_type=Release cuda_arch=70 ^umpire build_type=Release cuda_arch=70 ^chai build_type=Release cuda_arch=70 ^adiak build_type=Release ^caliper~papi build_type=Release ^pugixml build_type=Release ^parmetis build_type=Release ^superlu-dist build_type=Release ^trilinos build_type=Release"
-
-# PETSC doesn't compile on Lassen
-# ./scripts/uberenv/uberenv.py --spec="%gcc +essl ~petsc +cuda cuda_arch=70 ^cuda@10.1.243 ^raja cuda_arch=70 ^umpire cuda_arch=70 ^chai cuda_arch=70 ^caliper~papi"
-
-
-def cmake_cache_entry(name, value, comment=""):
-    """Generate a string for a cmake cache variable"""
-
-    return 'set(%s "%s" CACHE PATH "%s")\n\n' % (name, value, comment)
-
-
-def cmake_cache_list(name, value, comment=""):
-    """Generate a list for a cmake cache variable"""
-
-    indent = 5 + len(name)
-    join_str = '\n' + ' ' * indent
-    return 'set(%s %s CACHE STRING "%s")\n\n' % (name, join_str.join(value), comment)
-
-
-def cmake_cache_string(name, string, comment=""):
-    """Generate a string for a cmake cache variable"""
-
-    return 'set(%s "%s" CACHE STRING "%s")\n\n' % (name, string, comment)
-
-
-def cmake_cache_option(name, boolean_value, comment=""):
-    """Generate a string for a cmake configuration option"""
-
-    value = "ON" if boolean_value else "OFF"
-    return 'set(%s %s CACHE BOOL "%s")\n\n' % (name, value, comment)
-
-
-class Geosx(CMakePackage, CudaPackage, ROCmPackage):
+class Geosx(CachedCMakePackage, CudaPackage, ROCmPackage):
     """GEOSX simulation framework."""
 
     homepage = "https://github.com/GEOS-DEV/GEOS"
@@ -230,7 +193,7 @@ class Geosx(CMakePackage, CudaPackage, ROCmPackage):
     conflicts('~hypre lai=hypre', msg='To use HYPRE as the Linear Algebra Interface you must build it.')
     conflicts('~petsc lai=petsc', msg='To use PETSc as the Linear Algebra Interface you must build it.')
 
-    phases = ['hostconfig', 'cmake', 'build', 'install']
+    # phases = ['hostconfig', 'cmake', 'build', 'install']
 
     @run_after('build')
     @on_package_attributes(run_tests=True)
@@ -248,283 +211,174 @@ class Geosx(CMakePackage, CudaPackage, ROCmPackage):
             with working_dir(self.build_directory):
                 make('docs')
 
-    def _get_sys_type(self, spec):
-        sys_type = str(spec.architecture)
+
+    @property
+    def sys_type(self):
+        sys_type = str(self.spec.architecture)
         # if on llnl systems, we can use the SYS_TYPE
         if "SYS_TYPE" in env:
             sys_type = env["SYS_TYPE"]
         return sys_type
 
-    def _get_host_config_path(self, spec):
+    @property
+    def cache_name(self):
         var = ''
-        if '+cuda' in spec:
-            var = '-'.join([var, 'cuda'])
-
+        if self.spec.statisfies( '+cuda' ):
+            var = '-'.join((var, 'cuda'))
+        elif self.spec.statisfies( '+rocm' ):
+            var = '-'.join((var, 'rocm'))
         hostname = socket.gethostname().rstrip('1234567890')
-        host_config_path = "%s-%s-%s%s.cmake" % (hostname, self._get_sys_type(spec), spec.compiler, var)
-
+        host_config_path = "%s-%s-%s%s.cmake" % (hostname, self.sys_type(self.spec), self.spec.compiler, var)
         dest_dir = self.stage.source_path
         host_config_path = os.path.abspath(pjoin(dest_dir, host_config_path))
         return host_config_path
 
-    def hostconfig(self, spec, prefix, py_site_pkgs_dir=None):
-        """
-        This method creates a 'host-config' file that specifies
-        all of the options used to configure and build GEOSX.
+    def initconfig_mpi_entries(self):
+        entries = super().initconfig_mpi_entries()
+        entries.insert(0, cmake_cache_option('ENABLE_MPI', True))
 
-        Note:
-          The `py_site_pkgs_dir` arg exists to allow a package that
-          subclasses this package provide a specific site packages
-          dir when calling this function. `py_site_pkgs_dir` should
-          be an absolute path or `None`.
+    def initconfig_hardware_entries(self):
+        entries = super().initconfig_hardware_entries() # handles generic cuda/rocm flags, doesn't handle openmp
 
-          This is necessary because the spack `site_packages_dir`
-          var will not exist in the base class. For more details
-          on this issue see: https://github.com/spack/spack/issues/6261
-        """
+        prefix_entries = []
+        prefix_entries.append(super().define_cmake_cache_from_variant('ENABLE_OPENMP','openmp'))
+        prefix_entries.append(super().define_cmake_cache_from_variant('ENABLE_CUDA','cuda'))
+        prefix_entries.append(cmake_cache_string('CMAKE_CUDA_STANDARD','17'))
 
-        #######################
-        # Compiler Info
-        #######################
-        c_compiler = env["SPACK_CC"]
-        cpp_compiler = env["SPACK_CXX"]
+        archs = self.spec.variants["cuda_arch"].value
+        if archs[0] != "none":
+            prefix_entries.append( cmake_cache_string("CUDA_ARCH", ';'.join( f'sm_{arch}' for arch in archs ) ) )
 
-        #######################################################################
-        # By directly fetching the names of the actual compilers we appear
-        # to doing something evil here, but this is necessary to create a
-        # 'host config' file that works outside of the spack install env.
-        #######################################################################
+        cmake_cuda_flags = ('-restrict --expt-extended-lambda -Werror '
+                            'cross-execution-space-call,reorder,'
+                            'deprecated-declarations')
 
-        sys_type = self._get_sys_type(spec)
+        archSpecifiers = ('-mtune', '-mcpu', '-march', '-qtune', '-qarch')
+        for archSpecifier in archSpecifiers:
+            for compilerArg in self.spec.compiler_flags['cxxflags']:
+                if compilerArg.startswith(archSpecifier):
+                    cmake_cuda_flags += ' -Xcompiler ' + compilerArg
 
-        ##############################################
-        # Find and record what CMake is used
-        ##############################################
+        if archs[0] != "none":
+            for arch in archs:
+                cmake_cuda_flags += f" -arch sm_{arch}"
 
-        cmake_exe = spec['cmake'].command.path
-        cmake_exe = os.path.realpath(cmake_exe)
+        prefix_entries.append(cmake_cache_string('CMAKE_CUDA_FLAGS', cmake_cuda_flags))
 
-        host_config_path = self._get_host_config_path(spec)
-        with open(host_config_path, "w") as cfg:
-            cfg.write("#{0}\n".format("#" * 80))
-            cfg.write("# Generated host-config - Edit at own risk!\n")
-            cfg.write("#{0}\n".format("#" * 80))
+        cmake_cuda_release_flags = '-O3 -Xcompiler -O3 -DNDEBUG'
+        prefix_entries.append(cmake_cache_string('CMAKE_CUDA_FLAGS_RELEASE', cmake_cuda_release_flags ))
+        prefix_entries.append(cmake_cache_string('CMAKE_CUDA_FLAGS_RELWITHDEBINFO', f'-g -lineinfo {cmake_cuda_release_flags}'))
+        prefix_entries.append(cmake_cache_string('CMAKE_CUDA_FLAGS_DEBUG', '-g -G -O0 -Xcompiler -O0 '))
 
-            cfg.write("#{0}\n".format("-" * 80))
-            cfg.write("# SYS_TYPE: {0}\n".format(sys_type))
-            cfg.write("# Compiler Spec: {0}\n".format(spec.compiler))
-            cfg.write("# CMake executable path: %s\n" % cmake_exe)
-            cfg.write("#{0}\n\n".format("-" * 80))
+        return [ *prefix_entries, *entries ]
 
-            #######################
-            # Compiler Settings
-            #######################
+    def initconfig_package_entries(self):
+        hdiv = "#------------------{0}".format("-" * 30)
 
-            cfg.write("#{0}\n".format("-" * 80))
-            cfg.write("# Compilers\n")
-            cfg.write("#{0}\n\n".format("-" * 80))
-            cfg.write(cmake_cache_entry("CMAKE_C_COMPILER", c_compiler))
-            cflags = ' '.join(spec.compiler_flags['cflags'])
-            if cflags:
-                cfg.write(cmake_cache_entry("CMAKE_C_FLAGS", cflags))
+        entries = []
+        entries.append( hdiv )
+        entries.append( '# Package TPLs' )
+        entries.append( hdiv )
 
-            cfg.write(cmake_cache_entry("CMAKE_CXX_COMPILER", cpp_compiler))
-            cxxflags = ' '.join(spec.compiler_flags['cxxflags'])
-            if cxxflags:
-                cfg.write(cmake_cache_entry("CMAKE_CXX_FLAGS", cxxflags))
+        tpls = ( ('raja', 'RAJA', True),
+                 ('umpire', 'UMPIRE', True),
+                 ('chai', 'CHAI', True),
+                 ('hdf5', 'HDF5', True),
+                 ('conduit', 'CONDUIT', True),
+                 ('silo', 'SILO', self.spec.satisfies('+silo')),
+                 ('adiak', 'ADIAK', self.spec.satisfies('+caliper') and self.spec['caliper'].satisfies('+adiak')),
+                 ('caliper', 'CALIPER', self.spec.satisfies('+caliper')),
+                 ('pugixml', 'PUGIXML', True),
+                 ('vtk', 'VTK', self.spec.satisfies('+vtk')),
+                 ('fmt', 'FMT', True),
+                 ('metis', 'METIS', True),
+                 ('parmetis', 'PARMETIS', True),
+                 ('scotch', 'SCOTCH', self.spec.satisfies('+scotch')),
+                 ('superlu-dist', 'SUPERLU_DIST', self.spec.satisfies('+superlu-dist')),
+                 ('suite-sparse', 'SUITESPARSE', self.spec.satisfies('+suite-sparse')),
+                 ('trilinos', 'TRILINOS', self.spec.satisfies('+trilinos')),
+                 ('hypre', 'HYPRE', self.spec.satisfies('+hypre')),
+                 ('petsc', 'PETSC', self.spec.satisfies('+petsc'))
+                 )
 
-            release_flags = "-O3 -DNDEBUG"
-            cfg.write(cmake_cache_string("CMAKE_CXX_FLAGS_RELEASE", release_flags))
-            reldebinf_flags = "-O3 -g -DNDEBUG"
-            cfg.write(cmake_cache_string("CMAKE_CXX_FLAGS_RELWITHDEBINFO", reldebinf_flags))
-            debug_flags = "-O0 -g"
-            cfg.write(cmake_cache_string("CMAKE_CXX_FLAGS_DEBUG", debug_flags))
+        for tpl, cmake_name, enable in tpls:
+            entries.append(cmake_cache_option( f'ENABLE_{cmake_name}', False) )
+            if enable:
+                entries.append(cmake_cache_path( f'{cmake_name}_DIR', self.spec[tpl].prefix) )
 
-            cfg.write("#{0}\n".format("-" * 80))
-            cfg.write("# MPI\n")
-            cfg.write("#{0}\n\n".format("-" * 80))
+        if self.spec.satisfies( '^hypre+cuda' ):
+            entries.append( cmake_cache_string('ENABLE_HYPRE_DEVICE', "CUDA") )
+        elif self.spec.satisfies( '^hypre+rocm' ):
+            entries.append( cmake_cache_string('ENABLE_HYPRE_DEVICE', "HIP") )
 
-            cfg.write(cmake_cache_option('ENABLE_MPI', True))
-            cfg.write(cmake_cache_entry('MPI_C_COMPILER', spec['mpi'].mpicc))
-            cfg.write(cmake_cache_entry('MPI_CXX_COMPILER', spec['mpi'].mpicxx))
+        if self.spec.satisfies('lai=trilinos'):
+            entries.append( cmake_cache_path('GEOSX_LA_INTERFACE', 'Trilinos') )
+        if self.spec.satisfies('lai=hypre'):
+            entries.append( cmake_cache_path('GEOSX_LA_INTERFACE', 'Hypre') )
+        if self.spec.satisfies('lai=petsc'):
+            entries.append( cmake_cache_path('GEOSX_LA_INTERFACE', 'Petsc') )
 
-            if sys_type in ('linux-rhel7-ppc64le', 'linux-rhel8-ppc64le'):
-                cfg.write(cmake_cache_option('ENABLE_WRAP_ALL_TESTS_WITH_MPIEXEC', True))
-                if socket.gethostname().rstrip('1234567890') == "lassen":
-                    cfg.write(cmake_cache_entry('MPIEXEC', 'lrun'))
-                    cfg.write(cmake_cache_entry('MPIEXEC_NUMPROC_FLAG', '-n'))
-                else:
-                    cfg.write(cmake_cache_entry('MPIEXEC', 'jsrun'))
-                    cfg.write(cmake_cache_list('MPIEXEC_NUMPROC_FLAG', ['-g1', '--bind', 'rs', '-n']))
+        entries.append( hdiv )
+        entries.append( '# BLAS/LAPACK (System) TPLs' )
+        entries.append( hdiv )
+        if self.spec.satisfies('^intel-oneapi-mkl'):
+            entries.append(cmake_cache_option('ENABLE_MKL', True))
+            entries.append(cmake_cache_path('MKL_INCLUDE_DIRS', self.spec['intel-oneapi-mkl'].prefix.include))
+            entries.append(cmake_cache_string('MKL_LIBRARIES', ';'.join( self.spec['intel-oneapi--mkl'].libs ) ))
+        elif self.spec.satisfies('^essl'):
+            entries.append(cmake_cache_option('ENABLE_ESSL', True))
+            entries.append(cmake_cache_path('ESSL_INCLUDE_DIRS', self.spec['essl'].prefix.include))
+            entries.append(cmake_cache_string('ESSL_LIBRARIES', ';'.join( self.spec['essl'].libs + self.spec['cuda'].libs ) ))
 
-            cfg.write("#{0}\n".format("-" * 80))
-            cfg.write("# OpenMP\n")
-            cfg.write("#{0}\n\n".format("-" * 80))
+            #TODO: these should be handled internall in geosx cmakelists.txt depending on the compiler
+            entries.append(cmake_cache_option('FORTRAN_MANGLE_NO_UNDERSCORE', True))
+            if self.spec.satisfies('+openmp'):
+                entries.append(cmake_cache_string('OpenMP_Fortran_FLAGS','-qsmp=omp'))
+                entries.append(cmake_cache_string('OpenMP_Fortran_LIB_NAMES',''))
+        else:
+            entries.append(cmake_cache_string('BLAS_LIBRARIES', ';'.join( self.spec['blas'].libs ) ))
+            entries.append(cmake_cache_string('LAPACK_LIBRARIES', ';'.join( self.spec['lapack'].libs ) ))
 
-            cfg.write(cmake_cache_option('ENABLE_OPENMP', spec.satisfies('+openmp')))
+        entries.append( hdiv )
+        entries.append( '# Python' )
+        entries.append( hdiv )
+        entries.append( super().define_cmake_cache_from_variant( 'ENABLE_PYGEOSX','pygeosx') )
+        if self.spec.satisfies('+pygeosx') :
+            entries.append(cmake_cache_path('Python3_EXECUTABLE', os.path.join( self.spec['python'].prefix.bin, 'python3')))
 
-            cfg.write('#{0}\n'.format('-' * 80))
-            cfg.write('# Cuda\n')
-            cfg.write('#{0}\n\n'.format('-' * 80))
-            if '+cuda' in spec:
-                cfg.write(cmake_cache_option('ENABLE_CUDA', True))
-                cfg.write(cmake_cache_entry('CMAKE_CUDA_STANDARD', 17))
+        entries.append( hdiv )
+        entries.append( '# Documentation' )
+        entries.append( hdiv )
 
-                cfg.write(cmake_cache_entry('CUDA_TOOLKIT_ROOT_DIR', spec['cuda'].prefix))
-                cfg.write(cmake_cache_entry('CMAKE_CUDA_HOST_COMPILER', '${CMAKE_CXX_COMPILER}'))
-                cfg.write(cmake_cache_entry('CMAKE_CUDA_COMPILER', '${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc'))
-                # since cuda_arch is a multi-value variant, .value is a tuple
-                cfg.write(cmake_cache_string('CUDA_ARCH', ','.join( f'sm_{arch}' for arch in spec.variants['cuda_arch'].value ) ) )
-                # since cuda_arch is a multi-value variant, .value is a tuple
-                cfg.write(cmake_cache_string('CMAKE_CUDA_ARCHITECTURES', ','.join( spec.variants['cuda_arch'].value ) ) )
+        entries.append( super().define_cmake_cache_from_variant('ENABLE_DOCS', 'doc') )
+        entries.append( super().define_cmake_cache_from_variant('ENABLE_DOXYGEN', 'doc') )
+        entries.append( super().define_cmake_cache_from_variant('ENABLE_SPHINX', 'doc') )
 
-                cmake_cuda_flags = ('-restrict --expt-extended-lambda -Werror '
-                                    'cross-execution-space-call,reorder,'
-                                    'deprecated-declarations')
+        if self.spec.satisfies( '+doc' ):
+            entries.append( cmake_cache_path('SPHINX_EXECUTABLE', os.path.join(self.spec['py-sphinx'].prefix.bin, 'sphinx-build')) )
+            entries.append( cmake_cache_path('DOXYGEN_EXECUTABLE', os.path.join(self.spec['doxygen'].prefix.bin, 'doxygen')) )
 
-                archSpecifiers = ('-mtune', '-mcpu', '-march', '-qtune', '-qarch')
-                for archSpecifier in archSpecifiers:
-                    for compilerArg in spec.compiler_flags['cxxflags']:
-                        if compilerArg.startswith(archSpecifier):
-                            cmake_cuda_flags += ' -Xcompiler ' + compilerArg
+        entries.append( super().define_cmake_cache_from_variant('ENABLE_UNCRUSTIFY', 'dev') )
+        if self.spec.satisfies( '+dev' ):
+            entries.append( hdiv )
+            entries.append('# Development tools\n')
+            entries.append( hdiv )
+            entries.append( cmake_cache_path('UNCRUSTIFY_EXECUTABLE', os.path.join(self.spec['uncrustify'].prefix.bin, 'uncrustify')) )
 
-                # since cuda_arch is a multi-value variant, .value is a tuple
-                for arch in spec.variants['cuda_arch'].value:
-                    cmake_cuda_flags += f" -arch sm_{arch}"
+        # entries.append( hdiv )
+        # entries.append('# addr2line\n')
+        # entries.append( hdiv )
+        # entries.append( super().define_cmake_cache_from_variant('ENABLE_ADDR2LINE', 'addr2line') )
 
-                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS', cmake_cuda_flags))
+        entries.append( hdiv )
+        entries.append('# Other\n')
+        entries.append( hdiv )
 
-                cmake_cuda_release_flags = '-O3 -Xcompiler -O3 -DNDEBUG'
-                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_RELEASE', cmake_cuda_release_flags ))
-                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_RELWITHDEBINFO', f'-g -lineinfo {cmake_cuda_release_flags}'))
-                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_DEBUG', '-g -G -O0 -Xcompiler -O0 '))
+        entries.append( cmake_cache_option('ENABLE_MATHPRESSO', False) )
+        entries.append( cmake_cache_option('ENABLE_XML_UPDATES', False) )
 
-            else:
-                cfg.write(cmake_cache_option('ENABLE_CUDA', False))
-
-            performance_portability_tpls = (('raja', 'RAJA', True),
-                                            ('umpire', 'UMPIRE', True),
-                                            ('chai', 'CHAI', True))
-            cfg.write('#{0}\n'.format('-' * 80))
-            cfg.write('# Performance Portability TPLs\n')
-            cfg.write('#{0}\n\n'.format('-' * 80))
-            for tpl, cmake_name, enable in performance_portability_tpls:
-                if enable:
-                    cfg.write(cmake_cache_entry('{}_DIR'.format(cmake_name), spec[tpl].prefix))
-                else:
-                    cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
-
-            have_adiak = spec.satisfies('+caliper') and '+adiak' in spec['caliper'].variants
-
-            io_tpls = (('hdf5', 'HDF5', True),
-                       ('conduit', 'CONDUIT', True),
-                       ('silo', 'SILO', spec.satisfies('+silo')),
-                       ('adiak', 'ADIAK', have_adiak),
-                       ('caliper', 'CALIPER', spec.satisfies('+caliper')),
-                       ('pugixml', 'PUGIXML', True),
-                       ('vtk', 'VTK', spec.satisfies('+vtk')),
-                       ('fmt', 'FMT', True))
-            cfg.write('#{0}\n'.format('-' * 80))
-            cfg.write('# IO TPLs\n')
-            cfg.write('#{0}\n\n'.format('-' * 80))
-            for tpl, cmake_name, enable in io_tpls:
-                if enable:
-                    cfg.write(cmake_cache_entry('{}_DIR'.format(cmake_name), spec[tpl].prefix))
-                else:
-                    cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
-
-            cfg.write('#{0}\n'.format('-' * 80))
-            cfg.write('# System Math Libraries\n')
-            cfg.write('#{0}\n\n'.format('-' * 80))
-            if spec.satisfies('^intel-oneapi-mkl'):
-                cfg.write(cmake_cache_option('ENABLE_MKL', True))
-                cfg.write(cmake_cache_entry('MKL_INCLUDE_DIRS', spec['intel-oneapi-mkl'].prefix.include))
-                cfg.write(cmake_cache_list('MKL_LIBRARIES', spec['intel-oneapi--mkl'].libs))
-            elif spec.satisfies('^essl'):
-                cfg.write(cmake_cache_option('ENABLE_ESSL', True))
-                cfg.write(cmake_cache_entry('ESSL_INCLUDE_DIRS', spec['essl'].prefix.include))
-                cfg.write(cmake_cache_list('ESSL_LIBRARIES', spec['essl'].libs + spec['cuda'].libs))
-
-                cfg.write(cmake_cache_option('FORTRAN_MANGLE_NO_UNDERSCORE', True))
-            else:
-                cfg.write(cmake_cache_list('BLAS_LIBRARIES', spec['blas'].libs))
-                cfg.write(cmake_cache_list('LAPACK_LIBRARIES', spec['lapack'].libs))
-
-            # yapf: disable
-            math_tpls = (
-              ('metis', 'METIS', True),
-              ('parmetis', 'PARMETIS', True),
-              ('scotch', 'SCOTCH', spec.satisfies('+scotch')),
-              ('superlu-dist', 'SUPERLU_DIST', spec.satisfies('+superlu-dist')),
-              ('suite-sparse', 'SUITESPARSE', spec.satisfies('+suite-sparse')),
-              ('trilinos', 'TRILINOS', spec.satisfies('+trilinos')),
-              ('hypre', 'HYPRE', spec.satisfies('+hypre')),
-              ('petsc', 'PETSC', spec.satisfies('+petsc'))
-            )
-            # yapf: enable
-
-            cfg.write('#{0}\n'.format('-' * 80))
-            cfg.write('# Math TPLs\n')
-            cfg.write('#{0}\n\n'.format('-' * 80))
-            for tpl, cmake_name, enable in math_tpls:
-                if enable:
-                    cfg.write(cmake_cache_entry('{}_DIR'.format(cmake_name), spec[tpl].prefix))
-                    if tpl == 'hypre' and spec.satisfies('^hypre+cuda'):
-                        cfg.write(cmake_cache_string('ENABLE_HYPRE_DEVICE', "CUDA"))
-                    elif tpl == 'hypre' and spec.satisfies('^hypre+rocm'):
-                        cfg.write(cmake_cache_string('ENABLE_HYPRE_DEVICE', "HIP"))
-                else:
-                    cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
-
-            if spec.satisfies('lai=trilinos'):
-                cfg.write(cmake_cache_entry('GEOSX_LA_INTERFACE', 'Trilinos'))
-            if spec.satisfies('lai=hypre'):
-                cfg.write(cmake_cache_entry('GEOSX_LA_INTERFACE', 'Hypre'))
-            if spec.satisfies('lai=petsc'):
-                cfg.write(cmake_cache_entry('GEOSX_LA_INTERFACE', 'Petsc'))
-
-            cfg.write('#{0}\n'.format('-' * 80))
-            cfg.write('# Python\n')
-            cfg.write('#{0}\n\n'.format('-' * 80))
-            if '+pygeosx' in spec:
-                cfg.write(cmake_cache_option('ENABLE_PYGEOSX', True))
-                cfg.write(cmake_cache_entry('Python3_EXECUTABLE', os.path.join(spec['python'].prefix.bin, 'python3')))
-            else:
-                cfg.write(cmake_cache_option('ENABLE_PYGEOSX', False))
-
-            cfg.write('#{0}\n'.format('-' * 80))
-            cfg.write('# Documentation\n')
-            cfg.write('#{0}\n\n'.format('-' * 80))
-            if spec.satisfies('+doc'):
-                sphinx_bin_dir = spec['py-sphinx'].prefix.bin
-                cfg.write(cmake_cache_entry('SPHINX_EXECUTABLE', os.path.join(sphinx_bin_dir, 'sphinx-build')))
-
-                doxygen_bin_dir = spec['doxygen'].prefix.bin
-                cfg.write(cmake_cache_entry('DOXYGEN_EXECUTABLE', os.path.join(doxygen_bin_dir, 'doxygen')))
-            else:
-                cfg.write(cmake_cache_option('ENABLE_DOCS', False))
-                cfg.write(cmake_cache_option('ENABLE_DOXYGEN', False))
-                cfg.write(cmake_cache_option('ENABLE_SPHINX', False))
-
-            if spec.satisfies('+dev'):
-                cfg.write('#{0}\n'.format('-' * 80))
-                cfg.write('# Development tools\n')
-                cfg.write('#{0}\n\n'.format('-' * 80))
-                cfg.write(cmake_cache_entry('UNCRUSTIFY_EXECUTABLE', os.path.join(spec['uncrustify'].prefix.bin, 'uncrustify')))
-            else:
-                cfg.write(cmake_cache_option('ENABLE_UNCRUSTIFY', False))
-
-            # cfg.write('#{0}\n'.format('-' * 80))
-            # cfg.write('# addr2line\n')
-            # cfg.write('#{0}\n\n'.format('-' * 80))
-            # cfg.write(cmake_cache_option('ENABLE_ADDR2LINE', '+addr2line' in spec))
-
-            cfg.write('#{0}\n'.format('-' * 80))
-            cfg.write('# Other\n')
-            cfg.write('#{0}\n\n'.format('-' * 80))
-
-            cfg.write(cmake_cache_option('ENABLE_MATHPRESSO', False))
-            cfg.write(cmake_cache_option('ENABLE_XML_UPDATES', False))
+        return entries
 
     def cmake_args(self):
-        return [ '-C', self._get_host_config_path(self.spec), '-
+        return [ '-C', self._get_host_config_path(self.spec), '--trace', '--trace-expand' ]
+
