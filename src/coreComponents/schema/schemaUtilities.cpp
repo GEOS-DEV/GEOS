@@ -233,7 +233,7 @@ void SchemaConstruction( Group & group,
               commentString += " => " + stringutilities::join( registrars.begin(), registrars.end(), ", " );
             }
 
-            xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child( xmlWrapper::xmlTypes::node_comment );
+            xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child( xmlWrapper::xmlNodeType::node_comment );
             commentNode.set_value( commentString.c_str());
 
 
@@ -289,7 +289,7 @@ void SchemaConstruction( Group & group,
         // Only add this attribute if not present
         if( targetTypeDefNode.find_child_by_attribute( "xsd:attribute", "name", "name" ).empty())
         {
-          xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child( xmlWrapper::xmlTypes::node_comment );
+          xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child( xmlWrapper::xmlNodeType::node_comment );
           commentNode.set_value( "name => A name is required for any non-unique nodes" );
 
           xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child( "xsd:attribute" );

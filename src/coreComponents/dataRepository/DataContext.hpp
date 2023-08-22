@@ -82,9 +82,9 @@ protected:
   struct ToStringInfo
   {
     /// the targetName of the DataContext
-    string_view m_targetName;
+    string m_targetName;
     /// the file path of the DataFileContext, if it exists (an empty string otherwise)
-    string_view m_filePath;
+    string m_filePath;
     /// the file line of the DataFileContext, if it exists (an empty string otherwise)
     size_t m_line;
 
@@ -94,12 +94,12 @@ protected:
      * @param filePath the input file path where the target is declared.
      * @param line the line in the file where the target is declared.
      */
-    ToStringInfo( string_view targetName, string_view filePath, int line );
+    ToStringInfo( string const & targetName, string const & filePath, size_t line );
     /**
      * @brief Construct a new ToStringInfo object from a DataContext that has no input file info.
      * @param targetName the target name.
      */
-    ToStringInfo( string_view targetName );
+    ToStringInfo( string const & targetName );
     /**
      * @return true if a location has been found to declare the target in an input file.
      */
@@ -224,8 +224,11 @@ struct GEOS_FMT_NS::formatter< geos::dataRepository::DataContext >
    * @param ctx formatting state consisting of the formatting arguments and the output iterator
    * @return iterator to the output buffer (leaved unchanged)
    */
-  constexpr auto parse( format_parse_context & ctx )
-  { return ctx.begin(); }
+  auto parse( format_parse_context & ctx )
+  { 
+    GEOS_ERROR( "DataContext parsing is not implemented." );
+    return ctx.begin();
+  }
 };
 
 #endif /* GEOS_DATAREPOSITORY_DATACONTEXT_HPP_ */

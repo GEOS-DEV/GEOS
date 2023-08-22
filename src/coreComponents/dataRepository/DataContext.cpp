@@ -34,15 +34,13 @@ std::ostream & operator<<( std::ostream & os, DataContext const & ctx )
   return os;
 }
 
-DataContext::ToStringInfo::ToStringInfo( string_view targetName, string_view filePath, int line ):
+DataContext::ToStringInfo::ToStringInfo( string const & targetName, string const & filePath, size_t line ):
   m_targetName( targetName ),
   m_filePath( filePath ),
   m_line( line )
 {}
-DataContext::ToStringInfo::ToStringInfo( string_view targetName ):
-  m_targetName( targetName ),
-  m_filePath(),
-  m_line( xmlWrapper::xmlDocument::npos )
+DataContext::ToStringInfo::ToStringInfo( string const & targetName ):
+  DataContext::ToStringInfo::ToStringInfo( targetName, "", xmlWrapper::xmlDocument::npos )
 {}
 bool DataContext::ToStringInfo::hasInputFileInfo() const
 { return !m_filePath.empty() && m_line != xmlWrapper::xmlDocument::npos; }

@@ -26,7 +26,7 @@ VTKVTMWriter::VTKVTMWriter( string filePath )
   : m_filePath( std::move( filePath ) )
 {
   // Declaration of XML version
-  auto declarationNode = m_document.appendChild( xmlWrapper::xmlTypes::node_declaration );
+  auto declarationNode = m_document.appendChild( xmlWrapper::xmlNodeType::node_declaration );
   declarationNode.append_attribute( "version" ) = "1.0";
 
   // Declaration of the node VTKFile

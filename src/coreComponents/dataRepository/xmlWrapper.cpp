@@ -250,7 +250,7 @@ xmlResult xmlDocument::loadFile( string const & path, bool loadNodeFileInfo )
 xmlNode xmlDocument::appendChild( string const & name )
 { return pugiDocument.append_child( name.c_str() ); }
 
-xmlNode xmlDocument::appendChild( xmlTypes type )
+xmlNode xmlDocument::appendChild( xmlNodeType type )
 { return pugiDocument.append_child( type ); }
 
 bool xmlDocument::saveFile( string const & path ) const

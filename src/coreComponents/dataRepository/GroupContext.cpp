@@ -41,11 +41,11 @@ string GroupContext::toString() const
   }
 
   std::ostringstream path;
-  auto lastFileInfo = &*std::find_if( parentsInfo.begin(), parentsInfo.end(),
-                                      []( ToStringInfo const & i ) { return i.hasInputFileInfo(); } );
+  auto lastFileInfo = std::find_if( parentsInfo.begin(), parentsInfo.end(),
+                                    []( ToStringInfo const & i ) { return i.hasInputFileInfo(); } );
   for( auto info = parentsInfo.rbegin(); info != parentsInfo.rend(); ++info )
   {
-    path << ( &*info != lastFileInfo ?
+    path << ( info.base() != lastFileInfo ?
               GEOS_FMT( "/{}", info->m_targetName ) :
               GEOS_FMT( "/{}({},l.{})", info->m_targetName, info->m_filePath, info->m_line ) );
   }

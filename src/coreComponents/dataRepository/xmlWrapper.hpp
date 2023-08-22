@@ -61,7 +61,7 @@ using xmlNode = pugi::xml_node;
 using xmlAttribute = pugi::xml_attribute;
 
 /// Alias for the type variant of an xml node.
-using xmlTypes = pugi::xml_node_type;
+using xmlNodeType = pugi::xml_node_type;
 
 class xmlDocument;
 
@@ -227,7 +227,7 @@ public:
    * As an exemple, node_declaration is useful to add the "<?xml ?>" node.
    * @return the added node
    */
-  xmlNode appendChild( xmlTypes type = xmlTypes::node_element );
+  xmlNode appendChild( xmlNodeType type = xmlNodeType::node_element );
 
   /**
    * @brief Save the XML to a file
