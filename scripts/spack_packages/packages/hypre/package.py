@@ -28,7 +28,7 @@ class Hypre(AutotoolsPackage, CudaPackage, ROCmPackage):
     test_requires_compiler = True
 
     # GEOSX EDIT START
-    version('2.28.0geosx', commit='461b6eee60b05ee735ad54a66878bf44be31b5dc')
+    version("2.29.0", sha256="98b72115407a0e24dbaac70eccae0da3465f8f999318b2c9241631133f42d511")
     # GEOSX EDIT END
 
     version("develop", branch="master")

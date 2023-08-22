@@ -19,7 +19,7 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
     maintainers("davidbeckingsale")
 
     # GEOS_EDIT_START
-    version("2023.06.0", branch="v2023.06.0", submodules=False)
+    version("2023.06.1", tag="v2023.06.1", submodules=False)
     # GEOS_EDIT_END
 
     version("develop", branch="develop", submodules=False)

@@ -92,7 +92,7 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # Performance portability
     #
-    depends_on('raja@2023.06.0 +openmp~examples~exercises~shared')
+    depends_on('raja@2023.06.1 +openmp~examples~exercises~shared')
 
     depends_on('umpire@2023.06.0 +c+openmp~examples+fortran~device_alloc~shared')
 
@@ -118,7 +118,7 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('conduit@0.8.2~test~fortran~hdf5_compat')
 
     depends_on('adiak@0.2.2', when='+caliper')
-    depends_on('caliper@2.8.0~gotcha~sampler~libunwind~libdw', when='+caliper')
+    depends_on('caliper@2.10.0~gotcha~sampler~libunwind~libdw', when='+caliper')
 
     depends_on('pugixml')
 
@@ -134,7 +134,7 @@ class Geosx(CMakePackage, CudaPackage):
 
     depends_on('superlu-dist@6.3.1geosx+int64+openmp')
 
-    depends_on('scotch@6.0.9 +mpi +int64', when='+scotch')
+    depends_on('scotch@7.0.3 +mpi +int64', when='+scotch')
 
     depends_on('suite-sparse@5.10.1+openmp')
 
@@ -142,9 +142,9 @@ class Geosx(CMakePackage, CudaPackage):
     trilinos_packages = '+aztec+stratimikos~amesos2~anasazi~belos~ifpack2~muelu~sacado+thyra'
     depends_on('trilinos@13.4.1 ' + trilinos_build_options + trilinos_packages, when='+trilinos')
 
-    depends_on('hypre@2.28.0geosx+superlu-dist+mixedint+mpi+openmp', when='+hypre~cuda')
+    depends_on('hypre@2.29.0+superlu-dist+mixedint+mpi+openmp', when='+hypre~cuda')
 
-    depends_on('hypre@2.28.0geosx+cuda+superlu-dist+mixedint+mpi+openmp+umpire+unified-memory', when='+hypre+cuda')
+    depends_on('hypre@2.29.0+cuda+superlu-dist+mixedint+mpi+openmp+umpire+unified-memory', when='+hypre+cuda')
     with when('+cuda'):
         for sm_ in CudaPackage.cuda_arch_values:
             depends_on('hypre+cuda cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))
