@@ -18,7 +18,7 @@
 
 #include "Group.hpp"
 #include "RestartFlags.hpp"
-#include "GroupContext.hpp"
+#include "WrapperContext.hpp"
 
 
 namespace geos

@@ -56,19 +56,5 @@ DataContext::ToStringInfo GroupContext::getToStringInfo() const
 { return ToStringInfo( m_targetName ); }
 
 
-WrapperContext::WrapperContext( WrapperBase & wrapper ):
-  GroupContext( wrapper.getParent(), wrapper.getParent().getName() + '/' + wrapper.getName() ),
-  m_typeName( wrapper.getName() )
-{}
-
-string WrapperContext::toString() const
-{
-  ToStringInfo const info = m_group.getDataContext().getToStringInfo();
-  return info.hasInputFileInfo() ?
-         GEOS_FMT( "{} ({}, l.{})", m_targetName, info.m_filePath, info.m_line ) :
-         GEOS_FMT( "{}/{}", m_group.getDataContext().toString(), m_typeName );
-}
-
-
 } /* namespace dataRepository */
 } /* namespace geos */

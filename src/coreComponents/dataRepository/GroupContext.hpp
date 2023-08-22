@@ -20,7 +20,6 @@
 #define GEOS_DATAREPOSITORY_GROUPCONTEXT_HPP_
 
 #include "DataContext.hpp"
-#include "WrapperBase.hpp"
 #include "Group.hpp"
 
 namespace geos
@@ -72,33 +71,6 @@ private:
    * @copydoc DataContext::getToStringInfo()
    */
   ToStringInfo getToStringInfo() const override;
-};
-
-/**
- * @class WrapperContext
- * 
- * Dedicated implementation of GroupContext for Wrapper.
- * See DataContext class for more info.
- */
-class WrapperContext final : public GroupContext
-{
-public:
-
-  /**
-   * @brief Construct a new WrapperContext object
-   * @param wrapper the target Wrapper object
-   */
-  WrapperContext( WrapperBase & wrapper );
-
-private:
-
-  string const m_typeName;
-
-  /**
-   * @return the parent group DataContext followed by the wrapper name.
-   */
-  string toString() const override;
-
 };
 
 
