@@ -737,7 +737,6 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
     arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
 
-    arrayView1d< real64 > const particleDensity = subRegion.getField< fields::mpm::particleDensity >();
     arrayView1d< real64 > const particleMass = subRegion.getField< fields::mpm::particleMass >();
     arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
     arrayView3d< real64 > const particleFDot = subRegion.getField< fields::mpm::particleFDot >();
