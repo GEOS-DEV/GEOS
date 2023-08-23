@@ -116,7 +116,7 @@ protected:
 };
 
 /**
- * @class DataContext
+ * @class DataFileContext
  *
  * Stores information to retrieve where a target object has been declared in the input source
  * file (e.g. XML).

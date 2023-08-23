@@ -200,7 +200,7 @@ public:
    * @brief Load document from zero-terminated string. No encoding conversions are applied.
    * Free any previously loaded xml tree.
    * Wrapper of pugi::xml_document::loadBuffer() method.
-   * @param contents the string containing the document content
+   * @param content the string containing the document content
    * @param loadNodeFileInfo Load the node source file info, allowing getNodePosition() to work.
    * @return an xmlResult object representing the parsing resulting status.
    */
