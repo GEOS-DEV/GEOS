@@ -149,7 +149,7 @@ TEST( testDispatch, DispatchVirtualTypePairs )
   std::unique_ptr< A > b = std::make_unique< B >();
   std::unique_ptr< A > c = std::make_unique< C >();
 
-  testDispatch< types::TypeList< B, C > >( Types{}, *c, *c );
+  testDispatch< types::TypeList< B, C > >( Types{}, *b, *c );
 }
 
 TEST( testDispatch, DispatchVirtualTypeTriplets )
@@ -159,10 +159,6 @@ TEST( testDispatch, DispatchVirtualTypeTriplets )
   using Types = types::TypeList< types::TypeList< B, B, B >,
                                  types::TypeList< B, C, C >,
                                  types::TypeList< B, C, D > >;
-
-
-  std::cout << LvArray::system::demangle( typeid(types::TypeList< C, B, B >).name() ) << std::endl;
-  std::cout << LvArray::system::demangle( typeid(types::TypeList< B, B, B >).name() ) << std::endl;
 
   std::unique_ptr< A > b = std::make_unique< B >();
   std::unique_ptr< A > c = std::make_unique< C >();

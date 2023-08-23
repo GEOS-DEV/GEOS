@@ -159,6 +159,9 @@ using Increment = typename IncrementImpl< T, N >::type;
 template< typename ... Ts >
 using TypeList = camp::list< Ts... >;
 
+/**
+ * @brief Construct a list of list type.
+ */
 template< typename LIST >
 using ListofTypeList = internal::Apply< camp::list, LIST >;
 
@@ -238,12 +241,22 @@ struct tuple_hash
   }
 };
 
+/**
+ * @brief Function to create a tuple
+ * @tparam Ts tuple types
+ */
 template< typename ... Ts >
 auto createTypeIndexTuple( TypeList< Ts... > )
 {
   return std::make_tuple( std::type_index( typeid(Ts))... );
 }
 
+/**
+ * @brief Get the static/singleton instance of the type map
+ * @tparam LIST The
+ * @tparam Is integer sequence
+ * @return reference to the static map
+ */
 template< typename LIST, std::size_t ... Is >
 auto const & getTypeMap( LIST, std::integer_sequence< std::size_t, Is... > )
 {
@@ -252,22 +265,22 @@ auto const & getTypeMap( LIST, std::integer_sequence< std::size_t, Is... > )
   return result;
 }
 
-
-template< typename ... Ts >
-string listToString( TypeList< Ts... > )
+/**
+ * @brief Function to output string containing the types of a TypeList
+ * @tparam Ts The types contained in the TypeList
+ * @param pre string to prepend the printer with
+ * @param post string to postpend the printer with
+ * @param printer a function that prints the type Ts
+ * @return A string containing the types in the TypeList
+ */
+template< typename ... Ts, typename P >
+string listToString( TypeList< Ts... >,
+                     string const & pre,
+                     string const & post,
+                     P printer )
 {
-  string result = ( ( "\n  " + LvArray::system::demangle( typeid(Ts).name() ) ) + ... );
-  return result;
+  return ( ( pre + printer( Ts{} ) + post ) + ... );
 }
-
-template< typename ... Ts >
-string listOfListsToString( TypeList< Ts... > )
-{
-  string result = ( ( "\n( " + listToString( Ts{} ) + "\n)") + ... );
-  return result;
-}
-
-
 
 HAS_MEMBER_FUNCTION_NO_RTYPE( getTypeId, );
 
@@ -347,10 +360,13 @@ bool dispatch( LIST const combinations,
 
   if( !success )
   {
+    auto typePrinter = []( auto t ){ return LvArray::system::demangle( typeid(t).name() ); };
+    auto typeListPrinter = [typePrinter]( auto tlist ){ return internal::listToString( tlist, "\n  ", "", typePrinter ); };
+
     GEOS_ERROR( "Types were not dispatched. The types of the input objects are:\n" <<
                 "( "<<(  ( "\n  " + LvArray::system::demangle( internal::typeIdWrapper( objects ).name() ) ) + ... )<<" \n)\n"<<
                 "and the dispatch options are:\n"<<
-                internal::listOfListsToString( combinations ) );
+                internal::listToString( combinations, "\n(", "\n)", typeListPrinter ) );
   }
   return success;
 }
