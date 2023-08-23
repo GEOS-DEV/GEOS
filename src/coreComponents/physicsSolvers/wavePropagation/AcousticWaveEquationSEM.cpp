@@ -331,6 +331,9 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                            X32,
                                                                            elemsToNodes,
                                                                            mass );
+
+        real64 globaldt = MpiWrapper::min(dtCompute);
+
       } );
     } );
   } );
