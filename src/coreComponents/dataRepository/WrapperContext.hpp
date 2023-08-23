@@ -30,7 +30,7 @@ namespace dataRepository
 
 /**
  * @class WrapperContext
- * 
+ *
  * Dedicated implementation of GroupContext for Wrapper.
  * See DataContext class for more info.
  */

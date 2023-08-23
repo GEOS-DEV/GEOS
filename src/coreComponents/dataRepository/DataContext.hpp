@@ -32,7 +32,7 @@ namespace dataRepository
 
 /**
  * @class DataContext
- * 
+ *
  * DataContext is an abstract class storing contextual information on an object:
  * - Either its line position in a file (if applicable, implementation in DataFileContext),
  * - or its location in the data hierarchy (implementation in GroupContext and WrapperContext).
@@ -115,10 +115,9 @@ protected:
 
 };
 
-/// 
 /**
  * @class DataContext
- * 
+ *
  * Stores information to retrieve where a target object has been declared in the input source
  * file (e.g. XML).
  */
@@ -225,7 +224,7 @@ struct GEOS_FMT_NS::formatter< geos::dataRepository::DataContext >
    * @return iterator to the output buffer (leaved unchanged)
    */
   auto parse( format_parse_context & ctx )
-  { 
+  {
     GEOS_ERROR( "DataContext parsing is not implemented." );
     return ctx.begin();
   }

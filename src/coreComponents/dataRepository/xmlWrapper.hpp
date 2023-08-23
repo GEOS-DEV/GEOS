@@ -67,7 +67,7 @@ class xmlDocument;
 
 /**
  * @struct xmlAttributePos
- * 
+ *
  * Stores the source file path, and position in the file of a xml attribute.
  */
 struct xmlAttributePos
@@ -104,7 +104,7 @@ struct xmlAttributePos
 
 /**
  * @struct xmlNodePos
- * 
+ *
  * Used to retrieve the position of dataRepository::Wrapper in XML
  */
 struct xmlNodePos : xmlAttributePos
@@ -135,7 +135,7 @@ struct xmlNodePos : xmlAttributePos
 
 /**
  * @class xmlDocument
- * 
+ *
  * Wrapper class for the type of xml document.
  * This class exists to intercept file / string loading methods, and to keep the loaded buffers,
  * in order to retrieve the source file and line of nodes and attributes.

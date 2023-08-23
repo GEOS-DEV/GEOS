@@ -30,7 +30,7 @@ namespace dataRepository
 
 /**
  * @class GroupContext
- * 
+ *
  * Helps to know where a Group is in the hierarchy.
  * See DataContext class for more info.
  */
