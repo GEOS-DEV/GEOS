@@ -402,8 +402,8 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
 
     // Return to yield surface requires iterative solution
     // Implemented fixed points, however a newton solver may be more efficient and applicable
-    real64 tol = 1e-10;
-    int maxEvals = 100;
+    real64 tol = 1e-10; // CC: need to experiment with these for the best options
+    int maxEvals = 100; // Same comment as previously line
 
     real64 yieldStrength = m_yieldStrength[k];
     real64 oldYieldStrength = yieldStrength;
