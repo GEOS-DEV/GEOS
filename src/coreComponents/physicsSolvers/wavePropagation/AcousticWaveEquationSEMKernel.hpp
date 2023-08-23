@@ -1055,7 +1055,7 @@ public:
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
-    m_X( nodeManager.referencePosition() ),
+    m_X( nodeManager.getField< fields::referencePosition32 >() ),
     m_p_n( nodeManager.getField< fields::Pressure_n >() ),
     m_p_prime_n( nodeManager.getField< fields::Pressure_prime_n >() ),
     m_stiffnessVector( nodeManager.getField< fields::StiffnessVector >() ),
@@ -1131,7 +1131,7 @@ public:
 
 protected:
   /// The array containing the nodal position array.
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const m_X;
 
   /// The array containing the nodal pressure array.
   arrayView1d< real32 const > const m_p_n;
@@ -1222,7 +1222,7 @@ public:
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
-    m_X( nodeManager.referencePosition() ),
+    m_X( nodeManager.getField< fields::referencePosition32 >() ),
     m_p_n( nodeManager.getField< fields::Pressure_n >() ),
     m_p_prime_n( nodeManager.getField< fields::Pressure_prime_n >() ),
     m_stiffnessVector( nodeManager.getField< fields::StiffnessVector >() ),
@@ -1302,7 +1302,7 @@ public:
 
 protected:
   /// The array containing the nodal position array.
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const m_X;
 
   /// The array containing the nodal pressure array.
   arrayView1d< real32 const > const m_p_n;
@@ -1403,7 +1403,7 @@ public:
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
-    m_X( nodeManager.referencePosition() ),
+    m_X( nodeManager.getField< fields::referencePosition32 >() ),
     m_p_n( nodeManager.getField< fields::Pressure_n >() ),
     m_p_prime_n( nodeManager.getField< fields::Pressure_prime_n >() ),
     m_stiffnessVector( nodeManager.getField< fields::StiffnessVector >() ),
@@ -1484,7 +1484,7 @@ public:
 
 protected:
   /// The array containing the nodal position array.
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const m_X;
 
   /// The array containing the nodal pressure array.
   arrayView1d< real32 const > const m_p_n;
