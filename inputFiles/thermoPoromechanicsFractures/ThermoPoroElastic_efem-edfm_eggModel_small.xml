@@ -6,15 +6,17 @@
     <SinglePhasePoromechanicsEmbeddedFractures
       name="poroSolver"
       targetRegions="{ Reservoir, Overburden, Underburden, Sideburden, Fracture }"
-      initialDt="1e-3"
+      initialDt="1000"
       fracturesSolverName="fractureMechSolver"
       flowSolverName="flowSolver"
       solidSolverName="matrixMechSolver"
-      logLevel="1">
+      logLevel="1"
+      isThermal="1">
       <NonlinearSolverParameters
         maxTimeStepCuts="1"
         newtonTol="1e-03"
-        newtonMaxIter="10"/>
+        newtonMaxIter="10"
+        maxAllowedResidualNorm="1e+15"/>
       <LinearSolverParameters
         directParallel="1"
         solverType="direct"
@@ -45,20 +47,21 @@
     <SinglePhaseFVM
       name="flowSolver"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Reservoir, Overburden, Underburden, Sideburden, Fracture }">
+      targetRegions="{ Reservoir, Overburden, Underburden, Sideburden, Fracture }"
+      isThermal="1">
       <NonlinearSolverParameters
         maxTimeStepCuts="1"
         newtonTol="1e-03"
         newtonMaxIter="10"/>
       <LinearSolverParameters
-        directParallel="0"/>
+        directParallel="1"/>
     </SinglePhaseFVM>
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"      
       targetRegions="{ Reservoir, Overburden, Underburden, Sideburden, Fracture }"
+      targetObjects="{ Fracture1, Fracture2, Fracture3, Fracture4, Fracture5 }"
       fractureRegion="Fracture"
-      targetObjects="{ FracturePlane1, FracturePlane2, FracturePlane3, FracturePlane4, FracturePlane5 }"
       logLevel="1"
       discretization="FE1"
       mpiCommOrder="1"/>
@@ -67,7 +70,7 @@
   <Mesh>
     <VTKMesh
       name="mesh"
-      file="../../../../GEOSXDATA/DataSets/Egg/egg_withBurdens.vts"
+      file="../../../GEOSXDATA/DataSets/Egg/egg_withBurdens_small.vts"
       regionAttribute="elementRegionMarker"
       fieldsToImport="{ PERM }"
       fieldNamesInGEOSX="{ rockPermeability_permeability }"/>
@@ -144,7 +147,7 @@
   </Geometry>
 
   <Events
-    maxTime="1000">
+    maxTime="1500000">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGenerator"/>
@@ -155,7 +158,6 @@
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="1000"
       target="/Solvers/poroSolver"/>
 
     <PeriodicEvent
@@ -181,27 +183,27 @@
     <CellElementRegion
       name="Reservoir"
       cellBlocks="{ 1_hexahedra }"
-      materialList="{ porousRock, water }"/>
+      materialList="{ porousRock, water, thermalCond }"/>
 
     <CellElementRegion
       name="Overburden"
       cellBlocks="{ 3_hexahedra }"
-      materialList="{ porousRock, water }"/> 
+      materialList="{ porousRock, water, thermalCond }"/> 
     
     <CellElementRegion
       name="Underburden"
       cellBlocks="{ 2_hexahedra }"
-      materialList="{ porousRock, water }"/>
+      materialList="{ porousRock, water, thermalCond }"/>
       
     <CellElementRegion
       name="Sideburden"
       cellBlocks="{ 0_hexahedra }"
-      materialList="{ porousRock, water }"/>  
+      materialList="{ porousRock, water, thermalCond }"/>  
 
     <SurfaceElementRegion
       name="Fracture"
       subRegionType="embeddedElement"
-      materialList="{ water, fractureFilling, fractureContact }"
+      materialList="{ water, fractureFilling, fractureContact, thermalCond }"
       defaultAperture="1e-3"/>
   </ElementRegions>
 
@@ -210,7 +212,8 @@
       name="porousRock"
       solidModelName="rock"
       porosityModelName="rockPorosity"
-      permeabilityModelName="rockPermeability"/>
+      permeabilityModelName="rockPermeability"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
 
     <ElasticIsotropic
       name="rock"
@@ -222,14 +225,27 @@
       name="rockPermeability"
       permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
 
-    <CompressibleSinglePhaseFluid
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      volumetricHeatCapacity="1.672e5"
+      referenceTemperature="0.0"
+      referenceInternalEnergy="0.0"/>  
+
+    <ThermalCompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
-      defaultViscosity="1.0e-3"
+      defaultViscosity="1e-3"
       referencePressure="1e5"
+      referenceTemperature="0.0"
       compressibility="1.0e-10"
-      referenceViscosity="1e-3"
-      viscosibility="0.0"/>
+      thermalExpansionCoeff="0.0"
+      viscosibility="0.0"
+      volumetricHeatCapacity="1.672e2"
+      referenceInternalEnergy="0.001"/> 
+
+    <SinglePhaseConstantThermalConductivity
+      name="thermalCond"
+      thermalConductivityComponents="{ 10, 10, 10 }"/>   
 
     <BiotPorosity
       name="rockPorosity"
@@ -240,7 +256,8 @@
       name="fractureFilling"
       solidModelName="nullSolid"
       porosityModelName="fracturePorosity"
-      permeabilityModelName="fracturePerm"/>
+      permeabilityModelName="fracturePerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
 
     <NullModel
       name="nullSolid"/>
@@ -307,6 +324,13 @@
       objectPath="ElementRegions/Fracture/FractureSubRegion"
       fieldName="pressure"
       scale="1.0e6"/>
+
+    <FieldSpecification
+      name="initialTemperatureFracture"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="temperature"
+      scale="100"/>  
 
     <FieldSpecification
       name="xConstraint"

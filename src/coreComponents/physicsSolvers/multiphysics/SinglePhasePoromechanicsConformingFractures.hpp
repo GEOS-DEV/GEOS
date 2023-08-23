@@ -267,7 +267,7 @@ real64 SinglePhasePoromechanicsConformingFractures::assemblyLaunch( MeshLevel & 
                                 std::forward< PARAMS >( params )... );
 
   return finiteElement::
-           regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+           regionBasedKernelApplication< parallelDevicePolicy< >,
                                          CONSTITUTIVE_BASE,
                                          CellElementSubRegion >( mesh,
                                                                  regionNames,

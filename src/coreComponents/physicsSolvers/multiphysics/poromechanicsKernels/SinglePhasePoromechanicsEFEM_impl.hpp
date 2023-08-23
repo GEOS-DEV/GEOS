@@ -205,9 +205,11 @@ quadraturePointKernel( localIndex const k,
   //  a 3 x 6 because it is more convenient for construction purposes (reduces number of local var).
   real64 compMatrix[3][6]{}, strainMatrix[6][nUdof]{}, eqMatrix[3][6]{};
   real64 matBD[nUdof][6]{}, matED[3][6]{};
-  real64 const biotCoefficient = 1.0;
-
+  real64 biotCoefficient{};
   int Heaviside[ numNodesPerElem ]{};
+
+  m_constitutiveUpdate.getBiotCoefficient( k, biotCoefficient );
+
 
   // TODO: asking for the stiffness here will only work for elastic models.  most other models
   //       need to know the strain increment to compute the current stiffness value.
@@ -257,7 +259,9 @@ quadraturePointKernel( localIndex const k,
   LvArray::tensorOps::scaledAdd< 3, 3 >( stack.localKww, Kww_gauss, -detJ );
   LvArray::tensorOps::scaledAdd< 3, nUdof >( stack.localKwu, Kwu_gauss, -detJ );
   LvArray::tensorOps::scaledAdd< nUdof, 3 >( stack.localKuw, Kuw_gauss, -detJ );
-  // No neg coz the effective stress is total stress - porePressure
+
+  /// TODO: should this be negative???
+  // I had No neg coz the total stress = effective stress - porePressure
   // and all signs are flipped here.
   LvArray::tensorOps::scaledAdd< 3 >( stack.localKwpm, Kwpm_gauss, detJ*biotCoefficient );
 
