@@ -216,7 +216,7 @@ struct PrecomputeSourceAndReceiverKernelForModifiedEquation
   launch( localIndex const size,
           localIndex const numNodesPerElem,
           localIndex const numFacesPerElem,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView1d< integer const > const elemGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
