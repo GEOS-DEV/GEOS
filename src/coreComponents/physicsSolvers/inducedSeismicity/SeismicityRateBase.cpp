@@ -222,7 +222,7 @@ void SeismicityRateBase::initializeFaultTraction(real64 const time_n, integer co
 }
 
 void SeismicityRateBase::constructFaultStressProjectionTensors( 
-  real64 faultNormalProjectionTensor[6], real64 faultShearProjectionTensor[6] )
+  real64 (&faultNormalProjectionTensor)[6], real64  (&faultShearProjectionTensor)[6] )
 {
    faultNormalProjectionTensor[0] = m_faultNormalDirection[0]*m_faultNormalDirection[0];
    faultNormalProjectionTensor[1] = m_faultNormalDirection[1]*m_faultNormalDirection[1];

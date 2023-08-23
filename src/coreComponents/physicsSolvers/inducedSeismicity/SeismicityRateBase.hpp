@@ -71,7 +71,8 @@ protected:
   */
   void initializeFaultTraction( real64 const time_n, integer const cycleNumber, DomainPartition & domain );
 
-  void constructFaultStressProjectionTensors(real64 faultNormalProjectionTensor[6], real64 faultShearProjectionTensor[6]);
+  void constructFaultStressProjectionTensors( 
+    real64 (&faultNormalProjectionTensor)[6], real64 (&faultShearProjectionTensor)[6]);
 
   virtual void postProcessInput() override;
 
