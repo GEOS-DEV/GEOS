@@ -192,16 +192,16 @@ void calculateCO2Solubility( string const & functionName,
                           - logF( T, P, V_r )
                           + 2*Par( T+T_K_f, P, lambda ) * salinity
                           + Par( T+T_K_f, P, zeta ) * salinity * salinity;
-      real const expLogK = exp( logK );
-
-      GEOS_WARNING_IF( expLogK <= 1e-10,
-                 GEOS_FMT( "CO2Solubility: exp(logK) = {} is too small (logK = {}, P = {}, T = {}, V_r = {}), resulting solubility value is {}",
-                           expLogK, logK, P, T, V_r, values[j*nPressures+i] ));
+      real64 const expLogK = exp( logK );
 
       // mole fraction of CO2 in vapor phase, equation (4) of Duan and Sun (2003)
-      real const Pw = PWater( T );
+      real64 const Pw = PWater( T );
       real64 const y_CO2 = (P - Pw)/P;
       values[j*nPressures+i] = y_CO2 * P / expLogK;
+
+      GEOS_WARNING_IF( expLogK <= 1e-10,
+                       GEOS_FMT( "CO2Solubility: exp(logK) = {} is too small (logK = {}, P = {}, T = {}, V_r = {}), resulting solubility value is {}",
+                                 expLogK, logK, P, T, V_r, values[j*nPressures+i] ));
 
       if( values[j*nPressures+i] < 0 )
       {
