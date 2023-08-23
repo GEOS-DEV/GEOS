@@ -58,6 +58,19 @@ public:
   };
 
   /**
+   * @enum UpdateMethodOption
+   *
+   * The options for time integration
+   */
+  enum class UpdateMethodOption : integer
+  {
+    FLIP,      //!< FLIP
+    PIC,       //!< PIC
+    XPIC,      //!< XPIC
+    FMPM       //!< FMPM
+  };
+
+  /**
    * @enum BoundaryConditionOption
    *
    * The options for essential boundary conditions
@@ -66,6 +79,19 @@ public:
   {
     OUTFLOW,    //!<Outflow
     SYMMETRY    //!<Symmetry
+  };
+
+    /**
+   * @enum EventOption
+   *
+   * The options for essential boundary conditions
+   */
+  enum struct EventOption : integer
+  {
+    ANNEAL,                          //!Anneal
+    HEAL,                            //!Heal
+    MATERIAL_SWAP,                   //!MaterialSwap
+    INSERT_PERIODIC_CONTACT_SURFACES //!Insert Periodic Contact Surfaces
   };
 
   /**
@@ -192,6 +218,13 @@ public:
                    ParticleManager & particleManager,
                    SpatialPartition & partition );
 
+  void triggerEvents( const real64 dt,
+                      const real64 time_n, 
+                      ParticleManager & particleManager,
+                      SpatialPartition & partition );
+
+  void performMaterialSwap( ParticleManager & particleManager );
+
   void resizeGrid( SpatialPartition & partition,
                    NodeManager & nodeManager,
                    real64 const dt );
@@ -309,6 +342,10 @@ public:
 
   void boundaryConditionUpdate( real64 dt, real64 time_n );
 
+  // void computeXPIC(real64 dt,
+  //                  ParticleManager & particleManager,
+  //                  NodeManager & nodeManager);
+
   void particleToGrid( ParticleManager & particleManager,
                        NodeManager & nodeManager );
 
@@ -327,6 +364,22 @@ public:
                        ParticleManager & particleManager,
                        NodeManager & nodeManager );
 
+  void performFLIPUpdate( real64 dt,
+                          ParticleManager & particleManager,
+                          NodeManager & nodeManager );
+
+  void performPICUpdate( real64 dt,
+                         ParticleManager & particleManager,
+                         NodeManager & nodeManager );
+
+  void performXPICUpdate( real64 dt,
+                          ParticleManager & particleManager,
+                          NodeManager & nodeManager );
+
+  void performFMPMUpdate( real64 dt,
+                          ParticleManager & particleManager,
+                          NodeManager & nodeManager );
+
   void updateSolverDependencies( ParticleManager & particleManager );
 
   real64 getStableTimeStep( ParticleManager & particleManager );
@@ -338,8 +391,6 @@ public:
   void computeSurfaceFlags( ParticleManager & particleManager );
 
   void computeSphF( ParticleManager & particleManager );
-
-  void performMaterialSwap( ParticleManager & particleManager );
 
   // void directionalOverlapCorrection( real64 dt, ParticleManager & particleManager );
 
@@ -382,6 +433,9 @@ protected:
   std::vector< std::string > m_profilingLabels;
 
   TimeIntegrationOption m_timeIntegrationOption;
+  UpdateMethodOption m_updateMethod;
+  int m_updateOrder;
+
   MPI_iCommData m_iComm;
 
   int m_prescribedBcTable;
@@ -389,14 +443,23 @@ protected:
   array2d< real64 > m_bcTable;
 
   int m_prescribedBoundaryFTable;
-  Path m_fTablePath;
   int m_fTableInterpType;
   array2d< real64 > m_fTable;
   array1d< real64 > m_domainF;
   array1d< real64 > m_domainL;
 
+  int m_writePlot;
+  // int m_plotInterval;
+  int m_writeRestart;
+  // int m_restartInterval;
+
   int m_boxAverageHistory;
+  real64 m_boxAverageWriteInterval;
+  real64 m_nextBoxAverageWriteTime;
+
   int m_reactionHistory;
+  real64 m_reactionWriteInterval;
+  real64 m_nextReactionWriteTime;
 
   int m_needsNeighborList;
   real64 m_neighborRadius;
@@ -431,6 +494,15 @@ protected:
   real64 m_domainExtent[3];       // Length of each edge of global domain excluding buffer cells
   int m_nEl[3];                   // Number of elements in each grid direction including buffer and ghost cells
   array3d< int > m_ijkMap;        // Map from indices in each spatial dimension to local node ID
+
+  int m_useEvents;                   // Events flag
+  array2d< real64 > m_eventsTable;
+  array1d< SolidMechanicsMPM::EventOption > m_eventTypes;                  
+  array1d< real64 > m_eventTimes;
+  array1d< real64 > m_eventIntervals;
+  array1d< bool > m_eventComplete;
+
+  int m_surfaceHealing;
 
 private:
   struct BinKey
@@ -469,9 +541,21 @@ ENUM_STRINGS( SolidMechanicsMPM::TimeIntegrationOption,
               "ImplicitDynamic",
               "ExplicitDynamic" );
 
+ENUM_STRINGS( SolidMechanicsMPM::UpdateMethodOption,
+              "FLIP",
+              "PIC",
+              "XPIC",
+              "FMPM" );
+
 ENUM_STRINGS( SolidMechanicsMPM::BoundaryConditionOption,
               "Outflow",
               "Symmetry" );
+
+ENUM_STRINGS(SolidMechanicsMPM::EventOption,
+            "Anneal",
+            "Heal",
+            "MaterialSwap",
+            "InsertPeriodicContactSurfaces");
 
 //**********************************************************************************************************************
 //**********************************************************************************************************************
