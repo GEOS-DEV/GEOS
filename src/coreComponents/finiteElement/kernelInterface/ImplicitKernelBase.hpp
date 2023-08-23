@@ -79,6 +79,7 @@ public:
    * @param rankOffset dof index offset of current rank
    * @param inputMatrix Reference to the Jacobian matrix.
    * @param inputRhs Reference to the RHS vector.
+   * @param inputDt The timestep for the physics update.
    * @copydoc geos::finiteElement::KernelBase::KernelBase
    */
   ImplicitKernelBase( NodeManager const & nodeManager,
