@@ -215,6 +215,8 @@ protected:
   static real64 constexpr cTau = 1e-3;
   static real64 constexpr aSigma = 1e6;
   static real64 constexpr t_a = 1e6/3.171e-5;
+  static real64 constexpr iniSig = -100e6;
+  static real64 constexpr iniTau = 60e6;
 
   GeosxState state;
   DieterichSeismicityRate * propagator;
@@ -229,13 +231,7 @@ TEST_F( DieterichSeismicityRateIntegralSolverTest, solverTest )
   // run for 100 hours (100 steps)
   for( int i=0; i<100; i++ )
   {
-    // Initialize shear and normal stresses acting on fault (field variables in seismicity rate solver) 
-    // as specified in XML file
-    if ( i==0 )
-    {
-      propagator->initializeFaultTraction(0.0, i, domain); 
-    }
-    
+            
     // Loop through CellElementSubRegions of domain to pass the subRegion as input to seismciity rate solver
     domain.forMeshBodies( [&] ( MeshBody & meshBody )
     {
@@ -247,6 +243,26 @@ TEST_F( DieterichSeismicityRateIntegralSolverTest, solverTest )
           ElementRegionBase & elemRegion = elemManager.getRegion( er );
           elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const, CellElementSubRegion & subRegion )
           {
+
+            // Initialize shear and normal stresses acting on fault 
+            // (field variables in seismicity rate solver) as specified in XML file
+            if ( i==0 )
+            {
+              arrayView1d< real64 > const tempSigIni = subRegion.getField< inducedSeismicity::initialProjectedNormalTraction >();
+              tempSigIni.setValues< parallelHostPolicy >( iniSig );
+              arrayView1d< real64 > const tempSig_n = subRegion.getField< inducedSeismicity::projectedNormalTraction_n >();
+              tempSig_n.setValues< parallelHostPolicy >( iniSig );
+              arrayView1d< real64 > const tempSig = subRegion.getField< inducedSeismicity::projectedNormalTraction >();
+              tempSig.setValues< parallelHostPolicy >( iniSig );
+
+              arrayView1d< real64 > const tempTauIni = subRegion.getField< inducedSeismicity::initialProjectedShearTraction >();
+              tempTauIni.setValues< parallelHostPolicy >( iniTau );
+              arrayView1d< real64 > const tempTau_n = subRegion.getField< inducedSeismicity::projectedShearTraction_n >();
+              tempTau_n.setValues< parallelHostPolicy >( iniTau );
+              arrayView1d< real64 > const tempTau = subRegion.getField< inducedSeismicity::projectedShearTraction >();
+              tempTau.setValues< parallelHostPolicy >( iniTau );
+            }
+
             // Retrieve shear stress fields from seismicity rate solver, to be hard coded
             arrayView1d< real64 const > const tau_i = subRegion.getField< geos::fields::inducedSeismicity::initialProjectedShearTraction >();
             arrayView1d< real64 > const tau = subRegion.getField< geos::fields::inducedSeismicity::projectedShearTraction >();

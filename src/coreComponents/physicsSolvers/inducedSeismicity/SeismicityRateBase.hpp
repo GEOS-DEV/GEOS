@@ -53,6 +53,8 @@ public:
 
   virtual void initializePreSubGroups() override;
 
+protected:
+
   /**
    * @brief called in SolverStep after member stress solver is called to
    *  project the stress state to pre-defined fault orientations 
@@ -68,8 +70,6 @@ public:
    * @param domain The DomainPartition of the problem
   */
   void initializeFaultTraction( real64 const time_n, integer const cycleNumber, DomainPartition & domain );
-  
-protected:
 
   void constructFaultStressProjectionTensors(real64 faultNormalProjectionTensor[6], real64 faultShearProjectionTensor[6]);
 
