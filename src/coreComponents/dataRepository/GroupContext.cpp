@@ -45,7 +45,7 @@ string GroupContext::toString() const
                                     []( ToStringInfo const & i ) { return i.hasInputFileInfo(); } );
   for( auto info = parentsInfo.rbegin(); info != parentsInfo.rend(); ++info )
   {
-    path << ( info.base() != lastFileInfo ?
+    path << ( &*info != &*lastFileInfo ?
               GEOS_FMT( "/{}", info->m_targetName ) :
               GEOS_FMT( "/{}({},l.{})", info->m_targetName, info->m_filePath, info->m_line ) );
   }
