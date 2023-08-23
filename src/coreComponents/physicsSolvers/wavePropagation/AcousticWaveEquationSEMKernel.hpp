@@ -60,7 +60,7 @@ struct PrecomputeSourceAndReceiverKernel
   launch( localIndex const size,
           localIndex const numNodesPerElem,
           localIndex const numFacesPerElem,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView1d< integer const > const elemGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
@@ -361,7 +361,7 @@ struct MassMatrixKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView1d< real32 const > const velocity,
           arrayView1d< real32 > const mass )
@@ -419,7 +419,7 @@ struct DampingMatrixKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const > const facesToElems,
           ArrayOfArraysView< localIndex const > const facesToNodes,
           arrayView1d< integer const > const facesDomainBoundaryIndicator,
@@ -481,7 +481,7 @@ struct PMLKernelHelper
    */
   GEOS_HOST_DEVICE
   inline
-  static void computeDampingProfilePML( real64 const (&xLocal)[3],
+  static void computeDampingProfilePML( real32 const (&xLocal)[3],
                                         real32 const (&xMin)[3],
                                         real32 const (&xMax)[3],
                                         real32 const (&dMin)[3],
@@ -561,7 +561,7 @@ struct PMLKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( SortedArrayView< localIndex const > const targetSet,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst,
           arrayView1d< real32 const > const velocity,
           arrayView1d< real32 const > const p_n,
@@ -590,6 +590,7 @@ struct PMLKernel
 
       /// coordinates of the element nodes
       real64 xLocal[ numNodesPerElem ][ 3 ];
+      real32 xLocal32[ numNodesPerElem ][ 3 ];
 
       /// local arrays to store the pressure at all nodes and its gradient at a given node
       real64 pressure[ numNodesPerElem ];
@@ -614,6 +615,7 @@ struct PMLKernel
         for( int j=0; j<3; ++j )
         {
           xLocal[i][j] =  X[elemToNodesViewConst[k][i]][j];
+          xLocal32[i][j] =  X[elemToNodesViewConst[k][i]][j];
           auxV[j][i] = v_n[elemToNodesViewConst[k][i]][j];
         }
       }
@@ -641,7 +643,7 @@ struct PMLKernel
 
         /// compute the PML damping profile
         PMLKernelHelper::computeDampingProfilePML(
-          xLocal[i],
+          xLocal32[i],
           xMin,
           xMax,
           dMin,
@@ -707,7 +709,7 @@ struct waveSpeedPMLKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( SortedArrayView< localIndex const > const targetSet,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst,
           arrayView1d< real32 const > const velocity,
           real32 const (&xMin)[3],
@@ -891,7 +893,7 @@ public:
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
-    m_X( nodeManager.referencePosition() ),
+    m_X( nodeManager.getField< fields::referencePosition32 >() ),
     m_p_n( nodeManager.getField< fields::Pressure_n >() ),
     m_stiffnessVector( nodeManager.getField< fields::StiffnessVector >() ),
     m_dt( dt )
@@ -965,7 +967,7 @@ public:
 
 protected:
   /// The array containing the nodal position array.
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const m_X;
 
   /// The array containing the nodal pressure array.
   arrayView1d< real32 const > const m_p_n;
