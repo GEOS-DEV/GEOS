@@ -339,8 +339,6 @@ public:
 
   void computeSphF( ParticleManager & particleManager );
 
-  void performMaterialSwap( ParticleManager & particleManager );
-
   // void directionalOverlapCorrection( real64 dt, ParticleManager & particleManager );
 
   int evaluateSeparabilityCriterion( localIndex const & A,

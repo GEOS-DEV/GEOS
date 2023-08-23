@@ -1472,19 +1472,6 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   }
 }
 
-void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager ){
-  sourceSubregionName = ;
-  destinationSubRegionName = ;
-
-  ParticleSubRegion & sourceSubregion = particleManager.getSubRegion< ParticleSubRegion >();
-  ParticleSubRegion & destinationSubregion = particleManager.getSubRegion< ParticleSubRegion >();
-  int regionSize = sourceSubregion.size();
-  
-  for(int p=0; ){
-
-  }
-}
-
 void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleManager,
                                                    NodeManager & nodeManager )
 {
