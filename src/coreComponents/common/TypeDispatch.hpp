@@ -252,8 +252,31 @@ auto const & getTypeMap( LIST, std::integer_sequence< std::size_t, Is... > )
   return result;
 }
 
+
+template< typename ... Ts >
+string listToString( TypeList< Ts... > )
+{
+  string result = ( ( "\n  " + LvArray::system::demangle( typeid(Ts).name() ) ) + ... );
+  return result;
+}
+
+template< typename ... Ts >
+string listOfListsToString( TypeList< Ts... > )
+{
+  string result = ( ( "\n( " + listToString( Ts{} ) + "\n)") + ... );
+  return result;
+}
+
+
+
 HAS_MEMBER_FUNCTION_NO_RTYPE( getTypeId, );
 
+/**
+ * @brief Function to return the typeid() of a type or a wrapped type.
+ * @tparam T the type of object or the wrapper
+ * @param[in] object The object or wrapped object
+ * @return the result of typeid()
+ */
 template< typename T >
 std::type_info const & typeIdWrapper( T const & object )
 {
@@ -320,18 +343,14 @@ bool dispatch( LIST const combinations,
 {
   bool const success = internal::dispatchViaTable( combinations,
                                                    std::forward< LAMBDA >( lambda ),
-//                                                   std::make_tuple( std::type_index( internal::typeIdWrapper(objects))... ) );
-                                                   std::make_tuple( std::type_index( typeid(objects))... ) );
+                                                   std::make_tuple( std::type_index( internal::typeIdWrapper( objects ))... ) );
 
   if( !success )
   {
-    std::ostringstream dispatchInput;
-    ( (dispatchInput<<"\n  "<<LvArray::system::demangle( internal::typeIdWrapper( objects ).name() ) ), ...);
-
-    GEOS_ERROR( "Type was not dispatched. The type is specified as:\n" <<
-                "( "<<dispatchInput.str()<<" \n)\n"<<
+    GEOS_ERROR( "Types were not dispatched. The types of the input objects are:\n" <<
+                "( "<<(  ( "\n  " + LvArray::system::demangle( internal::typeIdWrapper( objects ).name() ) ) + ... )<<" \n)\n"<<
                 "and the dispatch options are:\n"<<
-                LvArray::system::demangle( typeid(combinations).name() ) );
+                internal::listOfListsToString( combinations ) );
   }
   return success;
 }

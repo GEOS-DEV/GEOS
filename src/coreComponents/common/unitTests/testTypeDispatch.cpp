@@ -149,7 +149,7 @@ TEST( testDispatch, DispatchVirtualTypePairs )
   std::unique_ptr< A > b = std::make_unique< B >();
   std::unique_ptr< A > c = std::make_unique< C >();
 
-  testDispatch< types::TypeList< B, C > >( Types{}, *b, *c );
+  testDispatch< types::TypeList< B, C > >( Types{}, *c, *c );
 }
 
 TEST( testDispatch, DispatchVirtualTypeTriplets )
