@@ -316,7 +316,7 @@ void SolidMechanicsConformingFracturesVEM::computeTolerances( DomainPartition & 
         arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
         arrayView3d< real64 const > const &
         faceRotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
-        arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+        ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
 
         arrayView1d< real64 > const & normalTractionTolerance =
           subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() );
@@ -339,7 +339,7 @@ void SolidMechanicsConformingFracturesVEM::computeTolerances( DomainPartition & 
             real64 averageConstrainedModulus = 0.0;
             real64 averageBoxSize0 = 0.0;
 
-            for( localIndex i = 0; i < 2; ++i )
+            for( localIndex i = 0; i < elemsToFaces.sizeOfArray( kfe ); ++i )
             {
               localIndex const faceIndex = elemsToFaces[kfe][i];
               localIndex const er = faceToElemRegion[faceIndex][0];
@@ -485,12 +485,15 @@ void SolidMechanicsConformingFracturesVEM::computeFaceDisplacementJump( DomainPa
       {
         arrayView3d< real64 > const &
         rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
-        arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+        ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
         arrayView2d< real64 > const & dispJump = subRegion.getField< contact::dispJump >();
         arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
 
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
+          if( elemsToFaces.sizeOfArray( kfe ) != 2 )
+          { return; }
+
           // Contact constraints
           localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
 
@@ -821,17 +824,21 @@ void SolidMechanicsConformingFracturesVEM::computeRotationMatrices( DomainPartit
                                                               [&]( localIndex const,
                                                                    FaceElementSubRegion & subRegion )
     {
-      arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+      ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
 
       arrayView3d< real64 > const &
       rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
 
       forAll< parallelHostPolicy >( subRegion.size(), [=]( localIndex const kfe )
       {
+        if( elemsToFaces.sizeOfArray( kfe ) != 2 )
+        { return; }
+
         stackArray1d< real64, 3 > Nbar( 3 );
-        Nbar[ 0 ] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
-        Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
-        Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
+        localIndex const & f0 = elemsToFaces[kfe][0], f1 = elemsToFaces[kfe][1];
+        Nbar[ 0 ] = faceNormal[f0][0] - faceNormal[f1][0];
+        Nbar[ 1 ] = faceNormal[f0][1] - faceNormal[f1][1];
+        Nbar[ 2 ] = faceNormal[f0][2] - faceNormal[f1][2];
         LvArray::tensorOps::normalize< 3 >( Nbar );
 
         computationalGeometry::RotationMatrix_3D( Nbar.toSliceConst(), rotationMatrix[kfe] );
@@ -1209,10 +1216,12 @@ void SolidMechanicsConformingFracturesVEM::
     arrayView1d< globalIndex const > const & tracDofNumber = subRegion.getReference< globalIndex_array >( tracDofKey );
     arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( contact::traction::key() );
     arrayView3d< real64 const > const & rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
-    arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+    ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
 
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
     {
+      if( elemsToFaces.sizeOfArray( kfe ) != 2 )
+      { return; }
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
 
       globalIndex rowDOF[12]; // this needs to be changed when dealing with arbitrary element types
@@ -1324,7 +1333,8 @@ void SolidMechanicsConformingFracturesVEM::
     arrayView1d< real64 const > const & area = subRegion.getElementArea();
     arrayView3d< real64 const > const &
     rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
-    arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+    ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
+
     arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
     arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
     arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
@@ -1338,6 +1348,9 @@ void SolidMechanicsConformingFracturesVEM::
 
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
+        if( elemsToFaces.sizeOfArray( kfe ) != 2 )
+        { return; }
+
         if( ghostRank[kfe] < 0 )
         {
           localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
@@ -1593,8 +1606,8 @@ void SolidMechanicsConformingFracturesVEM::assembleStabilization( MeshLevel cons
   FaceElementSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
 
   GEOS_ERROR_IF( !fractureSubRegion.hasField< contact::traction >(), "The fracture subregion must contain traction field." );
-  arrayView2d< localIndex const > const faceMap = fractureSubRegion.faceList();
-  GEOS_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
+  ArrayOfArraysView< localIndex const > const faceMap = fractureSubRegion.faceList().toViewConst();
+  //GEOS_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
 
   // Get the state of fracture elements
   arrayView1d< integer const > const & fractureState =
