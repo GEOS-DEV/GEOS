@@ -80,6 +80,8 @@
       plotLevel="2"/>
   </Outputs>
 
+  <!-- forceDt="4.2e-4" -->
+  <!-- timeFrequency="5e-2" -->
   <Events maxTime="3">
     <PeriodicEvent
       name="solidfluidSolverApplications"
@@ -99,7 +101,7 @@
     <!-- output -->
     <PeriodicEvent
       name="outputs"
-      timeFrequency="2e-2"
+      timeFrequency="1e-2"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput">
     </PeriodicEvent>

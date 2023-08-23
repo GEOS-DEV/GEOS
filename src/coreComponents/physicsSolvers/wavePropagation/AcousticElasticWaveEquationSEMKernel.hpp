@@ -124,6 +124,8 @@ struct CouplingKernel
 
 } /* namespace acousticElasticWaveEquationSEMKernels */
 
+#if 0
+
 namespace acousticElasticWaveEquationSEMKernels2
 {
 
@@ -485,6 +487,8 @@ public:
 };
 
 } // namespace acousticElasticWaveEquationSEMKernels3
+
+#endif
 
 } /* namespace geos */
 
