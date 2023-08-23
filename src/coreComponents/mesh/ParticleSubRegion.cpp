@@ -79,6 +79,46 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock 
   } );
 }
 
+void ParticleSubRegion::copyFromParticleSubRegion( ParticleSubRegion & particleSubRegion )
+{
+  // Defines the (unique) particle type of this cell particle region,
+  // and its associated number of nodes, edges, faces.
+  m_particleRank.resize( particleSubRegion.size() );
+  m_particleType = particleSubRegion.getParticleType();
+  m_particleID = particleSubRegion.getParticleID();
+  m_particleGroup = particleSubRegion.getParticleGroup();
+  m_particleSurfaceFlag = particleSubRegion.getParticleSurfaceFlag();
+  m_particleDamage = particleSubRegion.getParticleDamage();
+  m_particleStrengthScale = particleSubRegion.getParticleStrengthScale();
+  m_particleCenter = particleSubRegion.getParticleCenter();
+  m_particleVelocity = particleSubRegion.getParticleVelocity();
+  m_particleMaterialDirection = particleSubRegion.getParticleMaterialDirection();
+  m_particleVolume = particleSubRegion.getParticleVolume();
+  m_particleRVectors = particleSubRegion.getParticleRVectors();
+  m_hasRVectors = particleSubRegion.hasRVectors();
+
+  // We call the `resize` member function of the cell to (nodes, edges, faces) relations,
+  // before calling the `ParticleSubRegion::resize` in order to keep the first dimension.
+  // Be careful when refactoring.
+  this->resize( particleSubRegion.size() );
+  this->m_localToGlobalMap = particleSubRegion.localToGlobalMap();
+  this->constructGlobalToLocalMap();
+
+  // CC: I believe the particleblock assosciated with this subregion is already registered from copyFromParticleBlock on startup so 
+  // there should not be a need to get the particle block of the source sub region during the copy (double check this!!!)
+
+  // Not sure what the following actually does, but ParticleSubRegion does not have a particleBlock or forExternalProperties
+  // particleBlock.forExternalProperties( [&]( WrapperBase & wrapper ) 
+  // {
+  //   types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
+  //   {
+  //     using ArrayType = decltype( array );
+  //     Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
+  //     this->registerWrapper( wrapper.getName(), &wrapperT.reference() );
+  //   } );
+  // } );
+}
+
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ParticleSubRegion, string const &, Group * const )
 
 } /* namespace geos */
