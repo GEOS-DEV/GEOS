@@ -345,7 +345,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
                                                              real64 const ( & strainIncrement )[6],
                                                              real64 ( & stress )[6] ) const
 {
-  real64 yieldStrength = m_yieldStrength[k];
+  // real64 yieldStrength = m_yieldStrength[k];
 
   // Store old stress for plastic strain increment
   real64 oldStress[6];
@@ -355,28 +355,10 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 trialP;
   real64 trialQ;
   real64 deviator[6];
-  twoInvariant::stressDecomposition( stress,
+  twoInvariant::stressDecomposition( oldStress,
                                      trialP,
                                      trialQ,
                                      deviator );
-
-
-  // GEOS_LOG_RANK( k << ": " << 
-  //                stress[0] << ", " <<
-  //                stress[1] << ", " << 
-  //                stress[2] << ", " << 
-  //                stress[3] << ", " << 
-  //                stress[4] << ", " <<
-  //                stress[5] << ", " << 
-  //                m_plasticStrain[k][0] << ", " << 
-  //                m_plasticStrain[k][1] << ", " << 
-  //                m_plasticStrain[k][2] << ", " << 
-  //                m_plasticStrain[k][3] << ", " << 
-  //                m_plasticStrain[k][4] << ", " << 
-  //                m_plasticStrain[k][5] << ", " << 
-  //                trialP << ", " <<
-  //                trialQ << ", " <<
-  //                yield);
 
     // CC: model needs the unrotated deformation gradient
     // Right stretch tensor
@@ -406,8 +388,6 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 eigenVectors[3][3] = { { 0 } };
     LvArray::tensorOps::symEigenvectors< 3 >( stretch, eigenVectors, U );
 
-    // GEOS_LOG_RANK(stretch[0] << ", " << stretch[1] << ", " << stretch[2]);
-
     // Find the largest eigenvalues
     real64 maximumStretch = 0.0;
     for( localIndex i = 0; i < 3; ++i )
@@ -420,101 +400,148 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
         m_damage[k][q] = 1.0;
     }
 
-    // magnitude of plastic strain tensor
-    real64 gamma_p = 0.0;
-    for( int i = 0; i < 6; i++ )
+    // Return to yield surface requires iterative solution
+    // Implemented fixed points, however a newton solver may be more efficient and applicable
+    real64 tol = 1e-10;
+    int maxEvals = 100;
+
+    real64 yieldStrength = m_yieldStrength[k];
+    real64 oldYieldStrength = yieldStrength;
+    real64 unrotatedTempPlasticStrain[6] = {0};
+    real64 plasticStrainIncrement[6] = {0};
+    for(int iter=0; iter < maxEvals; ++iter)
     {
-      gamma_p += 0.5*( 1 + (i < 3) ) * unrotatedOldPlasticStrain[i] * unrotatedOldPlasticStrain[i];
+      LvArray::tensorOps::copy< 6 >(unrotatedTempPlasticStrain, unrotatedOldPlasticStrain);
+      LvArray::tensorOps::add< 6 >(unrotatedTempPlasticStrain, plasticStrainIncrement);
+      
+      // magnitude of plastic strain tensor
+      real64 gamma_p = 0.0;
+      for( int i = 0; i < 6; i++ )
+      {
+        gamma_p += 0.5*( 1 + (i < 3) ) * unrotatedTempPlasticStrain[i] * unrotatedTempPlasticStrain[i];
+      }
+      gamma_p = sqrt( gamma_p );
+      
+      // This term starts at value r0 and decays with plastic shear strain to give plastic softening.
+      // Put in a check to prevent roundoff error.
+      real64 gamma_by_r1_to_r2 = std::pow( gamma_p / m_shearSofteningShapeParameter1, m_shearSofteningShapeParameter2 );
+
+      // Compute change in yield strength
+      real64 plasticSoftening = m_shearSofteningMagnitude * std::exp( std::max( -1.0 * gamma_by_r1_to_r2, -16.0 ) );
+      real64 stretchHardening = m_strainHardeningSlope * ( maximumStretch * maximumStretch - 1.0 / maximumStretch );
+      yieldStrength = m_yieldStrength[k] + plasticSoftening + stretchHardening; // CC: debugging disabling change in yield strength
+
+      // // CC: need to add this later
+      // real64 thermalStrengthReduction = 1.0;
+      // if(m_thermalSoftening)
+      // {
+      //   thermalStrengthReduction = computeThermalStrengthReduction();
+      // }
+      // m_yieldStrength[k] *= thermalStrengthReduction;
+
+      // check yield function
+      real64 yield = trialQ / yieldStrength;
+      if( trialQ > yieldStrength || iter > 0 ){
+        if(iter == 0){
+            GEOS_LOG_RANK_0("Particle " << k);
+            GEOS_LOG_RANK_0("F: " << "{{" << unrotatedDeformationGradient[0][0] << "," << 
+                                            unrotatedDeformationGradient[0][1] << "," <<
+                                            unrotatedDeformationGradient[0][2] << "}, {" << 
+            
+                                            unrotatedDeformationGradient[1][0] << "," << 
+                                            unrotatedDeformationGradient[1][1] << "," <<
+                                            unrotatedDeformationGradient[1][2] << "}, {" << 
+
+                                            unrotatedDeformationGradient[2][0] << "," << 
+                                            unrotatedDeformationGradient[2][1] << "," <<
+                                            unrotatedDeformationGradient[2][2] << "}}" );
+            
+            GEOS_LOG_RANK_0("stress: " << "{" << stress[0] << "," << 
+                                                stress[1] << "," <<
+                                                stress[2] << "," <<
+                                                stress[3] << "," << 
+                                                stress[4] << "," <<
+                                                stress[5] << "}" );
+
+            GEOS_LOG_RANK_0("ep: " << "{" << unrotatedOldPlasticStrain[0] << "," << 
+                                            unrotatedOldPlasticStrain[1] << "," <<
+                                            unrotatedOldPlasticStrain[2] << "," <<
+                                            unrotatedOldPlasticStrain[3] << "," << 
+                                            unrotatedOldPlasticStrain[4] << "," <<
+                                            unrotatedOldPlasticStrain[5] << "}" );
+
+            GEOS_LOG_RANK_0("dstrain: " << "{" << strainIncrement[0] << "," << 
+                                                  strainIncrement[1] << "," <<
+                                                  strainIncrement[2] << "," <<
+                                                  strainIncrement[3] << "," << 
+                                                  strainIncrement[4] << "," <<
+                                                  strainIncrement[5] << "}" );
+
+            GEOS_LOG_RANK_0("Max stretch: " << maximumStretch);
+        } 
+
+        // re-construct stress = P*eye + sqrt(2/3)*Q*nhat
+        real64 stressTemp[6] = {0};
+        twoInvariant::stressRecomposition( trialP,
+                                           yieldStrength,
+                                           deviator,
+                                           stressTemp );
+
+        // Increment plastic strain
+        real64 stressIncrement[6] = {0};
+        LvArray::tensorOps::copy< 6 >(stressIncrement, stressTemp);
+        LvArray::tensorOps::subtract< 6 >(stressIncrement, oldStress);
+
+        // increment plastic strain
+        computePlasticStrainIncrement( k,
+                                       q,
+                                       timeIncrement,           
+                                       strainIncrement,
+                                       stressIncrement,
+                                       plasticStrainIncrement );
+
+        real64 unrotatedNewPlasticStrain[6] = { 0 };
+        LvArray::tensorOps::copy< 6 >(unrotatedNewPlasticStrain, unrotatedOldPlasticStrain);
+        LvArray::tensorOps::add< 6 >(unrotatedNewPlasticStrain, plasticStrainIncrement);
+
+        // CC: debug
+        GEOS_LOG_RANK_0("Iter " << iter << " | " <<
+                        "ID: " << k << ", " << 
+                        "Yield strength old(new): " << oldYieldStrength << "(" << yieldStrength << "), " <<
+                        "Plastic Strain: {" << unrotatedNewPlasticStrain[0] << "," << 
+                                               unrotatedNewPlasticStrain[1] << "," << 
+                                               unrotatedNewPlasticStrain[2] << "," << 
+                                               unrotatedNewPlasticStrain[3] << "," <<
+                                               unrotatedNewPlasticStrain[4] << "," <<
+                                               unrotatedNewPlasticStrain[5] << "}");
+
+        if(abs(yieldStrength - oldYieldStrength) < tol)
+        {
+          unrotatedNewPlasticStrain[3] *= 0.5;
+          unrotatedNewPlasticStrain[4] *= 0.5;
+          unrotatedNewPlasticStrain[5] *= 0.5;
+          real64 newPlasticStrain[6] = { 0 };
+          LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >(newPlasticStrain, endRotation, unrotatedNewPlasticStrain);
+          newPlasticStrain[3] *= 2.0;
+          newPlasticStrain[4] *= 2.0;
+          newPlasticStrain[5] *= 2.0;
+
+          LvArray::tensorOps::copy< 6 >(m_plasticStrain[k][q], newPlasticStrain);
+          LvArray::tensorOps::copy< 6 >(stress, stressTemp);
+          return;
+        }
+        else
+        {
+          oldYieldStrength = yieldStrength;
+        }
+      } 
+      else 
+      {
+        return;
+      }
     }
-    gamma_p = sqrt( gamma_p );
-    
-    // This term starts at value r0 and decays with plastic shear strain to give plastic softening.
-    // Put in a check to prevent roundoff error.
-    real64 gamma_by_r1_to_r2 = std::pow( gamma_p / m_shearSofteningShapeParameter1, m_shearSofteningShapeParameter2 );
 
-    // Compute change in yield strength
-    real64 plasticSoftening = m_shearSofteningMagnitude * std::exp( std::max( -1.0 * gamma_by_r1_to_r2, -16.0 ) );
-    real64 stretchHardening = m_strainHardeningSlope * ( maximumStretch * maximumStretch - 1.0 / maximumStretch );
-    yieldStrength += plasticSoftening + stretchHardening; // CC: debugging disabling change in yield strength
-
-    // // CC: need to add this later
-    // real64 thermalStrengthReduction = 1.0;
-    // if(m_thermalSoftening)
-    // {
-    //   thermalStrengthReduction = computeThermalStrengthReduction();
-    // }
-    // m_yieldStrength[k] *= thermalStrengthReduction;
-
-    // check yield function
-    real64 yield = trialQ / yieldStrength;
-
-    if( trialQ > yieldStrength ){
-      // re-construct stress = P*eye + sqrt(2/3)*Q*nhat
-      twoInvariant::stressRecomposition( trialP,
-                                         yieldStrength,
-                                         deviator,
-                                         stress );
-
-      // Increment plastic strain
-      real64 stressIncrement[6] = {0};
-      LvArray::tensorOps::copy< 6 >(stressIncrement, stress);
-      LvArray::tensorOps::subtract< 6 >(stressIncrement, oldStress);
-
-      // increment plastic strain
-      real64 plasticStrainIncrement[6] = {0};
-      computePlasticStrainIncrement( k,
-                                    q,
-                                    timeIncrement,           
-                                    strainIncrement,
-                                    stressIncrement,
-                                    plasticStrainIncrement );
-
-      real64 unrotatedNewPlasticStrain[6] = { 0 };
-      LvArray::tensorOps::copy< 6 >(unrotatedNewPlasticStrain, unrotatedOldPlasticStrain);
-      LvArray::tensorOps::add< 6 >(unrotatedNewPlasticStrain, plasticStrainIncrement);
-
-      unrotatedNewPlasticStrain[3] *= 0.5;
-      unrotatedNewPlasticStrain[4] *= 0.5;
-      unrotatedNewPlasticStrain[5] *= 0.5;
-
-      real64 newPlasticStrain[6] = { 0 };
-      LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >(newPlasticStrain, endRotation, unrotatedNewPlasticStrain);
-      newPlasticStrain[3] *= 2.0;
-      newPlasticStrain[4] *= 2.0;
-      newPlasticStrain[5] *= 2.0;
-
-      LvArray::tensorOps::copy< 6 >(m_plasticStrain[k][q], newPlasticStrain);
-    }
-    // GEOS_LOG_RANK(k << ", " << 
-    //               yield << ", " << 
-    //               m_yieldStrength[k] << ", " << 
-    //               m_damage[k][q] << ", " << 
-    //               stretch[0] << ", " <<
-    //               stretch[1] << ", " << 
-    //               stretch[2] << ", {" << 
-    //               oldStress[0] << ", " << 
-    //               oldStress[1] << ", " << 
-    //               oldStress[2] << ", " << 
-    //               oldStress[3] << ", " << 
-    //               oldStress[4] << ", " << 
-    //               oldStress[5] << "}, {" <<
-    //               stress[0] << ", " << 
-    //               stress[1] << ", " << 
-    //               stress[2] << ", " << 
-    //               stress[3] << ", " << 
-    //               stress[4] << ", " << 
-    //               stress[5] << "}, " <<
-    //               m_plasticStrain[k][q] );
-
-    // GEOS_LOG_RANK(k << ": " << 
-    //               m_bulkModulus[k] << ", " << 
-    //               m_shearModulus[k] << ", " << 
-    //               m_yieldStrength[k] << ", " << 
-    //               m_strainHardeningSlope << ", " << 
-    //               m_shearSofteningMagnitude << ", " <<
-    //               m_shearSofteningShapeParameter1 << ", " << 
-    //               m_shearSofteningShapeParameter2 << ", ");
-  
+    GEOS_ERROR("Plastic strain of StrainHardeningPolymer model did not converge within max evals.");
 }
 
 
