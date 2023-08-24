@@ -377,15 +377,13 @@ splitMeshByPartition( vtkSmartPointer< vtkDataSet > mesh,
   for( localIndex p = 0; p < numParts; ++p )
   {
     arraySlice1d< vtkIdType const > const cells = cellsLists[p];
-    if( cells.size() > 0 )
-    {
-      extractor->SetCellIds( cells.dataIfContiguous(), LvArray::integerConversion< vtkIdType >( cells.size() ) );
-      extractor->Update();
 
-      vtkNew< vtkUnstructuredGrid > ug;
-      ug->ShallowCopy( extractor->GetOutputDataObject( 0 ) );
-      result->SetPartition( LvArray::integerConversion< unsigned int >( p ), ug );
-    }
+    extractor->SetCellIds( cells.dataIfContiguous(), LvArray::integerConversion< vtkIdType >( cells.size() ) );
+    extractor->Update();
+
+    vtkNew< vtkUnstructuredGrid > ug;
+    ug->ShallowCopy( extractor->GetOutputDataObject( 0 ) );
+    result->SetPartition( LvArray::integerConversion< unsigned int >( p ), ug );
   }
   return result;
 }
