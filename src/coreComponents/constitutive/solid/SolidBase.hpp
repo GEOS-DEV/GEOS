@@ -383,6 +383,34 @@ public:
     GEOS_ERROR( "viscousStateUpdate() not implemented for this model" );
   }
 
+  GEOS_HOST_DEVICE
+  virtual void hyperUpdate( localIndex const k,
+                            localIndex const q,
+                            real64 const ( & FminusI )[3][3],
+                            real64 ( & stress )[6] ) const 
+  {
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( FminusI );
+    GEOS_UNUSED_VAR( stress );
+    GEOS_ERROR( "hyperUpdate() not implemented for this model" );
+  }
+
+  GEOS_HOST_DEVICE
+  virtual void hyperUpdate( localIndex const k,
+                            localIndex const q,
+                            real64 const ( & FminusI )[3][3],
+                            real64 ( & stress )[6],
+                            real64 ( & stiffness )[6][6] ) const
+  {
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( FminusI );
+    GEOS_UNUSED_VAR( stress );
+    GEOS_UNUSED_VAR( stiffness );
+    GEOS_ERROR( "hyperUpdate() not implemented for this model" );
+  }                     
+
   /**
    * @brief Return the strain energy density at a given material point
    *
@@ -597,6 +625,26 @@ public:
    * Destructor
    */
   virtual ~SolidBase() override;
+
+  /**
+   * @name Static Factory Catalog members and functions
+   */
+  ///@{
+
+  /// string name to use for this class in the catalog
+  static constexpr auto m_catalogNameString = "SolidBase";
+
+  /**
+   * @brief Static catalog string
+   * @return A string that is used to register/lookup this class in the registry
+   */
+  static std::string catalogName() { return m_catalogNameString; }
+
+  /**
+   * @brief Get catalog name
+   * @return Name string
+   */
+  virtual string getCatalogName() const override { return catalogName(); }
 
   /// Keys for data in this class
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct

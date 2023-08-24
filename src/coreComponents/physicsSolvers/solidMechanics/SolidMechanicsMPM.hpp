@@ -310,7 +310,8 @@ public:
   void boundaryConditionUpdate( real64 dt, real64 time_n );
 
   void particleToGrid( ParticleManager & particleManager,
-                       NodeManager & nodeManager );
+                       NodeManager & nodeManager,
+                       real64 const time_n );
 
   void gridTrialUpdate( real64 dt,
                         NodeManager & nodeManager );
@@ -354,10 +355,34 @@ public:
 
   void cpdiDomainScaling( ParticleManager & particleManager );
 
-  void resizeMappingArrays( ParticleManager & particleManager );
+  // void resizeMappingArrays( ParticleManager & particleManager );
 
-  void populateMappingArrays( ParticleManager & particleManager,
-                              NodeManager & nodeManager );
+  void GEOS_DEVICE mapNodesAndComputeShapeFunctions(arrayView3d< int const > const ijkMap,
+                                                    const real64 xLocalMin[3],
+                                                    const real64 hEl[3],
+                                                    ParticleType particleType,
+                                                    arraySlice1d< real64 const > const particlePosition,
+                                                    arraySlice2d< real64 const > const particleRVectors,
+                                                    arraySlice2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
+                                                    int * mappedNode,
+                                                    real64 * shapeFunctionValues,
+                                                    real64 shapeFunctionGradientValues[][3]);
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  void computeBodyForce(real64 const time_n,
+                        real64 const & shearModulus,
+                        real64 const & density,
+                        arraySlice1d< real64 const > const particlePosition, 
+                        real64 * particleBodyForce);
+  
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  void computeGeneralizedVortexMMSBodyForce(real64 const time_n,
+                                            real64 const & shearModulus,
+                                            real64 const & density,
+                                            arraySlice1d< real64 const > const particlePosition,
+                                            real64 * particleBodyForce);
 
   void cofactor( real64 const (& F)[3][3],
                  real64 (& Fc)[3][3] );
@@ -392,6 +417,8 @@ protected:
   array1d< real64 > m_domainF;
   array1d< real64 > m_domainL;
 
+  array1d< real64 > m_bodyForce;
+
   int m_boxAverageHistory;
   real64 m_boxAverageWriteInterval;
   real64 m_nextBoxAverageWriteTime;
@@ -421,6 +448,9 @@ protected:
 
   int m_planeStrain;
   int m_numDims;
+
+  int m_uniformBodyForce;
+  int m_generalizedVortexMMS;
 
   real64 m_hEl[3];                // Grid spacing in x-y-z
   real64 m_xLocalMin[3];          // Minimum local grid coordinate including ghost nodes
