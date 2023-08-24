@@ -612,7 +612,6 @@ struct SolutionCheckKernel
 
 struct StatisticsKernel
 {
-  template< typename POLICY >
   static void
   saveDeltaPressure( localIndex const size,
                      arrayView1d< real64 const > const & pres,
@@ -625,7 +624,6 @@ struct StatisticsKernel
     } );
   }
 
-  template< typename POLICY >
   static void
   launch( localIndex const size,
           arrayView1d< integer const > const & elemGhostRank,

@@ -106,6 +106,7 @@ set( constitutive_headers
      solid/ModifiedCamClay.hpp
      solid/DelftEgg.hpp
      solid/ElasticTransverseIsotropicPressureDependent.hpp
+     solid/HyperelasticMMS.hpp
      solid/ElasticIsotropic.hpp
      solid/ElasticIsotropicPressureDependent.hpp
      solid/ElasticTransverseIsotropic.hpp
@@ -230,6 +231,7 @@ set( constitutive_sources
      solid/ModifiedCamClay.cpp
      solid/DelftEgg.cpp
      solid/ElasticTransverseIsotropicPressureDependent.cpp
+     solid/HyperelasticMMS.cpp
      solid/ElasticIsotropic.cpp
      solid/ElasticIsotropicPressureDependent.cpp
      solid/ElasticTransverseIsotropic.cpp
