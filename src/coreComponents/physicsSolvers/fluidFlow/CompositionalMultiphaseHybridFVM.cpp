@@ -713,10 +713,9 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
 void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & dofManager,
                                                             arrayView1d< real64 const > const & localSolution,
                                                             real64 const scalingFactor,
-                                                            real64 const dt,
+                                                            real64 const GEOS_UNUSED_PARAM( dt ),
                                                             DomainPartition & domain )
 {
-  GEOS_UNUSED_PARAM( dt );
   GEOS_MARK_FUNCTION;
 
   // 1. apply the elem-based update
