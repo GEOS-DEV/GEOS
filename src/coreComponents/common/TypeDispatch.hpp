@@ -126,16 +126,16 @@ struct ArrayType< camp::list< T, camp::list< NDIM, LAYOUT > > >
 };
 
 // Helper to apply a template to all types in a list
-template< template< typename > class F, typename T >
+template< template< typename ... > class F, typename T >
 struct ApplyImpl;
 
-template< template< typename > class F, typename ... Ts >
+template< template< typename ... > class F, typename ... Ts >
 struct ApplyImpl< F, camp::list< Ts ... > >
 {
   using types = camp::list< typename F< Ts >::type ... >;
 };
 
-template< template< typename > class F, typename T >
+template< template< typename ... > class F, typename T >
 using Apply = typename ApplyImpl< F, T >::types;
 
 // Helper to increment values in an compile-time integer sequence
@@ -151,7 +151,7 @@ struct IncrementImpl< camp::idx_seq< Is... >, N >
 template< typename T, int N >
 using Increment = typename IncrementImpl< T, N >::type;
 
-} // namespace detail
+} // namespace internal
 
 /**
  * @brief Construct a list of types.
