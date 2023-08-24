@@ -130,6 +130,8 @@ public:
    * @details Each node of the @p FaceBlockABC is pointing to other nodes which are collocated.
    * Those other nodes are meant to be nodes of neighboring 3d cells.
    * All the collocated nodes of each node of each 2d element of the @p FaceBlockABC are gathered in the same bucket.
+   * @warning There is no guarantee that the nodes for each 2d element are provided any order.
+   * As well, there is no guarantee that buckets of collocated nodes are provided in any order.
    */
   virtual ArrayOfArrays< array1d< globalIndex > > get2dElemsToCollocatedNodesBuckets() const = 0;
 
