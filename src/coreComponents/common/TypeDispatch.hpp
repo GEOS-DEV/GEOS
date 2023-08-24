@@ -265,6 +265,13 @@ auto const & getTypeMap( LIST, std::integer_sequence< std::size_t, Is... > )
   return result;
 }
 
+
+template< typename T >
+struct TypeIdentity
+{
+  using type = T;
+};
+
 /**
  * @brief Function to output string containing the types of a TypeList
  * @tparam Ts The types contained in the TypeList
@@ -279,7 +286,7 @@ string listToString( TypeList< Ts... >,
                      string const & post,
                      P printer )
 {
-  return ( ( pre + printer( Ts{} ) + post ) + ... );
+  return ( ( pre + printer( TypeIdentity< Ts >{} ) + post ) + ... );
 }
 
 HAS_MEMBER_FUNCTION_NO_RTYPE( getTypeId, );
@@ -360,8 +367,8 @@ bool dispatch( LIST const combinations,
 
   if( !success )
   {
-    auto typePrinter = []( auto t ){ return LvArray::system::demangle( typeid(t).name() ); };
-    auto typeListPrinter = [typePrinter]( auto tlist ){ return internal::listToString( tlist, "\n  ", "", typePrinter ); };
+    auto typePrinter = []( auto t ){ return LvArray::system::demangle( typeid( typename decltype(t)::type ).name() ); };
+    auto typeListPrinter = [typePrinter]( auto tlist ){ return internal::listToString( typename decltype( tlist )::type{}, "\n  ", "", typePrinter ); };
 
     GEOS_ERROR( "Types were not dispatched. The types of the input objects are:\n" <<
                 "( "<<(  ( "\n  " + LvArray::system::demangle( internal::typeIdWrapper( objects ).name() ) ) + ... )<<" \n)\n"<<
