@@ -930,7 +930,17 @@ redistributeMesh( vtkSmartPointer< vtkDataSet > loadedMesh,
     result.setFaceBlocks( namesToFractures );
   }
 
-  GEOS_LOG_RANK( "Mesh sizes are: main = " << result.getMainMesh()->GetNumberOfCells() << " faceBlock = " << result.getFaceBlocks().at( "fracture" )->GetNumberOfCells() );
+  // Logging some information about the redistribution.
+  {
+    string const pattern = "{} = {}";
+    std::vector< string > messages;
+    messages.push_back( GEOS_FMT( pattern, "Mesh sizes are: main", result.getMainMesh()->GetNumberOfCells() ) );
+    for( auto const & [faceName, faceMesh]: result.getFaceBlocks() )
+    {
+      messages.push_back( GEOS_FMT( pattern, faceName, faceMesh->GetNumberOfCells() ) );
+    }
+    GEOS_LOG_RANK( stringutilities::join( messages, ", " ) );
+  }
 
   return result;
 }
