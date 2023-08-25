@@ -739,8 +739,8 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
 
   auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dt );
 
-  for (auto nm : regionNames)
-    std::cout << "\t[ElasticWaveEquationSEM::computeUnknowns] regionName=" << nm << std::endl;
+  // for (auto nm : regionNames)
+  //   std::cout << "\t[ElasticWaveEquationSEM::computeUnknowns] regionName=" << nm << std::endl;
 
   finiteElement::
     regionBasedKernelApplication< EXEC_POLICY,
@@ -755,7 +755,7 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
   addSourceToRightHandSide( cycleNumber, rhsx, rhsy, rhsz );
 
   real64 const dt2 = pow( dt, 2 );
-  SortedArrayView< localIndex const > const & solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
+  SortedArrayView< localIndex const > const solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
   forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
   {
     localIndex const a = solverTargetNodesSet[n];
@@ -856,7 +856,7 @@ void ElasticWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
   arrayView1d< real32 > const rhsy = nodeManager.getField< fields::ForcingRHSy >();
   arrayView1d< real32 > const rhsz = nodeManager.getField< fields::ForcingRHSz >();
 
-  SortedArrayView< localIndex const > const & solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
+  SortedArrayView< localIndex const > const solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
 
   forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
   {

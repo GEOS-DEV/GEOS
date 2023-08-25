@@ -951,7 +951,7 @@ void AcousticWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
   arrayView1d< real32 > const stiffnessVector = nodeManager.getField< fields::StiffnessVector >();
   arrayView1d< real32 > const rhs = nodeManager.getField< fields::ForcingRHS >();
 
-  SortedArrayView< localIndex const > const & solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
+  SortedArrayView< localIndex const > const solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
 
   forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
   {
@@ -986,8 +986,8 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
 
   auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
 
-  for (auto nm : regionNames)
-    std::cout << "\t[AcousticWaveEquationSEM::computeUnknowns] regionName=" << nm << std::endl;
+  // for (auto nm : regionNames)
+  //   std::cout << "\t[AcousticWaveEquationSEM::computeUnknowns] regionName=" << nm << std::endl;
 
   finiteElement::
     regionBasedKernelApplication< EXEC_POLICY,
@@ -1007,7 +1007,7 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
   /// calculate your time integrators
   real64 const dt2 = pow( dt, 2 );
 
-  SortedArrayView< localIndex const > const & solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
+  SortedArrayView< localIndex const > const solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
   if( !m_usePML )
   {
     GEOS_MARK_SCOPE ( updateP );
