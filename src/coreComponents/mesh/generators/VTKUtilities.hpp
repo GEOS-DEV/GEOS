@@ -73,8 +73,13 @@ class AllMeshes
 public:
   AllMeshes() = default;
 
+  /**
+   * @brief Builds the compound from values.
+   * @param main The main 3d mesh (the matrix).
+   * @param faceBlocks The fractures meshes.
+   */
   AllMeshes( vtkSmartPointer< vtkDataSet > const & main,
-             std::map< string, vtkSmartPointer< vtkDataSet>> const & faceBlocks )
+             std::map< string, vtkSmartPointer< vtkDataSet > > const & faceBlocks )
     : m_main( main ),
       m_faceBlocks( faceBlocks )
   { }
@@ -140,6 +145,7 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes );
 /**
  * @brief Generate global point/cell IDs and redistribute the mesh among MPI ranks.
  * @param[in] loadedMesh the mesh that was loaded on one or several MPI ranks
+ * @param[in] namesToFractures the fracture meshes
  * @param[in] comm the MPI communicator
  * @param[in] method the partitionning method
  * @param[in] partitionRefinement number of graph partitioning refinement cycles
