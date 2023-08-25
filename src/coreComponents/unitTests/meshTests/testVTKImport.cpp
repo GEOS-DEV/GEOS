@@ -84,12 +84,14 @@ protected:
 
   TestFractureImport() = default;
 
-  /// Folder where the vtk files will be written.
-  std::filesystem::path m_vtkFolder;
-
   inline static string const MULTI_BLOCK_NAME = "multi";
 
+  std::filesystem::path m_vtkFile;
+
 private:
+
+  /// Folder where the vtk files will be written.
+  std::filesystem::path m_vtkFolder;
 
   void SetUp() override
   {
@@ -101,7 +103,7 @@ private:
     m_vtkFolder = folder / subFolder;
     ASSERT_TRUE( fs::create_directory( m_vtkFolder ) );
 
-    createFractureMesh( m_vtkFolder );
+    m_vtkFile = createFractureMesh( m_vtkFolder );
   }
 
   void TearDown() override
@@ -123,7 +125,7 @@ private:
     }
   }
 
-  static void createFractureMesh( std::filesystem::path const & folder )
+  static std::filesystem::path createFractureMesh( std::filesystem::path const & folder )
   {
     // The main mesh
     vtkNew< vtkUnstructuredGrid > main;
@@ -230,14 +232,19 @@ private:
     multiBlock->GetMetaData( 1 )->Set( multiBlock->NAME(), "fracture" );
 
     vtkNew< vtkXMLMultiBlockDataWriter > writer;
-    writer->SetFileName( ( folder / ( MULTI_BLOCK_NAME + ".vtm" ) ).c_str() );
+    std::filesystem::path const vtkFile = folder / ( MULTI_BLOCK_NAME + ".vtm" );
+    writer->SetFileName( vtkFile.c_str() );
     writer->SetInputData( multiBlock );
     writer->SetDataModeToAscii();
     writer->Write();
+
+    return vtkFile;
   }
 };
 
-TEST_F(TestFractureImport, fracture) {
+
+TEST_F( TestFractureImport, fracture )
+{
   auto validate = []( CellBlockManagerABC const & cellBlockManager ) -> void
   {
     ASSERT_EQ( cellBlockManager.numNodes(), 16 );
@@ -259,7 +266,7 @@ TEST_F(TestFractureImport, fracture) {
     }
   };
 
-  TestMeshImport( m_vtkFolder / ( MULTI_BLOCK_NAME + ".vtm" ), validate, "fracture" );
+  TestMeshImport( m_vtkFile, validate, "fracture" );
 }
 
 
