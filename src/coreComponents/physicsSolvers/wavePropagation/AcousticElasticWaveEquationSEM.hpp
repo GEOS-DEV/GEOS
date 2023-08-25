@@ -161,14 +161,6 @@ DECLARE_FIELD( CouplingVectorz,
                NOPLOT,
                WRITE_AND_READ,
                "Coupling term on z." );
-
-DECLARE_FIELD( CouplingDensity,
-               "couplingDensity",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Interfacial density." );
 }
 
 } /* namespace geos */
