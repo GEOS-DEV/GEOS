@@ -95,33 +95,46 @@ private:
 
   void SetUp() override
   {
-    namespace fs = std::filesystem;
+    if( MpiWrapper::commRank() == 0 )
+    {
+      namespace fs = std::filesystem;
 
-    fs::path const folder = fs::temp_directory_path();
-    srand( (unsigned) time( nullptr ) );
-    string const subFolder = "tmp-geos-vtk-" + std::to_string( rand() );
-    m_vtkFolder = folder / subFolder;
-    ASSERT_TRUE( fs::create_directory( m_vtkFolder ) );
+      fs::path const folder = fs::temp_directory_path();
+      srand( (unsigned) time( nullptr ) );
+      string const subFolder = "tmp-geos-vtk-" + std::to_string( rand() );
+      m_vtkFolder = folder / subFolder;
+      ASSERT_TRUE( fs::create_directory( m_vtkFolder ) );
 
-    m_vtkFile = createFractureMesh( m_vtkFolder );
+      m_vtkFile = createFractureMesh( m_vtkFolder );
+    }
+
+    string vtkFile( m_vtkFile );
+    MpiWrapper::broadcast( vtkFile );
+    if( MpiWrapper::commRank() != 0 )
+    {
+      m_vtkFile = vtkFile;
+    }
   }
 
   void TearDown() override
   {
-    namespace fs = std::filesystem;
+    if( MpiWrapper::commRank() == 0 )
+    {
+      namespace fs = std::filesystem;
 
-    // Carefully removing the files one by one and waiting the folders to be empty before removing them as well.
-    // We do not want to remove important files!
-    ASSERT_TRUE( fs::remove( m_vtkFolder / MULTI_BLOCK_NAME / ( MULTI_BLOCK_NAME + "_0.vtu" ) ) );
-    ASSERT_TRUE( fs::remove( m_vtkFolder / MULTI_BLOCK_NAME / ( MULTI_BLOCK_NAME + "_1.vtu" ) ) );
-    if( fs::is_empty( m_vtkFolder / MULTI_BLOCK_NAME ) )
-    {
-      ASSERT_TRUE( fs::remove( m_vtkFolder / MULTI_BLOCK_NAME ) );
-    }
-    ASSERT_TRUE( fs::remove( m_vtkFolder / ( MULTI_BLOCK_NAME + ".vtm" ) ) );
-    if( fs::is_empty( m_vtkFolder ) )
-    {
-      ASSERT_TRUE( fs::remove( m_vtkFolder ) );
+      // Carefully removing the files one by one and waiting the folders to be empty before removing them as well.
+      // We do not want to remove important files!
+      ASSERT_TRUE( fs::remove( m_vtkFolder / MULTI_BLOCK_NAME / ( MULTI_BLOCK_NAME + "_0.vtu" ) ) );
+      ASSERT_TRUE( fs::remove( m_vtkFolder / MULTI_BLOCK_NAME / ( MULTI_BLOCK_NAME + "_1.vtu" ) ) );
+      if( fs::is_empty( m_vtkFolder / MULTI_BLOCK_NAME ) )
+      {
+        ASSERT_TRUE( fs::remove( m_vtkFolder / MULTI_BLOCK_NAME ) );
+      }
+      ASSERT_TRUE( fs::remove( m_vtkFolder / ( MULTI_BLOCK_NAME + ".vtm" ) ) );
+      if( fs::is_empty( m_vtkFolder ) )
+      {
+        ASSERT_TRUE( fs::remove( m_vtkFolder ) );
+      }
     }
   }
 
@@ -247,22 +260,41 @@ TEST_F( TestFractureImport, fracture )
 {
   auto validate = []( CellBlockManagerABC const & cellBlockManager ) -> void
   {
-    ASSERT_EQ( cellBlockManager.numNodes(), 16 );
-    ASSERT_EQ( cellBlockManager.numEdges(), 24 );
-    ASSERT_EQ( cellBlockManager.numFaces(), 12 );
-
-    ASSERT_EQ( cellBlockManager.getFaceBlocks().numSubGroups(), 1 );
-    FaceBlockABC const & faceBlock = cellBlockManager.getFaceBlocks().getGroup< FaceBlockABC >( 0 );
-    ASSERT_EQ( faceBlock.num2dElements(), 1 );
-    ASSERT_EQ( faceBlock.num2dFaces(), 4 );
-    auto ecn = faceBlock.get2dElemsToCollocatedNodesBuckets();
-    ASSERT_EQ( ecn[0].size(), 4 );
-    for( int i = 0; i < 4; ++i )
+    // Instead of checking each rank on its own,
+    // we check that all the data is present across the ranks.
+    auto const sum = []( auto i )  // Alias
     {
-      auto bucket = ecn( 0, i );
-      ASSERT_EQ( bucket.size(), 2 );
-      std::set< globalIndex > result( bucket.begin(), bucket.end() );
-      ASSERT_EQ( result, std::set< globalIndex >( { 4 + i, 8 + i } ) );
+      return MpiWrapper::sum( i );
+    };
+
+    // Volumic mesh validations
+    ASSERT_EQ( sum( cellBlockManager.numNodes() ), 16 );
+    ASSERT_EQ( sum( cellBlockManager.numEdges() ), 24 );
+    ASSERT_EQ( sum( cellBlockManager.numFaces() ), 12 );
+
+    // Fracture mesh validations
+    ASSERT_EQ( sum( cellBlockManager.getFaceBlocks().numSubGroups() ), MpiWrapper::commSize() );
+    FaceBlockABC const & faceBlock = cellBlockManager.getFaceBlocks().getGroup< FaceBlockABC >( 0 );
+    ASSERT_EQ( sum( faceBlock.num2dElements() ), 1 );
+    ASSERT_EQ( sum( faceBlock.num2dFaces() ), 4 );
+    auto ecn = faceBlock.get2dElemsToCollocatedNodesBuckets();
+    auto const num2dElems = ecn.size();
+    ASSERT_EQ( sum( num2dElems ), 1 );
+    auto numNodesInFrac = 0;
+    for( int ei = 0; ei < num2dElems; ++ei )
+    {
+      numNodesInFrac += ecn[ei].size();
+    }
+    ASSERT_EQ( sum( numNodesInFrac ), 4 );
+    for( int ei = 0; ei < num2dElems; ++ei )
+    {
+      for( int ni = 0; ni < numNodesInFrac; ++ni )
+      {
+        auto bucket = ecn( ei, ni );
+        ASSERT_EQ( bucket.size(), 2 );
+        std::set< globalIndex > result( bucket.begin(), bucket.end() );
+        ASSERT_EQ( result, std::set< globalIndex >( { 4 + ni, 8 + ni } ) );
+      }
     }
   };
 
