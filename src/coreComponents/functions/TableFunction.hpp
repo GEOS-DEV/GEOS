@@ -228,7 +228,6 @@ private:
    */
   virtual real64 evaluate( real64 const * const input ) const override final;
 
-  // TODO c++17: change "std::string" to std::string_view
   /**
    * @brief Check if the given coordinate is in the bounds of the table coordinates in the
    * specified dimension, throw an exception otherwise.
@@ -238,7 +237,7 @@ private:
    * @param tableName the name to designate the table in the potential exception
    * @throw SimulationError if the value is out of the coordinates bounds.
    */
-  void checkCoord( real64 coord, localIndex dim, char const * dimName, char const * tableName ) const;
+  void checkCoord( real64 coord, localIndex dim, std::string_view dimName, std::string_view tableName ) const;
 
   /**
    * @brief @return Number of table dimensions

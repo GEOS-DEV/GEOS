@@ -21,7 +21,7 @@
 
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 
-#include "math/UOM.hpp"
+#include "common/PhysicsConstants.hpp"
 
 namespace geos
 {
@@ -657,7 +657,7 @@ public:
   using Base::m_localSolution;
   using Base::m_scalingFactor;
 
-  static real64 constexpr minTemperature = constants::zeroCInK;
+  static real64 constexpr minTemperature = constants::zeroDegreesCelsiusInKelvin;
 
   /**
    * @brief Create a new kernel instance

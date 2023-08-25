@@ -18,7 +18,7 @@
 
 #include "constitutive/fluid/multifluid/CO2Brine/functions/CO2EOSSolver.hpp"
 
-#include "math/UOM.hpp"
+#include "common/PhysicsConstants.hpp"
 
 
 namespace geos

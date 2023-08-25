@@ -21,7 +21,7 @@
 #include "constitutive/fluid/multifluid/CO2Brine/functions/CO2EOSSolver.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "functions/FunctionManager.hpp"
-#include "math/UOM.hpp"
+#include "common/PhysicsConstants.hpp"
 
 namespace geos
 {
@@ -37,7 +37,7 @@ namespace PVTProps
 namespace
 {
 
-constexpr real64 T_K_f  = constants::zeroCInK;
+constexpr real64 T_K_f  = constants::zeroDegreesCelsiusInKelvin;
 constexpr real64 P_Pa_f = 1e+5;
 constexpr real64 P_c    = 73.773 * P_Pa_f;
 constexpr real64 T_c    = 304.1282;

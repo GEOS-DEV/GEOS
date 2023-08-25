@@ -18,7 +18,7 @@
 
 #include "constitutive/fluid/multifluid/reactive/chemicalReactions/KineticReactions.hpp"
 #include "functions/FunctionManager.hpp"
-#include "math/UOM.hpp"
+#include "common/PhysicsConstants.hpp"
 
 namespace geos
 {

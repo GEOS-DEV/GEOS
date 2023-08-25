@@ -164,8 +164,8 @@ void TableFunction::reInitializeFunction()
 
 void TableFunction::checkCoord( real64 const coord,
                                 localIndex const dim,
-                                char const * const dimName,
-                                char const * const tableName ) const
+                                std::string_view dimName,
+                                std::string_view tableName ) const
 {
   GEOS_THROW_IF( dim >= m_coordinates.size() || dim < 0,
                  GEOS_FMT( "The {} dimension ( {} ) doesn't exist in the {} table.",
@@ -174,7 +174,7 @@ void TableFunction::checkCoord( real64 const coord,
   real64 const lowerBound = m_coordinates[dim][0];
   real64 const upperBound = m_coordinates[dim][m_coordinates.sizeOfArray( dim ) - 1];
   GEOS_THROW_IF( coord > upperBound || coord < lowerBound,
-                 GEOS_FMT( "Requested {} value of {} is out of the {} table bounds ( {} -> {} ).",
+                 GEOS_FMT( "Requested {} value of {} is out of the {} table bounds ( lower bound: {} -> upper bound: {} ).",
                            dimName, coord, tableName, lowerBound, upperBound ),
                  SimulationError );
 }

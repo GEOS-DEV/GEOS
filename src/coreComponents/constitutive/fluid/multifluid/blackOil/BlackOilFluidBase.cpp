@@ -216,6 +216,11 @@ void BlackOilFluidBase::checkTablesParameters( real64 const pressure,
 {
   GEOS_UNUSED_VAR( temperature );
 
+  if( !m_checkPVTTablesRanges )
+  {
+    return;
+  }
+
   for( integer ip = 0; ip < numFluidPhases(); ++ip )
   {
     string const volFactorTableName = GEOS_FMT( "{} formation volume factor '{}'",

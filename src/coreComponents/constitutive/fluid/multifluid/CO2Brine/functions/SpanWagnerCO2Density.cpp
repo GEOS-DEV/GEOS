@@ -20,7 +20,7 @@
 
 #include "constitutive/fluid/multifluid/CO2Brine/functions/CO2EOSSolver.hpp"
 #include "functions/FunctionManager.hpp"
-#include "math/UOM.hpp"
+#include "common/PhysicsConstants.hpp"
 
 namespace geos
 {
@@ -253,7 +253,7 @@ void SpanWagnerCO2Density::calculateCO2Density( string const & functionName,
                                                 array1d< real64 > const & densities )
 {
 
-  constexpr real64 TK_f = constants::zeroCInK;
+  constexpr real64 TK_f = constants::zeroDegreesCelsiusInKelvin;
 
   localIndex const nPressures = tableCoords.nPressures();
   localIndex const nTemperatures = tableCoords.nTemperatures();

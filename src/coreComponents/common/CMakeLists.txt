@@ -25,6 +25,7 @@ set( common_headers
      FixedSizeDeque.hpp
      FixedSizeDequeWithMutexes.hpp
      MultiMutexesLock.hpp
+     PhysicsConstants.hpp
    )
 
 if ( ENABLE_CUDA )

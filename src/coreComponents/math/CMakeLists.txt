@@ -2,7 +2,6 @@
 # Specify all headers
 #
 set( math_headers
-     Constants.hpp
      interpolation/Interpolation.hpp
      extrapolation/Extrapolation.hpp)
 
