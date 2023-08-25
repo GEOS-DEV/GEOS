@@ -26,6 +26,14 @@
 #include "tests/meshDirName.hpp"
 
 // TPL includes
+#include <vtkCellData.h>
+#include <vtkInformation.h>
+#include <vtkMultiBlockDataSet.h>
+#include <vtkPointData.h>
+#include <vtkPoints.h>
+#include <vtkUnstructuredGrid.h>
+#include <vtkXMLMultiBlockDataWriter.h>
+
 #include <gtest/gtest.h>
 #include <conduit.hpp>
 
@@ -33,10 +41,134 @@ using namespace geos;
 using namespace geos::testing;
 using namespace geos::dataRepository;
 
-template< class V >
-void TestMeshImport( string const & meshFilePath, V const & validate )
+void createFractureMesh()
 {
-  string const meshNode = GEOS_FMT( R"(<Mesh><VTKMesh name="mesh" file="{}" partitionRefinement="0"/></Mesh>)", meshFilePath );
+  // The main mesh
+  vtkNew< vtkUnstructuredGrid > main;
+  {
+    int constexpr numPoints = 16;
+    double const pointsCoords[numPoints][3] = {
+      { -1, 0, 0 },
+      { -1, 1, 0 },
+      { -1, 1, 1 },
+      { -1, 0, 1 },
+      { 0,  0, 0 },
+      { 0,  1, 0 },
+      { 0,  1, 1 },
+      { 0,  0, 1 },
+      { 0,  0, 0 },
+      { 0,  1, 0 },
+      { 0,  1, 1 },
+      { 0,  0, 1 },
+      { 1,  0, 0 },
+      { 1,  1, 0 },
+      { 1,  1, 1 },
+      { 1,  0, 1 } };
+    vtkNew< vtkPoints > points;
+    points->Allocate( numPoints );
+    for( double const * pointsCoord: pointsCoords )
+    {
+      points->InsertNextPoint( pointsCoord );
+    }
+    main->SetPoints( points );
+
+    int constexpr numHexs = 2;
+    vtkIdType const cubes[numHexs][8] = {
+      { 0, 1, 2,  3,  4,  5,  6,  7 },
+      { 8, 9, 10, 11, 12, 13, 14, 15 }
+    };
+    main->Allocate( numHexs );
+    for( vtkIdType const * cube: cubes )
+    {
+      main->InsertNextCell( VTK_HEXAHEDRON, 8, cube );
+    }
+
+    vtkNew< vtkIdTypeArray > cellGlobalIds;
+    cellGlobalIds->SetNumberOfComponents( 1 );
+    cellGlobalIds->SetNumberOfTuples( numHexs );
+    for( auto i = 0; i < numHexs; ++i )
+    {
+      cellGlobalIds->SetValue( i, i );
+    }
+    main->GetCellData()->SetGlobalIds( cellGlobalIds );
+
+    vtkNew< vtkIdTypeArray > pointGlobalIds;
+    pointGlobalIds->SetNumberOfComponents( 1 );
+    pointGlobalIds->SetNumberOfTuples( numPoints );
+    for( auto i = 0; i < numPoints; ++i )
+    {
+      pointGlobalIds->SetValue( i, i );
+    }
+    main->GetPointData()->SetGlobalIds( pointGlobalIds );
+  }
+
+  // The fracture mesh
+  vtkNew< vtkUnstructuredGrid > fracture;
+  {
+    int constexpr numPoints = 4;
+    double const pointsCoords[numPoints][3] = {
+      { 0, 0, 0 },
+      { 0, 1, 0 },
+      { 0, 1, 1 },
+      { 0, 0, 1 } };
+    vtkNew< vtkPoints > points;
+    points->Allocate( numPoints );
+    for( double const * pointsCoord: pointsCoords )
+    {
+      points->InsertNextPoint( pointsCoord );
+    }
+    fracture->SetPoints( points );
+
+    int constexpr numQuads = 1;
+    vtkIdType const quad[numQuads][4] = { { 0, 1, 2, 3 } };
+    fracture->Allocate( numQuads );
+    for( vtkIdType const * q: quad )
+    {
+      fracture->InsertNextCell( VTK_QUAD, numPoints, q );
+    }
+
+    // Do not forget the collocated_nodes fields
+    vtkNew< vtkIdTypeArray > collocatedNodes;
+    collocatedNodes->SetName( "duplicated_nodes" );
+    collocatedNodes->SetNumberOfComponents( 2 );
+    collocatedNodes->SetNumberOfTuples( numPoints );
+    collocatedNodes->SetTuple2( 0, 4, 8 );
+    collocatedNodes->SetTuple2( 1, 5, 9 );
+    collocatedNodes->SetTuple2( 2, 6, 10 );
+    collocatedNodes->SetTuple2( 3, 7, 11 );
+
+    fracture->GetPointData()->AddArray( collocatedNodes );
+  }
+
+  vtkNew< vtkMultiBlockDataSet > multiBlock;
+  multiBlock->SetNumberOfBlocks( 2 );
+  multiBlock->SetBlock( 0, main );
+  multiBlock->SetBlock( 1, fracture );
+  multiBlock->GetMetaData( int( 0 ) )->Set( multiBlock->NAME(), "main" );
+  multiBlock->GetMetaData( 1 )->Set( multiBlock->NAME(), "fracture" );
+
+  vtkNew< vtkXMLMultiBlockDataWriter > writer;
+  writer->SetFileName( "/tmp/multi.vtm" );
+  writer->SetInputData( multiBlock );
+  writer->SetDataModeToAscii();
+  writer->Write();
+}
+
+
+template< class V >
+void TestMeshImport( string const & meshFilePath, V const & validate, string const fractureName="" )
+{
+  string const pattern = R"xml(
+    <Mesh>
+      <VTKMesh
+        name="mesh"
+        file="{}"
+        partitionRefinement="0"
+        useGlobalIds="0"
+        {} />
+    </Mesh>
+  )xml";
+  string const meshNode = GEOS_FMT( pattern, meshFilePath, fractureName.empty() ? "" : "faceBlocks=\"{" + fractureName + "}\"" );
   xmlWrapper::xmlDocument xmlDocument;
   xmlDocument.load_buffer( meshNode.c_str(), meshNode.size() );
   xmlWrapper::xmlNode xmlMeshNode = xmlDocument.child( "Mesh" );
@@ -53,6 +185,34 @@ void TestMeshImport( string const & meshFilePath, V const & validate )
   // TODO Field import is not tested yet. Proper refactoring needs to be done first.
 
   validate( domain.getMeshBody( "mesh" ).getGroup< CellBlockManagerABC >( keys::cellManager ) );
+}
+
+TEST( VTKImport, fracture )
+{
+  createFractureMesh();
+
+  auto validate = []( CellBlockManagerABC const & cellBlockManager ) -> void
+  {
+    ASSERT_EQ( cellBlockManager.numNodes(), 16 );
+    ASSERT_EQ( cellBlockManager.numEdges(), 24 );
+    ASSERT_EQ( cellBlockManager.numFaces(), 12 );
+
+    ASSERT_EQ( cellBlockManager.getFaceBlocks().numSubGroups(), 1 );
+    FaceBlockABC const & faceBlock = cellBlockManager.getFaceBlocks().getGroup< FaceBlockABC >( 0 );
+    ASSERT_EQ( faceBlock.num2dElements(), 1 );
+    ASSERT_EQ( faceBlock.num2dFaces(), 4 );
+    auto ecn = faceBlock.get2dElemsToCollocatedNodesBuckets();
+    ASSERT_EQ( ecn[0].size(), 4 );
+    for( int i = 0; i < 4; ++i )
+    {
+      auto bucket = ecn( 0, i );
+      ASSERT_EQ( bucket.size(), 2 );
+      std::set< globalIndex > result( bucket.begin(), bucket.end() );
+      ASSERT_EQ( result, std::set< globalIndex >( { 4 + i, 8 + i } ) );
+    }
+  };
+
+  TestMeshImport( "/tmp/multi.vtm", validate, "fracture" );
 }
 
 TEST( VTKImport, cube )
