@@ -56,14 +56,12 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
     if( elasNodesSet.contains( val ))
       m_interfaceNodesSet.insert( val );
   }
-    // TODO: make this generic by looping through `getGroupByPath`
 
-#if 0
-    m_acousRegions.resize(1);
-    m_acousRegions[0] = "Fluid";
-    m_elasRegions.resize(1);
-    m_elasRegions[0] = "Solid";
-#endif
+  // TODO: make this generic by looping through `getGroupByPath`
+  m_acousRegions.resize(1);
+  m_acousRegions[0] = "Fluid";
+  m_elasRegions.resize(1);
+  m_elasRegions[0] = "Solid";
 
   std::cout << "\t[AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] "
             << "m_interfaceNodesSet.size()=" << m_interfaceNodesSet.size() << std::endl;
@@ -109,7 +107,7 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
     localIndex const solid_index = regions.getIndex( "Solid" );
     printf("\t[AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] fluid_index=%i solid_index=%i\n", fluid_index, solid_index);
 
-    elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const targetIndex,  // GEOS_UNUSED_PARAM(targetIndex)
+    elementRegionManager.forElementSubRegions< CellElementSubRegion >( m_acousRegions, [&]( localIndex const GEOS_UNUSED_PARAM(targetIndex),
                                                                                           CellElementSubRegion & elementSubRegion )
     {
 #if 0
@@ -167,7 +165,7 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
 #if 1
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                arrayView1d< string const > const & GEOS_UNUSED_PARAM(regionNames) )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -199,19 +197,15 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
     bool const coupling = !helpers::benv("NO_COUPLING");
     bool const dump = helpers::ienv("DUMP") > 0;
     // std::cout << "elas=" << (elas ? 'T' : 'F') << " acous=" << (acous ? 'T' : 'F') << " coupling=" << (coupling ? 'T' : 'F')  << " dump=" << (dump ? 'T' : 'F') << std::endl;
-
-#if 0
+/*
     for (auto nm : regionNames)
       std::cout << "\t[AcousticElasticWaveEquationSEM::solverStep] regionName=" << nm << std::endl;
-
     for (auto nm : m_acousRegions)
       std::cout << "\t[AcousticElasticWaveEquationSEM::solverStep] acousRegion=" << nm << std::endl;
-
     for (auto nm : m_elasRegions)
       std::cout << "\t[AcousticElasticWaveEquationSEM::solverStep] elasRegion=" << nm << std::endl;
- #endif
-
-    if (elas) elasSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+*/
+    if (elas) elasSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_elasRegions );
 
     if (coupling)
     {
@@ -237,9 +231,9 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
       } );
     }
 
-    if (elas) elasSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+    if (elas) elasSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_elasRegions );
 
-    if (acous) acousSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+    if (acous) acousSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_acousRegions );
 
     if (coupling)
     {
@@ -263,7 +257,7 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
       } );
     }
 
-    if (acous) acousSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+    if (acous) acousSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_acousRegions );
 
     if (acous) acousSolver->prepareNextTimestep( mesh );
     if (elas) elasSolver->prepareNextTimestep( mesh );
