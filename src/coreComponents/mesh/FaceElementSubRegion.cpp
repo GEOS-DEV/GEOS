@@ -372,7 +372,8 @@ void FaceElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
  * @brief Returns a mapping that links any collocated node to the collocated node with the lowest index.
  * @param elem2dToCollocatedNodesBuckets All the collocated nodes buckets.
  * @return The computed mapping.
- * @details For each collocated node, the returned mapping will provide the lowest id among all the collocated nodes sharing the same position.
+ * @details For each collocated node, the returned mapping will provide
+ * the lowest id among all the collocated nodes sharing the same position.
  * That way, it's possible to know if two nodes are collocated of each other by checking if they share the same lowest id.
  */
 std::map< globalIndex, globalIndex > buildReferenceCollocatedNodes( ArrayOfArrays< array1d< globalIndex > > const & elem2dToCollocatedNodesBuckets )
@@ -655,7 +656,9 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
   for( int e2d = 0; e2d < num2dElems; ++e2d )
   {
     if( m_2dElemToElems.m_toElementIndex.sizeOfArray( e2d ) >= 2 )  // All the neighbors are known.
-    { continue; }
+    {
+      continue;
+    }
 
     std::set< globalIndex > refNodes;
     if( m_toNodesRelation[e2d].size() != 0 )

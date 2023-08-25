@@ -625,7 +625,7 @@ void ProblemManager::generateMesh()
       // These neighbor cells are providing the node information to the fracture elements.
       meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
       {
-         subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+        subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
       } );
 
       faceManager.setIsExternal();

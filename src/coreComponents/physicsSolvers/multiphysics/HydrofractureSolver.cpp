@@ -670,7 +670,9 @@ assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
       forAll< execPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
         if( elemsToFaces.sizeOfArray( kfe ) != 2 )
-        { return; }
+        {
+          return;
+        }
 
         constexpr int kfSign[2] = { -1, 1 };
 

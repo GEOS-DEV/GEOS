@@ -195,27 +195,27 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
     std::set< globalIndex > requestedNodes;
     meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >(
       [&, g2l = &nodeManager.globalToLocalMap()]( FaceElementSubRegion const & subRegion )
+    {
+      ArrayOfArraysView< array1d< globalIndex > const > const buckets = subRegion.get2dElemToCollocatedNodesBuckets();
+      for( localIndex e2d = 0; e2d < buckets.size(); ++e2d )
       {
-        ArrayOfArraysView< array1d< globalIndex > const > const buckets = subRegion.get2dElemToCollocatedNodesBuckets();
-        for( localIndex e2d = 0; e2d < buckets.size(); ++e2d )
+        for( integer ni = 0; ni < buckets.sizeOfArray( e2d ); ++ni )
         {
-          for( integer ni = 0; ni < buckets.sizeOfArray( e2d ); ++ni )
-          {
-            array1d< globalIndex > const & bucket = buckets( e2d, ni );
-            std::set< globalIndex > tmp( bucket.begin(), bucket.end() );
-            collocatedNodesBuckets.insert( tmp );
+          array1d< globalIndex > const & bucket = buckets( e2d, ni );
+          std::set< globalIndex > tmp( bucket.begin(), bucket.end() );
+          collocatedNodesBuckets.insert( tmp );
 
-            for( globalIndex const gni: bucket )
+          for( globalIndex const gni: bucket )
+          {
+            auto const it = g2l->find( gni );
+            if( it == g2l->cend() )
             {
-              auto const it = g2l->find( gni );
-              if( it == g2l->cend() )
-              {
-                requestedNodes.insert( gni );
-              }
+              requestedNodes.insert( gni );
             }
           }
         }
-      } );
+      }
+    } );
 
     CommunicationTools::getInstance().findMatchedPartitionBoundaryNodes( nodeManager,
                                                                          m_neighbors,

@@ -486,7 +486,9 @@ void LagrangianContactSolver::computeFaceDisplacementJump( DomainPartition & dom
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
           if( elemsToFaces.sizeOfArray( kfe ) != 2 )
-          { return; }
+          {
+            return;
+          }
 
           // Contact constraints
           localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
@@ -806,7 +808,9 @@ void LagrangianContactSolver::computeRotationMatrices( DomainPartition & domain 
       forAll< parallelHostPolicy >( subRegion.size(), [=]( localIndex const kfe )
       {
         if( elemsToFaces.sizeOfArray( kfe ) != 2 )
-        { return; }
+        {
+          return;
+        }
 
         stackArray1d< real64, 3 > Nbar( 3 );
         localIndex const & f0 = elemsToFaces[kfe][0], f1 = elemsToFaces[kfe][1];
@@ -930,7 +934,9 @@ void LagrangianContactSolver::
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
     {
       if( elemsToFaces.sizeOfArray( kfe ) != 2 )
-      { return; }
+      {
+        return;
+      }
 
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
       localIndex const numQuadraturePointsPerElem = numNodesPerFace==3 ? 1 : 4;
@@ -1076,7 +1082,9 @@ void LagrangianContactSolver::
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
         if( elemsToFaces.sizeOfArray( kfe ) != 2 )
-        { return; }
+        {
+          return;
+        }
 
         if( ghostRank[kfe] < 0 )
         {
@@ -1360,17 +1368,17 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
 
         localIndex const id1 = ( normalProduct > 0.0 ) ? 0 : 1;
 
-        localIndex const numNodesPerFace0 = faceToNodeMap.sizeOfArray(elem2dToFaces[sei[iconn][0]][0] );
+        localIndex const numNodesPerFace0 = faceToNodeMap.sizeOfArray( elem2dToFaces[sei[iconn][0]][0] );
         array1d< localIndex > nodes0( numNodesPerFace0 );
         for( localIndex i = 0; i < numNodesPerFace0; ++i )
         {
-          nodes0[i] = faceToNodeMap(elem2dToFaces[sei[iconn][0]][0], i );
+          nodes0[i] = faceToNodeMap( elem2dToFaces[sei[iconn][0]][0], i );
         }
-        localIndex const numNodesPerFace1 = faceToNodeMap.sizeOfArray(elem2dToFaces[sei[iconn][1]][0] );
+        localIndex const numNodesPerFace1 = faceToNodeMap.sizeOfArray( elem2dToFaces[sei[iconn][1]][0] );
         array1d< localIndex > nodes1( numNodesPerFace1 );
         for( localIndex i = 0; i < numNodesPerFace1; ++i )
         {
-          nodes1[i] = faceToNodeMap(elem2dToFaces[sei[iconn][1]][id1], i );
+          nodes1[i] = faceToNodeMap( elem2dToFaces[sei[iconn][1]][id1], i );
         }
         std::sort( nodes0.begin(), nodes0.end() );
         std::sort( nodes1.begin(), nodes1.end() );
@@ -1393,11 +1401,11 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
         localIndex node1index0 = -1;
         for( localIndex i = 0; i < numNodesPerFace0; ++i )
         {
-          if( edge[0] == faceToNodeMap(elem2dToFaces[sei[iconn][0]][0], i ) )
+          if( edge[0] == faceToNodeMap( elem2dToFaces[sei[iconn][0]][0], i ) )
           {
             node0index0 = i;
           }
-          if( edge[1] == faceToNodeMap(elem2dToFaces[sei[iconn][0]][0], i ) )
+          if( edge[1] == faceToNodeMap( elem2dToFaces[sei[iconn][0]][0], i ) )
           {
             node1index0 = i;
           }
@@ -1406,18 +1414,18 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
         localIndex node1index1 = -1;
         for( localIndex i = 0; i < numNodesPerFace1; ++i )
         {
-          if( edge[0] == faceToNodeMap(elem2dToFaces[sei[iconn][1]][id1], i ) )
+          if( edge[0] == faceToNodeMap( elem2dToFaces[sei[iconn][1]][id1], i ) )
           {
             node0index1 = i;
           }
-          if( edge[1] == faceToNodeMap(elem2dToFaces[sei[iconn][1]][id1], i ) )
+          if( edge[1] == faceToNodeMap( elem2dToFaces[sei[iconn][1]][id1], i ) )
           {
             node1index1 = i;
           }
         }
         array1d< real64 > nodalArea0, nodalArea1;
-        computeFaceNodalArea(nodePosition, faceToNodeMap, elem2dToFaces[sei[iconn][0]][0], nodalArea0 );
-        computeFaceNodalArea(nodePosition, faceToNodeMap, elem2dToFaces[sei[iconn][1]][id1], nodalArea1 );
+        computeFaceNodalArea( nodePosition, faceToNodeMap, elem2dToFaces[sei[iconn][0]][0], nodalArea0 );
+        computeFaceNodalArea( nodePosition, faceToNodeMap, elem2dToFaces[sei[iconn][1]][id1], nodalArea1 );
         real64 const areafac = nodalArea0[node0index0] * nodalArea1[node0index1] + nodalArea0[node1index0] * nodalArea1[node1index1];
 
         // first index: face, second index: element (T/B), third index: dof (x, y, z)

@@ -32,7 +32,7 @@ CollocatedNodes::CollocatedNodes( string const & faceBlockName,
     // Therefore, not finding the duplicated nodes field on a rank cannot be interpreted as a globally missing field.
     // Converting the address into an integer and exchanging it through the MPI ranks let us find out
     // if the field is globally missing or not.
-    std::uintptr_t const address = MpiWrapper::max( reinterpret_cast<std::uintptr_t>(collocatedNodes) );
+    std::uintptr_t const address = MpiWrapper::max( reinterpret_cast< std::uintptr_t >(collocatedNodes) );
     if( address == 0 )
     {
       GEOS_ERROR_IF( collocatedNodes == nullptr, "Could not find valid field \"" << COLLOCATED_NODES << "\" for fracture \"" << faceBlockName << "\"." );

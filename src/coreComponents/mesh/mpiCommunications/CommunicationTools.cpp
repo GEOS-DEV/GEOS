@@ -449,7 +449,7 @@ std::map< int, array1d< globalIndex > > reorganizeRequestedNodes( std::map< int,
 {
   class MinInt
   {
-  public:
+public:
     MinInt & operator=( int other )
     {
       m_value = std::min( other, m_value );
@@ -461,7 +461,7 @@ std::map< int, array1d< globalIndex > > reorganizeRequestedNodes( std::map< int,
       return m_value;
     }
 
-  private:
+private:
     int m_value = std::numeric_limits< int >::max();
   };
 
@@ -516,7 +516,9 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
                                neighborNodes.cbegin(), neighborNodes.cend(),
                                std::back_inserter( intersection ) );
         if( intersection.empty() )
-        { continue; }
+        {
+          continue;
+        }
 
         std::vector< globalIndex > nodesMissingOnNeighbor;
         std::set_difference( collocatedNodes.cbegin(), collocatedNodes.cend(),
@@ -527,7 +529,8 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
           auto it = g2l.find( gi );
           if( it != g2l.cend() )
           {
-            collocatedNodesToSend.emplace_back( it->second );  // TODO find a way to select the lowest rank that will send the node, not all of them...
+            // We need to be sure that the lowest (owning) rank sends the node.
+            collocatedNodesToSend.emplace_back( it->second );
           }
         }
       }

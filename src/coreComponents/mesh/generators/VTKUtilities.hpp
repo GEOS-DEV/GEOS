@@ -81,7 +81,7 @@ public:
   AllMeshes( vtkSmartPointer< vtkDataSet > const & main,
              std::map< string, vtkSmartPointer< vtkDataSet > > const & faceBlocks )
     : m_main( main ),
-      m_faceBlocks( faceBlocks )
+    m_faceBlocks( faceBlocks )
   { }
 
   /**
@@ -132,7 +132,7 @@ private:
  */
 AllMeshes loadAllMeshes( Path const & filePath,
                          string const & mainBlockName,
-                         array1d <string> const & faceBlockNames );
+                         array1d< string > const & faceBlockNames );
 
 /**
  * @brief Compute the rank neighbor candidate list.

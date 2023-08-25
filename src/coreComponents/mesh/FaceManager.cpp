@@ -125,7 +125,9 @@ void FaceManager::setDomainBoundaryObjects( ElementRegionManager const & elemReg
     for( int ei = 0; ei < elem2dToFaces.size(); ++ei )
     {
       if( elem2dToFaces.sizeOfArray( ei ) == 2 )
-      { continue; }
+      {
+        continue;
+      }
 
       for( localIndex const & face: elem2dToFaces[ei] )
       {
