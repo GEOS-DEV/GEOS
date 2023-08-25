@@ -2,18 +2,15 @@
 
 <Problem>
   <Solvers>
-    <!-- define the solver -->
-    <!-- define the source coordinates -->
-    <!-- define the time source frequency -->
-    <!-- define the receiver coordinates -->
+    <!-- define the solver, source coordinates, time source frequency, receiver coordinates -->
     <AcousticSEM
       name="acousticSolver"
       cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Fluid }"
-      sourceCoordinates="{ { 1010,1010,1710 } }"
+      sourceCoordinates="{ { 1500, 800, 2900  } }"
       timeSourceFrequency="5"
-      receiverCoordinates="{ { 1010,1010,1610 } }"
+      receiverCoordinates="{ { 3752.29351, 800, 2933.3333 } }"
       rickerOrder="3"
       outputSeismoTrace="1"
       dtSeismoTrace="0.001"/>
@@ -36,9 +33,8 @@
       elasticSolverName="elasticSolver"/>
   </Solvers>
 
-  <!-- hexahedral mesh generated internally by GEOSX -->
-  <!-- 6400x1600x4800m -->
-  <!--
+  <!-- hexahedral mesh generated internally by GEOSX
+  6400x1600x4800m domain
   nx="{ 320 }"
   ny="{ 80 }"
   nz="{ 120, 120 }" -->
@@ -49,9 +45,9 @@
       xCoords="{ 0, 6400 }"
       yCoords="{ 0, 1600 }"
       zCoords="{ 0, 2400, 4800 }"
-      nx="{ 160 }"
-      ny="{ 40 }"
-      nz="{ 60, 60 }"
+      nx="{ 320 }"
+      ny="{ 80 }"
+      nz="{ 120, 120 }"
       cellBlockNames="{ solid, fluid }"/>
   </Mesh>
 
@@ -67,6 +63,7 @@
       timeFrequency="1e-2"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
+    <!-- FIXME: forceDt hack to satisfy pre timeloop computation -->
     <SoloEvent
       name="solidSolverApplications"
       forceDt="4.2e-4"
@@ -105,7 +102,7 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <!-- 2) The velocity in the domain -->
+    <!-- initial condition for ρ, 𝓋ₚ and 𝓋ₛ -->
     <FieldSpecification
       name="acousticVelocity"
       initialCondition="1"
