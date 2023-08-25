@@ -86,7 +86,7 @@ protected:
     /// the file path of the DataFileContext, if it exists (an empty string otherwise)
     string m_filePath;
     /// the file line of the DataFileContext, if it exists (an empty string otherwise)
-    size_t m_line;
+    size_t m_line = xmlWrapper::xmlDocument::npos;
 
     /**
      * @brief Construct a new ToStringInfo object from a DataContext that has input file info.
@@ -103,7 +103,8 @@ protected:
     /**
      * @return true if a location has been found to declare the target in an input file.
      */
-    bool hasInputFileInfo() const;
+    bool hasInputFileInfo() const
+    { return !m_filePath.empty() && m_line != xmlWrapper::xmlDocument::npos; }
   };
 
   /**

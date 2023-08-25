@@ -40,10 +40,8 @@ DataContext::ToStringInfo::ToStringInfo( string const & targetName, string const
   m_line( line )
 {}
 DataContext::ToStringInfo::ToStringInfo( string const & targetName ):
-  DataContext::ToStringInfo::ToStringInfo( targetName, "", xmlWrapper::xmlDocument::npos )
+  m_targetName( targetName )
 {}
-bool DataContext::ToStringInfo::hasInputFileInfo() const
-{ return !m_filePath.empty() && m_line != xmlWrapper::xmlDocument::npos; }
 
 
 /**
