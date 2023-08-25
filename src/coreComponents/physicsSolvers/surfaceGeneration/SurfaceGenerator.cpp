@@ -3022,7 +3022,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
           {
             tralingNodeID = unpinchedNodeID[0];
           }
-          else if( unpinchedNodeID.size() == 2 )
+          else if( unpinchedNodeID.size() >= 2 )
           {
             for( localIndex const edgeIndex : nodeToEdgeMap[ nodeIndex ] )
             {
