@@ -442,43 +442,44 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
       // check yield function
       real64 yield = trialQ / yieldStrength;
       if( trialQ > yieldStrength || iter > 0 ){
-        if(iter == 0){
-            GEOS_LOG_RANK_0("Particle " << k);
-            GEOS_LOG_RANK_0("F: " << "{{" << unrotatedDeformationGradient[0][0] << "," << 
-                                            unrotatedDeformationGradient[0][1] << "," <<
-                                            unrotatedDeformationGradient[0][2] << "}, {" << 
+        // CC: debug
+        // if(iter == 0){
+        //     GEOS_LOG_RANK_0("Particle " << k);
+        //     GEOS_LOG_RANK_0("F: " << "{{" << unrotatedDeformationGradient[0][0] << "," << 
+        //                                     unrotatedDeformationGradient[0][1] << "," <<
+        //                                     unrotatedDeformationGradient[0][2] << "}, {" << 
             
-                                            unrotatedDeformationGradient[1][0] << "," << 
-                                            unrotatedDeformationGradient[1][1] << "," <<
-                                            unrotatedDeformationGradient[1][2] << "}, {" << 
+        //                                     unrotatedDeformationGradient[1][0] << "," << 
+        //                                     unrotatedDeformationGradient[1][1] << "," <<
+        //                                     unrotatedDeformationGradient[1][2] << "}, {" << 
 
-                                            unrotatedDeformationGradient[2][0] << "," << 
-                                            unrotatedDeformationGradient[2][1] << "," <<
-                                            unrotatedDeformationGradient[2][2] << "}}" );
+        //                                     unrotatedDeformationGradient[2][0] << "," << 
+        //                                     unrotatedDeformationGradient[2][1] << "," <<
+        //                                     unrotatedDeformationGradient[2][2] << "}}" );
             
-            GEOS_LOG_RANK_0("stress: " << "{" << stress[0] << "," << 
-                                                stress[1] << "," <<
-                                                stress[2] << "," <<
-                                                stress[3] << "," << 
-                                                stress[4] << "," <<
-                                                stress[5] << "}" );
+        //     GEOS_LOG_RANK_0("stress: " << "{" << stress[0] << "," << 
+        //                                         stress[1] << "," <<
+        //                                         stress[2] << "," <<
+        //                                         stress[3] << "," << 
+        //                                         stress[4] << "," <<
+        //                                         stress[5] << "}" );
 
-            GEOS_LOG_RANK_0("ep: " << "{" << unrotatedOldPlasticStrain[0] << "," << 
-                                            unrotatedOldPlasticStrain[1] << "," <<
-                                            unrotatedOldPlasticStrain[2] << "," <<
-                                            unrotatedOldPlasticStrain[3] << "," << 
-                                            unrotatedOldPlasticStrain[4] << "," <<
-                                            unrotatedOldPlasticStrain[5] << "}" );
+        //     GEOS_LOG_RANK_0("ep: " << "{" << unrotatedOldPlasticStrain[0] << "," << 
+        //                                     unrotatedOldPlasticStrain[1] << "," <<
+        //                                     unrotatedOldPlasticStrain[2] << "," <<
+        //                                     unrotatedOldPlasticStrain[3] << "," << 
+        //                                     unrotatedOldPlasticStrain[4] << "," <<
+        //                                     unrotatedOldPlasticStrain[5] << "}" );
 
-            GEOS_LOG_RANK_0("dstrain: " << "{" << strainIncrement[0] << "," << 
-                                                  strainIncrement[1] << "," <<
-                                                  strainIncrement[2] << "," <<
-                                                  strainIncrement[3] << "," << 
-                                                  strainIncrement[4] << "," <<
-                                                  strainIncrement[5] << "}" );
+        //     GEOS_LOG_RANK_0("dstrain: " << "{" << strainIncrement[0] << "," << 
+        //                                           strainIncrement[1] << "," <<
+        //                                           strainIncrement[2] << "," <<
+        //                                           strainIncrement[3] << "," << 
+        //                                           strainIncrement[4] << "," <<
+        //                                           strainIncrement[5] << "}" );
 
-            GEOS_LOG_RANK_0("Max stretch: " << maximumStretch);
-        } 
+        //     GEOS_LOG_RANK_0("Max stretch: " << maximumStretch);
+        // } 
 
         // re-construct stress = P*eye + sqrt(2/3)*Q*nhat
         real64 stressTemp[6] = {0};
@@ -504,16 +505,16 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
         LvArray::tensorOps::copy< 6 >(unrotatedNewPlasticStrain, unrotatedOldPlasticStrain);
         LvArray::tensorOps::add< 6 >(unrotatedNewPlasticStrain, plasticStrainIncrement);
 
-        // CC: debug
-        GEOS_LOG_RANK_0("Iter " << iter << " | " <<
-                        "ID: " << k << ", " << 
-                        "Yield strength old(new): " << oldYieldStrength << "(" << yieldStrength << "), " <<
-                        "Plastic Strain: {" << unrotatedNewPlasticStrain[0] << "," << 
-                                               unrotatedNewPlasticStrain[1] << "," << 
-                                               unrotatedNewPlasticStrain[2] << "," << 
-                                               unrotatedNewPlasticStrain[3] << "," <<
-                                               unrotatedNewPlasticStrain[4] << "," <<
-                                               unrotatedNewPlasticStrain[5] << "}");
+        // // CC: debug
+        // GEOS_LOG_RANK_0("Iter " << iter << " | " <<
+        //                 "ID: " << k << ", " << 
+        //                 "Yield strength old(new): " << oldYieldStrength << "(" << yieldStrength << "), " <<
+        //                 "Plastic Strain: {" << unrotatedNewPlasticStrain[0] << "," << 
+        //                                        unrotatedNewPlasticStrain[1] << "," << 
+        //                                        unrotatedNewPlasticStrain[2] << "," << 
+        //                                        unrotatedNewPlasticStrain[3] << "," <<
+        //                                        unrotatedNewPlasticStrain[4] << "," <<
+        //                                        unrotatedNewPlasticStrain[5] << "}");
 
         if(abs(yieldStrength - oldYieldStrength) < tol)
         {
