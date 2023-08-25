@@ -2568,6 +2568,7 @@ void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleMa
           }
         }
 
+
         // Call kernel field gradient function
         computeKernelFieldGradient( particlePosition[p],        // input
                                     neighborPositions,          // input
@@ -2824,9 +2825,6 @@ void SolidMechanicsMPM::particleKinematicUpdate( ParticleManager & particleManag
         cofactor(deformationGradient, deformationGradientCofactor);
         LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( materialDirection, deformationGradientCofactor, particleInitialMaterialDirection[p] );
         LvArray::tensorOps::copy< 3 >(particleMaterialDirection[p], materialDirection);
-        // for(int i = 0; i <3; i++){
-        //   particleMaterialDirection[p][i] = materialDirection[i];
-        // }
       }
     } );
   } );
@@ -3101,6 +3099,18 @@ void SolidMechanicsMPM::particleToGrid( ParticleManager & particleManager,
                                                                                                                                                                              // "B"
                                                                                                                                                                              // field
           int const fieldIndex = nodeFlag * m_numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
+          // CC: debug
+          // GEOS_LOG_RANK_0( p << ", " << 
+          //                  g << ", " << 
+          //                  mappedNode << ": " << 
+          //                  gridDamageGradient[mappedNode] << ", " << 
+          //                  particleDamageGradient[p] << ", " << 
+          //                  LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNode], particleDamageGradient[p] ) << ", " << 
+          //                  nodeFlag << ", " << 
+          //                  fieldIndex << ", " << 
+          //                  particleDamage[p] << ", " << 
+          //                  particleSurfaceFlag[p] );
+
           gridMass[mappedNode][fieldIndex] += particleMass[p] * shapeFunctionValues[pp][g];
           // TODO: Normalizing by volume might be better
           gridDamage[mappedNode][fieldIndex] += particleMass[p] * ( particleSurfaceFlag[p] == 1 ? 1 : particleDamage[pp] ) * shapeFunctionValues[pp][g];
