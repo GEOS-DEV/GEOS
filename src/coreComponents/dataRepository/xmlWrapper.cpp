@@ -357,14 +357,16 @@ size_t findAttribute( string const & attName, string const & xmlBuffer, size_t c
     try
     {
       std::smatch m;
-      // we search for a string which is the attribute name followed by an '=', eventually separated by spaces
+      // As pugixml doesn't expose a way to get the attribute line or character offset, a regex
+      // seem like a suficient solution for GEOS XMLs.
+      // The regex search for the attribute name followed by an '=', eventually separated by spaces
       if( std::regex_search( xmlBuffer.cbegin() + searchStart, xmlBuffer.cbegin() + tagEnd,
                              m, std::regex( attName + "\\s*=\\s*\"" )))
       {
         size_t candidatePos = m.position() + searchStart;
         string previousString = xmlBuffer.substr( tagBegin, candidatePos - tagBegin );
-        // we must be out of value surrounding quotes: the number of previous quotes '"' should be even (ignoring the inner quotes preceded
-        // by '\\')
+        // We must be out of value surrounding quotes: the number of previous quotes '"' should be even
+        // (ignoring the inner quotes preceded by '\\')
         size_t surroundingQuotesCount = 0;
         size_t quotePos = 0;
         while((quotePos = previousString.find( '"', quotePos + 1 )) != string::npos )
