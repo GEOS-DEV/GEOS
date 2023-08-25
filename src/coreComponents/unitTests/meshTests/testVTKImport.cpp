@@ -87,6 +87,8 @@ protected:
   /// Folder where the vtk files will be written.
   std::filesystem::path m_vtkFolder;
 
+  inline static string const MULTI_BLOCK_NAME = "multi";
+
 private:
 
   void SetUp() override
@@ -108,20 +110,20 @@ private:
 
     // Carefully removing the files one by one and waiting the folders to be empty before removing them as well.
     // We do not want to remove important files!
-    ASSERT_TRUE( fs::remove( m_vtkFolder / "multi/multi_0.vtu" ) );
-    ASSERT_TRUE( fs::remove( m_vtkFolder / "multi/multi_1.vtu" ) );
-    if( fs::is_empty( m_vtkFolder / "multi" ) )
+    ASSERT_TRUE( fs::remove( m_vtkFolder / MULTI_BLOCK_NAME / ( MULTI_BLOCK_NAME + "_0.vtu" ) ) );
+    ASSERT_TRUE( fs::remove( m_vtkFolder / MULTI_BLOCK_NAME / ( MULTI_BLOCK_NAME + "_1.vtu" ) ) );
+    if( fs::is_empty( m_vtkFolder / MULTI_BLOCK_NAME ) )
     {
-      ASSERT_TRUE( fs::remove( m_vtkFolder / "multi" ) );
+      ASSERT_TRUE( fs::remove( m_vtkFolder / MULTI_BLOCK_NAME ) );
     }
-    ASSERT_TRUE( fs::remove( m_vtkFolder / "multi.vtm" ) );
+    ASSERT_TRUE( fs::remove( m_vtkFolder / ( MULTI_BLOCK_NAME + ".vtm" ) ) );
     if( fs::is_empty( m_vtkFolder ) )
     {
       ASSERT_TRUE( fs::remove( m_vtkFolder ) );
     }
   }
 
-  static void createFractureMesh( string const & folder )
+  static void createFractureMesh( std::filesystem::path const & folder )
   {
     // The main mesh
     vtkNew< vtkUnstructuredGrid > main;
@@ -228,7 +230,7 @@ private:
     multiBlock->GetMetaData( 1 )->Set( multiBlock->NAME(), "fracture" );
 
     vtkNew< vtkXMLMultiBlockDataWriter > writer;
-    writer->SetFileName(  (folder + "/multi.vtm").c_str() );
+    writer->SetFileName( ( folder / ( MULTI_BLOCK_NAME + ".vtm" ) ).c_str() );
     writer->SetInputData( multiBlock );
     writer->SetDataModeToAscii();
     writer->Write();
@@ -257,7 +259,7 @@ TEST_F(TestFractureImport, fracture) {
     }
   };
 
-  TestMeshImport( m_vtkFolder / "multi.vtm", validate, "fracture" );
+  TestMeshImport( m_vtkFolder / ( MULTI_BLOCK_NAME + ".vtm" ), validate, "fracture" );
 }
 
 
