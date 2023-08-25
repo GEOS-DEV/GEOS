@@ -84,6 +84,33 @@ void getElementsRecursive( xmlDocument const & document, xmlNode const & targetN
   }
 }
 /**
+ * @brief Calls a lambda for the DataContext of this Group and the ones of its children Group and
+ * Wrapper if they can be casted to a DataFileContext type.
+ * @tparam LAMBDA the type of functor to call. The functor takes in parameter a DataContext of
+ * TARGET_DC type.
+ * @param func the functor to call for each DataFileContext of the group and its children
+ */
+template< typename FUNC >
+void forAllDataFileContext( Group const & group, FUNC func )
+{
+  if( auto * groupCtx = dynamic_cast< DataFileContext const * >( &group.getDataContext() ) )
+  {
+    func( *groupCtx );
+  }
+  for( auto const & wrapperIterator : group.wrappers() )
+  {
+    auto * wrapperCtx = dynamic_cast< DataFileContext const * >( &wrapperIterator.second->getDataContext() );
+    if( wrapperCtx )
+    {
+      func( *wrapperCtx );
+    }
+  }
+  for( auto subGroup : group.getSubGroups() )
+  {
+    forAllDataFileContext( *subGroup.second, func );
+  }
+}
+/**
  * @brief Verify if the DataFileContext data correctly locates from where the object comes from (in the
  * correct document/include, at the correct line and at the correct character offset).
  * @param document root xml document (which potentially contains includes).
@@ -181,7 +208,7 @@ TEST( testXML, testXMLFileLines )
   getElementsRecursive( xmlDoc, xmlDoc.getFirstChild(), expectedElements );
 
   std::set< string > verifiedElements;
-  problemManager.forAllDataContext< DataFileContext >( [&]( DataFileContext const & ctx )
+  forAllDataFileContext( problemManager, [&]( DataFileContext const & ctx )
   {
     verifyDataFileContext( ctx, xmlDoc, verifiedElements );
   } );

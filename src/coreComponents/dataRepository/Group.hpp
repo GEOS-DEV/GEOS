@@ -1322,17 +1322,6 @@ public:
   { return getWrapperBase< KEY >( key ).getDataContext(); }
 
   /**
-   * @brief Calls a lambda for the DataContext of this Group and the ones of its children Group and
-   * Wrapper if they can be casted to the requested class type.
-   * @tparam TARGET_DC the requested DataContext class or parent class type.
-   * @tparam LAMBDA the type of functor to call. The functor takes in parameter a DataContext of
-   * TARGET_DC type.
-   * @param func
-   */
-  template< typename TARGET_DC = DataContext, typename FUNC >
-  void forAllDataContext( FUNC func ) const;
-
-  /**
    * @brief Access the group's parent.
    * @return reference to parent Group
    * @throw std::domain_error if the Group doesn't have a parent.
@@ -1683,27 +1672,6 @@ Wrapper< T > & Group::registerWrapper( string const & name,
     rval.resize( size());
   }
   return rval;
-}
-
-template< typename TARGET_DC, typename FUNC >
-void Group::forAllDataContext( FUNC func ) const
-{
-  if( auto * groupCtx = dynamic_cast< TARGET_DC const * >( &getDataContext() ) )
-  {
-    func( *groupCtx );
-  }
-  for( auto const & wrapperIterator : m_wrappers )
-  {
-    auto * wrapperCtx = dynamic_cast< TARGET_DC const * >( &wrapperIterator.second->getDataContext() );
-    if( wrapperCtx )
-    {
-      func( *wrapperCtx );
-    }
-  }
-  for( auto subGroup : m_subGroups )
-  {
-    subGroup.second->forAllDataContext< TARGET_DC >( func );
-  }
 }
 
 } /* end namespace dataRepository */
