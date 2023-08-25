@@ -209,7 +209,7 @@ private:
 
       // Do not forget the collocated_nodes fields
       vtkNew< vtkIdTypeArray > collocatedNodes;
-      collocatedNodes->SetName( "duplicated_nodes" );
+      collocatedNodes->SetName( "collocated_nodes" );
       collocatedNodes->SetNumberOfComponents( 2 );
       collocatedNodes->SetNumberOfTuples( numPoints );
       collocatedNodes->SetTuple2( 0, 4, 8 );
