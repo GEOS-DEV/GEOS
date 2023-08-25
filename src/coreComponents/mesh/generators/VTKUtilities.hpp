@@ -68,6 +68,9 @@ using CellMapType = std::map< ElementType, std::unordered_map< int, std::vector<
  */
 vtkSmartPointer< vtkMultiProcessController > getController();
 
+/**
+ * @brief Gathers all the vtk meshes together.
+ */
 class AllMeshes
 {
 public:
@@ -119,7 +122,10 @@ public:
   }
 
 private:
+  /// The main 3d mesh (namely the matrix).
   vtkSmartPointer< vtkDataSet > m_main;
+
+  /// The face meshes (namely the fractures).
   std::map< string, vtkSmartPointer< vtkDataSet > > m_faceBlocks;
 };
 
