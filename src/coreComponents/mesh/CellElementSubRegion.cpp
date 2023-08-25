@@ -103,12 +103,12 @@ void CellElementSubRegion::copyFromCellBlock( CellBlockABC const & cellBlock )
 #endif
   cellBlock.forExternalProperties( [&]( WrapperBase const & wrapper )
   {
-    types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
+    types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
     {
-      using ArrayType = decltype( array );
+      using ArrayType = camp::first< decltype( tupleOfTypes ) >;
       auto const src = Wrapper< ArrayType >::cast( wrapper ).reference().toViewConst();
       this->registerWrapper( wrapper.getName(), std::make_unique< ArrayType >( &src ) );
-    } );
+    }, wrapper );
   } );
 }
 
