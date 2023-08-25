@@ -572,7 +572,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
   SortedArray< localIndex > & yposNodes = nodeSets["ypos"];
   SortedArray< localIndex > & znegNodes = nodeSets["zneg"];
   SortedArray< localIndex > & zposNodes = nodeSets["zpos"];
-#if !defined(GEOSX_MAPS_OFF)
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   SortedArray< localIndex > & allNodes = nodeSets["all"];
 #endif
 
@@ -776,7 +776,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
           {
             zposNodes.insert( localNodeIndex );
           }
-#if !defined(GEOSX_MAPS_OFF)
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
           allNodes.insert( localNodeIndex );
 #endif
 
@@ -954,7 +954,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
   coordinateTransformation( X, nodeSets );
 
-#if !defined(GEOSX_MAPS_OFF)
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   cellBlockManager.buildMaps();
 #endif
 

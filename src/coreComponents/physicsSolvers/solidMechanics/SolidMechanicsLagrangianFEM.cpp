@@ -403,7 +403,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 
               for( localIndex a=0; a< numSupportPoints; ++a )
               {
-#if !defined(GEOSX_MAPS_OFF)
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
                 mass[elemsToNodes[k][a]] += rho[k][q] * detJW * N[a];
 #else
                 mass[elemsToNodes[k][a]] += 1 * detJW * N[a];

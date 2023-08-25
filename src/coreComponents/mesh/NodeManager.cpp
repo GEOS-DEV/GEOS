@@ -43,7 +43,7 @@ NodeManager::NodeManager( string const & name,
 {
   registerWrapper( viewKeyStruct::referencePositionString(), &m_referencePosition );
   //END_SPHINX_REFPOS_REG
-#if !defined(GEOSX_MAPS_OFF)
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   this->registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation );
   this->registerWrapper( viewKeyStruct::faceListString(), &m_toFacesRelation );
   this->registerWrapper( viewKeyStruct::elementRegionListString(), &elementRegionList() );
@@ -60,7 +60,7 @@ NodeManager::NodeManager( string const & name,
 
 void NodeManager::resize( localIndex const newSize )
 {
-#if !defined(GEOSX_MAPS_OFF)
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   m_toFacesRelation.resize( newSize, 2 * getFaceMapOverallocation() );
   m_toEdgesRelation.resize( newSize, 2 * getEdgeMapOverallocation() );
   m_toElements.m_toElementRegion.resize( newSize, 2 * getElemMapOverAllocation() );
@@ -145,7 +145,7 @@ void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
 
   m_referencePosition = cellBlockManager.getNodePositions();
 
-#if !defined(GEOSX_MAPS_OFF)
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   m_toEdgesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getNodeToEdges(),
                                                              LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
   m_toFacesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getNodeToFaces(),
@@ -175,19 +175,11 @@ void NodeManager::setupRelatedObjectsInRelations( EdgeManager const & edgeManage
 
 void NodeManager::compressRelationMaps()
 {
-#if !defined(GEOSX_MAPS_OFF)
   m_toEdgesRelation.compress();
   m_toFacesRelation.compress();
   m_toElements.m_toElementRegion.compress();
   m_toElements.m_toElementSubRegion.compress();
   m_toElements.m_toElementIndex.compress();
-#else
-  m_toEdgesRelation.compress();
-  m_toFacesRelation.compress();
-  m_toElements.m_toElementRegion.compress();
-  m_toElements.m_toElementSubRegion.compress();
-  m_toElements.m_toElementIndex.compress();
-#endif
 }
 
 

@@ -40,7 +40,7 @@ CellElementSubRegion::CellElementSubRegion( string const & name, Group * const p
 
   registerWrapper( viewKeyStruct::detJString(), &m_detJ ).setSizedFromParent( 1 ).reference();
 
-#if !defined(GEOSX_MAPS_OFF)
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   registerWrapper( viewKeyStruct::toEmbSurfString(), &m_toEmbeddedSurfaces ).setSizedFromParent( 1 );
 #endif
 
@@ -63,7 +63,7 @@ void CellElementSubRegion::resizePerElementValues( localIndex const newNumNodesP
                                                 newNumFacesPerElement );
 
   m_toNodesRelation.resize( size(), m_numNodesPerElement );
-#if !defined(GEOSX_MAPS_OFF)
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   m_toEdgesRelation.resize( size(), m_numEdgesPerElement );
   m_toFacesRelation.resize( size(), m_numFacesPerElement );
 #endif
@@ -84,21 +84,21 @@ void CellElementSubRegion::copyFromCellBlock( CellBlockABC const & cellBlock )
   // Be careful when refactoring.
   m_toNodesRelation.resize( this->size(), m_numNodesPerElement );
 
-#if !defined(GEOSX_MAPS_OFF)
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   m_toEdgesRelation.resize( this->size(), m_numEdgesPerElement );
   m_toFacesRelation.resize( this->size(), m_numFacesPerElement );
 #endif
   this->resize( cellBlock.numElements() );
 
   this->nodeList() = cellBlock.getElemToNodes();
-#if !defined(GEOSX_MAPS_OFF)
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   this->edgeList() = cellBlock.getElemToEdges();
   this->faceList() = cellBlock.getElemToFaces();
 #endif
 
   this->m_localToGlobalMap = cellBlock.localToGlobalMap();
 
-#if !defined(GEOSX_MAPS_OFF)
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   this->constructGlobalToLocalMap();
 #endif
   cellBlock.forExternalProperties( [&]( WrapperBase const & wrapper )

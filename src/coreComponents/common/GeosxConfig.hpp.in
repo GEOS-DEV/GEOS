@@ -181,7 +181,7 @@
 #define GEOS_USE_DEVICE
 #endif
 
-#cmakedefine GEOSX_MAPS_OFF
+#cmakedefine GEOS_TEMP_MINIMUM_ALLOCATION_FLAG
 
 
 #endif  /* GEOS_CONFIG_HPP */
