@@ -433,6 +433,17 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       arrayView1d< real64 > const initTemp = subRegion.template getField< fields::flow::initialTemperature >();
       initPres.setValues< parallelDevicePolicy<> >( pres );
       initTemp.setValues< parallelDevicePolicy<> >( temp );
+
+      if (m_isFixedStressPoromechanicsUpdate)
+      {
+        arrayView1d< real64 > const pres_k = subRegion.getField < fields::flow::pressure_k >();
+        pres_k.setValues< parallelDevicePolicy<> >( pres );
+        arrayView1d< real64 > const temp_k = subRegion.getField < fields::flow::temperature_k >();
+        temp_k.setValues< parallelDevicePolicy<> >( temp );
+
+        std::cout << pres_k[0] << "\t" << pres[0] << "\t" << initPres[0] << std::endl;
+      }
+
     } );
   } );
 

@@ -116,8 +116,13 @@ public:
                         real64 const & biotCoefficient,
                         real64 const & thermalExpansionCoefficient,
                         real64 const & meanEffectiveStressIncrement_k,
-                        real64 const & bulkModulus ) const
+                        real64 & bulkModulus,
+                        bool const printFlag=false ) const
   {
+
+    bulkModulus = 6.6667e7;
+    //bulkModulus = 5.e9;
+
     real64 const biotSkeletonModulusInverse = (biotCoefficient - referencePorosity) / m_grainBulkModulus;
     real64 const porosityThermalExpansion = 3 * thermalExpansionCoefficient * ( biotCoefficient - referencePorosity );
     real64 const fixedStressPressureCoefficient = biotCoefficient * biotCoefficient / bulkModulus;
@@ -131,13 +136,25 @@ public:
     dPorosity_dPressure = biotSkeletonModulusInverse;
     dPorosity_dTemperature = -porosityThermalExpansion;
 
-    if( !isZero( meanEffectiveStressIncrement_k ) ) // TODO: find a better way to disable this at the first flow iteration
-    {
-      porosity += fixedStressPressureCoefficient * deltaPressureFromLastIteration // fixed-stress pressure term
-                  + fixedStressTemperatureCoefficient * deltaTemperatureFromLastIteration; // fixed-stress temperature term
+    bool test = !isZero( meanEffectiveStressIncrement_k );
+
+    //if( !isZero( meanEffectiveStressIncrement_k ) ) // TODO: find a better way to disable this at the first flow iteration
+    //{
+      porosity += fixedStressPressureCoefficient * deltaPressureFromBeginningOfTimeStep // fixed-stress pressure term - modified for explicit coupling
+                  + fixedStressTemperatureCoefficient * deltaTemperatureFromBeginningOfTimeStep; // fixed-stress temperature term
       dPorosity_dPressure += fixedStressPressureCoefficient;
       dPorosity_dTemperature += fixedStressTemperatureCoefficient;
-    }
+    //}
+
+    if (printFlag) {std::cout << "------------- computePorosity info ----------------" << std::endl;
+                    std::cout << "porosity_n: " << std::setprecision(16) << porosity_n << std::endl; 
+                    std::cout << "porosity: " << std::setprecision(16) << porosity << "\t" << test << std::endl;
+                    std::cout << "deltaPressureFromLastIteration: " << deltaPressureFromLastIteration << "\t" << "deltaPressureFromBeginningOfTimeStep: " <<  deltaPressureFromBeginningOfTimeStep << std::endl;
+                    std::cout << "fixedStressPressureCoefficient: " << fixedStressPressureCoefficient << std::endl;
+                    std::cout << "biotCoefficient: " << biotCoefficient << "\t "<< "bulkModulus: " << bulkModulus << std::endl;
+                    std::cout << "meanEffectiveStressIncrement_k: " << meanEffectiveStressIncrement_k << std::endl;
+                    std::cout << "--------------------------------------------" << std::endl;   }
+    GEOS_UNUSED_VAR(deltaPressureFromLastIteration, deltaTemperatureFromLastIteration);
   }
 
   GEOS_HOST_DEVICE
@@ -155,6 +172,9 @@ public:
     real64 const deltaTemperatureFromBeginningOfTimeStep = temperature - temperature_n;
     real64 const deltaTemperatureFromLastIteration = temperature - temperature_k;
 
+    bool printFlag=false;
+    if (k == 0 && q == 0) {printFlag=true;}
+
     computePorosity( deltaPressureFromBeginningOfTimeStep,
                      deltaPressureFromLastIteration,
                      deltaTemperatureFromBeginningOfTimeStep,
@@ -167,7 +187,8 @@ public:
                      m_biotCoefficient[k],
                      m_thermalExpansionCoefficient[k],
                      m_averageMeanEffectiveStressIncrement_k[k],
-                     m_bulkModulus[k] );
+                     m_bulkModulus[k],
+                     printFlag );
   }
 
   GEOS_HOST_DEVICE

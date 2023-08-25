@@ -95,8 +95,8 @@ void BiotPorosity::initializeState() const
 void BiotPorosity::saveConvergedState() const
 {
   PorosityBase::saveConvergedState();
-  m_meanEffectiveStressIncrement_k.zero();
-  m_averageMeanEffectiveStressIncrement_k.zero();
+  //m_meanEffectiveStressIncrement_k.zero();
+  //m_averageMeanEffectiveStressIncrement_k.zero();
 }
 
 void BiotPorosity::ignoreConvergedState() const

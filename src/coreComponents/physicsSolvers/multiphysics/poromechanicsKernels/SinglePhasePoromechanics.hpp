@@ -299,9 +299,17 @@ public:
   void compute( localIndex const ei,
                 localIndex const q ) const
   {
+
+    if (ei == 0 and q == 0){
+      std::cout << "Bulk density update porosity: "<< m_porosity[ei][q] << std::endl;
+    }
+
     m_bulkDensity[ei][q] =
       ( 1 - m_porosity[ei][q] ) * m_rockDensity[ei][q] + m_porosity[ei][q] * m_fluidDensity[ei][q];
+    
+
   }
+
 
   /**
    * @brief Performs the kernel launch

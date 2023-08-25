@@ -357,6 +357,8 @@ protected:
 
     Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
 
+    implicitStepSetup(time_n, dt, domain);
+
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
 
