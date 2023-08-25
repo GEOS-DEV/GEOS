@@ -758,8 +758,8 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   // Node and edge managers rely on the boundary information provided by the face manager.
   // This is why `faceManager.setDomainBoundaryObjects` is called first.
   faceManager.setDomainBoundaryObjects( elemRegionManager );
-  edgeManager.setDomainBoundaryObjects( faceManager, elemRegionManager );
-  nodeManager.setDomainBoundaryObjects( faceManager, edgeManager, elemRegionManager );
+  edgeManager.setDomainBoundaryObjects( faceManager );
+  nodeManager.setDomainBoundaryObjects( faceManager, edgeManager );
 
   meshLevel.generateSets();
 

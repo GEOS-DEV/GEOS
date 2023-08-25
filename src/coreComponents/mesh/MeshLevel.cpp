@@ -354,9 +354,7 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
   };
 
   // Add all the collocated nodes of the fracture element.
-  auto const addCollocatedFractureNodes = [&]( localIndex const er,
-                                               localIndex const esr,
-                                               FaceElementSubRegion const & subRegion )
+  auto const addCollocatedFractureNodes = [&]( FaceElementSubRegion const & subRegion )
   {
     auto const & l2g = nodeManager.localToGlobalMap();
     auto const & g2l = nodeManager.globalToLocalMap();
@@ -418,7 +416,7 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
                                                                          FaceElementSubRegion const & subRegion )
       {
         addFractureSupport( er, esr, subRegion );
-        addCollocatedFractureNodes( er, esr, subRegion );
+        addCollocatedFractureNodes( subRegion );
       } );
     }
   }

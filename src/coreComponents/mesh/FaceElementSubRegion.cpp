@@ -611,7 +611,7 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
   std::map< std::set< globalIndex >, std::set< ElemPath > > faceRefNodesToElems;
   elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex const er,
                                                                          localIndex const esr,
-                                                                         ElementRegionBase const & region,
+                                                                         ElementRegionBase const & GEOS_UNUSED_PARAM( region ),
                                                                          CellElementSubRegion const & subRegion )
   {
     auto const & elemToFaces = subRegion.faceList().base();

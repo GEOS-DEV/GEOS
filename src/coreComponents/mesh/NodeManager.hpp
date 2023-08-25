@@ -154,8 +154,7 @@ public:
    * @see ObjectManagerBase::getDomainBoundaryIndicator()
    */
   void setDomainBoundaryObjects( FaceManager const & faceManager,
-                                 EdgeManager const & edgeManager,
-                                 ElementRegionManager const & elemRegionManager);
+                                 EdgeManager const & edgeManager );
 
   /**
    * @brief Copies the nodes positions and the nodes to (edges|faces|elements) mappings from @p cellBlockManager.

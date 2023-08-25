@@ -542,8 +542,7 @@ loadMesh( Path const & filePath,
 
 AllMeshes loadAllMeshes( Path const & filePath,
                          string const & mainBlockName,
-                         array1d< string > const & faceBlockNames,
-                         bool forceRead )
+                         array1d< string > const & faceBlockNames )
 {
   int const lastRank = MpiWrapper::commSize() - 1;
   vtkSmartPointer< vtkDataSet > main = loadMesh( filePath, mainBlockName );
@@ -591,13 +590,12 @@ AllMeshes redistributeByCellGraph( AllMeshes & input,
     MpiWrapper::allGather( numElems, elemCounts, comm );
     std::partial_sum( elemCounts.begin(), elemCounts.end(), elemDist.begin() + 1 );
   }
-  pmet_idx_t const offset = elemDist.back();
 
   vtkIdType localNumFracCells = 0;
   if( isLastMpiRank ) // Let's add artificially the fracture to the last rank (for numbering reasons).
   {
     // Adding one fracture element
-    for( auto fracture: input.getFaceBlocks() )
+    for( auto const & fracture: input.getFaceBlocks() )
     {
       localNumFracCells += fracture.second->GetNumberOfCells();
     }

@@ -386,7 +386,7 @@ CommunicationTools::buildNeighborPartitionBoundaryObjects( ObjectManagerBase & m
   // The data functor will return the same information, whatever the rank `i` is.
   // This is because the `exchange` function is able to send different data depending on the rank.
   // Since in our precise case, we want to send the same information, we adapt the functor that way.
-  auto const data = [&]( auto i ) -> array1d< globalIndex > const &
+  auto const data = [&]( auto GEOS_UNUSED_PARAM( i ) ) -> array1d< globalIndex > const &
   {
     return std::cref( globalPartitionBoundaryObjectsIndices );
   };

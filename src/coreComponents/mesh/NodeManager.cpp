@@ -111,8 +111,7 @@ void NodeManager::buildGeometricSets( GeometricObjectManager const & geometries 
 }
 
 void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager,
-                                            EdgeManager const & edgeManager,
-                                            ElementRegionManager const & elemRegionManager )
+                                            EdgeManager const & edgeManager )
 {
   arrayView1d< integer const > const isFaceOnDomainBoundary = faceManager.getDomainBoundaryIndicator();
   arrayView1d< integer const > const isEdgeOnDomainBoundary = edgeManager.getDomainBoundaryIndicator();
