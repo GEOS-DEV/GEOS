@@ -986,6 +986,9 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
 
   auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
 
+  for (auto nm : regionNames)
+    std::cout << "\t[AcousticWaveEquationSEM::computeUnknowns] regionName=" << nm << std::endl;
+
   finiteElement::
     regionBasedKernelApplication< EXEC_POLICY,
                                   constitutive::NullModel,

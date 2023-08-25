@@ -1,0 +1,154 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers>
+    <!-- define the solver -->
+    <!-- define the source coordinates -->
+    <!-- define the time source frequency -->
+    <!-- define the receiver coordinates -->
+    <AcousticSEM
+      name="acousticSolver"
+      cflFactor="0.25"
+      discretization="FE1"
+      targetRegions="{ Fluid }"
+      sourceCoordinates="{ { 1010,1010,1710 } }"
+      timeSourceFrequency="5"
+      receiverCoordinates="{ { 1010,1010,1610 } }"
+      rickerOrder="3"
+      outputSeismoTrace="1"
+      dtSeismoTrace="0.001"/>
+    <ElasticSEM
+      name="elasticSolver"
+      cflFactor="0.25"
+      discretization="FE1"
+      targetRegions="{ Solid }"
+      sourceCoordinates="{ }"
+      timeSourceFrequency="0"
+      receiverCoordinates="{ }"
+      outputSeismoTrace="1"
+      dtSeismoTrace="1e-2"/>
+    <AcousticElasticSEM
+      name="acousticelasticSolver"
+      cflFactor="0.25"
+      discretization="FE1"
+      targetRegions="{ Solid, Fluid }"
+      acousticSolverName="acousticSolver"
+      elasticSolverName="elasticSolver"/>
+  </Solvers>
+
+  <!-- hexahedral mesh generated internally by GEOSX -->
+  <!-- 6400x1600x4800m -->
+  <!--
+  nx="{ 320 }"
+  ny="{ 80 }"
+  nz="{ 120, 120 }" -->
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 6400 }"
+      yCoords="{ 0, 1600 }"
+      zCoords="{ 0, 2400, 4800 }"
+      nx="{ 160 }"
+      ny="{ 40 }"
+      nz="{ 60, 60 }"
+      cellBlockNames="{ solid, fluid }"/>
+  </Mesh>
+
+  <Events
+    maxTime="3">
+    <!-- control the timestepping here with forceDt -->
+    <PeriodicEvent
+      name="solidfluidSolverApplications"
+      forceDt="4.2e-4"
+      target="/Solvers/acousticelasticSolver"/>
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1e-2"
+      targetExactTimestep="0"
+      target="/Outputs/vtkOutput"/>
+    <SoloEvent
+      name="solidSolverApplications"
+      forceDt="4.2e-4"
+      endTime="0"
+      target="/Solvers/elasticSolver"/>
+    <SoloEvent
+      name="fluidSolverApplications"
+      forceDt="4.2e-4"
+      endTime="0"
+      target="/Solvers/acousticSolver"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"
+        formulation="SEM"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Fluid"
+      cellBlocks="{ fluid }"
+      materialList="{ nullModel }"/>
+    <CellElementRegion
+      name="Solid"
+      cellBlocks="{ solid }"
+      materialList="{ nullModel }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <NullModel
+      name="nullModel"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <!-- 2) The velocity in the domain -->
+    <FieldSpecification
+      name="acousticVelocity"
+      initialCondition="1"
+      objectPath="mesh/FE1/ElementRegions/Fluid/fluid"
+      fieldName="mediumVelocity"
+      scale="1500.0"
+      setNames="{ all }"/>
+
+    <FieldSpecification
+      name="acousticDensity"
+      initialCondition="1"
+      objectPath="mesh/FE1/ElementRegions/Fluid/fluid"
+      fieldName="mediumDensityA"
+      scale="1020.0"
+      setNames="{ all }"/>
+
+    <FieldSpecification
+      name="elasticVelocityVp"
+      initialCondition="1"
+      objectPath="mesh/FE1/ElementRegions/Solid/solid"
+      fieldName="mediumVelocityVp"
+      scale="3400.0"
+      setNames="{ all }"/>
+    <FieldSpecification
+      name="elasticVelocityVs"
+      initialCondition="1"
+      objectPath="mesh/FE1/ElementRegions/Solid/solid"
+      fieldName="mediumVelocityVs"
+      scale="1963.0"
+      setNames="{ all }"/>
+    <FieldSpecification
+      name="elasticDensity"
+      initialCondition="1"
+      objectPath="mesh/FE1/ElementRegions/Solid/solid"
+      fieldName="mediumDensityE"
+      scale="2500.0"
+      setNames="{ all }"/>
+  </FieldSpecifications>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      writeFEMFaces="1"
+      plotLevel="2"/>
+  </Outputs>
+</Problem>

@@ -739,6 +739,9 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
 
   auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dt );
 
+  for (auto nm : regionNames)
+    std::cout << "\t[ElasticWaveEquationSEM::computeUnknowns] regionName=" << nm << std::endl;
+
   finiteElement::
     regionBasedKernelApplication< EXEC_POLICY,
                                   constitutive::NullModel,
