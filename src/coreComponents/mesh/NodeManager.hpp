@@ -150,7 +150,6 @@ public:
    * @brief Builds the node-on-domain-boundary indicator.
    * @param[in] faceManager The computation is based on the face-on-domain-boundary indicator.
    * @param[in] edgeManager The edge manager.
-   * @param[in] elemRegionManager The element region manager.
    * @see ObjectManagerBase::getDomainBoundaryIndicator()
    */
   void setDomainBoundaryObjects( FaceManager const & faceManager,
