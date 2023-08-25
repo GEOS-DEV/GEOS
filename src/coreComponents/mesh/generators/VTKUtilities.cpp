@@ -377,15 +377,13 @@ splitMeshByPartition( vtkSmartPointer< vtkDataSet > mesh,
   for( localIndex p = 0; p < numParts; ++p )
   {
     arraySlice1d< vtkIdType const > const cells = cellsLists[p];
-    if( cells.size() > 0 )
-    {
-      extractor->SetCellIds( cells.dataIfContiguous(), LvArray::integerConversion< vtkIdType >( cells.size() ) );
-      extractor->Update();
 
-      vtkNew< vtkUnstructuredGrid > ug;
-      ug->ShallowCopy( extractor->GetOutputDataObject( 0 ) );
-      result->SetPartition( LvArray::integerConversion< unsigned int >( p ), ug );
-    }
+    extractor->SetCellIds( cells.dataIfContiguous(), LvArray::integerConversion< vtkIdType >( cells.size() ) );
+    extractor->Update();
+
+    vtkNew< vtkUnstructuredGrid > ug;
+    ug->ShallowCopy( extractor->GetOutputDataObject( 0 ) );
+    result->SetPartition( LvArray::integerConversion< unsigned int >( p ), ug );
   }
   return result;
 }
@@ -932,7 +930,17 @@ redistributeMesh( vtkSmartPointer< vtkDataSet > loadedMesh,
     result.setFaceBlocks( namesToFractures );
   }
 
-  GEOS_LOG_RANK( "Mesh sizes are: main = " << result.getMainMesh()->GetNumberOfCells() << " faceBlock = " << result.getFaceBlocks().at( "fracture" )->GetNumberOfCells() );
+  // Logging some information about the redistribution.
+  {
+    string const pattern = "{} = {}";
+    std::vector< string > messages;
+    messages.push_back( GEOS_FMT( pattern, "Mesh sizes are: main", result.getMainMesh()->GetNumberOfCells() ) );
+    for( auto const & [faceName, faceMesh]: result.getFaceBlocks() )
+    {
+      messages.push_back( GEOS_FMT( pattern, faceName, faceMesh->GetNumberOfCells() ) );
+    }
+    GEOS_LOG_RANK( stringutilities::join( messages, ", " ) );
+  }
 
   return result;
 }
@@ -1812,37 +1820,15 @@ string getElementTypeName( ElementType const type )
   }
 }
 
-/**
- * @brief Collect a set of material field names registered in a subregion.
- * @param subRegion the target subregion
- * @return a set of wrapper names
- */
-std::unordered_set< string > getMaterialWrapperNames( ElementSubRegionBase const & subRegion )
-{
-  using namespace constitutive;
-  std::unordered_set< string > materialWrapperNames;
-  subRegion.getConstitutiveModels().forSubGroups< ConstitutiveBase >( [&]( ConstitutiveBase const & material )
-  {
-    material.forWrappers( [&]( WrapperBase const & wrapper )
-    {
-      if( wrapper.sizedFromParent() )
-      {
-        materialWrapperNames.insert( ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() ) );
-      }
-    } );
-  } );
-  return materialWrapperNames;
-}
-
 void importMaterialField( std::vector< vtkIdType > const & cellIds,
                           vtkDataArray * vtkArray,
                           WrapperBase & wrapper )
 {
   // Scalar material fields are stored as 2D arrays, vector/tensor are 3D
-  using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 2, 3 > >;
-  types::dispatch( ImportTypes{}, wrapper.getTypeId(), true, [&]( auto array )
+  using ImportTypes = types::ListofTypeList< types::ArrayTypes< types::RealTypes, types::DimsRange< 2, 3 > > >;
+  types::dispatch( ImportTypes{}, [&]( auto tupleOfTypes )
   {
-    using ArrayType = decltype( array );
+    using ArrayType = camp::first< decltype( tupleOfTypes ) >;
     Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
     auto const view = wrapperT.reference().toView();
 
@@ -1868,17 +1854,17 @@ void importMaterialField( std::vector< vtkIdType > const & cellIds,
         ++cellCount;
       }
     } );
-  } );
+  }, wrapper );
 }
 
 void importRegularField( std::vector< vtkIdType > const & cellIds,
                          vtkDataArray * vtkArray,
                          WrapperBase & wrapper )
 {
-  using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 1, 2 > >;
-  types::dispatch( ImportTypes{}, wrapper.getTypeId(), true, [&]( auto dstArray )
+  using ImportTypes = types::ListofTypeList< types::ArrayTypes< types::RealTypes, types::DimsRange< 1, 2 > > >;
+  types::dispatch( ImportTypes{}, [&]( auto tupleOfTypes )
   {
-    using ArrayType = decltype( dstArray );
+    using ArrayType = camp::first< decltype( tupleOfTypes ) >;
     Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
     auto const view = wrapperT.reference().toView();
 
@@ -1900,7 +1886,7 @@ void importRegularField( std::vector< vtkIdType > const & cellIds,
         ++cellCount;
       }
     } );
-  } );
+  }, wrapper );
 }
 
 
@@ -1964,30 +1950,6 @@ void printMeshStatistics( vtkDataSet & mesh,
                         widthLocal, "min", "avg", "max",
                         minLocalElems, avgLocalElems, maxLocalElems ) );
   }
-}
-
-std::vector< vtkDataArray * >
-findArraysForImport( vtkDataSet & mesh,
-                     arrayView1d< string const > const & srcFieldNames )
-{
-  std::vector< vtkDataArray * > arrays;
-  vtkCellData & cellData = *mesh.GetCellData();
-
-  for( string const & sourceName : srcFieldNames )
-  {
-    vtkAbstractArray * const curArray = cellData.GetAbstractArray( sourceName.c_str() );
-    GEOS_THROW_IF( curArray == nullptr,
-                   GEOS_FMT( "Source field '{}' not found in dataset", sourceName ),
-                   InputError );
-
-    int const dataType = curArray->GetDataType();
-    GEOS_ERROR_IF( dataType != VTK_FLOAT && dataType != VTK_DOUBLE,
-                   GEOS_FMT( "Source field '{}' has unsupported type: {} (expected floating point type)",
-                             sourceName, curArray->GetDataTypeAsString() ) );
-    arrays.push_back( vtkDataArray::SafeDownCast( curArray ) );
-  }
-
-  return arrays;
 }
 
 vtkDataArray *

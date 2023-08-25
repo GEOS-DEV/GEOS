@@ -164,18 +164,18 @@ void VTKMeshGenerator::importSurfacicFieldOnArray( string const & faceBlockName,
                                                    string const & meshFieldName,
                                                    dataRepository::WrapperBase & wrapper ) const
 {
-  // If the field was not imported from cell blocks, we now look for it in the face blocks.
-  // This surely can be improved by clearly stating which field should be on which block.
   // Note that there is no additional work w.r.t. the cells on which we want to import the fields,
   // because the face blocks are heterogeneous.
   // We always take the whole data, we do not select cell type by cell type.
   vtkSmartPointer< vtkDataSet > faceMesh = m_faceBlockMeshes.at( faceBlockName );
+
+  // I've noticed that there may be some issues when reading empty arrays.
+  // It looks like we may be reading above the limits of the array...
   if( faceMesh->GetNumberOfCells() == 0 )
   {
-    GEOS_LOG_RANK( "Empty fracture mesh \"" << faceBlockName << "\", most probably because of parallel partitioning. Ignoring..." );
-    // TODO Improve the check here.
     return;
   }
+
   if( vtk::hasArray( *faceMesh, meshFieldName ) )
   {
     vtkDataArray * vtkArray = vtk::findArrayForImport( *faceMesh, meshFieldName );

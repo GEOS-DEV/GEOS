@@ -22,7 +22,7 @@ CollocatedNodes::CollocatedNodes( string const & faceBlockName,
                                   bool isParallel )
 {
   // The vtk field to the collocated nodes for fractures.
-  string const COLLOCATED_NODES = "duplicated_nodes";
+  string const COLLOCATED_NODES = "collocated_nodes";
 
   vtkIdTypeArray const * collocatedNodes = vtkIdTypeArray::FastDownCast( faceMesh->GetPointData()->GetArray( COLLOCATED_NODES.c_str() ) );
   if( isParallel )
