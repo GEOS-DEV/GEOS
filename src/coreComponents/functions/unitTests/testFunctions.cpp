@@ -20,7 +20,7 @@
 #include "functions/TableFunction.hpp"
 #include "functions/MultivariableTableFunction.hpp"
 #include "functions/MultivariableTableFunctionKernels.hpp"
-#include "mainInterface/GeosxState.hpp"
+//#include "mainInterface/GeosxState.hpp"
 
 #ifdef GEOSX_USE_MATHPRESSO
   #include "functions/SymbolicFunction.hpp"
@@ -904,11 +904,16 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geos::GeosxState state( geos::basicSetup( argc, argv ) );
+  // geos::GeosxState state( geos::basicSetup( argc, argv ) );
+  conduit::Node conduitNode;
+  dataRepository::Group rootNode( "root", conduitNode );
+
+
+  FunctionManager functionManager( "FunctionManager", &rootNode );
 
   int const result = RUN_ALL_TESTS();
 
-  geos::basicCleanup();
+  // geos::basicCleanup();
 
   return result;
 }

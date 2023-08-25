@@ -42,4 +42,5 @@ blt_add_library( NAME       functions
 
 target_include_directories( functions PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
+add_subdirectory(unitTests)
 geosx_add_code_checks( PREFIX functions )

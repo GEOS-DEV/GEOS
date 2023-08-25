@@ -7,13 +7,13 @@ set( gtest_geosx_tests
    )
 
 
-set( dependencyList ${parallelDeps} gtest )
+set( dependencyList ${parallelDeps} gtest functions )
 
-if ( GEOSX_BUILD_SHARED_LIBS )
-  set (dependencyList ${dependencyList} geosx_core )
-else()
-  set (dependencyList ${dependencyList} ${geosx_core_libs} )
-endif()
+# if ( GEOSX_BUILD_SHARED_LIBS )
+#   set (dependencyList ${dependencyList} geosx_core )
+# else()
+#   set (dependencyList ${dependencyList} ${geosx_core_libs} )
+# endif()
 
 #
 # Add gtest C++ based tests
