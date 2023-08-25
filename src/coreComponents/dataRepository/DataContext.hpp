@@ -203,9 +203,12 @@ private:
 
 
 
-/// Formatter to be able to directly use a DataContext as a GEOS_FMT() argument.
+/**
+ * @brief Formatter to be able to directly use a DataContext as a GEOS_FMT() argument.
+ * Inherits from formatter<std::string> to reuse its parse() method.
+ */
 template<>
-struct GEOS_FMT_NS::formatter< geos::dataRepository::DataContext >
+struct GEOS_FMT_NS::formatter< geos::dataRepository::DataContext > : GEOS_FMT_NS::formatter< std::string >
 {
   /**
    * @brief Format the specified DataContext to a string.
@@ -215,18 +218,7 @@ struct GEOS_FMT_NS::formatter< geos::dataRepository::DataContext >
    */
   auto format( geos::dataRepository::DataContext const & dataContext, format_context & ctx )
   {
-    return format_to( ctx.out(), dataContext.toString() );
-  }
-
-  /**
-   * @brief Method to parse a dataContext from a string. Not implemented!
-   * @param ctx formatting state consisting of the formatting arguments and the output iterator
-   * @return iterator to the output buffer (leaved unchanged)
-   */
-  auto parse( format_parse_context & ctx )
-  {
-    GEOS_ERROR( "DataContext parsing is not implemented." );
-    return ctx.begin();
+    return GEOS_FMT_NS::formatter< std::string >::format( dataContext.toString(), ctx );
   }
 };
 
