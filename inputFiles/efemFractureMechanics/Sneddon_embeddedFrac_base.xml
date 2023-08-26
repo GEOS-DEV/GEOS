@@ -1,57 +1,6 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers
-    gravityVector="{0.0, 0.0, 0.0}">
-  <!-- SPHINX_SNEDDON_SOLVER -->
-    <SolidMechanicsEmbeddedFractures
-      name="mechSolve"
-      targetRegions="{ Domain, Fracture }"
-      fractureRegionName="Fracture"
-      initialDt="10"
-      solidSolverName="matrixSolver"
-      contactRelationName="fractureContact"
-      logLevel="1">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="2"
-        maxTimeStepCuts="1"/>
-      <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
-    </SolidMechanicsEmbeddedFractures>
-
-    <SolidMechanicsLagrangianSSLE
-      name="matrixSolver"
-      timeIntegrationOption="QuasiStatic"
-      logLevel="1"
-      discretization="FE1"
-      targetRegions="{ Domain }"/>
-
-    <EmbeddedSurfaceGenerator
-      name="SurfaceGenerator"
-      discretization="FE1"
-      targetRegions="{ Domain, Fracture }"
-      targetObjects="{ FracturePlane }"
-      fractureRegion="Fracture"
-      logLevel="1"
-      mpiCommOrder="1"/>
-  </Solvers>
-  <!-- SPHINX_SNEDDON_SOLVER_END -->
-
-  <!-- SPHINX_SNEDDON_GEOMETRY -->
-  <Geometry>
-    <Rectangle
-      name="FracturePlane"
-      normal="{1.0, 0.0, 0.0}"
-      origin="{0.0, 0.0, 0.0}"
-      lengthVector="{0.0, 1.0, 0.0}"
-      widthVector="{0.0, 0.0, 1.0}"
-      dimensions="{ 2, 10 }"/>
-  </Geometry>
-  <!-- SPHINX_SNEDDON_GEOMETRY_END -->  
-
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
@@ -147,7 +96,8 @@
     <PackCollection
       name="displacementJumpCollection"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
-      fieldName="displacementJump"/>   
+      fieldName="displacementJump"
+      setNames="{all}"/>
   </Tasks>
   <!-- SPHINX_SNEDDON_TASK_END -->
 
@@ -155,7 +105,7 @@
     <VTK
       name="vtkOutput"
       plotLevel="2"
-      format="ascii"/>
+      format="binary"/>
       
     <TimeHistory
       name="timeHistoryOutput"
