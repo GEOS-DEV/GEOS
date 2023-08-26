@@ -131,8 +131,8 @@ protected:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   SortedArray< localIndex > m_interfaceNodesSet;
-  array1d< string > m_acousRegions;
-  array1d< string > m_elasRegions;
+  arrayView1d< string const > m_acousRegions;
+  arrayView1d< string const > m_elasRegions;
 };
 
 namespace fields

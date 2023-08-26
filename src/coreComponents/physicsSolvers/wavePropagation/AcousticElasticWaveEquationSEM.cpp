@@ -56,11 +56,8 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
       m_interfaceNodesSet.insert( val );
   }
 
-  // TODO: make this generic by looping through `getGroupByPath`
-  m_acousRegions.resize(1);
-  m_acousRegions[0] = "Fluid";
-  m_elasRegions.resize(1);
-  m_elasRegions[0] = "Solid";
+  m_acousRegions = acousSolver->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
+  m_elasRegions = elasSolver->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
 
   std::cout << "\t[AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] "
             << "m_interfaceNodesSet.size()=" << m_interfaceNodesSet.size() << std::endl;
@@ -132,8 +129,6 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
   auto elasSolver = elasticSolver();
 
   SortedArrayView< localIndex const > const interfaceNodesSet = m_interfaceNodesSet.toViewConst();
-  // arrayView1d< string const > const acousRegions = m_acousRegions.toViewConst();
-  // arrayView1d< string const > const elasRegions = m_elasRegions.toViewConst();
 
 #if 1
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
