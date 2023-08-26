@@ -159,7 +159,7 @@ public:
     size_t const free = sysconf( _SC_AVPHYS_PAGES ) * sysconf( _SC_PAGESIZE );
 #else
     size_t const free = 0;
-    GEOS_ERROR( "To use LifoStorage, both _SC_AVPHYS_PAGES and _SC_PAGESIZE must be defined.");
+    GEOS_ERROR( "To use LifoStorage, both _SC_AVPHYS_PAGES and _SC_PAGESIZE must be defined." );
 #endif
     int numberOfBuffersToStoreOnHost = std::max( 1, std::min( ( int )( 0.01 * percent * free / bufferSize ), maxNumberOfBuffers - numberOfBuffersToStoreOnDevice ) );
     double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 ) / MpiWrapper::nodeCommSize();
