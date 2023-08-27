@@ -66,6 +66,11 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_fTable(),
   m_domainF(),
   m_domainL(),
+  m_stressControl(),
+  m_stressTableInterpType( 0 ),
+  m_stressControlKp( 0.1 ),
+  m_stressControlKi( 0 ),
+  m_stressControlKd( 0 ),
   m_boxAverageHistory( 0 ),
   m_reactionHistory( 0 ),
   m_needsNeighborList( 0 ),
@@ -164,6 +169,30 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper( "fTable", &m_fTable ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Array that stores time-dependent grid-aligned stretches interpreted as a gloabl background grid F read from the XML file." );
+
+  registerWrapper( "stressControl" , &m_stressControl).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag for whether stress control using box averages is enabled" );
+
+  registerWrapper( "stressTableInterpType", &m_stressTableInterpType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The type of stress table interpolation. Options are 0 (linear), 1 (cosine), 2 (quintic polynomial)." );
+
+  registerWrapper( "stressTable", &m_stressTable ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Array that stores the time-depended grid aligned stresses" );
+
+  registerWrapper( "stressControlKp", &m_stressControlKp ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Proportional gain of stress PID controller" );
+
+  registerWrapper( "stressControlKi", &m_stressControlKi ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Integral gain of stress PID controller" );
+
+   registerWrapper( "stressControlKd", &m_stressControlKd ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Derivative gain of stress PID controller" );
 
   registerWrapper( "needsNeighborList", &m_needsNeighborList ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -589,6 +618,24 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
                        m_fTable[i][2] < 0 || 
                        m_fTable[i][3] < 0, "Deformations of FTable must be positive." );
       }
+    }
+  }
+
+  if( m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1 )
+  {
+    m_domainStress.resize( 3 );
+    m_stressControlLastError.resize(3);
+    LvArray::tensorOps::fill< 3 >( m_stressControlLastError, 0.0 );
+    m_stressControlITerm.resize(3);
+    LvArray::tensorOps::fill< 3 >( m_stressControlITerm, 0.0 );
+    
+
+    GEOS_ERROR_IF(m_stressTable.size(0) == 0, "Stress table cannot be empty is stress control is enabled");
+    GEOS_ERROR_IF(m_stressTable.size(1) == 0, "Stress table must have 4 columns");
+
+    for(int i = 0; i < m_stressTable.size(0) ; i++)
+    {
+      GEOS_ERROR_IF(m_stressTable[i][0] < 0.0, "Stress table times must be positive");
     }
   }
 
@@ -1066,15 +1113,21 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     enforceContact( dt, domain, particleManager, nodeManager, mesh );
   }
 
+  //#######################################################################################
+  solverProfilingIf( "Interpolate stress table", m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1 );
+  //#######################################################################################
+  if( m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1 )
+  {
+    interpolateStressTable( dt, time_n );
+  }
 
   //#######################################################################################
   solverProfilingIf( "Interpolate F table", m_prescribedBoundaryFTable == 1 );
   //#######################################################################################
-  if( m_prescribedBoundaryFTable == 1 )
+  if( ( !m_stressControl[0] || !m_stressControl[1] || !m_stressControl[2] ) && m_prescribedBoundaryFTable == 1 )
   {
     interpolateFTable( dt, time_n );
   }
-
 
   //#######################################################################################
   solverProfiling( "Apply essential boundary conditions" );
@@ -1140,6 +1193,18 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     }
   }
 
+  //#######################################################################################
+  solverProfilingIf("Stress control",  m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1 );
+  //#######################################################################################
+  // stress control reads a principal stress table.  we compute the
+  // difference between most recent box sum and the prescribed value and increment
+  // the domain strain rate accordingly.  This is a simple control loop.
+  if( m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1 )
+  {
+    stressControl( dt,
+                   time_n,
+                   particleManager );
+  }
 
   //#######################################################################################
   solverProfiling( "Calculate stable time step" );
@@ -1178,7 +1243,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   solverProfilingIf( "Resize grid based on F-table", m_prescribedBoundaryFTable == 1 );
   //#######################################################################################
-  if( m_prescribedBoundaryFTable == 1 )
+  if( m_prescribedBoundaryFTable == 1 || m_stressControl[0] || m_stressControl[1] || m_stressControl[2] )
   {
     resizeGrid( partition, nodeManager, dt );
   }
@@ -2765,6 +2830,169 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   }
 }
 
+void SolidMechanicsMPM::computeBoxStress( const real64 dt,
+                                          const real64 time_n,
+                                          ParticleManager & particleManager,
+                                          arrayView1d< real64 > currentStress )
+{
+  real64 boxStress[3] = { 0.0 }; // we sum stress * volume in particles, additive sync, then divide by box volume.
+
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    // Get fields
+    arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
+    arrayView2d< real64 > const particleStress = subRegion.getField< fields::mpm::particleStress >();
+
+    // Accumulate values
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    //CC: debug
+    // GEOS_LOG_RANK_0("SubRegion: " << subRegion.getName() << ", numP: " << activeParticleIndices.size());
+    // CC: TODO parallelize via reduction
+    forAll< serialPolicy >( activeParticleIndices.size(), [=, &boxStress] GEOS_HOST ( localIndex const pp )
+    {
+      localIndex const p = activeParticleIndices[pp];
+      // Only need diagonal components
+      //CC: debug
+      // GEOS_LOG_RANK_0("p: " << p << ", stress " << particleStress[p] << ", pV" << particleVolume[p]);
+      for( int i=0; i < 3; i++ )
+      {
+        boxStress[i] += particleStress[p][i] * particleVolume[p]; // volume weighted average, will normalize later.
+      }
+    } );
+  } );
+
+  // Additive sync: sxx, syy, szz, sxy, syz, sxz, mass, particle volume, damage
+  real64 boxSums[3];
+  boxSums[0] = boxStress[0];       // sig_xx * volume
+  boxSums[1] = boxStress[1];       // sig_yy * volume
+  boxSums[2] = boxStress[2];       // sig_zz * volume
+
+  // Do an MPI sync to total these values and write from proc0 to a file.  Also compute global F
+  // so file is directly plottable in excel as CSV or something.
+  for( localIndex i = 0; i < 3; i++ )
+  {
+    real64 localSum = boxSums[i];
+    real64 globalSum;
+    MPI_Allreduce( &localSum,
+                   &globalSum,
+                   1,
+                   MPI_DOUBLE,
+                   MPI_SUM,
+                   MPI_COMM_GEOSX );
+    boxSums[i] = globalSum;
+  }
+
+  real64 boxVolume = m_domainExtent[0] * m_domainExtent[1] * m_domainExtent[2];
+
+  currentStress[0] = boxSums[0] / boxVolume;
+  currentStress[1] = boxSums[1] / boxVolume;
+  currentStress[2] = boxSums[2] / boxVolume;  
+  GEOS_LOG_RANK_0( "cS: {" << currentStress[0] << ", "
+                          << currentStress[1] << ", "
+                          << currentStress[2] << "}, bS: {" << boxSums[0] << ", "
+                          << boxSums[1] << ", "
+                          << boxSums[2] << "}, bV: " << boxVolume);
+}
+
+void SolidMechanicsMPM::stressControl( real64 dt,
+                                       real64 time_n,
+                                       ParticleManager & particleManager )
+{
+  
+  real64 targetStress[3] = {0};
+  LvArray::tensorOps::copy< 3 >(targetStress, m_domainStress);
+
+  array1d< real64 > currentStress;
+  currentStress.resize( 3 );
+	computeBoxStress( dt,
+                    time_n,
+                    particleManager,
+                    currentStress );
+
+  GEOS_LOG_RANK_0("Current Stress: " << currentStress << ", Target Stress: {" << targetStress[0] << ", " << targetStress[1] << ", " << targetStress[2] << "}");
+
+  // Only the first material is used for the stress controlled driver
+  // TO DO: What to do if your system has several materials? Volume average of bulk modulus?
+  const ParticleSubRegion & subRegion = dynamic_cast< ParticleSubRegion & >( particleManager.getRegion( 0 ).getSubRegion(0) );
+  string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+  const SolidBase & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
+  GEOS_LOG_RANK_IF( !solidModel.hasWrapper( "defaultBulkModulus" ), "First material must have bulk modulus defined when stress control is enabled" );
+  real64 bulkModulus = solidModel.getReference< real64 >( "defaultBulkModulus" );
+
+	// This will drive the response towards the desired stress but may be
+	// unstable.
+	real64 stressControlKp = m_stressControlKp / ( bulkModulus * dt );
+	real64 stressControlKd = m_stressControlKd / ( bulkModulus );
+	real64 stressControlKi = m_stressControlKi / ( bulkModulus * dt * dt );
+
+	real64 error[3] = {0};
+  LvArray::tensorOps::copy< 3 >(error, targetStress);
+  LvArray::tensorOps::subtract< 3 >(error, currentStress);
+
+	real64 dedt[3] = {0};
+  LvArray::tensorOps::copy< 3 >( dedt, error);
+  LvArray::tensorOps::subtract< 3 >( dedt, m_stressControlLastError);
+  LvArray::tensorOps::scale< 3 >( dedt, dt);
+
+	real64 stressControlPTerm[3] = {0}; 
+  LvArray::tensorOps::copy< 3 >( stressControlPTerm, error);
+  LvArray::tensorOps::scale< 3 >( stressControlPTerm, stressControlKp);
+
+  real64 stressControlITerm[3] = {0};
+  LvArray::tensorOps::copy< 3 >( stressControlITerm, error);
+  LvArray::tensorOps::scale< 3 >( stressControlITerm, stressControlKi*dt);
+  LvArray::tensorOps::add< 3 >( m_stressControlITerm, stressControlITerm );
+
+  real64 stressControlDTerm[3] = {0};
+  LvArray::tensorOps::copy< 3 >( stressControlDTerm, dedt);
+  LvArray::tensorOps::scale< 3 >(stressControlDTerm, stressControlKp);
+
+	real64 L_new[3] = {0}; 
+  LvArray::tensorOps::copy< 3 >( L_new, stressControlPTerm );
+  LvArray::tensorOps::add< 3 >( L_new, m_stressControlITerm );
+  LvArray::tensorOps::add< 3 >( L_new, stressControlDTerm );
+
+	LvArray::tensorOps::copy< 3 >(m_stressControlLastError, error);
+
+	// Limit L so boundary motion doesn't exceed CFL limit
+	// boundaryV = strainRate*(m_xmax_global - m_xmin_global) = CFL*m_dx/dt
+	real64 Lxx_min, 
+         Lxx_max, 
+         Lyy_min, 
+         Lyy_max, 
+         Lzz_min,
+         Lzz_max;
+
+	Lxx_max = m_cflFactor * ( m_hEl[0] / dt) / ( m_xGlobalMax[0] - m_xGlobalMin[0]);
+	Lxx_min = -1.0 * Lxx_max;
+	L_new[0] = std::min( Lxx_max , std::max( L_new[0], Lxx_min ) );
+
+	Lyy_max = m_cflFactor * ( m_hEl[1] / dt) / ( m_xGlobalMax[1] - m_xGlobalMin[1]);
+	Lyy_min = -1.0 * Lyy_max;
+	L_new[1] = std::min( Lyy_max , std::max( L_new[1], Lyy_min ) );
+
+	Lzz_max = m_cflFactor * ( m_hEl[2] / dt) / ( m_xGlobalMax[2] - m_xGlobalMin[2]);
+	Lzz_min = -1.0 * Lzz_max;
+	L_new[2] = std::min( Lzz_max , std::max( L_new[1], Lzz_min ) );
+
+	for(int i=0; i < m_numDims; i++ )
+	{
+		if( m_stressControl[i] )
+		{
+			m_domainL[i] = L_new[i];
+			//m_domainL[i] = m_stress_control_eta*L_new[i] + (1.0 -  m_stress_control_eta)*m_domain_L[i]; // CC: ported from old geos but no modified
+			m_domainF[i] += m_domainL[i]*m_domainF[i]*dt;
+		}
+	}
+
+  GEOS_LOG_RANK_0("error: " << error[0] << ", " << error[1] << ", " << error[2] << 
+                  ", dedt: " << dedt[0] << ", " << dedt[1] << ", " << dedt[2] <<  
+                  ", P: " << stressControlPTerm[0] << ", " << stressControlPTerm[1] << ", " << stressControlPTerm[2] << 
+                  ", I: " << stressControlITerm[0] << ", " << stressControlITerm[1] << ", " << stressControlITerm[2] <<  
+                  ", D: " << stressControlDTerm[0] << ", " << stressControlDTerm[1] << ", " << stressControlDTerm[2]);
+  GEOS_LOG_RANK_0("Domain L: " << m_domainL << ", Domain F" << m_domainF);
+}
+
 void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
 {
   int const numNodes = nodeManager.size();
@@ -3046,32 +3274,35 @@ void SolidMechanicsMPM::interpolateFTable( real64 dt, real64 time_n )
 
     for( int i = 0; i < m_numDims; i++ )   // Update L and F
     {
-      // smooth-step interpolation with cosine, zero endpoint velocity
-      if( m_fTableInterpType == 1 )
+      if ( !m_stressControl[i] )
       {
-        Fii_new = m_fTable[fInterval][i + 1] - 0.5 * ( m_fTable[fInterval + 1][i + 1] - m_fTable[fInterval][i + 1] ) * ( cos( 3.141592653589793 * timePast / timeInterval ) - 1.0 );
-      }
-      // smooth-step interpolation with 5th order polynomial, zero endpoint velocity and acceleration
-      else if( m_fTableInterpType == 2 )
-      {
-        Fii_new = m_fTable[fInterval][i+1] + (m_fTable[fInterval+1][i+1] - m_fTable[fInterval][i+1])*
-                  (10.0*pow( timePast/timeInterval, 3 ) - 15.0*pow( timePast/timeInterval, 4 ) + 6.0*pow( timePast/timeInterval, 5 ));
-      }
-      // default linear interpolation
-      else
-      {
-        Fii_new = m_fTable[fInterval][i + 1] * ( timeInterval - timePast ) / timeInterval + m_fTable[fInterval + 1][i + 1] * ( timePast ) / timeInterval;
-      }
+        // smooth-step interpolation with cosine, zero endpoint velocity
+        if( m_fTableInterpType == 1 )
+        {
+          Fii_new = m_fTable[fInterval][i + 1] - 0.5 * ( m_fTable[fInterval + 1][i + 1] - m_fTable[fInterval][i + 1] ) * ( cos( 3.141592653589793 * timePast / timeInterval ) - 1.0 );
+        }
+        // smooth-step interpolation with 5th order polynomial, zero endpoint velocity and acceleration
+        else if( m_fTableInterpType == 2 )
+        {
+          Fii_new = m_fTable[fInterval][i+1] + (m_fTable[fInterval+1][i+1] - m_fTable[fInterval][i+1])*
+                    (10.0*pow( timePast/timeInterval, 3 ) - 15.0*pow( timePast/timeInterval, 4 ) + 6.0*pow( timePast/timeInterval, 5 ));
+        }
+        // default linear interpolation
+        else
+        {
+          Fii_new = m_fTable[fInterval][i + 1] * ( timeInterval - timePast ) / timeInterval + m_fTable[fInterval + 1][i + 1] * ( timePast ) / timeInterval;
+        }
 
-      // // drive F22 and F33 using F11 to get pure shear
-      // if(m_fTable_pure_shear && i > 0)
-      // {
-      //   Fii_new = m_planeStrain ? 1.0/m_domainF[0] : 1.0/sqrt(m_domainF[0]);
-      // }
+        // // drive F22 and F33 using F11 to get pure shear
+        // if(m_fTable_pure_shear && i > 0)
+        // {
+        //   Fii_new = m_planeStrain ? 1.0/m_domainF[0] : 1.0/sqrt(m_domainF[0]);
+        // }
 
-      Fii_dot = ( Fii_new - m_domainF[i] ) / dt;
-      m_domainL[i] = Fii_dot / Fii_new; // L = Fdot.Finv
-      m_domainF[i] = Fii_new;
+        Fii_dot = ( Fii_new - m_domainF[i] ) / dt;
+        m_domainL[i] = Fii_dot / Fii_new; // L = Fdot.Finv
+        m_domainF[i] = Fii_new;
+      }
     }
   }
   else if( time_n + dt >= m_fTable[m_fTable.size( 0 ) - 1][0] ) // Else (i.e. if we exceed F table upper bound)...
@@ -3084,6 +3315,62 @@ void SolidMechanicsMPM::interpolateFTable( real64 dt, real64 time_n )
       m_domainF[i] = Fii_new;
     }
   }
+}
+
+void SolidMechanicsMPM::interpolateStressTable( real64 dt,
+                                                real64 time_n )
+{
+  double stressii_new;
+  int stressInterval = 0;
+  double timeInterval;
+  double timePast;
+
+  if( time_n + dt < m_stressTable[m_stressTable.size( 0 ) - 1][0] ) // If within F table bounds...
+  {
+    for( localIndex i = 0; i < m_stressTable.size( 0 ); i++ ) // Naive method for determining what part of F table we're currently in, can
+                                                         // optimize later (TODO)
+    {
+      if( time_n + dt / 2 > m_stressTable[i][0] )
+      {
+        stressInterval = i;
+      }
+    }
+
+    timeInterval = m_stressTable[stressInterval + 1][0] - m_stressTable[stressInterval][0]; // Time fInterval for current part of F table we're in
+    timePast = time_n + dt - m_stressTable[stressInterval][0]; // Time elapsed since switching intervals in F table
+
+    for( int i = 0; i < m_numDims; i++ )   // Update L and F
+    {
+      // smooth-step interpolation with cosine, zero endpoint velocity
+      if( m_stressTableInterpType == 1 )
+      {
+        stressii_new = m_stressTable[stressInterval][i + 1] - 0.5 * ( m_stressTable[stressInterval + 1][i + 1] - m_stressTable[stressInterval][i + 1] ) * ( cos( 3.141592653589793 * timePast / timeInterval ) - 1.0 );
+      }
+      // smooth-step interpolation with 5th order polynomial, zero endpoint velocity and acceleration
+      else if( m_stressTableInterpType == 2 )
+      {
+        stressii_new = m_stressTable[stressInterval][i+1] + (m_stressTable[stressInterval+1][i+1] - m_stressTable[stressInterval][i+1])*
+                  (10.0*pow( timePast/timeInterval, 3 ) - 15.0*pow( timePast/timeInterval, 4 ) + 6.0*pow( timePast/timeInterval, 5 ));
+      }
+      // default linear interpolation
+      else
+      {
+        stressii_new = m_stressTable[stressInterval][i + 1] * ( timeInterval - timePast ) / timeInterval + m_stressTable[stressInterval + 1][i + 1] * ( timePast ) / timeInterval;
+      }
+
+      m_domainStress[i] = stressii_new;
+    }
+  }
+  else if( time_n + dt >= m_stressTable[m_stressTable.size( 0 ) - 1][0] ) // Else (i.e. if we exceed F table upper bound)...
+  {
+    for( int i = 0; i < m_numDims; i++ )
+    {
+      stressii_new = m_stressTable[m_stressTable.size( 0 ) - 1][i + 1]; // Set Fii_new to the last prescribed F table value
+      m_domainStress[i] = stressii_new;
+    }
+  }
+
+  GEOS_LOG_RANK_0("Stress control: " << m_stressControl << ", Domain Stress: " << m_domainStress);
 }
 
 void SolidMechanicsMPM::gridToParticle( real64 dt,
