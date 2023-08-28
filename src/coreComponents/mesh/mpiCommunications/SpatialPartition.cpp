@@ -67,14 +67,11 @@ SpatialPartition::SpatialPartition( string const & name,
   m_numColors = 8,
   setPartitions( 1, 1, 1 );
 
-  //CC: hard coded periodic boundaries for now
-  // Apply default of periodic boundaries turned off
-  // Is there a way to initialize the size and elements of array1d?
+  LvArray::tensorOps::fill< 3 >(m_Periodic, 0);
+
   registerWrapper( viewKeyStruct::periodicString(), &m_Periodic ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "periodic flag for each direction of mesh" );
-
-  // GEOS_LOG_RANK("Periodic: " << m_Periodic[0] << ", " << m_Periodic[1] << ", " << m_Periodic[2]);
 }
 
 SpatialPartition::~SpatialPartition()
