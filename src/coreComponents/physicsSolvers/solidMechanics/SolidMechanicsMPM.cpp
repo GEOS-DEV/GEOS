@@ -2478,16 +2478,27 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( ParticleManager & part
 {
   // Grid nodes gain the damage field gradient of the particle mapping to them with the largest damage field gradient
 
+  real64 xLocalMin[3] = {0};
+  LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
+  real64 hEl[3] = {0};
+  LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
+  arrayView3d< int const > const ijkMap = m_ijkMap;
+
   // Get grid fields
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
   arrayView2d< real64 > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::damageGradientString() );
+  
   int subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     // Get particle fields
+    ParticleType particleType = subRegion.getParticleType();
+    arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
+    arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
     arrayView2d< real64 const > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
 
     // Get nodes this particle maps to
-    arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
+    // arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
 
     // Map to grid
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
@@ -2496,9 +2507,27 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( ParticleManager & part
       {
         localIndex const p = activeParticleIndices[pp];
 
+        //CC: Computed the node mappings of particle corners on the fly
+        int mappedNodes[64];
+        real64 shapeFunctionValues[64];
+        real64 shapeFunctionGradientValues[64][3];
+        mapNodesAndComputeShapeFunctions( ijkMap,
+                                          xLocalMin,
+                                          hEl,
+                                          particleType,
+                                          particlePosition[p],
+                                          particleRVectors[p],
+                                          gridPosition,
+                                          mappedNodes,
+                                          shapeFunctionValues,
+                                          shapeFunctionGradientValues);
+
         // Map to grid
-        for( localIndex const & g: mappedNodes[pp] )
+        // CC: this will need to be modified for different particles types
+        // Currently only supports CPDI
+        for( int gg = 0; gg < 64; ++gg)
         {
+          localIndex const g = mappedNodes[gg];
           if( LvArray::tensorOps::l2NormSquared< 3 >( particleDamageGradient[p] ) > LvArray::tensorOps::l2NormSquared< 3 >( gridDamageGradient[g] ) )
           {
             for( int i=0; i<numDims; i++ )
@@ -2808,6 +2837,13 @@ void SolidMechanicsMPM::boundaryConditionUpdate( real64 dt, real64 time_n )
 void SolidMechanicsMPM::particleToGrid( ParticleManager & particleManager,
                                         NodeManager & nodeManager )
 {
+  //CC: fields for on-the-fly mapNodes calculations
+  real64 xLocalMin[3] = {0};
+  LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
+  real64 hEl[3] = {0};
+  LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
+  arrayView3d< int const > const ijkMap = m_ijkMap;
+
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -2823,6 +2859,7 @@ void SolidMechanicsMPM::particleToGrid( ParticleManager & particleManager,
     arrayView2d< real64 const > const particleStress = subRegion.getField< fields::mpm::particleStress >();
     arrayView2d< real64 const > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
     arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
+    arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
 
     // Grid fields
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
@@ -2833,14 +2870,6 @@ void SolidMechanicsMPM::particleToGrid( ParticleManager & particleManager,
     arrayView3d< real64 > const gridMaterialPosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::materialPositionString() );
     arrayView2d< real64 > const gridDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::damageString() );
     arrayView2d< real64 > const gridMaxDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::maxDamageString() );
-
-    //CC: fields for on-the-fly mapNodes calculations
-    real64 xLocalMin[3] = {0};
-    LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
-    real64 hEl[3] = {0};
-    LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
-    arrayView3d< int const > const ijkMap = m_ijkMap;
-    arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
 
     // Get views to mapping arrays
     int const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
@@ -3104,6 +3133,13 @@ void SolidMechanicsMPM::gridToParticle( real64 dt,
                                         ParticleManager & particleManager,
                                         NodeManager & nodeManager )
 {
+  //CC: fields for on-the-fly mapNodes calculations
+  real64 xLocalMin[3] = {0};
+  LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
+  real64 hEl[3] = {0};
+  LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
+  arrayView3d< int const > const ijkMap = m_ijkMap;
+
   // Grid fields
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
   arrayView2d< real64 const > const & gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::damageGradientString() );
@@ -3118,18 +3154,11 @@ void SolidMechanicsMPM::gridToParticle( real64 dt,
     arrayView2d< real64 > const particlePosition = subRegion.getParticleCenter();
     arrayView2d< real64 > const particleVelocity = subRegion.getParticleVelocity();
     arrayView1d< int const > const particleGroup = subRegion.getParticleGroup();
+    arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors(); 
 
     // Registered by MPM solver
     arrayView3d< real64 > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
     arrayView2d< real64 const > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
-
-    //CC: fields for on-the-fly mapNodes calculations
-    real64 xLocalMin[3] = {0};
-    LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
-    real64 hEl[3] = {0};
-    LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
-    arrayView3d< int const > const ijkMap = m_ijkMap;
-    arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors(); 
 
     // Get views to mapping arrays
     int const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
