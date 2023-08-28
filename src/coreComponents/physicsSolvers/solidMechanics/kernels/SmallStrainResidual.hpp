@@ -170,12 +170,34 @@ public:
   real64 complete( localIndex const k,
                    StackVariables const & stack ) const;
 
+  /**
+   * @copydoc geosx::finiteElement::KernelBase::complete
+   *
+   * ### SmallStrainResidual Description
+   * Performs the distribution of the nodal force out to the rank local arrays.
+   */
+  GEOS_HOST_DEVICE
+  real64 complete( localIndex const k,
+                   real64 const (&fLocal) [ numNodesPerElem ][ numDofPerTestSupportPoint ] ) const;
+
+  GEOS_HOST_DEVICE
+  real64 complete( localIndex const k,
+                   localIndex const ( &elemToNodeMap )[numNodesPerElem],
+                   real64 const (&fLocal) [ numNodesPerElem ][ numDofPerTestSupportPoint ] ) const;
 
 
   GEOS_HOST_DEVICE
   void setup( localIndex const k,
               real64 ( &xLocal ) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
               real64 ( &varLocal ) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const;
+
+  GEOS_HOST_DEVICE
+  void setup( localIndex const k,
+              localIndex ( &elemToNodeMap )[numNodesPerElem],
+              real64 ( &xLocal ) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
+              real64 ( &varLocal ) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const;
+
+
 
   /**
    * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
@@ -203,15 +225,6 @@ public:
                               real64 const (&varLocal)[ numNodesPerElem ][ numDofPerTrialSupportPoint ],
                               real64 ( &fLocal ) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const;
 
-  /**
-   * @copydoc geosx::finiteElement::KernelBase::complete
-   *
-   * ### SmallStrainResidual Description
-   * Performs the distribution of the nodal force out to the rank local arrays.
-   */
-  GEOS_HOST_DEVICE
-  real64 complete( localIndex const k,
-                   real64 const (&fLocal) [ numNodesPerElem ][ numDofPerTestSupportPoint ] ) const;
 
 
 

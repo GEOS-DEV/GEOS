@@ -98,8 +98,7 @@ MatrixFreeSolidMechanicsFEM::MatrixFreeSolidMechanicsFEM( const string & name,
   m_kernelOptimizationOption(0)
 {
     registerWrapper( viewKeyStruct::kernelOptimizationOption(), &m_kernelOptimizationOption ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Internal flag used for various kernel optimzation options within the matrix-free operator kernels. "
                     "Only for use by developers or under guidance of a developer." );
 

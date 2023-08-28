@@ -156,6 +156,30 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
+void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( localIndex const k,
+                                                                               localIndex ( &elemToNodeMap )[numNodesPerElem],
+                                                                               real64 (& xLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
+                                                                               real64 (& varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const
+{
+  RAJA_UNROLL
+  for( localIndex a=0; a< numNodesPerElem; ++a )
+  {
+    elemToNodeMap[a] = m_elemsToNodes( k, a );
+    RAJA_UNROLL
+    for( int i=0; i<numDofPerTrialSupportPoint; ++i )
+    {
+      xLocal[ a ][ i ] = m_X( elemToNodeMap[a], i );
+      varLocal[ a ][ i ] = m_input( elemToNodeMap[a], i );
+    }
+  }
+}
+
+
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel( localIndex const k,
                                                                                                localIndex const qa,
                                                                                                localIndex const qb,
@@ -275,6 +299,7 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   real64 stressLocal[ 6 ] = {0};
   m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, qa+2*qb+4*qc, strain, stressLocal );
 
+  RAJA_UNROLL
   for( localIndex c = 0; c < 6; ++c )
   {
     stressLocal[ c ] *= -detJ;
@@ -292,14 +317,16 @@ template< typename SUBREGION_TYPE,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64 SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::complete( localIndex const k,
+                                                                                    localIndex const ( &elemToNodeMap )[numNodesPerElem],
                                                                                     real64 const (&fLocal) [ numNodesPerElem ][ numDofPerTestSupportPoint ] ) const
 {
+  RAJA_UNROLL
   for( localIndex a = 0; a < numNodesPerElem; ++a )
   {
-    localIndex const nodeIndex = m_elemsToNodes( k, a );
+    RAJA_UNROLL
     for( int i = 0; i < numDofPerTestSupportPoint; ++i )
     {
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_res( nodeIndex, i ), fLocal[ a ][ i ] );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_res( elemToNodeMap[a], i ), fLocal[ a ][ i ] );
     }
   }
   return 0;
@@ -318,72 +345,105 @@ kernelLaunch( localIndex const numElems,
               KERNEL_TYPE const & kernelComponent )
 {
   GEOS_MARK_FUNCTION;
+  int const kernelOptimizationOption = kernelComponent.m_kernelOptimizationOption;
 
-  #define KERNEL_OPTION 3
-#if KERNEL_OPTION == 1 // use stack container
-  forAll< POLICY >( numElems,
-                    [=] GEOS_DEVICE ( localIndex const k )
+  if( kernelOptimizationOption == 1 )
   {
-    typename KERNEL_TYPE::StackVariables stack;
+    forAll< POLICY >( numElems,
+                      [=] GEOS_DEVICE ( localIndex const k )
+    {
+      typename KERNEL_TYPE::StackVariables stack;
 
-    kernelComponent.setup( k, stack );
-//    for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
-  RAJA_UNROLL
-    for( integer qa=0; qa<2; ++qa )
-                                     RAJA_UNROLL
-      for( integer qb=0; qb<2; ++qb )
-                                       RAJA_UNROLL
-        for( integer qc=0; qc<2; ++qc )
+      kernelComponent.setup( k, stack );
+  //    for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
+    RAJA_UNROLL
+      for( integer qa=0; qa<2; ++qa )
+                                      RAJA_UNROLL
+        for( integer qb=0; qb<2; ++qb )
+                                        RAJA_UNROLL
+          for( integer qc=0; qc<2; ++qc )
+          {
+            //  int qa, qb, qc;
+            //FE_TYPE::LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+
+            int const q = qa + 2 * qb + 4*qc;
+            kernelComponent.quadraturePointKernel( k, q, stack );
+          }
+      kernelComponent.complete( k, stack );
+    } );
+  }
+  else if( kernelOptimizationOption == 2 )
+  {
+    forAll< POLICY >( numElems,
+                      [=] GEOS_DEVICE ( localIndex const k )
+    {
+      real64 fLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ] = {{0}};
+      real64 varLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
+      real64 xLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
+
+      kernelComponent.setup( k, xLocal, varLocal );
+      for( integer qc=0; qc<2; ++qc )
+      {
+        for( integer qb=0; qb<2; ++qb )
         {
-          //  int qa, qb, qc;
-          //FE_TYPE::LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
-
-          int const q = qa + 2 * qb + 4*qc;
-          kernelComponent.quadraturePointKernel( k, q, stack );
+          for( integer qa=0; qa<2; ++qa )
+          {
+            kernelComponent.quadraturePointKernel( k, qa, qb, qc, xLocal, varLocal, fLocal );
+          }
         }
-    kernelComponent.complete( k, stack );
-  } );
-#elif KERNEL_OPTION == 2 // no stack
+      }
+      kernelComponent.complete( k, fLocal );
 
-  forAll< POLICY >( numElems,
-                    [=] GEOS_DEVICE ( localIndex const k )
+    } );
+  }
+  else if( kernelOptimizationOption == 21 )
   {
-    real64 fLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ] = {{0}};
-    real64 varLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
-    real64 xLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
+    forAll< POLICY >( numElems,
+                      [=] GEOS_DEVICE ( localIndex const k )
+    {
+      real64 fLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ] = {{0}};
+      real64 varLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
+      real64 xLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
+      localIndex elementToNodeMap[ KERNEL_TYPE::numNodesPerElem ];
 
-    kernelComponent.setup( k, xLocal, varLocal );
-    for( integer qc=0; qc<2; ++qc )
-      for( integer qb=0; qb<2; ++qb )
-        for( integer qa=0; qa<2; ++qa )
+      kernelComponent.setup( k, xLocal, varLocal );
+      for( integer qc=0; qc<2; ++qc )
+      {
+        for( integer qb=0; qb<2; ++qb )
         {
-          kernelComponent.quadraturePointKernel( k, qa, qb, qc, xLocal, varLocal, fLocal );
+          for( integer qa=0; qa<2; ++qa )
+          {
+            kernelComponent.quadraturePointKernel( k, qa, qb, qc, xLocal, varLocal, fLocal );
+          }
         }
-    kernelComponent.complete( k, fLocal );
+      }
+      kernelComponent.complete( k, fLocal );
 
-  } );
-#else // no stack, hand unroll of quadrature loop as template arguments
-  forAll< POLICY >( numElems,
-                    [=] GEOS_DEVICE ( localIndex const k )
+    } );
+  }  
+  else if( kernelOptimizationOption == 3 )
   {
-    real64 fLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ] = {{0}};
-    real64 varLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
-    real64 xLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
+    forAll< POLICY >( numElems,
+                      [=] GEOS_DEVICE ( localIndex const k )
+    {
+      real64 fLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ] = {{0}};
+      real64 varLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
+      real64 xLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
+//      localIndex elementToNodeMap[ KERNEL_TYPE::numNodesPerElem ] = {0};
 
-    kernelComponent.setup( k, xLocal, varLocal );
-    kernelComponent.template quadraturePointKernel< 0, 0, 0 >( k, xLocal, varLocal, fLocal );
-    kernelComponent.template quadraturePointKernel< 0, 0, 1 >( k, xLocal, varLocal, fLocal );
-    kernelComponent.template quadraturePointKernel< 0, 1, 0 >( k, xLocal, varLocal, fLocal );
-    kernelComponent.template quadraturePointKernel< 0, 1, 1 >( k, xLocal, varLocal, fLocal );
-    kernelComponent.template quadraturePointKernel< 1, 0, 0 >( k, xLocal, varLocal, fLocal );
-    kernelComponent.template quadraturePointKernel< 1, 0, 1 >( k, xLocal, varLocal, fLocal );
-    kernelComponent.template quadraturePointKernel< 1, 1, 0 >( k, xLocal, varLocal, fLocal );
-    kernelComponent.template quadraturePointKernel< 1, 1, 1 >( k, xLocal, varLocal, fLocal );
-    kernelComponent.complete( k, fLocal );
+      kernelComponent.setup( k, xLocal, varLocal );
+      kernelComponent.template quadraturePointKernel< 0, 0, 0 >( k, xLocal, varLocal, fLocal );
+      kernelComponent.template quadraturePointKernel< 0, 0, 1 >( k, xLocal, varLocal, fLocal );
+      kernelComponent.template quadraturePointKernel< 0, 1, 0 >( k, xLocal, varLocal, fLocal );
+      kernelComponent.template quadraturePointKernel< 0, 1, 1 >( k, xLocal, varLocal, fLocal );
+      kernelComponent.template quadraturePointKernel< 1, 0, 0 >( k, xLocal, varLocal, fLocal );
+      kernelComponent.template quadraturePointKernel< 1, 0, 1 >( k, xLocal, varLocal, fLocal );
+      kernelComponent.template quadraturePointKernel< 1, 1, 0 >( k, xLocal, varLocal, fLocal );
+      kernelComponent.template quadraturePointKernel< 1, 1, 1 >( k, xLocal, varLocal, fLocal );
+      kernelComponent.complete( k, fLocal );
 
-  } );
-
-#endif
+    } );
+  }
   return 0;
 }
 
