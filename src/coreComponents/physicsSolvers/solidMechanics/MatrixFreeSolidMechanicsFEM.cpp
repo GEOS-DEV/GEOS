@@ -15,10 +15,12 @@
 /**
  * @file MatrixFreeSolidMechanicsFEM.cpp
  */
+
 #define SELECTED_FE_TYPES H1_Hexahedron_Lagrange1_GaussLegendre2
 
 // Source includes
 #include "MatrixFreeSolidMechanicsFEM.hpp"
+#include "MatrixFreeSolidMechanicsFEMOperator.hpp"
 #include "kernels/SmallStrainResidual.hpp"
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "mesh/MeshBody.hpp"
@@ -43,134 +45,6 @@ namespace keys
 using namespace dataRepository;
 using namespace constitutive;
 
-MatrixFreeSolidMechanicsFEMOperator::
-  MatrixFreeSolidMechanicsFEMOperator( DomainPartition & domain,
-                                       map< std::pair< string, string >, array1d< string > > const & meshTargets,
-                                       DofManager & dofManager,
-                                       string const & finiteElementName ):
-  m_meshBodies( domain.getMeshBodies() ),
-  m_meshTargets( meshTargets ),
-  m_dofManager( dofManager ),
-  m_finiteElementName( finiteElementName )
-{ }
-
-MatrixFreeSolidMechanicsFEMOperator::
-  MatrixFreeSolidMechanicsFEMOperator( dataRepository::Group & meshBodies,
-                                       map< std::pair< string, string >, array1d< string > > const & meshTargets,
-                                       DofManager & dofManager,
-                                       string const & finiteElementName ):
-  m_meshBodies( meshBodies ),
-  m_meshTargets( meshTargets ),
-  m_dofManager( dofManager ),
-  m_finiteElementName( finiteElementName )
-{ }
-
-void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, ParallelVector & dst ) const
-{
-  GEOS_MARK_FUNCTION;
-
-  arrayView1d< real64 const > const localSrc = src.values();
-  arrayView1d< real64 > const localDst = dst.open();
-  // We do it by hand to avoid hypre call
-  using POLICY = parallelDeviceAsyncPolicy< 1024 >;
-  forAll< POLICY >( localDst.size(), [localDst] GEOS_HOST_DEVICE ( localIndex const i )
-  {
-    localDst[ i ] = 0.0;
-  } );
-
-  // {
-  // std::cout<<"MatrixFreeSolidMechanicsFEMOperator::apply - bp1"<<std::endl;
-  // LvArray::print< parallelDevicePolicy< 32 > >( localSrc );
-  // std::cout<<"MatrixFreeSolidMechanicsFEMOperator::apply - bp2"<<std::endl;
-  // }
-
-
-
-  for( auto const & target: m_meshTargets )
-  {
-    string const meshBodyName = target.first.first;
-    string const meshLevelName = target.first.second;
-    arrayView1d< string const > const & regionNames = target.second.toViewConst();
-    MeshBody & meshBody = m_meshBodies.getGroup< MeshBody >( meshBodyName );
-
-    MeshLevel * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( meshLevelName );
-    if( meshLevelPtr==nullptr )
-    {
-      meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( MeshBody::groupStructKeys::baseDiscretizationString() );
-    }
-    MeshLevel & mesh = *meshLevelPtr;
-
-    auto const & totalDisplacement = mesh.getNodeManager().getField< fields::solidMechanics::totalDisplacement >();
-    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > localSrc2d( totalDisplacement.dimsArray(), totalDisplacement.stridesArray(), 0, localSrc.dataBuffer() );
-    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > localDst2d( totalDisplacement.dimsArray(), totalDisplacement.stridesArray(), 0, localDst.dataBuffer() );
-
-#if 0
-    TeamSolidMechanicsFEMKernelFactory kernelFactory( localSrc2d, localDst2d );
-    finiteElement::
-      regionBasedKernelApplication< team_launch_policy,
-                                    constitutive::SolidBase,
-                                    CellElementSubRegion >( mesh,
-                                                            regionNames,
-                                                            m_finiteElementName,
-                                                            "solidMaterialNames",
-                                                            kernelFactory );
-#else
-    auto kernelFactory = solidMechanicsLagrangianFEMKernels::SmallStrainResidualFactory( localSrc2d,
-                                                                                         localDst2d,
-                                                                                         0,
-                                                                                         "" );
-
-    finiteElement::
-      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                    constitutive::ElasticIsotropic,
-                                    CellElementSubRegion >( mesh,
-                                                            regionNames,
-                                                            m_finiteElementName,
-                                                            "solidMaterialNames",
-                                                            kernelFactory );
-    //parallelDeviceSync();
-
-#endif
-  }
-
-  // {
-  //   std::cout<<"MatrixFreeSolidMechanicsFEMOperator::apply - bp3"<<std::endl;
-  //   LvArray::print< parallelDevicePolicy< 32 > >( localDst );
-  //   std::cout<<"MatrixFreeSolidMechanicsFEMOperator::apply - bp4"<<std::endl;
-  // }
-
-  dst.close();
-}
-
-void MatrixFreeSolidMechanicsFEMOperator::computeDiagonal( ParallelVector & GEOS_UNUSED_PARAM( diagonal ) ) const
-{
-  GEOS_ERROR( "computeDiagonal: operation not yet implemented" );
-}
-
-globalIndex MatrixFreeSolidMechanicsFEMOperator::numGlobalRows() const
-{
-  return m_dofManager.numGlobalDofs();
-}
-
-globalIndex MatrixFreeSolidMechanicsFEMOperator::numGlobalCols() const
-{
-  return m_dofManager.numGlobalDofs();
-}
-
-localIndex MatrixFreeSolidMechanicsFEMOperator::numLocalRows() const
-{
-  return m_dofManager.numLocalDofs();
-}
-
-localIndex MatrixFreeSolidMechanicsFEMOperator::numLocalCols() const
-{
-  return m_dofManager.numLocalDofs();
-}
-
-MPI_Comm MatrixFreeSolidMechanicsFEMOperator::comm() const
-{
-  return MPI_COMM_GEOSX;
-}
 
 /*----------------------------------------------------------------------------------
  * LaplaceFEM: Solving Laplace's partial differential equation with finite elements
@@ -220,8 +94,16 @@ MPI_Comm MatrixFreeSolidMechanicsFEMOperator::comm() const
 MatrixFreeSolidMechanicsFEM::MatrixFreeSolidMechanicsFEM( const string & name,
                                                           Group * const parent ):
   SolverBase( name, parent ),
-  m_fieldName( "totalDisplacement" )
-{}
+  m_fieldName( "totalDisplacement" ),
+  m_kernelOptimizationOption(0)
+{
+    registerWrapper( viewKeyStruct::kernelOptimizationOption(), &m_kernelOptimizationOption ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Internal flag used for various kernel optimzation options within the matrix-free operator kernels. "
+                    "Only for use by developers or under guidance of a developer." );
+
+}
 //END_SPHINX_INCLUDE_CONSTRUCTOR
 
 MatrixFreeSolidMechanicsFEM::~MatrixFreeSolidMechanicsFEM()
@@ -251,7 +133,8 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
     domain,
     getMeshTargets(),
     m_dofManager,
-    this->getDiscretizationName() );
+    this->getDiscretizationName(),
+    m_kernelOptimizationOption );
 
 //  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp2"<<std::endl;
 

@@ -104,6 +104,7 @@ set( physicsSolvers_headers
      simplePDE/PhaseFieldDamageFEM.hpp
      simplePDE/PhaseFieldDamageFEMKernels.hpp
      solidMechanics/MatrixFreeSolidMechanicsFEM.hpp
+     solidMechanics/MatrixFreeSolidMechanicsFEMOperator.hpp
      solidMechanics/SolidMechanicsFields.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
@@ -189,6 +190,7 @@ set( physicsSolvers_sources
      simplePDE/LaplaceFEM.cpp
      simplePDE/PhaseFieldDamageFEM.cpp
      solidMechanics/MatrixFreeSolidMechanicsFEM.cpp
+     solidMechanics/MatrixFreeSolidMechanicsFEMOperator.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      solidMechanics/SolidMechanicsStateReset.cpp

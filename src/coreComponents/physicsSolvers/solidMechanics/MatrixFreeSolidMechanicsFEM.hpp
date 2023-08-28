@@ -12,6 +12,10 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+/**
+ * @file MatrixFreeSolidMechanicsFEM.hpp
+ */
+
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_MFSOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_MFSOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_
 
@@ -23,38 +27,7 @@
 namespace geos
 {
 
-// Like most physics solvers, the Laplace solver derives from a generic SolverBase class.
-// The base class is densely Doxygen-commented and worth a look if you have not done so already.
-// Most important system assembly steps, linear and non-linear resolutions, and time-stepping mechanisms
-// are implemented at the SolverBase class level and can thus be used in Laplace without needing reimplementation.
 
-class MatrixFreeSolidMechanicsFEMOperator : public LinearOperator< ParallelVector >
-{
-private:
-  dataRepository::Group & m_meshBodies;
-  map< std::pair< string, string >, array1d< string > > const & m_meshTargets;
-  DofManager & m_dofManager;
-  string const m_finiteElementName;
-
-public:
-  MatrixFreeSolidMechanicsFEMOperator( DomainPartition & domain, map< std::pair< string, string >, array1d< string > > const & meshTargets, DofManager & dofManager, string const & finiteElementName );
-  MatrixFreeSolidMechanicsFEMOperator( dataRepository::Group & meshBodies, map< std::pair< string, string >, array1d< string > > const & meshTargets, DofManager & dofManager,
-                                       string const & finiteElementName );
-
-  virtual void apply( ParallelVector const & src, ParallelVector & dst ) const;
-
-  void computeDiagonal( ParallelVector & diagonal ) const;
-
-  virtual globalIndex numGlobalRows() const;
-
-  virtual globalIndex numGlobalCols() const;
-
-  virtual localIndex numLocalRows() const;
-
-  virtual localIndex numLocalCols() const;
-
-  virtual MPI_Comm comm() const;
-};
 
 //START_SPHINX_INCLUDE_BEGINCLASS
 class MatrixFreeSolidMechanicsFEM : public SolverBase
@@ -92,12 +65,20 @@ public:
                        real64 const scalingFactor,
                        DomainPartition & domain ) override;
 
+  struct viewKeyStruct : SolverBase::viewKeyStruct
+  {
+    static constexpr char const * kernelOptimizationOption() { return "kernelOptimizationOption"; }
+  } solidMechanicsViewKeys;
+
 protected:
   string m_fieldName;
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
   using FieldType = array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM >;
+
+  int m_kernelOptimizationOption = 0;
+
 
 };
 } /* namespace geos */

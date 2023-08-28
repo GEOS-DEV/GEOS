@@ -100,7 +100,8 @@ public:
                        arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const inputSrc,
                        arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const inputDst,
                        real64 const dt,
-                       string const elementListName );
+                       string const elementListName,
+                       int const kernelOptimizationOption );
 
   //*****************************************************************************
   /**
@@ -239,6 +240,8 @@ protected:
   /// the force.
   arrayView2d< real64, nodes::ACCELERATION_USD > const m_res;
 
+  int const m_kernelOptimizationOption;
+
   /// The list of elements to process for the kernel launch.
 
 
@@ -251,7 +254,8 @@ using SmallStrainResidualFactory = finiteElement::KernelFactory< SmallStrainResi
                                                                  arrayView2d< real64 const, nodes::ACCELERATION_USD > const,
                                                                  arrayView2d< real64, nodes::ACCELERATION_USD > const,
                                                                  real64,
-                                                                 string const >;
+                                                                 string const,
+                                                                 int const >;
 
 
 

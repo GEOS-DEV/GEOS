@@ -13,7 +13,7 @@
  */
 
 /**
- * @file ExplictSmallStrain_impl.hpp
+ * @file SmallStrainResidual_impl.hpp
  */
 
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_SMALLSTRAINRESIDUAL_IMPL_HPP_
@@ -43,13 +43,15 @@ SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::SmallStrainRe
                                                                                         arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const inputSrc,
                                                                                         arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const inputDst,
                                                                                         real64 const GEOS_UNUSED_PARAM( dt ),
-                                                                                        string const GEOS_UNUSED_PARAM( elementListName ) ):
+                                                                                        string const GEOS_UNUSED_PARAM( elementListName ),
+                                                                                        int const kernelOptimizationOption ):
   Base( elementSubRegion,
         finiteElementSpace,
         inputConstitutiveType ),
   m_X( nodeManager.referencePosition()),
   m_input( inputSrc ),
-  m_res( inputDst )
+  m_res( inputDst ),
+  m_kernelOptimizationOption( kernelOptimizationOption )
 {
   GEOS_UNUSED_VAR( edgeManager );
   GEOS_UNUSED_VAR( faceManager );
@@ -89,26 +91,6 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
                                                                                                localIndex const q,
                                                                                                StackVariables & stack ) const
 {
-  #define USE_JACOBIAN
-#if !defined( USE_JACOBIAN )
-  real64 dNdX[ numNodesPerElem ][ 3 ];
-  real64 const detJ = FE_TYPE::calcGradN( q, stack.xLocal, dNdX );
-
-  real64 strain[6] = {0};
-  FE_TYPE::symmetricGradient( dNdX, stack.varLocal, strain );
-
-  real64 stressLocal[ 6 ] = {0};
-  m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
-
-  RAJA_UNROLL
-  for( localIndex c = 0; c < 6; ++c )
-  {
-    stressLocal[ c ] *= -detJ;
-  }
-
-  FE_TYPE::plusGradNajAij( dNdX, stressLocal, stack.fLocal );
-
-#else //defined( USE_JACOBIAN )
   real64 invJ[3][3] = {{0}};
   real64 const detJ = FE_TYPE::invJacobianTransformation( q, stack.xLocal, invJ );
 
@@ -124,9 +106,7 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   }
 
   FE_TYPE::plusGradNajAij( q, invJ, stressLocal, stack.fLocal );
-#endif // !defined( USE_JACOBIAN )
 }
-#undef USE_JACOBIAN
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
@@ -185,23 +165,8 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
                                                                                                real64 (& fLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const
 {
   #define USE_JACOBIAN 2
-#if !defined(USE_JACOBIAN)
-  real64 dNdX[ numNodesPerElem ][ 3 ];
-  real64 const detJ = FE_TYPE::calcGradN( qa, qb, qc, xLocal, dNdX );
 
-  /// Macro to substitute in the shape function derivatives.
-  real64 strain[6] = {0};
-  FE_TYPE::symmetricGradient( dNdX, varLocal, strain );
-
-  real64 stressLocal[ 6 ] = {0};
-  m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, qa+2*qb+4*qc, strain, stressLocal );
-  RAJA_UNROLL
-  for( localIndex c = 0; c < 6; ++c )
-  {
-    stressLocal[ c ] *= -detJ;
-  }
-  FE_TYPE::plusGradNajAij( dNdX, stressLocal, fLocal );
-#elif USE_JACOBIAN==1
+#if USE_JACOBIAN==1
   real64 invJ[3][3] = {{0}};
   real64 const detJ = FE_TYPE::invJacobianTransformation( qa, qb, qc, xLocal, invJ );
 
@@ -280,8 +245,6 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   real64 parentGradVar[3][3] = {{0}};
 
   FE_TYPE::template parentGradient2< qa, qb, qc >( xLocal, varLocal, invJ, parentGradVar );
-
-//  FE_TYPE::template parentGradient< qa, qb, qc >( xLocal, invJ);
   real64 const detJ = LvArray::tensorOps::invert< 3 >( invJ );
 
 //  FE_TYPE::template parentGradient< qa, qb, qc >( varLocal, parentGradVar);
@@ -357,7 +320,7 @@ kernelLaunch( localIndex const numElems,
   GEOS_MARK_FUNCTION;
 
   #define KERNEL_OPTION 3
-#if KERNEL_OPTION == 1
+#if KERNEL_OPTION == 1 // use stack container
   forAll< POLICY >( numElems,
                     [=] GEOS_DEVICE ( localIndex const k )
   {
@@ -399,7 +362,7 @@ kernelLaunch( localIndex const numElems,
     kernelComponent.complete( k, fLocal );
 
   } );
-#else
+#else // no stack, hand unroll of quadrature loop as template arguments
   forAll< POLICY >( numElems,
                     [=] GEOS_DEVICE ( localIndex const k )
   {

@@ -240,7 +240,7 @@ public:
       typename KERNEL_TYPE::StackVariables stack;
 
       kernelComponent.setup( k, stack );
-      // RAJA_UNROLL
+      RAJA_UNROLL
       for( integer q=0; q<numQuadraturePointsPerElem; ++q )
       {
         kernelComponent.quadraturePointKernel( k, q, stack );
@@ -276,7 +276,7 @@ protected:
 template< template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
                     typename FE_TYPE > class KERNEL_TYPE,
-          typename ... ARGS >
+                    typename ... ARGS >
 class KernelFactory
 {
 public:
