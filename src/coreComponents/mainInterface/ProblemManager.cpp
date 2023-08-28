@@ -426,7 +426,6 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
 
     // CC: debug
     SpatialPartition & spatialPartition = domain.getPartition();
-    GEOS_LOG_RANK( spatialPartition.getName().c_str() );
     xmlWrapper::xmlNode partitionNode = xmlProblemNode.child( spatialPartition.getName().c_str() );
     spatialPartition.processInputFileRecursive( partitionNode );
 
