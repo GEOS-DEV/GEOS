@@ -232,11 +232,9 @@ protected:
    * @brief Writes the files for all the CellElementRegions.
    * @details There will be one file written per CellElementRegion and per rank.
    * @param[in] time the time-step
-   * @param[in] cycle the current cycle number
    * @param[in] elemManager the ElementRegionManager containing the CellElementRegions to be output
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
-   * @param[in] meshLevelName the name of the MeshLevel containing the nodes and elements to be output
-   * @param[in] meshBodyName the name of the MeshBody containing the nodes and elements to be output
+   * @param[in] path the root path where the mesh will be written
    */
   void writeCellElementRegions( real64 time,
                                 ElementRegionManager const & elemManager,
@@ -247,9 +245,9 @@ protected:
    * @brief Writes the files containing the well representation
    * @details There will be one file written per WellElementRegion and per rank
    * @param[in] time the time-step
-   * @param[in] cycle the current cycle number
    * @param[in] elemManager the ElementRegionManager containing the WellElementRegions to be output
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
+   * @param[in] path the root path where the mesh will be written
    */
   void writeWellElementRegions( real64 time,
                                 ElementRegionManager const & elemManager,
@@ -281,7 +279,7 @@ protected:
    * @brief Writes a VTM file for the time-step \p time.
    * @details a VTM file is a VTK Multiblock file. It contains relative path to different files organized in blocks.
    * @param[in] cycle the current cycle number
-   * @param[in] elemManager the ElementRegionManager containing all the regions to be output and referred to in the VTM file
+   * @param[in] domain the DomainPartition containing all the regions to be output and referred to in the VTM file
    * @param[in] vtmWriter a writer specialized for the VTM file format
    */
 
@@ -314,8 +312,9 @@ protected:
    * @details The unstructured grid is the last element in the hierarchy of the output,
    * it contains the cells connectivities and the vertices coordinates as long as the
    * data fields associated with it
-   * @param[in] ug a VTK SmartPointer to the VTK unstructured grid.
    * @param[in] path directory path for the grid file
+   * @param[in] region ElementRegionBase beeing written
+   * @param[in] ug a VTK SmartPointer to the VTK unstructured grid.
    */
   void writeUnstructuredGrid( string const & path,
                               ObjectManagerBase const & region,
