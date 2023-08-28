@@ -73,9 +73,7 @@ void VTKWellGenerator::fillPolylineDataStructure( )
     // load edges
     polyData->GetLines()->InitTraversal();
     vtkNew< vtkIdList > idList;
-    integer hadRead = polyData->GetLines()->GetNextCell( idList );
-
-    GEOS_ERROR_IF( hadRead == 0, GEOS_FMT( "{}: Error! Your VTK file {} doesn't contain any line", this->getName(), m_filePath ));
+    polyData->GetLines()->GetNextCell( idList );
 
     const globalIndex nbSegments = idList->GetNumberOfIds() - 1;
     m_segmentToPolyNodeMap.resizeDimension< 0 >( nbSegments );
