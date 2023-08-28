@@ -61,7 +61,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_boundaryConditionTypes(),
   m_bcTable(),
   m_prescribedBoundaryFTable( 0 ),
-  m_fTablePath(),
   m_fTableInterpType( 0 ),
   m_fTable(),
   m_domainF(),
@@ -114,10 +113,34 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Flag for whether to output box average history" );
 
+  registerWrapper( "boxAverageWriteInterval", &m_boxAverageWriteInterval ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Interval between writing box averages to files" );
+
+  registerWrapper( "nextBoxAverageWriteTime", &m_nextBoxAverageWriteTime ).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Next time to write box averages" );
+
   registerWrapper( "reactionHistory", &m_reactionHistory ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Flag for whether to output face reaction history" );
+
+  registerWrapper( "reactionWriteInterval", &m_reactionWriteInterval ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Interval between writing reactions to files" );
+
+  registerWrapper( "nextReactionWriteTime", &m_nextReactionWriteTime ).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Next time to write reactions" );
 
   registerWrapper( "boundaryConditionTypes", &m_boundaryConditionTypes ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -125,24 +148,21 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setDescription( "Boundary conditions on x-, x+, y-, y+, z- and z+ faces. Options are:\n* " + EnumStrings< BoundaryConditionOption >::concat( "\n* " ) );
 
   registerWrapper( "bcTable", &m_bcTable ).
-    setInputFlag( InputFlags::FALSE ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Array that stores time-dependent bc types on x-, x+, y-, y+, z- and z+ faces." );
 
   registerWrapper( "prescribedBoundaryFTable", &m_prescribedBoundaryFTable ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag for whether to have time-dependent boundary conditions described by a global background grid F" );
 
-  registerWrapper( "fTablePath", &m_fTablePath ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Path to f-table" );
-
   registerWrapper( "fTableInterpType", &m_fTableInterpType ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The type of F table interpolation. Options are 0 (linear), 1 (cosine), 2 (quintic polynomial)." );
 
   registerWrapper( "fTable", &m_fTable ).
-    setInputFlag( InputFlags::FALSE ).
-    setDescription( "Array that stores time-dependent grid-aligned stretches interpreted as a global background grid F." );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Array that stores time-dependent grid-aligned stretches interpreted as a gloabl background grid F read from the XML file." );
 
   registerWrapper( "needsNeighborList", &m_needsNeighborList ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -508,33 +528,34 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   // Read and distribute BC table
   if( m_prescribedBcTable == 1 )
   {
-    int rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-    int BCTableSize;
-    std::vector< double > BCTable1D; // Need 1D version of BC table for MPI broadcast
+    // Reads the FTable directly from the xml
+    int numRows = m_bcTable.size( 0 );
+    GEOS_ERROR_IF(numRows == 0, "Prescribed boundary conditions is enabled but no fTable was specified.");
+    
+    for(int i = 0; i < numRows; ++i){
+      GEOS_ERROR_IF(m_bcTable[i].size() != 7, "BCtable row " << i+1 << " must have 7 elements.");
+      
+      GEOS_ERROR_IF(m_bcTable[i][0] < 0, "BCTable times must be positive.");
 
-    if( rank == 0 ) // Rank 0 process parses the BC table file
-    {
-      std::ifstream fp( "BCTable.dat" );
-      double BCTableEntry = 0;
-      while( fp >> BCTableEntry )
-      {
-        BCTable1D.push_back( BCTableEntry ); // Push values into BCTable1D
-      }
-      BCTableSize = BCTable1D.size();
-    }
+      GEOS_ERROR_IF(roundf(m_bcTable[i][1]) != m_bcTable[i][1] || 
+                    roundf(m_bcTable[i][2]) != m_bcTable[i][1] || 
+                    roundf(m_bcTable[i][3]) != m_bcTable[i][1] || 
+                    roundf(m_bcTable[i][4]) != m_bcTable[i][1] || 
+                    roundf(m_bcTable[i][5]) != m_bcTable[i][1] || 
+                    roundf(m_bcTable[i][6]) != m_bcTable[i][1], "Only integer boundary condition types are permitted.");
 
-    MPI_Bcast( &BCTableSize, 1, MPI_INT, 0, MPI_COMM_GEOSX ); // Broadcast the size of BCTable1D to other processes
-    if( rank != 0 ) // All processes except for root resize their versions of BCTable1D
-    {
-      BCTable1D.resize( BCTableSize );
-    }
-    MPI_Bcast( BCTable1D.data(), BCTableSize, MPI_DOUBLE, 0, MPI_COMM_GEOSX ); // Broadcast BCTable1D to other processes
-
-    // Technically don't need to reshape BCTable1D into a 2D array, but it makes things more readable and should have little runtime penalty
-    m_bcTable.resize( BCTableSize / 7, 7 ); // Initialize size of m_BCTable
-    for( int i = 0; i < BCTableSize; i++ )   // Populate m_BCTable
-    {
-      m_bcTable[i / 7][i % 7] = BCTable1D[i]; // Taking advantage of integer division rounding towards zero
+      GEOS_ERROR_IF( ( m_bcTable[i][1] < 0 || 
+                       m_bcTable[i][2] < 0 || 
+                       m_bcTable[i][3] < 0 || 
+                       m_bcTable[i][4] < 0 || 
+                       m_bcTable[i][5] < 0 || 
+                       m_bcTable[i][6] < 0 ) && 
+                     ( m_bcTable[i][1] > 3 || 
+                       m_bcTable[i][2] > 3 || 
+                       m_bcTable[i][3] > 3 || 
+                       m_bcTable[i][4] > 3 || 
+                       m_bcTable[i][5] > 3 || 
+                       m_bcTable[i][6] > 3 ), "Boundary types must be 0, 1, 2 or 3");
     }
   }
 
@@ -548,36 +569,25 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   }
   if( m_prescribedBoundaryFTable == 1 )
   {
-    int rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-    int FTableSize;
-    std::vector< double > FTable1D; // Need 1D version of F table for MPI broadcast
+    // Reads the FTable directly from the xml
+    int numRows = m_fTable.size( 0 );
+    GEOS_ERROR_IF(numRows == 0, "Prescribed boundary deformation is enabled but no fTable was specified.");
+    for(int i = 0; i < numRows; ++i){
+      GEOS_ERROR_IF(m_fTable[i].size() != 4, "Ftable row " << i+1 << " must have 4 elements.");
+      GEOS_ERROR_IF(m_fTable[i][0] < 0, "FTable times must be positive.");
 
-    if( rank == 0 ) // Rank 0 process parses the F table file
-    {
-      std::ifstream fp( m_fTablePath );
-      // Throw error if FTable can't be read
-      GEOS_ERROR_IF( fp.fail(), "MPMSolver Failed to read FTable.dat" );
-     
-      double FTableEntry = 0;
-      while( fp >> FTableEntry )
+      if(i == 0)
       {
-        FTable1D.push_back( FTableEntry ); // Push values into FTable1D
+        GEOS_ERROR_IF( m_fTable[i][1] != 1.0 || 
+                       m_fTable[i][2] != 1.0 || 
+                       m_fTable[i][3] != 1.0 , "Deformation of first row of FTable must be 1." );
       }
-      FTableSize = FTable1D.size();
-    }
-
-    MPI_Bcast( &FTableSize, 1, MPI_INT, 0, MPI_COMM_GEOSX ); // Broadcast the size of FTable1D to other processes
-    if( rank != 0 ) // All processes except for root resize their versions of FTable1D
-    {
-      FTable1D.resize( FTableSize );
-    }
-    MPI_Bcast( FTable1D.data(), FTableSize, MPI_DOUBLE, 0, MPI_COMM_GEOSX ); // Broadcast FTable1D to other processes
-
-    // Techinically don't need to reshape FTable1D into a 2D array, but it makes things more readable and should have little runtime penalty
-    m_fTable.resize( FTableSize / 4, 4 ); // Initialize size of m_fTable
-    for( int i = 0; i < FTableSize; i++ )   // Populate m_fTable
-    {
-      m_fTable[i / 4][i % 4] = FTable1D[i]; // Taking advantage of integer division rounding towards zero
+      else
+      {
+        GEOS_ERROR_IF( m_fTable[i][1] < 0 || 
+                       m_fTable[i][2] < 0 || 
+                       m_fTable[i][3] < 0, "Deformations of FTable must be positive." );
+      }
     }
   }
 
@@ -696,7 +706,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 && m_reactionHistory == 1 )
   {
     std::ofstream file;
-    file.open( "reactionHistory.csv", std::ios::out | std::ios::app );
+    file.open( "reactionHistory.csv", std::ios::out); // | std::ios::app );
     if( file.fail() )
       throw std::ios_base::failure( std::strerror( errno ) );
     //make sure write fails with exception if something is wrong
@@ -717,11 +727,13 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     // Getters
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
-    arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
     arrayView2d< real64 const > const constitutiveDensity = constitutiveRelation.getDensity();
-    arrayView1d< real64 > const particleDensity = subRegion.getField< fields::mpm::particleDensity >();
+
+    arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
     arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
     arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
+
+    arrayView1d< real64 > const particleDensity = subRegion.getField< fields::mpm::particleDensity >();
     arrayView1d< real64 > const particleMass = subRegion.getField< fields::mpm::particleMass >();
     arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
     arrayView3d< real64 > const particleFDot = subRegion.getField< fields::mpm::particleFDot >();
@@ -793,7 +805,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
     {
       std::ofstream file;
-      file.open( "boxAverageHistory.csv", std::ios::out | std::ios::app );
+      file.open( "boxAverageHistory.csv", std::ios::out ); // | std::ios::app );
       if( file.fail() )
       {
         throw std::ios_base::failure( std::strerror( errno ) );
@@ -1120,7 +1132,11 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   if( m_boxAverageHistory == 1 )
   {
-    computeAndWriteBoxAverage( time_n, dt, particleManager );
+    if( time_n + dt >= m_nextBoxAverageWriteTime )
+    {
+      computeAndWriteBoxAverage( time_n, dt, particleManager );
+      m_nextBoxAverageWriteTime += m_boxAverageWriteInterval;
+    }
   }
 
 
@@ -1416,34 +1432,38 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   // Write global reactions to file
   if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 && m_reactionHistory == 1 )
   {
-    std::ofstream file;
-    // can't enable exception now because of gcc bug that raises ios_base::failure with useless message
-    // file.exceptions(file.exceptions() | std::ios::failbit);
-    file.open( "reactionHistory.csv", std::ios::out | std::ios::app );
-    if( file.fail() )
+    if(time_n + dt >= m_nextReactionWriteTime )
     {
-      throw std::ios_base::failure( std::strerror( errno ) );
+      std::ofstream file;
+      // can't enable exception now because of gcc bug that raises ios_base::failure with useless message
+      // file.exceptions(file.exceptions() | std::ios::failbit);
+      file.open( "reactionHistory.csv", std::ios::out | std::ios::app );
+      if( file.fail() )
+      {
+        throw std::ios_base::failure( std::strerror( errno ) );
+      }
+      // make sure write fails with exception if something is wrong
+      file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
+      file << std::setprecision( std::numeric_limits< long double >::digits10 )
+          << time_n + dt << ","
+          << m_domainF[0] << ","
+          << m_domainF[1] << ","
+          << m_domainF[2] << ","
+          << length << ","
+          << width << ","
+          << height << ","
+          << globalFaceReactions[0] << ","
+          << globalFaceReactions[1] << ","
+          << globalFaceReactions[2] << ","
+          << globalFaceReactions[3] << ","
+          << globalFaceReactions[4] << ","
+          << globalFaceReactions[5] << ","
+          << m_domainL[0] << ","
+          << m_domainL[1] << ","
+          << m_domainL[2] << std::endl;
+      file.close();
+      m_nextReactionWriteTime += m_reactionWriteInterval;
     }
-    // make sure write fails with exception if something is wrong
-    file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
-    file << std::setprecision( std::numeric_limits< long double >::digits10 )
-         << time_n + dt << ","
-         << m_domainF[0] << ","
-         << m_domainF[1] << ","
-         << m_domainF[2] << ","
-         << length << ","
-         << width << ","
-         << height << ","
-         << globalFaceReactions[0] << ","
-         << globalFaceReactions[1] << ","
-         << globalFaceReactions[2] << ","
-         << globalFaceReactions[3] << ","
-         << globalFaceReactions[4] << ","
-         << globalFaceReactions[5] << ","
-         << m_domainL[0] << ","
-         << m_domainL[1] << ","
-         << m_domainL[2] << std::endl;
-    file.close();
   }
 }
 
