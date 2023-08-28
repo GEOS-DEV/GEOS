@@ -215,6 +215,10 @@ public:
                           const real64 time_n,
                           NodeManager & nodeManager );
 
+  void applySuperimposedVelocityGradient( const real64 dt,
+                                          ParticleManager & particleManager,
+                                          SpatialPartition & partition );
+
   void computeGridSurfaceNormals( ParticleManager & particleManager,
                                   NodeManager & nodeManager );
 
@@ -399,6 +403,7 @@ protected:
   array1d< int > m_boundaryConditionTypes; // TODO: Surely there's a way to have just one variable here
   array2d< real64 > m_bcTable;
 
+  int m_prescribedFTable;
   int m_prescribedBoundaryFTable;
   Path m_fTablePath;
   int m_fTableInterpType;

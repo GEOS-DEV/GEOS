@@ -61,6 +61,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_prescribedBcTable( 0 ),
   m_boundaryConditionTypes(),
   m_bcTable(),
+  m_prescribedFTable( 0 ),
   m_prescribedBoundaryFTable( 0 ),
   m_fTablePath(),
   m_fTableInterpType( 0 ),
@@ -128,6 +129,10 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper( "bcTable", &m_bcTable ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Array that stores time-dependent bc types on x-, x+, y-, y+, z- and z+ faces." );
+
+  registerWrapper( "prescribedFTable", &m_prescribedFTable ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag for whether to have time-dependent superimposed velocity gradient for triply periodic simulations" );
 
   registerWrapper( "prescribedBoundaryFTable", &m_prescribedBoundaryFTable ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -548,7 +553,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     m_domainF[i] = 1.0;
     m_domainL[i] = 0.0;
   }
-  if( m_prescribedBoundaryFTable == 1 )
+  if( m_prescribedBoundaryFTable == 1 && m_prescribedFTable == 1 )
   {
     // int rank = MpiWrapper::commRank( MPI_COMM_GEOSX ); // CC:
     int FTableSize;
@@ -1121,9 +1126,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
 
   //#######################################################################################
-  solverProfilingIf( "Interpolate F table", m_prescribedBoundaryFTable == 1 );
+  solverProfilingIf( "Interpolate F table", m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 );
   //#######################################################################################
-  if( m_prescribedBoundaryFTable == 1 )
+  if( m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 )
   {
     interpolateFTable( dt, time_n );
   }
@@ -1189,6 +1194,16 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     computeAndWriteBoxAverage( time_n, dt, particleManager );
   }
 
+  //#######################################################################################
+  solverProfilingIf( "Update particle positions according to prescribed F Table", m_prescribedFTable == 1 );
+  //####################################################################################### 
+  if( m_prescribedFTable == 1 )
+  {
+    applySuperimposedVelocityGradient( dt,
+                                       particleManager,
+                                       partition );
+  }
+  
 
   //#######################################################################################
   solverProfiling( "Calculate stable time step" );
@@ -1234,11 +1249,10 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     }
   }
 
-
   //#######################################################################################
-  solverProfilingIf( "Resize grid based on F-table", m_prescribedBoundaryFTable == 1 );
+  solverProfilingIf( "Resize grid based on F-table", m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 );
   //#######################################################################################
-  if( m_prescribedBoundaryFTable == 1 )
+  if( m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 )
   {
     resizeGrid( partition, nodeManager, dt );
   }
@@ -2838,6 +2852,37 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
          << std::endl;
     file.close();
   }
+}
+
+void SolidMechanicsMPM::applySuperimposedVelocityGradient( const real64 dt, 
+                                                           ParticleManager & particleManager,
+                                                           SpatialPartition & partition )
+{
+  arrayView1d< int > periodic = partition.m_Periodic;
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    // Particle fields
+    arrayView2d< real64 > const particlePosition = subRegion.getParticleCenter();
+
+    real64 domainL[3] = {0};
+    LvArray::tensorOps::copy< 3 >( domainL, m_domainL );
+    int const numDims = m_numDims; // CC: do member scalars need to be copied to local variable to be used in a RAJA loops?
+
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_DEVICE ( localIndex const pp )
+       {
+        localIndex const p = activeParticleIndices[pp];
+        
+        for(int i=0; i < numDims; i++)
+        {
+          // CC: would we want to apply 
+          if(periodic[i])
+          {
+            particlePosition[p][i] += particlePosition[p][i] * domainL[i] * dt;
+          }
+        }
+      } ); // particle loop
+  } ); // subregion loop
 }
 
 void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
