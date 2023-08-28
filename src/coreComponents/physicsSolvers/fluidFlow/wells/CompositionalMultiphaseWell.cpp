@@ -329,13 +329,25 @@ void CompositionalMultiphaseWell::validateInjectionStreams( WellElementSubRegion
   WellControls const & wellControls = getWellControls( subRegion );
 
   // check well injection stream for injectors
-  if( wellControls.isInjector() )
+  if( wellControls.isInjector())
   {
-    arrayView1d< real64 const > const & injection = wellControls.getInjectionStream();
+    arrayView1d< real64 const > const & injectionStream = wellControls.getInjectionStream();
+
+    integer const streamSize = injectionStream.size();
+    GEOS_THROW_IF( ( streamSize == 0 ),
+                   "WellControls '" << wellControls.getName() << "'" <<
+                   ": Injection stream not specified for well " << subRegion.getName(),
+                   InputError );
+    GEOS_THROW_IF( ( streamSize != m_numComponents ),
+                   "WellControls '" << wellControls.getName() << "'" <<
+                   ": Injection stream for well " << subRegion.getName() << " should have " <<
+                   m_numComponents << " components.",
+                   InputError );
+
     real64 compFracSum = 0;
     for( integer ic = 0; ic < m_numComponents; ++ic )
     {
-      real64 const compFrac = injection[ic];
+      real64 const compFrac = injectionStream[ic];
       GEOS_THROW_IF( ( compFrac < 0.0 ) || ( compFrac > 1.0 ),
                      "WellControls '" << wellControls.getName() << "'" <<
                      ": Invalid injection stream for well " << subRegion.getName(),
