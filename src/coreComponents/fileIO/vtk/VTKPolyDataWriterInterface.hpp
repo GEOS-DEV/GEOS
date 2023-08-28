@@ -365,6 +365,7 @@ protected:
   /// Number of target processes to aggregate the data to be written
   integer m_numberOfTargetProcesses;
 
+  /// Map a region name to the array of ranks outputed for it
   std::map< string, std::vector< integer > > m_targetProcessesId;
 };
 
