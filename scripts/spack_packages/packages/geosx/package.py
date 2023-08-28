@@ -63,6 +63,7 @@ class Geosx(CMakePackage, CudaPackage):
     variant('hypre', default=True, description='Build HYPRE support.')
     variant('petsc', default=False, description='Build PETSc support.')
     variant('scotch', default=True, description='Build Scotch support.')
+    variant('uncrustify', default=True, description='Build Uncrustify support.')
     variant('lai',
             default='hypre',
             description='Linear algebra interface.',
@@ -161,7 +162,7 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # Dev tools
     #
-    depends_on('uncrustify@0.70geosx')
+    depends_on('uncrustify@0.70geosx', when='+uncrustify')
 
     #
     # Documentation
@@ -484,8 +485,11 @@ class Geosx(CMakePackage, CudaPackage):
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Development tools\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
-            cfg.write(
-                cmake_cache_entry('UNCRUSTIFY_EXECUTABLE', os.path.join(spec['uncrustify'].prefix.bin, 'uncrustify')))
+
+            cfg.write(cmake_cache_option('ENABLE_UNCRUSTIFY', '+uncrustify' in spec))
+            if '+uncrustify' in spec:
+                cfg.write(
+                    cmake_cache_entry('UNCRUSTIFY_EXECUTABLE', os.path.join(spec['uncrustify'].prefix.bin, 'uncrustify')))
 
             # cfg.write('#{0}\n'.format('-' * 80))
             # cfg.write('# addr2line\n')

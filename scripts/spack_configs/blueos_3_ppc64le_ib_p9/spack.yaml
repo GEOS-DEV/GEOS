@@ -13,7 +13,7 @@
 # geosx@develop%clang@10.0.1+cuda cuda_arch=70 ^cuda@11.8.0+allow-unsupported-compilers
 #
 # Uberenv command to build geos dependencies:
-# python3 ./scripts/uberenv/uberenv.py --spec="%clang@10.0.1+cuda cuda_arch=70 ^cuda@11.8.0+allow-unsupported-compilers"
+# python3 ./scripts/uberenv/uberenv.py --spec="%clang@10.0.1+cuda~uncrustify cuda_arch=70 ^cuda@11.8.0+allow-unsupported-compilers"
 
 spack:
   config:
