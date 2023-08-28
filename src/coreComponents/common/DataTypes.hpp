@@ -174,22 +174,27 @@ using Timestamp = unsigned long long int;
 /// Multidimensional array type. See LvArray:Array for details.
 template< typename T,
           int NDIM,
-          typename PERMUTATION=camp::make_idx_seq_t< NDIM > >
-using Array = LvArray::Array< T, NDIM, PERMUTATION, localIndex, LvArray::ChaiBuffer >;
+          typename PERMUTATION = camp::make_idx_seq_t< NDIM > >
+using Array = LvArray::Array< T, LvArray::DynamicExtent< NDIM, localIndex >, PERMUTATION, LvArray::ChaiBuffer >;
 
 /// Multidimensional array view type. See LvArray:ArrayView for details.
 template< typename T,
           int NDIM,
-          int USD = NDIM - 1 >
-using ArrayView = LvArray::ArrayView< T, NDIM, USD, localIndex, LvArray::ChaiBuffer >;
+          typename PERMUTATION = camp::make_idx_seq_t< NDIM > >
+using ArrayView = LvArray::ArrayView< T, LvArray::DynamicLayout< NDIM, localIndex, PERMUTATION >, LvArray::ChaiBuffer >;
 
 /// Multidimensional array slice type. See LvArray:ArraySlice for details.
-template< typename T, int NDIM, int USD = NDIM - 1 >
-using ArraySlice = LvArray::ArraySlice< T, NDIM, USD, localIndex >;
+template< typename T,
+          int NDIM,
+          typename PERMUTATION = camp::make_idx_seq_t< NDIM > >
+using ArraySlice = LvArray::ArraySlice< T, LvArray::DynamicLayout< NDIM, localIndex, PERMUTATION > >;
 
 /// Multidimensional stack-based array type. See LvArray:StackArray for details.
-template< typename T, int NDIM, int MAXSIZE, typename PERMUTATION=camp::make_idx_seq_t< NDIM > >
-using StackArray = LvArray::StackArray< T, NDIM, PERMUTATION, localIndex, MAXSIZE >;
+template< typename T,
+          int NDIM,
+          int MAXSIZE,
+          typename PERMUTATION=camp::make_idx_seq_t< NDIM > >
+using StackArray = LvArray::StackArray< T, LvArray::DynamicExtent< NDIM, localIndex >, PERMUTATION, MAXSIZE >;
 
 ///@}
 
@@ -216,24 +221,24 @@ template< typename T >
 using arrayView1d = ArrayView< T, 1 >;
 
 /// Alias for 1D array slice.
-template< typename T, int USD = 0 >
-using arraySlice1d = ArraySlice< T, 1, USD >;
+template< typename T, typename PERMUTATION = RAJA::PERM_I >
+using arraySlice1d = ArraySlice< T, 1, PERMUTATION >;
 
 /// Alias for 1D stack array.
 template< typename T, int MAXSIZE >
 using stackArray1d = StackArray< T, 1, MAXSIZE >;
 
 /// Alias for 2D array.
-template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 2 > >
+template< typename T, typename PERMUTATION = camp::make_idx_seq_t< 2 > >
 using array2d = Array< T, 2, PERMUTATION >;
 
 /// Alias for 2D array view.
-template< typename T, int USD = 1 >
-using arrayView2d = ArrayView< T, 2, USD >;
+template< typename T, typename PERMUTATION = camp::make_idx_seq_t< 2 > >
+using arrayView2d = ArrayView< T, 2, PERMUTATION >;
 
 /// Alias for 2D array slice.
-template< typename T, int USD = 1 >
-using arraySlice2d = ArraySlice< T, 2, USD >;
+template< typename T, typename PERMUTATION = camp::make_idx_seq_t< 2 > >
+using arraySlice2d = ArraySlice< T, 2, PERMUTATION >;
 
 /// Alias for 2D stack array.
 template< typename T, int MAXSIZE >
@@ -244,12 +249,12 @@ template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 3 > >
 using array3d = Array< T, 3, PERMUTATION >;
 
 /// Alias for 3D array view.
-template< typename T, int USD=2 >
-using arrayView3d = ArrayView< T, 3, USD >;
+template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 3 > >
+using arrayView3d = ArrayView< T, 3, PERMUTATION >;
 
 /// Alias for 3D array slice.
-template< typename T, int USD=2 >
-using arraySlice3d = ArraySlice< T, 3, USD >;
+template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 3 > >
+using arraySlice3d = ArraySlice< T, 3, PERMUTATION >;
 
 /// Alias for 3D stack array.
 template< typename T, int MAXSIZE >
@@ -260,12 +265,12 @@ template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 4 > >
 using array4d = Array< T, 4, PERMUTATION >;
 
 /// Alias for 4D array view.
-template< typename T, int USD=3 >
-using arrayView4d = ArrayView< T, 4, USD >;
+template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 4 > >
+using arrayView4d = ArrayView< T, 4, PERMUTATION >;
 
 /// Alias for 4D array slice.
-template< typename T, int USD=3 >
-using arraySlice4d = ArraySlice< T, 4, USD >;
+template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 4 > >
+using arraySlice4d = ArraySlice< T, 4, PERMUTATION >;
 
 /// Alias for 4D stack array.
 template< typename T, int MAXSIZE >
@@ -276,12 +281,12 @@ template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 5 > >
 using array5d = Array< T, 5, PERMUTATION >;
 
 /// Alias for 5D array view.
-template< typename T, int USD=4 >
-using arrayView5d = ArrayView< T, 5, USD >;
+template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 5 > >
+using arrayView5d = ArrayView< T, 5, PERMUTATION >;
 
 /// Alias for 5D array slice.
-template< typename T, int USD=4 >
-using arraySlice5d = ArraySlice< T, 5, 4 >;
+template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 5 > >
+using arraySlice5d = ArraySlice< T, 5, PERMUTATION >;
 
 /// Alias for 5D stack array.
 template< typename T, int MAXSIZE >
