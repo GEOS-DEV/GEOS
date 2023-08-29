@@ -1941,6 +1941,13 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
                                    / std::max( eps, maxRelativeTempChange + m_solutionChangeScalingFactor * m_targetRelativeTempChange )
     : LvArray::NumericLimits< real64 >::max;
 
+  if( MpiWrapper::commRank() == 0 ) 
+    std::cout << "nextDtPressure = " << nextDtPressure
+	      << " nextDtPhaseVolFrac = " << nextDtPhaseVolFrac
+	      << " nextDtTemperature = " << nextDtTemperature
+	      << " nextDt = " << std::min( std::min( nextDtPressure, nextDtPhaseVolFrac ), nextDtTemperature ) 
+	      << std::endl;
+
   return std::min( std::min( nextDtPressure, nextDtPhaseVolFrac ), nextDtTemperature );
 }
 
