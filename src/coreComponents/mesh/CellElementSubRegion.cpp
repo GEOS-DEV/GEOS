@@ -34,6 +34,8 @@ CellElementSubRegion::CellElementSubRegion( string const & name, Group * const p
   registerWrapper( viewKeyStruct::constitutiveGroupingString(), &m_constitutiveGrouping ).
     setSizedFromParent( 0 );
 
+  getWrapper< array1d< globalIndex > >( viewKeyStruct::localToGlobalMapString() ).setPlotLevel( PlotLevel::LEVEL_0 ); 
+
   registerWrapper( viewKeyStruct::constitutivePointVolumeFractionString(), &m_constitutivePointVolumeFraction );
 
   registerWrapper( viewKeyStruct::dNdXString(), &m_dNdX ).setSizedFromParent( 1 ).reference().resizeDimension< 3 >( 3 );
