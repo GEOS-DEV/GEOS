@@ -19,8 +19,8 @@ class JointSet():
       allow_repeating (bool): Flag to allow repeating events on joints
       shear_modulus (float): Shear modulus of host rock (Pa)
       N (int): Number of joints in the set
-      strike (list): Strike (counter-clockwise from x-axis, radians)
-      dip (list): Dip (radians)
+      strike (list): Strike (counter-clockwise from x-axis, degrees)
+      dip (list): True Dip refering to strike (degrees)
       mu (list): Coefficient of friction (unitless)
       cohesion (list): Cohesion (Pa)
       element_id (list): Parent element index
@@ -60,6 +60,8 @@ class JointSet():
         self.sigma_sdn_offset = []
         self.fail_count = []
         self.rotation = []
+        self.sigma_origin = []
+        self.sigma_new = []
 
     def build_joint_set(self,
                         problem,
@@ -82,10 +84,10 @@ class JointSet():
             random_location (bool): Choose random locations within the regin (default=True)
             density (float): Joint density (#/m3)
             uniform_orientation (bool): Use randomly oriented joints (default=True)
-            strike_mean (float): Strike angle mean (radians)
-            strike_std (float): Strike angle std deviation (radians)
-            dip_mean (float): Dip angle mean (radians)
-            dip_std: Dip angle std deviation (radians)
+            strike_mean (float): Strike angle mean (degrees)
+            strike_std (float): Strike angle std deviation (degrees)
+            dip_mean (float): Dip angle mean (degrees)
+            dip_std: Dip angle std deviation (degrees)
             mu_mean (float): Friction coefficient mean (unitless)
             mu_std: Friction coefficient std deviation (unitless)
             cohesion_mean (float): Cohesion mean (Pa)
@@ -118,7 +120,10 @@ class JointSet():
         self.sigma_n = np.zeros(self.N)
         self.tau = np.zeros(self.N)
         self.pressure = np.zeros(self.N)
-
+        ################################################
+        self.sigma_origin = np.zeros((self.N, 3, 3))
+        self.sigma_new = np.zeros((self.N, 3, 3))
+        ################################################
         if self.fluid_name:
             self.pressure_key = wrapper.get_matching_wrapper_path(problem, [self.mesh_level, self.region_name, 'pressure'])
 
@@ -198,6 +203,7 @@ class JointSet():
             index (int): Joint index
         """
         s = np.zeros((3, 3))
+        sigma_ori = np.zeros((3,3))
         jj = self.element_id[index]
         s[0, 0] = sigma[jj, 0, 0]
         s[1, 1] = sigma[jj, 0, 1]
@@ -208,9 +214,23 @@ class JointSet():
         s[1, 0] = s[0, 1]
         s[2, 0] = s[0, 2]
         s[2, 1] = s[1, 2]
+        #########################
+        sigma_ori[0, 0] = sigma[jj, 0, 0]
+        sigma_ori[1, 1] = sigma[jj, 0, 1]
+        sigma_ori[2, 2] = sigma[jj, 0, 2]
+        sigma_ori[0, 1] = sigma[jj, 0, 5]
+        sigma_ori[0, 2] = sigma[jj, 0, 4]
+        sigma_ori[1, 2] = sigma[jj, 0, 3]
+        sigma_ori[1, 0] = s[0, 1]
+        sigma_ori[2, 0] = s[0, 2]
+        sigma_ori[2, 1] = s[1, 2]
+        ########################
         R = self.rotation[index]
+        #print('Rotation matrix: \n{}'.format(R))
         s_sdn = np.matmul(np.matmul(R, s), np.transpose(R))
-        return s_sdn
+        #print('Original stress tensor: \n{}'.format(sigma_ori))
+        #print('Result stress tensor: \n{}'.format(s_sdn))
+        return sigma_ori, s_sdn
 
     def check_critical_stress(self, problem):
         """
@@ -226,8 +246,13 @@ class JointSet():
 
         for ii in range(self.N):
             jj = self.element_id[ii]
-            s_sdn = self.get_joint_stress_sdn(sigma, ii)
-
+            sigma_ori, s_sdn = self.get_joint_stress_sdn(sigma, ii)
+            #print('Original stress tensor: \n{}'.format(sigma_ori))
+            #print("Processed rotated tensor is \n{}".format(s_sdn))
+            #################################
+            self.sigma_origin[ii] = sigma_ori
+            self.sigma_new[ii] = s_sdn
+            #################################
             # Store the current stress values
             self.tau[ii] = np.sqrt(s_sdn[0, 2]**2 + s_sdn[1, 2]**2)
             self.sigma_n[ii] = -s_sdn[2, 2]
@@ -235,7 +260,7 @@ class JointSet():
                 self.pressure[ii] = pressure[jj]
 
             # Check failure criteria
-            dT = self.tau[ii] - (self.cohesion[ii] + self.mu[ii] * (self.sigma_n[ii] - self.pressure[ii]))
+            dT = self.tau[ii] - (self.cohesion[ii] + self.mu[ii] * (self.sigma_n[ii]))
 
             # If the failure criteria are met, then set the sdn_offset
             # to match a state between 0 and 1 events to the next failure
@@ -244,7 +269,7 @@ class JointSet():
                 rake = np.arctan2(s_sdn[1, 2], s_sdn[0, 2])
                 self.sigma_sdn_offset[ii, 0, 2] = dT * np.cos(rake)
                 self.sigma_sdn_offset[ii, 1, 2] = dT * np.sin(rake)
-
+        
     def check_failure_criteria(self, problem):
         """
         Check the failure criteria on each joint
@@ -261,7 +286,7 @@ class JointSet():
         for ii in range(self.N):
             if ((self.fail_count[ii] == 0) | self.allow_repeating):
                 jj = self.element_id[ii]
-                s_sdn = self.get_joint_stress_sdn(sigma, ii)
+                sigma_ori, s_sdn = self.get_joint_stress_sdn(sigma, ii)
                 s_sdn -= self.sigma_sdn_offset[ii, ...]
 
                 # Store the current stress values
@@ -271,7 +296,7 @@ class JointSet():
                     self.pressure[ii] = pressure[jj]
 
                 # Check failure criteria
-                fail_criteria = self.tau[ii] - (self.cohesion[ii] + self.mu[ii] * (self.sigma_n[ii] - self.pressure[ii]))
+                fail_criteria = self.tau[ii] - (self.cohesion[ii] + self.mu[ii] * (self.sigma_n[ii]))
 
                 if (fail_criteria > 0):
                     self.fail_count[ii] += 1
@@ -307,8 +332,12 @@ class JointSet():
             dip_mean (float): Dip angle mean (radians)
             dip_std: Dip angle std deviation (radians)
         """
-        self.strike = (np.random.randn(self.N) * strike_std) + strike_mean
-        self.dip = (np.random.randn(self.N) * dip_std) + dip_mean
+        strike_mean_rd = strike_mean / 180.0 * np.pi
+        strike_std_rd = strike_std / 180.0 * np.pi
+        dip_mean_rd = dip_mean  / 180.0 * np.pi
+        dip_std_rd = dip_std / 180.0 * np.pi
+        self.strike = (np.random.randn(self.N) * strike_std_rd) + strike_mean_rd
+        self.dip = (np.random.randn(self.N) * dip_std_rd) + dip_mean_rd
 
     def get_rotation_matrix(self, strike, dip):
         """
@@ -321,6 +350,7 @@ class JointSet():
         Returns:
             np.array: Rotation matrix
         """
+        #print("strike is {}, dip is {}\n".format(strike, dip))
         stheta = np.sin(strike)
         ctheta = np.cos(strike)
         sdelta = np.sin(dip)
@@ -329,7 +359,7 @@ class JointSet():
         rotation_matrix_strike = np.array([[ctheta,-stheta,0],[stheta,ctheta,0],[0,0,1]])
         rotation_matrix_dip = np.array([[cdelta,0,-sdelta],[0,1,0],[sdelta,0,cdelta]])
         rotation_matrix = np.matmul(rotation_matrix_dip,rotation_matrix_strike)
-
+        #print(rotation_matrix)
         return rotation_matrix
 
 
@@ -480,7 +510,7 @@ class MicroseismicAnalysis():
         """
         targets = ['strike', 'dip', 'mu', 'cohesion',
                    'location', 'fail_count', 'sigma_sdn_offset',
-                   'sigma_n', 'pressure', 'tau']
+                   'sigma_n', 'pressure', 'tau', 'sigma_origin', 'sigma_new']
 
         # Grab all local values
         local_values = {k: [] for k in targets}
