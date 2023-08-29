@@ -298,6 +298,13 @@ void MultiphasePoromechanics::initializePreSubGroups()
   } );
 }
 
+void MultiphasePoromechanics::resetStateToBeginningOfStep( DomainPartition & domain )
+{
+  Base::resetStateToBeginningOfStep( domain ); 
+
+  flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
+}  
+
 void MultiphasePoromechanics::updateStabilizationParameters( DomainPartition & domain ) const
 {
   // Step 1: we loop over the regions where stabilization is active and collect their name

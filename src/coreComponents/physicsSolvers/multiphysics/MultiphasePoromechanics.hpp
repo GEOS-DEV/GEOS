@@ -120,6 +120,8 @@ public:
   void setStressInitialization( integer const performStressInitialization )
   { m_performStressInitialization = performStressInitialization; }
 
+  virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override;
+
   virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType ) override final;
 
 
