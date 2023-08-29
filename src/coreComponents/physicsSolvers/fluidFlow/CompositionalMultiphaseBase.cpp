@@ -2010,7 +2010,10 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
       // Step 3: save the converged solid state
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
       CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
-      porousMaterial.saveConvergedState();
+      if( !m_keepFlowVariablesConstantDuringInitStep )
+      {
+	porousMaterial.saveConvergedState();
+      }
 
       // Step 4: save converged state for the relperm model to handle hysteresis
       arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
