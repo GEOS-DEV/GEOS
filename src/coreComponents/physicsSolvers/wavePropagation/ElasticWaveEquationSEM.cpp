@@ -903,6 +903,8 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
                                       real64 const eventProgress,
                                       DomainPartition & domain )
 {
+  std::cout << "\t[ElasticWaveEquationSEM::cleanup]" << std::endl;
+
   // call the base class cleanup (for reporting purposes)
   SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
 

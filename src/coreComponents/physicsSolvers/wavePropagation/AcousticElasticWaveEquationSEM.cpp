@@ -20,6 +20,7 @@
 #include "AcousticElasticWaveEquationSEMKernel.hpp"
 #include "dataRepository/Group.hpp"
 #include <typeinfo>
+#include <limits>
 
 namespace geos
 {
@@ -158,23 +159,30 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
     arrayView1d< real32 > const uy_np1 = nodeManager.getField< fields::Displacementy_np1 >();
     arrayView1d< real32 > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
 
+    real32 const eps32 = std::numeric_limits< real32 >::epsilon();
+    real64 const eps64 = std::numeric_limits< real64 >::epsilon();
+    real32 const dt2 = pow(dt, 2);
+
     // source ok when using (elas=false, acous=true, coupling=false) or (elas=true, acous=true, coupling=false)
-    bool const elas = !helpers::benv("NO_ELAS");
-    bool const acous = !helpers::benv("NO_ACOUS");
-    bool const coupling = !helpers::benv("NO_COUPLING");
-    bool const dump = helpers::ienv("DUMP") > 1;
+    auto const elas = !helpers::benv("NO_ELAS");
+    auto const acous = !helpers::benv("NO_ACOUS");
+    auto const f2s = !helpers::benv("NO_F2S");  // fluid -> solid coupling
+    auto const s2f = !helpers::benv("NO_S2F");  // solid -> fluid coupling
+    auto const dump = helpers::ienv("DUMP") > 1;
     // std::cout << "elas=" << (elas ? 'T' : 'F') << " acous=" << (acous ? 'T' : 'F') << " coupling=" << (coupling ? 'T' : 'F')  << " dump=" << (dump ? 'T' : 'F') << std::endl;
-/*
+
+    /*
     for (auto nm : regionNames)
       std::cout << "\t[AcousticElasticWaveEquationSEM::solverStep] regionName=" << nm << std::endl;
     for (auto nm : m_acousRegions)
       std::cout << "\t[AcousticElasticWaveEquationSEM::solverStep] acousRegion=" << nm << std::endl;
     for (auto nm : m_elasRegions)
       std::cout << "\t[AcousticElasticWaveEquationSEM::solverStep] elasRegion=" << nm << std::endl;
-*/
+    */
+
     if (elas) elasSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_elasRegions );
 
-    if (coupling)
+    if (f2s)
     {
       forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
       {
@@ -182,11 +190,11 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
         if (freeSurfaceNodeIndicatorE[a] == 1) return;
 
         real32 const aux = p_n[a] / massE[a];
-        real32 const localIncrementx = atoex[a] * aux;
-        real32 const localIncrementy = atoey[a] * aux;
-        real32 const localIncrementz = atoez[a] * aux;
+        real32 const localIncrementx = dt2 * atoex[a] * aux;
+        real32 const localIncrementy = dt2 * atoey[a] * aux;
+        real32 const localIncrementz = dt2 * atoez[a] * aux;
 
-        if (dump && sqrt(pow(localIncrementx, 2) + pow(localIncrementy, 2) + pow(localIncrementz, 2)) > 1e-16) printf(
+        if (dump && pow(localIncrementx, 2) + pow(localIncrementy, 2) + pow(localIncrementz, 2) > pow(eps32, 2)) printf(
           "\t[AcousticElasticWaveEquationSEM::solverStep] atoex=%g atoey=%g atoez=%g p_n=%g massE=%g aux=%g incx=%g incy=%g incz=%g\n",
           atoex[a], atoey[a], atoez[a], p_n[a], massE[a], aux,
           localIncrementx, localIncrementy, localIncrementz
@@ -202,20 +210,20 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
 
     if (acous) acousSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_acousRegions );
 
-    if (coupling)
+    if (s2f)
     {
       forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
       {
         localIndex const a = interfaceNodesSet[n];
         if (freeSurfaceNodeIndicatorA[a] == 1) return;
 
-        real32 const localIncrement = (
-          -atoex[a] * ( ux_np1[a] - 2.0 * ux_n[a] + ux_nm1[a] ) +
-          -atoey[a] * ( uy_np1[a] - 2.0 * uy_n[a] + uy_nm1[a] ) +
-          -atoez[a] * ( uz_np1[a] - 2.0 * uz_n[a] + uz_nm1[a] )
-        ) / massA[a];
+        real32 const ddux_n = ( ux_np1[a] - 2.0 * ux_n[a] + ux_nm1[a] ) / dt2;
+        real32 const dduy_n = ( uy_np1[a] - 2.0 * uy_n[a] + uy_nm1[a] ) / dt2;
+        real32 const dduz_n = ( uz_np1[a] - 2.0 * uz_n[a] + uz_nm1[a] ) / dt2;
 
-        if (dump && abs(localIncrement) > 1e-16) printf(
+        real32 const localIncrement = -dt2 * (atoex[a] * ddux_n + atoey[a] * dduy_n + atoez[a] * dduz_n) / massA[a];
+
+        if (dump && abs(localIncrement) > eps32) printf(
           "\t[AcousticElasticWaveEquationSEM::solverStep] atoex=%g atoey=%g atoez=%g massA=%g inc=%g\n",
           atoex[a], atoey[a], atoez[a], massA[a], localIncrement
         );
@@ -302,6 +310,18 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
 #endif
 
   return dt;
+}
+
+void AcousticElasticWaveEquationSEM::cleanup( real64 const time_n,
+                                              integer const cycleNumber,
+                                              integer const eventCounter,
+                                              real64 const eventProgress,
+                                              DomainPartition & domain )
+{
+  std::cout << "\t[AcousticElasticWaveEquationSEM::cleanup]" << std::endl;
+
+  elasticSolver()->cleanup(time_n, cycleNumber, eventCounter, eventProgress, domain);
+  acousticSolver()->cleanup(time_n, cycleNumber, eventCounter, eventProgress, domain);
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, AcousticElasticWaveEquationSEM, string const &, Group * const )

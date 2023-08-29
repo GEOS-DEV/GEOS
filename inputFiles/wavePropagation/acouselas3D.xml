@@ -5,49 +5,79 @@
     <!-- define the solver, source coordinates, time source frequency, receiver coordinates -->
     <AcousticSEM
       name="acousticSolver"
-      cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Fluid }"
-      sourceCoordinates="{ { 1500, 800, 2900  } }"
-      timeSourceFrequency="5"
-      receiverCoordinates="{ { 3752.29351, 800, 2933.3333 } }"
+      sourceCoordinates="{ { 1500, 8, 2900  } }"
+      timeSourceFrequency="10"
+      receiverCoordinates="{ { 3752.29351, 8, 2933.3333 } }"
       rickerOrder="3"
       outputSeismoTrace="1"
-      dtSeismoTrace="0.001"/>
+      dtSeismoTrace="1e-3"/>
     <ElasticSEM
       name="elasticSolver"
-      cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Solid }"
       sourceCoordinates="{ }"
       timeSourceFrequency="0"
       receiverCoordinates="{ }"
-      outputSeismoTrace="1"
-      dtSeismoTrace="1e-2"/>
+      outputSeismoTrace="0"
+      dtSeismoTrace="0"/>
+    <!-- NOTES:
+      - coupled solver must be declared at the end (for interface computations)
+      - discretization is also needed for the correct mesh to be passed through from the coupled solver to the elastic / acoustic solvers
+    -->
     <AcousticElasticSEM
       name="acousticelasticSolver"
-      cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Solid, Fluid }"
       acousticSolverName="acousticSolver"
       elasticSolverName="elasticSolver"/>
   </Solvers>
 
-  <!-- hexahedral mesh generated internally by GEOSX
+  <!--
+  hexahedral mesh generated internally by GEOSX
   6400x1600x4800m domain
+  # R1-Q5 (pseudo-2D)
+  sourceCoordinates="{ { 1500, 20, 2900  } }"
+  yCoords="{ 0, 40 }"
+  nx="{ 160 }"
+  ny="{ 1 }"
+  nz="{ 60, 60 }"
+  # R2-Q4 (pseudo-2D)
+  sourceCoordinates="{ { 1500, 10, 2900  } }"
+  yCoords="{ 0, 20 }"
   nx="{ 320 }"
-  ny="{ 80 }"
-  nz="{ 120, 120 }" -->
+  ny="{ 1 }"
+  nz="{ 120, 120 }"
+  # R3-Q3 (pseudo-2D)
+  sourceCoordinates="{ { 1500, 6.6666, 2900  } }"
+  yCoords="{ 0, 13.3333 }"
+  nx="{ 480 }"
+  ny="{ 1 }"
+  nz="{ 180, 180 }"
+  # R4-Q2 (pseudo-2D)
+  sourceCoordinates="{ { 1500, 5, 2900  } }"
+  yCoords="{ 0, 10 }"
+  nx="{ 640 }"
+  ny="{ 1 }"
+  nz="{ 240, 240 }"
+  # R5-Q1 (pseudo-2D)
+  sourceCoordinates="{ { 1500, 4, 2900  } }"
+  yCoords="{ 0, 8 }"
+  nx="{ 800 }"
+  ny="{ 1 }"
+  nz="{ 300, 300 }"
+  -->
   <Mesh>
     <InternalMesh
       name="mesh"
       elementTypes="{ C3D8 }"
       xCoords="{ 0, 6400 }"
-      yCoords="{ 0, 1600 }"
+      yCoords="{ 0, 16 }"
       zCoords="{ 0, 2400, 4800 }"
-      nx="{ 160 }"
-      ny="{ 40 }"
-      nz="{ 60, 60 }"
+      nx="{ 640 }"
+      ny="{ 2 }"
+      nz="{ 240, 240 }"
       cellBlockNames="{ solid, fluid }"/>
   </Mesh>
 
@@ -60,10 +90,10 @@
       target="/Solvers/acousticelasticSolver"/>
     <PeriodicEvent
       name="outputs"
-      timeFrequency="1e-2"
+      timeFrequency="5e-2"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
-    <!-- FIXME: forceDt hack to satisfy pre timeloop computation -->
+    <!-- FIXME: forceDt hack to satisfy pre-timeloop computation -->
     <SoloEvent
       name="solidSolverApplications"
       forceDt="4.2e-4"

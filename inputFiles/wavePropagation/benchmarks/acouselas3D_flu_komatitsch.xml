@@ -4,7 +4,6 @@
   <Solvers>
     <AcousticSEM
       name="acousticSolver"
-      cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Fluid }"
       sourceCoordinates="{ { 1500, 800, 2900 } }"
@@ -15,19 +14,19 @@
       dtSeismoTrace="1e-2"/>
     <ElasticSEM
       name="elasticSolver"
-      cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Solid }"
       sourceCoordinates="{ }"
       timeSourceFrequency="0"
       receiverCoordinates="{ }"
       outputSeismoTrace="1"
-      dtSeismoTrace="1e-2"/>
-    <!-- NOTE: the coupled solver must be declared at the end (for interface computations) -->
-    <!-- NOTE: discretization is also needed for the correct mesh to be passed through from the coupled solver to the elastic / acoustic solvers -->
+      dtSeismoTrace="0"/>
+    <!-- NOTES:
+      - coupled solver must be declared at the end (for interface computations)
+      - discretization is also needed for the correct mesh to be passed through from the coupled solver to the elastic / acoustic solvers
+    -->
     <AcousticElasticSEM
       name="acousticelasticSolver"
-      cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Solid, Fluid }"
       acousticSolverName="acousticSolver"

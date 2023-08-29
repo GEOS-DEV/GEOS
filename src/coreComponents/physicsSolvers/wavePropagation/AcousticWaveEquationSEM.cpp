@@ -106,7 +106,6 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-
 void AcousticWaveEquationSEM::postProcessInput()
 {
 
@@ -780,7 +779,6 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                      DomainPartition & domain,
                                                      bool computeGradient )
 {
-  // helpers::print_stacktrace();
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
@@ -1175,7 +1173,7 @@ void AcousticWaveEquationSEM::cleanup( real64 const time_n,
     NodeManager & nodeManager = mesh.getNodeManager();
     arrayView1d< real32 const > const p_n = nodeManager.getField< fields::Pressure_n >();
     arrayView1d< real32 const > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
-    arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
+    arrayView2d< real32 > const pReceivers  = m_pressureNp1AtReceivers.toView();
     computeAllSeismoTraces( time_n, 0, p_np1, p_n, pReceivers );
   } );
 }
@@ -1186,9 +1184,8 @@ void AcousticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
                                                       arrayView1d< real32 const > const var_n,
                                                       arrayView2d< real32 > varAtReceivers )
 {
-
   /*
-   * In forward case we compute seismo if time_n + dt  is the first time
+   * In forward case we compute seismo if time_n + dt is the first time
    * step after the timeSeismo to write.
    *
    *  time_n        timeSeismo    time_n + dt
@@ -1200,6 +1197,7 @@ void AcousticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
    *  time_n - dt    timeSeismo    time_n
    *   ---|--------------|-------------|
    */
+
   for( real64 timeSeismo;
        (m_forward)?((timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + dt + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace):
        ((timeSeismo = m_dtSeismoTrace*(m_nsamplesSeismoTrace-m_indexSeismoTrace-1)) >= (time_n - dt -  epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace);
