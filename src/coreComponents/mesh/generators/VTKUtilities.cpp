@@ -575,22 +575,25 @@ redistributeMesh( vtkDataSet & loadedMesh,
 
   // Generate global IDs for vertices and cells, if needed
   vtkSmartPointer< vtkDataSet > mesh;
+  mesh = &loadedMesh;
+
   bool globalIdsAvailable = loadedMesh.GetPointData()->GetGlobalIds() != nullptr
                             && loadedMesh.GetCellData()->GetGlobalIds() != nullptr;
   if( useGlobalIds > 0 && !globalIdsAvailable )
   {
-    GEOSX_ERROR( "Global IDs strictly required (useGlobalId > 0) but unavailable. Set useGlobalIds to 0 to build them automatically." );
+    //GEOSX_ERROR( "Global IDs strictly required (useGlobalId > 0) but unavailable. Set useGlobalIds to 0 to build them automatically." );
   }
   else if( useGlobalIds >= 0 && globalIdsAvailable )
   {
-    mesh = &loadedMesh;
-    vtkIdTypeArray const * const globalCellId = vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() );
-    vtkIdTypeArray const * const globalPointId = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
-    GEOSX_ERROR_IF( globalCellId->GetNumberOfComponents() != 1 && globalCellId->GetNumberOfTuples() != mesh->GetNumberOfCells(),
-                    "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
-    GEOSX_ERROR_IF( globalPointId->GetNumberOfComponents() != 1 && globalPointId->GetNumberOfTuples() != mesh->GetNumberOfPoints(),
-                    "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
-
+    if( MpiWrapper::commRank() == 0 )
+    {
+      vtkIdTypeArray const * const globalCellId = vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() );
+      vtkIdTypeArray const * const globalPointId = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
+      GEOSX_ERROR_IF( globalCellId->GetNumberOfComponents() != 1 && globalCellId->GetNumberOfTuples() != mesh->GetNumberOfCells(),
+                      "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
+      GEOSX_ERROR_IF( globalPointId->GetNumberOfComponents() != 1 && globalPointId->GetNumberOfTuples() != mesh->GetNumberOfPoints(),
+                      "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
+    }
     GEOSX_LOG_RANK_0( "Using global Ids defined in VTK mesh" );
   }
   else
