@@ -57,6 +57,10 @@ typedef PorousSolid< Damage< ElasticIsotropic > > PorousDamageElasticIsotropic;
 typedef PorousSolid< DamageSpectral< ElasticIsotropic > > PorousDamageSpectralElasticIsotropic;
 typedef PorousSolid< DamageVolDev< ElasticIsotropic > > PorousDamageVolDevElasticIsotropic;
 typedef PorousSolid< ModifiedCamClay > PorousModifiedCamClay;
+typedef PorousSolid< DuvautLionsSolid< ModifiedCamClay > > PorousViscoModifiedCamClay;
+typedef PorousSolid< DuvautLionsSolid< DruckerPrager > > PorousViscoDruckerPrager;
+typedef PorousSolid< DuvautLionsSolid< DruckerPragerExtended > > PorousViscoDruckerPragerExtended;
+
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticIsotropic, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticTransverseIsotropic, string const &, Group * const )
@@ -68,6 +72,10 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDamageElasticIsotropic, string c
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDamageSpectralElasticIsotropic, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDamageVolDevElasticIsotropic, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousModifiedCamClay, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousViscoModifiedCamClay, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousViscoDruckerPrager, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, DruckerPragerExtended, string const &, Group * const )
+
 
 }
 } /* namespace geos */
