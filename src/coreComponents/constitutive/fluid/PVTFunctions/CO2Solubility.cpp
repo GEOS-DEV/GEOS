@@ -196,6 +196,10 @@ void calculateCO2Solubility( string const & functionName,
       // mole fraction of CO2 in vapor phase, equation (4) of Duan and Sun (2003)
       real64 const y_CO2 = (P - PWater( T ))/P;
       values[j*nPressures+i] = y_CO2 * P / exp( logK );
+
+      GEOSX_WARNING_IF( exp( logK ) <= 1e-10,
+			GEOSX_FMT( "CO2Solubility: exp(logK) = {} is too small (logK = {}, P = {}, T = {}, V_r = {}), resulting solubility value is {}",
+				   exp( logK ), logK, P, T, V_r, values[j*nPressures+i] ));
     }
   }
 }
