@@ -238,12 +238,12 @@ computeBodyForce( localIndex const k,
 
   // Step 2: compute mixture density as an average between total mass density and solid density
 
-  real64 const mixtureDensity = ( 1.0 - porosity ) * m_solidDensity( k, q ) + porosity * totalMassDensity;
-  real64 const dMixtureDens_dVolStrainIncrement = dPorosity_dVolStrain * ( -m_solidDensity( k, q ) + totalMassDensity );
-  real64 const dMixtureDens_dPressure = dPorosity_dPressure * ( -m_solidDensity( k, q ) + totalMassDensity )
-                                        + ( 1.0 - porosity ) * dSolidDensity_dPressure
-                                        + porosity * dTotalMassDensity_dPressure;
-  LvArray::tensorOps::scale< maxNumComponents >( dTotalMassDensity_dComponents, porosity );
+  GEOSX_UNUSED_VAR( porosity, dPorosity_dVolStrain, dPorosity_dPressure );
+
+  real64 const mixtureDensity = m_solidDensity( k, q );
+  real64 const dMixtureDens_dVolStrainIncrement = 0;
+  real64 const dMixtureDens_dPressure = dSolidDensity_dPressure;
+  LvArray::tensorOps::scale< maxNumComponents >( dTotalMassDensity_dComponents, 0 );
 
   // Step 3: finally, get the body force
 
