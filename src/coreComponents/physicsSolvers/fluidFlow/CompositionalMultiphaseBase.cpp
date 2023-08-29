@@ -1862,11 +1862,14 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
     return LvArray::NumericLimits< real64 >::max;
   }
 
-  real64 maxRelativePresChange = 0.0;
+  real64 maxAbsolutePressure = 0.0;
+  real64 maxAbsolutePresChange = 0.0;
   real64 maxRelativeTempChange = 0.0;
   real64 maxAbsolutePhaseVolFracChange = 0.0;
 
-  real64 const numPhase = m_numPhases;
+  integer const numPhase = m_numPhases;
+
+  real64 const epsilon = LvArray::NumericLimits< real64 >::epsilon;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -1887,6 +1890,7 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
       arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac_n =
         subRegion.getField< fields::flow::phaseVolumeFraction_n >();
 
+      RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPressure( 0.0 );
       RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPresChange( 0.0 );
       RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxTempChange( 0.0 );
       RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPhaseVolFracChange( 0.0 );
@@ -1895,8 +1899,9 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
       {
         if( ghostRank[ei] < 0 )
         {
-          subRegionMaxPresChange.max( LvArray::math::abs( pres[ei] - pres_n[ei] ) / LvArray::math::max( pres_n[ei], LvArray::NumericLimits< real64 >::epsilon ) );
-          subRegionMaxTempChange.max( LvArray::math::abs( temp[ei] - temp_n[ei] ) / LvArray::math::max( temp_n[ei], LvArray::NumericLimits< real64 >::epsilon ) );
+          subRegionMaxPressure.max( LvArray::math::abs( pres[ei] ) );
+          subRegionMaxPresChange.max( LvArray::math::abs( pres[ei] - pres_n[ei] ) );
+          subRegionMaxTempChange.max( LvArray::math::abs( temp[ei] - temp_n[ei] ) / LvArray::math::max( temp_n[ei], epsilon ) );
           for( integer ip = 0; ip < numPhase; ++ip )
           {
             subRegionMaxPhaseVolFracChange.max( LvArray::math::abs( phaseVolFrac[ei][ip] - phaseVolFrac_n[ei][ip] ) );
@@ -1904,14 +1909,17 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
         }
       } );
 
-      maxRelativePresChange = LvArray::math::max( maxRelativePresChange, subRegionMaxPresChange.get() );
+      maxAbsolutePressure = LvArray::math::max( maxAbsolutePressure, subRegionMaxPressure.get() );
+      maxAbsolutePresChange = LvArray::math::max( maxAbsolutePresChange, subRegionMaxPresChange.get() );
       maxRelativeTempChange = LvArray::math::max( maxRelativeTempChange, subRegionMaxTempChange.get() );
       maxAbsolutePhaseVolFracChange = LvArray::math::max( maxAbsolutePhaseVolFracChange, subRegionMaxPhaseVolFracChange.get() );
 
     } );
   } );
 
-  maxRelativePresChange = MpiWrapper::max( maxRelativePresChange );
+  maxAbsolutePressure = MpiWrapper::max( maxAbsolutePressure );
+  maxAbsolutePresChange = MpiWrapper::max( maxAbsolutePresChange );
+  real64 const maxRelativePresChange = maxAbsolutePresChange / LvArray::math::max( maxAbsolutePressure, epsilon );
   maxAbsolutePhaseVolFracChange = MpiWrapper::max( maxAbsolutePhaseVolFracChange );
   GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max relative pressure change: "<< 100*maxRelativePresChange << " %" );
   GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max absolute phase volume fraction change: "<< maxAbsolutePhaseVolFracChange );
