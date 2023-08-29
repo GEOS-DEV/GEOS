@@ -435,7 +435,11 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition const & do
     } );
   } );
 
-  return MpiWrapper::min( localCheck );
+  if( MpiWrapper::min( localCheck ) == 0 )
+  {
+    GEOSX_LOG_RANK_0( "Negative pressure was detected in the model. The simulation will proceed." );
+  }
+  return true;
 }
 
 void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofManager,

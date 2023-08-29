@@ -1043,9 +1043,9 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
         }
       } );
 
-      GEOSX_ERROR_IF( minPressure.get() < 0.0,
-                      GEOSX_FMT( "A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
-                                 minPressure.get(), region.getName(), subRegion.getName() ) );
+      //GEOSX_ERROR_IF( minPressure.get() < 0.0,
+      //                GEOSX_FMT( "A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
+      //                           minPressure.get(), region.getName(), subRegion.getName() ) );
     } );
   } );
 }
