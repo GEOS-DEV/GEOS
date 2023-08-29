@@ -1042,10 +1042,8 @@ void SpatialPartition::setPeriodicDomainBoundaryObjects( MeshBody & grid,
                                                          EdgeManager & edgeManager,
                                                          FaceManager & faceManager )
   {
-    GEOS_LOG_RANK("Check periodic: " << m_Periodic[0] << ", " << m_Periodic[1] << ", " << m_Periodic[2]); //CC: debug
-
     arrayView1d< globalIndex > localToGlobalMap = nodeManager.localToGlobalMap();
-    unordered_map< globalIndex, localIndex > const & globalToLocalMap = nodeManager.globalToLocalMap(); 
+    // unordered_map< globalIndex, localIndex > const & globalToLocalMap = nodeManager.globalToLocalMap(); // CC: need this for single partition case 
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
 
     // CC: Should we be using periodicSets? Old geos used periodic sets in the input file, we don't here

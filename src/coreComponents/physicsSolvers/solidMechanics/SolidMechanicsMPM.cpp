@@ -524,8 +524,6 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
                                     ParticleManager & particleManager,
                                     SpatialPartition & partition )
 {
-  int rank  = MpiWrapper::commRank( MPI_COMM_GEOSX );
-
   // Initialize neighbor lists
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -1168,6 +1166,15 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   gridToParticle( dt, particleManager, nodeManager );
 
+  //#######################################################################################
+  solverProfilingIf( "Update particle positions according to prescribed F Table", m_prescribedFTable == 1 );
+  //####################################################################################### 
+  if( m_prescribedFTable == 1 )
+  {
+    applySuperimposedVelocityGradient( dt,
+                                       particleManager,
+                                       partition );
+  }
 
   //#######################################################################################
   solverProfiling( "Update deformation gradient" );
@@ -1209,18 +1216,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       computeAndWriteBoxAverage( time_n, dt, particleManager );
       m_nextBoxAverageWriteTime += m_boxAverageWriteInterval;
     }
-  }
-
-  //#######################################################################################
-  solverProfilingIf( "Update particle positions according to prescribed F Table", m_prescribedFTable == 1 );
-  //####################################################################################### 
-  if( m_prescribedFTable == 1 )
-  {
-    applySuperimposedVelocityGradient( dt,
-                                       particleManager,
-                                       partition );
-  }
-  
+  }  
 
   //#######################################################################################
   solverProfiling( "Calculate stable time step" );
@@ -2762,7 +2758,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   real64 boxParticleInitialVolume = 0.0;
   real64 boxDamage = 0.0; // we sum damage * initial volume, additive sync, then divide by total initial volume in box
 
-  if( m_prescribedBoundaryFTable == 1 ) // TODO: Why do we have this flag?
+  if( m_prescribedBoundaryFTable == 1  || m_prescribedFTable == 1 ) // TODO: Why do we have this flag?
   {
     particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
     {
@@ -2772,7 +2768,6 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
       arrayView1d< real64 > const particleInitialVolume = subRegion.getField< fields::mpm::particleInitialVolume >();
       arrayView2d< real64 > const particleStress = subRegion.getField< fields::mpm::particleStress >();
       arrayView1d< real64 > const particleDamage = subRegion.getParticleDamage();
-
       // Accumulate values
       SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
       forAll< serialPolicy >( activeParticleIndices.size(), [=, &boxMass, &boxParticleInitialVolume, &boxStress, &boxDamage] GEOS_HOST ( localIndex const pp ) // This
@@ -2785,6 +2780,19 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
           localIndex const p = activeParticleIndices[pp];
           boxMass += particleMass[p];
           boxParticleInitialVolume += particleInitialVolume[p];
+
+          // if(pp < 10){
+          //   GEOS_LOG_RANK_0("Particle " << p << " " << pp << ": " <<
+          //                   particleMass[p] << ", " <<
+          //                   particleVolume[p] << ", " << 
+          //                   particleStress[p][0] << ", " << 
+          //                   particleStress[p][1] << ", " << 
+          //                   particleStress[p][2] << ", " << 
+          //                   particleStress[p][3] << ", " << 
+          //                   particleStress[p][4] << ", " << 
+          //                   particleStress[p][5] );
+          // }
+
           for( int i=0; i<6; i++ )
           {
             boxStress[i] += particleStress[p][i] * particleVolume[p]; // volume weighted average, will normalize later.
@@ -2842,6 +2850,25 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
     //   boxVolume = ( m_particle_box_xmax - m_particle_box_xmin ) * ( m_particle_box_ymax - m_particle_box_ymin ) * ( m_particle_box_zmax - m_particle_box_zmin ); //Does this need to account for periodic boundaries
     // }
 
+    // GEOS_LOG_RANK_0("BoxSums: "
+    //                   << boxSums[0] / boxVolume
+    //                   << ","
+    //                   << boxSums[1] / boxVolume
+    //                   << ","
+    //                   << boxSums[2] / boxVolume
+    //                   << ","
+    //                   << boxSums[3] / boxVolume
+    //                   << ","
+    //                   << boxSums[4] / boxVolume
+    //                   << ","
+    //                   << boxSums[5] / boxVolume
+    //                   << ","
+    //                   << boxSums[6] / boxVolume
+    //                   << ","
+    //                   << boxSums[8] / boxSums[7]
+    //                   <<","
+    //                   << boxVolume );
+
     // Write to file
     std::ofstream file;
     file.open( "boxAverageHistory.csv", std::ios::out | std::ios::app );
@@ -2879,15 +2906,19 @@ void SolidMechanicsMPM::applySuperimposedVelocityGradient( const real64 dt,
                                                            ParticleManager & particleManager,
                                                            SpatialPartition & partition )
 {
+  // GEOS_LOG_RANK_0( "Superimposed domainL: " <<  m_domainL[0] << ", " <<
+  //                            m_domainL[1] << ", " << 
+  //                            m_domainL[2]);
+  real64 domainL[3] = {0};
+  LvArray::tensorOps::copy< 3 >( domainL, m_domainL );
+  int const numDims = m_numDims; // CC: do member scalars need to be copied to local variable to be used in a RAJA loops?
+
   arrayView1d< int > periodic = partition.m_Periodic;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     // Particle fields
     arrayView2d< real64 > const particlePosition = subRegion.getParticleCenter();
-
-    real64 domainL[3] = {0};
-    LvArray::tensorOps::copy< 3 >( domainL, m_domainL );
-    int const numDims = m_numDims; // CC: do member scalars need to be copied to local variable to be used in a RAJA loops?
+    arrayView3d< real64 > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
 
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
     forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_DEVICE ( localIndex const pp )
@@ -2896,11 +2927,42 @@ void SolidMechanicsMPM::applySuperimposedVelocityGradient( const real64 dt,
         
         for(int i=0; i < numDims; i++)
         {
-          // CC: would we want to apply 
-          if(periodic[i])
+          // if(pp< 10){
+          //   GEOS_LOG_RANK_0( "Particle Pos: " << 
+          //                    particlePosition[p][0] << ", "  <<
+          //                    particlePosition[p][1] << ", " <<
+          //                    particlePosition[p][2] << ", DomainL" <<
+          //                    particleVelocityGradient[p][0][0] << ", " << 
+          //                    particleVelocityGradient[p][1][1] << ", " << 
+          //                    particleVelocityGradient[p][2][2] << ", " << 
+          //                    domainL[0] << ", " <<
+          //                    domainL[1] << ", " << 
+          //                    domainL[2] << ", Periodic" << 
+          //                    periodic[0] << ", " <<
+          //                    periodic[1] << ", " << 
+          //                    periodic[2]);
+          // }
+          // CC: would we want to apply even if direction was not periodic?
+          if( periodic[i] )
           {
+            particleVelocityGradient[p][i][i] += domainL[i];
             particlePosition[p][i] += particlePosition[p][i] * domainL[i] * dt;
           }
+          // if(pp< 10){
+          //   GEOS_LOG_RANK_0( "After Particle Pos: " << 
+          //                    particlePosition[p][0] << ", "  <<
+          //                    particlePosition[p][1] << ", " <<
+          //                    particlePosition[p][2] << ", DomainL" <<
+          //                    particleVelocityGradient[p][0][0] << ", " << 
+          //                    particleVelocityGradient[p][1][1] << ", " << 
+          //                    particleVelocityGradient[p][2][2] << ", " << 
+          //                    domainL[0] << ", " <<
+          //                    domainL[1] << ", " << 
+          //                    domainL[2] << ", Periodic" << 
+          //                    periodic[0] << ", " <<
+          //                    periodic[1] << ", " << 
+          //                    periodic[2]);
+          // }
         }
       } ); // particle loop
   } ); // subregion loop
@@ -4230,7 +4292,6 @@ inline void GEOS_DEVICE SolidMechanicsMPM::mapNodesAndComputeShapeFunctions(arra
           int cornerIJK[8][3]; // CPDI can map to up to 8 cells
           for( int corner=0; corner<8; corner++ )
           {
-            real64 cornerPos[3];
             for( int i=0; i<3; i++ )
             {
               real64 cornerPositionComponent = particlePosition[i] + 
