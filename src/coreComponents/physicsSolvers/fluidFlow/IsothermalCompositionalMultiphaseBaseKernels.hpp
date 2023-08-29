@@ -309,10 +309,10 @@ public:
       bool const phaseExists = (phaseFrac[ip] > 0);
       if( !phaseExists )
       {
-        phaseVolFrac[ip] = 0.;
+        phaseVolFrac[ip] = 0.0;
         for( integer jc = 0; jc < numComp+2; ++jc )
         {
-          dPhaseVolFrac[ip][jc] = 0.;
+          dPhaseVolFrac[ip][jc] = 0.0;
         }
         continue;
       }
@@ -348,6 +348,16 @@ public:
 
       phaseVolFrac[ip] *= totalDensity;
       dPhaseVolFrac[ip][Deriv::dP] *= totalDensity;
+
+      if( phaseVolFrac[ip] < 0.0 )
+      { 
+        phaseVolFrac[ip] = 0.0;
+      }
+      else if( phaseVolFrac[ip] > 1.0 )
+      {
+        phaseVolFrac[ip] = 1.0;
+      }
+
     }
   }
 
@@ -679,6 +689,12 @@ public:
       for( integer ic = 0; ic < numComp; ++ic )
       {
         real64 const phaseCompAmount = phaseAmount * phaseCompFrac[ip][ic];
+
+	// if( fabs( phaseCompAmount ) > 1e10 )
+	// { 
+	//   std::cout << stack.poreVolume << " " << phaseVolFrac[ip] << " " << phaseDens[ip] << " " << phaseCompFrac[ip][ic] << std::endl;
+	// }
+
         real64 const phaseCompAmount_n = phaseAmount_n * phaseCompFrac_n[ip][ic];
 
         real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * phaseCompFrac[ip][ic]
