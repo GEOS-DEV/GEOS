@@ -369,7 +369,7 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
     }
   };
 
-	// Add all the collocated nodes of the fracture element.
+  // Add all the collocated nodes of the fracture element.
   auto const addCollocatedFractureNodes = [&]( FaceElementSubRegion const & subRegion )
   {
     auto const & l2g = nodeManager.localToGlobalMap();
