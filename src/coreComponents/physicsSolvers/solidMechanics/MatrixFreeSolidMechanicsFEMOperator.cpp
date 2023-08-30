@@ -17,6 +17,7 @@
  */
 
 // Source includes
+#define SELECTED_FE_TYPES H1_Hexahedron_Lagrange1_GaussLegendre2
 #include "MatrixFreeSolidMechanicsFEMOperator.hpp"
 #include "kernels/SmallStrainResidual.hpp"
 #include "finiteElement/kernelInterface/KernelBase.hpp"
@@ -165,3 +166,4 @@ MPI_Comm MatrixFreeSolidMechanicsFEMOperator::comm() const
 }
 
 } /* namespace geos */
+#undef SELECTED_FE_TYPES

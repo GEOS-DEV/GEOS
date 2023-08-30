@@ -7,7 +7,9 @@
     <MatrixFreeSolidMechanicsFEM
       name="Solver"
       discretization="FE1"
-      targetRegions="{ mesh1/Region1 }">
+      targetRegions="{ mesh1/Region1 }"
+      kernelOptimizationOption="3"
+      >
       <NonlinearSolverParameters
         newtonTol="1.0e-7"
         newtonMaxIter="8"/>

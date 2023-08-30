@@ -310,14 +310,33 @@ void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 }
 
 
-
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64 SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::complete( localIndex const k,
-                                                                                    localIndex const ( &elemToNodeMap )[numNodesPerElem],
+                                                                                    real64 const (&fLocal) [ numNodesPerElem ][ numDofPerTestSupportPoint ] ) const
+{
+  RAJA_UNROLL
+  for( localIndex a = 0; a < numNodesPerElem; ++a )
+  {
+    localIndex const nodeIndex = m_elemsToNodes( k, a );
+    RAJA_UNROLL
+    for( int i = 0; i < numDofPerTestSupportPoint; ++i )
+    {
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_res( nodeIndex, i ), fLocal[ a ][ i ] );
+    }
+  }
+  return 0;
+}
+
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::complete( localIndex const ( &elemToNodeMap )[numNodesPerElem],
                                                                                     real64 const (&fLocal) [ numNodesPerElem ][ numDofPerTestSupportPoint ] ) const
 {
   RAJA_UNROLL
@@ -406,7 +425,7 @@ kernelLaunch( localIndex const numElems,
       real64 xLocal[ KERNEL_TYPE::numNodesPerElem ][ 3 ];
       localIndex elementToNodeMap[ KERNEL_TYPE::numNodesPerElem ];
 
-      kernelComponent.setup( k, xLocal, varLocal );
+      kernelComponent.setup( k, elementToNodeMap, xLocal, varLocal );
       for( integer qc=0; qc<2; ++qc )
       {
         for( integer qb=0; qb<2; ++qb )
@@ -417,7 +436,7 @@ kernelLaunch( localIndex const numElems,
           }
         }
       }
-      kernelComponent.complete( k, fLocal );
+      kernelComponent.complete( elementToNodeMap, fLocal );
 
     } );
   }  

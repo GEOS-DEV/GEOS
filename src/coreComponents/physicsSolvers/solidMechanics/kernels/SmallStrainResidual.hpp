@@ -181,8 +181,7 @@ public:
                    real64 const (&fLocal) [ numNodesPerElem ][ numDofPerTestSupportPoint ] ) const;
 
   GEOS_HOST_DEVICE
-  real64 complete( localIndex const k,
-                   localIndex const ( &elemToNodeMap )[numNodesPerElem],
+  real64 complete( localIndex const ( &elemToNodeMap )[numNodesPerElem],
                    real64 const (&fLocal) [ numNodesPerElem ][ numDofPerTestSupportPoint ] ) const;
 
 

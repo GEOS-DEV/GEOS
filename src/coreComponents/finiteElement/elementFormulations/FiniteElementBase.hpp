@@ -524,7 +524,10 @@ public:
   static void symmetricGradient( int const q,
                                  real64 const (&invJ)[3][3],
                                  real64 const (&var)[NUM_SUPPORT_POINTS][3],
-                                 real64 ( & grad )[6] ){}
+                                 real64 ( & grad )[6] )
+  {
+    GEOS_UNUSED_VAR( q, invJ, var, grad );
+  }
 
 
   /**
@@ -667,7 +670,10 @@ public:
   static void plusGradNajAij( int const q,
                               real64 const (&invJ)[3][3],
                               real64 const (&var)[6],
-                              real64 ( & R )[NUM_SUPPORT_POINTS][3] ){}
+                              real64 ( & R )[NUM_SUPPORT_POINTS][3] )
+  {
+        GEOS_UNUSED_VAR( q, invJ, var, R );
+  }
 
   /**
    * @brief Product of each shape function with a vector forcing term.

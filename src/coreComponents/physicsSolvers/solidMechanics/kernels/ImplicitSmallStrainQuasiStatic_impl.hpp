@@ -79,7 +79,7 @@ setup( localIndex const k,
   stack.numRows =  3 * numSupportPoints;
   stack.numCols = stack.numRows;
 
-  RAJA_UNROLL
+  //RAJA_UNROLL
   for( localIndex a = 0; a < numSupportPoints; ++a )
   {
     localIndex const localNodeIndex = m_elemsToNodes( k, a );
@@ -177,7 +177,7 @@ real64 ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYP
 #endif
   localIndex const numSupportPoints = m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
 
-  RAJA_UNROLL
+  //RAJA_UNROLL
   for( int localNode = 0; localNode < numSupportPoints; ++localNode )
   {
     RAJA_UNROLL

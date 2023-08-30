@@ -49,6 +49,7 @@ NodeManager::NodeManager( string const & name,
   this->registerWrapper( viewKeyStruct::elementRegionListString(), &elementRegionList() );
   this->registerWrapper( viewKeyStruct::elementSubRegionListString(), &elementSubRegionList() );
   this->registerWrapper( viewKeyStruct::elementListString(), &elementList() );
+
   excludeWrappersFromPacking( { viewKeyStruct::edgeListString(),
                                 viewKeyStruct::faceListString(),
                                 viewKeyStruct::elementRegionListString(),
