@@ -14,7 +14,7 @@
 
 
 /**
- * @file LaplaceFEMKernels.hpp
+ * @file LaplaceFEMKernelsNew.hpp
  */
 
 #ifndef GEOS_PHYSICSSOLVERS_SIMPLEPDE_LAPLACEFEMKERNELSNEW_HPP_
@@ -28,87 +28,135 @@ namespace geos
 {
 
 //namespace cells TODO?
-
-//Dense3x3Tensor;
-//Diagonal3x3Tensor;
+struct Dense3x3Tensor
+{
+  real64 val[3][3]{{}};
+};
 
 class HexadronCell
 {
 public:
   constexpr static int numVertex = 8;
 
-//  using JacobianType = Dense3x3Tensor;
-  using JacobianType = real64[3][3];
+  using JacobianType = Dense3x3Tensor;
 
-  GEOS_HOST_DEVICE HexadronCell( real64[numVertex][3] nodeCoords )
-    :
-    m_nodeCoords( nodeCoords )
+  GEOS_HOST_DEVICE
+  HexadronCell( real64 nodeCoords[numVertex][3] )
   {
-
+    for( int i = 0; i < numVertex; ++i )
+    {
+      for( int j = 0; j < 3; ++j )
+      {
+        m_nodeCoords[i][j] = nodeCoords[i][j];
+      }
+    }
   }
 
-  GEOS_HOST_DEVICE JacobianType getJacobian( real64[3] refPointCoords ) const
+  GEOS_HOST_DEVICE
+  JacobianType getJacobian( real64 refPointCoords[3] ) const
   {
-    JacobianType j;
-    // ...
-    return j;
+    JacobianType J;
+    
+    // Compute Jacobian
+    real64 dPhiLin[2] = { -1.0, 1.0 };
+    for( int k = 0; k < 2; ++k )
+    {
+      for( int j = 0; j < 2; ++j )
+      {
+        for( int i = 0; i < 2; ++i )
+        {
+          real64 gradPhi[3]{ 0.125 * dPhiLin[i] * ( 1.0 - refPointCoords[1]) * ( 1.0 - refPointCoords[2]),
+                             0.125 * ( 1.0 - refPointCoords[0]) * dPhiLin[j]  * ( 1.0 - refPointCoords[2]),
+                             0.125 * ( 1.0 - refPointCoords[0]) * ( 1.0 - refPointCoords[1]) * dPhiLin[k] };
+
+          int vertexInd = 4 * k + 2 * j + i;
+
+          J.val[0][0] += m_nodeCoords[vertexInd][0] * gradPhi[0]; 
+          J.val[0][1] += m_nodeCoords[vertexInd][0] * gradPhi[1]; 
+          J.val[0][2] += m_nodeCoords[vertexInd][0] * gradPhi[2]; 
+          J.val[1][0] += m_nodeCoords[vertexInd][1] * gradPhi[0]; 
+          J.val[1][1] += m_nodeCoords[vertexInd][1] * gradPhi[1]; 
+          J.val[1][2] += m_nodeCoords[vertexInd][1] * gradPhi[2]; 
+          J.val[2][0] += m_nodeCoords[vertexInd][2] * gradPhi[0]; 
+          J.val[2][1] += m_nodeCoords[vertexInd][2] * gradPhi[1]; 
+          J.val[2][2] += m_nodeCoords[vertexInd][2] * gradPhi[2]; 
+        }
+      }
+    }
+
+    return J;
   }
 
-  GEOS_HOST_DEVICE real64[3] mapping( real64[3] refPointCoords ) const
-  {
+  // GEOS_HOST_DEVICE real64[3] mapping( real64 refPointCoords[3] ) const
+  // {
 
-  }
+  // }
 
 private:
-  real64[numVertex][3] m_nodeCoords;
+  real64 m_nodeCoords[numVertex][3];
 };
 
-class HexadronIJKCell
-{
-public:
-  constexpr static int numVertex = 8;
+// class HexadronIJKCell
+// {
+// public:
+  // constexpr static int numVertex = 8;
+// 
+  // using JacobianType = real64[3][3];
+// 
+  // GEOS_HOST_DEVICE HexadronIJKCell( real64[3] h )
+    // :
+    // m_h( h )
+  // {
+// 
+  // }
+// 
+  // GEOS_HOST_DEVICE JacobianType getJacobian( real64[3] refPointCoords )
+  // {
+    // return 0.5 * m_h;
+  // }
+// 
+  // GEOS_HOST_DEVICE real64[3] mapping( real64[3] refPointCoords ) const
+  // {
+// 
+  // }
+// 
+// private:
+  // real64[3] m_h;
+// };
 
-  using JacobianType = real64[3][3];
 
-  GEOS_HOST_DEVICE HexadronIJKCell( real64[3] h )
-    :
-    m_h( h )
-  {
-
-  }
-
-  GEOS_HOST_DEVICE JacobianType getJacobian( real64[3] refPointCoords )
-  {
-    return 0.5 * m_h;
-  }
-
-  GEOS_HOST_DEVICE real64[3] mapping( real64[3] refPointCoords ) const
-  {
-
-  }
-
-private:
-  real64[3] m_h;
-};
-
-
-template< typename SUBREGION_TYPE  >
+template< typename ARRAY_VIEW_TYPE  >
 class isoparametricMesh
 {
+public:
+  isoparametricMesh( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+                     ARRAY_VIEW_TYPE const elementToNodes )
+   : m_X( X ), m_elementToNodes( elementToNodes )
+  {
+
+  }
+  
+  localIndex numCells() const
+  {
+    return m_elementToNodes.size( 0 );
+  }
+
 protected:
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
-  traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > const m_elementToNodes;
+  // traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > const m_elementToNodes;
+  ARRAY_VIEW_TYPE const m_elementToNodes;
 };
 
-
-class isoparametricHexahedronMesh : public isoparametricMesh<...> // isoparametricMesh< HexadronCell >?
+template< typename ARRAY_VIEW_TYPE  >
+class isoparametricHexahedronMesh : public isoparametricMesh< ARRAY_VIEW_TYPE >
 {
-  using const_iterator = CellIterator< HexadronCell >;
+public :
+  // using const_iterator = CellIterator< HexadronCell >;
   //...
 
-//  using CellType = HexadronCell;
+ using CellType = HexadronCell;
   // ... 
-  constexpr static numCellVertex = HexadronCell::numVertex;
+  constexpr static int numCellVertex = HexadronCell::numVertex;
 
   // ...
   // constructor
@@ -116,56 +164,57 @@ class isoparametricHexahedronMesh : public isoparametricMesh<...> // isoparametr
   // 
   HexadronCell getCell( localIndex k ) const
   {
-    return HexadronCell(m_X[k]);
+    return HexadronCell( this->m_X[k] );
   }
 
-  localIndex numCells() const;
+  // localIndex numCells() const;
 };
 
-class ijkMesh
-{
+// class ijkMesh
+// {
   // ...
-  constexpr static nVertex = 8;
+  // constexpr static nVertex = 8;
   // ...
   // constructor
+// 
+  
+  // HexadronIJKCell getCell( localIndex k )
+  // {
+    // return ...;
+  // }
+// private:
+  // ArrayOfArrays< real64 const > const m_h;
+// 
+// };
 
-  //
-  HexadronIJKCell getCell( localIndex k )
-  {
-    return ...;
-  }
-private:
-  ArrayOfArrays< real64 const > const m_h;
-
-};
-
-class isoparametricWedgeMesh : public isoparametricMesh
-{
-  // ... 
-  constexpr static nVertex = 6;
-  // ...
-  WedgeCell getCell( localIndex k )
-  {
-    return ...;
-  }
-};
+// class isoparametricWedgeMesh : public isoparametricMesh
+// {
+//   // ... 
+//   constexpr static nVertex = 6;
+//   // ...
+//   WedgeCell getCell( localIndex k )
+//   {
+//     return ...;
+//   }
+// };
 
 // Factory selectign dynamically the appropriate isopametric mesh
-isoparametricMesh selectIsoparametricMesh( ElementType elemType, nodePoisitions, elemToNodees )
+template< typename ARRAY_VIEW_TYPE  >
+isoparametricMesh< ARRAY_VIEW_TYPE > selectIsoparametricMesh( ElementType elemType,
+                                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePositions,
+                                           ARRAY_VIEW_TYPE const elementToNodes )
 {
-  if( elemType == ElementType::Hexahedron) )
+  if( elemType == ElementType::Hexahedron)
   {
-    return isoparametricHexahedronMesh( nodePositions, elementToNodes );
+    return isoparametricHexahedronMesh< ARRAY_VIEW_TYPE >( nodePositions, elementToNodes );
   }
-  else if( elemType == ElementType::Wedge) )
-  {
-    eturn isoparametricWedgenMesh( nodePositions, elementToNodes );
-  }
-
-  }
+  // else if( elemType == ElementType::Wedge) )
+  // {
+    // return isoparametricWedgenMesh( nodePositions, elementToNodes );
+  // }
   else
   {
-    GEOS_ERROR( "finiteElement::dispatchlowOrder3D() is not implemented for input of "<<LvArray::system::demangleType( &input ) );
+    GEOS_ERROR( "finiteElement::dispatchlowOrder3D() is not implemented for input of " << elemType );
   }
 }
 
@@ -179,7 +228,7 @@ isoparametricMesh selectIsoparametricMesh( ElementType elemType, nodePoisitions,
  * @tparam UNUSED An unused parameter since we are assuming that the test and
  *                trial space have the same number of support points.
  *
- * ### LaplaceFEMKernel Description
+ * ### LaplaceFEMKernelNew Description
  * Implements the KernelBase interface functions required for solving Laplace's
  * equation using on of the finite element kernel application functions such as
  * geos::finiteElement::RegionBasedKernelApplication.
@@ -197,7 +246,7 @@ isoparametricMesh selectIsoparametricMesh( ElementType elemType, nodePoisitions,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class LaplaceFEMKernel :
+class LaplaceFEMKernelNew :
   public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
                                             FE_TYPE,
@@ -229,7 +278,7 @@ public:
    * @param fieldName The name of the primary field
    *                  (i.e. Temperature, Pressure, etc.)
    */
-  LaplaceFEMKernel( NodeManager const & nodeManager,
+  LaplaceFEMKernelNew( NodeManager const & nodeManager,
                     EdgeManager const & edgeManager,
                     FaceManager const & faceManager,
                     localIndex const targetRegionIndex,
@@ -253,7 +302,10 @@ public:
           inputMatrix,
           inputRhs ),
     // m_X( nodeManager.referencePosition() ),
-    m_subregionMesh( selectIsoparametricMesh( elementSubRegion.getElementType(), nodeManager.referencePosition(), elementSubRegion.nodeList().toViewConst()) ),
+    m_subregionMesh( selectIsoparametricMesh< traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > >(
+                       elementSubRegion.getElementType(),
+                       nodeManager.referencePosition(),
+                       elementSubRegion.nodeList().toViewConst()) ),
     m_primaryField( nodeManager.template getReference< array1d< real64 > >( fieldName ))
   {}
 
@@ -295,7 +347,7 @@ public:
    * @brief Copy global values from primary field to a local stack array.
    * @copydoc geos::finiteElement::ImplicitKernelBase::setup
    *
-   * For the LaplaceFEMKernel implementation, global values from the
+   * For the LaplaceFEMKernelNew implementation, global values from the
    * primaryField, and degree of freedom numbers are placed into element local
    * stack storage.
    */
@@ -337,10 +389,10 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    m_subregionMesh::CellType c = m_subregionMesh.getCell( k );
-    real64[3] pts = quadRule::getCoords< RULE >( q ); // ???
-    m_subregionMesh::JacobianType j = c.getJacobian( pts );
-    real64 const detJ = LvArray::tensorOps::determinant<...>( j );
+    typename subregionMeshType::CellType c = m_subregionMesh.getCell( k );
+    // real64[3] pts = quadRule::getCoords< RULE >( q ); // ???
+    // m_subregionMesh::JacobianType j = c.getJacobian( pts );
+    // real64 const detJ = LvArray::tensorOps::determinant<...>( j );
 
 
     real64 dNdX[ maxNumTestSupportPointsPerElem ][ 3 ];
@@ -401,10 +453,13 @@ protected:
   /// The global primary field array.
   arrayView1d< real64 const > const m_primaryField;
 
+  using subregionMeshType = isoparametricMesh< traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > >;
+  subregionMeshType m_subregionMesh;
+
 };
 
-/// The factory used to construct a LaplaceFEMKernel.
-using LaplaceFEMKernelFactory = finiteElement::KernelFactory< LaplaceFEMKernel,
+/// The factory used to construct a LaplaceFEMKernelNew.
+using LaplaceFEMKernelNewFactory = finiteElement::KernelFactory< LaplaceFEMKernelNew,
                                                               arrayView1d< globalIndex const > const,
                                                               globalIndex const,
                                                               CRSMatrixView< real64, globalIndex const > const,
