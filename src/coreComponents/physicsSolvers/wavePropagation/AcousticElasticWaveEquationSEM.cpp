@@ -91,8 +91,17 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
 
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
 
+    array1d< localIndex > fluid_indices( m_acousRegions.size(0) );
+
+    auto const & regions = elementRegionManager.getRegions();
+    localIndex cnt = 0;
+    for (auto const & nm : m_acousRegions)
+    {
+      fluid_indices[cnt++] = regions.getIndex( nm );
+    }
+
     elementRegionManager.forElementSubRegions< CellElementSubRegion >( m_acousRegions, [&]( localIndex const GEOS_UNUSED_PARAM(targetIndex),
-                                                                                          CellElementSubRegion & elementSubRegion )
+                                                                                            CellElementSubRegion & elementSubRegion )
     {
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -105,6 +114,7 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
 
         kernelC.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
                                                                X32,
+                                                               fluid_indices.toViewConst(),
                                                                faceToRegion,
                                                                faceToElement,
                                                                faceToNode,

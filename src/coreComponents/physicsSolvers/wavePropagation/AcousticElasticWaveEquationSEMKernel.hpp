@@ -40,7 +40,9 @@ struct CouplingKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const,
+          nodes::REFERENCE_POSITION_USD > const X,
+          arrayView1d< localIndex const > fluid_indices,
           arrayView2d< localIndex const > const faceToRegion,
           arrayView2d< localIndex const > const faceToElement,
           ArrayOfArraysView< localIndex const > const facesToNodes,
@@ -71,9 +73,19 @@ struct CouplingKernel
       {
         RAJA::atomicInc< ATOMIC_POLICY >( &count_view[1] );
         // printf("\t[CouplingKernel::launch] f=%i -> (e0=%i, e1=%i)\n", f, e0, e1);
-        // NOTE: subregion check doesn't work: sr0 != esr1
+        // NOTE: subregion check doesn't work: esr0 != esr1
         if( er0 != er1 )  // should define an interface
         {
+          // determine normal sign for fluid -> solid coupling
+          localIndex sgn = -1;
+          for (auto const & idx : fluid_indices)
+          {
+            if (er0 == idx)
+            {
+              sgn = +1;
+              break;
+            }
+          }
           RAJA::atomicInc< ATOMIC_POLICY >( &count_view[2] );
           // printf("\t[CouplingKernel::launch] interface found for f=%i\n", f);
           real64 xLocal[ numNodesPerFace ][ 3 ];
@@ -88,12 +100,12 @@ struct CouplingKernel
           for( localIndex q = 0; q < numNodesPerFace; ++q )
           {
             real64 const aux = -FE_TYPE::computeDampingTerm( q, xLocal );
+
             // real64 const mag = sqrt(pow(faceNormals[f][0], 2) + pow(faceNormals[f][1], 2) + pow(faceNormals[f][2], 2));
 
-            // what about normal sign ?
-            real32 const localIncrementx = aux * faceNormals[f][0];
-            real32 const localIncrementy = aux * faceNormals[f][1];
-            real32 const localIncrementz = aux * faceNormals[f][2];
+            real32 const localIncrementx = aux * (sgn * faceNormals[f][0]);
+            real32 const localIncrementy = aux * (sgn * faceNormals[f][1]);
+            real32 const localIncrementz = aux * (sgn * faceNormals[f][2]);
 
             if( dump && q == 0 )
               printf(
