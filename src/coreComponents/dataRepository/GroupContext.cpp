@@ -45,9 +45,9 @@ string GroupContext::toString() const
                                     []( ToStringInfo const & i ) { return i.hasInputFileInfo(); } );
   for( auto info = parentsInfo.rbegin(); info != parentsInfo.rend(); ++info )
   {
-    path << ( std::prev( info.base() ) != lastFileInfo ? // Is `info` not pointing to the last file info?
-              GEOS_FMT( "/{}", info->m_targetName ) :
-              GEOS_FMT( "/{}({},l.{})", info->m_targetName, info->m_filePath, info->m_line ) );
+    path << ( std::prev( info.base() ) == lastFileInfo ? // Is `info` pointing to the last file info?
+              GEOS_FMT( "/{}({},l.{})", info->m_targetName, info->m_filePath, info->m_line ) :
+              GEOS_FMT( "/{}", info->m_targetName ));
   }
   return path.str();
 }

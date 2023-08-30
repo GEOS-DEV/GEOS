@@ -47,7 +47,7 @@ public:
   /**
    * @return the reference to the Group related to this GroupContext.
    */
-  Group & getGroup() const;
+  Group const & getGroup() const;
 
 protected:
 
