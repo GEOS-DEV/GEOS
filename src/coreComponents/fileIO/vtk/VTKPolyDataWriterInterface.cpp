@@ -34,6 +34,7 @@
 #include <vtkXMLUnstructuredGridWriter.h>
 
 // System includes
+#include <numeric>
 #include <unordered_set>
 
 namespace geos
@@ -281,15 +282,27 @@ getSurface( FaceElementSubRegion const & subRegion,
 
   for( localIndex ei = 0; ei < subRegion.size(); ei++ )
   {
-    std::vector< int > const vtkOrdering = getVtkConnectivity( subRegion.getElementType( ei ) );
-    auto const & elem = nodeListPerElement[ei];
-    connectivity.clear();
-    for( size_t i = 0; i < vtkOrdering.size(); ++i )
+    auto const & elemToNodes = nodeListPerElement[ei];
+
+    ElementType const elementType = subRegion.getElementType( ei );
+    std::vector< int > vtkOrdering;
+    if( elementType == ElementType::Polygon )
     {
-      auto const & VTKIndexPos = geosx2VTKIndexing.find( elem[vtkOrdering[i]] );
+      vtkOrdering.resize( elemToNodes.size() );
+      std::iota( vtkOrdering.begin(), vtkOrdering.end(), 0 );
+    }
+    else
+    {
+      vtkOrdering = getVtkConnectivity( elementType );
+    }
+
+    connectivity.clear();
+    for( int const & ordering: vtkOrdering )
+    {
+      auto const & VTKIndexPos = geosx2VTKIndexing.find( elemToNodes[ordering] );
       if( VTKIndexPos == geosx2VTKIndexing.end() )
       {
-        connectivity.push_back( geosx2VTKIndexing[elem[vtkOrdering[i]]] = nodeIndexInVTK++ );
+        connectivity.push_back( geosx2VTKIndexing[elemToNodes[ordering]] = nodeIndexInVTK++ );
       }
       else
       {

@@ -217,15 +217,19 @@ void FaceElementSubRegion::calculateElementGeometricQuantities( NodeManager cons
 
 ElementType FaceElementSubRegion::getElementType( localIndex ei ) const
 {
-  switch( m_2dElemToCollocatedNodesBuckets[ei].size() )
+  // We try to get the element type information from the bucket.
+  // If this information does not appear to be reliable,
+  // let's fall back on the 2d elem to nodes.
+  auto const sizeFromBuckets = m_2dElemToCollocatedNodesBuckets[ei].size();
+  auto const size = sizeFromBuckets > 0 ? sizeFromBuckets : m_toNodesRelation.size() / 2;
+  switch( size )
   {
     case 3:
       return ElementType::Triangle;
     case 4:
       return ElementType::Quadrilateral;
     default:
-      GEOS_ERROR( "Unsupported surfacic element type." );
-      return {};
+      return ElementType::Polygon;
   }
 }
 
