@@ -22,8 +22,8 @@
         newtonMaxIter="2"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
+        solverType="gmres"
+        preconditionerType="mgr"
         logLevel="0"/>
     </SolidMechanicsEmbeddedFractures>
 
@@ -46,29 +46,31 @@
   <!-- SPHINX_SNEDDON_SOLVER_END -->
 
   <!-- SPHINX_SNEDDON_MESH -->
-  <Mesh>
-      <InternalMesh
-        name="mesh1"
-        elementTypes="{ C3D8 }"
-        xCoords="{ 0, 16, 19, 21, 24, 40 }"
-        yCoords="{ 0, 16, 24, 40 }"
-        zCoords="{ 0, 1 }"
-        nx="{ 1, 1, 5, 1, 1 }"
-        ny="{ 1, 5, 1 }"
-        nz="{ 1 }"
-        cellBlockNames="{ cb1 }"/>
+  <Mesh>  
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -20, -4, 4, 20 }"
+      yCoords="{ -20, -4, 4, 20 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 10, 101, 10 }"
+      ny="{ 10, 901, 10 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/> 
   </Mesh>
+  <!-- SPHINX_SNEDDON_MESH_END --> 
 
+  <!-- SPHINX_SNEDDON_GEOMETRY -->
   <Geometry>
     <Rectangle
       name="FracturePlane"
-      normal="{ 0, 1, 0 }"
-      origin="{ 20, 20, 0.5 }"
-      lengthVector="{ 1, 0, 0 }"
-      widthVector="{ 0, 0, 1 }"
-      dimensions="{ 2, 2 }"/>
+      normal="{1.0, 0.0, 0.0}"
+      origin="{0.0, 0.0, 0.0}"
+      lengthVector="{0.0, 1.0, 0.0}"
+      widthVector="{0.0, 0.0, 1.0}"
+      dimensions="{ 2, 10 }"/>
   </Geometry>
-  <!-- SPHINX_SNEDDON_MESH_END -->  
+  <!-- SPHINX_SNEDDON_GEOMETRY_END -->   
   
   <!-- SPHINX_SNEDDON_EVENTS -->
   <Events
@@ -84,7 +86,7 @@
       forceDt="1.0"
       target="/Solvers/mechSolve"/>
 
-     <PeriodicEvent
+    <PeriodicEvent
       name="outputs"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
@@ -99,12 +101,7 @@
       name="timeHistoryOutput"
       timeFrequency="1.0"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput"/>
-      
-    <PeriodicEvent
-      name="restarts"
-      timeFrequency="1.0"
-      target="/Outputs/restartOutput"/>    
+      target="/Outputs/timeHistoryOutput"/>    
   </Events>
   <!-- SPHINX_SNEDDON_EVENTS_END -->
  
