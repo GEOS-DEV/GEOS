@@ -83,9 +83,9 @@ struct WaveSolverUtils
           {
             string const fn = joinPath( outputDir, GEOS_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
             std::ofstream f( fn, std::ios::app );
-            if (!f)
+            if( !f )
             {
-              GEOS_WARNING( GEOS_FMT( "Failed to open output file {}", fn) );
+              GEOS_WARNING( GEOS_FMT( "Failed to open output file {}", fn ) );
               return;
             }
             for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
@@ -136,7 +136,7 @@ struct WaveSolverUtils
       } );
     }
 
-    writeSeismoTrace(iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers);
+    writeSeismoTrace( iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
   }
 
   static void compute2dVariableSeismoTrace( real64 const time_n,
@@ -181,7 +181,7 @@ struct WaveSolverUtils
       } );
     }
 
-    writeSeismoTrace(iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers);
+    writeSeismoTrace( iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
   }
 
   /**
@@ -277,8 +277,6 @@ struct WaveSolverUtils
       }
     }
   }
-
-
 
 };
 
