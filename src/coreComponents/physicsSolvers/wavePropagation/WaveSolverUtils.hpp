@@ -20,6 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
 
+#include "fileIO/Outputs/OutputBase.hpp"
 #include "WaveSolverBase.hpp"
 
 namespace geos
