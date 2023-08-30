@@ -72,9 +72,9 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDamageElasticIsotropic, string c
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDamageSpectralElasticIsotropic, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDamageVolDevElasticIsotropic, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousModifiedCamClay, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousViscoModifiedCamClay, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousViscoDruckerPrager, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, DruckerPragerExtended, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousViscoDruckerPragerExtended, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousViscoModifiedCamClay, string const &, Group * const )
 
 
 }
