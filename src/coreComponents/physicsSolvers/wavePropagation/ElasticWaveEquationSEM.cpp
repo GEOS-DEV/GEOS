@@ -882,7 +882,10 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
 
     /// Compute DAS data if requested
     /// Pairs or sets of receivers are assumed to be modeled ( see WaveSolverBase::initializeDAS() )
-    computeDAS( uXReceivers, uYReceivers, uZReceivers );
+    if( m_useDAS > 0 )
+    {
+      computeDAS( uXReceivers, uYReceivers, uZReceivers );
+    }
   } );
 
   // increment m_indexSeismoTrace
