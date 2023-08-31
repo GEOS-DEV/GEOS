@@ -105,6 +105,7 @@ private:
   real64 m_nodeCoords[numVertex][3];
 };
 
+
 // class HexadronIJKCell
 // {
 // public:
@@ -132,6 +133,8 @@ private:
 // private:
   // real64[3] m_h;
 // };
+
+// ***************************************************
 
 
 template< typename ARRAY_VIEW_TYPE  >
@@ -242,6 +245,27 @@ isoparametricMesh< ARRAY_VIEW_TYPE > selectIsoparametricMesh( ElementType elemTy
     return isoparametricHexahedronMesh< ARRAY_VIEW_TYPE >( nodePositions, elementToNodes );
   }
 }
+
+// ***************************************************
+
+template< typename ARRAY_VIEW_TYPE , int NUM_VERTEX >
+struct NumVertexToSubregionMesh
+{
+  using type = isoparametricHexahedronMesh< ARRAY_VIEW_TYPE >;
+};
+
+// template< typename ARRAY_VIEW_TYPE >
+// struct NumVertexToSubregionMesh< ARRAY_VIEW_TYPE, 6 >
+// {
+//   using type = isoparametricWedgeMesh< ARRAY_VIEW_TYPE >;
+// };
+
+template< typename ARRAY_VIEW_TYPE >
+struct NumVertexToSubregionMesh< ARRAY_VIEW_TYPE, 8 >
+{
+  using type = isoparametricHexahedronMesh< ARRAY_VIEW_TYPE >;
+};
+
 
 } // namespace geos
 

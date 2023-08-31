@@ -204,6 +204,7 @@ public:
       c.getLocalCoordinates( stack.xLocal );
 #endif
 
+    
     // typename subregionMeshType::CellType::JacobianType const J = c.getJacobian( real64 refPointCoords[3] );
 
     // real64[3] pts = quadRule::getCoords< RULE >( q ); // ???
@@ -270,7 +271,8 @@ protected:
   arrayView1d< real64 const > const m_primaryField;
 
   // using subregionMeshType = isoparametricMesh< traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > >;
-  using subregionMeshType = isoparametricHexahedronMesh< traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > >;
+  using subregionMeshType = typename NumVertexToSubregionMesh< traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type >,
+                                                               FE_TYPE::numNodes  >::type;
   subregionMeshType m_subregionMesh;
 
 };
