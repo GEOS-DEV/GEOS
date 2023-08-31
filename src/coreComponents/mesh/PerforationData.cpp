@@ -126,6 +126,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     if( m_wellTransmissibility[iperf] >= 0 )
     {
       WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
+      GEOS_UNUSED_VAR( wellRegion ); // unused if geos_error_if is nulld
       GEOS_LOG_RANK_IF( isZero( m_wellTransmissibility[iperf] ),
                         "\n \nWarning! A perforation is defined with a zero transmissibility in " << wellRegion.getWellGeneratorName() << "! \n" <<
                         "The simulation is going to proceed with this zero transmissibility,\n" <<
@@ -161,8 +162,8 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
 
     // get the index of the well element, and of the neighboring well nodes
     localIndex const wellElemIndex = m_wellElementIndex[iperf];
-    localIndex const topNode = elemToNodeMap[wellElemIndex][InternalWellGenerator::NodeLocation::TOP];
-    localIndex const bottomNode = elemToNodeMap[wellElemIndex][InternalWellGenerator::NodeLocation::BOTTOM];
+    localIndex const topNode = elemToNodeMap[wellElemIndex][LineBlockABC::NodeLocation::TOP];
+    localIndex const bottomNode = elemToNodeMap[wellElemIndex][LineBlockABC::NodeLocation::BOTTOM];
     // using the direction of the segment, compute the perforation "direction"
     // that will be used to construct the Peaceman index
     real64 topToBottomVec[3] = { X[bottomNode][0],
@@ -243,11 +244,11 @@ void PerforationData::getReservoirElementDimensions( MeshLevel const & mesh,
   dz /= dx * dy;
 }
 
-void PerforationData::connectToWellElements( InternalWellGenerator const & wellGeometry,
+void PerforationData::connectToWellElements( LineBlockABC const & lineBlock,
                                              unordered_map< globalIndex, localIndex > const & globalToLocalWellElemMap,
                                              globalIndex elemOffsetGlobal )
 {
-  arrayView1d< globalIndex const > const & perfElemIndexGlobal = wellGeometry.getPerfElemIndex();
+  arrayView1d< globalIndex const > const & perfElemIndexGlobal = lineBlock.getPerfElemIndex();
 
   for( localIndex iperfLocal = 0; iperfLocal < size(); ++iperfLocal )
   {
