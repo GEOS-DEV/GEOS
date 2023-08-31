@@ -18,7 +18,7 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
-#include "DataContext.hpp"
+#include "GroupContext.hpp"
 #if defined(GEOSX_USE_PYGEOSX)
 #include "python/PyGroupType.hpp"
 #endif
@@ -195,7 +195,7 @@ void Group::processInputFile( xmlWrapper::xmlDocument const & xmlDocument,
 
   if( nodePos.isFound() )
   {
-    m_dataContext = std::make_unique< DataFileContext >( *this, nodePos, targetNode.name() );
+    m_dataContext = std::make_unique< DataFileContext >( targetNode, nodePos );
   }
 
 

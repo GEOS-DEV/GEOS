@@ -18,7 +18,7 @@
 
 #include "Group.hpp"
 #include "RestartFlags.hpp"
-#include "DataContext.hpp"
+#include "WrapperContext.hpp"
 
 
 namespace geos
@@ -106,12 +106,14 @@ int WrapperBase::setTotalviewDisplay() const
 }
 #endif
 
-void WrapperBase::createDataContext( xmlWrapper::xmlNodePos const & nodePos )
+void WrapperBase::createDataContext( xmlWrapper::xmlNode const & targetNode,
+                                     xmlWrapper::xmlNodePos const & nodePos )
 {
+  xmlWrapper::xmlAttribute att = targetNode.attribute( m_name.c_str() );
   xmlWrapper::xmlAttributePos attPos = nodePos.getAttributeLine( m_name );
-  if( nodePos.isFound() && attPos.isFound() )
+  if( nodePos.isFound() && attPos.isFound() && !att.empty() )
   {
-    m_dataContext = std::make_unique< DataFileContext >( *this, attPos );
+    m_dataContext = std::make_unique< DataFileContext >( targetNode, att, attPos );
   }
 }
 
@@ -128,9 +130,10 @@ void WrapperBase::processInputException( std::exception const & ex,
   oss << "***** XML parsing error at node ";
   if( nodePos.isFound() )
   {
+    string const & filePath = attPos.isFound() ? attPos.filePath : nodePos.filePath;
+    int const line = attPos.isFound() ? attPos.line : nodePos.line;
     oss << "named " << m_parent->getName() << ", attribute " << getName()
-        << " (" << splitPath( attPos.isFound() ? attPos.filePath : nodePos.filePath ).second
-        << ", l." << ( attPos.isFound() ? attPos.line : nodePos.line ) << ").";
+        << " (" << splitPath( filePath ).second << ", l." << line << ").";
   }
   else
   {

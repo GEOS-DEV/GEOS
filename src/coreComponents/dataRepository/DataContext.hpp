@@ -23,29 +23,30 @@
 #include "common/Logger.hpp"
 #include "xmlWrapper.hpp"
 #include "common/Format.hpp"
-#include "Group.hpp"
-#include "WrapperBase.hpp"
 
 namespace geos
 {
-
 namespace dataRepository
 {
 
-/// DataContext is an abstract class storing contextual information on an object:
-/// - Either its line position in a file (if applicable, implementation in DataFileContext),
-/// - or its location in the data hierarchy (implementation in GroupContext and WrapperContext).
-/// Typically, the target object contains an unique_ptr< DataContext > instance of this class.
+
+/**
+ * @class DataContext
+ *
+ * DataContext is an abstract class storing contextual information on an object:
+ * - Either its line position in a file (if applicable, implementation in DataFileContext),
+ * - or its location in the data hierarchy (implementation in GroupContext and WrapperContext).
+ * Typically, the target object contains an unique_ptr< DataContext > instance of this class.
+ */
 class DataContext
 {
 public:
 
   /**
    * @brief Construct a new DataContext object.
-   * @param objectName the target object name
-   * @param isDataFileContext true if this Context is a DataFileContext
+   * @param targetName the target object name
    */
-  DataContext( string const & objectName, bool isDataFileContext );
+  DataContext( string const & targetName );
 
   /**
    * @brief Destroy the DataContext object
@@ -59,126 +60,100 @@ public:
   virtual string toString() const = 0;
 
   /**
-   * @return Get the target object name
+   * @todo implementation :
+   * DataFileContext : simple toString() ?
+   * GroupContext&WrapperContext : path truncated at the first found parent that has file-info
+   * 
+   * @return A shorter version of toString() that can help to redact more concise messages.
    */
-  string getObjectName() const
-  { return m_objectName; }
+  virtual string toShortString() const;
 
   /**
-   * @brief Flag on availability of file information. Used to provide more user-friendly information.
-   * @return true if the context is from a file.
+   * @return Get the target object name
    */
-  bool isDataFileContext() const
-  { return m_isDataFileContext; }
-
+  string getTargetName() const
+  { return m_targetName; }
   /**
    * @brief Insert contextual information in the provided stream.
    */
-  friend std::ostream & operator<<( std::ostream & os, const DataContext & dt );
+  friend std::ostream & operator<<( std::ostream & os, const DataContext & ctx );
 
 protected:
+  // GroupContext & WrapperContext are friend class to be able to access to the protected method on other instances.
+  friend class GroupContext;
+  friend class WrapperContext;
 
-  /// see getObjectName()
-  string const m_objectName;
+  /// @see getObjectName()
+  string const m_targetName;
 
-  /// see isDataFileContext()
-  bool const m_isDataFileContext;
+  /// This struct exposes the raw data of a DataContext instance that toString() need in order to format it.
+  /// This struct lifetime depends on that of the source DataContext. The DataContext is considered constant.
+  struct ToStringInfo
+  {
+    /// the targetName of the DataContext
+    string m_targetName;
+    /// the file path of the DataFileContext, if it exists (an empty string otherwise)
+    string m_filePath;
+    /// the file line of the DataFileContext, if it exists (an empty string otherwise)
+    size_t m_line = xmlWrapper::xmlDocument::npos;
+
+    /**
+     * @brief Construct a new ToStringInfo object from a DataContext that has input file info.
+     * @param targetName the target name
+     * @param filePath the input file path where the target is declared.
+     * @param line the line in the file where the target is declared.
+     */
+    ToStringInfo( string const & targetName, string const & filePath, size_t line );
+    /**
+     * @brief Construct a new ToStringInfo object from a DataContext that has no input file info.
+     * @param targetName the target name.
+     */
+    ToStringInfo( string const & targetName );
+    /**
+     * @return true if a location has been found to declare the target in an input file.
+     */
+    bool hasInputFileInfo() const
+    { return !m_filePath.empty() && m_line != xmlWrapper::xmlDocument::npos; }
+  };
+
+  /**
+   * @brief This method exposes the raw data of a DataContext, in order to access and format it
+   * (notably in toString() implementations that need to access other DataContext instances).
+   * @return a ToStringInfo struct that contains the raw data contained in this DataContext instance.
+   */
+  virtual ToStringInfo getToStringInfo() const = 0;
 
 };
 
-/// Helps to know where a Group is in the hierarchy.
-/// See DataContext class for more info.
-class GroupContext : public DataContext
-{
-public:
-
-  /**
-   * @brief Construct a new GroupContext object
-   * @param group The reference to the Group related to this GroupContext.
-   */
-  GroupContext( Group & group );
-
-  /**
-   * @brief Destroy the GroupContext object
-   */
-  virtual ~GroupContext() {}
-
-  /**
-   * @return the reference to the Group related to this GroupContext.
-   */
-  Group & getGroup() const;
-
-  /**
-   * @return the group path with the file & line of the first parent for which this information exists.
-   */
-  virtual string toString() const;
-
-protected:
-
-  /**
-   * @brief Construct a new GroupContext object
-   * @param group The reference to the Group related to this GroupContext.
-   * @param objectName Target object name.
-   */
-  GroupContext( Group & group, string const & objectName );
-
-  /// The reference to the Group related to this GroupContext.
-  Group & m_group;
-
-};
-
-/// Dedicated implementation of GroupContext for Wrapper.
-/// See DataContext class for more info.
-class WrapperContext final : public GroupContext
-{
-public:
-
-  /**
-   * @brief Construct a new WrapperContext object
-   * @param wrapper the target Wrapper object
-   */
-  WrapperContext( WrapperBase & wrapper );
-
-  /**
-   * @brief Destroy the WrapperContext object
-   */
-  virtual ~WrapperContext() {}
-
-  /**
-   * @return the parent group DataContext followed by the wrapper name.
-   */
-  virtual string toString() const;
-
-};
-
-/// Stores information to retrieve where a Group or Wrapper has been declared in the input source file (e.g. XML)
+/**
+ * @class DataFileContext
+ *
+ * Stores information to retrieve where a target object has been declared in the input source
+ * file (e.g. XML).
+ */
 class DataFileContext final : public DataContext
 {
 public:
 
   /**
    * @brief Construct the file context of a Group from an xml node.
-   * @param group the target Group object
+   * @param targetNode the target object xml node
    * @param nodePos the target object xml node position
-   * @param nodeTagName the xml node tag name.
    */
-  DataFileContext( Group & group, xmlWrapper::xmlNodePos const & nodePos, string const & nodeTagName );
+  DataFileContext( xmlWrapper::xmlNode const & targetNode, xmlWrapper::xmlNodePos const & nodePos );
   /**
-   * @brief Construct the file context of a Group from an xml attribute.
-   * @param wrapper the target Wrapper object
+   * @brief Construct the file context of a Group from an xml node.
+   * @param targetNode the xml node containing the xml attribute
+   * @param att the target object xml attribute
    * @param attPos the target object xml attribute position
    */
-  DataFileContext( WrapperBase & wrapper, xmlWrapper::xmlAttributePos const & attPos );
-
-  /**
-   * @brief Destroy the DataFileContext object
-   */
-  virtual ~DataFileContext() {}
+  DataFileContext( xmlWrapper::xmlNode const & targetNode, xmlWrapper::xmlAttribute const & att,
+                   xmlWrapper::xmlAttributePos const & attPos );
 
   /**
    * @return the target object name followed by the the file and line declaring it.
    */
-  virtual string toString() const;
+  string toString() const override;
 
   /**
    * @return the type name in the source file (XML node tag name / attribute name).
@@ -212,31 +187,38 @@ public:
   size_t getOffset() const
   { return m_offset; }
 
-protected:
+private:
 
-  /// see getTypeName()
+  /// @see getTypeName()
   string const m_typeName;
-  /// see getFilePath()
+  /// @see getFilePath()
   string const m_filePath;
-  /// see getLine()
+  /// @see getLine()
   size_t const m_line;
-  /// see getLineOffset()
+  /// @see getLineOffset()
   size_t const m_offsetInLine;
-  /// see getOffset()
+  /// @see getOffset()
   size_t const m_offset;
+
+  /**
+   * @copydoc DataContext::getToStringInfo()
+   */
+  ToStringInfo getToStringInfo() const override;
 
 };
 
 
 } /* namespace dataRepository */
-
 } /* namespace geos */
 
 
 
-/// Formatter to be able to directly use a DataContext as a GEOS_FMT() argument.
+/**
+ * @brief Formatter to be able to directly use a DataContext as a GEOS_FMT() argument.
+ * Inherits from formatter<std::string> to reuse its parse() method.
+ */
 template<>
-struct GEOS_FMT_NS::formatter< geos::dataRepository::DataContext >
+struct GEOS_FMT_NS::formatter< geos::dataRepository::DataContext > : GEOS_FMT_NS::formatter< std::string >
 {
   /**
    * @brief Format the specified DataContext to a string.
@@ -246,16 +228,8 @@ struct GEOS_FMT_NS::formatter< geos::dataRepository::DataContext >
    */
   auto format( geos::dataRepository::DataContext const & dataContext, format_context & ctx )
   {
-    return format_to( ctx.out(), dataContext.toString() );
+    return GEOS_FMT_NS::formatter< std::string >::format( dataContext.toString(), ctx );
   }
-
-  /**
-   * @brief Method to parse a dataContext from a string. Not implemented!
-   * @param ctx formatting state consisting of the formatting arguments and the output iterator
-   * @return iterator to the output buffer (leaved unchanged)
-   */
-  constexpr auto parse( format_parse_context & ctx )
-  { return ctx.begin(); }
 };
 
 #endif /* GEOS_DATAREPOSITORY_DATACONTEXT_HPP_ */
