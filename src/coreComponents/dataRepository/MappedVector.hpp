@@ -328,8 +328,8 @@ public:
     m_constValues.resize( index );
     for( typename valueContainer::size_type i = index; i < m_values.size(); ++i )
     {
-      m_constKeyValues.emplace_back( m_values[i].first, rawPtr( index ) );
-      m_constValues.emplace_back( m_values[i].first, rawPtr( index ) );
+      m_constKeyValues.emplace_back( m_values[i].first, rawPtr( i ) );
+      m_constValues.emplace_back( m_values[i].first, rawPtr( i ) );
     }
 
     // adjust lookup map indices
