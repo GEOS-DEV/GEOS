@@ -529,7 +529,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
   SinglePhasePoromechanics::updateState( domain );
 
   // remove the contribution of the hydraulic aperture from the stencil weights
-  flowSolver()->prepareWeights( domain );
+  flowSolver()->prepareStencilWeights( domain );
 
   /// 2. update the fractures
   m_fracturesSolver->updateState( domain );
@@ -597,7 +597,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
       } );
 
       // update the stencil weights using the updated hydraulic aperture
-      flowSolver()->updateWeights( domain );
+      flowSolver()->updateStencilWeights( domain );
 
       // update fracture's permeability and porosity
       flowSolver()->updatePorosityAndPermeability( subRegion );

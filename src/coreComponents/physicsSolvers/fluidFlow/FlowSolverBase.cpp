@@ -712,7 +712,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
   } );
 }
 
-void FlowSolverBase::prepareWeights( DomainPartition & domain )
+void FlowSolverBase::prepareStencilWeights( DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -738,7 +738,7 @@ void FlowSolverBase::prepareWeights( DomainPartition & domain )
   } );
 }
 
-void FlowSolverBase::updateWeights( DomainPartition & domain )
+void FlowSolverBase::updateStencilWeights( DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,

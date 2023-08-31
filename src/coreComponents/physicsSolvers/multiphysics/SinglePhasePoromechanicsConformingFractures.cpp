@@ -731,12 +731,12 @@ void SinglePhasePoromechanicsConformingFractures::updateState( DomainPartition &
   Base::updateState( domain );
 
   // remove the contribution of the hydraulic aperture from the stencil weights
-  poromechanicsSolver()->flowSolver()->prepareWeights( domain );
+  poromechanicsSolver()->flowSolver()->prepareStencilWeights( domain );
 
   updateHydraulicApertureAndFracturePermeability( domain );
 
   // update the stencil weights using the updated hydraulic aperture
-  poromechanicsSolver()->flowSolver()->updateWeights( domain );
+  poromechanicsSolver()->flowSolver()->updateStencilWeights( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
