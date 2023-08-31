@@ -1096,7 +1096,10 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
     // retrieve finite element type
 
     GEOS_MARK_BEGIN("geos::CellBlockManager::generateHighOrderMaps -- Elements");
+    //for( localIndex iter_elem = 0; iter_elem < numCellElements; ++iter_elem )
     for( localIndex iter_elem = 0; iter_elem < numCellElements; ++iter_elem )
+    forAll< parallelHostPolicy >( numCellElements, 
+                                  [ =, &elemMeshVertices, &Xmesh, &X, &localNodeID ]( localIndex const iter_elem )
     {
       localIndex newCellNodes = 0;
       for( localIndex iter_vertex = 0; iter_vertex < numVerticesPerCell; iter_vertex++ )
@@ -1134,7 +1137,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
         }
         else
         {
-          nodeID = nodeIDs[ nodeKey ];
+          nodeID = nodeIDs.at( nodeKey );
         }
         for( int i=0; i<3; i++ )
         {
@@ -1142,7 +1145,8 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
         }
         elemsToNodesNew[ iter_elem ][ q ] = nodeID;
       }
-    }
+    //}
+    } );
     GEOS_MARK_END("geos::CellBlockManager::generateHighOrderMaps -- Elements");
   } );
 }
