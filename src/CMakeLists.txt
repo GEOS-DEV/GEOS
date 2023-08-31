@@ -1,8 +1,8 @@
 
-cmake_minimum_required( VERSION 3.9 )
+cmake_minimum_required( VERSION 3.23 )
 
 # At the moment we are manually passing the cuda arch flag.
-if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.18.0")
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.23.0")
   cmake_policy(SET CMP0104 OLD) # when using nvcc populate CMAKE_CUDA_ARCHITECTURES, raise error if we can't
 endif()
 cmake_policy(SET CMP0074 NEW) # dont ignore <PackageName>_ROOT env vars when searching for packages via find_package()
@@ -14,7 +14,7 @@ cmake_policy(SET CMP0056 NEW) # use CMAKE_EXE_LINKER_FLAGS in try_compile() in a
 ################################
 project( geosx LANGUAGES C CXX )
 include(GNUInstallDirs)
-set( BLT_CXX_STD "c++14" CACHE STRING "Version of C++ standard" )
+set( BLT_CXX_STD "c++17" CACHE STRING "Version of C++ standard" )
 if(CMAKE_BUILD_TYPE EQUAL "Debug")
   set( ENABLE_WARNINGS_AS_ERRORS "OFF" CACHE PATH "")
 else()
@@ -161,6 +161,11 @@ set_target_properties( geosx PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/l
 set_target_properties( geosx PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
 
 install(TARGETS geosx RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+# Duplicate the installed `geosx` executable and rename it `geos` to let the end users adapt their scripts.
+install( FILES ${CMAKE_INSTALL_PREFIX}/bin/geosx
+         DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+         RENAME geos
+         PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE )
 
 if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
 

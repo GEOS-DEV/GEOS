@@ -47,6 +47,7 @@
       targetRegions="{ Domain, Fracture }"
       discretization="FE1"    
       fractureRegion="Fracture"
+      targetObjects="{ FracturePlane }"
       logLevel="1"
       mpiCommOrder="1"/>
   </Solvers>
@@ -105,7 +106,7 @@
 
     <BiotPorosity
       name="rockPorosity"
-      grainBulkModulus="2.2222e10"
+      grainBulkModulus="1e27"
       defaultReferencePorosity="0.2"/>
 
     <CompressibleSolidParallelPlatesPermeability

@@ -178,10 +178,10 @@ void FunctionBase::evaluateT( dataRepository::Group const & group,
       dataRepository::WrapperBase const & wrapper = group.getWrapperBase( varName );
       varSize[varIndex] = wrapper.numArrayComp();
 
-      using Types = types::ArrayTypes< types::TypeList< real64 >, types::DimsUpTo< 2 > >;
-      types::dispatch( Types{}, wrapper.getTypeId(), true, [&]( auto array )
+      using Types = types::ListofTypeList< types::ArrayTypes< types::TypeList< real64 >, types::DimsUpTo< 2 > > >;
+      types::dispatch( Types{}, [&]( auto tupleOfTypes )
       {
-        using ArrayType = decltype( array );
+        using ArrayType = camp::first< decltype( tupleOfTypes ) >;
         auto const view = dataRepository::Wrapper< ArrayType >::cast( wrapper ).reference().toViewConst();
         view.move( hostMemorySpace, false );
         for( int dim = 0; dim < ArrayType::NDIM; ++dim )
@@ -189,7 +189,7 @@ void FunctionBase::evaluateT( dataRepository::Group const & group,
           varStride[varIndex][dim] = view.strides()[dim];
         }
         inputPtrs[varIndex] = view.data();
-      } );
+      }, wrapper );
     }
     totalVarSize += varSize[varIndex];
   }

@@ -23,7 +23,7 @@
 
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-#include "common/lifoStorage.hpp"
+#include "common/LifoStorage.hpp"
 #if !defined( GEOS_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #endif
@@ -49,7 +49,8 @@ class WaveSolverBase : public SolverBase
 {
 public:
 
-  using EXEC_POLICY = parallelDevicePolicy< 32 >;
+  using EXEC_POLICY = parallelDevicePolicy< >;
+  using wsCoordType = real32;
 
   WaveSolverBase( const std::string & name,
                   Group * const parent );
@@ -100,6 +101,7 @@ public:
     static constexpr char const * forwardString() { return "forward"; }
     static constexpr char const * saveFieldsString() { return "saveFields"; }
     static constexpr char const * shotIndexString() { return "shotIndex"; }
+    static constexpr char const * enableLifoString() { return "enableLifo"; }
     static constexpr char const * lifoSizeString() { return "lifoSize"; }
     static constexpr char const * lifoOnDeviceString() { return "lifoOnDevice"; }
     static constexpr char const * lifoOnHostString() { return "lifoOnHost"; }
@@ -188,6 +190,10 @@ protected:
                                        DomainPartition & domain,
                                        bool const computeGradient ) = 0;
 
+
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
+
+
   localIndex getNumNodesPerElem();
 
   /// Coordinates of the sources in the mesh
@@ -253,17 +259,20 @@ protected:
   /// Flag that indicates whether the receiver is local or not to the MPI rank
   array1d< localIndex > m_receiverIsLocal;
 
-  /// lifo size
+  /// Flag to enable LIFO
+  localIndex m_enableLifo;
+
+  /// lifo size (should be the total number of buffer to save in LIFO)
   localIndex m_lifoSize;
 
-  /// Number of buffers to store on device by LIFO
+  /// Number of buffers to store on device by LIFO  (if negative, opposite of percentage of remaining memory)
   localIndex m_lifoOnDevice;
 
-  /// Number of buffers to store on host by LIFO
+  /// Number of buffers to store on host by LIFO  (if negative, opposite of percentage of remaining memory)
   localIndex m_lifoOnHost;
 
   /// LIFO to store p_dt2
-  std::unique_ptr< lifoStorage< real32 > > m_lifo;
+  std::unique_ptr< LifoStorage< real32, localIndex > > m_lifo;
 
   struct parametersPML
   {
@@ -287,6 +296,17 @@ protected:
 
 };
 
+namespace fields
+{
+using reference32Type = array2d< WaveSolverBase::wsCoordType, nodes::REFERENCE_POSITION_PERM >;
+DECLARE_FIELD( referencePosition32,
+               "referencePosition32",
+               reference32Type,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Copy of the referencePosition from NodeManager in 32 bits integer" );
+}
 } /* namespace geos */
 
 #endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERBASE_HPP_ */
