@@ -119,7 +119,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-
+      // Convective flux
       if( m_isThermal )
       {
         thermalCompositionalMultiphaseFVMKernels::
@@ -152,6 +152,42 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      dt,
                                                      localMatrix.toViewConstSizes(),
                                                      localRhs.toView() );
+      }
+
+      // Diffusive and dispersive flux
+      if( m_hasDiffusion || m_hasDispersion )
+      {
+
+        if( m_isThermal )
+        {
+          thermalCompositionalMultiphaseFVMKernels::
+            DiffusionDispersionFaceBasedAssemblyKernelFactory::
+            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                       m_numPhases,
+                                                       dofManager.rankOffset(),
+                                                       elemDofKey,
+                                                       getName(),
+                                                       mesh.getElemManager(),
+                                                       stencilWrapper,
+                                                       dt,
+                                                       localMatrix.toViewConstSizes(),
+                                                       localRhs.toView() );
+        }
+        else
+        {
+          isothermalCompositionalMultiphaseFVMKernels::
+            DiffusionDispersionFaceBasedAssemblyKernelFactory::
+            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                       m_numPhases,
+                                                       dofManager.rankOffset(),
+                                                       elemDofKey,
+                                                       getName(),
+                                                       mesh.getElemManager(),
+                                                       stencilWrapper,
+                                                       dt,
+                                                       localMatrix.toViewConstSizes(),
+                                                       localRhs.toView() );
+        }
       }
 
     } );

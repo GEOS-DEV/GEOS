@@ -407,6 +407,12 @@ protected:
   /// flag to determine whether or not to apply capillary pressure
   integer m_hasCapPressure;
 
+  /// flag to determine whether or not to apply diffusion
+  integer m_hasDiffusion;
+
+  /// flag to determine whether or not to apply dispersion
+  integer m_hasDispersion;
+
   /// flag to freeze the initial state during initialization in coupled problems
   integer m_keepFlowVariablesConstantDuringInitStep;
 

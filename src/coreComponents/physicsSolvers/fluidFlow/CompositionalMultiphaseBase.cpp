@@ -24,6 +24,7 @@
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
+#include "constitutive/diffusion/DiffusionBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
@@ -59,6 +60,8 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_hasCapPressure( 0 ),
+  m_hasDiffusion( 0 ),
+  m_hasDispersion( 0 ),
   m_keepFlowVariablesConstantDuringInitStep( 0 ),
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 )
@@ -178,6 +181,14 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       {
         m_hasCapPressure = true;
       }
+
+      // If at least one region has a diffusion model, consider it enabled for all
+      string const diffusionName = getConstitutiveName< DiffusionBase >( subRegion );
+      if( !diffusionName.empty() )
+      {
+        m_hasDiffusion = true;
+      }
+
     } );
   } );
 
