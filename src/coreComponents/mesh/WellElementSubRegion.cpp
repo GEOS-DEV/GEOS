@@ -368,7 +368,7 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
   // if they belong to the same well element. This is a temporary solution.
   // TODO: split the well elements that contain multiple perforations, so that no element is shared
   GEOS_THROW_IF( sharedElems.size() > 0,
-                 "InternalWell " << lineBlock.getDataContext() << " contains shared well elements",
+                 "Well " << lineBlock.getDataContext() << " contains shared well elements",
                  InputError );
 
   // In Steps 1 and 2 we determine the local objects on this rank (elems and nodes)

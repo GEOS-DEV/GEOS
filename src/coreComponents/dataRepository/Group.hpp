@@ -26,7 +26,6 @@
 #include "RestartFlags.hpp"
 #include "Wrapper.hpp"
 #include "xmlWrapper.hpp"
-#include "DataContext.hpp"
 
 
 #include <iostream>
@@ -761,7 +760,8 @@ public:
 
   /**
    * @brief Recursively read values using ProcessInputFile() from the input
-   *        file and put them into the wrapped values for this group.
+   * file and put them into the wrapped values for this group.
+   * Also add the includes content to the xmlDocument when `Include` nodes are encountered.
    * @param[in] xmlDocument the XML document that contains the targetNode
    * @param[in] targetNode the XML node that to extract input values from.
    */

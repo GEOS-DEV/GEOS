@@ -385,7 +385,7 @@ void ProblemManager::parseInputFile()
 
   // Load preprocessed xml file
   xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult const xmlResult = xmlDocument.load_file( inputFileName.c_str(), true );
+  xmlWrapper::xmlResult const xmlResult = xmlDocument.loadFile( inputFileName, true );
   GEOS_THROW_IF( !xmlResult, GEOS_FMT( "Errors found while parsing XML file {}\nDescription: {}\nOffset: {}",
                                        inputFileName, xmlResult.description(), xmlResult.offset ), InputError );
 
@@ -398,7 +398,7 @@ void ProblemManager::parseInputString( string const & xmlString )
 {
   // Load preprocessed xml file
   xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( xmlString.c_str(), xmlString.length(), true );
+  xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( xmlString, true );
   GEOS_THROW_IF( !xmlResult, GEOS_FMT( "Errors found while parsing XML string\nDescription: {}\nOffset: {}",
                                        xmlResult.description(), xmlResult.offset ), InputError );
 
@@ -410,7 +410,7 @@ void ProblemManager::parseInputString( string const & xmlString )
 void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
 {
   // Extract the problem node and begin processing the user inputs
-  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( this->getName().c_str() );
+  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( this->getName().c_str() );
   processInputFileRecursive( xmlDocument, xmlProblemNode );
 
   // The objects in domain are handled separately for now
