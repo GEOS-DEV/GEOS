@@ -1072,10 +1072,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > refPosNew = this->getNodePositions();
   refPosNew.setValues< parallelHostPolicy >( -1.0 );
 
-  real64 Xmesh[ numVerticesPerCell ][ 3 ] = { { } };
-  real64 X[ 3 ] = { { } };
   array1d< real64 > glCoords = gaussLobattoPoints( order );
-  localIndex elemMeshVertices[ numVerticesPerCell ] = { };
   offset = maxVertexGlobalID + maxEdgeGlobalID * numInternalNodesPerEdge + maxFaceGlobalID * numInternalNodesPerFace;
   std::array< localIndex, 6 > const nullKey = std::array< localIndex, 6 >{ -1, -1, -1, -1, -1, -1 };
 
@@ -1097,11 +1094,16 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
 
     GEOS_MARK_BEGIN("geos::CellBlockManager::generateHighOrderMaps -- Elements");
     //for( localIndex iter_elem = 0; iter_elem < numCellElements; ++iter_elem )
-    for( localIndex iter_elem = 0; iter_elem < numCellElements; ++iter_elem )
-    forAll< parallelHostPolicy >( numCellElements, 
-                                  [ =, &elemMeshVertices, &Xmesh, &X, &localNodeID ]( localIndex const iter_elem )
+    forAll< RAJA::omp_parallel_for_exec >( numCellElements, 
+                                  [ =, &nodeLocalToGlobalNew, 
+				    &elemsToNodesNew, &refPosNew,
+				    &localNodeID ]( localIndex const iter_elem )
     {
       localIndex newCellNodes = 0;
+      real64 Xmesh[ numVerticesPerCell ][ 3 ] = { { } };
+      real64 X[ 3 ] = { { } };
+      localIndex elemMeshVertices[ numVerticesPerCell ] = { };
+
       for( localIndex iter_vertex = 0; iter_vertex < numVerticesPerCell; iter_vertex++ )
       {
         elemMeshVertices[ iter_vertex ] = elemsToNodesSource[ iter_elem ][ iter_vertex ];
