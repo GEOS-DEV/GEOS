@@ -640,6 +640,114 @@ vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mes
   return output;
 }
 
+/**
+ * @brief This function tries to make sure that no MPI rank is empty
+ *
+ * @param[in] mesh a vtk grid
+ * @param[in] comm the MPI communicator
+ * @return the vtk grid redistributed
+ */
+vtkSmartPointer< vtkDataSet >
+ensureNoEmptyRank( vtkDataSet & mesh,
+                   MPI_Comm const comm )
+{
+  GEOS_MARK_FUNCTION;
+
+  // step 1: figure out who is a donor and who is a recipient
+  localIndex const numElems = LvArray::integerConversion< localIndex >( mesh.GetNumberOfCells() );
+  integer const numProcs = MpiWrapper::commSize( comm );
+
+  array1d< localIndex > elemCounts( numProcs );
+  MpiWrapper::allGather( numElems, elemCounts, comm );
+
+  SortedArray< integer > recipientRanks;
+  array1d< integer > donorRanks;
+  recipientRanks.reserve( numProcs );
+  donorRanks.reserve( numProcs );
+
+  for( integer iRank = 0; iRank < numProcs; ++iRank )
+  {
+    if( elemCounts[iRank] == 0 )
+    {
+      recipientRanks.insert( iRank );
+    }
+    else if( elemCounts[iRank] > 1 ) // need at least two elems to be a donor
+    {
+      donorRanks.emplace_back( iRank );
+    }
+  }
+
+  // step 2: at this point, we need to determine the donors and which cells they donate
+
+  // First we sort the donor in order of the number of elems they contain
+  std::stable_sort( donorRanks.begin(), donorRanks.end(),
+                    [&elemCounts] ( auto i1, auto i2 )
+  { return elemCounts[i1] < elemCounts[i2]; } );
+
+  // Then, if my position is "i" in the donorRanks array, I will send half of my elems to the i-th recipient
+  integer const myRank = MpiWrapper::commRank();
+  auto const myPosition =
+    LvArray::sortedArrayManipulation::find( donorRanks.begin(), donorRanks.size(), myRank );
+  bool const isDonor = myPosition != donorRanks.size();
+
+  // step 3: my rank was selected to donate cells, let's proceed
+  // we need to make a distinction between two configurations
+
+  array1d< localIndex > newParts( numElems );
+  newParts.setValues< parallelHostPolicy >( myRank );
+
+  // step 3.1: donorRanks.size() >= recipientRanks.size()
+  // we use a strategy that preserves load balancing
+  if( isDonor && donorRanks.size() >= recipientRanks.size() )
+  {
+    if( myPosition < recipientRanks.size() )
+    {
+      integer const recipientRank = recipientRanks[myPosition];
+      for( localIndex iElem = numElems/2; iElem < numElems; ++iElem )
+      {
+        newParts[iElem] = recipientRank; // I donate half of my cells
+      }
+    }
+  }
+  // step 3.2: donorRanks.size() < recipientRanks.size()
+  // this is the unhappy path: we don't care anymore about load balancing at this stage
+  // we just want the simulation to run and count on ParMetis/PTScotch to restore load balancing
+  else if( isDonor && donorRanks.size() < recipientRanks.size() )
+  {
+    localIndex firstRecipientPosition = 0;
+    for( integer iRank = 0; iRank < myPosition; ++iRank )
+    {
+      firstRecipientPosition += elemCounts[iRank] - 1;
+    }
+    if( firstRecipientPosition < recipientRanks.size() )
+    {
+      bool const isLastDonor = myPosition == donorRanks.size() - 1;
+      localIndex const lastRecipientPosition = firstRecipientPosition + numElems - 1;
+      GEOS_THROW_IF( isLastDonor && ( lastRecipientPosition < recipientRanks.size() ),
+                     "The current implementation is unable to guarantee that all ranks have at least one element",
+                     std::runtime_error );
+
+      for( localIndex iElem = 1; iElem < numElems; ++iElem ) // I only keep my first element
+      {
+        // this is the brute force approach
+        // each donor donates all its elems except the first one
+        localIndex const recipientPosition = firstRecipientPosition + iElem - 1;
+        if( recipientPosition < recipientRanks.size() )
+        {
+          newParts[iElem] = recipientRanks[recipientPosition];
+        }
+      }
+    }
+  }
+
+  GEOS_LOG_RANK_0_IF( donorRanks.size() < recipientRanks.size(),
+                      "\nWarning! We strongly encourage the use of partitionRefinement > 5 for this number of MPI ranks \n" );
+
+  vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( mesh, numProcs, newParts.toViewConst() );
+  return vtk::redistribute( *splitMesh, MPI_COMM_GEOSX );
+}
+
+
 vtkSmartPointer< vtkDataSet >
 redistributeMesh( vtkSmartPointer< vtkDataSet > loadedMesh,
                   MPI_Comm const comm,
@@ -658,6 +766,14 @@ redistributeMesh( vtkSmartPointer< vtkDataSet > loadedMesh,
   {
     // Redistribute the mesh over all ranks using simple octree partitions
     mesh = redistributeByKdTree( *mesh );
+  }
+
+  // Check if a rank does not have a cell after the redistribution
+  // If this is the case, we need a fix otherwise the next redistribution will fail
+  // We expect this function to only be called in some pathological cases
+  if( MpiWrapper::min( mesh->GetNumberOfCells(), comm ) == 0 )
+  {
+    mesh = ensureNoEmptyRank( *mesh, comm );
   }
 
   // Redistribute the mesh again using higher-quality graph partitioner
@@ -1571,10 +1687,10 @@ void importMaterialField( std::vector< vtkIdType > const & cellIds,
                           WrapperBase & wrapper )
 {
   // Scalar material fields are stored as 2D arrays, vector/tensor are 3D
-  using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 2, 3 > >;
-  types::dispatch( ImportTypes{}, wrapper.getTypeId(), true, [&]( auto array )
+  using ImportTypes = types::ListofTypeList< types::ArrayTypes< types::RealTypes, types::DimsRange< 2, 3 > > >;
+  types::dispatch( ImportTypes{}, [&]( auto tupleOfTypes )
   {
-    using ArrayType = decltype( array );
+    using ArrayType = camp::first< decltype( tupleOfTypes ) >;
     Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
     auto const view = wrapperT.reference().toView();
 
@@ -1600,17 +1716,17 @@ void importMaterialField( std::vector< vtkIdType > const & cellIds,
         ++cellCount;
       }
     } );
-  } );
+  }, wrapper );
 }
 
 void importRegularField( std::vector< vtkIdType > const & cellIds,
                          vtkDataArray * vtkArray,
                          WrapperBase & wrapper )
 {
-  using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 1, 2 > >;
-  types::dispatch( ImportTypes{}, wrapper.getTypeId(), true, [&]( auto dstArray )
+  using ImportTypes = types::ListofTypeList< types::ArrayTypes< types::RealTypes, types::DimsRange< 1, 2 > > >;
+  types::dispatch( ImportTypes{}, [&]( auto tupleOfTypes )
   {
-    using ArrayType = decltype( dstArray );
+    using ArrayType = camp::first< decltype( tupleOfTypes ) >;
     Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
     auto const view = wrapperT.reference().toView();
 
@@ -1632,7 +1748,7 @@ void importRegularField( std::vector< vtkIdType > const & cellIds,
         ++cellCount;
       }
     } );
-  } );
+  }, wrapper );
 }
 
 
