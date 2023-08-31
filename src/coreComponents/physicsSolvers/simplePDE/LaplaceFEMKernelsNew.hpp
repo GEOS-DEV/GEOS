@@ -92,6 +92,17 @@ public:
 
   // }
 
+  GEOS_HOST_DEVICE
+  void getLocalCoordinates( real64 (& xLocal)[numVertex][3] ) const
+  {
+    for( int i = 0; i < numVertex; ++i )
+    {
+      xLocal[i][0] = m_nodeCoords[i][0]; 
+      xLocal[i][1] = m_nodeCoords[i][1]; 
+      xLocal[i][2] = m_nodeCoords[i][2]; 
+    }
+  }
+
 private:
   real64 m_nodeCoords[numVertex][3];
 };
@@ -160,11 +171,26 @@ public :
 
   // ...
   // constructor
+  isoparametricHexahedronMesh( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+                               ARRAY_VIEW_TYPE const elementToNodes ) : isoparametricMesh< ARRAY_VIEW_TYPE >( X, elementToNodes )
+  {
+
+  }
 
   // 
   HexadronCell getCell( localIndex k ) const
   {
-    return HexadronCell( this->m_X[k] );
+    real64 xLocal[numCellVertex][3]{};
+
+    for( int i=0; i<numCellVertex; ++i )
+    {
+      localIndex const localNodeIndex = this->m_elementToNodes( k, i );
+      xLocal[ i ][ 0 ] = this->m_X[ localNodeIndex ][ 0 ];
+      xLocal[ i ][ 1 ] = this->m_X[ localNodeIndex ][ 1 ];
+      xLocal[ i ][ 2 ] = this->m_X[ localNodeIndex ][ 2 ];
+    }
+
+    return HexadronCell( xLocal );
   }
 
   // localIndex numCells() const;
@@ -215,6 +241,7 @@ isoparametricMesh< ARRAY_VIEW_TYPE > selectIsoparametricMesh( ElementType elemTy
   else
   {
     GEOS_ERROR( "finiteElement::dispatchlowOrder3D() is not implemented for input of " << elemType );
+    return isoparametricHexahedronMesh< ARRAY_VIEW_TYPE >( nodePositions, elementToNodes );
   }
 }
 
@@ -302,11 +329,13 @@ public:
           inputMatrix,
           inputRhs ),
     // m_X( nodeManager.referencePosition() ),
-    m_subregionMesh( selectIsoparametricMesh< traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > >(
-                       elementSubRegion.getElementType(),
-                       nodeManager.referencePosition(),
-                       elementSubRegion.nodeList().toViewConst()) ),
-    m_primaryField( nodeManager.template getReference< array1d< real64 > >( fieldName ))
+    m_primaryField( nodeManager.template getReference< array1d< real64 > >( fieldName )),
+    // m_subregionMesh( selectIsoparametricMesh< traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > >(
+    //                    elementSubRegion.getElementType(),
+    //                    nodeManager.referencePosition(),
+    //                    elementSubRegion.nodeList().toViewConst()) )
+    m_subregionMesh( nodeManager.referencePosition(),
+                     elementSubRegion.nodeList().toViewConst() )
   {}
 
   //***************************************************************************
@@ -356,7 +385,6 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-//    m_subregionMesh::CellType c = m_subregionMesh.getCell( k );
     m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
     stack.numRows = m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
     stack.numCols = stack.numRows;
@@ -364,12 +392,12 @@ public:
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
-#if defined(CALC_FEM_SHAPE_IN_KERNEL)
-      for( int i=0; i<3; ++i )
-      {
-        stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
-      }
-#endif
+// #if defined(CALC_FEM_SHAPE_IN_KERNEL)
+//       for( int i=0; i<3; ++i )
+//       {
+//         stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
+//       }
+// #endif
 
       stack.primaryField_local[ a ] = m_primaryField[ localNodeIndex ];
       stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
@@ -390,6 +418,12 @@ public:
                               StackVariables & stack ) const
   {
     typename subregionMeshType::CellType c = m_subregionMesh.getCell( k );
+#if defined(CALC_FEM_SHAPE_IN_KERNEL)
+      c.getLocalCoordinates( stack.xLocal );
+#endif
+
+    // typename subregionMeshType::CellType::JacobianType const J = c.getJacobian( real64 refPointCoords[3] );
+
     // real64[3] pts = quadRule::getCoords< RULE >( q ); // ???
     // m_subregionMesh::JacobianType j = c.getJacobian( pts );
     // real64 const detJ = LvArray::tensorOps::determinant<...>( j );
@@ -453,7 +487,8 @@ protected:
   /// The global primary field array.
   arrayView1d< real64 const > const m_primaryField;
 
-  using subregionMeshType = isoparametricMesh< traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > >;
+  // using subregionMeshType = isoparametricMesh< traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > >;
+  using subregionMeshType = isoparametricHexahedronMesh< traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > >;
   subregionMeshType m_subregionMesh;
 
 };
