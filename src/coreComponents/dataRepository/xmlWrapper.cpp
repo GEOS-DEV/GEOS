@@ -77,17 +77,17 @@ template void stringToInputVariable( Tensor< real64, 6 > & target, string const 
  * @brief Adds the filePath and character offset info on the node in filePathString
  * and charOffsetString attributes. This function allow to keep track of the source
  * filename & offset of each node.
- * @param node the target node to add the informations on.
+ * @param targetNode the target node to add the informations on.
  * @param filePath the absolute path of the xml file containing the node.
  */
-void addNodeFileInfo( xmlNode node, string const & filePath )
+void addNodeFileInfo( xmlNode targetNode, string const & filePath )
 {
   // we keep the file path and the character offset on each node so we keep track of these
   // informations, even if the nodes are manipulated within the xml hierarchy.
-  node.append_attribute( filePathString ).set_value( filePath.c_str() );
-  node.append_attribute( charOffsetString ).set_value( node.offset_debug() );
+  targetNode.append_attribute( filePathString ).set_value( filePath.c_str() );
+  targetNode.append_attribute( charOffsetString ).set_value( targetNode.offset_debug() );
 
-  for( xmlNode subNode : node.children() )
+  for( xmlNode subNode : targetNode.children() )
   {
     addNodeFileInfo( subNode, filePath );
   }
@@ -96,7 +96,7 @@ void addNodeFileInfo( xmlNode node, string const & filePath )
  * @brief Returns true if the addNodeFileInfo() command has been called of the specified node.
  */
 bool xmlDocument::hasNodeFileInfo() const
-{ return !first_child().attribute( filePathString ).empty(); }
+{ return !getFirstChild().attribute( filePathString ).empty(); }
 
 void xmlDocument::addIncludedXML( xmlNode & targetNode, int const level )
 {
@@ -124,8 +124,7 @@ void xmlDocument::addIncludedXML( xmlNode & targetNode, int const level )
       }();
 
       xmlDocument includedXmlDocument;
-      xmlResult const result = includedXmlDocument.load_file( includedFilePath.c_str(),
-                                                              hasNodeFileInfo() );
+      xmlResult const result = includedXmlDocument.loadFile( includedFilePath, hasNodeFileInfo() );
       GEOS_THROW_IF( !result, GEOS_FMT( "Errors found while parsing included XML file {}\n"
                                         "Description: {}\nOffset: {}",
                                         includedFilePath, result.description(), result.offset ),
@@ -136,7 +135,7 @@ void xmlDocument::addIncludedXML( xmlNode & targetNode, int const level )
       // Currently, schema only allows <Included> tags at the top level (inside <Problem>).
       // We then proceed to merge each nested node from included file with the one in main.
 
-      xmlNode includedRootNode = includedXmlDocument.first_child();
+      xmlNode includedRootNode = includedXmlDocument.getFirstChild();
       GEOS_THROW_IF_NE_MSG( string( includedRootNode.name() ), string( targetNode.name() ),
                             "Included document root does not match the including XML node", InputError );
 
@@ -177,7 +176,7 @@ string buildMultipleInputXML( string_array const & inputFileList,
   if( MpiWrapper::commRank() == 0 )
   {
     xmlWrapper::xmlDocument compositeTree;
-    xmlWrapper::xmlNode compositeRoot = compositeTree.append_child( dataRepository::keys::ProblemManager );
+    xmlWrapper::xmlNode compositeRoot = compositeTree.appendChild( dataRepository::keys::ProblemManager );
     xmlWrapper::xmlNode includedRoot = compositeRoot.append_child( includedListTag );
 
     for( auto & fileName: inputFileList )
@@ -186,7 +185,7 @@ string buildMultipleInputXML( string_array const & inputFileList,
       fileNode.append_attribute( "name" ) = fileName.c_str();
     }
 
-    compositeTree.save_file( inputFileName.c_str() );
+    compositeTree.saveFile( inputFileName );
   }
 
   // Everybody else has to wait before attempting to read
@@ -203,34 +202,33 @@ bool isFileMetadataAttribute( string const & name )
   return fileMetadataAttributes.find( name ) != fileMetadataAttributes.end();
 }
 
-const size_t xmlDocument::npos = string::npos;
+constexpr size_t xmlDocument::npos;
 size_t documentId=0;
 
 xmlDocument::xmlDocument():
-  pugi::xml_document(),
+  pugiDocument(),
   m_rootFilePath( "CodeIncludedXML" + std::to_string( documentId++ ) )
 {}
 
-xmlResult xmlDocument::load_string( const pugi::char_t * contents, bool loadNodeFileInfo,
-                                    unsigned int options )
+xmlResult xmlDocument::loadString( string_view content, bool loadNodeFileInfo )
 {
-  xmlResult result = pugi::xml_document::load_string( contents, options );
+  xmlResult result = pugiDocument.load_buffer( content.data(), content.size(),
+                                               pugi::parse_default, pugi::encoding_auto );
 
   // keeping a copy of original buffer to allow line retrieval
   if( loadNodeFileInfo )
   {
-    new (&m_originalBuffers) map< string, string >();
-    m_originalBuffers[m_rootFilePath] = string( contents );
+    m_originalBuffers.clear();
+    m_originalBuffers[m_rootFilePath] = content;
 
-    addNodeFileInfo( first_child(), m_rootFilePath );
+    addNodeFileInfo( getFirstChild(), m_rootFilePath );
   }
 
   return result;
 }
-xmlResult xmlDocument::load_file( const char * path, bool loadNodeFileInfo,
-                                  unsigned int options, pugi::xml_encoding encoding )
+xmlResult xmlDocument::loadFile( string const & path, bool loadNodeFileInfo )
 {
-  xmlResult result = pugi::xml_document::load_file( path, options, encoding );
+  xmlResult result = pugiDocument.load_file( path.c_str(), pugi::parse_default, pugi::encoding_auto );
   m_rootFilePath = getAbsolutePath( path );
 
   // keeping a copy of original buffer to allow line retrieval
@@ -240,33 +238,32 @@ xmlResult xmlDocument::load_file( const char * path, bool loadNodeFileInfo,
     std::stringstream buffer;
     buffer << t.rdbuf();
 
-    new (&m_originalBuffers) map< string, string >();
+    m_originalBuffers.clear();
     m_originalBuffers[m_rootFilePath] = string( buffer.str() );
 
-    addNodeFileInfo( first_child(), getAbsolutePath( m_rootFilePath ) );
+    addNodeFileInfo( getFirstChild(), getAbsolutePath( m_rootFilePath ) );
   }
 
   return result;
 }
-xmlResult xmlDocument::load_buffer( const void * contents, size_t size, bool loadNodeFileInfo,
-                                    unsigned int options, pugi::xml_encoding encoding )
-{
-  xmlResult result = pugi::xml_document::load_buffer( contents, size, options, encoding );
 
-  //keeping a copy of original buffer
-  if( loadNodeFileInfo )
-  {
-    new (&m_originalBuffers) map< string, string >();
-    m_originalBuffers[m_rootFilePath] = string( ( char const * )contents, size );
+xmlNode xmlDocument::appendChild( string const & name )
+{ return pugiDocument.append_child( name.c_str() ); }
 
-    addNodeFileInfo( first_child(), m_rootFilePath );
-  }
+xmlNode xmlDocument::appendChild( xmlNodeType type )
+{ return pugiDocument.append_child( type ); }
 
-  return result;
-}
+bool xmlDocument::saveFile( string const & path ) const
+{ return pugiDocument.save_file( path.c_str() ); }
 
 string const & xmlDocument::getFilePath() const
 { return m_rootFilePath; }
+
+xmlNode xmlDocument::getFirstChild() const
+{ return pugiDocument.first_child(); }
+
+xmlNode xmlDocument::getChild( string const & name ) const
+{ return pugiDocument.child( name.c_str() ); }
 
 string const & xmlDocument::getOriginalBuffer() const
 { return m_originalBuffers.find( m_rootFilePath )->second; }
@@ -335,32 +332,80 @@ xmlNodePos::xmlNodePos( xmlDocument const & document_, string const & filePath_,
 bool xmlNodePos::isFound() const
 { return line != xmlDocument::npos; }
 
+size_t findTagEnd( string const & xmlBuffer, size_t const offset )
+{
+  bool outOfQuotes = true;
+  auto bufferEnd = xmlBuffer.cend();
+  for( auto it = xmlBuffer.cbegin() + offset; it != bufferEnd; ++it )
+  {
+    if( *it == '"' && *(it - 1) != '\\' )
+    {
+      outOfQuotes = !outOfQuotes;
+    }
+    else if( outOfQuotes && *it == '>' )
+    {
+      return it - xmlBuffer.cbegin();
+    }
+  }
+  return string::npos;
+}
+size_t findAttribute( string const & attName, string const & xmlBuffer, size_t const tagBegin, size_t const tagEnd )
+{
+  if( !attName.empty())
+  {
+    size_t searchStart = tagBegin;
+    try
+    {
+      std::smatch m;
+      // As pugixml doesn't expose a way to get the attribute line or character offset, a regex
+      // seem like a suficient solution for GEOS XMLs.
+      // The regex search for the attribute name followed by an '=', eventually separated by spaces
+      if( std::regex_search( xmlBuffer.cbegin() + searchStart, xmlBuffer.cbegin() + tagEnd,
+                             m, std::regex( attName + "\\s*=\\s*\"" )))
+      {
+        size_t candidatePos = m.position() + searchStart;
+        string previousString = xmlBuffer.substr( tagBegin, candidatePos - tagBegin );
+        // We must be out of value surrounding quotes: the number of previous quotes '"' should be even
+        // (ignoring the inner quotes preceded by '\\')
+        size_t surroundingQuotesCount = 0;
+        size_t quotePos = 0;
+        while((quotePos = previousString.find( '"', quotePos + 1 )) != string::npos )
+        {
+          if( previousString[quotePos - 1] != '\\' )
+            ++surroundingQuotesCount;
+        }
+
+        if(((surroundingQuotesCount % 1) == 0))
+        {
+          return candidatePos;
+        }
+        searchStart = candidatePos + attName.size();
+      }
+    }
+    catch( std::regex_error const & )
+    {}
+  }
+  return xmlDocument::npos;
+}
+
 xmlAttributePos xmlNodePos::getAttributeLine( string const & attName ) const
 {
   string const * buffer = document.getOriginalBuffer( filePath );
-  size_t tagEnd = xmlDocument::npos;
-  size_t attOffset = xmlDocument::npos;
-  size_t attLine = xmlDocument::npos;
-  size_t attOffsetInLine = xmlDocument::npos;
+  size_t attOffset = offset;
+  size_t attLine = line;
+  size_t attOffsetInLine = offsetInLine;
 
   if( isFound() && buffer != nullptr && offset < buffer->size() )
   {
-    tagEnd = buffer->find( '>', offset );
+    size_t tagEnd = findTagEnd( *buffer, offset );
     if( tagEnd != string::npos )
     {
-      std::smatch m;
-      try
+      attOffset = findAttribute( attName, *buffer, offset, tagEnd );
+      if( attOffset != string::npos )
       {
-        // we search for a string which is the attribute name followed by an '=', eventually separated by spaces
-        if( std::regex_search( buffer->cbegin() + offset, buffer->cbegin() + tagEnd,
-                               m, std::regex( attName + "\\s*=" ) ) )
-        {
-          attOffset = m.position() + offset;
-          attLine = line + std::count( buffer->cbegin() + offset, buffer->cbegin() + attOffset, '\n' );
-          attOffsetInLine = attOffset - buffer->rfind( '\n', attOffset );
-        }
-      } catch( std::regex_error const & e )
-      { }
+        attLine = line + std::count( buffer->cbegin() + offset, buffer->cbegin() + attOffset, '\n' );
+        attOffsetInLine = attOffset - buffer->rfind( '\n', attOffset );
+      }
     }
   }
 

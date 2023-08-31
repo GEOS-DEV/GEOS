@@ -51,17 +51,25 @@ namespace xmlWrapper
 using xmlResult = pugi::xml_parse_result;
 
 /// Alias for the type of an xml node.
+/// An xmlNode behave as a pointer object: passing it by value to a function which modify it
+/// will modify the original xmlNode object.
 using xmlNode = pugi::xml_node;
 
 /// Alias for the type of an xml attribute.
+/// An xmlAttribute behave as a pointer object: passing it by value to a function which modify it
+/// will modify the original xmlAttribute object.
 using xmlAttribute = pugi::xml_attribute;
 
 /// Alias for the type variant of an xml node.
-using xmlTypes = pugi::xml_node_type;
+using xmlNodeType = pugi::xml_node_type;
 
 class xmlDocument;
 
-/// Stores the source file path, and position in the file of a xml attribute.
+/**
+ * @struct xmlAttributePos
+ *
+ * Stores the source file path, and position in the file of a xml attribute.
+ */
 struct xmlAttributePos
 {
   /// Path of the file containing this element
@@ -94,7 +102,11 @@ struct xmlAttributePos
   string toString() const;
 };
 
-/// Used to retrieve the position of dataRepository::Wrapper in XML
+/**
+ * @struct xmlNodePos
+ *
+ * Used to retrieve the position of dataRepository::Wrapper in XML
+ */
 struct xmlNodePos : xmlAttributePos
 {
   /// Reference of the main xmlDocument that contains all original file buffers.
@@ -121,20 +133,41 @@ struct xmlNodePos : xmlAttributePos
   xmlAttributePos getAttributeLine( string const & attName ) const;
 };
 
-/// Wrapper class for the type of xml document.
-/// This class exists to intercept file / string loading methods, and to keep the loaded buffers,
-/// in order to retrieve the source file and line of nodes and attributes.
-class xmlDocument : public pugi::xml_document
+/**
+ * @class xmlDocument
+ *
+ * Wrapper class for the type of xml document.
+ * This class exists to intercept file / string loading methods, and to keep the loaded buffers,
+ * in order to retrieve the source file and line of nodes and attributes.
+ */
+class xmlDocument
 {
 public:
   /// Error value for when an offset / line position is undefined.
-  static const size_t npos;
+  static constexpr size_t npos = string::npos;
 
   /**
    * @brief Construct an empty xmlDocument that waits to load something.
    */
   xmlDocument();
+  /**
+   * @brief non-copyable
+   */
+  xmlDocument( const xmlDocument & ) = delete;
+  /**
+   * @brief move constructor
+   */
+  xmlDocument( xmlDocument && ) = default;
 
+  /**
+   * @return the first child of this document (typically in GEOS, the Problem node)
+   */
+  xmlNode getFirstChild() const;
+  /**
+   * @return a child with the specified name
+   * @param name the tag name of the node to find
+   */
+  xmlNode getChild( string const & name ) const;
   /**
    * @return the original file buffer loaded during the last load_X() call on this object.
    */
@@ -151,7 +184,7 @@ public:
    */
   map< string, string > const & getOriginalBuffers() const;
   /**
-   * @return If load_file() has been loaded, returns the path of the source file.
+   * @return If loadFile() has been loaded, returns the path of the source file.
    * If another load method has been called, it returns a generated unique value.
    */
   string const & getFilePath() const;
@@ -165,67 +198,44 @@ public:
 
   /**
    * @brief Load document from zero-terminated string. No encoding conversions are applied.
-   * Wrapper of pugi::xml_document::load_buffer() method.
-   * @param contents the string containing the document content
+   * Free any previously loaded xml tree.
+   * Wrapper of pugi::xml_document::loadBuffer() method.
+   * @param content the string containing the document content
    * @param loadNodeFileInfo Load the node source file info, allowing getNodePosition() to work.
-   * @param options the parsing options
    * @return an xmlResult object representing the parsing resulting status.
    */
-  xmlResult load_string( const pugi::char_t * contents, bool loadNodeFileInfo = false,
-                         unsigned int options = pugi::parse_default );
+  xmlResult loadString( string_view content, bool loadNodeFileInfo = false );
 
   /**
-   * @brief Load document from file. Wrapper of pugi::xml_document::load_buffer() method.
+   * @brief Load document from file. Free any previously loaded xml tree.
+   * Wrapper of pugi::xml_document::loadBuffer() method.
    * @param path the path of an xml file to load.
    * @param loadNodeFileInfo Load the node source file info, allowing getNodePosition() to work.
-   * @param options the parsing options
-   * @param encoding the encoding options
    * @return an xmlResult object representing the parsing resulting status.
    */
-  xmlResult load_file( const char * path, bool loadNodeFileInfo = false,
-                       unsigned int options = pugi::parse_default,
-                       pugi::xml_encoding encoding = pugi::encoding_auto );
+  xmlResult loadFile( string const & path, bool loadNodeFileInfo = false );
 
   /**
-   * @brief Load document from buffer. Copies/converts the buffer, so it may be deleted or changed
-   * after the function returns. Wrapper of pugi::xml_document::load_buffer() method.
-   * @param contents the buffer containing the document content
-   * @param size the size of the buffer in bytes
-   * @param loadNodeFileInfo Load the node source file info, allowing getNodePosition() to work.
-   * @param options the parsing options
-   * @param encoding the encoding options
-   * @return an xmlResult object representing the parsing resulting status.
+   * @brief Add a root element to the document
+   * @param name the tag name of the node to add
+   * @return the added node
    */
-  xmlResult load_buffer( const void * contents, size_t size, bool loadNodeFileInfo = false,
-                         unsigned int options = pugi::parse_default,
-                         pugi::xml_encoding encoding = pugi::encoding_auto );
+  xmlNode appendChild( string const & name );
+  /**
+   * @brief Add a root element to the document
+   * @param type the type of the node to add to the root of the document.
+   * As an exemple, node_declaration is useful to add the "<?xml ?>" node.
+   * @return the added node
+   */
+  xmlNode appendChild( xmlNodeType type = xmlNodeType::node_element );
 
   /**
-   * @name deleted methods we don't need to inherit
+   * @brief Save the XML to a file
+   * @param path the file path
+   * @return true if the file has successfuly been saved
+   * @return false otherwise
    */
-  ///@{
-  /// @cond DO_NOT_DOCUMENT
-  xmlResult load_string( const pugi::char_t * contents, unsigned int options ) = delete;
-  xmlResult load_file( const char * path, unsigned int options,
-                       pugi::xml_encoding encoding = pugi::encoding_auto ) = delete;
-
-  xmlResult load_buffer( const void * contents, size_t size, unsigned int options,
-                         pugi::xml_encoding encoding = pugi::encoding_auto ) = delete;
-  #ifndef PUGIXML_NO_STL
-  xmlResult load( std::basic_istream< char, std::char_traits< char > > & stream,
-                  unsigned int options,
-                  pugi::xml_encoding encoding = pugi::encoding_auto ) = delete;
-  xmlResult load( std::basic_istream< wchar_t, std::char_traits< wchar_t > > & stream,
-                  unsigned int options ) = delete;
-  #endif
-  xmlResult load_file( const wchar_t * path, unsigned int options,
-                       pugi::xml_encoding encoding = pugi::encoding_auto ) = delete;
-  xmlResult load_buffer_inplace( void * contents, size_t size, unsigned int options,
-                                 pugi::xml_encoding encoding = pugi::encoding_auto ) = delete;
-  xmlResult load_buffer_inplace_own( void * contents, size_t size, unsigned int options,
-                                     pugi::xml_encoding encoding = pugi::encoding_auto ) = delete;
-  /// @endcond
-  ///@}
+  bool saveFile( string const & path ) const;
 
   /**
    * @brief Function to add xml nodes from included files.
@@ -245,11 +255,14 @@ public:
   bool hasNodeFileInfo() const;
 
 private:
+  /// original xml_document object that this class aims to wrap
+  pugi::xml_document pugiDocument;
+
   /// Used to retrieve node positions as pugixml buffer is private and processed.
   map< string, string > m_originalBuffers;
-  /// see getFilePath()
+  /// @see getFilePath()
   string m_rootFilePath;
-  // see hasNodeFileInfo()
+  /// @see hasNodeFileInfo()
   bool m_hasNodeFileInfo;
 };
 

@@ -642,7 +642,7 @@ public:
       }
 
       if( m_successfulReadFromInput )
-        createDataContext( nodePos );
+        createDataContext( targetNode, nodePos );
 
       return true;
     }

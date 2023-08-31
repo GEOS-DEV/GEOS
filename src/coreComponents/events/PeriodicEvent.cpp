@@ -218,7 +218,7 @@ void PeriodicEvent::cleanup( real64 const time_n,
                              DomainPartition & domain )
 {
   // Only call the cleanup method of the target/children if it is within its application time
-  if( isReadyForCleanup( time_n ) )
+  if( isActive( time_n ) )
   {
     ExecutableGroup * target = getEventTarget();
     if( target != nullptr )
