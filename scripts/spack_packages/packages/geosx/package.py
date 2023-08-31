@@ -76,9 +76,10 @@ class Geosx(CMakePackage, CudaPackage):
     # variant('tests', default=True, description='Build tests')
     # variant('benchmarks', default=False, description='Build benchmarks')
     # variant('examples', default=False, description='Build examples')
-    # variant('docs', default=False, description='Build docs')
-    # variant('addr2line', default=True,
-    #         description='Build support for addr2line.')
+
+    variant('docs', default=False, description='Build docs')
+    variant('addr2line', default=True,
+            description='Add support for addr2line.')
 
     # SPHINX_BEGIN_DEPENDS
 
@@ -111,9 +112,7 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # IO
     #
-    depends_on('hdf5')
-
-    # depends_on('hdf5@1.12.1')
+    depends_on('hdf5@1.12.1')
     depends_on('silo@4.11~fortran')
 
     depends_on('conduit@0.8.2~test~fortran~hdf5_compat')
@@ -167,8 +166,8 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # Documentation
     #
-    # depends_on('doxygen@1.8.20', when='+docs', type='build')
-    # depends_on('py-sphinx@1.6.3:', when='+docs', type='build')
+    depends_on('doxygen@1.8.20', when='+docs', type='build')
+    depends_on('py-sphinx@1.6.3:', when='+docs', type='build')
 
     # SPHINX_END_DEPENDS
 
@@ -491,10 +490,12 @@ class Geosx(CMakePackage, CudaPackage):
                 cfg.write(
                     cmake_cache_entry('UNCRUSTIFY_EXECUTABLE', os.path.join(spec['uncrustify'].prefix.bin, 'uncrustify')))
 
-            # cfg.write('#{0}\n'.format('-' * 80))
-            # cfg.write('# addr2line\n')
-            # cfg.write('#{0}\n\n'.format('-' * 80))
-            # cfg.write(cmake_cache_option('ENABLE_ADDR2LINE', '+addr2line' in spec))
+            if '+addr2line' in spec:
+                cfg.write('#{0}\n'.format('-' * 80))
+                cfg.write('# addr2line\n')
+                cfg.write('#{0}\n\n'.format('-' * 80))
+                cfg.write(cmake_cache_option('ENABLE_ADDR2LINE', True))
+                cfg.write(cmake_cache_entry('ADDR2LINE_EXEC ', '/usr/bin/addr2line'))
 
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Other\n')
@@ -510,12 +511,6 @@ class Geosx(CMakePackage, CudaPackage):
             # Quartz
             if sys_type in ('toss_4_x86_64_ib'):
                 cfg.write(cmake_cache_string('ATS_ARGUMENTS', '--machine slurm36'))
-
-        # Copy host-config out of temporary spack build directory into install
-        # directory for geosx and current working directory
-        # os.system('cp ' + host_config_path + ' ' + self.prefix)
-        # cwd_path = os.path.dirname(os.path.dirname(self.prefix))
-        # os.system('cp ' + host_config_path + ' ' + cwd_path)
 
     def cmake_args(self):
         pass

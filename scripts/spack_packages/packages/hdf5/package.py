@@ -3,6 +3,11 @@
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 
+# GEOS_EDIT_START
+# Older hdf5 spack recipe that works on lassen
+# (latest spack release fails with MPI related configuration failure)
+# GEOS_EDIT_END
+
 import os
 import shutil
 
@@ -216,7 +221,7 @@ class Hdf5(CMakePackage):
     # See https://github.com/spack/spack/issues/31085
     conflicts("+fortran+mpi", when="@1.8.22")
 
-    # GEOS EDIT START
+    # GEOS_EDIT_START
     # Commenting out unused patches
 
     # There are several officially unsupported combinations of the features:

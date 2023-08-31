@@ -17,3 +17,5 @@ class Pygeosx(BundlePackage):
     depends_on("py-scipy")
     depends_on("openblas")
     depends_on("py-matplotlib")
+    depends_on("py-sphinx")
+    depends_on("py-sphinx-argparse")

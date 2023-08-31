@@ -38,9 +38,6 @@ class Vtk(CMakePackage):
     variant('python', default=False, description='Enable Python support')
     variant('mpi', default=True, description='Enable MPI support')
 
-    patch('VTK-9.1.0-disable_traits.patch', when='@9.1.0')
-    patch('VTK-9.1.0-duplicate-points-fix.patch', when='@9.1.0')
-    patch('VTK-9.1.0-cmake-fix.patch', when='@9.1.0')
     patch('vtkXMLReader-fpe.patch', when='@9.1.0:')
 
     extends('python', when='+python')

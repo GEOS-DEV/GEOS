@@ -37,12 +37,7 @@ spack:
         cxx: /usr/tce/packages/clang/clang-10.0.1-gcc-8.3.1/bin/clang++
         f77: /usr/tce/packages/gcc/gcc-8.3.1/bin/gfortran
         fc: /usr/tce/packages/gcc/gcc-8.3.1/bin/gfortran
-        #f77: /usr/tce/packages/xl/xl-2022.08.19-cuda-11.8.0/bin/xlf_r
-        # fc: /usr/tce/packages/xl/xl-2022.08.19-cuda-11.8.0/bin/xlf_r
       flags: {}
-      # flags:
-        # Fix for "undefined reference to `_gfortran_transfer_integer_write'"
-        # ldlibs: -lgfortran
       operating_system: rhel7
       target: ppc64le
       modules: []
@@ -93,7 +88,6 @@ spack:
         # Previously clang@upstream - clingo doesn't like "upstream" version
         - spec: spectrum-mpi@release%clang@10.0.1
           prefix: /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-clang-10.0.1-gcc-8.3.1
-          # prefix: /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-xl-2022.08.19-cuda-11.8.0
         - spec: spectrum-mpi@release%clang@13.0.1
           prefix: /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-clang-13.0.1-gcc-8.3.1
 
