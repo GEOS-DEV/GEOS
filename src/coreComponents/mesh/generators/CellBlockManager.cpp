@@ -872,9 +872,9 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                                               arrayView1d< globalIndex const > const faceLocalToGlobal )
 {
 
+  GEOS_MARK_FUNCTION;
+
   // constants for hex mesh
-
-
   localIndex const numVerticesPerCell = 8;
   localIndex const numNodesPerEdge = ( order+1 );
   localIndex const numNodesPerFace = ( order+1 )*( order+1 );
@@ -957,6 +957,8 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
   arrayView2d< localIndex > edgeToNodeMapNew = m_edgeToNodes.toView();
   // create / retrieve nodes on edges
   localIndex offset = maxVertexGlobalID;
+
+  GEOS_MARK_BEGIN("geos::CellBlockManager::generateHighOrderMaps -- Edges");
   for( localIndex iter_edge = 0; iter_edge < numLocalEdges; iter_edge++ )
   {
     localIndex v1 = edgeToNodesMapSource[ iter_edge ][ 0 ];
@@ -984,6 +986,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
       edgeToNodeMapNew[ iter_edge ][ q ] = nodeID;
     }
   }
+  GEOS_MARK_END("geos::CellBlockManager::generateHighOrderMaps -- Edges");
 
   /////////////////////////
   // Faces
@@ -1012,6 +1015,8 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
   // - The 3rd and 4th node need to be swapped, to be consistent with the GL ordering
   // - The global IDs of the internal nodes must be referred to a global "reference" orientation (using the createNodeKey method)
   offset = maxVertexGlobalID + maxEdgeGlobalID * numInternalNodesPerEdge;
+
+  GEOS_MARK_BEGIN("geos::CellBlockManager::generateHighOrderMaps -- Faces");
   for( localIndex iter_face = 0; iter_face < numLocalFaces; iter_face++ )
   {
     localIndex v1 = faceToNodesMapSource[ iter_face ][ 0 ];
@@ -1048,6 +1053,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
       }
     }
   }
+  GEOS_MARK_END("geos::CellBlockManager::generateHighOrderMaps -- Faces");
 
   // add all nodes to the target set "all"
   SortedArray< localIndex > & allNodesSet = this->getNodeSets()[ "all" ];
@@ -1088,6 +1094,8 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
     // then loop through all the elements and assign the globalID according to the globalID of the Element
     // and insert the new local to global ID ( for the internal nodes of elements ) into the nodeLocalToGlobal
     // retrieve finite element type
+
+    GEOS_MARK_BEGIN("geos::CellBlockManager::generateHighOrderMaps -- Elements");
     for( localIndex iter_elem = 0; iter_elem < numCellElements; ++iter_elem )
     {
       localIndex newCellNodes = 0;
@@ -1135,6 +1143,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
         elemsToNodesNew[ iter_elem ][ q ] = nodeID;
       }
     }
+    GEOS_MARK_END("geos::CellBlockManager::generateHighOrderMaps -- Elements");
   } );
 }
 
