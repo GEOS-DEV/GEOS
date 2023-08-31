@@ -180,6 +180,25 @@ public:
   }
 
   /**
+   * @brief Const/non-mutable accessor for the mean stress increment at the previous sequential iteration
+   * @return Accessor
+   */
+  arrayView2d< real64 const > const getMeanEffectiveStressIncrement_k() const
+  {
+    return getBasePorosityModel().getMeanEffectiveStressIncrement_k();
+  }
+
+  /**
+   * @brief Non-const accessor for the mean stress increment at the previous sequential iteration
+   * @return Accessor
+   */
+  arrayView1d< real64 > const getAverageMeanEffectiveStressIncrement_k()
+  {
+    return getBasePorosityModel().getAverageMeanEffectiveStressIncrement_k();
+  }
+
+
+  /**
    * @brief initialize the constitutive models fields.
    */
   void initializeState() const
@@ -196,6 +215,14 @@ public:
       /// If the name is provided it has to be saved as well.
       getSolidInternalEnergyModel().saveConvergedState();
     }
+  }
+
+  /**
+   * @brief ignore the porosity update (after initialization step)
+   */
+  virtual void ignoreConvergedState() const
+  {
+    getBasePorosityModel().ignoreConvergedState();
   }
 
   /**
@@ -227,6 +254,15 @@ private:
    */
   PorosityBase const & getBasePorosityModel() const
   { return this->getParent().template getGroup< PorosityBase >( m_porosityModelName ); }
+
+  /**
+   * @brief get a PorosityBase reference to the porosity model
+   * return a PorosityBase reference to the porosity model
+   */
+  PorosityBase & getBasePorosityModel()
+  { return this->getParent().template getGroup< PorosityBase >( m_porosityModelName ); }
+
+
   /**
    * @brief get a Permeability base constant reference to the permeability model
    * return a constant PermeabilityBase reference to the permeability model
