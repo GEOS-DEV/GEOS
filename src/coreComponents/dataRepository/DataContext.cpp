@@ -16,8 +16,7 @@
  * @file DataContext.cpp
  */
 
-#include "Group.hpp"
-#include "WrapperBase.hpp"
+#include "DataContext.hpp"
 
 namespace geos
 {
@@ -25,87 +24,58 @@ namespace dataRepository
 {
 
 
-DataContext::DataContext( string const & objectName, bool const isDataFileContext ):
-  m_objectName( objectName ),
-  m_isDataFileContext( isDataFileContext )
+DataContext::DataContext( string const & targetName ):
+  m_targetName( targetName )
 {}
 
-std::ostream & operator<<( std::ostream & os, DataContext const & sc )
+std::ostream & operator<<( std::ostream & os, DataContext const & ctx )
 {
-  os << sc.toString();
+  os << ctx.toString();
   return os;
 }
 
-
-GroupContext::GroupContext( Group & group, string const & objectName ):
-  DataContext( objectName, false ),
-  m_group( group )
+DataContext::ToStringInfo::ToStringInfo( string const & targetName, string const & filePath, size_t line ):
+  m_targetName( targetName ),
+  m_filePath( filePath ),
+  m_line( line )
 {}
-GroupContext::GroupContext( Group & group ):
-  GroupContext( group, group.getName() )
+DataContext::ToStringInfo::ToStringInfo( string const & targetName ):
+  m_targetName( targetName )
 {}
 
-string GroupContext::toString() const
+
+/**
+ * @return the node 'name' attribute if it exists, return the node tag name otherwise.
+ * @param node the target node.
+ */
+string getNodeName( xmlWrapper::xmlNode const & node )
 {
-  string path;
-  bool foundNearestLine = false;
-  for( Group const * parentGroup = &m_group; parentGroup->hasParent(); parentGroup = &parentGroup->getParent() )
+  xmlWrapper::xmlAttribute const nameAtt = node.attribute( "name" );
+  if( !nameAtt.empty() )
   {
-    if( !foundNearestLine && parentGroup->getDataContext().isDataFileContext() )
-    {
-      DataFileContext const & parentContext =
-        dynamic_cast< DataFileContext const & >( parentGroup->getDataContext() );
-      if( parentContext.getLine() != xmlWrapper::xmlDocument::npos )
-      {
-        path.insert( 0, '/' + parentGroup->getName() + '(' +
-                     splitPath( parentContext.getFilePath() ).second +
-                     ",l." + std::to_string( parentContext.getLine() ) + ')' );
-        foundNearestLine=true;
-      }
-      else
-      {
-        path.insert( 0, '/' + parentGroup->getName() );
-      }
-    }
-    else
-    {
-      path.insert( 0, '/' + parentGroup->getName() );
-    }
-  }
-  return path;
-}
-
-
-WrapperContext::WrapperContext( WrapperBase & wrapper ):
-  GroupContext( wrapper.getParent(), wrapper.getName() )
-{}
-
-string WrapperContext::toString() const
-{
-  if( m_group.getDataContext().isDataFileContext() )
-  {
-    return m_group.getDataContext().toString() + ", attribute " + m_objectName;
+    return string( node.attribute( "name" ).value() );
   }
   else
   {
-    return m_group.getDataContext().toString() + "/" + m_objectName;
+    return string( node.name() );
   }
 }
 
-
-DataFileContext::DataFileContext( Group & group, xmlWrapper::xmlNodePos const & nodePos,
-                                  string const & nodeTagName ):
-  DataContext( group.getName(), true ),
-  m_typeName( nodeTagName ),
+DataFileContext::DataFileContext( xmlWrapper::xmlNode const & targetNode,
+                                  xmlWrapper::xmlNodePos const & nodePos ):
+  DataContext( getNodeName( targetNode ) ),
+  m_typeName( targetNode.name() ),
   m_filePath( nodePos.filePath ),
   m_line( nodePos.line ),
   m_offsetInLine( nodePos.offsetInLine ),
   m_offset( nodePos.offset )
 {}
 
-DataFileContext::DataFileContext( WrapperBase & wrapper, xmlWrapper::xmlAttributePos const & attPos ):
-  DataContext( wrapper.getParent().getName() + "/" + wrapper.getName(), true ),
-  m_typeName( wrapper.getName() ),
+DataFileContext::DataFileContext( xmlWrapper::xmlNode const & targetNode,
+                                  xmlWrapper::xmlAttribute const & att,
+                                  xmlWrapper::xmlAttributePos const & attPos ):
+  DataContext( getNodeName( targetNode ) + '/' + att.name() ),
+  m_typeName( att.name() ),
   m_filePath( attPos.filePath ),
   m_line( attPos.line ),
   m_offsetInLine( attPos.offsetInLine ),
@@ -114,22 +84,23 @@ DataFileContext::DataFileContext( WrapperBase & wrapper, xmlWrapper::xmlAttribut
 
 string DataFileContext::toString() const
 {
-  std::ostringstream oss;
-  oss << m_objectName;
   if( m_line != xmlWrapper::xmlDocument::npos )
   {
-    oss << " (" << splitPath( m_filePath ).second << ", l." << m_line << ")";
+    return GEOS_FMT( "{} ({}, l.{})", m_targetName, splitPath( m_filePath ).second, m_line );
   }
   else if( m_offset != xmlWrapper::xmlDocument::npos )
   {
-    oss << " (" << splitPath( m_filePath ).second <<  ", offset " << m_offset << ")";
+    return GEOS_FMT( "{} ({}, offset {})", m_targetName, splitPath( m_filePath ).second, m_offset );
   }
   else
   {
-    oss << " (Source file not found)";
+    return GEOS_FMT( "{} (Source file not found)", m_targetName );
   }
-  return oss.str();
 }
+
+DataContext::ToStringInfo DataFileContext::getToStringInfo() const
+{ return ToStringInfo( m_targetName, m_filePath, m_line ); }
+
 
 
 } /* namespace dataRepository */

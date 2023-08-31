@@ -280,14 +280,14 @@ TEST( ConformingVirtualElementOrder1, hexahedra )
     "</Problem>";
 
   xmlWrapper::xmlDocument inputFile;
-  xmlWrapper::xmlResult xmlResult = inputFile.load_buffer( inputStream.c_str(), inputStream.size());
+  xmlWrapper::xmlResult xmlResult = inputFile.loadString( inputStream );
   if( !xmlResult )
   {
     GEOS_LOG_RANK_0( "XML parsed with errors!" );
     GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
     GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
-  xmlWrapper::xmlNode xmlProblemNode = inputFile.child( dataRepository::keys::ProblemManager );
+  xmlWrapper::xmlNode xmlProblemNode = inputFile.getChild( dataRepository::keys::ProblemManager );
 
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
 
@@ -333,14 +333,14 @@ TEST( ConformingVirtualElementOrder1, wedges )
     "  </ElementRegions>"
     "</Problem>";
   xmlWrapper::xmlDocument inputFile;
-  xmlWrapper::xmlResult xmlResult = inputFile.load_buffer( inputStream.c_str(), inputStream.size());
+  xmlWrapper::xmlResult xmlResult = inputFile.loadString( inputStream );
   if( !xmlResult )
   {
     GEOS_LOG_RANK_0( "XML parsed with errors!" );
     GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
     GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
-  xmlWrapper::xmlNode xmlProblemNode = inputFile.child( dataRepository::keys::ProblemManager );
+  xmlWrapper::xmlNode xmlProblemNode = inputFile.getChild( dataRepository::keys::ProblemManager );
 
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
 
