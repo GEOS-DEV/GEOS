@@ -36,7 +36,9 @@ ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Gro
   m_c13(),
   m_c33(),
   m_c44(),
-  m_c66()
+  m_c66(),
+  m_effectiveBulkModulus(),
+  m_effectiveShearModulus()
 {
   registerWrapper( viewKeyStruct::defaultYoungModulusTransverseString(), &m_defaultYoungModulusTransverse ).
     setApplyDefaultValue( -1 ).
@@ -107,6 +109,14 @@ ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Gro
   registerWrapper( viewKeyStruct::c66String(), &m_c66 ).
     setApplyDefaultValue( -1 ).
     setDescription( "Elastic Stiffness Field C66" );
+
+  registerWrapper( viewKeyStruct::effectiveBulkModulusString(), &m_effectiveBulkModulus ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Effective bulk modulus for stress control and wavespeed calculations" );
+  
+  registerWrapper( viewKeyStruct::effectiveShearModulusString(), &m_effectiveShearModulus ).
+    setInputFlag( InputFlags::FALSE).
+    setDescription( "Effective shear modulus for stress control and wavespeed calculations");
 }
 
 ElasticTransverseIsotropic::~ElasticTransverseIsotropic()
@@ -128,6 +138,7 @@ void ElasticTransverseIsotropic::postProcessInput()
   real64 & Nuat = m_defaultPoissonRatioAxialTransverse;
   real64 & Gat = m_defaultShearModulusAxialTransverse;
 
+  // CC: TODO make sure that if stiffness constants are set or issues with other variable error is through or other logic to ensure effective bulk and shear moduli can be computed
   if( Et > 0.0 && Ea > 0.0 && Gat > 0.0 && Nut > -0.5 && Nut < 0.5 )
   {
     real64 const Nuta = Nuat * ( Et / Ea );
@@ -141,6 +152,14 @@ void ElasticTransverseIsotropic::postProcessInput()
       c44 = Gat;
       c66 = 0.5 * Et / ( 1.0 + Nut );
     }
+  } 
+  else 
+  {
+    Et = 4 * c66 * (c11 * c33 - c66 * c33 - c13 * c13) / ( c11 * c33 * c13 * c13 );
+    Ea = c33 - c13 * c13 / ( c11 - c66 );
+    Gat = c66;
+    Nut = 4 * (c11 * c33 - c66 * c33 - c13 * c13 ) / ( c11 * c33 - c13 * c13 ) - 1;
+    Nuat = c13 / ( 2 * ( c11 - c66 ) );
   }
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::c11String() ).
@@ -157,6 +176,15 @@ void ElasticTransverseIsotropic::postProcessInput()
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::c66String() ).
     setApplyDefaultValue( c66 );
+
+  real64 Keff = -Et*Ea/(2*Ea*(Nut+Nuat-1) + Et*(2*Nuat-1));
+  real64 Geff=  0.6*Keff;
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::effectiveBulkModulusString() ).
+    setApplyDefaultValue( Keff );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::effectiveShearModulusString() ).
+    setApplyDefaultValue( Geff );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticTransverseIsotropic, string const &, Group * const )

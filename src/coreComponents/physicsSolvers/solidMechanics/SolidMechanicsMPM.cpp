@@ -2692,9 +2692,6 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
       } );
     }
 
-    // CC: debug
-    // GEOS_LOG_RANK("Update materialDirection");
-
     if(  solidModel.hasWrapper( "materialDirection" ) )
     {
       // CC: Todo add check for fiber vs plane update to material direction
@@ -2706,9 +2703,6 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
         LvArray::tensorOps::copy< 3 >(constitutiveMaterialDirection[p], particleMaterialDirection[p]); 
       } );
     }
-
-    // CC: debug
-    // GEOS_LOG_RANK("Update deformationGradient");
 
     if(  solidModel.hasWrapper( "deformationGradient" ) )
     {
@@ -3059,25 +3053,26 @@ void SolidMechanicsMPM::particleToGrid( ParticleManager & particleManager,
     SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
     arrayView2d< real64 const > const constitutiveDensity = constitutiveRelation.getDensity();
 
-    array1d< real64 > shearModulus; // = constitutiveRelation.shearModulus();
-    // array1d< real64 > bulkModulus; // = constitutiveRelation.bulkModulus();
+    array1d< real64 > shearModulus;
     if( constitutiveRelation.hasWrapper( "bulkModulus" ) )
     {
       //ElasticIsotropic
       ElasticIsotropic & elasticIsotropic = dynamic_cast< ElasticIsotropic & >( constitutiveRelation );
       shearModulus = elasticIsotropic.shearModulus();
-      // bulkModulus = elasticIsotropic.bulkModulus();
     }
     else
     {
-      //HyperelasticMMS
-      HyperelasticMMS & hyperelasticMMS = dynamic_cast< HyperelasticMMS & >( constitutiveRelation ); 
-      arrayView1d< real64 const > const lambda = hyperelasticMMS.lambda();
-      shearModulus = hyperelasticMMS.shearModulus();
-      // bulkModulus.resize(lambda.size());
-      // for(int i = 0; i < lambda.size(); i++){
-      //   bulkModulus[i] = conversions::lameConstants::toBulkMod( lambda[i], shearModulus[i] );
-      // }
+      if( constitutiveRelation.hasWrapper( "effectiveShearModulus" ) )
+      {
+        shearModulus = constitutiveRelation.getReference< array1d< real64 > >( "effectiveShearModulus" );  
+      }
+      else
+      {
+        //HyperelasticMMS
+        HyperelasticMMS & hyperelasticMMS = dynamic_cast< HyperelasticMMS & >( constitutiveRelation ); 
+        arrayView1d< real64 const > const lambda = hyperelasticMMS.lambda();
+        shearModulus = hyperelasticMMS.shearModulus();
+      }
     }
 
     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // Can be parallized using atomics -
@@ -3099,17 +3094,6 @@ void SolidMechanicsMPM::particleToGrid( ParticleManager & particleManager,
                                                                                                                                                                              // "B"
                                                                                                                                                                              // field
           int const fieldIndex = nodeFlag * m_numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
-          // CC: debug
-          // GEOS_LOG_RANK_0( p << ", " << 
-          //                  g << ", " << 
-          //                  mappedNode << ": " << 
-          //                  gridDamageGradient[mappedNode] << ", " << 
-          //                  particleDamageGradient[p] << ", " << 
-          //                  LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNode], particleDamageGradient[p] ) << ", " << 
-          //                  nodeFlag << ", " << 
-          //                  fieldIndex << ", " << 
-          //                  particleDamage[p] << ", " << 
-          //                  particleSurfaceFlag[p] );
 
           gridMass[mappedNode][fieldIndex] += particleMass[p] * shapeFunctionValues[pp][g];
           // TODO: Normalizing by volume might be better
@@ -3453,47 +3437,69 @@ real64 SolidMechanicsMPM::getStableTimeStep( ParticleManager & particleManager )
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
+    arrayView1d< real64 const> const particleDensity = subRegion.getField< fields::mpm::particleDensity >();
     arrayView2d< real64 const > const particleVelocity = subRegion.getParticleVelocity();
-    string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-    // For the time being we restrict our attention to elastic isotropic solids.
-    //TODO: Have all constitutive models automatically calculate a wave speed.
-    array1d< real64 > rho = subRegion.getField< fields::mpm::particleDensity >();
 
+    string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
 
-    // CC: there has to be a better way to do this
-    array1d< real64 > shearModulus; // = constitutiveRelation.shearModulus();
-    array1d< real64 > bulkModulus; // = constitutiveRelation.bulkModulus();
+    // CC: there has to be a better way to do this, have all models calculate their own wavespeed?
+    array1d< real64 > shearModulus;
+    array1d< real64 > bulkModulus;
+
     if( constitutiveRelation.hasWrapper( "bulkModulus" ) )
     {
       //ElasticIsotropic
-      ElasticIsotropic & elasticIsotropic = dynamic_cast< ElasticIsotropic & >( constitutiveRelation );
-      shearModulus = elasticIsotropic.shearModulus();
-      bulkModulus = elasticIsotropic.bulkModulus();
+      bulkModulus = constitutiveRelation.getReference< array1d< real64 > >( "bulkModulus" );
     }
     else
     {
-      //HyperelasticMMS
-      HyperelasticMMS & hyperelasticMMS = dynamic_cast< HyperelasticMMS & >( constitutiveRelation ); 
-      arrayView1d< real64 const > const lambda = hyperelasticMMS.lambda();
-      shearModulus = hyperelasticMMS.shearModulus();
-      bulkModulus.resize(lambda.size());
-      for(int i = 0; i < lambda.size(); i++){
-        bulkModulus[i] = conversions::lameConstants::toBulkMod( lambda[i], shearModulus[i] );
+      if( constitutiveRelation.hasWrapper( "effectiveBulkModulus" ) )
+      {
+        // Anisotropic material models (e.g. ElasticTransverseIsotropic, ElasticAnisotropic)
+        bulkModulus = constitutiveRelation.getReference< array1d< real64 > >( "effectiveBulkModulus" );
+      }
+      else
+      {
+        // CC: TODO
+        //HyperelasticMMS (maybe I should just make a bulk modulus variable for the in the model so I don't need this extra code)
+        HyperelasticMMS & hyperelasticMMS = dynamic_cast< HyperelasticMMS & >( constitutiveRelation ); 
+        arrayView1d< real64 const > const lambda = hyperelasticMMS.lambda();
+        shearModulus = hyperelasticMMS.shearModulus();
+        bulkModulus.resize(lambda.size());
+        for(int i = 0; i < lambda.size(); i++)
+        {
+          bulkModulus[i] = conversions::lameConstants::toBulkMod( lambda[i], shearModulus[i] );
+        }
       }
     }
 
-    // ElasticIsotropic & constitutiveRelation = getConstitutiveModel< ElasticIsotropic >( subRegion, solidMaterialName );
-    // arrayView1d< real64 const > const rho = subRegion.getField< fields::mpm::particleDensity >();
-    // arrayView1d< real64 const > const shearModulus = constitutiveRelation.shearModulus();
-    // arrayView1d< real64 const > const bulkModulus = constitutiveRelation.bulkModulus();
-    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    forAll< serialPolicy >( activeParticleIndices.size(), [=, &wavespeed] GEOS_HOST ( localIndex const pp ) // would need reduction to
-                                                                                                            // parallelize
+    if( constitutiveRelation.hasWrapper( "shearModulus" ) )
+    {
+      //ElasticIsotropic
+      shearModulus = constitutiveRelation.getReference< array1d< real64 > >( "shearModulus" );
+    }
+    else
+    {
+      if( constitutiveRelation.hasWrapper( "effectiveShearModulus" ) )
       {
-        localIndex const p = activeParticleIndices[pp];
-        wavespeed = fmax( wavespeed, sqrt( ( bulkModulus[p] + (4.0/3.0) * shearModulus[p] ) / rho[p] ) + LvArray::tensorOps::l2Norm< 3 >( particleVelocity[p] ) );
-      } );
+        // Anisotropic material models (e.g. ElasticTransverseIsotropic, ElasticAnisotropic)
+        shearModulus = constitutiveRelation.getReference< array1d< real64 > >( "effectiveShearModulus" );
+      }
+      else
+      {
+        //Hyperelastic MMS model
+        HyperelasticMMS & hyperelasticMMS = dynamic_cast< HyperelasticMMS & >( constitutiveRelation ); 
+        shearModulus = hyperelasticMMS.shearModulus();
+      }
+    }
+
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    forAll< serialPolicy >( activeParticleIndices.size(), [=, &wavespeed] GEOS_HOST ( localIndex const pp ) // would need reduction to parallelize
+    {
+      localIndex const p = activeParticleIndices[pp];
+      wavespeed = fmax( wavespeed, sqrt( ( bulkModulus[p] + (4.0/3.0) * shearModulus[p] ) / particleDensity[p] ) + LvArray::tensorOps::l2Norm< 3 >( particleVelocity[p] ) );
+    } );
   } );
 
   real64 dtReturn = wavespeed > 1.0e-16 ? m_cflFactor * length / wavespeed : DBL_MAX; // This partitions's dt, make it huge if wavespeed=0.0
@@ -4369,39 +4375,39 @@ inline void GEOS_DEVICE SolidMechanicsMPM::computeBodyForce( real64 const time_n
                                                              arraySlice1d< real64 const > const particlePosition, 
                                                              real64 * particleBodyForce )
 {
-    particleBodyForce[0] = 0;
-    particleBodyForce[1] = 0;
-    particleBodyForce[2] = 0;  
+  particleBodyForce[0] = 0;
+  particleBodyForce[1] = 0;
+  particleBodyForce[2] = 0;  
 
-    if(m_uniformBodyForce)
-    {
-      particleBodyForce[0] += m_bodyForce[0];
-      particleBodyForce[1] += m_bodyForce[1];
-      particleBodyForce[2] += m_bodyForce[2];  
-    }
+  if(m_uniformBodyForce)
+  {
+    particleBodyForce[0] += m_bodyForce[0];
+    particleBodyForce[1] += m_bodyForce[1];
+    particleBodyForce[2] += m_bodyForce[2];  
+  }
 
-    if(m_generalizedVortexMMS){
-          computeGeneralizedVortexMMSBodyForce(time_n,
-                                               shearModulus,
-                                               density,
-                                               particlePosition,
-                                               particleBodyForce);
-    }
+  if(m_generalizedVortexMMS){
+      computeGeneralizedVortexMMSBodyForce( time_n,
+                                            shearModulus,
+                                            density,
+                                            particlePosition,
+                                            particleBodyForce );
+  } 
 }
 
 // CC: does LvArray have function to compute cofactor?
 void SolidMechanicsMPM::cofactor( real64 const (& F)[3][3],
                                   real64 (& Fc)[3][3] )
 {
-  Fc[0][0] = F[1][1]*F[2][2] - F[1][2]*F[2][1];
-  Fc[0][1] = F[1][2]*F[2][0] - F[1][0]*F[2][2];
-  Fc[0][2] = F[1][0]*F[2][1] - F[1][1]*F[2][0];
-  Fc[1][0] = F[0][2]*F[2][1] - F[0][1]*F[2][2];
-  Fc[1][1] = F[0][0]*F[2][2] - F[0][2]*F[2][0];
-  Fc[1][2] = F[0][1]*F[2][0] - F[0][0]*F[2][1];
-  Fc[2][0] = F[0][1]*F[1][2] - F[0][2]*F[1][1];
-  Fc[2][1] = F[0][2]*F[1][0] - F[0][0]*F[1][2];
-  Fc[2][2] = F[0][0]*F[1][1] - F[0][1]*F[1][0];
+  Fc[0][0] = F[1][1] * F[2][2] - F[1][2] * F[2][1];
+  Fc[0][1] = F[1][2] * F[2][0] - F[1][0] * F[2][2];
+  Fc[0][2] = F[1][0] * F[2][1] - F[1][1] * F[2][0];
+  Fc[1][0] = F[0][2] * F[2][1] - F[0][1] * F[2][2];
+  Fc[1][1] = F[0][0] * F[2][2] - F[0][2] * F[2][0];
+  Fc[1][2] = F[0][1] * F[2][0] - F[0][0] * F[2][1];
+  Fc[2][0] = F[0][1] * F[1][2] - F[0][2] * F[1][1];
+  Fc[2][1] = F[0][2] * F[1][0] - F[0][0] * F[1][2];
+  Fc[2][2] = F[0][0] * F[1][1] - F[0][1] * F[1][0];
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsMPM, string const &, dataRepository::Group * const )

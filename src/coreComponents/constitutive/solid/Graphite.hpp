@@ -102,12 +102,14 @@ public:
                    real64 const & dc33dp,
                    real64 const & dc44dp,
                    real64 const & dc66dp,
-                   arrayView1d< real64 const > const & c11,
-                   arrayView1d< real64 const > const & c13,
-                   arrayView1d< real64 const > const & c33,
-                   arrayView1d< real64 const > const & c44,
-                   arrayView1d< real64 const > const & c66,
-                   arrayView1d< real64 const > const & thermalExpansionCoefficient,
+                   arrayView1d< real64 > const & c11,
+                   arrayView1d< real64 > const & c13,
+                   arrayView1d< real64 > const & c33,
+                   arrayView1d< real64 > const & c44,
+                   arrayView1d< real64 > const & c66,
+                   arrayView1d< real64 > const & effectiveBulkModulus,
+                   arrayView1d< real64 > const & effectiveShearModulus,
+                   arrayView1d< real64 > const & thermalExpansionCoefficient,
                    arrayView3d< real64, solid::STRESS_USD > const & newStress,
                    arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                    bool const & disableInelasticity ):
@@ -121,6 +123,8 @@ public:
                                                         c33, 
                                                         c44, 
                                                         c66, 
+                                                        effectiveBulkModulus,
+                                                        effectiveShearModulus,
                                                         thermalExpansionCoefficient, 
                                                         newStress, 
                                                         oldStress, 
@@ -442,6 +446,7 @@ void GraphiteUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                                    timeIncrement,
                                                                    strainIncrement, 
                                                                    stress );
+
   m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
   if( m_disableInelasticity )
@@ -498,7 +503,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 materialDirection[3];
     LvArray::tensorOps::copy< 3 >( materialDirection, m_materialDirection[k] );
     LvArray::tensorOps::normalize< 3 >( materialDirection );
-
+    
     // Use beginning of step normal stress to compute stress dependence of Ez
     real64 temp[3];
     int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
@@ -1143,6 +1148,8 @@ public:
                             m_c33,
                             m_c44,
                             m_c66,
+                            m_effectiveBulkModulus,
+                            m_effectiveShearModulus,
                             m_thermalExpansionCoefficient,
                             m_newStress,
                             m_oldStress,
@@ -1193,6 +1200,8 @@ public:
                           m_c33,
                           m_c44,
                           m_c66,
+                          m_effectiveBulkModulus,
+                          m_effectiveShearModulus,
                           m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
