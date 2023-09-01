@@ -480,7 +480,7 @@ enum class LogLevel : int16_t
   Debug = 4,      // Information that are only relevant for a developper in a debugging context.
   DebugTrace = 5, // This level is useful to have deeper debugging information (which can be potencially heavy to log).
 };
-ENUM_BIMAP( SolidMechanicsLagrangianFEM::TimeIntegrationOption,
+ENUM_BIMAP( LogLevel,
             { LogLevel::Silent, "Silent" },
             { LogLevel::Important, "Important" },
             { LogLevel::Progress, "Progress" },
@@ -499,29 +499,11 @@ class Logger
 public:
 
   /// @brief The default message log level when logging directly with the Logger
-  static constexpr LogLevel defaultLogLevel = LogLevel::Important;// TODO Logger: mettre ça à Important ? Detailed ? Debug ?
+  static constexpr LogLevel defaultMsgLogLevel = LogLevel::Debug;
   // TODO :
-  static constexpr LogLevel defaultGlobalLogLevel = defaultLogLevel;// TODO Logger: mettre ça à Important ? Detailed ?
+  static constexpr LogLevel defaultProblemLogLevel = LogLevel::Progress;// TODO Logger: mettre ça à  Progress? Detailed? faire en f° du tri des message
   // TODO :
-  static constexpr LogLevel defaultMinLogLevel = LogLevel::Important;
-  // TODO :
-  static constexpr LogLevel defaultMaxLogLevel = LogLevel::DebugTrace;
-  // TODO :
-  enum class PriorityLevel
-  {
-    FromInputFile=0,
-    FromCommandLine=1,
-  };
-  struct PrioritizedLogLevel
-  {
-    LogLevel m_value;
-    PriorityLevel m_priorityLevel;
-
-    PrioritizedParam( LogLevel value, PriorityLevel priorityLevel ) :
-      m_value( value ),
-      m_priorityLevel( priorityLevel )
-    {}
-  }
+  static constexpr LogLevel defaultGroupLogLevel = LogLevel::Important;
 
   /**
    * @brief Construct the logger. Default output is the standard one.
@@ -538,7 +520,6 @@ public:
    */
   void initMpi( MPI_Comm mpiComm );
 
-  // TODO Logger: les politiques de log sont actuellement confues...
   /**
    * @brief Change the logger output to the specified stream.
    * Also close the potential previously opened file output stream.
@@ -554,46 +535,53 @@ public:
 
   /**
    * @param param set the log level for global messages (ie. applied to simulation progress messages).
-   * TODO : documenter la priorité
    */
-  void setGlobalLogLevel( PrioritizedLogLevel const & param );
+  void setProblemLogLevel( LogLevel param );
   /**
-   * @param param set the minimal log level requiered for all messages. With a value of 2, all
-   * messages from level 0, 1 and 2 will be output.
-   * TODO : documenter la priorité
+   * @param param value to override all groups LogLevel and the problem LogLevel.
    */
-  void setMinLogLevel( PrioritizedLogLevel const & param );
+  void enableLogLevelOverride( LogLevel param );
   /**
    * @param param set the maximal log level allowed for all messages. With a value of 2, all
    * messages from level 3 and more will not be output. With a value of -1, the logger become silent.
    * This value is prioritized over setMinLogLevel.
-   * TODO : documenter la priorité
    */
-  void setMaxLogLevel( PrioritizedLogLevel const & param );
+  void disableLogLevelOverride();
 
-  /////////////////////////////////////////////////////////////////////////////////////////////////
-  // TODO Logger: stdLog() devrait être abandonnée au profit de rank0Log() ou rankLog(), car le
-  // message est spam par tous les ranks sans qu'on puisse identifier d'où il vient...
-  //
-  // Une autre possibilité serait de créer une méthode logOnce() qui renvoit tout au rank 0 qui
-  // s'occupe de n'afficher le message qu'une seule et unique fois si et seulement si il apparait
-  // sur un des ranks.
-  //
-  // Encore une autre possibilité serait de créer une méthode logMerge() qui a le même
-  // comportement que logOnce(), mais précède le message d'un range des ranks qui l'emettent, du
-  // style "Rank 0->54, 55, 57, 67->127: Hello World"
+
+  // TODO Logger: nouvelle collection de methodes, mergedLog sera conservé si l'on utilise pas une
+  // stratégie de postprocess (et donc on doit les fusionner en temps reel).
+  // Si l'on utilise une stratégie de postprocess, on peut imaginer lancer geos avec un paramètre de ligne de commande 
+  // sur un dossier de log pour merger les infos, lire un rank en particulier, etc...
   /**
-   * @brief log one or more inputs to the standard output (std::cout).
+   * @brief log one or more inputs to the rank file stream if used, -> or <- to the standard output.
+   * A partir de ProblemLogLevel = Trace (ou Detailed?), un prefix est ajouté pour savoir quel rank a sorti le message,
+   * par exemple "Rank 54: Hello World"
    * @param MSG_LEVEL the level of the message to log: The message will be ignored if the MSG_LEVEL
    * is strictly higher than the current globalLogLevel value.
-   * @param inputs the inputs to log.
+   * @param input the inputs to log.
    * @tparam INPUTS types of the inputs.
    */
   template< LogLevel MSG_LEVEL = defaultLogLevel, typename ... INPUTS >
-  void stdLog( INPUTS ... inputs );
+  void log( INPUTS ... inputs );
 
   template< LogLevel MSG_LEVEL = defaultLogLevel, typename ... INPUTS >
-  void stdLogIf( bool cond, INPUTS ... inputs );
+  void logIf( bool cond, INPUTS ... inputs );
+
+  /**
+   * @brief Log le message de manière mergée. 
+   * A partir de ProblemLogLevel = Trace (ou Detailed?), un prefix est ajouté pour savoir quel rank a sorti le message,
+   * par exemple "Rank 0->54, 55, 57, 67->127: Hello World"
+   * @param MSG_LEVEL the level of the message to log: The message will be ignored if the MSG_LEVEL
+   * is strictly higher than the current globalLogLevel value.
+   * @param input the inputs to log.
+   * @tparam INPUTS types of the inputs.
+   */
+  template< LogLevel MSG_LEVEL = defaultLogLevel, typename ... INPUTS >
+  void mergedLog( INPUTS ... inputs );
+
+  template< LogLevel MSG_LEVEL = defaultLogLevel, typename ... INPUTS >
+  void mergedLogIf( bool cond, INPUTS ... inputs );
 
   /**
    * @brief log one or more inputs, only from the rank 0, to the standard output (and to
@@ -609,26 +597,14 @@ public:
   template< LogLevel MSG_LEVEL = defaultLogLevel, typename ... INPUTS >
   void rank0LogIf( bool cond, INPUTS ... inputs );
 
-  /**
-   * @brief log one or more inputs to the rank file stream if used, or to the standard output.
-   * @param MSG_LEVEL the level of the message to log: The message will be ignored if the MSG_LEVEL
-   * is strictly higher than the current globalLogLevel value.
-   * @param input the inputs to log.
-   * @tparam INPUTS types of the inputs.
-   */
-  template< LogLevel MSG_LEVEL = defaultLogLevel, typename ... INPUTS >
-  void rankLog( INPUTS ... input );
+  //TODO? deviceLog( INPUTS ... inputs )
 
-  template< LogLevel MSG_LEVEL = defaultLogLevel, typename ... INPUTS >
-  void rankLogIf( bool cond, INPUTS ... input );
 
 public://todo: private
-  /// @see setGlobalLogLevel( PrioritizedLogLevel const & param )
-  PrioritizedLogLevel< LogLevel > m_globalLogLevel;
-  /// @see setMinLogLevel( PrioritizedLogLevel const & param )
-  PrioritizedLogLevel< LogLevel > m_minLogLevel;
-  /// @see setMaxLogLevel( PrioritizedLogLevel const & param )
-  PrioritizedLogLevel< LogLevel > m_maxLogLevel;
+  /// @see setProblemLogLevel( LogLevel param )
+  LogLevel m_problemLogLevel;
+  /// @see enableLogLevelOverride( LogLevel param ) and disableLogLevelOverride()
+  std::optional< LogLevel > m_overrideLogLevel;
 
   /// @brief MPI communicator
   MPI_Comm m_comm;
@@ -687,6 +663,8 @@ struct LogSource
 
   template< LogLevel MSG_LEVEL = Logger::defaultLogLevel, Logger& TARGET = logger, typename ... INPUTS >
   void rankLogIf( bool cond, INPUTS ... input );
+
+  //TODO? deviceLog( INPUTS ... inputs )
 
 };
 

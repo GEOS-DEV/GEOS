@@ -102,9 +102,8 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     TRACE_DATA_MIGRATION,
     MEMORY_USAGE,
     PAUSE_FOR,
-    GLOBAL_LOG_LEVEL,
-    MIN_LOG_LEVEL,
-    MAX_LOG_LEVEL,
+    OVERRIDE_LOG_LEVELS,
+    RANK_LOG_FOLDER
   };
 
   const option::Descriptor usage[] =
@@ -125,9 +124,8 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     { TRACE_DATA_MIGRATION, 0, "", "trace-data-migration", Arg::None, "\t--trace-data-migration, \t Trace host-device data migration" },
     { MEMORY_USAGE, 0, "m", "memory-usage", Arg::nonEmpty, "\t-m, --memory-usage, \t Minimum threshold for printing out memory allocations in a member of the data repository." },
     { PAUSE_FOR, 0, "", "pause-for", Arg::numeric, "\t--pause-for, \t Pause geosx for a given number of seconds before starting execution" },
-    { GLOBAL_LOG_LEVEL, 0, "-gll", "global-log-level", Arg::nonEmpty, "\t-gll, --global-log-level, \t Allow the messages of the given log level or less to be logged." },
-    { MIN_LOG_LEVEL, 0, "-minll", "min-log-level", Arg::nonEmpty, "\t-minll, --min-log-level, \t Force the messages to be at least of the given log level." },
-    { MAX_LOG_LEVEL, 0, "-maxll", "max-log-level", Arg::nonEmpty, "\t-maxll, --max-log-level, \t Force the messages to be at most of the given log level." },
+    { OVERRIDE_LOG_LEVELS, 0, "l", "override-log-level", Arg::nonEmpty, "\t-l, --override-log-level, \t Overrides all xml log level settings." },
+    { RANK_LOG_FOLDER, 0, "f", "logs-folder", Arg::nonEmpty, "\t-f, --logs-folder, \t With this option, the log will be output to the specified folder. In case of a parallel launch, a specific file per rank is created." },
     { 0, 0, nullptr, nullptr, nullptr, nullptr }
   };
 
