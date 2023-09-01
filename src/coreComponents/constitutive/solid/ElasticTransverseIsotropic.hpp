@@ -53,11 +53,13 @@ public:
    * @param[in] oldStress The ArrayView holding the old stress data for each point.
    * @param[in] disableInelasticity Flag to disable plastic response for inelastic models.
    */
-  ElasticTransverseIsotropicUpdates( arrayView1d< real64 const > const & c11,
-                                     arrayView1d< real64 const > const & c13,
-                                     arrayView1d< real64 const > const & c33,
-                                     arrayView1d< real64 const > const & c44,
-                                     arrayView1d< real64 const > const & c66,
+  ElasticTransverseIsotropicUpdates( arrayView1d< real64 > const & c11,
+                                     arrayView1d< real64 > const & c13,
+                                     arrayView1d< real64 > const & c33,
+                                     arrayView1d< real64 > const & c44,
+                                     arrayView1d< real64 > const & c66,
+                                     arrayView1d< real64 > const & effectiveBulkModulus,
+                                     arrayView1d< real64 > const & effectiveShearModulus,
                                      arrayView1d< real64 const > const & thermalExpansionCoefficient,
                                      arrayView3d< real64, solid::STRESS_USD > const & newStress,
                                      arrayView3d< real64, solid::STRESS_USD > const & oldStress,
@@ -67,7 +69,9 @@ public:
     m_c13( c13 ),
     m_c33( c33 ),
     m_c44( c44 ),
-    m_c66( c66 )
+    m_c66( c66 ),
+    m_effectiveBulkModulus( effectiveBulkModulus ),
+    m_effectiveShearModulus( effectiveShearModulus )
   {}
 
   /// Deleted default constructor
@@ -155,20 +159,25 @@ public:
 protected:
 
   /// A reference to the ArrayView holding c11 for each element.
-  arrayView1d< real64 const > const m_c11;
+  arrayView1d< real64 > const m_c11;
 
   /// A reference to the ArrayView holding c13 for each element.
-  arrayView1d< real64 const > const m_c13;
+  arrayView1d< real64 > const m_c13;
 
   /// A reference to the ArrayView holding c33 for each element.
-  arrayView1d< real64 const > const m_c33;
+  arrayView1d< real64 > const m_c33;
 
   /// A reference to the ArrayView holding c44 for each element.
-  arrayView1d< real64 const > const m_c44;
+  arrayView1d< real64 > const m_c44;
 
   /// A reference to the ArrayView holding c66 for each element.
-  arrayView1d< real64 const > const m_c66;
+  arrayView1d< real64 > const m_c66;
 
+  /// A reference to the ArrayView holding the effectiveBulkModulus for each element
+  arrayView1d< real64 > const m_effectiveBulkModulus;
+
+  /// A reference to the ArrayView holding the effectiveBulkModulus for each element
+  arrayView1d< real64 > const m_effectiveShearModulus;
 };
 
 inline
@@ -393,6 +402,12 @@ public:
 
     /// string/key for c66 component of Voigt stiffness tensor
     static constexpr char const * c66String() { return "c66"; }
+
+    /// string/key for effective bulk modulus 
+    static constexpr char const * effectiveBulkModulusString() { return "effectiveBulkModulus"; }
+
+    /// string/key for effective shear modulus 
+    static constexpr char const * effectiveShearModulusString() { return "effectiveShearModulus"; }
   };
 
   /**
@@ -547,6 +562,18 @@ public:
   arrayView1d< real64 > getC66() { return m_c66; }
 
   /**
+   * @brief Getter for effective bulk modulus.
+   * @return reference to mutable effective bulk modulus.
+   */
+  arrayView1d< real64 > getEffectiveBulkModulus() { return m_effectiveBulkModulus; }
+
+    /**
+   * @brief Getter for effective shear modulus.
+   * @return reference to mutable effective shear modulus.
+   */
+  arrayView1d< real64 > getEffectiveShearModulus() { return m_effectiveShearModulus; }
+
+  /**
    * @brief Create a instantiation of the
    *        ElasticTransverseIsotropicUpdates class that refers to the
    *        data in this.
@@ -559,6 +586,8 @@ public:
                                               m_c33,
                                               m_c44,
                                               m_c66,
+                                              m_effectiveBulkModulus,
+                                              m_effectiveShearModulus,
                                               m_thermalExpansionCoefficient,
                                               m_newStress,
                                               m_oldStress,
@@ -582,6 +611,8 @@ public:
                           m_c33,
                           m_c44,
                           m_c66,
+                          m_effectiveBulkModulus,
+                          m_effectiveShearModulus,
                           m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
@@ -625,6 +656,12 @@ protected:
 
   /// The 66 component of the Voigt stiffness tensor.
   array1d< real64 > m_c66;
+
+  /// The effective bulk modulus.
+  array1d< real64 > m_effectiveBulkModulus;
+
+  /// The effective shear modulus
+  array1d< real64 > m_effectiveShearModulus;
 };
 
 } /* namespace constitutive */

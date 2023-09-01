@@ -554,6 +554,7 @@ public:
   {
     return m_bulkModulus;
   }
+  
   GEOS_HOST_DEVICE
   virtual arrayView1d< real64 const > getShearModulus() const override final
   {

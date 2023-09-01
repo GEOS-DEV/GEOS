@@ -161,10 +161,13 @@ void Graphite::allocateConstitutiveData( dataRepository::Group & parent,
 {
   ElasticTransverseIsotropicPressureDependent::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_velocityGradient.resize(0, 3, 3);
-  m_plasticStrain.resize(0, numConstitutivePointsPerParentIndex, 6);
+  m_velocityGradient.resize( 0, 3, 3 );
+  m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6 );
+  m_relaxation.resize( 0, numConstitutivePointsPerParentIndex );
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
   m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
+  m_lengthScale.resize( 0 );
+  m_materialDirection.resize( 0, 3 );
 }
 
 
