@@ -503,7 +503,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 materialDirection[3];
     LvArray::tensorOps::copy< 3 >( materialDirection, m_materialDirection[k] );
     LvArray::tensorOps::normalize< 3 >( materialDirection );
-    
+
     // Use beginning of step normal stress to compute stress dependence of Ez
     real64 temp[3];
     int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
@@ -518,11 +518,12 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // CC: in old geos the elastic on two different lines of the same code, Mike used planeNormalStress in one but not the other
     // need to ask him about that
 
-    real64 c11_0 = m_c11[k];
-    real64 c13_0 = m_c13[k];
-    real64 c33_0 = m_c33[k];
-    real64 c44_0 = m_c44[k];
-    real64 c66_0 = m_c66[k];
+    // Elastic constants are updated based on pressure before in ElasticTransverseIsotropicPressureDependent update
+    real64 c11 = m_c11[k];
+    real64 c13 = m_c13[k];
+    real64 c33 = m_c33[k];
+    real64 c44 = m_c44[k];
+    real64 c66 = m_c66[k];
 
     real64 dc11dp = m_dc11dp;
     real64 dc13dp = m_dc13dp;
@@ -530,21 +531,11 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 dc44dp = m_dc44dp;
     real64 dc66dp = m_dc66dp;
 
-    real64 Ez_0 = c33_0-std::pow(c13_0, 2)/(c11_0-c66_0);
-    real64 Ep_0 = 4*c66_0*(c11_0*c33_0-c66_0*c33_0-std::pow(c13_0,2))/(c11_0*c33_0-std::pow(c13_0,2));
-    real64 Gzp_0 = c66_0;
-    real64 nuzp_0 = c33_0/(2*(c11_0-c66_0));
-    real64 nup_0 = 4*(c11_0*c33_0-c66_0*c33_0-std::pow(c13_0,2))/(c11_0*c33_0-std::pow(c13_0,2))-1;
-
-    real64 dEzdp = (nup_0 + 1)*(2*std::pow(nuzp_0,2)+nup_0-1)/(std::pow(nuzp_0,2)-1)*dc33dp;
-    real64 dEpdp = (nup_0 + 1)*dc66dp;
-    real64 dGzpdp = dc66dp;
-
-    real64 Ez = Ez_0 + dEzdp*std::max(0.0, 0.5*(oldPressure-oldPlaneNormalStress));  // TI elastic constant
-    real64 Ep = Ep_0 + dEpdp*std::max(0.0, oldPressure);// TI elastic constant
-    real64 nuzp = nuzp_0;// TI elastic constant
-    real64 nup = nup_0;// TI elastic constant
-    real64 Gzp = Gzp_0 +dGzpdp*std::max(0.0, oldPressure);// TI elastic constant
+    real64 Ez = c33 - c13 * c13 / ( c11 - c66 );
+    real64 Ep = 4 * c66 * ( c11 * c33 - c66 * c33 - c13 * c13 ) / ( c11 * c33 - c13 * c13 );
+    real64 Gzp = c66;
+    real64 nuzp = c13 / ( 2 * ( c11 - c66 ) );
+    real64 nup = 4 * ( c11 * c33 - c66 * c33 - c13 * c13 ) / ( c11 * c33 - c13 * c13 ) - 1;
 
     // hypoelastic trial stress update.
     computeTransverselyIsotropicTrialStress( timeIncrement,             // time step
