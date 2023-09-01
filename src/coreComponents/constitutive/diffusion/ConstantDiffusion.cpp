@@ -61,10 +61,10 @@ void ConstantDiffusion::allocateConstitutiveData( dataRepository::Group & parent
 
 void ConstantDiffusion::postProcessInput()
 {
-  GEOS_THROW_IF( m_diffusivityComponents[0] <= 0 ||
-                 m_diffusivityComponents[1] <= 0 ||
-                 m_diffusivityComponents[2] <= 0,
-                 GEOS_FMT( "{}: the components of the diffusivity tensor must be strictly positive",
+  GEOS_THROW_IF( m_diffusivityComponents[0] < 0 ||
+                 m_diffusivityComponents[1] < 0 ||
+                 m_diffusivityComponents[2] < 0,
+                 GEOS_FMT( "{}: the components of the diffusivity tensor must be positive",
                            getFullName() ),
                  InputError );
 }
