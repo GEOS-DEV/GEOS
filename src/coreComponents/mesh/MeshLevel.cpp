@@ -312,9 +312,9 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
 
     for( localIndex const ei: elementAdjacencySet[er][esr] )
     {
-      for( localIndex const & ni: elemsToNodes[ei] )
+      for( localIndex a = 0; a <  elemsToNodes.size(1); a++)
       {
-        nodeAdjacencySet.insert( ni );
+        nodeAdjacencySet.insert( elemsToNodes( ei, a ) );
       }
       for( localIndex const fi: elemsToFaces[ei] )
       {
@@ -362,9 +362,9 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
 
     for( localIndex const ei: elementAdjacencySet[er][esr] )
     {
-      for( localIndex const & ni: elemsToNodes[ei] )
+      for( localIndex a = 0; a <  elemsToNodes.size(1); a++)
       {
-        nodeAdjacencySet.insert( ni );
+        nodeAdjacencySet.insert( elemsToNodes( ei, a ) );
       }
     }
   };
