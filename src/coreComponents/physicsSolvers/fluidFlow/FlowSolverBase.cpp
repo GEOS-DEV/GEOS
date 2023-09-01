@@ -56,6 +56,7 @@ void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE
                                                            pressure[k],
                                                            pressure[k], // will not be used
                                                            pressure_n[k], // will not be used
+                                                           pressure_n[k], // will not be used
                                                            temperature[k],
                                                            temperature[k], // will not be used
                                                            temperature_n[k] ); // will not be used
@@ -69,6 +70,7 @@ void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE
                                                               arrayView1d< real64 const > const & pressure,
                                                               arrayView1d< real64 const > const & pressure_k,
                                                               arrayView1d< real64 const > const & pressure_n,
+                                                              arrayView1d< real64 const > const & pressure_nm1,
                                                               arrayView1d< real64 const > const & temperature,
                                                               arrayView1d< real64 const > const & temperature_k,
                                                               arrayView1d< real64 const > const & temperature_n )
@@ -82,6 +84,7 @@ void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE
                                                            pressure[k],
                                                            pressure_k[k],
                                                            pressure_n[k],
+                                                           pressure_nm1[k],
                                                            temperature[k],
                                                            temperature_k[k],
                                                            temperature_n[k] );
@@ -193,10 +196,31 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
 
 void FlowSolverBase::saveConvergedState( ElementSubRegionBase & subRegion ) const
 {
-  arrayView1d< real64 const > const pres = subRegion.template getField< fields::flow::pressure >();
-  arrayView1d< real64 > const pres_n = subRegion.template getField< fields::flow::pressure_n >();
-  pres_n.setValues< parallelDevicePolicy<> >( pres );
 
+  std::cout << "In FlowSolverBase::saveConvergedState" << std::endl;
+
+  arrayView1d< real64 > const pres = subRegion.template getField< fields::flow::pressure >();
+  arrayView1d< real64 > const pres_n = subRegion.template getField< fields::flow::pressure_n >();
+  arrayView1d< real64 > const pres_nm1 = subRegion.template getField< fields::flow::pressure_nm1 >();
+
+
+  if (subRegion.hasField< fields::flow::pressure_nm1 >()  && std::abs(pres(0) - (pres_n[0] + (pres_n[0] - pres_nm1[0]))) > 1e-14)
+  {
+    pres_nm1.setValues< parallelDevicePolicy<> >( pres_n );
+    std::cout << "resetting pres_nm1" << std::endl;
+  } 
+
+  if (std::abs((pres(0) - pres_n(0)) - (pres_n(0)-pres_nm1(0))) > 1e-14)
+  { 
+    pres_n.setValues< parallelDevicePolicy<> >( pres );
+    std::cout << "resetting pres_n" << std::endl;
+  
+    for (auto ind = 0; ind < pres.size(); ++ind)
+    {
+      //pres[ind] = pres_n[ind] + (pres_n[ind] - pres_nm1[ind]);
+    }
+    std::cout << "resetting pres" << std::endl;
+  }
   arrayView1d< real64 const > const temp = subRegion.template getField< fields::flow::temperature >();
   arrayView1d< real64 > const temp_n = subRegion.template getField< fields::flow::temperature_n >();
   temp_n.setValues< parallelDevicePolicy<> >( temp );
@@ -215,6 +239,8 @@ void FlowSolverBase::saveConvergedState( ElementSubRegionBase & subRegion ) cons
     pres_k.setValues< parallelDevicePolicy<> >( pres );
     temp_k.setValues< parallelDevicePolicy<> >( temp );
   }
+
+  
 }
 
 void FlowSolverBase::saveIterationState( ElementSubRegionBase & subRegion ) const
@@ -473,9 +499,10 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
     {
       arrayView1d< real64 const > const & pressure_k = subRegion.getField< fields::flow::pressure_k >();
       arrayView1d< real64 const > const & temperature_k = subRegion.getField< fields::flow::temperature_k >();
+      arrayView1d< real64 const > const & pressure_nm1 = subRegion.getField< fields::flow::pressure_nm1 >();
 
       updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion,
-                                                               pressure, pressure_k, pressure_n,
+                                                               pressure, pressure_k, pressure_n, pressure_nm1,
                                                                temperature, temperature_k, temperature_n );
     }
     else // for fully implicit simulations

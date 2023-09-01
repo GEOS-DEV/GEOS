@@ -48,6 +48,14 @@ DECLARE_FIELD( pressure_n,
                WRITE_AND_READ,
                "Pressure at the previous converged time step" );
 
+DECLARE_FIELD( pressure_nm1,
+               "pressure_nm1",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Pressure from two time steps prior" );
+
 DECLARE_FIELD( pressure_k,
                "pressure_k",
                array1d< real64 >,

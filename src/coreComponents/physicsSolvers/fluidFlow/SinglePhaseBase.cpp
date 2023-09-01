@@ -88,6 +88,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       if( m_isFixedStressPoromechanicsUpdate )
       {
         subRegion.registerField< pressure_k >( getName() ); // needed for the fixed-stress porosity update
+        subRegion.registerField< pressure_nm1 >( getName() );
       }
 
       subRegion.registerField< deltaVolume >( getName() );
@@ -638,6 +639,9 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                    auto & subRegion )
     {
+
+      std::cout << "in SinglePhaseBase::implicitStepSetup" << std::endl;
+
       arrayView1d< real64 const > const & pres = subRegion.template getField< fields::flow::pressure >();
       arrayView1d< real64 const > const & initPres = subRegion.template getField< fields::flow::initialPressure >();
       arrayView1d< real64 > const & deltaPres = subRegion.template getField< fields::flow::deltaPressure >();
@@ -792,6 +796,7 @@ void SinglePhaseBase::assembleSystem( real64 const time_n,
                      dofManager,
                      localMatrix,
                      localRhs );
+
 }
 
 void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,

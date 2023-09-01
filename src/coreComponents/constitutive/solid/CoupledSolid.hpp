@@ -86,12 +86,13 @@ public:
                                                       real64 const & pressure,
                                                       real64 const & pressure_k,
                                                       real64 const & pressure_n,
+                                                      real64 const & pressure_nm1,
                                                       real64 const & temperature,
                                                       real64 const & temperature_k,
                                                       real64 const & temperature_n ) const
   {
     GEOS_UNUSED_VAR( k, q,
-                     pressure, pressure_k, pressure_n,
+                     pressure, pressure_k, pressure_n, pressure_nm1,
                      temperature, temperature_k, temperature_n );
   }
 

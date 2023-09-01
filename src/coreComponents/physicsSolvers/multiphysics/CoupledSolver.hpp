@@ -387,11 +387,11 @@ protected:
       if( iter == 0 )
       {
         // Reset the states of all solvers if any of them had to restart
-        forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
-        {
-          solver->resetStateToBeginningOfStep( domain );
-        } );
-        resetStateToBeginningOfStep( domain );
+        //forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+        //{
+          //solver->resetStateToBeginningOfStep( domain );
+        //} );
+        //resetStateToBeginningOfStep( domain );
       }
 
       // Increment the solver statistics for reporting purposes

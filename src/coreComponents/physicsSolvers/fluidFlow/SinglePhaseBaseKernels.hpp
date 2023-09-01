@@ -158,7 +158,11 @@ public:
     m_density( fluid.density() ),
     m_dDensity_dPres( fluid.dDensity_dPressure() ),
     m_localMatrix( localMatrix ),
-    m_localRhs( localRhs )
+    m_localRhs( localRhs ),
+    m_pressure_n( subRegion.template getField< fields::flow::pressure_n >() ),
+    m_pressure_nm1( subRegion.template getField< fields::flow::pressure_nm1 >() ),
+    m_bulkModulus( solid.getBulkModulus() ),
+    m_biotCoefficient( solid.getBiotCoefficient() )
   {}
 
   /**
@@ -242,7 +246,8 @@ public:
                             FUNC && kernelOp = NoOpFunc{} ) const
   {
     // Residual contribution is mass conservation in the cell
-    stack.localResidual[0] = stack.poreVolume * m_density[ei][0] - stack.poreVolume_n * m_density_n[ei][0];
+    //stack.localResidual[0] = stack.poreVolume * m_density[ei][0] - stack.poreVolume_n * m_density_n[ei][0];
+    stack.localResidual[0] = stack.poreVolume * m_density[ei][0] - stack.poreVolume_n * m_density_n[ei][0] + m_density[ei][0]*stack.poreVolume*m_biotCoefficient[ei]*m_biotCoefficient[ei]*(m_pressure_n[ei] - m_pressure_nm1[ei])/m_bulkModulus[ei]; //density?       
 
     // Derivative of residual wrt to pressure in the cell
     stack.localJacobian[0][0] = stack.dPoreVolume_dPres * m_density[ei][0] + m_dDensity_dPres[ei][0] * stack.poreVolume;
@@ -328,6 +333,11 @@ protected:
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
 
+  arrayView1d< real64 const > const m_pressure_n;
+  arrayView1d< real64 const > const m_pressure_nm1;
+  
+  arrayView1d< real64 const > const m_bulkModulus;
+  arrayView1d< real64 const > const m_biotCoefficient;
 };
 
 /**

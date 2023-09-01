@@ -163,17 +163,35 @@ public:
                                                  real64 const & pressure, // current
                                                  real64 const & pressure_k, // last iteration (for sequential)
                                                  real64 const & pressure_n, // last time step
+                                                 real64 const & pressure_nm1,
                                                  real64 const & temperature,
                                                  real64 const & temperature_k,
                                                  real64 const & temperature_n ) const override final
   {
+    //real64 test;
+    //if (std::abs(pressure - pressure_n) < 1e-13)
+   // {
+   //     test = pressure - pressure_nm1;
+   // }
+   // else
+   // {
+   //     test = pressure - pressure_n;
+   // }
     real64 const deltaPressureFromBeginningOfTimeStep = pressure - pressure_n;
+    //real64 const deltaPressureFromBeginningOfTimeStep = test; // here is where its weird I think
     real64 const deltaPressureFromLastIteration = pressure - pressure_k;
     real64 const deltaTemperatureFromBeginningOfTimeStep = temperature - temperature_n;
     real64 const deltaTemperatureFromLastIteration = temperature - temperature_k;
 
     bool printFlag=false;
-    if (k == 0 && q == 0) {printFlag=true;}
+    if (k == 0 && q == 0)
+    {
+      printFlag=true;
+      std::cout << "pressure = " << pressure << std::endl;
+      std::cout << "pressure_n = " << pressure_n << std::endl;
+      std::cout << "pressure_nm1 = " << pressure_nm1 << std::endl;
+      std::cout << "pressure_k = " << pressure_k << std::endl;
+    }
 
     computePorosity( deltaPressureFromBeginningOfTimeStep,
                      deltaPressureFromLastIteration,
@@ -226,6 +244,8 @@ protected:
 
   /// View on the average mean stress increment
   arrayView1d< real64 const > const m_averageMeanEffectiveStressIncrement_k;
+
+  arrayView1d< real64 > m_pressureIncrement;
 
 };
 
@@ -315,6 +335,8 @@ protected:
 
   /// Mean stress increment (updated in the update class, not read in input)
   array2d< real64 > m_meanEffectiveStressIncrement_k;
+
+  array1d< real64 > m_pressureIncrement;
 
   /// Average mean stress increment (not read in input)
   array1d< real64 > m_averageMeanEffectiveStressIncrement_k;
