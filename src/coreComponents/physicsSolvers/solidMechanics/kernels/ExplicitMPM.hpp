@@ -119,7 +119,7 @@ struct StateUpdateKernel
 
       real64 stress[6] = { 0 };
       //CC: debug hardcoded hyperelastic model for now
-      if( constitutiveWrapper.getCatalogName() == "HyperelasticMMS" )
+      if( false )
       // if ( constitutiveWrapper.m_disableInelasticity ) // CC: Shouldn't there be a flag for hyperelastic models? otherwise we have to manually add their name here everything we add them
                                                                     // Some models we might want hyperelastic updates when plasticity or damage are turned off 
       { //Hyperelastic stress update
