@@ -725,14 +725,15 @@ void FlowSolverBase::prepareStencilWeights( DomainPartition & domain )
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( getDiscretizationName() );
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture =
       mesh.getElemManager().constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::hydraulicAperture::key() );
+    auto hydraulicApertureView = hydraulicAperture.toNestedViewConst();
 
     fluxApprox.forStencils< SurfaceElementStencil, FaceElementToCellStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-      forAll< parallelHostPolicy >( stencilWrapper.size(), [=] ( localIndex const iconn )
+      forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] ( localIndex const iconn )
       {
-        stencilWrapper.removeHydraulicApertureContribution( iconn, hydraulicAperture );
+        stencilWrapper.removeHydraulicApertureContribution( iconn, hydraulicApertureView );
       } );
     } );
   } );
@@ -751,14 +752,15 @@ void FlowSolverBase::updateStencilWeights( DomainPartition & domain )
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( getDiscretizationName() );
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture =
       mesh.getElemManager().constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::hydraulicAperture::key() );
+    auto hydraulicApertureView = hydraulicAperture.toNestedViewConst();
 
     fluxApprox.forStencils< SurfaceElementStencil, FaceElementToCellStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-      forAll< parallelHostPolicy >( stencilWrapper.size(), [=] ( localIndex const iconn )
+      forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] ( localIndex const iconn )
       {
-        stencilWrapper.addHydraulicApertureContribution( iconn, hydraulicAperture );
+        stencilWrapper.addHydraulicApertureContribution( iconn, hydraulicApertureView );
       } );
     } );
   } );

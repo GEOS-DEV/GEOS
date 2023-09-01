@@ -221,7 +221,7 @@ public:
    * @param hydraulicAperture hydraulic apertures of the fractures
    */
   GEOS_HOST_DEVICE
-  void removeHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture ) const;
+  void removeHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const;
 
   /**
    * @brief Add the contribution of the aperture to the weight in the stencil (done after aperture update)
@@ -230,7 +230,7 @@ public:
    * @param hydraulicAperture hydraulic apertures of the fractures
    */
   GEOS_HOST_DEVICE
-  void addHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture ) const;
+  void addHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const;
 
 private:
 
@@ -616,7 +616,7 @@ SurfaceElementStencilWrapper::
 GEOS_HOST_DEVICE
 inline void
 SurfaceElementStencilWrapper::
-  removeHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture ) const
+  removeHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const
 {
   for( localIndex k = 0; k < stencilSize( iconn ); ++k )
   {
@@ -631,7 +631,7 @@ SurfaceElementStencilWrapper::
 GEOS_HOST_DEVICE
 inline void
 SurfaceElementStencilWrapper::
-  addHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture ) const
+  addHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const
 {
   for( localIndex k = 0; k < stencilSize( iconn ); ++k )
   {
