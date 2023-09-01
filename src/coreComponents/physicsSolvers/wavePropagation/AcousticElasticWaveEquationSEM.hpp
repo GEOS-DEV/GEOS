@@ -99,7 +99,7 @@ public:
            integer const eventCounter,
            real64 const eventProgress,
            DomainPartition & domain ) override;
-  
+
 protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;

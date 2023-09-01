@@ -79,32 +79,33 @@ public:
                      GEOS_FMT( "Could not find solver '{}' of type {}",
                                m_names[idx()], LvArray::system::demangleType< SolverType >() ),
                      InputError );
-      // solver->postProcessInput();  // error: function "geos::AcousticWaveEquationSEM::postProcessInput" (declared at line 160 of AcousticWaveEquationSEM.hpp) is inaccessible
+      // solver->postProcessInput();  // error: function "geos::AcousticWaveEquationSEM::postProcessInput" (declared at line 160 of
+      // AcousticWaveEquationSEM.hpp) is inaccessible
     } );
   }
 
   /*
-  virtual void
-  cleanup( real64 const time_n,
+     virtual void
+     cleanup( real64 const time_n,
            integer const cycleNumber,
            integer const eventCounter,
            real64 const eventProgress,
            DomainPartition & domain ) override
-  {
-    std::cout << "\t[CoupledWaveSolver::cleanup]" << std::endl;
+     {
+     std::cout << "\t[CoupledWaveSolver::cleanup]" << std::endl;
 
-    // call the base class cleanup (for reporting purposes)
-    SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
+     // call the base class cleanup (for reporting purposes)
+     SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
 
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto idx )
-    {
+     forEachArgInTuple( m_solvers, [&]( auto & solver, auto idx )
+     {
       using SolverPtr = TYPEOFREF( solver );
       using SolverType = TYPEOFPTR( SolverPtr {} );
       solver = this->getParent().template getGroupPointer< SolverType >( m_names[idx()] );
       solver->cleanup(time_n, cycleNumber, eventCounter, eventProgress, domain);
-    } );
-  }
-  */
+     } );
+     }
+   */
 
 protected:
 

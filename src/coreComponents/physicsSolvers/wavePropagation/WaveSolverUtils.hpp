@@ -78,7 +78,8 @@ struct WaveSolverUtils
                                 arrayView2d< real32 > varAtReceivers )
   {
     // helpers::print_stacktrace();
-    // printf("\t[WaveSolverUtils::writeSeismoTrace] nrec=%i iSeismo=%i nsamplesSeismoTrace-1=%i outputSeismoTrace=%c\n", receiverConstants.size( 0 ), iSeismo, nsamplesSeismoTrace - 1, outputSeismoTrace == 1 ? 'T' : 'F');
+    // printf("\t[WaveSolverUtils::writeSeismoTrace] nrec=%i iSeismo=%i nsamplesSeismoTrace-1=%i outputSeismoTrace=%c\n",
+    // receiverConstants.size( 0 ), iSeismo, nsamplesSeismoTrace - 1, outputSeismoTrace == 1 ? 'T' : 'F');
 
     // TODO DEBUG: the following output is only temporary until our wave propagation kernels are finalized.
     // Output will then only be done via the previous code.
@@ -95,9 +96,9 @@ struct WaveSolverUtils
             //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
             string const fn = joinPath( outputDir, GEOS_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
             std::ofstream f( fn, std::ios::app );
-            if (!f)
+            if( !f )
             {
-              GEOS_WARNING( GEOS_FMT( "Failed to open output file {}", fn) );
+              GEOS_WARNING( GEOS_FMT( "Failed to open output file {}", fn ) );
               return;
             }
             for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
@@ -149,7 +150,7 @@ struct WaveSolverUtils
       } );
     }
 
-    writeSeismoTrace(iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers);
+    writeSeismoTrace( iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
   }
 
   static void compute2dVariableSeismoTrace( real64 const time_n,
@@ -194,7 +195,7 @@ struct WaveSolverUtils
       } );
     }
 
-    writeSeismoTrace(iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers);
+    writeSeismoTrace( iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
   }
 
   /**
