@@ -845,7 +845,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
         throw std::ios_base::failure( std::strerror( errno ) );
       }
       file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
-      file << "Time, Sxx, Syy, Szz, Sxy, Syz, Sxz, Density, Damage" << std::endl;
+      file << "Time, Sxx, Syy, Szz, Syz, Sxz, Sxy, Density, Damage, epxx, epyy, epzz, epyz, epxz, epxy" << std::endl;
     }
     MpiWrapper::barrier( MPI_COMM_GEOSX ); // wait for the header to be written
     computeAndWriteBoxAverage( 0.0, 0.0, particleManager );
@@ -2831,6 +2831,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
                                                    const real64 time_n,
                                                    ParticleManager & particleManager )
 {
+  real64 boxPlasticStrain[6] = { 0.0 };
   real64 boxStress[6] = { 0.0 }; // we sum stress * volume in particles, additive sync, then divide by box volume.
   real64 boxMass = 0.0; // we sum particle mass, additive sync, then divide by box volume
   real64 boxParticleInitialVolume = 0.0;
@@ -2841,15 +2842,16 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
     particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
     {
       // Get fields
-      arrayView1d< real64 > const particleMass = subRegion.getField< fields::mpm::particleMass >();
-      arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
-      arrayView1d< real64 > const particleInitialVolume = subRegion.getField< fields::mpm::particleInitialVolume >();
-      arrayView2d< real64 > const particleStress = subRegion.getField< fields::mpm::particleStress >();
-      arrayView1d< real64 > const particleDamage = subRegion.getParticleDamage();
+      arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
+      arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
+      arrayView1d< real64 const > const particleInitialVolume = subRegion.getField< fields::mpm::particleInitialVolume >();
+      arrayView2d< real64 const > const particleStress = subRegion.getField< fields::mpm::particleStress >();
+      arrayView2d< real64 const > const particlePlasticStrain = subRegion.getField< fields::mpm::particlePlasticStrain >();
+      arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
 
       // Accumulate values
       SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-      forAll< serialPolicy >( activeParticleIndices.size(), [=, &boxMass, &boxParticleInitialVolume, &boxStress, &boxDamage] GEOS_HOST ( localIndex const pp ) // This
+      forAll< serialPolicy >( activeParticleIndices.size(), [=, &boxMass, &boxParticleInitialVolume, &boxStress, &boxPlasticStrain, &boxDamage] GEOS_HOST ( localIndex const pp ) // This
                                                                                                                                                                // can
                                                                                                                                                                // be
                                                                                                                                                                // parallelized
@@ -2862,6 +2864,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
           for( int i=0; i<6; i++ )
           {
             boxStress[i] += particleStress[p][i] * particleVolume[p]; // volume weighted average, will normalize later.
+            boxPlasticStrain[i] += particlePlasticStrain[p][i] * particleVolume[p];
           }
           boxDamage += particleDamage[p] * particleInitialVolume[p]; // initial volume weighted average, will normalize later.
         } );
@@ -2869,20 +2872,27 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   }
 
   // Additive sync: sxx, syy, szz, sxy, syz, sxz, mass, particle volume, damage
-  real64 boxSums[9];
+  // Check the voigt indexing of stress
+  real64 boxSums[15];
   boxSums[0] = boxStress[0];       // sig_xx * volume
   boxSums[1] = boxStress[1];       // sig_yy * volume
   boxSums[2] = boxStress[2];       // sig_zz * volume
-  boxSums[3] = boxStress[3];       // sig_xy * volume
-  boxSums[4] = boxStress[4];       // sig_yz * volume
-  boxSums[5] = boxStress[5];       // sig_xz * volume
+  boxSums[3] = boxStress[3];       // sig_yz * volume
+  boxSums[4] = boxStress[4];       // sig_xz * volume
+  boxSums[5] = boxStress[5];       // sig_xy * volume
   boxSums[6] = boxMass;            // total mass in box
   boxSums[7] = boxParticleInitialVolume > 0.0 ? boxParticleInitialVolume : 1.0;  // total particle initial volume in box; prevent div0 error
   boxSums[8] = boxDamage;          // damage * volume
-
+  boxSums[9] = boxPlasticStrain[0]; // plasticStrain_xx
+  boxSums[10] = boxPlasticStrain[1]; // plasticStrain_yy
+  boxSums[11] = boxPlasticStrain[2]; // plasticStrain_zz
+  boxSums[12] = boxPlasticStrain[3]; // plasticStrain_yz
+  boxSums[13] = boxPlasticStrain[4]; // plasticStrain_xz
+  boxSums[14] = boxPlasticStrain[5]; // plasticStrain_xy
+      
   // Do an MPI sync to total these values and write from proc0 to a file.  Also compute global F
   // so file is directly plottable in excel as CSV or something.
-  for( localIndex i = 0; i < 9; i++ )
+  for( localIndex i = 0; i < 15; i++ )
   {
     real64 localSum = boxSums[i];
     real64 globalSum;
@@ -2930,6 +2940,18 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
          << ","
          << boxSums[8] / boxSums[7] // We normalize by total particle initial volume because this should equal one if all the material is
                                     // damaged
+         << ", "
+         << boxSums[9] / boxVolume
+         << ", "
+         << boxSums[10] / boxVolume
+         << ", "
+         << boxSums[11] / boxVolume
+         << ", "
+         << boxSums[12] / boxVolume
+         << ", "
+         << boxSums[13] / boxVolume
+         << ", "
+         << boxSums[14] / boxVolume
          << std::endl;
     file.close();
   }
