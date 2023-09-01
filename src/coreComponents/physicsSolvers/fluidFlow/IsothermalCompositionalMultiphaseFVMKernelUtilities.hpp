@@ -362,7 +362,7 @@ struct C1PPUPhaseFlux
       localIndex const esr = sesri[i];
       localIndex const ei  = sei[i];
 
-      real64 const gravD     = trans[i] * gravCoef[er][esr][ei];
+      real64 const gravD = trans[i] * gravCoef[er][esr][ei];
 
       gravHead += gravD;
     }
@@ -386,7 +386,7 @@ struct C1PPUPhaseFlux
     real64 const tmpSqrt = sqrt( potGrad * potGrad + smoEps * smoEps );
     real64 const smoMax = 0.5 * (-potGrad + tmpSqrt);
 
-    phaseFlux = Ttrans * (potGrad * mobility_i - smoMax * (mobility_j - mobility_i));
+    phaseFlux = Ttrans * ( potGrad * mobility_i - smoMax * (mobility_j - mobility_i) );
 
     // derivativess
 
