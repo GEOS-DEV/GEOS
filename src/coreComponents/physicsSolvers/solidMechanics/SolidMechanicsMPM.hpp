@@ -294,6 +294,10 @@ public:
   void updateDeformationGradient( real64 dt,
                                   ParticleManager & particleManager );
 
+  void stressControl( const real64 dt,
+                      const real64 time_n,
+                      ParticleManager & particleManager );
+
   void updateConstitutiveModelDependencies( ParticleManager & particleManager );
 
   void updateStress( real64 dt,
@@ -304,6 +308,11 @@ public:
   void computeAndWriteBoxAverage( const real64 dt,
                                   const real64 time_n,
                                   ParticleManager & particleManager );
+
+  void computeBoxStress(  const real64 dt,
+                          const real64 time_n,
+		                      ParticleManager & particleManager,
+                          arrayView1d< real64 > boxStress );
 
   void initializeGridFields( NodeManager & nodeManager );
 
@@ -323,6 +332,8 @@ public:
                        MeshLevel & mesh );
 
   void interpolateFTable( real64 dt, real64 time_n );
+
+  void interpolateStressTable( real64 dt, real64 time_n );
 
   void gridToParticle( real64 dt,
                        ParticleManager & particleManager,
@@ -410,6 +421,16 @@ protected:
   array1d< real64 > m_domainL;
 
   array1d< real64 > m_bodyForce;
+
+  array1d< int > m_stressControl;
+  int m_stressTableInterpType;
+  array2d< real64 > m_stressTable;
+  real64 m_stressControlKp;
+  real64 m_stressControlKi;
+  real64 m_stressControlKd;
+  array1d< real64 > m_domainStress;
+  array1d< real64 > m_stressControlLastError;
+  array1d< real64 > m_stressControlITerm;
 
   int m_boxAverageHistory;
   real64 m_boxAverageWriteInterval;
