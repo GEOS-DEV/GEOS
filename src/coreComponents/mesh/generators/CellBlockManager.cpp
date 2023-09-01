@@ -845,7 +845,7 @@ static array1d< real64 > gaussLobattoPoints( int order )
   return GaussLobattoPts;
 }
 
-static void trilinearInterp( real64 const alpha,
+inline void trilinearInterp( real64 const alpha,
                              real64 const beta,
                              real64 const gamma,
                              real64 const (&X)[8][3],
@@ -959,6 +959,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
   localIndex offset = maxVertexGlobalID;
 
   GEOS_MARK_BEGIN("geos::CellBlockManager::generateHighOrderMaps -- Edges");
+
   for( localIndex iter_edge = 0; iter_edge < numLocalEdges; iter_edge++ )
   {
     localIndex v1 = edgeToNodesMapSource[ iter_edge ][ 0 ];
@@ -1095,9 +1096,20 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
     GEOS_MARK_BEGIN("geos::CellBlockManager::generateHighOrderMaps -- Elements");
     //for( localIndex iter_elem = 0; iter_elem < numCellElements; ++iter_elem )
     forAll< RAJA::omp_parallel_for_exec >( numCellElements, 
-                                  [ =, &nodeLocalToGlobalNew, 
+                                  [  
+                                    elemsToNodesSource=elemsToNodesSource.toView(), 
+                                    refPosSource=refPosSource.toView(),
+                                    elementLocalToGlobal=elementLocalToGlobal.toView(),
+                                    elemsToNodesNew=elemsToNodesNew.toView(),
+                                    refPosNew=refPosNew.toView(),
+                                    numNodesPerCell, numNodesPerEdge, glCoords, order, offset, numInternalNodesPerCell, nullKey,
+                                    nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView(), 
+                                    &localNodeID, &nodeIDs
+                                    /*
 				    &elemsToNodesNew, &refPosNew,
-				    &localNodeID ]( localIndex const iter_elem )
+				    &localNodeID 
+                                    */
+                                  ]( localIndex const iter_elem )
     {
       localIndex newCellNodes = 0;
       real64 Xmesh[ numVerticesPerCell ][ 3 ] = { { } };
@@ -1126,7 +1138,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
         real64 alpha = ( glCoords[ q1 ] + 1.0 ) / 2.0;
         real64 beta = ( glCoords[ q2 ] + 1.0 ) / 2.0;
         real64 gamma = ( glCoords[ q3 ] + 1.0 ) / 2.0;
-        trilinearInterp( alpha, beta, gamma, Xmesh, X );
+
         // find node ID
         std::array< localIndex, 6 > nodeKey = createNodeKey( elemMeshVertices, q1, q2, q3, order );
         if( nodeKey == nullKey )
@@ -1141,10 +1153,15 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
         {
           nodeID = nodeIDs.at( nodeKey );
         }
+
+        trilinearInterp( alpha, beta, gamma, Xmesh, X );
+
+
         for( int i=0; i<3; i++ )
         {
           refPosNew( nodeID, i ) = X[ i ];
         }
+
         elemsToNodesNew[ iter_elem ][ q ] = nodeID;
       }
     //}
