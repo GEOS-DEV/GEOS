@@ -4,6 +4,8 @@ numpy
 h5py
 mpmath
 docutils<0.18
+pandas
 # using plantuml for diagrams
 sphinxcontrib-plantuml
 sphinx-argparse
+pydata-sphinx-theme
