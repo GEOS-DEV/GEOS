@@ -24,6 +24,12 @@ namespace geos
 namespace constitutive
 {
 
+/*
+ * Calculate the molar volume and apply the Peneloux shift parameters. The parameters should be in
+ * dimensional form.
+ *   Peneloux, A et al. 1982. Fluid phase equilibria, 8(1):7–23.
+ *   https://doi.org/10.1016/0378-3812(82)80002-2
+ */
 GEOS_HOST_DEVICE
 void CompositionalProperties::computeMolarDensity( integer const numComps,
                                                    real64 const pressure,
@@ -39,7 +45,7 @@ void CompositionalProperties::computeMolarDensity( integer const numComps,
 
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    vCorrected = vCorrected + composition[ic] * ( volumeShift[ic] * temperature + volumeShift[ic] );
+    vCorrected += composition[ic] * volumeShift[ic];
   }
 
   if( epsilon < vCorrected )
@@ -56,7 +62,7 @@ GEOS_HOST_DEVICE
 void CompositionalProperties::computeMolarDensity( integer const numComps,
                                                    real64 const pressure,
                                                    real64 const temperature,
-                                                   arraySlice1d< real64 const > const & composition,
+                                                   arraySlice1d< real64 const > const & GEOS_UNUSED_PARAM ( composition ),
                                                    arraySlice1d< real64 const > const & volumeShift,
                                                    real64 const compressibilityFactor,
                                                    real64 const dCompressibilityFactor_dp,
@@ -86,17 +92,12 @@ void CompositionalProperties::computeMolarDensity( integer const numComps,
 
   // Temperature derivative
   dvCorrected_dx = gasConstant * (temperature * dCompressibilityFactor_dt + compressibilityFactor) / pressure;
-  for( integer ic = 0; ic < numComps; ++ic )
-  {
-    dvCorrected_dx += composition[ic] * volumeShift[ic];
-  }
   dMolarDensity_dt = -molarDensity * molarDensity * dvCorrected_dx;
 
   // Composition derivative
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    dvCorrected_dx = gasConstant * temperature * dCompressibilityFactor_dz[ic] / pressure
-                     + ( volumeShift[ic] * temperature + volumeShift[ic] );
+    dvCorrected_dx = gasConstant * temperature * dCompressibilityFactor_dz[ic] / pressure + volumeShift[ic];
     dMolarDensity_dz[ic] = -molarDensity * molarDensity * dvCorrected_dx;
   }
 }

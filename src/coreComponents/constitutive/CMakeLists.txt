@@ -185,7 +185,6 @@ set( constitutive_sources
      fluid/multifluid/CO2Brine/functions/PureWaterProperties.cpp
      fluid/multifluid/CO2Brine/functions/WaterDensity.cpp
      fluid/multifluid/compositional/functions/CompositionalProperties.cpp
-     fluid/multifluid/compositional/functions/RachfordRice.cpp          
      fluid/multifluid/reactive/ReactiveBrineFluid.cpp
      fluid/multifluid/reactive/ReactiveMultiFluid.cpp
      fluid/multifluid/reactive/ReactiveFluidDriver.cpp

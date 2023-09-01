@@ -41,7 +41,7 @@ public:
    * @param[in] pressure pressure
    * @param[in] temperature temperature
    * @param[in] composition composition of the mixture
-   * @param[in] volumeShift volume shift parameters
+   * @param[in] volumeShift dimensional volume shift parameters
    * @param[in] compressibilityFactor compressibility factor (z-factor)
    * @param[out] molarDensity the calculated molar density
    * @note The volume shifts can result in a negative molar density which will be truncated to zero
@@ -61,7 +61,7 @@ public:
    * @param[in] pressure pressure
    * @param[in] temperature temperature
    * @param[in] composition composition of the mixture
-   * @param[in] volumeShift volume shift parameters
+   * @param[in] volumeShift dimensional volume shift parameters
    * @param[in] compressibilityFactor compressibility factor (z-factor)
    * @param[in] dCompressibilityFactor_dp derivative of the compressibility factor (z-factor) wrt pressure
    * @param[in] dCompressibilityFactor_dp derivative of the compressibility factor (z-factor) wrt temperature
