@@ -712,7 +712,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
   } );
 }
 
-void FlowSolverBase::prepareStencilWeights( DomainPartition & domain )
+void FlowSolverBase::prepareStencilWeights( DomainPartition & domain ) const
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -731,7 +731,7 @@ void FlowSolverBase::prepareStencilWeights( DomainPartition & domain )
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-      forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] ( localIndex const iconn )
+      forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
       {
         stencilWrapper.removeHydraulicApertureContribution( iconn, hydraulicApertureView );
       } );
@@ -739,7 +739,7 @@ void FlowSolverBase::prepareStencilWeights( DomainPartition & domain )
   } );
 }
 
-void FlowSolverBase::updateStencilWeights( DomainPartition & domain )
+void FlowSolverBase::updateStencilWeights( DomainPartition & domain ) const
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -758,7 +758,7 @@ void FlowSolverBase::updateStencilWeights( DomainPartition & domain )
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-      forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] ( localIndex const iconn )
+      forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
       {
         stencilWrapper.addHydraulicApertureContribution( iconn, hydraulicApertureView );
       } );

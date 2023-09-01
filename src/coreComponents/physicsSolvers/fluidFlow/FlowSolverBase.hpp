@@ -80,14 +80,14 @@ public:
    * the aperture is updated
    * @param[in] domain the domain partition
    */
-  void prepareStencilWeights( DomainPartition & domain );
+  void prepareStencilWeights( DomainPartition & domain ) const;
 
   /**
    * @brief Update the stencil weights by adding the contribution of the hydraulic aperture after
    * the aperture is updated
    * @param[in] domain the domain partition
    */
-  void updateStencilWeights( DomainPartition & domain );
+  void updateStencilWeights( DomainPartition & domain ) const;
 
   void enableFixedStressPoromechanicsUpdate();
 
