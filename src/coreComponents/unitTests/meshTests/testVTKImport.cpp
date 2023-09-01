@@ -241,8 +241,8 @@ private:
     multiBlock->SetNumberOfBlocks( 2 );
     multiBlock->SetBlock( 0, main );
     multiBlock->SetBlock( 1, fracture );
-    multiBlock->GetMetaData( static_cast<unsigned int>(0) )->Set( multiBlock->NAME(), "main" );
-    multiBlock->GetMetaData( static_cast<unsigned int>(1) )->Set( multiBlock->NAME(), "fracture" );
+    multiBlock->GetMetaData( static_cast< unsigned int >( 0 ) )->Set( multiBlock->NAME(), "main" );
+    multiBlock->GetMetaData( static_cast< unsigned int >( 1 ) )->Set( multiBlock->NAME(), "fracture" );
 
     vtkNew< vtkXMLMultiBlockDataWriter > writer;
     std::filesystem::path const vtkFile = folder / ( MULTI_BLOCK_NAME + ".vtm" );

@@ -312,7 +312,7 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
 
     for( localIndex const ei: elementAdjacencySet[er][esr] )
     {
-      for( localIndex a = 0; a <  elemsToNodes.size(1); a++)
+      for( localIndex a = 0; a < elemsToNodes.size( 1 ); ++a )  // Range-based for loop not supported for GPU layout.
       {
         nodeAdjacencySet.insert( elemsToNodes( ei, a ) );
       }
@@ -362,7 +362,7 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
 
     for( localIndex const ei: elementAdjacencySet[er][esr] )
     {
-      for( localIndex a = 0; a <  elemsToNodes.size(1); a++)
+      for( localIndex a = 0; a < elemsToNodes.size( 1 ); ++a )  // Range-based for loop not supported for GPU layout.
       {
         nodeAdjacencySet.insert( elemsToNodes( ei, a ) );
       }
