@@ -348,13 +348,13 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
   // real64 yieldStrength = m_yieldStrength[k];
 
   // Store old stress for plastic strain increment
-  real64 oldStress[6];
+  real64 oldStress[6] = { 0 };
   LvArray::tensorOps::copy< 6 >( oldStress, stress);
 
   // decompose into mean (P) and von Mises (Q) stress invariants
   real64 trialP;
   real64 trialQ;
-  real64 deviator[6];
+  real64 deviator[6] = { 0 };
   twoInvariant::stressDecomposition( oldStress,
                                      trialP,
                                      trialQ,
@@ -378,7 +378,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     unrotatedOldPlasticStrain[4] *= 2.0;
     unrotatedOldPlasticStrain[5] *= 2.0;
 
-    real64 unrotatedDeformationGradient[3][3] = {{ 0 }};
+    real64 unrotatedDeformationGradient[3][3] = { { 0 } };
     LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3>( unrotatedDeformationGradient, rotationTranspose, m_deformationGradient[k] );
 
     real64 U[6];
@@ -403,18 +403,18 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     // Return to yield surface requires iterative solution
     // Implemented fixed points, however a newton solver may be more efficient and applicable
     real64 tol = 1e-10; // CC: need to experiment with these for the best options
-    int maxEvals = 100; // Same comment as previously line
+    int maxEvals = 100; // Same cas above
 
     real64 yieldStrength = m_yieldStrength[k];
     real64 oldYieldStrength = yieldStrength;
-    real64 unrotatedTempPlasticStrain[6] = {0};
-    real64 plasticStrainIncrement[6] = {0};
+    real64 unrotatedTempPlasticStrain[6] = { 0 };
+    real64 plasticStrainIncrement[6] = { 0 };
     for(int iter=0; iter < maxEvals; ++iter)
     {
       LvArray::tensorOps::copy< 6 >(unrotatedTempPlasticStrain, unrotatedOldPlasticStrain);
       LvArray::tensorOps::add< 6 >(unrotatedTempPlasticStrain, plasticStrainIncrement);
       
-      // magnitude of plastic strain tensor
+      // Compute magnitude of plastic strain tensor
       real64 gamma_p = 0.0;
       for( int i = 0; i < 6; i++ )
       {
@@ -442,45 +442,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
       // check yield function
       real64 yield = trialQ / yieldStrength;
       if( trialQ > yieldStrength || iter > 0 ){
-        // CC: debug
-        // if(iter == 0){
-        //     GEOS_LOG_RANK_0("Particle " << k);
-        //     GEOS_LOG_RANK_0("F: " << "{{" << unrotatedDeformationGradient[0][0] << "," << 
-        //                                     unrotatedDeformationGradient[0][1] << "," <<
-        //                                     unrotatedDeformationGradient[0][2] << "}, {" << 
-            
-        //                                     unrotatedDeformationGradient[1][0] << "," << 
-        //                                     unrotatedDeformationGradient[1][1] << "," <<
-        //                                     unrotatedDeformationGradient[1][2] << "}, {" << 
-
-        //                                     unrotatedDeformationGradient[2][0] << "," << 
-        //                                     unrotatedDeformationGradient[2][1] << "," <<
-        //                                     unrotatedDeformationGradient[2][2] << "}}" );
-            
-        //     GEOS_LOG_RANK_0("stress: " << "{" << stress[0] << "," << 
-        //                                         stress[1] << "," <<
-        //                                         stress[2] << "," <<
-        //                                         stress[3] << "," << 
-        //                                         stress[4] << "," <<
-        //                                         stress[5] << "}" );
-
-        //     GEOS_LOG_RANK_0("ep: " << "{" << unrotatedOldPlasticStrain[0] << "," << 
-        //                                     unrotatedOldPlasticStrain[1] << "," <<
-        //                                     unrotatedOldPlasticStrain[2] << "," <<
-        //                                     unrotatedOldPlasticStrain[3] << "," << 
-        //                                     unrotatedOldPlasticStrain[4] << "," <<
-        //                                     unrotatedOldPlasticStrain[5] << "}" );
-
-        //     GEOS_LOG_RANK_0("dstrain: " << "{" << strainIncrement[0] << "," << 
-        //                                           strainIncrement[1] << "," <<
-        //                                           strainIncrement[2] << "," <<
-        //                                           strainIncrement[3] << "," << 
-        //                                           strainIncrement[4] << "," <<
-        //                                           strainIncrement[5] << "}" );
-
-        //     GEOS_LOG_RANK_0("Max stretch: " << maximumStretch);
-        // } 
-
+  
         // re-construct stress = P*eye + sqrt(2/3)*Q*nhat
         real64 stressTemp[6] = {0};
         twoInvariant::stressRecomposition( trialP,
@@ -504,17 +466,6 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
         real64 unrotatedNewPlasticStrain[6] = { 0 };
         LvArray::tensorOps::copy< 6 >(unrotatedNewPlasticStrain, unrotatedOldPlasticStrain);
         LvArray::tensorOps::add< 6 >(unrotatedNewPlasticStrain, plasticStrainIncrement);
-
-        // // CC: debug
-        // GEOS_LOG_RANK_0("Iter " << iter << " | " <<
-        //                 "ID: " << k << ", " << 
-        //                 "Yield strength old(new): " << oldYieldStrength << "(" << yieldStrength << "), " <<
-        //                 "Plastic Strain: {" << unrotatedNewPlasticStrain[0] << "," << 
-        //                                        unrotatedNewPlasticStrain[1] << "," << 
-        //                                        unrotatedNewPlasticStrain[2] << "," << 
-        //                                        unrotatedNewPlasticStrain[3] << "," <<
-        //                                        unrotatedNewPlasticStrain[4] << "," <<
-        //                                        unrotatedNewPlasticStrain[5] << "}");
 
         if(abs(yieldStrength - oldYieldStrength) < tol)
         {
