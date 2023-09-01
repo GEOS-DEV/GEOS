@@ -13,7 +13,7 @@
  */
 
 /**
- * @file EnumStrings.hpp
+ * @file EnumBimap.hpp
  *
  * Collection of utilities to facilitate I/O of enumeration types.
  * Provides a macro definition that allows associating string names
@@ -21,12 +21,11 @@
  * of these strings, like stream insertion/extraction operators.
  */
 
-#ifndef GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP
-#define GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP
+#ifndef GEOS_CODINGUTILITIES_ENUMBIMAP_HPP
+#define GEOS_CODINGUTILITIES_ENUMBIMAP_HPP
 
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/DataTypes.hpp"
-#include "common/Logger.hpp"
 #include "common/Format.hpp"
 
 #include <iostream>
@@ -70,7 +69,7 @@ namespace geos
   template< typename ENUM >                                                                       \
   inline constexpr size_t ::geos::EnumBimap< ENUM >::size()                                       \
   {                                                                                               \
-    return std::initializer_list< std::pair< ENUM, std::string > >( {__VA_ARGS__} ).size();              \
+    return std::initializer_list< std::pair< ENUM, std::string > >( {__VA_ARGS__} ).size();       \
   }                                                                                               \
                                                                                                   \
   inline std::ostream & operator<<( std::ostream & os, ENUM const e )                             \
@@ -171,7 +170,6 @@ struct EnumBimap
     }
   }
 
-  // TODO Logger: ajouter un TODO pour déprécier progressivement les valeurs numériques de logLevels ?
   /**
    * @brief Convert a string to its refering enum value.
    * The string can be a numeric value
@@ -181,6 +179,7 @@ struct EnumBimap
    */
   static ENUM fromString( string const & s )
   {
+    // Try to parse a string value
     auto enumIt = getToEnumMap().find( s );
     if( enumIt != getToEnumMap().end() )
     {
@@ -188,17 +187,20 @@ struct EnumBimap
     }
     else
     {
-      UnderlyingType e;
+      // Try to parse a numerical value
+      UnderlyingType literalValue;
       std::istringstream ss( s );
-      ss >> target;
-      GEOS_THROW_IF( ss.fail() || !ss.eof(),
-                     wrongValueMsg( s ),
-                     InputError );
+      ss >> literalValue;
+      if( ss.fail() || !ss.eof() )
+      {
+          throw std::invalid_argument( wrongValueMsg( s ));
+      }
 
-      auto enumIt2 = getToStringMap().find( static_cast< ENUM >( e ) );
-      GEOS_THROW_IF( enumIt2 == getToStringMap().end(),
-                     wrongValueMsg( s ),
-                     InputError );
+      auto enumIt2 = getToStringMap().find( static_cast< ENUM >( literalValue ) );
+      if( enumIt2 == getToStringMap().end())
+      {
+        throw std::invalid_argument( wrongValueMsg( s ));
+      }
       return enumIt2->first;
     }
   }
@@ -211,8 +213,8 @@ struct EnumBimap
   static string wrongValueMsg( T wrongValue )
   {
     std::ostringstream oss;
-    oss << "Invalid value " << wrongValue << " of type " << TypeName< enum_type >::brief()
-        << ". Valid values are:" << std::endl;
+    oss << "Invalid value '" << wrongValue << "' of type " << TypeName< ENUM >::brief()
+        << ". Valid values are: " << std::endl;
     for( auto pair : getToStringMap() )
       oss << " - " << static_cast< UnderlyingType >( pair.first ) << " = " << pair.second << std::endl;
     return oss.str();
@@ -245,7 +247,7 @@ struct TypeRegex< ENUM, std::enable_if_t< internal::HasEnumBimap< ENUM > > >
 
 // Formatter specialization for enums
 template< typename ENUM >
-struct GEOS_FMT_NS::formatter< ENUM, std::enable_if_t< std::is_enum< ENUM >::value && geos::internal::HasEnumStrings< ENUM >, char > >
+struct GEOS_FMT_NS::formatter< ENUM, std::enable_if_t< std::is_enum< ENUM >::value && geos::internal::HasEnumBimap< ENUM >, char > >
   : GEOS_FMT_NS::formatter< std::string >
 {
   template< typename FormatContext >
@@ -257,7 +259,7 @@ struct GEOS_FMT_NS::formatter< ENUM, std::enable_if_t< std::is_enum< ENUM >::val
 
 // Formatter specialization for enums
 template< typename ENUM >
-struct GEOS_FMT_NS::formatter< ENUM, std::enable_if_t< std::is_enum< ENUM >::value && !geos::internal::HasEnumStrings< ENUM >, char > >
+struct GEOS_FMT_NS::formatter< ENUM, std::enable_if_t< std::is_enum< ENUM >::value && !geos::internal::HasEnumBimap< ENUM >, char > >
   : GEOS_FMT_NS::formatter< std::underlying_type_t< ENUM > >
 {
   template< typename FormatContext >
@@ -267,4 +269,4 @@ struct GEOS_FMT_NS::formatter< ENUM, std::enable_if_t< std::is_enum< ENUM >::val
   }
 };
 
-#endif //GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP
+#endif //GEOS_CODINGUTILITIES_ENUMBIMAP_HPP

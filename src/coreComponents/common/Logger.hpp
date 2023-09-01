@@ -23,7 +23,7 @@
 #include "common/GeosxConfig.hpp"
 #include "common/GeosxMacros.hpp"
 #include "common/Format.hpp"
-#include "codingUtilities/EnumBimap.hpp/EnumBimap.hpp"
+#include "codingUtilities/EnumBimap.hpp"
 #include "LvArray/src/Macros.hpp"
 
 // System includes
