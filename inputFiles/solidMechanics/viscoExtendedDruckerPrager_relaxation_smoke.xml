@@ -1,0 +1,41 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./viscoExtendedDruckerPrager_relaxation_base.xml"/>
+  </Included> 
+
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1.0 }"
+      yCoords="{ 0, 1.0 }"
+      zCoords="{ 0, 1.0 }"
+      nx="{ 1 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Events
+    maxTime="4000.0">
+    <PeriodicEvent 
+      name="outputs"
+      timeFrequency="1000.0"
+      targetExactTimestep="1"
+      target="/Outputs/vtkOutput" />
+
+    <PeriodicEvent
+      name="solverApplications"
+      beginTime="0"
+      forceDt="1000.0"
+      target="/Solvers/mechanicsSolver"/>
+
+   <PeriodicEvent
+      name="restarts"
+      timeFrequency="2000.0"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"  />   
+  </Events>
+</Problem>
