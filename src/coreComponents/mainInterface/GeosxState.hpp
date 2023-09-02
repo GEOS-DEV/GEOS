@@ -253,6 +253,34 @@ private:
  */
 GeosxState & getGlobalState();
 
+/**
+ * @class Timer
+ * @brief Object that times the duration of its existence.
+ */
+class Timer
+{
+public:
+
+  /**
+   * @brief Constructor. The time the object is alive is added to @p duration.
+   * @param duration A reference to the duration to add to.
+   */
+  Timer( std::chrono::system_clock::duration & duration ):
+    m_start( std::chrono::system_clock::now() ),
+    m_duration( duration )
+  {}
+
+  /// Destructor. Adds to the referenced duration.
+  ~Timer()
+  { m_duration += std::chrono::system_clock::now() - m_start; }
+
+private:
+  /// The time at which this object was constructed.
+  std::chrono::system_clock::time_point const m_start;
+  /// A reference to the duration to add to.
+  std::chrono::system_clock::duration & m_duration;
+};
+
 } // namespace geos
 
 #endif /* GEOS_MAININTERFACE_GEOSXSTATE_HPP_ */
