@@ -975,7 +975,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
       }
 
       {
-        Timer timer_setup(m_timers["linear solver create"]);
+        Timer timer_setup( m_timers["linear solver create"] );
 
         // Compose parallel LA matrix/rhs out of local LA matrix/rhs
         //
@@ -1205,11 +1205,11 @@ void SolverBase::solveLinearSystem( DofManager const & dofManager,
   {
     std::unique_ptr< LinearSolverBase< LAInterface > > solver = LAInterface::createSolver( params );
     {
-      Timer timer_setup(m_timers["linear solver setup"]);
+      Timer timer_setup( m_timers["linear solver setup"] );
       solver->setup( matrix );
     }
     {
-      Timer timer_setup(m_timers["linear solver solve"]);
+      Timer timer_setup( m_timers["linear solver solve"] );
       solver->solve( rhs, solution );
     }
     m_linearSolverResult = solver->result();
@@ -1217,12 +1217,12 @@ void SolverBase::solveLinearSystem( DofManager const & dofManager,
   else
   {
     {
-      Timer timer_setup(m_timers["linear solver setup"]);
+      Timer timer_setup( m_timers["linear solver setup"] );
       m_precond->setup( matrix );
     }
     std::unique_ptr< KrylovSolver< ParallelVector > > solver = KrylovSolver< ParallelVector >::create( params, matrix, *m_precond );
     {
-      Timer timer_setup(m_timers["linear solver solve"]);
+      Timer timer_setup( m_timers["linear solver solve"] );
       solver->solve( rhs, solution );
     }
     m_linearSolverResult = solver->result();
@@ -1309,7 +1309,7 @@ void SolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
 
   if( getLogLevel() > 0 )
   {
-    for(auto& timer : m_timers)
+    for( auto & timer : m_timers )
     {
       real64 const time = std::chrono::duration< double >( timer.second ).count();
       real64 const minTime = MpiWrapper::min( time );
