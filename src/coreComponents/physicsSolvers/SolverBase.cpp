@@ -42,12 +42,7 @@ SolverBase::SolverBase( string const & name,
   m_linearSolverParameters( groupKeyStruct::linearSolverParametersString(), this ),
   m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this ),
   m_solverStatistics( groupKeyStruct::solverStatisticsString(), this ),
-  m_systemSetupTimestamp( 0 ),
-  m_assembleTime(),
-  m_convergenceCheckTime(),
-  m_linearSolverTime(),
-  m_applySolutionTime(),
-  m_updateStateTime()
+  m_systemSetupTimestamp( 0 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -101,22 +96,7 @@ SolverBase::SolverBase( string const & name,
   m_matrix.setDofManager( &m_dofManager );
 }
 
-SolverBase::~SolverBase()
-{
-  if( getLogLevel() > 0 )
-  {
-    if( m_assembleTime.count() > 0 )
-      GEOS_LOG_RANK_0( GEOS_FMT( getName() + ": assemble time              {:%H:%M:%S}", m_assembleTime ) );
-    if( m_convergenceCheckTime.count() > 0 )
-      GEOS_LOG_RANK_0( GEOS_FMT( getName() + ": convergence check time     {:%H:%M:%S}", m_convergenceCheckTime ) );
-    if( m_convergenceCheckTime.count() > 0 )
-      GEOS_LOG_RANK_0( GEOS_FMT( getName() + ": linear solver time         {:%H:%M:%S}", m_linearSolverTime ) );
-    if( m_applySolutionTime.count() > 0 )
-      GEOS_LOG_RANK_0( GEOS_FMT( getName() + ": apply solution time        {:%H:%M:%S}", m_applySolutionTime ) );
-    if( m_updateStateTime.count() > 0 )
-      GEOS_LOG_RANK_0( GEOS_FMT( getName() + ": update state time          {:%H:%M:%S}", m_updateStateTime ) );
-  }
-}
+SolverBase::~SolverBase() = default;
 
 void SolverBase::initialize_postMeshGeneration()
 {
@@ -378,7 +358,7 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
   implicitStepSetup( time_n, dt, domain );
 
   {
-    Timer timer( m_assembleTime );
+    Timer timer( m_timers["assemble"] );
 
     // zero out matrix/rhs before assembly
     m_localMatrix.zero();
@@ -414,7 +394,7 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
   }
 
   {
-    Timer timer( m_linearSolverTime );
+    Timer timer( m_timers["linear solver total"] );
 
     // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
     if( m_precond )
@@ -422,8 +402,12 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
       m_precond->clear();
     }
 
-    // Compose parallel LA matrix out of local matrix
-    m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+    {
+      Timer timer_create( m_timers["linear solver create"] );
+
+      // Compose parallel LA matrix out of local matrix
+      m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+    }
 
     // Output the linear system matrix/rhs for debugging purposes
     debugOutputSystem( 0.0, 0, 0, m_matrix, m_rhs );
@@ -439,14 +423,14 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
   debugOutputSolution( 0.0, 0, 0, m_solution );
 
   {
-    Timer timer( m_applySolutionTime );
+    Timer timer( m_timers["apply solution"] );
 
     // apply the system solution to the fields/variables
     applySystemSolution( m_dofManager, m_solution.values(), 1.0, domain );
   }
 
   {
-    Timer timer( m_updateStateTime );
+    Timer timer( m_timers["update state"] );
 
     // update non-primary variables (constitutive models)
     updateState( domain );
@@ -489,7 +473,7 @@ bool SolverBase::lineSearch( real64 const & time_n,
   for( integer lineSearchIteration = 0; lineSearchIteration < maxNumberLineSearchCuts; ++lineSearchIteration )
   {
     {
-      Timer timer( m_applySolutionTime );
+      Timer timer( m_timers["apply solution"] );
 
       // cut the scale factor by half. This means that the scale factors will
       // have values of -0.5, -0.25, -0.125, ...
@@ -506,14 +490,14 @@ bool SolverBase::lineSearch( real64 const & time_n,
     }
 
     {
-      Timer timer( m_updateStateTime );
+      Timer timer( m_timers["update state"] );
 
       // update non-primary variables (constitutive models)
       updateState( domain );
     }
 
     {
-      Timer timer( m_assembleTime );
+      Timer timer( m_timers["assemble"] );
 
       // re-assemble system
       localMatrix.zero();
@@ -531,7 +515,7 @@ bool SolverBase::lineSearch( real64 const & time_n,
     }
 
     {
-      Timer timer( m_convergenceCheckTime );
+      Timer timer( m_timers["convergence check"] );
 
       // get residual norm
       residualNorm = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
@@ -589,7 +573,7 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
   while( residualNormT >= (1.0 - alpha*localScaleFactor)*residualNorm0 )
   {
     {
-      Timer timer( m_applySolutionTime );
+      Timer timer( m_timers["apply solution"] );
 
       real64 const previousLocalScaleFactor = localScaleFactor;
       // Apply the three point parabolic model
@@ -616,7 +600,7 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
     }
 
     {
-      Timer timer( m_updateStateTime );
+      Timer timer( m_timers["update state"] );
 
       updateState( domain );
     }
@@ -627,7 +611,7 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
     // Keep the books on the function norms
 
     {
-      Timer timer( m_assembleTime );
+      Timer timer( m_timers["assemble"] );
 
       // re-assemble system
       // TODO: add a flag to avoid a completely useless Jacobian computation: rhs is enough
@@ -646,7 +630,7 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
     }
 
     {
-      Timer timer( m_convergenceCheckTime );
+      Timer timer( m_timers["convergence check"] );
 
       // get residual norm
       residualNormT = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
@@ -854,7 +838,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ) );
 
     {
-      Timer timer( m_assembleTime );
+      Timer timer( m_timers["assemble"] );
 
       // zero out matrix/rhs before assembly
       m_localMatrix.zero();
@@ -891,7 +875,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
     real64 residualNorm = 0;
     {
-      Timer timer( m_convergenceCheckTime );
+      Timer timer( m_timers["convergence check"] );
 
       // get residual norm
       residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
@@ -982,7 +966,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     {
-      Timer timer( m_linearSolverTime );
+      Timer timer( m_timers["linear solver total"] );
 
       // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
       if( m_precond )
@@ -990,9 +974,13 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
         m_precond->clear();
       }
 
-      // Compose parallel LA matrix/rhs out of local LA matrix/rhs
-      //
-      m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+      {
+        Timer timer_setup(m_timers["linear solver create"]);
+
+        // Compose parallel LA matrix/rhs out of local LA matrix/rhs
+        //
+        m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+      }
 
       // Output the linear system matrix/rhs for debugging purposes
       debugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
@@ -1008,7 +996,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
 
     {
-      Timer timer( m_applySolutionTime );
+      Timer timer( m_timers["apply solution"] );
 
       // Compute the scaling factor for the Newton update
       scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
@@ -1025,7 +1013,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     {
-      Timer timer( m_updateStateTime );
+      Timer timer( m_timers["update state"] );
 
       // update non-primary variables (constitutive models)
       updateState( domain );
@@ -1216,15 +1204,27 @@ void SolverBase::solveLinearSystem( DofManager const & dofManager,
   if( params.solverType == LinearSolverParameters::SolverType::direct || !m_precond )
   {
     std::unique_ptr< LinearSolverBase< LAInterface > > solver = LAInterface::createSolver( params );
-    solver->setup( matrix );
-    solver->solve( rhs, solution );
+    {
+      Timer timer_setup(m_timers["linear solver setup"]);
+      solver->setup( matrix );
+    }
+    {
+      Timer timer_setup(m_timers["linear solver solve"]);
+      solver->solve( rhs, solution );
+    }
     m_linearSolverResult = solver->result();
   }
   else
   {
-    m_precond->setup( matrix );
+    {
+      Timer timer_setup(m_timers["linear solver setup"]);
+      m_precond->setup( matrix );
+    }
     std::unique_ptr< KrylovSolver< ParallelVector > > solver = KrylovSolver< ParallelVector >::create( params, matrix, *m_precond );
-    solver->solve( rhs, solution );
+    {
+      Timer timer_setup(m_timers["linear solver solve"]);
+      solver->solve( rhs, solution );
+    }
     m_linearSolverResult = solver->result();
   }
 
@@ -1306,6 +1306,18 @@ void SolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
                           DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   m_solverStatistics.outputStatistics();
+
+  if( getLogLevel() > 0 )
+  {
+    for(auto& timer : m_timers)
+    {
+      real64 const time = std::chrono::duration< double >( timer.second ).count();
+      real64 const minTime = MpiWrapper::min( time );
+      real64 const maxTime = MpiWrapper::max( time );
+      if( maxTime > 0 )
+        GEOS_LOG_RANK_0( GEOS_FMT( getName() + ": {} time = {} s (min), {} s (max)", timer.first, minTime, maxTime ) );
+    }
+  }
 }
 
 Timestamp SolverBase::getMeshModificationTimestamp( DomainPartition & domain ) const

@@ -792,11 +792,7 @@ protected:
 
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 
-  std::chrono::system_clock::duration m_assembleTime;
-  std::chrono::system_clock::duration m_convergenceCheckTime;
-  std::chrono::system_clock::duration m_linearSolverTime;
-  std::chrono::system_clock::duration m_applySolutionTime;
-  std::chrono::system_clock::duration m_updateStateTime;
+  std::map<std::string, std::chrono::system_clock::duration> m_timers;
 
 private:
   /// List of names of regions the solver will be applied to
