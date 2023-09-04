@@ -60,7 +60,8 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
   m_acousRegions = acousSolver->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
   m_elasRegions = elasSolver->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
 
-  GEOS_THROW_IF( m_interfaceNodesSet.size() == 0, "Failed to compute interface: check xml input (solver order)", std::runtime_error );
+  localIndex const numInterfaceNodes = MpiWrapper::sum( m_interfaceNodesSet.size() );
+  GEOS_THROW_IF( numInterfaceNodes == 0, "Failed to compute interface: check xml input (solver order)", std::runtime_error );
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -98,6 +99,8 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
       fluid_indices[cnt++] = regions.getIndex( nm );
     }
 
+    arrayView1d< localIndex const > const fluid_indices_v = fluid_indices.toViewConst();
+
     elementRegionManager.forElementSubRegions< CellElementSubRegion >( m_acousRegions, [&]( localIndex const GEOS_UNUSED_PARAM( targetIndex ),
                                                                                             CellElementSubRegion & elementSubRegion )
     {
@@ -112,7 +115,7 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
 
         kernelC.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
                                                                X32,
-                                                               fluid_indices.toViewConst(),
+                                                               fluid_indices_v,
                                                                faceToRegion,
                                                                faceToElement,
                                                                faceToNode,
