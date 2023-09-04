@@ -703,6 +703,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
     // Enforce distortion strain yield
     real64 totalShearStress = 1.224744871391589 * LvArray::tensorOps::l2Norm< 6 >( distortion_dev );
+    // GEOS_LOG_RANK_0(k << ": totalShearStress " << totalShearStress);
     if ( totalShearStress > totalShearStrength )
     {
       LvArray::tensorOps::scale< 6 >( distortion_dev, totalShearStrength / totalShearStress );
@@ -712,6 +713,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
     // enforce in-plane yield
     real64 inPlaneShearStress = 1.224744871391589 * LvArray::tensorOps::l2Norm< 6 >( inPlaneDev ) ;
+    // GEOS_LOG_RANK_0(k << ":inPlaneShearStress " << inPlaneShearStress);
     if ( inPlaneShearStress > inPlaneShearStrength )
     {
       LvArray::tensorOps::scale< 6 >( inPlaneDev, inPlaneShearStrength / inPlaneShearStress );
@@ -721,6 +723,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
     // enforce coupled yield
     real64 coupledShearStress = 1.224744871391589 * LvArray::tensorOps::l2Norm< 6 >( sigma5 );
+    // GEOS_LOG_RANK_0(k << ": coupledShearStress " << coupledShearStress);
     if ( coupledShearStress > coupledYieldStrength )
     {
       LvArray::tensorOps::scale< 6 >( sigma5, coupledYieldStrength / coupledShearStress );
@@ -734,6 +737,8 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     LvArray::tensorOps::add< 6 >(newStress, distortion_dev);
     LvArray::tensorOps::add< 6 >(newStress, inPlaneDev);
     LvArray::tensorOps::add< 6 >(newStress, sigma5);
+
+    // GEOS_LOG_RANK_0(k << ": Plastic " << plastic);
 
     //////////////////////////////////////////////////////
     // Evolve state variables.
