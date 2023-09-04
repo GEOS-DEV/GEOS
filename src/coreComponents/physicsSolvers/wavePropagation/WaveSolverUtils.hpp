@@ -77,10 +77,6 @@ struct WaveSolverUtils
                                 localIndex const outputSeismoTrace,
                                 arrayView2d< real32 > varAtReceivers )
   {
-    // helpers::print_stacktrace();
-    // printf("\t[WaveSolverUtils::writeSeismoTrace] nrec=%i iSeismo=%i nsamplesSeismoTrace-1=%i outputSeismoTrace=%c\n",
-    // receiverConstants.size( 0 ), iSeismo, nsamplesSeismoTrace - 1, outputSeismoTrace == 1 ? 'T' : 'F');
-
     // TODO DEBUG: the following output is only temporary until our wave propagation kernels are finalized.
     // Output will then only be done via the previous code.
     if( iSeismo == nsamplesSeismoTrace - 1 )
@@ -103,7 +99,6 @@ struct WaveSolverUtils
             }
             for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
             {
-              // printf("iSample=%i val=%g\n", iSample, varAtReceivers[iSample][ircv]);
               f << iSample << " " << varAtReceivers[iSample][ircv] << std::endl;
             }
             f.close();

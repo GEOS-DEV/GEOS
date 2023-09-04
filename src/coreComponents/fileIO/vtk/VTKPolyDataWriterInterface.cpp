@@ -70,15 +70,15 @@ toVTKCellType( ElementType const elementType, localIndex numNodes )
     case ElementType::Pyramid:       return VTK_PYRAMID;
     case ElementType::Wedge:         return VTK_WEDGE;
     case ElementType::Hexahedron:
-     switch( numNodes )
-     {
-       case 8:
-         return VTK_HEXAHEDRON;
-       case 27:
-         return VTK_QUADRATIC_HEXAHEDRON;
-       default:
-        return VTK_HEXAHEDRON;
-     }
+      switch( numNodes )
+      {
+        case 8:
+          return VTK_HEXAHEDRON;
+        case 27:
+          return VTK_QUADRATIC_HEXAHEDRON;
+        default:
+          return VTK_HEXAHEDRON;
+      }
     case ElementType::Prism5:        return VTK_PENTAGONAL_PRISM;
     case ElementType::Prism6:        return VTK_HEXAGONAL_PRISM;
     case ElementType::Prism7:        return VTK_POLYHEDRON;
@@ -122,17 +122,18 @@ static std::vector< int > getVtkConnectivity( ElementType const elementType, loc
     case ElementType::Pyramid:       return { 0, 1, 3, 2, 4 };
     case ElementType::Wedge:         return { 0, 4, 2, 1, 5, 3 };
     case ElementType::Hexahedron:
-      switch ( numNodes )
+      switch( numNodes )
       {
-      case 8:
-        return { 0, 1, 3, 2, 4, 5, 7, 6 };
-        break;
-      case 27:
-        // WARNING: numbering convention changed between VTK writer 1.0 and 2.2 (https://discourse.julialang.org/t/writevtk-node-numbering-for-27-node-lagrange-hexahedron/93698/8) Geos uses 1.0
-        return { 0, 2, 8, 6, 18, 20, 26, 24, 1, 5, 7, 3, 19, 23, 25, 21, 9, 11, 17, 15, 12, 14, 10, 16, 4, 22, 17 };
-        break;
-      default:
-        return { };  // TODO
+        case 8:
+          return { 0, 1, 3, 2, 4, 5, 7, 6 };
+          break;
+        case 27:
+          // WARNING: numbering convention changed between VTK writer 1.0 and 2.2
+          // (https://discourse.julialang.org/t/writevtk-node-numbering-for-27-node-lagrange-hexahedron/93698/8) Geos uses 1.0
+          return { 0, 2, 8, 6, 18, 20, 26, 24, 1, 5, 7, 3, 19, 23, 25, 21, 9, 11, 17, 15, 12, 14, 10, 16, 4, 22, 17 };
+          break;
+        default:
+          return { }; // TODO
       }
     case ElementType::Prism5:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     case ElementType::Prism6:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
@@ -450,7 +451,7 @@ getVtkCells( CellElementRegion const & region,
     region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
     {
       auto const nodeList = subRegion.nodeList().toViewConst();
-      numConn += subRegion.size() * getVtkConnectivity( subRegion.getElementType(), nodeList.size(1) ).size();
+      numConn += subRegion.size() * getVtkConnectivity( subRegion.getElementType(), nodeList.size( 1 ) ).size();
     } );
     return numConn;
   }();
@@ -469,7 +470,7 @@ getVtkCells( CellElementRegion const & region,
   localIndex connOffset = 0;
   region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
   {
-    auto const numNodes = subRegion.nodeList().toViewConst().size(1);
+    auto const numNodes = subRegion.nodeList().toViewConst().size( 1 );
     cellTypes.insert( cellTypes.end(), subRegion.size(), toVTKCellType( subRegion.getElementType(), numNodes ) );
     std::vector< int > const vtkOrdering = getVtkConnectivity( subRegion.getElementType(), numNodes );
     localIndex const numVtkData = vtkOrdering.size();

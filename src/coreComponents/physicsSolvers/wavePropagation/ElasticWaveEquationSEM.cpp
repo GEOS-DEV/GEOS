@@ -179,8 +179,6 @@ void ElasticWaveEquationSEM::initializePreSubGroups()
 
 void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
-  std::cout << "\t[ElasticWaveEquationSEM::registerDataOnMesh]" << std::endl;
-
   WaveSolverBase::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
@@ -602,8 +600,6 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       } );
     } );
   } );
-
-  std::cout << "\t[ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] m_solverTargetNodesSet.size()=" << m_solverTargetNodesSet.size() << std::endl;
 }
 
 
@@ -738,9 +734,6 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
   arrayView1d< real32 > const rhsz = nodeManager.getField< fields::ForcingRHSz >();
 
   auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dt );
-
-  // for (auto nm : regionNames)
-  //   std::cout << "\t[ElasticWaveEquationSEM::computeUnknowns] regionName=" << nm << std::endl;
 
   finiteElement::
     regionBasedKernelApplication< EXEC_POLICY,
@@ -881,8 +874,6 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 {
   GEOS_MARK_FUNCTION;
 
-  // std::cout << "\t[ElasticWaveEquationSEM::explicitStepInternal]" << std::endl;
-
   GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -903,8 +894,6 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
                                       real64 const eventProgress,
                                       DomainPartition & domain )
 {
-  std::cout << "\t[ElasticWaveEquationSEM::cleanup]" << std::endl;
-
   // call the base class cleanup (for reporting purposes)
   SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
 

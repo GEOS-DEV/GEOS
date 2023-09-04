@@ -59,8 +59,6 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
 
 void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
-  std::cout << "\t[AcousticWaveEquationSEM::registerDataOnMesh]" << std::endl;
-
   WaveSolverBase::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
@@ -229,7 +227,6 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNum
       for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
       {
         real32 const localIncrement = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
-        // printf("[AcousticWaveEquationSEM::addSourceToRightHandSide] localIncrement=%g\n", localIncrement);
         RAJA::atomicAdd< ATOMIC_POLICY >( &rhs[sourceNodeIds[isrc][inode]], localIncrement );
       }
     }
@@ -339,8 +336,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     } );
   } );
 
-  std::cout << "\t[AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] m_solverTargetNodesSet.size()=" << m_solverTargetNodesSet.size() << " m_usePML=" << (m_usePML ?  'T' : 'F') <<
-    std::endl;
 }
 
 
@@ -984,9 +979,6 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
 
   auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
 
-  // for (auto nm : regionNames)
-  //   std::cout << "\t[AcousticWaveEquationSEM::computeUnknowns] regionName=" << nm << std::endl;
-
   finiteElement::
     regionBasedKernelApplication< EXEC_POLICY,
                                   constitutive::NullModel,
@@ -999,7 +991,6 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
   integer const cycleForSource = int(round( -minTime/dt + cycleNumber ));
-  // std::cout << "cycle GEOSX = " << cycleForSource << std::endl;
   addSourceToRightHandSide( cycleForSource, rhs );
 
   /// calculate your time integrators
@@ -1140,8 +1131,6 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                                       DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
-  // std::cout << "\t[AcousticWaveEquationSEM::explicitStepInternal]" << std::endl;
 
   GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 

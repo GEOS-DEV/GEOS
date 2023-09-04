@@ -250,11 +250,6 @@ struct MassMatrixKernel
 
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-      if( k == 0 )
-        printf(
-          "\t[ElasticWaveEquationSEMKernel::MassMatrixKernel] rho=%g\n",
-          density[k]
-          );
 
       real64 xLocal[ numNodesPerElem ][ 3 ];
       for( localIndex a = 0; a < numNodesPerElem; ++a )

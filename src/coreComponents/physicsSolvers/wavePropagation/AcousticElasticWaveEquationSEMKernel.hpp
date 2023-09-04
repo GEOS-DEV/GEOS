@@ -51,28 +51,14 @@ struct CouplingKernel
           arrayView1d< real32 > const couplingVectory,
           arrayView1d< real32 > const couplingVectorz )
   {
-    array1d< localIndex > count( 3 );
-    count.zero();
-    arrayView1d< localIndex > const count_view = count.toView();
-
-    bool const dump = helpers::ienv( "DUMP" ) > 0;
-
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
     {
       localIndex e0 = faceToElement( f, 0 ), e1 = faceToElement( f, 1 );
       localIndex er0 = faceToRegion( f, 0 ), er1 = faceToRegion( f, 1 );
       // localIndex esr0 = faceToSubRegion( f, 0 ), esr1 = faceToSubRegion( f, 1 );
 
-      if((e0 != -1 && e1 == -1) || (e0 == -1 && e1 != -1))
-      {
-        // printf("\t[CouplingKernel::launch] debug\n");
-        RAJA::atomicInc< ATOMIC_POLICY >( &count_view[0] );
-      }
-
       if( e0 != -1 && e1 != -1 )
       {
-        RAJA::atomicInc< ATOMIC_POLICY >( &count_view[1] );
-        // printf("\t[CouplingKernel::launch] f=%i -> (e0=%i, e1=%i)\n", f, e0, e1);
         // NOTE: subregion check doesn't work: esr0 != esr1
         if( er0 != er1 )  // should define an interface
         {
@@ -86,8 +72,6 @@ struct CouplingKernel
               break;
             }
           }
-          RAJA::atomicInc< ATOMIC_POLICY >( &count_view[2] );
-          // printf("\t[CouplingKernel::launch] interface found for f=%i\n", f);
           real64 xLocal[ numNodesPerFace ][ 3 ];
           for( localIndex a = 0; a < numNodesPerFace; ++a )
           {
@@ -101,17 +85,10 @@ struct CouplingKernel
           {
             real64 const aux = -FE_TYPE::computeDampingTerm( q, xLocal );
 
-            // real64 const mag = sqrt(pow(faceNormals[f][0], 2) + pow(faceNormals[f][1], 2) + pow(faceNormals[f][2], 2));
-
             real32 const localIncrementx = aux * (sgn * faceNormals[f][0]);
             real32 const localIncrementy = aux * (sgn * faceNormals[f][1]);
             real32 const localIncrementz = aux * (sgn * faceNormals[f][2]);
 
-            if( dump && q == 0 )
-              printf(
-                "\t[CouplingKernel::launch] nx=%g ny=%g nz=%g\n",
-                faceNormals[f][0], faceNormals[f][1], faceNormals[f][2]
-                );
             RAJA::atomicAdd< ATOMIC_POLICY >( &couplingVectorx[facesToNodes[f][q]], localIncrementx );
             RAJA::atomicAdd< ATOMIC_POLICY >( &couplingVectory[facesToNodes[f][q]], localIncrementy );
             RAJA::atomicAdd< ATOMIC_POLICY >( &couplingVectorz[facesToNodes[f][q]], localIncrementz );
@@ -119,12 +96,6 @@ struct CouplingKernel
         }
       }
     } );
-
-    printf(
-      "\t[CouplingKernel::launch] n_faces=%i n_boundary_faces=%i n_internal_faces=%i n_interface_faces=%i\n",
-      size, count[0], count[1], count[2]
-      );
-
 
   }
 };

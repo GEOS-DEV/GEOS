@@ -80,9 +80,9 @@
       xCoords="{ 0, 6400 }"
       yCoords="{ 0, 2400 }"
       zCoords="{ 0, 2400, 4800 }"
-      nx="{ 160 }"
-      ny="{ 60 }"
-      nz="{ 60, 60 }"
+      nx="{ 640 }"
+      ny="{ 240 }"
+      nz="{ 240, 240 }"
       cellBlockNames="{ solid, fluid }"/>
   </Mesh>
 
