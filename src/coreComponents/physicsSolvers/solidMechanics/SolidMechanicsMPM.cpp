@@ -1293,7 +1293,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   solverProfilingIf( "Resize grid based on F-table", m_prescribedBoundaryFTable == 1 );
   //#######################################################################################
-  if( m_prescribedBoundaryFTable == 1 || m_stressControl[0] || m_stressControl[1] || m_stressControl[2] )
+  if( m_prescribedBoundaryFTable == 1 || m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1)
   {
     resizeGrid( partition, nodeManager, dt );
   }
@@ -1462,7 +1462,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
       singleFaceVectorFieldSymmetryBC( face, gridVelocity, gridPosition, nodeSets );
       singleFaceVectorFieldSymmetryBC( face, gridAcceleration, gridPosition, nodeSets );
     }
-    else if( m_boundaryConditionTypes[face] == 2 && m_prescribedBoundaryFTable == 1 )
+    else if( m_boundaryConditionTypes[face] == 2 && ( m_prescribedBoundaryFTable == 1 || m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1) )
     {
       for( int fieldIndex = 0; fieldIndex < m_numVelocityFields; fieldIndex++ )
       {
@@ -2902,39 +2902,36 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   real64 boxParticleInitialVolume = 0.0;
   real64 boxDamage = 0.0; // we sum damage * initial volume, additive sync, then divide by total initial volume in box
 
-  if( m_prescribedBoundaryFTable == 1 ) // TODO: Why do we have this flag?
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
-    {
-      // Get fields
-      arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
-      arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
-      arrayView1d< real64 const > const particleInitialVolume = subRegion.getField< fields::mpm::particleInitialVolume >();
-      arrayView2d< real64 const > const particleStress = subRegion.getField< fields::mpm::particleStress >();
-      arrayView2d< real64 const > const particlePlasticStrain = subRegion.getField< fields::mpm::particlePlasticStrain >();
-      arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
+    // Get fields
+    arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
+    arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
+    arrayView1d< real64 const > const particleInitialVolume = subRegion.getField< fields::mpm::particleInitialVolume >();
+    arrayView2d< real64 const > const particleStress = subRegion.getField< fields::mpm::particleStress >();
+    arrayView2d< real64 const > const particlePlasticStrain = subRegion.getField< fields::mpm::particlePlasticStrain >();
+    arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
 
-      // Accumulate values
-      SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-      forAll< serialPolicy >( activeParticleIndices.size(), [=, &boxMass, &boxParticleInitialVolume, &boxStress, &boxPlasticStrain, &boxDamage] GEOS_HOST ( localIndex const pp ) // This
-                                                                                                                                                               // can
-                                                                                                                                                               // be
-                                                                                                                                                               // parallelized
-                                                                                                                                                               // via
-                                                                                                                                                               // reduction
+    // Accumulate values
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    forAll< serialPolicy >( activeParticleIndices.size(), [=, &boxMass, &boxParticleInitialVolume, &boxStress, &boxPlasticStrain, &boxDamage] GEOS_HOST ( localIndex const pp ) // This
+                                                                                                                                                              // can
+                                                                                                                                                              // be
+                                                                                                                                                              // parallelized
+                                                                                                                                                              // via
+                                                                                                                                                              // reduction
+      {
+        localIndex const p = activeParticleIndices[pp];
+        boxMass += particleMass[p];
+        boxParticleInitialVolume += particleInitialVolume[p];
+        for( int i=0; i<6; i++ )
         {
-          localIndex const p = activeParticleIndices[pp];
-          boxMass += particleMass[p];
-          boxParticleInitialVolume += particleInitialVolume[p];
-          for( int i=0; i<6; i++ )
-          {
-            boxStress[i] += particleStress[p][i] * particleVolume[p]; // volume weighted average, will normalize later.
-            boxPlasticStrain[i] += particlePlasticStrain[p][i] * particleVolume[p];
-          }
-          boxDamage += particleDamage[p] * particleInitialVolume[p]; // initial volume weighted average, will normalize later.
-        } );
-    } );
-  }
+          boxStress[i] += particleStress[p][i] * particleVolume[p]; // volume weighted average, will normalize later.
+          boxPlasticStrain[i] += particlePlasticStrain[p][i] * particleVolume[p];
+        }
+        boxDamage += particleDamage[p] * particleInitialVolume[p]; // initial volume weighted average, will normalize later.
+      } );
+  } );
 
   // Additive sync: sxx, syy, szz, sxy, syz, sxz, mass, particle volume, damage
   // Check the voigt indexing of stress
@@ -3079,11 +3076,8 @@ void SolidMechanicsMPM::computeBoxStress( const real64 dt,
   currentStress[0] = boxSums[0] / boxVolume;
   currentStress[1] = boxSums[1] / boxVolume;
   currentStress[2] = boxSums[2] / boxVolume;  
-  GEOS_LOG_RANK_0( "cS: {" << currentStress[0] << ", "
-                          << currentStress[1] << ", "
-                          << currentStress[2] << "}, bS: {" << boxSums[0] << ", "
-                          << boxSums[1] << ", "
-                          << boxSums[2] << "}, bV: " << boxVolume);
+
+  GEOS_LOG_RANK_0("Current stress: " << currentStress[0] << ", " << currentStress[1] << ", " << currentStress[2]);
 }
 
 void SolidMechanicsMPM::stressControl( real64 dt,
@@ -3101,21 +3095,47 @@ void SolidMechanicsMPM::stressControl( real64 dt,
                     particleManager,
                     currentStress );
 
-  GEOS_LOG_RANK_0("Current Stress: " << currentStress << ", Target Stress: {" << targetStress[0] << ", " << targetStress[1] << ", " << targetStress[2] << "}");
+  // Uses maximum bulk modulus ( lowest effective PID gains ) of all materials
+  real64 maximumBulkModulus = 0.0;
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    const SolidBase & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
+    
+    arrayView1d< real64 const > bulkModulus;
+    if(solidModel.hasWrapper( "bulkModulus" ) )
+    {
+      bulkModulus = solidModel.getReference< array1d< real64 > >( "bulkModulus" );
+    } 
+    else 
+    {
+      if( solidModel.hasWrapper( "effectiveBulkModulus" ) )
+      {
+        bulkModulus = solidModel.getReference< array1d< real64 > >( "effectiveBulkModulus" );
+      }
+      else
+      {
+        GEOS_ERROR(solidMaterialName << " must have define a bulk modulus or an effective one when stress control is enabled!" );
+      }
+    }  
 
-  // Only the first material is used for the stress controlled driver
-  // TO DO: What to do if your system has several materials? Volume average of bulk modulus?
-  const ParticleSubRegion & subRegion = dynamic_cast< ParticleSubRegion & >( particleManager.getRegion( 0 ).getSubRegion(0) );
-  string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-  const SolidBase & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
-  GEOS_LOG_RANK_IF( !solidModel.hasWrapper( "defaultBulkModulus" ), "First material must have bulk modulus defined when stress control is enabled" );
-  real64 bulkModulus = solidModel.getReference< real64 >( "defaultBulkModulus" );
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    forAll< serialPolicy >( activeParticleIndices.size(), [=, &maximumBulkModulus] GEOS_HOST ( localIndex const pp ) // Could be reduction instead of a loop
+    {
+        localIndex const p = activeParticleIndices[pp];
+        maximumBulkModulus = fmax( maximumBulkModulus, bulkModulus[p] );
+    } );
+  } );
+
+  GEOS_ERROR_IF( maximumBulkModulus <= 0.0, "At least one material must have a positive bulk or effective bulk modulus for stress control!" );
+
+  GEOS_LOG_RANK_0( "max K " << maximumBulkModulus );
 
 	// This will drive the response towards the desired stress but may be
 	// unstable.
-	real64 stressControlKp = m_stressControlKp / ( bulkModulus * dt );
-	real64 stressControlKd = m_stressControlKd / ( bulkModulus );
-	real64 stressControlKi = m_stressControlKi / ( bulkModulus * dt * dt );
+	real64 stressControlKp = m_stressControlKp / ( maximumBulkModulus * dt );
+	real64 stressControlKd = m_stressControlKd / ( maximumBulkModulus );
+	real64 stressControlKi = m_stressControlKi / ( maximumBulkModulus * dt * dt );
 
 	real64 error[3] = {0};
   LvArray::tensorOps::copy< 3 >(error, targetStress);
@@ -3165,18 +3185,20 @@ void SolidMechanicsMPM::stressControl( real64 dt,
 
 	Lzz_max = m_cflFactor * ( m_hEl[2] / dt) / ( m_xGlobalMax[2] - m_xGlobalMin[2]);
 	Lzz_min = -1.0 * Lzz_max;
-	L_new[2] = std::min( Lzz_max , std::max( L_new[1], Lzz_min ) );
+	L_new[2] = std::min( Lzz_max , std::max( L_new[2], Lzz_min ) );
 
 	for(int i=0; i < m_numDims; i++ )
 	{
-		if( m_stressControl[i] )
+		if( m_stressControl[i] == 1 )
 		{
+      GEOS_LOG_RANK_0( "Applying stress control to " << i );
 			m_domainL[i] = L_new[i];
 			//m_domainL[i] = m_stress_control_eta*L_new[i] + (1.0 -  m_stress_control_eta)*m_domain_L[i]; // CC: ported from old geos but no modified
 			m_domainF[i] += m_domainL[i]*m_domainF[i]*dt;
 		}
 	}
 
+  // CC: debug
   GEOS_LOG_RANK_0("error: " << error[0] << ", " << error[1] << ", " << error[2] << 
                   ", dedt: " << dedt[0] << ", " << dedt[1] << ", " << dedt[2] <<  
                   ", P: " << stressControlPTerm[0] << ", " << stressControlPTerm[1] << ", " << stressControlPTerm[2] << 
@@ -3507,7 +3529,7 @@ void SolidMechanicsMPM::interpolateFTable( real64 dt, real64 time_n )
 
     for( int i = 0; i < m_numDims; i++ )   // Update L and F
     {
-      if ( !m_stressControl[i] )
+      if ( m_stressControl[i] != 1)
       {
         // smooth-step interpolation with cosine, zero endpoint velocity
         if( m_fTableInterpType == 1 )
@@ -3603,6 +3625,7 @@ void SolidMechanicsMPM::interpolateStressTable( real64 dt,
     }
   }
 
+  // CC: debug
   GEOS_LOG_RANK_0("Stress control: " << m_stressControl << ", Domain Stress: " << m_domainStress);
 }
 
@@ -3753,7 +3776,7 @@ real64 SolidMechanicsMPM::getStableTimeStep( ParticleManager & particleManager )
     SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
 
     // CC: there has to be a better way to do this, have all models calculate their own wavespeed?
-    array1d< real64 > shearModulus;
+    arrayView1d< real64 const > shearModulus;
     array1d< real64 > bulkModulus;
 
     if( constitutiveRelation.hasWrapper( "bulkModulus" ) )
