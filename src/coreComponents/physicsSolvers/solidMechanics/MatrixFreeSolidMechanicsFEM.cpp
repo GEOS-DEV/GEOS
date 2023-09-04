@@ -22,6 +22,7 @@
 #include "MatrixFreeSolidMechanicsFEM.hpp"
 #include "MatrixFreeSolidMechanicsFEMOperator.hpp"
 #include "kernels/SmallStrainResidual.hpp"
+#include "fieldSpecification/TractionBoundaryCondition.hpp"
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "mesh/MeshBody.hpp"
 #include "linearAlgebra/solvers/CgSolver.hpp"
@@ -126,25 +127,29 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
   m_solution.setName( this->getName() + "/solution" );
   m_solution.create( m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 
+  arrayView1d< real64 > const localRhs = m_rhs.open();
+  applyTractionBC( time_n + dt, m_dofManager, domain, localRhs );
+  m_rhs.close();
+
 //  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp1"<<std::endl;
 
-  MatrixFreeSolidMechanicsFEMOperator unconstrained_solid_mechanics(
-    domain,
-    getMeshTargets(),
-    m_dofManager,
-    this->getDiscretizationName(),
-    m_kernelOptimizationOption );
+  MatrixFreeSolidMechanicsFEMOperator 
+  unconstrained_solid_mechanics( domain,
+                                 getMeshTargets(),
+                                 m_dofManager,
+                                 this->getDiscretizationName(),
+                                 m_kernelOptimizationOption );
 
 //  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp2"<<std::endl;
 
-  LinearOperatorWithBC< ParallelVector, FieldType > constrained_solid_mechanics(
-    *this,
-    unconstrained_solid_mechanics,
-    domain,
-    m_dofManager,
-    m_fieldName,
-    time_n+dt,
-    LinearOperatorWithBC< ParallelVector, FieldType >::DiagPolicy::DiagonalOne );
+  LinearOperatorWithBC< ParallelVector, FieldType > 
+  constrained_solid_mechanics( *this,
+                                unconstrained_solid_mechanics,
+                                domain,
+                                m_dofManager,
+                                m_fieldName,
+                                time_n+dt,
+                                LinearOperatorWithBC< ParallelVector, FieldType >::DiagPolicy::DiagonalOne );
 
 //  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp3"<<std::endl;
 
@@ -172,6 +177,7 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
 
 //   std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp7"<<std::endl;
 
+
   solver.solve( m_rhs, m_solution );
   const real64 elapsed_seconds = solver.result().solveTime;
   std::cout << "solve time: " << elapsed_seconds << "s\n";
@@ -192,6 +198,46 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
 //  std::cout<<"MatrixFreeSolidMechanicsFEM::solverStep - end"<<std::endl;
 
   return dt;
+}
+
+void MatrixFreeSolidMechanicsFEM::applyTractionBC( real64 const time,
+                                                   DofManager const & dofManager,
+                                                   DomainPartition & domain,
+                                                   arrayView1d< real64 > const & localRhs )
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
+  {
+
+    FaceManager const & faceManager = mesh.getFaceManager();
+    NodeManager const & nodeManager = mesh.getNodeManager();
+
+    string const dofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
+
+    arrayView1d< globalIndex const > const blockLocalDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+    globalIndex const dofRankOffset = dofManager.rankOffset();
+
+    fsManager.template apply< FaceManager,
+                              TractionBoundaryCondition >( time,
+                                                           mesh,
+                                                           TractionBoundaryCondition::catalogName(),
+                                                           [&]( TractionBoundaryCondition const & bc,
+                                                                string const &,
+                                                                SortedArrayView< localIndex const > const & targetSet,
+                                                                Group &,
+                                                                string const & )
+    {
+      bc.launch( time,
+                 blockLocalDofNumber,
+                 dofRankOffset,
+                 faceManager,
+                 targetSet,
+                 localRhs );
+    } );
+  } );
 }
 
 void MatrixFreeSolidMechanicsFEM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),

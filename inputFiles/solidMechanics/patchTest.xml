@@ -1,6 +1,20 @@
 <?xml version="1.0" ?>
 
 <Problem>
+  
+  
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -1, 1 }"
+      yCoords="{ -1, 1 }"
+      zCoords="{ -1, 1 }"
+      nx="{ 2 }"
+      ny="{ 2 }"
+      nz="{ 2 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
 
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
@@ -15,7 +29,7 @@
         newtonMaxIter="8"/>
       <LinearSolverParameters
         directParallel="0"
-        logLevel="1"
+        logLevel="2"
         krylovTol="1.0e-200"
         krylovMaxIter="1000"/>
     </MatrixFreeSolidMechanicsFEM>
@@ -36,18 +50,7 @@
     </SolidMechanicsLagrangianSSLE> -->
   </Solvers>
 
-  <!-- <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1 }"
-      yCoords="{ 0, 1 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 100 }"
-      ny="{ 100 }"
-      nz="{ 100 }"
-      cellBlockNames="{ cb1 }"/>
-  </Mesh> -->
+
 
   <Events
     maxTime="1.0">
@@ -56,7 +59,7 @@
       forceDt="1.0"
       target="/Solvers/Solver"/>
 
-    <!--PeriodicEvent
+    <PeriodicEvent
       name="outputs"
       timeFrequency="1.0"
       target="/Outputs/vtkOutput"/>
@@ -64,7 +67,7 @@
     <PeriodicEvent
       name="siloOutputs"
       timeFrequency="1.0"
-      target="/Outputs/siloOutput"/-->
+      target="/Outputs/siloOutput"/>
 
 
   </Events>
@@ -101,7 +104,7 @@
       objectPath="nodeManager"
       fieldName="ReferencePosition"
       component="0"
-      scale="0.0"
+      scale="0.2"
       setNames="{ middleNode }"/>
 
     <FieldSpecification
@@ -122,22 +125,13 @@
       scale="0.2"
       setNames="{ middleNode }"/>
 
-
     <FieldSpecification
-      name="zconstraint"
-      objectPath="nodeManager"
-      fieldName="totalDisplacement"
-      component="2"
-      scale="0.0"
-      setNames="{ zneg, zpos}"/>
-
-    <FieldSpecification
-      name="yconstraint"
-      objectPath="nodeManager"
-      fieldName="totalDisplacement"
-      component="1"
-      scale="0.0"
-      setNames="{ yneg, ypos }"/>
+      name="xconstraintPos"
+      objectPath="faceManager"
+      fieldName="Traction"
+      component="0"
+      scale="1.0e6"
+      setNames="{ xpos }"/>
 
     <FieldSpecification
       name="xconstraintNeg"
@@ -148,13 +142,21 @@
       setNames="{ xneg }"/>
 
     <FieldSpecification
-      name="xconstraintPos"
+      name="yconstraint"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
-      component="0"
-      scale="-0.001"
-      functionName="timeFunction"
-      setNames="{ xpos }"/>
+      component="1"
+      scale="0.0"
+      setNames="{ yneg }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ all }"/>
+
   </FieldSpecifications>
 
   <Functions>
@@ -166,10 +168,18 @@
   </Functions>
 
   <Outputs>
-    <!--VTK
+    <VTK
       name="vtkOutput"/>
 
     <Silo
-      name="siloOutput"/-->
+      name="siloOutput"/>
   </Outputs>
+
+  <Geometry>
+  <Box
+      name="middleNode"
+      xMin="{ -0.1, -0.1, -0.1 }"
+      xMax="{  0.1,  0.1,  0.1 }"/>
+  </Geometry>
+
 </Problem>

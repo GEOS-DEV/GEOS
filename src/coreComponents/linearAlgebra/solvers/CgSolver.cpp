@@ -356,7 +356,7 @@ void UnprecCgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
     logProgress();
 
     // Convergence check on ||rk||/||b||
-    if( rnorm <= absTol )
+    if( rnorm <= absTol && k > 0 )
     {
       m_result.status = LinearSolverResult::Status::Success;
       break;

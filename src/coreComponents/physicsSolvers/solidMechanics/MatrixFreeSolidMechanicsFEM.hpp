@@ -65,6 +65,12 @@ public:
                        real64 const scalingFactor,
                        DomainPartition & domain ) override;
 
+  void applyTractionBC( real64 const time,
+                        DofManager const & dofManager,
+                        DomainPartition & domain,
+                        arrayView1d< real64 > const & localRhs );
+                     
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr char const * kernelOptimizationOption() { return "kernelOptimizationOption"; }
