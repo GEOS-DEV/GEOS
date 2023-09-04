@@ -57,7 +57,7 @@ VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( string name ):
 {}
 
 static int
-toVTKCellType( ElementType const elementType )
+toVTKCellType( ElementType const elementType, localIndex numNodes )
 {
   switch( elementType )
   {
@@ -69,7 +69,16 @@ toVTKCellType( ElementType const elementType )
     case ElementType::Tetrahedron:   return VTK_TETRA;
     case ElementType::Pyramid:       return VTK_PYRAMID;
     case ElementType::Wedge:         return VTK_WEDGE;
-    case ElementType::Hexahedron:    return VTK_HEXAHEDRON;
+    case ElementType::Hexahedron:
+     switch( numNodes )
+     {
+       case 8:
+         return VTK_HEXAHEDRON;
+       case 27:
+         return VTK_QUADRATIC_HEXAHEDRON;
+       default:
+        return VTK_HEXAHEDRON;
+     }
     case ElementType::Prism5:        return VTK_PENTAGONAL_PRISM;
     case ElementType::Prism6:        return VTK_HEXAGONAL_PRISM;
     case ElementType::Prism7:        return VTK_POLYHEDRON;
@@ -100,7 +109,7 @@ toVTKCellType( ElementType const elementType )
  * nodes for mapping purpose while keeping a face streams data structure. The negative values are
  * converted to positives when generating the VTK_POLYHEDRON. Check getVtkCells() for more details.
  */
-static std::vector< int > getVtkConnectivity( ElementType const elementType )
+static std::vector< int > getVtkConnectivity( ElementType const elementType, localIndex const numNodes )
 {
   switch( elementType )
   {
@@ -112,7 +121,19 @@ static std::vector< int > getVtkConnectivity( ElementType const elementType )
     case ElementType::Tetrahedron:   return { 0, 1, 2, 3 };
     case ElementType::Pyramid:       return { 0, 1, 3, 2, 4 };
     case ElementType::Wedge:         return { 0, 4, 2, 1, 5, 3 };
-    case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
+    case ElementType::Hexahedron:
+      switch ( numNodes )
+      {
+      case 8:
+        return { 0, 1, 3, 2, 4, 5, 7, 6 };
+        break;
+      case 27:
+        // WARNING: numbering convention changed between VTK writer 1.0 and 2.2 (https://discourse.julialang.org/t/writevtk-node-numbering-for-27-node-lagrange-hexahedron/93698/8) Geos uses 1.0
+        return { 0, 2, 8, 6, 18, 20, 26, 24, 1, 5, 7, 3, 19, 23, 25, 21, 9, 11, 17, 15, 12, 14, 10, 16, 4, 22, 17 };
+        break;
+      default:
+        return { };  // TODO
+      }
     case ElementType::Prism5:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     case ElementType::Prism6:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
     case ElementType::Prism7:        return {-9,
@@ -276,7 +297,8 @@ getSurface( FaceElementSubRegion const & subRegion,
   geosx2VTKIndexing.reserve( subRegion.size() * subRegion.numNodesPerElement() );
   localIndex nodeIndexInVTK = 0;
   std::vector< vtkIdType > connectivity( subRegion.numNodesPerElement() );
-  std::vector< int > const vtkOrdering = getVtkConnectivity( subRegion.getElementType() );
+  auto numNodes = nodeListPerElement.toViewConst().size();
+  std::vector< int > const vtkOrdering = getVtkConnectivity( subRegion.getElementType(), numNodes );
 
   for( localIndex ei = 0; ei < subRegion.size(); ei++ )
   {
@@ -308,10 +330,11 @@ getSurface( FaceElementSubRegion const & subRegion,
 
   VTKCellType const type = [&]()
   {
-    switch( subRegion.numNodesPerElement() )
+    switch( numNodes )
     {
       case 6: return VTK_WEDGE;
       case 8: return VTK_HEXAHEDRON;
+      case 27: return VTK_QUADRATIC_HEXAHEDRON;
       default:
       {
         GEOS_ERROR( GEOS_FMT( "Elements with {} nodes can't be output in the subregion {}",
@@ -426,7 +449,8 @@ getVtkCells( CellElementRegion const & region,
     localIndex numConn = 0;
     region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
     {
-      numConn += subRegion.size() * getVtkConnectivity( subRegion.getElementType() ).size();
+      auto const nodeList = subRegion.nodeList().toViewConst();
+      numConn += subRegion.size() * getVtkConnectivity( subRegion.getElementType(), nodeList.size(1) ).size();
     } );
     return numConn;
   }();
@@ -445,8 +469,9 @@ getVtkCells( CellElementRegion const & region,
   localIndex connOffset = 0;
   region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
   {
-    cellTypes.insert( cellTypes.end(), subRegion.size(), toVTKCellType( subRegion.getElementType() ) );
-    std::vector< int > const vtkOrdering = getVtkConnectivity( subRegion.getElementType() );
+    auto const numNodes = subRegion.nodeList().toViewConst().size(1);
+    cellTypes.insert( cellTypes.end(), subRegion.size(), toVTKCellType( subRegion.getElementType(), numNodes ) );
+    std::vector< int > const vtkOrdering = getVtkConnectivity( subRegion.getElementType(), numNodes );
     localIndex const numVtkData = vtkOrdering.size();
     auto const nodeList = subRegion.nodeList().toViewConst();
 
