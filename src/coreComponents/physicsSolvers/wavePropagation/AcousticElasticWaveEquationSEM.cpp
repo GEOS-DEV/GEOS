@@ -177,7 +177,7 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
       if( freeSurfaceNodeIndicatorE[a] == 1 )
         return;
 
-      real32 const aux = p_n[a] / massE[a];
+      real32 const aux = -p_n[a] / massE[a];
       real32 const localIncrementx = dt2 * atoex[a] * aux;
       real32 const localIncrementy = dt2 * atoey[a] * aux;
       real32 const localIncrementz = dt2 * atoez[a] * aux;
@@ -197,11 +197,11 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
       if( freeSurfaceNodeIndicatorA[a] == 1 )
         return;
 
-      real32 const ddux_n = ( ux_np1[a] - 2.0 * ux_n[a] + ux_nm1[a] ) / dt2;
-      real32 const dduy_n = ( uy_np1[a] - 2.0 * uy_n[a] + uy_nm1[a] ) / dt2;
-      real32 const dduz_n = ( uz_np1[a] - 2.0 * uz_n[a] + uz_nm1[a] ) / dt2;
-
-      real32 const localIncrement = -dt2 * (atoex[a] * ddux_n + atoey[a] * dduy_n + atoez[a] * dduz_n) / massA[a];
+      real32 const localIncrement = (
+        atoex[a] * ( ux_np1[a] - 2.0 * ux_n[a] + ux_nm1[a] ) +
+        atoey[a] * ( uy_np1[a] - 2.0 * uy_n[a] + uy_nm1[a] ) +
+        atoez[a] * ( uz_np1[a] - 2.0 * uz_n[a] + uz_nm1[a] )
+      ) / massA[a];
 
       RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[a], localIncrement );
     } );

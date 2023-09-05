@@ -83,7 +83,7 @@ struct CouplingKernel
 
           for( localIndex q = 0; q < numNodesPerFace; ++q )
           {
-            real64 const aux = -FE_TYPE::computeDampingTerm( q, xLocal );
+            real64 const aux = FE_TYPE::computeDampingTerm( q, xLocal );
 
             real32 const localIncrementx = aux * (sgn * faceNormals[f][0]);
             real32 const localIncrementy = aux * (sgn * faceNormals[f][1]);
