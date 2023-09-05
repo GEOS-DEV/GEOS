@@ -230,6 +230,14 @@ DECLARE_FIELD( MediumVelocity,
                WRITE_AND_READ,
                "Medium velocity of the cell" );
 
+DECLARE_FIELD( MediumDensity,
+               "mediumDensity",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Medium density of the cell" );
+
 DECLARE_FIELD( StiffnessVector,
                "stiffnessVector",
                array1d< real32 >,
