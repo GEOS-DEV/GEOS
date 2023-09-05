@@ -22,7 +22,6 @@
 
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "WaveSolverBase.hpp"
-#include "Helpers.hpp"
 
 namespace geos
 {

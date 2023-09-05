@@ -88,7 +88,7 @@
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solidfluidSolverApplications"
-      forceDt="2e-4"
+      forceDt="4e-4"
       target="/Solvers/acousticelasticSolver"/>
     <PeriodicEvent
       name="outputs"
@@ -98,12 +98,12 @@
     <!-- FIXME: forceDt hack to satisfy pre-timeloop computation -->
     <SoloEvent
       name="solidSolverApplications"
-      forceDt="2e-4"
+      forceDt="4e-4"
       endTime="0"
       target="/Solvers/elasticSolver"/>
     <SoloEvent
       name="fluidSolverApplications"
-      forceDt="2e-4"
+      forceDt="4e-4"
       endTime="0"
       target="/Solvers/acousticSolver"/>
   </Events>
