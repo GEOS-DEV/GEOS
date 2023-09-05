@@ -276,7 +276,7 @@ protected:
 template< template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
                     typename FE_TYPE > class KERNEL_TYPE,
-                    typename ... ARGS >
+          typename ... ARGS >
 class KernelFactory
 {
 public:

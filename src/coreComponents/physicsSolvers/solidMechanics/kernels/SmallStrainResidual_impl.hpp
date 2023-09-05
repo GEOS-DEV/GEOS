@@ -157,7 +157,7 @@ template< typename SUBREGION_TYPE,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void SmallStrainResidual< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( localIndex const k,
-                                                                               localIndex ( &elemToNodeMap )[numNodesPerElem],
+                                                                               localIndex ( & elemToNodeMap )[numNodesPerElem],
                                                                                real64 (& xLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ],
                                                                                real64 (& varLocal) [ numNodesPerElem ][ numDofPerTrialSupportPoint ] ) const
 {
@@ -374,12 +374,12 @@ kernelLaunch( localIndex const numElems,
       typename KERNEL_TYPE::StackVariables stack;
 
       kernelComponent.setup( k, stack );
-  //    for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
-    RAJA_UNROLL
+      //    for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
+      RAJA_UNROLL
       for( integer qa=0; qa<2; ++qa )
-                                      RAJA_UNROLL
+        RAJA_UNROLL
         for( integer qb=0; qb<2; ++qb )
-                                        RAJA_UNROLL
+          RAJA_UNROLL
           for( integer qc=0; qc<2; ++qc )
           {
             //  int qa, qb, qc;
@@ -439,7 +439,7 @@ kernelLaunch( localIndex const numElems,
       kernelComponent.complete( elementToNodeMap, fLocal );
 
     } );
-  }  
+  }
   else if( kernelOptimizationOption == 3 )
   {
     forAll< POLICY >( numElems,

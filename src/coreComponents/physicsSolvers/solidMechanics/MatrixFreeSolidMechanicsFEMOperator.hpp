@@ -39,14 +39,14 @@ private:
   int const m_kernelOptimizationOption = 0;
 
 public:
-  MatrixFreeSolidMechanicsFEMOperator( DomainPartition & domain, 
-                                       map< std::pair< string, string >, array1d< string > > const & meshTargets, 
-                                       DofManager & dofManager, 
+  MatrixFreeSolidMechanicsFEMOperator( DomainPartition & domain,
+                                       map< std::pair< string, string >, array1d< string > > const & meshTargets,
+                                       DofManager & dofManager,
                                        string const & finiteElementName,
                                        int const kernelOptimizationOption );
 
-  MatrixFreeSolidMechanicsFEMOperator( dataRepository::Group & meshBodies, 
-                                       map< std::pair< string, string >, array1d< string > > const & meshTargets, 
+  MatrixFreeSolidMechanicsFEMOperator( dataRepository::Group & meshBodies,
+                                       map< std::pair< string, string >, array1d< string > > const & meshTargets,
                                        DofManager & dofManager,
                                        string const & finiteElementName,
                                        int const kernelOptimizationOption );

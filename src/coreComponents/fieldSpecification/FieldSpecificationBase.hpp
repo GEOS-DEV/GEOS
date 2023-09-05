@@ -755,15 +755,15 @@ FieldSpecificationBase::
   arrayView1d< real64 > const & rhsContribution = rhsContributionArray.toView();
 
   computeRhsContribution< FIELD_OP, POLICY, MATRIX_TYPE, LAMBDA >( targetSet,
-                                                                time,
-                                                                dt,
-                                                                dataGroup,
-                                                                dofMap,
-                                                                dofRankOffset,
-                                                                matrix,
-                                                                dof,
-                                                                rhsContribution,
-                                                                std::forward< LAMBDA >( lambda ) );
+                                                                   time,
+                                                                   dt,
+                                                                   dataGroup,
+                                                                   dofMap,
+                                                                   dofRankOffset,
+                                                                   matrix,
+                                                                   dof,
+                                                                   rhsContribution,
+                                                                   std::forward< LAMBDA >( lambda ) );
 
   FIELD_OP::template prescribeRhsValues< POLICY >( rhs, dof, dofRankOffset, rhsContribution );
 }

@@ -125,13 +125,14 @@
       scale="0.2"
       setNames="{ middleNode }"/>
 
-    <FieldSpecification
-      name="xconstraintPos"
+    <Traction
+      name="xposconstraint"
       objectPath="faceManager"
-      fieldName="Traction"
-      component="0"
       scale="1.0e6"
+      direction="{ 1, 0, 0 }"
+      functionName="timeFunction"
       setNames="{ xpos }"/>
+
 
     <FieldSpecification
       name="xconstraintNeg"
@@ -164,7 +165,7 @@
       name="timeFunction"
       inputVarNames="{ time }"
       coordinates="{ 0.0, 1.0, 2.0, 10.0 }"
-      values="{ 0.0, 1.0, 1.0, 1.0 }"/>
+      values="{ 1.0, 1.0, 1.0, 1.0 }"/>
   </Functions>
 
   <Outputs>

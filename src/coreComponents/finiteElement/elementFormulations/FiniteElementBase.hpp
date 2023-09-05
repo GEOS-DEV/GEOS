@@ -672,7 +672,7 @@ public:
                               real64 const (&var)[6],
                               real64 ( & R )[NUM_SUPPORT_POINTS][3] )
   {
-        GEOS_UNUSED_VAR( q, invJ, var, R );
+    GEOS_UNUSED_VAR( q, invJ, var, R );
   }
 
   /**

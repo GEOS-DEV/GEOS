@@ -53,7 +53,7 @@ MatrixFreeSolidMechanicsFEMOperator::
   m_meshTargets( meshTargets ),
   m_dofManager( dofManager ),
   m_finiteElementName( finiteElementName ),
-  m_kernelOptimizationOption(kernelOptimizationOption)
+  m_kernelOptimizationOption( kernelOptimizationOption )
 { }
 
 MatrixFreeSolidMechanicsFEMOperator::
@@ -66,8 +66,8 @@ MatrixFreeSolidMechanicsFEMOperator::
   m_meshTargets( meshTargets ),
   m_dofManager( dofManager ),
   m_finiteElementName( finiteElementName ),
-  m_kernelOptimizationOption(kernelOptimizationOption)
-  { }
+  m_kernelOptimizationOption( kernelOptimizationOption )
+{ }
 
 void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, ParallelVector & dst ) const
 {
@@ -112,7 +112,7 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
                                                                                          localDst2d,
                                                                                          0,
                                                                                          "",
-                                                                                         m_kernelOptimizationOption);
+                                                                                         m_kernelOptimizationOption );
 
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy< 32 >,

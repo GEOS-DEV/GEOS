@@ -19,7 +19,7 @@ namespace geos
 using namespace constitutive;
 using namespace finiteElement;
 namespace solidMechanicsLagrangianFEMKernels
-{ 
+{
 INSTANTIATION( SmallStrainResidual )
 }
 }

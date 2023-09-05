@@ -226,7 +226,6 @@ public:
 
 
 
-
   /**
    * @copydoc geosx::finiteElement::KernelBase::kernelLaunch
    *

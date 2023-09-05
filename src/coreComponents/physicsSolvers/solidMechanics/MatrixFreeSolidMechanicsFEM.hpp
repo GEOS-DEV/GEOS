@@ -69,7 +69,7 @@ public:
                         DofManager const & dofManager,
                         DomainPartition & domain,
                         arrayView1d< real64 > const & localRhs );
-                     
+
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {

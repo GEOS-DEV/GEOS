@@ -96,9 +96,9 @@ MatrixFreeSolidMechanicsFEM::MatrixFreeSolidMechanicsFEM( const string & name,
                                                           Group * const parent ):
   SolverBase( name, parent ),
   m_fieldName( "totalDisplacement" ),
-  m_kernelOptimizationOption(0)
+  m_kernelOptimizationOption( 0 )
 {
-    registerWrapper( viewKeyStruct::kernelOptimizationOption(), &m_kernelOptimizationOption ).
+  registerWrapper( viewKeyStruct::kernelOptimizationOption(), &m_kernelOptimizationOption ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Internal flag used for various kernel optimzation options within the matrix-free operator kernels. "
                     "Only for use by developers or under guidance of a developer." );
@@ -118,7 +118,7 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
 {
   GEOS_MARK_FUNCTION;
 
-//  std::cout<<"MatrixFreeSolidMechanicsFEM::solverStep - begin"<<std::endl;
+// std::cout<<"MatrixFreeSolidMechanicsFEM::solverStep - begin"<<std::endl;
   m_dofManager.setDomain( domain );
   setupDofs( domain, m_dofManager );
   m_dofManager.reorderByRank();
@@ -131,36 +131,37 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
   applyTractionBC( time_n + dt, m_dofManager, domain, localRhs );
   m_rhs.close();
 
-//  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp1"<<std::endl;
+  // std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp1"<<std::endl;
+  // std::cout<< "m_rhs: "<<std::endl<< m_rhs << std::endl;
 
-  MatrixFreeSolidMechanicsFEMOperator 
-  unconstrained_solid_mechanics( domain,
-                                 getMeshTargets(),
-                                 m_dofManager,
-                                 this->getDiscretizationName(),
-                                 m_kernelOptimizationOption );
+  MatrixFreeSolidMechanicsFEMOperator
+    unconstrained_solid_mechanics( domain,
+                                   getMeshTargets(),
+                                   m_dofManager,
+                                   this->getDiscretizationName(),
+                                   m_kernelOptimizationOption );
 
-//  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp2"<<std::endl;
+  // std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp2"<<std::endl;
+  // std::cout<< "m_rhs: "<<std::endl<< m_rhs << std::endl;
 
-  LinearOperatorWithBC< ParallelVector, FieldType > 
+  LinearOperatorWithBC< ParallelVector, FieldType >
   constrained_solid_mechanics( *this,
-                                unconstrained_solid_mechanics,
-                                domain,
-                                m_dofManager,
-                                m_fieldName,
-                                time_n+dt,
-                                LinearOperatorWithBC< ParallelVector, FieldType >::DiagPolicy::DiagonalOne );
+                               unconstrained_solid_mechanics,
+                               domain,
+                               m_dofManager,
+                               m_fieldName,
+                               time_n+dt,
+                               LinearOperatorWithBC< ParallelVector, FieldType >::DiagPolicy::DiagonalOne );
 
-//  std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp3"<<std::endl;
-
-// std::cout<< "m_rhs0: "<<std::endl<< m_rhs << std::endl;
+  // std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp3"<<std::endl;
+  // std::cout<< "m_rhs: "<<std::endl<< m_rhs << std::endl;
 
   constrained_solid_mechanics.computeConstrainedRHS( m_rhs, m_solution );
 
-//  std::cout<< "m_rhs: "<<std::endl<< m_rhs << std::endl;
-//  std::cout<< "solution: " <<std::endl<< m_solution << std::endl;
 
-//   std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp4"<<std::endl;
+  // std::cout<<"     MatrixFreeSolidMechanicsFEM::solverStep - bp4"<<std::endl;
+  // std::cout<< "m_rhs: "<<std::endl<< m_rhs << std::endl;
+  // std::cout<< "solution: " <<std::endl<< m_solution << std::endl;
 
 
   // MatrixFreePreconditionerIdentity< HypreInterface > identity( m_dofManager );

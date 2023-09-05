@@ -892,7 +892,7 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( int const qa,
                                                              real64 (& R)[numNodes][3] )
 {
   real64 const fullVar[3][3] =
-    {
+  {
     { var[0] * invJ[0][0] + var[5] * invJ[0][1] + var[4] * invJ[0][2],
       var[0] * invJ[1][0] + var[5] * invJ[1][1] + var[4] * invJ[1][2],
       var[0] * invJ[2][0] + var[5] * invJ[2][1] + var[4] * invJ[2][2] },
@@ -925,15 +925,15 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( real64 const (&invJ
 {
   real64 const fullVar[3][3] =
   {
-    { invJ[0][0] * var[0] + invJ[1][0] * var[5] + invJ[2][0] * var[4],
-      invJ[0][1] * var[0] + invJ[1][1] * var[5] + invJ[2][1] * var[4],
-      invJ[0][2] * var[0] + invJ[1][2] * var[5] + invJ[2][2] * var[4]},
-    { invJ[0][0] * var[5] + invJ[1][0] * var[1] + invJ[2][0] * var[3],
-      invJ[0][1] * var[5] + invJ[1][1] * var[1] + invJ[2][1] * var[3],
-      invJ[0][2] * var[5] + invJ[1][2] * var[1] + invJ[2][2] * var[3]},
-    { invJ[0][0] * var[4] + invJ[1][0] * var[3] + invJ[2][0] * var[2],
-      invJ[0][1] * var[4] + invJ[1][1] * var[3] + invJ[2][1] * var[2],
-      invJ[0][2] * var[4] + invJ[1][2] * var[3] + invJ[2][2] * var[2]}
+    { var[0] * invJ[0][0] + var[5] * invJ[0][1] + var[4] * invJ[0][2],
+      var[0] * invJ[1][0] + var[5] * invJ[1][1] + var[4] * invJ[1][2],
+      var[0] * invJ[2][0] + var[5] * invJ[2][1] + var[4] * invJ[2][2] },
+    { var[5] * invJ[0][0] + var[1] * invJ[0][1] + var[3] * invJ[0][2],
+      var[5] * invJ[1][0] + var[1] * invJ[1][1] + var[3] * invJ[1][2],
+      var[5] * invJ[2][0] + var[1] * invJ[2][1] + var[3] * invJ[2][2] },
+    { var[4] * invJ[0][0] + var[3] * invJ[0][1] + var[2] * invJ[0][2],
+      var[4] * invJ[1][0] + var[3] * invJ[1][1] + var[2] * invJ[1][2],
+      var[4] * invJ[2][0] + var[3] * invJ[2][1] + var[2] * invJ[2][2] }
   };
 
   supportLoop< qa, qb, qc >(

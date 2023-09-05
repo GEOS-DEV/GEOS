@@ -86,7 +86,7 @@ void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
   // Initialize iteration state
   m_result.status = LinearSolverResult::Status::NotConverged;
   m_residualNorms.clear();
-  
+
   integer & k = m_result.numIterations;
   for( k = 0; k <= m_params.krylov.maxIterations; ++k )
   {
@@ -128,7 +128,7 @@ void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
     // Keep the old value of tau
     tau_old = tau;
   }
-  
+
   m_result.residualReduction = rnorm0 > 0.0 ? m_residualNorms.back() / rnorm0 : 0.0;
   m_result.solveTime = watch.elapsedTime();
   logResult();
@@ -402,8 +402,8 @@ void UnprecCgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
     tau = dot( r, r );
 #endif
 
-  real64 iterTime = watch2.elapsedTime();
-  m_result.minIterTime = LvArray::math::min( iterTime, m_result.minIterTime );
+    real64 iterTime = watch2.elapsedTime();
+    m_result.minIterTime = LvArray::math::min( iterTime, m_result.minIterTime );
 
   }
   // std::cout << "iter: " << k << std::endl;
