@@ -7,9 +7,9 @@
       name="acousticSolver"
       discretization="FE1"
       targetRegions="{ Fluid }"
-      sourceCoordinates="{ { 1500, 1200, 2900  } }"
+      sourceCoordinates="{ { 1500, 400, 2900  } }"
       timeSourceFrequency="10"
-      receiverCoordinates="{ { 3752.29351, 1200, 2933.3333 } }"
+      receiverCoordinates="{ { 3752.29351, 400, 2933.3333 } }"
       rickerOrder="3"
       outputSeismoTrace="1"
       dtSeismoTrace="1e-3"/>
@@ -66,10 +66,10 @@
       name="mesh"
       elementTypes="{ C3D8 }"
       xCoords="{ 0, 6400 }"
-      yCoords="{ 0, 2400 }"
+      yCoords="{ 0, 800 }"
       zCoords="{ 0, 2400, 4800 }"
       nx="{ 320 }"
-      ny="{ 120 }"
+      ny="{ 40 }"
       nz="{ 120, 120 }"
       cellBlockNames="{ solid, fluid }"/>
   </Mesh>
@@ -88,7 +88,7 @@
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solidfluidSolverApplications"
-      forceDt="4e-4"
+      forceDt="3e-4"
       target="/Solvers/acousticelasticSolver"/>
     <PeriodicEvent
       name="outputs"
@@ -98,12 +98,12 @@
     <!-- FIXME: forceDt hack to satisfy pre-timeloop computation -->
     <SoloEvent
       name="solidSolverApplications"
-      forceDt="4e-4"
+      forceDt="3e-4"
       endTime="0"
       target="/Solvers/elasticSolver"/>
     <SoloEvent
       name="fluidSolverApplications"
-      forceDt="4e-4"
+      forceDt="3e-4"
       endTime="0"
       target="/Solvers/acousticSolver"/>
   </Events>
