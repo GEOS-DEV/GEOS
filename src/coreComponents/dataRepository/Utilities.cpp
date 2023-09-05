@@ -31,6 +31,7 @@ namespace dataRepository
 
 void printMemoryAllocation( Group const & group, integer const indent, real64 const threshold )
 {
+  MpiWrapper::barrier( );
   // static flag to keep track of whether or not a subgroup is the last one, and thus
   // visually will terminate the tree.
   static bool terminateBranch[64]{};
