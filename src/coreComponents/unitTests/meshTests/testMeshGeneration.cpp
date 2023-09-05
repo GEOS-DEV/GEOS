@@ -99,12 +99,12 @@ protected:
       maxCoordInX, maxCoordInY, maxCoordInZ, numElemsInX, numElemsInY, numElemsInZ );
 
     xmlWrapper::xmlDocument xmlDocument;
-    xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(), inputStream.size() );
+    xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( inputStream );
     ASSERT_TRUE( xmlResult );
 
-    xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( dataRepository::keys::ProblemManager );
+    xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( dataRepository::keys::ProblemManager );
     ProblemManager & problemManager = getGlobalState().getProblemManager();
-    problemManager.processInputFileRecursive( xmlProblemNode );
+    problemManager.processInputFileRecursive( xmlDocument, xmlProblemNode );
 
     // Open mesh levels
     DomainPartition & domain = problemManager.getDomainPartition();
@@ -113,7 +113,7 @@ protected:
 
     ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
-    elementManager.processInputFileRecursive( topLevelNode );
+    elementManager.processInputFileRecursive( xmlDocument, topLevelNode );
     elementManager.postProcessInputRecursive();
 
     problemManager.problemSetup();
