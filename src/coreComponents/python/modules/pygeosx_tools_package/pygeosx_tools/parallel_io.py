@@ -85,6 +85,7 @@ def gather_array(local_values, allgather=False, concatenate=True):
 
         # Concatenate into a single array
         if concatenate:
-            all_values = np.concatenate(all_values, axis=0)
+            if (len(all_values)):
+                all_values = np.concatenate(all_values, axis=0)
 
     return all_values
