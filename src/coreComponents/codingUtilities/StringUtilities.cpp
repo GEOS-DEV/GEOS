@@ -73,6 +73,9 @@ string removeStringAndFollowingContent( string const & str,
 template< typename T >
 string toMetricPrefixString( T const & value )
 {
+  if( value == 0 )
+    return " 0.0  ";
+
   // These are the metric prefixes corrosponding to kilo, mega, giga...etc.
   char const prefixes[12] = { 'f', 'p', 'n', 'u', 'm', ' ', 'K', 'M', 'G', 'T', 'P', 'E'};
   string rval;
