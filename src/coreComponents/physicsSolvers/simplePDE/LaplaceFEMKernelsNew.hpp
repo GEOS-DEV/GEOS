@@ -24,6 +24,7 @@
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "IsoparametricMeshUtilities.hpp"
+#include "QuadratureUtilities.hpp"
 
 namespace geos
 {
@@ -199,29 +200,89 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    typename subregionMeshType::CellType c = m_subregionMesh.getCell( k );
+    CellType cell = m_subregionMesh.getCell( k );
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
-      c.getLocalCoordinates( stack.xLocal );
+      cell.getLocalCoordinates( stack.xLocal );
 #endif
 
+    // Temporary implementation for isoparametric hexahedron
     
-    // typename subregionMeshType::CellType::JacobianType const J = c.getJacobian( real64 refPointCoords[3] );
+    // ... Get parent element coordinates for quadrature point q 
+    //     (quadrature rule responsability)
+    real64 const val = 0.5773502691896257645092;
+    int const a = q & 1;
+    int const b = ( q & 2 ) >> 1;
+    int const c = ( q & 4 ) >> 2;
+    real64 const Xiq[3] = { ( 2 * a - 1 ) * val,
+                            ( 2 * b - 1 ) * val,
+                            ( 2 * c - 1 ) * val };
+    real64 const wq = 1.0; // weight
+    // [Xiq, wq] = QuadratureRule::getQuadraturePointCoordsAndWeight( q )
+    // getQuadratureData< CELL_TYPE, INTEGRATION_RULE, INTEGRATION_ORDER >
+    // {
+    //   return Helper< CELL_TYPE, INTEGRATION_RULE, INTEGRATION_ORDER >::getQuadrat... ;
+    // }
 
-    // real64[3] pts = quadRule::getCoords< RULE >( q ); // ???
-    // m_subregionMesh::JacobianType j = c.getJacobian( pts );
-    // real64 const detJ = LvArray::tensorOps::determinant<...>( j );
+    //   Helper get...
+    //   {
+    //     return std::make_pair( Xiq, wq );
+    //   }
+    // ... 
+    // const auto [ Xiq, wq ] = getQuadratureData< CellType, IntegrationRule::Gauss, 1>( q ) 
 
+    // onst auto [ Xiq, wq ] = getQuadratureData< HexahedronCell, IntegrationRule::Gauss, 1>()
+    // {
 
-    real64 dNdX[ maxNumTestSupportPointsPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
-                                                                           stack.feStack, dNdX );
-    for( localIndex a = 0; a < stack.numRows; ++a )
+    // } 
+    // const auto [ Xiq, wq ] = getQuadratureData< CellType, IntegrationRule::Gauss, 1>() 
+
+    // ... Evaluate Jacobian
+    typename CellType::JacobianType J = cell.getJacobian( Xiq );
+    real64 const detJxW = wq * LvArray::tensorOps::invert< 3 >( J.val );
+    typename CellType::JacobianType const & Jinv = J;
+    
+     // ... Evaluate basis function gradients
+    real64 dPhiLin[2] = { -1.0, 1.0 };
+    real64 gradPhi[maxNumTestSupportPointsPerElem][3]{{}};
+    for( int kk = 0; kk < 2; ++kk )
     {
-      for( localIndex b = 0; b < stack.numCols; ++b )
+      for( int jj = 0; jj < 2; ++jj )
       {
-        stack.localJacobian[ a ][ b ] += LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) * detJ;
+        for( int ii = 0; ii < 2; ++ii )
+        {
+          real64 dNdXi[3]{ 0.125 * (       dPhiLin[ii]          ) * ( 1.0 + dPhiLin[jj] * Xiq[1] ) * ( 1.0 + dPhiLin[kk] * Xiq[2] ),
+                           0.125 * ( 1.0 + dPhiLin[ii] * Xiq[0] ) * (       dPhiLin[jj]          ) * ( 1.0 + dPhiLin[kk] * Xiq[2] ),
+                           0.125 * ( 1.0 + dPhiLin[ii] * Xiq[0] ) * ( 1.0 + dPhiLin[jj] * Xiq[1] ) * (       dPhiLin[kk]          ) };
+
+          int nodeIndex = 4 * kk + 2 * jj + ii;
+
+          gradPhi[nodeIndex][0] = dNdXi[0] * Jinv.val[0][0] + dNdXi[1] * Jinv.val[1][0] + dNdXi[2] * Jinv.val[2][0];
+          gradPhi[nodeIndex][1] = dNdXi[0] * Jinv.val[0][1] + dNdXi[1] * Jinv.val[1][1] + dNdXi[2] * Jinv.val[2][1];
+          gradPhi[nodeIndex][2] = dNdXi[0] * Jinv.val[0][2] + dNdXi[1] * Jinv.val[1][2] + dNdXi[2] * Jinv.val[2][2];
+        }
       }
     }
+    // dNdX = m_finiteElementSpace.template getGradShapeFunctions< FE_TYPE >( Xiq, Jinv );
+
+    // ... Compute local stiffness matrix
+    for( localIndex i = 0; i < stack.numRows; ++i )
+    {
+      for( localIndex j = 0; j < stack.numCols; ++j )
+      {
+        stack.localJacobian[ i ][ j ] += LvArray::tensorOps::AiBi< 3 >( gradPhi[i], gradPhi[j] ) * detJxW;
+      }
+    }
+
+    // real64 dNdX[ maxNumTestSupportPointsPerElem ][ 3 ];
+    // real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
+                                                                          //  stack.feStack, dNdX );
+    // for( localIndex a = 0; a < stack.numRows; ++a )
+    // {
+      // for( localIndex b = 0; b < stack.numCols; ++b )
+      // {
+        // stack.localJacobian[ a ][ b ] += LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) * detJxW;
+      // }
+    // }
   }
 
   /**
@@ -271,10 +332,11 @@ protected:
   arrayView1d< real64 const > const m_primaryField;
 
   // using subregionMeshType = isoparametricMesh< traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > >;
-  using subregionMeshType = typename NumVertexToSubregionMesh< traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type >,
+  using SubregionMeshType = typename NumVertexToSubregionMesh< traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type >,
                                                                FE_TYPE::numNodes  >::type;
-  subregionMeshType m_subregionMesh;
-
+  SubregionMeshType m_subregionMesh;
+   
+  using CellType = typename SubregionMeshType::CellType;
 };
 
 /// The factory used to construct a LaplaceFEMKernelNew.

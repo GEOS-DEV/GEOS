@@ -102,6 +102,7 @@ set( physicsSolvers_headers
      simplePDE/LaplaceFEM.hpp
      simplePDE/LaplaceFEMKernels.hpp
      simplePDE/IsoparametricMeshUtilities.hpp
+     simplePDE/QuadratureUtilities.hpp
      simplePDE/LaplaceFEMKernelsNew.hpp
      simplePDE/PhaseFieldDamageFEM.hpp
      simplePDE/PhaseFieldDamageFEMKernels.hpp
