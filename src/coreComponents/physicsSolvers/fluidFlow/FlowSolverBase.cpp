@@ -716,25 +716,21 @@ void FlowSolverBase::prepareStencilWeights( DomainPartition & domain ) const
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                arrayView1d< string const > const & )
   {
-    GEOS_UNUSED_VAR( regionNames );
-
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( getDiscretizationName() );
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture =
       mesh.getElemManager().constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::hydraulicAperture::key() );
-    auto hydraulicApertureView = hydraulicAperture.toNestedViewConst();
 
     fluxApprox.forStencils< SurfaceElementStencil, FaceElementToCellStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
     {
-      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+      using STENCILWRAPPER_TYPE =  typename TYPEOFREF( stencil ) ::KernelWrapper;
 
-      forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
-      {
-        stencilWrapper.removeHydraulicApertureContribution( iconn, hydraulicApertureView );
-      } );
+      STENCILWRAPPER_TYPE stencilWrapper = stencil.createKernelWrapper();
+
+      flowSolverBaseKernels::stencilWeightsUpdateKernel< STENCILWRAPPER_TYPE >::prepareStencilWeights( stencilWrapper, hydraulicAperture.toNestedViewConst() );
     } );
   } );
 }
@@ -743,25 +739,21 @@ void FlowSolverBase::updateStencilWeights( DomainPartition & domain ) const
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                arrayView1d< string const > const & )
   {
-    GEOS_UNUSED_VAR( regionNames );
-
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( getDiscretizationName() );
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture =
       mesh.getElemManager().constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::hydraulicAperture::key() );
-    auto hydraulicApertureView = hydraulicAperture.toNestedViewConst();
 
     fluxApprox.forStencils< SurfaceElementStencil, FaceElementToCellStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
     {
-      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+      using STENCILWRAPPER_TYPE =  typename TYPEOFREF( stencil ) ::KernelWrapper;
 
-      forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
-      {
-        stencilWrapper.addHydraulicApertureContribution( iconn, hydraulicApertureView );
-      } );
+      STENCILWRAPPER_TYPE stencilWrapper = stencil.createKernelWrapper();
+
+      flowSolverBaseKernels::stencilWeightsUpdateKernel< STENCILWRAPPER_TYPE >::updateStencilWeights( stencilWrapper, hydraulicAperture.toNestedViewConst() );
     } );
   } );
 }
