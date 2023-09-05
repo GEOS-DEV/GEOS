@@ -7,9 +7,9 @@
       name="acousticSolver"
       discretization="FE1"
       targetRegions="{ Fluid }"
-      sourceCoordinates="{ { 1500, 400, 2900  } }"
+      sourceCoordinates="{ { 1500, 1200, 2900  } }"
       timeSourceFrequency="10"
-      receiverCoordinates="{ { 3752.29351, 400, 2933.3333 } }"
+      receiverCoordinates="{ { 3752.29351, 1200, 2933.3333 } }"
       rickerOrder="3"
       outputSeismoTrace="1"
       dtSeismoTrace="1e-3"/>
@@ -66,10 +66,10 @@
       name="mesh"
       elementTypes="{ C3D8 }"
       xCoords="{ 0, 6400 }"
-      yCoords="{ 0, 800 }"
+      yCoords="{ 0, 2400 }"
       zCoords="{ 0, 2400, 4800 }"
       nx="{ 320 }"
-      ny="{ 40 }"
+      ny="{ 120 }"
       nz="{ 120, 120 }"
       cellBlockNames="{ solid, fluid }"/>
   </Mesh>
@@ -85,25 +85,30 @@
 
   <Events
     maxTime="3">
-    <!-- control the timestepping here with forceDt -->
-    <PeriodicEvent
-      name="solidfluidSolverApplications"
-      forceDt="3e-4"
-      target="/Solvers/acousticelasticSolver"/>
     <PeriodicEvent
       name="outputs"
       timeFrequency="5e-2"
-      targetExactTimestep="0"
-      target="/Outputs/vtkOutput"/>
+      targetExactTimestep="0">
+      <PeriodicEvent name="outputs_vtk" target="/Outputs/vtkOutput"/>
+      <PeriodicEvent name="outputs_ux_np1" target="/Tasks/displacementxCollection"/>
+      <PeriodicEvent name="outputs_uy_np1" target="/Tasks/displacementyCollection"/>
+      <PeriodicEvent name="outputs_uz_np1" target="/Tasks/displacementzCollection"/>
+      <PeriodicEvent name="outputs_px_np1" target="/Tasks/pressureCollection"/>
+    <!-- control the timestepping here with forceDt -->
+    <PeriodicEvent
+      name="solidfluidSolverApplications"
+      forceDt="1e-4"
+      target="/Solvers/acousticelasticSolver"/>
+    </PeriodicEvent>
     <!-- FIXME: forceDt hack to satisfy pre-timeloop computation -->
     <SoloEvent
       name="solidSolverApplications"
-      forceDt="3e-4"
+      forceDt="1e-4"
       endTime="0"
       target="/Solvers/elasticSolver"/>
     <SoloEvent
       name="fluidSolverApplications"
-      forceDt="3e-4"
+      forceDt="1e-4"
       endTime="0"
       target="/Solvers/acousticSolver"/>
   </Events>
@@ -133,7 +138,6 @@
       fieldName="mediumVelocity"
       scale="1500.0"
       setNames="{ all }"/>
-
     <FieldSpecification
       name="acousticDensity"
       initialCondition="1"
@@ -141,7 +145,6 @@
       fieldName="mediumDensityA"
       scale="1020.0"
       setNames="{ all }"/>
-
     <FieldSpecification
       name="elasticVelocityVp"
       initialCondition="1"
@@ -165,10 +168,45 @@
       setNames="{ all }"/>
   </FieldSpecifications>
 
+  <Tasks>
+    <PackCollection
+      name="displacementxCollection"
+      objectPath="mesh/FE1/nodeManager"
+      fieldName="displacementx_np1"/>
+    <PackCollection
+      name="displacementyCollection"
+      objectPath="mesh/FE1/nodeManager"
+      fieldName="displacementy_np1"/>
+    <PackCollection
+      name="displacementzCollection"
+      objectPath="mesh/FE1/nodeManager"
+      fieldName="displacementz_np1"/>
+    <PackCollection
+      name="pressureCollection"
+      objectPath="mesh/FE1/nodeManager"
+      fieldName="pressure_np1"/>
+  </Tasks>
+
   <Outputs>
     <VTK
       name="vtkOutput"
       writeFEMFaces="1"
       plotLevel="1"/>
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{ /Tasks/pressureCollection }"
+      filename="pressure_history"/>
+    <TimeHistory
+      name="timeHistoryOutputx"
+      sources="{ /Tasks/displacementxCollection }"
+      filename="displacementx_history"/>
+    <TimeHistory
+      name="timeHistoryOutputy"
+      sources="{ /Tasks/displacementyCollection }"
+      filename="displacementy_history"/>
+    <TimeHistory
+      name="timeHistoryOutputz"
+      sources="{ /Tasks/displacementzCollection }"
+      filename="displacementz_history"/>
   </Outputs>
 </Problem>
