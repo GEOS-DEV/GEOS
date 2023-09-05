@@ -101,6 +101,7 @@ set( physicsSolvers_headers
      simplePDE/LaplaceBaseH1.hpp
      simplePDE/LaplaceFEM.hpp
      simplePDE/LaplaceFEMKernels.hpp
+     simplePDE/CellUtilities.hpp
      simplePDE/IsoparametricMeshUtilities.hpp
      simplePDE/QuadratureUtilities.hpp
      simplePDE/LaplaceFEMKernelsNew.hpp

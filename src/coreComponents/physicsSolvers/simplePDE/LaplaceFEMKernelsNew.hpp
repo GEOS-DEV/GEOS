@@ -209,14 +209,28 @@ public:
     
     // ... Get parent element coordinates for quadrature point q 
     //     (quadrature rule responsability)
-    real64 const val = 0.5773502691896257645092;
-    int const a = q & 1;
-    int const b = ( q & 2 ) >> 1;
-    int const c = ( q & 4 ) >> 2;
-    real64 const Xiq[3] = { ( 2 * a - 1 ) * val,
-                            ( 2 * b - 1 ) * val,
-                            ( 2 * c - 1 ) * val };
-    real64 const wq = 1.0; // weight
+
+    // real64 const val = 0.5773502691896257645092;
+    // int const a = q & 1;
+    // int const b = ( q & 2 ) >> 1;
+    // int const c = ( q & 4 ) >> 2;
+    // real64 const Xiq[3] = { ( 2 * a - 1 ) * val,
+    //                         ( 2 * b - 1 ) * val,
+    //                         ( 2 * c - 1 ) * val };
+    // real64 const wq = 1.0; // weight
+
+    QuadratureUtilities::Data quadratureData = QuadratureUtilities::getData< CellType, 
+                                                                             QuadratureUtilities::Rule::Gauss,
+                                                                             8 >( q );
+
+    real64 const wq = quadratureData.wq;
+    real64 const Xiq[3] = { quadratureData.Xiq[0],
+                            quadratureData.Xiq[1],
+                            quadratureData.Xiq[2] };
+
+    // real64 & wq = quadratureData.wq;
+    // real64 (& Xiq)[3] = quadratureData.Xiq;
+
     // [Xiq, wq] = QuadratureRule::getQuadraturePointCoordsAndWeight( q )
     // getQuadratureData< CELL_TYPE, INTEGRATION_RULE, INTEGRATION_ORDER >
     // {

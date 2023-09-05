@@ -22,125 +22,10 @@
 
 #include "common/DataTypes.hpp"
 
+#include "CellUtilities.hpp"
+
 namespace geos
 {
-
-//namespace cells TODO?
-struct Dense3x3Tensor
-{
-  real64 val[3][3]{{}};
-  
-  void inPlaceInvert()
-  {
-    LvArray::tensorOps::invert< 3 >( val );
-  }
-};
-
-class HexadronCell
-{
-public:
-  constexpr static int numVertex = 8;
-
-  using JacobianType = Dense3x3Tensor;
-
-  GEOS_HOST_DEVICE
-  HexadronCell( real64 const nodeCoords[numVertex][3] )
-  {
-    for( int i = 0; i < numVertex; ++i )
-    {
-      for( int j = 0; j < 3; ++j )
-      {
-        m_nodeCoords[i][j] = nodeCoords[i][j];
-      }
-    }
-  }
-
-  GEOS_HOST_DEVICE
-  JacobianType getJacobian( real64 const refPointCoords[3] ) const
-  {
-    JacobianType J;
-    
-    // Compute Jacobian
-    real64 dPhiLin[2] = { -1.0, 1.0 };
-    for( int k = 0; k < 2; ++k )
-    {
-      for( int j = 0; j < 2; ++j )
-      {
-        for( int i = 0; i < 2; ++i )
-        {
-          real64 gradPhi[3]{ 0.125 * (       dPhiLin[i]                     ) * ( 1.0 + dPhiLin[j] * refPointCoords[1] ) * ( 1.0 + dPhiLin[k] * refPointCoords[2] ),
-                             0.125 * ( 1.0 + dPhiLin[i] * refPointCoords[0] ) * (       dPhiLin[j]                     ) * ( 1.0 + dPhiLin[k] * refPointCoords[2] ),
-                             0.125 * ( 1.0 + dPhiLin[i] * refPointCoords[0] ) * ( 1.0 + dPhiLin[j] * refPointCoords[1] ) * (       dPhiLin[k]                     ) };
-
-          int vertexInd = 4 * k + 2 * j + i;
-
-          J.val[0][0] += m_nodeCoords[vertexInd][0] * gradPhi[0]; 
-          J.val[0][1] += m_nodeCoords[vertexInd][0] * gradPhi[1]; 
-          J.val[0][2] += m_nodeCoords[vertexInd][0] * gradPhi[2]; 
-          J.val[1][0] += m_nodeCoords[vertexInd][1] * gradPhi[0]; 
-          J.val[1][1] += m_nodeCoords[vertexInd][1] * gradPhi[1]; 
-          J.val[1][2] += m_nodeCoords[vertexInd][1] * gradPhi[2]; 
-          J.val[2][0] += m_nodeCoords[vertexInd][2] * gradPhi[0]; 
-          J.val[2][1] += m_nodeCoords[vertexInd][2] * gradPhi[1]; 
-          J.val[2][2] += m_nodeCoords[vertexInd][2] * gradPhi[2]; 
-        }
-      }
-    }
-
-    return J;
-  }
-
-  // GEOS_HOST_DEVICE real64[3] mapping( real64 refPointCoords[3] ) const
-  // {
-
-  // }
-
-  GEOS_HOST_DEVICE
-  void getLocalCoordinates( real64 (& xLocal)[numVertex][3] ) const
-  {
-    for( int i = 0; i < numVertex; ++i )
-    {
-      xLocal[i][0] = m_nodeCoords[i][0]; 
-      xLocal[i][1] = m_nodeCoords[i][1]; 
-      xLocal[i][2] = m_nodeCoords[i][2]; 
-    }
-  }
-
-private:
-  real64 m_nodeCoords[numVertex][3];
-};
-
-
-// class HexadronIJKCell
-// {
-// public:
-  // constexpr static int numVertex = 8;
-// 
-  // using JacobianType = real64[3][3];
-// 
-  // GEOS_HOST_DEVICE HexadronIJKCell( real64[3] h )
-    // :
-    // m_h( h )
-  // {
-// 
-  // }
-// 
-  // GEOS_HOST_DEVICE JacobianType getJacobian( real64[3] refPointCoords )
-  // {
-    // return 0.5 * m_h;
-  // }
-// 
-  // GEOS_HOST_DEVICE real64[3] mapping( real64[3] refPointCoords ) const
-  // {
-// 
-  // }
-// 
-// private:
-  // real64[3] m_h;
-// };
-
-// ***************************************************
-
 
 template< typename ARRAY_VIEW_TYPE  >
 class isoparametricMesh
@@ -171,9 +56,9 @@ public :
   // using const_iterator = CellIterator< HexadronCell >;
   //...
 
- using CellType = HexadronCell;
+ using CellType = HexahedronCell;
   // ... 
-  constexpr static int numCellVertex = HexadronCell::numVertex;
+  constexpr static int numCellVertex = HexahedronCell::numVertex;
 
   // ...
   // constructor
@@ -184,7 +69,7 @@ public :
   }
 
   // 
-  HexadronCell getCell( localIndex k ) const
+  HexahedronCell getCell( localIndex k ) const
   {
     real64 xLocal[numCellVertex][3]{};
 
@@ -196,7 +81,7 @@ public :
       xLocal[ i ][ 2 ] = this->m_X[ localNodeIndex ][ 2 ];
     }
 
-    return HexadronCell( xLocal );
+    return HexahedronCell( xLocal );
   }
 
   // localInde{x numCells() const;
