@@ -201,7 +201,7 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
         atoex[a] * ( ux_np1[a] - 2.0 * ux_n[a] + ux_nm1[a] ) +
         atoey[a] * ( uy_np1[a] - 2.0 * uy_n[a] + uy_nm1[a] ) +
         atoez[a] * ( uz_np1[a] - 2.0 * uz_n[a] + uz_nm1[a] )
-      ) / massA[a];
+        ) / massA[a];
 
       RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[a], localIncrement );
     } );

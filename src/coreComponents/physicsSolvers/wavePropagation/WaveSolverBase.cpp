@@ -387,7 +387,6 @@ localIndex WaveSolverBase::getNumNodesPerElem()
 
   } );
   return numNodesPerElem;
-
 }
 
 } /* namespace geos */

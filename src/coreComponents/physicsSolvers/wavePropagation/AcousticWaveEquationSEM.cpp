@@ -289,14 +289,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
 
-      auto numQuadraturePointsPerElem = fe.getNumQuadraturePoints();
-      for( localIndex e = 0; e < elementSubRegion.size(); ++e )
-      {
-        for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
-        {
-          m_solverTargetNodesSet.insert( elemsToNodes[e][q] );
-        }
-      }
+      computeTargetNodeSet( elementSubRegion, elemsToNodes, fe.getNumQuadraturePoints());
 
       arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
