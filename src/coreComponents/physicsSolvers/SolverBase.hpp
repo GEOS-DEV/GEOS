@@ -547,7 +547,6 @@ public:
                         real64 const & dt,
                         DomainPartition & domain );
 
-
   /*
    * Returns the requirement for the next time-step to the event executing the solver.
    */
