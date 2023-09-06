@@ -30,6 +30,8 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "MPMSolverFields.hpp"
 
+#include "events/mpmEvents/MPMEventManager.hpp"
+
 namespace geos
 {
 
@@ -79,19 +81,6 @@ public:
   {
     OUTFLOW,    //!<Outflow
     SYMMETRY    //!<Symmetry
-  };
-
-    /**
-   * @enum EventOption
-   *
-   * The options for essential boundary conditions
-   */
-  enum struct EventOption : integer
-  {
-    ANNEAL,                          //!Anneal
-    HEAL,                            //!Heal
-    MATERIAL_SWAP,                   //!MaterialSwap
-    INSERT_PERIODIC_CONTACT_SURFACES //!Insert Periodic Contact Surfaces
   };
 
   /**
@@ -214,6 +203,12 @@ public:
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
 
+  /// Child group viewKeys
+  struct groupKeysStruct
+  {
+    dataRepository::GroupKey mpmEventManager = { "MPMEvents" }; ///< MPM Events key
+  } groupKeys; ///< Child group viewKeys
+
   void initialize( NodeManager & nodeManager,
                    ParticleManager & particleManager,
                    SpatialPartition & partition );
@@ -223,7 +218,9 @@ public:
                       ParticleManager & particleManager,
                       SpatialPartition & partition );
 
-  void performMaterialSwap( ParticleManager & particleManager );
+  void performMaterialSwap( ParticleManager & particleManager,
+                            string sourceRegionName,
+                            string destinationRegionName );
 
   void resizeGrid( SpatialPartition & partition,
                    NodeManager & nodeManager,
@@ -496,11 +493,7 @@ protected:
   array3d< int > m_ijkMap;        // Map from indices in each spatial dimension to local node ID
 
   int m_useEvents;                   // Events flag
-  array2d< real64 > m_eventsTable;
-  array1d< SolidMechanicsMPM::EventOption > m_eventTypes;                  
-  array1d< real64 > m_eventTimes;
-  array1d< real64 > m_eventIntervals;
-  array1d< bool > m_eventComplete;
+  MPMEventManager* m_mpmEventManager;
 
   int m_surfaceHealing;
 
@@ -550,12 +543,6 @@ ENUM_STRINGS( SolidMechanicsMPM::UpdateMethodOption,
 ENUM_STRINGS( SolidMechanicsMPM::BoundaryConditionOption,
               "Outflow",
               "Symmetry" );
-
-ENUM_STRINGS(SolidMechanicsMPM::EventOption,
-            "Anneal",
-            "Heal",
-            "MaterialSwap",
-            "InsertPeriodicContactSurfaces");
 
 //**********************************************************************************************************************
 //**********************************************************************************************************************

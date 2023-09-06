@@ -82,7 +82,6 @@ EventManager::~EventManager()
 {}
 
 
-
 Group * EventManager::createChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0( "Adding Event: " << childKey << ", " << childName );

@@ -45,6 +45,11 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 
+#include "events/mpmEvents/MPMEventBase.hpp"
+#include "events/mpmEvents/MaterialSwapMPMEvent.hpp"
+#include "events/mpmEvents/AnnealMPMEvent.hpp"
+#include "events/mpmEvents/HealMPMEvent.hpp"
+#include "events/mpmEvents/InsertPeriodicContactSurfacesMPMEvent.hpp"
 
 namespace geos
 {
@@ -95,8 +100,12 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_xGlobalMax{ 0.0, 0.0, 0.0 },
   m_partitionExtent{ 0.0, 0.0, 0.0 },
   m_nEl{ 0, 0, 0 },
-  m_ijkMap()
+  m_ijkMap(),
+  m_mpmEventManager( nullptr ),
+  m_surfaceHealing( false )
 {
+  setInputFlags( InputFlags::OPTIONAL );
+
   registerWrapper( "solverProfiling", &m_solverProfiling ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag for timing subroutines in the solver" );
@@ -186,10 +195,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper( "fTable", &m_fTable ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Array that stores time-dependent grid-aligned stretches interpreted as a gloabl background grid F read from the XML file." );
-
-  registerWrapper( "eventsTable", &m_eventsTable ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Array that stores events." );
 
   registerWrapper( "needsNeighborList", &m_needsNeighborList ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -286,7 +291,10 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( 0 ).
     setDescription( "Enable events" );
+
+  m_mpmEventManager = &registerGroup< MPMEventManager >( groupKeys.mpmEventManager );
 }
+
 
 void SolidMechanicsMPM::postProcessInput()
 {
@@ -559,31 +567,6 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     neighborList.setParticleManager( particleManager );
   } );
 
-  if( m_useEvents == 1){
-    // If the table read from the xml file has now rows then through error
-    GEOS_ERROR_IF(m_eventsTable.size(0) == 0, "SolidMechanicsMPM solver events table is empty!");
-    int numEvents = m_eventsTable.size(0);
-    m_eventTypes.resize( numEvents );                  
-    m_eventTimes.resize( numEvents );
-    m_eventIntervals.resize( numEvents );
-    m_eventComplete.resize( numEvents );
-    for(int i = 0; i < m_eventComplete.size(); i++){
-      m_eventComplete[i] = false;
-    }
-
-    for(int i = 0; i < m_eventsTable.size(0); i++){
-      GEOS_ERROR_IF(m_eventsTable[i].size(0) != 5, "Event in solver events table has incorrect number of terms!");
-      
-      m_eventTypes[i] = ( SolidMechanicsMPM::EventOption ) m_eventsTable[i][0];
-      m_eventTimes[i] = m_eventsTable[i][1];
-      m_eventIntervals[i] = m_eventsTable[i][2];
-
-      // GEOS_ERROR_IF(m_eventTypes[i] < 0 || m_eventTypes[i] > 4, "SolidMechanicsMPM solver does not have an event with that index!");
-      GEOS_ERROR_IF(m_eventTimes[i] < 0, "Event time must be positive.");
-      GEOS_ERROR_IF(m_eventIntervals[i] < 0, "Event interval time must be positive.");
-    }
-  }
-
   // Read and distribute BC table
   if( m_prescribedBcTable == 1 )
   {
@@ -806,6 +789,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     // Set reference position, volume and R-vectors
     for( int p=0; p<subRegion.size(); p++ )
     {
+      GEOS_LOG_RANK_0 ( subRegion.getName() << ", " << p << ": " << particleRVectors[p]);
       particleInitialVolume[p] = particleVolume[p];
       for( int i=0; i<3; i++ )
       {
@@ -1079,6 +1063,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     computeDamageFieldGradient( particleManager );
   }
 
+
   //#######################################################################################
   solverProfiling( "Update surface flag overload" );
   //#######################################################################################
@@ -1086,6 +1071,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   // Keeping this here as it will eventually be used to support other surface
   // flag usages.
   //updateSurfaceFlagOverload( particleManager );
+
 
   //#######################################################################################
   solverProfilingIf( "Update BCs based on bcTable", m_prescribedBcTable == 1 );
@@ -1286,6 +1272,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     printProfilingResults();
   }
 
+
   // Return stable time step
   return dtReturn;
 }
@@ -1295,83 +1282,96 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                                        ParticleManager & particleManager,
                                        SpatialPartition & partition )
 {
-  for(int i=0; i < m_eventTypes.size(); ++i)
+  m_mpmEventManager->forSubGroups< MPMEventBase >( [&]( MPMEventBase & event )
   {
-    SolidMechanicsMPM::EventOption eventType =  m_eventTypes[i];
-    real64 eventTime = m_eventTimes[i];
-    real64 eventInterval = m_eventIntervals[i];
+    real64 eventTime = event.getTime();
+    real64 eventInterval = event.getInterval();
 
-    if( ( eventTime - dt / 2 <= time_n && time_n <= eventTime + eventInterval + dt/2 ) && !m_eventComplete[i] )
+    if( ( eventTime - dt / 2 <= time_n && time_n <= eventTime + eventInterval + dt/2 ) && !event.isComplete() )
     {
-      switch(eventType)
+      GEOS_LOG_RANK_0( "Event " <<  event.getName() << " triggered!");
+
+      if( event.getName() == "MaterialSwap" )
       {
-        case SolidMechanicsMPM::EventOption::ANNEAL:
-          GEOS_LOG_RANK("Annealing event triggered!");
-          particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+        MaterialSwapMPMEvent & materialSwap = dynamicCast< MaterialSwapMPMEvent & >( event );
+        GEOS_LOG_RANK_0("Performing material swap");
+        performMaterialSwap( particleManager, materialSwap.getSource(), materialSwap.getDestination() );
+        event.setIsComplete( 1 );
+      }
+
+      if( event.getName() == "Anneal" )
+      {
+        AnnealMPMEvent & anneal = dynamicCast< AnnealMPMEvent & >( event );
+
+        particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+        {
+          string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+          SolidBase & solid = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
+
+          // CC: TODO
+          // Annealing should only happen to polymer model, for now anyways
+          if( solid.getCatalogName() == anneal.getSource() ) // Should this be the name for the material model, or the specific model name as defined by the user? //Or a flag for the parent material model that isAnnealable? or something?
           {
-            string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-            SolidBase & solid = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
+            arrayView2d< real64 > particleStress = subRegion.getField< fields::mpm::particleStress >();
 
-            // CC: TODO
-            // Annealing should only happen to polymer model, for now anyways
-            if(solid.getCatalogName() == "strainHardeningPolymer") // Should this be the name for the material model, or the specific model name as defined by the user? //Or a flag for the parent material model that isAnnealable? or something?
-            {
-              arrayView2d< real64 > particleStress = subRegion.getField< fields::mpm::particleStress >();
-
-              SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-              forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
-              {
-                localIndex const p = activeParticleIndices[pp];
-
-                  real64 knockdown = 0.0; // At the end of the annealing process, strongly enforce zero deviatoric stress.
-                  if( !( time_n - dt / 2 <= eventTime + eventInterval && time_n + dt / 2 > eventTime + eventInterval ) )
-                  {
-                    // Otherwise, scale it down by a number that gradually goes from 1 to 0
-                    knockdown = fmax( 0.0, 1.0 - dt * 20.0 * ( time_n - eventTime ) / ( eventInterval * eventInterval ) ); // Gaussian decay
-                  }
-
-                  // Smoothly knock down the deviatoric stress to simulate annealing
-                  real64 stress[6] = {0};
-                  LvArray::tensorOps::copy< 6 >( stress, particleStress[p]);
-
-                  real64 trialP;
-                  real64 trialQ; //  Check that this isn't a redeclaration
-                  real64 deviator[6];
-                  twoInvariant::stressDecomposition( stress,
-                                                     trialP,
-                                                     trialQ,
-                                                     deviator );
-
-                  twoInvariant::stressRecomposition( trialP,
-                                                    knockdown * trialQ,
-                                                    deviator,
-                                                    stress );
-
-                  LvArray::tensorOps::copy< 6 >( particleStress[p], stress);
-              });
-            }
-          });
-          break;
-        case SolidMechanicsMPM::EventOption::HEAL:
-          m_surfaceHealing = true;
-          particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
-          {
-            arrayView1d< int > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
-           
             SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
             forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
             {
               localIndex const p = activeParticleIndices[pp];
-              particleSurfaceFlag[p] = 0;
+
+                real64 knockdown = 0.0; // At the end of the annealing process, strongly enforce zero deviatoric stress.
+                if( !( time_n - dt / 2 <= eventTime + eventInterval && time_n + dt / 2 > eventTime + eventInterval ) )
+                {
+                  // Otherwise, scale it down by a number that gradually goes from 1 to 0
+                  knockdown = fmax( 0.0, 1.0 - dt * 20.0 * ( time_n - eventTime ) / ( eventInterval * eventInterval ) ); // Gaussian decay
+                }
+
+                // Smoothly knock down the deviatoric stress to simulate annealing
+                real64 stress[6] = {0};
+                LvArray::tensorOps::copy< 6 >( stress, particleStress[p]);
+
+                real64 trialP;
+                real64 trialQ; //  Check that this isn't a redeclaration
+                real64 deviator[6];
+                twoInvariant::stressDecomposition( stress,
+                                                    trialP,
+                                                    trialQ,
+                                                    deviator );
+
+                twoInvariant::stressRecomposition( trialP,
+                                                  knockdown * trialQ,
+                                                  deviator,
+                                                  stress );
+
+                LvArray::tensorOps::copy< 6 >( particleStress[p], stress);
             });
+          }
+        });
+      }
+
+      if( event.getName() == "Heal" )
+      {
+        HealMPMEvent & heal = dynamicCast< HealMPMEvent & >( event );      
+        
+        m_surfaceHealing = true;
+        particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+        {
+          arrayView1d< int > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
+          
+          SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+          forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+          {
+            localIndex const p = activeParticleIndices[pp];
+            particleSurfaceFlag[p] = 0;
           });
-          m_eventComplete[i] = true;
-          break;
-        case SolidMechanicsMPM::EventOption::MATERIAL_SWAP:
-          performMaterialSwap( particleManager );
-          m_eventComplete[i] = true;
-          break;
-        case SolidMechanicsMPM::EventOption::INSERT_PERIODIC_CONTACT_SURFACES:
+        });
+        event.setIsComplete( 1 );
+      }
+
+      if( event.getName() == "InsertPeriodicContactSurfaces" )
+      {
+          InsertPeriodicContactSurfacesMPMEvent & insertPeriodicContactSurfaces = dynamicCast< InsertPeriodicContactSurfacesMPMEvent & >( event );
+
           real64 xGlobalMin[3];
           real64 xGlobalMax[3];
           real64 hEl[3];
@@ -1403,24 +1403,23 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
               }
             });
           });
-          m_eventComplete[i] = true;
-          break;
-        default:
-          GEOS_ERROR("Unrecognized event type in SolidMechanicsMPM solver");
-          break;
+          event.setIsComplete( 1 );
       }
     }
-  }
+  } );
+
 }
 
-void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager )
+void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
+                                             string sourceRegionName,
+                                             string destinationRegionName )
 {
   // Material swap is performed by copying particle data from source region and constitutive model to destination region and constitutive model
   // The destination constiutive model is initialized as an empty particle subRegion
   // Presently only material swaps for polymers are implemented
   // TODO: come up with a general architecture for performing material swaps between other material models
-  string sourceRegionName = "ParticleRegion1"; // This should be read in from the XML file
-  string destinationRegionName = "ParticleRegion2"; // This shoul dbe read in from the XML file
+  // string sourceRegionName = "ParticleRegion1"; // This should be read in from the XML file
+  // string destinationRegionName = "ParticleRegion2"; // This shoul dbe read in from the XML file
 
   ParticleRegion & sourceParticleRegion = particleManager.getRegion< ParticleRegion >( sourceRegionName );
   ParticleRegion & destinationParticleRegion = particleManager.getRegion< ParticleRegion > ( destinationRegionName );
@@ -1580,8 +1579,30 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager )
       } );
     }
 
+    if( sourceSolidModel.hasWrapper( "newStress" ) && destinationSolidModel.hasWrapper( "newStress" ) )
+    {
+      arrayView3d< real64 > const sourceNewStress = sourceSolidModel.getReference< array3d< real64 > >( "newStress" );
+      arrayView3d< real64 > const destinationNewStress = destinationSolidModel.getReference< array3d< real64 > >( "newStress" );
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        LvArray::tensorOps::copy< 6 >( destinationNewStress[p][0], sourceNewStress[p][0]);
+      } );
+    }
+
+    if( sourceSolidModel.hasWrapper( "oldStress" ) && destinationSolidModel.hasWrapper( "oldStress" ) )
+    {
+      arrayView3d< real64 > const sourceOldStress = sourceSolidModel.getReference< array3d< real64 > >( "oldStress" );
+      arrayView3d< real64 > const destinationOldStress = destinationSolidModel.getReference< array3d< real64 > >( "oldStress" );
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        LvArray::tensorOps::copy< 6 >( destinationOldStress[p][0], sourceOldStress[p][0]);
+      } );
+    }
+
     // Remove particles from subregion since they now reside in destination subregion
-    // Needs make a set to pass to erase ( maybe subregion needs a clear that deletes all particles or the like)
+    // Need to make a set to pass to erase ( maybe subregion needs a clear that deletes all particles or the like)
     std::set< localIndex > indicesToErase;
     for(int p = 0; p < activeParticleIndices.size(); ++p)
     {
@@ -1590,8 +1611,8 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager )
     sourceSubRegion.erase( indicesToErase ); 
     sourceSubRegion.resize( 0 );
 
-    // sourceSubRegion.setActiveParticleIndices();
-    // destinationSubRegion.setActiveParticleIndices();
+    sourceSubRegion.setActiveParticleIndices();
+    destinationSubRegion.setActiveParticleIndices();
   }
   // Need to resize regions too
   destinationParticleRegion.resize(sourceParticleRegion.size());
@@ -2894,9 +2915,6 @@ void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleMa
   // Perform neighbor operations
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    // CC: debug
-    // GEOS_LOG_RANK_0("Get neighbor list");
-
     // Get neighbor list
     OrderedVariableToManyParticleRelation & neighborList = subRegion.neighborList();
     arrayView1d< localIndex const > const numNeighborsAll = neighborList.m_numParticles.toViewConst();
@@ -2904,15 +2922,9 @@ void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleMa
     ArrayOfArraysView< localIndex const > const neighborSubRegions = neighborList.m_toParticleSubRegion.toViewConst();
     ArrayOfArraysView< localIndex const > const neighborIndices = neighborList.m_toParticleIndex.toViewConst();
 
-// CC: debug
-    // GEOS_LOG_RANK_0("Get particle position and damage field gradient");
-
     // Get particle position and damage field gradient
     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
     arrayView2d< real64 > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
-// CC: debug
-    // GEOS_LOG_RANK_0("Loop over neighbors");
-    // GEOS_LOG_RANK_0("Subregion " << subRegion.getName() << " has " << subRegion.size() << " particles");
     
     // Loop over neighbors
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
@@ -2920,32 +2932,17 @@ void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleMa
                                                                                                 // method which uses class variables
       {
         localIndex const p = activeParticleIndices[pp];
-// CC: debug
-        // GEOS_LOG_RANK_0("Get number of neighbors and accessor indices");
 
-        // Get number of neighbors and accessor indices
-        // CC: debug
-        // GEOS_LOG_RANK_0( numNeighborsAll[p] );
-        // GEOS_LOG_RANK_0( neighborRegions[p] );
-        // GEOS_LOG_RANK_0( neighborSubRegions[p] );
-        // GEOS_LOG_RANK_0( neighborIndices[p] );
-        
         localIndex numNeighbors = numNeighborsAll[p];
         arraySlice1d< localIndex const > const regionIndices = neighborRegions[p];
         arraySlice1d< localIndex const > const subRegionIndices = neighborSubRegions[p];
         arraySlice1d< localIndex const > const particleIndices = neighborIndices[p];
-
-// CC: debug
-        // GEOS_LOG_RANK_0("Declare and size neighbor data arrays - TODO: switch to std::array? But then we'd need to template computeKernelFieldGradient");
 
         // Declare and size neighbor data arrays - TODO: switch to std::array? But then we'd need to template computeKernelFieldGradient
         std::vector< real64 > neighborVolumes( numNeighbors );
         std::vector< std::vector< real64 > > neighborPositions;
         neighborPositions.resize( numNeighbors, std::vector< real64 >( 3 ) );
         std::vector< real64 > neighborDamages( numNeighbors );
-
-// CC: debug
-        // GEOS_LOG_RANK_0("Populate neighbor data arrays");
 
         // Populate neighbor data arrays
         for( localIndex neighborIndex = 0; neighborIndex < numNeighbors; neighborIndex++ )
@@ -2966,9 +2963,6 @@ void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleMa
             neighborDamages[neighborIndex] = particleDamageAccessor[regionIndex][subRegionIndex][particleIndex];
           }
         }
-
-// CC: debug
-        // GEOS_LOG_RANK_0("Call kernel field gradient function");
 
         // Call kernel field gradient function
         computeKernelFieldGradient( particlePosition[p],        // input
@@ -3163,8 +3157,6 @@ void SolidMechanicsMPM::updateStress( real64 dt,
     arrayView3d< real64 const > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
     arrayView2d< real64 > const particleStress = subRegion.getField< fields::mpm::particleStress >();
 
-    // GEOS_LOG_RANK_0(particleStress);
-
     // Call constitutive model
     ConstitutivePassThruMPM< SolidBase >::execute( solid, [&] ( auto & castedSolid )
     {
@@ -3186,9 +3178,6 @@ void SolidMechanicsMPM::particleKinematicUpdate( ParticleManager & particleManag
   // Update particle volume and density
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    // CC: debug
-    // GEOS_LOG_RANK_0("Subregion " << subRegion.getName() << " has " << subRegion.size() << " particles");
-
     // Get particle fields
     arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
     arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
@@ -3714,6 +3703,8 @@ void SolidMechanicsMPM::performFLIPUpdate( real64 dt,
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
+
+
     // Registered by subregion
     arrayView2d< real64 > const particlePosition = subRegion.getParticleCenter();
     arrayView2d< real64 > const particleVelocity = subRegion.getParticleVelocity();
@@ -3765,7 +3756,7 @@ void SolidMechanicsMPM::performFLIPUpdate( real64 dt,
         int const fieldIndex = nodeFlag * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
         for( int i=0; i<numDims; i++ )
         {
-          particlePosition[p][i] += ( gridVelocity[mappedNode][fieldIndex][i] - 0.5 * gridAcceleration[mappedNode][fieldIndex][i] * dt ) * shapeFunctionValues[pp][g];
+          particlePosition[p][i] += ( gridVelocity[mappedNode][fieldIndex][i] - 0.5 * gridAcceleration[mappedNode][fieldIndex][i] * dt ) * shapeFunctionValues[pp][g] * dt;
           particleVelocity[p][i] += gridAcceleration[mappedNode][fieldIndex][i] * dt * shapeFunctionValues[pp][g]; // FLIP
           for( int j=0; j<numDims; j++ )
           {
@@ -3784,6 +3775,7 @@ void SolidMechanicsMPM::performFLIPUpdate( real64 dt,
         }
       }
     } );
+    subRegionIndex++;
   } );
 }
 
@@ -3850,7 +3842,7 @@ void SolidMechanicsMPM::performPICUpdate(  real64 dt,
         int const fieldIndex = nodeFlag * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
         for( int i=0; i<numDims; i++ )
         {
-          particlePosition[p][i] += ( gridVelocity[mappedNode][fieldIndex][i] - 0.5 * gridAcceleration[mappedNode][fieldIndex][i] * dt ) * shapeFunctionValues[pp][g]; // CC: position update doesn't seem consistent with old GEOS for FLIP and PIC, need to double check
+          particlePosition[p][i] += ( gridVelocity[mappedNode][fieldIndex][i] - 0.5 * gridAcceleration[mappedNode][fieldIndex][i] * dt ) * shapeFunctionValues[pp][g] * dt; // CC: position update doesn't seem consistent with old GEOS for FLIP and PIC, need to double check
           particleVelocity[p][i] += gridVelocity[mappedNode][fieldIndex][i] * shapeFunctionValues[pp][g];
           for( int j=0; j<numDims; j++ )
           {
@@ -3870,6 +3862,7 @@ void SolidMechanicsMPM::performPICUpdate(  real64 dt,
         }
       }
     } );
+    subRegionIndex++;
   } );
 }
 
@@ -4011,7 +4004,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
         }
       }
     } );
-
+    subRegionIndex++;
   } );
 }
 
@@ -4147,7 +4140,7 @@ void SolidMechanicsMPM::performFMPMUpdate(  real64 dt,
         }
       }
     } );
-
+    subRegionIndex++;
   } );
 }
 
@@ -4694,19 +4687,19 @@ void SolidMechanicsMPM::computeRVectors( ParticleManager & particleManager )
       {
         localIndex const p = activeParticleIndices[pp];
         
-        for(int i = 0; i < 3; i++)
-        {
-          LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleRVectors[p][i], particleDeformationGradient[p], particleRVectors[p][i] );
-        }
-        // for( int i=0; i<3; i++ )
+        // for(int i = 0; i < 3; i++)
         // {
-        //   for( int j=0; j<3; j++ )
-        //   {
-        //     particleRVectors[p][i][j] = particleInitialRVectors[p][i][0] * particleDeformationGradient[p][j][0] +
-        //                                 particleInitialRVectors[p][i][1] * particleDeformationGradient[p][j][1] +
-        //                                 particleInitialRVectors[p][i][2] * particleDeformationGradient[p][j][2];
-        //   }
+        //   LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleRVectors[p][i], particleDeformationGradient[p], particleRVectors[p][i] );
         // }
+        for( int i=0; i<3; i++ )
+        {
+          for( int j=0; j<3; j++ )
+          {
+            particleRVectors[p][i][j] = particleInitialRVectors[p][i][0] * particleDeformationGradient[p][j][0] +
+                                        particleInitialRVectors[p][i][1] * particleDeformationGradient[p][j][1] +
+                                        particleInitialRVectors[p][i][2] * particleDeformationGradient[p][j][2];
+          }
+        }
       } );
     }
   } );
@@ -4911,6 +4904,7 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
             {  1, 1, 1 },
             { -1, 1, 1 } };
           arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
+      
           forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
         {
           localIndex const p = activeParticleIndices[pp];
