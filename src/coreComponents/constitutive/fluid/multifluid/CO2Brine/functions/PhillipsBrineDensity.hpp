@@ -39,10 +39,14 @@ class PhillipsBrineDensityUpdate final : public PVTFunctionBaseUpdate
 public:
 
   PhillipsBrineDensityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
+                              TableFunction const & waterSatDensityTable,
+                              TableFunction const & waterSatPressureTable,
                               TableFunction const & brineDensityTable,
                               integer const CO2Index,
                               integer const waterIndex )
     : PVTFunctionBaseUpdate( componentMolarWeight ),
+    m_waterSatDensityTable( waterSatDensityTable.createKernelWrapper()),
+    m_waterSatPressureTable( waterSatPressureTable.createKernelWrapper()),
     m_brineDensityTable( brineDensityTable.createKernelWrapper() ),
     m_CO2Index( CO2Index ),
     m_waterIndex( waterIndex )
@@ -70,9 +74,17 @@ public:
   {
     PVTFunctionBaseUpdate::move( space, touch );
     m_brineDensityTable.move( space, touch );
+    m_waterSatDensityTable.move( space, touch );
+    m_waterSatPressureTable.move( space, touch );
   }
 
 protected:
+
+  /// Table with water saturated density tabulated as a function (T)
+  TableFunction::KernelWrapper m_waterSatDensityTable;
+
+  /// Table with water saturated pressure tabulated as a function (T)
+  TableFunction::KernelWrapper m_waterSatPressureTable;
 
   /// Table with brine density tabulated as a function (P,T,sal)
   TableFunction::KernelWrapper m_brineDensityTable;
@@ -115,6 +127,12 @@ public:
 
 private:
 
+  /// Table with water saturated density tabulated as a function (T)
+  TableFunction const * m_waterSatDensityTable;
+
+  /// Table with water saturated pressure tabulated as a function (T)
+  TableFunction const * m_waterSatPressureTable;
+
   /// Table with brine density tabulated as a function of (P,T,sal)
   TableFunction const * m_brineDensityTable;
 
@@ -143,8 +161,14 @@ void PhillipsBrineDensityUpdate::compute( real64 const & pressure,
   constexpr real64 c = 8.740e-4;
   constexpr real64 d = -5.044e-7;
 
-  real64 const input[2] = { pressure, temperature };
-  real64 const density = m_brineDensityTable.compute( input );
+  constexpr real64 waterCompressibility = 4.5e-10;
+
+  //real64 const input[2] = { pressure, temperature };
+  //real64 const density = m_brineDensityTable.compute( input );
+  real64 const waterSatDensity = m_waterSatDensityTable.compute( &temperature );
+  real64 const waterSatPressure = m_waterSatPressureTable.compute( &temperature );
+
+  real64 const density = waterSatDensity * exp( waterCompressibility * ( pressure - waterSatPressure ) );
 
   // equation (2) from Garcia (2001)
   real64 const squaredTemp = temperature * temperature;
@@ -195,9 +219,19 @@ void PhillipsBrineDensityUpdate::compute( real64 const & pressure,
   constexpr real64 c = 8.740e-4;
   constexpr real64 d = -5.044e-7;
 
-  real64 const input[2] = { pressure, temperature };
-  real64 densityDeriv[2]{};
-  real64 const density = m_brineDensityTable.compute( input, densityDeriv );
+  constexpr real64 waterCompressibility = 4.5e-10;
+
+  //real64 const input[2] = { pressure, temperature };
+  //real64 const density = m_brineDensityTable.compute( input, densityDeriv );
+  real64 waterSatDensity_dTemperature = 0.0;
+  real64 waterSatPressure_dTemperature = 0.0;
+  real64 const waterSatDensity = m_waterSatDensityTable.compute( &temperature, &waterSatDensity_dTemperature );
+  real64 const waterSatPressure = m_waterSatPressureTable.compute( &temperature, &waterSatPressure_dTemperature );
+  real64 const waterSatDensityCoef = exp( waterCompressibility * ( pressure - waterSatPressure ) );
+  real64 const density = waterSatDensity * waterSatDensityCoef;
+  real64 const densityDeriv[2]
+  { waterSatDensity * waterCompressibility * waterSatDensityCoef,
+    waterSatDensityCoef * ( waterSatDensity_dTemperature - waterSatDensity * waterCompressibility * waterSatPressure_dTemperature ) };
 
   // equation (2) from Garcia (2001)
   real64 const squaredTemp = temperature * temperature;

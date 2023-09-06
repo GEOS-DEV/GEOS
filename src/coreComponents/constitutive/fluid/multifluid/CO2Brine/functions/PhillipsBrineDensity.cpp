@@ -18,6 +18,7 @@
 
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PhillipsBrineDensity.hpp"
 
+#include "constitutive/fluid/multifluid/CO2Brine/functions/PureWaterProperties.hpp"
 #include "functions/FunctionManager.hpp"
 
 namespace geos
@@ -126,6 +127,9 @@ PhillipsBrineDensity::PhillipsBrineDensity( string const & name,
   string const expectedWaterComponentNames[] = { "Water", "water" };
   m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, "componentNames" );
 
+  m_waterSatDensityTable = PureWaterProperties::makeSaturationDensityTable( m_functionName, FunctionManager::getInstance() );
+  m_waterSatPressureTable = PureWaterProperties::makeSaturationPressureTable( m_functionName, FunctionManager::getInstance() );
+
   m_brineDensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
 }
 
@@ -133,6 +137,8 @@ PhillipsBrineDensity::KernelWrapper
 PhillipsBrineDensity::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,
+                        *m_waterSatDensityTable,
+                        *m_waterSatPressureTable,
                         *m_brineDensityTable,
                         m_CO2Index,
                         m_waterIndex );

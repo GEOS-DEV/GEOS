@@ -84,10 +84,11 @@ void PVTDriver::postProcessInput()
   m_numComponents = baseFluid.numFluidComponents();
 
   // resize data table to fit number of timesteps and fluid phases:
-  // (numRows,numCols) = (numSteps+1,4+3*numPhases)
-  // column order = time, pressure, temp, totalDensity, phaseFraction_{1:NP}, phaseDensity_{1:NP}, phaseViscosity_{1:NP}
+  // (numRows,numCols) = (numSteps+1,4+4*numPhases)
+  // column order = time, pressure, temp, totalDensity, phaseFraction_{1:NP}, phaseDensity_{1:NP}, phaseViscosity_{1:NP},
+  // phaseEnthalpy_{1:NP}
 
-  m_table.resize( m_numSteps+1, 3*m_numPhases+4 );
+  m_table.resize( m_numSteps+1, 4*m_numPhases+4 );
 
   // initialize functions
 
@@ -202,6 +203,7 @@ void PVTDriver::outputResults()
   fprintf( fp, "# columns %d-%d = phase fractions\n", 5, 4+m_numPhases );
   fprintf( fp, "# columns %d-%d = phase densities\n", 5+m_numPhases, 4+2*m_numPhases );
   fprintf( fp, "# columns %d-%d = phase viscosities\n", 5+2*m_numPhases, 4+3*m_numPhases );
+  fprintf( fp, "# columns %d-%d = phase enthalpies\n", 5+3*m_numPhases, 4+4*m_numPhases );
 
   for( integer n=0; n<m_table.size( 0 ); ++n )
   {

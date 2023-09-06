@@ -195,7 +195,9 @@ void calculateCO2Solubility( string const & functionName,
 
       // mole fraction of CO2 in vapor phase, equation (4) of Duan and Sun (2003)
       real64 const y_CO2 = (P - PWater( T ))/P;
+
       values[j*nPressures+i] = y_CO2 * P / exp( logK );
+
     }
   }
 }

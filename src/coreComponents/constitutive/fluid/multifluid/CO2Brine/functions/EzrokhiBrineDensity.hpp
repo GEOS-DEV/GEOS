@@ -87,7 +87,6 @@ protected:
   /// Table with water saturated density tabulated as a function (T)
   TableFunction::KernelWrapper m_waterSatDensityTable;
 
-
   /// Table with water saturated pressure tabulated as a function (T)
   TableFunction::KernelWrapper m_waterSatPressureTable;
 

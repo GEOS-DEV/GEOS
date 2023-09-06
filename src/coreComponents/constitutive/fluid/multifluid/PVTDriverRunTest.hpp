@@ -77,6 +77,7 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
         table( n, TEMP + 2 + p ) = kernelWrapper.phaseFraction()( i, 0, p );
         table( n, TEMP + 2 + p + numPhases ) = kernelWrapper.phaseDensity()( i, 0, p );
         table( n, TEMP + 2 + p + 2 * numPhases ) = kernelWrapper.phaseViscosity()( i, 0, p );
+        table( n, TEMP + 2 + p + 3 * numPhases ) = kernelWrapper.phaseEnthalpy()( i, 0, p );
       }
     }
   } );

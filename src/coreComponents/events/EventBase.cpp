@@ -159,6 +159,7 @@ void EventBase::checkEvents( real64 const time,
                              integer const cycle,
                              DomainPartition & domain )
 {
+
   // Check event status
   if( time < m_beginTime )
   {

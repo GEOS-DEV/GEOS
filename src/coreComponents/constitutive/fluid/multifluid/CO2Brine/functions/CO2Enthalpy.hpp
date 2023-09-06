@@ -131,8 +131,9 @@ void CO2EnthalpyUpdate::compute( real64 const & pressure,
   GEOS_UNUSED_VAR( phaseComposition );
   real64 const input[2] = { pressure, temperature };
 
+  real64 const referenceEnthalpy = 5.0584e5;
 
-  value = m_CO2EnthalpyTable.compute( input );
+  value = m_CO2EnthalpyTable.compute( input ) + referenceEnthalpy;
 
   if( !useMass )
   {
@@ -157,7 +158,9 @@ void CO2EnthalpyUpdate::compute( real64 const & pressure,
   real64 const input[2] = { pressure, temperature };
   real64 CO2EnthalpyDeriv[2]{};
 
-  value = m_CO2EnthalpyTable.compute( input, CO2EnthalpyDeriv );
+  real64 const referenceEnthalpy = 5.0584e5;
+
+  value = m_CO2EnthalpyTable.compute( input, CO2EnthalpyDeriv ) + referenceEnthalpy;
 
   LvArray::forValuesInSlice( dValue, []( real64 & val ){ val = 0.0; } );
   dValue[Deriv::dP] = CO2EnthalpyDeriv[0];
