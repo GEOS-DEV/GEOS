@@ -41,7 +41,7 @@ class CellBlockManagerABC;
 
 /**
  * @class ProblemManager
- * @brief This is the class handling the operation flow of the problem being ran in GEOSX
+ * @brief This is the class handling the operation flow of the problem being ran in GEOS
  */
 class ProblemManager : public dataRepository::Group
 {
@@ -119,10 +119,11 @@ public:
   void parseInputString( string const & xmlString );
 
   /**
-   * @brief Parses the input xml document
+   * @brief Parses the input xml document. Also add the includes content to the xmlDocument when
+   * `Include` nodes are encountered.
    * @param xmlDocument The parsed xml document handle
    */
-  void parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocument );
+  void parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument );
 
   /**
    * @brief Generates numerical meshes used throughout the code
