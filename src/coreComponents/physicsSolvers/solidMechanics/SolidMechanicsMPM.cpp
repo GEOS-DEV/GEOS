@@ -789,7 +789,6 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     // Set reference position, volume and R-vectors
     for( int p=0; p<subRegion.size(); p++ )
     {
-      GEOS_LOG_RANK_0 ( subRegion.getName() << ", " << p << ": " << particleRVectors[p]);
       particleInitialVolume[p] = particleVolume[p];
       for( int i=0; i<3; i++ )
       {
@@ -1289,8 +1288,6 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
     if( ( eventTime - dt / 2 <= time_n && time_n <= eventTime + eventInterval + dt/2 ) && !event.isComplete() )
     {
-      GEOS_LOG_RANK_0( "Event " <<  event.getName() << " triggered!");
-
       if( event.getName() == "MaterialSwap" )
       {
         MaterialSwapMPMEvent & materialSwap = dynamicCast< MaterialSwapMPMEvent & >( event );
@@ -1305,19 +1302,18 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
         particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
         {
-          string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-          SolidBase & solid = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
-
-          // CC: TODO
-          // Annealing should only happen to polymer model, for now anyways
-          if( solid.getCatalogName() == anneal.getSource() ) // Should this be the name for the material model, or the specific model name as defined by the user? //Or a flag for the parent material model that isAnnealable? or something?
+          if( subRegion.getName() == anneal.getSource() || anneal.getSource() == "all" )
           {
-            arrayView2d< real64 > particleStress = subRegion.getField< fields::mpm::particleStress >();
+            // Get constitutive model reference
+            string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+            SolidBase & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
 
-            SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-            forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+            GEOS_ERROR_IF( !solidModel.hasWrapper( "oldStress" ), "Cannot anneal constitutive model that does not have oldStress wrapper!");
+            arrayView3d< real64 > const constitutiveOldStress = solidModel.getReference< array3d< real64 > >( "oldStress" );
+          
+            // SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+            forAll< serialPolicy >( constitutiveOldStress.size(0), [=] GEOS_HOST ( localIndex const p )
             {
-              localIndex const p = activeParticleIndices[pp];
 
                 real64 knockdown = 0.0; // At the end of the annealing process, strongly enforce zero deviatoric stress.
                 if( !( time_n - dt / 2 <= eventTime + eventInterval && time_n + dt / 2 > eventTime + eventInterval ) )
@@ -1328,7 +1324,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
                 // Smoothly knock down the deviatoric stress to simulate annealing
                 real64 stress[6] = {0};
-                LvArray::tensorOps::copy< 6 >( stress, particleStress[p]);
+                LvArray::tensorOps::copy< 6 >( stress, constitutiveOldStress[p][0]);
 
                 real64 trialP;
                 real64 trialQ; //  Check that this isn't a redeclaration
@@ -1343,7 +1339,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                                                   deviator,
                                                   stress );
 
-                LvArray::tensorOps::copy< 6 >( particleStress[p], stress);
+                LvArray::tensorOps::copy< 6 >( constitutiveOldStress[p][0], stress);
             });
           }
         });
