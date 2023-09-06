@@ -17,6 +17,7 @@
 #include "mesh/generators/CellBlockUtilities.hpp"
 #include "mesh/generators/LineBlock.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
+#include "RAJA/util/mutex.hpp"
 
 #include <algorithm>
 
@@ -940,10 +941,20 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
   // Create new nodes, with local and global IDs
   localIndex localNodeID = 0;
   for( localIndex iter_vertex=0; iter_vertex < numLocalVertices; iter_vertex++ )
+  /*
+  forAll< parallelHostPolicy >( numLocalVertices, 
+                                [ nodeLocalToGlobalSource=nodeLocalToGlobalSource.toView(),
+                                  &nodeLocalToGlobalNew, &nodeIDs, &localNodeID]( localIndex const iter_vertex)
+  */
   {
-    nodeLocalToGlobalNew[ localNodeID ] = nodeLocalToGlobalSource.toView()[ iter_vertex ];
+    //RAJA::omp::mutex mutexNodeID;
+    //RAJA::lock_guard<RAJA::omp::mutex> lock_guardNodeID(mutexNodeID);
+    //mutexNodeID.lock();
+    nodeLocalToGlobalNew[ localNodeID ] = nodeLocalToGlobalSource[ iter_vertex ];
     nodeIDs[ createNodeKey( iter_vertex ) ] = localNodeID;
     localNodeID++;
+    //mutexNodeID.unlock();
+  //} );
   }
 
   //////////////////////////
@@ -960,12 +971,21 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
 
   GEOS_MARK_BEGIN("geos::CellBlockManager::generateHighOrderMaps -- Edges");
 
-  for( localIndex iter_edge = 0; iter_edge < numLocalEdges; iter_edge++ )
+  //for( localIndex iter_edge = 0; iter_edge < numLocalEdges; iter_edge++ )
+  forAll< parallelHostPolicy >( numLocalEdges, 
+                                [ nodeLocalToGlobalSource=nodeLocalToGlobalSource.toView(),
+                                  edgeToNodesMapSource=edgeToNodesMapSource.toView(),
+                                  edgeLocalToGlobal=edgeLocalToGlobal.toView(),
+                                  numNodesPerEdge, order, offset, numInternalNodesPerEdge,
+                                  &edgeToNodeMapNew,&nodeLocalToGlobalNew, &nodeIDs, &localNodeID]( localIndex const iter_edge)
   {
     localIndex v1 = edgeToNodesMapSource[ iter_edge ][ 0 ];
     localIndex v2 = edgeToNodesMapSource[ iter_edge ][ 1 ];
-    globalIndex gv1 = nodeLocalToGlobalSource.toView()[v1];
-    globalIndex gv2 = nodeLocalToGlobalSource.toView()[v2];
+    globalIndex gv1 = nodeLocalToGlobalSource[v1];
+    globalIndex gv2 = nodeLocalToGlobalSource[v2];
+
+    RAJA::omp::mutex mutexNodeID;
+    RAJA::lock_guard<RAJA::omp::mutex> lock_guardNodeID(mutexNodeID);
     for( int q=0; q<numNodesPerEdge; q++ )
     {
       localIndex nodeID;
@@ -986,7 +1006,8 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
       }
       edgeToNodeMapNew[ iter_edge ][ q ] = nodeID;
     }
-  }
+  //}
+  } );
   GEOS_MARK_END("geos::CellBlockManager::generateHighOrderMaps -- Edges");
 
   /////////////////////////
