@@ -120,9 +120,10 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
           }
         } );
 
-        GEOS_ERROR_IF( !bodyFound,
+        GEOS_THROW_IF( !bodyFound,
                        GEOS_FMT( "MeshBody ({}) is specified, but not found.",
-                                 targetTokens[0] ) );
+                                 targetTokens[0] ),
+                       std::domain_error );
       }
 
       string const meshBodyName = targetTokens[0];
@@ -149,9 +150,10 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
             }
           } );
 
-          GEOS_ERROR_IF( !levelFound,
+          GEOS_THROW_IF( !levelFound,
                          GEOS_FMT( "MeshLevel ({}) is specified, but not found.",
-                                   targetTokens[1] ) );
+                                   targetTokens[1] ),
+                         std::domain_error );
         }
       }
       else if( !meshBody.getMeshLevels().hasGroup< MeshLevel >( targetTokens[1] ) )
@@ -201,9 +203,9 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
       return targetGroup;
     }
   }
-  catch( std::domain_error const & e )
+  catch( std::exception const & e )
   {
-    throw InputError( e, getName() + " has a wrong objectPath: " + objectPath + "\n" );
+    throw InputError( e, getDataContext().toString() + " has a wrong objectPath: " + objectPath + "\n" );
   }
 }
 

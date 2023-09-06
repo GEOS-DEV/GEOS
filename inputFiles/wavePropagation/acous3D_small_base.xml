@@ -67,6 +67,14 @@
       scale="1500"
       setNames="{ all }"/>
 
+    <FieldSpecification
+      name="cellDensity"
+      initialCondition="1"
+      objectPath="ElementRegions/Region/cb"
+      fieldName="mediumDensity"
+      scale="1"
+      setNames="{ all }"/>
+
     <!-- 3) The free surface condition the domain -->
     <FieldSpecification
       name="zposFreeSurface"
