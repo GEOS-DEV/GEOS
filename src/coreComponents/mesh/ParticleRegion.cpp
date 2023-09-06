@@ -59,9 +59,7 @@ void ParticleRegion::generateMesh( Group & particleBlocks )
 // TODO This should be changed to call a ParticleSubRegion::getParticleCoordinates (and/or getParticleCorners) on each subregion such that
 // we can access those functions directly if needed
 array2d< real64 > ParticleRegion::getParticleCorners() const
-{
-  GEOS_LOG_RANK_0("Particle Region Size " << this->getName() << ", size " << this->size());
-  
+{ 
   // CC: Not sure why size of particle region is used instead of number of particles
   // size seems related to group parent object and number of registered wrappers but someone holds size of particles in region
   // TODO investigate this
@@ -80,12 +78,9 @@ array2d< real64 > ParticleRegion::getParticleCorners() const
     {-1, -1, -1} };
   this->forParticleSubRegions( [&]( auto & subRegion )
   {
-    GEOS_LOG_RANK_0("SubRegion Name: " << subRegion.getName() << ", size " << subRegion.size());
     arrayView2d< real64 const > const particleCenter = subRegion.getParticleCenter();
-    GEOS_LOG_RANK_0("Got particle centers");
     if( !subRegion.hasRVectors() ) // if no r-vectors, return coordinates of a cube centered at the particle with side length = volume^(1/3)
     {
-      GEOS_LOG_RANK_0("Failed getting volume");
       arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
       forAll< serialPolicy >( subRegion.size(), [=, &coords, &index] GEOS_HOST ( localIndex const p )
         {
@@ -102,10 +97,7 @@ array2d< real64 > ParticleRegion::getParticleCorners() const
     }
     else
     {
-      GEOS_LOG_RANK_0("Before Rvectors");
       arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
-      GEOS_LOG_RANK_0("After rvectors centers");
-      GEOS_LOG_RANK_0(particleRVectors.size() << ", " << particleRVectors.size(0) << ", " << particleRVectors.size(1) << ", " << particleRVectors.size(2));
       forAll< serialPolicy >( subRegion.size(), [=, &coords, &index] GEOS_HOST ( localIndex const p )
         {
           for( int corner=0; corner<8; corner++ )
