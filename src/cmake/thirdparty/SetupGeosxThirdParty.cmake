@@ -230,16 +230,30 @@ endif()
 if(DEFINED PUGIXML_DIR)
     message(STATUS "PUGIXML_DIR = ${PUGIXML_DIR}")
 
-    find_and_register( NAME pugixml
-                       INCLUDE_DIRECTORIES ${PUGIXML_DIR}/include
-                       LIBRARY_DIRECTORIES ${PUGIXML_DIR}/lib64 ${PUGIXML_DIR}/lib
-                       HEADER pugixml.hpp
-                       LIBRARIES pugixml )
+    find_package(pugixml REQUIRED
+                 PATHS ${PUGIXML_DIR}
+                 NO_DEFAULT_PATH)
 
     message( " ----> pugixml_VERSION = ${pugixml_VERSION}")
 
+    # get_target_property(RAJA_INCLUDE_DIRS RAJA INTERFACE_INCLUDE_DIRECTORIES)
+    # set_target_properties(RAJA PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${RAJA_INCLUDE_DIRS}")
     set(ENABLE_PUGIXML ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} pugixml)
+    set(thirdPartyLibs ${thirdPartyLibs} pugixml )
+
+
+
+    # find_and_register( NAME pugixml
+    #                    INCLUDE_DIRECTORIES ${PUGIXML_DIR}/include
+    #                    LIBRARY_DIRECTORIES ${PUGIXML_DIR}/lib64 ${PUGIXML_DIR}/lib
+    #                    HEADER pugixml.hpp
+    #                    LIBRARIES pugixml )
+
+    # message( " ----> pugixml_VERSION = ${pugixml_VERSION}")
+
+    # set(ENABLE_PUGIXML ON CACHE BOOL "")
+    # set(thirdPartyLibs ${thirdPartyLibs} pugixml)
+
 else()
     message(FATAL_ERROR "GEOSX requires pugixml, set PUGIXML_DIR to the pugixml installation directory.")
 endif()

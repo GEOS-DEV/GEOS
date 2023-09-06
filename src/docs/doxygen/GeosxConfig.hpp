@@ -153,7 +153,7 @@
 #define PARAMETIS_VERSION 4.0.3
 
 /// Version information for scotch
-#define scotch_VERSION 7.0.4
+#define scotch_VERSION 7.0.3
 
 /// Version information for superlu_dist
 #define superlu_dist_VERSION 6.3.0
@@ -168,7 +168,7 @@
 #define fmt_VERSION 10.0.0
 
 /// Version information for python
-#define Python3_VERSION 3.11.4
+#define Python3_VERSION 3.10.13
 
 /// Version information for CUDAToolkit
 /* #undef CUDAToolkit_VERSION */
