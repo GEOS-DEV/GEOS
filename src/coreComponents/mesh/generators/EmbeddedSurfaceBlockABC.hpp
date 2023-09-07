@@ -67,12 +67,12 @@ public:
     virtual ArrayOfArrays<localIndex> getEmbeddedSurfElemToNodes() const = 0;
     
     /**
-    * @brief Get the indices of the parent 3d elements of eacch embedded surface element (1 or more)
+    * @brief Get the indices of the parent 3d elements of each embedded surface element (1 or more)
     * @return The mapping of first dimension @p numEmbeddedSurfElem.
-    * Second dimension is heterogeneous, and depends on how many 3d element does the embedded surface element
+    * Second dimension 1 to number of 3d elements, and depends on how many 3d elements does the embedded surface element
     * intersect.
     *
-    * @details each embedded surface element is intersects 1 or more 3d elements. Indices of these 3d elements
+    * @details each embedded surface element intersects 1 or more 3d elements. Indices of these 3d elements
     * are returned for each embedded surface element
     */
     virtual ArrayOfArrays<localIndex> getEmbeddedSurfElemTo3dElem() const = 0;
@@ -84,8 +84,6 @@ public:
     * first dimension is @p numEmbeddedSurfaceElements*4.
     * Second dimension is 3, and represents the x, y and z.
     */
-    virtual ArrayOfArrays<real64> getEmbeddedSurfaceElementsNodes() const = 0;
-    
-
+    virtual ArrayOfArrays<real64> getEmbeddedSurfElemNodes() const = 0;
     
 }
