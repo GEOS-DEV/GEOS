@@ -86,6 +86,10 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
 
   // This should probably handled elsewhere:
   int aa = 0;
+  
+  // CC: debug
+  GEOS_LOG_RANK("Block Names: " << m_blockNames);
+
   for( auto & particleBlockName : m_blockNames )
   {
     ParticleBlock & particleBlock = particleBlockManager.registerParticleBlock( particleBlockName );
@@ -184,7 +188,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     string_array particleBlockNames = particleRegion.getParticleBlockNames();
     std::string material = particleRegion.getMaterialList()[0]; // We will assume that the material list for a region contains only one
                                                                 // material since MPM will only be doing single phase mechanics for now
-    for( auto i=0; i<particleBlockNames.size(); i++ )
+    for( auto i=0; i < particleBlockNames.size(); i++ )
     {
       blockMaterialMap[particleBlockNames[i]] = materialMap[material];
     }
@@ -335,7 +339,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     }
     numParticles += size;
     particleRegion.resize( size );
-    //GEOS_LOG_RANK( "Particle region " << particleRegion.getName() << " contains " << size << " particles on this rank." );
+    GEOS_LOG_RANK( "Particle region " << particleRegion.getName() << " contains " << size << " particles on this rank." );
   } );
 
   particleManager.resize( numParticles ); // All this does is change m_size for the particleManager, gives a convenient way to get the total
