@@ -6,9 +6,9 @@ env
 # Optional BUILD_AND_TEST_ARGS to pass arguments to build_test_helper.sh script.
 #
 # We extract the location of the GEOSX_TPL from the container...
-GEOSX_TPL_DIR=$(docker run --rm ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} /bin/bash -c 'echo ${GEOSX_TPL_DIR}')
+GEOSX_TPL_DIR=$(docker run --rm ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} /bin/bash -c 'echo ${GEOSX_TPL_DIR}' | tail -1)
 # ... so we can install GEOSX alongside. This is assumed for bundling the binaries, so consider modifying with care.
-GEOSX_DIR=${GEOSX_TPL_DIR}/../GEOSX-INSTALL
+GEOSX_DIR=${GEOSX_TPL_DIR}/../GEOSX-${GITHUB_SHA:0:7}
 # We need to get the build directory
 BUILD_DIR=${GITHUB_WORKSPACE}
 # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
@@ -32,5 +32,5 @@ docker run \
   -e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU} \
   -e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON} \
   ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} \
-  ${BUILD_DIR_MOUNT_POINT}/scripts/travis_build_and_test.sh ${BUILD_AND_TEST_ARGS};
+  ${BUILD_DIR_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh ${BUILD_AND_TEST_ARGS};
 

@@ -385,12 +385,9 @@ void ProblemManager::parseInputFile()
 
   // Load preprocessed xml file
   xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult const xmlResult = xmlDocument.load_file( inputFileName.c_str() );
+  xmlWrapper::xmlResult const xmlResult = xmlDocument.loadFile( inputFileName, true );
   GEOS_THROW_IF( !xmlResult, GEOS_FMT( "Errors found while parsing XML file {}\nDescription: {}\nOffset: {}",
                                        inputFileName, xmlResult.description(), xmlResult.offset ), InputError );
-
-  // Add path information to the file
-  xmlDocument.append_child( xmlWrapper::filePathString ).append_attribute( xmlWrapper::filePathString ).set_value( inputFileName.c_str() );
 
   // Parse the results
   parseXMLDocument( xmlDocument );
@@ -401,7 +398,7 @@ void ProblemManager::parseInputString( string const & xmlString )
 {
   // Load preprocessed xml file
   xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( xmlString.c_str(), xmlString.length() );
+  xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( xmlString, true );
   GEOS_THROW_IF( !xmlResult, GEOS_FMT( "Errors found while parsing XML string\nDescription: {}\nOffset: {}",
                                        xmlResult.description(), xmlResult.offset ), InputError );
 
@@ -410,18 +407,18 @@ void ProblemManager::parseInputString( string const & xmlString )
 }
 
 
-void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocument )
+void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
 {
   // Extract the problem node and begin processing the user inputs
-  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( this->getName().c_str() );
-  processInputFileRecursive( xmlProblemNode );
+  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( this->getName().c_str() );
+  processInputFileRecursive( xmlDocument, xmlProblemNode );
 
   // The objects in domain are handled separately for now
   {
     DomainPartition & domain = getDomainPartition();
     ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( groupKeys.constitutiveManager );
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
-    constitutiveManager.processInputFileRecursive( topLevelNode );
+    constitutiveManager.processInputFileRecursive( xmlDocument, topLevelNode );
 
     // Open mesh levels
     MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
@@ -441,7 +438,7 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
       {
         ElementRegionManager & elementManager = meshLevel.getElemManager();
         Group * newRegion = elementManager.createChild( regionNode.name(), regionName );
-        newRegion->processInputFileRecursive( regionNode );
+        newRegion->processInputFileRecursive( xmlDocument, regionNode );
       } );
     }
   }
@@ -542,14 +539,14 @@ void ProblemManager::generateMesh()
   // setup the base discretizations (hard code this for now)
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
-    CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
+    CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
 
     MeshLevel & baseMesh = meshBody.getBaseDiscretization();
     array1d< string > junk;
     this->generateMeshLevel( baseMesh, cellBlockManager, nullptr, junk.toViewConst() );
 
     ElementRegionManager & elemManager = baseMesh.getElemManager();
-    elemManager.generateWells( meshManager, baseMesh );
+    elemManager.generateWells( cellBlockManager, baseMesh );
 
   } );
 
@@ -574,7 +571,7 @@ void ProblemManager::generateMesh()
         int const order = feDiscretization->getOrder();
         string const & discretizationName = feDiscretization->getName();
         arrayView1d< string const > const regionNames = discretizationPair.second;
-        CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
+        CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
 
         // create a high order MeshLevel
         if( order > 1 )
@@ -613,7 +610,7 @@ void ProblemManager::generateMesh()
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
 
-    meshBody.deregisterGroup( keys::cellManager );
+    meshBody.deregisterCellBlockManager();
 
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
     {
@@ -703,7 +700,7 @@ ProblemManager::getDiscretizations() const
 }
 
 void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
-                                        CellBlockManagerABC & cellBlockManager,
+                                        CellBlockManagerABC const & cellBlockManager,
                                         Group const * const discretization,
                                         arrayView1d< string const > const & )
 {

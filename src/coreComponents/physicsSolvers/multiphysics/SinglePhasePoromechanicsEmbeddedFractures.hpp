@@ -188,7 +188,7 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
 
   real64 const maxForce =
     finiteElement::
-      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+      regionBasedKernelApplication< parallelDevicePolicy< >,
                                     CONSTITUTIVE_BASE,
                                     CellElementSubRegion >( mesh,
                                                             regionNames,
@@ -207,7 +207,7 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
                                          FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
   finiteElement::
-    regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+    regionBasedKernelApplication< parallelDevicePolicy< >,
                                   CONSTITUTIVE_BASE,
                                   CellElementSubRegion >( mesh,
                                                           regionNames,
