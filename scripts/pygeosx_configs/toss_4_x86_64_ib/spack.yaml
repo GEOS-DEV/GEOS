@@ -10,10 +10,10 @@
 # See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
 #------------------------------------------------------------------------------------------------------------
 
-#  %clang@14.0.6
+#  %gcc@10.3.1
 #
 # Uberenv command to build pygeosx dependencies:
-# python3 ./scripts/uberenv/uberenv.py --spec="%clang@14.0.6" --project-json="scripts/pygeosx_configs/pygeosx.json"
+# python3 ./scripts/uberenv/uberenv.py --spec="%gcc@10.3.1" --project-json="scripts/pygeosx_configs/pygeosx.json"
 
 spack:
   config:
@@ -34,12 +34,12 @@ spack:
 
   compilers::
   - compiler:
-      spec: clang@14.0.6
+      spec: gcc@10.3.1
       paths:
-        cc: /usr/tce/packages/clang/clang-14.0.6-magic/bin/clang
-        cxx: /usr/tce/packages/clang/clang-14.0.6-magic/bin/clang++
-        f77: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/gfortran
-        fc: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/gfortran
+        cc: /usr/tce/packages/gcc/gcc-10.3.1-magic/bin/gcc
+        cxx: /usr/tce/packages/gcc/gcc-10.3.1-magic/bin/g++
+        f77: /usr/tce/packages/gcc/gcc-10.3.1-magic/bin/gfortran
+        fc: /usr/tce/packages/gcc/gcc-10.3.1-magic/bin/gfortran
       operating_system: rhel8
       target: x86_64
       modules: []
@@ -59,8 +59,8 @@ spack:
     mvapich2:
       buildable: False
       externals:
-        - spec: mvapich2@2.3%clang@14.0.6
-          prefix:  /usr/tce/packages/mvapich2/mvapich2-2.3.6-clang-14.0.6-magic
+        - spec: mvapich2@2.3%gcc@10.3.1
+          prefix:  /usr/tce/packages/mvapich2/mvapich2-2.3.6-gcc-10.3.1-magic
 
     intel-oneapi-mkl:
       externals:
@@ -105,11 +105,6 @@ spack:
       externals:
         - spec: diffutils@3.3
           prefix: /usr/bin
-    py-sphinx:
-      buildable: False
-      externals:
-      - spec: py-sphinx@1.6.3
-        prefix: /collab/usr/gapps/python/build/spack-toss3.2/opt/spack/linux-rhel7-x86_64/gcc-4.9.3/python-2.7.14-7rci3jkmuht2uiwp433afigveuf4ocnu/
     autoconf:
       buildable: False
       externals:
