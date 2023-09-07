@@ -42,7 +42,8 @@
         newtonMaxIter="200"
         newtonTol="1.0e-4"/>
       <LinearSolverParameters
-        solverType="direct"/>
+        solverType="gmres"
+        preconditionerType="amg"/>
     </PhaseFieldDamageFEM>
 
     <SolidMechanicsLagrangianSSLE
