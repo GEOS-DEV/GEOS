@@ -110,7 +110,7 @@ public:
   { return m_nonLocalGhosts; }
 
 private:
-  /// Array containing the indices of the objects on the bomain boundary with the neighbor.
+  /// Array containing the indices of the objects on the domain boundary with the neighbor.
   array1d< localIndex > m_matchedPartitionBoundary;
 
   /// Array containing the indices of the objects to send to the neighbor.
