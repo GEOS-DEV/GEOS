@@ -17,6 +17,7 @@
  */
 
 // Source includes
+#define SELECTED_FE_TYPES H1_Hexahedron_Lagrange1_GaussLegendre2
 #include "LaplaceFEM.hpp"
 #include "LaplaceFEMKernels.hpp"
 #include "LaplaceFEMKernelsNew.hpp"

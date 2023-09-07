@@ -23,6 +23,7 @@
 #define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
+#include "BasisFunctionUtilities.hpp"
 #include "IsoparametricMeshUtilities.hpp"
 #include "QuadratureUtilities.hpp"
 
@@ -74,6 +75,7 @@ public:
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::maxNumTestSupportPointsPerElem;
+  using Base::numQuadraturePointsPerElem;
   using Base::m_dofNumber;
   using Base::m_dofRankOffset;
   using Base::m_matrix;
@@ -221,7 +223,7 @@ public:
 
     QuadratureUtilities::Data quadratureData = QuadratureUtilities::getData< CellType, 
                                                                              QuadratureUtilities::Rule::Gauss,
-                                                                             8 >( q );
+                                                                             numQuadraturePointsPerElem >( q );
 
     real64 const wq = quadratureData.wq;
     real64 const Xiq[3] = { quadratureData.Xiq[0],
@@ -251,31 +253,24 @@ public:
     // const auto [ Xiq, wq ] = getQuadratureData< CellType, IntegrationRule::Gauss, 1>() 
 
     // ... Evaluate Jacobian
-    typename CellType::JacobianType J = cell.getJacobian( Xiq );
-    real64 const detJxW = wq * LvArray::tensorOps::invert< 3 >( J.val );
+    typename CellType::JacobianType J = cell.getJacobian( quadratureData.Xiq );
+    real64 const detJxW = quadratureData.wq * LvArray::tensorOps::invert< 3 >( J.val );
     typename CellType::JacobianType const & Jinv = J;
     
      // ... Evaluate basis function gradients
-    real64 dPhiLin[2] = { -1.0, 1.0 };
-    real64 gradPhi[maxNumTestSupportPointsPerElem][3]{{}};
-    for( int kk = 0; kk < 2; ++kk )
+    real64 dNdX[maxNumTestSupportPointsPerElem][3]{{}};
+    for( int i = 0; i < maxNumTestSupportPointsPerElem; ++i )
     {
-      for( int jj = 0; jj < 2; ++jj )
-      {
-        for( int ii = 0; ii < 2; ++ii )
-        {
-          real64 dNdXi[3]{ 0.125 * (       dPhiLin[ii]          ) * ( 1.0 + dPhiLin[jj] * Xiq[1] ) * ( 1.0 + dPhiLin[kk] * Xiq[2] ),
-                           0.125 * ( 1.0 + dPhiLin[ii] * Xiq[0] ) * (       dPhiLin[jj]          ) * ( 1.0 + dPhiLin[kk] * Xiq[2] ),
-                           0.125 * ( 1.0 + dPhiLin[ii] * Xiq[0] ) * ( 1.0 + dPhiLin[jj] * Xiq[1] ) * (       dPhiLin[kk]          ) };
+      // Basis function in parent space
+      BasisFunctionUtilities::Gradient dNdXi = BasisFunctionUtilities::getGradient< CellType,
+                                                                                    BasisFunctionUtilities::BasisFunction::Lagrange >( i, quadratureData.Xiq );
 
-          int nodeIndex = 4 * kk + 2 * jj + ii;
-
-          gradPhi[nodeIndex][0] = dNdXi[0] * Jinv.val[0][0] + dNdXi[1] * Jinv.val[1][0] + dNdXi[2] * Jinv.val[2][0];
-          gradPhi[nodeIndex][1] = dNdXi[0] * Jinv.val[0][1] + dNdXi[1] * Jinv.val[1][1] + dNdXi[2] * Jinv.val[2][1];
-          gradPhi[nodeIndex][2] = dNdXi[0] * Jinv.val[0][2] + dNdXi[1] * Jinv.val[1][2] + dNdXi[2] * Jinv.val[2][2];
-        }
-      }
+      // Basis function in physical space
+      dNdX[i][0] = dNdXi.val[0] * Jinv.val[0][0] + dNdXi.val[1] * Jinv.val[1][0] + dNdXi.val[2] * Jinv.val[2][0];
+      dNdX[i][1] = dNdXi.val[0] * Jinv.val[0][1] + dNdXi.val[1] * Jinv.val[1][1] + dNdXi.val[2] * Jinv.val[2][1];
+      dNdX[i][2] = dNdXi.val[0] * Jinv.val[0][2] + dNdXi.val[1] * Jinv.val[1][2] + dNdXi.val[2] * Jinv.val[2][2];
     }
+
     // dNdX = m_finiteElementSpace.template getGradShapeFunctions< FE_TYPE >( Xiq, Jinv );
 
     // ... Compute local stiffness matrix
@@ -283,7 +278,7 @@ public:
     {
       for( localIndex j = 0; j < stack.numCols; ++j )
       {
-        stack.localJacobian[ i ][ j ] += LvArray::tensorOps::AiBi< 3 >( gradPhi[i], gradPhi[j] ) * detJxW;
+        stack.localJacobian[ i ][ j ] += LvArray::tensorOps::AiBi< 3 >( dNdX[i], dNdX[j] ) * detJxW;
       }
     }
 

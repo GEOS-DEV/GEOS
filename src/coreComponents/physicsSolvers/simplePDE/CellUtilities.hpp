@@ -42,6 +42,8 @@ public:
   constexpr static int numVertex = 8;
 
   using JacobianType = Dense3x3Tensor;
+  using IndexType = localIndex; // 
+  // using IndexType = tripleIndex // to be added for IJK hex meshes
 
   GEOS_HOST_DEVICE
   HexahedronCell( real64 const nodeCoords[numVertex][3] )
