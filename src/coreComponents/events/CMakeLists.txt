@@ -9,6 +9,12 @@ set( events_headers
      SoloEvent.hpp
      tasks/TaskBase.hpp
      tasks/TasksManager.hpp
+     mpmEvents/MPMEventManager.hpp
+     mpmEvents/MPMEventBase.hpp
+     mpmEvents/MaterialSwapMPMEvent.hpp
+     mpmEvents/AnnealMPMEvent.hpp
+     mpmEvents/HealMPMEvent.hpp
+     mpmEvents/InsertPeriodicContactSurfacesMPMEvent.hpp
    )
 
 #
@@ -22,6 +28,12 @@ set( events_sources
      SoloEvent.cpp
      tasks/TaskBase.cpp
      tasks/TasksManager.cpp
+     mpmEvents/MPMEventManager.cpp
+     mpmEvents/MPMEventBase.cpp
+     mpmEvents/MaterialSwapMPMEvent.cpp
+     mpmEvents/AnnealMPMEvent.cpp
+     mpmEvents/HealMPMEvent.cpp
+     mpmEvents/InsertPeriodicContactSurfacesMPMEvent.cpp
    )
 
 set( dependencyList ${parallelDeps} common fileIO dataRepository )

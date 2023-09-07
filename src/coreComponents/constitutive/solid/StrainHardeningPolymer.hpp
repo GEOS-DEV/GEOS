@@ -442,7 +442,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
       // check yield function
       real64 yield = trialQ / yieldStrength;
       if( trialQ > yieldStrength || iter > 0 ){
-  
+
         // re-construct stress = P*eye + sqrt(2/3)*Q*nhat
         real64 stressTemp[6] = {0};
         twoInvariant::stressRecomposition( trialP,

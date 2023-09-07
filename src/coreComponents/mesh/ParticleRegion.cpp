@@ -59,9 +59,13 @@ void ParticleRegion::generateMesh( Group & particleBlocks )
 // TODO This should be changed to call a ParticleSubRegion::getParticleCoordinates (and/or getParticleCorners) on each subregion such that
 // we can access those functions directly if needed
 array2d< real64 > ParticleRegion::getParticleCorners() const
-{
-  int const size = 8 * ( this->size() ); // number of particle corners in this region for a parallelpiped CPDI particle type (TODO add
+{ 
+  // CC: Not sure why size of particle region is used instead of number of particles
+  // size seems related to group parent object and number of registered wrappers but someone holds size of particles in region
+  // TODO investigate this
+  // int const size = 8 * ( this->size() ); // number of particle corners in this region for a parallelpiped CPDI particle type (TODO add
                                          // support for general types)
+  int const size = 8 * ( this->getNumberOfParticles() );
   array2d< real64 > coords( size, 3 );
   int index = 0;
   int const signs[8][3] = { { 1, 1, 1},   // These have to be in the order VTK wants
