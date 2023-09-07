@@ -17,9 +17,12 @@
  */
 
 // Source includes
-#define SELECTED_FE_TYPES H1_Hexahedron_Lagrange1_GaussLegendre2
+#define SELECTED_FE_TYPES H1_Wedge_Lagrange1_Gauss6 
+// #define SELECTED_FE_TYPES H1_Hexahedron_Lagrange1_GaussLegendre2
+//                          H1_Wedge_Lagrange1_Gauss6 
+
 #include "LaplaceFEM.hpp"
-#include "LaplaceFEMKernels.hpp"
+// #include "LaplaceFEMKernels.hpp"
 #include "LaplaceFEMKernelsNew.hpp"
 
 namespace geos

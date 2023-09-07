@@ -143,6 +143,91 @@ private:
 
 // ***************************************************
 
+class WedgeCell
+{
+public:
+  constexpr static int numVertex = 6;
+
+  using JacobianType = Dense3x3Tensor;
+  using IndexType = localIndex; // 
+  // using IndexType = tripleIndex // to be added for IJK hex meshes
+
+  GEOS_HOST_DEVICE
+  WedgeCell( real64 const nodeCoords[numVertex][3] )
+  {
+    for( int i = 0; i < numVertex; ++i )
+    {
+      for( int j = 0; j < 3; ++j )
+      {
+        m_nodeCoords[i][j] = nodeCoords[i][j];
+      }
+    }
+  }
+  
+  GEOS_HOST_DEVICE
+  inline
+  constexpr static int linearMap( int const indexT, int const indexL )
+  {
+    return 2 * indexT + indexL;
+  }
+
+  GEOS_HOST_DEVICE
+  JacobianType getJacobian( real64 const refPointCoords[3] ) const
+  {
+    JacobianType J;
+    
+    // Compute Jacobian
+    real64 const psiTRI[3] = { 1.0 - refPointCoords[0] - refPointCoords[1], refPointCoords[0], refPointCoords[1] };
+    real64 const psiLIN[2] = { 0.5 - 0.5*refPointCoords[2], 0.5 + 0.5*refPointCoords[2] };
+    constexpr real64 dpsiTRI[2][3] = { { -1.0, 1.0, 0.0 }, { -1.0, 0.0, 1.0 } };
+    constexpr real64 dpsiLIN[2] = { -0.5, 0.5 };
+
+    
+
+    for( int a=0; a<3; ++a )
+    {
+      for( int b=0; b<2; ++b )
+      {
+        real64 gradPhi[3]{ dpsiTRI[0][a] * psiLIN[b],
+                           dpsiTRI[1][a] * psiLIN[b],
+                           psiTRI[a] * dpsiLIN[b] };
+
+        int vertexInd = linearMap( a, b );
+
+        J.val[0][0] += m_nodeCoords[vertexInd][0] * gradPhi[0]; 
+        J.val[0][1] += m_nodeCoords[vertexInd][0] * gradPhi[1]; 
+        J.val[0][2] += m_nodeCoords[vertexInd][0] * gradPhi[2]; 
+        J.val[1][0] += m_nodeCoords[vertexInd][1] * gradPhi[0]; 
+        J.val[1][1] += m_nodeCoords[vertexInd][1] * gradPhi[1]; 
+        J.val[1][2] += m_nodeCoords[vertexInd][1] * gradPhi[2]; 
+        J.val[2][0] += m_nodeCoords[vertexInd][2] * gradPhi[0]; 
+        J.val[2][1] += m_nodeCoords[vertexInd][2] * gradPhi[1]; 
+        J.val[2][2] += m_nodeCoords[vertexInd][2] * gradPhi[2]; 
+      }
+    }
+
+    return J;
+  }
+
+  // GEOS_HOST_DEVICE real64[3] mapping( real64 refPointCoords[3] ) const
+  // {
+
+  // }
+
+  GEOS_HOST_DEVICE
+  void getLocalCoordinates( real64 (& xLocal)[numVertex][3] ) const
+  {
+    for( int i = 0; i < numVertex; ++i )
+    {
+      xLocal[i][0] = m_nodeCoords[i][0]; 
+      xLocal[i][1] = m_nodeCoords[i][1]; 
+      xLocal[i][2] = m_nodeCoords[i][2]; 
+    }
+  }
+
+private:
+  real64 m_nodeCoords[numVertex][3];
+};
 
 } // namespace geos
 

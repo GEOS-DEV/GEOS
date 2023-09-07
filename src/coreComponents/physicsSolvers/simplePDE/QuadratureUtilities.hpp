@@ -69,8 +69,47 @@ struct Helper< HexahedronCell,
     return data;
   }
 };
-                  
 
+template<>
+struct Helper< WedgeCell,
+               Rule::Gauss,
+               6 >
+{
+  GEOS_HOST_DEVICE
+  inline
+  constexpr static real64 parentCoords0( int const a )
+  {
+    return 0.5 * ( a & 2 );
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  constexpr static real64 parentCoords1( int const a )
+  {
+    return 0.25 * ( a & 4 );
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  constexpr static real64 parentCoords2( int const a )
+  {
+    return -1.0 + 2 * ( a & 1 );
+  } 
+
+  GEOS_HOST_DEVICE
+  static Data getData( int q )
+  {
+    constexpr static real64 quadratureCrossSectionCoord = 1.0 / 6.0;
+    constexpr static real64 quadratureLongitudinalCoord = 1.0 / 1.732050807568877293528;
+
+    Data data;
+    data.wq = 1.0 / 6.0; // weight  
+    data.Xiq[0] = quadratureCrossSectionCoord + 0.5 * parentCoords0( q ); 
+    data.Xiq[1] = quadratureCrossSectionCoord + 0.5 * parentCoords1( q ); 
+    data.Xiq[2] = quadratureLongitudinalCoord * parentCoords2( q ); 
+    return data;
+  }
+};
 
 // getQuadratureData< CELL_TYPE, INTEGRATION_RULE, INTEGRATION_ORDER >
 
