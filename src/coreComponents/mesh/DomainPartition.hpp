@@ -32,15 +32,16 @@ namespace geos
 class SiloFile;
 namespace dataRepository
 {
-namespace keys
-{
-/// @return PartitionManager string key
-string const partitionManager( "partitionManager" );
-}
+// namespace keys
+// {
+// /// @return PartitionManager string key
+// string const partitionManager( "partitionManager" );
+// }
 }
 
 class ObjectManagerBase;
 class PartitionBase;
+class SpatialPartition;
 
 /**
  * @brief Partition of the decomposed physical domain. It also manages the connexion information to its neighbors.
@@ -135,6 +136,8 @@ public:
     dataRepository::GroupKey constitutiveManager = { constitutiveManagerString() };
     /// View key to the Group holding the CommunicationManager
     dataRepository::GroupKey communicationManager = { "communicationManager" };
+    /// View key to the Group holding the SpatialPartition
+    dataRepository::GroupKey spatialPartition = { "SpatialPartition" };
   }
   /// groupKey struct for the DomainPartition class
   groupKeys;
@@ -282,6 +285,11 @@ public:
   std::vector< NeighborCommunicator > const & getNeighbors() const
   { return m_neighbors; };
 
+  SpatialPartition & getPartition() //CC: Maybe it should be const
+  {
+    return *m_spatialPartition;
+  }
+
 private:
 
   /**
@@ -292,6 +300,12 @@ private:
    * @brief Contains all the communicators from this DomainPartition to its neighbors.
    */
   std::vector< NeighborCommunicator > m_neighbors;
+  /**
+   * @brief Spatial partition
+   */
+   SpatialPartition * m_spatialPartition;
+  
+
 };
 
 } /* namespace geos */

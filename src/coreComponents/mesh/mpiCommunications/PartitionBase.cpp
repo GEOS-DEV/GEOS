@@ -17,9 +17,16 @@
 namespace geos
 {
 
+PartitionBase::PartitionBase(string const & name,
+                Group * const parent ):
+ Group( name, parent )
+{}
+
 PartitionBase::PartitionBase( const unsigned int numPartitions,
-                              const unsigned int thisPartition )
-  :
+                              const unsigned int thisPartition, 
+                              string const & name,
+                              Group * const parent ): 
+  Group( name, parent ),
   m_size( numPartitions ),
   m_rank( thisPartition ),
   m_numColors( 1 )
@@ -27,5 +34,11 @@ PartitionBase::PartitionBase( const unsigned int numPartitions,
 
 PartitionBase::~PartitionBase()
 {}
+
+PartitionBase::CatalogInterface::CatalogType & PartitionBase::getCatalog()
+{
+  static PartitionBase::CatalogInterface::CatalogType catalog;
+  return catalog;
+}
 
 }
