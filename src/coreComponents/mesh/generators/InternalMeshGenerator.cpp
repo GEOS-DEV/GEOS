@@ -554,7 +554,8 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
   auto & nodeSets = cellBlockManager.getNodeSets();
 
-  SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+  // SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+  SpatialPartition & partition = dynamic_cast< SpatialPartition & >( domain.getPartition() );
 
 //  bool isRadialWithOneThetaPartition = false;
 

@@ -215,6 +215,10 @@ public:
                           const real64 time_n,
                           NodeManager & nodeManager );
 
+  void applySuperimposedVelocityGradient( const real64 dt,
+                                          ParticleManager & particleManager,
+                                          SpatialPartition & partition );
+
   void computeGridSurfaceNormals( ParticleManager & particleManager,
                                   NodeManager & nodeManager );
 
@@ -387,8 +391,16 @@ public:
                                             arraySlice1d< real64 const > const particlePosition,
                                             real64 * particleBodyForce);
 
+  void correctGhostParticleCentersAcrossPeriodicBoundaries(ParticleManager & particleManager,
+                                                           SpatialPartition & partition);
+
+  void correctParticleCentersAcrossPeriodicBoundaries(ParticleManager & particleManager,
+                                                      SpatialPartition & partition);
+
   void cofactor( real64 const (& F)[3][3],
                  real64 (& Fc)[3][3] );
+
+  real64 Mod(real64 num, real64 denom);
 
 protected:
   virtual void postProcessInput() override final;
@@ -414,6 +426,7 @@ protected:
   array1d< int > m_boundaryConditionTypes; // TODO: Surely there's a way to have just one variable here
   array2d< real64 > m_bcTable;
 
+  int m_prescribedFTable;
   int m_prescribedBoundaryFTable;
   int m_fTableInterpType;
   array2d< real64 > m_fTable;

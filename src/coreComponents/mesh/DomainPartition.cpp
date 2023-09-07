@@ -39,10 +39,12 @@ DomainPartition::DomainPartition( string const & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setSizedFromParent( false );
 
-  this->registerWrapper< SpatialPartition, PartitionBase >( keys::partitionManager ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setSizedFromParent( false );
+  // this->registerWrapper< SpatialPartition, PartitionBase >( keys::partitionManager ).
+  //   setRestartFlags( RestartFlags::NO_WRITE ).
+  //   setSizedFromParent( false );
 
+  // Advice from randy make spatialpartition member and register as group
+  m_spatialPartition = &registerGroup< SpatialPartition >( groupKeys.spatialPartition );
   registerGroup( groupKeys.meshBodies );
   registerGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager );
 }
@@ -82,8 +84,9 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
 
   if( m_metisNeighborList.empty() )
   {
-    PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
-    SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
+    // PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
+    // SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
+    SpatialPartition & partition = *m_spatialPartition;
 
     //get communicator, rank, and coordinates
     MPI_Comm cartcomm;
@@ -180,6 +183,15 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
                                                              nodeManager,
                                                              m_neighbors );
 
+      // CC: Add check if there even are any periodic boundaries?
+      // PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager ); //CC: This is grabbed above in separate scope, duplicate code?
+      // SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
+      SpatialPartition & partition = *m_spatialPartition;
+      partition.setPeriodicDomainBoundaryObjects( meshBody,
+                                                  nodeManager,
+                                                  edgeManager,
+                                                  faceManager );
+
       CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
                                                                              m_neighbors );
 
@@ -210,6 +222,7 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
         }
         else if( !meshLevel.isShallowCopyOf( meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )
         {
+
           for( NeighborCommunicator const & neighbor : m_neighbors )
           {
             neighbor.addNeighborGroupToMesh( meshLevel );
@@ -233,9 +246,10 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
 void DomainPartition::addNeighbors( const unsigned int idim,
                                     MPI_Comm & cartcomm,
                                     int * ncoords )
-{
-  PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
-  SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
+{  
+  // PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
+  // SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
+  SpatialPartition & partition = *m_spatialPartition;
 
   if( idim == nsdof )
   {

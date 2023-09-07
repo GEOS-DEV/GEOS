@@ -45,6 +45,7 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 
+
 namespace geos
 {
 
@@ -60,6 +61,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_prescribedBcTable( 0 ),
   m_boundaryConditionTypes(),
   m_bcTable(),
+  m_prescribedFTable( 0 ),
   m_prescribedBoundaryFTable( 0 ),
   m_fTableInterpType( 0 ),
   m_fTable(),
@@ -112,6 +114,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "prescribedBcTable", &m_prescribedBcTable ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
     setDescription( "Flag for whether to have time-dependent boundary condition types" );
 
   registerWrapper( "boxAverageHistory", &m_boxAverageHistory ).
@@ -161,6 +164,10 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Array that stores time-dependent bc types on x-, x+, y-, y+, z- and z+ faces." );
+
+  registerWrapper( "prescribedFTable", &m_prescribedFTable ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag for whether to have time-dependent superimposed velocity gradient for triply periodic simulations" );
 
   registerWrapper( "prescribedBoundaryFTable", &m_prescribedBoundaryFTable ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -586,7 +593,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   {
     // Reads the FTable directly from the xml
     int numRows = m_bcTable.size( 0 );
-    GEOS_ERROR_IF(numRows == 0, "Prescribed boundary conditions is enabled but no fTable was specified.");
+    GEOS_ERROR_IF(numRows == 0, "Prescribed boundary conditions is enabled but no bcTable was specified.");
     
     for(int i = 0; i < numRows; ++i){
       GEOS_ERROR_IF(m_bcTable[i].size() != 7, "BCtable row " << i+1 << " must have 7 elements.");
@@ -618,12 +625,12 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   // Initialize domain F and L, then read and distribute F table
   m_domainF.resize( 3 );
   m_domainL.resize( 3 );
-  for( int i=0; i<3; i++ )
+  for( int i=0; i < 3; i++ )
   {
     m_domainF[i] = 1.0;
     m_domainL[i] = 0.0;
   }
-  if( m_prescribedBoundaryFTable == 1 )
+  if( m_prescribedBoundaryFTable == 1 && m_prescribedFTable == 1 )
   {
     // Reads the FTable directly from the xml
     int numRows = m_fTable.size( 0 );
@@ -647,6 +654,12 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     }
   }
 
+  // Check stress control
+  if( m_stressControl.size() == 0 ){
+    m_stressControl.resize( 3 );
+    LvArray::tensorOps::fill<3>( m_stressControl, 0 );
+  }
+
   if( m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1 )
   {
     m_domainStress.resize( 3 );
@@ -667,7 +680,37 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
   // Get nodal position
   int numNodes = nodeManager.size();
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & gridPosition = nodeManager.referencePosition();
+
+  for(int i =0; i < 3; i++)
+  {
+    if(partition.m_Periodic[i] && (partition.m_coords[i] == 0 || partition.m_coords[i] == partition.m_Partitions[i]-1))
+    {
+      real64 xExtent = partition.getGlobalMax()[i] - partition.getGlobalMin()[i];
+      for(int g=0; g<nodeManager.size(); g++)
+      {
+        // if (gridPosition[g][i] < partition.getLocalMin()[i] && gridPosition[g][i] > partition.getLocalMax()[i] ){
+          //Partition is on positive face
+          if( partition.m_coords[i] == partition.m_Partitions[i]-1) // CC: Does this need to be toleranced?
+          {
+            if(gridPosition[g][i] < partition.getLocalMin()[i] - xExtent/2)
+            {
+              gridPosition[g][i] += xExtent; //Do I nee to subtract two cells that are ghost? Shouldn't have those if periodic boundaries are on
+            }
+          }
+
+          //Partition is on negative face
+          if( partition.m_coords[i] == 0){
+            if(gridPosition[g][i] > partition.getLocalMax()[i] + xExtent/2) // CC: Does this need to be toleranced?
+            {
+              gridPosition[g][i] -= xExtent; //Do I nee to subtract two cells that are ghost? Shouldn't have those if periodic boundaries are on
+            }
+          }
+        // }
+
+      }
+    }
+  }
 
   // Get local domain extent
   for( int g=0; g<numNodes; g++ )
@@ -685,6 +728,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     m_partitionExtent[i] = m_xLocalMax[i] - m_xLocalMin[i];
   }
 
+  // CC: why not compute element size directly from domain extent and number of cpps across direction?
   // Get element size
   for( int g=0; g<numNodes; g++ )
   {
@@ -716,8 +760,14 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   // Get global domain extent excluding buffer nodes
   for( int i=0; i<3; i++ )
   {
-    m_xGlobalMin[i] = partition.getGlobalMin()[i] + m_hEl[i];
-    m_xGlobalMax[i] = partition.getGlobalMax()[i] - m_hEl[i];
+    m_xGlobalMin[i] = partition.getGlobalMin()[i];
+    m_xGlobalMax[i] = partition.getGlobalMax()[i];
+    if(!partition.m_Periodic[i]){
+      m_xGlobalMin[i] += m_hEl[i];
+      m_xGlobalMax[i] -= m_hEl[i];  
+    }
+    // m_xGlobalMin[i] = partition.getGlobalMin()[i] + m_hEl[i];
+    // m_xGlobalMax[i] = partition.getGlobalMax()[i] - m_hEl[i];
     m_domainExtent[i] = m_xGlobalMax[i] - m_xGlobalMin[i];
   }
 
@@ -735,6 +785,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     int j = std::round( ( gridPosition[g][1] - m_xLocalMin[1] ) / m_hEl[1] );
     int k = std::round( ( gridPosition[g][2] - m_xLocalMin[2] ) / m_hEl[2] );
     m_ijkMap[i][j][k] = g;
+    
   }
 
   // Identify node sets for applying boundary conditions. We need boundary nodes and buffer nodes.
@@ -974,7 +1025,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   solverProfiling( "Get spatial partition, get node and particle managers. Resize m_iComm." );
   //#######################################################################################
-  SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+  // SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+  SpatialPartition & partition = dynamic_cast< SpatialPartition & >( domain.getPartition() );
 
   // ***** We assume that there are exactly two mesh bodies, and that one has particles and one does not. *****
   Group & meshBodies = domain.getMeshBodies();
@@ -1046,6 +1098,13 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     subRegion.setActiveParticleIndices();
   } );
 
+  if(std::any_of( partition.m_Periodic.begin(), partition.m_Periodic.end(), []( int & dimPeriodic ) { return dimPeriodic == 1; } ))
+  {
+    //#######################################################################################
+    solverProfiling( "Correct ghost particle centers across periodic boundaries" );
+    //#######################################################################################
+    correctGhostParticleCentersAcrossPeriodicBoundaries(particleManager, partition);
+  }
 
   //#######################################################################################
   solverProfilingIf( "Construct neighbor list", m_needsNeighborList == 1 );
@@ -1129,6 +1188,24 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     //GEOS_LOG_RANK("3");
   }
 
+  // // CC: debugging
+  // int rank  = MpiWrapper::commRank( MPI_COMM_GEOSX );
+  // arrayView1d< globalIndex > localToGlobalMap = nodeManager.localToGlobalMap(); // CC: debugging
+  // arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
+  // std::string nodefile = "nodes_mapNodes_" + std::to_string(rank);
+  // std::ofstream file;
+  // file.open(nodefile);
+  // file << "Size: " << m_ijkMap.size(0) << ", " << m_ijkMap.size(1) << ", " << m_ijkMap.size(2) << "\n";
+  // for(int i = 0; i < m_ijkMap.size(0); i++){
+  //   for(int j = 0; j < m_ijkMap.size(1); j++){
+  //     for(int k = 0; k < m_ijkMap.size(2); k++){ 
+  //       int g = m_ijkMap[i][j][k];
+  //       if(g != 0){
+  //         file << g << ", " << localToGlobalMap[g] << ", " << gridPosition[g][0] << ", " << gridPosition[g][1] << ", " << gridPosition[g][2] << ", " << i << ", " <<  j << ", " << k << "\n";
+  //       }
+  //     }
+  //   } 
+  // }
 
   //#######################################################################################
   solverProfiling( "Particle-to-grid interpolation" );
@@ -1172,9 +1249,10 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   }
 
   //#######################################################################################
-  solverProfilingIf( "Interpolate F table", m_prescribedBoundaryFTable == 1 );
+  solverProfilingIf( "Interpolate F table", m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 );
   //#######################################################################################
-  if( ( !m_stressControl[0] || !m_stressControl[1] || !m_stressControl[2] ) && m_prescribedBoundaryFTable == 1 )
+  if( ( !m_stressControl[0] || !m_stressControl[1] || !m_stressControl[2] ) && ( m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 ) )
+
   {
     interpolateFTable( dt, time_n );
   }
@@ -1200,6 +1278,15 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   gridToParticle( dt, particleManager, nodeManager );
 
+  //#######################################################################################
+  solverProfilingIf( "Update particle positions according to prescribed F Table", m_prescribedFTable == 1 );
+  //####################################################################################### 
+  if( m_prescribedFTable == 1 )
+  {
+    applySuperimposedVelocityGradient( dt,
+                                       particleManager,
+                                       partition );
+  }
 
   //#######################################################################################
   solverProfiling( "Update deformation gradient" );
@@ -1286,14 +1373,24 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
         wrapper.move( LvArray::MemorySpace::host, true );
       } );
       partition.repartitionMasterParticles( subRegion, m_iComm );
+
+      // CC: We need to know which of the particles are master to correct the particle centers across periodic boundaries
+      // We could perform this correction on all particles, but that might be slower since we would also be iterating over
+      // Ghost particles that get update beginning of next time step anyways
+      subRegion.setActiveParticleIndices();
     } );
+
+    //CC: Correct particle centers across periodic boundaries
+    if(std::any_of( partition.m_Periodic.begin(), partition.m_Periodic.end(), []( int & dimPeriodic ) { return dimPeriodic == 1; } ))
+    {
+        correctParticleCentersAcrossPeriodicBoundaries(particleManager, partition);
+    }
   }
 
-
   //#######################################################################################
-  solverProfilingIf( "Resize grid based on F-table", m_prescribedBoundaryFTable == 1 );
+  solverProfilingIf( "Resize grid based on F-table", m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 );
   //#######################################################################################
-  if( m_prescribedBoundaryFTable == 1 || m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1)
+  if( m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 || m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1)
   {
     resizeGrid( partition, nodeManager, dt );
   }
@@ -1453,6 +1550,11 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   array1d< SortedArray< localIndex > > & m_boundaryNodes = nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::boundaryNodesString() );
   array1d< SortedArray< localIndex > > & m_bufferNodes = nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::bufferNodesString() );
 
+  // BC Types
+  // 0 = outflow
+  // 1 = symmetry
+  // 2 = hardwall
+  // 3 = periodic
   // Impose BCs on each face while gathering reaction forces
   real64 localFaceReactions[6] = {0.0};
   for( int face = 0; face < 6; face++ )
@@ -2974,6 +3076,39 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
     // Calculate the box volume
     real64 boxVolume = m_domainExtent[0] * m_domainExtent[1] * m_domainExtent[2];
 
+    //CC: Old GEOS logic for computing box sums 
+    // May not need this if an extra cell is not already added as was the case when periodicity was specificed in the xml in old GEOS
+    // Now we normalize stress, which is stored as a volume-weighted value:
+    // realT boxVolume;
+    // if( m_prescribed_boundary_f_table || m_prescribed_f_table )
+    // {
+    // boxVolume = ( m_xmax_global - m_xmin_global - (!periodic[0])*2.0*m_dx) * ( m_ymax_global - m_ymin_global - (!periodic[1])*2.0*m_dy) * ( m_zmax_global - m_zmin_global - (!periodic[2])*2.0*m_dz);
+    //   //boxVolume = ( m_xmax_global - m_xmin_global - 2.0*m_dx) * ( m_ymax_global - m_ymin_global - 2.0*m_dy) * ( m_zmax_global - m_zmin_global - 2.0*m_dz);
+    // }
+    // else
+    // {
+    //   boxVolume = ( m_particle_box_xmax - m_particle_box_xmin ) * ( m_particle_box_ymax - m_particle_box_ymin ) * ( m_particle_box_zmax - m_particle_box_zmin ); //Does this need to account for periodic boundaries
+    // }
+
+    // GEOS_LOG_RANK_0("BoxSums: "
+    //                   << boxSums[0] / boxVolume
+    //                   << ","
+    //                   << boxSums[1] / boxVolume
+    //                   << ","
+    //                   << boxSums[2] / boxVolume
+    //                   << ","
+    //                   << boxSums[3] / boxVolume
+    //                   << ","
+    //                   << boxSums[4] / boxVolume
+    //                   << ","
+    //                   << boxSums[5] / boxVolume
+    //                   << ","
+    //                   << boxSums[6] / boxVolume
+    //                   << ","
+    //                   << boxSums[8] / boxSums[7]
+    //                   <<","
+    //                   << boxVolume );
+
     // Write to file
     std::ofstream file;
     file.open( "boxAverageHistory.csv", std::ios::out | std::ios::app );
@@ -3018,6 +3153,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
     file.close();
   }
 }
+
 
 void SolidMechanicsMPM::computeBoxStress( const real64 dt,
                                           const real64 time_n,
@@ -3207,6 +3343,73 @@ void SolidMechanicsMPM::stressControl( real64 dt,
   GEOS_LOG_RANK_0("Domain L: " << m_domainL << ", Domain F" << m_domainF);
 }
 
+
+void SolidMechanicsMPM::applySuperimposedVelocityGradient( const real64 dt, 
+                                                           ParticleManager & particleManager,
+                                                           SpatialPartition & partition )
+{
+  // GEOS_LOG_RANK_0( "Superimposed domainL: " <<  m_domainL[0] << ", " <<
+  //                            m_domainL[1] << ", " << 
+  //                            m_domainL[2]);
+  real64 domainL[3] = {0};
+  LvArray::tensorOps::copy< 3 >( domainL, m_domainL );
+  int const numDims = m_numDims; // CC: do member scalars need to be copied to local variable to be used in a RAJA loops?
+
+  arrayView1d< int > periodic = partition.m_Periodic;
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    // Particle fields
+    arrayView2d< real64 > const particlePosition = subRegion.getParticleCenter();
+    arrayView3d< real64 > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
+
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_DEVICE ( localIndex const pp )
+       {
+        localIndex const p = activeParticleIndices[pp];
+        
+        for(int i=0; i < numDims; i++)
+        {
+          // if(pp< 10){
+          //   GEOS_LOG_RANK_0( "Particle Pos: " << 
+          //                    particlePosition[p][0] << ", "  <<
+          //                    particlePosition[p][1] << ", " <<
+          //                    particlePosition[p][2] << ", DomainL" <<
+          //                    particleVelocityGradient[p][0][0] << ", " << 
+          //                    particleVelocityGradient[p][1][1] << ", " << 
+          //                    particleVelocityGradient[p][2][2] << ", " << 
+          //                    domainL[0] << ", " <<
+          //                    domainL[1] << ", " << 
+          //                    domainL[2] << ", Periodic" << 
+          //                    periodic[0] << ", " <<
+          //                    periodic[1] << ", " << 
+          //                    periodic[2]);
+          // }
+          // CC: would we want to apply even if direction was not periodic?
+          if( periodic[i] )
+          {
+            particleVelocityGradient[p][i][i] += domainL[i];
+            particlePosition[p][i] += particlePosition[p][i] * domainL[i] * dt;
+          }
+          // if(pp< 10){
+          //   GEOS_LOG_RANK_0( "After Particle Pos: " << 
+          //                    particlePosition[p][0] << ", "  <<
+          //                    particlePosition[p][1] << ", " <<
+          //                    particlePosition[p][2] << ", DomainL" <<
+          //                    particleVelocityGradient[p][0][0] << ", " << 
+          //                    particleVelocityGradient[p][1][1] << ", " << 
+          //                    particleVelocityGradient[p][2][2] << ", " << 
+          //                    domainL[0] << ", " <<
+          //                    domainL[1] << ", " << 
+          //                    domainL[2] << ", Periodic" << 
+          //                    periodic[0] << ", " <<
+          //                    periodic[1] << ", " << 
+          //                    periodic[2]);
+          // }
+        }
+      } ); // particle loop
+  } ); // subregion loop
+}
+
 void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
 {
   int const numNodes = nodeManager.size();
@@ -3298,14 +3501,6 @@ void SolidMechanicsMPM::particleToGrid( ParticleManager & particleManager,
     arrayView3d< real64 > const gridMaterialPosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::materialPositionString() );
     arrayView2d< real64 > const gridDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::damageString() );
     arrayView2d< real64 > const gridMaxDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::maxDamageString() );
-
-    // //CC: fields for on-the-fly mapNodes calculations
-    // real64 xLocalMin[3] = {0};
-    // LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
-    // real64 hEl[3] = {0};
-    // LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
-    // arrayView3d< int const > const ijkMap = m_ijkMap;
-    // arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
 
     // Get views to mapping arrays
     int const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
@@ -4208,6 +4403,9 @@ int SolidMechanicsMPM::evaluateSeparabilityCriterion( localIndex const & A,
   return separable;
 }
 
+// CC: do I need to modify this to check for periodic boundaries
+// All master particles should have centers inside the domain if particleCenters are corrected correctly during repartitioning
+// CPDI: Edge case, corner of large or long particle beyond ghost cells but center is still inside domain?
 void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManager )
 {
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
@@ -4439,6 +4637,88 @@ void SolidMechanicsMPM::resizeMappingArrays( ParticleManager & particleManager )
   } );
 }
 
+
+void SolidMechanicsMPM::correctGhostParticleCentersAcrossPeriodicBoundaries(ParticleManager & particleManager,
+                                                                         SpatialPartition & partition)
+{
+  // GEOS_LOG_RANK("Correct ghost particles across periodic boundaries");
+  arrayView1d< int > periodic = partition.m_Periodic;
+  real64 xGlobalMin[3] = {0};
+  real64 xGlobalMax[3] = {0};
+
+  for( int i=0; i<3; i++ )
+  {
+    xGlobalMin[i] = m_xGlobalMin[i];// - m_hEl[i];
+    xGlobalMax[i] = m_xGlobalMax[i];// + m_hEl[i];
+  }
+
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    
+    SortedArrayView< localIndex const > const inactiveParticleIndices = subRegion.inactiveParticleIndices();
+    arrayView2d< real64 > const particlePosition = subRegion.getParticleCenter();
+
+    forAll< serialPolicy >( inactiveParticleIndices.size(), [&] GEOS_HOST ( localIndex const pp )
+    {
+      localIndex const p = inactiveParticleIndices[pp];
+
+      for( int i=0 ; i<3 ; ++i) //Should this be outside the RAJA::forAll? Are there RAJA calls better or worse than 1
+      {
+        if(periodic[i])
+        {
+          particlePosition[p][i] = Mod(particlePosition[p][i]-xGlobalMin[i], xGlobalMax[i]-xGlobalMin[i])+xGlobalMin[i];
+        }
+      }
+    });
+  });
+}
+
+
+void SolidMechanicsMPM::correctParticleCentersAcrossPeriodicBoundaries(ParticleManager & particleManager,
+                                                                       SpatialPartition & partition)
+{
+  arrayView1d< int > periodic = partition.m_Periodic;
+  real64 xGlobalMin[3] = {0};
+  real64 xGlobalMax[3] = {0};
+
+ for( int i=0; i<3; i++ )
+ {
+   xGlobalMin[i] = m_xGlobalMin[i];
+   xGlobalMax[i] = m_xGlobalMax[i];
+ }
+
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    arrayView2d< real64 > particlePosition = subRegion.getParticleCenter();
+
+    forAll< serialPolicy >( activeParticleIndices.size(), [&] GEOS_HOST ( localIndex const pp )
+    {
+      localIndex const p = activeParticleIndices[pp];
+
+      //Check over every dimension
+      for( int i=0 ; i<3 ; ++i) //Should this be outside the RAJA::forAll? Are there RAJA calls better or worse than 1
+      {
+        if(periodic[i])
+        {
+          particlePosition[p][i] = Mod(particlePosition[p][i]-xGlobalMin[i], xGlobalMax[i]-xGlobalMin[i])+xGlobalMin[i];
+        }
+      }
+    });
+  });
+}
+
+
+real64 SolidMechanicsMPM::Mod(real64 num, real64 denom)
+{
+  if(isZero(denom))
+  {
+    return num;
+  }
+  return num - denom * std::floor(num/denom);
+}
+
+ 
 void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager,
                                                NodeManager & nodeManager )
 {
@@ -4571,8 +4851,11 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
           {
             for( int i=0; i<3; i++ )
             {
-              real64 cornerPositionComponent = particlePosition[p][i] + signs[corner][0] * particleRVectors[p][0][i] + signs[corner][1] * particleRVectors[p][1][i] + signs[corner][2] *
-                                               particleRVectors[p][2][i];
+              real64 cornerPositionComponent = particlePosition[p][i] + 
+                                               signs[corner][0] * particleRVectors[p][0][i] + 
+                                               signs[corner][1] * particleRVectors[p][1][i] + 
+                                               signs[corner][2] * particleRVectors[p][2][i];                             
+
               cornerIJK[corner][i] = std::floor( ( cornerPositionComponent - xLocalMin[i] ) / hEl[i] ); // TODO: Temporarily store the CPDI
                                                                                                         // corners since they're re-used
                                                                                                         // below?
@@ -4585,6 +4868,7 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
           for( int corner=0; corner<8; corner++ )
           {
             int cornerNode = ijkMap[cornerIJK[corner][0]][cornerIJK[corner][1]][cornerIJK[corner][2]];
+            // GEOS_LOG_RANK("Particle Corner " << corner << " mapped to corner IJK " << cornerIJK[corner][0] << ", "  << cornerIJK[corner][1] << ", " << cornerIJK[corner][2]);
             auto cornerNodePosition = gridPosition[cornerNode];
 
             real64 x, y, z;
@@ -4606,6 +4890,7 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
                 {
                   real64 zWeight = k * zRel + (1 - k) * (1.0 - zRel);
                   real64 weight = xWeight * yWeight * zWeight;
+
                   mappedNodes[pp][node] = ijkMap[cornerIJK[corner][0]+i][cornerIJK[corner][1]+j][cornerIJK[corner][2]+k];
                   shapeFunctionValues[pp][node] = 0.125 * weight;
                   shapeFunctionGradientValues[pp][node][0] = alpha[corner][0] * weight;
