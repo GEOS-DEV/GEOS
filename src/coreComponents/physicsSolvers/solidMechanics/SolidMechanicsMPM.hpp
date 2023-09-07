@@ -30,6 +30,8 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "MPMSolverFields.hpp"
 
+#include "events/mpmEvents/MPMEventManager.hpp"
+
 namespace geos
 {
 
@@ -55,6 +57,19 @@ public:
     QuasiStatic,      //!< QuasiStatic
     ImplicitDynamic,  //!< ImplicitDynamic
     ExplicitDynamic   //!< ExplicitDynamic
+  };
+
+  /**
+   * @enum UpdateMethodOption
+   *
+   * The options for time integration
+   */
+  enum class UpdateMethodOption : integer
+  {
+    FLIP,      //!< FLIP
+    PIC,       //!< PIC
+    XPIC,      //!< XPIC
+    FMPM       //!< FMPM
   };
 
   /**
@@ -188,9 +203,24 @@ public:
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
 
+  /// Child group viewKeys
+  struct groupKeysStruct
+  {
+    dataRepository::GroupKey mpmEventManager = { "MPMEvents" }; ///< MPM Events key
+  } groupKeys; ///< Child group viewKeys
+
   void initialize( NodeManager & nodeManager,
                    ParticleManager & particleManager,
                    SpatialPartition & partition );
+
+  void triggerEvents( const real64 dt,
+                      const real64 time_n, 
+                      ParticleManager & particleManager,
+                      SpatialPartition & partition );
+
+  void performMaterialSwap( ParticleManager & particleManager,
+                            string sourceRegionName,
+                            string destinationRegionName );
 
   void resizeGrid( SpatialPartition & partition,
                    NodeManager & nodeManager,
@@ -322,6 +352,10 @@ public:
 
   void boundaryConditionUpdate( real64 dt, real64 time_n );
 
+  // void computeXPIC(real64 dt,
+  //                  ParticleManager & particleManager,
+  //                  NodeManager & nodeManager);
+
   void particleToGrid( ParticleManager & particleManager,
                        NodeManager & nodeManager,
                        real64 const time_n );
@@ -342,6 +376,22 @@ public:
   void gridToParticle( real64 dt,
                        ParticleManager & particleManager,
                        NodeManager & nodeManager );
+
+  void performFLIPUpdate( real64 dt,
+                          ParticleManager & particleManager,
+                          NodeManager & nodeManager );
+
+  void performPICUpdate( real64 dt,
+                         ParticleManager & particleManager,
+                         NodeManager & nodeManager );
+
+  void performXPICUpdate( real64 dt,
+                          ParticleManager & particleManager,
+                          NodeManager & nodeManager );
+
+  void performFMPMUpdate( real64 dt,
+                          ParticleManager & particleManager,
+                          NodeManager & nodeManager );
 
   void updateSolverDependencies( ParticleManager & particleManager );
 
@@ -420,6 +470,9 @@ protected:
   std::vector< std::string > m_profilingLabels;
 
   TimeIntegrationOption m_timeIntegrationOption;
+  UpdateMethodOption m_updateMethod;
+  int m_updateOrder;
+
   MPI_iCommData m_iComm;
 
   int m_prescribedBcTable;
@@ -490,6 +543,11 @@ protected:
   int m_nEl[3];                   // Number of elements in each grid direction including buffer and ghost cells
   array3d< int > m_ijkMap;        // Map from indices in each spatial dimension to local node ID
 
+  int m_useEvents;                   // Events flag
+  MPMEventManager* m_mpmEventManager;
+
+  int m_surfaceHealing;
+
 private:
   struct BinKey
   {
@@ -526,6 +584,12 @@ ENUM_STRINGS( SolidMechanicsMPM::TimeIntegrationOption,
               "QuasiStatic",
               "ImplicitDynamic",
               "ExplicitDynamic" );
+
+ENUM_STRINGS( SolidMechanicsMPM::UpdateMethodOption,
+              "FLIP",
+              "PIC",
+              "XPIC",
+              "FMPM" );
 
 ENUM_STRINGS( SolidMechanicsMPM::BoundaryConditionOption,
               "Outflow",
