@@ -942,7 +942,7 @@ static string getCycleSubFolder( integer const cycle )
 static string getRankFileName( integer const rank )
 {
   int const width = static_cast< int >( std::log10( MpiWrapper::commSize() ) ) + 1;
-  return GEOS_FMT( "rank_{:>0{}}", rank, width );
+  return GEOS_FMT( "rank_{0:0>{1}}", rank, width );
 }
 
 void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
