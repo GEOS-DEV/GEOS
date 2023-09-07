@@ -101,6 +101,10 @@ public:
     static constexpr char const * useDBCString()                  { return "useDBC"; }
     static constexpr char const * omegaDBCString()                { return "omegaDBC"; }
     static constexpr char const * continuationDBCString()         { return "continuationDBC"; }
+
+    static constexpr char const * miscibleDBCString()                  { return "miscibleDBC"; }
+    static constexpr char const * kappaminDBCString()                { return "kappaminDBC"; }
+    static constexpr char const * contMultiplierDBCString()         { return "contMultiplierDBC"; }
   } viewKeys;
 
   /**
@@ -243,6 +247,33 @@ public:
     return m_continuationDBC;
   }
 
+  /**
+   * @brief Getter for the flag to enable DBC formulation
+   * @return 1 or 0 depending if compositional or immsicible 
+   */
+  real64 miscibleDBC() const
+  {
+    return m_miscibleDBC;
+  }
+
+  /**
+   * @brief Getter for factor that controls how much dissipation is kept in the system when continuation is used
+   * @return target minimum continuation flux (range from 0 to 1)
+   */
+  real64 kappaminDBC() const
+  {
+    return m_kappaminDBC;
+  }
+
+  /**
+   * @brief Factor by which continuation parameter is changed every newton when DBC is used
+   * @return continuation parameter multiplier (range from 0 to 1)
+   */
+  real64 contMultiplierDBC() const
+  {
+    return m_contMultiplierDBC;
+  }
+
   
   /// Flag to apply a line search.
   LineSearchAction m_lineSearchAction;
@@ -327,6 +358,15 @@ public:
 
   /// Flag to enable continuation for DBC Method
   integer m_continuationDBC;
+
+  /// Flag to enable DBC formulation 
+  integer m_miscibleDBC;
+
+  /// Factor that controls how much dissipation is kept in the system when continuation is used
+  real64 m_kappaminDBC;
+
+  /// Factor by which continuation parameter is changed every newton when DBC is used
+  real64 m_contMultiplierDBC;
 };
 
 ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction,

@@ -113,6 +113,11 @@ void SolverStatistics::saveTimeStepStatistics()
   m_numTimeSteps++;
 }
 
+integer SolverStatistics::getTotalCurrentCumNewtonIterations()
+{
+  return m_numSuccessfulNonlinearIterations +  m_numDiscardedNonlinearIterations;
+}
+
 void SolverStatistics::outputStatistics() const
 {
   bool const printOuterLoopIterations = !(m_numSuccessfulOuterLoopIterations == 0 && m_numDiscardedOuterLoopIterations == 0);

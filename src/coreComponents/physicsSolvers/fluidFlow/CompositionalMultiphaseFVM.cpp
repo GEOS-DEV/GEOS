@@ -156,11 +156,14 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      localRhs.toView(),
                                                      getNonlinearSolverParameters().omegaDBC(),
                                                      getNonlinearSolverParameters().m_numNewtonIterations,
-                                                     getNonlinearSolverParameters().continuationDBC()  );
+                                                      getNonlinearSolverParameters().continuationDBC(),
+                                                     getNonlinearSolverParameters().miscibleDBC(),
+                                                     getNonlinearSolverParameters().kappaminDBC(),
+                                                     getNonlinearSolverParameters().contMultiplierDBC()  );
          }
          else
          {
-        isothermalCompositionalMultiphaseFVMKernels::
+          isothermalCompositionalMultiphaseFVMKernels::
           FaceBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                      m_numPhases,

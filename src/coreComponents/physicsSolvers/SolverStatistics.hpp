@@ -79,6 +79,11 @@ public:
    */
   void outputStatistics() const;
 
+  /**
+   * @brief Return the current cumulative newton iterations (for debugging)
+   */
+  integer getTotalCurrentCumNewtonIterations();
+
 private:
 
   /**
