@@ -77,6 +77,8 @@ public:
 
   void enableFixedStressPoromechanicsUpdate();
 
+  void enableJumpStabilization();   
+
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
 
   virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const;
@@ -164,6 +166,8 @@ protected:
 
   /// enable the fixed stress poromechanics update of porosity
   bool m_isFixedStressPoromechanicsUpdate;
+
+  bool m_isJumpStabilized;
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
