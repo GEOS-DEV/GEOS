@@ -171,7 +171,9 @@ void DieterichSeismicityRate::initializePreSubGroups()
   } );
 }
 
-void checkExpArgument( real64 arg ){
+void checkExpArgument( real64 arg )
+{
+  GEOS_UNUSED_VAR( arg );
   // TODO:
   // 1. CHECK IF CLOSE TO LITHOSTATIC PRESSURE
   // 2. CHECK IF STRESSING RATE IS TOO LARGE

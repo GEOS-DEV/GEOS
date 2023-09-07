@@ -815,7 +815,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
             if( feDiscretization != nullptr )
             {
-              elemRegion.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto & subRegion )
+              elemRegion.forElementSubRegions< CellElementSubRegion >( [&]( auto & subRegion )
               {
                 std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( subRegion.getElementType() );
 

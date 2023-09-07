@@ -223,7 +223,7 @@ public:
     // Field data key for duplicated nodes.
     constexpr char key[] = "duplicated_nodes";
 
-    vtkIntArray const * duplicatedNodes = vtkIntArray::FastDownCast( faceMesh->GetPointData()->GetArray( key ) );
+    vtkIdTypeArray const * duplicatedNodes = vtkIdTypeArray::FastDownCast( faceMesh->GetPointData()->GetArray( key ) );
     GEOS_ERROR_IF( duplicatedNodes == nullptr, "Could not find valid field \"" << key << "\" for fracture \"" << faceBlockName << "\"." );
 
     vtkIdType const numTuples = duplicatedNodes->GetNumberOfTuples();
