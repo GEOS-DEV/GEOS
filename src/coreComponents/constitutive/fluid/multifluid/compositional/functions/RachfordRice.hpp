@@ -20,6 +20,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_RACHFORDRICE_HPP_
 
 #include "common/DataTypes.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 
 namespace geos
 {
@@ -30,15 +31,14 @@ namespace constitutive
 struct RachfordRice
 {
 public:
-
   /// Tolerance of the SSI loop
-  static constexpr real64 SSITolerance = 1e-3;
+  static constexpr real64 SSITolerance = MultiFluidConstants::SSITolerance;
   /// Tolerance of the Newton loop
-  static constexpr real64 newtonTolerance = 1e-12;
+  static constexpr real64 newtonTolerance = MultiFluidConstants::newtonTolerance;
   /// Max number of SSI iterations
-  static constexpr integer maxSSIIterations = 200;
+  static constexpr integer maxSSIIterations = MultiFluidConstants::maxSSIIterations;
   /// Max number of Newton iterations
-  static constexpr integer maxNewtonIterations = 30;
+  static constexpr integer maxNewtonIterations = MultiFluidConstants::maxNewtonIterations;
   /// Epsilon used in the calculations
   static constexpr real64 epsilon = LvArray::NumericLimits< real64 >::epsilon;
 

@@ -20,6 +20,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_CUBICEOSPHASEMODEL_HPP_
 
 #include "common/DataTypes.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 
 namespace geos
 {
@@ -67,9 +68,9 @@ struct CubicEOSPhaseModel
 public:
 
   /// Max number of components allowed in the class for now
-  static constexpr integer maxNumComps = 5;
+  static constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
   /// Constant for PI
-  static constexpr real64 pi = 3.141592653589793238;
+  static constexpr real64 pi = MultiFluidConstants::pi;
 
   /**
    * @brief Main entry point of the cubic EOS model
@@ -539,7 +540,7 @@ computeCompressibilityFactor( integer const numComps,
 
   // Implicit differentiation scale
   real64 const denominator = (3.0*a*compressibilityFactor + 2.0*b)*compressibilityFactor + c;
-  constexpr real64 epsilon = LvArray::NumericLimits< real64 >::epsilon;
+  constexpr real64 epsilon = MultiFluidConstants::epsilon;
   real64 const scalingFactor = fabs( denominator ) < epsilon ? 0.0 : -1.0 / denominator;
 
   // Pressure derivatives

@@ -21,6 +21,7 @@
 
 #include "constitutive/fluid/multifluid/blackOil/BlackOilFluidBase.hpp"
 #include "constitutive/fluid/multifluid/blackOil/PVTOData.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "math/interpolation/Interpolation.hpp"
 
 namespace geos
@@ -33,7 +34,7 @@ class BlackOilFluid : public BlackOilFluidBase
 {
 public:
 
-  static constexpr real64 minForPhasePresence = 1e-10;
+  static constexpr real64 minForPhasePresence = MultiFluidConstants::minForSpeciesPresence;
 
   /// Number of components supported by the model
   static constexpr integer NC_BO = 3;

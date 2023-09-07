@@ -48,7 +48,7 @@ void CompositionalProperties::computeMolarDensity( integer const numComps,
     vCorrected += composition[ic] * volumeShift[ic];
   }
 
-  if( epsilon < vCorrected )
+  if( MultiFluidConstants::epsilon < vCorrected )
   {
     molarDensity = 1.0 / vCorrected;
   }
@@ -73,7 +73,7 @@ void CompositionalProperties::computeMolarDensity( integer const numComps,
                                                    real64 & dMolarDensity_dt,
                                                    arraySlice1d< real64 > const & dMolarDensity_dz )
 {
-  if( molarDensity < epsilon )
+  if( molarDensity < MultiFluidConstants::epsilon )
   {
     dMolarDensity_dp = 0.0;
     dMolarDensity_dt = 0.0;

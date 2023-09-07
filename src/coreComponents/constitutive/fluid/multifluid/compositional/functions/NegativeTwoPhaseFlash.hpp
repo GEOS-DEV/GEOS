@@ -23,6 +23,7 @@
 #include "CubicEOSPhaseModel.hpp"
 #include "RachfordRice.hpp"
 #include "KValueInitialization.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 
 namespace geos
 {
@@ -34,13 +35,13 @@ struct NegativeTwoPhaseFlash
 {
 public:
   /// Max number of components alloweeed in the class for now
-  static constexpr integer maxNumComps = 5;
+  static constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
   /// Max number of iterations
-  static constexpr integer maxIterations = 200;
+  static constexpr integer maxIterations = MultiFluidConstants::maxSSIIterations;
   /// Epsilon used in the calculations
-  static constexpr real64 epsilon = LvArray::NumericLimits< real64 >::epsilon;
+  static constexpr real64 epsilon = MultiFluidConstants::epsilon;
   /// Tolerance for checking fugacity ratio convergence
-  static constexpr real64 fugacityTolerance = 1.0e-8;
+  static constexpr real64 fugacityTolerance = MultiFluidConstants::fugacityTolerance;
 
   /**
    * @brief Perform negative two-phase EOS flash
