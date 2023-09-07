@@ -61,6 +61,7 @@
 #include <unordered_map>
 #include <vector>
 #include <set>
+#include <string_view>
 
 /**
  * top level geosx namespace contains all code that is specific to GEOSX
@@ -128,6 +129,9 @@ using globalIndex = GEOSX_GLOBALINDEX_TYPE;
 
 /// String type.
 using string      = std::string;
+
+/// String type.
+using string_view = std::string_view;
 
 /// 32-bit floating point type.
 using real32 = float;
