@@ -357,6 +357,56 @@ localIndex FaceElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & bu
   return unPackedSize;
 }
 
+
+/**
+ * @brief The two mappings @p elem2dToElems3d and @p elem2dToFaces have to be consistent
+ * in the sense that each @p face for a given index must "belong" to @p 3d @p element at the same index.
+ * @param[in] elem2dToElems3d A mapping.
+ * @param[inout] elem2dToFaces This mapping will be corrected if needed to match @p elem2dToElems3d.
+ */
+void fixNeighborMappingsInconsistency( OrderedVariableToManyElementRelation const & elem2dToElems3d,
+                                       FaceElementSubRegion::FaceMapType & elem2dToFaces )
+{
+  {
+    localIndex const num2dElems = elem2dToFaces.size();
+    for( int e2d = 0; e2d < num2dElems; ++e2d )
+    {
+      auto const s = elem2dToFaces[e2d].size();
+      GEOS_ASSERT_EQ( elem2dToElems3d.m_toElementRegion[e2d].size(), s );
+      GEOS_ASSERT_EQ( elem2dToElems3d.m_toElementSubRegion[e2d].size(), s );
+      GEOS_ASSERT_EQ( elem2dToElems3d.m_toElementIndex[e2d].size(), s );
+
+      if( s != 2 )
+      {
+        continue;
+      }
+
+      localIndex const f0 = elem2dToFaces[e2d][0];
+      localIndex const er0 = elem2dToElems3d.m_toElementRegion[e2d][0];
+      localIndex const esr0 = elem2dToElems3d.m_toElementSubRegion[e2d][0];
+      localIndex const ei0 = elem2dToElems3d.m_toElementIndex[e2d][0];
+      auto const & faces0 = elem2dToElems3d.getElementRegionManager()->getRegion( er0 ).getSubRegion< CellElementSubRegion >( esr0 ).faceList()[ei0];
+      std::set< localIndex > tmp0( faces0.begin(), faces0.end() );
+
+      localIndex const f1 = elem2dToFaces[e2d][1];
+      localIndex const er1 = elem2dToElems3d.m_toElementRegion[e2d][1];
+      localIndex const esr1 = elem2dToElems3d.m_toElementSubRegion[e2d][1];
+      localIndex const ei1 = elem2dToElems3d.m_toElementIndex[e2d][1];
+      auto const & faces1 = elem2dToElems3d.getElementRegionManager()->getRegion( er1 ).getSubRegion< CellElementSubRegion >( esr1 ).faceList()[ei1];
+      std::set< localIndex > tmp1( faces1.begin(), faces1.end() );
+
+      bool const match00 = tmp0.find( f0 ) != tmp0.cend();
+      bool const match11 = tmp1.find( f1 ) != tmp1.cend();
+      bool const match01 = tmp0.find( f1 ) != tmp0.cend();
+      bool const match10 = tmp1.find( f0 ) != tmp1.cend();
+      if( !match00 && !match11 && match01 && match10 )
+      {
+        std::swap( elem2dToFaces[e2d][0], elem2dToFaces[e2d][1] );
+      }
+    }
+  }
+}
+
 void FaceElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
 {
   ObjectManagerBase::fixUpDownMaps( m_toNodesRelation,
@@ -370,6 +420,8 @@ void FaceElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
   ObjectManagerBase::fixUpDownMaps( m_toFacesRelation,
                                     m_unmappedGlobalIndicesInToFaces,
                                     clearIfUnmapped );
+
+  fixNeighborMappingsInconsistency( m_2dElemToElems, m_toFacesRelation );
 }
 
 /**
@@ -729,6 +781,8 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
   }
   GEOS_ERROR_IF( !isolatedFractureElements.empty(),
                  "Fracture " << this->getName() << " has elements {" << stringutilities::join( isolatedFractureElements, ", " ) << "} with less than two neighbors." );
+
+  fixNeighborMappingsInconsistency( m_2dElemToElems, m_toFacesRelation );
 }
 
 void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const & faceManager,
