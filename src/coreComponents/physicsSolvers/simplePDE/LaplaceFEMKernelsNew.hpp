@@ -140,17 +140,17 @@ public:
     GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-            xLocal(),
+            // xLocal(),
             primaryField_local{ 0.0 }
     {}
 
-#if !defined(CALC_FEM_SHAPE_IN_KERNEL)
-    /// Dummy
-    int xLocal;
-#else
-    /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ maxNumTestSupportPointsPerElem ][ 3 ];
-#endif
+// #if !defined(CALC_FEM_SHAPE_IN_KERNEL)
+//     /// Dummy
+//     int xLocal;
+// #else
+//     /// C-array stack storage for element local the nodal positions.
+//     real64 xLocal[ maxNumTestSupportPointsPerElem ][ 3 ];
+// #endif
 
     /// C-array storage for the element local primary field variable.
     real64 primaryField_local[ maxNumTestSupportPointsPerElem ];
@@ -202,55 +202,13 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
+    // ... Get info for cell k
     CellType cell = m_subregionMesh.getCell( k );
-#if defined(CALC_FEM_SHAPE_IN_KERNEL)
-      cell.getLocalCoordinates( stack.xLocal );
-#endif
 
-    // Temporary implementation for isoparametric hexahedron
-    
-    // ... Get parent element coordinates for quadrature point q 
-    //     (quadrature rule responsability)
-
-    // real64 const val = 0.5773502691896257645092;
-    // int const a = q & 1;
-    // int const b = ( q & 2 ) >> 1;
-    // int const c = ( q & 4 ) >> 2;
-    // real64 const Xiq[3] = { ( 2 * a - 1 ) * val,
-    //                         ( 2 * b - 1 ) * val,
-    //                         ( 2 * c - 1 ) * val };
-    // real64 const wq = 1.0; // weight
-
+    // ... Get coordinates and weight for quadrature point q
     QuadratureUtilities::Data quadratureData = QuadratureUtilities::getData< CellType, 
                                                                              QuadratureUtilities::Rule::Gauss,
                                                                              numQuadraturePointsPerElem >( q );
-
-    real64 const wq = quadratureData.wq;
-    real64 const Xiq[3] = { quadratureData.Xiq[0],
-                            quadratureData.Xiq[1],
-                            quadratureData.Xiq[2] };
-
-    // real64 & wq = quadratureData.wq;
-    // real64 (& Xiq)[3] = quadratureData.Xiq;
-
-    // [Xiq, wq] = QuadratureRule::getQuadraturePointCoordsAndWeight( q )
-    // getQuadratureData< CELL_TYPE, INTEGRATION_RULE, INTEGRATION_ORDER >
-    // {
-    //   return Helper< CELL_TYPE, INTEGRATION_RULE, INTEGRATION_ORDER >::getQuadrat... ;
-    // }
-
-    //   Helper get...
-    //   {
-    //     return std::make_pair( Xiq, wq );
-    //   }
-    // ... 
-    // const auto [ Xiq, wq ] = getQuadratureData< CellType, IntegrationRule::Gauss, 1>( q ) 
-
-    // onst auto [ Xiq, wq ] = getQuadratureData< HexahedronCell, IntegrationRule::Gauss, 1>()
-    // {
-
-    // } 
-    // const auto [ Xiq, wq ] = getQuadratureData< CellType, IntegrationRule::Gauss, 1>() 
 
     // ... Evaluate Jacobian
     typename CellType::JacobianType J = cell.getJacobian( quadratureData.Xiq );
@@ -261,17 +219,15 @@ public:
     real64 dNdX[maxNumTestSupportPointsPerElem][3]{{}};
     for( int i = 0; i < maxNumTestSupportPointsPerElem; ++i )
     {
-      // Basis function in parent space
+      // ... ... Parent space
       BasisFunctionUtilities::Gradient dNdXi = BasisFunctionUtilities::getGradient< CellType,
                                                                                     BasisFunctionUtilities::BasisFunction::Lagrange >( i, quadratureData.Xiq );
 
-      // Basis function in physical space
+      // ... ... Physical space
       dNdX[i][0] = dNdXi.val[0] * Jinv.val[0][0] + dNdXi.val[1] * Jinv.val[1][0] + dNdXi.val[2] * Jinv.val[2][0];
       dNdX[i][1] = dNdXi.val[0] * Jinv.val[0][1] + dNdXi.val[1] * Jinv.val[1][1] + dNdXi.val[2] * Jinv.val[2][1];
       dNdX[i][2] = dNdXi.val[0] * Jinv.val[0][2] + dNdXi.val[1] * Jinv.val[1][2] + dNdXi.val[2] * Jinv.val[2][2];
     }
-
-    // dNdX = m_finiteElementSpace.template getGradShapeFunctions< FE_TYPE >( Xiq, Jinv );
 
     // ... Compute local stiffness matrix
     for( localIndex i = 0; i < stack.numRows; ++i )
@@ -281,17 +237,6 @@ public:
         stack.localJacobian[ i ][ j ] += LvArray::tensorOps::AiBi< 3 >( dNdX[i], dNdX[j] ) * detJxW;
       }
     }
-
-    // real64 dNdX[ maxNumTestSupportPointsPerElem ][ 3 ];
-    // real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
-                                                                          //  stack.feStack, dNdX );
-    // for( localIndex a = 0; a < stack.numRows; ++a )
-    // {
-      // for( localIndex b = 0; b < stack.numCols; ++b )
-      // {
-        // stack.localJacobian[ a ][ b ] += LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) * detJxW;
-      // }
-    // }
   }
 
   /**
