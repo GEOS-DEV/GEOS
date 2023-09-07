@@ -128,6 +128,13 @@ char const * xmlInput =
         scale="1500"
         setNames="{ all }"/>
       <FieldSpecification
+        name="cellDensity"
+        initialCondition="1"
+        objectPath="ElementRegions/Region/cb"
+        fieldName="mediumDensity"
+        scale="1"
+        setNames="{ all }"/>
+      <FieldSpecification
         name="zposFreeSurface"
         objectPath="faceManager"
         fieldName="FreeSurface"
