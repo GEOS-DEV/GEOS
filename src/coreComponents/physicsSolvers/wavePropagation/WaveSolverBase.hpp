@@ -27,7 +27,9 @@
 #if !defined( GEOS_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #endif
-
+#include <stdexcept>
+#include <vector>
+#include <set>
 
 #if !defined( GEOS_USE_HIP )
 #define SEM_FE_TYPES \
@@ -126,22 +128,9 @@ public:
 
   SortedArray< localIndex > const & getSolverNodesSet() { return m_solverTargetNodesSet; }
 
-  void computeTargetNodeSet( CellElementSubRegion const & elementSubRegion,
-                             arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
-                             localIndex const numQuadraturePointsPerElem )
-  {
-    array1d< localIndex > scratch( elemsToNodes.size() * numQuadraturePointsPerElem );
-    localIndex i = 0;
-    for( localIndex e = 0; e < elementSubRegion.size(); ++e )
-    {
-      for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q, ++i )
-      {
-        scratch[i] = elemsToNodes[e][q];
-      }
-    }
-    std::ptrdiff_t const numUniqueValues = LvArray::sortedArrayManipulation::makeSortedUnique( scratch.begin(), scratch.end());
-    m_solverTargetNodesSet.insert( scratch.begin(), scratch.begin() + numUniqueValues );
-  }
+  void computeTargetNodeSet( arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+                             localIndex const subRegionSize,
+                             localIndex const numQuadraturePointsPerElem );
 
 protected:
 

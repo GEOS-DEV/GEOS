@@ -236,9 +236,7 @@ void WaveSolverBase::postProcessInput()
   m_usePML = counter;
 
   if( m_linearDASGeometry.size( 1 ) > 0 )
-  {
     m_useDAS = 1;
-  }
 
   if( m_useDAS )
   {
@@ -387,6 +385,24 @@ localIndex WaveSolverBase::getNumNodesPerElem()
 
   } );
   return numNodesPerElem;
+}
+
+void WaveSolverBase::computeTargetNodeSet( arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+                                           localIndex const subRegionSize,
+                                           localIndex const numQuadraturePointsPerElem )
+{
+  array1d< localIndex > scratch( subRegionSize * numQuadraturePointsPerElem );
+  localIndex i = 0;
+  for( localIndex e = 0; e < subRegionSize; ++e )
+  {
+    for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
+    {
+      scratch[i++] = elemsToNodes( e, q );
+    }
+  }
+  std::ptrdiff_t const numUniqueValues = LvArray::sortedArrayManipulation::makeSortedUnique( scratch.begin(), scratch.end() );
+
+  m_solverTargetNodesSet.insert( scratch.begin(), scratch.begin() + numUniqueValues );
 }
 
 } /* namespace geos */

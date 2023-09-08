@@ -241,9 +241,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     WaveSolverBase::initializePostInitialConditionsPreSubGroups();
   }
   if( m_usePML )
-  {
     AcousticWaveEquationSEM::initializePML();
-  }
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -261,10 +259,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
     arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
-    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
-
-    /// get face to node map
-    ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
+    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
     // mass matrix to be computed in this function
     arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVectorA >();
@@ -281,54 +276,63 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
     arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicatorA >();
 
-    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                          CellElementSubRegion & elementSubRegion )
+    ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
+    arrayView2d< localIndex const > const facesToElements    = faceManager.elementList();
+    arrayView2d< localIndex const > const faceToSubRegion    = faceManager.elementSubRegionList();
+    arrayView2d< localIndex const > const faceToRegion       = faceManager.elementRegionList();
+
+    mesh.getElemManager().forElementRegions< CellElementRegion >( regionNames, [&] ( localIndex const regionIndex,
+                                                                                     CellElementRegion & elemRegion )
     {
-      finiteElement::FiniteElementBase const &
-      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
-
-      computeTargetNodeSet( elementSubRegion, elemsToNodes, fe.getNumQuadraturePoints());
-
-      arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
-      arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
-      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensityA >();
-
-      /// Partial gradient if gradient as to be computed
-      arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
+      elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const subRegionIndex,
+                                                                         CellElementSubRegion & elementSubRegion )
       {
+        finiteElement::FiniteElementBase const &
+        fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+
+        arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
+
+        computeTargetNodeSet( elemsToNodes, elementSubRegion.size(), fe.getNumQuadraturePoints() );
+
+        arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
+        arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensityA >();
+
+        /// Partial gradient if gradient as to be computed
+        arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
         grad.zero();
-      }
-      finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
-      {
-        using FE_TYPE = TYPEOFREF( finiteElement );
 
-        acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
-        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                               X32,
-                                                               elemsToNodes,
-                                                               velocity,
-                                                               density,
-                                                               mass );
+        finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
         {
-          GEOS_MARK_SCOPE( DampingMatrixKernel );
-          acousticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
+          using FE_TYPE = TYPEOFREF( finiteElement );
 
-          kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
-                                                                 X32,
-                                                                 facesToElements,
-                                                                 facesToNodes,
-                                                                 facesDomainBoundaryIndicator,
-                                                                 freeSurfaceFaceIndicator,
+          acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
+          kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                 nodeCoords,
+                                                                 elemsToNodes,
                                                                  velocity,
                                                                  density,
-                                                                 damping );
-        }
+                                                                 mass );
+          {
+            GEOS_MARK_SCOPE( DampingMatrixKernel );
+            acousticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
+            kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
+                                                                   nodeCoords,
+                                                                   regionIndex,
+                                                                   subRegionIndex,
+                                                                   faceToSubRegion,
+                                                                   faceToRegion,
+                                                                   facesToElements,
+                                                                   facesToNodes,
+                                                                   facesDomainBoundaryIndicator,
+                                                                   freeSurfaceFaceIndicator,
+                                                                   velocity,
+                                                                   density,
+                                                                   damping );
+          }
+        } );
       } );
     } );
   } );
-
 }
 
 

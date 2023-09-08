@@ -53,15 +53,14 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
 
   for( auto val : acousNodesSet )
   {
-    if( elasNodesSet.contains( val ))
+    if( elasNodesSet.contains( val ) )
       m_interfaceNodesSet.insert( val );
   }
+  localIndex const numInterfaceNodes = MpiWrapper::sum( m_interfaceNodesSet.size() );
+  GEOS_THROW_IF( numInterfaceNodes == 0, "Failed to compute interface: check xml input (solver order)", std::runtime_error );
 
   m_acousRegions = acousSolver->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
   m_elasRegions = elasSolver->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
-
-  localIndex const numInterfaceNodes = MpiWrapper::sum( m_interfaceNodesSet.size() );
-  GEOS_THROW_IF( numInterfaceNodes == 0, "Failed to compute interface: check xml input (solver order)", std::runtime_error );
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -72,12 +71,13 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
 
-    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
+    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
+    arrayView2d< real64 const > const faceNormals          = faceManager.faceNormal().toViewConst();
     ArrayOfArraysView< localIndex const > const faceToNode = faceManager.nodeList().toViewConst();
+    arrayView2d< localIndex const > const faceToSubRegion  = faceManager.elementSubRegionList();
     arrayView2d< localIndex const > const faceToRegion     = faceManager.elementRegionList();
     arrayView2d< localIndex const > const faceToElement    = faceManager.elementList();
-    arrayView2d< real64 const > const faceNormals          = faceManager.faceNormal().toViewConst();
 
     arrayView1d< real32 > const couplingVectorx = nodeManager.getField< fields::CouplingVectorx >();
     couplingVectorx.zero();
@@ -90,39 +90,31 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
 
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
 
-    array1d< localIndex > fluid_indices( m_acousRegions.size( 0 ) );
-
-    auto const & regions = elementRegionManager.getRegions();
-    localIndex cnt = 0;
-    for( auto const & nm : m_acousRegions )
+    elementRegionManager.forElementRegions( m_acousRegions, [&] ( localIndex const regionIndex, ElementRegionBase const & elemRegion )
     {
-      fluid_indices[cnt++] = regions.getIndex( nm );
-    }
-
-    arrayView1d< localIndex const > const fluid_indices_v = fluid_indices.toViewConst();
-
-    elementRegionManager.forElementSubRegions< CellElementSubRegion >( m_acousRegions, [&]( localIndex const GEOS_UNUSED_PARAM( targetIndex ),
-                                                                                            CellElementSubRegion & elementSubRegion )
-    {
-      finiteElement::FiniteElementBase const &
-      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-
-      finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
+      elemRegion.forElementSubRegionsIndex( [&]( localIndex const subRegionIndex, ElementSubRegionBase const & elementSubRegion )
       {
-        using FE_TYPE = TYPEOFREF( finiteElement );
+        finiteElement::FiniteElementBase const &
+        fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
-        acousticElasticWaveEquationSEMKernels::CouplingKernel< FE_TYPE > kernelC;
+        finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
+        {
+          using FE_TYPE = TYPEOFREF( finiteElement );
 
-        kernelC.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
-                                                               X32,
-                                                               fluid_indices_v,
-                                                               faceToRegion,
-                                                               faceToElement,
-                                                               faceToNode,
-                                                               faceNormals,
-                                                               couplingVectorx,
-                                                               couplingVectory,
-                                                               couplingVectorz );
+          acousticElasticWaveEquationSEMKernels::CouplingKernel< FE_TYPE > kernelC;
+          kernelC.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
+                                                                 nodeCoords,
+                                                                 regionIndex,
+                                                                 subRegionIndex,
+                                                                 faceToSubRegion,
+                                                                 faceToRegion,
+                                                                 faceToElement,
+                                                                 faceToNode,
+                                                                 faceNormals,
+                                                                 couplingVectorx,
+                                                                 couplingVectory,
+                                                                 couplingVectorz );
+        } );
       } );
     } );
   } );

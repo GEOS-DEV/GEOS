@@ -41,8 +41,10 @@ struct CouplingKernel
   void
   launch( localIndex const size,
           arrayView2d< WaveSolverBase::wsCoordType const,
-                       nodes::REFERENCE_POSITION_USD > const X,
-          arrayView1d< localIndex const > fluid_indices,
+                       nodes::REFERENCE_POSITION_USD > const nodeCoords,
+          localIndex const regionIndex,
+          localIndex const subRegionIndex,
+          arrayView2d< localIndex const > const faceToSubRegion,
           arrayView2d< localIndex const > const faceToRegion,
           arrayView2d< localIndex const > const faceToElement,
           ArrayOfArraysView< localIndex const > const facesToNodes,
@@ -55,43 +57,36 @@ struct CouplingKernel
     {
       localIndex e0 = faceToElement( f, 0 ), e1 = faceToElement( f, 1 );
       localIndex er0 = faceToRegion( f, 0 ), er1 = faceToRegion( f, 1 );
-      // localIndex esr0 = faceToSubRegion( f, 0 ), esr1 = faceToSubRegion( f, 1 );
+      localIndex esr0 = faceToSubRegion( f, 0 ), esr1 = faceToSubRegion( f, 1 );
 
-      if( e0 != -1 && e1 != -1 )
+      if( e0 != -1 && e1 != -1 && er0 != er1 )  // an interface is defined as a transition between regions
       {
-        // NOTE: subregion check doesn't work: esr0 != esr1
-        if( er0 != er1 )  // should define an interface
+        // check that one of the region is the fluid subregion for the fluid -> solid coupling term
+        if((er0 == regionIndex && esr0 == subRegionIndex) || (er1 == regionIndex && esr1 == subRegionIndex))
         {
-          // determine normal sign for fluid -> solid coupling
-          localIndex sgn = -1;
-          for( auto const & idx : fluid_indices )
-          {
-            if( er0 == idx )
-            {
-              sgn = +1;
-              break;
-            }
-          }
           real64 xLocal[ numNodesPerFace ][ 3 ];
           for( localIndex a = 0; a < numNodesPerFace; ++a )
           {
             for( localIndex i = 0; i < 3; ++i )
             {
-              xLocal[a][i] = X( facesToNodes( f, a ), i );
+              xLocal[a][i] = nodeCoords( facesToNodes( f, a ), i );
             }
           }
+
+          // determine normal sign for fluid -> solid coupling
+          localIndex sgn = er0 == regionIndex ? 1 : (er1 == regionIndex ? -1 : 0);
 
           for( localIndex q = 0; q < numNodesPerFace; ++q )
           {
             real64 const aux = FE_TYPE::computeDampingTerm( q, xLocal );
 
-            real32 const localIncrementx = aux * (sgn * faceNormals[f][0]);
-            real32 const localIncrementy = aux * (sgn * faceNormals[f][1]);
-            real32 const localIncrementz = aux * (sgn * faceNormals[f][2]);
+            real32 const localIncrementx = aux * (sgn * faceNormals( f, 0 ));
+            real32 const localIncrementy = aux * (sgn * faceNormals( f, 1 ));
+            real32 const localIncrementz = aux * (sgn * faceNormals( f, 2 ));
 
-            RAJA::atomicAdd< ATOMIC_POLICY >( &couplingVectorx[facesToNodes[f][q]], localIncrementx );
-            RAJA::atomicAdd< ATOMIC_POLICY >( &couplingVectory[facesToNodes[f][q]], localIncrementy );
-            RAJA::atomicAdd< ATOMIC_POLICY >( &couplingVectorz[facesToNodes[f][q]], localIncrementz );
+            RAJA::atomicAdd< ATOMIC_POLICY >( &couplingVectorx[facesToNodes( f, q )], localIncrementx );
+            RAJA::atomicAdd< ATOMIC_POLICY >( &couplingVectory[facesToNodes( f, q )], localIncrementy );
+            RAJA::atomicAdd< ATOMIC_POLICY >( &couplingVectorz[facesToNodes( f, q )], localIncrementz );
           }
         }
       }
