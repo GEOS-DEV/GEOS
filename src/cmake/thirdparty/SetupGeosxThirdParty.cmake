@@ -244,15 +244,13 @@ endif()
 if(DEFINED PUGIXML_DIR)
     message(STATUS "PUGIXML_DIR = ${PUGIXML_DIR}")
 
-    find_and_import( NAME pugixml
-                       INCLUDE_DIRECTORIES ${PUGIXML_DIR}/include
-                       LIBRARY_DIRECTORIES ${PUGIXML_DIR}/lib64 ${PUGIXML_DIR}/lib
-                       HEADER pugixml.hpp
-                       LIBRARIES pugixml )
+    set(ENABLE_PUGIXML ON CACHE BOOL "")
+
+    find_package(pugixml REQUIRED
+                 PATHS ${PUGIXML_DIR}
+                 NO_DEFAULT_PATH)
 
     message( " ----> pugixml_VERSION = ${pugixml_VERSION}")
-
-    set(ENABLE_PUGIXML ON CACHE BOOL "")
 
     if(TARGET pugixml::pugixml)
       set(thirdPartyLibs ${thirdPartyLibs} pugixml::pugixml)
