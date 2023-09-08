@@ -151,7 +151,10 @@ pygments_style = 'sphinx'
 # -- Options for HTML output -------------------------------------------------
 
 try:
-    import sphinx_rtd_theme
+    if read_the_docs_build:
+        import sphinx_rtd_theme
+    else:
+        import pydata_sphinx_theme
 except:
     html_theme = 'classic'
     html_theme_options = {
@@ -160,9 +163,16 @@ except:
     }
     html_theme_path = []
 else:
-    html_theme = 'sphinx_rtd_theme'
-    html_theme_options = {}
-    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+    html_theme = "pydata_sphinx_theme"
+    html_theme_options = {'navigation_depth': -1, 'collapse_navigation': False}
+    html_theme_path = [
+        "_themes",
+    ]
+
+    if read_the_docs_build:
+        html_theme = 'sphinx_rtd_theme'
+        html_theme_options = {}
+        html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
