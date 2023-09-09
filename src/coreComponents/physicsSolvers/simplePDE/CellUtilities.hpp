@@ -28,13 +28,44 @@ namespace geos
 //namespace cells TODO?
 struct Dense3x3Tensor
 {
-  real64 val[3][3]{{}};
-  
-  void inPlaceInvert()
+  real64 data[3][3]{{}};
+
+  void leftMultiplyTranspose( real64 const (&src)[3],
+                              real64 (&dst)[3]  ) const
   {
-    LvArray::tensorOps::invert< 3 >( val );
-  }
+      dst[0] = data[0][0] * src[0] + data[1][0] * src[1] + data[2][0] * src[2];
+      dst[1] = data[0][1] * src[0] + data[1][1] * src[1] + data[2][1] * src[2];
+      dst[2] = data[0][2] * src[0] + data[1][2] * src[1] + data[2][2] * src[2];
+  };
+  
 };
+
+namespace CellUtilities
+{
+
+template< typename CELL_TYPE >
+GEOS_HOST_DEVICE
+static camp::tuple< real64, typename CELL_TYPE::JacobianType >
+getJacobianDeterminantAndJacobianInverse( CELL_TYPE cell,
+                                          real64 const refPointCoords[3] )
+{
+  // Compute Jacobian
+  typename CELL_TYPE::JacobianType J = cell.getJacobian( refPointCoords );
+
+  // Compute determinant and invert Jacobian in place
+  real64 const detJ = LvArray::tensorOps::invert< 3 >( J.data );
+  
+  return camp::make_tuple( detJ, J );
+}
+
+} // namespace CellUtilities
+
+
+
+
+
+
+
 
 class HexahedronCell
 {
@@ -42,8 +73,6 @@ public:
   constexpr static int numVertex = 8;
 
   using JacobianType = Dense3x3Tensor;
-  using IndexType = localIndex; // 
-  // using IndexType = tripleIndex // to be added for IJK hex meshes
 
   GEOS_HOST_DEVICE
   HexahedronCell( real64 const nodeCoords[numVertex][3] )
@@ -76,15 +105,15 @@ public:
 
           int vertexInd = 4 * k + 2 * j + i;
 
-          J.val[0][0] += m_nodeCoords[vertexInd][0] * gradPhi[0]; 
-          J.val[0][1] += m_nodeCoords[vertexInd][0] * gradPhi[1]; 
-          J.val[0][2] += m_nodeCoords[vertexInd][0] * gradPhi[2]; 
-          J.val[1][0] += m_nodeCoords[vertexInd][1] * gradPhi[0]; 
-          J.val[1][1] += m_nodeCoords[vertexInd][1] * gradPhi[1]; 
-          J.val[1][2] += m_nodeCoords[vertexInd][1] * gradPhi[2]; 
-          J.val[2][0] += m_nodeCoords[vertexInd][2] * gradPhi[0]; 
-          J.val[2][1] += m_nodeCoords[vertexInd][2] * gradPhi[1]; 
-          J.val[2][2] += m_nodeCoords[vertexInd][2] * gradPhi[2]; 
+          J.data[0][0] += m_nodeCoords[vertexInd][0] * gradPhi[0]; 
+          J.data[0][1] += m_nodeCoords[vertexInd][0] * gradPhi[1]; 
+          J.data[0][2] += m_nodeCoords[vertexInd][0] * gradPhi[2]; 
+          J.data[1][0] += m_nodeCoords[vertexInd][1] * gradPhi[0]; 
+          J.data[1][1] += m_nodeCoords[vertexInd][1] * gradPhi[1]; 
+          J.data[1][2] += m_nodeCoords[vertexInd][1] * gradPhi[2]; 
+          J.data[2][0] += m_nodeCoords[vertexInd][2] * gradPhi[0]; 
+          J.data[2][1] += m_nodeCoords[vertexInd][2] * gradPhi[1]; 
+          J.data[2][2] += m_nodeCoords[vertexInd][2] * gradPhi[2]; 
         }
       }
     }
@@ -149,7 +178,7 @@ public:
   constexpr static int numVertex = 6;
 
   using JacobianType = Dense3x3Tensor;
-  using IndexType = localIndex; // 
+ 
   // using IndexType = tripleIndex // to be added for IJK hex meshes
 
   GEOS_HOST_DEVICE
@@ -194,15 +223,15 @@ public:
 
         int vertexInd = linearMap( a, b );
 
-        J.val[0][0] += m_nodeCoords[vertexInd][0] * gradPhi[0]; 
-        J.val[0][1] += m_nodeCoords[vertexInd][0] * gradPhi[1]; 
-        J.val[0][2] += m_nodeCoords[vertexInd][0] * gradPhi[2]; 
-        J.val[1][0] += m_nodeCoords[vertexInd][1] * gradPhi[0]; 
-        J.val[1][1] += m_nodeCoords[vertexInd][1] * gradPhi[1]; 
-        J.val[1][2] += m_nodeCoords[vertexInd][1] * gradPhi[2]; 
-        J.val[2][0] += m_nodeCoords[vertexInd][2] * gradPhi[0]; 
-        J.val[2][1] += m_nodeCoords[vertexInd][2] * gradPhi[1]; 
-        J.val[2][2] += m_nodeCoords[vertexInd][2] * gradPhi[2]; 
+        J.data[0][0] += m_nodeCoords[vertexInd][0] * gradPhi[0]; 
+        J.data[0][1] += m_nodeCoords[vertexInd][0] * gradPhi[1]; 
+        J.data[0][2] += m_nodeCoords[vertexInd][0] * gradPhi[2]; 
+        J.data[1][0] += m_nodeCoords[vertexInd][1] * gradPhi[0]; 
+        J.data[1][1] += m_nodeCoords[vertexInd][1] * gradPhi[1]; 
+        J.data[1][2] += m_nodeCoords[vertexInd][1] * gradPhi[2]; 
+        J.data[2][0] += m_nodeCoords[vertexInd][2] * gradPhi[0]; 
+        J.data[2][1] += m_nodeCoords[vertexInd][2] * gradPhi[1]; 
+        J.data[2][2] += m_nodeCoords[vertexInd][2] * gradPhi[2]; 
       }
     }
 

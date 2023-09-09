@@ -26,6 +26,7 @@
 #include "BasisFunctionUtilities.hpp"
 #include "IsoparametricMeshUtilities.hpp"
 #include "QuadratureUtilities.hpp"
+#include "finiteElement/BilinearFormUtilities.hpp"
 
 namespace geos
 {
@@ -198,10 +199,15 @@ public:
    */
   GEOS_HOST_DEVICE
   inline
-  void quadraturePointKernel( localIndex const k,
+  void quadraturePointKernel( localIndex const k, //CellIndexType const k,
                               localIndex const q,
                               StackVariables & stack ) const
   {
+    using namespace PDEUtilities;
+
+    constexpr PDEUtilities::FunctionSpace TrialSpace = FE_TYPE::template getFunctionSpace< numDofPerTrialSupportPoint >();
+    constexpr PDEUtilities::FunctionSpace TestSpace = TrialSpace;
+
     // ... Get info for cell k
     CellType cell = m_subregionMesh.getCell( k );
 
@@ -210,33 +216,41 @@ public:
                                                                              QuadratureUtilities::Rule::Gauss,
                                                                              numQuadraturePointsPerElem >( q );
 
-    // ... Evaluate Jacobian
-    typename CellType::JacobianType J = cell.getJacobian( quadratureData.Xiq );
-    real64 const detJxW = quadratureData.wq * LvArray::tensorOps::invert< 3 >( J.val );
-    typename CellType::JacobianType const & Jinv = J;
+    // ... Evaluate Jacobian determinant and Jacobian inverse
+    auto [ detJ, Jinv ] = CellUtilities::getJacobianDeterminantAndJacobianInverse( cell, quadratureData.Xiq );
     
      // ... Evaluate basis function gradients
     real64 dNdX[maxNumTestSupportPointsPerElem][3]{{}};
     for( int i = 0; i < maxNumTestSupportPointsPerElem; ++i )
     {
       // ... ... Parent space
-      BasisFunctionUtilities::Gradient dNdXi = BasisFunctionUtilities::getGradient< CellType,
-                                                                                    BasisFunctionUtilities::BasisFunction::Lagrange >( i, quadratureData.Xiq );
+      BasisFunctionUtilities::Gradient dNdXi =
+        BasisFunctionUtilities::getParentGradient< CellType,
+                                                   BasisFunctionUtilities::BasisFunction::Lagrange >( i, quadratureData.Xiq );
 
       // ... ... Physical space
-      dNdX[i][0] = dNdXi.val[0] * Jinv.val[0][0] + dNdXi.val[1] * Jinv.val[1][0] + dNdXi.val[2] * Jinv.val[2][0];
-      dNdX[i][1] = dNdXi.val[0] * Jinv.val[0][1] + dNdXi.val[1] * Jinv.val[1][1] + dNdXi.val[2] * Jinv.val[2][1];
-      dNdX[i][2] = dNdXi.val[0] * Jinv.val[0][2] + dNdXi.val[1] * Jinv.val[1][2] + dNdXi.val[2] * Jinv.val[2][2];
+      Jinv.leftMultiplyTranspose( dNdXi.data, dNdX[i] );
     }
 
     // ... Compute local stiffness matrix
-    for( localIndex i = 0; i < stack.numRows; ++i )
-    {
-      for( localIndex j = 0; j < stack.numCols; ++j )
-      {
-        stack.localJacobian[ i ][ j ] += LvArray::tensorOps::AiBi< 3 >( dNdX[i], dNdX[j] ) * detJxW;
-      }
-    }
+    real64 const detJxW = detJ * quadratureData.wq;
+    BilinearFormUtilities::compute< TestSpace,
+                                    TrialSpace,
+                                    DifferentialOperator::Gradient,
+                                    DifferentialOperator::Gradient >
+  (
+    stack.localJacobian,
+    dNdX,
+    1.0,
+    dNdX,
+    detJxW );
+    // for( localIndex i = 0; i < stack.numRows; ++i )
+    // {
+    //   for( localIndex j = 0; j < stack.numCols; ++j )
+    //   {
+    //     stack.localJacobian[ i ][ j ] += LvArray::tensorOps::AiBi< 3 >( dNdX[i], dNdX[j] ) * detJxW;
+    //   }
+    // }
   }
 
   /**
@@ -279,9 +293,6 @@ public:
   }
 
 protected:
-  /// The array containing the nodal position array.
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
-
   /// The global primary field array.
   arrayView1d< real64 const > const m_primaryField;
 
@@ -290,6 +301,7 @@ protected:
                                                                FE_TYPE::numNodes  >::type;
   SubregionMeshType m_subregionMesh;
    
+  using CellIndexType = typename SubregionMeshType::CellIndexType;
   using CellType = typename SubregionMeshType::CellType;
 };
 

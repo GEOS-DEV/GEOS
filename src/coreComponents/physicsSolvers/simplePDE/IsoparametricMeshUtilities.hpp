@@ -31,6 +31,8 @@ template< typename ARRAY_VIEW_TYPE  >
 class isoparametricMesh
 {
 public:
+  using CellIndexType = localIndex;
+
   isoparametricMesh( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
                      ARRAY_VIEW_TYPE const elementToNodes )
    : m_X( X ), m_elementToNodes( elementToNodes )
@@ -55,8 +57,9 @@ class isoparametricHexahedronMesh : public isoparametricMesh< ARRAY_VIEW_TYPE >
 public :
   // using const_iterator = CellIterator< HexadronCell >;
   //...
-
+ using CellIndexType = typename isoparametricMesh< ARRAY_VIEW_TYPE >::CellIndexType;
  using CellType = HexahedronCell;
+
   // ... 
   constexpr static int numCellVertex = HexahedronCell::numVertex;
 
@@ -69,7 +72,7 @@ public :
   }
 
   // 
-  HexahedronCell getCell( localIndex k ) const
+  HexahedronCell getCell( CellIndexType k ) const
   {
     real64 xLocal[numCellVertex][3]{};
 
@@ -120,6 +123,7 @@ class isoparametricWedgeMesh : public isoparametricMesh< ARRAY_VIEW_TYPE >
 {
 public :
 
+ using CellIndexType = typename isoparametricMesh< ARRAY_VIEW_TYPE >::CellIndexType;
  using CellType = WedgeCell;
   // ... 
   constexpr static int numCellVertex = WedgeCell::numVertex;
@@ -133,7 +137,7 @@ public :
   }
 
   // 
-  WedgeCell getCell( localIndex k ) const
+  WedgeCell getCell( CellIndexType k ) const
   {
     real64 xLocal[numCellVertex][3]{};
 

@@ -38,7 +38,7 @@ enum class BasisFunction : integer
 
 struct Gradient
 {
-  real64 val[3];
+  real64 data[3];
 };
 
 template< typename CELL_TYPE,
@@ -51,8 +51,8 @@ struct Helper< HexahedronCell,
                BasisFunction::Lagrange >
 {
   GEOS_HOST_DEVICE
-  static Gradient getGradient( int const BasisIndex,
-                               real64 const Xiq[3] )
+  static Gradient getParentGradient( int const BasisIndex,
+                               real64 const (&Xiq)[3] )
   {
     constexpr real64 dPhiLin[2] = { -1.0, 1.0 };
 
@@ -61,9 +61,9 @@ struct Helper< HexahedronCell,
     int const c = ( BasisIndex & 4 ) >> 2;
 
     Gradient gradient;
-    gradient.val[0] = 0.125 * (       dPhiLin[a]          ) * ( 1.0 + dPhiLin[b] * Xiq[1] ) * ( 1.0 + dPhiLin[c] * Xiq[2] );
-    gradient.val[1] = 0.125 * ( 1.0 + dPhiLin[a] * Xiq[0] ) * (       dPhiLin[b]          ) * ( 1.0 + dPhiLin[c] * Xiq[2] );
-    gradient.val[2] = 0.125 * ( 1.0 + dPhiLin[a] * Xiq[0] ) * ( 1.0 + dPhiLin[b] * Xiq[1] ) * (       dPhiLin[c]          );
+    gradient.data[0] = 0.125 * (       dPhiLin[a]          ) * ( 1.0 + dPhiLin[b] * Xiq[1] ) * ( 1.0 + dPhiLin[c] * Xiq[2] );
+    gradient.data[1] = 0.125 * ( 1.0 + dPhiLin[a] * Xiq[0] ) * (       dPhiLin[b]          ) * ( 1.0 + dPhiLin[c] * Xiq[2] );
+    gradient.data[2] = 0.125 * ( 1.0 + dPhiLin[a] * Xiq[0] ) * ( 1.0 + dPhiLin[b] * Xiq[1] ) * (       dPhiLin[c]          );
     return gradient;
   }
 };
@@ -73,8 +73,8 @@ struct Helper< WedgeCell,
                BasisFunction::Lagrange >
 {
   GEOS_HOST_DEVICE
-  static Gradient getGradient( int const BasisIndex,
-                               real64 const Xiq[3] )
+  static Gradient getParentGradient( int const BasisIndex,
+                               real64 const (&Xiq)[3] )
   { 
     constexpr real64 dpsiTRI[2][3] = { { -1.0, 1.0, 0.0 }, { -1.0, 0.0, 1.0 } };
     constexpr real64 dpsiLIN[2] = { -1.0, 1.0 };
@@ -84,9 +84,9 @@ struct Helper< WedgeCell,
 
 
     Gradient gradient;
-    gradient.val[0] = dpsiTRI[0][a] * 0.5 * ( 1.0 + dpsiLIN[b] * Xiq[2] );
-    gradient.val[1] = dpsiTRI[1][a] * 0.5 * ( 1.0 + dpsiLIN[b] * Xiq[2] );
-    gradient.val[2] = ( ( BasisIndex < 2 ) +  dpsiTRI[0][a] * Xiq[0] + dpsiTRI[1][a] * Xiq[1] )
+    gradient.data[0] = dpsiTRI[0][a] * 0.5 * ( 1.0 + dpsiLIN[b] * Xiq[2] );
+    gradient.data[1] = dpsiTRI[1][a] * 0.5 * ( 1.0 + dpsiLIN[b] * Xiq[2] );
+    gradient.data[2] = ( ( BasisIndex < 2 ) +  dpsiTRI[0][a] * Xiq[0] + dpsiTRI[1][a] * Xiq[1] )
                     * dpsiLIN[b];
     return gradient;
   }
@@ -99,10 +99,10 @@ struct Helper< WedgeCell,
 template< typename CELL_TYPE,
           BasisFunction BASIS_FUNCTION >
 GEOS_HOST_DEVICE
-static Gradient getGradient( int const BasisIndex,
-                             real64 const Xiq[3] )
+static Gradient getParentGradient( int const BasisIndex,
+                             real64 const (&Xiq)[3] )
 {
-  return Helper< CELL_TYPE, BASIS_FUNCTION >::getGradient( BasisIndex, Xiq );
+  return Helper< CELL_TYPE, BASIS_FUNCTION >::getParentGradient( BasisIndex, Xiq );
 }
 
 /// Declare strings associated with enumeration values.
