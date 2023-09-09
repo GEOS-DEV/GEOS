@@ -361,10 +361,12 @@ localIndex FaceElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & bu
 /**
  * @brief The two mappings @p elem2dToElems3d and @p elem2dToFaces have to be consistent
  * in the sense that each @p face for a given index must "belong" to @p 3d @p element at the same index.
+ * @param[in] fractureName The name of the fracture for which we're checking the mapping consistency.
  * @param[in] elem2dToElems3d A mapping.
  * @param[inout] elem2dToFaces This mapping will be corrected if needed to match @p elem2dToElems3d.
  */
-void fixNeighborMappingsInconsistency( OrderedVariableToManyElementRelation const & elem2dToElems3d,
+void fixNeighborMappingsInconsistency( string const & fractureName,
+                                       OrderedVariableToManyElementRelation const & elem2dToElems3d,
                                        FaceElementSubRegion::FaceMapType & elem2dToFaces )
 {
   {
@@ -386,22 +388,25 @@ void fixNeighborMappingsInconsistency( OrderedVariableToManyElementRelation cons
       localIndex const esr0 = elem2dToElems3d.m_toElementSubRegion[e2d][0];
       localIndex const ei0 = elem2dToElems3d.m_toElementIndex[e2d][0];
       auto const & faces0 = elem2dToElems3d.getElementRegionManager()->getRegion( er0 ).getSubRegion< CellElementSubRegion >( esr0 ).faceList()[ei0];
-      std::set< localIndex > tmp0( faces0.begin(), faces0.end() );
 
       localIndex const f1 = elem2dToFaces[e2d][1];
       localIndex const er1 = elem2dToElems3d.m_toElementRegion[e2d][1];
       localIndex const esr1 = elem2dToElems3d.m_toElementSubRegion[e2d][1];
       localIndex const ei1 = elem2dToElems3d.m_toElementIndex[e2d][1];
       auto const & faces1 = elem2dToElems3d.getElementRegionManager()->getRegion( er1 ).getSubRegion< CellElementSubRegion >( esr1 ).faceList()[ei1];
-      std::set< localIndex > tmp1( faces1.begin(), faces1.end() );
 
-      bool const match00 = tmp0.find( f0 ) != tmp0.cend();
-      bool const match11 = tmp1.find( f1 ) != tmp1.cend();
-      bool const match01 = tmp0.find( f1 ) != tmp0.cend();
-      bool const match10 = tmp1.find( f0 ) != tmp1.cend();
+      bool const match00 = std::find( faces0.begin(), faces0.end(), f0 ) != faces0.end();
+      bool const match11 = std::find( faces1.begin(), faces1.end(), f1 ) != faces1.end();
+      bool const match01 = std::find( faces0.begin(), faces0.end(), f1 ) != faces0.end();
+      bool const match10 = std::find( faces1.begin(), faces1.end(), f0 ) != faces1.end();
+
       if( !match00 && !match11 && match01 && match10 )
       {
         std::swap( elem2dToFaces[e2d][0], elem2dToFaces[e2d][1] );
+      }
+      else if( !( match00 && match11 && !match01 && !match10 ) )
+      {
+        GEOS_ERROR( "Mapping neighbor inconsistency detected for fracture " << fractureName );
       }
     }
   }
@@ -421,7 +426,7 @@ void FaceElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
                                     m_unmappedGlobalIndicesInToFaces,
                                     clearIfUnmapped );
 
-  fixNeighborMappingsInconsistency( m_2dElemToElems, m_toFacesRelation );
+  fixNeighborMappingsInconsistency( getName(), m_2dElemToElems, m_toFacesRelation );
 }
 
 /**
@@ -663,7 +668,7 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
     }
   };
 
-  // We are building the mapping that connect all the reference (collocated) nodes of any face to the elements those nodes are touching.
+  // We are building the mapping that connects all the reference (collocated) nodes of any face to the elements those nodes are touching.
   // Using this nodal information will let use reconnect the fracture 2d element to its 3d neighbor.
   std::map< std::set< globalIndex >, std::set< ElemPath > > faceRefNodesToElems;
   elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex const er,
@@ -782,7 +787,7 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
   GEOS_ERROR_IF( !isolatedFractureElements.empty(),
                  "Fracture " << this->getName() << " has elements {" << stringutilities::join( isolatedFractureElements, ", " ) << "} with less than two neighbors." );
 
-  fixNeighborMappingsInconsistency( m_2dElemToElems, m_toFacesRelation );
+  fixNeighborMappingsInconsistency( getName(), m_2dElemToElems, m_toFacesRelation );
 }
 
 void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const & faceManager,
