@@ -68,9 +68,9 @@
       xCoords="{ 0, 6400 }"
       yCoords="{ 0, 2400 }"
       zCoords="{ 0, 2400, 4800 }"
-      nx="{ 10 }"
-      ny="{ 10 }"
-      nz="{ 5, 5 }"
+      nx="{ 320 }"
+      ny="{ 120 }"
+      nz="{ 120, 120 }"
       cellBlockNames="{ solid, fluid }"/>
   </Mesh>
 
@@ -87,7 +87,7 @@
     maxTime="3">
     <PeriodicEvent
       name="outputs"
-      timeFrequency="5e-2"
+      timeFrequency="1e-1"
       targetExactTimestep="0">
       <PeriodicEvent name="outputs_vtk" target="/Outputs/vtkOutput"/>
       <PeriodicEvent name="outputs_ux_np1" target="/Tasks/displacementxCollection"/>

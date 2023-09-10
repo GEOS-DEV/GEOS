@@ -211,25 +211,25 @@ struct MassMatrixKernel
           arrayView1d< real32 > const mass )
 
   {
-    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
     {
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
-      real32 const invC2 = 1.0 / ( density[k] * velocity[k] * velocity[k] );
+      real32 const invC2 = 1.0 / ( density[e] * velocity[e] * velocity[e] );
       real64 xLocal[ numNodesPerElem ][ 3 ];
       for( localIndex a = 0; a < numNodesPerElem; ++a )
       {
         for( localIndex i = 0; i < 3; ++i )
         {
-          xLocal[a][i] = X( elemsToNodes( k, a ), i );
+          xLocal[a][i] = X( elemsToNodes( e, a ), i );
         }
       }
 
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
         real32 const localIncrement = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
-        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes( k, q )], localIncrement );
+        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes( e, q )], localIncrement );
       }
     } ); // end loop over element
   }
@@ -272,11 +272,7 @@ struct DampingMatrixKernel
   void
   launch( localIndex const size,
           arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
-          localIndex const regionIndex,
-          localIndex const subRegionIndex,
-          arrayView2d< localIndex const > const faceToSubRegion,
-          arrayView2d< localIndex const > const faceToRegion,
-          arrayView2d< localIndex const > const facesToElems,
+          arrayView2d< localIndex const > const elemsToFaces,
           ArrayOfArraysView< localIndex const > const facesToNodes,
           arrayView1d< integer const > const facesDomainBoundaryIndicator,
           arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
@@ -284,24 +280,21 @@ struct DampingMatrixKernel
           arrayView1d< real32 const > const density,
           arrayView1d< real32 > const damping )
   {
-    // forAll< EXEC_POLICY >
-    forAll< RAJA::seq_exec >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
     {
-      // face on the domain boundary and not on free surface
-      if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
+      for ( localIndex i = 0; i < elemsToFaces.size(1); ++i )
       {
-        localIndex faceSide = facesToElems( f, 0 ) == -1 ? 1 : 0;
-        localIndex e = facesToElems( f, faceSide ), er = faceToRegion( f, faceSide ), esr = faceToSubRegion( f, faceSide );
-
-        if( er == regionIndex && esr == subRegionIndex )
+        localIndex const f = elemsToFaces(e, i);
+        // face on the domain boundary and not on free surface
+        if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
         {
           constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
           real64 xLocal[ numNodesPerFace ][ 3 ];
           for( localIndex a = 0; a < numNodesPerFace; ++a )
           {
-            for( localIndex i = 0; i < 3; ++i )
+            for( localIndex d = 0; d < 3; ++d )
             {
-              xLocal[a][i] = nodeCoords( facesToNodes( f, a ), i );
+              xLocal[a][d] = nodeCoords( facesToNodes( f, a ), d );
             }
           }
           real32 const alpha = 1.0 / (density[e] * velocity[e]);

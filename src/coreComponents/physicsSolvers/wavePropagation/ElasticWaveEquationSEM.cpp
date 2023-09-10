@@ -522,11 +522,9 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
 
-    /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
-    arrayView1d< integer const > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
-    arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
 
     // mass matrix to be computed in this function
     arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVectorE >();
@@ -540,60 +538,52 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     dampingz.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
-    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicatorE >();
+    arrayView1d< localIndex const > const freeSurfaceFaceIndicator    = faceManager.getField< fields::FreeSurfaceFaceIndicatorE >();
+    arrayView1d< integer const > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
+    ArrayOfArraysView< localIndex const > const facesToNodes          = faceManager.nodeList().toViewConst();
+    arrayView2d< real64 const > const faceNormal                      = faceManager.faceNormal();
 
-    ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
-    arrayView2d< localIndex const > const facesToElements    = faceManager.elementList();
-    arrayView2d< localIndex const > const faceToSubRegion    = faceManager.elementSubRegionList();
-    arrayView2d< localIndex const > const faceToRegion       = faceManager.elementRegionList();
 
-    mesh.getElemManager().forElementRegions< CellElementRegion >( regionNames, [&] ( localIndex const regionIndex,
-                                                                                     CellElementRegion & elemRegion )
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                CellElementSubRegion & elementSubRegion )
     {
-      elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const subRegionIndex,
-                                                                         CellElementSubRegion & elementSubRegion )
+      finiteElement::FiniteElementBase const &
+      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
+      arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
+
+      computeTargetNodeSet( elemsToNodes, elementSubRegion.size(), fe.getNumQuadraturePoints() );
+
+      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensityE >();
+      arrayView1d< real32 const > const velocityVp = elementSubRegion.getField< fields::MediumVelocityVp >();
+      arrayView1d< real32 const > const velocityVs = elementSubRegion.getField< fields::MediumVelocityVs >();
+
+      finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
-        finiteElement::FiniteElementBase const &
-        fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+        using FE_TYPE = TYPEOFREF( finiteElement );
 
-        arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
+        elasticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
+        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                               nodeCoords,
+                                                               elemsToNodes,
+                                                               density,
+                                                               mass );
 
-        computeTargetNodeSet( elemsToNodes, elementSubRegion.size(), fe.getNumQuadraturePoints() );
-
-        arrayView1d< real32 > const density = elementSubRegion.getField< fields::MediumDensityE >();
-        arrayView1d< real32 > const velocityVp = elementSubRegion.getField< fields::MediumVelocityVp >();
-        arrayView1d< real32 > const velocityVs = elementSubRegion.getField< fields::MediumVelocityVs >();
-
-        finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
-        {
-          using FE_TYPE = TYPEOFREF( finiteElement );
-
-          elasticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
-          kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                                 nodeCoords,
-                                                                 elemsToNodes,
-                                                                 density,
-                                                                 mass );
-
-          elasticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
-          kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
-                                                                 nodeCoords,
-                                                                 regionIndex,
-                                                                 subRegionIndex,
-                                                                 faceToSubRegion,
-                                                                 faceToRegion,
-                                                                 facesToElements,
-                                                                 facesToNodes,
-                                                                 facesDomainBoundaryIndicator,
-                                                                 freeSurfaceFaceIndicator,
-                                                                 faceNormal,
-                                                                 density,
-                                                                 velocityVp,
-                                                                 velocityVs,
-                                                                 dampingx,
-                                                                 dampingy,
-                                                                 dampingz );
-        } );
+        elasticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
+        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                               nodeCoords,
+                                                               elemsToFaces,
+                                                               facesToNodes,
+                                                               facesDomainBoundaryIndicator,
+                                                               freeSurfaceFaceIndicator,
+                                                               faceNormal,
+                                                               density,
+                                                               velocityVp,
+                                                               velocityVs,
+                                                               dampingx,
+                                                               dampingy,
+                                                               dampingz );
       } );
     } );
   } );

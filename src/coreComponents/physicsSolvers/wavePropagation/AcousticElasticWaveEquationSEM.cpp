@@ -70,6 +70,7 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
   {
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
 
     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
@@ -88,9 +89,7 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
     arrayView1d< real32 > const couplingVectorz = nodeManager.getField< fields::CouplingVectorz >();
     couplingVectorz.zero();
 
-    ElementRegionManager & elementRegionManager = mesh.getElemManager();
-
-    elementRegionManager.forElementRegions( m_acousRegions, [&] ( localIndex const regionIndex, ElementRegionBase const & elemRegion )
+    elemManager.forElementRegions( m_acousRegions, [&] ( localIndex const regionIndex, ElementRegionBase const & elemRegion )
     {
       elemRegion.forElementSubRegionsIndex( [&]( localIndex const subRegionIndex, ElementSubRegionBase const & elementSubRegion )
       {
