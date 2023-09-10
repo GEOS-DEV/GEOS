@@ -548,6 +548,8 @@ protected:
 
   int m_surfaceHealing;
 
+  int m_debugFlag;
+
 private:
   struct BinKey
   {

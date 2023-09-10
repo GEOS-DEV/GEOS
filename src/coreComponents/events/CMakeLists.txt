@@ -15,6 +15,7 @@ set( events_headers
      mpmEvents/AnnealMPMEvent.hpp
      mpmEvents/HealMPMEvent.hpp
      mpmEvents/InsertPeriodicContactSurfacesMPMEvent.hpp
+     mpmEvents/MachineSampleMPMEvent.hpp
    )
 
 #
@@ -34,6 +35,7 @@ set( events_sources
      mpmEvents/AnnealMPMEvent.cpp
      mpmEvents/HealMPMEvent.cpp
      mpmEvents/InsertPeriodicContactSurfacesMPMEvent.cpp
+     mpmEvents/MachineSampleMPMEvent.cpp
    )
 
 set( dependencyList ${parallelDeps} common fileIO dataRepository )
