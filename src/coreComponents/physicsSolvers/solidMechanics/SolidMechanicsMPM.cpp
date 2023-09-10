@@ -50,6 +50,7 @@
 #include "events/mpmEvents/AnnealMPMEvent.hpp"
 #include "events/mpmEvents/HealMPMEvent.hpp"
 #include "events/mpmEvents/InsertPeriodicContactSurfacesMPMEvent.hpp"
+#include "events/mpmEvents/MachineSampleMPMEvent.hpp"
 
 namespace geos
 {
@@ -136,17 +137,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Flag for whether to have time-dependent boundary condition types" );
-
-  // CC: Temporarily added these here, but not sure how to implement them, don't currently do anything
-  registerWrapper( "writePlot", &m_writePlot ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Flag for whether to write plot" );
-
-  registerWrapper( "writeRestart", &m_writeRestart ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Flag for whether to write restart" );
 
   registerWrapper( "boxAverageHistory", &m_boxAverageHistory ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -341,6 +331,11 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( 0 ).
     setDescription( "Enable events" );
+
+  registerWrapper( "debugFlag", &m_debugFlag ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( 0 ).
+    setDescription( "Enables debugging of MPM explicit timestep" );
 
   m_mpmEventManager = &registerGroup< MPMEventManager >( groupKeys.mpmEventManager );
 }
@@ -1063,6 +1058,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   #define USE_PHYSICS_LOOP
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Get spatial partition, get node and particle managers. Resize m_iComm." );
   solverProfiling( "Get spatial partition, get node and particle managers. Resize m_iComm." );
   //#######################################################################################
   // SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
@@ -1084,6 +1080,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && cycleNumber == 0 , "At time step zero, perform initialization calculations" );
   solverProfilingIf( "At time step zero, perform initialization calculations", cycleNumber == 0 );
   //#######################################################################################
   if( cycleNumber == 0 )
@@ -1092,6 +1089,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   }
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Set grid multi-field labels to avoid a VTK output bug" );
   solverProfiling( "Set grid multi-field labels to avoid a VTK output bug" );
   //#######################################################################################
   // Must be done every time step despite grid fields being registered
@@ -1100,13 +1098,15 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Set grid fields to zero" );
   solverProfiling( "Set grid fields to zero" );
   //#######################################################################################
   initializeGridFields( nodeManager );
 
 
   //#######################################################################################
-  solverProfiling( "Check if event has been triggered");
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_useEvents == 1, "Check if event has been triggered" );
+  solverProfilingIf( "Check if event has been triggered", m_useEvents == 1);
   //#######################################################################################
   if( m_useEvents == 1 )
   {
@@ -1116,14 +1116,14 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                    partition );
   }
 
-
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Update global-to-local map" );
   solverProfiling( "Update global-to-local map" );
   //#######################################################################################
   particleManager.updateMaps();
 
-
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && MpiWrapper::commSize( MPI_COMM_GEOSX ) > 1 && m_needsNeighborList == 1,  "Perform particle ghosting" );
   solverProfilingIf( "Perform particle ghosting", MpiWrapper::commSize( MPI_COMM_GEOSX ) > 1 && m_needsNeighborList == 1 );
   //#######################################################################################
   if( MpiWrapper::commSize( MPI_COMM_GEOSX ) > 1 && m_needsNeighborList == 1 )
@@ -1141,8 +1141,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     partition.getGhostParticlesFromNeighboringPartitions( domain, m_iComm, m_neighborRadius );
   }
 
-
   //#######################################################################################
+  GEOS_LOG_RANK_IF(m_debugFlag == 1, "Get indices of non-ghost particles" );
   solverProfiling( "Get indices of non-ghost particles" );
   //#######################################################################################
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
@@ -1150,15 +1150,17 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     subRegion.setActiveParticleIndices();
   } );
 
+  //#######################################################################################
+  GEOS_LOG_RANK_IF(m_debugFlag == 1 && std::any_of( partition.m_Periodic.begin(), partition.m_Periodic.end(), []( int & dimPeriodic ) { return dimPeriodic == 1; } ), "Correct ghost particle centers across periodic boundaries" );
+  solverProfilingIf( "Correct ghost particle centers across periodic boundaries", std::any_of( partition.m_Periodic.begin(), partition.m_Periodic.end(), []( int & dimPeriodic ) { return dimPeriodic == 1; } ) );
+  //#######################################################################################
   if(std::any_of( partition.m_Periodic.begin(), partition.m_Periodic.end(), []( int & dimPeriodic ) { return dimPeriodic == 1; } ))
   {
-    //#######################################################################################
-    solverProfiling( "Correct ghost particle centers across periodic boundaries" );
-    //#######################################################################################
     correctGhostParticleCentersAcrossPeriodicBoundaries(particleManager, partition);
   }
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF(m_debugFlag == 1 && m_needsNeighborList == 1, "Construct neighbor list" );
   solverProfilingIf( "Construct neighbor list", m_needsNeighborList == 1 );
   //#######################################################################################
   if( m_needsNeighborList == 1 )
@@ -1176,8 +1178,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     // }
   }
 
-
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_surfaceDetection > 0 && cycleNumber == 0, "Compute surface flags" );
   solverProfilingIf( "Compute surface flags", m_surfaceDetection > 0 && cycleNumber == 0 );
   //#######################################################################################
   if( m_surfaceDetection > 0 && ( cycleNumber == 0 || m_surfaceHealing == true ) )
@@ -1186,8 +1188,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     computeSurfaceFlags( particleManager );
   }
 
-
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_damageFieldPartitioning == 1, "Compute damage field gradient" );
   solverProfilingIf( "Compute damage field gradient", m_damageFieldPartitioning == 1 );
   //#######################################################################################
   if( m_damageFieldPartitioning == 1 )
@@ -1195,8 +1197,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     computeDamageFieldGradient( particleManager );
   }
 
-
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Update surface flag overload" );
   solverProfiling( "Update surface flag overload" );
   //#######################################################################################
   // We now read in surface flags so don't need to update them based on damage.
@@ -1204,8 +1206,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   // flag usages.
   //updateSurfaceFlagOverload( particleManager );
 
-
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_prescribedBcTable == 1, "Update BCs based on bcTable" );
   solverProfilingIf( "Update BCs based on bcTable", m_prescribedBcTable == 1 );
   //#######################################################################################
   if( m_prescribedBcTable == 1 )
@@ -1213,8 +1215,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     boundaryConditionUpdate( dt, time_n );
   }
 
-
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_cpdiDomainScaling == 1, "Perform r-vector scaling (CPDI domain scaling)" );
   solverProfilingIf( "Perform r-vector scaling (CPDI domain scaling)", m_cpdiDomainScaling == 1 );
   //#######################################################################################
   if( m_cpdiDomainScaling == 1 )
@@ -1222,15 +1224,15 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     cpdiDomainScaling( particleManager );
   }
 
-
   //#######################################################################################
-  // solverProfiling( "Resize and populate mapping arrays" );
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Resize and populate mapping arrays" );
+  solverProfiling( "Resize and populate mapping arrays" );
   //#######################################################################################
   resizeMappingArrays( particleManager );
   populateMappingArrays( particleManager, nodeManager );
 
-
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_damageFieldPartitioning == 1, "Project damage field gradient to the grid and then sync" );
   solverProfilingIf( "Project damage field gradient to the grid and then sync", m_damageFieldPartitioning == 1 );
   //#######################################################################################
   if( m_damageFieldPartitioning == 1 )
@@ -1243,31 +1245,14 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     //GEOS_LOG_RANK("3");
   }
 
-  // // CC: debugging
-  // int rank  = MpiWrapper::commRank( MPI_COMM_GEOSX );
-  // arrayView1d< globalIndex > localToGlobalMap = nodeManager.localToGlobalMap(); // CC: debugging
-  // arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
-  // std::string nodefile = "nodes_mapNodes_" + std::to_string(rank);
-  // std::ofstream file;
-  // file.open(nodefile);
-  // file << "Size: " << m_ijkMap.size(0) << ", " << m_ijkMap.size(1) << ", " << m_ijkMap.size(2) << "\n";
-  // for(int i = 0; i < m_ijkMap.size(0); i++){
-  //   for(int j = 0; j < m_ijkMap.size(1); j++){
-  //     for(int k = 0; k < m_ijkMap.size(2); k++){ 
-  //       int g = m_ijkMap[i][j][k];
-  //       if(g != 0){
-  //         file << g << ", " << localToGlobalMap[g] << ", " << gridPosition[g][0] << ", " << gridPosition[g][1] << ", " << gridPosition[g][2] << ", " << i << ", " <<  j << ", " << k << "\n";
-  //       }
-  //     }
-  //   } 
-  // }
-
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Particle-to-grid interpolation" );
   solverProfiling( "Particle-to-grid interpolation" );
   //#######################################################################################
   particleToGrid( particleManager, nodeManager, time_n);
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Grid MPI operations" );
   solverProfiling( "Grid MPI operations" );
   //#######################################################################################
   std::vector< std::string > fieldNames1 = { viewKeyStruct::massString(),
@@ -1280,14 +1265,14 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   std::vector< std::string > fieldNames2 = { viewKeyStruct::maxDamageString() };
   syncGridFields( fieldNames2, domain, nodeManager, mesh, MPI_MAX );
 
-
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Determine trial momenta and velocities based on acceleration due to internal and external forces, but before contact enforcement" );
   solverProfiling( "Determine trial momenta and velocities based on acceleration due to internal and external forces, but before contact enforcement" );
   //#######################################################################################
   gridTrialUpdate( dt, nodeManager );
 
-
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_numVelocityFields > 1, "Contact enforcement" );
   solverProfilingIf( "Contact enforcement", m_numVelocityFields > 1 );
   //#######################################################################################
   if( m_numVelocityFields > 1 )
@@ -1296,6 +1281,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   }
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && ( m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1 ), "Interpolate stress table" );
   solverProfilingIf( "Interpolate stress table", m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1 );
   //#######################################################################################
   if( m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1 )
@@ -1304,6 +1290,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   }
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && ( ( !m_stressControl[0] || !m_stressControl[1] || !m_stressControl[2] ) && ( m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 ) ), "Interpolate F table" );
   solverProfilingIf( "Interpolate F table", ( !m_stressControl[0] || !m_stressControl[1] || !m_stressControl[2] ) && ( m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 ) );
   //#######################################################################################
   if( ( !m_stressControl[0] || !m_stressControl[1] || !m_stressControl[2] ) && ( m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 ) )
@@ -1313,6 +1300,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   }
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Apply essential boundary conditions" );
   solverProfiling( "Apply essential boundary conditions" );
   //#######################################################################################
   applyEssentialBCs( dt, time_n, nodeManager );
@@ -1329,11 +1317,13 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Grid-to-particle interpolation" );
   solverProfiling( "Grid-to-particle interpolation" );
   //#######################################################################################
   gridToParticle( dt, particleManager, nodeManager );
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_prescribedFTable == 1, "Update particle positions according to prescribed F Table" );
   solverProfilingIf( "Update particle positions according to prescribed F Table", m_prescribedFTable == 1 );
   //####################################################################################### 
   if( m_prescribedFTable == 1 )
@@ -1344,36 +1334,42 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   }
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Update deformation gradient" );
   solverProfiling( "Update deformation gradient" );
   //#######################################################################################
   updateDeformationGradient( dt, particleManager );
 
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Update particle geometry (e.g. volume, r-vectors) and density" );
   solverProfiling( "Update particle geometry (e.g. volume, r-vectors) and density" );
   //#######################################################################################
   particleKinematicUpdate( particleManager );
 
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Update constitutive model dependencies" );
   solverProfiling( "Update constitutive model dependencies" );
   //#######################################################################################
   updateConstitutiveModelDependencies( particleManager );
 
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Update stress" );
   solverProfiling( "Update stress" );
   //#######################################################################################
   updateStress( dt, particleManager );
 
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Update solver dependencies" );
   solverProfiling( "Update solver dependencies" );
   //#######################################################################################
   updateSolverDependencies( particleManager );
 
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_boxAverageHistory == 1, "Compute and write box averages" );
   solverProfilingIf( "Compute and write box averages", m_boxAverageHistory == 1 );
   //#######################################################################################
   if( m_boxAverageHistory == 1 )
@@ -1386,6 +1382,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   }
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && ( m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1 ), "Stress control" );
   solverProfilingIf("Stress control",  m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1 );
   //#######################################################################################
   // stress control reads a principal stress table.  we compute the
@@ -1398,25 +1395,28 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                    particleManager );
   }
 
+
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Calculate stable time step" );
   solverProfiling( "Calculate stable time step" );
   //#######################################################################################
   real64 dtReturn = getStableTimeStep( particleManager );
 
-
   //#######################################################################################
-  solverProfiling( "Flag out-of-range particles" );
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Update global-to-local map" );
+  solverProfiling( "Update global-to-local map" );
   //#######################################################################################
   flagOutOfRangeParticles( particleManager );
 
-
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Delete bad particles" );
   solverProfiling( "Delete bad particles" );
   //#######################################################################################
   deleteBadParticles( particleManager );
 
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && MpiWrapper::commSize( MPI_COMM_GEOSX ) > 1, "Delete bad particles" );
   solverProfilingIf( "Particle repartitioning", MpiWrapper::commSize( MPI_COMM_GEOSX ) > 1 );
   //#######################################################################################
   if( MpiWrapper::commSize( MPI_COMM_GEOSX ) > 1 )
@@ -1443,6 +1443,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   }
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && ( m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 || m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1 ), "Resize grid based on F-table" );
   solverProfilingIf( "Resize grid based on F-table",  m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 || m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1 );
   //#######################################################################################
   if( m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 || m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1 )
@@ -1452,6 +1453,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "End of explicitStep");
   solverProfiling( "End of explicitStep" );
   //#######################################################################################
   if( m_solverProfiling >= 1 )
@@ -1469,6 +1471,77 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                                        ParticleManager & particleManager,
                                        SpatialPartition & partition )
 {
+  // // CC: debugging single cell stress/velocity grad issue
+  // particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  // {
+  //   // Particle fields
+  //   arrayView2d< real64 > const particleStress = subRegion.getField< fields::mpm::particleStress >();
+  //   arrayView3d< real64 > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
+  //   SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+  //   forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // Can be parallized using atomics -
+  //                                                                                               // remember to pass copies of class
+  //                                                                                               // variables
+  //   {                                                                                          // Grid max damage will require reduction
+  //     localIndex const p = activeParticleIndices[pp];
+
+  //     real64 trialP, trialQ;
+  //     real64 deviator[6];
+  //     real64 stress[6];
+  //     LvArray::tensorOps::copy<6>(stress, particleStress[p]);
+  //     twoInvariant::stressDecomposition(stress, trialP, trialQ, deviator);
+
+  //     GEOS_LOG_RANK_0( p << ": " << 
+  //                      "Stress " << particleStress[p] << ", " << 
+  //                      "TrialP " << trialP << ", " << 
+  //                      "TrialQ " << trialQ << ", " <<
+  //                      "Deviator {" << deviator[0] << ", " << 
+  //                      deviator[1] << ", " << 
+  //                      deviator[2] << ", " << 
+  //                      deviator[3] << ", " << 
+  //                      deviator[4] << ", " << 
+  //                      deviator[5] << "}, " << 
+  //                      "VelGrad: { {" << particleVelocityGradient[p][0][0] << ", " << particleVelocityGradient[p][0][1] << ", " << particleVelocityGradient[p][0][2] << "}, " <<
+  //                                       "{" << particleVelocityGradient[p][1][0] << ", " << particleVelocityGradient[p][1][1] << ", " << particleVelocityGradient[p][1][2] << "}, " <<
+  //                                       "{" << particleVelocityGradient[p][2][0] << ", " << particleVelocityGradient[p][2][1] << ", " << particleVelocityGradient[p][2][2] << "} }");
+  //   });
+  // });
+
+  // particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  // {
+  //     // Get constitutive model reference
+  //     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+  //     SolidBase & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
+
+  //     GEOS_ERROR_IF( !solidModel.hasWrapper( "oldStress" ), "Cannot anneal constitutive model that does not have oldStress wrapper!");
+  //     arrayView3d< real64 > const constitutiveOldStress = solidModel.getReference< array3d< real64 > >( "oldStress" );
+    
+  //     // SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+  //     forAll< serialPolicy >( constitutiveOldStress.size(0), [=] GEOS_HOST ( localIndex const p )
+  //     {
+  //         // Smoothly knock down the deviatoric stress to simulate annealing
+  //         real64 stress[6] = {0};
+  //         LvArray::tensorOps::copy< 6 >( stress, constitutiveOldStress[p][0]);
+
+  //         real64 trialP;
+  //         real64 trialQ;
+  //         real64 deviator[6];
+  //         twoInvariant::stressDecomposition( stress,
+  //                                            trialP,
+  //                                            trialQ,
+  //                                            deviator );
+  //         GEOS_LOG_RANK_0( p << ": " << 
+  //                          "TrialP: " << trialP << ", " <<
+  //                          "TrailQ: " << trialQ << ", " <<
+  //                          "oldS: " << constitutiveOldStress[p][0] << ", " << 
+  //                          "Dev: " << deviator[0] << ", " << 
+  //                                     deviator[1] << ", " <<
+  //                                     deviator[2] << ", " <<
+  //                                     deviator[3] << ", " << 
+  //                                     deviator[4] << ", " << 
+  //                                     deviator[5] );
+  //     });
+  // });
+
   m_mpmEventManager->forSubGroups< MPMEventBase >( [&]( MPMEventBase & event )
   {
     real64 eventTime = event.getTime();
@@ -1486,6 +1559,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
       if( event.getName() == "Anneal" )
       {
+        GEOS_LOG_RANK_0( "Processing anneal event");
         AnnealMPMEvent & anneal = dynamicCast< AnnealMPMEvent & >( event );
 
         particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
@@ -1515,19 +1589,19 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                 LvArray::tensorOps::copy< 6 >( stress, constitutiveOldStress[p][0]);
 
                 real64 trialP;
-                real64 trialQ; //  Check that this isn't a redeclaration
+                real64 trialQ;
                 real64 deviator[6];
                 twoInvariant::stressDecomposition( stress,
-                                                    trialP,
-                                                    trialQ,
-                                                    deviator );
+                                                   trialP,
+                                                   trialQ,
+                                                   deviator );
 
+                LvArray::tensorOps::copy< 6 >( constitutiveOldStress[p][0], stress );
                 twoInvariant::stressRecomposition( trialP,
-                                                  knockdown * trialQ,
-                                                  deviator,
-                                                  stress );
-
-                LvArray::tensorOps::copy< 6 >( constitutiveOldStress[p][0], stress);
+                                                   knockdown * trialQ,
+                                                   deviator,
+                                                   stress );
+                LvArray::tensorOps::copy< 6 >( constitutiveOldStress[p][0], stress );
             });
           }
         });
@@ -1583,6 +1657,90 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                 {
                   particleSurfaceFlag[p] = 2;
                   break;
+                }
+              }
+            });
+          });
+          event.setIsComplete( 1 );
+      }
+
+      if( event.getName() == "MachineSample" )
+      {
+          MachineSampleMPMEvent & machineSample = dynamicCast< MachineSampleMPMEvent & >( event );
+
+          real64 xGlobalMin[3];
+          real64 xGlobalMax[3];
+          real64 domainExtent[3];
+          real64 hEl[3];
+          LvArray::tensorOps::copy< 3 >(xGlobalMin, m_xGlobalMin);
+          LvArray::tensorOps::copy< 3 >(xGlobalMax, m_xGlobalMax);
+          LvArray::tensorOps::copy< 3 >(domainExtent, m_domainExtent);
+          LvArray::tensorOps::copy< 3 >(hEl, m_hEl);
+
+          particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+          {
+            arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
+            arrayView1d< int > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
+            arrayView1d< int > const particleIsBad = subRegion.getField< fields::mpm::isBad >();
+
+            SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+
+            string sampleType = machineSample.getSampleType();
+
+            real64 gaugeRadius = machineSample.getGaugeRadius();
+            real64 gaugeLength = machineSample.getGaugeLength();
+            real64 filletRadius = machineSample.getFilletRadius();     
+            real64 machiningLength = 2*filletRadius + gaugeLength;
+            
+            real64 diskRadius = machineSample.getDiskRadius();
+
+            real64 domainCenter[3] = { 0 };
+            LvArray::tensorOps::copy< 3 >( domainCenter, xGlobalMin);
+            LvArray::tensorOps::add< 3 >( domainCenter, xGlobalMax);
+            LvArray::tensorOps::scale< 3 >( domainCenter, 0.5 );
+            
+            forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+            {
+              localIndex const p = activeParticleIndices[pp];
+
+              // Dogbone is milled along y direction
+              if( sampleType == "dogbone")
+              {
+                // Particle is inside gauge section
+                if( particlePosition[p][1] > xGlobalMin[1] + (domainExtent[1] - machiningLength)/2 && 
+                    particlePosition[p][1] < xGlobalMax[1] - (domainExtent[1] - machiningLength)/2 )
+                {
+                  real64 distSqr = std::pow( particlePosition[p][0] - domainCenter[0], 2 ) + std::pow( particlePosition[p][2] - domainCenter[2], 2 );
+                  //Is particle inside the gauge section
+                  if( particlePosition[p][1] > xGlobalMin[1] + (domainExtent[1] - gaugeLength)/2 && 
+                      particlePosition[p][1] < xGlobalMax[1] - (domainExtent[1] - gaugeLength)/2 )
+                  {
+                    // Check distance in XZ plane from radius of gauge
+                    if( distSqr  > gaugeRadius * gaugeRadius ){
+                      // GEOS_LOG_RANK( p << ": " << std::sqrt(distSqr) << ", Pos: " << particlePosition[p] );
+                      particleIsBad[p] = 1;
+                    }
+                  } 
+                  //Check if particle is outside of fillet radius
+                  else
+                  {
+                    real64 y = std::abs( particlePosition[p][1] - domainCenter[1] ) - gaugeLength/2;
+                    real64 rr = filletRadius - std::sqrt( ( filletRadius * filletRadius - y * y ) ) + gaugeRadius;
+                    if( distSqr > rr * rr)
+                    {
+                      GEOS_LOG_RANK( p << ": " << std::sqrt(distSqr) << ", Pos: " << particlePosition[p] );
+                      particleIsBad[p] = 1;
+                    }
+                  }
+                }
+              }
+
+              if( sampleType == "brazilDisk"){
+                real64 distSqr = std::pow( particlePosition[p][0] - domainCenter[0], 2 ) + std::pow( particlePosition[p][1] - domainCenter[1], 2 )  + std::pow( particlePosition[p][2] - domainCenter[2], 2 );
+                  
+                if( distSqr > diskRadius * diskRadius )
+                {
+                  particleIsBad[p] = 1;
                 }
               }
             });
@@ -4334,10 +4492,11 @@ void SolidMechanicsMPM::performFLIPUpdate( real64 dt,
         for( int i=0; i<numDims; i++ )
         {
           // Full step update
-          particlePosition[p][i] += gridVelocity[mappedNode][fieldIndex][i] * shapeFunctionValues[pp][g] * dt;
+          // particlePosition[p][i] += gridVelocity[mappedNode][fieldIndex][i] * shapeFunctionValues[pp][g] * dt;
           
-          // // Half step update
-          // particlePosition[p][i] += ( gridVelocity[mappedNode][fieldIndex][i] - 0.5 * gridAcceleration[mappedNode][fieldIndex][i] * dt ) * shapeFunctionValues[pp][g] * dt;
+          // Half step update ( equivalent to old geos, but if there is only one cell in the simulation that is anomalous issues with the particle velocity gradient and by extension the stresses)
+          // If the simulation size is increased to 2x2x2 then the issue goes away and likewise if the rvectors are scaled to 80% for a single cell simulation
+          particlePosition[p][i] += ( gridVelocity[mappedNode][fieldIndex][i] - 0.5 * gridAcceleration[mappedNode][fieldIndex][i] * dt ) * shapeFunctionValues[pp][g] * dt;
           
           particleVelocity[p][i] += gridAcceleration[mappedNode][fieldIndex][i] * dt * shapeFunctionValues[pp][g]; // FLIP
           for( int j=0; j<numDims; j++ )
@@ -4850,9 +5009,11 @@ real64 SolidMechanicsMPM::getStableTimeStep( ParticleManager & particleManager )
 
 void SolidMechanicsMPM::deleteBadParticles( ParticleManager & particleManager )
 {
+  int size = 0;
   // Cases covered:
   // 1.) Particles that map outside the domain (including buffer cells)
   // 2.) Particles with unacceptable Jacobian (<0.1 or >10)
+  // 3.) Particles that are removed by the machine sample event
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     // Move everything into the host memory space
@@ -4878,7 +5039,12 @@ void SolidMechanicsMPM::deleteBadParticles( ParticleManager & particleManager )
         }
       } );
     subRegion.erase( indicesToErase );
+    subRegion.setActiveParticleIndices(); // CC: debug
+    size = subRegion.activeParticleIndices().size();
+    GEOS_LOG_RANK_0( subRegion.getName() << ": numParticles=" << subRegion.activeParticleIndices().size());
   } );
+
+  // particleManager.getRegion< ParticleRegion >( "ParticleRegion1" ).resize( size ) ;
 }
 
 void SolidMechanicsMPM::printProfilingResults()
