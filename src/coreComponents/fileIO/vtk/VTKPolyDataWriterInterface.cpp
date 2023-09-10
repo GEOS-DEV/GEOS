@@ -239,7 +239,7 @@ getVtkPoints( ParticleRegion const & particleRegion ) // TODO: Loop over the sub
   // TODO: add support for CPTI (tet) and single point (cube or sphere) geometries
 
   localIndex const numCornersPerParticle = 8; // Each CPDI particle has 8 corners. TODO: add support for other particle types.
-  localIndex const numCorners = numCornersPerParticle * particleRegion.size();
+  localIndex const numCorners = numCornersPerParticle * particleRegion.getNumberOfParticles(); // size(); // size isn't updated in mpm solver leading to crashes from index out of range
   auto points = vtkSmartPointer< vtkPoints >::New();
   points->SetNumberOfPoints( numCorners );
   array2d< real64 > const coord = particleRegion.getParticleCorners();
