@@ -55,12 +55,7 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( UpwindingScheme::PPU ).
     setDescription( "Type of upwinding scheme. "
-                    "Valid options:\n* " + EnumStrings< UpwindingScheme >::concat( "\n* " ) );      
-
-//  registerWrapper( viewKeyStruct::useDBCString(), &m_useDBC ).
-//    setInputFlag( InputFlags::OPTIONAL ).
-//    setApplyDefaultValue( 0 ).
-//    setDescription( "Enable Dissipation-based continuation flux" );                            
+                    "Valid options:\n* " + EnumStrings< UpwindingScheme >::concat( "\n* " ) );
 
 //  registerWrapper( viewKeyStruct::epsC1PPUString(), &m_upwindingParams.epsC1PPU ).
 //    setApplyDefaultValue( 1e-10 ).

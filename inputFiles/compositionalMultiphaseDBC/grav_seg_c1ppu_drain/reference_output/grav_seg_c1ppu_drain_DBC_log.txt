@@ -1,0 +1,1535 @@
+Num ranks: 1
+Max threads: 1
+GEOSX version: 0.2.0
+  - c++ compiler: gcc 10.4.0
+  - openmp version: 201511
+  - MPI version: Open MPI v4.1.5rc2, package: Open MPI root@hpc-kernel-03 Distribution, ident: 4.1.5rc2, repo rev: v4.1.5rc1-16-g5980bac633, Unreleased developer copy
+  - HDF5 version: 1.12.1
+  - Conduit version: 0.8.2
+  - VTK version: 9.1.0
+  - RAJA version: 2022.3.0
+  - umpire version: 2022.3.0
+  -  adiak version: ..
+  - caliper version: 2.8.0
+  - METIS version: 5.1.0
+  - PARAMETIS version: 4.0.3
+  - scotch version: 6.0.9
+  - superlu_dist version: 6.3.0
+  - suitesparse version: 5.7.9
+  - Python3 version: 3.10.9
+  - hypre release version: 2.28.0
+Started at 2023-09-11 16:03:41
+Adding Solver of type CompositionalMultiphaseFVM, named grav_seg_c1ppu_drain
+Adding Mesh: InternalMesh, mesh
+Adding Geometric Object: Box, left_half
+Adding Geometric Object: Box, right_half
+   TableFunction: waterCapillaryPressureTable
+Adding Output: VTK, vtkOutput
+Adding Output: Restart, restartOutput
+Adding Event: PeriodicEvent, statistics
+Adding Event: PeriodicEvent, solverApplications
+Adding Event: PeriodicEvent, restarts
+Adding Object CellElementRegion named region from ObjectManager::Catalog.
+   TableFunction: fluid_PVDG_Bg
+   TableFunction: fluid_PVDG_viscg
+mesh: total number of nodes = 4004
+mesh: total number of elems = 1000
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = mesh, Level0, region, cellBlock
+mesh/Level0/region/cellBlock/fluid allocated 1 quadrature points
+mesh/Level0/region/cellBlock/rock allocated 1 quadrature points
+mesh/Level0/region/cellBlock/relperm allocated 1 quadrature points
+mesh/Level0/region/cellBlock/cappres allocated 1 quadrature points
+mesh: importing field data from mesh dataset
+Time: 0.00e+00 s, dt: 1000 s, Cycle: 0
+compflowstats, region: Pressure (min, average, max): 1e+07, 1e+07, 1e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0, 0 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.990269, 1.00973 } rm^3
+compflowstats, region: Phase mass: { 982.346, 100.973 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 982.346, 100.973 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0.10009, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 982.246, 100.973 } kg
+compflowstats, region: Dissolved component mass: { { 982.346, 0 }, { 0, 100.973 } } kg
+compflowstats: Max phase CFL number: 0.413635
+compflowstats: Max component CFL number: 19.1915
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 5.93e+03 ) ;     ( R ) = ( 5.93e+03 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 2.35e+03 ) ;     ( R ) = ( 2.35e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.14e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.95e+03 ) ;     ( R ) = ( 1.95e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.69e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.60e+03 ) ;     ( R ) = ( 1.60e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.85e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.37e+03 ) ;     ( R ) = ( 1.37e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.47e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.16e+03 ) ;     ( R ) = ( 1.16e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.50e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.00e+03 ) ;     ( R ) = ( 1.00e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.54e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 8.54e+02 ) ;     ( R ) = ( 8.54e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.45e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 7.22e+02 ) ;     ( R ) = ( 7.22e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.28e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 5.93e+02 ) ;     ( R ) = ( 5.93e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.26e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 5.06e+02 ) ;     ( R ) = ( 5.06e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.92e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 3.95e+02 ) ;     ( R ) = ( 3.95e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.93e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 3.08e+02 ) ;     ( R ) = ( 3.08e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.37e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 2.34e+02 ) ;     ( R ) = ( 2.34e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.90e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 1.69e+02 ) ;     ( R ) = ( 1.69e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.94e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 15
+    ( Rflow ) = ( 1.12e+02 ) ;     ( R ) = ( 1.12e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.13e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 16
+    ( Rflow ) = ( 6.36e+01 ) ;     ( R ) = ( 6.36e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.41e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 17
+    ( Rflow ) = ( 2.45e+01 ) ;     ( R ) = ( 2.45e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.88e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 18
+    ( Rflow ) = ( 3.68e+00 ) ;     ( R ) = ( 3.68e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.88e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 19
+    ( Rflow ) = ( 2.59e+00 ) ;     ( R ) = ( 2.59e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.81e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 20
+    ( Rflow ) = ( 5.79e-01 ) ;     ( R ) = ( 5.79e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.94e-17 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 21
+    ( Rflow ) = ( 8.07e-02 ) ;     ( R ) = ( 8.07e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.74e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 22
+    ( Rflow ) = ( 3.35e-03 ) ;     ( R ) = ( 3.35e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.25e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 23
+    ( Rflow ) = ( 8.22e-06 ) ;     ( R ) = ( 8.22e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.15e-16 ) ; 
+grav_seg_c1ppu_drain: Newton solver converged in less than 40 iterations, time-step required will be increased.
+Rank 0: Writing out restart file at ./grav_seg_c1ppu_drain_DBC-1_restart_000000000/rank_0000000.hdf5
+Time: 1.00e+03 s, dt: 2000 s, Cycle: 1
+compflowstats, region: Pressure (min, average, max): 9.97553e+06, 1.00126e+07, 1.0028e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0, 0 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.990269, 1.00973 } rm^3
+compflowstats, region: Phase mass: { 982.346, 100.973 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 982.346, 100.973 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0.0954736, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 982.251, 100.973 } kg
+compflowstats, region: Dissolved component mass: { { 982.346, 0 }, { 0, 100.973 } } kg
+compflowstats: Max phase CFL number: 43.5722
+compflowstats: Max component CFL number: 31.4666
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 4.29e+01 ) ;     ( R ) = ( 4.29e+01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 5.84e+00 ) ;     ( R ) = ( 5.84e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.14e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 4.07e+00 ) ;     ( R ) = ( 4.07e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.04e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 4.83e+00 ) ;     ( R ) = ( 4.83e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.45e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 4.81e-01 ) ;     ( R ) = ( 4.81e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.24e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 9.12e-02 ) ;     ( R ) = ( 9.12e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.60e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 5.58e-03 ) ;     ( R ) = ( 5.58e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.91e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.31e-04 ) ;     ( R ) = ( 1.31e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.04e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 7.65e-07 ) ;     ( R ) = ( 7.65e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.88e-14 ) ; 
+grav_seg_c1ppu_drain: Newton solver converged in less than 40 iterations, time-step required will be increased.
+Time: 3.00e+03 s, dt: 4000 s, Cycle: 2
+compflowstats, region: Pressure (min, average, max): 9.97564e+06, 1.00119e+07, 1.00266e+07 Pa
+compflowstats, region: Delta pressure (min, max): -24467.5, 28003.6 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.990269, 1.00973 } rm^3
+compflowstats, region: Phase mass: { 982.346, 100.973 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 982.346, 100.973 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0.0931818, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 982.253, 100.973 } kg
+compflowstats, region: Dissolved component mass: { { 982.346, 0 }, { 0, 100.973 } } kg
+compflowstats: Max phase CFL number: 85.7496
+compflowstats: Max component CFL number: 60.2296
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.32e+02 ) ;     ( R ) = ( 1.32e+02 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.69e+01 ) ;     ( R ) = ( 1.69e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.99e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.12e+01 ) ;     ( R ) = ( 1.12e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.01e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.15e+01 ) ;     ( R ) = ( 1.15e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.33e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 3.34e+00 ) ;     ( R ) = ( 3.34e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.62e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 3.77e-01 ) ;     ( R ) = ( 3.77e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.81e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 7.26e-02 ) ;     ( R ) = ( 7.26e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.04e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.37e-02 ) ;     ( R ) = ( 1.37e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.80e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 2.17e-04 ) ;     ( R ) = ( 2.17e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.76e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.13e-06 ) ;     ( R ) = ( 1.13e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.26e-14 ) ; 
+grav_seg_c1ppu_drain: Newton solver converged in less than 40 iterations, time-step required will be increased.
+Time: 7.00e+03 s, dt: 8000 s, Cycle: 3
+compflowstats, region: Pressure (min, average, max): 9.97605e+06, 1.00107e+07, 1.00242e+07 Pa
+compflowstats, region: Delta pressure (min, max): -24357.9, 26591.1 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.990269, 1.00973 } rm^3
+compflowstats, region: Phase mass: { 982.346, 100.973 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 982.346, 100.973 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0.0858071, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 982.261, 100.973 } kg
+compflowstats, region: Dissolved component mass: { { 982.346, 0 }, { 0, 100.973 } } kg
+compflowstats: Max phase CFL number: 170.286
+compflowstats: Max component CFL number: 118.995
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 3.27e+02 ) ;     ( R ) = ( 3.27e+02 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 4.20e+01 ) ;     ( R ) = ( 4.20e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.62e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.36e+01 ) ;     ( R ) = ( 2.36e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.58e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.71e+01 ) ;     ( R ) = ( 2.71e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.76e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 2.54e+01 ) ;     ( R ) = ( 2.54e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.87e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 6.15e+00 ) ;     ( R ) = ( 6.15e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.48e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 4.75e-01 ) ;     ( R ) = ( 4.75e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.36e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 7.15e-02 ) ;     ( R ) = ( 7.15e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.07e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.22e-03 ) ;     ( R ) = ( 1.22e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.49e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.22e-03 ) ;     ( R ) = ( 1.22e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.20e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 7.54e-08 ) ;     ( R ) = ( 7.54e-08 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.38e-15 ) ; 
+grav_seg_c1ppu_drain: Newton solver converged in less than 40 iterations, time-step required will be increased.
+Time: 1.50e+04 s, dt: 16000 s, Cycle: 4
+compflowstats, region: Pressure (min, average, max): 9.97761e+06, 1.00084e+07, 1.00203e+07 Pa
+compflowstats, region: Delta pressure (min, max): -23952.2, 24197.3 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.990269, 1.00973 } rm^3
+compflowstats, region: Phase mass: { 982.346, 100.973 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 982.346, 100.973 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0.0746994, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 982.272, 100.973 } kg
+compflowstats, region: Dissolved component mass: { { 982.346, 0 }, { 0, 100.973 } } kg
+compflowstats: Max phase CFL number: 339.404
+compflowstats: Max component CFL number: 236.718
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 9.11e+02 ) ;     ( R ) = ( 9.11e+02 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.19e+02 ) ;     ( R ) = ( 1.19e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.77e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 4.63e+01 ) ;     ( R ) = ( 4.63e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.13e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 5.56e+01 ) ;     ( R ) = ( 5.56e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.49e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 5.25e+01 ) ;     ( R ) = ( 5.25e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.34e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.55e+01 ) ;     ( R ) = ( 2.55e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.75e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.01e+01 ) ;     ( R ) = ( 1.01e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.16e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 3.76e+00 ) ;     ( R ) = ( 3.76e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.74e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 4.15e-01 ) ;     ( R ) = ( 4.15e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.89e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.81e-03 ) ;     ( R ) = ( 1.81e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.18e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 1.51e-07 ) ;     ( R ) = ( 1.51e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.19e-13 ) ; 
+grav_seg_c1ppu_drain: Newton solver converged in less than 40 iterations, time-step required will be increased.
+Time: 3.10e+04 s, dt: 32000 s, Cycle: 5
+compflowstats, region: Pressure (min, average, max): 9.98311e+06, 1.0005e+07, 1.00155e+07 Pa
+compflowstats, region: Delta pressure (min, max): -22391.5, 20313.3 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.990269, 1.00973 } rm^3
+compflowstats, region: Phase mass: { 982.346, 100.973 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 982.346, 100.973 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0.0516936, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 982.295, 100.973 } kg
+compflowstats, region: Dissolved component mass: { { 982.346, 0 }, { 0, 100.973 } } kg
+compflowstats: Max phase CFL number: 677.641
+compflowstats: Max component CFL number: 472.218
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 2.65e+03 ) ;     ( R ) = ( 2.65e+03 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 3.15e+02 ) ;     ( R ) = ( 3.15e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.87e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 8.65e+01 ) ;     ( R ) = ( 8.65e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.38e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 8.12e+01 ) ;     ( R ) = ( 8.12e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.22e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 9.80e+01 ) ;     ( R ) = ( 9.80e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.36e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 7.47e+01 ) ;     ( R ) = ( 7.47e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.85e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.51e+01 ) ;     ( R ) = ( 1.51e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.14e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.76e+00 ) ;     ( R ) = ( 1.76e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.28e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 3.92e-01 ) ;     ( R ) = ( 3.92e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.12e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 3.13e-02 ) ;     ( R ) = ( 3.13e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.08e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 4.87e-03 ) ;     ( R ) = ( 4.87e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.87e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 2.26e-04 ) ;     ( R ) = ( 2.26e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.01e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 7.30e-07 ) ;     ( R ) = ( 7.30e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.61e-11 ) ; 
+grav_seg_c1ppu_drain: Newton solver converged in less than 40 iterations, time-step required will be increased.
+Time: 6.30e+04 s, dt: 64000 s, Cycle: 6
+compflowstats, region: Pressure (min, average, max): 9.99015e+06, 1.00014e+07, 1.00106e+07 Pa
+compflowstats, region: Delta pressure (min, max): -16888.1, 15464.1 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.990269, 1.00973 } rm^3
+compflowstats, region: Phase mass: { 982.346, 100.973 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 982.346, 100.973 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0.0100338, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 982.336, 100.973 } kg
+compflowstats, region: Dissolved component mass: { { 982.346, 0 }, { 0, 100.973 } } kg
+compflowstats: Max phase CFL number: 933.235
+compflowstats: Max component CFL number: 861.878
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.26e+04 ) ;     ( R ) = ( 1.26e+04 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.64e+03 ) ;     ( R ) = ( 1.64e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.36e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.13e+02 ) ;     ( R ) = ( 2.13e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.32e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.42e+02 ) ;     ( R ) = ( 2.42e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.81e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 3.66e+02 ) ;     ( R ) = ( 3.66e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.30e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 3.98e+02 ) ;     ( R ) = ( 3.98e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.44e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 4.10e+02 ) ;     ( R ) = ( 4.10e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.22e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.63e+03 ) ;     ( R ) = ( 2.63e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.06e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 5.22e+03 ) ;     ( R ) = ( 5.22e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.85e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 5.91e+03 ) ;     ( R ) = ( 5.91e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.13e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 1.61e+04 ) ;     ( R ) = ( 1.61e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.88e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 2.75e+04 ) ;     ( R ) = ( 2.75e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.99e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 3.11e+04 ) ;     ( R ) = ( 3.11e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.68e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 3.71e+04 ) ;     ( R ) = ( 3.71e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.17e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 3.61e+04 ) ;     ( R ) = ( 3.61e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.52e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 15
+    ( Rflow ) = ( 3.77e+04 ) ;     ( R ) = ( 3.77e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.66e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 16
+    ( Rflow ) = ( 3.83e+04 ) ;     ( R ) = ( 3.83e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.21e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 17
+    ( Rflow ) = ( 3.90e+04 ) ;     ( R ) = ( 3.90e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.40e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 18
+    ( Rflow ) = ( 4.02e+04 ) ;     ( R ) = ( 4.02e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.67e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 19
+    ( Rflow ) = ( 4.14e+04 ) ;     ( R ) = ( 4.14e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.64e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 20
+    ( Rflow ) = ( 3.99e+04 ) ;     ( R ) = ( 3.99e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.69e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 21
+    ( Rflow ) = ( 3.99e+04 ) ;     ( R ) = ( 3.99e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.08e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 22
+    ( Rflow ) = ( 4.03e+04 ) ;     ( R ) = ( 4.03e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.45e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 23
+    ( Rflow ) = ( 3.92e+04 ) ;     ( R ) = ( 3.92e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.45e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 24
+    ( Rflow ) = ( 4.08e+04 ) ;     ( R ) = ( 4.08e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.27e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 25
+    ( Rflow ) = ( 4.02e+04 ) ;     ( R ) = ( 4.02e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.47e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 26
+    ( Rflow ) = ( 4.09e+04 ) ;     ( R ) = ( 4.09e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.44e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 27
+    ( Rflow ) = ( 4.06e+04 ) ;     ( R ) = ( 4.06e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.55e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 28
+    ( Rflow ) = ( 4.01e+04 ) ;     ( R ) = ( 4.01e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.26e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 29
+    ( Rflow ) = ( 3.96e+04 ) ;     ( R ) = ( 3.96e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.01e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 30
+    ( Rflow ) = ( 3.92e+04 ) ;     ( R ) = ( 3.92e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.16e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 31
+    ( Rflow ) = ( 3.52e+04 ) ;     ( R ) = ( 3.52e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.42e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 32
+    ( Rflow ) = ( 3.47e+04 ) ;     ( R ) = ( 3.47e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.74e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 33
+    ( Rflow ) = ( 3.58e+04 ) ;     ( R ) = ( 3.58e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.78e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 34
+    ( Rflow ) = ( 3.41e+04 ) ;     ( R ) = ( 3.41e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.55e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 35
+    ( Rflow ) = ( 3.37e+04 ) ;     ( R ) = ( 3.37e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.82e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 36
+    ( Rflow ) = ( 2.89e+04 ) ;     ( R ) = ( 2.89e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.98e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 37
+    ( Rflow ) = ( 6.19e+05 ) ;     ( R ) = ( 6.19e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.79e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 38
+    ( Rflow ) = ( 6.12e+05 ) ;     ( R ) = ( 6.12e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.26e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 39
+    ( Rflow ) = ( 6.04e+05 ) ;     ( R ) = ( 6.04e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.92e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 40
+    ( Rflow ) = ( 5.98e+05 ) ;     ( R ) = ( 5.98e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.71e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 41
+    ( Rflow ) = ( 5.87e+05 ) ;     ( R ) = ( 5.87e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.22e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 42
+    ( Rflow ) = ( 5.81e+05 ) ;     ( R ) = ( 5.81e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.49e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 43
+    ( Rflow ) = ( 2.87e+05 ) ;     ( R ) = ( 2.87e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.02e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 44
+    ( Rflow ) = ( 2.13e+05 ) ;     ( R ) = ( 2.13e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.42e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 45
+    ( Rflow ) = ( 3.14e+05 ) ;     ( R ) = ( 3.14e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.77e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 46
+    ( Rflow ) = ( 3.16e+05 ) ;     ( R ) = ( 3.16e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.19e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 47
+    ( Rflow ) = ( 3.13e+05 ) ;     ( R ) = ( 3.13e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.60e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 48
+    ( Rflow ) = ( 3.14e+05 ) ;     ( R ) = ( 3.14e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.32e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 49
+    ( Rflow ) = ( 3.12e+05 ) ;     ( R ) = ( 3.12e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.35e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 50
+    ( Rflow ) = ( 3.24e+05 ) ;     ( R ) = ( 3.24e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.72e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 51
+    ( Rflow ) = ( 3.20e+05 ) ;     ( R ) = ( 3.20e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.89e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 52
+    ( Rflow ) = ( 2.98e+05 ) ;     ( R ) = ( 2.98e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.96e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 53
+    ( Rflow ) = ( 1.40e+05 ) ;     ( R ) = ( 1.40e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.01e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 54
+    ( Rflow ) = ( 8.91e+04 ) ;     ( R ) = ( 8.91e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.16e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 55
+    ( Rflow ) = ( 5.32e+04 ) ;     ( R ) = ( 5.32e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.71e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 56
+    ( Rflow ) = ( 2.86e+04 ) ;     ( R ) = ( 2.86e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.16e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 57
+    ( Rflow ) = ( 1.15e+04 ) ;     ( R ) = ( 1.15e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.01e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 58
+    ( Rflow ) = ( 2.15e+03 ) ;     ( R ) = ( 2.15e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.46e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 59
+    ( Rflow ) = ( 1.65e+04 ) ;     ( R ) = ( 1.65e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.79e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 60
+    ( Rflow ) = ( 7.34e+05 ) ;     ( R ) = ( 7.34e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.75e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 61
+    ( Rflow ) = ( 7.04e+05 ) ;     ( R ) = ( 7.04e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.18e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 62
+    ( Rflow ) = ( 6.97e+05 ) ;     ( R ) = ( 6.97e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.23e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 63
+    ( Rflow ) = ( 6.69e+05 ) ;     ( R ) = ( 6.69e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.71e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 64
+    ( Rflow ) = ( 6.63e+05 ) ;     ( R ) = ( 6.63e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.28e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 65
+    ( Rflow ) = ( 6.41e+05 ) ;     ( R ) = ( 6.41e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.60e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 66
+    ( Rflow ) = ( 6.34e+05 ) ;     ( R ) = ( 6.34e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.50e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 67
+    ( Rflow ) = ( 6.24e+05 ) ;     ( R ) = ( 6.24e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.14e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 68
+    ( Rflow ) = ( 5.64e+05 ) ;     ( R ) = ( 5.64e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.32e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 69
+    ( Rflow ) = ( 5.33e+05 ) ;     ( R ) = ( 5.33e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.96e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 70
+    ( Rflow ) = ( 5.20e+05 ) ;     ( R ) = ( 5.20e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.50e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 71
+    ( Rflow ) = ( 5.12e+05 ) ;     ( R ) = ( 5.12e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.03e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 72
+    ( Rflow ) = ( 5.07e+05 ) ;     ( R ) = ( 5.07e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.07e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 73
+    ( Rflow ) = ( 4.88e+05 ) ;     ( R ) = ( 4.88e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.52e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 74
+    ( Rflow ) = ( 4.83e+05 ) ;     ( R ) = ( 4.83e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.21e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 75
+    ( Rflow ) = ( 4.07e+05 ) ;     ( R ) = ( 4.07e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.76e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 76
+    ( Rflow ) = ( 5.36e+05 ) ;     ( R ) = ( 5.36e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.36e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 77
+    ( Rflow ) = ( 5.36e+05 ) ;     ( R ) = ( 5.36e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.10e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 78
+    ( Rflow ) = ( 5.25e+05 ) ;     ( R ) = ( 5.25e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.09e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 79
+    ( Rflow ) = ( 5.19e+05 ) ;     ( R ) = ( 5.19e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.33e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 80
+    ( Rflow ) = ( 5.40e+05 ) ;     ( R ) = ( 5.40e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.87e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 81
+    ( Rflow ) = ( 4.06e+05 ) ;     ( R ) = ( 4.06e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.00e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 82
+    ( Rflow ) = ( 4.01e+05 ) ;     ( R ) = ( 4.01e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.80e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 83
+    ( Rflow ) = ( 2.91e+05 ) ;     ( R ) = ( 2.91e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.21e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 84
+    ( Rflow ) = ( 1.75e+05 ) ;     ( R ) = ( 1.75e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.69e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 85
+    ( Rflow ) = ( 1.10e+05 ) ;     ( R ) = ( 1.10e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.24e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 86
+    ( Rflow ) = ( 6.21e+04 ) ;     ( R ) = ( 6.21e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.26e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 87
+    ( Rflow ) = ( 3.22e+04 ) ;     ( R ) = ( 3.22e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.95e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 88
+    ( Rflow ) = ( 9.14e+03 ) ;     ( R ) = ( 9.14e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.66e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 89
+    ( Rflow ) = ( 9.41e+02 ) ;     ( R ) = ( 9.41e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.47e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 90
+    ( Rflow ) = ( 1.32e+04 ) ;     ( R ) = ( 1.32e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.87e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 91
+    ( Rflow ) = ( 1.27e+04 ) ;     ( R ) = ( 1.27e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.50e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 92
+    ( Rflow ) = ( 5.87e+05 ) ;     ( R ) = ( 5.87e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.16e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 93
+    ( Rflow ) = ( 5.67e+05 ) ;     ( R ) = ( 5.67e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.23e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 94
+    ( Rflow ) = ( 5.62e+05 ) ;     ( R ) = ( 5.62e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.41e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 95
+    ( Rflow ) = ( 5.41e+05 ) ;     ( R ) = ( 5.41e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.05e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 96
+    ( Rflow ) = ( 5.36e+05 ) ;     ( R ) = ( 5.36e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.18e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 97
+    ( Rflow ) = ( 5.16e+05 ) ;     ( R ) = ( 5.16e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.00e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 98
+    ( Rflow ) = ( 5.11e+05 ) ;     ( R ) = ( 5.11e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.01e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 99
+    ( Rflow ) = ( 4.96e+05 ) ;     ( R ) = ( 4.96e+05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.06e-15 ) ; 
+New dt = 32000
+    Attempt:  1, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 3.16e+03 ) ;     ( R ) = ( 3.16e+03 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 4.00e+02 ) ;     ( R ) = ( 4.00e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.93e-13 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 9.02e+01 ) ;     ( R ) = ( 9.02e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.30e-13 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 9.66e+01 ) ;     ( R ) = ( 9.66e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.01e-13 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.52e+02 ) ;     ( R ) = ( 1.52e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.16e-13 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.77e+02 ) ;     ( R ) = ( 1.77e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.96e-13 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.00e+02 ) ;     ( R ) = ( 1.00e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.47e-13 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.81e+03 ) ;     ( R ) = ( 1.81e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.26e-13 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 6.80e+03 ) ;     ( R ) = ( 6.80e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.12e-15 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 7.74e+03 ) ;     ( R ) = ( 7.74e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.05e-15 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 1.90e+04 ) ;     ( R ) = ( 1.90e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.18e-15 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 4.22e+03 ) ;     ( R ) = ( 4.22e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.47e-16 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 1.84e+04 ) ;     ( R ) = ( 1.84e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.48e-15 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 4.54e+03 ) ;     ( R ) = ( 4.54e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.12e-16 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 3.32e+02 ) ;     ( R ) = ( 3.32e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.58e-16 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 15
+    ( Rflow ) = ( 1.14e+03 ) ;     ( R ) = ( 1.14e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.41e-15 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 16
+    ( Rflow ) = ( 1.68e+02 ) ;     ( R ) = ( 1.68e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.36e-16 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 17
+    ( Rflow ) = ( 5.37e+02 ) ;     ( R ) = ( 5.37e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.47e-15 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 18
+    ( Rflow ) = ( 7.50e+01 ) ;     ( R ) = ( 7.50e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.17e-15 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 19
+    ( Rflow ) = ( 7.08e+03 ) ;     ( R ) = ( 7.08e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.20e-14 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 20
+    ( Rflow ) = ( 7.82e+03 ) ;     ( R ) = ( 7.82e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.48e-15 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 21
+    ( Rflow ) = ( 1.56e+04 ) ;     ( R ) = ( 1.56e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.48e-15 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 22
+    ( Rflow ) = ( 4.18e+03 ) ;     ( R ) = ( 4.18e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.96e-16 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 23
+    ( Rflow ) = ( 2.88e+03 ) ;     ( R ) = ( 2.88e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.38e-16 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 24
+    ( Rflow ) = ( 5.19e+02 ) ;     ( R ) = ( 5.19e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.37e-16 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 25
+    ( Rflow ) = ( 9.81e+01 ) ;     ( R ) = ( 9.81e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.40e-16 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 26
+    ( Rflow ) = ( 3.22e+01 ) ;     ( R ) = ( 3.22e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.58e-15 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 27
+    ( Rflow ) = ( 4.03e+00 ) ;     ( R ) = ( 4.03e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.04e-15 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 28
+    ( Rflow ) = ( 7.12e+03 ) ;     ( R ) = ( 7.12e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.52e-13 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 29
+    ( Rflow ) = ( 2.48e+04 ) ;     ( R ) = ( 2.48e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.29e-15 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 30
+    ( Rflow ) = ( 1.40e+04 ) ;     ( R ) = ( 1.40e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.19e-16 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 31
+    ( Rflow ) = ( 2.82e+03 ) ;     ( R ) = ( 2.82e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.55e-16 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 32
+    ( Rflow ) = ( 4.58e+02 ) ;     ( R ) = ( 4.58e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.53e-16 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 33
+    ( Rflow ) = ( 6.39e+01 ) ;     ( R ) = ( 6.39e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.70e-16 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 34
+    ( Rflow ) = ( 1.06e+01 ) ;     ( R ) = ( 1.06e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.74e-15 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 35
+    ( Rflow ) = ( 3.60e+00 ) ;     ( R ) = ( 3.60e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.79e-15 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 36
+    ( Rflow ) = ( 7.49e-02 ) ;     ( R ) = ( 7.49e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.34e-15 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 37
+    ( Rflow ) = ( 2.26e-04 ) ;     ( R ) = ( 2.26e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.77e-13 ) ; 
+    Attempt:  1, ConfigurationIter:  0, NewtonIter: 38
+    ( Rflow ) = ( 1.17e-07 ) ;     ( R ) = ( 1.17e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.58e-11 ) ; 
+grav_seg_c1ppu_drain: Newton solver converged in less than 40 iterations, time-step required will be increased.
+grav_seg_c1ppu_drain: sub-step = 0, accepted dt = 32000, remaining dt = 32000
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 2.18e+03 ) ;     ( R ) = ( 2.18e+03 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 2.68e+02 ) ;     ( R ) = ( 2.68e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.28e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.08e+03 ) ;     ( R ) = ( 1.08e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.44e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 9.67e+02 ) ;     ( R ) = ( 9.67e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.01e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 8.02e+02 ) ;     ( R ) = ( 8.02e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.87e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 7.13e+02 ) ;     ( R ) = ( 7.13e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.45e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 5.99e+03 ) ;     ( R ) = ( 5.99e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.02e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 5.14e+03 ) ;     ( R ) = ( 5.14e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.51e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 5.53e+03 ) ;     ( R ) = ( 5.53e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.48e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 4.65e+03 ) ;     ( R ) = ( 4.65e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.13e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 5.12e+03 ) ;     ( R ) = ( 5.12e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.42e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 4.24e+03 ) ;     ( R ) = ( 4.24e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.71e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 4.86e+03 ) ;     ( R ) = ( 4.86e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.40e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 3.93e+03 ) ;     ( R ) = ( 3.93e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.00e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 4.56e+03 ) ;     ( R ) = ( 4.56e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.63e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 15
+    ( Rflow ) = ( 3.57e+03 ) ;     ( R ) = ( 3.57e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.71e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 16
+    ( Rflow ) = ( 4.43e+03 ) ;     ( R ) = ( 4.43e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.65e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 17
+    ( Rflow ) = ( 3.25e+03 ) ;     ( R ) = ( 3.25e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.19e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 18
+    ( Rflow ) = ( 4.48e+03 ) ;     ( R ) = ( 4.48e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.88e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 19
+    ( Rflow ) = ( 2.87e+03 ) ;     ( R ) = ( 2.87e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.09e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 20
+    ( Rflow ) = ( 4.25e+03 ) ;     ( R ) = ( 4.25e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.26e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 21
+    ( Rflow ) = ( 2.47e+03 ) ;     ( R ) = ( 2.47e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.08e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 22
+    ( Rflow ) = ( 5.23e+03 ) ;     ( R ) = ( 5.23e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.25e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 23
+    ( Rflow ) = ( 3.09e+03 ) ;     ( R ) = ( 3.09e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.14e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 24
+    ( Rflow ) = ( 6.15e+03 ) ;     ( R ) = ( 6.15e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.32e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 25
+    ( Rflow ) = ( 2.96e+03 ) ;     ( R ) = ( 2.96e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.21e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 26
+    ( Rflow ) = ( 5.73e+02 ) ;     ( R ) = ( 5.73e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.33e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 27
+    ( Rflow ) = ( 8.26e+01 ) ;     ( R ) = ( 8.26e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.32e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 28
+    ( Rflow ) = ( 1.35e+03 ) ;     ( R ) = ( 1.35e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.62e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 29
+    ( Rflow ) = ( 3.70e+02 ) ;     ( R ) = ( 3.70e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.95e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 30
+    ( Rflow ) = ( 8.52e+01 ) ;     ( R ) = ( 8.52e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.05e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 31
+    ( Rflow ) = ( 2.42e+01 ) ;     ( R ) = ( 2.42e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.39e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 32
+    ( Rflow ) = ( 1.18e+01 ) ;     ( R ) = ( 1.18e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.02e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 33
+    ( Rflow ) = ( 4.10e+01 ) ;     ( R ) = ( 4.10e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.29e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 34
+    ( Rflow ) = ( 4.61e+00 ) ;     ( R ) = ( 4.61e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.42e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 35
+    ( Rflow ) = ( 5.22e-01 ) ;     ( R ) = ( 5.22e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.94e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 36
+    ( Rflow ) = ( 7.09e-02 ) ;     ( R ) = ( 7.09e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.65e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 37
+    ( Rflow ) = ( 1.83e-06 ) ;     ( R ) = ( 1.83e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.10e-14 ) ; 
+grav_seg_c1ppu_drain: Newton solver converged in less than 40 iterations, time-step required will be increased.
+Time: 1.27e+05 s, dt: 64000 s, Cycle: 7
+compflowstats, region: Pressure (min, average, max): 9.99113e+06, 9.99778e+06, 1.00132e+07 Pa
+compflowstats, region: Delta pressure (min, max): -8183.73, 8018.83 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.990269, 1.00973 } rm^3
+compflowstats, region: Phase mass: { 982.346, 100.973 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 982.346, 100.973 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 982.346, 100.973 } kg
+compflowstats, region: Dissolved component mass: { { 982.346, 0 }, { 0, 100.973 } } kg
+compflowstats: Max phase CFL number: 1344.82
+compflowstats: Max component CFL number: 928.983
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.87e+03 ) ;     ( R ) = ( 6.87e+03 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 7.21e+02 ) ;     ( R ) = ( 7.21e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.50e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 5.10e+01 ) ;     ( R ) = ( 5.10e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.42e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.59e+02 ) ;     ( R ) = ( 1.59e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.48e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 7.07e+02 ) ;     ( R ) = ( 7.07e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.59e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.57e+03 ) ;     ( R ) = ( 1.57e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.12e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.10e+04 ) ;     ( R ) = ( 1.10e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.08e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 5.20e+03 ) ;     ( R ) = ( 5.20e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.34e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.68e+04 ) ;     ( R ) = ( 1.68e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.86e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 7.51e+03 ) ;     ( R ) = ( 7.51e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.95e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 3.91e+03 ) ;     ( R ) = ( 3.91e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.99e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 1.21e+03 ) ;     ( R ) = ( 1.21e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.29e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 1.18e+03 ) ;     ( R ) = ( 1.18e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.89e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 1.12e+03 ) ;     ( R ) = ( 1.12e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.32e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 1.03e+03 ) ;     ( R ) = ( 1.03e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.33e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 15
+    ( Rflow ) = ( 8.00e+02 ) ;     ( R ) = ( 8.00e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.52e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 16
+    ( Rflow ) = ( 2.85e+02 ) ;     ( R ) = ( 2.85e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.44e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 17
+    ( Rflow ) = ( 4.58e+01 ) ;     ( R ) = ( 4.58e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.38e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 18
+    ( Rflow ) = ( 3.22e+02 ) ;     ( R ) = ( 3.22e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.78e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 19
+    ( Rflow ) = ( 1.74e+04 ) ;     ( R ) = ( 1.74e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.75e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 20
+    ( Rflow ) = ( 1.02e+04 ) ;     ( R ) = ( 1.02e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.99e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 21
+    ( Rflow ) = ( 3.27e+03 ) ;     ( R ) = ( 3.27e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.34e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 22
+    ( Rflow ) = ( 7.34e+02 ) ;     ( R ) = ( 7.34e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.49e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 23
+    ( Rflow ) = ( 8.92e+01 ) ;     ( R ) = ( 8.92e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.31e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 24
+    ( Rflow ) = ( 5.96e+00 ) ;     ( R ) = ( 5.96e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.00e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 25
+    ( Rflow ) = ( 6.10e-01 ) ;     ( R ) = ( 6.10e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.48e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 26
+    ( Rflow ) = ( 2.38e-02 ) ;     ( R ) = ( 2.38e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.37e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 27
+    ( Rflow ) = ( 1.42e-05 ) ;     ( R ) = ( 1.42e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.37e-14 ) ; 
+grav_seg_c1ppu_drain: Newton solver converged in less than 40 iterations, time-step required will be increased.
+Time: 1.91e+05 s, dt: 100000 s, Cycle: 8
+compflowstats, region: Pressure (min, average, max): 9.98362e+06, 9.99352e+06, 1.00222e+07 Pa
+compflowstats, region: Delta pressure (min, max): -8871.49, 13172.8 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.990269, 1.00973 } rm^3
+compflowstats, region: Phase mass: { 982.346, 100.973 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 982.346, 100.973 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0, 0.000480325 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 982.346, 100.973 } kg
+compflowstats, region: Dissolved component mass: { { 982.346, 0 }, { 0, 100.973 } } kg
+compflowstats: Max phase CFL number: 2093.67
+compflowstats: Max component CFL number: 1293.1
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 2.18e+04 ) ;     ( R ) = ( 2.18e+04 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 2.53e+03 ) ;     ( R ) = ( 2.53e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.01e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 8.62e+01 ) ;     ( R ) = ( 8.62e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.13e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.34e+02 ) ;     ( R ) = ( 1.34e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.26e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 5.96e+02 ) ;     ( R ) = ( 5.96e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.10e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.26e+03 ) ;     ( R ) = ( 2.26e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.36e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.36e+04 ) ;     ( R ) = ( 1.36e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.06e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.59e+03 ) ;     ( R ) = ( 2.59e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.60e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 3.09e+02 ) ;     ( R ) = ( 3.09e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.80e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 2.19e+02 ) ;     ( R ) = ( 2.19e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.12e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 2.68e+01 ) ;     ( R ) = ( 2.68e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.95e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 7.04e-01 ) ;     ( R ) = ( 7.04e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.10e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 3.36e-02 ) ;     ( R ) = ( 3.36e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.83e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 2.24e-05 ) ;     ( R ) = ( 2.24e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.63e-14 ) ; 
+grav_seg_c1ppu_drain: Newton solver converged in less than 40 iterations, time-step required will be increased.
+Time: 2.91e+05 s, dt: 100000 s, Cycle: 9
+compflowstats, region: Pressure (min, average, max): 9.97824e+06, 9.99059e+06, 1.0024e+07 Pa
+compflowstats, region: Delta pressure (min, max): -16375.3, 22164.7 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.990269, 1.00973 } rm^3
+compflowstats, region: Phase mass: { 982.346, 100.973 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 982.346, 100.973 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0, 0.00149509 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 982.346, 100.972 } kg
+compflowstats, region: Dissolved component mass: { { 982.346, 0 }, { 0, 100.973 } } kg
+compflowstats: Max phase CFL number: 1542.36
+compflowstats: Max component CFL number: 823.759
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 2.70e+04 ) ;     ( R ) = ( 2.70e+04 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 3.31e+03 ) ;     ( R ) = ( 3.31e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.13e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.43e+02 ) ;     ( R ) = ( 1.43e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.59e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.61e+02 ) ;     ( R ) = ( 1.61e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.47e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 2.76e+02 ) ;     ( R ) = ( 2.76e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.28e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.20e+03 ) ;     ( R ) = ( 1.20e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.84e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.22e+02 ) ;     ( R ) = ( 1.22e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.11e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.05e+02 ) ;     ( R ) = ( 2.05e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.84e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.85e+01 ) ;     ( R ) = ( 1.85e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.71e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 3.70e+00 ) ;     ( R ) = ( 3.70e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.17e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 1.01e-01 ) ;     ( R ) = ( 1.01e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.97e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 5.49e-05 ) ;     ( R ) = ( 5.49e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.66e-14 ) ; 
+grav_seg_c1ppu_drain: Newton solver converged in less than 40 iterations, time-step required will be increased.
+Time: 3.91e+05 s, dt: 100000 s, Cycle: 10
+compflowstats, region: Pressure (min, average, max): 9.9761e+06, 9.98943e+06, 1.00242e+07 Pa
+compflowstats, region: Delta pressure (min, max): -21758, 23993.5 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.990269, 1.00973 } rm^3
+compflowstats, region: Phase mass: { 982.346, 100.973 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 982.346, 100.973 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0, 0.00299373 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 982.346, 100.97 } kg
+compflowstats, region: Dissolved component mass: { { 982.346, 0 }, { 0, 100.973 } } kg
+compflowstats: Max phase CFL number: 1023.24
+compflowstats: Max component CFL number: 524.744
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 2.90e+04 ) ;     ( R ) = ( 2.90e+04 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 3.66e+03 ) ;     ( R ) = ( 3.66e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.08e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.79e+02 ) ;     ( R ) = ( 1.79e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.63e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.63e+02 ) ;     ( R ) = ( 1.63e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.19e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.49e+02 ) ;     ( R ) = ( 1.49e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.38e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.27e+02 ) ;     ( R ) = ( 2.27e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.07e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.32e+03 ) ;     ( R ) = ( 1.32e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.85e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.85e+03 ) ;     ( R ) = ( 1.85e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.16e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 2.89e+02 ) ;     ( R ) = ( 2.89e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.45e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.92e+02 ) ;     ( R ) = ( 1.92e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.85e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 1.12e+01 ) ;     ( R ) = ( 1.12e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.21e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 2.19e+00 ) ;     ( R ) = ( 2.19e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.90e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 3.66e-01 ) ;     ( R ) = ( 3.66e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.95e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 6.15e-03 ) ;     ( R ) = ( 6.15e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.82e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 1.85e-06 ) ;     ( R ) = ( 1.85e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.59e-13 ) ; 
+grav_seg_c1ppu_drain: Newton solver converged in less than 40 iterations, time-step required will be increased.
+Time: 4.91e+05 s, dt: 100000 s, Cycle: 11
+compflowstats, region: Pressure (min, average, max): 9.975e+06, 9.98884e+06, 1.00243e+07 Pa
+compflowstats, region: Delta pressure (min, max): -23902.2, 24235.6 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.990269, 1.00973 } rm^3
+compflowstats, region: Phase mass: { 982.346, 100.973 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 982.346, 100.973 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0, 0.00502436 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 982.346, 100.968 } kg
+compflowstats, region: Dissolved component mass: { { 982.346, 0 }, { 0, 100.973 } } kg
+compflowstats: Max phase CFL number: 819.06
+compflowstats: Max component CFL number: 527.806
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 2.81e+04 ) ;     ( R ) = ( 2.81e+04 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 3.58e+03 ) ;     ( R ) = ( 3.58e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.97e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.87e+02 ) ;     ( R ) = ( 1.87e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.42e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.39e+02 ) ;     ( R ) = ( 1.39e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.30e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.66e+02 ) ;     ( R ) = ( 1.66e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.88e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 3.13e+02 ) ;     ( R ) = ( 3.13e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.74e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 2.22e+03 ) ;     ( R ) = ( 2.22e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.99e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 4.12e+03 ) ;     ( R ) = ( 4.12e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.19e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 2.80e+03 ) ;     ( R ) = ( 2.80e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.08e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.05e+03 ) ;     ( R ) = ( 1.05e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.59e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 5.98e+02 ) ;     ( R ) = ( 5.98e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.06e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 7.63e+01 ) ;     ( R ) = ( 7.63e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.49e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 3.61e+00 ) ;     ( R ) = ( 3.61e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.34e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 1.53e-02 ) ;     ( R ) = ( 1.53e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.66e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 5.41e-06 ) ;     ( R ) = ( 5.41e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.34e-14 ) ; 
+grav_seg_c1ppu_drain: Newton solver converged in less than 40 iterations, time-step required will be increased.
+Time: 5.91e+05 s, dt: 100000 s, Cycle: 12
+compflowstats, region: Pressure (min, average, max): 9.97434e+06, 9.98849e+06, 1.00243e+07 Pa
+compflowstats, region: Delta pressure (min, max): -25001.6, 24292.8 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.990269, 1.00973 } rm^3
+compflowstats, region: Phase mass: { 982.346, 100.973 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 982.346, 100.973 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0, 0.00733448 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 982.346, 100.966 } kg
+compflowstats, region: Dissolved component mass: { { 982.346, 0 }, { 0, 100.973 } } kg
+compflowstats: Max phase CFL number: 808.922
+compflowstats: Max component CFL number: 520.416
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 2.50e+04 ) ;     ( R ) = ( 2.50e+04 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 3.21e+03 ) ;     ( R ) = ( 3.21e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.41e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.96e+02 ) ;     ( R ) = ( 1.96e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.09e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.44e+02 ) ;     ( R ) = ( 1.44e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.04e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.38e+02 ) ;     ( R ) = ( 1.38e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.23e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.54e+02 ) ;     ( R ) = ( 2.54e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.91e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.70e+03 ) ;     ( R ) = ( 1.70e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.07e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 3.51e+03 ) ;     ( R ) = ( 3.51e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.03e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 3.18e+03 ) ;     ( R ) = ( 3.18e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.01e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 9.95e+02 ) ;     ( R ) = ( 9.95e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.11e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 6.40e+02 ) ;     ( R ) = ( 6.40e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.12e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 8.71e+01 ) ;     ( R ) = ( 8.71e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.02e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 2.50e+00 ) ;     ( R ) = ( 2.50e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.81e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 3.84e-01 ) ;     ( R ) = ( 3.84e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.27e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 2.51e-03 ) ;     ( R ) = ( 2.51e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.57e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 15
+    ( Rflow ) = ( 7.38e-07 ) ;     ( R ) = ( 7.38e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.70e-13 ) ; 
+grav_seg_c1ppu_drain: Newton solver converged in less than 40 iterations, time-step required will be increased.
+Time: 6.91e+05 s, dt: 100000 s, Cycle: 13
+compflowstats, region: Pressure (min, average, max): 9.97391e+06, 9.98826e+06, 1.00243e+07 Pa
+compflowstats, region: Delta pressure (min, max): -25658, 24310.7 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.990269, 1.00973 } rm^3
+compflowstats, region: Phase mass: { 982.346, 100.973 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 982.346, 100.973 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0, 0.00982476 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 982.346, 100.963 } kg
+compflowstats, region: Dissolved component mass: { { 982.346, 0 }, { 0, 100.973 } } kg
+compflowstats: Max phase CFL number: 805.9
+compflowstats: Max component CFL number: 518.764
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 2.12e+04 ) ;     ( R ) = ( 2.12e+04 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 2.73e+03 ) ;     ( R ) = ( 2.73e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.05e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.98e+02 ) ;     ( R ) = ( 1.98e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.55e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.51e+02 ) ;     ( R ) = ( 1.51e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.10e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.27e+02 ) ;     ( R ) = ( 1.27e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.94e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.15e+02 ) ;     ( R ) = ( 2.15e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.87e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.35e+03 ) ;     ( R ) = ( 1.35e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.19e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.89e+03 ) ;     ( R ) = ( 2.89e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.37e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 2.37e+03 ) ;     ( R ) = ( 2.37e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.99e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 4.45e+02 ) ;     ( R ) = ( 4.45e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.48e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 4.84e+02 ) ;     ( R ) = ( 4.84e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.16e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 1.33e+02 ) ;     ( R ) = ( 1.33e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.06e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 3.01e+01 ) ;     ( R ) = ( 3.01e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.62e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 3.13e-01 ) ;     ( R ) = ( 3.13e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.09e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 1.68e-04 ) ;     ( R ) = ( 1.68e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.09e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 15
+    ( Rflow ) = ( 7.87e-07 ) ;     ( R ) = ( 7.87e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.17e-14 ) ; 
+grav_seg_c1ppu_drain: Newton solver converged in less than 40 iterations, time-step required will be increased.
+Time: 7.91e+05 s, dt: 100000 s, Cycle: 14
+compflowstats, region: Pressure (min, average, max): 9.97361e+06, 9.9881e+06, 1.00243e+07 Pa
+compflowstats, region: Delta pressure (min, max): -26087.8, 24316.6 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.990269, 1.00973 } rm^3
+compflowstats, region: Phase mass: { 982.346, 100.973 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 982.346, 100.973 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0, 0.0125595 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 982.346, 100.961 } kg
+compflowstats, region: Dissolved component mass: { { 982.346, 0 }, { 0, 100.973 } } kg
+compflowstats: Max phase CFL number: 818.647
+compflowstats: Max component CFL number: 551.693
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.94e+04 ) ;     ( R ) = ( 1.94e+04 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 2.25e+03 ) ;     ( R ) = ( 2.25e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.84e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.56e+02 ) ;     ( R ) = ( 1.56e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.19e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.50e+02 ) ;     ( R ) = ( 1.50e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.10e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.20e+02 ) ;     ( R ) = ( 1.20e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.19e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.43e+02 ) ;     ( R ) = ( 2.43e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.80e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.68e+03 ) ;     ( R ) = ( 1.68e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.43e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 3.13e+03 ) ;     ( R ) = ( 3.13e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.06e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 2.49e+03 ) ;     ( R ) = ( 2.49e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.49e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 8.78e+02 ) ;     ( R ) = ( 8.78e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.19e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 6.29e+02 ) ;     ( R ) = ( 6.29e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.33e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 7.50e+01 ) ;     ( R ) = ( 7.50e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.81e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 3.01e+00 ) ;     ( R ) = ( 3.01e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.08e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 4.60e-01 ) ;     ( R ) = ( 4.60e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.34e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 3.86e-04 ) ;     ( R ) = ( 3.86e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.60e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 15
+    ( Rflow ) = ( 8.09e-07 ) ;     ( R ) = ( 8.09e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.92e-13 ) ; 
+grav_seg_c1ppu_drain: Newton solver converged in less than 40 iterations, time-step required will be increased.
+Time: 8.91e+05 s, dt: 100000 s, Cycle: 15
+compflowstats, region: Pressure (min, average, max): 9.97339e+06, 9.98798e+06, 1.00243e+07 Pa
+compflowstats, region: Delta pressure (min, max): -26388.3, 24318.1 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.990269, 1.00973 } rm^3
+compflowstats, region: Phase mass: { 982.346, 100.973 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 982.346, 100.973 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0.00163155, 0.0153801 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 982.345, 100.958 } kg
+compflowstats, region: Dissolved component mass: { { 982.346, 0 }, { 0, 100.973 } } kg
+compflowstats: Max phase CFL number: 806.625
+compflowstats: Max component CFL number: 545.004
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.43e+04 ) ;     ( R ) = ( 1.43e+04 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.85e+03 ) ;     ( R ) = ( 1.85e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.68e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.57e+02 ) ;     ( R ) = ( 1.57e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.87e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.56e+02 ) ;     ( R ) = ( 1.56e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.06e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.12e+02 ) ;     ( R ) = ( 1.12e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.78e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.91e+02 ) ;     ( R ) = ( 1.91e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.71e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.15e+03 ) ;     ( R ) = ( 1.15e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.09e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.38e+03 ) ;     ( R ) = ( 2.38e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.15e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.33e+03 ) ;     ( R ) = ( 1.33e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.74e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 5.13e+02 ) ;     ( R ) = ( 5.13e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.77e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 1.02e+02 ) ;     ( R ) = ( 1.02e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.43e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 1.91e+00 ) ;     ( R ) = ( 1.91e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.96e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 3.30e-01 ) ;     ( R ) = ( 3.30e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.51e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 1.11e-04 ) ;     ( R ) = ( 1.11e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.37e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 8.35e-07 ) ;     ( R ) = ( 8.35e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.23e-12 ) ; 
+grav_seg_c1ppu_drain: Newton solver converged in less than 40 iterations, time-step required will be increased.
+Time: 9.91e+05 s, dt: 9000 s, Cycle: 16
+compflowstats, region: Pressure (min, average, max): 9.97323e+06, 9.98789e+06, 1.00243e+07 Pa
+compflowstats, region: Delta pressure (min, max): -26607.4, 24317.7 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.990269, 1.00973 } rm^3
+compflowstats, region: Phase mass: { 982.346, 100.973 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 982.346, 100.973 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0.00307466, 0.0183145 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 982.343, 100.955 } kg
+compflowstats, region: Dissolved component mass: { { 982.346, 0 }, { 0, 100.973 } } kg
+compflowstats: Max phase CFL number: 73.1441
+compflowstats: Max component CFL number: 51.3695
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 9.61e+01 ) ;     ( R ) = ( 9.61e+01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.28e+01 ) ;     ( R ) = ( 1.28e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.67e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 5.40e+00 ) ;     ( R ) = ( 5.40e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.52e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 5.91e+00 ) ;     ( R ) = ( 5.91e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.74e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 3.08e+00 ) ;     ( R ) = ( 3.08e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.49e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 3.44e+00 ) ;     ( R ) = ( 3.44e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.73e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.12e+00 ) ;     ( R ) = ( 1.12e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.82e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.53e-01 ) ;     ( R ) = ( 1.53e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.47e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 4.76e-03 ) ;     ( R ) = ( 4.76e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.64e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 2.68e-03 ) ;     ( R ) = ( 2.68e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.03e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 1.16e-07 ) ;     ( R ) = ( 1.16e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.90e-14 ) ; 
+grav_seg_c1ppu_drain: Newton solver converged in less than 40 iterations, time-step required will be increased.
+Cleaning up events
+grav_seg_c1ppu_drain, number of time steps: 18
+grav_seg_c1ppu_drain, number of successful nonlinear iterations: 295
+grav_seg_c1ppu_drain, number of successful linear iterations: 295
+grav_seg_c1ppu_drain, number of time step cuts: 1
+grav_seg_c1ppu_drain, number of discarded nonlinear iterations: 100
+grav_seg_c1ppu_drain, number of discarded linear iterations: 100
+Rank 0: Writing out restart file at ./grav_seg_c1ppu_drain_DBC-1_restart_000000017/rank_0000000.hdf5
+Umpire            HOST sum across ranks:    6.2 MB
+Umpire            HOST         rank max:    6.2 MB
+Finished at 2023-09-11 16:04:03
+total time            00:00:21.329
+initialization time   00:00:00.199
+run time              00:00:16.901
