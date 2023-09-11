@@ -107,6 +107,7 @@ set( constitutive_headers
      solid/DelftEgg.hpp
      solid/ElasticTransverseIsotropicPressureDependent.hpp
      solid/HyperelasticMMS.hpp
+     solid/Hyperelastic.hpp
      solid/ElasticIsotropic.hpp
      solid/ElasticIsotropicPressureDependent.hpp
      solid/ElasticTransverseIsotropic.hpp
@@ -232,6 +233,7 @@ set( constitutive_sources
      solid/DelftEgg.cpp
      solid/ElasticTransverseIsotropicPressureDependent.cpp
      solid/HyperelasticMMS.cpp
+     solid/Hyperelastic.cpp
      solid/ElasticIsotropic.cpp
      solid/ElasticIsotropicPressureDependent.cpp
      solid/ElasticTransverseIsotropic.cpp
