@@ -46,7 +46,6 @@ class SpatialPartition;
 class SolidMechanicsMPM : public SolverBase
 {
 public:
-
   /**
    * @enum TimeIntegrationOption
    *
@@ -265,8 +264,15 @@ public:
                              arrayView3d< real64 const > const & gridMaterialPosition,
                              arrayView3d< real64 > const & gridContactForce );
 
+  void initializeFrictionCoefficients();
+
+  void lookupFrictionCoefficient( int const a,
+                                  int const b,
+                                  real64 & frictionCoefficient );
+
   void computePairwiseNodalContactForce( int const & separable,
                                          real64 const & dt,
+                                         real64 const & frictionCoefficient,
                                          real64 const & mA,
                                          real64 const & mB,
                                          arraySlice1d< real64 const > const vA,
@@ -425,32 +431,31 @@ public:
   void populateMappingArrays( ParticleManager & particleManager,
                               NodeManager & nodeManager );
 
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  void computeBodyForce(real64 const time_n,
-                        real64 const & shearModulus,
-                        real64 const & density,
-                        arraySlice1d< real64 const > const particlePosition, 
-                        real64 * particleBodyForce);
+  void computeBodyForce( real64 const time_n,
+                         ParticleManager & particleManager );
   
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  void computeGeneralizedVortexMMSBodyForce(real64 const time_n,
-                                            real64 const & shearModulus,
-                                            real64 const & density,
-                                            arraySlice1d< real64 const > const particlePosition,
-                                            real64 * particleBodyForce);
+  void computeGeneralizedVortexMMSBodyForce( real64 const time_n,
+                                             ParticleManager & particleManager );
+                                            //  real64 const & shearModulus,
+                                            //  real64 const & density,
+                                            //  arraySlice1d< real64 const > const particlePosition,
+                                            //  real64 * particleBodyForce );
+ 
+  void correctGhostParticleCentersAcrossPeriodicBoundaries( ParticleManager & particleManager,
+                                                            SpatialPartition & partition );
 
-  void correctGhostParticleCentersAcrossPeriodicBoundaries(ParticleManager & particleManager,
-                                                           SpatialPartition & partition);
-
-  void correctParticleCentersAcrossPeriodicBoundaries(ParticleManager & particleManager,
-                                                      SpatialPartition & partition);
+  void correctParticleCentersAcrossPeriodicBoundaries( ParticleManager & particleManager,
+                                                       SpatialPartition & partition );
 
   void cofactor( real64 const (& F)[3][3],
                  real64 (& Fc)[3][3] );
 
   real64 Mod(real64 num, real64 denom);
+
+  int combinations( int n, 
+                    int k );
+
+  int factorial( int n );
 
 protected:
   virtual void postProcessInput() override final;
@@ -523,7 +528,13 @@ protected:
   int m_damageFieldPartitioning;
   int m_contactGapCorrection;
   // int m_directionalOverlapCorrection;
+
   real64 m_frictionCoefficient;
+  string m_frictionCoefficientRuleOfMixtures;
+  array2d< real64 > m_frictionCoefficientTable; 
+  array1d< int > m_frictionCoefficientGroup1;
+  array1d< int > m_frictionCoefficientGroup2;
+  array1d< real64 > m_frictionCoefficients;
 
   int m_planeStrain;
   int m_numDims;

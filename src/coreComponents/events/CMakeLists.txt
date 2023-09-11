@@ -16,6 +16,7 @@ set( events_headers
      mpmEvents/HealMPMEvent.hpp
      mpmEvents/InsertPeriodicContactSurfacesMPMEvent.hpp
      mpmEvents/MachineSampleMPMEvent.hpp
+     mpmEvents/FrictionCoefficientSwapMPMEvent.hpp
    )
 
 #
@@ -36,6 +37,7 @@ set( events_sources
      mpmEvents/HealMPMEvent.cpp
      mpmEvents/InsertPeriodicContactSurfacesMPMEvent.cpp
      mpmEvents/MachineSampleMPMEvent.cpp
+     mpmEvents/FrictionCoefficientSwapMPMEvent.cpp
    )
 
 set( dependencyList ${parallelDeps} common fileIO dataRepository )
