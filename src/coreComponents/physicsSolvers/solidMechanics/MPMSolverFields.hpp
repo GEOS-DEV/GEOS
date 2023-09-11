@@ -96,6 +96,14 @@ DECLARE_FIELD( particleStress,
                WRITE_AND_READ,
                "An array that holds particle stresses in Voigt notation." );
 
+DECLARE_FIELD( particleBodyForce,
+               "particleBodyForce",
+               array2d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that holds particle body forces." );
+
 DECLARE_FIELD( particlePlasticStrain,
                "particlePlasticStrain",
                array2d< real64 >,
