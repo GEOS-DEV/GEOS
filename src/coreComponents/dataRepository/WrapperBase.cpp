@@ -18,6 +18,7 @@
 
 #include "Group.hpp"
 #include "RestartFlags.hpp"
+#include "WrapperContext.hpp"
 
 
 namespace geos
@@ -37,7 +38,8 @@ WrapperBase::WrapperBase( string const & name,
   m_successfulReadFromInput( false ),
   m_description(),
   m_registeringObjects(),
-  m_conduitNode( parent.getConduitNode()[ name ] )
+  m_conduitNode( parent.getConduitNode()[ name ] ),
+  m_dataContext( std::make_unique< WrapperContext >( *this ) )
 {}
 
 
@@ -60,7 +62,7 @@ void WrapperBase::copyWrapperAttributes( WrapperBase const & source )
 
 string WrapperBase::getPath() const
 {
-  // In the Conduit node heirarchy everything begins with 'Problem', we should change it so that
+  // In the Conduit node hierarchy everything begins with 'Problem', we should change it so that
   // the ProblemManager actually uses the root Conduit Node but that will require a full rebaseline.
   string const noProblem = m_conduitNode.path().substr( std::strlen( dataRepository::keys::ProblemManager ) - 1 );
   return noProblem.empty() ? "/" : noProblem;
@@ -104,16 +106,43 @@ int WrapperBase::setTotalviewDisplay() const
 }
 #endif
 
+void WrapperBase::createDataContext( xmlWrapper::xmlNode const & targetNode,
+                                     xmlWrapper::xmlNodePos const & nodePos )
+{
+  xmlWrapper::xmlAttribute att = targetNode.attribute( m_name.c_str() );
+  xmlWrapper::xmlAttributePos attPos = nodePos.getAttributeLine( m_name );
+  if( nodePos.isFound() && attPos.isFound() && !att.empty() )
+  {
+    m_dataContext = std::make_unique< DataFileContext >( targetNode, att, attPos );
+  }
+}
+
 void WrapperBase::processInputException( std::exception const & ex,
-                                         xmlWrapper::xmlNode const & targetNode ) const
+                                         xmlWrapper::xmlNode const & targetNode,
+                                         xmlWrapper::xmlNodePos const & nodePos ) const
 {
   xmlWrapper::xmlAttribute const & attribute = targetNode.attribute( getName().c_str() );
   string const inputStr = string( attribute.value() );
-  string subExStr = string( "***** XML parsing error in " ) + targetNode.path() +
-                    " (name=" + targetNode.attribute( "name" ).value() + ")/" + attribute.name() +
-                    "\n***** Input value: '" + inputStr + "'\n";
+  xmlWrapper::xmlAttributePos const attPos = nodePos.getAttributeLine( getName() );
+  std::ostringstream oss;
+  string const exStr = ex.what();
 
-  throw InputError( subExStr + ex.what() );
+  oss << "***** XML parsing error at node ";
+  if( nodePos.isFound() )
+  {
+    string const & filePath = attPos.isFound() ? attPos.filePath : nodePos.filePath;
+    int const line = attPos.isFound() ? attPos.line : nodePos.line;
+    oss << "named " << m_parent->getName() << ", attribute " << getName()
+        << " (" << splitPath( filePath ).second << ", l." << line << ").";
+  }
+  else
+  {
+    oss << targetNode.path() << " (name=" << targetNode.attribute( "name" ).value() << ")/" << getName();
+  }
+  oss << "\n***** Input value: '" << inputStr << '\'';
+  oss << ( exStr[0]=='\n' ? exStr : "'\n" + exStr );
+
+  throw InputError( oss.str() );
 }
 
 
