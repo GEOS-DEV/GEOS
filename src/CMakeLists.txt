@@ -12,7 +12,7 @@ cmake_policy(SET CMP0056 NEW) # use CMAKE_EXE_LINKER_FLAGS in try_compile() in a
 ################################
 # GEOSX
 ################################
-project( geosx LANGUAGES C CXX )
+project( geosx LANGUAGES C CXX Fortran )
 include(GNUInstallDirs)
 set( BLT_CXX_STD "c++17" CACHE STRING "Version of C++ standard" )
 if(CMAKE_BUILD_TYPE EQUAL "Debug")
@@ -52,7 +52,6 @@ set(CMAKE_SKIP_BUILD_RPATH  FALSE)
 # when building, don't use the install RPATH already
 # (but later on when installing)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 
 # add the automatically determined parts of the RPATH

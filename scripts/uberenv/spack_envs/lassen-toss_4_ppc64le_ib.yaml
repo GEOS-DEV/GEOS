@@ -1,0 +1,171 @@
+spack:
+  config:
+    build_stage:
+    - $spack/var/spack/spack-stage/build-$arch/
+    install_missing_compilers: false
+    misc_cache: $spack/.cache
+    install_tree:
+      root: $spack/opt/spack/
+      #root: /usr/WS1/GEOS/GEOSX/TPLs_$date/
+      projections:
+        all: install-{arch}-{compiler.name}-{compiler.version}/{name}-{version}
+  compilers:
+  - compiler:
+      spec: clang@14.0.6
+      paths:
+        cc: /usr/tce/packages/clang/clang-14.0.6/bin/clang
+        cxx: /usr/tce/packages/clang/clang-14.0.6/bin/clang++
+        f77:  /usr/tce/packages/gcc/gcc-11.2.1/bin/gfortran
+        fc:  /usr/tce/packages/gcc/gcc-11.2.1/bin/gfortran
+      flags: {}
+      operating_system: rhel8
+      target: ppc64le
+      modules: []
+      environment: {}
+      extra_rpaths: []
+  - compiler:
+      spec: gcc@11.2
+      paths:
+        cc: /usr/tce/packages/gcc/gcc-11.2.1/bin/gcc
+        cxx: /usr/tce/packages/gcc/gcc-11.2.1/bin/g++
+        f77:  /usr/tce/packages/gcc/gcc-11.2.1/bin/gfortran
+        fc:  /usr/tce/packages/gcc/gcc-11.2.1/bin/gfortran
+      flags: {}
+      operating_system: rhel8
+      target: ppc64le
+      modules: []
+      environment: {}
+      extra_rpaths: []
+  - compiler:
+      spec: xl@2023.06.28
+      paths:
+        cc: /usr/tce/packages/xl/xl-2023.06.28/bin/xlc
+        cxx: /usr/tce/packages/xl/xl-2023.06.28/bin/xlc++
+        f77:  /usr/tce/packages/xl/xl-2023.06.28/bin/xlf
+        fc:  /usr/tce/packages/xl/xl-2023.06.28/bin/xlf90
+      flags: {}
+      operating_system: rhel8
+      target: ppc64le
+      modules: []
+      environment: {}
+      extra_rpaths: []
+  packages:
+    all:
+      target: [ppc64le]
+      compiler: [gcc, clang, xl]
+      providers:
+        blas: [essl]
+        lapack: [essl]
+        mpi: [spectrum-mpi]
+    xlf:
+      externals:
+        - spec: xlf@2023.06.29
+          prefix: /usr/tce/packages/xl/xl-2023.06.28/
+    xlc:
+      externals:
+        - spec: xlc@2023.06.29
+          prefix: /usr/tce/packages/xl/xl-2023.06.28/
+    automake:
+      externals:
+      - spec: automake@1.16.1
+        prefix: /usr
+      buildable: false
+    autoconf:
+      externals:
+      - spec: autoconf@2.69
+        prefix: /usr
+      buildable: false
+    texinfo:
+      externals:
+      - spec: texinfo@6.5
+        prefix: /usr
+      buildable: false
+    cuda:
+      buildable: false
+      version: [11.8.0]
+      externals:
+      - spec: cuda@11.8.0
+        prefix: /usr/tce/packages/cuda/cuda-11.8.0/
+    cub:
+      buildable: false
+      version: [11.8.0]
+      externals:
+      - spec: cub@11.8.0
+        prefix: /usr/tce/packages/cuda/cuda-11.8.0/
+    elfutils:
+      buildable: false
+      externals:
+      - spec: elfutils@0.182
+        prefix: /
+    mpi:
+      buildable: false
+    spectrum-mpi:
+      externals:
+      - spec: spectrum-mpi@rolling-release
+        modules: [ spectrum-mpi/rolling-release ]
+    essl:
+      buildable: false
+      externals:
+      - spec: essl@6.3.0.2 +lapackforessl
+        modules: [ essl/6.3.0.2 ]
+    lapack:
+      buildable: false
+    zlib:
+      buildable: false
+      version: [1.2.11]
+      externals:
+      - spec: zlib@1.2.11
+        prefix: /
+    autoconf-archive:
+      buildable: false
+      externals:
+      - spec: autoconf-archive@6.6.3
+        prefix: /usr
+    # Build tools
+    cmake:
+      buildable: false
+      version: [3.23.1]
+      externals:
+      - spec: cmake@3.23.1
+        prefix: /usr/tce/packages/cmake/cmake-3.23.1
+    perl:
+      buildable: false
+      externals:
+      - spec: perl@5.30.1
+        modules: [ python/3.8.2 ]
+    pkgconf:
+      buildable: false
+      version: [1.6.3]
+      externals:
+      - spec: pkgconf@1.6.3
+        prefix: /usr/tce/packages/python/python-3.8.2
+    gmake:
+      buildable: false
+      version: [4.2.1]
+      externals:
+      - spec: gmake@4.2.1
+        prefix: /usr/tcetmp/
+    gmp:
+      buildable: false
+      version: [10.3.2]
+      externals:
+      - spec: gmp@10.3.2
+        prefix: /
+    libtool:
+      buildable: false
+      version: [2.4.6]
+      externals:
+      - spec: libtool@2.4.6
+        prefix: /usr
+    m4:
+      buildable: false
+      version: [1.4.18]
+      externals:
+      - spec: m4@1.4.18
+        prefix: /usr
+    python:
+      buildable: false
+      version: [3.8.2]
+      externals:
+      - spec: python@3.8.2
+        prefix: /usr/tce/packages/python/python-3.8.2

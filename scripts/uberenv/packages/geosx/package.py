@@ -4,13 +4,11 @@
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 
 from spack import *
-import warnings
 
 import socket
 import os
 
 from os import environ as env
-from os.path import join as pjoin
 
 class Geosx(CachedCMakePackage, CudaPackage, ROCmPackage):
     """GEOSX simulation framework."""
@@ -51,7 +49,7 @@ class Geosx(CachedCMakePackage, CudaPackage, ROCmPackage):
     # variant('benchmarks', default=False, description='Build benchmarks')
     # variant('examples', default=False, description='Build examples')
     variant( 'dev', default=False, description='Build with optional dev tools.' )
-    variant( 'docs', default=False, description='Build with doc generation support.' )
+    variant( 'doc', default=False, description='Build with doc generation support.' )
 
 
     # SPHINX_BEGIN_DEPENDS
@@ -88,8 +86,8 @@ class Geosx(CachedCMakePackage, CudaPackage, ROCmPackage):
     depends_on( 'superlu-dist', when='+superlu-dist' )
 
     depends_on( 'uncrustify@0.71:', when='+dev', type='build' )
-    depends_on( 'doxygen@1.8.13:', when='+docs', type='build' )
-    depends_on( 'py-sphinx@1.6.3:', when='+docs', type='build' )
+    depends_on( 'doxygen@1.8.13:', when='+doc', type='build' )
+    depends_on( 'py-sphinx@1.6.3:', when='+doc', type='build' )
 
     #
     # Additional variants/restrictions on dependencies depending on local variants / spec restrictions.
@@ -105,7 +103,15 @@ class Geosx(CachedCMakePackage, CudaPackage, ROCmPackage):
                 depends_on( f'camp +cuda {cuda_arch_variant}' )
                 depends_on( f'caliper +cuda {cuda_arch_variant}' )
 
-        depends_on( f'essl +lapackforessl +cuda', when='^essl' ) # no cuda_arch here..
+        with when( '^essl' ):
+            depends_on( 'xlf' ) # some xl libraries are required to link against essl per IBM docs
+                                #  https://www.ibm.com/docs/en/essl/6.1?topic=pyp-program-procedures
+                                # there isn't currently a mechanism to capture this dependency information
+                                #  in the essl package since it is external and not built by spack, so
+                                # the `depends_on` directives are ignored
+                                #  'external dependencies of externals are ignored' is how to reference this
+                                #  in spack-lingo
+            depends_on( f'essl +lapackforessl +cuda' ) # no cuda_arch here
 
     with when( '+rocm' ):
         for rocm_arch in ROCmPackage.amdgpu_targets:
@@ -193,7 +199,7 @@ class Geosx(CachedCMakePackage, CudaPackage, ROCmPackage):
     conflicts('~hypre lai=hypre', msg='To use HYPRE as the Linear Algebra Interface you must build it.')
     conflicts('~petsc lai=petsc', msg='To use PETSc as the Linear Algebra Interface you must build it.')
 
-    # phases = ['hostconfig', 'cmake', 'build', 'install']
+    root_cmakelists_dir = "src"
 
     @run_after('build')
     @on_package_attributes(run_tests=True)
@@ -207,10 +213,9 @@ class Geosx(CachedCMakePackage, CudaPackage, ROCmPackage):
 
     @run_after('build')
     def build_docs(self):
-        if '+docs' in self.spec:
+        if self.spec.satisfies('+doc'):
             with working_dir(self.build_directory):
                 make('docs')
-
 
     @property
     def sys_type(self):
@@ -222,32 +227,34 @@ class Geosx(CachedCMakePackage, CudaPackage, ROCmPackage):
 
     @property
     def cache_name(self):
-        var = ''
-        if self.spec.statisfies( '+cuda' ):
-            var = '-'.join((var, 'cuda'))
-        elif self.spec.statisfies( '+rocm' ):
-            var = '-'.join((var, 'rocm'))
         hostname = socket.gethostname().rstrip('1234567890')
-        host_config_path = "%s-%s-%s%s.cmake" % (hostname, self.sys_type(self.spec), self.spec.compiler, var)
-        dest_dir = self.stage.source_path
-        host_config_path = os.path.abspath(pjoin(dest_dir, host_config_path))
-        return host_config_path
+        parts = [ hostname, self.sys_type, str(self.spec.compiler) ]
+        if self.spec.statisfies( '+cuda' ):
+            parts.append( 'cuda' )
+        elif self.spec.statisfies( '+rocm' ):
+            parts.append( 'rocm' )
+        return '-'.join( parts ) + '.cmake'
+
+    @property
+    def cache_path(self):
+        return os.path.join( self.package.build_dir, self.cache_name )
 
     def initconfig_mpi_entries(self):
         entries = super().initconfig_mpi_entries()
-        entries.insert(0, cmake_cache_option('ENABLE_MPI', True))
+        # insert after header
+        entries.insert(3, cmake_cache_option('ENABLE_MPI', True))
+        return entries
 
     def initconfig_hardware_entries(self):
-        entries = super().initconfig_hardware_entries() # handles generic cuda/rocm flags, doesn't handle openmp
+        default_entries = super().initconfig_hardware_entries() # handles generic cuda/rocm flags, doesn't handle openmp
 
-        prefix_entries = []
-        prefix_entries.append(super().define_cmake_cache_from_variant('ENABLE_OPENMP','openmp'))
-        prefix_entries.append(super().define_cmake_cache_from_variant('ENABLE_CUDA','cuda'))
-        prefix_entries.append(cmake_cache_string('CMAKE_CUDA_STANDARD','17'))
+        entries = []
+        entries.append(self.define_cmake_cache_from_variant('ENABLE_CUDA','cuda'))
+        entries.append(cmake_cache_string('CMAKE_CUDA_STANDARD','17'))
 
         archs = self.spec.variants["cuda_arch"].value
         if archs[0] != "none":
-            prefix_entries.append( cmake_cache_string("CUDA_ARCH", ';'.join( f'sm_{arch}' for arch in archs ) ) )
+            entries.append( cmake_cache_string("CUDA_ARCH", ';'.join( f'sm_{arch}' for arch in archs ) ) )
 
         cmake_cuda_flags = ('-restrict --expt-extended-lambda -Werror '
                             'cross-execution-space-call,reorder,'
@@ -263,14 +270,19 @@ class Geosx(CachedCMakePackage, CudaPackage, ROCmPackage):
             for arch in archs:
                 cmake_cuda_flags += f" -arch sm_{arch}"
 
-        prefix_entries.append(cmake_cache_string('CMAKE_CUDA_FLAGS', cmake_cuda_flags))
+        entries.append(cmake_cache_string('CMAKE_CUDA_FLAGS', cmake_cuda_flags))
 
         cmake_cuda_release_flags = '-O3 -Xcompiler -O3 -DNDEBUG'
-        prefix_entries.append(cmake_cache_string('CMAKE_CUDA_FLAGS_RELEASE', cmake_cuda_release_flags ))
-        prefix_entries.append(cmake_cache_string('CMAKE_CUDA_FLAGS_RELWITHDEBINFO', f'-g -lineinfo {cmake_cuda_release_flags}'))
-        prefix_entries.append(cmake_cache_string('CMAKE_CUDA_FLAGS_DEBUG', '-g -G -O0 -Xcompiler -O0 '))
+        entries.append(cmake_cache_string('CMAKE_CUDA_FLAGS_RELEASE', cmake_cuda_release_flags ))
+        entries.append(cmake_cache_string('CMAKE_CUDA_FLAGS_RELWITHDEBINFO', f'-g -lineinfo {cmake_cuda_release_flags}'))
+        entries.append(cmake_cache_string('CMAKE_CUDA_FLAGS_DEBUG', '-g -G -O0 -Xcompiler -O0 '))
 
-        return [ *prefix_entries, *entries ]
+        # insert after headers from super entries
+        return [ *default_entries[:3],
+                 self.define_cmake_cache_from_variant('ENABLE_OPENMP','openmp'),
+                 *default_entries[3:6],
+                 *entries,
+                 *default_entries[6:] ]
 
     def initconfig_package_entries(self):
         hdiv = "#------------------{0}".format("-" * 30)
@@ -302,7 +314,7 @@ class Geosx(CachedCMakePackage, CudaPackage, ROCmPackage):
                  )
 
         for tpl, cmake_name, enable in tpls:
-            entries.append(cmake_cache_option( f'ENABLE_{cmake_name}', False) )
+            entries.append(cmake_cache_option( f'ENABLE_{cmake_name}', enable) )
             if enable:
                 entries.append(cmake_cache_path( f'{cmake_name}_DIR', self.spec[tpl].prefix) )
 
@@ -326,15 +338,16 @@ class Geosx(CachedCMakePackage, CudaPackage, ROCmPackage):
             entries.append(cmake_cache_path('MKL_INCLUDE_DIRS', self.spec['intel-oneapi-mkl'].prefix.include))
             entries.append(cmake_cache_string('MKL_LIBRARIES', ';'.join( self.spec['intel-oneapi--mkl'].libs ) ))
         elif self.spec.satisfies('^essl'):
-            entries.append(cmake_cache_option('ENABLE_ESSL', True))
-            entries.append(cmake_cache_path('ESSL_INCLUDE_DIRS', self.spec['essl'].prefix.include))
-            entries.append(cmake_cache_string('ESSL_LIBRARIES', ';'.join( self.spec['essl'].libs + self.spec['cuda'].libs ) ))
+            entries.append( cmake_cache_option('ENABLE_ESSL', True) )
+            # TODO: these are all needed by ESSL, but spack doesn't have a mechanism to encode
+            #       dependencies for external packages we aren't building, so the essl package
+            #       has no knowledge of which cuda we're using, or which xl compiler toolchain
+            #       to link against
+            cuda_libs = find_libraries(['libcublas','libcudart'], root=self.spec['cuda'].prefix.lib64)
+            xl_libs = find_libraries(['libxlf90_r', 'libxlfmath', 'libxlsmp'], root=self.spec['xlf'].prefix.lib)
 
-            #TODO: these should be handled internall in geosx cmakelists.txt depending on the compiler
-            entries.append(cmake_cache_option('FORTRAN_MANGLE_NO_UNDERSCORE', True))
-            if self.spec.satisfies('+openmp'):
-                entries.append(cmake_cache_string('OpenMP_Fortran_FLAGS','-qsmp=omp'))
-                entries.append(cmake_cache_string('OpenMP_Fortran_LIB_NAMES',''))
+            entries.append( cmake_cache_path('ESSL_INCLUDE_DIRS', ';'.join( [ self.spec['blas'].prefix.include, self.spec['lapack'].prefix.include ] )) )
+            entries.append( cmake_cache_string('ESSL_LIBRARIES', ';'.join( self.spec['blas'].libs + self.spec['lapack'].libs )) )
         else:
             entries.append(cmake_cache_string('BLAS_LIBRARIES', ';'.join( self.spec['blas'].libs ) ))
             entries.append(cmake_cache_string('LAPACK_LIBRARIES', ';'.join( self.spec['lapack'].libs ) ))
@@ -342,43 +355,36 @@ class Geosx(CachedCMakePackage, CudaPackage, ROCmPackage):
         entries.append( hdiv )
         entries.append( '# Python' )
         entries.append( hdiv )
-        entries.append( super().define_cmake_cache_from_variant( 'ENABLE_PYGEOSX','pygeosx') )
+        entries.append( self.define_cmake_cache_from_variant( 'ENABLE_PYGEOSX','pygeosx') )
         if self.spec.satisfies('+pygeosx') :
             entries.append(cmake_cache_path('Python3_EXECUTABLE', os.path.join( self.spec['python'].prefix.bin, 'python3')))
 
         entries.append( hdiv )
-        entries.append( '# Documentation' )
+        entries.append( '# Documentation / Development' )
         entries.append( hdiv )
 
-        entries.append( super().define_cmake_cache_from_variant('ENABLE_DOCS', 'doc') )
-        entries.append( super().define_cmake_cache_from_variant('ENABLE_DOXYGEN', 'doc') )
-        entries.append( super().define_cmake_cache_from_variant('ENABLE_SPHINX', 'doc') )
+        entries.append( self.define_cmake_cache_from_variant('ENABLE_DOCS', 'doc') )
+        entries.append( self.define_cmake_cache_from_variant('ENABLE_DOXYGEN', 'doc') )
+        entries.append( self.define_cmake_cache_from_variant('ENABLE_SPHINX', 'doc') )
 
         if self.spec.satisfies( '+doc' ):
             entries.append( cmake_cache_path('SPHINX_EXECUTABLE', os.path.join(self.spec['py-sphinx'].prefix.bin, 'sphinx-build')) )
             entries.append( cmake_cache_path('DOXYGEN_EXECUTABLE', os.path.join(self.spec['doxygen'].prefix.bin, 'doxygen')) )
 
-        entries.append( super().define_cmake_cache_from_variant('ENABLE_UNCRUSTIFY', 'dev') )
+        entries.append( self.define_cmake_cache_from_variant('ENABLE_UNCRUSTIFY', 'dev') )
         if self.spec.satisfies( '+dev' ):
-            entries.append( hdiv )
-            entries.append('# Development tools\n')
-            entries.append( hdiv )
             entries.append( cmake_cache_path('UNCRUSTIFY_EXECUTABLE', os.path.join(self.spec['uncrustify'].prefix.bin, 'uncrustify')) )
 
-        # entries.append( hdiv )
-        # entries.append('# addr2line\n')
-        # entries.append( hdiv )
-        # entries.append( super().define_cmake_cache_from_variant('ENABLE_ADDR2LINE', 'addr2line') )
-
         entries.append( hdiv )
-        entries.append('# Other\n')
+        entries.append( '# Other' )
         entries.append( hdiv )
 
+        # entries.append( self.define_cmake_cache_from_variant('ENABLE_ADDR2LINE', 'addr2line') )
         entries.append( cmake_cache_option('ENABLE_MATHPRESSO', False) )
         entries.append( cmake_cache_option('ENABLE_XML_UPDATES', False) )
 
         return entries
 
     def cmake_args(self):
-        return [ '-C', self._get_host_config_path(self.spec), '--trace', '--trace-expand' ]
+        return super().cmake_args() #, '--trace', '--trace-expand' ]
 
