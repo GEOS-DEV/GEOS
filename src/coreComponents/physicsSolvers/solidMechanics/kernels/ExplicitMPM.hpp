@@ -97,6 +97,7 @@ struct StateUpdateKernel
   static void launch( SortedArrayView< localIndex const > const indices,
                       CONSTITUTIVE_WRAPPER const & constitutiveWrapper,
                       real64 dt,
+                      int hyperelasticUpdate,
                       arrayView3d< real64 const > const deformationGradient,
                       arrayView3d< real64 const > const fDot,
                       arrayView3d< real64 const > const velocityGradient,
@@ -119,7 +120,7 @@ struct StateUpdateKernel
 
       real64 stress[6] = { 0 };
       //CC: debug hardcoded hyperelastic model for now
-      if( false )
+      if( hyperelasticUpdate == 1 )
       // if ( constitutiveWrapper.m_disableInelasticity ) // CC: Shouldn't there be a flag for hyperelastic models? otherwise we have to manually add their name here everything we add them
                                                                     // Some models we might want hyperelastic updates when plasticity or damage are turned off 
       { //Hyperelastic stress update
