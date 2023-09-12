@@ -276,8 +276,10 @@ void SinglePhaseBase::updateSolidInternalEnergyModel( ObjectManagerBase & dataGr
 
 void SinglePhaseBase::updateThermalConductivity( ElementSubRegionBase & subRegion ) const
 {
+  //START_SPHINX_INCLUDE_COUPLEDSOLID
   CoupledSolidBase const & porousSolid =
     getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+  //END_SPHINX_INCLUDE_COUPLEDSOLID
 
   arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
 
