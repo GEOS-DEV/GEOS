@@ -108,7 +108,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               arrayView1d< string const > const &)
+                                                               arrayView1d< string const > const & )
   {
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -138,46 +138,46 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
       }
       else
       {
-        if(getNonlinearSolverParameters().useDBC())
-         {
+        if( getNonlinearSolverParameters().useDBC())
+        {
           DissipationCompositionalMultiphaseFVMKernels::
-          FaceBasedAssemblyKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                     m_numPhases,
-                                                     dofManager.rankOffset(),
-                                                     elemDofKey,
-                                                     m_hasCapPressure,
-                                                     getName(),
-                                                     mesh.getElemManager(),
-                                                     //subRegion,
-                                                     stencilWrapper,
-                                                     dt,
-                                                     localMatrix.toViewConstSizes(),
-                                                     localRhs.toView(),
-                                                     getNonlinearSolverParameters().omegaDBC(),
-                                                     getNonlinearSolverParameters().m_numNewtonIterations,
-                                                      getNonlinearSolverParameters().continuationDBC(),
-                                                     getNonlinearSolverParameters().miscibleDBC(),
-                                                     getNonlinearSolverParameters().kappaminDBC(),
-                                                     getNonlinearSolverParameters().contMultiplierDBC()  );
-         }
-         else
-         {
+            FaceBasedAssemblyKernelFactory::
+            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                       m_numPhases,
+                                                       dofManager.rankOffset(),
+                                                       elemDofKey,
+                                                       m_hasCapPressure,
+                                                       getName(),
+                                                       mesh.getElemManager(),
+                                                       //subRegion,
+                                                       stencilWrapper,
+                                                       dt,
+                                                       localMatrix.toViewConstSizes(),
+                                                       localRhs.toView(),
+                                                       getNonlinearSolverParameters().omegaDBC(),
+                                                       getNonlinearSolverParameters().m_numNewtonIterations,
+                                                       getNonlinearSolverParameters().continuationDBC(),
+                                                       getNonlinearSolverParameters().miscibleDBC(),
+                                                       getNonlinearSolverParameters().kappaminDBC(),
+                                                       getNonlinearSolverParameters().contMultiplierDBC()  );
+        }
+        else
+        {
           isothermalCompositionalMultiphaseFVMKernels::
-          FaceBasedAssemblyKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                     m_numPhases,
-                                                     dofManager.rankOffset(),
-                                                     elemDofKey,
-                                                     m_hasCapPressure,
-                                                     fluxApprox.upwindingParams(),
-                                                     getName(),
-                                                     mesh.getElemManager(),
-                                                     stencilWrapper,
-                                                     dt,
-                                                     localMatrix.toViewConstSizes(),
-                                                     localRhs.toView() );
-         }
+            FaceBasedAssemblyKernelFactory::
+            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                       m_numPhases,
+                                                       dofManager.rankOffset(),
+                                                       elemDofKey,
+                                                       m_hasCapPressure,
+                                                       fluxApprox.upwindingParams(),
+                                                       getName(),
+                                                       mesh.getElemManager(),
+                                                       stencilWrapper,
+                                                       dt,
+                                                       localMatrix.toViewConstSizes(),
+                                                       localRhs.toView() );
+        }
       }
 
     } );

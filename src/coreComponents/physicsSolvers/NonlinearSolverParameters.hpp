@@ -238,7 +238,7 @@ public:
     return m_kappaDBC;
   }
 
-    /**
+  /**
    * @brief Getter for the flag to enable continuation
    * @return 1 or 0 depending if continuation for DBC is enabled
    */
@@ -249,7 +249,7 @@ public:
 
   /**
    * @brief Getter for the flag to enable DBC formulation
-   * @return 1 or 0 depending if compositional or immsicible 
+   * @return 1 or 0 depending if compositional or immsicible
    */
   real64 miscibleDBC() const
   {
@@ -274,7 +274,7 @@ public:
     return m_contMultiplierDBC;
   }
 
-  
+
   /// Flag to apply a line search.
   LineSearchAction m_lineSearchAction;
 
@@ -359,7 +359,7 @@ public:
   /// Flag to enable continuation for DBC Method
   integer m_continuationDBC;
 
-  /// Flag to enable DBC formulation 
+  /// Flag to enable DBC formulation
   integer m_miscibleDBC;
 
   /// Factor that controls how much dissipation is kept in the system when continuation is used

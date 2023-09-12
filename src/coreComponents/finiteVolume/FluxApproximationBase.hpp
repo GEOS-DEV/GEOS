@@ -302,7 +302,7 @@ protected:
 
   /// upwinding parameters
   UpwindingParameters m_upwindingParams;
-  
+
 //public:
   /// flag for DBC
   //integer m_useDBC;

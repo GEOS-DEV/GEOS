@@ -152,32 +152,32 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
   registerWrapper( viewKeysStruct::useDBCString(), &m_useDBC ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Enable Dissipation-based continuation flux" );      
+    setDescription( "Enable Dissipation-based continuation flux" );
 
   registerWrapper( viewKeysStruct::omegaDBCString(), &m_omegaDBC ).
     setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Factor by which DBC flux is multiplied" ); 
+    setDescription( "Factor by which DBC flux is multiplied" );
 
   registerWrapper( viewKeysStruct::continuationDBCString(), &m_continuationDBC ).
     setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag for enabling continuation parameter" );   
+    setDescription( "Flag for enabling continuation parameter" );
 
   registerWrapper( viewKeysStruct::miscibleDBCString(), &m_miscibleDBC ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag for enabling DBC formulation with/without miscibility" );    
+    setDescription( "Flag for enabling DBC formulation with/without miscibility" );
 
   registerWrapper( viewKeysStruct::kappaminDBCString(), &m_kappaminDBC ).
     setApplyDefaultValue( 1e-20 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Factor that controls how much dissipation is kept in the system when continuation is used" ); 
+    setDescription( "Factor that controls how much dissipation is kept in the system when continuation is used" );
 
   registerWrapper( viewKeysStruct::contMultiplierDBCString(), &m_contMultiplierDBC ).
     setApplyDefaultValue( 0.5 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Factor by which continuation parameter is changed every newton when DBC is used" );       
+    setDescription( "Factor by which continuation parameter is changed every newton when DBC is used" );
 
 }
 
