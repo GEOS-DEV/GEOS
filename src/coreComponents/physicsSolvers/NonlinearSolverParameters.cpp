@@ -154,8 +154,6 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setApplyDefaultValue( ScalingType::Global ).
     setDescription( "Solution scaling type."
                     "Valid options:\n* " + EnumStrings< ScalingType >::concat( "\n* " ) );
-  if( m_scalingType == ScalingType::Local && m_lineSearchAction != LineSearchAction::None )
-    GEOS_ERROR( "Line search is not supported for " + EnumStrings< ScalingType >::toString( ScalingType::Local ) );
 }
 
 void NonlinearSolverParameters::postProcessInput()
@@ -163,6 +161,10 @@ void NonlinearSolverParameters::postProcessInput()
   if( m_timeStepDecreaseIterLimit <= m_timeStepIncreaseIterLimit )
   {
     GEOS_ERROR( " timeStepIncreaseIterLimit should be smaller than timeStepDecreaseIterLimit!!" );
+  }
+  if( m_scalingType == ScalingType::Local && m_lineSearchAction != LineSearchAction::None )
+  {
+    GEOS_ERROR( "Line search is not supported for " + EnumStrings< ScalingType >::toString( ScalingType::Local ) );
   }
 }
 
