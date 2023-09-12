@@ -3929,8 +3929,6 @@ void SolidMechanicsMPM::computeBoxStress( const real64 dt,
     {
       localIndex const p = activeParticleIndices[pp];
       // Only need diagonal components
-      //CC: debug
-      // GEOS_LOG_RANK_0("p: " << p << ", stress " << particleStress[p] << ", pV" << particleVolume[p]);
       for( int i=0; i < 3; i++ )
       {
         boxStress[i] += particleStress[p][i] * particleVolume[p]; // volume weighted average, will normalize later.
