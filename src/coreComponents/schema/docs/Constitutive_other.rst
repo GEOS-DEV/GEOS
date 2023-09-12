@@ -50,10 +50,7 @@ PorousElasticIsotropic                        node :ref:`DATASTRUCTURE_PorousEla
 PorousElasticOrthotropic                      node :ref:`DATASTRUCTURE_PorousElasticOrthotropic`                      
 PorousElasticTransverseIsotropic              node :ref:`DATASTRUCTURE_PorousElasticTransverseIsotropic`              
 PorousExtendedDruckerPrager                   node :ref:`DATASTRUCTURE_PorousExtendedDruckerPrager`                   
-PorousModifiedCamClay                         node :ref:`DATASTRUCTURE_PorousModifiedCamClay` 
-PorousViscoDruckerPrager                      node :ref:`DATASTRUCTURE_PorousViscoDruckerPrager`
-PorousViscoExtendedDruckerPrager              node :ref:`DATASTRUCTURE_PorousViscoExtendedDruckerPrager` 
-PorousViscoModifiedCamClay                    node :ref:`DATASTRUCTURE_PorousViscoModifiedCamClay`                         
+PorousModifiedCamClay                         node :ref:`DATASTRUCTURE_PorousModifiedCamClay`                         
 PressurePorosity                              node :ref:`DATASTRUCTURE_PressurePorosity`                              
 ProppantPermeability                          node :ref:`DATASTRUCTURE_ProppantPermeability`                          
 ProppantPorosity                              node :ref:`DATASTRUCTURE_ProppantPorosity`                              

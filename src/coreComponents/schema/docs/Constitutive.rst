@@ -50,10 +50,7 @@ PorousElasticIsotropic                        node         :ref:`XML_PorousElast
 PorousElasticOrthotropic                      node         :ref:`XML_PorousElasticOrthotropic`                      
 PorousElasticTransverseIsotropic              node         :ref:`XML_PorousElasticTransverseIsotropic`              
 PorousExtendedDruckerPrager                   node         :ref:`XML_PorousExtendedDruckerPrager`                   
-PorousModifiedCamClay                         node         :ref:`XML_PorousModifiedCamClay`
-PorousViscoDruckerPrager                      node         :ref:`XML_PorousViscoDruckerPrager`
-PorousViscoExtendedDruckerPrager              node         :ref:`XML_PorousViscoExtendedDruckerPrager` 
-PorousViscoModifiedCamClay                    node         :ref:`XML_PorousViscoModifiedCamClay`                              
+PorousModifiedCamClay                         node         :ref:`XML_PorousModifiedCamClay`                         
 PressurePorosity                              node         :ref:`XML_PressurePorosity`                              
 ProppantPermeability                          node         :ref:`XML_ProppantPermeability`                          
 ProppantPorosity                              node         :ref:`XML_ProppantPorosity`                              
