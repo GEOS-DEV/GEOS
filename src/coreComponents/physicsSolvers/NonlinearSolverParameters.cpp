@@ -154,7 +154,8 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setApplyDefaultValue( ScalingType::Global ).
     setDescription( "Solution scaling type."
                     "Valid options:\n* " + EnumStrings< ScalingType >::concat( "\n* " ) );
-
+  if( m_scalingType == ScalingType::Local && m_lineSearchAction != LineSearchAction::None )
+    GEOS_ERROR( "Line search is not supported for " + EnumStrings< ScalingType >::toString( ScalingType::Local ) );
 }
 
 void NonlinearSolverParameters::postProcessInput()
