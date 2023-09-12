@@ -102,9 +102,9 @@ public:
     static constexpr char const * omegaDBCString()                { return "omegaDBC"; }
     static constexpr char const * continuationDBCString()         { return "continuationDBC"; }
 
-    static constexpr char const * miscibleDBCString()                  { return "miscibleDBC"; }
-    static constexpr char const * kappaminDBCString()                { return "kappaminDBC"; }
-    static constexpr char const * contMultiplierDBCString()         { return "contMultiplierDBC"; }
+    static constexpr char const * miscibleDBCString()             { return "miscibleDBC"; }
+    static constexpr char const * kappaminDBCString()             { return "kappaminDBC"; }
+    static constexpr char const * contMultiplierDBCString()       { return "contMultiplierDBC"; }
   } viewKeys;
 
   /**
