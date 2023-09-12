@@ -75,6 +75,7 @@ public:
    * @param inputDofNumber The dof number for the primary field.
    * @param rankOffset dof index offset of current rank
    * @param inputSparsity The sparsity pattern to fill.
+   * @param inputDt The timestep for the physics update.
    * @copydoc geos::finiteElement::KernelBase::KernelBase
    */
   SparsityKernelBase( NodeManager const & nodeManager,

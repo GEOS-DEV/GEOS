@@ -237,7 +237,7 @@ struct ConstitutivePassThru< PorousSolidBase >
                                  PorousSolid< DelftEgg >,
                                  PorousSolid< DruckerPrager >,
                                  //PorousSolid< DuvautLionsSolid< DruckerPrager > >,
-                                // PorousSolid< DuvautLionsSolid< DruckerPragerExtended > >,
+                                 // PorousSolid< DuvautLionsSolid< DruckerPragerExtended > >,
                                  //PorousSolid< DuvautLionsSolid< ModifiedCamClay > >,
                                  PorousSolid< ElasticIsotropic >,
                                  PorousSolid< ElasticTransverseIsotropic >,
