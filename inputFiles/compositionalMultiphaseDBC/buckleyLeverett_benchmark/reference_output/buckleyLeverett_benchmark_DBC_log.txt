@@ -1,0 +1,1111 @@
+Num ranks: 1
+Max threads: 1
+GEOSX version: 0.2.0
+  - c++ compiler: gcc 10.4.0
+  - openmp version: 201511
+  - MPI version: Open MPI v4.1.5rc2, package: Open MPI root@hpc-kernel-03 Distribution, ident: 4.1.5rc2, repo rev: v4.1.5rc1-16-g5980bac633, Unreleased developer copy
+  - HDF5 version: 1.12.1
+  - Conduit version: 0.8.2
+  - VTK version: 9.1.0
+  - RAJA version: 2022.3.0
+  - umpire version: 2022.3.0
+  -  adiak version: ..
+  - caliper version: 2.8.0
+  - METIS version: 5.1.0
+  - PARAMETIS version: 4.0.3
+  - scotch version: 6.0.9
+  - superlu_dist version: 6.3.0
+  - suitesparse version: 5.7.9
+  - Python3 version: 3.10.9
+  - hypre release version: 2.28.0
+Started at 2023-09-11 15:52:26
+Adding Solver of type CompositionalMultiphaseFVM, named buckleyLeverett_benchmark
+Adding Output: VTK, vtkOutput
+Adding Output: Restart, restartOutput
+Adding Mesh: InternalMesh, mesh
+Adding Geometric Object: Box, source
+Adding Geometric Object: Box, sink
+Adding Event: PeriodicEvent, restarts
+Adding Event: PeriodicEvent, solverApplications
+Adding Event: PeriodicEvent, statistics
+Adding Object CellElementRegion named region from ObjectManager::Catalog.
+   TableFunction: fluid_PVDG_Bg
+   TableFunction: fluid_PVDG_viscg
+mesh: total number of nodes = 4004
+mesh: total number of elems = 1000
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = mesh, Level0, region, cellBlock
+mesh/Level0/region/cellBlock/fluid allocated 1 quadrature points
+mesh/Level0/region/cellBlock/rock allocated 1 quadrature points
+mesh/Level0/region/cellBlock/relperm allocated 1 quadrature points
+mesh: importing field data from mesh dataset
+Time: 0.00e+00 s, dt: 10000 s, Cycle: 0
+Rank 0: Writing out restart file at ./buckleyLeverett_benchmark_DBC-1_restart_000000000/rank_0000000.hdf5
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 3.54e-01 ) ;     ( R ) = ( 3.54e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 3.62e-01 ) ;     ( R ) = ( 3.62e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.12e-11 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.07e+00 ) ;     ( R ) = ( 1.07e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.99e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.64e+00 ) ;     ( R ) = ( 1.64e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.12e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.27e+00 ) ;     ( R ) = ( 1.27e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.57e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 5.88e-01 ) ;     ( R ) = ( 5.88e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.36e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 3.15e-02 ) ;     ( R ) = ( 3.15e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.22e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.83e-03 ) ;     ( R ) = ( 2.83e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.33e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 3.67e-05 ) ;     ( R ) = ( 3.67e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.92e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 6.21e-09 ) ;     ( R ) = ( 6.21e-09 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.75e-16 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00016e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0, 0 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.00956774, 1.99043 } rm^3
+compflowstats, region: Phase mass: { 2.67897, 1974.51 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 2.67897, 1974.51 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 1.96783, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 0.711139, 1974.51 } kg
+compflowstats, region: Dissolved component mass: { { 2.67897, 0 }, { 0, 1974.51 } } kg
+compflowstats: Max phase CFL number: 5.3433
+compflowstats: Max component CFL number: 2.60768
+Time: 1.00e+04 s, dt: 20000 s, Cycle: 1
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 8.34e-01 ) ;     ( R ) = ( 8.34e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 7.16e-01 ) ;     ( R ) = ( 7.16e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.05e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.49e-01 ) ;     ( R ) = ( 1.49e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.05e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 7.15e-02 ) ;     ( R ) = ( 7.15e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.47e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 4.13e-02 ) ;     ( R ) = ( 4.13e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.47e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 4.56e-02 ) ;     ( R ) = ( 4.56e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.64e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 8.02e-03 ) ;     ( R ) = ( 8.02e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.19e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 5.21e-06 ) ;     ( R ) = ( 5.21e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.62e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 7.81e-09 ) ;     ( R ) = ( 7.81e-09 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.05e-16 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00016e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1551.11 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.0145677, 1.98543 } rm^3
+compflowstats, region: Phase mass: { 4.07897, 1969.55 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 4.07897, 1969.55 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 1.95219, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 2.12678, 1969.55 } kg
+compflowstats, region: Dissolved component mass: { { 4.07897, 0 }, { 0, 1969.55 } } kg
+compflowstats: Max phase CFL number: 10.7767
+compflowstats: Max component CFL number: 5.34138
+Time: 3.00e+04 s, dt: 40000 s, Cycle: 2
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 2.30e+00 ) ;     ( R ) = ( 2.30e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.30e+00 ) ;     ( R ) = ( 1.30e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.04e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.24e-01 ) ;     ( R ) = ( 2.24e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.34e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.26e-01 ) ;     ( R ) = ( 1.26e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.19e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 7.94e-02 ) ;     ( R ) = ( 7.94e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.49e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 9.43e-02 ) ;     ( R ) = ( 9.43e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.32e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 2.90e-02 ) ;     ( R ) = ( 2.90e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.46e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 4.03e-04 ) ;     ( R ) = ( 4.03e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.53e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.61e-07 ) ;     ( R ) = ( 1.61e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.75e-16 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00016e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1554.19 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.0245677, 1.97543 } rm^3
+compflowstats, region: Phase mass: { 6.87897, 1959.63 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 6.87897, 1959.63 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 1.9286, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 4.95037, 1959.63 } kg
+compflowstats, region: Dissolved component mass: { { 6.87897, 0 }, { 0, 1959.63 } } kg
+compflowstats: Max phase CFL number: 21.6906
+compflowstats: Max component CFL number: 10.6815
+Time: 7.00e+04 s, dt: 80000 s, Cycle: 3
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 4.17e+00 ) ;     ( R ) = ( 4.17e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.72e+00 ) ;     ( R ) = ( 1.72e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.07e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 3.40e-01 ) ;     ( R ) = ( 3.40e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.27e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.20e-01 ) ;     ( R ) = ( 2.20e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.58e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.39e-01 ) ;     ( R ) = ( 1.39e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.14e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.66e-01 ) ;     ( R ) = ( 1.66e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.64e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 7.36e-02 ) ;     ( R ) = ( 7.36e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.83e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.23e-01 ) ;     ( R ) = ( 1.23e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.64e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 7.69e-06 ) ;     ( R ) = ( 7.69e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.58e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 3.12e-08 ) ;     ( R ) = ( 3.12e-08 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.58e-15 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00016e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1559.38 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.0445677, 1.95543 } rm^3
+compflowstats, region: Phase mass: { 12.479, 1939.79 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 12.479, 1939.79 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 1.86221, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 10.6168, 1939.79 } kg
+compflowstats, region: Dissolved component mass: { { 12.479, 0 }, { 0, 1939.79 } } kg
+compflowstats: Max phase CFL number: 43.3788
+compflowstats: Max component CFL number: 21.3703
+Time: 1.50e+05 s, dt: 160000 s, Cycle: 4
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.57e+01 ) ;     ( R ) = ( 1.57e+01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 7.74e+00 ) ;     ( R ) = ( 7.74e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.63e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 7.44e-01 ) ;     ( R ) = ( 7.44e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.58e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 4.09e-01 ) ;     ( R ) = ( 4.09e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.64e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 2.59e-01 ) ;     ( R ) = ( 2.59e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.07e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 3.09e-01 ) ;     ( R ) = ( 3.09e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.03e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.63e-01 ) ;     ( R ) = ( 1.63e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.53e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.48e-01 ) ;     ( R ) = ( 2.48e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.91e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 2.76e-04 ) ;     ( R ) = ( 2.76e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.02e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.09e-07 ) ;     ( R ) = ( 1.09e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.24e-15 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00016e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1569.35 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.0845677, 1.91543 } rm^3
+compflowstats, region: Phase mass: { 23.679, 1900.11 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 23.679, 1900.11 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 1.74163, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 21.9373, 1900.11 } kg
+compflowstats, region: Dissolved component mass: { { 23.679, 0 }, { 0, 1900.11 } } kg
+compflowstats: Max phase CFL number: 86.765
+compflowstats: Max component CFL number: 42.7407
+Time: 3.10e+05 s, dt: 160000 s, Cycle: 5
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 7.71e+00 ) ;     ( R ) = ( 7.71e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 2.77e+00 ) ;     ( R ) = ( 2.77e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.56e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 3.92e-01 ) ;     ( R ) = ( 3.92e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.25e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.46e-01 ) ;     ( R ) = ( 2.46e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.70e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.52e-01 ) ;     ( R ) = ( 1.52e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.80e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.78e-01 ) ;     ( R ) = ( 1.78e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.24e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.56e-01 ) ;     ( R ) = ( 1.56e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.80e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.48e-01 ) ;     ( R ) = ( 2.48e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.43e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 3.70e-04 ) ;     ( R ) = ( 3.70e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.91e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 2.47e-07 ) ;     ( R ) = ( 2.47e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.49e-15 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00016e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1589.06 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.124568, 1.87543 } rm^3
+compflowstats, region: Phase mass: { 34.879, 1860.43 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 34.879, 1860.43 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 1.64644, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 33.2325, 1860.43 } kg
+compflowstats, region: Dissolved component mass: { { 34.879, 0 }, { 0, 1860.43 } } kg
+compflowstats: Max phase CFL number: 86.7592
+compflowstats: Max component CFL number: 42.7407
+Time: 4.70e+05 s, dt: 160000 s, Cycle: 6
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 7.79e+00 ) ;     ( R ) = ( 7.79e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 2.59e+00 ) ;     ( R ) = ( 2.59e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.47e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.71e-01 ) ;     ( R ) = ( 2.71e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.21e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.72e-01 ) ;     ( R ) = ( 1.72e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.91e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.04e-01 ) ;     ( R ) = ( 1.04e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.40e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.20e-01 ) ;     ( R ) = ( 1.20e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.67e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.51e-01 ) ;     ( R ) = ( 1.51e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.59e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.45e-01 ) ;     ( R ) = ( 2.45e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.84e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 4.57e-04 ) ;     ( R ) = ( 4.57e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.11e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.46e-07 ) ;     ( R ) = ( 1.46e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.28e-15 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00016e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1583.27 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.164568, 1.83543 } rm^3
+compflowstats, region: Phase mass: { 46.079, 1820.75 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 46.079, 1820.75 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 1.55614, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 44.5228, 1820.75 } kg
+compflowstats, region: Dissolved component mass: { { 46.079, 0 }, { 0, 1820.75 } } kg
+compflowstats: Max phase CFL number: 86.768
+compflowstats: Max component CFL number: 42.7406
+Time: 6.30e+05 s, dt: 160000 s, Cycle: 7
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.89e+00 ) ;     ( R ) = ( 6.89e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 2.12e+00 ) ;     ( R ) = ( 2.12e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.02e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.04e-01 ) ;     ( R ) = ( 2.04e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.22e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.28e-01 ) ;     ( R ) = ( 1.28e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.76e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 7.67e-02 ) ;     ( R ) = ( 7.67e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.32e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 8.65e-02 ) ;     ( R ) = ( 8.65e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.24e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.44e-01 ) ;     ( R ) = ( 1.44e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.27e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.44e-01 ) ;     ( R ) = ( 2.44e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.95e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.10e-03 ) ;     ( R ) = ( 1.10e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.68e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 3.36e-07 ) ;     ( R ) = ( 3.36e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.58e-15 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00016e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1570.55 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.204568, 1.79543 } rm^3
+compflowstats, region: Phase mass: { 57.279, 1781.07 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 57.279, 1781.07 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 1.457, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 55.822, 1781.07 } kg
+compflowstats, region: Dissolved component mass: { { 57.279, 0 }, { 0, 1781.07 } } kg
+compflowstats: Max phase CFL number: 86.7717
+compflowstats: Max component CFL number: 42.7406
+Time: 7.90e+05 s, dt: 160000 s, Cycle: 8
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 5.71e+00 ) ;     ( R ) = ( 5.71e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.71e+00 ) ;     ( R ) = ( 1.71e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.16e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.64e-01 ) ;     ( R ) = ( 1.64e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.65e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.02e-01 ) ;     ( R ) = ( 1.02e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.11e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 6.04e-02 ) ;     ( R ) = ( 6.04e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.09e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 6.76e-02 ) ;     ( R ) = ( 6.76e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.64e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.50e-01 ) ;     ( R ) = ( 1.50e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.42e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.48e-01 ) ;     ( R ) = ( 2.48e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.06e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 5.21e-04 ) ;     ( R ) = ( 5.21e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.13e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 4.29e-07 ) ;     ( R ) = ( 4.29e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.12e-15 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00015e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1554.74 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.244568, 1.75543 } rm^3
+compflowstats, region: Phase mass: { 68.479, 1741.39 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 68.479, 1741.39 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 1.37291, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 67.106, 1741.39 } kg
+compflowstats, region: Dissolved component mass: { { 68.479, 0 }, { 0, 1741.39 } } kg
+compflowstats: Max phase CFL number: 86.7623
+compflowstats: Max component CFL number: 42.7407
+Time: 9.50e+05 s, dt: 160000 s, Cycle: 9
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 7.36e+00 ) ;     ( R ) = ( 7.36e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 2.18e+00 ) ;     ( R ) = ( 2.18e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.40e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.35e-01 ) ;     ( R ) = ( 1.35e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.04e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 8.34e-02 ) ;     ( R ) = ( 8.34e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.23e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 4.89e-02 ) ;     ( R ) = ( 4.89e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.36e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 5.43e-02 ) ;     ( R ) = ( 5.43e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.89e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.45e-01 ) ;     ( R ) = ( 1.45e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.74e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.44e-01 ) ;     ( R ) = ( 2.44e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.09e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.25e-03 ) ;     ( R ) = ( 1.25e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.25e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 3.56e-07 ) ;     ( R ) = ( 3.56e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.79e-15 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00015e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1537.11 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.284568, 1.71543 } rm^3
+compflowstats, region: Phase mass: { 79.679, 1701.71 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 79.679, 1701.71 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 1.27681, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 78.4022, 1701.71 } kg
+compflowstats, region: Dissolved component mass: { { 79.679, 0 }, { 0, 1701.71 } } kg
+compflowstats: Max phase CFL number: 86.7684
+compflowstats: Max component CFL number: 42.7407
+Time: 1.11e+06 s, dt: 160000 s, Cycle: 10
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 5.33e+00 ) ;     ( R ) = ( 5.33e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.53e+00 ) ;     ( R ) = ( 1.53e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.75e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.14e-01 ) ;     ( R ) = ( 1.14e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.27e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 7.02e-02 ) ;     ( R ) = ( 7.02e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.60e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 4.08e-02 ) ;     ( R ) = ( 4.08e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.18e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 4.52e-02 ) ;     ( R ) = ( 4.52e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.42e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.45e-01 ) ;     ( R ) = ( 1.45e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.91e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.44e-01 ) ;     ( R ) = ( 2.44e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.24e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.32e-03 ) ;     ( R ) = ( 1.32e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.57e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 3.86e-07 ) ;     ( R ) = ( 3.86e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.98e-15 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00015e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1518.26 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.324568, 1.67543 } rm^3
+compflowstats, region: Phase mass: { 90.879, 1662.03 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 90.879, 1662.03 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 1.18775, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 89.6912, 1662.03 } kg
+compflowstats, region: Dissolved component mass: { { 90.879, 0 }, { 0, 1662.03 } } kg
+compflowstats: Max phase CFL number: 86.7663
+compflowstats: Max component CFL number: 42.7407
+Time: 1.27e+06 s, dt: 160000 s, Cycle: 11
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 5.32e+00 ) ;     ( R ) = ( 5.32e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.51e+00 ) ;     ( R ) = ( 1.51e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.88e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.10e-01 ) ;     ( R ) = ( 1.10e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.47e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 6.05e-02 ) ;     ( R ) = ( 6.05e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.71e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 3.50e-02 ) ;     ( R ) = ( 3.50e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.29e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 3.86e-02 ) ;     ( R ) = ( 3.86e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.42e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.49e-01 ) ;     ( R ) = ( 1.49e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.42e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.47e-01 ) ;     ( R ) = ( 2.47e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.95e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 7.91e-04 ) ;     ( R ) = ( 7.91e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.26e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 2.63e-07 ) ;     ( R ) = ( 2.63e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.04e-15 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00015e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1498.54 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.364568, 1.63543 } rm^3
+compflowstats, region: Phase mass: { 102.079, 1622.35 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 102.079, 1622.35 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 1.10665, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 100.972, 1622.35 } kg
+compflowstats, region: Dissolved component mass: { { 102.079, 0 }, { 0, 1622.35 } } kg
+compflowstats: Max phase CFL number: 86.7691
+compflowstats: Max component CFL number: 42.7407
+Time: 1.43e+06 s, dt: 160000 s, Cycle: 12
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 7.01e+00 ) ;     ( R ) = ( 7.01e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.98e+00 ) ;     ( R ) = ( 1.98e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.99e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.17e-01 ) ;     ( R ) = ( 1.17e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.44e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 5.28e-02 ) ;     ( R ) = ( 5.28e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.15e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 3.05e-02 ) ;     ( R ) = ( 3.05e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.87e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 3.35e-02 ) ;     ( R ) = ( 3.35e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.13e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.36e-01 ) ;     ( R ) = ( 1.36e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.21e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.47e-01 ) ;     ( R ) = ( 2.47e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.17e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.52e-03 ) ;     ( R ) = ( 1.52e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.95e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.96e-06 ) ;     ( R ) = ( 1.96e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.07e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 1.94e-07 ) ;     ( R ) = ( 1.94e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.89e-15 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00015e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1478.16 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.404568, 1.59543 } rm^3
+compflowstats, region: Phase mass: { 113.279, 1582.67 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 113.279, 1582.67 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 1.01335, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 112.266, 1582.67 } kg
+compflowstats, region: Dissolved component mass: { { 113.279, 0 }, { 0, 1582.67 } } kg
+compflowstats: Max phase CFL number: 86.7712
+compflowstats: Max component CFL number: 42.7407
+Time: 1.59e+06 s, dt: 160000 s, Cycle: 13
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 7.70e+00 ) ;     ( R ) = ( 7.70e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 2.26e+00 ) ;     ( R ) = ( 2.26e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.47e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.03e-01 ) ;     ( R ) = ( 1.03e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.90e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 4.69e-02 ) ;     ( R ) = ( 4.69e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.25e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 2.70e-02 ) ;     ( R ) = ( 2.70e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.19e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.96e-02 ) ;     ( R ) = ( 2.96e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.13e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.47e-01 ) ;     ( R ) = ( 1.47e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.61e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.45e-01 ) ;     ( R ) = ( 2.45e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.33e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.09e-03 ) ;     ( R ) = ( 1.09e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.00e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.98e-07 ) ;     ( R ) = ( 1.98e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.32e-15 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00014e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1457.25 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.444568, 1.55543 } rm^3
+compflowstats, region: Phase mass: { 124.479, 1542.99 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 124.479, 1542.99 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0.931995, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 123.547, 1542.99 } kg
+compflowstats, region: Dissolved component mass: { { 124.479, 0 }, { 0, 1542.99 } } kg
+compflowstats: Max phase CFL number: 86.7698
+compflowstats: Max component CFL number: 42.7407
+Time: 1.75e+06 s, dt: 160000 s, Cycle: 14
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.33e+00 ) ;     ( R ) = ( 6.33e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.72e+00 ) ;     ( R ) = ( 1.72e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.49e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.09e-01 ) ;     ( R ) = ( 1.09e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.79e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 4.21e-02 ) ;     ( R ) = ( 4.21e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.34e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 2.42e-02 ) ;     ( R ) = ( 2.42e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.81e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.64e-02 ) ;     ( R ) = ( 2.64e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.23e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.36e-01 ) ;     ( R ) = ( 1.36e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.79e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.45e-01 ) ;     ( R ) = ( 2.45e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.43e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.85e-03 ) ;     ( R ) = ( 1.85e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.10e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.61e-06 ) ;     ( R ) = ( 1.61e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.01e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 1.15e-07 ) ;     ( R ) = ( 1.15e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.45e-15 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00014e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1435.92 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.484568, 1.51543 } rm^3
+compflowstats, region: Phase mass: { 135.679, 1503.31 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 135.679, 1503.31 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0.836277, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 134.843, 1503.31 } kg
+compflowstats, region: Dissolved component mass: { { 135.679, 0 }, { 0, 1503.31 } } kg
+compflowstats: Max phase CFL number: 86.7669
+compflowstats: Max component CFL number: 42.7407
+Time: 1.91e+06 s, dt: 160000 s, Cycle: 15
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 7.04e+00 ) ;     ( R ) = ( 7.04e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 2.04e+00 ) ;     ( R ) = ( 2.04e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.71e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 8.70e-02 ) ;     ( R ) = ( 8.70e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.47e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 3.82e-02 ) ;     ( R ) = ( 3.82e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.55e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 2.19e-02 ) ;     ( R ) = ( 2.19e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.19e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.39e-02 ) ;     ( R ) = ( 2.39e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.30e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.46e-01 ) ;     ( R ) = ( 1.46e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.13e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.47e-01 ) ;     ( R ) = ( 2.47e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.38e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.20e-03 ) ;     ( R ) = ( 1.20e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.01e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.85e-06 ) ;     ( R ) = ( 1.85e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.48e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 2.59e-07 ) ;     ( R ) = ( 2.59e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.76e-15 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00014e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1414.24 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.524568, 1.47543 } rm^3
+compflowstats, region: Phase mass: { 146.879, 1463.63 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 146.879, 1463.63 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0.751109, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 146.128, 1463.63 } kg
+compflowstats, region: Dissolved component mass: { { 146.879, 0 }, { 0, 1463.63 } } kg
+compflowstats: Max phase CFL number: 86.7709
+compflowstats: Max component CFL number: 42.7407
+Time: 2.07e+06 s, dt: 160000 s, Cycle: 16
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 7.87e+00 ) ;     ( R ) = ( 7.87e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 2.26e+00 ) ;     ( R ) = ( 2.26e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.87e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.06e-01 ) ;     ( R ) = ( 1.06e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.57e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 3.49e-02 ) ;     ( R ) = ( 3.49e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.15e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.99e-02 ) ;     ( R ) = ( 1.99e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.14e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.28e-02 ) ;     ( R ) = ( 2.28e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.48e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.49e-01 ) ;     ( R ) = ( 1.49e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.19e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.48e-01 ) ;     ( R ) = ( 2.48e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.36e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 6.46e-04 ) ;     ( R ) = ( 6.46e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.48e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 7.88e-07 ) ;     ( R ) = ( 7.88e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.23e-15 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00014e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1392.27 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.564568, 1.43543 } rm^3
+compflowstats, region: Phase mass: { 158.079, 1423.95 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 158.079, 1423.95 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0.666187, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 157.413, 1423.95 } kg
+compflowstats, region: Dissolved component mass: { { 158.079, 0 }, { 0, 1423.95 } } kg
+compflowstats: Max phase CFL number: 86.7719
+compflowstats: Max component CFL number: 42.7407
+Time: 2.23e+06 s, dt: 160000 s, Cycle: 17
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 7.45e+00 ) ;     ( R ) = ( 7.45e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 2.08e+00 ) ;     ( R ) = ( 2.08e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.68e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.09e-01 ) ;     ( R ) = ( 1.09e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.40e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 3.21e-02 ) ;     ( R ) = ( 3.21e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.28e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.83e-02 ) ;     ( R ) = ( 1.83e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.54e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.24e-02 ) ;     ( R ) = ( 2.24e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.02e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.48e-01 ) ;     ( R ) = ( 1.48e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.04e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.47e-01 ) ;     ( R ) = ( 2.47e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.01e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 9.98e-04 ) ;     ( R ) = ( 9.98e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.51e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 2.06e-07 ) ;     ( R ) = ( 2.06e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.93e-15 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00013e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1370.05 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.604568, 1.39543 } rm^3
+compflowstats, region: Phase mass: { 169.279, 1384.27 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 169.279, 1384.27 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0.580835, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 168.698, 1384.27 } kg
+compflowstats, region: Dissolved component mass: { { 169.279, 0 }, { 0, 1384.27 } } kg
+compflowstats: Max phase CFL number: 86.7719
+compflowstats: Max component CFL number: 42.7407
+Time: 2.39e+06 s, dt: 160000 s, Cycle: 18
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.75e+00 ) ;     ( R ) = ( 6.75e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.83e+00 ) ;     ( R ) = ( 1.83e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.79e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.05e-01 ) ;     ( R ) = ( 1.05e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.87e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.97e-02 ) ;     ( R ) = ( 2.97e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.42e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.69e-02 ) ;     ( R ) = ( 1.69e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.91e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.22e-02 ) ;     ( R ) = ( 2.22e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.25e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.47e-01 ) ;     ( R ) = ( 1.47e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.45e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.45e-01 ) ;     ( R ) = ( 2.45e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.24e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.20e-03 ) ;     ( R ) = ( 1.20e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.13e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 2.26e-07 ) ;     ( R ) = ( 2.26e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.83e-15 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00013e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1347.62 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.644568, 1.35543 } rm^3
+compflowstats, region: Phase mass: { 180.479, 1344.59 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 180.479, 1344.59 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0.494705, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 179.984, 1344.59 } kg
+compflowstats, region: Dissolved component mass: { { 180.479, 0 }, { 0, 1344.59 } } kg
+compflowstats: Max phase CFL number: 86.7718
+compflowstats: Max component CFL number: 42.7407
+Time: 2.55e+06 s, dt: 160000 s, Cycle: 19
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.30e+00 ) ;     ( R ) = ( 6.30e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.68e+00 ) ;     ( R ) = ( 1.68e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.15e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.02e-01 ) ;     ( R ) = ( 1.02e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.84e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.77e-02 ) ;     ( R ) = ( 2.77e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.74e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.58e-02 ) ;     ( R ) = ( 1.58e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.68e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.21e-02 ) ;     ( R ) = ( 2.21e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.49e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.47e-01 ) ;     ( R ) = ( 1.47e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.26e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.45e-01 ) ;     ( R ) = ( 2.45e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.42e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.22e-03 ) ;     ( R ) = ( 1.22e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.20e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 2.39e-07 ) ;     ( R ) = ( 2.39e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.19e-15 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00013e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1324.99 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.684568, 1.31543 } rm^3
+compflowstats, region: Phase mass: { 191.679, 1304.91 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 191.679, 1304.91 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0.407712, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 191.271, 1304.91 } kg
+compflowstats, region: Dissolved component mass: { { 191.679, 0 }, { 0, 1304.91 } } kg
+compflowstats: Max phase CFL number: 86.7718
+compflowstats: Max component CFL number: 42.7407
+Time: 2.71e+06 s, dt: 160000 s, Cycle: 20
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.26e+00 ) ;     ( R ) = ( 6.26e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.66e+00 ) ;     ( R ) = ( 1.66e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.49e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.00e-01 ) ;     ( R ) = ( 1.00e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.88e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.59e-02 ) ;     ( R ) = ( 2.59e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.09e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.47e-02 ) ;     ( R ) = ( 1.47e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.35e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.21e-02 ) ;     ( R ) = ( 2.21e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.44e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.47e-01 ) ;     ( R ) = ( 1.47e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.68e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.47e-01 ) ;     ( R ) = ( 2.47e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.08e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.10e-03 ) ;     ( R ) = ( 1.10e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.71e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 2.55e-07 ) ;     ( R ) = ( 2.55e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.16e-15 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00013e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1302.2 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.724568, 1.27543 } rm^3
+compflowstats, region: Phase mass: { 202.879, 1265.23 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 202.879, 1265.23 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0.319935, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 202.559, 1265.23 } kg
+compflowstats, region: Dissolved component mass: { { 202.879, 0 }, { 0, 1265.23 } } kg
+compflowstats: Max phase CFL number: 86.7719
+compflowstats: Max component CFL number: 42.7407
+Time: 2.87e+06 s, dt: 160000 s, Cycle: 21
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.60e+00 ) ;     ( R ) = ( 6.60e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.77e+00 ) ;     ( R ) = ( 1.77e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.33e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.02e-01 ) ;     ( R ) = ( 1.02e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.96e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.43e-02 ) ;     ( R ) = ( 2.43e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.92e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.38e-02 ) ;     ( R ) = ( 1.38e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.39e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.21e-02 ) ;     ( R ) = ( 2.21e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.68e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.48e-01 ) ;     ( R ) = ( 1.48e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.55e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.48e-01 ) ;     ( R ) = ( 2.48e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.05e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 8.37e-04 ) ;     ( R ) = ( 8.37e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.79e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 5.01e-07 ) ;     ( R ) = ( 5.01e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.27e-15 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00013e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1279.26 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.764568, 1.23543 } rm^3
+compflowstats, region: Phase mass: { 214.079, 1225.55 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 214.079, 1225.55 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0.231566, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 213.847, 1225.55 } kg
+compflowstats, region: Dissolved component mass: { { 214.079, 0 }, { 0, 1225.55 } } kg
+compflowstats: Max phase CFL number: 86.7716
+compflowstats: Max component CFL number: 42.7407
+Time: 3.03e+06 s, dt: 160000 s, Cycle: 22
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 7.17e+00 ) ;     ( R ) = ( 7.17e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.96e+00 ) ;     ( R ) = ( 1.96e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.37e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.05e-01 ) ;     ( R ) = ( 1.05e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.74e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.29e-02 ) ;     ( R ) = ( 2.29e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.86e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.30e-02 ) ;     ( R ) = ( 1.30e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.91e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.22e-02 ) ;     ( R ) = ( 2.22e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.97e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.48e-01 ) ;     ( R ) = ( 1.48e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.90e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.48e-01 ) ;     ( R ) = ( 2.48e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.01e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 7.82e-04 ) ;     ( R ) = ( 7.82e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.82e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.34e-06 ) ;     ( R ) = ( 1.34e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.77e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 1.73e-07 ) ;     ( R ) = ( 1.73e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.67e-15 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00012e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1256.19 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.804568, 1.19543 } rm^3
+compflowstats, region: Phase mass: { 225.279, 1185.87 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 225.279, 1185.87 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0.142872, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 225.136, 1185.87 } kg
+compflowstats, region: Dissolved component mass: { { 225.279, 0 }, { 0, 1185.87 } } kg
+compflowstats: Max phase CFL number: 86.7701
+compflowstats: Max component CFL number: 42.7407
+Time: 3.19e+06 s, dt: 10000 s, Cycle: 23
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 3.02e-02 ) ;     ( R ) = ( 3.02e-02 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 4.45e-03 ) ;     ( R ) = ( 4.45e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.58e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.74e-03 ) ;     ( R ) = ( 2.74e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.48e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.86e-03 ) ;     ( R ) = ( 1.86e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.71e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.20e-03 ) ;     ( R ) = ( 1.20e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.33e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.45e-03 ) ;     ( R ) = ( 1.45e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.10e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 2.34e-04 ) ;     ( R ) = ( 2.34e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.01e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.87e-08 ) ;     ( R ) = ( 1.87e-08 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.01e-14 ) ; 
+buckleyLeverett_benchmark: Newton solver converged in less than 400 iterations, time-step required will be increased.
+compflowstats, region: Pressure (min, average, max): 1e+07, 1.00008e+07, 1.00012e+07 Pa
+compflowstats, region: Delta pressure (min, max): 0.773413, 1233 Pa
+compflowstats, region: Temperature (min, average, max): 300, 300, 300 K
+compflowstats, region: Total dynamic pore volume: 2 rm^3
+compflowstats, region: Phase dynamic pore volumes: { 0.807068, 1.19293 } rm^3
+compflowstats, region: Phase mass: { 225.979, 1183.39 } kg
+compflowstats, region: Trapped phase mass (metric 1): { 0, 0 } kg
+compflowstats, region: Non-trapped phase mass (metric 1): { 225.979, 1183.39 } kg
+compflowstats, region: Immobile phase mass (metric 2): { 0.143228, 0 } kg
+compflowstats, region: Mobile phase mass (metric 2): { 225.836, 1183.39 } kg
+compflowstats, region: Dissolved component mass: { { 225.979, 0 }, { 0, 1183.39 } } kg
+compflowstats: Max phase CFL number: 5.42292
+compflowstats: Max component CFL number: 2.67129
+Cleaning up events
+Rank 0: Writing out restart file at ./buckleyLeverett_benchmark_DBC-1_restart_000000024/rank_0000000.hdf5
+buckleyLeverett_benchmark, number of time steps: 24
+buckleyLeverett_benchmark, number of successful nonlinear iterations: 216
+buckleyLeverett_benchmark, number of successful linear iterations: 216
+buckleyLeverett_benchmark, number of time step cuts: 0
+buckleyLeverett_benchmark, number of discarded nonlinear iterations: 0
+buckleyLeverett_benchmark, number of discarded linear iterations: 0
+Umpire            HOST sum across ranks:    6.0 MB
+Umpire            HOST         rank max:    6.0 MB
+Finished at 2023-09-11 15:52:36
+total time            00:00:10.009
+initialization time   00:00:00.108
+run time              00:00:07.695
