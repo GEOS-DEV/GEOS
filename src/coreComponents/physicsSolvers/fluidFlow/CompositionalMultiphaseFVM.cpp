@@ -120,6 +120,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
+
       if( m_isThermal )
       {
         thermalCompositionalMultiphaseFVMKernels::

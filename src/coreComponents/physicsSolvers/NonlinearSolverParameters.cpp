@@ -190,6 +190,7 @@ void NonlinearSolverParameters::postProcessInput()
 }
 
 
+
 REGISTER_CATALOG_ENTRY( Group, NonlinearSolverParameters, string const &, Group * const )
 
 } /* namespace geos */
