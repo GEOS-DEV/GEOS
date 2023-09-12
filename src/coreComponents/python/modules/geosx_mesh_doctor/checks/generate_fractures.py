@@ -25,6 +25,7 @@ from vtkmodules.vtkCommonDataModel import (
 )
 from vtkmodules.vtkFiltersGeometry import (
     vtkMarkBoundaryFilter,
+    vtkGeometryFilter,
 )
 from vtkmodules.util.numpy_support import (
     vtk_to_numpy,
@@ -40,6 +41,9 @@ from .vtk_utils import (
    VtkOutput,
 )
 
+from vtkmodules.vtkFiltersCore import (
+    vtkExtractEdges,
+)
 
 @dataclass(frozen=True)
 class Options:
@@ -73,6 +77,7 @@ def build_fracture_nodes(mesh: vtkUnstructuredGrid,
     :return: The fracture nodes information.
     """
     fracture_edges: Dict[Tuple[int, int], int] = defaultdict(int)
+    fracture_edges_set = set()
     for c, fs in cell_to_faces.items():
         cell = mesh.GetCell(c)
         for f in fs:
@@ -83,12 +88,9 @@ def build_fracture_nodes(mesh: vtkUnstructuredGrid,
                 for i in range(edge.GetNumberOfPoints()):    # TODO, do less pedantic
                     edge_nodes.append(edge.GetPointId(i))
                 fracture_edges[tuple(sorted(edge_nodes))] += 1    # TODO frozenset?
+                fracture_edges_set.add(tuple(sorted(edge_nodes)))
 
-    boundary_fracture_edges = []
-    # Boundary edges are seen twice because each 2d fracture element is seen twice too.
-    # (Each side of the fracture).
-    for kv in filter(lambda fe: fe[1] == 2, fracture_edges.items()):
-        boundary_fracture_edges.append(kv[0])
+    boundary_fracture_edges = get_boundary_fracture_edges(mesh, fracture_edges_set)
 
     is_fracture_node = numpy.zeros(mesh.GetNumberOfPoints(), dtype=bool)
     for nodes in fracture_edges.keys():
@@ -165,8 +167,70 @@ def find_involved_cells(mesh: vtkUnstructuredGrid,
                     cells_to_faces[cell_id].append(i)
                     for k in range(face.GetNumberOfPoints()):
                         is_fracture_node[face.GetPointId(k)] = True
+
+    # For reasons yet unclear (-Taeho Kim, Sep. 5th, 2023), cells on the boundary 
+    # and with a single edge on the fracture surface are not recognized above as a fracture cell.
+    # Below is added to make sure such cells are added to cells_to_faces. 
+    for cell_id in range(mesh.GetNumberOfCells()):
+        # Skip if cell has already been captured by above loop
+        if cell_id in cells_to_faces.keys():
+            continue
+
+        # If cell contains even a single node that is a fracture node, add cell to cells_to_faces
+        cell = mesh.GetCell(cell_id)
+        points = cell.GetPointIds()
+        for p in vtk_iter(points):
+            if is_fracture_node[p]:
+                cells_to_faces[cell_id]
+                break
+
     return cells_to_faces
 
+def get_boundary_fracture_edges(mesh: vtkUnstructuredGrid,
+                                fracture_edges_set: set) -> list[tuple[int, int]]:
+    """
+    Helper function to get all fracture boundary edges, meaning edges that lie on the 
+    the fracture plane and also the boundary surfaces of the entire domain, defined by the mesh
+    :return: List of fracture edges as sorted tuples between two points
+    """
+    # Call vtkExtractEdges to retrieve boundary of the original mesh as a separate mesh
+    # The main result is boundary, a vtkPolyData for the envelope of the mesh as a mesh
+    boundaryExtractor = vtkGeometryFilter()
+    boundaryExtractor.PassThroughPointIdsOn()
+    boundaryExtractor.PassThroughCellIdsOn()
+    boundaryExtractor.FastModeOff()
+    boundaryExtractor.SetOriginalPointIdsName("boundary points")
+    boundaryExtractor.SetOriginalCellIdsName("boundary cells")
+    boundaryExtractor.SetInputData(mesh)
+    boundaryExtractor.Update()
+    boundary = boundaryExtractor.GetOutput()
+
+    # Store mapping of ids between points on the temporarily created boundary mesh
+    # and the original mesh. This will be used later to create the set of boundary edges
+    # with consistent point IDs. 
+    boundary_to_global_map = vtk_to_numpy(boundary.GetPointData().GetArray("boundary points"))
+
+    # Call vtkExtractEdges to retrieve all edges of the boundary mesh
+    # The main result is vtkEdges, a vtkPolyData for edges of the mesh envelope
+    edgeExtractor = vtkExtractEdges()
+    edgeExtractor.SetInputData(boundary)
+    edgeExtractor.UseAllPointsOn()
+    edgeExtractor.Update()
+    vtkEdges = edgeExtractor.GetOutput()
+
+    # Loop through all edges and store each in a Python list as 
+    # pairs of the two Point IDs (global to the original mesh) of the edge
+    # This will late be intersected with the IDs of the boundary nodes. 
+    boundary_edges_set = set()
+    for kv in range(vtkEdges.GetNumberOfCells()):
+        edge = vtkEdges.GetCell(kv)
+        assert(edge.GetCellType() == 3)
+
+        boundary_edges_set.add( tuple(sorted([boundary_to_global_map[edge.GetPointId(0)], 
+                                              boundary_to_global_map[edge.GetPointId(1)]])) )
+
+    boundary_fracture_edges_set = boundary_edges_set.intersection(fracture_edges_set)
+    return list(boundary_fracture_edges_set)
 
 class FractureInfo:
     def __init__(self, mesh: vtkUnstructuredGrid, options: Options):
