@@ -72,14 +72,11 @@ public:
 private:
  
     localIndex m_numEmbeddedSurfElem;
-
     ArrayOfArrays< localIndex > m_embeddedSurfElemToNodes;
-
     ArrayOfArrays< localIndex > m_embeddedSurfElemTo3dElem;
-
     ArrayOfArrays< real64 > m_embeddedSurfElemNodes;
 };
 
 }
 
-#endif
+#endif //inlcude guard
