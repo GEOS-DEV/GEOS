@@ -271,7 +271,7 @@ struct WaveSolverUtils
   static void
   computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
                                         arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const elemsToNodes,
-                                        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+                                        arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
                                         real64 (& coordsOnRefElem)[3] )
   {
     real64 xLocal[FE_TYPE::numNodes][3]{};
