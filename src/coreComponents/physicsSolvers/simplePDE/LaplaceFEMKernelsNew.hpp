@@ -219,18 +219,28 @@ public:
     // ... Evaluate Jacobian determinant and Jacobian inverse
     auto [ detJ, Jinv ] = CellUtilities::getJacobianDeterminantAndJacobianInverse( cell, quadratureData.Xiq );
     
-     // ... Evaluate basis function gradients
+    // ... Evaluate basis function gradients
+    //
+    //  TODO 
+    //  auto dNdX = BasisFunctionUtilities::getGradient< CellType, 
+    //                                                   BasisFunctionUtilities::BasisFunction::Lagrange,
+    //                                                   maxNumTestSupportPointsPerElem >( quadratureData.Xiq, Jinv );
     real64 dNdX[maxNumTestSupportPointsPerElem][3]{{}};
-    for( int i = 0; i < maxNumTestSupportPointsPerElem; ++i )
-    {
-      // ... ... Parent space
-      BasisFunctionUtilities::Gradient dNdXi =
-        BasisFunctionUtilities::getParentGradient< CellType,
-                                                   BasisFunctionUtilities::BasisFunction::Lagrange >( i, quadratureData.Xiq );
+    BasisFunctionUtilities::getGradient< CellType, 
+                                         BasisFunctionUtilities::BasisFunction::Lagrange,
+                                         maxNumTestSupportPointsPerElem >( quadratureData.Xiq, Jinv, dNdX );
+    // real64 dNdX[maxNumTestSupportPointsPerElem][3]{{}};
 
-      // ... ... Physical space
-      Jinv.leftMultiplyTranspose( dNdXi.data, dNdX[i] );
-    }
+    // for( int i = 0; i < maxNumTestSupportPointsPerElem; ++i )
+    // {
+    //   // ... ... Parent space
+    //   BasisFunctionUtilities::Gradient dNdXi =
+    //     BasisFunctionUtilities::getParentGradient< CellType,
+    //                                                BasisFunctionUtilities::BasisFunction::Lagrange >( i, quadratureData.Xiq );
+
+    //   // ... ... Physical space
+    //   Jinv.leftMultiplyTranspose( dNdXi.data, dNdX[i] );
+    // }
 
     // ... Compute local stiffness matrix
     real64 const detJxW = detJ * quadratureData.wq;
@@ -244,13 +254,6 @@ public:
     1.0,
     dNdX,
     detJxW );
-    // for( localIndex i = 0; i < stack.numRows; ++i )
-    // {
-    //   for( localIndex j = 0; j < stack.numCols; ++j )
-    //   {
-    //     stack.localJacobian[ i ][ j ] += LvArray::tensorOps::AiBi< 3 >( dNdX[i], dNdX[j] ) * detJxW;
-    //   }
-    // }
   }
 
   /**

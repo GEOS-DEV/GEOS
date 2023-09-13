@@ -111,6 +111,25 @@ struct Helper< WedgeCell,
   }
 };
 
+template<>
+struct Helper< TetrahedronCell,
+               Rule::Gauss,
+               1 >
+{
+  GEOS_HOST_DEVICE
+  static Data getData( int q )
+  {
+    GEOS_UNUSED_VAR( q );
+
+    Data data;
+    data.wq = 1.0 / 1.6;
+    data.Xiq[0] = 0.25;
+    data.Xiq[1] = 0.25;
+    data.Xiq[2] = 0.25;
+    return data;
+  }
+};
+
 // getQuadratureData< CELL_TYPE, INTEGRATION_RULE, INTEGRATION_ORDER >
 
 template< typename CELL_TYPE,

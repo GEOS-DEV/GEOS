@@ -26,6 +26,7 @@ namespace geos
 {
 
 //namespace cells TODO?
+
 struct Dense3x3Tensor
 {
   real64 data[3][3]{{}};
@@ -39,6 +40,72 @@ struct Dense3x3Tensor
   };
   
 };
+
+// namespace Polynomials
+// {
+
+// /**
+//  * @brief Polynomial types
+//  */
+// enum class PolynomialName : integer
+// {
+//   Lagrange
+// };
+
+// template< PolynomialName POLYNOMIAL,
+//           int NUM_NODES >
+// struct Helper
+// {};
+
+// template<>
+// struct Helper< PolynomialName::Lagrange,
+//                2 >
+// {
+//   GEOS_HOST_DEVICE
+//   // constexpr
+//   static stackArray1d< real64, 2 > getDerivatives( real64 const Xiq[3] )
+//   { 
+//     stackArray1d< real64, 2 > deriv;
+//     deriv[0] = -0.5;
+//     deriv[1] =  0.5;
+//     return deriv;
+//   }
+
+//   GEOS_HOST_DEVICE
+//   static void getDerivatives( real64 const (& Xiq)[3], real64 ( & deriv )[2] )
+//   { 
+//     deriv[0] = -0.5;
+//     deriv[1] =  0.5;
+//   }
+
+// };
+
+// template< PolynomialName POLYNOMIAL,
+//           int NUM_NODES >
+// GEOS_HOST_DEVICE
+// // constexpr
+// static stackArray1d< real64, NUM_NODES > getDerivatives( real64 const Xiq[3] )
+// {
+//   return Helper< POLYNOMIAL, NUM_NODES >::getDerivatives( Xiq );
+// }
+
+// template< PolynomialName POLYNOMIAL,
+//           int NUM_NODES >
+// GEOS_HOST_DEVICE
+// // constexpr
+// static void getDerivatives( real64 const (& Xiq)[3], real64 ( & derivatives )[NUM_NODES] )
+// {
+//   return Helper< POLYNOMIAL, NUM_NODES >::getDerivatives( Xiq, derivatives );
+// }
+
+
+// /// Declare strings associated with enumeration values.
+// ENUM_STRINGS( PolynomialName,
+//               "Lagrange" );
+
+// } // namespace Polynomials
+
+
 
 namespace CellUtilities
 {
@@ -93,6 +160,7 @@ public:
     
     // Compute Jacobian
     real64 dPhiLin[2] = { -1.0, 1.0 };
+
     for( int k = 0; k < 2; ++k )
     {
       for( int j = 0; j < 2; ++j )
@@ -234,6 +302,67 @@ public:
         J.data[2][2] += m_nodeCoords[vertexInd][2] * gradPhi[2]; 
       }
     }
+
+    return J;
+  }
+
+  // GEOS_HOST_DEVICE real64[3] mapping( real64 refPointCoords[3] ) const
+  // {
+
+  // }
+
+  GEOS_HOST_DEVICE
+  void getLocalCoordinates( real64 (& xLocal)[numVertex][3] ) const
+  {
+    for( int i = 0; i < numVertex; ++i )
+    {
+      xLocal[i][0] = m_nodeCoords[i][0]; 
+      xLocal[i][1] = m_nodeCoords[i][1]; 
+      xLocal[i][2] = m_nodeCoords[i][2]; 
+    }
+  }
+
+private:
+  real64 m_nodeCoords[numVertex][3];
+};
+
+// ***************************************************
+
+class TetrahedronCell
+{
+public:
+  constexpr static int numVertex = 4;
+
+  using JacobianType = Dense3x3Tensor;
+ 
+  GEOS_HOST_DEVICE
+  TetrahedronCell( real64 const nodeCoords[numVertex][3] )
+  {
+    for( int i = 0; i < numVertex; ++i )
+    {
+      for( int j = 0; j < 3; ++j )
+      {
+        m_nodeCoords[i][j] = nodeCoords[i][j];
+      }
+    }
+  }
+  
+  GEOS_HOST_DEVICE
+  JacobianType getJacobian( real64 const refPointCoords[3] ) const
+  {
+    GEOS_UNUSED_VAR( refPointCoords );
+    JacobianType J;
+    J.data[0][0] = - m_nodeCoords[0][0] + m_nodeCoords[1][0];
+    J.data[0][1] = - m_nodeCoords[0][0] + m_nodeCoords[2][0];
+    J.data[0][2] = - m_nodeCoords[0][0] + m_nodeCoords[3][0];
+
+    J.data[1][0] = - m_nodeCoords[0][1] + m_nodeCoords[1][1];
+    J.data[1][1] = - m_nodeCoords[0][1] + m_nodeCoords[2][1];
+    J.data[1][2] = - m_nodeCoords[0][1] + m_nodeCoords[3][1];
+
+    J.data[2][0] = - m_nodeCoords[0][2] + m_nodeCoords[1][2];
+    J.data[2][1] = - m_nodeCoords[0][2] + m_nodeCoords[2][2];
+    J.data[2][2] = - m_nodeCoords[0][2] + m_nodeCoords[3][2];
 
     return J;
   }

@@ -42,17 +42,19 @@ struct Gradient
 };
 
 template< typename CELL_TYPE,
-          BasisFunction BASIS_FUNCTION >
+          BasisFunction BASIS_FUNCTION,
+          int NUM_SUPPORT_POINTS >
 struct Helper
 {};
 
 template<>
 struct Helper< HexahedronCell,
-               BasisFunction::Lagrange >
+               BasisFunction::Lagrange,
+               8 >
 {
   GEOS_HOST_DEVICE
   static Gradient getParentGradient( int const BasisIndex,
-                               real64 const (&Xiq)[3] )
+                                     real64 const (&Xiq)[3] )
   {
     constexpr real64 dPhiLin[2] = { -1.0, 1.0 };
 
@@ -66,11 +68,27 @@ struct Helper< HexahedronCell,
     gradient.data[2] = 0.125 * ( 1.0 + dPhiLin[a] * Xiq[0] ) * ( 1.0 + dPhiLin[b] * Xiq[1] ) * (       dPhiLin[c]          );
     return gradient;
   }
+
+  GEOS_HOST_DEVICE
+  static void getGradient( real64 const (&Xiq)[3],
+                           typename HexahedronCell::JacobianType const & Jinv,
+                           real64 (&dNdX)[8][3] )
+  {
+    for( int i = 0; i < 8; ++i )
+    {
+      // ... ... Parent space
+      Gradient dNdXi = getParentGradient( i, Xiq );
+
+      // ... ... Physical space
+      Jinv.leftMultiplyTranspose( dNdXi.data, dNdX[i] );
+    }
+  }
 };
 
 template<>
 struct Helper< WedgeCell,
-               BasisFunction::Lagrange >
+               BasisFunction::Lagrange,
+               6 >
 {
   GEOS_HOST_DEVICE
   static Gradient getParentGradient( int const BasisIndex,
@@ -90,20 +108,90 @@ struct Helper< WedgeCell,
                     * dpsiLIN[b];
     return gradient;
   }
+
+  GEOS_HOST_DEVICE
+  static void getGradient( real64 const (&Xiq)[3],
+                           typename WedgeCell::JacobianType const & Jinv,
+                           real64 (&dNdX)[6][3] )
+  {
+    for( int i = 0; i < 6; ++i )
+    {
+      // ... ... Parent space
+      Gradient dNdXi = getParentGradient( i, Xiq );
+
+      // ... ... Physical space
+      Jinv.leftMultiplyTranspose( dNdXi.data, dNdX[i] );
+    }
+  }
 };
-                  
 
+template<>
+struct Helper< TetrahedronCell,
+               BasisFunction::Lagrange,
+               4 >
+{
+  GEOS_HOST_DEVICE
+  static Gradient getParentGradient( int const BasisIndex,
+                                     real64 const (&Xiq)[3] )
+  { 
+    Gradient gradient;
+    gradient.data[0] = -1.0 + (BasisIndex > 0) + (BasisIndex == 1 );
+    gradient.data[1] = -1.0 + (BasisIndex > 0) + (BasisIndex == 2 );
+    gradient.data[2] = -1.0 + (BasisIndex > 0) + (BasisIndex == 3 );
+    return gradient;
+  }
 
-// getQuadratureData< CELL_TYPE, INTEGRATION_RULE, INTEGRATION_ORDER >
+  GEOS_HOST_DEVICE
+  static void getGradient( real64 const (&Xiq)[3],
+                           typename WedgeCell::JacobianType const & Jinv,
+                           real64 (&dNdX)[4][3] )
+  {
+    GEOS_UNUSED_VAR( Xiq );
+    for( int i = 0; i < 4; ++i )
+    {
+      // ... ... Parent space
+      Gradient dNdXi = getParentGradient( i, Xiq );
+
+      // ... ... Physical space
+      Jinv.leftMultiplyTranspose( dNdXi.data, dNdX[i] );
+    }
+  }
+};
+
+// template< typename CELL_TYPE,
+//           BasisFunction BASIS_FUNCTION >
+// GEOS_HOST_DEVICE
+// static Gradient getParentGradient( int const BasisIndex,
+//                                    real64 const (&Xiq)[3] )
+// {
+//   return Helper< CELL_TYPE, BASIS_FUNCTION >::getParentGradient( BasisIndex, Xiq );
+// }
 
 template< typename CELL_TYPE,
-          BasisFunction BASIS_FUNCTION >
+          BasisFunction BASIS_FUNCTION,
+          int NUM_SUPPORT_POINTS >
 GEOS_HOST_DEVICE
-static Gradient getParentGradient( int const BasisIndex,
-                             real64 const (&Xiq)[3] )
+static void getGradient( real64 const (&Xiq)[3],
+                         typename CELL_TYPE::JacobianType const & Jinv,
+                         real64 (&dNdX)[NUM_SUPPORT_POINTS][3] )
 {
-  return Helper< CELL_TYPE, BASIS_FUNCTION >::getParentGradient( BasisIndex, Xiq );
+  // for( int i = 0; i < NUM_SUPPORT_POINTS; ++i )
+  // {
+  //   // ... ... Parent space
+  //   Gradient dNdXi = getParentGradient< CELL_TYPE, BASIS_FUNCTION >( i, Xiq );
+
+  //   // ... ... Physical space
+  //   Jinv.leftMultiplyTranspose( dNdXi.data, dNdX[i] );
+  // }
+  Helper< CELL_TYPE, BASIS_FUNCTION, NUM_SUPPORT_POINTS >::getGradient( Xiq, Jinv, dNdX );
 }
+
+
+
+
+
+
+
 
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( BasisFunction,
