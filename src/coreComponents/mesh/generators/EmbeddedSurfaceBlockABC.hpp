@@ -21,11 +21,14 @@
 #include "common/DataTypes.hpp"
 
 
+namespace geos
+{
+
 /**
  * @brief An embedded 2d element within a 3d element
  * 
- * @details The @p EmbeddedSurfaceBlockABC represents a 2d element (@e surfacic) embedded within 
- * a 3d element. The 2d element is assumed to be a quad.  
+ * @details The @p EmbeddedSurfaceBlockABC represents an array of 2d elements (@e surfacic) embedded within 
+ * a 3d elements grid (2d element can intersect one or more 3d element). The 2d element is assumed to be a quad.  
  * @details In this class, we'll use the term @e 2d @e element for the elements of the @p EmbeddedSurfaceBlockABC,
  * which are geometrical quad surfaces (in 3d).
  * In the same way, we'll use the wording @e 2d @e face
@@ -85,5 +88,8 @@ public:
     * Second dimension is 3, and represents the x, y and z.
     */
     virtual ArrayOfArrays<real64> getEmbeddedSurfElemNodes() const = 0;
+};
     
 }
+
+#endif // include guard
