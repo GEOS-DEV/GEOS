@@ -2,7 +2,7 @@
     "build": {
         "dockerfile": "Dockerfile",
         "args": {
-            "GEOS_TPL_TAG": "238-62"
+            "GEOS_TPL_TAG": "238-63"
         }
     },
     "runArgs": [
