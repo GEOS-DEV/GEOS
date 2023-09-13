@@ -60,6 +60,11 @@
     ny="{ 120 }"
     nz="{ 120, 120 }
     => local threshold for local builds in 3D Q1 (9e6 elems, 5Gb GPU)
+    or
+    nx="{ 160 }"
+    ny="{ 60 }"
+    nz="{ 60, 60 }
+    => local threshold for local builds in 3D Q3 (31e6 elems, 7Gb GPU)
   -->
   <Mesh>
     <InternalMesh
@@ -68,9 +73,9 @@
       xCoords="{ 0, 6400 }"
       yCoords="{ 0, 2400 }"
       zCoords="{ 0, 2400, 4800 }"
-      nx="{ 320 }"
-      ny="{ 120 }"
-      nz="{ 120, 120 }"
+      nx="{ 160 }"
+      ny="{ 60 }"
+      nz="{ 60, 60 }"
       cellBlockNames="{ solid, fluid }"/>
   </Mesh>
 
@@ -87,19 +92,23 @@
     maxTime="3">
     <PeriodicEvent
       name="outputs"
-      timeFrequency="1e-1"
+      timeFrequency="1e-2"
       targetExactTimestep="0">
       <PeriodicEvent name="outputs_vtk" target="/Outputs/vtkOutput"/>
-      <PeriodicEvent name="outputs_ux_np1" target="/Tasks/displacementxCollection"/>
-      <PeriodicEvent name="outputs_uy_np1" target="/Tasks/displacementyCollection"/>
-      <PeriodicEvent name="outputs_uz_np1" target="/Tasks/displacementzCollection"/>
-      <PeriodicEvent name="outputs_px_np1" target="/Tasks/pressureCollection"/>
+      <PeriodicEvent name="tsk_ux_np1" target="/Tasks/displacementxCollection"/>
+      <PeriodicEvent name="out_ux_np1" target="/Outputs/timeHistoryOutputx"/>
+      <PeriodicEvent name="tsk_uy_np1" target="/Tasks/displacementyCollection"/>
+      <PeriodicEvent name="out_uy_np1" target="/Outputs/timeHistoryOutputy"/>
+      <PeriodicEvent name="tsk_uz_np1" target="/Tasks/displacementzCollection"/>
+      <PeriodicEvent name="out_uz_np1" target="/Outputs/timeHistoryOutputz"/>
+      <PeriodicEvent name="tsk_p_np1" target="/Tasks/pressureCollection"/>
+      <PeriodicEvent name="out_p_np1" target="/Outputs/timeHistoryOutput"/>
+    </PeriodicEvent>
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solidfluidSolverApplications"
       forceDt="1e-4"
       target="/Solvers/acousticelasticSolver"/>
-    </PeriodicEvent>
     <!-- FIXME: forceDt hack to satisfy pre-timeloop computation -->
     <SoloEvent
       name="solidSolverApplications"
@@ -170,27 +179,28 @@
 
   <Tasks>
     <PackCollection
+      name="pressureCollection"
+      objectPath="mesh/FE1/nodeManager"
+      fieldName="pressure_np1"/>
+    <PackCollection
       name="displacementxCollection"
       objectPath="mesh/FE1/nodeManager"
       fieldName="displacementx_np1"/>
     <PackCollection
+      disableCoordCollection="1"
       name="displacementyCollection"
       objectPath="mesh/FE1/nodeManager"
       fieldName="displacementy_np1"/>
     <PackCollection
+      disableCoordCollection="1"
       name="displacementzCollection"
       objectPath="mesh/FE1/nodeManager"
       fieldName="displacementz_np1"/>
-    <PackCollection
-      name="pressureCollection"
-      objectPath="mesh/FE1/nodeManager"
-      fieldName="pressure_np1"/>
   </Tasks>
 
   <Outputs>
     <VTK
       name="vtkOutput"
-      writeFEMFaces="1"
       plotLevel="1"/>
     <TimeHistory
       name="timeHistoryOutput"
