@@ -440,7 +440,7 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
         {
           ElementRegionManager & elementManager = meshLevel.getElemManager();
           Group * newRegion = elementManager.createChild( regionNode.name(), regionName );
-          newRegion->processInputFileRecursive( xmlDocument, regionNode );
+          newRegion->processInputFileRecursive( xmlDocument, xmlDocument, regionNode );
         } );
       }
       catch( InputError const & e )

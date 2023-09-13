@@ -262,8 +262,6 @@ private:
   map< string, string > m_originalBuffers;
   /// @see getFilePath()
   string m_rootFilePath;
-  /// @see hasNodeFileInfo()
-  bool m_hasNodeFileInfo;
 };
 
 /**
