@@ -131,5 +131,6 @@
     <VTK
       name="vtkOutput"
       plotFileRoot="fractureMatrixFlow_impermeableFault"/>
+    <Restart name="restartOutput"/>  
   </Outputs>
 </Problem>

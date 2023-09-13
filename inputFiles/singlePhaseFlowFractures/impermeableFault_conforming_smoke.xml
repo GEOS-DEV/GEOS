@@ -39,5 +39,10 @@
     <PeriodicEvent
       name="outputs"
       target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="2500"
+      target="/Outputs/restartOutput"/>  
   </Events>
 </Problem>
