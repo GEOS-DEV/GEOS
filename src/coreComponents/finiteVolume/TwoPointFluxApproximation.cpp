@@ -335,8 +335,11 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsDFM( MeshLevel & m
       stencilCellsSubRegionIndex[kfe] = 0;
       stencilCellsIndex[kfe] = fractureElementIndex;
       containsLocalElement = containsLocalElement || elemGhostRank[fractureRegionIndex][0][fractureElementIndex] < 0;
+      
+      // Note: this is done solely to avoid crashes when using the LagrangianContactSolver that builds a stencil but does not register the hydraulicAperture    
+      real64 const aperture_h =  hydraulicAperture[fractureRegionIndex][0].size() == 0 ? 1.0 : hydraulicAperture[fractureRegionIndex][0][fractureElementIndex];
 
-      stencilWeights[kfe] = hydraulicAperture[fractureRegionIndex][0][fractureElementIndex] * edgeLength / LvArray::tensorOps::l2Norm< 3 >( cellCenterToEdgeCenter );
+      stencilWeights[kfe] = aperture_h * edgeLength / LvArray::tensorOps::l2Norm< 3 >( cellCenterToEdgeCenter );
 
       LvArray::tensorOps::copy< 3 >( stencilCellCenterToEdgeCenters[kfe], cellCenterToEdgeCenter );
     }
@@ -745,7 +748,11 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
         stencilCellsRegionIndex[1] = fractureRegionIndex;
         stencilCellsSubRegionIndex[1] = 0;
         stencilCellsIndex[1] = kfe;
-        stencilWeights[1] = 2. * faceArea[faceIndex] / hydraulicAperture[fractureRegionIndex][0][kfe];
+
+        // Note: this is done solely to avoid crashes when using the LagrangianContactSolver that builds a stencil but does not register the hydraulicAperture    
+        real64 const aperture_h =  hydraulicAperture[fractureRegionIndex][0].size() == 0 ? 1.0 : hydraulicAperture[fractureRegionIndex][0][kfe];
+
+        stencilWeights[1] = 2. * faceArea[faceIndex] / aperture_h;
 
         faceToCellStencil.add( 2,
                                stencilCellsRegionIndex.data(),
