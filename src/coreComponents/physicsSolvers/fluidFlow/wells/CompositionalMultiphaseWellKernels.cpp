@@ -850,7 +850,6 @@ PerforationKernel::
     dPres_dC[TAG::WELL][ic] += dWellElemTotalMassDens_dCompDens[ic] * gravD;
   }
 
-
   // Step 3: compute potential difference
 
   real64 potDiff = 0.0;
@@ -1504,6 +1503,7 @@ PresTempCompFracInitializationKernel::
           integer const numComps,
           integer const numPhases,
           localIndex const numPerforations,
+          integer const allowNegativePressure,
           WellControls const & wellControls,
           real64 const & currentTime,
           ElementViewConst< arrayView1d< real64 const > > const & resPres,
@@ -1684,10 +1684,17 @@ PresTempCompFracInitializationKernel::
 
   } );
 
-
-  GEOS_THROW_IF( foundNegativePres.get() == 1,
-                 "Invalid well initialization: negative pressure was found, please check " << wellControls.getName(),
-                 InputError );
+  if( allowNegativePressure )
+  {
+    GEOS_WARNING_IF( foundNegativePres.get() == 1,
+                     "Negative pressure was found in well initialisation. Please check " << wellControls.getName());
+  }
+  else
+  {
+    GEOS_THROW_IF( foundNegativePres.get() == 1,
+                   "Invalid well initialization: negative pressure was found, please check " << wellControls.getName(),
+                   InputError );
+  }
   GEOS_THROW_IF( foundNegativeTemp.get() == 1,
                  "Invalid well initialization: negative temperature was found, please check " << wellControls.getName(),
                  InputError );

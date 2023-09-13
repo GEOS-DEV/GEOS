@@ -660,6 +660,7 @@ public:
   /**
    * @brief Create a new kernel instance
    * @param[in] allowCompDensChopping flag to allow the component density chopping
+   * @param[in] allowNegativePressure flag to allow negative pressure
    * @param[in] scalingFactor the scaling factor
    * @param[in] rankOffset the rank offset
    * @param[in] numComp the number of components
@@ -671,6 +672,7 @@ public:
    * @param[in] compDens the component density vector
    */
   SolutionCheckKernel( integer const allowCompDensChopping,
+                       integer const allowNegativePressure,
                        real64 const scalingFactor,
                        globalIndex const rankOffset,
                        integer const numComp,
@@ -681,6 +683,7 @@ public:
                        arrayView1d< real64 const > const temperature,
                        arrayView2d< real64 const, compflow::USD_COMP > const compDens )
     : Base( allowCompDensChopping,
+            allowNegativePressure,
             scalingFactor,
             rankOffset,
             numComp,
@@ -729,9 +732,9 @@ public:
   /**
    * @brief Create a new kernel and launch
    * @tparam POLICY the policy used in the RAJA kernel
-   * @param[in] maxRelativePresChange the max allowed relative pressure change
-   * @param[in] maxRelativeTempChange the max allowed relative temperature change
-   * @param[in] maxCompFracChange the max allowed comp fraction change
+   * @param[in] allowCompDensChopping flag to allow the component density chopping
+   * @param[in] allowNegativePressure flag to allow negative pressure
+   * @param[in] scalingFactor the scaling factor
    * @param[in] rankOffset the rank offset
    * @param[in] numComp the number of components
    * @param[in] dofKey the dof key to get dof numbers
@@ -741,6 +744,7 @@ public:
   template< typename POLICY >
   static integer
   createAndLaunch( integer const allowCompDensChopping,
+                   integer const allowNegativePressure,
                    real64 const scalingFactor,
                    globalIndex const rankOffset,
                    integer const numComp,
@@ -754,7 +758,7 @@ public:
       subRegion.getField< fields::flow::temperature >();
     arrayView2d< real64 const, compflow::USD_COMP > const compDens =
       subRegion.getField< fields::flow::globalCompDensity >();
-    SolutionCheckKernel kernel( allowCompDensChopping, scalingFactor,
+    SolutionCheckKernel kernel( allowCompDensChopping, allowNegativePressure, scalingFactor,
                                 rankOffset, numComp, dofKey, subRegion, localSolution,
                                 pressure, temperature, compDens );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );

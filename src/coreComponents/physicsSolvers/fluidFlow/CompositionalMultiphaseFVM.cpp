@@ -424,6 +424,7 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition const & do
   ? thermalCompositionalMultiphaseBaseKernels::
           SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
+                                                     m_allowNegativePressure,
                                                      scalingFactor,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
@@ -433,6 +434,7 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition const & do
   : isothermalCompositionalMultiphaseBaseKernels::
           SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
+                                                     m_allowNegativePressure,
                                                      scalingFactor,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,

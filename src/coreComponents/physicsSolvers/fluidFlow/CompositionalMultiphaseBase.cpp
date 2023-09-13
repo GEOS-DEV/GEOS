@@ -116,6 +116,11 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setApplyDefaultValue( 1 ).
     setDescription( "Flag indicating whether local (cell-wise) chopping of negative compositions is allowed" );
 
+  this->registerWrapper( viewKeyStruct::allowNegativePressureString(), &m_allowNegativePressure ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag indicating whether negative pressures should be allowed" );
 }
 
 void CompositionalMultiphaseBase::postProcessInput()
@@ -1048,9 +1053,18 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
         }
       } );
 
-      GEOS_ERROR_IF( minPressure.get() < 0.0,
-                     GEOS_FMT( "A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
-                               minPressure.get(), region.getName(), subRegion.getName() ) );
+      if( m_allowNegativePressure )
+      {
+        GEOS_WARNING_IF( minPressure.get() < 0.0,
+                         GEOS_FMT( "A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
+                                   minPressure.get(), region.getName(), subRegion.getName() ) );
+      }
+      else
+      {
+        GEOS_ERROR_IF( minPressure.get() < 0.0,
+                       GEOS_FMT( "A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
+                                 minPressure.get(), region.getName(), subRegion.getName() ) );
+      }
     } );
   } );
 }
@@ -1854,11 +1868,14 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
     return LvArray::NumericLimits< real64 >::max;
   }
 
-  real64 maxRelativePresChange = 0.0;
+  real64 maxAbsolutePressure = 0.0;
+  real64 maxAbsolutePresChange = 0.0;
   real64 maxRelativeTempChange = 0.0;
   real64 maxAbsolutePhaseVolFracChange = 0.0;
 
-  real64 const numPhase = m_numPhases;
+  integer const numPhase = m_numPhases;
+
+  real64 const epsilon = LvArray::NumericLimits< real64 >::epsilon;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -1879,6 +1896,7 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
       arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac_n =
         subRegion.getField< fields::flow::phaseVolumeFraction_n >();
 
+      RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPressure( 0.0 );
       RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPresChange( 0.0 );
       RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxTempChange( 0.0 );
       RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPhaseVolFracChange( 0.0 );
@@ -1887,8 +1905,9 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
       {
         if( ghostRank[ei] < 0 )
         {
-          subRegionMaxPresChange.max( LvArray::math::abs( pres[ei] - pres_n[ei] ) / LvArray::math::max( pres_n[ei], LvArray::NumericLimits< real64 >::epsilon ) );
-          subRegionMaxTempChange.max( LvArray::math::abs( temp[ei] - temp_n[ei] ) / LvArray::math::max( temp_n[ei], LvArray::NumericLimits< real64 >::epsilon ) );
+          subRegionMaxPressure.max( LvArray::math::abs( pres[ei] ) );
+          subRegionMaxPresChange.max( LvArray::math::abs( pres[ei] - pres_n[ei] ) );
+          subRegionMaxTempChange.max( LvArray::math::abs( temp[ei] - temp_n[ei] ) / LvArray::math::max( temp_n[ei], epsilon ) );
           for( integer ip = 0; ip < numPhase; ++ip )
           {
             subRegionMaxPhaseVolFracChange.max( LvArray::math::abs( phaseVolFrac[ei][ip] - phaseVolFrac_n[ei][ip] ) );
@@ -1896,14 +1915,16 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
         }
       } );
 
-      maxRelativePresChange = LvArray::math::max( maxRelativePresChange, subRegionMaxPresChange.get() );
+      maxAbsolutePressure = LvArray::math::max( maxAbsolutePressure, subRegionMaxPressure.get() );
+      maxAbsolutePresChange = LvArray::math::max( maxAbsolutePresChange, subRegionMaxPresChange.get() );
       maxRelativeTempChange = LvArray::math::max( maxRelativeTempChange, subRegionMaxTempChange.get() );
       maxAbsolutePhaseVolFracChange = LvArray::math::max( maxAbsolutePhaseVolFracChange, subRegionMaxPhaseVolFracChange.get() );
-
     } );
   } );
 
-  maxRelativePresChange = MpiWrapper::max( maxRelativePresChange );
+  maxAbsolutePressure = MpiWrapper::max( maxAbsolutePressure );
+  maxAbsolutePresChange = MpiWrapper::max( maxAbsolutePresChange );
+  real64 const maxRelativePresChange = maxAbsolutePresChange / LvArray::math::max( maxAbsolutePressure, epsilon );
   maxAbsolutePhaseVolFracChange = MpiWrapper::max( maxAbsolutePhaseVolFracChange );
   GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max relative pressure change: "<< 100*maxRelativePresChange << " %" );
   GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max absolute phase volume fraction change: "<< maxAbsolutePhaseVolFracChange );
@@ -1914,15 +1935,13 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
     GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max relative temperature change: "<< 100*maxRelativeTempChange << " %" );
   }
 
-  real64 const eps = LvArray::NumericLimits< real64 >::epsilon;
-
   real64 const nextDtPressure = currentDt *  ( 1.0 + m_solutionChangeScalingFactor ) * m_targetRelativePresChange
-                                / std::max( eps, maxRelativePresChange + m_solutionChangeScalingFactor * m_targetRelativePresChange );
+                                / std::max( epsilon, maxRelativePresChange + m_solutionChangeScalingFactor * m_targetRelativePresChange );
   real64 const nextDtPhaseVolFrac = currentDt *  ( 1.0 + m_solutionChangeScalingFactor ) * m_targetPhaseVolFracChange
-                                    / std::max( eps, maxAbsolutePhaseVolFracChange + m_solutionChangeScalingFactor * m_targetPhaseVolFracChange );
+                                    / std::max( epsilon, maxAbsolutePhaseVolFracChange + m_solutionChangeScalingFactor * m_targetPhaseVolFracChange );
   real64 const nextDtTemperature = m_isThermal
     ? currentDt * ( 1.0 + m_solutionChangeScalingFactor ) * m_targetRelativeTempChange
-                                   / std::max( eps, maxRelativeTempChange + m_solutionChangeScalingFactor * m_targetRelativeTempChange )
+                                   / std::max( epsilon, maxRelativeTempChange + m_solutionChangeScalingFactor * m_targetRelativeTempChange )
     : LvArray::NumericLimits< real64 >::max;
 
   return std::min( std::min( nextDtPressure, nextDtPhaseVolFrac ), nextDtTemperature );

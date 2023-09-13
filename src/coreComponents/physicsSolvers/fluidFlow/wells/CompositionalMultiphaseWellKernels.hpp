@@ -444,6 +444,7 @@ struct PresTempCompFracInitializationKernel
           localIndex const subRegionSize,
           integer const numComponents,
           integer const numPhases,
+          integer const allowNegativePressure,
           localIndex const numPerforations,
           WellControls const & wellControls,
           real64 const & currentTime,
@@ -930,6 +931,7 @@ public:
    * @brief Create a new kernel and launch
    * @tparam POLICY the policy used in the RAJA kernel
    * @param[in] allowCompDensChopping flag to allow the component density chopping
+   * @param[in] allowNegativePressure flag to allow negative pressure
    * @param[in] scalingFactor the scaling factor
    * @param[in] rankOffset the rank offset
    * @param[in] numComp the number of components
@@ -940,6 +942,7 @@ public:
   template< typename POLICY >
   static integer
   createAndLaunch( integer const allowCompDensChopping,
+                   integer const allowNegativePressure,
                    real64 const scalingFactor,
                    globalIndex const rankOffset,
                    integer const numComp,
@@ -950,7 +953,7 @@ public:
     arrayView1d< real64 const > const pressure = subRegion.getField< fields::well::pressure >();
     arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< fields::well::globalCompDensity >();
     isothermalCompositionalMultiphaseBaseKernels::
-      SolutionCheckKernel kernel( allowCompDensChopping, scalingFactor, rankOffset,
+      SolutionCheckKernel kernel( allowCompDensChopping, allowNegativePressure, scalingFactor, rankOffset,
                                   numComp, dofKey, subRegion, localSolution, pressure, compDens );
     return isothermalCompositionalMultiphaseBaseKernels::
              SolutionCheckKernel::

@@ -251,7 +251,7 @@ public:
     static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
     static constexpr char const * maxRelativeTempChangeString() { return "maxRelativeTemperatureChange"; }
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
-
+    static constexpr char const * allowNegativePressureString() { return "allowNegativePressure"; }
   };
 
   /**
@@ -436,6 +436,9 @@ protected:
 
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
   integer m_allowCompDensChopping;
+
+  /// flag indicating whether to allow negative pressure values
+  integer m_allowNegativePressure;
 
   /// name of the fluid constitutive model used as a reference for component/phase description
   string m_referenceFluidModelName;

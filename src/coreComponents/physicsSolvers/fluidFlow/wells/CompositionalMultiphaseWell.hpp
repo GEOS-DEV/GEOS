@@ -283,6 +283,8 @@ public:
 
     static constexpr char const * allowLocalCompDensChoppingString() { return CompositionalMultiphaseBase::viewKeyStruct::allowLocalCompDensChoppingString(); }
 
+    static constexpr char const * allowNegativePressureString() { return CompositionalMultiphaseBase::viewKeyStruct::allowNegativePressureString(); }
+
     // control data (not registered on the mesh)
 
     static constexpr char const * currentBHPString() { return "currentBHP"; }
@@ -378,6 +380,9 @@ private:
 
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
   integer m_allowCompDensChopping;
+
+  /// flag indicating whether to allow negative pressure values
+  integer m_allowNegativePressure;
 
   /// index of the target phase, used to impose the phase rate constraint
   localIndex m_targetPhaseIndex;
