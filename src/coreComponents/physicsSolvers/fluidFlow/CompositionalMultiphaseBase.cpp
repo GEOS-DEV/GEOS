@@ -24,13 +24,17 @@
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
+#include "constitutive/diffusion/DiffusionFields.hpp"
+#include "constitutive/diffusion/DiffusionSelector.hpp"
+#include "constitutive/dispersion/DispersionFields.hpp"
+#include "constitutive/dispersion/DispersionSelector.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
-#include "constitutive/thermalConductivity/multiPhaseThermalConductivitySelector.hpp"
+#include "constitutive/thermalConductivity/MultiPhaseThermalConductivitySelector.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
@@ -59,6 +63,8 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_hasCapPressure( 0 ),
+  m_hasDiffusion( 0 ),
+  m_hasDispersion( 0 ),
   m_keepFlowVariablesConstantDuringInitStep( 0 ),
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 )
@@ -178,6 +184,22 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       {
         m_hasCapPressure = true;
       }
+
+      // If at least one region has a diffusion model, consider it enabled for all
+      string const diffusionName = getConstitutiveName< DiffusionBase >( subRegion );
+      if( !diffusionName.empty() )
+      {
+        GEOS_ERROR( "Dispersion is not supported yet, please remove this model from this XML file" );
+        m_hasDiffusion = true;
+      }
+
+      // If at least one region has a dispersion model, consider it enabled for all
+      string const dispersionName = getConstitutiveName< DispersionBase >( subRegion );
+      if( !dispersionName.empty() )
+      {
+        m_hasDispersion = true;
+      }
+
     } );
   } );
 
@@ -202,19 +224,47 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
                                                      ElementSubRegionBase & subRegion )
     {
       {
-
         if( m_hasCapPressure )
         {
-
           subRegion.registerWrapper< string >( viewKeyStruct::capPressureNamesString() ).
             setPlotLevel( PlotLevel::NOPLOT ).
             setRestartFlags( RestartFlags::NO_WRITE ).
-            setSizedFromParent( 0 );
+            setSizedFromParent( 0 ).
+            setDescription( "Name of the capillary pressure constitutive model to use" ).
+            reference();
 
           string & capPresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
           capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
           GEOS_THROW_IF( capPresName.empty(),
                          GEOS_FMT( "Capillary pressure model not found on subregion {}", subRegion.getName() ),
+                         InputError );
+        }
+        if( m_hasDiffusion )
+        {
+          subRegion.registerWrapper< string >( viewKeyStruct::diffusionNamesString() ).
+            setPlotLevel( PlotLevel::NOPLOT ).
+            setRestartFlags( RestartFlags::NO_WRITE ).
+            setSizedFromParent( 0 ).
+            setDescription( "Name of the diffusion constitutive model to use" );
+
+          string & diffusionName = subRegion.getReference< string >( viewKeyStruct::diffusionNamesString() );
+          diffusionName = getConstitutiveName< DiffusionBase >( subRegion );
+          GEOS_THROW_IF( diffusionName.empty(),
+                         GEOS_FMT( "Diffusion model not found on subregion {}", subRegion.getName() ),
+                         InputError );
+        }
+        if( m_hasDispersion )
+        {
+          subRegion.registerWrapper< string >( viewKeyStruct::dispersionNamesString() ).
+            setPlotLevel( PlotLevel::NOPLOT ).
+            setRestartFlags( RestartFlags::NO_WRITE ).
+            setSizedFromParent( 0 ).
+            setDescription( "Name of the dispersion constitutive model to use" );
+
+          string & dispersionName = subRegion.getReference< string >( viewKeyStruct::dispersionNamesString() );
+          dispersionName = getConstitutiveName< DispersionBase >( subRegion );
+          GEOS_THROW_IF( dispersionName.empty(),
+                         GEOS_FMT( "Dispersion model not found on subregion {}", subRegion.getName() ),
                          InputError );
         }
       }
@@ -310,21 +360,6 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
   GEOS_THROW_IF( relPermName.empty(),
                  GEOS_FMT( "Relative permeability model not found on subregion {}", subRegion.getName() ),
                  InputError );
-
-
-  if( m_hasCapPressure )
-  {
-    string & capPressureName = subRegion.registerWrapper< string >( viewKeyStruct::capPressureNamesString() ).
-                                 setPlotLevel( PlotLevel::NOPLOT ).
-                                 setRestartFlags( RestartFlags::NO_WRITE ).
-                                 setSizedFromParent( 0 ).
-                                 setDescription( "Name of the capillary pressure constitutive model to use" ).
-                                 reference();
-    capPressureName = getConstitutiveName< CapillaryPressureBase >( subRegion );
-    GEOS_THROW_IF( capPressureName.empty(),
-                   GEOS_FMT( "Capillary pressure model not found on subregion {}", subRegion.getName() ),
-                   InputError );
-  }
 
   if( m_isThermal )
   {
@@ -487,6 +522,13 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
         compareMultiphaseModels( capPressure, referenceFluid );
       }
 
+      if( m_hasDiffusion )
+      {
+        string const & diffusionName = subRegion.getReference< string >( viewKeyStruct::diffusionNamesString() );
+        DiffusionBase const & diffusion = getConstitutiveModel< DiffusionBase >( subRegion, diffusionName );
+        compareMultiphaseModels( diffusion, referenceFluid );
+      }
+
       if( m_isThermal )
       {
         string const & thermalConductivityName = subRegion.getReference< string >( viewKeyStruct::thermalConductivityNamesString() );
@@ -638,7 +680,8 @@ void CompositionalMultiphaseBase::updateFluidState( ObjectManagerBase & subRegio
   updateRelPermModel( subRegion );
   updatePhaseMobility( subRegion );
   updateCapPressureModel( subRegion );
-  // note: for now, thermal conductivity is treated explicitly, so no update here
+  // note1: for now, thermal conductivity is treated explicitly, so no update here
+  // note2: for now, diffusion and dispersion are also treated explicitly
 }
 
 void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
@@ -768,7 +811,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
     // - This step depends phaseRelPerm
     updatePhaseMobility( subRegion );
 
-    // 4.6 Finally, we initialize the rock thermal quantities: conductivity and solid internal energy
+    // 4.6 We initialize the rock thermal quantities: conductivity and solid internal energy
     //
     // Note:
     // - This must be called after updatePorosityAndPermeability and updatePhaseVolumeFraction
@@ -789,8 +832,25 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       SolidInternalEnergy const & solidInternalEnergyMaterial =
         getConstitutiveModel< SolidInternalEnergy >( subRegion, solidInternalEnergyName );
       solidInternalEnergyMaterial.saveConvergedState();
-
     }
+
+    // Step 4.7: if the diffusion and/or dispersion is/are supported, initialize the two models
+    if( m_hasDiffusion )
+    {
+      string const & diffusionName = subRegion.template getReference< string >( viewKeyStruct::diffusionNamesString() );
+      DiffusionBase const & diffusionMaterial = getConstitutiveModel< DiffusionBase >( subRegion, diffusionName );
+      arrayView1d< real64 const > const temperature = subRegion.template getField< fields::flow::temperature >();
+      diffusionMaterial.initializeTemperatureState( temperature );
+    }
+    if( m_hasDispersion )
+    {
+      string const & dispersionName = subRegion.template getReference< string >( viewKeyStruct::dispersionNamesString() );
+      DispersionBase const & dispersionMaterial = getConstitutiveModel< DispersionBase >( subRegion, dispersionName );
+      GEOS_UNUSED_VAR( dispersionMaterial );
+      // TODO: compute the total velocity here
+      //dispersionMaterial.saveConvergedVelocitySate( totalVelovity );
+    }
+
   } );
 
   // 5. Save initial pressure
@@ -2046,6 +2106,23 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
         MultiPhaseThermalConductivityBase const & thermalConductivityMaterial =
           getConstitutiveModel< MultiPhaseThermalConductivityBase >( subRegion, thermName );
         thermalConductivityMaterial.saveConvergedRockFluidState( porosity, phaseVolFrac );
+      }
+
+      // Step 7: if the diffusion and/or dispersion is/are supported, update the two models explicity
+      if( m_hasDiffusion )
+      {
+        string const & diffusionName = subRegion.getReference< string >( viewKeyStruct::diffusionNamesString() );
+        DiffusionBase const & diffusionMaterial = getConstitutiveModel< DiffusionBase >( subRegion, diffusionName );
+        arrayView1d< real64 const > const temperature = subRegion.template getField< fields::flow::temperature >();
+        diffusionMaterial.saveConvergedTemperatureState( temperature );
+      }
+      if( m_hasDispersion )
+      {
+        string const & dispersionName = subRegion.getReference< string >( viewKeyStruct::dispersionNamesString() );
+        DispersionBase const & dispersionMaterial = getConstitutiveModel< DispersionBase >( subRegion, dispersionName );
+        GEOS_UNUSED_VAR( dispersionMaterial );
+        // TODO: compute the total velocity here
+        //dispersionMaterial.saveConvergedVelocitySate( totalVelovity );
       }
     } );
   } );
