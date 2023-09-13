@@ -659,11 +659,8 @@ AllMeshes redistributeByCellGraph( AllMeshes & input,
   vtkSmartPointer< vtkUnstructuredGrid > finalMesh = vtk::redistribute( *splitMesh, MPI_COMM_GEOSX );
   // ... and then for the fractures.
   std::map< string, vtkSmartPointer< vtkDataSet > > finalFractures;
-  for( auto const & nf: input.getFaceBlocks() )
+  for( auto const & [fractureName, fracture]: input.getFaceBlocks() )
   {
-    string const fractureName = nf.first;
-    vtkSmartPointer< vtkDataSet > fracture = nf.second;
-
     vtkSmartPointer< vtkPartitionedDataSet > const splitFracMesh = splitMeshByPartition( fracture, numRanks, newFracturePartitions[fractureName].toViewConst() );
     vtkSmartPointer< vtkUnstructuredGrid > const finalFracMesh = vtk::redistribute( *splitFracMesh, MPI_COMM_GEOSX );
     finalFractures[fractureName] = finalFracMesh;

@@ -18,13 +18,9 @@
 
 #include "EdgeManager.hpp"
 
-#include "SurfaceElementRegion.hpp"
-#include "ElementRegionManager.hpp"
-
 #include "BufferOps.hpp"
 #include "NodeManager.hpp"
 #include "FaceManager.hpp"
-#include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 

@@ -115,9 +115,9 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   GEOS_LOG_LEVEL_RANK_0( 2, "  building connectivity maps..." );
   cellBlockManager.buildMaps();
 
-  for( auto nameToMesh: m_faceBlockMeshes )
+  for( auto const & [name, mesh]: m_faceBlockMeshes )
   {
-    vtk::importFractureNetwork( nameToMesh.first, nameToMesh.second, m_vtkMesh, cellBlockManager );
+    vtk::importFractureNetwork( name, mesh, m_vtkMesh, cellBlockManager );
   }
 
   GEOS_LOG_LEVEL_RANK_0( 2, "  done!" );

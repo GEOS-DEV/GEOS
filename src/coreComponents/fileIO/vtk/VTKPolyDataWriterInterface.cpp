@@ -277,7 +277,7 @@ getSurface( FaceElementSubRegion const & subRegion,
   geosx2VTKIndexing.reserve( subRegion.size() * subRegion.numNodesPerElement() );
   localIndex nodeIndexInVTK = 0;
   // FaceElementSubRegion being heterogeneous, the size of the connectivity vector may vary for each element.
-  // In order not to allocate every a new vector time, we combine the usage of `clear` and `push_back`.
+  // In order not to allocate a new vector every time, we combine the usage of `clear` and `push_back`.
   std::vector< vtkIdType > connectivity;
 
   for( localIndex ei = 0; ei < subRegion.size(); ei++ )

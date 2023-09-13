@@ -127,14 +127,14 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
     m_2dElemToCollocatedNodesBuckets = faceBlock.get2dElemsToCollocatedNodesBuckets();
     // Checking if all the 2d elements are homogeneous.
     // We rely on the number of nodes for each element to find out.
-    std::vector< integer > sizes( num2dElements );
+    std::vector< integer > numNodesPerElement( num2dElements );
     for( int i = 0; i < num2dElements; ++i )
     {
-      sizes[i] = m_2dElemToCollocatedNodesBuckets[i].size();
+      numNodesPerElement[i] = m_2dElemToCollocatedNodesBuckets[i].size();
     }
-    std::set< integer > const s( sizes.cbegin(), sizes.cend() );
+    std::set< integer > const sizes( numNodesPerElement.cbegin(), numNodesPerElement.cend() );
 
-    if( s.size() > 1 )
+    if( sizes.size() > 1 )
     {
       // If we have found that the input face block contains 2d elements of different types,
       // we inform the used that the situation may be at risk.
@@ -142,8 +142,8 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
       GEOS_WARNING( "Heterogeneous face element sub region found and stored as homogeneous. Use at your own risk." );
     }
 
-    auto const it = std::max_element( s.cbegin(), s.cend() );
-    integer const maxSize = *it;
+    auto const it = std::max_element( sizes.cbegin(), sizes.cend() );
+    integer const maxSize = it != sizes.cend() ? *it : 0;
     m_elementType = deduce3dElemType( maxSize );
     m_numNodesPerElement = maxSize;
   }
@@ -400,11 +400,14 @@ void fixNeighborMappingsInconsistency( string const & fractureName,
       bool const match01 = std::find( faces0.begin(), faces0.end(), f1 ) != faces0.end();
       bool const match10 = std::find( faces1.begin(), faces1.end(), f0 ) != faces1.end();
 
-      if( !match00 && !match11 && match01 && match10 )
+      bool const matchCrossed = !match00 && !match11 && match01 && match10;
+      bool const matchStraight = match00 && match11 && !match01 && !match10;
+
+      if( matchCrossed )
       {
         std::swap( elem2dToFaces[e2d][0], elem2dToFaces[e2d][1] );
       }
-      else if( !( match00 && match11 && !match01 && !match10 ) )
+      else if( !matchStraight )
       {
         GEOS_ERROR( "Mapping neighbor inconsistency detected for fracture " << fractureName );
       }

@@ -249,6 +249,7 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface( localIndex const cellIndex
       m_toNodesRelation( surfaceIndex, inode ) = elemNodes[ inode ];
     }
 
+    // For now 2d elements are always only connected to a single 3d element.
     if( m_2dElemToElems.m_toElementIndex[surfaceIndex].size() > 0 )
     {
       m_2dElemToElems.m_toElementIndex[surfaceIndex][0] = cellIndex;
