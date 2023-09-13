@@ -44,7 +44,7 @@ public:
   virtual void initializePostSubGroups() override;
 
   /// @copydoc geos::HistoryCollection::getMetaData
-  virtual HistoryMetadata getMetaData( DomainPartition const & domain, localIndex collectionIdx ) const override;
+  virtual HistoryMetadata getMetaData( DomainPartition const & GEOS_UNUSED_PARAM( domain ), localIndex collectionIdx ) const override;
 
   /// @copydoc geos::HistoryCollection::getTargetName
   virtual const string & getTargetName() const override
@@ -61,7 +61,7 @@ public:
    * @deprecated Refactoring the packing functions to allow direct usage of set indices
    *             from SortedArrayView instead of only ArrayViews will remove this duplication.
    */
-  virtual void updateSetsIndices( DomainPartition const & domain ) override final;
+  virtual void updateSetsIndices( DomainPartition const & GEOS_UNUSED_PARAM( domain ) ) override final;
 
   virtual localIndex numMetaDataCollectors() const override final;
 
@@ -95,7 +95,7 @@ private:
   }
 
   /// @copydoc geos::HistoryCollection::collect
-  void collect( DomainPartition const & domain,
+  void collect( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                 localIndex const collectionIdx,
                 buffer_unit_type * & buffer ) override;
 
@@ -117,6 +117,8 @@ private:
   std::vector< array1d< localIndex > > m_setsIndices;
   /// The dataRepository name/path to get history data from, relative paths are assumed to be relative to mesh body 0, mesh level 0
   string m_objectPath;
+  /// @brief The dataRepository object to get history data from
+  Group const * m_targetObject;
   /// The (packable) field associated with the specified object to get data from
   string m_fieldName;
   /// The names of the sets to collect history info from
