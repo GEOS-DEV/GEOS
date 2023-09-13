@@ -2918,7 +2918,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
       }
     }
 
-    if( tipEdgesID.size() >= 1 )
+    if( unpinchedNodeID.size() < 3 )
     {
       for( localIndex const nodeIndex : pinchedNodeID )
       {
