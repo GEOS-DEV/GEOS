@@ -414,8 +414,8 @@ void SinglePhasePoromechanics::mapSolutionBetweenSolvers( DomainPartition & doma
   /// After the solid mechanics solver
   if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
   {
-    // compute the average of the mean stress increment over quadrature points
-    averageMeanStressIncrement( domain );
+    // compute the average of the mean total stress increment over quadrature points
+    averageMeanTotalStressIncrement( domain );
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
@@ -451,7 +451,7 @@ void SinglePhasePoromechanics::updateBulkDensity( ElementSubRegionBase & subRegi
                                                subRegion );
 }
 
-void SinglePhasePoromechanics::averageMeanStressIncrement( DomainPartition & domain )
+void SinglePhasePoromechanics::averageMeanTotalStressIncrement( DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -464,8 +464,8 @@ void SinglePhasePoromechanics::averageMeanStressIncrement( DomainPartition & dom
       string const solidName = subRegion.template getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       CoupledSolidBase & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
-      arrayView2d< real64 const > const meanStressIncrement_k = solid.getMeanEffectiveStressIncrement_k();
-      arrayView1d< real64 > const averageMeanStressIncrement_k = solid.getAverageMeanEffectiveStressIncrement_k();
+      arrayView2d< real64 const > const meanTotalStressIncrement_k = solid.getMeanTotalStressIncrement_k();
+      arrayView1d< real64 > const averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
 
       finiteElement::FiniteElementBase & subRegionFE =
         subRegion.template getReference< finiteElement::FiniteElementBase >( solidMechanicsSolver()->getDiscretizationName() );
@@ -485,8 +485,8 @@ void SinglePhasePoromechanics::averageMeanStressIncrement( DomainPartition & dom
                                                      mesh.getFaceManager(),
                                                      subRegion,
                                                      finiteElement,
-                                                     meanStressIncrement_k,
-                                                     averageMeanStressIncrement_k );
+                                                     meanTotalStressIncrement_k,
+                                                     averageMeanTotalStressIncrement_k );
       } );
     } );
   } );

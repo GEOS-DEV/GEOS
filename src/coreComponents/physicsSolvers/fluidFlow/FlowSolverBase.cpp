@@ -79,52 +79,6 @@ void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE
                                                               arrayView1d< real64 const > const & temperature_n )
                                                               // real64 const omega )
 {
-
-  // std::string tmp;
-  std::ifstream f;
-  // f.open("iter.txt");
-  // if ( f.is_open() ) { // always check whether the file is open
-  // f >> tmp; // pipe file's content into stream
-  // geos::constitutive::siter = std::stoi( tmp );
-  // //std::cout << "iter = " << geos::constitutive::siter << ", "; // pipe stream's content to standard output
-  // }
-  // f.close();
-
-  auto& ttlStrs = geos::constitutive::accTtlStrs;
-  f.open("accTtlStrs.txt");
-  int n = 0;
-  f >> n;
-  ttlStrs.resize(n);
-  for (int i = 0; i < n; ++i)
-    f >> ttlStrs[i];
-  f.close();
-  // std::cout << ttlStrs[0] << " done reading accTtlStrs\n";  
-
-  // if (siter > 1)
-  // {
-  //   if ( geos::subRegion_i >= 62 )
-  //   {
-  //     geos::subRegion_i = 0;
-  //   }
-  //   else
-  //   {
-  //     geos::subRegion_i += 1;
-  //   }
-  //   std::cout << "subRegion = " << geos::subRegion_i << std::endl;
-
-
-  //   auto& ttlStrs = geos::constitutive::accTtlStrs;
-  //   f.open("accTtlStrs" + std::to_string( geos::subRegion_i ) + ".txt");
-  //   int n = 0;
-  //   f >> n;
-  //   ttlStrs.resize(n);
-  //   for (int i = 0; i < n; ++i)
-  //     f >> ttlStrs[i];
-  //   f.close();
-  //   std::cout << "done reading accTtlStrs" + std::to_string( geos::subRegion_i ) + ".txt" << std::endl;
-  // }
-
-
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
   {
 
@@ -300,26 +254,6 @@ void FlowSolverBase::saveIterationState( DomainPartition & domain ) const
     } );
   } );
 }
-
-// void FlowSolverBase::saveIterationState( DomainPartition & domain ) const
-// {
-//   std::cout << "FlowSolverBase::saveIterationState" << std::endl;
-//   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-//                                                                MeshLevel & mesh,
-//                                                                arrayView1d< string const > const & regionNames )
-//   {
-//     mesh.getElemManager().forElementSubRegions( regionNames,
-//                                                 [&]( localIndex const,
-//                                                      ElementSubRegionBase & subRegion )
-//     {
-//       saveIterationState( subRegion );
-
-//       CoupledSolidBase const & porousSolid =
-//         getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
-//       porousSolid.saveConvergedState();
-//     } );
-//   } );
-// }
 
 void FlowSolverBase::enableFixedStressPoromechanicsUpdate()
 {

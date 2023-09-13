@@ -167,7 +167,7 @@ private:
    * @brief Helper function to average the mean stress increment
    * @param[in] domain the domain partition
    */
-  void averageMeanStressIncrement( DomainPartition & domain );
+  void averageMeanTotalStressIncrement( DomainPartition & domain );
 
   void createPreconditioner();
 

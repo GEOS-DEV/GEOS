@@ -173,10 +173,10 @@ private:
   void updateBulkDensity( ElementSubRegionBase & subRegion );
 
   /**
-   * @brief Helper function to average the mean stress increment over quadrature points
+   * @brief Helper function to average the mean total stress increment over quadrature points
    * @param[in] domain the domain partition
    */
-  void averageMeanStressIncrement( DomainPartition & domain );
+  void averageMeanTotalStressIncrement( DomainPartition & domain );
 
   template< typename CONSTITUTIVE_BASE,
             typename KERNEL_WRAPPER,
