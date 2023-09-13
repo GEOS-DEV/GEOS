@@ -21,38 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDSOLVER_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
-
-// #include "constitutive/ConstitutivePassThru.hpp"
-// #include "common/DataTypes.hpp"
-// #include "constitutive/solid/SolidBase.hpp"
-// #include "common/MpiWrapper.hpp"
-// #include "mesh/ElementRegionManager.hpp"
-// #include "mesh/CellElementSubRegion.hpp"
-// #include "mesh/FaceElementSubRegion.hpp"
-// #include "mesh/InterObjectRelation.hpp"
-// #include "codingUtilities/Utilities.hpp"
-// #include "constitutive/ConstitutiveManager.hpp"
-// #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
-// #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
-// #include "constitutive/contact/ContactBase.hpp"
-// #include "constitutive/NullModel.hpp"
-// #include "mesh/DomainPartition.hpp"
-// #include "mesh/MeshBody.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
-// #include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
-
-// #include "finiteElement/BilinearFormUtilities.hpp"
-// #include "finiteElement/LinearFormUtilities.hpp"
-// #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-// #include "linearAlgebra/interfaces/hypre/HypreVector.hpp"
-// #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
-
 #include "constitutive/solid/PorousSolid.hpp"
-#include "constitutive/solid/CoupledSolidBase.hpp"
-// #include "constitutive/solid/porosity/PorosityFields.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-
-// #include "linearAlgebra/interfaces/VectorBase.hpp"
 
 #include <tuple>
 
@@ -427,11 +396,6 @@ protected:
     integer & iter = solverParams.m_numNewtonIterations;
     iter = 0;
     bool isConverged = false;
-
-    // remove laterr
-    // std::vector<real64> res_v;
-    // std::vector<real64> omega_v;
-    // std::vector<real64> tot_str_v;
     
     /// Sequential coupling loop
     while( iter < solverParams.m_maxIterNewton )
@@ -451,7 +415,7 @@ protected:
       // Pass a "0" as argument (0 linear iteration) to skip the output of linear iteration stats at the end
       m_solverStatistics.logNonlinearIteration( 0 );
 
-      // Nonlinear Acceleration
+      // Nonlinear Acceleration (Aitken)
       beforeOuterIter( iter, domain );
 
       // Solve the subproblems nonlinearly
@@ -467,7 +431,7 @@ protected:
 
         if (idx() == 1)
         {
-          // Record m_s2_tilde
+          // Nonlinear Acceleration (Aitken): record unaccelerated averageMeanTotalStressIncrement
           afterGeomechanicsInnerLoop( domain );
         }
         
@@ -494,6 +458,7 @@ protected:
       }
       else
       {
+        // Nonlinear Acceleration (Aitken)
         afterOuterIter( iter, domain );
       }
       // Add convergence check:
@@ -628,7 +593,7 @@ protected:
     } );
   }
 
-  /* Implementation of Aitken relaxation of averageMeanTotalStressIncrement */
+  /* Implementation of Nonlinear Acceleration (Aitken) of averageMeanTotalStressIncrement */
 
   void recordAverageMeanTotalStressIncrement( DomainPartition & domain,
                                               std::vector<real64> & s )
@@ -794,7 +759,7 @@ protected:
   /// Names of the single-physics solvers
   std::array< string, sizeof...( SOLVERS ) > m_names;
 
-  /// member variables needed for Aitken Relaxation
+  /// member variables needed for Nonlinear Acceleration (Aitken)
   std::vector<real64> m_s0;
   std::vector<real64> m_s1;
   std::vector<real64> m_s1_tilde;
