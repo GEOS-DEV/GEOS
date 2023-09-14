@@ -172,6 +172,8 @@ protected:
 private:
   string m_stabilizationName;
 
+  string m_polyMeshInfSupName; // Testing the flexibility of the polyhedral mesh
+
   localIndex m_contactRelationFullIndex;
 
   real64 const m_slidingCheckTolerance = 0.05;
@@ -216,13 +218,14 @@ private:
     constexpr static char const * stabilizationNameString() { return "stabilizationName"; }
     constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
     constexpr static char const * activeSetMaxIterString() { return "activeSetMaxIter"; } // TODO: remove
-
+    
     constexpr static char const * rotationMatrixString() { return "rotationMatrix"; }
 
     constexpr static char const * slidingCheckToleranceString() { return "slidingCheckTolerance"; }
     constexpr static char const * normalDisplacementToleranceString() { return "normalDisplacementTolerance"; }
     constexpr static char const * normalTractionToleranceString() { return "normalTractionTolerance"; }
     constexpr static char const * slidingToleranceString() { return "slidingTolerance"; }
+    constexpr static char const * usePolyMeshForInfSupName() { return "polyMeshInfSup"; } // Testing the flexibility of the polyhedral mesh
 
     static constexpr char const * transMultiplierString() { return "penaltyStiffnessTransMultiplier"; }
 

@@ -65,6 +65,10 @@ SolidMechanicsConformingFracturesVEM::SolidMechanicsConformingFracturesVEM( cons
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the stabilization to use in the lagrangian contact solver" );
 
+  registerWrapper( viewKeyStruct::usePolyMeshForInfSupName(), &m_polyMeshInfSupName ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Name of a boolean indicator if a polyhedral mesh is used for testing inf-sup stability." );
+
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
   m_linearSolverParameters.get().mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
@@ -617,7 +621,15 @@ void SolidMechanicsConformingFracturesVEM::assembleSystem( real64 const time,
   {
     assembleForceResidualDerivativeWrtTraction( mesh, regionNames, dofManager, localMatrix, localRhs );
     assembleTractionResidualDerivativeWrtDisplacementAndTraction( mesh, regionNames, dofManager, localMatrix, localRhs );
-    assembleStabilization( mesh, domain.getNumericalMethodManager(), dofManager, localMatrix, localRhs );
+
+    if (!m_polyMeshInfSupName.empty())
+    {
+      assembleStabilization( mesh, domain.getNumericalMethodManager(), dofManager, localMatrix, localRhs );
+    }
+    else
+    {
+      GEOSX_LOG_RANK_0( "No stabilization is used!");
+    }
   } );
 }
 
