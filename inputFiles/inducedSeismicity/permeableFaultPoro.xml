@@ -11,11 +11,11 @@
       name="reservoir"
       cellBlocks="{ 98_hexahedra, 99_hexahedra, 98_wedges, 99_wedges }"
       materialList="{ water, porousRock_reservoir }"/>
-    <SurfaceElementRegion
+    <!--SurfaceElementRegion
       name="Fracture"
       faceBlock="fracture"
       defaultAperture="1.0e-3"
-      materialList="{ water, fractureFilling, fractureContact }"/>
+      materialList="{ water, fractureFilling, fractureContact }"/-->
   </ElementRegions> 
   <!-- SPHINX_ELEMENTREGIONS_END -->
 
@@ -30,8 +30,8 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"/>
-      <TwoPointFluxApproximation
-        name="singlePhaseTPFA_stab"/>
+      <!--TwoPointFluxApproximation
+        name="singlePhaseTPFA_stab"/-->
     </FiniteVolume>
   </NumericalMethods>
   <!-- SPHINX_NUMERICAL_END -->
@@ -40,34 +40,14 @@
   <Mesh>
      <VTKMesh
       name="FaultModel"
-      file="fracturedMesh_2D_irreg.vtm"
-      regionAttribute="CellEntityIds"
-      useGlobalIds="1"
-      faceBlocks="{fracture}">
+      file="faultMesh_2D_irreg.vtk"
+      regionAttribute="CellEntityIds">
      </VTKMesh>
   </Mesh>
   <!-- SPHINX_MESH_END -->
 
   <!-- SPHINX_POROMECHANICSSOLVER -->
   <Solvers gravityVector="{0.0, 0.0, 0.0}">
-    <SinglePhasePoromechanicsConformingFractures
-      name="poroFractureSolver"
-      targetRegions="{ burden, reservoir, Fracture }"
-      initialDt="1e-3"
-      LagrangianContactSolverName="fractureMechSolver"
-      poromechanicsSolverName="poromechanicsSolver"
-      logLevel="1">
-      <NonlinearSolverParameters
-        maxTimeStepCuts="1"
-        newtonMaxIter="10"
-        maxNumConfigurationAttempts="10"
-        lineSearchInterpolationType="Parabolic"
-	      maxAllowedResidualNorm="1.0e15"
-	      newtonTol="1e-1"/>
-      <LinearSolverParameters
-        directParallel="0"/>
-    </SinglePhasePoromechanicsConformingFractures>
-
     <SinglePhasePoromechanics
       name="poromechanicsSolver"
       solidSolverName="mechanicsSolver"
@@ -85,16 +65,6 @@
       />
     </SinglePhasePoromechanics>
     <!-- SPHINX_POROMECHANICSSOLVER_END -->
-
-    <LagrangianContact
-      name="fractureMechSolver"
-      solidSolverName="mechanicsSolver"
-      stabilizationName="singlePhaseTPFA_stab"
-      logLevel="1"
-      targetRegions="{ burden, reservoir, Fracture }"
-      fractureRegionName="Fracture"
-      discretization="FE1"
-      contactRelationName="fractureContact"/>
 
     <!-- SPHINX_MECHANICALSOLVER -->
     <SolidMechanics_LagrangianFEM
@@ -117,7 +87,7 @@
       name="singlePhaseFlowSolver"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ burden, reservoir, Fracture }">
+      targetRegions="{ burden, reservoir }">
       <NonlinearSolverParameters
         newtonTol = "1.0e-6"
         newtonMaxIter = "8"
@@ -200,7 +170,7 @@
     <Coulomb
       name="fractureContact"
       cohesion="0.0"
-      frictionCoefficient="100000000"
+      frictionCoefficient="0.1"
       apertureTableName="apertureTable"/>
 
     <!--FrictionlessContact
@@ -409,13 +379,7 @@
       tractionType="normal"
       scale="-0e4"
       setNames="{ right }"/-->
-    <FieldSpecification
-      name="fracPorosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Fracture"
-      fieldName="fracturePorosity_porosity"
-      scale="1.00"/>
+
   </FieldSpecifications>
   <!-- SPHINX_BC_END -->
 
@@ -460,8 +424,9 @@
 
     <PeriodicEvent
       name="solverApplicationsInit"
-      forceDt="1e6"
-      target="/Solvers/poroFractureSolver"/>
+      endTime="1e7"
+      forceDt="1e7"
+      target="/Solvers/poromechanicsSolver"/>
   </Events>
 
   <!-- SPHINX_OUTPUT -->  
@@ -469,7 +434,7 @@
     <VTK 
       name="vtkOutput"
       parallelThreads="1"
-      plotFileRoot="permeableFaultPoro_fractured"/>
+      plotFileRoot="permeableFaultPoro"/>
 
     <Restart
       name="restartOutput"
