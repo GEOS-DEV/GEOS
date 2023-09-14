@@ -75,6 +75,20 @@ public:
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
   };
 
+  /**
+   * @brief Prepare the stencil weights by removing the contribution of the hydraulic aperture before
+   * the aperture is updated
+   * @param[in] domain the domain partition
+   */
+  void prepareStencilWeights( DomainPartition & domain ) const;
+
+  /**
+   * @brief Update the stencil weights by adding the contribution of the hydraulic aperture after
+   * the aperture is updated
+   * @param[in] domain the domain partition
+   */
+  void updateStencilWeights( DomainPartition & domain ) const;
+
   void enableFixedStressPoromechanicsUpdate();
 
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
