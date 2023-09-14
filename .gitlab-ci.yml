@@ -173,10 +173,10 @@ lassen_clang_10_cuda_11_build:
     SYSTEM_COMPILER: "lassen-clang-10-cuda-11"
   extends: [.build_on_lassen]
 
-lassen_clang_13_cuda_11_build:
+lassen_gcc_8_cuda_11_build:
   variables:
-    HOST_CONFIG: "lassen-clang-13-cuda-11.cmake"
-    SYSTEM_COMPILER: "lassen-clang-13-cuda-11"
+    HOST_CONFIG: "lassen-gcc-8-cuda-11.cmake"
+    SYSTEM_COMPILER: "lassen-gcc-8-cuda-11"
   extends: [.build_on_lassen]
 
 ####
