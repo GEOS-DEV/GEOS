@@ -188,11 +188,11 @@ nightly-job:
       git clone -b feature/han12/add_compilers git@github.com:GEOS-DEV/nightlyTests.git
       cd nightlyTests
       ./update.sh \
-        quartz-clang-14 \
-        quartz-gcc-12 \
-        lassen-clang-10-cuda-11 \
-        lassen-gcc-8-cuda-11 \
-        tioga-cce-15
+          quartz-clang-14 \
+          quartz-gcc-12 \
+          lassen-clang-10-cuda-11 \
+          lassen-gcc-8-cuda-11 \
+          tioga-cce-15
       echo "~~~~~~~~~~ END - write to nightlyTests Repo ~~~~~~~~~~~~~"
   only:
     refs:
