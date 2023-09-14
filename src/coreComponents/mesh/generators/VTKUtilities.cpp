@@ -605,8 +605,7 @@ AllMeshes redistributeByCellGraph( AllMeshes & input,
   elemDist[lastRank + 1] += globalNumFracCells;
 
   // Use pmet_idx_t here to match ParMETIS' pmet_idx_t
-  // The `elemToNodes` mapping binds element indices, local to the rank.
-  // to the global indices of their support nodes.
+  // The `elemToNodes` mapping binds element indices (local to the rank) to the global indices of their support nodes.
   ArrayOfArrays< pmet_idx_t, pmet_idx_t > const elemToNodes = buildElemToNodes< pmet_idx_t >( input );
   ArrayOfArrays< pmet_idx_t, pmet_idx_t > const graph = parmetis::meshToDual( elemToNodes.toViewConst(), elemDist, comm, 3 );
 

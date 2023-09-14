@@ -123,7 +123,7 @@ public:
   /**
    * @brief Returns the collocated nodes for each node of each 2d element of the @p FaceBlockABC.
    * @return The bucket of collocated nodes.
-   * First dimension indices of the 2d element are local to the @p FaceBlockABC.
+   * Indices of the 2d elements (first dimension) local to the @p FaceBlockABC.
    * The size of the first dimension is equal to @p num2dElements.
    * The size of the second dimension is the number of nodes in the 2d element (e.g. 3 for a triangle).
    *

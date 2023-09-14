@@ -479,10 +479,6 @@ std::map< globalIndex, globalIndex > buildReferenceCollocatedNodes( ArrayOfArray
  * @param elem2dToEdges The 2d elem to edges mapping.
  * @param edgeGhostRanks The ghost rank of the edges.
  * @return The computed map.
- * @details The key of the map (`std::pair< globalIndex, globalIndex >`) represents the global indices of two nodes.
- * Those two nodes are the lowest index of collocated nodes. As such, those two nodes may not form a @e existing edge.
- * But this trick lets us define some kind of @e hash that allows to compare the location of the edges:
- * edges sharing the same @e hash lie in the same position.
  */
 std::map< localIndex, localIndex > buildReferenceCollocatedEdges( std::map< globalIndex, globalIndex > const & referenceCollocatedNodes,
                                                                   arrayView1d< globalIndex const > const nl2g,
@@ -503,6 +499,10 @@ std::map< localIndex, localIndex > buildReferenceCollocatedEdges( std::map< glob
     }
   }
 
+  // The key of the `collocatedEdgeBuckets` map (i.e. `std::pair< globalIndex, globalIndex >`) represents the global indices of two nodes.
+  // Those two nodes are the lowest index of collocated nodes. As such, those two nodes may not form an existing edge.
+  // But this trick lets us define some kind of _hash_ that allows to compare the location of the edges:
+  // edges sharing the same hash lie in the same position.
   std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > collocatedEdgeBuckets;
   // The `collocatedEdgeIds` map gathers all the collocated edges together.
   for( auto const & p: edgesIds )

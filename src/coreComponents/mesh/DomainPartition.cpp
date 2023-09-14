@@ -189,7 +189,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
     // And the fracture elements will point to those nodes.
     // While they are not the _same_ nodes (which is the criterion for edges and faces),
     // we still want those collocated nodes to be exchanged between the ranks.
-    // This is what we gather some additional information: what are those collocated nodes
+    // This is why we gather some additional information: what are those collocated nodes
     // and also what are the nodes that we require but are not present on the current rank!
     std::set< std::set< globalIndex > > collocatedNodesBuckets;
     std::set< globalIndex > requestedNodes;
