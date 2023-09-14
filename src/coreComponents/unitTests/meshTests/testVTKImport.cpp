@@ -60,14 +60,14 @@ void TestMeshImport( string const & meshFilePath, V const & validate, string con
   )xml";
   string const meshNode = GEOS_FMT( pattern, meshFilePath, fractureName.empty() ? "" : "faceBlocks=\"{" + fractureName + "}\"" );
   xmlWrapper::xmlDocument xmlDocument;
-  xmlDocument.load_buffer( meshNode.c_str(), meshNode.size() );
-  xmlWrapper::xmlNode xmlMeshNode = xmlDocument.child( "Mesh" );
+  xmlDocument.loadString( meshNode );
+  xmlWrapper::xmlNode xmlMeshNode = xmlDocument.getChild( "Mesh" );
 
   conduit::Node node;
   Group root( "root", node );
 
   MeshManager meshManager( "mesh", &root );
-  meshManager.processInputFileRecursive( xmlMeshNode );
+  meshManager.processInputFileRecursive( xmlDocument, xmlMeshNode );
   meshManager.postProcessInputRecursive();
   DomainPartition domain( "domain", &root );
   meshManager.generateMeshes( domain );
