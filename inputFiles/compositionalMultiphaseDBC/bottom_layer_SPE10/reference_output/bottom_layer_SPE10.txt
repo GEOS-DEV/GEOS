@@ -1,0 +1,1429 @@
+#  /home/fjvz/.init/GEOS/Init-x86_64-RHEL7-GEOS-0.2.0-CPU-OPTO2-Hypre-GCC_10.2.0-ompi_hpcx-OMP-relwithdebinfo.rc is initializing BASH Linux environment of fjvz
+# for GEOS 0.2.0 built with CPU-OPTO2-Hypre-GCC_10.2.0-ompi_hpcx-OMP on x86_64 and RHEL7
+# using CPU-OPTO2-Hypre-GCC_10.2.0-ompi_hpcx-OMP-relwithdebinfo
+Activated CMake_3.24.1; $ module help CMake_3.24.1
+
+Loading /data/rpo_fjvz/codes/x86_64/RHEL7/GEOS/0.2.0/install-CPU-OPTO2-Hypre-GCC_10.2.0-ompi_hpcx-OMP-relwithdebinfo/modulefiles/x86_64-RHEL7-GEOS-0.2.0-CPU-OPTO2-Hypre-GCC_10.2.0-ompi_hpcx-OMP-relwithdebinfo
+  Loading requirement: hpcx/rhel7/v2.14-mt
+    /devl/geophys/util/modules/ModuleFiles/git/2.27.0 CMake_3.24.1 gcc/10.4.0
+num of mpi threads: 55
+Currently Loaded Modulefiles:
+ 1) hpcx/rhel7/v2.14-mt <aL>                                                                                                                                                                                  
+ 2) /devl/geophys/util/modules/ModuleFiles/git/2.27.0 <aL>                                                                                                                                                    
+ 3) CMake_3.24.1 <aL>                                                                                                                                                                                         
+ 4) gcc/10.4.0 <aL>                                                                                                                                                                                           
+ 5) /data/rpo_fjvz/codes/x86_64/RHEL7/GEOS/0.2.0/install-CPU-OPTO2-Hypre-GCC_10.2.0-ompi_hpcx-OMP-relwithdebinfo/modulefiles/x86_64-RHEL7-GEOS-0.2.0-CPU-OPTO2-Hypre-GCC_10.2.0-ompi_hpcx-OMP-relwithdebinfo  
+
+Key:
+<module-tag>  <aL>=auto-loaded  
+/data/rpo_fjvz/codes/Maelstrom/bottom_layer_SPE10
+Num ranks: 55
+Max threads: 1
+GEOSX version: 0.2.0
+  - c++ compiler: gcc 10.4.0
+  - openmp version: 201511
+  - MPI version: Open MPI v4.1.5rc2, package: Open MPI root@hpc-kernel-03 Distribution, ident: 4.1.5rc2, repo rev: v4.1.5rc1-16-g5980bac633, Unreleased developer copy
+  - HDF5 version: 1.12.1
+  - Conduit version: 0.8.2
+  - VTK version: 9.1.0
+  - RAJA version: 2022.3.0
+  - umpire version: 2022.3.0
+  -  adiak version: ..
+  - caliper version: 2.8.0
+  - METIS version: 5.1.0
+  - PARAMETIS version: 4.0.3
+  - scotch version: 6.0.9
+  - superlu_dist version: 6.3.0
+  - suitesparse version: 5.7.9
+  - Python3 version: 3.10.9
+  - hypre release version: 2.28.0
+Started at 2023-09-11 16:10:04
+Adding Solver of type CompositionalMultiphaseFVM, named bottom_layer_SPE10
+Adding Event: PeriodicEvent, solverApplications
+Adding Event: PeriodicEvent, outputs
+Adding Mesh: InternalMesh, mesh
+Adding Geometric Object: Box, source
+Adding Geometric Object: Box, sink1
+Adding Output: VTK, vtkOutput
+   TableFunction: permxFunc
+   TableFunction: permyFunc
+   TableFunction: permzFunc
+   TableFunction: poroFunc
+   TableFunction: B_o_table
+   TableFunction: visc_o_table
+Adding Object CellElementRegion named region from ObjectManager::Catalog.
+mesh: total number of nodes = 26962
+mesh: total number of elems = 13200
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = mesh, Level0, region, cellBlock
+mesh/Level0/region/cellBlock/fluid allocated 1 quadrature points
+mesh/Level0/region/cellBlock/rock allocated 1 quadrature points
+mesh/Level0/region/cellBlock/relperm allocated 1 quadrature points
+mesh: importing field data from mesh dataset
+Time: 0.00e+00 s, dt: 10000 s, Cycle: 0
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.11e+01 ) ;     ( R ) = ( 1.11e+01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 6.33e+00 ) ;     ( R ) = ( 6.33e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.07e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.30e-01 ) ;     ( R ) = ( 1.30e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.26e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 7.86e-03 ) ;     ( R ) = ( 7.86e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.47e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 2.41e-05 ) ;     ( R ) = ( 2.41e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.90e-16 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 1.00e+04 s, dt: 15000 s, Cycle: 1
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 9.57e-01 ) ;     ( R ) = ( 9.57e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 6.16e-01 ) ;     ( R ) = ( 6.16e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.75e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 4.41e-02 ) ;     ( R ) = ( 4.41e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.42e-17 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 7.65e-05 ) ;     ( R ) = ( 7.65e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.82e-16 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 2.50e+04 s, dt: 22500 s, Cycle: 2
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.81e-01 ) ;     ( R ) = ( 6.81e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 3.76e-01 ) ;     ( R ) = ( 3.76e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.84e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.04e-02 ) ;     ( R ) = ( 1.04e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.86e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.55e-05 ) ;     ( R ) = ( 2.55e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.19e-16 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 4.75e+04 s, dt: 33750 s, Cycle: 3
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.25e-01 ) ;     ( R ) = ( 6.25e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 2.35e-01 ) ;     ( R ) = ( 2.35e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.15e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.12e-02 ) ;     ( R ) = ( 1.12e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.33e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 7.78e-05 ) ;     ( R ) = ( 7.78e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.34e-16 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 8.12e+04 s, dt: 50625 s, Cycle: 4
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 7.25e-01 ) ;     ( R ) = ( 7.25e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 4.37e-01 ) ;     ( R ) = ( 4.37e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.23e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.55e-02 ) ;     ( R ) = ( 2.55e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.33e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.72e-04 ) ;     ( R ) = ( 2.72e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.51e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 5.44e-09 ) ;     ( R ) = ( 5.44e-09 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.23e-16 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 1.32e+05 s, dt: 75937.5 s, Cycle: 5
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 7.72e-01 ) ;     ( R ) = ( 7.72e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 4.85e-01 ) ;     ( R ) = ( 4.85e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.12e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 5.95e-02 ) ;     ( R ) = ( 5.95e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.31e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.15e-03 ) ;     ( R ) = ( 1.15e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.08e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 2.34e-08 ) ;     ( R ) = ( 2.34e-08 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.71e-16 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 2.08e+05 s, dt: 113906.25 s, Cycle: 6
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 8.20e-01 ) ;     ( R ) = ( 8.20e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 5.95e-01 ) ;     ( R ) = ( 5.95e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.20e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.07e-01 ) ;     ( R ) = ( 2.07e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.32e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.23e-02 ) ;     ( R ) = ( 1.23e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.27e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 8.25e-06 ) ;     ( R ) = ( 8.25e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.14e-16 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 3.22e+05 s, dt: 170859.375 s, Cycle: 7
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 8.87e-01 ) ;     ( R ) = ( 8.87e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 5.15e-01 ) ;     ( R ) = ( 5.15e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.19e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.64e-01 ) ;     ( R ) = ( 2.64e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.28e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 7.87e-02 ) ;     ( R ) = ( 7.87e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.51e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.84e-03 ) ;     ( R ) = ( 1.84e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.83e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.86e-07 ) ;     ( R ) = ( 2.86e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.88e-16 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 4.93e+05 s, dt: 256289.0625 s, Cycle: 8
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 9.69e-01 ) ;     ( R ) = ( 9.69e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 8.67e-01 ) ;     ( R ) = ( 8.67e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.71e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 4.72e-01 ) ;     ( R ) = ( 4.72e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.66e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 6.24e-01 ) ;     ( R ) = ( 6.24e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.67e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 6.70e-02 ) ;     ( R ) = ( 6.70e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.64e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 3.85e-04 ) ;     ( R ) = ( 3.85e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.10e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 6.61e-09 ) ;     ( R ) = ( 6.61e-09 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.09e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 7.49e+05 s, dt: 384433.59375 s, Cycle: 9
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.02e+00 ) ;     ( R ) = ( 1.02e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.19e+00 ) ;     ( R ) = ( 1.19e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.19e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 6.07e-01 ) ;     ( R ) = ( 6.07e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.63e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 6.46e-01 ) ;     ( R ) = ( 6.46e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.65e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.65e-01 ) ;     ( R ) = ( 1.65e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.66e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.26e-02 ) ;     ( R ) = ( 2.26e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.77e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 2.96e-04 ) ;     ( R ) = ( 2.96e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.44e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.03e-07 ) ;     ( R ) = ( 1.03e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.20e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 1.13e+06 s, dt: 576650.390625 s, Cycle: 10
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.02e+00 ) ;     ( R ) = ( 1.02e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.05e+00 ) ;     ( R ) = ( 1.05e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.19e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.00e+00 ) ;     ( R ) = ( 2.00e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.79e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 5.11e-01 ) ;     ( R ) = ( 5.11e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.67e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 4.86e-01 ) ;     ( R ) = ( 4.86e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.49e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.23e-01 ) ;     ( R ) = ( 1.23e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.48e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 3.34e-03 ) ;     ( R ) = ( 3.34e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.74e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.32e-06 ) ;     ( R ) = ( 1.32e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.02e-16 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 1.71e+06 s, dt: 864975.5859375 s, Cycle: 11
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.03e+00 ) ;     ( R ) = ( 1.03e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 8.23e-01 ) ;     ( R ) = ( 8.23e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.62e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 8.06e-01 ) ;     ( R ) = ( 8.06e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.95e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 5.68e-01 ) ;     ( R ) = ( 5.68e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.93e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 4.10e-01 ) ;     ( R ) = ( 4.10e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.80e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 3.47e-01 ) ;     ( R ) = ( 3.47e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.96e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 4.61e-01 ) ;     ( R ) = ( 4.61e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.31e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.42e-01 ) ;     ( R ) = ( 1.42e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.53e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 4.54e-03 ) ;     ( R ) = ( 4.54e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.30e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 5.75e-06 ) ;     ( R ) = ( 5.75e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.32e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 2.57e+06 s, dt: 1297463.37890625 s, Cycle: 12
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.08e+00 ) ;     ( R ) = ( 1.08e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 8.95e-01 ) ;     ( R ) = ( 8.95e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.85e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 7.67e-01 ) ;     ( R ) = ( 7.67e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.47e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 6.40e-01 ) ;     ( R ) = ( 6.40e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.31e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 5.07e-01 ) ;     ( R ) = ( 5.07e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.17e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 3.80e-01 ) ;     ( R ) = ( 3.80e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.97e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 5.29e-01 ) ;     ( R ) = ( 5.29e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.29e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 3.99e-01 ) ;     ( R ) = ( 3.99e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.02e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 5.01e-02 ) ;     ( R ) = ( 5.01e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.74e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.86e-04 ) ;     ( R ) = ( 1.86e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.41e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 9.77e-09 ) ;     ( R ) = ( 9.77e-09 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.49e-16 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 3.87e+06 s, dt: 1946195.068359375 s, Cycle: 13
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.08e+00 ) ;     ( R ) = ( 1.08e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 8.85e-01 ) ;     ( R ) = ( 8.85e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.72e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 7.35e-01 ) ;     ( R ) = ( 7.35e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.35e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 6.45e-01 ) ;     ( R ) = ( 6.45e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.75e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 6.55e-01 ) ;     ( R ) = ( 6.55e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.45e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 4.07e-01 ) ;     ( R ) = ( 4.07e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.02e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 3.13e-01 ) ;     ( R ) = ( 3.13e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.57e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 9.90e-01 ) ;     ( R ) = ( 9.90e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.88e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 8.47e-01 ) ;     ( R ) = ( 8.47e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.58e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.46e-01 ) ;     ( R ) = ( 1.46e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.97e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 3.83e-03 ) ;     ( R ) = ( 3.83e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.59e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 3.95e-06 ) ;     ( R ) = ( 3.95e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.61e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 5.82e+06 s, dt: 2919292.6025390625 s, Cycle: 14
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.09e+00 ) ;     ( R ) = ( 1.09e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 9.19e-01 ) ;     ( R ) = ( 9.19e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.72e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.20e+00 ) ;     ( R ) = ( 1.20e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.86e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 9.02e-01 ) ;     ( R ) = ( 9.02e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.51e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 9.72e-01 ) ;     ( R ) = ( 9.72e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.10e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.21e+00 ) ;     ( R ) = ( 1.21e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.87e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 8.15e-01 ) ;     ( R ) = ( 8.15e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.25e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.11e+00 ) ;     ( R ) = ( 1.11e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.59e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 9.85e-01 ) ;     ( R ) = ( 9.85e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.27e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 8.42e-01 ) ;     ( R ) = ( 8.42e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.83e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 4.34e-01 ) ;     ( R ) = ( 4.34e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.43e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 7.21e-02 ) ;     ( R ) = ( 7.21e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.74e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 1.13e-03 ) ;     ( R ) = ( 1.13e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.15e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 4.47e-07 ) ;     ( R ) = ( 4.47e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.37e-15 ) ; 
+Time: 8.74e+06 s, dt: 2919292.6025390625 s, Cycle: 15
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 7.32e-01 ) ;     ( R ) = ( 7.32e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.07e+00 ) ;     ( R ) = ( 1.07e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.58e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 8.09e-01 ) ;     ( R ) = ( 8.09e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.42e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 6.76e-01 ) ;     ( R ) = ( 6.76e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.60e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 6.53e-01 ) ;     ( R ) = ( 6.53e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.49e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 9.91e-01 ) ;     ( R ) = ( 9.91e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.55e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 4.28e-01 ) ;     ( R ) = ( 4.28e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.47e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 3.57e-01 ) ;     ( R ) = ( 3.57e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.70e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 3.68e-02 ) ;     ( R ) = ( 3.68e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.69e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 4.17e-04 ) ;     ( R ) = ( 4.17e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.14e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 4.87e-08 ) ;     ( R ) = ( 4.87e-08 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.07e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 1.17e+07 s, dt: 4378938.903808594 s, Cycle: 16
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.07e+00 ) ;     ( R ) = ( 1.07e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.02e+00 ) ;     ( R ) = ( 1.02e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.53e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.29e+00 ) ;     ( R ) = ( 1.29e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.67e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.21e+00 ) ;     ( R ) = ( 1.21e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.66e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 9.56e-01 ) ;     ( R ) = ( 9.56e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.74e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 6.94e-01 ) ;     ( R ) = ( 6.94e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.80e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 5.66e-01 ) ;     ( R ) = ( 5.66e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.86e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 9.93e-01 ) ;     ( R ) = ( 9.93e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.62e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 2.57e+00 ) ;     ( R ) = ( 2.57e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.84e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.31e+00 ) ;     ( R ) = ( 1.31e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.91e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 1.20e+00 ) ;     ( R ) = ( 1.20e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.86e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 1.20e+00 ) ;     ( R ) = ( 1.20e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.64e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 1.20e+00 ) ;     ( R ) = ( 1.20e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.66e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 9.02e-01 ) ;     ( R ) = ( 9.02e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.63e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 1.46e-01 ) ;     ( R ) = ( 1.46e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.45e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 15
+    ( Rflow ) = ( 1.09e-02 ) ;     ( R ) = ( 1.09e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.40e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 16
+    ( Rflow ) = ( 4.00e-05 ) ;     ( R ) = ( 4.00e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.06e-15 ) ; 
+Time: 1.60e+07 s, dt: 4378938.903808594 s, Cycle: 17
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 7.40e-01 ) ;     ( R ) = ( 7.40e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.08e+00 ) ;     ( R ) = ( 1.08e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.12e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 9.38e-01 ) ;     ( R ) = ( 9.38e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.68e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 8.23e-01 ) ;     ( R ) = ( 8.23e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.05e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 6.22e-01 ) ;     ( R ) = ( 6.22e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.76e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 8.04e-01 ) ;     ( R ) = ( 8.04e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.72e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 5.05e-01 ) ;     ( R ) = ( 5.05e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.76e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 6.81e+00 ) ;     ( R ) = ( 6.81e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.86e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 2.59e+00 ) ;     ( R ) = ( 2.59e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.94e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.61e-01 ) ;     ( R ) = ( 1.61e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.93e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 9.01e-03 ) ;     ( R ) = ( 9.01e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.09e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 5.57e-05 ) ;     ( R ) = ( 5.57e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.27e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 2.04e+07 s, dt: 6568408.355712891 s, Cycle: 18
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.07e+00 ) ;     ( R ) = ( 1.07e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.03e+00 ) ;     ( R ) = ( 1.03e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.20e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.34e+00 ) ;     ( R ) = ( 1.34e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.85e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 4.57e+00 ) ;     ( R ) = ( 4.57e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.54e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.62e+00 ) ;     ( R ) = ( 1.62e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.37e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.35e+00 ) ;     ( R ) = ( 1.35e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.44e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.16e+00 ) ;     ( R ) = ( 1.16e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.52e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.73e+00 ) ;     ( R ) = ( 1.73e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.51e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 9.40e-01 ) ;     ( R ) = ( 9.40e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.96e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.42e+00 ) ;     ( R ) = ( 1.42e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.79e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 2.14e+00 ) ;     ( R ) = ( 2.14e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.10e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 1.76e+00 ) ;     ( R ) = ( 1.76e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.37e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 1.93e+00 ) ;     ( R ) = ( 1.93e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.17e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 2.27e+00 ) ;     ( R ) = ( 2.27e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.64e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 2.24e+00 ) ;     ( R ) = ( 2.24e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.70e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 15
+    ( Rflow ) = ( 2.00e+00 ) ;     ( R ) = ( 2.00e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.72e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 16
+    ( Rflow ) = ( 3.26e-01 ) ;     ( R ) = ( 3.26e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.12e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 17
+    ( Rflow ) = ( 1.31e-02 ) ;     ( R ) = ( 1.31e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.81e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 18
+    ( Rflow ) = ( 2.87e-04 ) ;     ( R ) = ( 2.87e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.51e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 19
+    ( Rflow ) = ( 9.44e-08 ) ;     ( R ) = ( 9.44e-08 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.98e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in more than 16 iterations, time-step required will be decreased.
+Time: 2.70e+07 s, dt: 5911567.520141602 s, Cycle: 19
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.68e-01 ) ;     ( R ) = ( 6.68e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 8.70e-01 ) ;     ( R ) = ( 8.70e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.01e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.64e+00 ) ;     ( R ) = ( 1.64e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.27e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.22e+00 ) ;     ( R ) = ( 1.22e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.35e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.07e+00 ) ;     ( R ) = ( 1.07e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.05e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 6.34e-01 ) ;     ( R ) = ( 6.34e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.33e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.22e+00 ) ;     ( R ) = ( 1.22e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.78e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 8.91e-01 ) ;     ( R ) = ( 8.91e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.17e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 5.17e-01 ) ;     ( R ) = ( 5.17e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.49e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 5.34e-02 ) ;     ( R ) = ( 5.34e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.77e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 3.52e-03 ) ;     ( R ) = ( 3.52e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.33e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 9.59e-06 ) ;     ( R ) = ( 9.59e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.97e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 3.29e+07 s, dt: 8867351.280212402 s, Cycle: 20
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.06e+00 ) ;     ( R ) = ( 1.06e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.22e+00 ) ;     ( R ) = ( 1.22e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.56e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 9.49e-01 ) ;     ( R ) = ( 9.49e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.69e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 8.20e-01 ) ;     ( R ) = ( 8.20e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.04e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.75e+00 ) ;     ( R ) = ( 1.75e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.29e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.85e+00 ) ;     ( R ) = ( 1.85e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.68e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.55e+00 ) ;     ( R ) = ( 1.55e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.67e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.45e+00 ) ;     ( R ) = ( 1.45e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.30e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.56e+00 ) ;     ( R ) = ( 1.56e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.46e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 2.00e+00 ) ;     ( R ) = ( 2.00e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.33e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 1.68e+00 ) ;     ( R ) = ( 1.68e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.21e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 1.85e+00 ) ;     ( R ) = ( 1.85e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.87e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 9.91e-01 ) ;     ( R ) = ( 9.91e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.03e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 1.00e-01 ) ;     ( R ) = ( 1.00e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.02e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 6.10e-03 ) ;     ( R ) = ( 6.10e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.12e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 15
+    ( Rflow ) = ( 7.95e-05 ) ;     ( R ) = ( 7.95e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.12e-15 ) ; 
+Time: 4.18e+07 s, dt: 8867351.280212402 s, Cycle: 21
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 7.27e-01 ) ;     ( R ) = ( 7.27e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.16e+00 ) ;     ( R ) = ( 1.16e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.64e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.62e+00 ) ;     ( R ) = ( 2.62e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.31e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.32e+00 ) ;     ( R ) = ( 2.32e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.57e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.93e+00 ) ;     ( R ) = ( 1.93e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.01e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.61e+00 ) ;     ( R ) = ( 1.61e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.18e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.42e+00 ) ;     ( R ) = ( 1.42e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.49e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.11e+00 ) ;     ( R ) = ( 2.11e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.54e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.45e+00 ) ;     ( R ) = ( 1.45e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.81e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.93e+00 ) ;     ( R ) = ( 1.93e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.89e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 1.61e+00 ) ;     ( R ) = ( 1.61e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.53e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 1.54e+00 ) ;     ( R ) = ( 1.54e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.46e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 3.51e+00 ) ;     ( R ) = ( 3.51e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.43e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 5.59e-01 ) ;     ( R ) = ( 5.59e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.21e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 5.94e-02 ) ;     ( R ) = ( 5.94e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.82e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 15
+    ( Rflow ) = ( 7.73e-04 ) ;     ( R ) = ( 7.73e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.56e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 16
+    ( Rflow ) = ( 2.11e-07 ) ;     ( R ) = ( 2.11e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.28e-15 ) ; 
+Time: 5.06e+07 s, dt: 8867351.280212402 s, Cycle: 22
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 7.04e-01 ) ;     ( R ) = ( 7.04e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.46e+00 ) ;     ( R ) = ( 1.46e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.31e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.35e+00 ) ;     ( R ) = ( 1.35e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.75e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.10e+00 ) ;     ( R ) = ( 1.10e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.21e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 2.58e+00 ) ;     ( R ) = ( 2.58e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.99e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.04e+00 ) ;     ( R ) = ( 2.04e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.98e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.26e+00 ) ;     ( R ) = ( 1.26e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.90e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.63e+00 ) ;     ( R ) = ( 1.63e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.00e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.43e+00 ) ;     ( R ) = ( 1.43e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.17e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.80e+00 ) ;     ( R ) = ( 1.80e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.45e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 1.28e+00 ) ;     ( R ) = ( 1.28e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.99e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 2.17e+00 ) ;     ( R ) = ( 2.17e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.35e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 3.26e-01 ) ;     ( R ) = ( 3.26e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.48e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 4.95e-02 ) ;     ( R ) = ( 4.95e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.67e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 2.35e-03 ) ;     ( R ) = ( 2.35e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.14e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 15
+    ( Rflow ) = ( 7.92e-06 ) ;     ( R ) = ( 7.92e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.08e-14 ) ; 
+Time: 5.95e+07 s, dt: 8867351.280212402 s, Cycle: 23
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 7.13e-01 ) ;     ( R ) = ( 7.13e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.43e+00 ) ;     ( R ) = ( 1.43e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.37e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 9.88e-01 ) ;     ( R ) = ( 9.88e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.79e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.35e+00 ) ;     ( R ) = ( 1.35e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.42e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 2.90e+00 ) ;     ( R ) = ( 2.90e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.71e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.69e+00 ) ;     ( R ) = ( 1.69e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.82e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 3.73e+00 ) ;     ( R ) = ( 3.73e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.16e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 3.29e+00 ) ;     ( R ) = ( 3.29e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.33e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 5.29e+00 ) ;     ( R ) = ( 5.29e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.30e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 3.97e+00 ) ;     ( R ) = ( 3.97e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.00e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 2.91e+00 ) ;     ( R ) = ( 2.91e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.98e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 2.94e+00 ) ;     ( R ) = ( 2.94e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.17e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 2.29e+00 ) ;     ( R ) = ( 2.29e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.87e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 4.88e-01 ) ;     ( R ) = ( 4.88e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.42e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 1.12e-01 ) ;     ( R ) = ( 1.12e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.52e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 15
+    ( Rflow ) = ( 7.15e-03 ) ;     ( R ) = ( 7.15e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.65e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 16
+    ( Rflow ) = ( 7.06e-05 ) ;     ( R ) = ( 7.06e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.69e-15 ) ; 
+Time: 6.84e+07 s, dt: 8867351.280212402 s, Cycle: 24
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 7.06e-01 ) ;     ( R ) = ( 7.06e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.08e+00 ) ;     ( R ) = ( 1.08e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.72e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.24e+00 ) ;     ( R ) = ( 2.24e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.12e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.63e+00 ) ;     ( R ) = ( 2.63e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.54e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 3.67e+00 ) ;     ( R ) = ( 3.67e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.79e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.83e+00 ) ;     ( R ) = ( 2.83e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.11e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 2.90e+00 ) ;     ( R ) = ( 2.90e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.62e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.01e+00 ) ;     ( R ) = ( 2.01e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.47e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 2.27e+00 ) ;     ( R ) = ( 2.27e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.67e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 2.02e+00 ) ;     ( R ) = ( 2.02e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.34e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 4.29e+00 ) ;     ( R ) = ( 4.29e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.41e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 4.26e+00 ) ;     ( R ) = ( 4.26e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.39e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 2.74e+00 ) ;     ( R ) = ( 2.74e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.99e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 4.07e+00 ) ;     ( R ) = ( 4.07e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.67e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 2.95e+00 ) ;     ( R ) = ( 2.95e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.39e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 15
+    ( Rflow ) = ( 4.97e-01 ) ;     ( R ) = ( 4.97e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.74e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 16
+    ( Rflow ) = ( 6.22e-02 ) ;     ( R ) = ( 6.22e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.98e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 17
+    ( Rflow ) = ( 4.03e-03 ) ;     ( R ) = ( 4.03e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.55e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 18
+    ( Rflow ) = ( 1.43e-05 ) ;     ( R ) = ( 1.43e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.23e-14 ) ; 
+bottom_layer_SPE10: Newton solver converged in more than 16 iterations, time-step required will be decreased.
+Time: 7.72e+07 s, dt: 7980616.152191162 s, Cycle: 25
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.24e-01 ) ;     ( R ) = ( 6.24e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.24e+00 ) ;     ( R ) = ( 1.24e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.34e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.18e+00 ) ;     ( R ) = ( 2.18e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.67e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.02e+00 ) ;     ( R ) = ( 1.02e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.66e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.31e+00 ) ;     ( R ) = ( 1.31e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.73e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.10e+00 ) ;     ( R ) = ( 1.10e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.74e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 7.68e-01 ) ;     ( R ) = ( 7.68e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.16e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.04e+00 ) ;     ( R ) = ( 1.04e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.88e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 4.27e-01 ) ;     ( R ) = ( 4.27e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.10e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.54e-01 ) ;     ( R ) = ( 1.54e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.54e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 1.22e-02 ) ;     ( R ) = ( 1.22e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.07e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 1.39e-04 ) ;     ( R ) = ( 1.39e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.17e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 6.84e-08 ) ;     ( R ) = ( 6.84e-08 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.90e-14 ) ; 
+Time: 8.52e+07 s, dt: 7980616.152191162 s, Cycle: 26
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.62e-01 ) ;     ( R ) = ( 6.62e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.03e+00 ) ;     ( R ) = ( 1.03e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.53e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 3.77e+00 ) ;     ( R ) = ( 3.77e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.61e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.56e+00 ) ;     ( R ) = ( 2.56e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.18e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 5.16e+00 ) ;     ( R ) = ( 5.16e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.24e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 5.46e+00 ) ;     ( R ) = ( 5.46e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.50e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 2.83e+00 ) ;     ( R ) = ( 2.83e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.77e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 3.57e+00 ) ;     ( R ) = ( 3.57e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.64e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 2.84e+00 ) ;     ( R ) = ( 2.84e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.67e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 2.49e+00 ) ;     ( R ) = ( 2.49e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.45e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 1.49e+00 ) ;     ( R ) = ( 1.49e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.14e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 1.51e+00 ) ;     ( R ) = ( 1.51e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.61e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 1.15e+00 ) ;     ( R ) = ( 1.15e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.89e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 2.02e-01 ) ;     ( R ) = ( 2.02e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.95e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 2.20e-02 ) ;     ( R ) = ( 2.20e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.13e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 15
+    ( Rflow ) = ( 6.43e-04 ) ;     ( R ) = ( 6.43e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.90e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 16
+    ( Rflow ) = ( 1.06e-06 ) ;     ( R ) = ( 1.06e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.49e-15 ) ; 
+Time: 9.32e+07 s, dt: 7980616.152191162 s, Cycle: 27
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.85e-01 ) ;     ( R ) = ( 6.85e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.33e+00 ) ;     ( R ) = ( 1.33e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.72e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 3.08e+00 ) ;     ( R ) = ( 3.08e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.04e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.24e+00 ) ;     ( R ) = ( 2.24e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.22e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.94e+00 ) ;     ( R ) = ( 1.94e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.10e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.53e+00 ) ;     ( R ) = ( 1.53e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.00e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.21e+00 ) ;     ( R ) = ( 1.21e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.26e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.16e+00 ) ;     ( R ) = ( 1.16e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.97e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.17e+00 ) ;     ( R ) = ( 1.17e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.66e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.92e+00 ) ;     ( R ) = ( 1.92e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.84e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 3.98e-01 ) ;     ( R ) = ( 3.98e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.26e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 2.13e-02 ) ;     ( R ) = ( 2.13e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.01e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 5.60e-04 ) ;     ( R ) = ( 5.60e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.08e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 5.13e-07 ) ;     ( R ) = ( 5.13e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.03e-14 ) ; 
+Time: 1.01e+08 s, dt: 7980616.152191162 s, Cycle: 28
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.75e-01 ) ;     ( R ) = ( 6.75e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.34e+00 ) ;     ( R ) = ( 1.34e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.19e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.62e+00 ) ;     ( R ) = ( 1.62e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.27e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.77e+00 ) ;     ( R ) = ( 1.77e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.31e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.58e+00 ) ;     ( R ) = ( 1.58e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.83e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 6.43e-01 ) ;     ( R ) = ( 6.43e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.15e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 6.07e-01 ) ;     ( R ) = ( 6.07e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.76e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.14e+00 ) ;     ( R ) = ( 1.14e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.43e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 2.98e-01 ) ;     ( R ) = ( 2.98e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.48e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 4.01e-02 ) ;     ( R ) = ( 4.01e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.19e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 7.57e-04 ) ;     ( R ) = ( 7.57e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.86e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 2.24e-07 ) ;     ( R ) = ( 2.24e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.38e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 1.09e+08 s, dt: 11970924.228286743 s, Cycle: 29
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.02e+00 ) ;     ( R ) = ( 1.02e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.26e+00 ) ;     ( R ) = ( 1.26e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.56e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.02e+00 ) ;     ( R ) = ( 1.02e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.55e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.73e+00 ) ;     ( R ) = ( 1.73e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.66e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.65e+00 ) ;     ( R ) = ( 1.65e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.56e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.87e+00 ) ;     ( R ) = ( 1.87e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.63e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 2.61e+00 ) ;     ( R ) = ( 2.61e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.45e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.08e+00 ) ;     ( R ) = ( 2.08e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.53e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.94e+00 ) ;     ( R ) = ( 1.94e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.93e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 2.00e+00 ) ;     ( R ) = ( 2.00e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.65e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 5.57e+00 ) ;     ( R ) = ( 5.57e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.71e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 3.79e+00 ) ;     ( R ) = ( 3.79e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.54e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 5.76e+00 ) ;     ( R ) = ( 5.76e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.63e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 3.68e+00 ) ;     ( R ) = ( 3.68e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.05e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 5.33e-01 ) ;     ( R ) = ( 5.33e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.50e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 15
+    ( Rflow ) = ( 1.09e-01 ) ;     ( R ) = ( 1.09e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.06e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 16
+    ( Rflow ) = ( 4.12e-03 ) ;     ( R ) = ( 4.12e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.16e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 17
+    ( Rflow ) = ( 3.67e-05 ) ;     ( R ) = ( 3.67e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.00e-14 ) ; 
+bottom_layer_SPE10: Newton solver converged in more than 16 iterations, time-step required will be decreased.
+Time: 1.21e+08 s, dt: 10773831.805458069 s, Cycle: 30
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.46e-01 ) ;     ( R ) = ( 6.46e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.23e+00 ) ;     ( R ) = ( 1.23e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.63e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 3.46e+00 ) ;     ( R ) = ( 3.46e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.83e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 3.01e+00 ) ;     ( R ) = ( 3.01e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.84e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 2.31e+00 ) ;     ( R ) = ( 2.31e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.83e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 4.07e+00 ) ;     ( R ) = ( 4.07e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.87e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 2.11e+00 ) ;     ( R ) = ( 2.11e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.91e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.88e+00 ) ;     ( R ) = ( 1.88e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.79e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.27e+00 ) ;     ( R ) = ( 1.27e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.84e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 5.39e+00 ) ;     ( R ) = ( 5.39e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.96e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 9.10e-01 ) ;     ( R ) = ( 9.10e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.07e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 1.99e-01 ) ;     ( R ) = ( 1.99e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.35e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 9.77e-03 ) ;     ( R ) = ( 9.77e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.35e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 1.26e-04 ) ;     ( R ) = ( 1.26e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.39e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 1.66e-08 ) ;     ( R ) = ( 1.66e-08 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.55e-15 ) ; 
+Time: 1.32e+08 s, dt: 10773831.805458069 s, Cycle: 31
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.79e-01 ) ;     ( R ) = ( 6.79e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.18e+00 ) ;     ( R ) = ( 1.18e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.12e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.16e+00 ) ;     ( R ) = ( 2.16e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.49e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.07e+01 ) ;     ( R ) = ( 1.07e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.50e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 8.89e+00 ) ;     ( R ) = ( 8.89e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.52e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 7.91e+00 ) ;     ( R ) = ( 7.91e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.67e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 6.69e+00 ) ;     ( R ) = ( 6.69e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.38e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 4.83e+00 ) ;     ( R ) = ( 4.83e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.07e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 3.50e+00 ) ;     ( R ) = ( 3.50e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.11e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 2.15e+00 ) ;     ( R ) = ( 2.15e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.96e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 1.78e+00 ) ;     ( R ) = ( 1.78e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.90e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 1.75e+00 ) ;     ( R ) = ( 1.75e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.39e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 2.12e-01 ) ;     ( R ) = ( 2.12e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.22e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 2.66e-02 ) ;     ( R ) = ( 2.66e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.62e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 5.12e-04 ) ;     ( R ) = ( 5.12e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.41e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 15
+    ( Rflow ) = ( 6.61e-07 ) ;     ( R ) = ( 6.61e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.14e-14 ) ; 
+Time: 1.43e+08 s, dt: 10773831.805458069 s, Cycle: 32
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.97e-01 ) ;     ( R ) = ( 6.97e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.75e+00 ) ;     ( R ) = ( 1.75e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.90e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.43e+00 ) ;     ( R ) = ( 1.43e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.70e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.17e+00 ) ;     ( R ) = ( 1.17e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.05e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 5.88e+00 ) ;     ( R ) = ( 5.88e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.99e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 3.84e+00 ) ;     ( R ) = ( 3.84e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.13e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 2.98e+00 ) ;     ( R ) = ( 2.98e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.84e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.30e+00 ) ;     ( R ) = ( 2.30e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.66e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.26e+00 ) ;     ( R ) = ( 1.26e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.77e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.87e+00 ) ;     ( R ) = ( 1.87e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.78e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 1.13e+00 ) ;     ( R ) = ( 1.13e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.17e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 1.47e-01 ) ;     ( R ) = ( 1.47e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.97e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 1.78e-02 ) ;     ( R ) = ( 1.78e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.08e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 7.74e-05 ) ;     ( R ) = ( 7.74e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.18e-14 ) ; 
+Time: 1.53e+08 s, dt: 10773831.805458069 s, Cycle: 33
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.97e-01 ) ;     ( R ) = ( 6.97e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 3.05e+00 ) ;     ( R ) = ( 3.05e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.72e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.77e+00 ) ;     ( R ) = ( 2.77e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.31e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.38e+00 ) ;     ( R ) = ( 2.38e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.96e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 3.15e+00 ) ;     ( R ) = ( 3.15e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.46e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.48e+00 ) ;     ( R ) = ( 2.48e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.82e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 2.90e+00 ) ;     ( R ) = ( 2.90e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.10e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.64e+00 ) ;     ( R ) = ( 2.64e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.97e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 2.19e+00 ) ;     ( R ) = ( 2.19e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.78e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 2.63e+00 ) ;     ( R ) = ( 2.63e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.19e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 2.25e+00 ) ;     ( R ) = ( 2.25e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.99e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 3.03e+00 ) ;     ( R ) = ( 3.03e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.51e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 1.76e+00 ) ;     ( R ) = ( 1.76e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.02e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 5.75e-01 ) ;     ( R ) = ( 5.75e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.54e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 9.02e-02 ) ;     ( R ) = ( 9.02e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.59e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 15
+    ( Rflow ) = ( 4.52e-03 ) ;     ( R ) = ( 4.52e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.48e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 16
+    ( Rflow ) = ( 3.30e-05 ) ;     ( R ) = ( 3.30e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.12e-13 ) ; 
+Time: 1.64e+08 s, dt: 10773831.805458069 s, Cycle: 34
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 7.01e-01 ) ;     ( R ) = ( 7.01e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.75e+00 ) ;     ( R ) = ( 1.75e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.04e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.04e+00 ) ;     ( R ) = ( 2.04e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.30e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 3.42e+00 ) ;     ( R ) = ( 3.42e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.66e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 2.56e+00 ) ;     ( R ) = ( 2.56e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.19e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.75e+00 ) ;     ( R ) = ( 2.75e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.18e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 2.57e+00 ) ;     ( R ) = ( 2.57e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.87e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.58e+00 ) ;     ( R ) = ( 2.58e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.76e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 2.68e+00 ) ;     ( R ) = ( 2.68e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.50e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 1.91e+00 ) ;     ( R ) = ( 1.91e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.28e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 2.04e+00 ) ;     ( R ) = ( 2.04e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.60e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 1.45e+00 ) ;     ( R ) = ( 1.45e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.60e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 4.45e-01 ) ;     ( R ) = ( 4.45e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.87e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 8.36e-02 ) ;     ( R ) = ( 8.36e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.02e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 3.55e-03 ) ;     ( R ) = ( 3.55e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.07e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 15
+    ( Rflow ) = ( 1.51e-05 ) ;     ( R ) = ( 1.51e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.81e-14 ) ; 
+Time: 1.75e+08 s, dt: 10773831.805458069 s, Cycle: 35
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.80e-01 ) ;     ( R ) = ( 6.80e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.80e+00 ) ;     ( R ) = ( 1.80e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.16e-11 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.52e+01 ) ;     ( R ) = ( 1.52e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.13e-11 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.11e+01 ) ;     ( R ) = ( 1.11e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.21e-11 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 8.19e+00 ) ;     ( R ) = ( 8.19e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.16e-11 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 7.71e+00 ) ;     ( R ) = ( 7.71e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.82e-11 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 9.64e+00 ) ;     ( R ) = ( 9.64e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.47e-11 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 5.76e+00 ) ;     ( R ) = ( 5.76e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.75e-11 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.21e+01 ) ;     ( R ) = ( 1.21e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.53e-11 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 6.93e+00 ) ;     ( R ) = ( 6.93e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.57e-11 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 1.01e+01 ) ;     ( R ) = ( 1.01e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.99e-11 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 11
+    ( Rflow ) = ( 2.31e+00 ) ;     ( R ) = ( 2.31e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.17e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 12
+    ( Rflow ) = ( 1.00e-01 ) ;     ( R ) = ( 1.00e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.85e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 13
+    ( Rflow ) = ( 5.53e-04 ) ;     ( R ) = ( 5.53e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.06e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 14
+    ( Rflow ) = ( 1.31e-08 ) ;     ( R ) = ( 1.31e-08 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.05e-13 ) ; 
+Time: 1.86e+08 s, dt: 10773831.805458069 s, Cycle: 36
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.70e-01 ) ;     ( R ) = ( 6.70e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 2.03e+00 ) ;     ( R ) = ( 2.03e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.79e-11 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.14e+00 ) ;     ( R ) = ( 1.14e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.19e-11 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 5.37e-01 ) ;     ( R ) = ( 5.37e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.67e-11 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 2.94e-01 ) ;     ( R ) = ( 2.94e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.04e-11 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.66e-02 ) ;     ( R ) = ( 1.66e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.58e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.20e-04 ) ;     ( R ) = ( 1.20e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.23e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 9.27e-09 ) ;     ( R ) = ( 9.27e-09 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.28e-13 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 1.97e+08 s, dt: 3458008.030052185 s, Cycle: 37
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 2.02e-01 ) ;     ( R ) = ( 2.02e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 6.48e-02 ) ;     ( R ) = ( 6.48e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.41e-11 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.45e-03 ) ;     ( R ) = ( 2.45e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.13e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.76e-06 ) ;     ( R ) = ( 1.76e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.41e-13 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Cleaning up events
+bottom_layer_SPE10, number of time steps: 38
+bottom_layer_SPE10, number of successful nonlinear iterations: 406
+bottom_layer_SPE10, number of successful linear iterations: 406
+bottom_layer_SPE10, number of time step cuts: 0
+bottom_layer_SPE10, number of discarded nonlinear iterations: 0
+bottom_layer_SPE10, number of discarded linear iterations: 0
+Umpire            HOST sum across ranks:    2.0 GB
+Umpire            HOST         rank max:   43.5 MB
+Finished at 2023-09-11 16:13:48
+total time            00:03:43.595
+initialization time   00:00:03.551
+run time              00:03:31.596

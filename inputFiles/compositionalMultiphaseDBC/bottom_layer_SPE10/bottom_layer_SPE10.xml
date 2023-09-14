@@ -53,7 +53,7 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="2e8"
-      target="/Outputs/vtkOutput"/> 
+      target="/Outputs/vtkOutput_cont_omega_1"/> 
     
   </Events>
 
@@ -92,7 +92,7 @@
 
   <Outputs>
     <VTK 
-      name="vtkOutput"/>
+      name="vtkOutput_cont_omega_1"/>
   </Outputs>
 
   

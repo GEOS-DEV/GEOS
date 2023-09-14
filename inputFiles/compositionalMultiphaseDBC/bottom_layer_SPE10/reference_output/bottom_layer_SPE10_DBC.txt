@@ -1,0 +1,604 @@
+#  /home/fjvz/.init/GEOS/Init-x86_64-RHEL7-GEOS-0.2.0-CPU-OPTO2-Hypre-GCC_10.2.0-ompi_hpcx-OMP-relwithdebinfo.rc is initializing BASH Linux environment of fjvz
+# for GEOS 0.2.0 built with CPU-OPTO2-Hypre-GCC_10.2.0-ompi_hpcx-OMP on x86_64 and RHEL7
+# using CPU-OPTO2-Hypre-GCC_10.2.0-ompi_hpcx-OMP-relwithdebinfo
+Activated CMake_3.24.1; $ module help CMake_3.24.1
+
+Loading /data/rpo_fjvz/codes/x86_64/RHEL7/GEOS/0.2.0/install-CPU-OPTO2-Hypre-GCC_10.2.0-ompi_hpcx-OMP-relwithdebinfo/modulefiles/x86_64-RHEL7-GEOS-0.2.0-CPU-OPTO2-Hypre-GCC_10.2.0-ompi_hpcx-OMP-relwithdebinfo
+  Loading requirement: hpcx/rhel7/v2.14-mt
+    /devl/geophys/util/modules/ModuleFiles/git/2.27.0 CMake_3.24.1 gcc/10.4.0
+num of mpi threads: 55
+Currently Loaded Modulefiles:
+ 1) hpcx/rhel7/v2.14-mt <aL>                                                                                                                                                                                  
+ 2) /devl/geophys/util/modules/ModuleFiles/git/2.27.0 <aL>                                                                                                                                                    
+ 3) CMake_3.24.1 <aL>                                                                                                                                                                                         
+ 4) gcc/10.4.0 <aL>                                                                                                                                                                                           
+ 5) /data/rpo_fjvz/codes/x86_64/RHEL7/GEOS/0.2.0/install-CPU-OPTO2-Hypre-GCC_10.2.0-ompi_hpcx-OMP-relwithdebinfo/modulefiles/x86_64-RHEL7-GEOS-0.2.0-CPU-OPTO2-Hypre-GCC_10.2.0-ompi_hpcx-OMP-relwithdebinfo  
+
+Key:
+<module-tag>  <aL>=auto-loaded  
+/data/rpo_fjvz/codes/Maelstrom/bottom_layer_SPE10
+Num ranks: 55
+Max threads: 1
+GEOSX version: 0.2.0
+  - c++ compiler: gcc 10.4.0
+  - openmp version: 201511
+  - MPI version: Open MPI v4.1.5rc2, package: Open MPI root@hpc-kernel-03 Distribution, ident: 4.1.5rc2, repo rev: v4.1.5rc1-16-g5980bac633, Unreleased developer copy
+  - HDF5 version: 1.12.1
+  - Conduit version: 0.8.2
+  - VTK version: 9.1.0
+  - RAJA version: 2022.3.0
+  - umpire version: 2022.3.0
+  -  adiak version: ..
+  - caliper version: 2.8.0
+  - METIS version: 5.1.0
+  - PARAMETIS version: 4.0.3
+  - scotch version: 6.0.9
+  - superlu_dist version: 6.3.0
+  - suitesparse version: 5.7.9
+  - Python3 version: 3.10.9
+  - hypre release version: 2.28.0
+Started at 2023-09-11 16:10:16
+Adding Solver of type CompositionalMultiphaseFVM, named bottom_layer_SPE10
+Adding Event: PeriodicEvent, solverApplications
+Adding Event: PeriodicEvent, outputs
+Adding Mesh: InternalMesh, mesh
+Adding Geometric Object: Box, source
+Adding Geometric Object: Box, sink1
+Adding Output: VTK, vtkOutput_cont_omega_1
+   TableFunction: permxFunc
+   TableFunction: permyFunc
+   TableFunction: permzFunc
+   TableFunction: poroFunc
+   TableFunction: B_o_table
+   TableFunction: visc_o_table
+Adding Object CellElementRegion named region from ObjectManager::Catalog.
+mesh: total number of nodes = 26962
+mesh: total number of elems = 13200
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = mesh, Level0, region, cellBlock
+mesh/Level0/region/cellBlock/fluid allocated 1 quadrature points
+mesh/Level0/region/cellBlock/rock allocated 1 quadrature points
+mesh/Level0/region/cellBlock/relperm allocated 1 quadrature points
+mesh: importing field data from mesh dataset
+Time: 0.00e+00 s, dt: 10000 s, Cycle: 0
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.11e+01 ) ;     ( R ) = ( 1.11e+01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 6.33e+00 ) ;     ( R ) = ( 6.33e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.07e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.30e-01 ) ;     ( R ) = ( 1.30e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.26e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 7.86e-03 ) ;     ( R ) = ( 7.86e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.47e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 2.41e-05 ) ;     ( R ) = ( 2.41e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.90e-16 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 1.00e+04 s, dt: 15000 s, Cycle: 1
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 9.57e-01 ) ;     ( R ) = ( 9.57e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 6.14e-01 ) ;     ( R ) = ( 6.14e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.91e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 4.28e-02 ) ;     ( R ) = ( 4.28e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.88e-17 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 9.59e-05 ) ;     ( R ) = ( 9.59e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.71e-16 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 2.50e+04 s, dt: 22500 s, Cycle: 2
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.81e-01 ) ;     ( R ) = ( 6.81e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 3.89e-01 ) ;     ( R ) = ( 3.89e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.32e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 8.01e-03 ) ;     ( R ) = ( 8.01e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.68e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.33e-04 ) ;     ( R ) = ( 1.33e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.06e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.06e-07 ) ;     ( R ) = ( 1.06e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.38e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 4.75e+04 s, dt: 33750 s, Cycle: 3
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.25e-01 ) ;     ( R ) = ( 6.25e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 2.64e-01 ) ;     ( R ) = ( 2.64e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.32e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 7.41e-03 ) ;     ( R ) = ( 7.41e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.31e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.42e-04 ) ;     ( R ) = ( 2.42e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.28e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.96e-07 ) ;     ( R ) = ( 1.96e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.06e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 8.12e+04 s, dt: 50625 s, Cycle: 4
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 7.25e-01 ) ;     ( R ) = ( 7.25e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 5.17e-01 ) ;     ( R ) = ( 5.17e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.05e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.71e-02 ) ;     ( R ) = ( 2.71e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.97e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 3.59e-04 ) ;     ( R ) = ( 3.59e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.37e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 3.54e-07 ) ;     ( R ) = ( 3.54e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.57e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 1.32e+05 s, dt: 75937.5 s, Cycle: 5
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 7.72e-01 ) ;     ( R ) = ( 7.72e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 7.28e-01 ) ;     ( R ) = ( 7.28e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.01e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 5.15e-02 ) ;     ( R ) = ( 5.15e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.32e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 5.59e-04 ) ;     ( R ) = ( 5.59e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.43e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 8.86e-07 ) ;     ( R ) = ( 8.86e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.64e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 2.08e+05 s, dt: 113906.25 s, Cycle: 6
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 8.20e-01 ) ;     ( R ) = ( 8.20e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 9.26e-01 ) ;     ( R ) = ( 9.26e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.23e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.40e-01 ) ;     ( R ) = ( 2.40e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.06e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 7.97e-03 ) ;     ( R ) = ( 7.97e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.14e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 7.24e-06 ) ;     ( R ) = ( 7.24e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.65e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 3.22e+05 s, dt: 170859.375 s, Cycle: 7
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 9.74e-01 ) ;     ( R ) = ( 9.74e-01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.19e+00 ) ;     ( R ) = ( 1.19e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.20e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 4.38e-01 ) ;     ( R ) = ( 4.38e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.80e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.63e-02 ) ;     ( R ) = ( 2.63e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.34e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.10e-04 ) ;     ( R ) = ( 1.10e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.41e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.21e-08 ) ;     ( R ) = ( 1.21e-08 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.87e-16 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 4.93e+05 s, dt: 256289.0625 s, Cycle: 8
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.91e+00 ) ;     ( R ) = ( 1.91e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.67e+00 ) ;     ( R ) = ( 1.67e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.65e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.07e+00 ) ;     ( R ) = ( 1.07e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.37e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 5.26e-01 ) ;     ( R ) = ( 5.26e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.55e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 4.02e-02 ) ;     ( R ) = ( 4.02e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.02e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.29e-04 ) ;     ( R ) = ( 1.29e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.37e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 2.67e-09 ) ;     ( R ) = ( 2.67e-09 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.38e-16 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 7.49e+05 s, dt: 384433.59375 s, Cycle: 9
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 2.17e+00 ) ;     ( R ) = ( 2.17e+00 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 2.39e+00 ) ;     ( R ) = ( 2.39e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.28e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.52e+00 ) ;     ( R ) = ( 1.52e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.42e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 6.48e-01 ) ;     ( R ) = ( 6.48e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.40e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 3.19e-02 ) ;     ( R ) = ( 3.19e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.44e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.04e-04 ) ;     ( R ) = ( 1.04e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.86e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 8.47e-10 ) ;     ( R ) = ( 8.47e-10 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.49e-16 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 1.13e+06 s, dt: 576650.390625 s, Cycle: 10
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 4.57e+01 ) ;     ( R ) = ( 4.57e+01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 4.14e+00 ) ;     ( R ) = ( 4.14e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.87e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.07e+01 ) ;     ( R ) = ( 2.07e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.05e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 5.47e+00 ) ;     ( R ) = ( 5.47e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.18e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 5.43e-02 ) ;     ( R ) = ( 5.43e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.25e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 3.72e-04 ) ;     ( R ) = ( 3.72e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.87e-16 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 3.41e-08 ) ;     ( R ) = ( 3.41e-08 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.27e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 1.71e+06 s, dt: 864975.5859375 s, Cycle: 11
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.24e+02 ) ;     ( R ) = ( 1.24e+02 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 8.19e+00 ) ;     ( R ) = ( 8.19e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.37e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 5.24e+00 ) ;     ( R ) = ( 5.24e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.23e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.42e+00 ) ;     ( R ) = ( 2.42e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.21e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 3.28e-01 ) ;     ( R ) = ( 3.28e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.82e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 9.22e-03 ) ;     ( R ) = ( 9.22e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.84e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 3.06e-05 ) ;     ( R ) = ( 3.06e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.53e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 2.57e+06 s, dt: 1297463.37890625 s, Cycle: 12
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 4.72e+01 ) ;     ( R ) = ( 4.72e+01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 4.67e+00 ) ;     ( R ) = ( 4.67e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.26e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 4.43e+00 ) ;     ( R ) = ( 4.43e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.06e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.44e+00 ) ;     ( R ) = ( 2.44e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.09e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.91e-01 ) ;     ( R ) = ( 1.91e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.88e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 9.62e-03 ) ;     ( R ) = ( 9.62e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.33e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.19e-04 ) ;     ( R ) = ( 1.19e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.71e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 3.66e-07 ) ;     ( R ) = ( 3.66e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.47e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 3.87e+06 s, dt: 1946195.068359375 s, Cycle: 13
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 3.10e+01 ) ;     ( R ) = ( 3.10e+01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 5.98e+00 ) ;     ( R ) = ( 5.98e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.81e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 3.51e+00 ) ;     ( R ) = ( 3.51e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.85e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 7.15e+00 ) ;     ( R ) = ( 7.15e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.91e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 6.12e-01 ) ;     ( R ) = ( 6.12e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.74e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 9.80e-03 ) ;     ( R ) = ( 9.80e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.79e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.40e-04 ) ;     ( R ) = ( 1.40e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.02e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 5.62e-07 ) ;     ( R ) = ( 5.62e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.24e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 5.82e+06 s, dt: 2919292.6025390625 s, Cycle: 14
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.15e+02 ) ;     ( R ) = ( 1.15e+02 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 7.45e+00 ) ;     ( R ) = ( 7.45e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.70e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 7.59e+00 ) ;     ( R ) = ( 7.59e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.74e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 6.56e+00 ) ;     ( R ) = ( 6.56e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.27e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.07e+00 ) ;     ( R ) = ( 1.07e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.67e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 3.50e-02 ) ;     ( R ) = ( 3.50e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.76e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 3.98e-04 ) ;     ( R ) = ( 3.98e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.69e-15 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 4.12e-06 ) ;     ( R ) = ( 4.12e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.73e-14 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 8.74e+06 s, dt: 4378938.903808594 s, Cycle: 15
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 8.33e+01 ) ;     ( R ) = ( 8.33e+01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 7.50e+00 ) ;     ( R ) = ( 7.50e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.60e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 9.33e+00 ) ;     ( R ) = ( 9.33e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.23e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 4.46e+00 ) ;     ( R ) = ( 4.46e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.88e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 5.42e-01 ) ;     ( R ) = ( 5.42e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.46e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 4.36e-02 ) ;     ( R ) = ( 4.36e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.32e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 4.18e-03 ) ;     ( R ) = ( 4.18e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.53e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 3.15e-04 ) ;     ( R ) = ( 3.15e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.04e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.95e-06 ) ;     ( R ) = ( 1.95e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.78e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 1.31e+07 s, dt: 6568408.355712891 s, Cycle: 16
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 2.76e+03 ) ;     ( R ) = ( 2.76e+03 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.31e+02 ) ;     ( R ) = ( 1.31e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.44e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.24e+01 ) ;     ( R ) = ( 1.24e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.79e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.28e+01 ) ;     ( R ) = ( 1.28e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.15e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 7.18e+00 ) ;     ( R ) = ( 7.18e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.23e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.43e-01 ) ;     ( R ) = ( 1.43e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.33e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 9.89e-03 ) ;     ( R ) = ( 9.89e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.10e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.19e-03 ) ;     ( R ) = ( 1.19e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.88e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 1.80e-05 ) ;     ( R ) = ( 1.80e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.45e-14 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 1.97e+07 s, dt: 9852612.533569336 s, Cycle: 17
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 3.41e+04 ) ;     ( R ) = ( 3.41e+04 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.62e+03 ) ;     ( R ) = ( 1.62e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.10e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 4.54e+01 ) ;     ( R ) = ( 4.54e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.02e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 1.15e+02 ) ;     ( R ) = ( 1.15e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.61e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 2.38e+01 ) ;     ( R ) = ( 2.38e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.68e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 1.20e+00 ) ;     ( R ) = ( 1.20e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.97e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.72e-02 ) ;     ( R ) = ( 1.72e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.96e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 2.40e-03 ) ;     ( R ) = ( 2.40e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.96e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 4.44e-05 ) ;     ( R ) = ( 4.44e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.66e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 2.95e+07 s, dt: 14778918.800354004 s, Cycle: 18
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 4.21e+04 ) ;     ( R ) = ( 4.21e+04 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.86e+03 ) ;     ( R ) = ( 1.86e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.07e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 7.41e+01 ) ;     ( R ) = ( 7.41e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.59e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.61e+01 ) ;     ( R ) = ( 2.61e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.44e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 6.84e+00 ) ;     ( R ) = ( 6.84e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.42e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 2.55e-01 ) ;     ( R ) = ( 2.55e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.12e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.43e-02 ) ;     ( R ) = ( 1.43e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.57e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.16e-03 ) ;     ( R ) = ( 1.16e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.00e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 4.90e-06 ) ;     ( R ) = ( 4.90e-06 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.05e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 4.43e+07 s, dt: 22168378.200531006 s, Cycle: 19
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.58e+04 ) ;     ( R ) = ( 1.58e+04 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 9.85e+02 ) ;     ( R ) = ( 9.85e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.06e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 6.72e+01 ) ;     ( R ) = ( 6.72e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.46e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 4.86e+01 ) ;     ( R ) = ( 4.86e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.65e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 4.21e+01 ) ;     ( R ) = ( 4.21e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.39e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 8.69e+00 ) ;     ( R ) = ( 8.69e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.85e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 3.44e-02 ) ;     ( R ) = ( 3.44e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.82e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 4.04e-03 ) ;     ( R ) = ( 4.04e-03 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.88e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 3.56e-05 ) ;     ( R ) = ( 3.56e-05 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.32e-14 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 6.65e+07 s, dt: 33252567.30079651 s, Cycle: 20
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 5.58e+04 ) ;     ( R ) = ( 5.58e+04 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 2.70e+03 ) ;     ( R ) = ( 2.70e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.70e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.51e+02 ) ;     ( R ) = ( 1.51e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.19e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 9.24e+01 ) ;     ( R ) = ( 9.24e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.05e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 2.05e+02 ) ;     ( R ) = ( 2.05e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.29e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 9.90e+01 ) ;     ( R ) = ( 9.90e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.40e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 3.66e+00 ) ;     ( R ) = ( 3.66e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.14e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.94e-02 ) ;     ( R ) = ( 1.94e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.18e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 5.65e-04 ) ;     ( R ) = ( 5.65e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.18e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 2.12e-07 ) ;     ( R ) = ( 2.12e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.98e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 9.97e+07 s, dt: 49878850.95119476 s, Cycle: 21
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.31e+05 ) ;     ( R ) = ( 6.31e+05 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 4.14e+04 ) ;     ( R ) = ( 4.14e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.19e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.94e+03 ) ;     ( R ) = ( 2.94e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.52e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 2.84e+02 ) ;     ( R ) = ( 2.84e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.38e-11 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.70e+02 ) ;     ( R ) = ( 1.70e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.13e-11 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 4.00e+01 ) ;     ( R ) = ( 4.00e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.20e-11 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 3.24e+01 ) ;     ( R ) = ( 3.24e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.95e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 3.49e+00 ) ;     ( R ) = ( 3.49e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 8.80e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 9.86e-02 ) ;     ( R ) = ( 9.86e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.25e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 5.39e-04 ) ;     ( R ) = ( 5.39e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.47e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 8.74e-08 ) ;     ( R ) = ( 8.74e-08 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.17e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Time: 1.50e+08 s, dt: 50383447.14641571 s, Cycle: 22
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 3.01e+05 ) ;     ( R ) = ( 3.01e+05 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 2.42e+04 ) ;     ( R ) = ( 2.42e+04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.24e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 1.41e+03 ) ;     ( R ) = ( 1.41e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.26e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 4.50e+02 ) ;     ( R ) = ( 4.50e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.92e-11 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 3.88e+02 ) ;     ( R ) = ( 3.88e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.41e-11 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
+    ( Rflow ) = ( 6.73e+02 ) ;     ( R ) = ( 6.73e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.61e-13 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  6
+    ( Rflow ) = ( 1.16e+02 ) ;     ( R ) = ( 1.16e+02 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.86e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  7
+    ( Rflow ) = ( 1.98e+01 ) ;     ( R ) = ( 1.98e+01 ) ; 
+    Last LinSolve(iter,res) = (   1, 6.21e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  8
+    ( Rflow ) = ( 6.10e-01 ) ;     ( R ) = ( 6.10e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 3.55e-12 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  9
+    ( Rflow ) = ( 9.55e-04 ) ;     ( R ) = ( 9.55e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 7.70e-14 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter: 10
+    ( Rflow ) = ( 3.10e-07 ) ;     ( R ) = ( 3.10e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.54e-15 ) ; 
+bottom_layer_SPE10: Newton solver converged in less than 12 iterations, time-step required will be increased.
+Cleaning up events
+bottom_layer_SPE10, number of time steps: 23
+bottom_layer_SPE10, number of successful nonlinear iterations: 146
+bottom_layer_SPE10, number of successful linear iterations: 146
+bottom_layer_SPE10, number of time step cuts: 0
+bottom_layer_SPE10, number of discarded nonlinear iterations: 0
+bottom_layer_SPE10, number of discarded linear iterations: 0
+Umpire            HOST sum across ranks:    2.0 GB
+Umpire            HOST         rank max:   43.5 MB
+Finished at 2023-09-11 16:11:44
+total time            00:01:27.952
+initialization time   00:00:02.844
+run time              00:01:16.448

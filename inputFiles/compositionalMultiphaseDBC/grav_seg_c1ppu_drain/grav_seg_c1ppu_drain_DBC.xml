@@ -1,7 +1,6 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <?xml version="1.0" ?>
   <!-- SPHINX_SOLVER -->
   <Solvers
     gravityVector="{ 0.0, 0.0, -9.81 }">
