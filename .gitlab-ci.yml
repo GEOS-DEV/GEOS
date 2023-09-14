@@ -46,8 +46,7 @@ stages:
     # BUILD
     - echo "~~~~~~~~~~ START - build ~~~~~~~~~~~"
     - build_code=0
-    # - ${ALLOC_COMMAND} make VERBOSE=1 -C build -j ${NPROC:-16} 2>&1 | tee ${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_build.log || build_code=$?
-    - echo Testing 1 2>&1 | tee ${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_build.log || build_code=$?
+    - ${ALLOC_COMMAND} make VERBOSE=1 -C build -j ${NPROC:-16} 2>&1 | tee ${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_build.log || build_code=$?
     - mv ${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_build.log ${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_build_$([ $build_code == 0 ] && echo "SUCCESS" || echo "FAILURE").log
     - echo "~~~~~~~~~~ END - build ~~~~~~~~~~~~~"
 
@@ -55,8 +54,7 @@ stages:
     - echo "~~~~~~~~~~ START - unit tests ~~~~~~~~~~~"
     - unit_code=0
     - cd build
-    # - ${ALLOC_COMMAND} ctest --output-on-failure  2>&1 | tee ../${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_unit_test.log || unit_code=$?
-    - echo Testing 2  2>&1 | tee ../${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_unit_test.log || unit_code=$?
+    - ${ALLOC_COMMAND} ctest --output-on-failure  2>&1 | tee ../${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_unit_test.log || unit_code=$?
     - cd ..
     - mv ${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_unit_test.log ${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_unit_test_$([ $unit_code == 0 ] && echo "SUCCESS" || echo "FAILURE").log
     - echo "~~~~~~~~~~ END - unit tests ~~~~~~~~~~~~~"
@@ -64,21 +62,21 @@ stages:
     # INTEGRATED TEST
     - echo "~~~~~~~~~~ START - integrated tests ~~~~~~~~~~~"
     - cd build
-    # - make ats_clean
-    # - make ats_environment
+    - make ats_clean
+    - make ats_environment
     # Hard code integrated test failure status until optional fail flag fixed
     - integrated_code=1
-    # - ${INTEGRATED_ALLOC_COMMAND} ./integratedTests/geos_ats.sh --failIfTestsFail 2>&1 | tee ../${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_integrated_test.log || integrated_code=1
+    - ${INTEGRATED_ALLOC_COMMAND} ./integratedTests/geos_ats.sh --failIfTestsFail 2>&1 | tee ../${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_integrated_test.log || integrated_code=1
     #- ${INTEGRATED_ALLOC_COMMAND} ./integratedTests/geos_ats.sh --failIfTestsFail 2>&1 | tee ../${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_integrated_test.log || integrated_code=$?
     - cd ..
-    # - mv ${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_integrated_test.log ${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_integrated_test_$([ $integrated_code == 0 ] && echo "SUCCESS" || echo "FAILURE").log
+    - mv ${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_integrated_test.log ${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_integrated_test_$([ $integrated_code == 0 ] && echo "SUCCESS" || echo "FAILURE").log
     - cp -rL build/integratedTests/TestResults ${SYSTEM_COMPILER}/
     - echo "~~~~~~~~~~ END - integrated tests ~~~~~~~~~~~~~"
 
     # CLEANUP + PRINT SUCCESS/FAILURES
     - echo "~~~~~~~~~~ START - cleanup ~~~~~~~~~~~"
     - cd build
-    # - make ats_clean
+    - make ats_clean
     - cd ..
     - rm -rf build
     - if [[ $config_code -ne 0 ]]; then echo "Configuration failed"; else echo "Configuration succeeded"; fi
@@ -181,6 +179,7 @@ lassen_gcc_8_cuda_11_build:
 
 ####
 # Pull nightlyTests repo and update files
+# Note: Arguments to update.sh needs to be kept updated with build jobs
 nightly-job:
   stage: nightly
   script:
