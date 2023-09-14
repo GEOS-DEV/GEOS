@@ -155,13 +155,13 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< fields::flow::gravityCoefficient >( getName() );
 
       subRegion.registerField< fields::flow::aperture0 >( getName() ).
-        setDefaultValue( faceRegion.getDefaultAperture() );
+        setApplyDefaultValue( faceRegion.getDefaultAperture() );
 
       subRegion.registerField< fields::flow::hydraulicAperture >( getName() ).
-        setDefaultValue( faceRegion.getDefaultAperture() );
+        setApplyDefaultValue( faceRegion.getDefaultAperture() );
 
       subRegion.registerField< fields::flow::minimumHydraulicAperture >( getName() ).
-        setDefaultValue( faceRegion.getDefaultAperture() );
+        setApplyDefaultValue( faceRegion.getDefaultAperture() );
 
     } );
 
@@ -715,5 +715,50 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
   } );
 }
 
+void FlowSolverBase::prepareStencilWeights( DomainPartition & domain ) const
+{
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
+  {
+    NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+    FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+    FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( getDiscretizationName() );
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture =
+      mesh.getElemManager().constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::hydraulicAperture::key() );
+
+    fluxApprox.forStencils< SurfaceElementStencil, FaceElementToCellStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
+    {
+      using STENCILWRAPPER_TYPE =  typename TYPEOFREF( stencil ) ::KernelWrapper;
+
+      STENCILWRAPPER_TYPE stencilWrapper = stencil.createKernelWrapper();
+
+      flowSolverBaseKernels::stencilWeightsUpdateKernel< STENCILWRAPPER_TYPE >::prepareStencilWeights( stencilWrapper, hydraulicAperture.toNestedViewConst() );
+    } );
+  } );
+}
+
+void FlowSolverBase::updateStencilWeights( DomainPartition & domain ) const
+{
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
+  {
+    NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+    FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+    FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( getDiscretizationName() );
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture =
+      mesh.getElemManager().constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::hydraulicAperture::key() );
+
+    fluxApprox.forStencils< SurfaceElementStencil, FaceElementToCellStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
+    {
+      using STENCILWRAPPER_TYPE =  typename TYPEOFREF( stencil ) ::KernelWrapper;
+
+      STENCILWRAPPER_TYPE stencilWrapper = stencil.createKernelWrapper();
+
+      flowSolverBaseKernels::stencilWeightsUpdateKernel< STENCILWRAPPER_TYPE >::updateStencilWeights( stencilWrapper, hydraulicAperture.toNestedViewConst() );
+    } );
+  } );
+}
 
 } // namespace geos
