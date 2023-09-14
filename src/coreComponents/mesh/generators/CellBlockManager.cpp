@@ -19,12 +19,12 @@
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "RAJA/util/mutex.hpp"
 
+#include <tuple>
 #include <algorithm>
 
 namespace geos
 {
-using namespace dataRepository;
-
+using namespace dataRepository; 
 CellBlockManager::CellBlockManager( string const & name, Group * const parent ):
   CellBlockManagerABC( name, parent ),
   m_nodesPositions( 0, 3 )
@@ -807,40 +807,28 @@ static array1d< real64 > gaussLobattoPoints( int order )
 
   switch( order )
   {
-    case 1:
-      GaussLobattoPts[0] = -1.0;
-      GaussLobattoPts[1] = 1.0;
-      break;
     case 2:
-      GaussLobattoPts[0] = -1.0;
-      GaussLobattoPts[1] = 0.0;
-      GaussLobattoPts[2] = 1.0;
+      GaussLobattoPts[0] = 0.0;
       break;
     case 3:
       static constexpr real64 sqrt5 = 2.2360679774997897;
-      GaussLobattoPts[0] = -1.0;
-      GaussLobattoPts[1] = -1./sqrt5;
-      GaussLobattoPts[2] = 1./sqrt5;
-      GaussLobattoPts[3] = 1.;
+      GaussLobattoPts[0] = -1./sqrt5;
+      GaussLobattoPts[1] = 1./sqrt5;
       break;
     case 4:
       static constexpr real64 sqrt3_7 = 0.6546536707079771;
-      GaussLobattoPts[0] = -1.0;
-      GaussLobattoPts[1] = -sqrt3_7;
-      GaussLobattoPts[2] = 0.0;
-      GaussLobattoPts[3] = sqrt3_7;
-      GaussLobattoPts[4] = 1.0;
+      GaussLobattoPts[0] = -sqrt3_7;
+      GaussLobattoPts[1] = 0.0;
+      GaussLobattoPts[2] = sqrt3_7;
       break;
     case 5:
       static constexpr real64 sqrt__7_plus_2sqrt7__ = 3.50592393273573196;
       static constexpr real64 sqrt__7_mins_2sqrt7__ = 1.30709501485960033;
       static constexpr real64 sqrt_inv21 = 0.218217890235992381;
-      GaussLobattoPts[0] = -1.0;
-      GaussLobattoPts[1] = -sqrt_inv21*sqrt__7_plus_2sqrt7__;
-      GaussLobattoPts[2] = -sqrt_inv21*sqrt__7_mins_2sqrt7__;
-      GaussLobattoPts[3] = sqrt_inv21*sqrt__7_mins_2sqrt7__;
-      GaussLobattoPts[4] = sqrt_inv21*sqrt__7_plus_2sqrt7__;
-      GaussLobattoPts[5] = 1.0;
+      GaussLobattoPts[0] = -sqrt_inv21*sqrt__7_plus_2sqrt7__;
+      GaussLobattoPts[1] = -sqrt_inv21*sqrt__7_mins_2sqrt7__;
+      GaussLobattoPts[2] = sqrt_inv21*sqrt__7_mins_2sqrt7__;
+      GaussLobattoPts[3] = sqrt_inv21*sqrt__7_plus_2sqrt7__;
       break;
   }
   return GaussLobattoPts;
@@ -876,7 +864,12 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
   GEOS_MARK_FUNCTION;
 
   // constants for hex mesh
+  localIndex const numEdgesPerFace = 4;
+  localIndex const numFacesPerCell = 6;
+  localIndex const numEdgesPerCell = 12;
+  localIndex const numVerticesPerFace = 4;
   localIndex const numVerticesPerCell = 8;
+
   localIndex const numNodesPerEdge = ( order+1 );
   localIndex const numNodesPerFace = ( order+1 )*( order+1 );
   localIndex const numNodesPerCell = ( order+1 )*( order+1 )*( order+1 );
@@ -888,6 +881,10 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
   localIndex const numLocalVertices = this->numNodes();
   localIndex const numLocalEdges = this->numEdges();
   localIndex const numLocalFaces = this->numFaces();
+
+  GEOS_LOG_RANK_0("TEST TEST: numLocalEdges = " << numLocalEdges);
+  GEOS_LOG_RANK_0("TEST TEST: numLocalFaces = " << numLocalFaces);
+  GEOS_LOG_RANK_0("TEST TEST: numLocalVertices = " << numLocalVertices);
 
   localIndex numLocalCells = 0;
   this->getCellBlocks().forSubGroups< CellBlock >( [&]( CellBlock & cellBlock )
@@ -914,6 +911,11 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
   m_edgeToNodes.resize( m_numEdges, order+1 );
   m_nodesPositions.resize( m_numNodes );
 
+  // also assign node coordinates using trilinear interpolation in th elements
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > refPosNew = this->getNodePositions();
+  refPosNew.setValues< parallelHostPolicy >( -1.0 );
+
+  array1d< real64 > glCoords = gaussLobattoPoints( order );
 
   // ---------------------------------------
   // initialize the node local to global map
@@ -936,26 +938,59 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
   //   (v1-v4 and v2-v3 are the diagonals), with interpolation parameters 'a' and 'b'.
   //   (we assume that v1 is the smallest, and that v2 < v3) Then these nodes are identified with [v1 v2 v3 v4 a b]
   // - nodes within the internal of a cell are encountered only once, and thus do not need to be put in the hash map
-  std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
 
   // Create new nodes, with local and global IDs
-  localIndex localNodeID = 0;
-  for( localIndex iter_vertex=0; iter_vertex < numLocalVertices; iter_vertex++ )
-  /*
+  localIndex localNodeOffset = 0;
+  
+  GEOS_MARK_BEGIN("geos::CellBlockManager::generateHighOrderMaps -- Vertices --- 11111");
   forAll< parallelHostPolicy >( numLocalVertices, 
-                                [ nodeLocalToGlobalSource=nodeLocalToGlobalSource.toView(),
-                                  &nodeLocalToGlobalNew, &nodeIDs, &localNodeID]( localIndex const iter_vertex)
-  */
+                                [ nodeLocalToGlobalSource=nodeLocalToGlobalSource.toView(), 
+                                  nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView(), 
+                                  refPosSource=refPosSource.toView(),
+                                  refPosNew=refPosNew.toView() ]( localIndex const iter_vertex)
   {
-    //RAJA::omp::mutex mutexNodeID;
-    //RAJA::lock_guard<RAJA::omp::mutex> lock_guardNodeID(mutexNodeID);
-    //mutexNodeID.lock();
-    nodeLocalToGlobalNew[ localNodeID ] = nodeLocalToGlobalSource[ iter_vertex ];
+    nodeLocalToGlobalNew[ iter_vertex ] = nodeLocalToGlobalSource[ iter_vertex ];
+    refPosNew[ iter_vertex ][0] = refPosSource[ iter_vertex ][0];
+    refPosNew[ iter_vertex ][1] = refPosSource[ iter_vertex ][1];
+    refPosNew[ iter_vertex ][2] = refPosSource[ iter_vertex ][2];
+  });
+  localNodeOffset = numLocalVertices;
+
+  GEOS_MARK_END("geos::CellBlockManager::generateHighOrderMaps -- Vertices --- 11111");
+
+  //GEOS_LOG_RANK_0("TEST TEST: nodeLocalToGlobalSource = " << nodeLocalToGlobalSource);
+  //GEOS_LOG_RANK_0("TEST TEST: nodeLocalToGlobalNew = " << nodeLocalToGlobalNew);
+  
+  //GEOS_LOG_RANK_0("TEST TEST: refPosSource = " << refPosSource);
+  //GEOS_LOG_RANK_0("TEST TEST: refPosNew = " << refPosNew);
+  /*
+  std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
+  localIndex localNodeID = 0;
+
+  GEOS_MARK_BEGIN("geos::CellBlockManager::generateHighOrderMaps -- Vertices --- 22222");
+  for( localIndex iter_vertex=0; iter_vertex < numLocalVertices; iter_vertex++ )
+  {
+    nodeLocalToGlobalNew[ iter_vertex ] = nodeLocalToGlobalSource[ iter_vertex ];
     nodeIDs[ createNodeKey( iter_vertex ) ] = localNodeID;
     localNodeID++;
-    //mutexNodeID.unlock();
-  //} );
   }
+  GEOS_MARK_END("geos::CellBlockManager::generateHighOrderMaps -- Vertices --- 22222");
+  */
+  
+  /*
+  forAll< parallelHostPolicy >( numLocalVertices, 
+                                [ nodeLocalToGlobalSource=nodeLocalToGlobalSource.toView(), &mutexNodeID, 
+                                  &nodeLocalToGlobalNew, &nodeIDs, &localNodeID]( localIndex const iter_vertex)
+  {
+    nodeLocalToGlobalNew[ localNodeID ] = nodeLocalToGlobalSource[ iter_vertex ];
+    mutexNodeID.lock();
+    nodeIDs[ createNodeKey( iter_vertex ) ] = localNodeID;
+    mutexNodeID.unlock();
+    localNodeID++;
+  } );
+  //}
+
+  */
 
   //////////////////////////
   // Edges
@@ -967,25 +1002,65 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
 
   arrayView2d< localIndex > edgeToNodeMapNew = m_edgeToNodes.toView();
   // create / retrieve nodes on edges
-  localIndex offset = maxVertexGlobalID;
+  localIndex globalNodeOffset = maxVertexGlobalID;
 
-  GEOS_MARK_BEGIN("geos::CellBlockManager::generateHighOrderMaps -- Edges");
+  GEOS_MARK_BEGIN("geos::CellBlockManager::generateHighOrderMaps -- Edges -- 111111");
+  forAll< parallelHostPolicy >( numLocalEdges, 
+                                [ edgeToNodesMapSource=edgeToNodesMapSource.toView(),
+                                  edgeToNodeMapNew=edgeToNodeMapNew.toView(),
+                                  refPosSrc=refPosSource.toView(),
+                                  refPosNew=refPosNew.toView(),
+                                  edgeLocalToGlobal=edgeLocalToGlobal.toView(),
+                                  nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView(),
+                                  numInternalNodesPerEdge, globalNodeOffset, glCoords, localNodeOffset]( localIndex const iter_edge)
+  {
+      localIndex edgeHeadNode = edgeToNodesMapSource[ iter_edge ][ 0 ];
+      localIndex edgeEndNode = edgeToNodesMapSource[ iter_edge ][ 1 ];
 
+      edgeToNodeMapNew[ iter_edge ][ 0 ] = edgeHeadNode;
+      edgeToNodeMapNew[ iter_edge ][ numInternalNodesPerEdge + 1] = edgeEndNode;
+
+      for( localIndex iter_node = 0; iter_node < numInternalNodesPerEdge; iter_node++ )
+      {
+        real64 alpha = ( glCoords[ iter_node % numInternalNodesPerEdge ] + 1.0 ) / 2.0;
+        localIndex nodeLocalID = localNodeOffset + iter_edge * ( numInternalNodesPerEdge ) + iter_node; 
+        edgeToNodeMapNew[ iter_edge ][ iter_node + 1 ] = nodeLocalID;
+        nodeLocalToGlobalNew[ nodeLocalID ] = globalNodeOffset + edgeLocalToGlobal[ iter_edge ] * numInternalNodesPerEdge + iter_node;
+
+        refPosNew[nodeLocalID][0] = refPosSrc[edgeEndNode][0] * alpha + refPosSrc[edgeHeadNode][0] * ( 1.0-alpha ) ;
+        refPosNew[nodeLocalID][1] = refPosSrc[edgeEndNode][1] * alpha + refPosSrc[edgeHeadNode][1] * ( 1.0-alpha ) ;
+        refPosNew[nodeLocalID][2] = refPosSrc[edgeEndNode][2] * alpha + refPosSrc[edgeHeadNode][2] * ( 1.0-alpha ) ;
+
+      }
+  });
+  localNodeOffset += numInternalNodesPerEdge * numLocalEdges;
+  //GEOS_LOG_RANK_0("TEST TEST: refPosNew = " << refPosNew); 
+  GEOS_MARK_END("geos::CellBlockManager::generateHighOrderMaps -- Edges -- 111111");
+
+  //GEOS_LOG_RANK_0("TEST TEST: edgeToNodesMapSource = " << edgeToNodesMapSource);
+  //GEOS_LOG_RANK_0("TEST TEST: edgeToNodeMapNew = " << edgeToNodeMapNew);
+
+  //GEOS_LOG_RANK_0("TEST TEST: refPosSource = " << refPosSource);
+  //GEOS_LOG_RANK_0("TEST TEST: refPosNew = " << refPosNew);
+
+  //GEOS_MARK_BEGIN("geos::CellBlockManager::generateHighOrderMaps -- Edges -- 222222");
   //for( localIndex iter_edge = 0; iter_edge < numLocalEdges; iter_edge++ )
+  //RAJA::omp::mutex mutexNodeID;
+  /*
   forAll< parallelHostPolicy >( numLocalEdges, 
                                 [ nodeLocalToGlobalSource=nodeLocalToGlobalSource.toView(),
                                   edgeToNodesMapSource=edgeToNodesMapSource.toView(),
                                   edgeLocalToGlobal=edgeLocalToGlobal.toView(),
-                                  numNodesPerEdge, order, offset, numInternalNodesPerEdge,
+                                  numNodesPerEdge, order, globalNodeOffset, numInternalNodesPerEdge, &mutexNodeID,
                                   &edgeToNodeMapNew,&nodeLocalToGlobalNew, &nodeIDs, &localNodeID]( localIndex const iter_edge)
+  */
+  /*
   {
     localIndex v1 = edgeToNodesMapSource[ iter_edge ][ 0 ];
     localIndex v2 = edgeToNodesMapSource[ iter_edge ][ 1 ];
     globalIndex gv1 = nodeLocalToGlobalSource[v1];
     globalIndex gv2 = nodeLocalToGlobalSource[v2];
 
-    RAJA::omp::mutex mutexNodeID;
-    RAJA::lock_guard<RAJA::omp::mutex> lock_guardNodeID(mutexNodeID);
     for( int q=0; q<numNodesPerEdge; q++ )
     {
       localIndex nodeID;
@@ -994,10 +1069,12 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
       {
         // this is an internal edge node: create it
         nodeID = localNodeID;
+        mutexNodeID.lock();
         nodeIDs[ nodeKey ] = nodeID;
+        mutexNodeID.unlock();
         std::array< globalIndex, 6 > referenceOrientation = createNodeKey( gv1, gv2, q, order );
         int gq = referenceOrientation[4] - 1;
-        nodeLocalToGlobalNew[ nodeID ] = offset + edgeLocalToGlobal[ iter_edge ] * numInternalNodesPerEdge + gq;
+        nodeLocalToGlobalNew[ nodeID ] = globalNodeOffset + edgeLocalToGlobal[ iter_edge ] * numInternalNodesPerEdge + gq;
         localNodeID++;
       }
       else
@@ -1006,14 +1083,20 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
       }
       edgeToNodeMapNew[ iter_edge ][ q ] = nodeID;
     }
-  //}
-  } );
-  GEOS_MARK_END("geos::CellBlockManager::generateHighOrderMaps -- Edges");
+  }
+  //} );
+  GEOS_MARK_END("geos::CellBlockManager::generateHighOrderMaps -- Edges -- 222222");
+  */
+
+  //GEOS_LOG_RANK_0("TEST TEST: edgeToNodeMapNew = " << edgeToNodeMapNew);
+  //GEOS_LOG_RANK_0("TEST TEST: nodeLocalToGlobalSource = " << nodeLocalToGlobalSource);
+  //GEOS_LOG_RANK_0("TEST TEST: nodeLocalToGlobalNew = " << nodeLocalToGlobalNew);
 
   /////////////////////////
   // Faces
   //////////////////////////
 
+  /*
   // initialize faceToNodeMap for the high-order mesh-level
   ArrayOfArrays< localIndex > & faceToNodeMapNew = m_faceToNodes;
   // number of elements in each row of the map as capacity
@@ -1030,15 +1113,91 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
       faceToNodeMapNew.emplaceBack( faceIndex, -1 );
     }
   } );
+  */
+
+  // initialize faceToNodeMap for the high-order mesh-level
+  ArrayOfArrays< localIndex > faceToNodeMapNew2 = m_faceToNodes;
+  // number of elements in each row of the map as capacity
+  array1d< localIndex > counts( faceToNodeMapNew2.size());
+  counts.setValues< parallelHostPolicy >( numNodesPerFace );
+  //  reconstructs the faceToNodeMap with the provided capacity in counts
+  faceToNodeMapNew2.resizeFromCapacities< parallelHostPolicy >( faceToNodeMapNew2.size(), counts.data() );
+  // setup initial values of the faceToNodeMap using emplaceBack
+  forAll< parallelHostPolicy >( faceToNodeMapNew2.size(),
+                                [ faceToNodeMapNew2 = faceToNodeMapNew2.toView() ]( localIndex const faceIndex )
+  {
+    for( localIndex i = 0; i < faceToNodeMapNew2.capacityOfArray( faceIndex ); ++i )
+    {
+      faceToNodeMapNew2.emplaceBack( faceIndex, -1 );
+    }
+  } );
+
+  //GEOS_LOG_RANK_0("TEST TEST: faceToNodesMapSource = " << faceToNodesMapSource);
+  globalNodeOffset = maxVertexGlobalID + maxEdgeGlobalID * numInternalNodesPerEdge;
+
+  GEOS_MARK_BEGIN("geos::CellBlockManager::generateHighOrderMaps -- Faces -- 111111");
+  //for( localIndex iter_edge = 0; iter_edge < numLocalEdges; iter_edge++ )
+  forAll< parallelHostPolicy >( numLocalFaces, 
+                                [ faceToNodesMapSource=faceToNodesMapSource.toView(),
+                                  edgeToNodeMapNew=edgeToNodeMapNew.toView(),
+                                  faceToNodeMapNew=faceToNodeMapNew2.toView(),
+                                  m_faceToEdges=m_faceToEdges.toView(),
+                                  refPosSrc=refPosSource.toView(),
+                                  refPosNew=refPosNew.toView(),
+                                  faceLocalToGlobal=faceLocalToGlobal.toView(),
+                                  nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView(),
+                                  numNodesPerEdge, numEdgesPerFace, numVerticesPerFace,
+                                  numInternalNodesPerEdge, numInternalNodesPerFace,
+                                  globalNodeOffset, glCoords, localNodeOffset ]( localIndex const iter_face)
+  {
+      localIndex faceVertID[ numVerticesPerFace ];
+      for( localIndex iter_node=0; iter_node<numVerticesPerFace; iter_node++ )
+      {
+        faceVertID[ iter_node ] = faceToNodesMapSource[ iter_face ][ iter_node ];
+        faceToNodeMapNew[ iter_face ][ iter_node ] = faceVertID[ iter_node ];
+      }
+
+      for( localIndex iter_edge=0; iter_edge<numEdgesPerFace; iter_edge++ )
+        for( localIndex iter_node=0; iter_node<numInternalNodesPerEdge; iter_node++ )
+          faceToNodeMapNew[ iter_face ][ numVerticesPerFace + iter_edge * numInternalNodesPerEdge + iter_node ] 
+            = edgeToNodeMapNew[m_faceToEdges[iter_face][iter_edge]][iter_node+1];
+
+      for( localIndex iter_node=0; iter_node<numInternalNodesPerFace; iter_node++ )
+      {
+        real64 alpha = ( glCoords[ iter_node % numInternalNodesPerEdge ] + 1.0 ) / 2.0;
+        real64 beta = ( glCoords[  ( iter_node / numInternalNodesPerEdge ) % numInternalNodesPerEdge ] + 1.0 ) / 2.0;
+
+        localIndex nodeLocalID = localNodeOffset + iter_face * numInternalNodesPerFace + iter_node;
+        faceToNodeMapNew[ iter_face ][ numVerticesPerFace + numEdgesPerFace * numInternalNodesPerEdge + iter_node ] = nodeLocalID;
+        nodeLocalToGlobalNew[ nodeLocalID ] = globalNodeOffset + faceLocalToGlobal[ iter_face ] * numInternalNodesPerFace + iter_node;
+
+        refPosNew[nodeLocalID][0] = refPosSrc[faceVertID[0]][0]*( 1.0-alpha )*( 1.0-beta ) + refPosSrc[faceVertID[1]][0]*alpha*( 1.0-beta )+
+                                    refPosSrc[faceVertID[2]][0]*( 1.0-alpha )*beta + refPosSrc[faceVertID[3]][0]*alpha*beta;
+
+        refPosNew[nodeLocalID][1] = refPosSrc[faceVertID[0]][1]*( 1.0-alpha )*( 1.0-beta ) + refPosSrc[faceVertID[1]][1]*alpha*( 1.0-beta )+
+                                    refPosSrc[faceVertID[2]][1]*( 1.0-alpha )*beta + refPosSrc[faceVertID[3]][1]*alpha*beta;
+
+        refPosNew[nodeLocalID][2] = refPosSrc[faceVertID[0]][2]*( 1.0-alpha )*( 1.0-beta ) + refPosSrc[faceVertID[1]][2]*alpha*( 1.0-beta )+
+                                    refPosSrc[faceVertID[2]][2]*( 1.0-alpha )*beta + refPosSrc[faceVertID[3]][2]*alpha*beta;
+      }
+
+  });
+
+  localNodeOffset += numInternalNodesPerFace * numLocalFaces ;
+  //}
+  GEOS_MARK_END("geos::CellBlockManager::generateHighOrderMaps -- Faces -- 111111");
+  //GEOS_LOG_RANK_0("TEST TEST: faceToNodeMapNew2 = " << faceToNodeMapNew2);
+  //GEOS_LOG_RANK_0("TEST TEST: refPosNew = " << refPosNew); 
+
 
   // create / retrieve nodes on faces
   // by default, faces are oriented so that the normal has an outward orientation for the current rank.
   // For this reason :
   // - The 3rd and 4th node need to be swapped, to be consistent with the GL ordering
   // - The global IDs of the internal nodes must be referred to a global "reference" orientation (using the createNodeKey method)
-  offset = maxVertexGlobalID + maxEdgeGlobalID * numInternalNodesPerEdge;
 
-  GEOS_MARK_BEGIN("geos::CellBlockManager::generateHighOrderMaps -- Faces");
+  /*
+  GEOS_MARK_BEGIN("geos::CellBlockManager::generateHighOrderMaps -- Faces -- 222222");
   for( localIndex iter_face = 0; iter_face < numLocalFaces; iter_face++ )
   {
     localIndex v1 = faceToNodesMapSource[ iter_face ][ 0 ];
@@ -1064,7 +1223,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
           std::array< globalIndex, 6 > referenceOrientation = createNodeKey( gv1, gv2, gv3, gv4, q1, q2, order );
           int gq1 = referenceOrientation[4] - 1;
           int gq2 = referenceOrientation[5] - 1;
-          nodeLocalToGlobalNew[ nodeID ] = offset + faceLocalToGlobal[ iter_face ] * numInternalNodesPerFace + gq1* numInternalNodesPerEdge + gq2;
+          nodeLocalToGlobalNew[ nodeID ] = globalNodeOffset + faceLocalToGlobal[ iter_face ] * numInternalNodesPerFace + gq1* numInternalNodesPerEdge + gq2;
           localNodeID++;
         }
         else
@@ -1075,7 +1234,9 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
       }
     }
   }
-  GEOS_MARK_END("geos::CellBlockManager::generateHighOrderMaps -- Faces");
+  GEOS_MARK_END("geos::CellBlockManager::generateHighOrderMaps -- Faces -- 222222");
+  // GEOS_LOG_RANK_0("TEST TEST: faceToNodeMapNew = " << faceToNodeMapNew);
+  */
 
   // add all nodes to the target set "all"
   SortedArray< localIndex > & allNodesSet = this->getNodeSets()[ "all" ];
@@ -1090,13 +1251,8 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
   // Elements
   //////////////////////////
 
-  // also assign node coordinates using trilinear interpolation in th elements
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > refPosNew = this->getNodePositions();
-  refPosNew.setValues< parallelHostPolicy >( -1.0 );
-
-  array1d< real64 > glCoords = gaussLobattoPoints( order );
-  offset = maxVertexGlobalID + maxEdgeGlobalID * numInternalNodesPerEdge + maxFaceGlobalID * numInternalNodesPerFace;
-  std::array< localIndex, 6 > const nullKey = std::array< localIndex, 6 >{ -1, -1, -1, -1, -1, -1 };
+  globalNodeOffset = maxVertexGlobalID + maxEdgeGlobalID * numInternalNodesPerEdge + maxFaceGlobalID * numInternalNodesPerFace;
+  //std::array< localIndex, 6 > const nullKey = std::array< localIndex, 6 >{ -1, -1, -1, -1, -1, -1 };
 
   // initialize the elements-to-nodes map
   arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodesNew;
@@ -1106,6 +1262,9 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
     arrayView1d< globalIndex > elementLocalToGlobal( cellBlock.localToGlobalMap() );
     array2d< localIndex, cells::NODE_MAP_PERMUTATION > elemsToNodesSource ( cellBlock.getElemToNodes() );
 
+    array2d< localIndex > elemsToEdges ( cellBlock.getElemToEdges() );
+    array2d< localIndex > elemsToFaces ( cellBlock.getElemToFaces() );
+
     cellBlock.resizeNumNodes( numNodesPerCell );
     elemsToNodesNew = cellBlock.getElemToNode();
     localIndex const numCellElements = cellBlock.numElements();
@@ -1114,22 +1273,122 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
     // and insert the new local to global ID ( for the internal nodes of elements ) into the nodeLocalToGlobal
     // retrieve finite element type
 
-    GEOS_MARK_BEGIN("geos::CellBlockManager::generateHighOrderMaps -- Elements");
+    //GEOS_LOG_RANK_0("TEST TEST: elemsToNodesSource = " << elemsToNodesSource);
+    //GEOS_LOG_RANK_0("TEST TEST: elemsToNodesNew = " << elemsToNodesNew);
+    //GEOS_LOG_RANK_0("TEST TEST: elemsToEdges = " << elemsToEdges);
+    //GEOS_LOG_RANK_0("TEST TEST: elemsToFaces = " << elemsToFaces);
+
+    GEOS_MARK_BEGIN("geos::CellBlockManager::generateHighOrderMaps -- Elements -- 111111 ");
+    //GEOS_LOG_RANK_0("TEST TEST: faceToNodeMapNew2 = " << faceToNodeMapNew2);
+
+    forAll< RAJA::omp_parallel_for_exec >( numCellElements, 
+                                  [ elemsToNodesSource=elemsToNodesSource.toView(), 
+                                    elemsToNodesNew=elemsToNodesNew.toView(),
+                                    elemsToEdges=elemsToEdges.toView(), 
+                                    elemsToFaces=elemsToFaces.toView(), 
+                                    edgeToNodeMapNew=edgeToNodeMapNew.toView(), 
+                                    faceToNodeMapNew2=faceToNodeMapNew2.toView(), 
+                                    refPosSrc=refPosSource.toView(),
+                                    refPosNew=refPosNew.toView(),
+                                    elementLocalToGlobal=elementLocalToGlobal.toView(),
+                                    nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView(),
+                                    numEdgesPerFace, numVerticesPerFace,
+                                    numVerticesPerCell, numEdgesPerCell, numFacesPerCell, numNodesPerCell,
+                                    numInternalNodesPerCell, numInternalNodesPerEdge, numInternalNodesPerFace,
+                                    globalNodeOffset, glCoords, localNodeOffset ]( localIndex const iter_elem )
+    {
+      localIndex elemVertID[ numVerticesPerCell];
+      for( localIndex iter_node=0; iter_node<numVerticesPerCell; iter_node++ )
+      {
+        elemVertID[ iter_node ] = elemsToNodesSource[ iter_elem ][ iter_node ];
+        elemsToNodesNew[ iter_elem ][ iter_node ] = elemVertID[ iter_node ];
+      }
+
+      for( localIndex iter_edge=0; iter_edge<numEdgesPerCell; iter_edge++ )
+        for( localIndex iter_node=0; iter_node<numInternalNodesPerEdge; iter_node++ )
+          elemsToNodesNew[ iter_elem ][ numVerticesPerCell + iter_edge * numInternalNodesPerEdge + iter_node ] 
+            = edgeToNodeMapNew[elemsToEdges[iter_elem][iter_edge]][iter_node+1];
+
+      for( localIndex iter_face=0; iter_face<numFacesPerCell; iter_face++ )
+        for( localIndex iter_node=0; iter_node<numInternalNodesPerFace; iter_node++ )
+        {
+          elemsToNodesNew[ iter_elem ][ numVerticesPerCell + numEdgesPerCell * numInternalNodesPerEdge + iter_face * numInternalNodesPerFace + iter_node ] 
+            = faceToNodeMapNew2[elemsToFaces[iter_elem][iter_face]][numVerticesPerFace + numEdgesPerFace * numInternalNodesPerEdge + iter_node ];
+        }
+
+      for( localIndex iter_node=0; iter_node<numInternalNodesPerCell; iter_node++ )
+      {
+        real64 alpha = ( glCoords[ iter_node % numInternalNodesPerEdge ] + 1.0 ) / 2.0;
+        real64 beta = ( glCoords[ ( iter_node / numInternalNodesPerEdge ) % numInternalNodesPerEdge ] + 1.0 ) / 2.0;
+        real64 gamma = ( glCoords[ ( iter_node / numInternalNodesPerEdge / numInternalNodesPerEdge ) % numInternalNodesPerEdge ] + 1.0 ) / 2.0;
+
+        //GEOS_LOG_RANK_0("TEST TEST: alpha = " << alpha << "; beta = "<< beta << "; gamma= "<< gamma ); 
+
+        localIndex nodeLocalID = localNodeOffset + iter_elem * numInternalNodesPerCell + iter_node;
+        elemsToNodesNew[ iter_elem ][ numVerticesPerCell + numEdgesPerCell * numInternalNodesPerEdge + numFacesPerCell * numInternalNodesPerFace + iter_node ] = nodeLocalID;
+        nodeLocalToGlobalNew[ nodeLocalID ] = globalNodeOffset + elementLocalToGlobal[ iter_elem ] * numInternalNodesPerCell + iter_node;
+
+        refPosNew[nodeLocalID][0] = refPosSrc[elemVertID[0]][0]*( 1.0-alpha )*( 1.0-beta )*( 1.0-gamma ) + refPosSrc[elemVertID[1]][0]*alpha*( 1.0-beta )*( 1.0-gamma ) +
+                                    refPosSrc[elemVertID[2]][0]*( 1.0-alpha )*beta*( 1.0-gamma )         + refPosSrc[elemVertID[3]][0]*alpha*beta*( 1.0-gamma ) +
+                                    refPosSrc[elemVertID[4]][0]*( 1.0-alpha )*( 1.0-beta )*gamma         + refPosSrc[elemVertID[5]][0]*alpha*( 1.0-beta )*gamma +
+                                    refPosSrc[elemVertID[6]][0]*( 1.0-alpha )*beta*gamma                 + refPosSrc[elemVertID[7]][0]*alpha*beta*gamma;
+
+        refPosNew[nodeLocalID][1] = refPosSrc[elemVertID[0]][1]*( 1.0-alpha )*( 1.0-beta )*( 1.0-gamma ) + refPosSrc[elemVertID[1]][1]*alpha*( 1.0-beta )*( 1.0-gamma )+
+                                    refPosSrc[elemVertID[2]][1]*( 1.0-alpha )*beta*( 1.0-gamma )         + refPosSrc[elemVertID[3]][1]*alpha*beta*( 1.0-gamma )+
+                                    refPosSrc[elemVertID[4]][1]*( 1.0-alpha )*( 1.0-beta )*gamma         + refPosSrc[elemVertID[5]][1]*alpha*( 1.0-beta )*gamma+
+                                    refPosSrc[elemVertID[6]][1]*( 1.0-alpha )*beta*gamma                 + refPosSrc[elemVertID[7]][1]*alpha*beta*gamma;
+
+        refPosNew[nodeLocalID][2] = refPosSrc[elemVertID[0]][2]*( 1.0-alpha )*( 1.0-beta )*( 1.0-gamma ) + refPosSrc[elemVertID[1]][2]*alpha*( 1.0-beta )*( 1.0-gamma )+
+                                    refPosSrc[elemVertID[2]][2]*( 1.0-alpha )*beta*( 1.0-gamma )         + refPosSrc[elemVertID[3]][2]*alpha*beta*( 1.0-gamma )+
+                                    refPosSrc[elemVertID[4]][2]*( 1.0-alpha )*( 1.0-beta )*gamma         + refPosSrc[elemVertID[5]][2]*alpha*( 1.0-beta )*gamma+
+                                    refPosSrc[elemVertID[6]][2]*( 1.0-alpha )*beta*gamma                 + refPosSrc[elemVertID[7]][2]*alpha*beta*gamma;
+    
+        //GEOS_LOG_RANK_0("TEST TEST: refPosNew["<<nodeLocalID<<"][0]="<<refPosNew[nodeLocalID][0]);
+        //GEOS_LOG_RANK_0("TEST TEST: refPosNew["<<nodeLocalID<<"][1]="<<refPosNew[nodeLocalID][1]);
+        //GEOS_LOG_RANK_0("TEST TEST: refPosNew["<<nodeLocalID<<"][2]="<<refPosNew[nodeLocalID][2]);
+
+      }
+
+      std::vector<std::tuple<real64, real64, real64, localIndex> > elemRefPos;
+      for( localIndex iter_node=0; iter_node<numNodesPerCell; iter_node++ )
+      {
+        localIndex elemNodeID = elemsToNodesNew[ iter_elem ][iter_node];
+        elemRefPos.push_back(std::make_tuple(refPosNew[elemNodeID][2], refPosNew[elemNodeID][1], refPosNew[elemNodeID][0], elemNodeID));
+      }
+
+      std::sort(elemRefPos.begin(), elemRefPos.end());
+      for( localIndex iter_node=0; iter_node<numNodesPerCell; iter_node++ )
+        elemsToNodesNew[ iter_elem ][iter_node] = std::get<3>(elemRefPos[iter_node]);
+
+      /*
+      std::cout << std::endl << "ElementID = "<<iter_elem<< std::endl;
+      for (int i = 0; i < elemRefPos.size(); i++)
+        std::cout << std::get<2>(elemRefPos[i]) << " "
+             << std::get<1>(elemRefPos[i]) << " "
+             << std::get<0>(elemRefPos[i]) << " "
+             << std::get<3>(elemRefPos[i]) << "\n";
+      */
+
+    } );
+
+    GEOS_MARK_END("geos::CellBlockManager::generateHighOrderMaps -- Elements -- 111111 ");
+    //GEOS_LOG_RANK_0("TEST TEST: elemsToNodesNew = " << elemsToNodesNew);
+
+    //GEOS_LOG_RANK_0("TEST TEST: refPosSource = " << refPosSource);
+    //GEOS_LOG_RANK_0("TEST TEST: refPosNew = " << refPosNew);
+
+    /*
+    GEOS_MARK_BEGIN("geos::CellBlockManager::generateHighOrderMaps -- Elements -- 222222");
     //for( localIndex iter_elem = 0; iter_elem < numCellElements; ++iter_elem )
     forAll< RAJA::omp_parallel_for_exec >( numCellElements, 
-                                  [  
-                                    elemsToNodesSource=elemsToNodesSource.toView(), 
-                                    refPosSource=refPosSource.toView(),
+                                  [ elemsToNodesSource=elemsToNodesSource.toView(), 
                                     elementLocalToGlobal=elementLocalToGlobal.toView(),
                                     elemsToNodesNew=elemsToNodesNew.toView(),
+                                    refPosSource=refPosSource.toView(),
                                     refPosNew=refPosNew.toView(),
-                                    numNodesPerCell, numNodesPerEdge, glCoords, order, offset, numInternalNodesPerCell, nullKey,
+                                    numVerticesPerCell, numNodesPerCell, numNodesPerEdge, glCoords, order, globalNodeOffset, numInternalNodesPerCell, nullKey,
                                     nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView(), 
                                     &localNodeID, &nodeIDs
-                                    /*
-				    &elemsToNodesNew, &refPosNew,
-				    &localNodeID 
-                                    */
                                   ]( localIndex const iter_elem )
     {
       localIndex newCellNodes = 0;
@@ -1151,14 +1410,19 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
         localIndex nodeID;
         int dof = q;
         int q1 = dof % numNodesPerEdge;
+        //GEOS_LOG_RANK_0("TEST TEST: dof = "<<dof<<"; q1 = "<<q1<<"; q="<<q);
         dof /= ( numNodesPerEdge );
         int q2 = dof % ( numNodesPerEdge );
+        //GEOS_LOG_RANK_0("TEST TEST: dof = "<<dof<<"; q2 = "<<q2<<"; q="<<q);
         dof /= ( numNodesPerEdge );
         int q3 = dof % ( numNodesPerEdge );
+        //GEOS_LOG_RANK_0("TEST TEST: dof = "<<dof<<"; q3 = "<<q3<<"; q="<<q);
+
         // compute node coords
         real64 alpha = ( glCoords[ q1 ] + 1.0 ) / 2.0;
         real64 beta = ( glCoords[ q2 ] + 1.0 ) / 2.0;
         real64 gamma = ( glCoords[ q3 ] + 1.0 ) / 2.0;
+        //GEOS_LOG_RANK_0("TEST TEST: alpha = "<<alpha<<"; beta = "<<beta<<"; gamma="<<gamma);
 
         // find node ID
         std::array< localIndex, 6 > nodeKey = createNodeKey( elemMeshVertices, q1, q2, q3, order );
@@ -1166,7 +1430,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
         {
           // the node is internal to a cell -- create it
           nodeID = localNodeID;
-          nodeLocalToGlobalNew[ nodeID ] = offset + elementLocalToGlobal[ iter_elem ] * numInternalNodesPerCell + newCellNodes;
+          nodeLocalToGlobalNew[ nodeID ] = globalNodeOffset + elementLocalToGlobal[ iter_elem ] * numInternalNodesPerCell + newCellNodes;
           localNodeID++;
           newCellNodes++;
         }
@@ -1187,8 +1451,11 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
       }
     //}
     } );
-    GEOS_MARK_END("geos::CellBlockManager::generateHighOrderMaps -- Elements");
+    GEOS_MARK_END("geos::CellBlockManager::generateHighOrderMaps -- Elements -- 222222");
+    */
   } );
+  //GEOS_LOG_RANK_0("TEST TEST: elemsToNodesNew = " << elemsToNodesNew);
+  //GEOS_LOG_RANK_0("TEST TEST: nodeLocalToGlobalNew = " << nodeLocalToGlobalNew);
 }
 
 }
