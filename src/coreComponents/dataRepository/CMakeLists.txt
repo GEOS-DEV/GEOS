@@ -43,7 +43,7 @@ set( dataRepository_sources
      WrapperContext.cpp
      )
 
-set( dependencyList ${parallelDeps} codingUtilities pugixml )
+set( dependencyList ${parallelDeps} codingUtilities )
 
 if( ENABLE_PYGEOSX )
   list( APPEND dataRepository_headers

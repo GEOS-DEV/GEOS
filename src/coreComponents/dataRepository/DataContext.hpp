@@ -60,15 +60,6 @@ public:
   virtual string toString() const = 0;
 
   /**
-   * @todo implementation :
-   * DataFileContext : simple toString() ?
-   * GroupContext&WrapperContext : path truncated at the first found parent that has file-info
-   * 
-   * @return A shorter version of toString() that can help to redact more concise messages.
-   */
-  virtual string toShortString() const;
-
-  /**
    * @return Get the target object name
    */
   string getTargetName() const
