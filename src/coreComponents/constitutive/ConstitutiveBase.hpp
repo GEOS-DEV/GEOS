@@ -90,7 +90,7 @@ public:
    */
   string getFullName() const
   {
-    return getCatalogName() + " " + getDataContext().toShortString();// TODO: Choose if we use a new toShortString() method or a simple toString()
+    return getCatalogName() + " " + getDataContext().toString();
   }
 
   ///@}
