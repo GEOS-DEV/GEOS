@@ -159,12 +159,12 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes );
  * @return the vtk grid redistributed
  */
 AllMeshes
-redistributeMesh( vtkSmartPointer< vtkDataSet > loadedMesh,
-                  std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
-                  MPI_Comm const comm,
-                  PartitionMethod const method,
-                  int const partitionRefinement,
-                  int const useGlobalIds );
+redistributeMeshes( vtkSmartPointer< vtkDataSet > loadedMesh,
+                    std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
+                    MPI_Comm const comm,
+                    PartitionMethod const method,
+                    int const partitionRefinement,
+                    int const useGlobalIds );
 
 /**
  * @brief Collect lists of VTK cell indices organized by type and attribute value.

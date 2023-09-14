@@ -870,12 +870,12 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
 
 
 AllMeshes
-redistributeMesh( vtkSmartPointer< vtkDataSet > loadedMesh,
-                  std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
-                  MPI_Comm const comm,
-                  PartitionMethod const method,
-                  int const partitionRefinement,
-                  int const useGlobalIds )
+redistributeMeshes( vtkSmartPointer< vtkDataSet > loadedMesh,
+                    std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
+                    MPI_Comm const comm,
+                    PartitionMethod const method,
+                    int const partitionRefinement,
+                    int const useGlobalIds )
 {
   GEOS_MARK_FUNCTION;
 
