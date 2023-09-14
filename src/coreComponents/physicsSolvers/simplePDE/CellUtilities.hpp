@@ -76,72 +76,6 @@ struct Dense3x3Tensor
 
 };
 
-// namespace Polynomials
-// {
-
-// /**
-//  * @brief Polynomial types
-//  */
-// enum class PolynomialName : integer
-// {
-//   Lagrange
-// };
-
-// template< PolynomialName POLYNOMIAL,
-//           int NUM_NODES >
-// struct Helper
-// {};
-
-// template<>
-// struct Helper< PolynomialName::Lagrange,
-//                2 >
-// {
-//   GEOS_HOST_DEVICE
-//   // constexpr
-//   static stackArray1d< real64, 2 > getDerivatives( real64 const Xiq[3] )
-//   { 
-//     stackArray1d< real64, 2 > deriv;
-//     deriv[0] = -0.5;
-//     deriv[1] =  0.5;
-//     return deriv;
-//   }
-
-//   GEOS_HOST_DEVICE
-//   static void getDerivatives( real64 const (& Xiq)[3], real64 ( & deriv )[2] )
-//   { 
-//     deriv[0] = -0.5;
-//     deriv[1] =  0.5;
-//   }
-
-// };
-
-// template< PolynomialName POLYNOMIAL,
-//           int NUM_NODES >
-// GEOS_HOST_DEVICE
-// // constexpr
-// static stackArray1d< real64, NUM_NODES > getDerivatives( real64 const Xiq[3] )
-// {
-//   return Helper< POLYNOMIAL, NUM_NODES >::getDerivatives( Xiq );
-// }
-
-// template< PolynomialName POLYNOMIAL,
-//           int NUM_NODES >
-// GEOS_HOST_DEVICE
-// // constexpr
-// static void getDerivatives( real64 const (& Xiq)[3], real64 ( & derivatives )[NUM_NODES] )
-// {
-//   return Helper< POLYNOMIAL, NUM_NODES >::getDerivatives( Xiq, derivatives );
-// }
-
-
-// /// Declare strings associated with enumeration values.
-// ENUM_STRINGS( PolynomialName,
-//               "Lagrange" );
-
-// } // namespace Polynomials
-
-
-
 namespace CellUtilities
 {
 
@@ -155,7 +89,7 @@ getJacobianDeterminantAndJacobianInverse( CELL_TYPE cell,
   typename CELL_TYPE::JacobianType J = cell.getJacobian( refPointCoords );
 
   // Compute determinant and invert Jacobian in place
-  real64 const detJ = LvArray::tensorOps::invert< 3 >( J.data );
+  real64 const detJ = J.inPlaceInvert();
   
   return camp::make_tuple( detJ, J );
 }
