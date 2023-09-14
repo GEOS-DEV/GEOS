@@ -164,7 +164,7 @@ void NonlinearSolverParameters::postProcessInput()
   }
   if( m_scalingType == ScalingType::Local && m_lineSearchAction != LineSearchAction::None )
   {
-    GEOS_ERROR( "Line search is not supported for " + EnumStrings< ScalingType >::toString( ScalingType::Local ) );
+    GEOS_ERROR( GEOS_FMT( "Line search is not supported for {} = {}", viewKeysStruct::scalingTypeString(), EnumStrings< ScalingType >::toString( ScalingType::Local )) );
   }
 }
 
