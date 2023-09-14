@@ -41,25 +41,25 @@
         logLevel="0"/>
     </SolidMechanics_LagrangianFEM>
 
-<!--    <SurfaceGenerator-->
-<!--      name="SurfaceGen"-->
-<!--      logLevel="0"-->
-<!--      fractureRegion="Fracture"-->
-<!--      targetRegions="{ Region }"-->
-<!--      rockToughness="1.0e6"-->
-<!--      mpiCommOrder="1"/>-->
+    <SurfaceGenerator
+      name="SurfaceGen"
+      logLevel="0"
+      fractureRegion="Fracture"
+      targetRegions="{ Region }"
+      rockToughness="1.0e6"
+      mpiCommOrder="1"/>
   <!-- SPHINX_SOLVER_END -->
   </Solvers>
 
   <!-- SPHINX_GEOMETRY -->
   <Geometry>
-<!--    <Rectangle-->
-<!--      name="fracture1"-->
-<!--      normal="{1.0, 0.0, 0.0}"-->
-<!--      origin="{0.0, 0.0, 0.0}"-->
-<!--      lengthVector="{0.0, 1.0, 0.0}"-->
-<!--      widthVector="{0.0, 0.0, 1.0}"-->
-<!--      dimensions="{ 100, 10 }"/>-->
+    <Rectangle
+      name="fracture1"
+      normal="{1.0, 0.0, 0.0}"
+      origin="{0.0, 0.0, 0.0}"
+      lengthVector="{0.0, 1.0, 0.0}"
+      widthVector="{0.0, 0.0, 1.0}"
+      dimensions="{ 100, 10 }"/>
 
     <Rectangle
       name="core1"
@@ -69,21 +69,21 @@
       widthVector="{0.0, 0.0, 1.0}"
       dimensions="{ 100, 10 }"/>
 
-<!--    <Rectangle-->
-<!--      name="fracture2"-->
-<!--      normal="{0.0, 1.0, 0.0}"-->
-<!--      origin="{0.0, 50.0, 0.0}"-->
-<!--      lengthVector="{1.0, 0.0, 0.0}"-->
-<!--      widthVector="{0.0, 0.0, 1.0}"-->
-<!--      dimensions="{ 50, 10 }"/>-->
+    <Rectangle
+      name="fracture2"
+      normal="{0.0, 1.0, 0.0}"
+      origin="{0.0, 50.0, 0.0}"
+      lengthVector="{1.0, 0.0, 0.0}"
+      widthVector="{0.0, 0.0, 1.0}"
+      dimensions="{ 50, 10 }"/>
 
-<!--    <Rectangle-->
-<!--      name="core2"-->
-<!--      normal="{0.0, 1.0, 0.0}"-->
-<!--      origin="{0.0, 50.0, 0.0}"-->
-<!--      lengthVector="{1.0, 0.0, 0.0}"-->
-<!--      widthVector="{0.0, 0.0, 1.0}"-->
-<!--      dimensions="{ 50, 10 }"/>    -->
+    <Rectangle
+      name="core2"
+      normal="{0.0, 1.0, 0.0}"
+      origin="{0.0, 50.0, 0.0}"
+      lengthVector="{1.0, 0.0, 0.0}"
+      widthVector="{0.0, 0.0, 1.0}"
+      dimensions="{ 50, 10 }"/>    
   </Geometry>
   <!-- SPHINX_GEOMETRY_END -->
 
@@ -103,12 +103,12 @@
   <ElementRegions>
     <CellElementRegion
       name="Region"
-      cellBlocks="{ hexahedra }"
+      cellBlocks="{ cb1 }"
       materialList="{ rock }"/>
 
     <SurfaceElementRegion
       name="Fracture"
-      faceBlock="fracture"
+      faceBlock="faceElementSubRegion"
       defaultAperture="0.0"
       materialList="{ fractureMaterial }"/>
   </ElementRegions>
@@ -134,18 +134,18 @@
     <FieldSpecification
       name="frac"
       initialCondition="1"
-      setNames="{ fracture }"
+      setNames="{ fracture1, fracture2 }"
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1"/>
 
-<!--    <FieldSpecification-->
-<!--      name="separableFace"-->
-<!--      initialCondition="1"-->
-<!--      setNames="{ core1, core2 }"-->
-<!--      objectPath="faceManager"-->
-<!--      fieldName="isFaceSeparable"-->
-<!--      scale="1"/>-->
+    <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ core1, core2 }"
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
 
     <FieldSpecification
       name="xconstraint"
