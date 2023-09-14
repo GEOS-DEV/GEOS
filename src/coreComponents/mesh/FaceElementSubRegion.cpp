@@ -221,7 +221,7 @@ ElementType FaceElementSubRegion::getElementType( localIndex ei ) const
   // If this information does not appear to be reliable,
   // let's fall back on the 2d elem to nodes.
   auto const sizeFromBuckets = m_2dElemToCollocatedNodesBuckets[ei].size();
-  auto const size = sizeFromBuckets > 0 ? sizeFromBuckets : m_toNodesRelation.size() / 2;
+  auto const size = sizeFromBuckets > 0 ? sizeFromBuckets : m_toNodesRelation[ei].size() / 2;
   switch( size )
   {
     case 3:
